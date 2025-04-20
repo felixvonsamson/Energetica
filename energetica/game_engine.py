@@ -236,7 +236,7 @@ class GameEngine(object):
             tar.add("instance/")
         os.replace("checkpoints/new_checkpoint.tar.gz", destination_filename)
 
-    def with_lock(self, func: Callable):
+    def with_lock(self, func: Callable) -> Callable:
         """Run a function with the engine lock."""
 
         def wrapped(*args: Any, **kwargs: Any) -> Any:

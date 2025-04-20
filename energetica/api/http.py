@@ -5,7 +5,7 @@ from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from flask import Blueprint, flash, g, jsonify, redirect, request
@@ -57,7 +57,7 @@ def log_action(func: Callable) -> Callable:
     """Log all endpoint actions of the players."""
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         if request.method != "POST":
             return func(*args, **kwargs)
 
@@ -95,7 +95,7 @@ def log_action(func: Callable) -> Callable:
 
 
 @http.before_request
-def restrict_access_during_simulation():
+def restrict_access_during_simulation() -> Any:
     """Restrict access to the API during the simulation."""
     if (
         engine.serve_local
@@ -107,7 +107,7 @@ def restrict_access_during_simulation():
 
 @http.before_request
 @login_required
-def check_if_logged_in():
+def check_if_logged_in() -> None:
     """Function that is called before every request and ensures that the player is logged in. (FLASK)"""
     g.player = current_user._get_current_object()  # pylint: disable=protected-access
 

@@ -1,5 +1,7 @@
 """Generate 10 maps for the game Energetica with the resources and climate risks."""
 
+from __future__ import annotations
+
 import math
 import os
 import random
@@ -19,28 +21,30 @@ directions = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
 
 
 class Tile:
-    def __init__(self, tile_id):
-        self.id = tile_id
+    def __init__(self, tile_id: int) -> None:
+        """Initialize a Tile."""
+        self.id: int = tile_id
         coords = id_to_coordinates(tile_id)
-        self.q = coords[0]
-        self.r = coords[1]
-        self.solar = 0
-        self.wind = 0
-        self.hydro = 0
-        self.coal = 0
-        self.gas = 0
-        self.uranium = 0
-        self.risk = 0
-        self.score = 0.0
+        self.q: int = coords[0]
+        self.r: int = coords[1]
+        self.solar: float = 0.0
+        self.wind: float = 0.0
+        self.hydro: float = 0.0
+        self.coal: float = 0.0
+        self.gas: float = 0.0
+        self.uranium: float = 0.0
+        self.risk: float = 0.0
+        self.score: float = 0.0
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """A string representation of the tile."""
         return f"Tile {self.id}"
 
-    def is_on_border(self):
-        """Return True if the tile is on the border of the map."""
+    def is_on_border(self) -> bool:
+        """Returns True if the tile is on the border of the map."""
         return abs(self.q) == size_param or abs(self.r) == size_param or abs(self.q + self.r) == size_param
 
-    def get_neighbors(self):
+    def get_neighbors(self) -> list[Tile]:
         """Return the neighbors of the tile."""
         neighbors = []
         for direction in directions:
@@ -49,7 +53,7 @@ class Tile:
                 neighbors.append(map[neighbor_id])
         return neighbors
 
-    def n_neighbors18(self):
+    def n_neighbors18(self) -> int:
         """Return the number of tile in a 2-hexagon radius around the tile."""
         neighbors18 = []
         for neighbor in self.get_neighbors():
@@ -59,14 +63,14 @@ class Tile:
                     neighbors18.append(neighbor2)
         return len(neighbors18)
 
-    def dist(self, tile):
+    def dist(self, tile: Tile) -> float:
         """Return the distance between the tile and another tile."""
         return math.sqrt(2 * (self.q - tile.q) ** 2 + (self.r - tile.r) ** 2 + (self.q - tile.q) * (self.r - tile.r))
 
-    def sigmoid_probability(self, inverted=False):
+    def sigmoid_probability(self, inverted: bool = False) -> float:
         """Return the probability of occurrence of heat and cold waves based on the latitude."""
 
-        def cdf(x):
+        def cdf(x: float) -> float:
             return (3 * np.log(math.exp(x / 3) + math.exp(-1 / 3)) + 0.88) / 11.44
 
         lower_bound = -0.5
@@ -76,10 +80,10 @@ class Tile:
         n_latitudes = 2 * size_param + 1 - abs(self.r)
         return (cdf_upper - cdf_lower) / n_latitudes
 
-    def normal_probability(self):
+    def normal_probability(self) -> float:
         """Return the probability of occurrence of wildfires based on the latitude."""
 
-        def cdf(x):
+        def cdf(x: float) -> float:
             return (1 / (1 + np.exp(-(x - 2.5) / 3.5)) - 0.02) / 0.88
 
         lower_bound = -0.5
@@ -89,11 +93,11 @@ class Tile:
         n_latitudes = 2 * size_param + 1 - abs(self.r)
         return (cdf_upper - cdf_lower) / n_latitudes
 
-    def get_downstream_tiles(self, n):
+    def get_downstream_tiles(self, n: int) -> list[Tile]:
         """Return up to `n` many tiles that are downstream (related to hydro) from the current tile."""
         downstream_tiles = []
 
-        def find_downstream(tile, n):
+        def find_downstream(tile: Tile, n: int) -> None:
             if n == 0:
                 return
             for neighbor in tile.get_neighbors():
@@ -105,10 +109,10 @@ class Tile:
         return downstream_tiles
 
 
-def id_to_coordinates(tile_id):
+def id_to_coordinates(tile_id: int) -> tuple[int, int]:
     """Convert the id of a tile to its coordinates (outwards spiral)."""
 
-    def sgn(x):
+    def sgn(x: int) -> int:
         sgnArray = [0, 1, 1, 0, -1, -1]
         return sgnArray[x % 6]
 
@@ -123,7 +127,7 @@ def id_to_coordinates(tile_id):
     return (x, y)
 
 
-def coordinates_to_id(x, y):
+def coordinates_to_id(x: int, y: int) -> int:
     """Convert the coordinates of a tile to its id (outwards spiral)."""
     if x == 0 and y == 0:
         return 0
@@ -142,18 +146,19 @@ def coordinates_to_id(x, y):
     return int(n + 4 * L + x)
 
 
-def save_as_csv(map, m):
+def save_as_csv(map: list[Tile], m: int) -> None:
     """Save the map as a csv file."""
     with open(f"map{m}.csv", "w") as f:
         f.write("q,r,solar,wind,hydro,coal,gas,uranium,climate_risk,score\n")
         for tile in map:
             f.write(
-                f"{tile.q},{tile.r},{tile.solar},{tile.wind},{tile.hydro},{tile.coal * 2_000_000_000},{tile.gas * 600_000_000},{tile.uranium * 8_000_000},{math.floor(tile.risk * 10.9)},{tile.score}\n"
+                f"{tile.q},{tile.r},{tile.solar},{tile.wind},{tile.hydro},{tile.coal * 2_000_000_000},"
+                f"{tile.gas * 600_000_000},{tile.uranium * 8_000_000},{math.floor(tile.risk * 10.9)},{tile.score}\n"
             )
     print(f"Map {m} saved.")
 
 
-def calculate_solar_potentials():
+def calculate_solar_potentials() -> dict[int, float]:
     """Calculate the solar potentials for each latitude."""
     start_date = datetime(2023, 1, 1).timestamp()
     end_date = datetime(2024, 1, 1).timestamp()
@@ -165,23 +170,23 @@ def calculate_solar_potentials():
     return dict(zip(Rs, potentials))
 
 
-def generate_solar(map, potentials):
+def generate_solar(map: list[Tile], potentials: dict[int, float]) -> None:
     """Generate solar resources on the map based on the internal clear sky model and depending on the latitude."""
     for tile in map:
         tile.solar = potentials[tile.r]
 
 
-def generate_hydro(map):
+def generate_hydro(map: list[Tile]) -> None:
     """Generate rivers from the border to the center of the map."""
 
-    def count_hydro_neighbors(tile):
+    def count_hydro_neighbors(tile: Tile) -> int:
         count = 0
         for neighbor in tile.get_neighbors():
             if neighbor.hydro > 0 or neighbor in sources:
                 count += 1
         return count
 
-    def non_adjacent_tiles(tiles):
+    def non_adjacent_tiles(tiles: list[Tile]) -> list[Tile]:
         if tiles[0] in tiles[1].get_neighbors():
             if tiles[0] in tiles[2].get_neighbors():
                 return [tiles[1], tiles[2]]
@@ -224,7 +229,7 @@ def generate_hydro(map):
                 sources.append(next_tile)
 
 
-def calculate_risk(map):
+def calculate_risk(map: list[Tile]) -> None:
     """Calculate the climate risk of each tile based on the cost of climate events and their probability."""
     heatwave_event_probability = (
         1.016  # calculated as the integral of the probability density function spread overt one year
@@ -270,7 +275,7 @@ def calculate_risk(map):
     for tile in map:
         tile.risk += hurricane_event_probability * hurricane_cost / mapsize * tile.n_neighbors18()
 
-    max_risk = 0
+    max_risk = 0.0
     for tile in map:
         if tile.risk > max_risk:
             max_risk = tile.risk
@@ -278,10 +283,10 @@ def calculate_risk(map):
         tile.risk = tile.risk / max_risk
 
 
-def generate_coal(map):
+def generate_coal(map: list[Tile]) -> None:
     """Generate coal resources on the map as big patches."""
 
-    def extend_patch(patch, coal_value):
+    def extend_patch(patch: list[Tile], coal_value: float) -> None:
         while patch:
             tile = patch.pop(0)
             tile.coal = min(1, coal_value)
@@ -308,7 +313,7 @@ def generate_coal(map):
     for tile in map:
         if tile.score < 0.05 and first_tile is None:
             first_tile = tile
-        if tile.score < 0.04 and second_tile is None and tile.dist(first_tile) > size_param:
+        if tile.score < 0.04 and first_tile is not None and second_tile is None and tile.dist(first_tile) > size_param:
             second_tile = tile
 
     if first_tile is None:
@@ -326,10 +331,10 @@ def generate_coal(map):
     extend_patch(patch, coal_value)
 
 
-def generate_gas(map):
+def generate_gas(map: list[Tile]) -> None:
     """Generate gas resources on the map as veins."""
 
-    def count_gas_neighbors(tile):
+    def count_gas_neighbors(tile: Tile) -> int:
         count = 0
         for neighbor in tile.get_neighbors():
             if neighbor.gas > 0 or neighbor in vein:
@@ -369,7 +374,7 @@ def generate_gas(map):
                     vein.append(neighbor)
 
 
-def generate_uranium(map):
+def generate_uranium(map: list[Tile]) -> None:
     """Generate uranium resources on the map as isolated groups of tiles."""
     for tile in map:
         tile.score = tile.solar + tile.hydro + tile.coal + tile.gas - tile.risk
@@ -384,7 +389,7 @@ def generate_uranium(map):
         threshold += 0.05
 
 
-def generate_wind(map):
+def generate_wind(map: list[Tile]) -> None:
     """Generate wind resources on the map trying to balance all tiles."""
     for tile in map:
         tile.score = tile.solar + tile.hydro + tile.coal + tile.gas + tile.uranium - tile.risk
@@ -393,14 +398,14 @@ def generate_wind(map):
         tile.wind = min(1, max(0.01 + 0.05 * random.random(), 1.2 - tile.score + 0.2 * random.random()))
 
 
-def generate_background_resources(map):
+def generate_background_resources(map: list[Tile]) -> None:
     """Generate low amount of background resources on each tile."""
 
-    def equilibrator(score):
+    def equilibrator(score: float) -> float:
         return 0.3 * (max_score - score) / (max_score - min_score)
 
-    max_score = 0
-    min_score = 0
+    max_score = 0.0
+    min_score = 0.0
     for tile in map:
         tile.score = tile.solar + tile.wind + tile.hydro + tile.coal + tile.gas + tile.uranium - tile.risk
         if tile.score > max_score:

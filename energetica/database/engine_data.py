@@ -369,7 +369,7 @@ class CircularBufferPlayer:
                 result[category][subcategory] = list(buffer)[-t:]
         return result
 
-    def get_last_data(self, category: str, subcategory: ProjectType) -> float:
+    def get_last_data(self, category: str, subcategory: str) -> float:
         """Return the last value of a subcategory."""
         if category in self._data and subcategory in self._data[category]:
             return self._data[category][subcategory][-1]

@@ -2,6 +2,7 @@
 
 import re
 from datetime import datetime
+from typing import Any
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
@@ -16,7 +17,7 @@ auth = Blueprint("auth", __name__)
 
 # logic for the login :
 @auth.route("/login", methods=["GET", "POST"])
-def login():
+def login() -> Any:
     """Endpoint for attempting to log in."""
     if request.method == "POST":
         username = request.form.get("username")
@@ -46,7 +47,7 @@ def login():
 
 
 @auth.route("/root_login", methods=["POST"])
-def root_login():
+def root_login() -> Any:
     if request.headers.get("X-Forwarded-For", request.remote_addr) != "127.0.0.1":
         abort(404)
     user_id = request.form.get("user_id")
@@ -63,7 +64,7 @@ def root_login():
 # logic for the logout :
 @auth.route("/logout")
 @login_required
-def logout():
+def logout() -> Any:
     """Log out the current user."""
     engine.log(f"{current_user.username} logged out")
     logout_user()
@@ -78,7 +79,7 @@ def is_valid_hash_format(hash_string: str) -> bool:
 
 # logic for the sign-up :
 @auth.route("/sign-up", methods=["GET", "POST"])
-def sign_up():
+def sign_up() -> Any:
     """Create a new account."""
     if request.method == "POST":
         username = request.form.get("username")

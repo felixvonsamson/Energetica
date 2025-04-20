@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from energetica.enums import Fuel, FunctionalFacilityType, TechnologyType, WorkerType
 
@@ -998,7 +998,7 @@ class Config(object):
             ),
         }
 
-    def __getitem__(self, player: Player):
+    def __getitem__(self, player: Player) -> Any:
         if player.id not in self.for_player:
             self.update_config_for_user(player)
         return self.for_player[player.id]

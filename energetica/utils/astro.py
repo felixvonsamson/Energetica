@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 from numpy import arccos, cos, exp, pi, sin
 from numpy.linalg import norm
@@ -12,7 +14,7 @@ T0 = 15011250  # Earth's orbit initial phase
 T1 = 33400  # Earth's spin initial phase
 
 
-def DrHI(unix_time, latitude, longitude):
+def DrHI(unix_time: Any, latitude: Any, longitude: Any) -> Any:
     """
     Calculate Direct Horizontal Irradiance (DrHI) at a given time and location.
 
@@ -78,4 +80,5 @@ def DrHI(unix_time, latitude, longitude):
     # Calculate Direct Horizontal Irradiance (DrHI)
     DrHI = DrNI * sin_elevation
 
+    return DrHI
     return DrHI

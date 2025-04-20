@@ -4,6 +4,7 @@ from functools import partial
 
 from flask import Blueprint, g, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
+from werkzeug.wrappers.response import Response
 
 from energetica.database.messages import Chat
 from energetica.database.player import Player
@@ -21,7 +22,7 @@ changelog = Blueprint("changelog", __name__, static_folder="static")
 @views.before_request
 @overviews.before_request
 @login_required
-def set_ctx():
+def set_ctx() -> Response | None:
     """Set up the context and redirects if the user has no tile."""
     if current_user.tile is None:
         return redirect("/location_choice", code=302)
@@ -32,12 +33,13 @@ def set_ctx():
         user=current_user,
     )
     g.render_template_ctx = render_template_ctx
+    return None
 
 
 @landing.before_request
 @wiki.before_request
 @changelog.before_request
-def set_ctx_no_login():
+def set_ctx_no_login() -> None:
     """Set a context for rendering templates without requiring user login, storing it in the global object."""
     user = current_user if current_user.is_authenticated and current_user.tile is not None else None
     render_template_ctx = partial(render_template, engine=engine, user=user)
@@ -46,29 +48,29 @@ def set_ctx_no_login():
 
 @location_choice_views.route("/location_choice", methods=["GET"])
 @login_required
-def location_choice():
+def location_choice() -> str | Response:
     if current_user.tile is not None:
         return redirect(url_for("views.home"))
     return render_template("location_choice.jinja", engine=engine)
 
 
 @views.route("/home")
-def home():
+def home() -> str:
     return g.render_template_ctx("dashboard.jinja")
 
 
 @views.route("/settings")
-def settings():
+def settings() -> str:
     return g.render_template_ctx("settings.jinja")
 
 
 @views.route("/map_view")
-def map_view():
+def map_view() -> str:
     return g.render_template_ctx("map.jinja")
 
 
 @views.route("/profile")
-def profile():
+def profile() -> str:
     """
     Serve the profile page.
 
@@ -84,45 +86,45 @@ def profile():
 
 
 @views.route("/messages", methods=["GET", "POST"])
-def messages():
+def messages() -> str:
     player = Player.getitem(current_user.id)
     chats = list(Chat.filter(lambda chat: player in chat.participants))
     return g.render_template_ctx("messages.jinja", chats=chats)
 
 
 @views.route("/network")
-def network():
+def network() -> str | Response:
     if not current_user.achievements["network"]:
         return redirect("/home", code=302)
     return g.render_template_ctx("network.jinja")
 
 
 @views.route("/power_facilities")
-def power_facilities():
+def power_facilities() -> str:
     return g.render_template_ctx("assets/power_facilities.jinja", constructions=current_user.power_facilities_data)
 
 
 @views.route("/storage_facilities")
-def storage_facilities():
+def storage_facilities() -> str:
     return g.render_template_ctx("assets/storage_facilities.jinja", constructions=current_user.storage_facilities_data)
 
 
 @views.route("/technology")
-def technology():
+def technology() -> str | Response:
     if not current_user.achievements["laboratory"]:
         return redirect("/home", code=302)
     return g.render_template_ctx("assets/technologies.jinja", available_technologies=current_user.technologies_data)
 
 
 @views.route("/functional_facilities")
-def functional_facilities():
+def functional_facilities() -> str:
     return g.render_template_ctx(
         "assets/functional_facilities.jinja", constructions=current_user.functional_facilities_data
     )
 
 
 @views.route("/extraction_facilities")
-def extraction_facilities():
+def extraction_facilities() -> str | Response:
     if not current_user.achievements["warehouse"]:
         return redirect("/home", code=302)
     return g.render_template_ctx(
@@ -131,7 +133,7 @@ def extraction_facilities():
 
 
 @views.route("/resource_market")
-def resource_market():
+def resource_market() -> str | Response:
     if not current_user.achievements["warehouse"]:
         return redirect("/home", code=302)
     on_sale = ResourceOnSale.all()
@@ -139,36 +141,36 @@ def resource_market():
 
 
 @views.route("/scoreboard")
-def scoreboard():
+def scoreboard() -> str:
     return g.render_template_ctx("scoreboard.jinja")
 
 
 @overviews.route("/revenues")
-def revenues():
+def revenues() -> str:
     return g.render_template_ctx("overviews/revenues.jinja")
 
 
 @overviews.route("/electricity")
-def electricity():
+def electricity() -> str:
     return g.render_template_ctx("overviews/electricity.jinja")
 
 
 @overviews.route("/storage")
-def storage():
+def storage() -> str | Response:
     if not current_user.achievements["storage_facilities"]:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/storage.jinja")
 
 
 @overviews.route("/resources")
-def resources():
+def resources() -> str | Response:
     if not current_user.achievements["warehouse"]:
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/resources.jinja")
 
 
 @overviews.route("/emissions")
-def emissions():
+def emissions() -> str | Response:
     if not current_user.discovered_greenhouse_gas_effect():
         return redirect("/home", code=302)
     return g.render_template_ctx("overviews/emissions.jinja")
@@ -176,14 +178,14 @@ def emissions():
 
 @landing.route("/")
 @landing.route("/landing")
-def landing_page():
+def landing_page() -> str | Response:
     if current_user.is_authenticated and request.path == "/":
         return redirect("/home")
     return g.render_template_ctx("landing.jinja")
 
 
 @wiki.route("/<template_name>")
-def render_template_wiki(template_name):
+def render_template_wiki(template_name: str) -> str | tuple[str, int]:
     valid_templates = [
         "introduction",
         "time_and_weather",
@@ -206,5 +208,5 @@ def render_template_wiki(template_name):
 
 
 @changelog.route("/changelog")
-def render_changelog():
+def render_changelog() -> str:
     return g.render_template_ctx("changelog.jinja")

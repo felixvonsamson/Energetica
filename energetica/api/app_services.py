@@ -1,8 +1,8 @@
-from flask import Response, jsonify, request, send_file
+from flask import Flask, Response, jsonify, request, send_file
 from flask_login import current_user
 
 
-def register_app_services(app):
+def register_app_services(app: Flask) -> None:
     @app.route("/subscribe", methods=["GET", "POST"])
     def subscribe() -> Response:
         """POST: Create a new subscription. GET: Return VAPID public key."""

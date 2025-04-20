@@ -17,7 +17,7 @@ from energetica.utils.assets import facility_destroyed
 from energetica.utils.formatting import display_money
 
 
-def climate_event_impact(tile: HexTile, event_name, rng: np.random.Generator):
+def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generator) -> None:
     """Create a ClimateEventRecovery object for the event and some facilities may be destroyed by the climate event."""
     engine.log(f"{climate_events[event_name].name} on tile {tile.id}")
     player = tile.player
@@ -71,18 +71,18 @@ def climate_event_impact(tile: HexTile, event_name, rng: np.random.Generator):
                     climate_event_impact(affected_tile, "flood", rng)
 
 
-def check_climate_events():
+def check_climate_events() -> None:
     """Check if a climate event happens on this tick."""
 
     seed_hash = hash((engine.random_seed, "check_climate_events", engine.total_t))
     rng = np.random.default_rng(abs(seed_hash))
 
-    def inv_cdf_sigmoid(p, inverse=False):
+    def inv_cdf_sigmoid(p: float, inverse: bool = False) -> float:
         latitude = 3 * np.log(math.exp((11.44 * p - 0.88) / 3) - math.exp(-1 / 3))
         latitude = max(-10.5, min(10.5, latitude))
         return round(-latitude) if inverse else round(latitude)
 
-    def inv_cdf_normal(p):
+    def inv_cdf_normal(p: float) -> int:
         return max(-10, round(2.5 - 3.5 * np.log(1 / (0.88 * (p + 0.02 / 0.88)) - 1)))
 
     climate_change = engine.current_climate_data.get_last_data()["temperature"]["deviation"]
@@ -161,7 +161,7 @@ def check_climate_events():
             climate_event_impact(affected_tile, "wildfire", rng)
 
 
-def data_init_climate(seconds_per_tick, random_seed, delta_t):
+def data_init_climate(seconds_per_tick: int, random_seed: int, delta_t: int) -> dict[str, dict[str, list[list]]]:
     """Initialize the data for the climate."""
     ref_temp: list[list] = []
     temp_deviation: list[list] = []

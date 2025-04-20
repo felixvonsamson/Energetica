@@ -35,7 +35,7 @@ def add_player_to_data(player: Player) -> None:
     player.capacities.update(player, None)
 
 
-def reduce_resolution(array, new_values) -> None:
+def reduce_resolution(array: list, new_values: np.ndarray) -> None:
     """Reduce resolution of current array x6, x36, x216 and x1296."""
     array[0] = array[0][len(new_values) :]
     array[0].extend(new_values)
@@ -49,7 +49,7 @@ def reduce_resolution(array, new_values) -> None:
         array[4].append(np.mean(array[3][-6:]))
 
 
-def save_past_data():
+def save_past_data() -> None:
     """Save the past production data to files every 216 ticks AND remove network data older than 24h."""
     # save climate data
     with open("instance/data/servers/climate_data.pck", "rb") as file:

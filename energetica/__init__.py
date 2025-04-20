@@ -21,6 +21,7 @@ import uuid
 from datetime import datetime
 from functools import partial
 from pathlib import Path
+from typing import Any
 
 from flask import Flask
 from flask_login import LoginManager
@@ -43,7 +44,9 @@ globals.engine = engine
 from energetica.api.app_services import register_app_services
 from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
-from energetica.api.websocket import add_sock_handlers, websocket_blueprint  # type: ignore
+from energetica.api.websocket import add_sock_handlers  # type: ignore
+
+# from energetica.api.websocket import websocket_blueprint
 from energetica.auth import auth
 from energetica.database.player import Player
 from energetica.init_test_players import init_test_players
@@ -96,7 +99,7 @@ def create_app(
     rm_instance: bool = False,
     load_checkpoint: bool = False,
     random_seed: int = 42,
-    simulate_file=None,
+    simulate_file: Any | None = None,
     simulate_stop_on_mismatch: bool = False,
     simulate_stop_on_server_error: bool = False,
     simulate_stop_on_assertion_error: bool = False,
@@ -196,7 +199,7 @@ def create_app(
     app.config["engine"] = engine
 
     @app.context_processor
-    def inject_global_context():
+    def inject_global_context() -> Any:
         return {"app_version": __version__, "app_release_date": __release_date__}
 
     # initialize socketio :
@@ -224,7 +227,7 @@ def create_app(
     app.register_blueprint(changelog, url_prefix="/")
     app.register_blueprint(auth, url_prefix="/")
     app.register_blueprint(http, url_prefix="/api/")
-    app.register_blueprint(websocket_blueprint, url_prefix="/api/")
+    # app.register_blueprint(websocket_blueprint, url_prefix="/api/")
 
     # initialize login manager
     login_manager = LoginManager()
@@ -283,7 +286,7 @@ def create_app(
         )
         if not simulate_file:
 
-            def job_listener(event):
+            def job_listener(event: Any) -> None:
                 if event.job_id != "replay" or not event.retval:
                     return
                 add_ticks_clock()
@@ -304,4 +307,5 @@ def create_app(
         engine.log("running init_test_players")
         init_test_players()
 
+    return socketio, app
     return socketio, app

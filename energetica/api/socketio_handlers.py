@@ -2,13 +2,14 @@
 
 from flask import request
 from flask_login import current_user
+from socketio import SocketIO
 
 
-def add_handlers(socketio):
+def add_handlers(socketio: SocketIO) -> None:
     """Handle connection and disconnection of clients."""
 
     @socketio.on("connect")
-    def handle_connect():
+    def handle_connect() -> None:
         """Handle a new client connection to the Socket.IO server."""
         if current_user.is_anonymous:
             return
@@ -16,7 +17,7 @@ def add_handlers(socketio):
         current_user.socketio_clients.append(request.sid)  # type: ignore[attr-defined]
 
     @socketio.on("disconnect")
-    def handle_disconnect():
+    def handle_disconnect() -> None:
         """Remove client's sid from current user's list if not anonymous."""
         if current_user.is_anonymous:
             return
