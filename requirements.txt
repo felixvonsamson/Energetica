@@ -3,7 +3,6 @@ scipy
 flask>=2.0.0,<3.0.0
 flask-socketio
 flask-sock
-flask-SQLAlchemy
 flask-login
 flask-apscheduler
 flask-httpauth
@@ -14,6 +13,5 @@ requests
 pandas
 pywebpush
 Werkzeug>=3.0.3
-sqlalchemy>=2.0.0
 noise
 pytest
