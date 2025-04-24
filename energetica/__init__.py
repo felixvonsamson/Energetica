@@ -23,17 +23,12 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-from flask import Flask
-from flask_login import LoginManager
-from gevent import monkey
-
-monkey.patch_all(thread=True, time=True)
-
+import socketio
 from apscheduler.events import EVENT_JOB_EXECUTED
 from ecdsa import NIST256p, SigningKey
+from flask import Flask
 from flask_apscheduler import APScheduler
-from flask_sock import Sock
-from flask_socketio import SocketIO
+from flask_login import LoginManager
 
 from energetica import globals
 from energetica.game_engine import GameEngine
@@ -108,7 +103,7 @@ def create_app(
     simulate_till: int | None = None,
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
-) -> tuple[SocketIO, Flask]:
+) -> tuple[socketio.ASGIApp, Flask]:
     """Set up the app and the game engine."""
     if simulate_checkpoint_ticks is None:
         simulate_checkpoint_ticks = []
@@ -118,7 +113,7 @@ def create_app(
         lock.bind("\0energetica")
 
     # Delete last checkpoint
-    if rm_instance or simulate_file:
+    if rm_instance or simulate_file or True:  # FIXME
         if os.path.exists("instance/"):
             shutil.rmtree("instance")
             print("instance folder deleted.")
@@ -203,18 +198,11 @@ def create_app(
         return {"app_version": __version__, "app_release_date": __release_date__}
 
     # initialize socketio :
-    socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
-    engine.socketio = socketio
+    # sio_app = None
+    import socketio
 
-    if not skip_adding_handlers:
-        add_handlers(socketio=socketio)
-
-    # initialize sock for WebSockets:
-    sock = Sock(app)
-    engine.sock = sock
-
-    if not skip_adding_handlers:
-        add_sock_handlers(sock=sock, engine=engine)
+    sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+    engine.socketio = sio
 
     register_app_services(app)
 
@@ -233,6 +221,9 @@ def create_app(
     login_manager = LoginManager()
     login_manager.login_view = "auth.login"
     login_manager.init_app(app)
+
+    if not skip_adding_handlers:
+        add_handlers(sio, app)
 
     @login_manager.user_loader
     def load_user(id: str) -> Player | None:  # pylint: disable=redefined-builtin
@@ -302,9 +293,9 @@ def create_app(
     scheduler.start()
     atexit.register(scheduler.shutdown)
 
-    if run_init_test_players:
+    if run_init_test_players or True:  # FIXME
         # Temporary automated player creation for testing
         engine.log("running init_test_players")
         init_test_players()
 
-    return socketio, app
+    return sio, app

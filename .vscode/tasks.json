@@ -38,6 +38,18 @@
 			}
 		},
 		{
+			"label": "fastapi dev",
+			"type": "shell",
+			"command": "fastapi dev main.py",
+			"presentation": {
+				"clear": true,
+				"focus": true
+			},
+			"group": {
+				"kind": "build"
+			}
+		},
+		{
 			"label": "pytest",
 			"type": "shell",
 			"command": "pytest",

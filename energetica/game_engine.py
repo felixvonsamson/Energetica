@@ -15,8 +15,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
+import socketio
 from flask_sock import Sock
-from flask_socketio import SocketIO
 from gevent.lock import RLock
 
 from energetica.config.assets import config, const_config
@@ -36,7 +36,7 @@ class GameEngine(object):
         Path("instance").mkdir(exist_ok=True)
         self.config = config
         self.const_config = const_config
-        self.socketio: SocketIO = None  # type: ignore[assignment]
+        self.socketio: socketio.AsyncServer = None  # type: ignore[assignment]
         self.websocket_dict: dict = {}
         self.console_logger = logging.getLogger("console")  # logs events in the terminal
         self.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
@@ -276,4 +276,5 @@ class Confirm(Exception):
 
     def __init__(self, **kwargs: Any) -> None:
         self.__dict__.update(kwargs)
+        Exception.__init__(self, "Please confirm this action.")
         Exception.__init__(self, "Please confirm this action.")

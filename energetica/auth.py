@@ -4,7 +4,8 @@ import re
 from datetime import datetime
 from typing import Any
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
+from flask.sessions import SecureCookieSessionInterface
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -13,6 +14,42 @@ from energetica.database.player import Player
 from energetica.globals import engine
 
 auth = Blueprint("auth", __name__)
+
+
+class SimpleSecureCookieSessionInterface(SecureCookieSessionInterface):
+    """A subclass to expose the session deserialization."""
+
+    def get_signing_serializer(self, app):
+        return super().get_signing_serializer(app)
+
+
+def load_user_from_socketio_environ(app, environ):
+    """Extracts Flask session from Socket.IO environ and loads the user."""
+    cookie = environ.get("HTTP_COOKIE")
+    if not cookie:
+        return None
+
+    # Parse cookies
+    from werkzeug.http import parse_cookie
+
+    cookies = parse_cookie(cookie)
+    session_cookie = cookies.get(app.config["SESSION_COOKIE_NAME"])
+    if not session_cookie:
+        return None
+
+    s = SimpleSecureCookieSessionInterface().get_signing_serializer(app)
+    if not s:
+        return None
+
+    try:
+        data = s.loads(session_cookie)
+        user_id = data.get("_user_id")
+        if user_id is not None:
+            return Player.get(int(user_id))
+    except Exception as e:
+        print("Failed to load session from cookie:", e)
+
+    return None
 
 
 # logic for the login :

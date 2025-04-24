@@ -58,6 +58,7 @@
         "APPROXIMATIVE",
         "apscheduler",
         "arccos",
+        "ASGI",
         "backref",
         "Baloo",
         "Banqiao",
@@ -82,7 +83,7 @@
         "Energetica",
         "engineio",
         "ensp",
-        "eolt", // End of Life Time
+        "eolt",
         "eventlet",
         "filterwarnings",
         "Fukushima",
