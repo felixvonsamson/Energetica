@@ -6,6 +6,7 @@
 __version__ = "0.11.1-b"
 __release_date__ = "03/02/2025"
 
+import asyncio
 import atexit
 import base64
 import glob
@@ -34,6 +35,7 @@ from energetica import globals
 from energetica.game_engine import GameEngine
 
 engine = GameEngine()
+MAIN_EVENT_LOOP = asyncio.get_event_loop()
 globals.engine = engine
 
 from energetica.api.app_services import register_app_services
@@ -298,4 +300,5 @@ def create_app(
         engine.log("running init_test_players")
         init_test_players()
 
+    return sio, app
     return sio, app

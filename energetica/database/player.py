@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -13,6 +14,7 @@ from flask import current_app
 from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
+from energetica import MAIN_EVENT_LOOP
 from energetica.config.achievements import achievements
 from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
@@ -330,7 +332,7 @@ class Player(DBModel, UserMixin):
     def emit(self, event: str, *args: Any) -> None:
         """Emit a socketio event to the player's clients."""
         for sid in self.socketio_clients:
-            engine.socketio.emit(event, *args, to=sid)
+            asyncio.run_coroutine_threadsafe(engine.socketio.emit(event, *args, to=sid), MAIN_EVENT_LOOP)
 
     def send_new_data(self, new_values: Any) -> None:
         """Send the new data to the player's clients."""
