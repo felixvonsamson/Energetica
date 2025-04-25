@@ -301,4 +301,3 @@ def create_app(
         init_test_players()
 
     return sio, app
-    return sio, app

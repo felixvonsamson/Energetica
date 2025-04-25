@@ -17,7 +17,7 @@ def read_root():
 
 
 for router in all_routers:
-    app.include_router(router)
+    app.include_router(router, prefix="/api/v1", tags=["api"])
 
 ssl_args = {"keyfile": None, "certfile": None}
 ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
