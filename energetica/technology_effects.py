@@ -7,9 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from energetica.config.assets import (
-    warehouse_capacity_for_level,
-)
+from energetica.config.assets import warehouse_capacity_for_level
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_project import OngoingProject
 from energetica.enums import (
@@ -40,6 +38,9 @@ if TYPE_CHECKING:
 
 def special_multiplier(pf: float, lvl: int) -> float:
     """Return special values to reduce exponential growth of the power production."""
+    # TODO(Felix): This function is quite confusing and should be reconsidered with eventual changes to the game values.
+    if pf < 1:
+        return pf**lvl
     return (0.5 + 0.5 * pf) ** lvl + np.log(pf / (0.5 + 0.5 * pf)) * lvl
 
 
