@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
 
 from energetica import create_app
+from energetica.routes import all_routers
 
 app = FastAPI()
 
@@ -14,6 +15,9 @@ app = FastAPI()
 def read_root():
     return {"Hello": "World"}
 
+
+for router in all_routers:
+    app.include_router(router)
 
 ssl_args = {"keyfile": None, "certfile": None}
 ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
