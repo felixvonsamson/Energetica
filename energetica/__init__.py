@@ -44,12 +44,10 @@ globals.engine = engine
 from energetica.api.app_services import register_app_services
 from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
-
-# from energetica.api.websocket import websocket_blueprint
 from energetica.auth import auth
 from energetica.database.player import Player
 from energetica.init_test_players import init_test_players
-from energetica.routes import all_routers
+from energetica.routers import all_routers
 from energetica.simulate import simulate
 from energetica.utils.tick_execution import state_update
 from energetica.views import changelog, landing, location_choice_views, overviews, views, wiki
@@ -94,6 +92,7 @@ def get_or_create_vapid_keys() -> tuple[str, str]:
 
 
 def create_app(
+    *,
     port: int = 5001,
     clock_time: int = 30,
     in_game_seconds_per_tick: int = 240,
@@ -306,11 +305,6 @@ def create_app(
         init_test_players()
 
     return sio, flask_app
-
-
-@app.get("/fastapi")
-def read_root():
-    return {"Hello": "World"}
 
 
 for router in all_routers:

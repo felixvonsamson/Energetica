@@ -26,14 +26,7 @@ from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.enums import (
-    ExtractionFacilityType,
-    Fuel,
-    PowerFacilityType,
-    Renewable,
-    StorageFacilityType,
-    str_to_project_type,
-)
+from energetica.enums import ExtractionFacilityType, Fuel, PowerFacilityType, StorageFacilityType, str_to_project_type
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -108,7 +101,7 @@ def restrict_access_during_simulation() -> Any:
 @http.before_request
 @login_required
 def check_if_logged_in() -> None:
-    """Function that is called before every request and ensures that the player is logged in. (FLASK)"""
+    """Function that is called before every request and ensures that the player is logged in (FLASK)."""
     g.player = current_user._get_current_object()  # pylint: disable=protected-access
 
 
