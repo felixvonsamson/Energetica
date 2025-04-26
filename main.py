@@ -1,32 +1,6 @@
 #!/usr/bin/env -S python3 -u
 """Launch the game."""
 
-import socketio
-from fastapi import FastAPI
-from fastapi.middleware.wsgi import WSGIMiddleware
-
-from energetica import create_app
-from energetica.routes import all_routers
-
-app = FastAPI()
-
-
-@app.get("/fastapi")
-def read_root():
-    return {"Hello": "World"}
-
-
-for router in all_routers:
-    app.include_router(router, prefix="/api/v1", tags=["api"])
-
-ssl_args = {"keyfile": None, "certfile": None}
-ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
-
-sio, flask_app = create_app()
-
-print("Mounting Flask app to FastAPI")
-app.mount("/socket.io", socketio.ASGIApp(sio))
-app.mount("/", WSGIMiddleware(flask_app))
 
 # if __name__ == "__main__":
 #     parser = argparse.ArgumentParser()

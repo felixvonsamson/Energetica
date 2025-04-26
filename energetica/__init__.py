@@ -27,6 +27,8 @@ from typing import Any
 import socketio
 from apscheduler.events import EVENT_JOB_EXECUTED
 from ecdsa import NIST256p, SigningKey
+from fastapi import FastAPI
+from fastapi.middleware.wsgi import WSGIMiddleware
 from flask import Flask
 from flask_apscheduler import APScheduler
 from flask_login import LoginManager
@@ -35,21 +37,24 @@ from energetica import globals
 from energetica.game_engine import GameEngine
 
 engine = GameEngine()
+
 MAIN_EVENT_LOOP = asyncio.get_event_loop()
 globals.engine = engine
 
 from energetica.api.app_services import register_app_services
 from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
-from energetica.api.websocket import add_sock_handlers  # type: ignore
 
 # from energetica.api.websocket import websocket_blueprint
 from energetica.auth import auth
 from energetica.database.player import Player
 from energetica.init_test_players import init_test_players
+from energetica.routes import all_routers
 from energetica.simulate import simulate
 from energetica.utils.tick_execution import state_update
 from energetica.views import changelog, landing, location_choice_views, overviews, views, wiki
+
+app = FastAPI()
 
 
 def get_or_create_flask_secret_key() -> str:
@@ -189,13 +194,13 @@ def create_app(
     actions_to_simulate = actions[start_action_id : last_action_id + 1]
 
     # creates the app :
-    app = Flask(__name__)
-    app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
-    app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
-    app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
-    app.config["engine"] = engine
+    flask_app = Flask(__name__)
+    flask_app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
+    flask_app.config["VAPID_PUBLIC_KEY"], flask_app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
+    flask_app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
+    flask_app.config["engine"] = engine
 
-    @app.context_processor
+    @flask_app.context_processor
     def inject_global_context() -> Any:
         return {"app_version": __version__, "app_release_date": __release_date__}
 
@@ -206,26 +211,26 @@ def create_app(
     sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
     engine.socketio = sio
 
-    register_app_services(app)
+    register_app_services(flask_app)
 
     # add blueprints (website repositories) :
-    app.register_blueprint(location_choice_views, url_prefix="/")
-    app.register_blueprint(landing, url_prefix="/")
-    app.register_blueprint(views, url_prefix="/")
-    app.register_blueprint(overviews, url_prefix="/production_overview")
-    app.register_blueprint(wiki, url_prefix="/wiki")
-    app.register_blueprint(changelog, url_prefix="/")
-    app.register_blueprint(auth, url_prefix="/")
-    app.register_blueprint(http, url_prefix="/api/")
+    flask_app.register_blueprint(location_choice_views, url_prefix="/")
+    flask_app.register_blueprint(landing, url_prefix="/")
+    flask_app.register_blueprint(views, url_prefix="/")
+    flask_app.register_blueprint(overviews, url_prefix="/production_overview")
+    flask_app.register_blueprint(wiki, url_prefix="/wiki")
+    flask_app.register_blueprint(changelog, url_prefix="/")
+    flask_app.register_blueprint(auth, url_prefix="/")
+    flask_app.register_blueprint(http, url_prefix="/api/")
     # app.register_blueprint(websocket_blueprint, url_prefix="/api/")
 
     # initialize login manager
     login_manager = LoginManager()
     login_manager.login_view = "auth.login"
-    login_manager.init_app(app)
+    login_manager.init_app(flask_app)
 
     if not skip_adding_handlers:
-        add_handlers(sio, app)
+        add_handlers(sio, flask_app)
 
     @login_manager.user_loader
     def load_user(id: str) -> Player | None:  # pylint: disable=redefined-builtin
@@ -234,7 +239,7 @@ def create_app(
     # initialize the schedulers and add the recurrent functions :
 
     scheduler = APScheduler()
-    scheduler.init_app(app)
+    scheduler.init_app(flask_app)
 
     add_ticks_clock = partial(
         scheduler.add_job,
@@ -300,4 +305,22 @@ def create_app(
         engine.log("running init_test_players")
         init_test_players()
 
-    return sio, app
+    return sio, flask_app
+
+
+@app.get("/fastapi")
+def read_root():
+    return {"Hello": "World"}
+
+
+for router in all_routers:
+    app.include_router(router, prefix="/api/v1")
+
+ssl_args = {"keyfile": None, "certfile": None}
+ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
+
+sio, flask_app = create_app()
+
+print("Mounting Flask app to FastAPI")
+app.mount("/socket.io", socketio.ASGIApp(sio))
+app.mount("/", WSGIMiddleware(flask_app))

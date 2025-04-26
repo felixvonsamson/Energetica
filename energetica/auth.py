@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 from typing import Any
 
+from fastapi import HTTPException, Request
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 from flask.sessions import SecureCookieSessionInterface
 from flask_login import current_user, login_required, login_user, logout_user
@@ -19,8 +20,23 @@ auth = Blueprint("auth", __name__)
 class SimpleSecureCookieSessionInterface(SecureCookieSessionInterface):
     """A subclass to expose the session deserialization."""
 
-    def get_signing_serializer(self, app):
-        return super().get_signing_serializer(app)
+    def get_signing_serializer(self, flask_app):
+        return super().get_signing_serializer(flask_app)
+
+
+def get_current_user(request: Request) -> Player:
+    from energetica import app
+
+    print(app)
+    print(request.headers)
+    # print(app.config["SESSION_COOKIE_NAME"])
+    # print(request.headers.get(app.config["SESSION_COOKIE_NAME"]))
+    print(request.headers.get("Cookie"))
+
+    user = load_user_from_cookie(request.headers.get("Cookie"))
+    if user is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return user
 
 
 def load_user_from_socketio_environ(app, environ):
@@ -28,16 +44,21 @@ def load_user_from_socketio_environ(app, environ):
     cookie = environ.get("HTTP_COOKIE")
     if not cookie:
         return None
+    return load_user_from_cookie(cookie)
 
-    # Parse cookies
+
+def load_user_from_cookie(cookie) -> Player | None:
+    """Extracts Flask session from cookie and loads the user."""
     from werkzeug.http import parse_cookie
 
+    from energetica import flask_app
+
     cookies = parse_cookie(cookie)
-    session_cookie = cookies.get(app.config["SESSION_COOKIE_NAME"])
+    session_cookie = cookies.get(flask_app.config["SESSION_COOKIE_NAME"])
     if not session_cookie:
         return None
 
-    s = SimpleSecureCookieSessionInterface().get_signing_serializer(app)
+    s = SimpleSecureCookieSessionInterface().get_signing_serializer(flask_app)
     if not s:
         return None
 

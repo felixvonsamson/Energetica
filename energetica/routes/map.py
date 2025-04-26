@@ -1,7 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from fastapi import APIRouter
 
-from energetica.database.map import HexTile
-from energetica.enums import Fuel, Renewable
+if TYPE_CHECKING:
+    from energetica.database.map import HexTile
+    from energetica.enums import Fuel, Renewable
 
 router = APIRouter(prefix="/map", tags=["map"])
 
