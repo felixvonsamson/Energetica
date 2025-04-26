@@ -662,13 +662,6 @@ def leave_network() -> Response | tuple:
     return redirect("/network", code=303)
 
 
-@http.route("hide_chat_disclaimer", methods=["GET"])
-def hide_chat_disclaimer() -> Response:
-    """Permanently hide the chat disclaimer."""
-    energetica.utils.chat.hide_chat_disclaimer(g.player)
-    return jsonify({"response": "success"})
-
-
 @http.route("create_chat", methods=["POST"])
 def create_chat() -> Response:
     """Create a chat with one other player."""

@@ -177,7 +177,7 @@ function hide_disclaimer() {
     /* Hide the chat disclaimer and send the "dont show again" information to the server */
     let checkbox = document.getElementById("dont_show_disclaimer");
     if (checkbox.checked) {
-        fetch("/api/hide_chat_disclaimer")
+        fetch("/api/v1/chat/hide_disclaimer", { method: "POST" })
             .catch((error) => {
                 console.error(`caught error ${error}`);
             });

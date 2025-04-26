@@ -17,7 +17,7 @@ from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.technology_effects import package_constructions_page_data
 from energetica.utils.assets import decrease_project_priority, queue_project, toggle_pause_project
-from energetica.utils.chat import add_message, create_chat, hide_chat_disclaimer
+from energetica.utils.chat import add_message, create_chat
 from energetica.utils.misc import confirm_location, package_weather_data
 from energetica.utils.network_helpers import create_network, join_network, leave_network
 
@@ -167,7 +167,7 @@ def rest_get_last_opened_chat(player: Player):
 
 def rest_get_show_chat_disclaimer(player: Player):
     """Gets the flag for if the chat disclaimer should be shown and returns it as a JSON string."""
-    response = {"type": "showChatDisclaimer", "data": player.show_disclaimer}
+    response = {"type": "showChatDisclaimer", "data": player.show_chat_disclaimer}
     return json.dumps(response)
 
 
@@ -388,7 +388,7 @@ def rest_parse_request(player: Player, ws, uuid, data):
         case "decreaseProjectPriority":
             rest_parse_request_decrease_project_priority(ws, uuid, body)
         case "dismissChatDisclaimer":
-            hide_chat_disclaimer(player)
+            pass
         case "createChat":
             buddy_id = data["buddy_id"]
             participants = {player, Player.get(buddy_id)}

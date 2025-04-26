@@ -11,6 +11,7 @@ async def get_me(user: Player = Depends(get_current_user)):
     """Get the current user's information."""
 
     return {
+        "id": user.id,
         "username": user.username,
     }
 
@@ -22,6 +23,7 @@ async def get_all_users():
     all_users = Player.all()
     return [
         {
+            "id": u.id,
             "username": u.username,
         }
         for u in all_users

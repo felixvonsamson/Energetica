@@ -13,13 +13,6 @@ if TYPE_CHECKING:
     from energetica.database.player import Player
 
 
-def hide_chat_disclaimer(player: Player) -> None:
-    """Store the player's choice to not show the chat disclaimer anymore."""
-    player.show_disclaimer = False
-    #    # message = websocket.rest_get_show_chat_disclaimer(player)
-    # websocket.rest_notify_player(player, message)
-
-
 def check_existing_chats(participants: set[Player]) -> bool:
     """Return true if a chat with exactly these participants already exists."""
     return any(chat.participants == participants for chat in Chat.all())
