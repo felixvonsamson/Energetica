@@ -162,13 +162,6 @@ def get_chat_messages() -> Response | tuple:
     return jsonify({"response": "success", "messages": packaged_messages})
 
 
-@http.route("/get_chat_list", methods=["GET"])
-def get_chat_list() -> Response:
-    """Get the list of chats for the current player."""
-    response = g.player.package_chat_list()
-    return jsonify({"response": "success"} | response)
-
-
 @http.route("/get_resource_data", methods=["GET"])
 def get_resource_data() -> Response:
     """Get production rates and quantity on sale for every resource."""

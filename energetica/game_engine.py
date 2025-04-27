@@ -37,7 +37,6 @@ class GameEngine(object):
         self.config = config
         self.const_config = const_config
         self.socketio: socketio.AsyncServer = None  # type: ignore[assignment]
-        self.websocket_dict: dict = {}
         self.console_logger = logging.getLogger("console")  # logs events in the terminal
         self.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
         self.serve_local = True
@@ -229,6 +228,10 @@ class GameEngine(object):
             data = pickle.load(file)
             for member, member_data in data.items():
                 setattr(self, member, member_data)
+
+    def first_tick_time_epoch_ms(self) -> int:
+        """Get the first tick time in epoch milliseconds."""
+        return int(self.first_tick_time.timestamp() * 1000)
 
     def save_checkpoint(self, destination_filename: str = "checkpoints/last_checkpoint.tar.gz") -> None:
         self.save()

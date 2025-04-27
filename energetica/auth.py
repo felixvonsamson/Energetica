@@ -27,12 +27,6 @@ class SimpleSecureCookieSessionInterface(SecureCookieSessionInterface):
 def get_current_user(request: Request) -> Player:
     from energetica import app
 
-    print(app)
-    print(request.headers)
-    # print(app.config["SESSION_COOKIE_NAME"])
-    # print(request.headers.get(app.config["SESSION_COOKIE_NAME"]))
-    print(request.headers.get("Cookie"))
-
     user = load_user_from_cookie(request.headers.get("Cookie"))
     if user is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -177,8 +171,6 @@ def sign_up() -> Any:
             }
             engine.log_action(log_entry)
             engine.log(f"{username} created an account")
-            # websocket.rest_notify_scoreboard()
-            # websocket.rest_notify_new_player()
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", engine=engine, user=current_user)

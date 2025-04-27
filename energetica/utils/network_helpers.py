@@ -19,8 +19,6 @@ def join_network(player: Player, network: Network | None) -> Network:
     network.members.append(player)
     network.capacities.update_network(network)
     engine.log(f"{player.username} joined the network {network.name}")
-    # import energetica.api.websocket as websocket
-    # websocket.rest_notify_network_change()
     return network
 
 
@@ -37,8 +35,6 @@ def create_network(player: Player, name: str) -> Network:
     new_network = Network(name=name, members=[player])
     player.network = new_network
     engine.log(f"{player.username} created the network {name}")
-    # import energetica.api.websocket as websocket
-    # websocket.rest_notify_network_change()
     return new_network
 
 
@@ -56,5 +52,3 @@ def leave_network(player: Player) -> None:
     if not network.members:
         engine.log(f"The network {network.name} has been deleted because it was empty")
         network.delete()
-    # import energetica.api.websocket as websocket
-    # websocket.rest_notify_network_change()

@@ -221,7 +221,6 @@ def create_app(
     flask_app.register_blueprint(changelog, url_prefix="/")
     flask_app.register_blueprint(auth, url_prefix="/")
     flask_app.register_blueprint(http, url_prefix="/api/")
-    # app.register_blueprint(websocket_blueprint, url_prefix="/api/")
 
     # initialize login manager
     login_manager = LoginManager()

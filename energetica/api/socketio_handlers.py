@@ -10,14 +10,12 @@ def add_handlers(sio, flask_app):
             print("Anonymous user tried to connect")
             return False  # Reject connection
 
-        print(f"{user.username} connected with SID {sid}")
         user.socketio_clients.append(sid)
 
     @sio.on("disconnect")
     def handle_disconnect(sid):
         for user in Player.all():
             if sid in user.socketio_clients:
-                print(f"{user.username} disconnected with SID {sid}")
                 user.socketio_clients.remove(sid)
                 return
                 return
