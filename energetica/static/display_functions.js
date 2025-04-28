@@ -119,6 +119,9 @@ function format_temperature(temperature, decimals = 2) {
 // Duration :
 function format_duration(ticks) {
     function format_minutes(total_minutes) {
+        if (total_minutes < 1) {
+            return `${Math.floor(total_minutes * 60)}s`;
+        }
         const days = Math.floor(total_minutes / 1440);
         total_minutes -= days * 1440;
         const hours = Math.floor(total_minutes / 60);
