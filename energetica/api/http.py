@@ -21,7 +21,6 @@ import energetica.utils.resource_market
 from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
-from energetica.database.messages import Chat
 from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
@@ -651,19 +650,6 @@ def create_group_chat() -> Response:
     chat_title = request_data["chat_title"]
     group_members = {g.player, *(map(Player.getitem, map(int, request_data["group_members"])))}
     energetica.utils.chat.create_chat(g.player, chat_title, group_members)
-    return jsonify({"response": "success"})
-
-
-@http.route("new_message", methods=["POST"])
-def new_message() -> Response | tuple:
-    """Send a message."""
-    request_data = request.get_json()
-    message = request_data["new_message"]
-    chat_id = int(request_data["chat_id"])
-    chat = Chat.get(chat_id)
-    if chat is None:
-        return jsonify({"response": "NoChatID"}), 403  # TODO(mglst) here we should throw a GameError
-    energetica.utils.chat.add_message(g.player, message, chat)
     return jsonify({"response": "success"})
 
 

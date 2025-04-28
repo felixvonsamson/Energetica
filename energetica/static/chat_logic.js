@@ -261,14 +261,14 @@ function newMessage() {
     if (!current_chat_id) {
         addError("No chat has been selected");
     }
-    send_json("/api/new_message", {
+    send_json(`/api/v1/chat/${current_chat_id}/new_message`, {
         new_message: message_field.value,
-        chat_id: current_chat_id,
     }).then((response) => {
         response.json().then((raw_data) => {
-            let response = raw_data["response"];
-            if (response == "success") {
+            if (response.status === 200) {
                 message_field.value = "";
+            } else if (response.status === 422) {
+                addError("Message cannot be empty or too long");
             }
         });
     })
@@ -319,7 +319,7 @@ function openChat(chatID) {
                             html += `<div class="message ${alignment}">
                         <div class="message_infos">
                             <span>${username}</span>
-                            <span class="txt_pine">${formatDateString(messages[i].time)}</span></div>
+                            <span class="txt_pine">${formatDateString(messages[i].timestamp)}</span></div>
                         <div class="message_text bone ${alignment}">${escapeHTML(messages[i].text)}</div>
                     </div>`;
                         }

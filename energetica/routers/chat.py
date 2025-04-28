@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 
+from energetica import utils
 from energetica.auth import get_current_user
-from energetica.database.messages import Chat, Message
+from energetica.database.messages import Chat
 from energetica.database.player import Player
+from energetica.schemas.chat import ChatListResponse, ChatOut, MessageListResponse, MessageOut, NewMessageRequest
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -17,22 +17,6 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 async def hide_disclaimer(user: Annotated[Player, Depends(get_current_user)]):  #  noqa: ANN201
     """Do not show the chat disclaimer again."""
     user.show_chat_disclaimer = False
-
-
-class ChatOut(BaseModel):
-    id: int
-    display_name: str
-    initials: list[str]
-    is_group: bool
-    unread_messages_count: int
-
-
-class ChatListResponse(BaseModel):
-    """Response model for the chat list."""
-
-    chats: list[ChatOut]
-    last_opened_chat_id: int | None
-    unread_chat_count: int
 
 
 @router.get("/chat_list")
@@ -79,24 +63,6 @@ async def get_chat_list(user: Annotated[Player, Depends(get_current_user)]) -> C
     )
 
 
-class MessageOut(BaseModel):
-    id: int
-    text: str
-    player_id: int
-    timestamp: datetime
-
-    @classmethod
-    def from_message(cls, message: Message) -> MessageOut:
-        """Create a MessageOut instance from a Message."""
-        return MessageOut(id=message.id, text=message.text, player_id=message.player.id, timestamp=message.timestamp)
-
-
-class MessageListResponse(BaseModel):
-    """Response model for the message list."""
-
-    messages: list[MessageOut]
-
-
 @router.get("/{chat_id}/messages")
 async def get_chat_messages(
     user: Annotated[Player, Depends(get_current_user)],
@@ -109,3 +75,18 @@ async def get_chat_messages(
     if user not in chat.participants:
         raise HTTPException(status_code=403, detail="You are not a participant in this chat")
     return MessageListResponse(messages=[MessageOut.from_message(message) for message in chat.messages])
+
+
+@router.post("/{chat_id}/new_message")
+async def new_message(
+    user: Annotated[Player, Depends(get_current_user)],
+    chat_id: int,
+    request: NewMessageRequest,
+) -> None:
+    """Send a message."""
+    chat = Chat.get(chat_id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    if user not in chat.participants:
+        raise HTTPException(status_code=403, detail="You are not a participant in this chat")
+    utils.chat.add_message(user, request.new_message, chat)
