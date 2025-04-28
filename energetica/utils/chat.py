@@ -56,6 +56,7 @@ def add_message(player: Player, message_text: str, chat: Chat) -> None:
     if len(message_text) > 500:
         raise GameError("messageTooLong", message=message_text)
     new_message = Message(
+        id=len(chat.messages),
         text=message_text,
         player=player,
         chat=chat,

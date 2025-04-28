@@ -1,17 +1,20 @@
+from __future__ import annotations
+
+from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from energetica.auth import get_current_user
-from energetica.database.messages import Chat
+from energetica.database.messages import Chat, Message
 from energetica.database.player import Player
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
 @router.post("/hide_disclaimer", status_code=204)
-async def hide_disclaimer(user: Annotated[Player, Depends(get_current_user)]) -> None:
+async def hide_disclaimer(user: Annotated[Player, Depends(get_current_user)]):  #  noqa: ANN201
     """Do not show the chat disclaimer again."""
     user.show_chat_disclaimer = False
 
@@ -74,3 +77,35 @@ async def get_chat_list(user: Annotated[Player, Depends(get_current_user)]) -> C
         last_opened_chat_id=user.last_opened_chat_id,
         unread_chat_count=user.unread_chat_count(),
     )
+
+
+class MessageOut(BaseModel):
+    id: int
+    text: str
+    player_id: int
+    timestamp: datetime
+
+    @classmethod
+    def from_message(cls, message: Message) -> MessageOut:
+        """Create a MessageOut instance from a Message."""
+        return MessageOut(id=message.id, text=message.text, player_id=message.player.id, timestamp=message.timestamp)
+
+
+class MessageListResponse(BaseModel):
+    """Response model for the message list."""
+
+    messages: list[MessageOut]
+
+
+@router.get("/{chat_id}/messages")
+async def get_chat_messages(
+    user: Annotated[Player, Depends(get_current_user)],
+    chat_id: int,
+) -> MessageListResponse:
+    """Get the messages for a chat."""
+    chat = Chat.get(chat_id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    if user not in chat.participants:
+        raise HTTPException(status_code=403, detail="You are not a participant in this chat")
+    return MessageListResponse(messages=[MessageOut.from_message(message) for message in chat.messages])

@@ -2,6 +2,10 @@
 line-length = 120 # Let's keep this at 120 for now, there are some files that need it
 target-version = "py312"
 select = [
+    "D200",
+    "D201",
+    "D202",
+    "D209",
     "D400", 
     "D415", 
     "COM812", 

@@ -22,18 +22,12 @@ load_players().then((players_) => {
 });
 
 function refresh_chats() {
-    console.log("refresh_chats");
     /* Retrieves chat list and displays it. Displays unread badges and opens last opened chat. */
     load_chats().then((chat_data) => {
         let chats = chat_data.chats;
-        console.log("refreshing chats");
-        console.log(chat_data);
-        console.log(chats);
         let chat_list_container = document.getElementById("chat_list_container");
         chat_list_container.innerHTML = "";
-        console.log("chat_list_container");
         for (let chat of chats) {
-            console.log(chat);
             badge = "";
             if (chat.unread_messages_count > 0) {
                 badge = `<span id="unread_badge_chat" class="unread_badge messages padding-small pine">${chat.unread_messages_count}</span>`;
@@ -57,9 +51,6 @@ function refresh_chats() {
                 </div>`;
         }
         if (chat_data.last_opened_chat_id == null) {
-            console.log("No chat opened");
-            console.log(chats);
-            console.log(chats[0]);
             chat_data.last_opened_chat_id = chats[0].id;
         }
         openChat(chat_data.last_opened_chat_id);
@@ -299,11 +290,7 @@ function openChat(chatID) {
     let html = ``;
     load_chats().then((chat_data) => {
         let chats = chat_data.chats;
-        console.log(chats);
-        console.log(chatID);
         const chat = chats.find(chat => chat.id == chatID);
-        console.log(chat);
-        console.log(chat.display_name);
         if (chat.unread_messages_count > 0) {
             chat.unread_messages_count = 0;
             chat_data.unread_chats -= 1;
@@ -312,10 +299,9 @@ function openChat(chatID) {
         chat_data.last_opened_chat_id = chatID;
         sessionStorage.setItem("chats_data", JSON.stringify(chat_data));
         show_unread_badges();
-        fetch(`/api/get_chat_messages?chatID=${chatID}`)
+        fetch(`/api/v1/chat/${chatID}/messages`)
             .then((response) => response.json())
             .then((data) => {
-                console.log("/api/get_chat_messages?chatID=" + chatID);
                 load_players().then((players) => {
                     load_player_id().then((player_id) => {
                         let messages = data.messages;

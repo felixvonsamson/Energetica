@@ -148,20 +148,6 @@ def get_networks() -> Response:
     return jsonify(networks)
 
 
-@http.route("/get_chat_messages", methods=["GET"])
-def get_chat_messages() -> Response | tuple:
-    """Get the last 20 messages from a chat and returns it as a list."""
-    chat_id = request.args.get("chatID")
-    if chat_id is None:
-        return jsonify({"response": "noChatID"}), 400
-    chat = Chat.get(int(chat_id))
-    if chat is None:
-        return jsonify({"response": "chatNotFound"}), 404
-    packaged_messages = g.player.package_chat_messages(chat)
-    g.player.mark_chat_as_read(chat)
-    return jsonify({"response": "success", "messages": packaged_messages})
-
-
 @http.route("/get_resource_data", methods=["GET"])
 def get_resource_data() -> Response:
     """Get production rates and quantity on sale for every resource."""

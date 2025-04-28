@@ -239,7 +239,7 @@ class Player(DBModel, UserMixin):
         """Package the last 20 messages of a chat."""
         messages_list = [
             {
-                "time": message.time.isoformat(),
+                "time": message.timestamp.isoformat(),
                 "player_id": message.player.id,
                 "text": message.text,
             }
