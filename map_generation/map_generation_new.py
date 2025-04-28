@@ -1,11 +1,12 @@
 """TODO"""
 
 import math
-from noise import pnoise2
+
 import numpy as np
+from noise import pnoise2
 
 # Parameters
-map_radius = 30
+map_radius = 100
 noise_scale = 10.0  # Bigger = larger features
 noise_seed = 42
 n_tiles = map_radius * (map_radius + 1) * 3 + 1
@@ -30,9 +31,7 @@ class Tile:
         """Return the neighbors of the tile."""
         neighbors = []
         for direction in directions:
-            neighbor_id = coordinates_to_id(
-                self.coordinates[0] + direction[0], self.coordinates[1] + direction[1]
-            )
+            neighbor_id = coordinates_to_id(self.coordinates[0] + direction[0], self.coordinates[1] + direction[1])
             if neighbor_id < n_tiles:
                 neighbors.append(map[neighbor_id])
         return neighbors
@@ -97,15 +96,11 @@ def generate_altitude(x: float, y: float) -> float:
     """Generate the altitude of the tiles based on 2D perlin noise."""
     altitude_min = -5000
     altitude_max = 5000
-    ocean_noise = pnoise2(
-        0.3 * x / noise_scale, 0.3 * y / noise_scale, octaves=2, base=noise_seed
-    )
+    ocean_noise = pnoise2(0.3 * x / noise_scale, 0.3 * y / noise_scale, octaves=2, base=noise_seed)
     if ocean_noise < -0.25:
         return np.interp(ocean_noise, [-1, -0.25], [altitude_min, 0])
     mult = min(1, (ocean_noise + 0.25) * 2)
-    terrain_noise = pnoise2(
-        x / noise_scale, y / noise_scale, octaves=6, base=noise_seed
-    )
+    terrain_noise = pnoise2(x / noise_scale, y / noise_scale, octaves=6, base=noise_seed)
     # altitude = np.clip(np.interp(noise_val, [-1, 1], [2*altitude_min, 2*altitude_max]), altitude_min, altitude_max)
     altitude = abs(terrain_noise) * mult * 2 * altitude_max
     return min(
@@ -177,9 +172,7 @@ def fix_basins(map: list[Tile]):
             assert len(valid_directions) > 0, "no valid directions"
             tile_to_dig = None
             for vd in valid_directions:
-                neighbor_tile_id = coordinates_to_id(
-                    current.coordinates[0] + vd[0], current.coordinates[1] + vd[1]
-                )
+                neighbor_tile_id = coordinates_to_id(current.coordinates[0] + vd[0], current.coordinates[1] + vd[1])
                 if neighbor_tile_id < n_tiles:
                     if (
                         tile_to_dig is None
@@ -220,3 +213,77 @@ def generate_rivers(map: list[Tile]):
     max_hydro = max([tile.hydro for tile in map])
     for tile in map:
         tile.hydro = math.sqrt(tile.hydro / max_hydro)
+
+
+def generate_solar(map: list[Tile]):
+    """Generate solar potential based latitude and altitude."""
+    # TODO: This should be derivate from the games weather model.
+    for tile in map:
+        if tile.altitude <= 0 or tile.hydro > 0:
+            tile.solar = 0
+        else:
+            tile.solar = min(
+                1,
+                math.cos((tile.coordinates[1] + map_radius) / (2 * map_radius) * 0.48 * math.pi)
+                * (0.5 + 0.8 * (tile.altitude / 5000)),
+            )
+
+
+def generate_wind(map: list[Tile]):
+    """Generate wind potential."""
+    for tile in map:
+        tile.wind = 0
+    for tile in map:
+        if tile.altitude <= 750:
+            tile.wind += 0.35
+        elif tile.altitude <= 0:
+            tile.wind += 0.1
+        else:
+            if tile.altitude > 2000:
+                tile.wind += 0.1
+            neighbors = tile.get_neighbors(map)
+            if all([tile.altitude > neighbor.altitude for neighbor in neighbors]):
+                tile.wind += 0.15
+
+        x, y = tile.square_coordinates()
+        tile.wind += abs(pnoise2(2 * x / noise_scale, 2 * y / noise_scale, octaves=3, base=noise_seed + 1))
+        tile.wind = min(1, tile.wind)
+        if tile.hydro > 0:
+            tile.wind = 0
+
+
+def generate_coal(map: list[Tile]):
+    """Generate coal reserves."""
+    for tile in map:
+        tile.coal = 0
+    for tile in map:
+        x, y = tile.square_coordinates()
+        coal_noise = (pnoise2(0.5 * x / noise_scale, 0.5 * y / noise_scale, octaves=1, base=noise_seed + 2) * 1.5) ** 2
+        coal_noise += abs(pnoise2(3 * x / noise_scale, 3 * y / noise_scale, octaves=4, base=noise_seed + 3)) * 0.5
+        tile.coal = min(1, coal_noise)
+        if tile.hydro > 0 or tile.altitude <= 0 or tile.altitude > 2000:
+            tile.coal = 0
+
+
+def generate_gas(map: list[Tile]):
+    """Generate gas reserves."""
+    for tile in map:
+        tile.gas = 0
+    for tile in map:
+        x, y = tile.square_coordinates()
+        gas_noise = (pnoise2(0.5 * x / noise_scale, y / noise_scale, octaves=2, base=noise_seed + 4) * 2) ** 2
+        tile.gas = min(1, gas_noise)
+        if tile.hydro > 0 or tile.altitude <= 0 or tile.altitude > 2000:
+            tile.gas = 0
+
+
+def generate_uranium(map: list[Tile]):
+    """Generate uranium reserves."""
+    for tile in map:
+        tile.uranium = 0
+    for tile in map:
+        x, y = tile.square_coordinates()
+        uranium_noise = (abs(pnoise2(x / noise_scale, y / noise_scale, octaves=5, base=noise_seed + 5)) * 2.5) ** 3
+        tile.uranium = min(1, uranium_noise)
+        if tile.hydro > 0 or tile.altitude <= 0 or tile.altitude > 2000:
+            tile.uranium = 0
