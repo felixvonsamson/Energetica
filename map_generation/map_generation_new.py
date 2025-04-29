@@ -6,11 +6,13 @@ import numpy as np
 from noise import pnoise2
 
 # Parameters
-map_radius = 100
+map_radius = 110
 noise_scale = 10.0  # Bigger = larger features
 noise_seed = 42
 n_tiles = map_radius * (map_radius + 1) * 3 + 1
 directions = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
+altitude_min = -5000
+altitude_max = 5000
 
 
 class Tile:
@@ -26,6 +28,9 @@ class Tile:
         self.uranium: float = None
 
         self.basin: int = None
+        self.shore: bool = False
+        self.valid: bool = True
+        self.flow_direction: tuple[int, int] = None
 
     def get_neighbors(self, map) -> list[int]:
         """Return the neighbors of the tile."""
@@ -81,32 +86,45 @@ def coordinates_to_id(q: int, r: int) -> int:
 
 
 def generate_map() -> list[Tile]:
-    """Generate a map of tiles with random features."""
+    """Generate a map of tiles with no features."""
     map = []
     for tile_id in range(n_tiles):
         tile = Tile(tile_id)
         map.append(tile)
-    for tile in map:
-        x, y = tile.square_coordinates()
-        tile.altitude = generate_altitude(x, y)
     return map
 
 
-def generate_altitude(x: float, y: float) -> float:
-    """Generate the altitude of the tiles based on 2D perlin noise."""
-    altitude_min = -5000
-    altitude_max = 5000
-    ocean_noise = pnoise2(0.3 * x / noise_scale, 0.3 * y / noise_scale, octaves=2, base=noise_seed)
-    if ocean_noise < -0.25:
-        return np.interp(ocean_noise, [-1, -0.25], [altitude_min, 0])
-    mult = min(1, (ocean_noise + 0.25) * 2)
-    terrain_noise = pnoise2(x / noise_scale, y / noise_scale, octaves=6, base=noise_seed)
-    # altitude = np.clip(np.interp(noise_val, [-1, 1], [2*altitude_min, 2*altitude_max]), altitude_min, altitude_max)
-    altitude = abs(terrain_noise) * mult * 2 * altitude_max
-    return min(
-        altitude_max,
-        np.interp(ocean_noise, [-0.25, 1], [0, 0.2 * altitude_max]) + altitude,
-    )
+def generate_oceans(map: list[Tile]):
+    """Generate oceans using a large perlin noise with few details"""
+    for tile in map:
+        x, y = tile.square_coordinates()
+        ocean_noise = pnoise2(0.3 * x / noise_scale, 0.3 * y / noise_scale, octaves=2, base=noise_seed) - max(
+            0,
+            0.08
+            * (
+                max(abs(tile.coordinates[0]), abs(tile.coordinates[1]), abs(tile.coordinates[0] + tile.coordinates[1]))
+                - 0.9 * map_radius
+            ),
+        )
+        if ocean_noise < -0.25:
+            tile.altitude = np.interp(ocean_noise, [-1, -0.25], [altitude_min, 0])
+        else:
+            tile.altitude = np.interp(ocean_noise, [-0.25, 1], [0, 0.5 * altitude_max])
+
+
+def generate_mountains(map: list[Tile]) -> float:
+    """Generate mountains onn the continent using 2D perlin noise."""
+    for tile in map:
+        if tile.altitude > 0:
+            x, y = tile.square_coordinates()
+            mult = min(1, 10 * tile.altitude / altitude_max)
+            terrain_noise = pnoise2(0.5 * x / noise_scale, 0.5 * y / noise_scale, octaves=6, base=noise_seed)
+            # altitude = np.clip(np.interp(noise_val, [-1, 1], [2*altitude_min, 2*altitude_max]), altitude_min, altitude_max)
+            altitude = (terrain_noise * 2.2) ** 2 * mult * altitude_max
+            tile.altitude = min(
+                altitude_max,
+                tile.altitude + altitude,
+            )
 
 
 def check_for_basins(map: list[Tile]):
@@ -145,6 +163,10 @@ def check_for_basins(map: list[Tile]):
 
 def fix_basins(map: list[Tile]):
     """Removes basins by forming a valley."""
+    for tile in map:
+        if tile.basin >= 0 and tile.altitude < 300:
+            tile.altitude = 300 + np.random.uniform(0, 100)
+    check_for_basins(map)
     basin_values = set()
     for tile in map:
         if tile.basin >= 0:
@@ -174,11 +196,9 @@ def fix_basins(map: list[Tile]):
             for vd in valid_directions:
                 neighbor_tile_id = coordinates_to_id(current.coordinates[0] + vd[0], current.coordinates[1] + vd[1])
                 if neighbor_tile_id < n_tiles:
-                    if (
-                        tile_to_dig is None
-                        or map[neighbor_tile_id].altitude < tile_to_dig.altitude
-                        and map[neighbor_tile_id].altitude > current.altitude + 1.5
-                    ):
+                    if map[neighbor_tile_id].altitude == current.altitude + 1:
+                        continue
+                    if tile_to_dig is None or map[neighbor_tile_id].altitude < tile_to_dig.altitude:
                         tile_to_dig = map[neighbor_tile_id]
             if tile_to_dig.altitude <= current.altitude:
                 break
@@ -190,26 +210,27 @@ def generate_rivers(map: list[Tile]):
     """Generate rivers flowing down form the mountains."""
     for tile in map:
         tile.hydro = 0
-    # randomly sample 20 tiles with an altitude above 1000
-    source_tiles = [tile for tile in map if tile.altitude > 1000]
-    source_tiles = np.random.choice(source_tiles, round(0.01 * n_tiles), replace=False)
-    for tile in source_tiles:
-        current = tile
-        flow_value = 1
-        while True:
-            # If we reached ocean
-            if current.altitude <= 0:
-                break
-            current.hydro += flow_value
-            flow_value += 0.1
-            # Find the neighbor with the lowest altitude
-            neighbors = current.get_neighbors(map)
-            lowest_neighbor = min(neighbors, key=lambda neighbor: neighbor.altitude)
-            # If no neighbor is lower, dig a valley
-            if lowest_neighbor.altitude >= current.altitude:
-                break
-            # Otherwise flow downhill
-            current = lowest_neighbor
+
+    total_hydro = 0
+    valid_source_tiles = [tile for tile in map if tile.altitude > 1000]
+    while total_hydro < 0.1 * n_tiles:
+        tile = np.random.choice(valid_source_tiles)
+        neighbors = tile.get_neighbors(map)
+        if not any([t.hydro != 0 for t in neighbors]):
+            current = tile
+            flow_value = 1
+            while True:
+                # If we reached ocean
+                if current.altitude <= 0:
+                    break
+                current.hydro += flow_value
+                total_hydro += 1
+                flow_value += 0.1
+                # Find the neighbor with the lowest altitude
+                neighbors = current.get_neighbors(map)
+                lowest_neighbor = min(neighbors, key=lambda neighbor: neighbor.altitude)
+                current = lowest_neighbor
+
     max_hydro = max([tile.hydro for tile in map])
     for tile in map:
         tile.hydro = math.sqrt(tile.hydro / max_hydro)
@@ -223,7 +244,7 @@ def generate_solar(map: list[Tile]):
             tile.solar = 0
         else:
             tile.solar = min(
-                1,
+                0.999,
                 math.cos((tile.coordinates[1] + map_radius) / (2 * map_radius) * 0.48 * math.pi)
                 * (0.5 + 0.8 * (tile.altitude / 5000)),
             )
@@ -284,6 +305,11 @@ def generate_uranium(map: list[Tile]):
     for tile in map:
         x, y = tile.square_coordinates()
         uranium_noise = (abs(pnoise2(x / noise_scale, y / noise_scale, octaves=5, base=noise_seed + 5)) * 2.5) ** 3
+        uranium_noise = (
+            uranium_noise
+            * abs(pnoise2(0.2 * x / noise_scale, 0.2 * y / noise_scale, octaves=1, base=noise_seed + 6))
+            * 2
+        )
         tile.uranium = min(1, uranium_noise)
         if tile.hydro > 0 or tile.altitude <= 0 or tile.altitude > 2000:
             tile.uranium = 0
