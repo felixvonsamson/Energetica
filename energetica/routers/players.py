@@ -32,7 +32,7 @@ async def get_all_users() -> list[PlayerOut]:
     ]
 
 
-@router.patch("/settings", status_code=204)
+@router.patch("/me/settings", status_code=204)
 async def update_user_settings(
     user: Annotated[Player, Depends(get_current_user)],
     request_data: SettingsRequest,

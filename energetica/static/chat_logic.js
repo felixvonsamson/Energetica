@@ -180,7 +180,7 @@ function hide_disclaimer() {
     /* Hide the chat disclaimer and send the "dont show again" information to the server */
     let checkbox = document.getElementById("dont_show_disclaimer");
     if (checkbox.checked) {
-        fetch("/api/v1/players/settings", {
+        fetch("/api/v1/players/me/settings", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ show_disclaimer: false }),
@@ -346,7 +346,7 @@ function openChat(chatID) {
                 console.error("Error:", error);
             });
     });
-    fetch("/api/v1/players/settings", {
+    fetch("/api/v1/players/me/settings", {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
