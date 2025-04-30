@@ -633,26 +633,6 @@ def leave_network() -> Response | tuple:
     return redirect("/network", code=303)
 
 
-@http.route("create_chat", methods=["POST"])
-def create_chat() -> Response:
-    """Create a chat with one other player."""
-    request_data = request.get_json()
-    buddy_id = int(request_data["buddy_id"])
-    buddy = Player.getitem(buddy_id)
-    energetica.utils.chat.create_chat(g.player, None, {g.player, buddy})
-    return jsonify({"response": "success"})
-
-
-@http.route("create_group_chat", methods=["POST"])
-def create_group_chat() -> Response:
-    """Create a group chat."""
-    request_data = request.get_json()
-    chat_title = request_data["chat_title"]
-    group_members = {g.player, *(map(Player.getitem, map(int, request_data["group_members"])))}
-    energetica.utils.chat.create_chat(g.player, chat_title, group_members)
-    return jsonify({"response": "success"})
-
-
 @http.route("change_graph_view", methods=["POST"])
 def change_graph_view() -> Response:
     """Change the view mode for the graphs (basic, normal, expert)."""

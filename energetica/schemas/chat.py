@@ -1,3 +1,5 @@
+"""Chat-related Pydantic models for request and response validation."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -8,6 +10,8 @@ from energetica.database.messages import Message
 
 
 class ChatOut(BaseModel):
+    """Response model for a chat."""
+
     id: int
     display_name: str
     initials: list[str]
@@ -24,6 +28,8 @@ class ChatListResponse(BaseModel):
 
 
 class MessageOut(BaseModel):
+    """Response model for a message."""
+
     id: int
     text: str
     player_id: int
@@ -45,3 +51,16 @@ class NewMessageRequest(BaseModel):
     """Request model for sending a new message."""
 
     new_message: str = Field(..., min_length=1, max_length=500)
+
+
+class NewChatRequest(BaseModel):
+    """Request model for creating a new chat."""
+
+    buddy_id: int
+
+
+class NewGroupChatRequest(BaseModel):
+    """Request model for creating a new group chat."""
+
+    group_chat_name: str = Field(..., min_length=1, max_length=100)
+    group_member_ids: list[int] = Field(..., min_length=1)

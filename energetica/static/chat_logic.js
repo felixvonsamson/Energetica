@@ -190,6 +190,7 @@ function hide_disclaimer() {
 
 function getIdByUsername(username) {
     /* Get the player ID from its username */
+    // WARN: this function returns a string, not a number
     for (let player of sortedNames) {
         if (player.username === username) {
             return player.id;
@@ -208,19 +209,25 @@ async function createChat() {
     }
 
     try {
-        const response = await send_json("/api/create_chat", { buddy_id: buddy_id });
-        const raw_data = await response.json();
-        const responseMessage = raw_data["response"];
+        const response = await send_json("/api/v1/chat/create_chat", { buddy_id: Number(buddy_id) });
 
-        if (responseMessage === "success") {
+        if (response.status == 204) {
+            // No content, chat created successfully
             retrieve_chats();
             document.getElementById('add_chat').classList.add('hidden');
-        } else if (responseMessage === "cannotChatWithYourself") {
-            addError("Cannot create a chat with yourself");
-        } else if (responseMessage === "buddyIDDoesNotExist") {
-            addError("This player does not exist");
-        } else if (responseMessage === "chatAlreadyExist") {
-            addError("This chat already exists");
+        } else if (response.status == 400) {
+            response.json().then((raw_data) => {
+                const description = {
+                    "chatAlreadyExist": "This chat already exists",
+                    "cannotChatWithYourself": "You cannot create a chat with yourself",
+                    "buddyIDDoesNotExist": "This player does not exist",
+                }[raw_data["exception_type"]];
+                if (description) {
+                    addError(description);
+                } else {
+                    addError("An unknown error occurred");
+                }
+            });
         }
     } catch (error) {
         console.error(`caught error: ${error}`);
@@ -230,25 +237,29 @@ async function createChat() {
 function createGroupChat() {
     /* Create a group chat with the selected players */
     let title = document.getElementById("chat_title").value;
-    send_json("/api/create_group_chat", {
-        chat_title: title,
-        group_members: group,
+    send_json("/api/v1/chat/create_group_chat", {
+        group_chat_name: title,
+        group_member_ids: group,
     }).then((response) => {
-        response.json().then((raw_data) => {
-            let response = raw_data["response"];
-            if (response == "success") {
-                retrieve_chats();
-                document.querySelector(".group_members").innerHTML = "";
-                document.getElementById('add_group_chat').classList.add('hidden');
-                group = [];
-            } else if (response == "wrongTitleLength") {
-                addError("The chat title cannot be empty and cannot have more than 25 characters");
-            } else if (response == "groupTooSmall") {
-                addError("Group chats have to have at least 3 members");
-            } else if (response == "chatAlreadyExist") {
-                addError("This chat already exists");
-            }
-        });
+        if (response.status == 204) {
+            retrieve_chats();
+            document.querySelector(".group_members").innerHTML = "";
+            document.getElementById('add_group_chat').classList.add('hidden');
+            group = [];
+        } else if (response.status == 400) {
+            response.json().then((raw_data) => {
+                const description = {
+                    "wrongTitleLength": "The chat title cannot be empty and cannot have more than 25 characters",
+                    "groupTooSmall": "Group chats have to have at least 3 members",
+                    "chatAlreadyExist": "This chat already exists",
+                }[raw_data["exception_type"]];
+                if (description) {
+                    addError(description);
+                } else {
+                    addError("An unknown error occurred");
+                }
+            });
+        }
     })
         .catch((error) => {
             console.error(`caught error ${error}`);

@@ -4,11 +4,19 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from energetica import utils
+import energetica.utils.chat
 from energetica.auth import get_current_user
 from energetica.database.messages import Chat
 from energetica.database.player import Player
-from energetica.schemas.chat import ChatListResponse, ChatOut, MessageListResponse, MessageOut, NewMessageRequest
+from energetica.schemas.chat import (
+    ChatListResponse,
+    ChatOut,
+    MessageListResponse,
+    MessageOut,
+    NewChatRequest,
+    NewGroupChatRequest,
+    NewMessageRequest,
+)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -81,7 +89,7 @@ async def get_chat_messages(
 async def new_message(
     user: Annotated[Player, Depends(get_current_user)],
     chat_id: int,
-    request: NewMessageRequest,
+    request_data: NewMessageRequest,
 ) -> None:
     """Send a message."""
     chat = Chat.get(chat_id)
@@ -89,4 +97,41 @@ async def new_message(
         raise HTTPException(status_code=404, detail="Chat not found")
     if user not in chat.participants:
         raise HTTPException(status_code=403, detail="You are not a participant in this chat")
-    utils.chat.add_message(user, request.new_message, chat)
+    energetica.utils.chat.add_message(user, request_data.new_message, chat)
+
+
+@router.post("/create_chat", status_code=204)
+async def create_chat(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request_data: NewChatRequest,
+):
+    """Create a chat with one other player."""
+    buddy = Player.get(request_data.buddy_id)
+    if buddy is None:
+        raise HTTPException(status_code=404, detail="Buddy not found")
+    if buddy == user:
+        raise HTTPException(status_code=400, detail="You cannot create a chat with yourself")
+    energetica.utils.chat.create_chat(user, None, {user, buddy})
+
+
+# @http.route("create_group_chat", methods=["POST"])
+# def create_group_chat() -> Response:
+#     """Create a group chat."""
+#     request_data = request.get_json()
+#     chat_title = request_data["chat_title"]
+#     group_members = {g.player, *(map(Player.getitem, map(int, request_data["group_members"])))}
+#     energetica.utils.chat.create_chat(g.player, chat_title, group_members)
+#     return jsonify({"response": "success"})
+
+
+@router.post("/create_group_chat", status_code=204)
+async def create_group_chat(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request_data: NewGroupChatRequest,
+):
+    """Create a group chat."""
+    try:
+        group_members = {user, *map(Player.getitem, request_data.group_member_ids)}
+    except KeyError:
+        raise HTTPException(status_code=404, detail="One or more group members not found")
+    energetica.utils.chat.create_chat(user, request_data.group_chat_name, group_members)
