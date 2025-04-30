@@ -44,7 +44,7 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
     return new_chat
 
 
-def add_message(player: Player, message_text: str, chat: Chat) -> None:
+def add_message(player: Player, message_text: str, chat: Chat) -> Message:
     """Add a player sent message to a chat."""
     if player not in chat.participants:
         raise GameError("notInChat")
@@ -62,3 +62,4 @@ def add_message(player: Player, message_text: str, chat: Chat) -> None:
     chat.player_last_read_index[player.id] = len(chat.messages) - 1
 
     display_new_message(new_message, chat)
+    return new_message

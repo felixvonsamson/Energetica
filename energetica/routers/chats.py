@@ -23,37 +23,12 @@ router = APIRouter(prefix="/chats", tags=["chats"])
 @router.get("")
 async def get_chat_list(user: Annotated[Player, Depends(get_current_user)]) -> ChatListResponse:
     """Get the chat list for the current user."""
-
-    def display_name(chat: Chat) -> str:
-        """Get the display name for a chat."""
-        if chat.name is not None:
-            return chat.name
-        for participant in chat.participants:
-            if participant != user:
-                return participant.username
-        msg = "Chat has no name and no other participant"
-        raise ValueError(msg)
-
-    def initials(chat: Chat) -> list[str]:
-        """Get the initials for a chat."""
-        if chat.name is None:
-            for participant in chat.participants:
-                if participant != user:
-                    return [participant.username[0]]
-        max_initials_size = 4
-        initials = []
-        for participant in chat.participants:
-            initials.append(participant.username[0])
-            if len(initials) == max_initials_size:
-                break
-        return initials
-
     return ChatListResponse(
         chats=[
             ChatOut(
                 id=chat.id,
-                display_name=display_name(chat),
-                initials=initials(chat),
+                display_name=chat.display_name(user),
+                initials=chat.initials(user),
                 is_group=chat.is_group(),
                 unread_messages_count=chat.unread_messages_count_for_player(user),
             )
@@ -83,24 +58,32 @@ async def new_message(
     user: Annotated[Player, Depends(get_current_user)],
     chat_id: int,
     request_data: NewMessageRequest,
-) -> None:
+) -> MessageOut:
     """Send a message."""
     chat = Chat.get(chat_id)
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found")
     if user not in chat.participants:
         raise HTTPException(status_code=403, detail="You are not a participant in this chat")
-    energetica.utils.chat.add_message(user, request_data.new_message, chat)
+    new_message = energetica.utils.chat.add_message(user, request_data.new_message, chat)
+    return MessageOut.from_message(new_message)
 
 
-@router.post("", status_code=204)
-async def create_group_chat(  # noqa: ANN201
+@router.post("", status_code=201)
+async def create_group_chat(
     user: Annotated[Player, Depends(get_current_user)],
     request_data: NewChatRequest,
-):
+) -> ChatOut:
     """Create a chat."""
     try:
         group_members = {user, *map(Player.getitem, request_data.group_member_ids)}
     except KeyError:
         raise HTTPException(status_code=404, detail="One or more group members not found")
-    energetica.utils.chat.create_chat(user, request_data.group_chat_name, group_members)
+    new_chat = energetica.utils.chat.create_chat(user, request_data.group_chat_name, group_members)
+    return ChatOut(
+        id=new_chat.id,
+        display_name=new_chat.display_name(user),
+        initials=new_chat.initials(user),
+        is_group=new_chat.is_group(),
+        unread_messages_count=new_chat.unread_messages_count_for_player(user),
+    )

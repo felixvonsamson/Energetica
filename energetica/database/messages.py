@@ -52,6 +52,30 @@ class Chat(DBModel):
             return len(self.messages)
         return len(self.messages) - last_read_message - 1
 
+    def display_name(self, player: Player) -> str:
+        """Get the display name for a chat."""
+        if self.name is not None:
+            return self.name
+        for participant in self.participants:
+            if participant != player:
+                return participant.username
+        msg = "Chat has no name and no other participant"
+        raise ValueError(msg)
+
+    def initials(self, player: Player) -> list[str]:
+        """Get the initials for a chat, used for displaying in the UI."""
+        if self.name is None:
+            for participant in self.participants:
+                if participant != player:
+                    return [participant.username[0]]
+        max_initials_size = 4
+        initials = []
+        for participant in self.participants:
+            initials.append(participant.username[0])
+            if len(initials) == max_initials_size:
+                break
+        return initials
+
 
 @dataclass
 class Notification(DBModel):

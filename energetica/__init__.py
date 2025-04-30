@@ -342,3 +342,5 @@ async def global_exception_handler(request: Request, exc: GameError) -> JSONResp
 for route in app.routes:
     if route.path.startswith("/api/v1/"):
         print(f"{route.methods} - {route.path} - {route.name}")
+    else:
+        print(f"{route.path}")
