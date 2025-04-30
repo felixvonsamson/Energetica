@@ -1,6 +1,13 @@
 from pydantic import BaseModel, Field
 
 
+class PlayerOut(BaseModel):
+    """Response model for player information."""
+
+    id: int = Field(..., description="ID of the player")
+    username: str = Field(..., description="Username of the player")
+
+
 class SettingsRequest(BaseModel):
     """Request model for user configuration."""
 
