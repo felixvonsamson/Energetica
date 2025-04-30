@@ -179,11 +179,13 @@ function removePlayer(id) {
 function hide_disclaimer() {
     /* Hide the chat disclaimer and send the "dont show again" information to the server */
     let checkbox = document.getElementById("dont_show_disclaimer");
-    fetch("/api/v1/chat", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ show_disclaimer: !checkbox.checked }),
-    },);
+    if (checkbox.checked) {
+        fetch("/api/v1/player/settings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ show_disclaimer: false }),
+        },);
+    }
     document.getElementById('disclaimer').classList.add('hidden');
 }
 
@@ -344,7 +346,7 @@ function openChat(chatID) {
                 console.error("Error:", error);
             });
     });
-    fetch("/api/v1/chat", {
+    fetch("/api/v1/player/settings", {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",

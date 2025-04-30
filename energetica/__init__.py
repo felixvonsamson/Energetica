@@ -341,6 +341,4 @@ async def global_exception_handler(request: Request, exc: GameError) -> JSONResp
 # print out all fastapi endpoints
 for route in app.routes:
     if route.path.startswith("/api/v1/"):
-        print(f"API endpoint: {route.path} - {route.name}")
-    else:
-        print(f"Web endpoint: {route.path} - {route.name}")
+        print(f"{route.methods} - {route.path} - {route.name}")

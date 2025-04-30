@@ -17,13 +17,6 @@ class ChatListResponse(BaseModel):
     unread_chat_count: int
 
 
-class ChatConfigRequest(BaseModel):
-    """Request model for chat configuration."""
-
-    last_opened_chat_id: int | None = Field(None, description="ID of the last opened chat")
-    show_disclaimer: bool | None = Field(None, description="Whether to show the chat disclaimer or not")
-
-
 class ChatOut(BaseModel):
     """Response model for a chat."""
 
