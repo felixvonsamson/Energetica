@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
+from warnings import deprecated
 
 from flask import current_app
 from flask_login import UserMixin
@@ -543,6 +544,7 @@ class Player(DBModel, UserMixin):
             | ({"cell_id": self.tile.id} if self.tile is not None else {})
         )
 
+    @deprecated("Use API instead")
     @staticmethod
     def package_all() -> dict[int, dict]:
         """Package data for all players."""

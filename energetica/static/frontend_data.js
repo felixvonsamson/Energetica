@@ -223,7 +223,7 @@ function load_chats() {
 }
 
 function retrieve_chats() {
-    return fetch("/api/v1/chat")
+    return fetch("/api/v1/chats")
         .then((response) => response.json())
         .then((data) => {
             sessionStorage.setItem("chats_data", JSON.stringify(data));

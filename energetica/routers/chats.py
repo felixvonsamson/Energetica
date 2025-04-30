@@ -8,7 +8,7 @@ import energetica.utils.chat
 from energetica.auth import get_current_user
 from energetica.database.messages import Chat
 from energetica.database.player import Player
-from energetica.schemas.chat import (
+from energetica.schemas.chats import (
     ChatListResponse,
     ChatOut,
     MessageListResponse,
@@ -17,7 +17,7 @@ from energetica.schemas.chat import (
     NewMessageRequest,
 )
 
-router = APIRouter(prefix="/chat", tags=["chat"])
+router = APIRouter(prefix="/chats", tags=["chats"])
 
 
 @router.get("")

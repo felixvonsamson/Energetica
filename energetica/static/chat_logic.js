@@ -180,7 +180,7 @@ function hide_disclaimer() {
     /* Hide the chat disclaimer and send the "dont show again" information to the server */
     let checkbox = document.getElementById("dont_show_disclaimer");
     if (checkbox.checked) {
-        fetch("/api/v1/player/settings", {
+        fetch("/api/v1/players/settings", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ show_disclaimer: false }),
@@ -210,7 +210,7 @@ async function createChat() {
     }
 
     try {
-        const response = await send_json("/api/v1/chat", { group_member_ids: [Number(buddy_id)] });
+        const response = await send_json("/api/v1/chats", { group_member_ids: [Number(buddy_id)] });
 
         if (response.status == 204) {
             // No content, chat created successfully
@@ -238,7 +238,7 @@ async function createChat() {
 function createGroupChat() {
     /* Create a group chat with the selected players */
     let title = document.getElementById("chat_title").value;
-    send_json("/api/v1/chat", {
+    send_json("/api/v1/chats", {
         group_chat_name: title,
         group_member_ids: group,
     }).then((response) => {
@@ -273,7 +273,7 @@ function newMessage() {
     if (!current_chat_id) {
         addError("No chat has been selected");
     }
-    send_json(`/api/v1/chat/${current_chat_id}/messages`, {
+    send_json(`/api/v1/chats/${current_chat_id}/messages`, {
         new_message: message_field.value,
     }).then((response) => {
         response.json().then((raw_data) => {
@@ -311,7 +311,7 @@ function openChat(chatID) {
         chat_data.last_opened_chat_id = chatID;
         sessionStorage.setItem("chats_data", JSON.stringify(chat_data));
         show_unread_badges();
-        fetch(`/api/v1/chat/${chatID}/messages`)
+        fetch(`/api/v1/chats/${chatID}/messages`)
             .then((response) => response.json())
             .then((data) => {
                 load_players().then((players) => {
@@ -346,7 +346,7 @@ function openChat(chatID) {
                 console.error("Error:", error);
             });
     });
-    fetch("/api/v1/player/settings", {
+    fetch("/api/v1/players/settings", {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
