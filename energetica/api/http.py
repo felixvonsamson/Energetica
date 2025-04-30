@@ -14,7 +14,6 @@ from flask_login import current_user, login_required
 from werkzeug.wrappers import Response
 
 import energetica.utils.assets
-import energetica.utils.chat
 import energetica.utils.misc
 import energetica.utils.network_helpers
 import energetica.utils.resource_market

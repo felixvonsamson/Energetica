@@ -1,12 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from fastapi import APIRouter
-
-if TYPE_CHECKING:
-    from energetica.database.map import HexTile
-    from energetica.enums import Fuel, Renewable
 
 router = APIRouter(prefix="/map", tags=["map"])
 
@@ -14,6 +8,9 @@ router = APIRouter(prefix="/map", tags=["map"])
 @router.get("/get")
 def get_map() -> list[dict]:
     """Get the map data from the database and returns it as a array of dictionaries."""
+    from energetica.database.map import HexTile
+    from energetica.enums import Fuel, Renewable
+
     hex_map = HexTile.all()
     hex_list = [
         {

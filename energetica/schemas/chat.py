@@ -9,6 +9,21 @@ from pydantic import BaseModel, Field
 from energetica.database.messages import Message
 
 
+class ChatListResponse(BaseModel):
+    """Response model for the chat list."""
+
+    chats: list[ChatOut]
+    last_opened_chat_id: int | None
+    unread_chat_count: int
+
+
+class ChatConfigRequest(BaseModel):
+    """Request model for chat configuration."""
+
+    last_opened_chat_id: int | None = Field(None, description="ID of the last opened chat")
+    show_disclaimer: bool | None = Field(None, description="Whether to show the chat disclaimer or not")
+
+
 class ChatOut(BaseModel):
     """Response model for a chat."""
 
@@ -17,14 +32,6 @@ class ChatOut(BaseModel):
     initials: list[str]
     is_group: bool
     unread_messages_count: int
-
-
-class ChatListResponse(BaseModel):
-    """Response model for the chat list."""
-
-    chats: list[ChatOut]
-    last_opened_chat_id: int | None
-    unread_chat_count: int
 
 
 class MessageOut(BaseModel):
@@ -54,13 +61,7 @@ class NewMessageRequest(BaseModel):
 
 
 class NewChatRequest(BaseModel):
-    """Request model for creating a new chat."""
-
-    buddy_id: int
-
-
-class NewGroupChatRequest(BaseModel):
     """Request model for creating a new group chat."""
 
-    group_chat_name: str = Field(..., min_length=1, max_length=100)
+    group_chat_name: str | None = Field(None, min_length=1, max_length=100)
     group_member_ids: list[int] = Field(..., min_length=1)

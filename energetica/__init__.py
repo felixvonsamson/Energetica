@@ -336,3 +336,11 @@ async def global_exception_handler(request: Request, exc: GameError) -> JSONResp
     """Handle global game exceptions."""
     content = GameErrorResponse(exception_type=exc.exception_type)
     return JSONResponse(content=content.model_dump(), status_code=status.HTTP_400_BAD_REQUEST)
+
+
+# print out all fastapi endpoints
+for route in app.routes:
+    if route.path.startswith("/api/v1/"):
+        print(f"API endpoint: {route.path} - {route.name}")
+    else:
+        print(f"Web endpoint: {route.path} - {route.name}")

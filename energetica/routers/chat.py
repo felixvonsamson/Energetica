@@ -9,25 +9,19 @@ from energetica.auth import get_current_user
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 from energetica.schemas.chat import (
+    ChatConfigRequest,
     ChatListResponse,
     ChatOut,
     MessageListResponse,
     MessageOut,
     NewChatRequest,
-    NewGroupChatRequest,
     NewMessageRequest,
 )
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
-@router.post("/hide_disclaimer", status_code=204)
-async def hide_disclaimer(user: Annotated[Player, Depends(get_current_user)]):  #  noqa: ANN201
-    """Do not show the chat disclaimer again."""
-    user.show_chat_disclaimer = False
-
-
-@router.get("/chat_list")
+@router.get("")
 async def get_chat_list(user: Annotated[Player, Depends(get_current_user)]) -> ChatListResponse:
     """Get the chat list for the current user."""
 
@@ -71,6 +65,18 @@ async def get_chat_list(user: Annotated[Player, Depends(get_current_user)]) -> C
     )
 
 
+@router.patch("")
+async def set_last_opened_chat(
+    user: Annotated[Player, Depends(get_current_user)],
+    request_data: ChatConfigRequest,
+) -> None:
+    """Set the last opened chat and hide the disclaimer."""
+    if request_data.last_opened_chat_id is not None:
+        user.last_opened_chat_id = request_data.last_opened_chat_id
+    if request_data.show_disclaimer is not None:
+        user.show_chat_disclaimer = request_data.show_disclaimer
+
+
 @router.get("/{chat_id}/messages")
 async def get_chat_messages(
     user: Annotated[Player, Depends(get_current_user)],
@@ -85,7 +91,7 @@ async def get_chat_messages(
     return MessageListResponse(messages=[MessageOut.from_message(message) for message in chat.messages])
 
 
-@router.post("/{chat_id}/new_message")
+@router.post("/{chat_id}/messages")
 async def new_message(
     user: Annotated[Player, Depends(get_current_user)],
     chat_id: int,
@@ -100,36 +106,12 @@ async def new_message(
     energetica.utils.chat.add_message(user, request_data.new_message, chat)
 
 
-@router.post("/create_chat", status_code=204)
-async def create_chat(  # noqa: ANN201
+@router.post("", status_code=204)
+async def create_group_chat(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     request_data: NewChatRequest,
 ):
-    """Create a chat with one other player."""
-    buddy = Player.get(request_data.buddy_id)
-    if buddy is None:
-        raise HTTPException(status_code=404, detail="Buddy not found")
-    if buddy == user:
-        raise HTTPException(status_code=400, detail="You cannot create a chat with yourself")
-    energetica.utils.chat.create_chat(user, None, {user, buddy})
-
-
-# @http.route("create_group_chat", methods=["POST"])
-# def create_group_chat() -> Response:
-#     """Create a group chat."""
-#     request_data = request.get_json()
-#     chat_title = request_data["chat_title"]
-#     group_members = {g.player, *(map(Player.getitem, map(int, request_data["group_members"])))}
-#     energetica.utils.chat.create_chat(g.player, chat_title, group_members)
-#     return jsonify({"response": "success"})
-
-
-@router.post("/create_group_chat", status_code=204)
-async def create_group_chat(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request_data: NewGroupChatRequest,
-):
-    """Create a group chat."""
+    """Create a chat."""
     try:
         group_members = {user, *map(Player.getitem, request_data.group_member_ids)}
     except KeyError:
