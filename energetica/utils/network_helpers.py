@@ -23,13 +23,15 @@ def join_network(player: Player, network: Network | None) -> Network:
 
 
 def create_network(player: Player, name: str) -> Network:
-    """Shared API method to create a network. Network name must pass validation,
+    """
+    Shared API method to create a network.
+
+    Network name must pass validation,
     namely it must not be too long, nor too short, and must not already be in
-    use."""
+    use.
+    """
     if not player.achievements["network"]:
         raise GameError("networkNotUnlocked")
-    if len(name) < 3 or len(name) > 40:
-        raise GameError("nameLengthInvalid")
     if len(list(Network.filter_by(name=name))):
         raise GameError("nameAlreadyUsed")
     new_network = Network(name=name, members=[player])
@@ -38,10 +40,8 @@ def create_network(player: Player, name: str) -> Network:
     return new_network
 
 
-# TODO (Felix): Move this to a method in Player
-# TODO(mglst): I'm not sure I agree. Why should this not be a method of Network for example?
-def leave_network(player: Player) -> None:
-    """Shared API method for a player to leave a network. Always succeeds."""
+def leave_network(player: Player) -> Network | None:
+    """Shared API method for a player to leave a network."""
     network = player.network
     if network is None:
         raise GameError("notInNetwork")
@@ -52,3 +52,5 @@ def leave_network(player: Player) -> None:
     if not network.members:
         engine.log(f"The network {network.name} has been deleted because it was empty")
         network.delete()
+        return None
+    return network

@@ -21,7 +21,8 @@ async def get_resource_market_asks() -> AskList:
 
 @router.post("/asks", status_code=201)
 async def post_resource_market_bid(
-    user: Annotated[Player, Depends(get_current_user)], request_data: AskCreate
+    user: Annotated[Player, Depends(get_current_user)],
+    request_data: AskCreate,
 ) -> AskOut:
     """Post a resource market bid."""
     return put_resource_on_market(
@@ -39,9 +40,7 @@ async def post_resource_market_ask_purchase(
     request_data: PurchaseOrderCreate,
 ) -> AskOut | None:
     """Purchase a resource market ask."""
-    sale = ResourceOnSale.get(ask_id)
-    if sale is None:
-        raise HTTPException(status_code=404, detail="Ask not found")
+    sale = ResourceOnSale.getitem(ask_id, error=HTTPException(status_code=404, detail="Ask not found"))
     # TODO(mglst): Add the following check in the future
     # if sale.player == user:
     #     raise HTTPException(status_code=403, detail="You cannot buy your own ask")
@@ -62,9 +61,7 @@ async def patch_resource_market_ask(
     request_data: AskCreate,
 ) -> AskOut:
     """Patch a resource market ask."""
-    sale = ResourceOnSale.get(ask_id)
-    if sale is None:
-        raise HTTPException(status_code=404, detail="Ask not found")
+    sale = ResourceOnSale.getitem(ask_id, error=HTTPException(status_code=404, detail="Ask not found"))
     if sale.player != user:
         raise HTTPException(status_code=403, detail="You are not the owner of this ask")
     if request_data.unit_price is not None:
@@ -80,9 +77,7 @@ async def delete_resource_market_ask(
     ask_id: int,
 ) -> None:
     """Delete a resource market ask."""
-    sale = ResourceOnSale.get(ask_id)
-    if sale is None:
-        raise HTTPException(status_code=404, detail="Ask not found")
+    sale = ResourceOnSale.getitem(ask_id, error=HTTPException(status_code=404, detail="Ask not found"))
     if sale.player != user:
         raise HTTPException(status_code=403, detail="You are not the owner of this ask")
     sale.delete()

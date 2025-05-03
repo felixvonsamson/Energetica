@@ -50,11 +50,11 @@ class MessageListResponse(BaseModel):
 class NewMessageRequest(BaseModel):
     """Request model for sending a new message."""
 
-    new_message: str = Field(..., min_length=1, max_length=500)
+    new_message: str = Field(min_length=1, max_length=500)
 
 
 class NewChatRequest(BaseModel):
     """Request model for creating a new group chat."""
 
     group_chat_name: str | None = Field(None, min_length=1, max_length=100)
-    group_member_ids: list[int] = Field(..., min_length=1)
+    group_member_ids: list[int] = Field(min_length=1)
