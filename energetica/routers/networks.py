@@ -16,7 +16,7 @@ def get_networks_list() -> NetworkList:
     return NetworkList(networks=[network.to_schema() for network in Network.all()])
 
 
-@router.post("{network_id}/join")
+@router.post("/{network_id}/join")
 def join_network(
     user: Annotated[Player, Depends(get_current_user)],
     network_id: int,
@@ -25,7 +25,7 @@ def join_network(
     return network_helpers.join_network(user, network).to_schema()
 
 
-@router.post("{network_id}/leave")
+@router.post("/{network_id}/leave")
 def leave_network(
     user: Annotated[Player, Depends(get_current_user)],
     network_id: int,

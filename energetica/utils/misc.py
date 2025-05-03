@@ -13,7 +13,6 @@ from scipy.stats import norm
 from energetica import technology_effects
 from energetica.config.assets import river_discharge_seasonal
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player
@@ -117,7 +116,7 @@ def save_past_data() -> None:
     # remove old notifications
     for notification in Notification.filter(
         lambda notification: notification.title != "Tutorial"
-        and notification.time < datetime.now() - timedelta(weeks=2)
+        and notification.time < datetime.now() - timedelta(weeks=2),
     ):
         notification.delete()
 
@@ -142,26 +141,6 @@ def display_new_message(message: Message, chat: Chat) -> None:
 # Map
 
 
-def confirm_location(player: Player, tile: HexTile) -> None:
-    """
-    Confirm a location choice.
-
-    Return either success or an explanatory error message in the form of a dictionary.
-    """
-    if tile.player is not None:
-        # Location already taken
-        raise GameError("locationOccupied", by=tile.player.id)
-    if player.tile is not None:
-        # Player has already chosen a location and cannot chose again
-        raise GameError("choiceUnmodifiable")
-
-    # Checks have succeeded, proceed
-    tile.player = player
-    player.tile = tile
-    initialize_player(player)
-    engine.log(f"{player.username} chose the location {tile.id}")
-
-
 def initialize_player(player: Player) -> None:
     """
     Initialize a player's data after they have chosen a location.
@@ -171,7 +150,7 @@ def initialize_player(player: Player) -> None:
     - Adding the player to the general chat
     """
     eol = engine.total_t + math.ceil(
-        engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
+        engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick,
     )
     if player.tile is None:
         raise GameError("noLocation")

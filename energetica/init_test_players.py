@@ -20,7 +20,7 @@ from energetica.enums import (
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.assets import finish_project, queue_project
-from energetica.utils.misc import confirm_location
+from energetica.utils.map_helpers import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
 
 
@@ -31,7 +31,11 @@ def init_test_players() -> None:
         """Create a project that will instantly finish."""
         for _ in range(n):
             ongoing_project = queue_project(
-                player, project_type, force=True, ignore_requirements_and_money=True, skip_notifications=True
+                player,
+                project_type,
+                force=True,
+                ignore_requirements_and_money=True,
+                skip_notifications=True,
             )
             finish_project(ongoing_project, skip_notifications=True)
         engine.log(f"Added {n} {project_type} for {player.username}")

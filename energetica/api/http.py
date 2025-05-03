@@ -14,6 +14,7 @@ from flask_login import current_user, login_required
 from werkzeug.wrappers import Response
 
 import energetica.utils.assets
+import energetica.utils.map_helpers
 import energetica.utils.misc
 import energetica.utils.network_helpers
 from energetica.config.assets import wind_power_curve
@@ -347,7 +348,7 @@ def choose_location() -> Response:
     request_data = request.get_json()
     selected_id = request_data["selected_id"]
     tile = HexTile.getitem(selected_id + 1)
-    energetica.utils.misc.confirm_location(player=g.player, tile=tile)
+    energetica.utils.map_helpers.confirm_location(player=g.player, tile=tile)
     return jsonify({"response": "success"})
 
 

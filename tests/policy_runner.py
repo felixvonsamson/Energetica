@@ -1,16 +1,16 @@
-"""Run a list of policies with one player per policy"""
+"""Run a list of policies with one player per policy."""
 
 from energetica.database.map import HexTile
 from energetica.database.player import Player
 from energetica.enums import Renewable
 from energetica.globals import engine
 from energetica.simulate import tick
-from energetica.utils import misc
+from energetica.utils import map_helpers
 from tests.policy import Policy
 
 
 def run_policies(policies: list[Policy], ticks_to_run: int) -> list[Player]:
-    """Run a list of policies with one player per policy"""
+    """Run a list of policies with one player per policy."""
     engine.init_instance(30, 3600, 0)
     players = [Player(f"player_{i}", "password_hash") for i in range(len(policies))]
     for player in players:
@@ -19,7 +19,7 @@ def run_policies(policies: list[Policy], ticks_to_run: int) -> list[Player]:
         # tile = max(HexTile.all(), key=lambda t: t.potentials[Renewable.HYDRO])
         # tile = max(HexTile.all(), key=lambda t: t.potentials[Renewable.WIND])
         tile = max(HexTile.all(), key=lambda t: t.potentials[Renewable.WIND] * t.potentials[Renewable.HYDRO])
-        misc.confirm_location(player, tile)
+        map_helpers.confirm_location(player, tile)
         assert player.tile is not None
         print(f"Player {player.id} is at {player.tile}")
         for renewable in Renewable:

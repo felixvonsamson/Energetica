@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash
 from energetica import create_app
 from energetica.database.map import HexTile
 from energetica.database.player import Player
-from energetica.utils.misc import confirm_location
+from energetica.utils.map_helpers import confirm_location
 
 
 def test() -> None:
