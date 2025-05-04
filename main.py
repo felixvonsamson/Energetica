@@ -1,6 +1,58 @@
 #!/usr/bin/env -S python3 -u
 """Launch the game."""
 
+import logging
+import os
+from contextlib import asynccontextmanager
+
+import socketio
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.responses import JSONResponse
+
+from energetica import create_app
+from energetica.flask_app import flask_app
+from energetica.game_error import GameError
+from energetica.globals import engine
+from energetica.routers import all_routers
+from energetica.schemas.common import GameErrorResponse
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_app()
+    for router in all_routers:
+        app.include_router(router, prefix="/api/v1")
+
+    ssl_args = {"keyfile": None, "certfile": None}
+    ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
+
+    print("Mounting Flask app to FastAPI")
+    app.mount("/socket.io", socketio.ASGIApp(engine.socketio))
+    app.mount("/", WSGIMiddleware(flask_app))
+    yield
+
+
+print("TWICE")
+
+app = FastAPI(lifespan=lifespan)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
+    logging.error(f"{request}: {exc_str}")
+    content = {"status_code": 10422, "message": exc_str, "data": None}
+    return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
+@app.exception_handler(GameError)
+async def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
+    """Handle global game exceptions."""
+    content = GameErrorResponse(exception_type=exc.exception_type)
+    return JSONResponse(content=content.model_dump(), status_code=status.HTTP_400_BAD_REQUEST)
+
 
 # if __name__ == "__main__":
 #     parser = argparse.ArgumentParser()

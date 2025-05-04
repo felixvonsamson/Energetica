@@ -5,13 +5,14 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import HTTPException, Request
-from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask.sessions import SecureCookieSessionInterface
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import energetica
 from energetica.database.player import Player
+from energetica.flask_app import flask_app
 from energetica.globals import engine
 
 auth = Blueprint("auth", __name__)
@@ -25,8 +26,6 @@ class SimpleSecureCookieSessionInterface(SecureCookieSessionInterface):
 
 
 def get_current_user(request: Request) -> Player:
-    from energetica import app
-
     user = load_user_from_cookie(request.headers.get("Cookie"))
     if user is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -44,8 +43,6 @@ def load_user_from_socketio_environ(app, environ):
 def load_user_from_cookie(cookie) -> Player | None:
     """Extracts Flask session from cookie and loads the user."""
     from werkzeug.http import parse_cookie
-
-    from energetica import flask_app
 
     cookies = parse_cookie(cookie)
     session_cookie = cookies.get(flask_app.config["SESSION_COOKIE_NAME"])
@@ -124,7 +121,7 @@ def logout() -> Any:
 
 
 def is_valid_hash_format(hash_string: str) -> bool:
-    """Checks if the hash string matches the Werkzeug password hash format via regex"""
+    """Checks if the hash string matches the Werkzeug password hash format via regex."""
     pattern = r"^[a-z0-9]+:\d+:\d+:\d+\$[a-zA-Z0-9./]+\$[a-fA-F0-9]+$"
     return bool(re.match(pattern, hash_string))
 

@@ -40,7 +40,7 @@
 		{
 			"label": "fastapi dev",
 			"type": "shell",
-			"command": "fastapi dev energetica",
+			"command": "fastapi dev main.py",
 			"presentation": {
 				"clear": true,
 				"focus": true

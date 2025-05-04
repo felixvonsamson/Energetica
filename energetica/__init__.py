@@ -24,21 +24,13 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-import socketio
 from apscheduler.events import EVENT_JOB_EXECUTED
 from ecdsa import NIST256p, SigningKey
-from fastapi import FastAPI, Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.wsgi import WSGIMiddleware
-from fastapi.responses import JSONResponse
-from flask import Flask
 from flask_apscheduler import APScheduler
 from flask_login import LoginManager
 
 from energetica import globals
 from energetica.game_engine import GameEngine
-from energetica.game_error import GameError
-from energetica.schemas.common import GameErrorResponse
 
 engine = GameEngine()
 
@@ -50,13 +42,11 @@ from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
 from energetica.auth import auth
 from energetica.database.player import Player
+from energetica.flask_app import flask_app
 from energetica.init_test_players import init_test_players
-from energetica.routers import all_routers
 from energetica.simulate import simulate
 from energetica.utils.tick_execution import state_update
 from energetica.views import changelog, landing, location_choice_views, overviews, views, wiki
-
-app = FastAPI()
 
 
 def get_or_create_flask_secret_key() -> str:
@@ -113,7 +103,7 @@ def create_app(
     simulate_till: int | None = None,
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
-) -> tuple[socketio.ASGIApp, Flask]:
+) -> None:
     """Set up the app and the game engine."""
     if simulate_checkpoint_ticks is None:
         simulate_checkpoint_ticks = []
@@ -197,7 +187,6 @@ def create_app(
     actions_to_simulate = actions[start_action_id : last_action_id + 1]
 
     # creates the app :
-    flask_app = Flask(__name__)
     flask_app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
     flask_app.config["VAPID_PUBLIC_KEY"], flask_app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
     flask_app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
@@ -307,32 +296,4 @@ def create_app(
         engine.log("running init_test_players")
         init_test_players()
 
-    return sio, flask_app
-
-
-for router in all_routers:
-    app.include_router(router, prefix="/api/v1")
-
-ssl_args = {"keyfile": None, "certfile": None}
-ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
-
-sio, flask_app = create_app()
-
-print("Mounting Flask app to FastAPI")
-app.mount("/socket.io", socketio.ASGIApp(sio))
-app.mount("/", WSGIMiddleware(flask_app))
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
-    exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
-    logging.error(f"{request}: {exc_str}")
-    content = {"status_code": 10422, "message": exc_str, "data": None}
-    return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
-
-
-@app.exception_handler(GameError)
-async def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
-    """Handle global game exceptions."""
-    content = GameErrorResponse(exception_type=exc.exception_type)
-    return JSONResponse(content=content.model_dump(), status_code=status.HTTP_400_BAD_REQUEST)
+    return sio
