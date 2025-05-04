@@ -1,6 +1,6 @@
 {
     // General
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": false,
     "files.associations": {
         "*.jinja": "jinja-html",
         "*.js": "javascript"
@@ -21,9 +21,26 @@
     "javascript.format.enable": true,
     "javascript.format.semicolons": "insert",
     "[javascript]": {
-        "editor.defaultFormatter": null,
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
         "editor.wordWrapColumn": 120,
         "editor.rulers": [ 120 ]
+    },
+    "eslint.useFlatConfig": true,
+    "eslint.format.enable": true,
+    "[typescript]": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": "explicit"
+        }
+    },
+    "typescript.format.enable": true,
+    "typescript.format.semicolons": "insert",
+    "[typescriptreact]": {
+        "editor.formatOnSave": false,
+        "editor.defaultFormatter": "vscode.typescript-language-features",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": "explicit"
+        }
     },
     // Python
     "files.exclude": {
