@@ -57,6 +57,26 @@ export default [
                     {
                         "blocks": "never"
                     }
+                ],
+                "@stylistic/jsx-first-prop-new-line": [
+                    "error",
+                    "multiline-multiprop"
+                ],
+                "@stylistic/jsx-max-props-per-line": [
+                    "error",
+                    {
+                        "maximum": 1,
+                        "when": "multiline"
+                    }
+                ],
+                "@stylistic/jsx-tag-spacing": [
+                    "error",
+                    {
+                        "closingSlash": "never",
+                        "beforeSelfClosing": "never",
+                        "afterOpening": "never",
+                        "beforeClosing": "proportional-always"
+                    }
                 ]
             }
         }
