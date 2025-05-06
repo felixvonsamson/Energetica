@@ -531,49 +531,6 @@ def request_change_facility_priority() -> Response | tuple:
     return jsonify({"response": "success"})
 
 
-@http.route("join_network", methods=["POST"])
-@log_action
-def join_network() -> Response:
-    """Join a network."""
-    request_data = request.form
-    network_id = int(request_data["choose_network"])
-    network = energetica.utils.network_helpers.join_network(g.player, Network.get(network_id))
-    flash(f"You joined the network {network.name}", category="message")
-    engine.log(f"{g.player.username} joined the network {network.name}")
-    return redirect("/network", code=303)
-
-
-@http.route("create_network", methods=["POST"])
-@log_action
-def create_network() -> Response:
-    """Create a network."""
-    request_data = request.form
-    network_name = request_data["network_name"]
-    try:
-        energetica.utils.network_helpers.create_network(g.player, network_name)
-    except GameError as game_exception:
-        match game_exception.exception_type:
-            case "nameLengthInvalid":
-                flash("Network name must be between 3 and 40 characters", category="error")
-            case "nameAlreadyUsed":
-                flash("A network with this name already exists", category="error")
-        raise
-    flash(f"You created the network {network_name}", category="message")
-    return redirect("/network", code=303)
-
-
-@http.route("leave_network", methods=["POST"])
-@log_action
-def leave_network() -> Response | tuple:
-    """Leave the current network."""
-    network = g.player.network
-    if network is None:
-        return jsonify({"response": "notInNetwork"}), 404
-    energetica.utils.network_helpers.leave_network(g.player)
-    flash(f"You left network {network.name}", category="message")
-    return redirect("/network", code=303)
-
-
 @http.route("change_graph_view", methods=["POST"])
 def change_graph_view() -> Response:
     """Change the view mode for the graphs (basic, normal, expert)."""
