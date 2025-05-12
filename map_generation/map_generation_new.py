@@ -334,7 +334,7 @@ def assign_types(map: dict[int, Tile]):
         if tile.type is not None:
             tile.altitude = 100
             continue
-        if tile.hydro > 0:
+        if tile.hydro > 0 and tile.altitude <= 2000:
             tile.type = "river"
         elif tile.altitude < 0:
             if tile.altitude < -750:
