@@ -2,7 +2,6 @@
 """Launch the game."""
 
 import logging
-import os
 from contextlib import asynccontextmanager
 
 import socketio
@@ -15,15 +14,16 @@ from energetica import create_app
 from energetica.flask_app import flask_app
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.routers import all_routers
+from energetica.routers import all_routers, todo_router
 from energetica.schemas.common import GameErrorResponse
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI):  # noqa: ANN201
     create_app()
     for router in all_routers:
         app.include_router(router, prefix="/api/v1")
+    app.include_router(todo_router, prefix="/api")
 
     ssl_args = {"keyfile": None, "certfile": None}
     ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
