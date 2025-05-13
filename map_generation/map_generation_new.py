@@ -35,7 +35,7 @@ class Tile:
         self.flow_direction: tuple[int, int] = None
         self.region: int = None
         self.type: str = None
-        self.distance_to_ocean: float = 1000
+        self.distance_to_ocean: float = None
         self.square_coordinates: tuple[float, float] = cubic_to_square_coordinates(
             self.coordinates[0], self.coordinates[1]
         )
@@ -111,7 +111,7 @@ def generate_oceans(map: dict[int, Tile]):
     """Generate oceans using a large perlin noise with few details"""
     for tile in map.values():
         x, y = tile.square_coordinates
-        ocean_noise = pnoise2(0.3 * x / noise_scale, 0.3 * y / noise_scale, octaves=2, base=noise_seed)
+        ocean_noise = pnoise2(0.25 * x / noise_scale, 0.25 * y / noise_scale, octaves=2, base=noise_seed)
         ocean_noise -= max(
             0,
             0.04
@@ -283,23 +283,26 @@ def fix_basins(map: dict[int, Tile]):
                     heapq.heappush(open_set, (f_score, neighbor, path_length + 1))
 
     # Calculate the distance to the nearest ocean for each tile
+    print("Calculating distance to ocean...")
     ocean_tiles = [t for t in map.values() if t.altitude <= 0]
     for tile in ocean_tiles:
         tile.distance_to_ocean = 0
-        neighbors = tile.get_neighbors(map)
-        if all([t.altitude <= 0 for t in neighbors]):
-            ocean_tiles.remove(tile)
-    for tile in ocean_tiles:
+    n_tiles = len(map)
+    while n_tiles > 0:
+        n_tiles = 0
         for tile in map.values():
-            if tile.altitude <= 0:
+            if tile.distance_to_ocean is not None:
                 continue
-            x_tile, y_tile = tile.square_coordinates
-            x_ocean, y_ocean = tile.square_coordinates
-            tile.distance_to_ocean = min(
-                tile.distance_to_ocean,
-                (x_tile - x_ocean) ** 2 + (y_tile - y_ocean) ** 2,
+            neighbors = tile.get_neighbors(map)
+            if all([neighbor.distance_to_ocean is None for neighbor in neighbors]):
+                continue
+            min_distance = min(
+                [neighbor.distance_to_ocean for neighbor in neighbors if neighbor.distance_to_ocean is not None]
             )
+            tile.distance_to_ocean = min_distance + 1
+            n_tiles += 1
 
+    print("Fixing basins...")
     for tile in map.values():
         tile.distance_to_ocean = math.sqrt(tile.distance_to_ocean)
         if tile.basin >= 0 and tile.altitude < 200:
@@ -319,9 +322,8 @@ def fix_basins(map: dict[int, Tile]):
         basin_tiles = [t for t in map.values() if t.basin == tile_id]
         for t in basin_tiles:
             t.basin = -1
-        if (n + 1) / len(basin_values) > progression + 1:
+        if (n + 1) / len(basin_values) > progression + 0.01:
             progression += 0.01
-            print(f"{int(progression * 100)}% of basins fixed")
 
 
 def generate_rivers(map: dict[int, Tile]):
@@ -400,18 +402,18 @@ def generate_wind(map: dict[int, Tile]):
         tile.wind = 0
     for tile in map.values():
         if tile.altitude <= -750:
-            tile.wind += 0.35
+            tile.wind += np.random.uniform(0.25, 0.4)
         elif tile.altitude <= 0:
-            tile.wind += 0.1
+            tile.wind += np.random.uniform(0.05, 0.2)
         else:
             if tile.altitude > 2000:
-                tile.wind += 0.1
+                tile.wind += np.random.uniform(0.05, 0.15)
             neighbors = tile.get_neighbors(map)
             if all([tile.altitude > neighbor.altitude for neighbor in neighbors]):
-                tile.wind += 0.15
+                tile.wind += 0.2
 
         x, y = tile.square_coordinates
-        tile.wind += 1.5 * abs(pnoise2(2 * x / noise_scale, 2 * y / noise_scale, octaves=3, base=noise_seed + 1))
+        tile.wind += 2 * abs(pnoise2(2 * x / noise_scale, 2 * y / noise_scale, octaves=3, base=noise_seed + 1))
         tile.wind = min(1, tile.wind)
         if tile.type not in ["land", "mountain", "hill", "shallow_ocean", "deep_ocean"]:
             tile.wind = None
@@ -488,35 +490,36 @@ def save_map(map: dict[int, Tile]):
         pickle.dump(map_data_min, f)
 
 
-# Map Generation code sequence:
-print("Generating empty tiles...")
-hexmap = generate_map()
-print("Generating oceans...")
-generate_oceans(hexmap)
-print("Tracing regions...")
-trace_regions(hexmap)
-print("Generating mountains...")
-generate_mountains(hexmap)
-print("Checking for basins...")
-check_for_basins(hexmap)
-print("Fixing basins...")
-fix_basins(hexmap)
-print("Checking for basins again...")
-check_for_basins(hexmap)
-print("Generating rivers...")
-generate_rivers(hexmap)
-print("Assigning tile types...")
-assign_types(hexmap)
-print("Generating solar potential...")
-generate_solar(hexmap)
-print("Generating wind potential...")
-generate_wind(hexmap)
-print("Generating coal reserves...")
-generate_coal(hexmap)
-print("Generating gas reserves...")
-generate_gas(hexmap)
-print("Generating uranium reserves...")
-generate_uranium(hexmap)
-print("Saving map...")
-save_map(hexmap)
-print("Map generation complete.")
+def generate_entire_map():
+    # Map Generation code sequence:
+    print("Generating empty tiles...")
+    hexmap = generate_map()
+    print("Generating oceans...")
+    generate_oceans(hexmap)
+    print("Tracing regions...")
+    trace_regions(hexmap)
+    print("Generating mountains...")
+    generate_mountains(hexmap)
+    print("Checking for basins...")
+    check_for_basins(hexmap)
+    fix_basins(hexmap)
+    print("Checking for basins again...")
+    check_for_basins(hexmap)
+    print("Generating rivers...")
+    generate_rivers(hexmap)
+    print("Assigning tile types...")
+    assign_types(hexmap)
+    print("Generating solar potential...")
+    generate_solar(hexmap)
+    print("Generating wind potential...")
+    generate_wind(hexmap)
+    print("Generating coal reserves...")
+    generate_coal(hexmap)
+    print("Generating gas reserves...")
+    generate_gas(hexmap)
+    print("Generating uranium reserves...")
+    generate_uranium(hexmap)
+    print("Saving map...")
+    save_map(hexmap)
+    print("Map generation complete.")
+    return hexmap
