@@ -35,6 +35,10 @@ class Tile:
         self.flow_direction: tuple[int, int] = None
         self.region: int = None
         self.type: str = None
+        self.distance_to_ocean: float = 1000
+        self.square_coordinates: tuple[float, float] = cubic_to_square_coordinates(
+            self.coordinates[0], self.coordinates[1]
+        )
 
     def get_neighbors(self, map) -> list[int]:
         """Return the neighbors of the tile."""
@@ -44,12 +48,6 @@ class Tile:
             if neighbor_id in map:
                 neighbors.append(map[neighbor_id])
         return neighbors
-
-    def square_coordinates(self) -> tuple[float, float]:
-        """Return the real coordinates of the tile."""
-        x = np.sqrt(3) * (self.coordinates[0] + 0.5 * self.coordinates[1])
-        y = 1.5 * self.coordinates[1]
-        return (x, y)
 
     def __lt__(self, other):
         """Define the less-than operator for tiles based on their IDs."""
@@ -72,6 +70,13 @@ def id_to_coordinates(tile_id: int) -> tuple[int, int]:
     q = sgn(edge + 2) * layer + sgn(edge + 4) * position
     r = sgn(edge) * layer + sgn(edge + 2) * position
     return (q, r)
+
+
+def cubic_to_square_coordinates(q: int, r: int) -> tuple[float, float]:
+    """Convert the q and r coordinates of a tile to its square coordinates."""
+    x = np.sqrt(3) * (q + 0.5 * r)
+    y = 1.5 * r
+    return (x, y)
 
 
 def coordinates_to_id(q: int, r: int) -> int:
@@ -100,6 +105,29 @@ def generate_map() -> list[Tile]:
         tile = Tile(tile_id)
         map[tile_id] = tile
     return map
+
+
+def generate_oceans(map: dict[int, Tile]):
+    """Generate oceans using a large perlin noise with few details"""
+    for tile in map.values():
+        x, y = tile.square_coordinates
+        ocean_noise = pnoise2(0.3 * x / noise_scale, 0.3 * y / noise_scale, octaves=2, base=noise_seed)
+        ocean_noise -= max(
+            0,
+            0.04
+            * (
+                max(
+                    abs(tile.coordinates[0] - tile.coordinates[1]),
+                    abs(tile.coordinates[0] + 2 * tile.coordinates[1]),
+                    abs(2 * tile.coordinates[0] + tile.coordinates[1]),
+                )
+                - 1.4 * map_radius
+            ),
+        )
+        if ocean_noise < -0.3:
+            tile.altitude = np.interp(ocean_noise, [-1, -0.3], [altitude_min, 0])
+        else:
+            tile.altitude = np.interp(ocean_noise, [-0.3, 1], [0, 0.5 * altitude_max])
 
 
 def trace_regions(map: dict[int, Tile]):
@@ -135,6 +163,16 @@ def trace_regions(map: dict[int, Tile]):
                 "politics": map[coordinates_to_id(center_tile.coordinates[0], center_tile.coordinates[1] + 1)],
                 "News": map[coordinates_to_id(center_tile.coordinates[0] + 1, center_tile.coordinates[1])],
             }
+            # if one of the tiles has an altitude < 0 adjust the local altitude:
+            if any(tile.altitude < 0 for tile in center_tiles.values()):
+                for tile in region_tiles:
+                    square_distance_to_nearest_center = (
+                        tile.square_coordinates[0] - center_tile.square_coordinates[0]
+                    ) ** 2 + (tile.square_coordinates[1] - center_tile.square_coordinates[1]) ** 2
+                    tile.altitude = max(
+                        tile.altitude,
+                        200 - 20 * square_distance_to_nearest_center + np.random.uniform(0, 200),
+                    )
             for type, tile in center_tiles.items():
                 tile.type = type
                 tile.altitude += 10**6
@@ -165,41 +203,20 @@ def trace_regions(map: dict[int, Tile]):
         map.pop(tile_id)
 
 
-def generate_oceans(map: dict[int, Tile]):
-    """Generate oceans using a large perlin noise with few details"""
-    for tile in map.values():
-        x, y = tile.square_coordinates()
-        ocean_noise = pnoise2(0.3 * x / noise_scale, 0.3 * y / noise_scale, octaves=2, base=noise_seed) - max(
-            0,
-            0.04
-            * (
-                max(
-                    abs(tile.coordinates[0] - tile.coordinates[1]),
-                    abs(tile.coordinates[0] + 2 * tile.coordinates[1]),
-                    abs(2 * tile.coordinates[0] + tile.coordinates[1]),
-                )
-                - 1.4 * map_radius
-            ),
-        )
-        if ocean_noise < -0.25:
-            tile.altitude = np.interp(ocean_noise, [-1, -0.25], [altitude_min, 0])
-        else:
-            tile.altitude = np.interp(ocean_noise, [-0.25, 1], [0, 0.5 * altitude_max])
-
-
 def generate_mountains(map: dict[int, Tile]) -> float:
     """Generate mountains onn the continent using 2D perlin noise."""
     for tile in map.values():
         if tile.altitude > 0:
-            x, y = tile.square_coordinates()
+            x, y = tile.square_coordinates
             mult = min(1, 10 * tile.altitude / altitude_max)
             terrain_noise = pnoise2(0.5 * x / noise_scale, 0.5 * y / noise_scale, octaves=6, base=noise_seed)
             # altitude = np.clip(np.interp(noise_val, [-1, 1], [2*altitude_min, 2*altitude_max]), altitude_min, altitude_max)
             altitude = (terrain_noise * 2.2) ** 2 * mult * altitude_max
-            tile.altitude = min(
-                altitude_max,
-                tile.altitude + altitude,
-            )
+            if tile.altitude < 5000:
+                tile.altitude = min(
+                    altitude_max,
+                    tile.altitude + altitude,
+                )
 
 
 def check_for_basins(map: dict[int, Tile]):
@@ -236,49 +253,55 @@ def check_for_basins(map: dict[int, Tile]):
             current = lowest_neighbor
 
 
-def dist_to_nearest_ocean(tile: Tile, map: dict[int, Tile]) -> float:
-    """Return the distance to the nearest ocean tile."""
-    x_tile, y_tile = tile.square_coordinates()
-    ocean_tiles = [t for t in map.values() if t.altitude <= 0]
-    minimum_distance = min(
-        [
-            math.sqrt((t.square_coordinates()[0] - x_tile) ** 2 + (t.square_coordinates()[1] - y_tile) ** 2)
-            for t in ocean_tiles
-        ]
-    )
-    return minimum_distance
-
-
-def a_star_basin_breach(start_tile, map: dict[int, Tile]):
-    open_set = []
-    heapq.heappush(open_set, (0, start_tile, 0))
-
-    came_from = {}
-    g_score = {start_tile: 0}
-
-    while open_set:
-        _, current, path_length = heapq.heappop(open_set)
-        if current.basin == -1 and current.altitude < start_tile.altitude - path_length:
-            # Reconstruct the path
-            path = [current]
-            while current in came_from:
-                current = came_from[current]
-                path.append(current)
-            return path[::-1]  # Return reversed path
-        for neighbor in current.get_neighbors(map):
-            elevation_diff = neighbor.altitude - current.altitude
-            step_cost = neighbor.altitude + 10 * max(0, elevation_diff) + 30
-            tenative_g_score = g_score[current] + step_cost
-            if neighbor not in g_score or tenative_g_score < g_score[neighbor]:
-                came_from[neighbor] = current
-                g_score[neighbor] = tenative_g_score
-                f_score = tenative_g_score + dist_to_nearest_ocean(neighbor, map) * 30
-                heapq.heappush(open_set, (f_score, neighbor, path_length + 1))
-
-
 def fix_basins(map: dict[int, Tile]):
     """Removes basins by forming a valley."""
+
+    def a_star_basin_breach(start_tile, map: dict[int, Tile]):
+        open_set = []
+        heapq.heappush(open_set, (0, start_tile, 0))
+
+        came_from = {}
+        g_score = {start_tile: 0}
+
+        while open_set:
+            _, current, path_length = heapq.heappop(open_set)
+            if current.basin == -1 and current.altitude < start_tile.altitude - path_length:
+                # Reconstruct the path
+                path = [current]
+                while current in came_from:
+                    current = came_from[current]
+                    path.append(current)
+                return path[::-1]  # Return reversed path
+            for neighbor in current.get_neighbors(map):
+                elevation_diff = neighbor.altitude - current.altitude
+                step_cost = neighbor.altitude + 10 * max(0, elevation_diff) + 30
+                tenative_g_score = g_score[current] + step_cost
+                if neighbor not in g_score or tenative_g_score < g_score[neighbor]:
+                    came_from[neighbor] = current
+                    g_score[neighbor] = tenative_g_score
+                    f_score = tenative_g_score + neighbor.distance_to_ocean * 30
+                    heapq.heappush(open_set, (f_score, neighbor, path_length + 1))
+
+    # Calculate the distance to the nearest ocean for each tile
+    ocean_tiles = [t for t in map.values() if t.altitude <= 0]
+    for tile in ocean_tiles:
+        tile.distance_to_ocean = 0
+        neighbors = tile.get_neighbors(map)
+        if all([t.altitude <= 0 for t in neighbors]):
+            ocean_tiles.remove(tile)
+    for tile in ocean_tiles:
+        for tile in map.values():
+            if tile.altitude <= 0:
+                continue
+            x_tile, y_tile = tile.square_coordinates
+            x_ocean, y_ocean = tile.square_coordinates
+            tile.distance_to_ocean = min(
+                tile.distance_to_ocean,
+                (x_tile - x_ocean) ** 2 + (y_tile - y_ocean) ** 2,
+            )
+
     for tile in map.values():
+        tile.distance_to_ocean = math.sqrt(tile.distance_to_ocean)
         if tile.basin >= 0 and tile.altitude < 200:
             tile.altitude = 200 + np.random.uniform(0, 200)
     check_for_basins(map)
@@ -287,6 +310,7 @@ def fix_basins(map: dict[int, Tile]):
         if tile.basin >= 0:
             basin_values.add(tile.basin)
     basin_values = sorted(basin_values, key=lambda x: map[x].altitude)
+    progression = 0
     for n, tile_id in enumerate(basin_values):
         path = a_star_basin_breach(map[tile_id], map)
         for i, tile in enumerate(path):
@@ -295,7 +319,9 @@ def fix_basins(map: dict[int, Tile]):
         basin_tiles = [t for t in map.values() if t.basin == tile_id]
         for t in basin_tiles:
             t.basin = -1
-        print(f"Fixed basin {tile_id} with {len(path)} tiles ({n}/{len(basin_values)})")
+        if (n + 1) / len(basin_values) > progression + 1:
+            progression += 0.01
+            print(f"{int(progression * 100)}% of basins fixed")
 
 
 def generate_rivers(map: dict[int, Tile]):
@@ -373,7 +399,7 @@ def generate_wind(map: dict[int, Tile]):
     for tile in map.values():
         tile.wind = 0
     for tile in map.values():
-        if tile.altitude <= 750:
+        if tile.altitude <= -750:
             tile.wind += 0.35
         elif tile.altitude <= 0:
             tile.wind += 0.1
@@ -384,8 +410,8 @@ def generate_wind(map: dict[int, Tile]):
             if all([tile.altitude > neighbor.altitude for neighbor in neighbors]):
                 tile.wind += 0.15
 
-        x, y = tile.square_coordinates()
-        tile.wind += abs(pnoise2(2 * x / noise_scale, 2 * y / noise_scale, octaves=3, base=noise_seed + 1))
+        x, y = tile.square_coordinates
+        tile.wind += 1.5 * abs(pnoise2(2 * x / noise_scale, 2 * y / noise_scale, octaves=3, base=noise_seed + 1))
         tile.wind = min(1, tile.wind)
         if tile.type not in ["land", "mountain", "hill", "shallow_ocean", "deep_ocean"]:
             tile.wind = None
@@ -394,7 +420,7 @@ def generate_wind(map: dict[int, Tile]):
 def generate_coal(map: dict[int, Tile]):
     """Generate coal reserves."""
     for tile in map.values():
-        x, y = tile.square_coordinates()
+        x, y = tile.square_coordinates
         coal_noise = (pnoise2(0.5 * x / noise_scale, 0.5 * y / noise_scale, octaves=1, base=noise_seed + 2) * 1.5) ** 2
         coal_noise += abs(pnoise2(3 * x / noise_scale, 3 * y / noise_scale, octaves=4, base=noise_seed + 3)) * 0.5
         tile.coal = min(1, coal_noise)
@@ -405,7 +431,7 @@ def generate_coal(map: dict[int, Tile]):
 def generate_gas(map: dict[int, Tile]):
     """Generate gas reserves."""
     for tile in map.values():
-        x, y = tile.square_coordinates()
+        x, y = tile.square_coordinates
         gas_noise = (pnoise2(0.5 * x / noise_scale, y / noise_scale, octaves=2, base=noise_seed + 4) * 2) ** 2
         tile.gas = min(1, gas_noise)
         if tile.type not in ["land", "hill"]:
@@ -415,7 +441,7 @@ def generate_gas(map: dict[int, Tile]):
 def generate_uranium(map: dict[int, Tile]):
     """Generate uranium reserves."""
     for tile in map.values():
-        x, y = tile.square_coordinates()
+        x, y = tile.square_coordinates
         uranium_noise = (abs(pnoise2(x / noise_scale, y / noise_scale, octaves=5, base=noise_seed + 5)) * 2.5) ** 3
         uranium_noise = (
             uranium_noise
@@ -440,6 +466,7 @@ def save_map(map: dict[int, Tile]):
             "gas": tile.gas,
             "uranium": tile.uranium,
             "region": tile.region,
+            "type": tile.type,
         }
         for tile in map.values()
     }
@@ -466,10 +493,10 @@ print("Generating empty tiles...")
 hexmap = generate_map()
 print("Generating oceans...")
 generate_oceans(hexmap)
-print("Generating mountains...")
-generate_mountains(hexmap)
 print("Tracing regions...")
 trace_regions(hexmap)
+print("Generating mountains...")
+generate_mountains(hexmap)
 print("Checking for basins...")
 check_for_basins(hexmap)
 print("Fixing basins...")
