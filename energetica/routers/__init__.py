@@ -45,63 +45,6 @@ all_routers = [
 ]
 
 
-def log_action(func: Callable) -> Callable:
-    """Log all endpoint actions of the players."""
-
-    @wraps(func)
-    async def wrapper(*args: Any, **kwargs: Any) -> Any:
-        # Look for Request in args or kwargs
-        request: Request | None = None
-
-        for arg in args:
-            if isinstance(arg, Request):
-                request = arg
-                break
-        if request is None:
-            request = kwargs.get("request", None)
-
-        if request is None:
-            raise ValueError("No request to intercept in log action")
-
-        if request.method != "POST":
-            return func(*args, **kwargs)
-
-        start = datetime.now()
-        try:
-            with engine.lock:
-                response_object = await func(*args, **kwargs)
-            print(response)
-            # status_code = response.status_code # TODO: Fix status codes
-            status_code = 200
-        except GameError as game_exception:
-            response, status_code = ({"response": game_exception.exception_type, **game_exception.kwargs}), 403
-
-        log_entry = {
-            "timestamp": start.isoformat(),
-            "elapsed": (datetime.now() - start).total_seconds(),
-            "ip": request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown"),
-            "action_type": "request",
-            "player_id": 0,  # TODO: Address this
-            "request": {
-                "endpoint": request.url.path,
-                "content_type": request.headers["content-type"],
-                # "content": (await request.json() if request.is_json else request.form.to_dict()),
-                "content": (await request.json()),  # TODO: Possibly deal with forms
-            },
-            "response": {
-                "status_code": status_code,
-                "content_type": response.content_type if isinstance(response, Response) else str(type(response)),
-                "content": (response.json if response.is_json else response.data.decode("utf-8"))
-                if isinstance(response, Response)
-                else response,
-            },
-        }
-        engine.log_action(log_entry)
-        return response
-
-    return wrapper
-
-
 # TODO: migrate all these routes to native FastAPI routes
 todo_router = APIRouter(prefix="", tags=["deprecated"])
 
@@ -346,7 +289,6 @@ def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  
 
 
 @todo_router.post("/choose_location")
-@log_action
 async def choose_location(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Set the location for the player."""
     request_data = await request.json()
@@ -357,7 +299,6 @@ async def choose_location(user: Annotated[Player, Depends(get_current_user)], re
 
 
 @todo_router.post("/request_queue_project")
-@log_action
 async def request_queue_project(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Start a construction or research project for the player."""
     request_data = await request.json()
@@ -389,7 +330,6 @@ async def request_queue_project(user: Annotated[Player, Depends(get_current_user
 
 
 @todo_router.post("/request_cancel_project")
-@log_action
 async def request_cancel_project(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Cancel an ongoing projects."""
     request_data = await request.json()
@@ -417,7 +357,6 @@ async def request_cancel_project(user: Annotated[Player, Depends(get_current_use
 
 
 @todo_router.post("/request_toggle_pause_project")
-@log_action
 async def request_pause_project(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Pause or unpause an ongoing project."""
     request_data = await request.json()
@@ -435,7 +374,6 @@ async def request_pause_project(user: Annotated[Player, Depends(get_current_user
 
 
 @todo_router.post("/request_decrease_project_priority")
-@log_action
 async def request_decrease_project_priority(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Change the order of ongoing projects."""
     request_data = await request.json()
@@ -453,7 +391,6 @@ async def request_decrease_project_priority(user: Annotated[Player, Depends(get_
 
 
 @todo_router.post("/request_upgrade_facility")
-@log_action
 async def request_upgrade_facility(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Upgrade a facility."""
     request_data = await request.json()
@@ -466,7 +403,6 @@ async def request_upgrade_facility(user: Annotated[Player, Depends(get_current_u
 
 
 @todo_router.post("/request_upgrade_all_of_type")
-@log_action
 async def request_upgrade_all_of_type(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Upgrade all facilities of a certain type."""
     request_data = await request.json()
@@ -478,7 +414,6 @@ async def request_upgrade_all_of_type(user: Annotated[Player, Depends(get_curren
 
 
 @todo_router.post("/request_dismantle_facility")
-@log_action
 async def request_dismantle_facility(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Dismantle a facility."""
     request_data = await request.json()
@@ -497,7 +432,6 @@ async def request_dismantle_facility(user: Annotated[Player, Depends(get_current
 
 
 @todo_router.post("/request_dismantle_all_of_type")
-@log_action
 async def request_dismantle_all_of_type(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Dismantle all facilities of a certain type."""
     request_data = await request.json()
@@ -507,7 +441,6 @@ async def request_dismantle_all_of_type(user: Annotated[Player, Depends(get_curr
 
 
 @todo_router.post("/change_network_prices")
-@log_action
 async def change_network_prices(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Change the prices for anything on the network."""
     if not user.is_in_network:
@@ -525,7 +458,6 @@ async def change_network_prices(user: Annotated[Player, Depends(get_current_user
 
 
 @todo_router.post("/request_change_facility_priority")
-@log_action
 async def request_change_facility_priority(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Change the generation priority."""
     if not user.achievements["network"]:

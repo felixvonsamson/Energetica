@@ -1,16 +1,20 @@
 #!/usr/bin/env -S python3 -u
 """Launch the game."""
 
+import json
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import AsyncGenerator, Awaitable, Callable
 
 import socketio
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.responses import JSONResponse
 
 from energetica import create_app
+from energetica.auth import get_current_user
 from energetica.flask_app import flask_app
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -19,7 +23,7 @@ from energetica.schemas.common import GameErrorResponse
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):  # noqa: ANN201
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     create_app()
     for router in all_routers:
         app.include_router(router, prefix="/api/v1")
@@ -33,8 +37,6 @@ async def lifespan(app: FastAPI):  # noqa: ANN201
     app.mount("/", WSGIMiddleware(flask_app))
     yield
 
-
-print("TWICE")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -52,6 +54,87 @@ async def global_exception_handler(request: Request, exc: GameError) -> JSONResp
     """Handle global game exceptions."""
     content = GameErrorResponse(exception_type=exc.exception_type)
     return JSONResponse(content=content.model_dump(), status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@app.middleware("")
+async def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    # Restrict access to the API during the simulation.
+    if (
+        engine.serve_local
+        and request.method == "POST"
+        and request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "")
+        != "127.0.0.1"
+    ):
+        return Response(status_code=503, content="Service temporarily unavailable. Please try again in a few seconds")
+
+    # GET requests can be served immediately
+    if request.method != "POST" or request.url.path == "/socket.io/":
+        response = await call_next(request)
+        return response
+
+    start = datetime.now()
+
+    # Request body is read-once only - store it
+    body_bytes = await request.body()
+
+    # Reattach body for downstream consumers (endpoint handlers)
+    async def receive() -> dict:
+        return {"type": "http.request", "body": body_bytes, "more_body": False}
+
+    request = Request(request.scope, receive=receive)
+
+    with engine.lock:
+        response = await call_next(request)
+
+    # Try to decode the request and response
+    try:
+        request_content = json.loads(body_bytes.decode())
+    except Exception:
+        request_content = "unparsable or not JSON"
+
+    # Buffer the response body
+    response_body = b""
+    async for chunk in response.__dict__.get("body_iterator", []):
+        response_body += chunk
+
+    # Rebuild the response so FastAPI can send it
+    new_response = Response(
+        content=response_body,
+        status_code=response.status_code,
+        headers=response.headers,
+        media_type=response.media_type,
+    )
+
+    try:
+        response_content = json.loads(response_body.decode())
+    except Exception:
+        response_content = "unparsable"
+
+    try:
+        user = get_current_user(request)
+        player_id = user.id
+    except HTTPException:
+        player_id = None
+
+    log_entry = {
+        "timestamp": start.isoformat(),
+        "elapsed": (datetime.now() - start).total_seconds(),
+        "ip": request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
+        "action_type": "request",
+        "player_id": player_id,
+        "request": {
+            "endpoint": request.url.path,
+            "content_type": request.headers["content-type"],
+            "content": request_content,
+        },
+        "response": {
+            "status_code": response.status_code,
+            "content_type": response.headers.get("content-type", "unknown"),
+            "content": response_content,
+        },
+    }
+    engine.log_action(log_entry)
+    return new_response
 
 
 # if __name__ == "__main__":
