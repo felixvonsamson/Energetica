@@ -18,4 +18,3 @@ def add_handlers(sio, flask_app):
             if sid in user.socketio_clients:
                 user.socketio_clients.remove(sid)
                 return
-                return

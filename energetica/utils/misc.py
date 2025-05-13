@@ -6,7 +6,6 @@ import pickle
 from datetime import datetime, timedelta
 
 import numpy as np
-from flask import flash
 from noise import pnoise3
 from scipy.stats import norm
 
@@ -22,11 +21,6 @@ from energetica.globals import engine
 from energetica.utils.astro import DrHI
 
 # Helper functions and data initialization utilities
-
-
-def flash_error(msg: str) -> None:
-    """Flash an error message."""
-    return flash(msg, category="error")
 
 
 def add_player_to_data(player: Player) -> None:

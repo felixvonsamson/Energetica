@@ -38,7 +38,6 @@ MAIN_EVENT_LOOP = asyncio.get_event_loop()
 globals.engine = engine
 
 from energetica.api.app_services import register_app_services
-from energetica.api.http import http
 from energetica.api.socketio_handlers import add_handlers
 from energetica.auth import auth
 from energetica.database.player import Player
@@ -213,7 +212,6 @@ def create_app(
     flask_app.register_blueprint(wiki, url_prefix="/wiki")
     flask_app.register_blueprint(changelog, url_prefix="/")
     flask_app.register_blueprint(auth, url_prefix="/")
-    flask_app.register_blueprint(http, url_prefix="/api/")
 
     # initialize login manager
     login_manager = LoginManager()
