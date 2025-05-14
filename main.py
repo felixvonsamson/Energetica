@@ -107,9 +107,9 @@ if __name__ == "__main__":
         help="Path to the SSL certificate file",
     )
     parser.add_argument(
-        "--disable_signins",
+        "--disable_signups",
         action="store_true",
-        help="Disable sign-ins if game is played with a fixed set of players.",
+        help="Disable sign-ups if game is played with a fixed set of players.",
     )
 
     kwargs = vars(parser.parse_args())

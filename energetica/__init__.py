@@ -108,7 +108,7 @@ def create_app(
     simulate_till: int | None = None,
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
-    disable_signins: bool = False,
+    disable_signups: bool = False,
 ) -> tuple[SocketIO, Flask]:
     """Set up the app and the game engine."""
     if simulate_checkpoint_ticks is None:
@@ -182,7 +182,7 @@ def create_app(
             kwargs["start_date"] = datetime.fromisoformat(kwargs["start_date"])
             engine.init_instance(**kwargs)
         else:
-            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, disable_signins)
+            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, disable_signups)
 
     action_id_by_tick = {
         action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"
