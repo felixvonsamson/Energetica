@@ -128,3 +128,33 @@ def sign_up() -> Any:
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", engine=engine, user=current_user)
+
+
+@auth.route("/change-password", methods=["POST"])
+@login_required
+def change_password() -> Any:
+    """Allow users to change their password."""
+    old_password = request.form.get("old_password")
+    new_password = request.form.get("new_password")
+    confirm_new_password = request.form.get("confirm_new_password")
+
+    if not old_password or not new_password or not confirm_new_password:
+        flash("All fields are required.", category="error")
+        return redirect(url_for("views.settings"))
+
+    if not check_password_hash(current_user.pwhash, old_password):
+        flash("Old password is incorrect.", category="error")
+        return redirect(url_for("views.settings"))
+
+    if new_password != confirm_new_password:
+        flash("New passwords do not match.", category="error")
+        return redirect(url_for("views.settings"))
+
+    if len(new_password) < 7:
+        flash("New password must be at least 7 characters long.", category="error")
+        return redirect(url_for("views.settings"))
+
+    current_user.pwhash = generate_password_hash(new_password, method="scrypt")
+    engine.log(f"{current_user.username} changed their password")
+    flash("Password changed successfully!", category="message")
+    return redirect(url_for("views.settings"))

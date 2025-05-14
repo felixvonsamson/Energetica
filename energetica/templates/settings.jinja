@@ -56,4 +56,43 @@
     </div>
   </div>
 </div>
+
+<div class="padding"></div>
+  <button class="button2 padding medium notification_button" onclick="document.getElementById('change_password_form').classList.remove('hidden');">
+    Change Password
+  </button>
+</div>
+
+<div id="change_password_form" class="popup bone flex-col medium hidden">
+  <div class="flex-row align-items-center notification_title">
+    <div class="large txt_center flex-grow-1">Change Password</div>
+    <div onclick="document.getElementById('change_password_form').classList.add('hidden');"
+          class="cross pine"
+          style="width:39px">×</div>
+  </div>
+  <form method="post" action="/change-password" class="padding-large">
+    <label for="old_password">Old Password</label>
+    <input type="password"
+            class="input medium"
+            id="old_password"
+            name="old_password"
+            placeholder="Enter old password" />
+    <label for="new_password">New Password</label>
+    <input type="password"
+            class="input medium"
+            id="new_password"
+            name="new_password"
+            placeholder="Enter new password" />
+    <label for="confirm_new_password">Confirm New Password</label>
+    <input type="password"
+            class="input medium"
+            id="confirm_new_password"
+            name="confirm_new_password"
+            placeholder="Confirm new password" />
+    <div class="flex-center">
+      <button type="submit" class="green login-button padding medium margin">Change Password</button>
+    </div>
+  </form>
+</div>
+
 {% endblock content %}
