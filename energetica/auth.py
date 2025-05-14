@@ -81,6 +81,10 @@ def is_valid_hash_format(hash_string: str) -> bool:
 @auth.route("/sign-up", methods=["GET", "POST"])
 def sign_up() -> Any:
     """Create a new account."""
+    if engine.disable_signins:
+        flash("Sign-ups are disabled.", category="error")
+        return redirect(url_for("auth.login"))
+
     if request.method == "POST":
         username = request.form.get("username")
         if not username:

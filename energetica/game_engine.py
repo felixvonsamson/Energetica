@@ -49,6 +49,7 @@ class GameEngine(object):
 
         self.uuid: uuid.UUID = None  # type: ignore[assignment]
         self.random_seed: int = None  # type: ignore[assignment]
+        self.disable_signins: bool = False
         self.total_t: int = None  # type: ignore[assignment]
         self.start_date: datetime = None  # type: ignore[assignment]
         self.first_tick_time: datetime = None  # type: ignore[assignment]
@@ -79,6 +80,7 @@ class GameEngine(object):
         clock_time: int,
         in_game_seconds_per_tick: int,
         random_seed: int,
+        disable_signins: bool = False,
         start_date: datetime | None = None,
         instance_uuid: uuid.UUID | None = None,
     ) -> None:
@@ -94,6 +96,7 @@ class GameEngine(object):
 
         self.uuid = instance_uuid or uuid.uuid1()
         self.random_seed = random_seed
+        self.disable_signins = disable_signins
         self.total_t = 0  # Number of simulated game ticks since server start
         self.start_date = start_date or datetime.now()  # 0 point of server time
         self.first_tick_time = self.start_date  # will be set to the correct time later on

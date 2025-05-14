@@ -106,6 +106,11 @@ if __name__ == "__main__":
         default=None,
         help="Path to the SSL certificate file",
     )
+    parser.add_argument(
+        "--disable_signins",
+        action="store_true",
+        help="Disable sign-ins if game is played with a fixed set of players.",
+    )
 
     kwargs = vars(parser.parse_args())
     ssl_args = {"keyfile": kwargs.pop("keyfile"), "certfile": kwargs.pop("certfile")}
