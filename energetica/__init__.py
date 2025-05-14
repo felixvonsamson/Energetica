@@ -34,6 +34,7 @@ from ecdsa import NIST256p, SigningKey
 from flask_apscheduler import APScheduler
 from flask_sock import Sock
 from flask_socketio import SocketIO
+from werkzeug.security import generate_password_hash
 
 from energetica import globals
 from energetica.game_engine import GameEngine
@@ -302,6 +303,32 @@ def create_app(
 
     scheduler.start()
     atexit.register(scheduler.shutdown)
+
+    if disable_signups:
+        # if sign-ups are disabled, accounts have to be created from a file.
+        with open("players.txt", "r") as file:
+            lines = file.readlines()
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(",")
+            if len(parts) > 2:
+                raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
+            username = parts[0].strip()
+            password = parts[1].strip() if len(parts) > 1 else None
+            existing_player = next(Player.filter_by(username=username), None)
+            if existing_player:
+                engine.log(f"Player {username} already exists.")
+                continue
+            if password is None:
+                password = secrets.token_hex(4)
+            hashed_password = generate_password_hash(password, method="scrypt")
+            Player(username=username, pwhash=hashed_password)
+            with open("players_new.txt", "a") as file:
+                file.write(f"{username},{password}\n")
+            engine.log(f"Created player {username} with password {password}")
+        shutil.move("players_new.txt", "players.txt")
 
     if run_init_test_players:
         # Temporary automated player creation for testing
