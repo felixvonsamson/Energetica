@@ -51,7 +51,8 @@
     {% endblock base %}
     <!--Toasts-->
     <div id="toasts" class="toast_container">
-      {% for category, message in get_flashed_messages(with_categories=true) %}
+    {# TODO: review this in the context of migration from flask to fastapi #}
+      {# {% for category, message in get_flashed_messages(with_categories=true) %}
         {% if category == "message" %}
           <div class="toast message medium">
             <i class="fa fa-info-circle info-circle"></i>
@@ -65,7 +66,7 @@
             <span onclick="this.parentElement.style.display='none'" class="cross">×</span>
           </div>
         {% endif %}
-      {% endfor %}
+      {% endfor %} #}
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
           integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="

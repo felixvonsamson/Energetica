@@ -12,21 +12,23 @@ from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from energetica import create_app
 from energetica.auth import get_current_user
 from energetica.flask_app import flask_app
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.routers import all_routers, todo_router
+from energetica.routers import api_routers, templates_router, todo_router
 from energetica.schemas.common import GameErrorResponse
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     create_app()
-    for router in all_routers:
+    for router in api_routers:
         app.include_router(router, prefix="/api/v1")
+    app.include_router(templates_router)
     app.include_router(todo_router, prefix="/api")
 
     ssl_args = {"keyfile": None, "certfile": None}
@@ -39,6 +41,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.mount("/static", StaticFiles(directory="energetica/static"), name="static")
 
 
 @app.exception_handler(RequestValidationError)

@@ -1,13 +1,10 @@
 import pickle
-from collections.abc import Callable
 from datetime import datetime
-from functools import wraps
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated
 
 import numpy as np
 from fastapi import APIRouter, Depends, Request
-from werkzeug.wrappers import Response
 
 import energetica.utils.assets
 import energetica.utils.map_helpers
@@ -31,10 +28,11 @@ from .map import router as map_router
 from .networks import router as network_router
 from .players import router as player_router
 from .resource_market import router as resource_market_router
+from .templates import router as templates_router
 
 # from .shipments import router as shipments_router
 
-all_routers = [
+api_routers = [
     chat_router,
     daily_quiz_router,
     map_router,
@@ -43,6 +41,8 @@ all_routers = [
     resource_market_router,
     # shipments_router,
 ]
+
+templates_router
 
 
 # TODO: migrate all these routes to native FastAPI routes
@@ -174,13 +174,11 @@ def get_network_capacities(user: Annotated[Player, Depends(get_current_user)]): 
 
 
 @todo_router.get("/get_market_data")
-async def get_market_data(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+def get_market_data(user: Annotated[Player, Depends(get_current_user)], t: int):  # noqa: ANN201
     """Get the data for the market graph at a specific tick."""
     market_data = {}
     if user.network is None:
         return "", 404
-    request_data = await request.json()
-    t = int(request_data["t"])
     filename_state = f"instance/data/networks/{user.network.id}/charts/market_t{engine.total_t - t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
@@ -271,6 +269,7 @@ def get_quiz_question(user: Annotated[Player, Depends(get_current_user)]):  # no
 @todo_router.post("/submit_quiz_answer")
 async def submit_quiz_answer(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
     """Submit the daily quiz answer from a player."""
+    # TODO: even for correct answers, the frontend displays "Incorrect answer! Try again tomorrow."
     request_data = await request.json()
     answer = request_data["answer"]
     answer_correct = energetica.utils.misc.submit_quiz_answer(user, answer)

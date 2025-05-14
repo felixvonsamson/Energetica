@@ -26,7 +26,7 @@
   <p>
     Extraction Facilities are what allow players to extract fossil resources from their own tile. Each of the three 
     natural resources has a dedicated extraction facility. Unlocking these facilities requires different levels of 
-    {% if user.achievements.laboratory %}
+    {% if user and user.achievements.laboratory %}
     <a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">mineral extraction</a>
     {% else %}mineral extraction{% endif %} technology and 
     <a href="{{ url_for('views.functional_facilities', _anchor='Warehouse') }}">Warehouse</a>.
@@ -47,7 +47,7 @@
       <strong>Resource Production:</strong> Extraction speed of one facility measured in kg or tons per hour 
       (<a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game time</a>).
       The extraction speed is influenced by the extraction rate, available resources in the ground, and the level of 
-      {% if user.achievements.laboratory %}
+      {% if user and user.achievements.laboratory %}
       <a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">mineral extraction</a>
       {% else %}mineral extraction{% endif %}.
     </li>
@@ -67,7 +67,7 @@
     <i class="fa fa-angle-double-right padding"></i>\(es_i = er_i \times q_i \times 1.4^{ME} \times n_{ef,i} \)<br>
     where \(es_i\) is the extraction speed in tons/h, \(er_i\) is the base extraction rate in h\(^{-1}\), \(q_i\) is the amount of the
     resource i in the ground on the player's tile in tons, \(ME\) is the level of the technology 
-    {% if user.achievements.laboratory %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
+    {% if user and user.achievements.laboratory %}<a href="{{ url_for('views.technology', _anchor='Mineral extraction') }}">
     mineral extraction</a>{% else %}mineral extraction{% endif %}, and \(n_{ef,i}\) is the number of extraction
     facilities for the resource i owned by the player.
   </li></ul>
@@ -110,7 +110,7 @@
   <p>
     To add an offer for a specific quantity of a resource at a chosen price, users can click on the "Put on sale"
     button on the market. This offer will be displayed as a new tile on the page. The amount put up for sale is stored
-    in your warehouse but cannot be consumed until sold (visible as "on sale" in the {% if user.achievements.network %}<a href="{{ url_for('overviews.resources') }}">resource graph</a>{% else %}resource graph{% endif %}).
+    in your warehouse but cannot be consumed until sold (visible as "on sale" in the {% if user and user.achievements.network %}<a href="{{ url_for('overviews.resources') }}">resource graph</a>{% else %}resource graph{% endif %}).
   </p>
   <p>
     Once another player buys a portion of your offer, you receive the money, and the sold amount is shipped. To remove

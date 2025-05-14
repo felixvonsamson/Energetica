@@ -45,7 +45,6 @@ from energetica.flask_app import flask_app
 from energetica.init_test_players import init_test_players
 from energetica.simulate import simulate
 from energetica.utils.tick_execution import state_update
-from energetica.views import changelog, landing, location_choice_views, overviews, views, wiki
 
 
 def get_or_create_flask_secret_key() -> str:
@@ -204,13 +203,6 @@ def create_app(
 
     register_app_services(flask_app)
 
-    # add blueprints (website repositories) :
-    flask_app.register_blueprint(location_choice_views, url_prefix="/")
-    flask_app.register_blueprint(landing, url_prefix="/")
-    flask_app.register_blueprint(views, url_prefix="/")
-    flask_app.register_blueprint(overviews, url_prefix="/production_overview")
-    flask_app.register_blueprint(wiki, url_prefix="/wiki")
-    flask_app.register_blueprint(changelog, url_prefix="/")
     flask_app.register_blueprint(auth, url_prefix="/")
 
     # initialize login manager
