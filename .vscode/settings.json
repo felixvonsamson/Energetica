@@ -116,6 +116,7 @@
         "numpy",
         "onclick",
         "oninput",
+        "passlib",
         "perlin",
         "Photovoltaics",
         "pnoise",

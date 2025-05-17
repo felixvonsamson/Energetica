@@ -1,6 +1,5 @@
 """Tests for the NetworkPrices class."""
 
-from energetica import engine
 from energetica.database.engine_data import NetworkPrices
 from energetica.database.player import Player
 from energetica.enums import (
@@ -11,6 +10,7 @@ from energetica.enums import (
     WindFacilityType,
 )
 from energetica.game_error import GameError
+from energetica.globals import engine
 
 
 def test_renewables_order() -> None:

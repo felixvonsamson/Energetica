@@ -1,7 +1,6 @@
 """Module to initialize the database with test players and networks."""
 
-from werkzeug.security import generate_password_hash
-
+from energetica.auth import generate_password_hash
 from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player

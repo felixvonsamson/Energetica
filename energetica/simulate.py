@@ -8,8 +8,8 @@ from time import sleep
 from typing import Any
 
 import requests
-from werkzeug.security import generate_password_hash
 
+from energetica.auth import generate_password_hash
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.utils.tick_execution import tick
@@ -95,7 +95,7 @@ def _simulate(
         elif action["action_type"] == "create_user":
             player_id = action["player_id"]
             username = action["username"] if not simulating else f"user{player_id}"
-            pw_hash = action["pw_hash"] if not simulating else generate_password_hash("password", method="scrypt")
+            pw_hash = action["pw_hash"] if not simulating else generate_password_hash("password")
             user_sessions[player_id] = create_user(player_id, username, pw_hash)
         elif action["action_type"] == "request":
             player_id = action["player_id"]

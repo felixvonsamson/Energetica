@@ -7,57 +7,39 @@ __version__ = "0.11.1-b"
 __release_date__ = "03/02/2025"
 
 import asyncio
-import atexit
 import base64
 import glob
 import json
-import logging
 import os
 import platform
-import secrets
 import shutil
 import socket
 import tarfile
 import uuid
 from datetime import datetime
-from functools import partial
 from pathlib import Path
 from typing import Any
 
 from apscheduler.events import EVENT_JOB_EXECUTED
 from ecdsa import NIST256p, SigningKey
+from fastapi import FastAPI
 from flask_apscheduler import APScheduler
-from flask_login import LoginManager
 
 from energetica import globals
 from energetica.game_engine import GameEngine
 
 engine = GameEngine()
 
-MAIN_EVENT_LOOP = asyncio.get_event_loop()
+globals.MAIN_EVENT_LOOP = asyncio.get_event_loop()
 globals.engine = engine
 
-from energetica.api.app_services import register_app_services
-from energetica.api.socketio_handlers import add_handlers
-from energetica.auth import auth
+from energetica.app_services import register_app_services
 from energetica.database.player import Player
-from energetica.flask_app import flask_app
 from energetica.init_test_players import init_test_players
+from energetica.routers import setup_routes
 from energetica.simulate import simulate
+from energetica.socketio import setup_socketio
 from energetica.utils.tick_execution import state_update
-
-
-def get_or_create_flask_secret_key() -> str:
-    """Load or create SECRET_KEY for Flask."""
-    filepath = "instance/flask_secret_key.txt"
-    if os.path.exists(filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    else:
-        secret_key = secrets.token_hex()
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(secret_key)
-        return secret_key
 
 
 def get_or_create_vapid_keys() -> tuple[str, str]:
@@ -83,6 +65,11 @@ def get_or_create_vapid_keys() -> tuple[str, str]:
     return public_key, private_key
 
 
+# @asynccontextmanager
+# async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+#     yield
+
+
 def create_app(
     *,
     port: int = 5001,
@@ -101,8 +88,9 @@ def create_app(
     simulate_till: int | None = None,
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
-) -> None:
+) -> FastAPI:
     """Set up the app and the game engine."""
+
     if simulate_checkpoint_ticks is None:
         simulate_checkpoint_ticks = []
     # gets lock to avoid multiple instances
@@ -184,106 +172,94 @@ def create_app(
     last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
     actions_to_simulate = actions[start_action_id : last_action_id + 1]
 
+    # TODO: Migrate vapid
     # creates the app :
-    flask_app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
-    flask_app.config["VAPID_PUBLIC_KEY"], flask_app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
-    flask_app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
-    flask_app.config["engine"] = engine
+    # VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY" = get_or_create_vapid_keys()
+    # app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
 
-    @flask_app.context_processor
-    def inject_global_context() -> Any:
-        return {"app_version": __version__, "app_release_date": __release_date__}
+    # app = FastAPI(lifespan=lifespan)
+    app = FastAPI()
 
-    # initialize socketio :
-    # sio_app = None
-    import socketio
+    from energetica.auth import setup_auth
 
-    sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
-    engine.socketio = sio
+    setup_auth(app)
+    setup_socketio(app)
+    setup_routes(app)
 
-    register_app_services(flask_app)
+    # TODO: migrate register_app_services
+    # register_app_services()
 
-    flask_app.register_blueprint(auth, url_prefix="/")
-
-    # initialize login manager
-    login_manager = LoginManager()
-    login_manager.login_view = "auth.login"
-    login_manager.init_app(flask_app)
-
-    if not skip_adding_handlers:
-        add_handlers(sio, flask_app)
-
-    @login_manager.user_loader
-    def load_user(id: str) -> Player | None:  # pylint: disable=redefined-builtin
-        return Player.get(int(id))
+    ssl_args = {"keyfile": None, "certfile": None}
+    ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
 
     # initialize the schedulers and add the recurrent functions :
 
-    scheduler = APScheduler()
-    scheduler.init_app(flask_app)
+    # TODO: scheduler
+    # scheduler = APScheduler()
+    # scheduler.init_app()
 
-    add_ticks_clock = partial(
-        scheduler.add_job,
-        func=state_update,
-        id="state_update",
-        trigger="cron",
-        second=f"*/{clock_time}" if clock_time != 60 else "0",
-        misfire_grace_time=10,
-    )
-    if actions_to_simulate:
-        if simulate_file:
-            kwargs = {
-                "simulating": True,
-                "profiling": simulate_profiling,
-                "stop_on_mismatch": simulate_stop_on_mismatch,
-                "stop_on_server_error": simulate_stop_on_server_error,
-                "stop_on_assertion_error": simulate_stop_on_assertion_error,
-                "checkpoint_every_k_ticks": simulate_checkpoint_every_k_ticks,
-                "checkpoint_ticks": simulate_checkpoint_ticks,
-            }
-        else:
-            engine.action_logger.setLevel(logging.CRITICAL)
-            kwargs = {
-                "simulating": False,
-                "profiling": False,
-                "stop_on_mismatch": simulate_stop_on_mismatch,
-                "stop_on_server_error": True,
-                "stop_on_assertion_error": True,
-                "checkpoint_every_k_ticks": None,
-                "checkpoint_ticks": None,
-            }
-        scheduler.add_job(
-            func=simulate,
-            args=(
-                port,
-                actions_to_simulate,
-            ),
-            kwargs=kwargs,
-            id="replay",
-            trigger="date",
-            run_date=datetime.now(),
-        )
-        if not simulate_file:
+    # add_ticks_clock = partial(
+    #     scheduler.add_job,
+    #     func=state_update,
+    #     id="state_update",
+    #     trigger="cron",
+    #     second=f"*/{clock_time}" if clock_time != 60 else "0",
+    #     misfire_grace_time=10,
+    # )
+    # if actions_to_simulate:
+    #     if simulate_file:
+    #         kwargs = {
+    #             "simulating": True,
+    #             "profiling": simulate_profiling,
+    #             "stop_on_mismatch": simulate_stop_on_mismatch,
+    #             "stop_on_server_error": simulate_stop_on_server_error,
+    #             "stop_on_assertion_error": simulate_stop_on_assertion_error,
+    #             "checkpoint_every_k_ticks": simulate_checkpoint_every_k_ticks,
+    #             "checkpoint_ticks": simulate_checkpoint_ticks,
+    #         }
+    #     else:
+    #         engine.action_logger.setLevel(logging.CRITICAL)
+    #         kwargs = {
+    #             "simulating": False,
+    #             "profiling": False,
+    #             "stop_on_mismatch": simulate_stop_on_mismatch,
+    #             "stop_on_server_error": True,
+    #             "stop_on_assertion_error": True,
+    #             "checkpoint_every_k_ticks": None,
+    #             "checkpoint_ticks": None,
+    #         }
+    #     scheduler.add_job(
+    #         func=simulate,
+    #         args=(
+    #             port,
+    #             actions_to_simulate,
+    #         ),
+    #         kwargs=kwargs,
+    #         id="replay",
+    #         trigger="date",
+    #         run_date=datetime.now(),
+    #     )
+    #     if not simulate_file:
 
-            def job_listener(event: Any) -> None:
-                if event.job_id != "replay" or not event.retval:
-                    return
-                add_ticks_clock()
-                engine.serve_local = False
-                engine.action_logger.setLevel(logging.INFO)
-                scheduler.remove_listener(job_listener)
+    #         def job_listener(event: Any) -> None:
+    #             if event.job_id != "replay" or not event.retval:
+    #                 return
+    #             add_ticks_clock()
+    #             engine.serve_local = False
+    #             engine.action_logger.setLevel(logging.INFO)
+    #             scheduler.remove_listener(job_listener)
 
-            scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED)
-    elif not simulate_file:
-        add_ticks_clock()
-        engine.serve_local = False
+    #         scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED)
+    # elif not simulate_file:
+    #     add_ticks_clock()
+    #     engine.serve_local = False
 
-    scheduler.start()
-    atexit.register(scheduler.shutdown)
+    # scheduler.start()
+    # atexit.register(scheduler.shutdown)
 
     if run_init_test_players or True:  # FIXME
         # Temporary automated player creation for testing
         engine.log("running init_test_players")
         init_test_players()
 
-    return sio
+    return app

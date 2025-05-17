@@ -15,7 +15,6 @@ from flask import current_app
 from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
-from energetica import MAIN_EVENT_LOOP
 from energetica.config.achievements import achievements
 from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
@@ -34,7 +33,7 @@ from energetica.enums import (
     WindFacilityType,
     WorkerType,
 )
-from energetica.globals import engine
+from energetica.globals import MAIN_EVENT_LOOP, engine
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -138,7 +137,7 @@ class Player(DBModel, UserMixin):
             "climate_events": True,
         },
     )
-    socketio_clients: list = field(default_factory=list)
+    socketio_clients: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Post initialization method for Player."""

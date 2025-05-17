@@ -3,9 +3,9 @@
 from typing import Iterable
 
 import pytest
-from werkzeug.security import generate_password_hash
 
 from energetica import create_app
+from energetica.auth import generate_password_hash
 from energetica.database.map import HexTile
 from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.player import Player
