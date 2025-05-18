@@ -107,6 +107,13 @@ if __name__ == "__main__":
         default=None,
         help="Path to the SSL certificate file",
     )
+    parser.add_argument(
+        "--env",
+        type=str,
+        choices=["dev", "prod"],
+        help="Run the game in PROD or in DEV",
+        required=True,
+    )
 
     kwargs = vars(parser.parse_args())
     ssl_args = {"keyfile": kwargs.pop("keyfile"), "certfile": kwargs.pop("certfile")}

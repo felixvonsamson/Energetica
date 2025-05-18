@@ -13,7 +13,7 @@ import tarfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, Literal
 
 import socketio
 from flask_sock import Sock
@@ -56,6 +56,7 @@ class GameEngine(object):
         self.daily_question: dict = None  # type: ignore[assignment]
         self.question_order: list[int] = None  # type: ignore[assignment]
         self.technology_lvls: dict = None  # type: ignore[assignment]
+        self.env: Literal["dev"] | Literal["prod"] = None  # type: ignore[assignment]
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations

@@ -137,7 +137,7 @@ def test_swap_paused_and_unpaused_constructions() -> None:
     Player has one construction worker, constructions A and B are launched, A is ongoing, B is waiting.
     After decreasing the priority of the construction A, construction B should be ongoing, and A waiting.
     """
-    create_app(rm_instance=True, skip_adding_handlers=True)
+    create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     hex_tile = HexTile.getitem(1)
@@ -160,7 +160,7 @@ def test_cancel_construction() -> None:
     Setup:
     Player starts a construction and then cancels it. There should be no more constructions afterwards.
     """
-    create_app(rm_instance=True, skip_adding_handlers=True)
+    create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     hex_tile = HexTile.getitem(1)
@@ -180,7 +180,7 @@ def test_pause_construction() -> None:
     Player starts a construction and then pauses it. It should be paused.
     Then player unpauses the construction. It should be ongoing.
     """
-    create_app(rm_instance=True, skip_adding_handlers=True)
+    create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     hex_tile = HexTile.getitem(1)
@@ -202,7 +202,7 @@ def test_queue_two_pause_one() -> None:
     Setup:
     Player starts constructions A and B. Player then pauses A.
     """
-    create_app(rm_instance=True, skip_adding_handlers=True)
+    create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     hex_tile = HexTile.getitem(1)
@@ -222,7 +222,7 @@ def test_three_constructions_with_pause() -> None:
     Setup:
     Player starts constructions A, B and C. Player then pauses C, then A.
     """
-    create_app(rm_instance=True, skip_adding_handlers=True)
+    create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     player.money = 1_000_000_000
@@ -244,7 +244,7 @@ def test_three_constructions_with_pause() -> None:
 
 def test_add_two_and_cancel_one() -> None:
     """Setup: queue(1), queue(2), cancel(1)."""
-    create_app(rm_instance=True, skip_adding_handlers=True)
+    create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     player.money = 1_000_000_000
@@ -266,7 +266,7 @@ def test_technologies_pausing_propagates_requirements() -> None:
     Player starts technology A, and then technology B, which has A as a prerequisite. Pausing A should pause B.
     Here, A is mathematics, B is mechanical_engineering.
     """
-    create_app(rm_instance=True, skip_adding_handlers=True)
+    create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     player.money = 1_000_000_000
@@ -292,7 +292,7 @@ def test_math_and_building_tech() -> None:
     Setup:
     Player starts mathematics and building_technology in that order.
     """
-    create_app(rm_instance=True, skip_adding_handlers=True)
+    create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
     player = Player(username="username", pwhash=generate_password_hash("password"))
     player.money = 1_000_000_000

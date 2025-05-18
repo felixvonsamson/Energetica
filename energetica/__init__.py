@@ -18,7 +18,7 @@ import tarfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from apscheduler.events import EVENT_JOB_EXECUTED
 from ecdsa import NIST256p, SigningKey
@@ -88,9 +88,10 @@ def create_app(
     simulate_till: int | None = None,
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
+    env: Literal["dev"] | Literal["prod"],
 ) -> FastAPI:
     """Set up the app and the game engine."""
-
+    print(f"SERVER IS RUNNING IN {env} MODE")
     if simulate_checkpoint_ticks is None:
         simulate_checkpoint_ticks = []
     # gets lock to avoid multiple instances

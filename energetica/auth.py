@@ -75,7 +75,7 @@ def add_session_cookie_to_response(response: Response, player: Player) -> Respon
         key="session",
         value=token,
         httponly=True,
-        secure=False,  # TODO: MAKE THIS TRUE FOR PRODUCTION
+        secure=engine.env != "prod",
         samesite="lax",
         max_age=3600,
     )
