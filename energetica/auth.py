@@ -7,8 +7,9 @@ Defines utility functions for cookie based auth and endpoints for sign-in and si
 import os
 import secrets
 from datetime import datetime
+from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi import Depends, FastAPI, Form, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_login.exceptions import InvalidCredentialsException
@@ -82,7 +83,7 @@ def add_session_cookie_to_response(response: Response, player: Player) -> Respon
 
 
 def setup_auth(app: FastAPI) -> None:
-    @app.post("/login")
+    @app.post("/login", tags=["Authentication"])
     def login(data: OAuth2PasswordRequestForm = Depends()):
         username = data.username
         password = data.password
@@ -110,7 +111,7 @@ def setup_auth(app: FastAPI) -> None:
         #     category="error",
         # )
 
-    @app.post("/sign-up")
+    @app.post("/sign-up", tags=["Authentication"])
     def signup(request: Request, request_data: SignupData):
         """Create a new account."""
         username = request_data.username
@@ -137,18 +138,14 @@ def setup_auth(app: FastAPI) -> None:
             new_player,
         )
 
-
-# TODO
-# @auth.route("/root_login", methods=["POST"])
-# def root_login() -> Any:
-#     if request.headers.get("X-Forwarded-For", request.remote_addr) != "127.0.0.1":
-#         abort(404)
-#     user_id = request.form.get("user_id")
-#     if not user_id:
-#         abort(400, description="User ID is required.")
-#     player = Player.get(int(user_id))
-#     if player is None:
-#         abort(404, description="User not found.")
-#     login_user(player, remember=True)
-#     engine.log(f"{player.username} logged in")
-#     return "Authenticated", 200
+    @app.post("/root_login")
+    def root_login(request: Request, user_id: Annotated[int, Form()]):
+        addr = request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else None)
+        if addr is None or addr != "127.0.0.1":
+            return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+        player = Player.get(int(user_id))
+        if player is None:
+            return Response(status_code=status.HTTP_404_NOT_FOUND)
+        engine.log(f"{player.username} logged in")
+        JSONResponse("Authenticated", status_code=status.HTTP_200_OK)
+        return add_session_cookie_to_response(JSONResponse("Authenticated", status_code=status.HTTP_200_OK), player)
