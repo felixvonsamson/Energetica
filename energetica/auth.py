@@ -8,8 +8,8 @@ import os
 import secrets
 from datetime import datetime
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_login.exceptions import InvalidCredentialsException
 from itsdangerous import URLSafeTimedSerializer
@@ -17,6 +17,7 @@ from passlib.context import CryptContext
 
 from energetica.database.player import Player
 from energetica.globals import engine
+from energetica.schemas.auth import SignupData
 
 
 def get_or_create_flask_secret_key() -> str:
@@ -67,6 +68,19 @@ def get_current_user_from_token(token: str) -> Player | None:
         return None
 
 
+def add_session_cookie_to_response(response: Response, player: Player) -> Response:
+    token = serializer.dumps(player.username)
+    response.set_cookie(
+        key="session",
+        value=token,
+        httponly=True,
+        secure=False,  # TODO: MAKE THIS TRUE FOR PRODUCTION
+        samesite="lax",
+        max_age=3600,
+    )
+    return response
+
+
 def setup_auth(app: FastAPI) -> None:
     @app.post("/login")
     def login(data: OAuth2PasswordRequestForm = Depends()):
@@ -86,18 +100,7 @@ def setup_auth(app: FastAPI) -> None:
 
         engine.log(f"{username} logged in")
 
-        token = serializer.dumps(username)
-
-        response = RedirectResponse(url="/home", status_code=302)
-        response.set_cookie(
-            key="session",
-            value=token,
-            httponly=True,
-            secure=False,  # TODO: MAKE THIS TRUE FOR PRODUCTION
-            samesite="lax",
-            max_age=3600,
-        )
-        return response
+        return add_session_cookie_to_response(RedirectResponse(url="/home", status_code=302), player)
 
         # TODO: manage nice messages about old accounts
         # flash(
@@ -108,34 +111,31 @@ def setup_auth(app: FastAPI) -> None:
         # )
 
     @app.post("/sign-up")
-    def sign_up(request: Request, data: OAuth2PasswordRequestForm = Depends()):
+    def signup(request: Request, request_data: SignupData):
         """Create a new account."""
-        # TODO: rework signup
-        return status.HTTP_501_NOT_IMPLEMENTED
-        # username = data.username
-        # password = data.password
-
-        # existing_player = next(Player.filter_by(username=username), None)
-        # if existing_player:
-        #     raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
-        # # elif len(username) < 3 or len(username) > 18:
-        # #     flash("Username must be between 3 and 18 characters.", category="error")
-        # # elif not pw_hash and len(password1) < 7:
-        # #     flash("Password must be at least 7 characters.", category="error")
-        # pwhash = generate_password_hash(password)
-        # new_player = Player(username=username, pwhash=pwhash)
-        # # flash("Account created!", category="message")
-        # log_entry = {
-        #     "timestamp": datetime.now().isoformat(),
-        #     "ip": request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
-        #     "action_type": "create_user",
-        #     "player_id": new_player.id,
-        #     "username": new_player.username,
-        #     "pw_hash": new_player.pwhash,
-        # }
-        # engine.log_action(log_entry)
-        # engine.log(f"{username} created an account")
-        # return RedirectResponse("/home")
+        username = request_data.username
+        password = request_data.password
+        existing_player = next(Player.filter_by(username=username), None)
+        if existing_player:
+            raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
+        pwhash = generate_password_hash(password)
+        new_player = Player(username=username, pwhash=pwhash)
+        # TODO: Migrate flash message maybe
+        # flash("Account created!", category="message")
+        log_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "ip": request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
+            "action_type": "create_user",
+            "player_id": new_player.id,
+            "username": new_player.username,
+            "pw_hash": new_player.pwhash,
+        }
+        engine.log_action(log_entry)
+        engine.log(f"{username} created an account")
+        return add_session_cookie_to_response(
+            JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED),
+            new_player,
+        )
 
 
 # TODO

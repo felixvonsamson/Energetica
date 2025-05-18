@@ -15,7 +15,7 @@
     <a href="{{ url_for('landing.landing_page') }}" class="no_deco medium">Learn more about Energetica</a>
   </div>
   <div class="login_box">
-    <form method="post" class="tan_green padding-large medium">
+    <form id="signup-form" class="tan_green padding-large medium">
       <div class="huge txt_center">Sign up</div>
       <label for="username">Username</label>
       <input type="text"
@@ -39,6 +39,36 @@
         <button type="submit" class="white login-button padding medium margin">Submit</button>
       </div>
     </form>
+    <script>
+    document.getElementById("signup-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      if (form.password1.value != form.password2.value) {
+        alert("Passwords to not match");
+        return;
+      }
+      const payload = {
+        username: form.username.value,
+        password: form.password1.value,
+      };
+
+      const res = await fetch("/sign-up", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert("Signup failed: " + error.detail);
+        return;
+      }
+      
+      window.location.href = "/location_choice";
+    });
+    </script>
     <div class="margin medium txt_center">- OR -</div>
     <div class="white login-button padding medium txt_center"
          onclick="window.location.href = '/login';">Login</div>

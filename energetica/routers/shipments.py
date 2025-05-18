@@ -7,7 +7,7 @@
 # from energetica.database.shipment import OngoingShipment
 # from energetica.schemas.shipments import ShipmentList
 
-# router = APIRouter(prefix="/shipments", tags=["shipments"])
+# router = APIRouter(prefix="/shipments", tags=["Shipment"])
 
 
 # @router.get("")

@@ -161,7 +161,7 @@ api_routers = [
 
 
 # TODO: migrate all these routes to native FastAPI routes
-todo_router = APIRouter(prefix="", tags=["deprecated"])
+todo_router = APIRouter(prefix="", tags=["Flask Migration"])
 
 
 @todo_router.post("/request_delete_notification")

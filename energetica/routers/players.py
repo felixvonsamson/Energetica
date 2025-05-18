@@ -7,7 +7,7 @@ from energetica.database.player import Player
 from energetica.routers.chats import router
 from energetica.schemas.players import PlayerOut, SettingsRequest
 
-router = APIRouter(prefix="/players", tags=["players"])
+router = APIRouter(prefix="/players", tags=["Player"])
 
 
 @router.get("/me")

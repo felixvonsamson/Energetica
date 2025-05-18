@@ -8,7 +8,7 @@ from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.schemas.resource_market import AskCreate, AskList, AskOut, PurchaseOrderCreate
 from energetica.utils.resource_market import buy_resource_from_market, put_resource_on_market
 
-router = APIRouter(prefix="/resource_market", tags=["resource_market"])
+router = APIRouter(prefix="/resource_market", tags=["Resource Market"])
 
 
 @router.get("/asks")

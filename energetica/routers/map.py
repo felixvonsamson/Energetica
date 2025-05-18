@@ -8,7 +8,7 @@ from energetica.database.player import Player
 from energetica.schemas.map import HexTileOut
 from energetica.utils import map_helpers
 
-router = APIRouter(prefix="/map", tags=["map"])
+router = APIRouter(prefix="/map", tags=["Map"])
 
 
 @router.get("")

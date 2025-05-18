@@ -13,7 +13,7 @@ from energetica.auth import get_current_user
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 
-router = APIRouter(prefix="", tags=["Templates"])
+router = APIRouter(prefix="", tags=["Pages"])
 
 
 def flask_style_url_for(request: Request, name: str, **params: Any) -> URL:

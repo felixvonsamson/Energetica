@@ -8,7 +8,7 @@ from energetica.database.player import Player
 from energetica.schemas.networks import NetworkIn, NetworkList, NetworkOut
 from energetica.utils import network_helpers
 
-router = APIRouter(prefix="/networks", tags=["networks"])
+router = APIRouter(prefix="/networks", tags=["Network"])
 
 
 @router.get("")
