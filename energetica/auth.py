@@ -6,7 +6,7 @@ Defines utility functions for cookie based auth and endpoints for sign-in and si
 
 import os
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, Response, status
@@ -19,6 +19,8 @@ from passlib.context import CryptContext
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.schemas.auth import SignupData
+
+COOKIE_MAX_AGE = timedelta(days=60).seconds  # NOTE: this could be made into a command line argument in the future
 
 
 def get_or_create_flask_secret_key() -> str:
@@ -63,7 +65,7 @@ def get_current_user_from_request(request: Request) -> Player | None:
 
 def get_current_user_from_token(token: str) -> Player | None:
     try:
-        username = serializer.loads(token, max_age=3600)
+        username = serializer.loads(token, max_age=COOKIE_MAX_AGE)
         return next(Player.filter_by(username=username), None)
     except Exception:
         return None
@@ -77,7 +79,7 @@ def add_session_cookie_to_response(response: Response, player: Player) -> Respon
         httponly=True,
         secure=engine.env != "prod",
         samesite="lax",
-        max_age=3600,
+        max_age=COOKIE_MAX_AGE,
     )
     return response
 
