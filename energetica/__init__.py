@@ -7,7 +7,6 @@ __version__ = "0.11.1-b"
 __release_date__ = "03/02/2025"
 
 import asyncio
-import base64
 import glob
 import json
 import logging
@@ -25,7 +24,6 @@ from typing import Any, AsyncGenerator, Literal
 
 from apscheduler.events import EVENT_JOB_EXECUTED
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from ecdsa import NIST256p, SigningKey
 from fastapi import FastAPI
 
 from energetica import globals
@@ -42,29 +40,6 @@ from energetica.routers import setup_routes
 from energetica.simulate import simulate
 from energetica.socketio import setup_socketio
 from energetica.utils.tick_execution import state_update
-
-
-def get_or_create_vapid_keys() -> tuple[str, str]:
-    """Load or create VAPID key pair for push notifications."""
-    public_key_filepath = "instance/vapid_public_key.txt"
-    private_key_filepath = "instance/vapid_private_key.txt"
-    if Path(public_key_filepath).exists() and Path(private_key_filepath).exists():
-        public_key = Path(public_key_filepath).read_text(encoding="utf-8").strip()
-        private_key = Path(private_key_filepath).read_text(encoding="utf-8").strip()
-        return public_key, private_key
-    # Generate a new ECDSA key pair
-    private_key_obj = SigningKey.generate(curve=NIST256p)
-    public_key_obj = private_key_obj.get_verifying_key()
-
-    # Encode the keys using URL- and filename-safe base64 without padding
-    private_key = base64.urlsafe_b64encode(private_key_obj.to_string()).rstrip(b"=").decode("utf-8")
-    public_key = base64.urlsafe_b64encode(b"\x04" + public_key_obj.to_string()).rstrip(b"=").decode("utf-8")
-
-    # Write the keys to their respective files
-    Path(public_key_filepath).write_text(public_key, encoding="utf-8")
-    Path(private_key_filepath).write_text(private_key, encoding="utf-8")
-
-    return public_key, private_key
 
 
 def create_app(
@@ -246,9 +221,7 @@ def create_app(
     setup_auth(app)
     setup_socketio(app)
     setup_routes(app)
-
-    # TODO: migrate register_app_services
-    # register_app_services()
+    register_app_services(app)
 
     ssl_args = {"keyfile": None, "certfile": None}
     ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
