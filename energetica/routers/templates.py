@@ -143,7 +143,7 @@ def render_network(  # noqa: ANN201
 ):
     # TODO:
     # if not current_user.achievements["network"]:
-    #     return redirect("/home", code=302)
+    #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse(request=request, name="network.jinja")
 
 
@@ -170,7 +170,7 @@ def render_technology(  # noqa: ANN201
 ):
     # TODO
     # if not current_user.achievements["laboratory"]:
-    #     return redirect("/home", code=302)
+    #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
     # TODO: missing context: available_technologies=current_user.technologies_data
     return templates.TemplateResponse(request=request, name="assets/technologies.jinja")
 
@@ -198,7 +198,7 @@ def render_resource_market(  # noqa: ANN201
 ):
     # TODO:
     # if not current_user.achievements["warehouse"]:
-    #     return redirect("/home", code=302)
+    #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse(request=request, name="resource_market.jinja")
 
 
@@ -249,7 +249,7 @@ def render_emissions(  # noqa: ANN201
 ):
     # TODO:
     # if not current_user.discovered_greenhouse_gas_effect():
-    #     return redirect("/home", code=302)
+    #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse(request=request, name="overviews/emissions.jinja")
 
 

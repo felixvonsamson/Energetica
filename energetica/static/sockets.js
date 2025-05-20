@@ -11,6 +11,7 @@ socket.on("infoMessage", addToast);
 
 socket.on("errorMessage", addError);
 
+// TODO: rename this function
 function send_json(endpoint, body) {
     return fetch(endpoint, {
         method: "POST",

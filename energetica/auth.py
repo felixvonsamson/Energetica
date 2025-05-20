@@ -20,7 +20,7 @@ from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.schemas.auth import SignupData
 
-COOKIE_MAX_AGE = timedelta(days=60).seconds  # NOTE: this could be made into a command line argument in the future
+COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a command line argument in the future
 
 
 def get_or_create_flask_secret_key() -> str:
@@ -77,7 +77,7 @@ def add_session_cookie_to_response(response: Response, player: Player) -> Respon
         key="session",
         value=token,
         httponly=True,
-        secure=engine.env != "prod",
+        secure=engine.env != "dev",
         samesite="lax",
         max_age=COOKIE_MAX_AGE,
     )
@@ -113,6 +113,7 @@ def setup_auth(app: FastAPI) -> None:
         #     category="error",
         # )
 
+    # TODO: relocate endpoint to sign-up as this is standard
     @app.post("/sign-up", tags=["Authentication"])
     def signup(request: Request, request_data: SignupData):
         """Create a new account."""

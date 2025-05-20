@@ -163,7 +163,7 @@ def create_app(
             kwargs["start_date"] = datetime.fromisoformat(kwargs["start_date"])
             engine.init_instance(**kwargs)
         else:
-            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed)
+            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env)
 
     action_id_by_tick = {
         action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"

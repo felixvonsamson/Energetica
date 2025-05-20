@@ -7,6 +7,7 @@ from typing import Annotated, Awaitable, Callable
 
 import numpy as np
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -36,16 +37,25 @@ from .players import router as player_router
 from .resource_market import router as resource_market_router
 from .templates import router as templates_router
 
-# from .shipments import router as shipments_router
+
+class SocketIOFilter(logging.Filter):
+    def filter(self, record):
+        return "/socket.io/" not in record.getMessage()
+
+
+logging.getLogger("uvicorn.access").addFilter(SocketIOFilter())
 
 
 def setup_routes(app: FastAPI):
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
-        exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
-        logging.error(f"{request}: {exc_str}")
-        content = {"status_code": 10422, "message": exc_str, "data": None}
-        return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        return JSONResponse(
+            content={
+                "detail": jsonable_encoder(exc.errors()),
+                "meta": {"error_type": "request_validation_error"},
+            },
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
 
     @app.exception_handler(GameError)
     async def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
@@ -63,7 +73,8 @@ def setup_routes(app: FastAPI):
             != "127.0.0.1"
         ):
             return Response(
-                status_code=503, content="Service temporarily unavailable. Please try again in a few seconds"
+                status_code=503,
+                content="Service temporarily unavailable. Please try again in a few seconds",
             )
 
         # GET requests can be served immediately
@@ -73,7 +84,7 @@ def setup_routes(app: FastAPI):
             if path.startswith("/api") or request.url.path == "/socket.io/":
                 return response
             if response.status_code == status.HTTP_401_UNAUTHORIZED:
-                return RedirectResponse(url="/login", status_code=302)
+                return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
             return response
 
         start = datetime.now()
