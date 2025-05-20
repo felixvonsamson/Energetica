@@ -63,26 +63,10 @@
 
         if (!response.ok) {
           const response_body = await response.json();
-          const {meta, detail} = response_body
-          // TODO abstract this into a utility function
-          if (meta?.error_type === "request_validation_error" && Array.isArray(detail)) {
-            const formattedMessages = detail.map(item => {
-              const field = item.loc?.[item.loc.length - 1] || "Field";
-              const capitalisedField = field.charAt(0).toUpperCase() + field.slice(1);
-
-              const msgWithoutPrefix = item.msg.includes(" ")
-              ? item.msg.split(" ").slice(1).join(" ")
-              : item.msg;
-
-              return `${capitalisedField} ${msgWithoutPrefix}.`;
-            });
-            addError(formattedMessages.join("<br>"));
-            return;
-          }
+          if (catch_validation_error(response_body)) return;
           addError(response_body.detail);
           return;
         }
-
         window.location.href = "/location_choice";
       });
     </script>

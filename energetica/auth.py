@@ -9,18 +9,18 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Form, HTTPException, Request, Response, status
-from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi_login.exceptions import InvalidCredentialsException
+from fastapi import FastAPI, Form, HTTPException, Request, Response, status
+from fastapi.responses import JSONResponse
 from itsdangerous import URLSafeTimedSerializer
 from passlib.context import CryptContext
 
 from energetica.database.player import Player
 from energetica.globals import engine
-from energetica.schemas.auth import SignupData
+from energetica.schemas.auth import LoginData, SignupData
 
 COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a command line argument in the future
+
+InvalidCredentialsException = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
 
 def get_or_create_flask_secret_key() -> str:
@@ -86,9 +86,9 @@ def add_session_cookie_to_response(response: Response, player: Player) -> Respon
 
 def setup_auth(app: FastAPI) -> None:
     @app.post("/login", tags=["Authentication"])
-    def login(data: OAuth2PasswordRequestForm = Depends()):
-        username = data.username
-        password = data.password
+    def login(request_data: LoginData):
+        username = request_data.username
+        password = request_data.password
 
         if not username or not password:
             raise InvalidCredentialsException
@@ -103,7 +103,10 @@ def setup_auth(app: FastAPI) -> None:
 
         engine.log(f"{username} logged in")
 
-        return add_session_cookie_to_response(RedirectResponse(url="/home", status_code=302), player)
+        return add_session_cookie_to_response(
+            JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK),
+            player,
+        )
 
         # TODO: manage nice messages about old accounts
         # flash(
