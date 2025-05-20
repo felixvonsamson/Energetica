@@ -145,11 +145,6 @@ def create_app(
     last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
     actions_to_simulate = actions[start_action_id : last_action_id + 1]
 
-    # TODO: Migrate vapid
-    # creates the app :
-    # VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY" = get_or_create_vapid_keys()
-    # app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
-
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # initialize the schedulers and add the recurrent functions :

@@ -386,13 +386,12 @@ class Player(DBModel, UserMixin):
             audience = "https://fcm.googleapis.com"
             if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
                 audience = "https://updates.push.services.mozilla.com"
-            current_app.config["VAPID_CLAIMS"]["aud"] = audience
             try:
                 webpush(
                     subscription_info=subscription,
                     data=json.dumps(notification_data),
                     vapid_private_key=current_app.config["VAPID_PRIVATE_KEY"],
-                    vapid_claims=current_app.config["VAPID_CLAIMS"],
+                    vapid_claims={"sub": "mailto:dgaf@gmail.com", "aud": audience},
                 )
             except WebPushException as ex:
                 engine.warn(f"Failed to send notification: {repr(ex)}")
