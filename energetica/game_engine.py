@@ -13,11 +13,10 @@ import tarfile
 import uuid
 from datetime import datetime
 from pathlib import Path
+from threading import RLock
 from typing import TYPE_CHECKING, Any, Callable, Literal
 
 import socketio
-from flask_sock import Sock
-from gevent.lock import RLock
 
 from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
@@ -26,8 +25,6 @@ from energetica.enums import Fuel, Renewable
 # This is the engine object
 class GameEngine(object):
     """Run the game engine. Contains all the data and methods to operate the game."""
-
-    sock: Sock
 
     def __init__(self) -> None:
         """Initialize the game engine object."""
