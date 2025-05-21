@@ -23,9 +23,9 @@ COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a com
 InvalidCredentialsException = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
 
-def get_or_create_flask_secret_key() -> str:
-    """Load or create SECRET_KEY for Flask."""
-    filepath = "instance/flask_secret_key.txt"
+def get_or_create_secret_key() -> str:
+    """Load or create SECRET_KEY for signing cookies."""
+    filepath = "instance/secret_key.txt"
     if os.path.exists(filepath):
         with open(filepath, "r", encoding="utf-8") as f:
             return f.read().strip()
@@ -37,7 +37,7 @@ def get_or_create_flask_secret_key() -> str:
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = get_or_create_flask_secret_key()
+SECRET_KEY = get_or_create_secret_key()
 serializer = URLSafeTimedSerializer(SECRET_KEY)
 
 

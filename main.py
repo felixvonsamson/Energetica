@@ -122,14 +122,4 @@ if __name__ == "__main__":
     app = create_app(**kwargs)
     uvicorn.run(app)
 
-    # """Initializes mock app."""
-    # if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
-    #     from flask import Flask
-    #     from flask_socketio import SocketIO
-
-    #     app = Flask(__name__)
-    #     socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
-    # else:
-    #     socketio, app = create_app(**kwargs)
-
     # socketio.run(app, debug=True, log_output=False, host="0.0.0.0", port=kwargs["port"], **ssl_args)
