@@ -9,7 +9,7 @@ from starlette.requests import Request
 from starlette.templating import Jinja2Templates
 
 from energetica import __release_date__, __version__, engine
-from energetica.auth import get_current_user, get_current_user_from_request
+from energetica.auth import get_current_user_from_request
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 
@@ -36,10 +36,7 @@ def flask_style_url_for(request: Request, name: str, **params: Any) -> URL:
 
 def app_context(request: Request) -> dict[str, Any]:
     # TODO: add user injection on per view case
-    try:
-        user = get_current_user(request)
-    except HTTPException:
-        user = None
+    user = get_current_user_from_request(request)
     return {
         "engine": engine,
         "user": user,
@@ -81,7 +78,9 @@ def render_signup(request: Request):  # noqa: ANN201
 
 
 @router.get("/logout", response_class=HTMLResponse, name="auth.logout")
-def logout(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def logout(user: Annotated[Player, Depends(get_current_user_from_request)]):  # noqa: ANN201
+    if user is None:
+        return RedirectResponse("/login")
     # TODO: review this
     engine.log(f"{user.username} logged out")
     # logout_user()
@@ -93,32 +92,40 @@ def logout(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
 @router.get("/location_choice", response_class=HTMLResponse)
 def render_location_choice(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     if user.tile is not None:
         return RedirectResponse("/home")  # TODO double check this works correctly
     return templates.TemplateResponse(request=request, name="location_choice.jinja")
 
 
 @router.get("/home", response_class=HTMLResponse, name="views.home")
-def render_dashboard(request: Request, user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    if isinstance(user, RedirectResponse):
-        return user
+def render_dashboard(request: Request, user: Annotated[Player, Depends(get_current_user_from_request)]):  # noqa: ANN201
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="dashboard.jinja")
 
 
 @router.get("/settings", response_class=HTMLResponse, name="views.settings")
-def render_settings(request: Request, user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def render_settings(request: Request, user: Annotated[Player, Depends(get_current_user_from_request)]):  # noqa: ANN201
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="settings.jinja")
 
 
 @router.get("/map_view", response_class=HTMLResponse, name="views.map_view")
-def render_map(request: Request, user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def render_map(request: Request, user: Annotated[Player, Depends(get_current_user_from_request)]):  # noqa: ANN201
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="map.jinja")
 
 
 @router.get("/profile", response_class=HTMLResponse, name="views.profile")
-def render_profile(request: Request, user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def render_profile(request: Request, user: Annotated[Player, Depends(get_current_user_from_request)]):  # noqa: ANN201
+    if user is None:
+        return RedirectResponse("/login")
     # TODO:
     # @views.route("/profile")
     # def profile() -> str:
@@ -140,8 +147,10 @@ def render_profile(request: Request, user: Annotated[Player, Depends(get_current
 @router.get("/messages", response_class=HTMLResponse, name="views.messages")
 def render_chats(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     chats = list(Chat.filter(lambda chat: user in chat.participants))
     return templates.TemplateResponse(request=request, context={"chats": chats}, name="messages.jinja")
 
@@ -149,8 +158,10 @@ def render_chats(  # noqa: ANN201
 @router.get("/network", response_class=HTMLResponse, name="views.network")
 def render_network(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     # TODO:
     # if not current_user.achievements["network"]:
     #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
@@ -160,24 +171,30 @@ def render_network(  # noqa: ANN201
 @router.get("/power_facilities", response_class=HTMLResponse, name="views.power_facilities")
 def render_power_facilities(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="assets/power_facilities.jinja")
 
 
 @router.get("/storage_facilities", response_class=HTMLResponse, name="views.storage_facilities")
 def render_storage_facilities(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="assets/storage_facilities.jinja")
 
 
 @router.get("/technology", response_class=HTMLResponse, name="views.technology")
 def render_technology(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     # TODO
     # if not current_user.achievements["laboratory"]:
     #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
@@ -188,24 +205,30 @@ def render_technology(  # noqa: ANN201
 @router.get("/functional_facilities", response_class=HTMLResponse, name="views.functional_facilities")
 def render_functional_facilities(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="assets/functional_facilities.jinja")
 
 
 @router.get("/extraction_facilities", response_class=HTMLResponse, name="views.extraction_facilities")
 def render_extraction_facilities(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="assets/extraction_facilities.jinja")
 
 
 @router.get("/resource_market", response_class=HTMLResponse, name="views.resource_market")
 def render_resource_market(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     # TODO:
     # if not current_user.achievements["warehouse"]:
     #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
@@ -215,48 +238,60 @@ def render_resource_market(  # noqa: ANN201
 @router.get("/scoreboard", response_class=HTMLResponse, name="views.scoreboard")
 def render_scoreboard(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="scoreboard.jinja")
 
 
 @router.get("/revenues", response_class=HTMLResponse, name="overviews.revenues")
 def render_revenues(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="overviews/revenues.jinja")
 
 
 @router.get("/electricity", response_class=HTMLResponse, name="overviews.electricity")
 def render_electricity(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="overviews/electricity.jinja")
 
 
 @router.get("/storage", response_class=HTMLResponse, name="overviews.storage")
 def render_storage(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="overviews/storage.jinja")
 
 
 @router.get("/resources", response_class=HTMLResponse, name="overviews.resources")
 def render_resources(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     return templates.TemplateResponse(request=request, name="overviews/resources.jinja")
 
 
 @router.get("/emissions", response_class=HTMLResponse, name="overviews.emissions")
 def render_emissions(  # noqa: ANN201
     request: Request,
-    user: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[Player, Depends(get_current_user_from_request)],
 ):
+    if user is None:
+        return RedirectResponse("/login")
     # TODO:
     # if not current_user.discovered_greenhouse_gas_effect():
     #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
