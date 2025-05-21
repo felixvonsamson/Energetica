@@ -101,6 +101,7 @@
         "isnot",
         "isort",
         "itertuples",
+        "jsonable",
         "jsonify",
         "lacunarity",
         "LCOE",

@@ -120,6 +120,5 @@ if __name__ == "__main__":
     ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
 
     app = create_app(**kwargs)
-    uvicorn.run(app)
-
-    # socketio.run(app, debug=True, log_output=False, host="0.0.0.0", port=kwargs["port"], **ssl_args)
+    uvicorn.run(app, host="0.0.0.0", port=kwargs["port"], **ssl_args)
+    # reload=(kwargs["env"] == "dev"),

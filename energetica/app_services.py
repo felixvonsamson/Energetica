@@ -50,7 +50,7 @@ def register_app_services(app: FastAPI) -> None:
     @app.get("/subscribe")
     async def get_vapid_key(request: Request) -> JSONResponse:
         """Return VAPID public key."""
-        return JSONResponse(content={"public_key": VAPID_PUBLIC_KEY})
+        return JSONResponse(content={"public_key": engine.VAPID_PUBLIC_KEY})
 
     @app.post("/subscribe")
     async def subscribe(
