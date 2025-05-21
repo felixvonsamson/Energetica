@@ -39,7 +39,7 @@ from .templates import router as templates_router
 
 
 class SocketIOFilter(logging.Filter):
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord):
         return "/socket.io/" not in record.getMessage()
 
 

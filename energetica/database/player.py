@@ -633,7 +633,7 @@ class Player(DBModel):
                     / sum(f.max_power_generation for f in group),
                     "hourly_op_cost": self.capacities[group_name]["O&M_cost"] * ticks_per_hour,
                     "remaining_lifespan": min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
-                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable and f.upgrade_cost is not None)
                     if any(f.is_upgradable for f in group)
                     else None,
                     "dismantle_cost": sum(f.dismantle_cost for f in group),
@@ -691,7 +691,7 @@ class Player(DBModel):
                     "remaining_lifespan": None
                     if all(f.decommissioning for f in group)
                     else min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
-                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable and f.upgrade_cost is not None)
                     if any(f.is_upgradable for f in group)
                     else None,
                     "dismantle_cost": None
@@ -738,7 +738,7 @@ class Player(DBModel):
                     "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
                     "max_power_use": sum(f.max_power_use for f in group),
                     "remaining_lifespan": min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
-                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable and f.upgrade_cost is not None)
                     if any(f.is_upgradable for f in group)
                     else None,
                     "dismantle_cost": sum(f.dismantle_cost for f in group),
