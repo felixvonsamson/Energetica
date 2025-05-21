@@ -54,6 +54,8 @@ class GameEngine(object):
         self.question_order: list[int] = None  # type: ignore[assignment]
         self.technology_lvls: dict = None  # type: ignore[assignment]
         self.env: Literal["dev"] | Literal["prod"] = None  # type: ignore[assignment]
+        self.VAPID_PUBLIC_KEY: str = None  # type: ignore[assignment]
+        self.VAPID_PRIVATE_KEY: str = None  # type: ignore[assignment]
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations

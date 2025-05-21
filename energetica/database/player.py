@@ -11,8 +11,6 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any
 from warnings import deprecated
 
-from flask import current_app
-from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements
@@ -51,7 +49,7 @@ if TYPE_CHECKING:
 
 @dataclass
 # TODO (Felix): add @dataclass(eq=False) on all classes
-class Player(DBModel, UserMixin):
+class Player(DBModel):
     """Class that stores the users and their data."""
 
     # Authentication :
@@ -390,7 +388,7 @@ class Player(DBModel, UserMixin):
                 webpush(
                     subscription_info=subscription,
                     data=json.dumps(notification_data),
-                    vapid_private_key=current_app.config["VAPID_PRIVATE_KEY"],
+                    vapid_private_key=engine.VAPID_PRIVATE_KEY,
                     vapid_claims={"sub": "mailto:dgaf@gmail.com", "aud": audience},
                 )
             except WebPushException as ex:

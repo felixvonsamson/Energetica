@@ -5,6 +5,7 @@ from typing import Dict, cast
 from ecdsa import NIST256p, SigningKey, VerifyingKey
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
+from globals import engine
 from pydantic import BaseModel
 
 from energetica.auth import get_current_user
@@ -34,7 +35,7 @@ def get_or_create_vapid_keys() -> tuple[str, str]:
     return public_key, private_key
 
 
-VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY = get_or_create_vapid_keys()
+engine.VAPID_PUBLIC_KEY, engine.VAPID_PRIVATE_KEY = get_or_create_vapid_keys()
 
 # TODO: move schemas, relocate endpoints for REST compliance / standard location compliance
 
