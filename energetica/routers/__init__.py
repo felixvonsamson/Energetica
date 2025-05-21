@@ -139,7 +139,7 @@ def setup_routes(app: FastAPI):
             "player_id": player_id,
             "request": {
                 "endpoint": request.url.path,
-                "content_type": request.headers["content-type"],
+                "content_type": request.headers.get("content-type"),
                 "content": request_content,
             },
             "response": {
