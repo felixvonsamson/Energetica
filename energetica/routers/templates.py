@@ -35,7 +35,6 @@ def flask_style_url_for(request: Request, name: str, **params: Any) -> URL:
 
 
 def app_context(request: Request) -> dict[str, Any]:
-    # TODO: add user injection on per view case
     user = get_current_user_from_request(request)
     return {
         "engine": engine,
@@ -51,7 +50,6 @@ templates = Jinja2Templates(directory="energetica/templates", context_processors
 print("Current working directory:", os.getcwd())
 
 
-# TODO: add a redirect on / for users not logged in
 @router.get("/")
 def default_redirect(
     request: Request,
@@ -81,9 +79,7 @@ def render_signup(request: Request):  # noqa: ANN201
 def logout(user: Annotated[Player, Depends(get_current_user_from_request)]):  # noqa: ANN201
     if user is None:
         return RedirectResponse("/login")
-    # TODO: review this
     engine.log(f"{user.username} logged out")
-    # logout_user()
     response = RedirectResponse("/login")
     response.delete_cookie("session", path="/")
     return response
@@ -97,7 +93,7 @@ def render_location_choice(  # noqa: ANN201
     if user is None:
         return RedirectResponse("/login")
     if user.tile is not None:
-        return RedirectResponse("/home")  # TODO double check this works correctly
+        return RedirectResponse("/home")
     return templates.TemplateResponse(request=request, name="location_choice.jinja")
 
 
@@ -162,9 +158,8 @@ def render_network(  # noqa: ANN201
 ):
     if user is None:
         return RedirectResponse("/login")
-    # TODO:
-    # if not current_user.achievements["network"]:
-    #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
+    if not user.achievements["network"]:
+        return RedirectResponse("/home")
     return templates.TemplateResponse(request=request, name="network.jinja")
 
 
@@ -195,9 +190,8 @@ def render_technology(  # noqa: ANN201
 ):
     if user is None:
         return RedirectResponse("/login")
-    # TODO
-    # if not current_user.achievements["laboratory"]:
-    #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
+    if not user.achievements["laboratory"]:
+        return RedirectResponse("/home")
     # TODO: missing context: available_technologies=current_user.technologies_data
     return templates.TemplateResponse(request=request, name="assets/technologies.jinja")
 
@@ -229,9 +223,8 @@ def render_resource_market(  # noqa: ANN201
 ):
     if user is None:
         return RedirectResponse("/login")
-    # TODO:
-    # if not current_user.achievements["warehouse"]:
-    #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
+    if not user.achievements["warehouse"]:
+        return RedirectResponse("/home")
     return templates.TemplateResponse(request=request, name="resource_market.jinja")
 
 
@@ -292,9 +285,8 @@ def render_emissions(  # noqa: ANN201
 ):
     if user is None:
         return RedirectResponse("/login")
-    # TODO:
-    # if not current_user.discovered_greenhouse_gas_effect():
-    #     return redirect("/home", code=status.HTTP_303_SEE_OTHER)
+    if not user.discovered_greenhouse_gas_effect():
+        return RedirectResponse("/home")
     return templates.TemplateResponse(request=request, name="overviews/emissions.jinja")
 
 
