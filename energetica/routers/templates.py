@@ -170,7 +170,11 @@ def render_power_facilities(  # noqa: ANN201
 ):
     if user is None:
         return RedirectResponse("/login")
-    return templates.TemplateResponse(request=request, name="assets/power_facilities.jinja")
+    return templates.TemplateResponse(
+        request=request,
+        name="assets/power_facilities.jinja",
+        context={"constructions": user.power_facilities_data},
+    )
 
 
 @router.get("/storage_facilities", response_class=HTMLResponse, name="views.storage_facilities")
@@ -180,7 +184,11 @@ def render_storage_facilities(  # noqa: ANN201
 ):
     if user is None:
         return RedirectResponse("/login")
-    return templates.TemplateResponse(request=request, name="assets/storage_facilities.jinja")
+    return templates.TemplateResponse(
+        request=request,
+        name="assets/storage_facilities.jinja",
+        context={"constructions": user.storage_facilities_data},
+    )
 
 
 @router.get("/technology", response_class=HTMLResponse, name="views.technology")
@@ -192,8 +200,11 @@ def render_technology(  # noqa: ANN201
         return RedirectResponse("/login")
     if not user.achievements["laboratory"]:
         return RedirectResponse("/home")
-    # TODO: missing context: available_technologies=current_user.technologies_data
-    return templates.TemplateResponse(request=request, name="assets/technologies.jinja")
+    return templates.TemplateResponse(
+        request=request,
+        name="assets/technologies.jinja",
+        context={"available_technologies": user.technologies_data},
+    )
 
 
 @router.get("/functional_facilities", response_class=HTMLResponse, name="views.functional_facilities")
@@ -203,7 +214,11 @@ def render_functional_facilities(  # noqa: ANN201
 ):
     if user is None:
         return RedirectResponse("/login")
-    return templates.TemplateResponse(request=request, name="assets/functional_facilities.jinja")
+    return templates.TemplateResponse(
+        request=request,
+        name="assets/functional_facilities.jinja",
+        context={"constructions": user.functional_facilities_data},
+    )
 
 
 @router.get("/extraction_facilities", response_class=HTMLResponse, name="views.extraction_facilities")
@@ -213,7 +228,11 @@ def render_extraction_facilities(  # noqa: ANN201
 ):
     if user is None:
         return RedirectResponse("/login")
-    return templates.TemplateResponse(request=request, name="assets/extraction_facilities.jinja")
+    return templates.TemplateResponse(
+        request=request,
+        name="assets/extraction_facilities.jinja",
+        context={"constructions": user.extraction_facilities_data},
+    )
 
 
 @router.get("/resource_market", response_class=HTMLResponse, name="views.resource_market")
