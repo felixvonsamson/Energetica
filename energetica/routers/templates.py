@@ -9,7 +9,7 @@ from starlette.requests import Request
 from starlette.templating import Jinja2Templates
 
 from energetica import __release_date__, __version__, engine
-from energetica.auth import get_current_user
+from energetica.auth import get_current_user, get_current_user_from_request
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 
@@ -55,6 +55,16 @@ print("Current working directory:", os.getcwd())
 
 
 # TODO: add a redirect on / for users not logged in
+@router.get("/")
+def default_redirect(
+    request: Request,
+    user: Annotated[Player, Depends(get_current_user_from_request)],
+) -> RedirectResponse:
+    if user:
+        return RedirectResponse("/home")
+    return RedirectResponse("/landing")
+
+
 @router.get("/landing", response_class=HTMLResponse, name="landing.landing_page")
 def landing(request: Request):  # noqa: ANN201
     return templates.TemplateResponse(request=request, name="landing.jinja")

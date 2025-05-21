@@ -5,11 +5,11 @@ from typing import Dict, cast
 from ecdsa import NIST256p, SigningKey, VerifyingKey
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
-from globals import engine
 from pydantic import BaseModel
 
 from energetica.auth import get_current_user
 from energetica.database.player import Player
+from energetica.globals import engine
 
 
 def get_or_create_vapid_keys() -> tuple[str, str]:
