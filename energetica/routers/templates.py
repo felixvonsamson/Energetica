@@ -1,7 +1,7 @@
 import os
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.datastructures import URL
@@ -119,25 +119,21 @@ def render_map(request: Request, user: Annotated[Player, Depends(get_current_use
 
 
 @router.get("/profile", response_class=HTMLResponse, name="views.profile")
-def render_profile(request: Request, user: Annotated[Player, Depends(get_current_user_from_request)]):  # noqa: ANN201
+def render_profile(  # noqa: ANN201
+    request: Request,
+    user: Annotated[Player, Depends(get_current_user_from_request)],
+    player_id: int | None = None,
+):
     if user is None:
         return RedirectResponse("/login")
-    # TODO:
-    # @views.route("/profile")
-    # def profile() -> str:
-    #     """
-    #     Serve the profile page.
+    if player_id is None:
+        profile = user
+    else:
+        profile = Player.get(player_id)
+        if profile is None:
+            return Response(status_code=status.HTTP_404_NOT_FOUND)
 
-    #     When players are on their own profile page, they can see more information about their account.
-    #     """
-    #     player_id_str = request.args.get("player_id")
-    #     if player_id_str is None:
-    #         player_id = current_user.id
-    #     else:
-    #         player_id = int(player_id_str)
-    #     player = Player.get(player_id)
-    #     return g.render_template_ctx("profile.jinja", profile=player)
-    return templates.TemplateResponse(request=request, name="dashboard.jinja")
+    return templates.TemplateResponse(request=request, name="profile.jinja", context={"profile": profile})
 
 
 @router.get("/messages", response_class=HTMLResponse, name="views.messages")
@@ -326,7 +322,7 @@ def render_template_wiki(request: Request, template_name: str, _anchor: str | No
         "climate_effects",
     ]
     if template_name not in valid_templates:
-        raise HTTPException(status_code=404, detail="No such wiki page")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such wiki page")
     return templates.TemplateResponse(request=request, name=f"wiki/{template_name}.jinja")
 
 
