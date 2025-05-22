@@ -132,7 +132,10 @@ if __name__ == "__main__":
         # If hot-reloading, store the kwargs in an environment variable and use hot.py as an entrypoint
         env = os.environ.copy()
         env["ENERGETICA_APP_CONFIG"] = json.dumps(kwargs)
-        subprocess.run([sys.executable, "-m", "uvicorn", "hot:app", "--reload"], env=env)
+        try:
+            subprocess.run([sys.executable, "-m", "uvicorn", "hot:app", "--reload"], env=env)
+        except KeyboardInterrupt:
+            print("[main.py] Server stopped by user (Ctrl+C)")
     else:
         # If no hot-reloading is needed, run uvicorn directly
         app = create_app(**kwargs)
