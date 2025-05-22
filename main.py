@@ -153,4 +153,4 @@ if __name__ == "__main__":
     else:
         # If no hot-reloading is needed, run uvicorn directly
         app = create_app(**kwargs)
-        uvicorn.run("main:app", host="0.0.0.0", port=kwargs["port"], **ssl_args)
+        uvicorn.run(app, host="0.0.0.0", port=kwargs["port"], **ssl_args)

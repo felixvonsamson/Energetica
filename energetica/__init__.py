@@ -72,7 +72,7 @@ def create_app(
         lock.bind("\0energetica")
 
     # Delete last checkpoint
-    if rm_instance or simulate_file or True:  # FIXME
+    if rm_instance or simulate_file:
         if os.path.exists("instance/"):
             shutil.rmtree("instance")
             print("instance folder deleted.")
@@ -208,6 +208,7 @@ def create_app(
         scheduler.start()
         yield
         scheduler.shutdown()
+        engine.save()
 
     app = FastAPI(lifespan=lifespan)
 
@@ -221,8 +222,7 @@ def create_app(
     ssl_args = {"keyfile": None, "certfile": None}
     ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
 
-    if run_init_test_players or True:  # FIXME
-        # Temporary automated player creation for testing
+    if run_init_test_players:
         engine.log("running init_test_players")
         init_test_players()
 
