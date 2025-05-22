@@ -11,7 +11,7 @@ from tests.policy import Policy
 
 def run_policies(policies: list[Policy], ticks_to_run: int) -> list[Player]:
     """Run a list of policies with one player per policy."""
-    engine.init_instance(30, 3600, 0)
+    engine.init_instance(30, 3600, 0, env="dev")
     players = [Player(f"player_{i}", "password_hash") for i in range(len(policies))]
     for player in players:
         # tile = HexTile.getitem(player.id)
