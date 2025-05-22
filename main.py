@@ -2,6 +2,10 @@
 """Launch the game."""
 
 import argparse
+import json
+import os
+import subprocess
+import sys
 
 import uvicorn
 
@@ -114,11 +118,22 @@ if __name__ == "__main__":
         help="Run the game in PROD or in DEV",
         required=True,
     )
+    parser.add_argument(
+        "--reload",
+        action="store_true",
+        help="Enable hot reloading",
+    )
 
     kwargs = vars(parser.parse_args())
     ssl_args = {"keyfile": kwargs.pop("keyfile"), "certfile": kwargs.pop("certfile")}
     ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
 
-    app = create_app(**kwargs)
-    uvicorn.run(app, host="0.0.0.0", port=kwargs["port"], **ssl_args)
-    # reload=(kwargs["env"] == "dev"),
+    if kwargs.pop("reload"):
+        # If hot-reloading, store the kwargs in an environment variable and use hot.py as an entrypoint
+        env = os.environ.copy()
+        env["ENERGETICA_APP_CONFIG"] = json.dumps(kwargs)
+        subprocess.run([sys.executable, "-m", "uvicorn", "hot:app", "--reload"], env=env)
+    else:
+        # If no hot-reloading is needed, run uvicorn directly
+        app = create_app(**kwargs)
+        uvicorn.run("main:app", host="0.0.0.0", port=kwargs["port"], reload=True, **ssl_args)
