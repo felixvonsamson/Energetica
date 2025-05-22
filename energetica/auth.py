@@ -9,10 +9,10 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Annotated
 
+import bcrypt
 from fastapi import FastAPI, Form, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from itsdangerous import URLSafeTimedSerializer
-from passlib.context import CryptContext
 
 from energetica.database.player import Player
 from energetica.globals import engine
@@ -36,17 +36,18 @@ def get_or_create_secret_key() -> str:
         return secret_key
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = get_or_create_secret_key()
 serializer = URLSafeTimedSerializer(SECRET_KEY)
 
 
-def check_password_hash(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-
 def generate_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode(), salt)
+    return hashed.decode()
+
+
+def check_password_hash(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
 
 def get_current_user(request: Request) -> Player:
