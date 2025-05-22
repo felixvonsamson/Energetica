@@ -128,8 +128,6 @@ def setup_auth(app: FastAPI) -> None:
             raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
         pwhash = generate_password_hash(password)
         new_player = Player(username=username, pwhash=pwhash)
-        # TODO: Migrate flash message maybe
-        # flash("Account created!", category="message")
         log_entry = {
             "timestamp": datetime.now().isoformat(),
             "ip": request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),

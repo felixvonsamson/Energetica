@@ -18,7 +18,6 @@ from energetica.globals import engine
 
 def setup_socketio(app: FastAPI) -> None:
     """Attach Socket.IO to the FastAPI app and handle user connections."""
-    # TODO: Pass SSL args
     sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*", logger=False)
     engine.socketio = sio
     app.mount("/socket.io", socketio.ASGIApp(engine.socketio))
