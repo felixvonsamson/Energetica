@@ -34,7 +34,7 @@ engine = GameEngine()
 globals.MAIN_EVENT_LOOP = asyncio.get_event_loop()
 globals.engine = engine
 
-from energetica.app_services import register_app_services
+from energetica.api.app_services import register_app_services
 from energetica.init_test_players import init_test_players
 from energetica.routers import setup_routes
 from energetica.simulate import simulate
@@ -63,7 +63,7 @@ def create_app(
     env: Literal["dev"] | Literal["prod"],
 ) -> FastAPI:
     """Set up the app and the game engine."""
-    print(f"SERVER IS RUNNING IN {env} MODE")
+    print(f"Server is running in {env} mode")
     if simulate_checkpoint_ticks is None:
         simulate_checkpoint_ticks = []
     # gets lock to avoid multiple instances
