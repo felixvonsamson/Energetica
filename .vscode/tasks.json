@@ -4,7 +4,7 @@
 		{
 			"label": "run server",
 			"type": "shell",
-			"command": "python main.py --env dev --reload",
+			"command": "python main.py --env dev",
 			"presentation": {
 				"clear": true
 			},
@@ -16,7 +16,7 @@
 		{
 			"label": "run server (fast clock)",
 			"type": "shell",
-			"command": "python main.py --env dev --clock_time 1 --in_game_seconds_per_tick 3600 --reload",
+			"command": "python main.py --env dev --clock_time 1 --in_game_seconds_per_tick 3600",
 			"presentation": {
 				"clear": true
 			},
@@ -28,7 +28,7 @@
 		{
 			"label": "run with init_test_players",
 			"type": "shell",
-			"command": "python main.py --env dev --rm_instance --run_init_test_players --reload",
+			"command": "python main.py --env dev --rm_instance --run_init_test_players",
 			"presentation": {
 				"clear": true,
 				"focus": true

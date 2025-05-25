@@ -119,17 +119,23 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
-        "--reload",
+        "--no-reload",
         action="store_true",
-        help="Enable hot reloading",
+        help="Disable hot reloading",
     )
 
     kwargs = vars(parser.parse_args())
     ssl_args = {"ssl_keyfile": kwargs.pop("keyfile"), "ssl_certfile": kwargs.pop("certfile")}
     ssl_args = ssl_args if ssl_args["ssl_keyfile"] and ssl_args["ssl_certfile"] else {}
 
-    if kwargs.pop("reload"):
-        # If hot-reloading, store the kwargs in an environment variable and use hot.py as an entrypoint
+    if kwargs.pop("no_reload"):
+        print("no hot reloading")
+        # If hot-reloading is disabled, run uvicorn directly
+        app = create_app(**kwargs)
+        uvicorn.run(app, host="0.0.0.0", port=kwargs["port"], **ssl_args)
+    else:
+        print("hot reloading enabled")
+        # If hot-reloading is enable, store the kwargs in an environment variable and use hot.py as an entrypoint
         env = os.environ.copy()
         env["ENERGETICA_APP_CONFIG"] = json.dumps(kwargs)
         try:
@@ -150,7 +156,3 @@ if __name__ == "__main__":
             subprocess.run(args, env=env)
         except KeyboardInterrupt:
             print("[main.py] Server stopped by user (Ctrl+C)")
-    else:
-        # If no hot-reloading is needed, run uvicorn directly
-        app = create_app(**kwargs)
-        uvicorn.run(app, host="0.0.0.0", port=kwargs["port"], **ssl_args)
