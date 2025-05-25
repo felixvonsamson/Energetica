@@ -80,7 +80,7 @@ class GameEngine(object):
         in_game_seconds_per_tick: int,
         random_seed: int,
         start_date: datetime | None = None,
-        instance_uuid: uuid.UUID | None = None,
+        instance_uuid: str | None = None,
     ) -> None:
         """Initialize the instance data / the GameEngine members."""
         from energetica.database.engine_data import EmissionData
@@ -92,7 +92,7 @@ class GameEngine(object):
         self.clock_time = clock_time
         self.in_game_seconds_per_tick = in_game_seconds_per_tick
 
-        self.uuid = instance_uuid or uuid.uuid1()
+        self.uuid = uuid.UUID(instance_uuid) or uuid.uuid1()
         self.random_seed = random_seed
         self.total_t = 0  # Number of simulated game ticks since server start
         self.start_date = start_date or datetime.now()  # 0 point of server time
@@ -100,7 +100,7 @@ class GameEngine(object):
         self.action_logger.info(
             json.dumps(
                 {
-                    "uuid": self.uuid.hex,
+                    "instance_uuid": self.uuid.hex,
                     "clock_time": self.clock_time,
                     "in_game_seconds_per_tick": self.in_game_seconds_per_tick,
                     "action_type": "init_engine",
