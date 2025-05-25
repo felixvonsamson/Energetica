@@ -92,7 +92,7 @@ class GameEngine(object):
         self.clock_time = clock_time
         self.in_game_seconds_per_tick = in_game_seconds_per_tick
 
-        self.uuid = uuid.UUID(instance_uuid) or uuid.uuid1()
+        self.uuid = uuid.uuid1() if instance_uuid is None else uuid.UUID(instance_uuid)
         self.random_seed = random_seed
         self.total_t = 0  # Number of simulated game ticks since server start
         self.start_date = start_date or datetime.now()  # 0 point of server time
