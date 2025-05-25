@@ -1,8 +1,5 @@
 """Initializes the app and the game engine."""
 
-# pylint: disable=wrong-import-order,wrong-import-position
-# ruff: noqa: E402
-
 __version__ = "0.11.1-b"
 __release_date__ = "03/02/2025"
 
