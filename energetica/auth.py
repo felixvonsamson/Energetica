@@ -96,7 +96,7 @@ def sign_up() -> Any:
             flash("Username already exist", category="error")
         elif len(username) < 3 or len(username) > 18:
             flash("Username must be between 3 and 18 characters.", category="error")
-        elif not password1 or not password2:
+        elif not pw_hash and (not password1 or not password2):
             flash("Please enter a password.", category="error")
         elif pw_hash and not is_valid_hash_format(pw_hash):
             flash("Invalid password hash format.", category="error")
@@ -121,6 +121,7 @@ def sign_up() -> Any:
             engine.log(f"{username} created an account")
             # websocket.rest_notify_scoreboard()
             # websocket.rest_notify_new_player()
+            print(f"New user created: {username} with ID {new_player.id}")
             return redirect(url_for("views.home"))
 
     return render_template("sign_up.jinja", engine=engine, user=current_user)
