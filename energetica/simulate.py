@@ -107,7 +107,6 @@ def _simulate(
                 url, **{content_type: action["request"]["content"]}, allow_redirects=False
             )
             # TODO (Yassir): mismatch if content type is not the same
-            # TODO(mglst): It would be nice to have both the expected and the actual response in the output
             if "money" in action["response"]["content"]:
                 money = action["response"]["content"]["money"]
                 real_money = Player.get(player_id).money
