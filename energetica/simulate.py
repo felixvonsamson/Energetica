@@ -108,6 +108,16 @@ def _simulate(
             )
             # TODO (Yassir): mismatch if content type is not the same
             # TODO(mglst): It would be nice to have both the expected and the actual response in the output
+            if "money" in action["response"]["content"]:
+                money = action["response"]["content"]["money"]
+                real_money = Player.get(player_id).money
+                if abs(money - real_money) > 1:
+                    print(
+                        f"""\033[31mMoney {real_money} does not match expected money """
+                        f"""{money}.\033[0m""",
+                    )
+                    if stop_on_mismatch:
+                        break
             if (
                 action["response"]["content_type"] == "application/json"
                 and response.headers["Content-Type"] == "application/json"
