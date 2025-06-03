@@ -14,7 +14,7 @@ from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.network import Network
-from energetica.database.ongoing_project import OngoingProject
+from energetica.database.ongoing_project import OngoingProject, ProjectStatus
 from energetica.database.player import Player
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
@@ -855,9 +855,8 @@ def construction_emissions(new_values: dict, player: Player) -> None:
     # Call project_emissions respectively
     # (for now this is wrong)
     emissions_of_constructions = 0.0
-    for ud in OngoingProject.filter_by(player=player):
-        if ud.is_ongoing():
-            emissions_of_constructions += ud.project_pollution
+    for ud in OngoingProject.filter_by(player=player, status=ProjectStatus.ONGOING):
+        emissions_of_constructions += ud.project_pollution
     add_emissions(new_values, player, "construction", emissions_of_constructions)
 
 
