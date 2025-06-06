@@ -9,7 +9,10 @@ from fastapi.responses import JSONResponse, RedirectResponse
 
 import energetica.utils.assets
 import energetica.utils.chat
+import energetica.utils.map_helpers
 import energetica.utils.misc
+import energetica.utils.network_helpers
+import energetica.utils.resource_market
 from energetica.auth import get_current_user
 from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
@@ -563,74 +566,13 @@ async def buy_resource(  # noqa: ANN201
     }
 
 
-@todo_router.get("/put_resource_on_sale")
-async def put_resource_on_sale(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Put a resource on sale."""
-    request_data = await request.json()
-    resource = Fuel(request_data["resource"])
-    quantity = float(request_data["quantity"])
-    price = float(request_data["price"])
-    try:
-        energetica.utils.resource_market.put_resource_on_market(user, resource, quantity * 1000, price / 1000)
-    except GameError as game_exception:
-        if game_exception.exception_type != "notEnoughResource":
-            raise
-        # TODO: flash
-        # flash_error(f"You have not enough {resource} available")
-    else:
-        # TODO: flash
-        # flash(
-        #     f"You put {quantity}t of {resource} on sale for "
-        #     f"{price}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
-        #     category="message",
-        # )
-        pass
-    # return redirect("/resource_market", code=303)
-    return RedirectResponse("/resource_market", status_code=status.HTTP_303_SEE_OTHER)
-
-
-@todo_router.get("/buy_resource")
-async def buy_resource(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Buy a resource from the market."""
-    request_data = request.json()
-    id = int(request_data["id"])
-    quantity = float(request_data["quantity"]) * 1000
-    sale = ResourceOnSale.get(id)
-    if sale is None:
-        return JSONResponse({"response": "saleNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.resource_market.buy_resource_from_market(user, quantity, sale)
-    if user == sale.player:
-        return {
-            "response": "removedFromMarket",
-            "quantity": quantity,
-            "available_quantity": sale.quantity,
-            "resource": sale.resource,
-        }
-
-    return {
-        "response": "success",
-        "resource": sale.resource,
-        "total_price": sale.price * quantity,
-        "quantity": quantity,
-        "seller": sale.player.username,
-        "available_quantity": sale.quantity,
-        "shipments": user.package_shipments(),
-    }
-
-
 @todo_router.post("join_network")
 async def join_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     request: Request,
 ):
     """Join a network."""
-    request_data = request.json()
+    request_data = await request.json()
     choose_network = int(request_data["choose_network"])
     network = energetica.utils.network_helpers.join_network(user, Network.get(choose_network))
     # TODO: flash
@@ -645,7 +587,7 @@ async def create_network(  # noqa: ANN201
     request: Request,
 ):
     """Create a network."""
-    request_data = request.json()
+    request_data = await request.json()
     network_name = str(request_data["network_name"])
     try:
         energetica.utils.network_helpers.create_network(user, network_name)
@@ -681,7 +623,7 @@ async def create_chat(  # noqa: ANN201
     request: Request,
 ):
     """Create a chat with one other player."""
-    request_data = request.json()
+    request_data = await request.json()
     buddy = Player.getitem(int(request_data["buddy_id"]))
     energetica.utils.chat.create_chat(user, None, {user, buddy})
     return {"response": "success"}
@@ -693,87 +635,10 @@ async def create_group_chat(  # noqa: ANN201
     request: Request,
 ):
     """Create a group chat."""
-    request_data = request.json()
+    request_data = await request.json()
     chat_title = str(request_data["chat_title"])
     group_members = {user, *(map(Player.getitem, map(int, request_data["group_members"])))}
     energetica.utils.chat.create_chat(user, chat_title, group_members)
-    return {"response": "success"}
-
-
-@todo_router.post("join_network")
-async def join_network(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Join a network."""
-    request_data = request.json()
-    choose_network = int(request_data["choose_network"])
-    network = energetica.utils.network_helpers.join_network(user, Network.get(choose_network))
-    # TODO: flash
-    # flash(f"You joined the network {network.name}", category="message")
-    engine.log(f"{user.username} joined the network {network.name}")
-    return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
-
-
-@todo_router.post("create_network")
-async def create_network(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Create a network."""
-    request_data = request.json()
-    network_name = str(request_data["network_name"])
-    try:
-        energetica.utils.network_helpers.create_network(user, network_name)
-    except GameError as game_exception:
-        # TODO: flash
-        # match game_exception.exception_type:
-        #     case "nameLengthInvalid":
-        #         flash("Network name must be between 3 and 40 characters", category="error")
-        #     case "nameAlreadyUsed":
-        #         flash("A network with this name already exists", category="error")
-        raise
-    # flash(f"You created the network {network_name}", category="message")
-    return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
-
-
-@todo_router.post("leave_network")
-def leave_network(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-):
-    """Leave the current network."""
-    network = user.network
-    if network is None:
-        return JSONResponse({"response": "notInNetwork"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.network_helpers.leave_network(user)
-    # TODO: flash
-    # flash(f"You left network {network.name}", category="message")
-    return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
-
-
-@todo_router.post("create_chat")
-async def create_chat(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Create a chat with one other player."""
-    request_data = request.json()
-    buddy = Player.getitem(int(request_data["buddy_id"]))
-    energetica.utils.chat.create_chat(user, None, {user, buddy})
-    return {"response": "success"}
-
-
-@todo_router.post("create_group_chat")
-async def create_group_chat(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Create a group chat."""
-    request_data = await request.json()
-    chat_title = str(request_data["chat_title"])
-    group_members = request_data["group_members"]
-    player_members = {user, *(map(Player.getitem, map(int, group_members)))}
-    energetica.utils.chat.create_chat(user, chat_title, player_members)
     return {"response": "success"}
 
 

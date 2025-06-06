@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 def hide_chat_disclaimer(player: Player) -> None:
     """Store the player's choice to not show the chat disclaimer anymore."""
-    player.show_disclaimer = False
+    player.show_chat_disclaimer = False
     #    # message = websocket.rest_get_show_chat_disclaimer(player)
     # websocket.rest_notify_player(player, message)
 
