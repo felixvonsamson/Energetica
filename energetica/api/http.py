@@ -468,8 +468,147 @@ async def request_change_facility_priority(user: Annotated[Player, Depends(get_c
     return {"response": "success"}
 
 
-@todo_router.post("/change_graph_view")
-async def change_graph_view(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+@todo_router.post("/put_resource_on_sale")  # noqa: ANN201
+def put_resource_on_sale():
+    """Put a resource on sale."""
+    # TODO: change form
+    request_data = request.form
+    resource = Fuel(request_data["resource"])
+    quantity = float(request_data["quantity"]) * 1000
+    price = float(request_data["price"]) / 1000
+    try:
+        energetica.utils.resource_market.put_resource_on_market(g.player, resource, quantity, price)
+    except GameError as game_exception:
+        if game_exception.exception_type != "notEnoughResource":
+            raise
+        flash_error(f"You have not enough {resource} available")
+    else:
+        flash(
+            f"You put {quantity / 1000}t of {resource} on sale for "
+            f"{price * 1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
+            category="message",
+        )
+    return redirect("/resource_market", code=303)
+
+
+@http.route("/buy_resource", methods=["POST"])
+@log_action
+def buy_resource() -> Response | tuple:
+    """Buy a resource from the market."""
+    request_data = request.get_json()
+    sale_id = int(request_data["id"])
+    quantity = float(request_data["quantity"]) * 1000
+    sale = ResourceOnSale.get(int(sale_id))
+    if sale is None:
+        return jsonify({"response": "saleNotFound"}), 404
+    energetica.utils.resource_market.buy_resource_from_market(g.player, quantity, sale)
+    if g.player == sale.player:
+        return jsonify(
+            {
+                "response": "removedFromMarket",
+                "quantity": quantity,
+                "available_quantity": sale.quantity,
+                "resource": sale.resource,
+            },
+        )
+    return jsonify(
+        {
+            "response": "success",
+            "resource": sale.resource,
+            "total_price": sale.price * quantity,
+            "quantity": quantity,
+            "seller": sale.player.username,
+            "available_quantity": sale.quantity,
+            "shipments": g.player.package_shipments(),
+        },
+    )
+
+
+@http.route("join_network", methods=["POST"])
+@log_action
+def join_network() -> Response:
+    """Join a network."""
+    request_data = request.form
+    network_id = int(request_data["choose_network"])
+    network = energetica.utils.network_helpers.join_network(g.player, Network.get(network_id))
+    flash(f"You joined the network {network.name}", category="message")
+    engine.log(f"{g.player.username} joined the network {network.name}")
+    return redirect("/network", code=303)
+
+
+@http.route("create_network", methods=["POST"])
+@log_action
+def create_network() -> Response:
+    """Create a network."""
+    request_data = request.form
+    network_name = request_data["network_name"]
+    try:
+        energetica.utils.network_helpers.create_network(g.player, network_name)
+    except GameError as game_exception:
+        match game_exception.exception_type:
+            case "nameLengthInvalid":
+                flash("Network name must be between 3 and 40 characters", category="error")
+            case "nameAlreadyUsed":
+                flash("A network with this name already exists", category="error")
+        raise
+    flash(f"You created the network {network_name}", category="message")
+    return redirect("/network", code=303)
+
+
+@http.route("leave_network", methods=["POST"])
+@log_action
+def leave_network() -> Response | tuple:
+    """Leave the current network."""
+    network = g.player.network
+    if network is None:
+        return jsonify({"response": "notInNetwork"}), 404
+    energetica.utils.network_helpers.leave_network(g.player)
+    flash(f"You left network {network.name}", category="message")
+    return redirect("/network", code=303)
+
+
+@http.route("hide_chat_disclaimer", methods=["GET"])
+def hide_chat_disclaimer() -> Response:
+    """Permanently hide the chat disclaimer."""
+    energetica.utils.chat.hide_chat_disclaimer(g.player)
+    return jsonify({"response": "success"})
+
+
+@http.route("create_chat", methods=["POST"])
+def create_chat() -> Response:
+    """Create a chat with one other player."""
+    request_data = request.get_json()
+    buddy_id = int(request_data["buddy_id"])
+    buddy = Player.getitem(buddy_id)
+    energetica.utils.chat.create_chat(g.player, None, {g.player, buddy})
+    return jsonify({"response": "success"})
+
+
+@http.route("create_group_chat", methods=["POST"])
+def create_group_chat() -> Response:
+    """Create a group chat."""
+    request_data = request.get_json()
+    chat_title = request_data["chat_title"]
+    group_members = {g.player, *(map(Player.getitem, map(int, request_data["group_members"])))}
+    energetica.utils.chat.create_chat(g.player, chat_title, group_members)
+    return jsonify({"response": "success"})
+
+
+@http.route("new_message", methods=["POST"])
+def new_message() -> Response | tuple:
+    """Send a message."""
+    request_data = request.get_json()
+    message = request_data["new_message"]
+    chat_id = int(request_data["chat_id"])
+    chat = Chat.get(chat_id)
+    if chat is None:
+        return jsonify({"response": "NoChatID"}), 403  # TODO(mglst) here we should throw a GameError
+    energetica.utils.chat.add_message(g.player, message, chat)
+    return jsonify({"response": "success"})
+
+
+@http.route("change_graph_view", methods=["POST"])
+def change_graph_view() -> Response:
     """Change the view mode for the graphs (basic, normal, expert)."""
     request_data = await request.json()
     view = request_data["view"]

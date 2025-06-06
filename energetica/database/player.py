@@ -57,8 +57,8 @@ class Player(DBModel):
     pwhash: str
 
     # inactive: bool = False  # True if account is inactive
-    show_chat_disclaimer: bool = True
-    last_opened_chat_id: int | None = None
+    show_disclaimer: bool = True
+    last_opened_chat: int = 0
 
     tile: HexTile | None = None
     network: Network | None = None

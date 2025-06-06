@@ -180,11 +180,10 @@ function hide_disclaimer() {
     /* Hide the chat disclaimer and send the "dont show again" information to the server */
     let checkbox = document.getElementById("dont_show_disclaimer");
     if (checkbox.checked) {
-        fetch("/api/v1/players/me/settings", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ show_disclaimer: false }),
-        },);
+        fetch("/api/hide_chat_disclaimer")
+            .catch((error) => {
+                console.error(`caught error ${error}`);
+            });
     }
     document.getElementById('disclaimer').classList.add('hidden');
 }
