@@ -194,10 +194,11 @@ function hide_disclaimer() {
         body: JSON.stringify({ show_disclaimer: !checkbox.checked }),
     },);
     if (checkbox.checked) {
-        fetch("/api/v1/chat/hide_disclaimer", { method: "POST" })
-            .catch((error) => {
-                console.error(`caught error ${error}`);
-            });
+        fetch("/api/v1/players/settings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ show_disclaimer: false }),
+        },);
     }
     document.getElementById('disclaimer').classList.add('hidden');
 }
@@ -351,7 +352,7 @@ function openChat(chatID) {
                 console.error("Error:", error);
             });
     });
-    fetch("/api/v1/chat", {
+    fetch("/api/v1/players/settings", {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
