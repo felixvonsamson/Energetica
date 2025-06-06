@@ -27,7 +27,10 @@ todo_router = APIRouter(prefix="", tags=["Flask Migration"])
 
 
 @todo_router.post("/request_delete_notification")
-async def request_delete_notification(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def request_delete_notification(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """
     Delete a notification from the player's notification list.
 
@@ -244,7 +247,10 @@ def get_quiz_question(user: Annotated[Player, Depends(get_current_user)]):  # no
 
 
 @todo_router.post("/submit_quiz_answer")
-async def submit_quiz_answer(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def submit_quiz_answer(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Submit the daily quiz answer from a player."""
     # TODO: even for correct answers, the frontend displays "Incorrect answer! Try again tomorrow."
     request_data = await request.json()
@@ -265,7 +271,10 @@ def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  
 
 
 @todo_router.post("/choose_location")
-async def choose_location(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def choose_location(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Set the location for the player."""
     request_data = await request.json()
     selected_id = request_data["selected_id"]
@@ -275,7 +284,10 @@ async def choose_location(user: Annotated[Player, Depends(get_current_user)], re
 
 
 @todo_router.post("/request_queue_project")
-async def request_queue_project(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def request_queue_project(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Start a construction or research project for the player."""
     request_data = await request.json()
     asset = request_data["facility"]
@@ -306,7 +318,10 @@ async def request_queue_project(user: Annotated[Player, Depends(get_current_user
 
 
 @todo_router.post("/request_cancel_project")
-async def request_cancel_project(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def request_cancel_project(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Cancel an ongoing projects."""
     request_data = await request.json()
     project_id = int(request_data["id"])
@@ -333,7 +348,10 @@ async def request_cancel_project(user: Annotated[Player, Depends(get_current_use
 
 
 @todo_router.post("/request_toggle_pause_project")
-async def request_pause_project(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def request_pause_project(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Pause or unpause an ongoing project."""
     request_data = await request.json()
     project_id = int(request_data["id"])
@@ -350,7 +368,10 @@ async def request_pause_project(user: Annotated[Player, Depends(get_current_user
 
 
 @todo_router.post("/request_decrease_project_priority")
-async def request_decrease_project_priority(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def request_decrease_project_priority(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Change the order of ongoing projects."""
     request_data = await request.json()
     project_id = request_data["id"]
@@ -367,7 +388,10 @@ async def request_decrease_project_priority(user: Annotated[Player, Depends(get_
 
 
 @todo_router.post("/request_upgrade_facility")
-async def request_upgrade_facility(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def request_upgrade_facility(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Upgrade a facility."""
     request_data = await request.json()
     facility_id = request_data["facility_id"]
@@ -379,7 +403,10 @@ async def request_upgrade_facility(user: Annotated[Player, Depends(get_current_u
 
 
 @todo_router.post("/request_upgrade_all_of_type")
-async def request_upgrade_all_of_type(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def request_upgrade_all_of_type(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Upgrade all facilities of a certain type."""
     request_data = await request.json()
     facility_type = str_to_project_type[request_data["facility"]]
@@ -390,7 +417,10 @@ async def request_upgrade_all_of_type(user: Annotated[Player, Depends(get_curren
 
 
 @todo_router.post("/request_dismantle_facility")
-async def request_dismantle_facility(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def request_dismantle_facility(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Dismantle a facility."""
     request_data = await request.json()
     facility_id = request_data["facility_id"]
@@ -408,7 +438,10 @@ async def request_dismantle_facility(user: Annotated[Player, Depends(get_current
 
 
 @todo_router.post("/request_dismantle_all_of_type")
-async def request_dismantle_all_of_type(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def request_dismantle_all_of_type(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Dismantle all facilities of a certain type."""
     request_data = await request.json()
     facility = request_data["facility"]
@@ -417,7 +450,10 @@ async def request_dismantle_all_of_type(user: Annotated[Player, Depends(get_curr
 
 
 @todo_router.post("/change_network_prices")
-async def change_network_prices(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def change_network_prices(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Change the prices for anything on the network."""
     if not user.is_in_network:
         return ({"response": "notAuthorized"}), 404
@@ -434,7 +470,10 @@ async def change_network_prices(user: Annotated[Player, Depends(get_current_user
 
 
 @todo_router.post("/request_change_facility_priority")
-async def request_change_facility_priority(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def request_change_facility_priority(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Change the generation priority."""
     if not user.achievements["network"]:
         return ({"response": "notAuthorized"}), 404
@@ -445,7 +484,10 @@ async def request_change_facility_priority(user: Annotated[Player, Depends(get_c
 
 
 @todo_router.post("/change_graph_view")
-async def change_graph_view(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def change_graph_view(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Change the view mode for the graphs (basic, normal, expert)."""
     request_data = await request.json()
     view = request_data["view"]
@@ -461,7 +503,10 @@ def test_notification(user: Annotated[Player, Depends(get_current_user)]):  # no
 
 
 @todo_router.post("/set_notification_preferences")
-async def set_notification_preferences(user: Annotated[Player, Depends(get_current_user)], request: Request):  # noqa: ANN201
+async def set_notification_preferences(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
     """Set notification preferences for a player."""
     request_data = await request.json()
     preferences = request_data["notification_preferences"]
