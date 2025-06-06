@@ -37,38 +37,35 @@ function buy_resource(saleId) {
         addError("Please enter a valid quantity");
         return;
     }
-    send_json(`/api/v1/resource_market/asks/${saleId}/purchase`, { "quantity": quantity * 1000 })
+    send_json("/api/buy_resource", { "id": saleId, "quantity": quantity })
         .then((response) => {
             response.json().then((raw_data) => {
-                if (response.status == 200) {
-                    addToast(`Purchase successful`);
-                    if (raw_data) {
-                        available_quantity = document.getElementById("available_quantity_" + saleId);
-                        available_quantity.innerHTML = format_mass(Number(raw_data["quantity"])) + raw_data["resource"];
-                    } else {
+                let response = raw_data["response"];
+                if (response == "success") {
+                    addToast(`You bought ${format_mass(raw_data["quantity"])} of ${raw_data["resource"]} from ${raw_data["seller"]} for a total cost of ${format_money(raw_data["total_price"])}`);
+                    if (raw_data["available_quantity"] == 0) {
                         document.getElementById("tile_" + saleId).remove();
+                    } else {
+                        available_quantity = document.getElementById("available_quantity_" + saleId);
+                        available_quantity.innerHTML = format_mass(raw_data["available_quantity"]) + raw_data["resource"];
                     }
                     sessionStorage.setItem(
                         "shipments",
                         JSON.stringify(raw_data["shipments"])
                     );
                     refresh_progressBar();
-                } else if (response.status == 400) {
-                    if (raw_data.exception_type == "Not enough money") {
-                        addError("Not enough money");
-                    } else if (raw_data.exception_type == "invalidQuantity") {
-                        addError("The quantity needs to be grater than 0 and cannot exceed the available quantity");
-                    } else if (raw_data.exception_type == "removedFromMarket") {
-                        if (raw_data["available_quantity"] == 0) {
-                            document.getElementById("tile_" + saleId).remove();
-                        } else {
-                            available_quantity = document.getElementById("available_quantity_" + saleId);
-                            available_quantity.innerHTML = format_mass(raw_data["available_quantity"]) + raw_data["resource"];
-                        }
-                        addToast(`You removed ${format_mass(raw_data["quantity"])} of ${raw_data["resource"]} from the market`);
+                } else if (response == "Not enough money") {
+                    addError("Not enough money");
+                } else if (response == "invalidQuantity") {
+                    addError("The quantity needs to be grater than 0 and cannot exceed the available quantity");
+                } else if (response == "removedFromMarket") {
+                    if (raw_data["available_quantity"] == 0) {
+                        document.getElementById("tile_" + saleId).remove();
+                    } else {
+                        available_quantity = document.getElementById("available_quantity_" + saleId);
+                        available_quantity.innerHTML = format_mass(raw_data["available_quantity"]) + raw_data["resource"];
                     }
-                } else {
-                    addError("An unknown error occurred");
+                    addToast(`You removed ${format_mass(raw_data["quantity"])} of ${raw_data["resource"]} from the market`);
                 }
             });
         })
@@ -90,41 +87,3 @@ resource_buy_forms.forEach(form => {
         }
     });
 });
-
-function place_ask(resource, quantity, unit_price) {
-    if (isNaN(quantity) || quantity == "") {
-        addError("Please enter a valid quantity");
-        return;
-    }
-    if (isNaN(unit_price) || unit_price == "") {
-        addError("Please enter a valid price");
-        return;
-    }
-    send_json("/api/v1/resource_market/asks", { "resource_type": resource, "quantity": quantity, "unit_price": unit_price })
-        .then((response) => {
-            if (response.status == 201) {
-                window.location = window.location;
-            } else {
-                addError("Failed to put resource on sale");
-            }
-        })
-        .catch((error) => {
-            console.error(`caught error ${error}`);
-        });
-}
-
-const place_ask_form = document.getElementById("place_ask_form");
-if (place_ask_form) {
-    place_ask_form.addEventListener("submit", function (event) {
-        event.preventDefault();  // Prevent the default form submission
-        if (place_ask_form.checkValidity()) {
-            const resource = document.getElementById("resource").value;
-            const quantity = Number(document.getElementById("quantity").value) * 1000;
-            const unit_price = Number(document.getElementById("price").value) / 1000;
-            console.log(resource, quantity, unit_price);
-            place_ask(resource, quantity, unit_price);
-        } else {
-            place_ask_form.reportValidity();
-        }
-    });
-}

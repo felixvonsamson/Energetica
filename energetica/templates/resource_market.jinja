@@ -31,9 +31,9 @@
                  class="cross pine margin-small"
                  style="width:39px">×</div>
         </div>
-        <form method="post"
+        <form action="/api/put_resource_on_sale"
+              method="post"
               autocomplete="off"
-              id="place_ask_form"
               class="flex-col margin-large"
               style="margin-top:5px;
                      width:200px">
@@ -98,7 +98,7 @@
                     <span id="available_quantity_{{ sale.id }}" class="large"></span>
                     <script>document.currentScript.previousElementSibling.innerHTML = format_mass({{ sale.quantity }}) + " {{ sale.resource }}";</script>
                     <span class="large"><b></b>
-                    <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ sale.unit_price * 1000 }});</script>
+                    <script>document.currentScript.previousElementSibling.innerHTML = format_money({{ sale.price * 1000 }});</script>
                     /t</span>
                 <span>
                     shipment time: <br>
@@ -123,10 +123,10 @@
                        step="0.01"
                        max="{{ sale.quantity/1000 }}"
                        onclick="stopPropagation(event);"
-                       oninput="updateToPay({{ sale.id }}, {{ sale.unit_price }});"
+                       oninput="updateToPay({{ sale.id }}, {{ sale.price }});"
                        required />
                 <span id="to_pay_{{ sale.id }}"></span>
-                <script>document.currentScript.previousElementSibling.innerHTML = '(total: ' + format_money({{ sale.quantity * sale.unit_price }}) + ')';</script>
+                <script>document.currentScript.previousElementSibling.innerHTML = '(total: ' + format_money({{ sale.quantity * sale.price }}) + ')';</script>
                 <button type="submit"
                         onclick="stopPropagation(event);"
                         class="margin medium white padding button"

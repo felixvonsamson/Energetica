@@ -11,35 +11,32 @@ from energetica.globals import engine
 from energetica.utils.formatting import display_money, format_mass
 
 
-def put_resource_on_market(player: Player, fuel: Fuel, quantity: float, unit_price: float) -> ResourceOnSale:
+def put_resource_on_market(player: Player, fuel: Fuel, quantity: float, price: float) -> None:
     """Put an offer on the resource market."""
     if player.resources[fuel] - player.resources_on_sale[fuel] < quantity:
         raise GameError("notEnoughResource")
     player.resources_on_sale[fuel] += quantity
-    return ResourceOnSale(
+    ResourceOnSale(
         resource=fuel,
         quantity=quantity,
-        unit_price=unit_price,
+        price=price,
         player=player,
     )
 
 
-def buy_resource_from_market(player: Player, quantity: float, sale: ResourceOnSale) -> ResourceOnSale | None:
+def buy_resource_from_market(player: Player, quantity: float, sale: ResourceOnSale) -> None:
     """Buy an offer from the resource market."""
     assert player.tile is not None
     assert sale.player.tile is not None
     if quantity is None or quantity <= 0 or quantity > sale.quantity:
         raise GameError("invalidQuantity")
-    total_price = sale.unit_price * quantity
+    total_price = sale.price * quantity
     if player == sale.player:
-        # TODO(mglst): this should be a different function
         # Player is buying their own resource
         sale.quantity -= quantity
-        player.resources_on_sale[sale.resource] -= quantity
         if sale.quantity == 0:
             sale.delete()
-            return None
-        return sale
+        player.resources_on_sale[sale.resource] -= quantity
     else:
         if total_price > player.money:
             raise GameError("Not enough money")
@@ -78,8 +75,6 @@ def buy_resource_from_market(player: Player, quantity: float, sale: ResourceOnSa
         if sale.quantity == 0:
             # Player is purchasing all available quantity
             sale.delete()
-            return None
-        return sale
 
 
 def store_import(player: Player, fuel: Fuel, quantity: float) -> None:

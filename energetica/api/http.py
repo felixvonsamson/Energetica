@@ -560,6 +560,62 @@ def buy_resource() -> Response | tuple:
     )
 
 
+@http.route("/put_resource_on_sale", methods=["POST"])
+@log_action
+def put_resource_on_sale() -> Response:
+    """Put a resource on sale."""
+    request_data = request.form
+    resource = Fuel(request_data["resource"])
+    quantity = float(request_data["quantity"]) * 1000
+    price = float(request_data["price"]) / 1000
+    try:
+        energetica.utils.resource_market.put_resource_on_market(g.player, resource, quantity, price)
+    except GameError as game_exception:
+        if game_exception.exception_type != "notEnoughResource":
+            raise
+        flash_error(f"You have not enough {resource} available")
+    else:
+        flash(
+            f"You put {quantity / 1000}t of {resource} on sale for "
+            f"{price * 1000}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
+            category="message",
+        )
+    return redirect("/resource_market", code=303)
+
+
+@http.route("/buy_resource", methods=["POST"])
+@log_action
+def buy_resource() -> Response | tuple:
+    """Buy a resource from the market."""
+    request_data = request.get_json()
+    sale_id = int(request_data["id"])
+    quantity = float(request_data["quantity"]) * 1000
+    sale = ResourceOnSale.get(int(sale_id))
+    if sale is None:
+        return jsonify({"response": "saleNotFound"}), 404
+    energetica.utils.resource_market.buy_resource_from_market(g.player, quantity, sale)
+    if g.player == sale.player:
+        return jsonify(
+            {
+                "response": "removedFromMarket",
+                "quantity": quantity,
+                "available_quantity": sale.quantity,
+                "resource": sale.resource,
+            },
+        )
+    return jsonify(
+        {
+            "response": "success",
+            "resource": sale.resource,
+            "total_price": sale.price * quantity,
+            "quantity": quantity,
+            "seller": sale.player.username,
+            "available_quantity": sale.quantity,
+            "shipments": g.player.package_shipments(),
+        },
+    )
+
+
 @http.route("join_network", methods=["POST"])
 @log_action
 def join_network() -> Response:
