@@ -631,7 +631,7 @@ def buy_resource(  # noqa: ANN201
     }
 
 
-@todo_router.get("join_network", methods=["POST"])
+@todo_router.post("join_network")
 def join_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     choose_network: Annotated[int, Form()],
@@ -644,7 +644,7 @@ def join_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@todo_router.get("create_network", methods=["POST"])
+@todo_router.post("create_network")
 def create_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     network_name: Annotated[str, Form()],
@@ -664,7 +664,7 @@ def create_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@todo_router.get("leave_network", methods=["POST"])
+@todo_router.post("leave_network")
 def leave_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
 ):
@@ -678,7 +678,7 @@ def leave_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@todo_router.get("create_chat", methods=["POST"])
+@todo_router.post("create_chat")
 def create_chat(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     buddy_id: int,
@@ -689,7 +689,7 @@ def create_chat(  # noqa: ANN201
     return {"response": "success"}
 
 
-@todo_router.get("create_group_chat", methods=["POST"])
+@todo_router.post("create_group_chat")
 def create_group_chat(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     chat_title: str,
@@ -701,7 +701,7 @@ def create_group_chat(  # noqa: ANN201
     return {"response": "success"}
 
 
-@todo_router.get("join_network", methods=["POST"])
+@todo_router.post("join_network")
 def join_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     choose_network: Annotated[int, Form()],
@@ -714,7 +714,7 @@ def join_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@todo_router.get("create_network", methods=["POST"])
+@todo_router.post("create_network")
 def create_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     network_name: Annotated[str, Form()],
@@ -734,7 +734,7 @@ def create_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@todo_router.get("leave_network", methods=["POST"])
+@todo_router.post("leave_network")
 def leave_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
 ):
@@ -748,7 +748,7 @@ def leave_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@todo_router.get("change_graph_view", methods=["POST"])
+@todo_router.post("change_graph_view")
 def change_graph_view(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     view: Player.NetworkGraphView,

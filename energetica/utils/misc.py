@@ -12,6 +12,7 @@ from scipy.stats import norm
 from energetica import technology_effects
 from energetica.config.assets import river_discharge_seasonal
 from energetica.database.active_facility import ActiveFacility
+from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player

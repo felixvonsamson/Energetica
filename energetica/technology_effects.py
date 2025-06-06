@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from energetica.config.assets import warehouse_capacity_for_level
-from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_project import OngoingProject
 from energetica.enums import (
     ControllableFacilityType,
@@ -174,7 +173,8 @@ def power_production_multiplier(player: Player, facility_type: PowerFacilityType
     # Aerodynamics
     if facility_type in const_config["aerodynamics"]["affected_facilities"]:
         mlt *= special_multiplier(
-            const_config["aerodynamics"]["prod_factor"], player.technology_lvl[TechnologyType.AERODYNAMICS]
+            const_config["aerodynamics"]["prod_factor"],
+            player.technology_lvl[TechnologyType.AERODYNAMICS],
         )
     # Nuclear engineering
     if facility_type in const_config["nuclear_engineering"]["affected_facilities"]:
@@ -329,6 +329,8 @@ def extraction_emissions_multiplier(player: Player, extraction_facility_type: Ex
 
 def next_available_location(player: Player, facility_type: HydroFacilityType | WindFacilityType) -> int:
     """Return the next available location for a hydro and wind facilities."""
+    from energetica.database.active_facility import ActiveFacility
+
     active_facilities = ActiveFacility.filter_by(
         facility_type=facility_type,
         player=player,
@@ -507,7 +509,8 @@ def requirements_status(player: Player, project_type: ProjectType, requirements:
     # TODO(mglst): this method, and the others about requirements should be revised, as they are unclear
     if all(requirement["status"] == "satisfied" for requirement in requirements):
         if isinstance(project_type, TechnologyType) and OngoingProject.filter_by(
-            project_type=project_type, player=player
+            project_type=project_type,
+            player=player,
         ):
             return "queued"
         return "satisfied"
