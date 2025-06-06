@@ -64,6 +64,7 @@ function load_constructions() {
 }
 
 function retrieve_constructions() {
+    console.log("Fetching construction data from the server");
     return fetch("/api/get_constructions")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -87,6 +88,7 @@ function load_shipments() {
 }
 
 function retrieve_shipments() {
+    console.log("Fetching shipments data from the server");
     return fetch("/api/get_shipments")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -115,6 +117,7 @@ function load_chart_data(return_data = "data") {
 }
 
 function retrieve_chart_data(return_data = "data") {
+    console.log("Fetching chart data from the server");
     return fetch("/api/get_chart_data")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -165,6 +168,7 @@ function load_player_data() {
 }
 
 function retrieve_player_data() {
+    console.log("Fetching player data from the server");
     return fetch("/api/get_player_data")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -213,6 +217,7 @@ function load_const_config() {
 }
 
 function load_chats() {
+    console.log("load_chats");
     if (typeof (Storage) !== "undefined") {
         const chats = sessionStorage.getItem("chats");
         if (chats) {
@@ -223,7 +228,8 @@ function load_chats() {
 }
 
 function retrieve_chats() {
-    fetch("/api/get_chat_list")
+    console.log("retrieve_chats");
+    return fetch("/api/v1/chat/chat_list")
         .then((response) => response.json())
         .then((data) => {
             const unread_chat_count = Object.values(data.chat_list).reduce((count, chat) => count + (chat.unread_messages > 0 ? 1 : 0), 0);

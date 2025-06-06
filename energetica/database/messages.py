@@ -15,21 +15,20 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class Message:
+class Message(DBModel):
     """Class for storing data about messages for the in-game messaging system."""
 
-    id: int
     text: str
     chat: Chat
     player: Player
-    timestamp: datetime = field(default_factory=datetime.now)
+    time: datetime = field(default_factory=datetime.now)
 
     def package(self) -> dict:
         """Package this message's data into a dictionary."""
         return {
             "id": self.id,
             "text": self.text,
-            "date": self.timestamp.timestamp(),
+            "date": self.time.timestamp(),
             "player_id": self.player.id,
         }
 

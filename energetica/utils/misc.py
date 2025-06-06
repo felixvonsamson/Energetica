@@ -125,7 +125,7 @@ def display_new_message(message: Message, chat: Chat) -> None:
         player.emit(
             "display_new_message",
             {
-                "time": message.timestamp.isoformat(),
+                "time": message.time.isoformat(),
                 "player_id": message.player.id,
                 "text": message.text,
                 "chat_id": message.chat.id,

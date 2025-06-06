@@ -237,7 +237,7 @@ class Player(DBModel):
         """Package the last 20 messages of a chat."""
         messages_list = [
             {
-                "time": message.timestamp.isoformat(),
+                "time": message.time.isoformat(),
                 "player_id": message.player.id,
                 "text": message.text,
             }

@@ -22,12 +22,18 @@ load_players().then((players_) => {
 });
 
 function refresh_chats() {
+    console.log("refresh_chats");
     /* Retrieves chat list and displays it. Displays unread badges and opens last opened chat. */
-    load_chats().then((data) => {
-        let chats = data.chat_list;
+    load_chats().then((chat_data) => {
+        let chats = chat_data.chats;
+        console.log("refreshing chats");
+        console.log(chat_data);
+        console.log(chats);
         let chat_list_container = document.getElementById("chat_list_container");
         chat_list_container.innerHTML = "";
-        for (chat_id in chats) {
+        console.log("chat_list_container");
+        for (let chat of chats) {
+            console.log(chat);
             badge = "";
             if (chats[chat_id].unread_messages > 0) {
                 badge = `<span id="unread_badge_chat" class="unread_badge messages padding-small pine">${chats[chat_id].unread_messages}</span>`;
@@ -50,7 +56,13 @@ function refresh_chats() {
                 ${badge}
                 </div>`;
         }
-        openChat(data.last_opened_chat);
+        if (chat_data.last_opened_chat_id == null) {
+            console.log("No chat opened");
+            console.log(chats);
+            console.log(chats[0]);
+            chat_data.last_opened_chat_id = chats[0].id;
+        }
+        openChat(chat_data.last_opened_chat_id);
     }).catch((error) => {
         console.error("Error:", error);
     });
@@ -297,18 +309,24 @@ function openChat(chatID) {
     current_chat_id = chatID;
     let html = ``;
     load_chats().then((chat_data) => {
-        let chats = chat_data.chat_list;
-        if (chat_data.chat_list[chatID].unread_messages > 0) {
-            chat_data.chat_list[chatID].unread_messages = 0;
+        let chats = chat_data.chats;
+        console.log(chats);
+        console.log(chatID);
+        const chat = chats.find(chat => chat.id == chatID);
+        console.log(chat);
+        console.log(chat.display_name);
+        if (chat.unread_messages_count > 0) {
+            chat.unread_messages_count = 0;
             chat_data.unread_chats -= 1;
             document.getElementById(`chat_${chatID}`).querySelector("#unread_badge_chat").classList.add("hidden");
         }
         chat_data.last_opened_chat = chatID;
         sessionStorage.setItem("chats", JSON.stringify(chat_data));
         show_unread_badges();
-        fetch(`/api/v1/chats/${chatID}/messages`)
+        fetch(`/api/get_chat_messages?chatID=${chatID}`)
             .then((response) => response.json())
             .then((data) => {
+                console.log("/api/get_chat_messages?chatID=" + chatID);
                 load_players().then((players) => {
                     load_player_id().then((player_id) => {
                         let messages = data.messages;
