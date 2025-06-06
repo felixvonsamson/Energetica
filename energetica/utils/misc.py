@@ -119,7 +119,8 @@ def save_past_data() -> None:
 
 
 def display_new_message(message: Message, chat: Chat) -> None:
-    """Send a chat message through socketio."""
+    """Send a chat message to all relevant sources through socketio and websocket."""
+    # websocket_message = websocket.rest_new_chat_message(chat.id, message)
     for player in chat.participants:
         player.emit(
             "display_new_message",
@@ -130,9 +131,31 @@ def display_new_message(message: Message, chat: Chat) -> None:
                 "chat_id": message.chat.id,
             },
         )
+        # websocket.rest_notify_player(player, websocket_message)
 
 
 # Map
+
+
+def confirm_location(player: Player, tile: HexTile) -> None:
+    """
+    Confirm a location choice.
+
+    Return either success or an explanatory error message in the form of a dictionary.
+    Called when a web client uses the choose_location socket.io endpoint, or the REST websocket API.
+    """
+    if tile.player is not None:
+        # Location already taken
+        raise GameError("locationOccupied", by=tile.player.id)
+    if player.tile is not None:
+        # Player has already chosen a location and cannot chose again
+        raise GameError("choiceUnmodifiable")
+
+    # Checks have succeeded, proceed
+    tile.player = player
+    player.tile = tile
+    initialize_player(player)
+    engine.log(f"{player.username} chose the location {tile.id}")
 
 
 def initialize_player(player: Player) -> None:
@@ -204,6 +227,7 @@ def initialize_player(player: Player) -> None:
     player.rolling_history.add_subcategory("op_costs", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
+    # websocket.rest_notify_player_location(player)
 
 
 # Quiz

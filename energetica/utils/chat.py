@@ -48,6 +48,7 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
         engine.log(f"{player.username} created a chat with {participant_list}")
     else:
         engine.log(f"{player.username} created a group chat called {chat_name} with {participant_list}")
+    # websocket.notify_new_chat(new_chat)
     return new_chat
 
 
@@ -66,7 +67,7 @@ def add_message(player: Player, message_text: str, chat: Chat) -> Message:
         chat=chat,
     )
     chat.messages.append(new_message)
-    chat.player_last_read_index[player.id] = len(chat.messages) - 1
+    chat.last_read_message[player.id] = len(chat.messages) - 1
 
     display_new_message(new_message, chat)
     return new_message

@@ -389,6 +389,9 @@ def queue_project(
 
     if not skip_notifications:
         engine.log(f"{player.username} started the construction {project_type}")
+    # TODO(mglst): This should be re-enabled when the websocket is re-enabled
+    # from energetica.api import websocket
+    # websocket.rest_notify_constructions(player)
 
     invalidate_data_on_project_update(player, project_type)
     player.send_worker_info()
@@ -448,6 +451,9 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
     player.send_worker_info()
 
     engine.log(f"{player.username} cancelled the project {project.project_type}")
+    # TODO(mglst): This should be re-enabled when the websocket is re-enabled
+    # from energetica.api import websocket
+    # websocket.rest_notify_constructions(player)
 
     invalidate_data_on_project_update(player, project.project_type)
 
@@ -493,6 +499,9 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
         project_2.set_ongoing()
 
     priority_list[index + 1], priority_list[index] = (priority_list[index], priority_list[index + 1])
+    # TODO(mglst): This should be re-enabled when the websocket is re-enabled
+    # from energetica.api import websocket
+    # websocket.rest_notify_constructions(player)
 
 
 def toggle_pause_project(player: Player, project: OngoingProject) -> None:
@@ -570,3 +579,7 @@ def toggle_pause_project(player: Player, project: OngoingProject) -> None:
         else:
             priority_list.append(project)
         engine.log(f"{player.username} unpaused the project {project.id} {project.project_type}")
+
+    # TODO(mglst): This should be re-enabled when the websocket is re-enabled
+    # from energetica.api import websocket
+    # websocket.rest_notify_projects(player)

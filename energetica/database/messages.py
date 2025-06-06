@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
+from functools import partial
 from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
@@ -39,18 +41,10 @@ class Chat(DBModel):
     name: str | None
     participants: set[Player]
     messages: list[Message] = field(default_factory=list)
-    player_last_read_index: dict[int, int] = field(default_factory=dict)
 
-    def is_group(self) -> bool:
-        """Check if the chat is a group chat."""
-        return len(self.participants) > 2
-
-    def unread_messages_count_for_player(self, player: Player) -> int:
-        """Get the number of unread messages for a player."""
-        last_read_message = self.player_last_read_index.get(player.id)
-        if last_read_message is None:
-            return len(self.messages)
-        return len(self.messages) - last_read_message - 1
+    last_read_message: dict[int, int | None] = field(
+        default_factory=lambda: defaultdict(partial(int, -1)),
+    )  # {player: message index in messages}
 
     def display_name(self, player: Player) -> str:
         """Get the display name for a chat."""

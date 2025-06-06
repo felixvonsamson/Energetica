@@ -92,8 +92,29 @@ def get_networks():  # noqa: ANN201
     return networks
 
 
-@todo_router.get("/get_resource_data")
-def get_resource_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+@http.route("/get_chat_messages", methods=["GET"])
+def get_chat_messages() -> Response | tuple:
+    """Get the last 20 messages from a chat and returns it as a list."""
+    chat_id = request.args.get("chatID")
+    if chat_id is None:
+        return jsonify({"response": "noChatID"}), 400
+    chat = Chat.get(int(chat_id))
+    if chat is None:
+        return jsonify({"response": "chatNotFound"}), 404
+    packaged_messages = g.player.package_chat_messages(chat)
+    g.player.mark_chat_as_read(chat)
+    return jsonify({"response": "success", "messages": packaged_messages})
+
+
+@http.route("/get_chat_list", methods=["GET"])
+def get_chat_list() -> Response:
+    """Get the list of chats for the current player."""
+    response = g.player.package_chat_list()
+    return jsonify({"response": "success"} | response)
+
+
+@http.route("/get_resource_data", methods=["GET"])
+def get_resource_data() -> Response:
     """Get production rates and quantity on sale for every resource."""
     return user.resources_on_sale
 

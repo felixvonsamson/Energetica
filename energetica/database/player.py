@@ -57,7 +57,7 @@ class Player(DBModel):
     pwhash: str
 
     # inactive: bool = False  # True if account is inactive
-    show_disclaimer: bool = True
+    show_chat_disclaimer: bool = True
     last_opened_chat: int = 0
 
     tile: HexTile | None = None
@@ -103,7 +103,7 @@ class Player(DBModel):
             "warehouse": 0,
             "GHG_effect": 0,
             "storage_facilities": 0,
-        },
+        }
     )
 
     progression_metrics: dict[str, float] = field(
@@ -247,18 +247,53 @@ class Player(DBModel):
 
     def mark_chat_as_read(self, chat: Chat) -> None:
         """Mark a chat as read."""
-        self.last_opened_chat_id = chat.id
-        chat.player_last_read_index[self.id] = len(chat.messages) - 1
+        self.last_opened_chat = chat.id
+        chat.last_read_message[self.id] = len(chat.messages) - 1
 
-    def unread_chat_count(self) -> int:
-        """Return the number of unread chats."""
-        return len(
-            [
-                chat
-                for chat in Chat.filter(lambda chat: self in chat.participants)
-                if chat.unread_messages_count_for_player(self) > 0
-            ],
-        )
+    def package_chat_list(self) -> dict:
+        """Package the chats of a player."""
+
+        def chat_name(chat: Chat) -> str:
+            if chat.name is not None:
+                return chat.name
+            for participant in chat.participants:
+                if participant != self:
+                    return participant.username
+            msg = "Chat has no name and no other participant"
+            raise ValueError(msg)
+
+        def find_initials(chat: Chat) -> list[str]:
+            if chat.name is None:
+                for participant in chat.participants:
+                    if participant != self:
+                        return [participant.username[0]]
+            max_initials_size = 4
+            initials = []
+            for participant in chat.participants:
+                initials.append(participant.username[0])
+                if len(initials) == max_initials_size:
+                    break
+            return initials
+
+        def unread_message_count(chat: Chat) -> int:
+            last_read_message = chat.last_read_message.get(self.id, 1)
+            if last_read_message is None:
+                return len(chat.messages)
+            return len(chat.messages) - last_read_message - 1
+
+        chat_dict = {
+            chat.id: {
+                "name": chat_name(chat),
+                "initials": find_initials(chat),
+                "group_chat": chat.name is not None,
+                "unread_messages": unread_message_count(chat),
+            }
+            for chat in Chat.filter(lambda chat: self in chat.participants)
+        }
+        return {
+            "chat_list": chat_dict,
+            "last_opened_chat": self.last_opened_chat,
+        }
 
     def package_chats(self) -> dict:
         """Package chats for the iOS frontend."""
@@ -782,6 +817,7 @@ class Player(DBModel):
         if technologies and "technologies_data" in self.__dict__:
             del self.technologies_data
         if self.socketio_clients:
+            # TODO(mglst): update clients over websocket
             pages_data: dict = {}
             if power_facilities:
                 pages_data |= {"power_facilities": self.power_facilities_data}

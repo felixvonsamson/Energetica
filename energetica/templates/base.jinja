@@ -364,7 +364,7 @@
 </div>
 {% endblock base %}
 {% block scripts %}
-  <script>let first_tick_time = {{engine.first_tick_time_epoch_ms()}};</script>
+  <script>let first_tick_time = {{engine.first_tick_time}};</script>
   <script>
     const navigationEntry = performance.getEntriesByType("navigation")[0];
     if (navigationEntry && navigationEntry.type === "reload")

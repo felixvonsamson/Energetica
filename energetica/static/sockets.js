@@ -277,11 +277,8 @@ socket.on("display_new_message", function (message) {
                         let username = "";
                         if (message.player_id == player_id) {
                             alignment = "right";
-                        } else {
-                            chat = chat_data.chats.find(c => c.id == message.chat_id);
-                            if (chat.group_chat) {
-                                username = players[message.player_id].username + "&emsp;";
-                            }
+                        } else if (chat_data.chat_list[message.chat_id].group_chat) {
+                            username = players[message.player_id].username + "&emsp;";
                         }
                         obj.innerHTML += `<div class="message ${alignment}">
                         <div class="message_infos">
@@ -293,15 +290,14 @@ socket.on("display_new_message", function (message) {
                     });
                 }
             }
-            const chat = chat_data.chats.find(c => c.id == message.chat_id);
-            if (!chat.group_chat) {
+            if (!chat_data.chat_list[message.chat_id]) {
                 retrieve_chats();
             } else {
-                if (chat.unread_messages_count == 0) {
+                if (chat_data.chat_list[message.chat_id].unread_messages == 0) {
                     chat_data.unread_chats += 1;
                 }
-                chat.unread_messages_count += 1;
-                sessionStorage.setItem("chats_data", JSON.stringify(chat_data));
+                chat_data.chat_list[message.chat_id].unread_messages += 1;
+                sessionStorage.setItem("chats", JSON.stringify(chat_data));
                 if (typeof refresh_chats === 'function') {
                     refresh_chats();
                 }

@@ -23,43 +23,40 @@ load_players().then((players_) => {
 
 function refresh_chats() {
     /* Retrieves chat list and displays it. Displays unread badges and opens last opened chat. */
-    load_chats().then((chat_data) => {
-        let chats = chat_data.chats;
+    load_chats().then((data) => {
+        let chats = data.chat_list;
         let chat_list_container = document.getElementById("chat_list_container");
         chat_list_container.innerHTML = "";
-        for (let chat of chats) {
+        for (chat_id in chats) {
             badge = "";
-            if (chat.unread_messages_count > 0) {
-                badge = `<span id="unread_badge_chat" class="unread_badge messages padding-small pine">${chat.unread_messages_count}</span>`;
+            if (chats[chat_id].unread_messages > 0) {
+                badge = `<span id="unread_badge_chat" class="unread_badge messages padding-small pine">${chats[chat_id].unread_messages}</span>`;
             }
             let profile_icon;
-            if (chat.id == 1) {
+            if (chat_id == 1) {
                 profile_icon = '<div class="profile-icon green large"><i class="fa fa-star"></i></div>';
-            } else if (chat.group_chat) {
+            } else if (chats[chat_id].group_chat) {
                 profile_icon = '<div class="profile-icon green">';
-                for (let initial of chat.initials) {
+                for (let initial of chats[chat_id].initials) {
                     profile_icon += `<span class="small_letter">${initial}</span>`;
                 }
                 profile_icon += "</div>";
             } else {
-                profile_icon = `<div class="profile-icon green large">${chat.initials}</div>`;
+                profile_icon = `<div class="profile-icon green large">${chats[chat_id].initials}</div>`;
             }
-            chat_list_container.innerHTML += `<div id="chat_${chat.id}" onclick="openChat(${chat.id})" class="margin-small white button position_relative flex-row">
+            chat_list_container.innerHTML += `<div id="chat_${chat_id}" onclick="openChat(${chat_id})" class="margin-small white button position_relative flex-row">
                 ${profile_icon}
-                <b class="medium padding txt_overflow-hidden">${chat.display_name}</b>
+                <b class="medium padding txt_overflow-hidden">${chats[chat_id].name}</b>
                 ${badge}
                 </div>`;
         }
-        if (chat_data.last_opened_chat_id == null) {
-            chat_data.last_opened_chat_id = chats[0].id;
-        }
-        openChat(chat_data.last_opened_chat_id);
+        openChat(data.last_opened_chat);
     }).catch((error) => {
         console.error("Error:", error);
     });
 }
 
-let input1 = document.getElementById("add_chat_7bca9");
+let input1 = document.getElementById("add_chat_username");
 let input2 = document.getElementById("add_player");
 
 input1.addEventListener("input", (e) => {
@@ -201,7 +198,7 @@ function getIdByUsername(username) {
 
 async function createChat() {
     /* Create a chat with a player */
-    const username = document.getElementById("add_chat_7bca9").value;
+    const username = document.getElementById("add_chat_username").value;
     const buddy_id = getIdByUsername(username);
     if (buddy_id == null) {
         addError("No Player with this username");
@@ -300,15 +297,14 @@ function openChat(chatID) {
     current_chat_id = chatID;
     let html = ``;
     load_chats().then((chat_data) => {
-        let chats = chat_data.chats;
-        const chat = chats.find(chat => chat.id == chatID);
-        if (chat.unread_messages_count > 0) {
-            chat.unread_messages_count = 0;
+        let chats = chat_data.chat_list;
+        if (chat_data.chat_list[chatID].unread_messages > 0) {
+            chat_data.chat_list[chatID].unread_messages = 0;
             chat_data.unread_chats -= 1;
             document.getElementById(`chat_${chatID}`).querySelector("#unread_badge_chat").classList.add("hidden");
         }
-        chat_data.last_opened_chat_id = chatID;
-        sessionStorage.setItem("chats_data", JSON.stringify(chat_data));
+        chat_data.last_opened_chat = chatID;
+        sessionStorage.setItem("chats", JSON.stringify(chat_data));
         show_unread_badges();
         fetch(`/api/v1/chats/${chatID}/messages`)
             .then((response) => response.json())
@@ -317,14 +313,14 @@ function openChat(chatID) {
                     load_player_id().then((player_id) => {
                         let messages = data.messages;
                         let chat_title = document.getElementById("chat_title_div");
-                        chat_title.innerHTML = `<b>${chat.display_name}</b>`;
+                        chat_title.innerHTML = `<b>${chats[chatID].name}</b>`;
                         document.getElementById("message_input_field").classList.remove("hidden");
                         for (let i = 0; i < messages.length; i++) {
                             let alignment = "left";
                             let username = "";
                             if (messages[i].player_id == player_id) {
                                 alignment = "right";
-                            } else if (chat.group_chat) {
+                            } else if (chats[chatID].group_chat) {
                                 username = players[messages[i].player_id].username + "&emsp;";
                             }
                             html += `<div class="message ${alignment}">

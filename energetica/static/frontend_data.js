@@ -214,7 +214,7 @@ function load_const_config() {
 
 function load_chats() {
     if (typeof (Storage) !== "undefined") {
-        const chats = sessionStorage.getItem("chats_data");
+        const chats = sessionStorage.getItem("chats");
         if (chats) {
             return Promise.resolve(JSON.parse(chats));
         }
@@ -223,10 +223,12 @@ function load_chats() {
 }
 
 function retrieve_chats() {
-    return fetch("/api/v1/chats")
+    fetch("/api/get_chat_list")
         .then((response) => response.json())
         .then((data) => {
-            sessionStorage.setItem("chats_data", JSON.stringify(data));
+            const unread_chat_count = Object.values(data.chat_list).reduce((count, chat) => count + (chat.unread_messages > 0 ? 1 : 0), 0);
+            data.unread_chats = unread_chat_count;
+            sessionStorage.setItem("chats", JSON.stringify(data));
             if (typeof refresh_chats === 'function') {
                 refresh_chats();
             }
@@ -239,7 +241,7 @@ function retrieve_chats() {
 }
 
 function show_unread_badges() {
-    const chats = sessionStorage.getItem("chats_data");
+    const chats = sessionStorage.getItem("chats");
     if (chats) {
         const unread_chat_count = JSON.parse(chats).unread_chats;
         if (unread_chat_count > 0) {
