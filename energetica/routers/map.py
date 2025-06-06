@@ -1,22 +1,19 @@
-from typing import Annotated
+from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import TYPE_CHECKING
 
-from energetica.auth import get_current_user
-from energetica.database.map import HexTile
-from energetica.database.player import Player
-from energetica.schemas.map import HexTileOut
-from energetica.utils import map_helpers
+from fastapi import APIRouter
 
-router = APIRouter(prefix="/map", tags=["Map"])
-
-
-@router.get("")
-def get_map() -> list[HexTileOut]:
-    """Get the map data."""
+if TYPE_CHECKING:
     from energetica.database.map import HexTile
     from energetica.enums import Fuel, Renewable
 
+router = APIRouter(prefix="/map", tags=["map"])
+
+
+@router.get("/get")
+def get_map() -> list[dict]:
+    """Get the map data from the database and returns it as a array of dictionaries."""
     hex_map = HexTile.all()
     hex_list = [
         HexTileOut(

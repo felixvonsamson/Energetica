@@ -7,7 +7,7 @@ import numpy as np
 from fastapi import APIRouter, Depends, Request
 
 import energetica.utils.assets
-import energetica.utils.map_helpers
+import energetica.utils.chat
 import energetica.utils.misc
 from energetica.auth import get_current_user
 from energetica.config.assets import wind_power_curve

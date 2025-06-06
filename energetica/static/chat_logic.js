@@ -189,7 +189,7 @@ function hide_disclaimer() {
     /* Hide the chat disclaimer and send the "dont show again" information to the server */
     let checkbox = document.getElementById("dont_show_disclaimer");
     if (checkbox.checked) {
-        fetch("/api/hide_chat_disclaimer")
+        fetch("/api/v1/chat/hide_disclaimer", { method: "POST" })
             .catch((error) => {
                 console.error(`caught error ${error}`);
             });
@@ -217,9 +217,7 @@ async function createChat() {
     }
 
     try {
-        const response = await send_json("/api/create_chat", { buddy_id: buddy_id });
-        const raw_data = await response.json();
-        const responseMessage = raw_data["response"];
+        const response = await send_json("/api/v1/chat/create_chat", { buddy_id: Number(buddy_id) });
 
         if (responseMessage === "success") {
             retrieve_chats();
@@ -239,9 +237,9 @@ async function createChat() {
 function createGroupChat() {
     /* Create a group chat with the selected players */
     let title = document.getElementById("chat_title").value;
-    send_json("/api/create_group_chat", {
-        chat_title: title,
-        group_members: group,
+    send_json("/api/v1/chat/create_group_chat", {
+        group_chat_name: title,
+        group_member_ids: group,
     }).then((response) => {
         response.json().then((raw_data) => {
             let response = raw_data["response"];
@@ -270,7 +268,7 @@ function newMessage() {
     if (!current_chat_id) {
         addError("No chat has been selected");
     }
-    send_json("/api/new_message", {
+    send_json(`/api/v1/chat/${current_chat_id}/new_message`, {
         new_message: message_field.value,
         chat_id: current_chat_id,
     }).then((response) => {
@@ -348,19 +346,4 @@ function openChat(chatID) {
                 console.error("Error:", error);
             });
     });
-    fetch("/api/v1/players/me/settings", {
-        method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ last_opened_chat_id: chatID }),
-    })
-        .then((response) => {
-            if (response.status !== 204) {
-                console.error("Error:", response.status);
-            }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-        });
 }
