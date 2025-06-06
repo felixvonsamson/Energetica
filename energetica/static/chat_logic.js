@@ -217,7 +217,9 @@ async function createChat() {
     }
 
     try {
-        const response = await send_json("/api/v1/chat/create_chat", { buddy_id: Number(buddy_id) });
+        const response = await send_json("/api/create_chat", { buddy_id: buddy_id });
+        const raw_data = await response.json();
+        const responseMessage = raw_data["response"];
 
         if (responseMessage === "success") {
             retrieve_chats();
@@ -237,9 +239,9 @@ async function createChat() {
 function createGroupChat() {
     /* Create a group chat with the selected players */
     let title = document.getElementById("chat_title").value;
-    send_json("/api/v1/chat/create_group_chat", {
-        group_chat_name: title,
-        group_member_ids: group,
+    send_json("/api/create_group_chat", {
+        chat_title: title,
+        group_members: group,
     }).then((response) => {
         response.json().then((raw_data) => {
             let response = raw_data["response"];

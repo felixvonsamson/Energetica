@@ -748,6 +748,29 @@ def leave_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
+@todo_router.post("create_chat")
+def create_chat(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    buddy_id: int,
+):
+    """Create a chat with one other player."""
+    buddy = Player.getitem(buddy_id)
+    energetica.utils.chat.create_chat(user, None, {user, buddy})
+    return {"response": "success"}
+
+
+@todo_router.post("create_group_chat")
+def create_group_chat(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    chat_title: str,
+    group_members: list[int],
+):
+    """Create a group chat."""
+    player_members = {user, *(map(Player.getitem, map(int, group_members)))}
+    energetica.utils.chat.create_chat(user, chat_title, player_members)
+    return {"response": "success"}
+
+
 @todo_router.post("change_graph_view")
 def change_graph_view(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
