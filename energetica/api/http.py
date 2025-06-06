@@ -13,6 +13,7 @@ from energetica.auth import get_current_user
 from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
+from energetica.database.messages import Chat
 from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
