@@ -50,6 +50,7 @@ class Network(DBModel):
         network_path = f"instance/data/networks/{self.id}"
         shutil.rmtree(network_path)
         super().delete()
+        super().delete()
 
     def to_schema(self) -> NetworkOut:
         return NetworkOut(id=self.id, name=self.name, member_ids=[member.id for member in self.members])
