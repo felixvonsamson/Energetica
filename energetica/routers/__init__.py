@@ -16,29 +16,9 @@ from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import GameErrorResponse
 
-from .chat import router as chat_router
-from .chats import router as chat_router
-from .daily_quiz import router as daily_quiz_router
-from .map import router as map_router
-from .network import router as network_router
-from .networks import router as network_router
-from .player import router as player_router
-from .players import router as player_router
-from .resource_market import router as resource_market_router
 from .templates import router as templates_router
 
-all_routers = [chat_router, daily_quiz_router, map_router, network_router, player_router, resource_market_router]
 __all__ = ["templates_router"]
-
-api_routers = [
-    chat_router,
-    daily_quiz_router,
-    map_router,
-    network_router,
-    player_router,
-    resource_market_router,
-    # shipments_router,
-]
 
 
 class SocketIOFilter(logging.Filter):
@@ -154,8 +134,6 @@ def setup_routes(app: FastAPI):
         engine.log_action(log_entry)
         return new_response
 
-    for router in api_routers:
-        app.include_router(router, prefix="/api/v1")
     app.include_router(templates_router)
     app.include_router(todo_router, prefix="/api")
     app.mount("/static", StaticFiles(directory="energetica/static"), name="static")
