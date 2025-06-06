@@ -490,7 +490,7 @@ async def change_graph_view(  # noqa: ANN201
 ):
     """Change the view mode for the graphs (basic, normal, expert)."""
     request_data = await request.json()
-    view = request_data["view"]
+    view = Player.NetworkGraphView(request_data["view"])
     user.change_graph_view(view)
     return {"response": "success"}
 
