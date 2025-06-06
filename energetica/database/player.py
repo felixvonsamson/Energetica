@@ -102,7 +102,7 @@ class Player(DBModel):
             "warehouse": 0,
             "GHG_effect": 0,
             "storage_facilities": 0,
-        }
+        },
     )
 
     progression_metrics: dict[str, float] = field(
