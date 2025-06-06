@@ -142,7 +142,7 @@ function setup() {
     textFont(font);
     textAlign(CENTER, CENTER);
     //filling map
-    fetch("/api/v1/map") // retrieves map data from the database using api.py
+    fetch("/api/get_map") // retrieves map data from the database using api.py
         .then((response) => response.json())
         .then((data) => {
             load_players().then((_players_ids) => {

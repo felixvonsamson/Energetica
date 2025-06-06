@@ -61,6 +61,30 @@ def get_wind_power_curve():  # noqa: ANN201
     return wind_power_curve
 
 
+# gets the map data from the database and returns it as a array of dictionaries :
+@http.route("/get_map", methods=["GET"])
+def get_map() -> Response:
+    """Get the map data from the database and returns it as a array of dictionaries."""
+    hex_map = HexTile.all()
+    hex_list = [
+        {
+            "id": tile.id,
+            "q": tile.coordinates[0],
+            "r": tile.coordinates[1],
+            "solar": tile.potentials[Renewable.SOLAR],
+            "wind": tile.potentials[Renewable.WIND],
+            "hydro": tile.potentials[Renewable.HYDRO],
+            "coal": tile.fuel_reserves[Fuel.COAL],
+            "gas": tile.fuel_reserves[Fuel.GAS],
+            "uranium": tile.fuel_reserves[Fuel.URANIUM],
+            "climate_risk": tile.climate_risk,
+            "player_id": tile.player.id if tile.player else None,
+        }
+        for tile in hex_map
+    ]
+    return jsonify(hex_list)
+
+
 @todo_router.get("/get_networks")
 def get_networks():  # noqa: ANN201
     """Get all the network names and returns it as a list."""

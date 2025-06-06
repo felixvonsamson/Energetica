@@ -60,7 +60,7 @@ let current_player_id;
 function preload() {
     font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
     //filling map
-    fetch("/api/v1/map") // retrieves map data from the database using api.py
+    fetch("/api/get_map") // retrieves map data from the database using api.py
         .then((response) => response.json())
         .then((raw_data) => {
             load_player_id().then((_current_player_id) => {
