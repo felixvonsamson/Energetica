@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Annotated
 
 import numpy as np
-from fastapi import APIRouter, Depends, Form, Request, status
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
 import energetica.utils.assets
@@ -103,12 +103,13 @@ def get_networks():  # noqa: ANN201
 
 
 @todo_router.get("/get_chat_messages")
-def get_chat_messages(  # noqa: ANN201
+async def get_chat_messages(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    chatID: Annotated[int, Form()],
+    request: Request,
 ):
     """Get the last 20 messages from a chat and returns it as a list."""
-    chat = Chat.get(int(chatID))
+    request_data = await request.json()
+    chat = Chat.get(int(request_data["chatID"]))
     if chat is None:
         return JSONResponse({"response": "chatNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
     packaged_messages = user.package_chat_messages(chat)
@@ -121,20 +122,6 @@ def get_chat_list(user: Annotated[Player, Depends(get_current_user)]):  # noqa: 
     """Get the list of chats for the current player."""
     response = user.package_chat_list()
     return {"response": "success"} | response
-
-
-@todo_router.get("/get_chat_messages")
-def get_chat_messages(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    chatID: Annotated[int, Form()],
-):
-    """Get the last 20 messages from a chat and returns it as a list."""
-    chat = Chat.get(int(chatID))
-    if chat is None:
-        return JSONResponse({"response": "chatNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    packaged_messages = user.package_chat_messages(chat)
-    user.mark_chat_as_read(chat)
-    return {"response": "success", "messages": packaged_messages}
 
 
 @todo_router.get("/get_resource_data")
@@ -517,13 +504,15 @@ async def request_change_facility_priority(  # noqa: ANN201
 
 
 @todo_router.post("/put_resource_on_sale")  # noqa: ANN201
-def put_resource_on_sale(  # noqa: ANN201
+async def put_resource_on_sale(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    resource: Annotated[Fuel, Form()],
-    quantity: Annotated[float, Form()],
-    price: Annotated[float, Form()],
+    request: Request,
 ):
     """Put a resource on sale."""
+    request_data = await request.json()
+    resource = Fuel(request_data["resource"])
+    quantity = float(request_data["resource"])
+    price = float(request_data["resource"])
     try:
         energetica.utils.resource_market.put_resource_on_market(user, resource, quantity * 1000, price / 1000)
     except GameError as game_exception:
@@ -544,13 +533,14 @@ def put_resource_on_sale(  # noqa: ANN201
 
 
 @todo_router.get("/buy_resource")
-def buy_resource(  # noqa: ANN201
+async def buy_resource(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    id: int,
-    quantity: float,
+    request: Request,
 ):
     """Buy a resource from the market."""
-    quantity *= 1000
+    request_data = await request.json()
+    id = int(request_data["id"])
+    quantity = float(request_data["quantity"]) * 1000
     sale = ResourceOnSale.get(id)
     if sale is None:
         return JSONResponse({"response": "saleNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
@@ -574,13 +564,15 @@ def buy_resource(  # noqa: ANN201
 
 
 @todo_router.get("/put_resource_on_sale")
-def put_resource_on_sale(  # noqa: ANN201
+async def put_resource_on_sale(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    resource: Annotated[Fuel, Form()],
-    quantity: Annotated[float, Form()],
-    price: Annotated[float, Form()],
+    request: Request,
 ):
     """Put a resource on sale."""
+    request_data = await request.json()
+    resource = Fuel(request_data["resource"])
+    quantity = float(request_data["quantity"])
+    price = float(request_data["price"])
     try:
         energetica.utils.resource_market.put_resource_on_market(user, resource, quantity * 1000, price / 1000)
     except GameError as game_exception:
@@ -601,13 +593,14 @@ def put_resource_on_sale(  # noqa: ANN201
 
 
 @todo_router.get("/buy_resource")
-def buy_resource(  # noqa: ANN201
+async def buy_resource(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    id: Annotated[int, Form()],
-    quantity: Annotated[float, Form()],
+    request: Request,
 ):
     """Buy a resource from the market."""
-    quantity *= 1000
+    request_data = request.json()
+    id = int(request_data["id"])
+    quantity = float(request_data["quantity"]) * 1000
     sale = ResourceOnSale.get(id)
     if sale is None:
         return JSONResponse({"response": "saleNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
@@ -632,11 +625,13 @@ def buy_resource(  # noqa: ANN201
 
 
 @todo_router.post("join_network")
-def join_network(  # noqa: ANN201
+async def join_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    choose_network: Annotated[int, Form()],
+    request: Request,
 ):
     """Join a network."""
+    request_data = request.json()
+    choose_network = int(request_data["choose_network"])
     network = energetica.utils.network_helpers.join_network(user, Network.get(choose_network))
     # TODO: flash
     # flash(f"You joined the network {network.name}", category="message")
@@ -645,11 +640,13 @@ def join_network(  # noqa: ANN201
 
 
 @todo_router.post("create_network")
-def create_network(  # noqa: ANN201
+async def create_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    network_name: Annotated[str, Form()],
+    request: Request,
 ):
     """Create a network."""
+    request_data = request.json()
+    network_name = str(request_data["network_name"])
     try:
         energetica.utils.network_helpers.create_network(user, network_name)
     except GameError as game_exception:
@@ -679,34 +676,38 @@ def leave_network(  # noqa: ANN201
 
 
 @todo_router.post("create_chat")
-def create_chat(  # noqa: ANN201
+async def create_chat(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    buddy_id: int,
+    request: Request,
 ):
     """Create a chat with one other player."""
-    buddy = Player.getitem(buddy_id)
+    request_data = request.json()
+    buddy = Player.getitem(int(request_data["buddy_id"]))
     energetica.utils.chat.create_chat(user, None, {user, buddy})
     return {"response": "success"}
 
 
 @todo_router.post("create_group_chat")
-def create_group_chat(  # noqa: ANN201
+async def create_group_chat(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    chat_title: str,
-    group_members: list[int],
+    request: Request,
 ):
     """Create a group chat."""
-    group_members = {user, *(map(Player.getitem, map(int, group_members)))}
+    request_data = request.json()
+    chat_title = str(request_data["chat_title"])
+    group_members = {user, *(map(Player.getitem, map(int, request_data["group_members"])))}
     energetica.utils.chat.create_chat(user, chat_title, group_members)
     return {"response": "success"}
 
 
 @todo_router.post("join_network")
-def join_network(  # noqa: ANN201
+async def join_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    choose_network: Annotated[int, Form()],
+    request: Request,
 ):
     """Join a network."""
+    request_data = request.json()
+    choose_network = int(request_data["choose_network"])
     network = energetica.utils.network_helpers.join_network(user, Network.get(choose_network))
     # TODO: flash
     # flash(f"You joined the network {network.name}", category="message")
@@ -715,11 +716,13 @@ def join_network(  # noqa: ANN201
 
 
 @todo_router.post("create_network")
-def create_network(  # noqa: ANN201
+async def create_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    network_name: Annotated[str, Form()],
+    request: Request,
 ):
     """Create a network."""
+    request_data = request.json()
+    network_name = str(request_data["network_name"])
     try:
         energetica.utils.network_helpers.create_network(user, network_name)
     except GameError as game_exception:
@@ -749,34 +752,39 @@ def leave_network(  # noqa: ANN201
 
 
 @todo_router.post("create_chat")
-def create_chat(  # noqa: ANN201
+async def create_chat(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    buddy_id: int,
+    request: Request,
 ):
     """Create a chat with one other player."""
-    buddy = Player.getitem(buddy_id)
+    request_data = request.json()
+    buddy = Player.getitem(int(request_data["buddy_id"]))
     energetica.utils.chat.create_chat(user, None, {user, buddy})
     return {"response": "success"}
 
 
 @todo_router.post("create_group_chat")
-def create_group_chat(  # noqa: ANN201
+async def create_group_chat(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    chat_title: str,
-    group_members: list[int],
+    request: Request,
 ):
     """Create a group chat."""
+    request_data = await request.json()
+    chat_title = str(request_data["chat_title"])
+    group_members = request_data["group_members"]
     player_members = {user, *(map(Player.getitem, map(int, group_members)))}
     energetica.utils.chat.create_chat(user, chat_title, player_members)
     return {"response": "success"}
 
 
 @todo_router.post("change_graph_view")
-def change_graph_view(  # noqa: ANN201
+async def change_graph_view(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    view: Player.NetworkGraphView,
+    request: Request,
 ):
     """Change the view mode for the graphs (basic, normal, expert)."""
+    request_data = await request.json()
+    view = Player.NetworkGraphView(request_data["view"])
     user.change_graph_view(view)
     return {"response": "success"}
 
