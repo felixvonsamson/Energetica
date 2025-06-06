@@ -4,15 +4,9 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/map", tags=["map"])
-
-
-@router.get("/get")
-def get_map() -> list[dict]:
-    """Get the map data from the database and returns it as a array of dictionaries."""
+if TYPE_CHECKING:
     from energetica.database.map import HexTile
     from energetica.enums import Fuel, Renewable
-
 
 router = APIRouter(prefix="/map", tags=["map"])
 

@@ -228,7 +228,6 @@ function load_chats() {
 }
 
 function retrieve_chats() {
-    console.log("retrieve_chats");
     return fetch("/api/v1/chat/chat_list")
         .then((response) => response.json())
         .then((data) => {
