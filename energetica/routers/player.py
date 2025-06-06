@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends
 
 from energetica.auth import get_current_user
 from energetica.database.player import Player
+from energetica.routers.chat import router
+from energetica.schemas.player import PlayerOut, SettingsRequest
 
-router = APIRouter(prefix="/players", tags=["Player"])
+router = APIRouter(prefix="/player", tags=["player"])
 
 
 @router.get("/me")
@@ -15,7 +17,7 @@ async def get_me(user: Player = Depends(get_current_user)) -> PlayerOut:
     )
 
 
-@router.get("")
+@router.get("/all")
 async def get_all_users() -> list[PlayerOut]:
     """Get all users' information."""
     all_users = Player.all()
@@ -28,7 +30,7 @@ async def get_all_users() -> list[PlayerOut]:
     ]
 
 
-@router.patch("/settings", status_code=204)
+@router.patch("/settings")
 async def update_user_settings(
     user: Annotated[Player, Depends(get_current_user)],
     request_data: SettingsRequest,

@@ -194,7 +194,7 @@ function hide_disclaimer() {
         body: JSON.stringify({ show_disclaimer: !checkbox.checked }),
     },);
     if (checkbox.checked) {
-        fetch("/api/v1/players/settings", {
+        fetch("/api/v1/player/settings", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ show_disclaimer: false }),
@@ -223,7 +223,7 @@ async function createChat() {
     }
 
     try {
-        const response = await send_json("/api/v1/chat/create_chat", { buddy_id: Number(buddy_id) });
+        const response = await send_json("/api/v1/chat", { group_member_ids: [Number(buddy_id)] });
 
         if (responseMessage === "success") {
             retrieve_chats();
@@ -243,7 +243,7 @@ async function createChat() {
 function createGroupChat() {
     /* Create a group chat with the selected players */
     let title = document.getElementById("chat_title").value;
-    send_json("/api/v1/chat/create_group_chat", {
+    send_json("/api/v1/chat", {
         group_chat_name: title,
         group_member_ids: group,
     }).then((response) => {
@@ -274,7 +274,7 @@ function newMessage() {
     if (!current_chat_id) {
         addError("No chat has been selected");
     }
-    send_json(`/api/v1/chat/${current_chat_id}/new_message`, {
+    send_json(`/api/v1/chat/${current_chat_id}/messages`, {
         new_message: message_field.value,
         chat_id: current_chat_id,
     }).then((response) => {
@@ -316,7 +316,7 @@ function openChat(chatID) {
         chat_data.last_opened_chat = chatID;
         sessionStorage.setItem("chats", JSON.stringify(chat_data));
         show_unread_badges();
-        fetch(`/api/get_chat_messages?chatID=${chatID}`)
+        fetch(`/api/v1/chat/${chatID}/messages`)
             .then((response) => response.json())
             .then((data) => {
                 console.log("/api/get_chat_messages?chatID=" + chatID);
@@ -352,7 +352,7 @@ function openChat(chatID) {
                 console.error("Error:", error);
             });
     });
-    fetch("/api/v1/players/settings", {
+    fetch("/api/v1/player/settings", {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",

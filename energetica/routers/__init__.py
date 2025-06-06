@@ -16,10 +16,13 @@ from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import GameErrorResponse
 
+from .chat import router as chat_router
 from .chats import router as chat_router
 from .daily_quiz import router as daily_quiz_router
 from .map import router as map_router
+from .network import router as network_router
 from .networks import router as network_router
+from .player import router as player_router
 from .players import router as player_router
 from .resource_market import router as resource_market_router
 from .templates import router as templates_router
