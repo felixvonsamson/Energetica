@@ -1,11 +1,7 @@
-from typing import Annotated
-
 from fastapi import APIRouter, Depends
 
 from energetica.auth import get_current_user
 from energetica.database.player import Player
-from energetica.routers.chats import router
-from energetica.schemas.players import PlayerOut, SettingsRequest
 
 router = APIRouter(prefix="/players", tags=["Player"])
 
@@ -30,14 +26,3 @@ async def get_all_users() -> list[PlayerOut]:
         )
         for u in all_users
     ]
-
-
-@router.patch("/me/settings", status_code=204)
-async def update_user_settings(
-    user: Annotated[Player, Depends(get_current_user)],
-    request_data: SettingsRequest,
-) -> None:
-    if request_data.last_opened_chat_id is not None:
-        user.last_opened_chat_id = request_data.last_opened_chat_id
-    if request_data.show_disclaimer is not None:
-        user.show_chat_disclaimer = request_data.show_disclaimer

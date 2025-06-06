@@ -8,7 +8,8 @@ import energetica.utils.chat
 from energetica.auth import get_current_user
 from energetica.database.messages import Chat
 from energetica.database.player import Player
-from energetica.schemas.chats import (
+from energetica.schemas.chat import (
+    ChatConfigRequest,
     ChatListResponse,
     ChatOut,
     MessageListResponse,
@@ -37,6 +38,18 @@ async def get_chat_list(user: Annotated[Player, Depends(get_current_user)]) -> C
         last_opened_chat_id=user.last_opened_chat_id,
         unread_chat_count=user.unread_chat_count(),
     )
+
+
+@router.patch("")
+async def set_last_opened_chat(
+    user: Annotated[Player, Depends(get_current_user)],
+    request_data: ChatConfigRequest,
+) -> None:
+    """Set the last opened chat and hide the disclaimer."""
+    if request_data.last_opened_chat_id is not None:
+        user.last_opened_chat_id = request_data.last_opened_chat_id
+    if request_data.show_disclaimer is not None:
+        user.show_chat_disclaimer = request_data.show_disclaimer
 
 
 @router.get("/{chat_id}/messages")
