@@ -33,6 +33,9 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
     :param str chat_name: a string for the name of the chat
     :param participant_ids: a list of numbers corresponding to player ids
     """
+    if None in participants:
+        # TODO (Felix): Catch this error in the frontend
+        raise GameError("playerDoesNotExist")
     if chat_name and (len(chat_name) == 0 or len(chat_name) > 25):
         raise GameError("wrongTitleLength")
     if len(participants) < 2:
@@ -59,7 +62,7 @@ def add_message(player: Player, message_text: str, chat: Chat) -> Message:
     if len(message_text) == 0:
         raise GameError("noMessage")
     if len(message_text) > 500:
-        raise GameError("messageTooLong")
+        raise GameError("messageTooLong", message=message_text)
     new_message = Message(
         text=message_text,
         player=player,
