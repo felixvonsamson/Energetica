@@ -131,9 +131,9 @@ let selected_id = null;
 let button_names = ["Solar", "Wind", "Hydro", "Coal", "Gas", "Uranium", "Climate risk"];
 
 function preload() {
-    font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
-    font_logo = loadFont("static/fonts/ExpletusSans-SemiBold.ttf");
-    logo = loadImage("static/images/icon_green.svg");
+    font = loadFont("/static/fonts/Baloo2-VariableFont_wght.ttf");
+    font_logo = loadFont("/static/fonts/ExpletusSans-SemiBold.ttf");
+    logo = loadImage("/static/images/icon_green.svg");
 }
 
 function setup() {
