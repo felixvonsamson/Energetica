@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Annotated
 
 import numpy as np
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
 import energetica.utils.assets
@@ -543,15 +543,13 @@ async def request_change_facility_priority(  # noqa: ANN201
 
 
 @todo_router.post("/put_resource_on_sale")  # noqa: ANN201
-async def put_resource_on_sale(  # noqa: ANN201
+def put_resource_on_sale(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
+    resource: Annotated[Fuel, Form()],
+    quantity: Annotated[float, Form()],
+    price: Annotated[float, Form()],
 ):
     """Put a resource on sale."""
-    request_data = await request.json()
-    resource = Fuel(request_data["resource"])
-    quantity = float(request_data["resource"])
-    price = float(request_data["resource"])
     try:
         energetica.utils.resource_market.put_resource_on_market(user, resource, quantity * 1000, price / 1000)
     except GameError as game_exception:
@@ -567,7 +565,6 @@ async def put_resource_on_sale(  # noqa: ANN201
         #     category="message",
         # )
         pass
-    # return redirect("/resource_market", code=303)
     return RedirectResponse("/resource_market", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -603,13 +600,11 @@ async def buy_resource(  # noqa: ANN201
 
 
 @todo_router.post("/join_network")
-async def join_network(  # noqa: ANN201
+def join_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
+    choose_network: Annotated[int, Form()],
 ):
     """Join a network."""
-    request_data = await request.json()
-    choose_network = int(request_data["choose_network"])
     network = energetica.utils.network_helpers.join_network(user, Network.get(choose_network))
     # TODO: flash
     # flash(f"You joined the network {network.name}", category="message")
@@ -618,13 +613,11 @@ async def join_network(  # noqa: ANN201
 
 
 @todo_router.post("/create_network")
-async def create_network(  # noqa: ANN201
+def create_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
+    network_name: Annotated[str, Form()],
 ):
     """Create a network."""
-    request_data = await request.json()
-    network_name = str(request_data["network_name"])
     try:
         energetica.utils.network_helpers.create_network(user, network_name)
     except GameError as game_exception:
