@@ -687,6 +687,23 @@ async def create_group_chat(  # noqa: ANN201
     return {"response": "success"}
 
 
+@todo_router.post("new_message")
+async def new_message(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+    request: Request,
+):
+    """Send a message."""
+    request_data = await request.json()
+    message = request_data["new_message"]
+    chat_id = int(request_data["chat_id"])
+    chat = Chat.get(chat_id)
+    if chat is None:
+        # TODO(mglst) here we should throw a GameError
+        return JSONResponse({"response": "NoChatID"}, status_code=status.HTTP_403_FORBIDDEN)
+    energetica.utils.chat.add_message(user, message, chat)
+    return {"response": "success"}
+
+
 @todo_router.post("/change_graph_view")
 async def change_graph_view(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
