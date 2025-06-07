@@ -12,6 +12,7 @@ from energetica import __release_date__, __version__, engine
 from energetica.auth import get_current_user_from_request
 from energetica.database.messages import Chat
 from energetica.database.player import Player
+from energetica.database.resource_on_sale import ResourceOnSale
 
 router = APIRouter(prefix="", tags=["Pages"])
 
@@ -240,7 +241,12 @@ def render_resource_market(  # noqa: ANN201
         return RedirectResponse("/login")
     if not user.achievements["warehouse"]:
         return RedirectResponse("/home")
-    return templates.TemplateResponse(request=request, name="resource_market.jinja")
+    print(list(ResourceOnSale.all()))
+    return templates.TemplateResponse(
+        request=request,
+        name="resource_market.jinja",
+        context={"on_sale": ResourceOnSale.all()},
+    )
 
 
 @router.get("/scoreboard", response_class=HTMLResponse, name="views.scoreboard")
