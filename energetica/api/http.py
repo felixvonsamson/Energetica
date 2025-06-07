@@ -13,6 +13,7 @@ from energetica.auth import get_current_user
 from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
+from energetica.database.messages import Notification
 from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
@@ -40,8 +41,8 @@ async def request_delete_notification(  # noqa: ANN201
         }
     """
     request_data = await request.json()
-    notification_id = request_data["id"]
-    user.delete_notification(notification_id)
+    notification = Notification.getitem(int(request_data["id"]))
+    user.delete_notification(notification)
     return {"response": "success"}
 
 
