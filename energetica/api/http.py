@@ -653,6 +653,15 @@ def leave_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
+@todo_router.get("hide_chat_disclaimer")
+def hide_chat_disclaimer(  # noqa: ANN201
+    user: Annotated[Player, Depends(get_current_user)],
+):
+    """Permanently hide the chat disclaimer."""
+    energetica.utils.chat.hide_chat_disclaimer(user)
+    return {"response": "success"}
+
+
 @todo_router.post("create_chat")
 async def create_chat(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
