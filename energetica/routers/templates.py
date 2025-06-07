@@ -253,7 +253,7 @@ def render_scoreboard(  # noqa: ANN201
     return templates.TemplateResponse(request=request, name="scoreboard.jinja")
 
 
-@router.get("/revenues", response_class=HTMLResponse, name="overviews.revenues")
+@router.get("/production_overview/revenues", response_class=HTMLResponse, name="overviews.revenues")
 def render_revenues(  # noqa: ANN201
     request: Request,
     user: Annotated[Player, Depends(get_current_user_from_request)],
@@ -263,7 +263,7 @@ def render_revenues(  # noqa: ANN201
     return templates.TemplateResponse(request=request, name="overviews/revenues.jinja")
 
 
-@router.get("/electricity", response_class=HTMLResponse, name="overviews.electricity")
+@router.get("/production_overview/electricity", response_class=HTMLResponse, name="overviews.electricity")
 def render_electricity(  # noqa: ANN201
     request: Request,
     user: Annotated[Player, Depends(get_current_user_from_request)],
@@ -273,7 +273,7 @@ def render_electricity(  # noqa: ANN201
     return templates.TemplateResponse(request=request, name="overviews/electricity.jinja")
 
 
-@router.get("/storage", response_class=HTMLResponse, name="overviews.storage")
+@router.get("/production_overview/storage", response_class=HTMLResponse, name="overviews.storage")
 def render_storage(  # noqa: ANN201
     request: Request,
     user: Annotated[Player, Depends(get_current_user_from_request)],
@@ -283,7 +283,7 @@ def render_storage(  # noqa: ANN201
     return templates.TemplateResponse(request=request, name="overviews/storage.jinja")
 
 
-@router.get("/resources", response_class=HTMLResponse, name="overviews.resources")
+@router.get("/production_overview/resources", response_class=HTMLResponse, name="overviews.resources")
 def render_resources(  # noqa: ANN201
     request: Request,
     user: Annotated[Player, Depends(get_current_user_from_request)],
@@ -293,7 +293,7 @@ def render_resources(  # noqa: ANN201
     return templates.TemplateResponse(request=request, name="overviews/resources.jinja")
 
 
-@router.get("/emissions", response_class=HTMLResponse, name="overviews.emissions")
+@router.get("/production_overview/emissions", response_class=HTMLResponse, name="overviews.emissions")
 def render_emissions(  # noqa: ANN201
     request: Request,
     user: Annotated[Player, Depends(get_current_user_from_request)],
