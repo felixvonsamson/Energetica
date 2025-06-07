@@ -602,7 +602,7 @@ async def buy_resource(  # noqa: ANN201
     }
 
 
-@todo_router.post("join_network")
+@todo_router.post("/join_network")
 async def join_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     request: Request,
@@ -617,7 +617,7 @@ async def join_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@todo_router.post("create_network")
+@todo_router.post("/create_network")
 async def create_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     request: Request,
@@ -639,7 +639,7 @@ async def create_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@todo_router.post("leave_network")
+@todo_router.post("/leave_network")
 def leave_network(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
 ):
@@ -653,7 +653,7 @@ def leave_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@todo_router.get("hide_chat_disclaimer")
+@todo_router.get("/hide_chat_disclaimer")
 def hide_chat_disclaimer(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
 ):
@@ -662,7 +662,7 @@ def hide_chat_disclaimer(  # noqa: ANN201
     return {"response": "success"}
 
 
-@todo_router.post("create_chat")
+@todo_router.post("/create_chat")
 async def create_chat(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     request: Request,
@@ -674,7 +674,7 @@ async def create_chat(  # noqa: ANN201
     return {"response": "success"}
 
 
-@todo_router.post("create_group_chat")
+@todo_router.post("/create_group_chat")
 async def create_group_chat(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     request: Request,
@@ -687,7 +687,7 @@ async def create_group_chat(  # noqa: ANN201
     return {"response": "success"}
 
 
-@todo_router.post("change_graph_view")
+@todo_router.post("/change_graph_view")
 async def change_graph_view(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     request: Request,
