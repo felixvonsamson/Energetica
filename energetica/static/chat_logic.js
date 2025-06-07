@@ -189,7 +189,7 @@ function hide_disclaimer() {
     /* Hide the chat disclaimer and send the "dont show again" information to the server */
     let checkbox = document.getElementById("dont_show_disclaimer");
     if (checkbox.checked) {
-        fetch("/api/v1/chat/hide_disclaimer", { method: "POST" })
+        fetch("/api/hide_chat_disclaimer")
             .catch((error) => {
                 console.error(`caught error ${error}`);
             });
@@ -270,7 +270,7 @@ function newMessage() {
     if (!current_chat_id) {
         addError("No chat has been selected");
     }
-    send_json(`/api/v1/chat/${current_chat_id}/new_message`, {
+    send_json("/api/new_message", {
         new_message: message_field.value,
         chat_id: current_chat_id,
     }).then((response) => {
@@ -348,4 +348,19 @@ function openChat(chatID) {
                 console.error("Error:", error);
             });
     });
+    fetch("/api/v1/players/me/settings", {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ last_opened_chat_id: chatID }),
+    })
+        .then((response) => {
+            if (response.status !== 204) {
+                console.error("Error:", response.status);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
 }
