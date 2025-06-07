@@ -217,7 +217,6 @@ function load_const_config() {
 }
 
 function load_chats() {
-    console.log("load_chats");
     if (typeof (Storage) !== "undefined") {
         const chats = sessionStorage.getItem("chats");
         if (chats) {
@@ -228,7 +227,7 @@ function load_chats() {
 }
 
 function retrieve_chats() {
-    return fetch("/api/v1/chat/chat_list")
+    fetch("/api/get_chat_list")
         .then((response) => response.json())
         .then((data) => {
             const unread_chat_count = Object.values(data.chat_list).reduce((count, chat) => count + (chat.unread_messages > 0 ? 1 : 0), 0);

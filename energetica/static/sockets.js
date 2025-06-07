@@ -11,7 +11,6 @@ socket.on("infoMessage", addToast);
 
 socket.on("errorMessage", addError);
 
-// TODO: rename this function
 function send_json(endpoint, body) {
     return fetch(endpoint, {
         method: "POST",
@@ -21,25 +20,6 @@ function send_json(endpoint, body) {
         },
         body: JSON.stringify(body),
     });
-}
-
-function catch_validation_error(response_body) {
-    const { meta, detail } = response_body;
-    if (meta?.error_type === "request_validation_error" && Array.isArray(detail)) {
-        const formattedMessages = detail.map(item => {
-            const field = item.loc?.[item.loc.length - 1] || "Field";
-            const capitalisedField = field.charAt(0).toUpperCase() + field.slice(1);
-
-            const msgWithoutPrefix = item.msg.includes(" ")
-                ? item.msg.split(" ").slice(1).join(" ")
-                : item.msg;
-
-            return `${capitalisedField} ${msgWithoutPrefix}.`;
-        });
-        addError(formattedMessages.join("<br>"));
-        return true;
-    }
-    return false;
 }
 
 //debug info for connection error
