@@ -187,15 +187,13 @@ def get_chart_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa:
         climate_data = pickle.load(file)
     concat_slices(climate_data, current_climate_data)
 
-    return (
-        {
-            "total_t": total_t,
-            "data": data,
-            "network_data": network_data,
-            "climate_data": climate_data,
-            "cumulative_emissions": user.cumul_emissions.get_all(),
-        },
-    )
+    return {
+        "total_t": total_t,
+        "data": data,
+        "network_data": network_data,
+        "climate_data": climate_data,
+        "cumulative_emissions": user.cumul_emissions.get_all(),
+    }
 
 
 @todo_router.get("/get_current_weather")
@@ -236,13 +234,11 @@ def get_player_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa
         return "", 404
     levels = user.get_lvls()
     capacities = user.capacities.get_all()
-    return (
-        {
-            "levels": levels,
-            "config": user.config,
-            "capacities": capacities,
-        },
-    )
+    return {
+        "levels": levels,
+        "config": user.config,
+        "capacities": capacities,
+    }
 
 
 @todo_router.get("/get_resource_reserves")
@@ -315,12 +311,10 @@ async def submit_quiz_answer(  # noqa: ANN201
     request_data = await request.json()
     answer = request_data["answer"]
     answer_correct = energetica.utils.misc.submit_quiz_answer(user, answer)
-    return (
-        {
-            "response": "correct" if answer_correct else "incorrect",
-            "question_data": energetica.utils.misc.get_quiz_question(user),
-        },
-    )
+    return {
+        "response": "correct" if answer_correct else "incorrect",
+        "question_data": energetica.utils.misc.get_quiz_question(user),
+    }
 
 
 @todo_router.get("/get_active_facilities")
@@ -359,21 +353,20 @@ async def request_queue_project(  # noqa: ANN201
             force=force,
         )
     except Confirm as confirm:
-        return (
+        return JSONResponse(
             {
                 "response": "areYouSure",
                 "capacity": confirm.__getattribute__("capacity"),
                 "construction_power": confirm.__getattribute__("construction_power"),
             },
-        ), 300
+            status_code=status.HTTP_300_MULTIPLE_CHOICES,
+        )
 
-    return (
-        {
-            "response": "success",
-            "money": user.money,
-            "constructions": package_projects_data(user),
-        },
-    )
+    return {
+        "response": "success",
+        "money": user.money,
+        "constructions": package_projects_data(user),
+    }
 
 
 @todo_router.post("/request_cancel_project")
@@ -391,19 +384,18 @@ async def request_cancel_project(  # noqa: ANN201
     try:
         energetica.utils.assets.cancel_project(player=user, project=project, force=force)
     except Confirm as confirm:
-        return (
+        return JSONResponse(
             {
                 "response": "areYouSure",
                 "refund": confirm.__getattribute__("refund"),
             },
-        ), 300
-    return (
-        {
-            "response": "success",
-            "money": user.money,
-            "projects": package_projects_data(user),
-        },
-    )
+            status_code=status.HTTP_300_MULTIPLE_CHOICES,
+        )
+    return {
+        "response": "success",
+        "money": user.money,
+        "projects": package_projects_data(user),
+    }
 
 
 @todo_router.post("/request_toggle_pause_project")
@@ -418,12 +410,10 @@ async def request_pause_project(  # noqa: ANN201
     if project is None or project.player != user:
         return ({"response": "projectNotFound"}), 404
     energetica.utils.assets.toggle_pause_project(player=user, project=project)
-    return (
-        {
-            "response": "success",
-            "projects": package_projects_data(user),
-        },
-    )
+    return {
+        "response": "success",
+        "projects": package_projects_data(user),
+    }
 
 
 @todo_router.post("/request_decrease_project_priority")
@@ -438,12 +428,10 @@ async def request_decrease_project_priority(  # noqa: ANN201
     if project is None or project.player != user:
         return ({"response": "projectNotFound"}), 404
     energetica.utils.assets.decrease_project_priority(player=user, project=project)
-    return (
-        {
-            "response": "success",
-            "projects": package_projects_data(user),
-        },
-    )
+    return {
+        "response": "success",
+        "projects": package_projects_data(user),
+    }
 
 
 @todo_router.post("/request_upgrade_facility")
@@ -487,13 +475,11 @@ async def request_dismantle_facility(  # noqa: ANN201
     if facility is None or facility.player != user:
         return ({"response": "projectNotFound"}), 404
     energetica.utils.assets.dismantle_facility(player=user, facility=facility)
-    return (
-        {
-            "response": "success",
-            "facility_name": facility.facility_type,
-            "money": user.money,
-        },
-    )
+    return {
+        "response": "success",
+        "facility_name": facility.facility_type,
+        "money": user.money,
+    }
 
 
 @todo_router.post("/request_dismantle_all_of_type")
