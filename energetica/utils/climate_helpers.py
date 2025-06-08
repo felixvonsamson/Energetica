@@ -15,6 +15,7 @@ from energetica.enums import FunctionalFacilityType, Renewable
 from energetica.globals import engine
 from energetica.utils.assets import facility_destroyed
 from energetica.utils.formatting import display_money
+from energetica.utils.hashing import stable_hash
 
 
 def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generator) -> None:
@@ -74,7 +75,7 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
 def check_climate_events() -> None:
     """Check if a climate event happens on this tick."""
 
-    seed_hash = hash((engine.random_seed, "check_climate_events", engine.total_t))
+    seed_hash = stable_hash((engine.random_seed, "check_climate_events", engine.total_t))
     rng = np.random.default_rng(abs(seed_hash))
 
     def inv_cdf_sigmoid(p: float, inverse: bool = False) -> float:
