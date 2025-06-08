@@ -3,4 +3,3 @@ tests/*/instance/*
 checkpoints/*
 __pycache__
 .DS_Store
-actions_history.log

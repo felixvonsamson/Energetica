@@ -28,6 +28,7 @@ from energetica.enums import (
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
+from energetica.utils.hashing import stable_hash
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -114,7 +115,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         # deterministically.
         if player.tile is None:
             raise GameError("Player has no tile")
-        seed_hash = hash(
+        seed_hash = stable_hash(
             (
                 engine.random_seed,
                 player.id,
