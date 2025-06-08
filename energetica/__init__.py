@@ -123,7 +123,7 @@ def create_app(
     if os.path.isfile("instance/engine_data.pck"):
         engine.load()
         if actions:
-            assert uuid.UUID(actions[0]["uuid"]) == engine.uuid
+            assert uuid.UUID(actions[0]["instance_uuid"]) == engine.uuid
     else:
         if actions:
             kwargs: dict = actions[0].copy()
