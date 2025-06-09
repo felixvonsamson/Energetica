@@ -9,7 +9,6 @@ from typing import Any
 
 import requests
 
-from energetica.auth import generate_password_hash
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.utils.tick_execution import tick
@@ -17,12 +16,14 @@ from energetica.utils.tick_execution import tick
 base_url: str | None = None
 
 
-def create_user(user_id: int, username: str, pw_hash: Any) -> requests.Session:
+def create_user(user_id: int, username: str, password: str) -> requests.Session:
     """Create a user with the given user_id."""
     session = requests.Session()
-    data = {"username": username, "pw_hash": pw_hash}
-    response = session.post(f"{base_url}/sign-up", data=data, allow_redirects=False)
-    assert response.status_code == 302
+    json = {"username": username, "password": password}
+    response = session.post(f"{base_url}/sign-up", json=json, allow_redirects=False)
+    assert response.status_code == 201
+    print(next(Player.filter_by(username=username)).id)
+    print(user_id)
     assert next(Player.filter_by(username=username)).id == user_id
     return session
 
@@ -95,8 +96,8 @@ def _simulate(
         elif action["action_type"] == "create_user":
             player_id = action["player_id"]
             username = action["username"] if not simulating else f"user{player_id}"
-            pw_hash = action["pw_hash"] if not simulating else generate_password_hash("password")
-            user_sessions[player_id] = create_user(player_id, username, pw_hash)
+            password = "password"
+            user_sessions[player_id] = create_user(player_id, username, password)
         elif action["action_type"] == "request":
             player_id = action["player_id"]
             if player_id not in user_sessions:
@@ -104,7 +105,9 @@ def _simulate(
             url = f"{base_url}{action['request']['endpoint']}"
             content_type = "json" if action["request"]["content_type"] == "application/json" else "data"
             response = user_sessions[player_id].post(
-                url, **{content_type: action["request"]["content"]}, allow_redirects=False
+                url,
+                **{content_type: action["request"]["content"]},
+                allow_redirects=False,
             )
             # TODO (Yassir): mismatch if content type is not the same
             if "money" in action["response"]["content"]:
