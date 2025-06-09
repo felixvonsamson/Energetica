@@ -11,3 +11,4 @@ noise
 pytest
 fastapi[standard]
 python-socketio[asgi]
+itsdangerous
