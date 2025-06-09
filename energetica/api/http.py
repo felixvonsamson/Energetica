@@ -554,7 +554,7 @@ def put_resource_on_sale(  # noqa: ANN201
     return RedirectResponse("/resource_market", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@todo_router.get("/buy_resource")
+@todo_router.post("/buy_resource")
 async def buy_resource(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
     request: Request,
@@ -632,6 +632,7 @@ def leave_network(  # noqa: ANN201
     return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
 
 
+# TODO(Felix): This should probably be a post or a patch request
 @todo_router.get("/hide_chat_disclaimer")
 def hide_chat_disclaimer(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],
