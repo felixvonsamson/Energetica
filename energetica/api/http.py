@@ -109,7 +109,7 @@ def get_chart_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa:
                 dict1[key][sub_key][3].extend(new_6month)
 
     if user.tile is None:
-        return "", 404
+        return JSONResponse("", status_code=status.HTTP_404_NOT_FOUND)
     total_t = engine.total_t
     rolling_history = user.rolling_history.get_data(t=total_t % 216 + 1)
     filename = f"instance/data/players/player_{user.id}.pck"
@@ -148,7 +148,7 @@ def get_current_weather(user: Annotated[Player, Depends(get_current_user)]):  # 
 def get_network_capacities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the network capacities for the current player."""
     if user.network is None:
-        return "", 404
+        return JSONResponse("", status_code=status.HTTP_404_NOT_FOUND)
     return user.network.capacities.get_all()
 
 
@@ -157,7 +157,7 @@ def get_market_data(user: Annotated[Player, Depends(get_current_user)], t: int):
     """Get the data for the market graph at a specific tick."""
     market_data = {}
     if user.network is None:
-        return "", 404
+        return JSONResponse("", status_code=status.HTTP_404_NOT_FOUND)
     filename_state = f"instance/data/networks/{user.network.id}/charts/market_t{engine.total_t - t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
@@ -165,7 +165,7 @@ def get_market_data(user: Annotated[Player, Depends(get_current_user)], t: int):
             market_data["capacities"] = market_data["capacities"].to_dict(orient="list")
             market_data["demands"] = market_data["demands"].to_dict(orient="list")
     else:
-        return "", 404
+        return JSONResponse("", status_code=status.HTTP_404_NOT_FOUND)
     return market_data
 
 
@@ -173,7 +173,7 @@ def get_market_data(user: Annotated[Player, Depends(get_current_user)], t: int):
 def get_player_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get count of assets and config for this player."""
     if user.tile is None:
-        return "", 404
+        return JSONResponse("", status_code=status.HTTP_404_NOT_FOUND)
     levels = user.get_lvls()
     capacities = user.capacities.get_all()
     return {
@@ -321,7 +321,7 @@ async def request_cancel_project(  # noqa: ANN201
     project_id = int(request_data["id"])
     project = OngoingProject.get(int(project_id))
     if project is None or project.player != user:
-        return ({"response": "projectNotFound"}), 404
+        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
     force = request_data["force"]
     try:
         energetica.utils.assets.cancel_project(player=user, project=project, force=force)
@@ -350,7 +350,7 @@ async def request_pause_project(  # noqa: ANN201
     project_id = int(request_data["id"])
     project = OngoingProject.get(int(project_id))
     if project is None or project.player != user:
-        return ({"response": "projectNotFound"}), 404
+        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
     energetica.utils.assets.toggle_pause_project(player=user, project=project)
     return {
         "response": "success",
@@ -368,7 +368,7 @@ async def request_decrease_project_priority(  # noqa: ANN201
     project_id = request_data["id"]
     project = OngoingProject.get(int(project_id))
     if project is None or project.player != user:
-        return ({"response": "projectNotFound"}), 404
+        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
     energetica.utils.assets.decrease_project_priority(player=user, project=project)
     return {
         "response": "success",
@@ -386,7 +386,7 @@ async def request_upgrade_facility(  # noqa: ANN201
     facility_id = request_data["facility_id"]
     facility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player != user:
-        return ({"response": "facilityNotFound"}), 404
+        return JSONResponse({"response": "facilityNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
     energetica.utils.assets.upgrade_facility(player=user, facility=facility)
     return {"response": "success", "money": user.money}
 
@@ -400,7 +400,7 @@ async def request_upgrade_all_of_type(  # noqa: ANN201
     request_data = await request.json()
     facility_type = str_to_project_type[request_data["facility"]]
     if not isinstance(facility_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
-        return ({"response": "malformedRequest"}), 400
+        return JSONResponse({"response": "malformedRequest"}, status_code=status.HTTP_400_BAD_REQUEST)
     energetica.utils.assets.upgrade_all_of_type(player=user, facility_type=facility_type)
     return {"response": "success", "money": user.money}
 
@@ -415,7 +415,7 @@ async def request_dismantle_facility(  # noqa: ANN201
     facility_id = request_data["facility_id"]
     facility = ActiveFacility.get(int(facility_id))
     if facility is None or facility.player != user:
-        return ({"response": "projectNotFound"}), 404
+        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
     energetica.utils.assets.dismantle_facility(player=user, facility=facility)
     return {
         "response": "success",
@@ -443,7 +443,7 @@ async def change_network_prices(  # noqa: ANN201
 ):
     """Change the prices for anything on the network."""
     if not user.is_in_network:
-        return ({"response": "notAuthorized"}), 404
+        return JSONResponse({"response": "notAuthorized"}, status_code=status.HTTP_404_NOT_FOUND)
     request_data = await request.json()
     updated_prices = request_data["prices"]
     if not all(key in ["supply", "demand"] for key in updated_prices.keys()):
@@ -463,7 +463,7 @@ async def request_change_facility_priority(  # noqa: ANN201
 ):
     """Change the generation priority."""
     if not user.achievements["network"]:
-        return ({"response": "notAuthorized"}), 404
+        return JSONResponse({"response": "notAuthorized"}, status_code=status.HTTP_404_NOT_FOUND)
     request_data = await request.json()
     priority = request_data["priority"]
     user.network_prices.change_facility_priority(new_priority=priority)
