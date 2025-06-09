@@ -43,8 +43,8 @@ def setup_routes(app: FastAPI):
     @app.exception_handler(GameError)
     async def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
         """Handle global game exceptions."""
-        content = GameErrorResponse(exception_type=exc.exception_type)
-        return JSONResponse(content=content.model_dump(), status_code=status.HTTP_400_BAD_REQUEST)
+        content = GameErrorResponse(response=exc.exception_type)
+        return JSONResponse(content=content.model_dump(), status_code=status.HTTP_403_FORBIDDEN)
 
     @app.middleware("")
     async def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
