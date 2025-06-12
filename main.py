@@ -123,16 +123,23 @@ if __name__ == "__main__":
         action="store_true",
         help="Disable hot reloading",
     )
+    parser.add_argument(
+        "--fastapi-log-level",
+        choices=["critical", "error", "warning", "info", "debug", "trace"],
+        default="warning",
+    )
 
     kwargs = vars(parser.parse_args())
     ssl_args = {"ssl_keyfile": kwargs.pop("keyfile"), "ssl_certfile": kwargs.pop("certfile")}
     ssl_args = ssl_args if ssl_args["ssl_keyfile"] and ssl_args["ssl_certfile"] else {}
+    print(kwargs.keys())
+    fastapi_log_level = kwargs.pop("fastapi_log_level")
 
     if kwargs.pop("no_reload"):
         print("no hot reloading")
         # If hot-reloading is disabled, run uvicorn directly
         app = create_app(**kwargs)
-        uvicorn.run(app, host="0.0.0.0", port=kwargs["port"], **ssl_args)
+        uvicorn.run(app, host="0.0.0.0", port=kwargs["port"], log_level=fastapi_log_level, **ssl_args)
     else:
         print("hot reloading enabled")
         # If hot-reloading is enable, store the kwargs in an environment variable and use hot.py as an entrypoint
@@ -148,6 +155,8 @@ if __name__ == "__main__":
                 "0.0.0.0",
                 "--port",
                 str(kwargs["port"]),
+                "--log-level",
+                fastapi_log_level,
                 "--reload",
             ]
             if ssl_args != {}:
