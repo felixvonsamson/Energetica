@@ -150,7 +150,7 @@ if __name__ == "__main__":
                 sys.executable,
                 "-m",
                 "uvicorn",
-                "hot:app",
+                "main:app",
                 "--host",
                 "0.0.0.0",
                 "--port",
@@ -165,3 +165,14 @@ if __name__ == "__main__":
             subprocess.run(args, env=env)
         except KeyboardInterrupt:
             print("[main.py] Server stopped by user (Ctrl+C)")
+
+if __name__ != "__main__":
+    try:
+        kwargs_json = os.environ["ENERGETICA_APP_CONFIG"]
+        kwargs = json.loads(kwargs_json)
+    except KeyError:
+        raise RuntimeError("Missing ENERGETICA_APP_CONFIG")
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"Invalid JSON in ENERGETICA_APP_CONFIG: {e}")
+
+    app = create_app(**kwargs)
