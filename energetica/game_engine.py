@@ -103,6 +103,7 @@ class GameEngine(object):
             json.dumps(
                 {
                     "instance_uuid": self.uuid.hex,
+                    "env": self.env,
                     "clock_time": self.clock_time,
                     "in_game_seconds_per_tick": self.in_game_seconds_per_tick,
                     "action_type": "init_engine",
