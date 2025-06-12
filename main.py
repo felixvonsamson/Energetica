@@ -7,8 +7,6 @@ import os
 import subprocess
 import sys
 
-import uvicorn
-
 from energetica import create_app
 
 if __name__ == "__main__":
@@ -132,39 +130,33 @@ if __name__ == "__main__":
     kwargs = vars(parser.parse_args())
     ssl_args = {"ssl_keyfile": kwargs.pop("keyfile"), "ssl_certfile": kwargs.pop("certfile")}
     ssl_args = ssl_args if ssl_args["ssl_keyfile"] and ssl_args["ssl_certfile"] else {}
-    print(kwargs.keys())
-    fastapi_log_level = kwargs.pop("fastapi_log_level")
 
-    if kwargs.pop("no_reload"):
-        print("no hot reloading")
-        # If hot-reloading is disabled, run uvicorn directly
-        app = create_app(**kwargs)
-        uvicorn.run(app, host="0.0.0.0", port=kwargs["port"], log_level=fastapi_log_level, **ssl_args)
-    else:
-        print("hot reloading enabled")
-        # If hot-reloading is enable, store the kwargs in an environment variable and use hot.py as an entrypoint
-        env = os.environ.copy()
-        env["ENERGETICA_APP_CONFIG"] = json.dumps(kwargs)
-        try:
-            args = [
-                sys.executable,
-                "-m",
-                "uvicorn",
-                "main:app",
-                "--host",
-                "0.0.0.0",
-                "--port",
-                str(kwargs["port"]),
-                "--log-level",
-                fastapi_log_level,
-                "--reload",
-            ]
-            if ssl_args != {}:
-                args += ["--ssl-keyfile", ssl_args["ssl_keyfile"]]
-                args += ["--ssl-certfile", ssl_args["ssl_certfile"]]
-            subprocess.run(args, env=env)
-        except KeyboardInterrupt:
-            print("[main.py] Server stopped by user (Ctrl+C)")
+    fastapi_log_level = kwargs.pop("fastapi_log_level")
+    reload_enabled = not kwargs.pop("no_reload")
+
+    env = os.environ.copy()
+    env["ENERGETICA_APP_CONFIG"] = json.dumps(kwargs)
+    args = [
+        sys.executable,
+        "-m",
+        "uvicorn",
+        "main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(kwargs["port"]),
+        "--log-level",
+        fastapi_log_level,
+    ]
+    if reload_enabled:
+        args.append("--reload")
+    if ssl_args != {}:
+        args += ["--ssl-keyfile", ssl_args["ssl_keyfile"]]
+        args += ["--ssl-certfile", ssl_args["ssl_certfile"]]
+    try:
+        subprocess.run(args, env=env)
+    except KeyboardInterrupt:
+        print("[main.py] Server stopped by user (Ctrl+C)")
 
 if __name__ != "__main__":
     try:
