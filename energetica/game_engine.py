@@ -232,10 +232,6 @@ class GameEngine(object):
             for member, member_data in data.items():
                 setattr(self, member, member_data)
 
-    def first_tick_time_epoch_ms(self) -> int:
-        """Get the first tick time in epoch milliseconds."""
-        return int(self.first_tick_time.timestamp() * 1000)
-
     def save_checkpoint(self, destination_filename: str = "checkpoints/last_checkpoint.tar.gz") -> None:
         self.save()
         with tarfile.open("checkpoints/new_checkpoint.tar.gz", "w:gz") as tar:
