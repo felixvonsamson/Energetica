@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import Annotated
 
 import numpy as np
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
+from fastapi.responses import JSONResponse
 
 import energetica.utils.assets
 import energetica.utils.map_helpers
