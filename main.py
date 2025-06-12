@@ -1,5 +1,14 @@
 #!/usr/bin/env -S python3 -u
-"""Launch the game."""
+"""
+Main entry point for the game.
+
+Usage:
+    - Development: `python main.py --env dev`
+    - Production:  `python main.py --env prod --no-reload --keyfile ... --certfile ...`
+    - Simulation:  `python main.py --env dev --simulate_file path/to/actions_history.log`
+
+If using VS Code, see `tasks.json` for quickly launching the server and `launch.json` for debugging.
+"""
 
 import argparse
 import json
@@ -163,7 +172,7 @@ if __name__ != "__main__":
         kwargs_json = os.environ["ENERGETICA_APP_CONFIG"]
         kwargs = json.loads(kwargs_json)
     except KeyError:
-        raise RuntimeError("Missing ENERGETICA_APP_CONFIG")
+        raise RuntimeError("Missing ENERGETICA_APP_CONFIG. Please use `python main.py <args>` as an entry point.")
     except json.JSONDecodeError as e:
         raise RuntimeError(f"Invalid JSON in ENERGETICA_APP_CONFIG: {e}")
 
