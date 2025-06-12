@@ -103,7 +103,9 @@ def test_seed_determinism() -> None:
         if result.returncode != 0:
             raise RuntimeError(f"Subprocess failed:\n{result.stderr}")
 
-        return json.loads(result.stdout)
+        # Only parse the last line of stdout as JSON
+        json_output = result.stdout.strip().split("\n")[-1]
+        return json.loads(json_output)
 
     seed = 42
     results = [run_seeded_subprocess(seed) for _ in range(2)]
