@@ -91,9 +91,6 @@ def setup_auth(app: FastAPI) -> None:
         username = request_data.username
         password = request_data.password
 
-        if not username or not password:
-            raise InvalidCredentialsException
-
         player = next(Player.filter_by(username=username), None)
 
         if player is None:
