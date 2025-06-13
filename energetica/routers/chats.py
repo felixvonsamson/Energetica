@@ -17,7 +17,7 @@ from energetica.schemas.chats import (
     NewMessageRequest,
 )
 
-router = APIRouter(prefix="/chats", tags=["Chat"])
+router = APIRouter(prefix="/chats", tags=["Chats"])
 
 
 @router.get("")
