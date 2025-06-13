@@ -238,28 +238,6 @@ def get_scoreboard(user: Annotated[Player, Depends(get_current_user)]):  # noqa:
     return user.package_scoreboard()
 
 
-@todo_router.get("/get_quiz_question")
-def get_quiz_question(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get the daily quiz question."""
-    return energetica.utils.misc.get_quiz_question(user)
-
-
-@todo_router.post("/submit_quiz_answer")
-async def submit_quiz_answer(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Submit the daily quiz answer from a player."""
-    # TODO: even for correct answers, the frontend displays "Incorrect answer! Try again tomorrow."
-    request_data = await request.json()
-    answer = request_data["answer"]
-    answer_correct = energetica.utils.misc.submit_quiz_answer(user, answer)
-    return {
-        "response": "correct" if answer_correct else "incorrect",
-        "question_data": energetica.utils.misc.get_quiz_question(user),
-    }
-
-
 @todo_router.get("/get_active_facilities")
 def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the active facilities for this player."""

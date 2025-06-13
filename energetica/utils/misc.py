@@ -18,6 +18,7 @@ from energetica.database.player import Player
 from energetica.enums import ControllableFacilityType
 from energetica.game_error import GameError
 from energetica.globals import engine
+from energetica.schemas.daily_quiz import DailyQuizBase
 from energetica.utils.astro import DrHI
 
 # Helper functions and data initialization utilities
@@ -207,13 +208,13 @@ def initialize_player(player: Player) -> None:
 
 
 # Quiz
-def submit_quiz_answer(player: Player, answer: str) -> bool:
+def submit_quiz_answer(player: Player, player_answer: str) -> bool:
     """Return True if the answer was correct, False otherwise."""
     quiz_data = engine.daily_question
     if player.id in quiz_data["player_answers"]:
         raise GameError("quizAlreadyAnswered")
-    quiz_data["player_answers"][player.id] = answer
-    if answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
+    quiz_data["player_answers"][player.id] = player_answer
+    if player_answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
         player.progression_metrics["xp"] += 1
         engine.log(f"{player.username} answered the quiz correctly")
         return True
@@ -221,13 +222,32 @@ def submit_quiz_answer(player: Player, answer: str) -> bool:
     return False
 
 
-def get_quiz_question(player: Player) -> dict:
-    """Return the data for the quiz question in the form of a dictionary with only the answer of the current player."""
-    question_data = engine.daily_question.copy()
-    if player.id in question_data["player_answers"]:
-        question_data["player_answer"] = question_data["player_answers"][player.id]
-    del question_data["player_answers"]
-    return question_data
+def get_quiz_question(player: Player) -> DailyQuizBase:
+    """Return the data for the quiz question with only the answer of the current player."""
+    quiz_data = engine.daily_question
+    if player.id in quiz_data["player_answers"]:
+        return DailyQuizBase(
+            question=quiz_data["question"],
+            answer1=quiz_data["answer1"],
+            answer2=quiz_data["answer2"],
+            answer3=quiz_data["answer3"],
+            player_answer=quiz_data["player_answers"][player.id],
+            answered_correctly=quiz_data["player_answers"][player.id] == quiz_data["answer"]
+            or quiz_data["answer"] == "all correct",
+            correct_answer=quiz_data["answer"],
+            explanation=quiz_data["explanation"],
+        )
+    else:
+        return DailyQuizBase(
+            question=quiz_data["question"],
+            answer1=quiz_data["answer1"],
+            answer2=quiz_data["answer2"],
+            answer3=quiz_data["answer3"],
+            player_answer=None,
+            answered_correctly=None,
+            correct_answer=None,
+            explanation=None,
+        )
 
 
 # Weather

@@ -39,42 +39,43 @@ setInterval(() => {
 }, 10000);
 
 
-fetch('/api/get_quiz_question')
+fetch('/api/v1/daily_quiz')
   .then((response) => response.json())
   .then((quiz_question) => {
     display_quiz_question(quiz_question);
   });
 
 function answer_quiz(answer) {
-  send_json("/api/submit_quiz_answer", { answer: answer })
+  send_json("/api/v1/daily_quiz", { player_answer: answer })
     .then((response) => {
       response.json().then((response_data) => {
-        if (response_data.response == "correct") {
+        if (response_data.answered_correctly) {
           addToast("Correct answer! You earned 1XP");
         } else {
           addError("Incorrect answer! Try again tomorrow.");
         }
-        display_quiz_question(response_data.question_data);
+        display_quiz_question(response_data);
       });
     });
 }
 
 function display_quiz_question(question_data) {
+  console.log(question_data);
   const quiz = document.getElementById("quiz_question");
   quiz.innerHTML = `<p>${question_data.question}</p>`;
-  if ("player_answer" in question_data) {
+  if (question_data.player_answer !== null) {
     quiz.innerHTML += `<div class="quiz_answers_container">
-    <button class="quiz_answer medium ${question_data.answer == "p1" || question_data.answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.p1}</button>
-    <button class="quiz_answer medium ${question_data.answer == "p2" || question_data.answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.p2}</button>
-    <button class="quiz_answer medium ${question_data.answer == "p3" || question_data.answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.p3}</button>
+    <button class="quiz_answer medium ${question_data.correct_answer == "answer1" || question_data.correct_answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.answer1}</button>
+    <button class="quiz_answer medium ${question_data.correct_answer == "answer2" || question_data.correct_answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.answer2}</button>
+    <button class="quiz_answer medium ${question_data.correct_answer == "answer3" || question_data.correct_answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.answer3}</button>
     </div>
     <p>${question_data.explanation}</p>
     <p class="txt_center"><a href="${question_data.Link}" target="_blank">Learn more</a></p>`;
   } else {
     quiz.innerHTML += `<div class="quiz_answers_container">
-    <button class="quiz_answer medium" onclick="answer_quiz('p1')">${question_data.p1}</button>
-    <button class="quiz_answer medium" onclick="answer_quiz('p2')">${question_data.p2}</button>
-    <button class="quiz_answer medium" onclick="answer_quiz('p3')">${question_data.p3}</button>
+    <button class="quiz_answer medium" onclick="answer_quiz('answer1')">${question_data.answer1}</button>
+    <button class="quiz_answer medium" onclick="answer_quiz('answer2')">${question_data.answer2}</button>
+    <button class="quiz_answer medium" onclick="answer_quiz('answer3')">${question_data.answer3}</button>
     </div>`;
   }
 }
