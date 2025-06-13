@@ -280,4 +280,3 @@ class Confirm(Exception):
     def __init__(self, **kwargs: Any) -> None:
         self.__dict__.update(kwargs)
         Exception.__init__(self, "Please confirm this action.")
-        Exception.__init__(self, "Please confirm this action.")
