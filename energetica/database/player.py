@@ -32,6 +32,7 @@ from energetica.enums import (
     WorkerType,
 )
 from energetica.globals import MAIN_EVENT_LOOP, engine
+from energetica.schemas.achievements import Achievement
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -499,31 +500,35 @@ class Player(DBModel):
                 )
                 self.notify("Achievement", message)
 
-    def package_upcoming_achievements(self) -> dict:
+    def package_upcoming_achievements(self) -> list[Achievement]:
         """Package the progress information for the upcoming achievements."""
-        upcoming_achievements = {}
-        for achievement, achievement_data in achievements.items():
+        upcoming_achievements: list[Achievement] = []
+        for achievement_id, achievement_data in achievements.items():
             requirements_met = all(self.achievements[requirement] for requirement in achievement_data["requirements"])
             if not requirements_met:
                 continue
-            if achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
-                if not self.achievements[achievement]:
-                    upcoming_achievements[achievement] = {
-                        "name": achievement_data["name"],
-                        "reward": achievement_data["reward"],
-                        "objective": 1,
-                        "status": 0,
-                    }
+            if achievement_id in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
+                if not self.achievements[achievement_id]:
+                    achievement = Achievement(
+                        id=achievement_id,
+                        name=achievement_data["name"],
+                        reward=achievement_data["reward"],
+                        objective=1,
+                        status=0,
+                    )
+                    upcoming_achievements.append(achievement)
             else:
-                current_lvl = self.achievements[achievement]
+                current_lvl = self.achievements[achievement_id]
                 if current_lvl < len(achievement_data["milestones"]):
                     status = self.progression_metrics[achievement_data["metric"]]
-                    upcoming_achievements[achievement] = {
-                        "name": f"{achievement_data['name']} {current_lvl + 1}",
-                        "reward": achievement_data["rewards"][current_lvl],
-                        "objective": achievement_data["milestones"][current_lvl],
-                        "status": round(status),
-                    }
+                    achievement = Achievement(
+                        id=achievement_id,
+                        name=f"{achievement_data['name']} {current_lvl + 1}",
+                        reward=achievement_data["rewards"][current_lvl],
+                        objective=achievement_data["milestones"][current_lvl],
+                        status=round(status),
+                    )
+                    upcoming_achievements.append(achievement)
         return upcoming_achievements
 
     def __repr__(self) -> str:

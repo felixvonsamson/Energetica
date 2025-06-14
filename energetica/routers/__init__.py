@@ -16,6 +16,7 @@ from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import GameErrorResponse
 
+from .achievements import router as achievements_router
 from .chats import router as chat_router
 from .daily_quiz import router as daily_quiz_router
 from .map import router as map_router
@@ -28,6 +29,7 @@ from .templates import router as templates_router
 __all__ = ["templates_router"]
 
 api_routers = [
+    achievements_router,
     chat_router,
     daily_quiz_router,
     map_router,

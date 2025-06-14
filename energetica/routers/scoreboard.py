@@ -1,7 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter
-from fastapi.params import Depends
+from fastapi import APIRouter, Depends
 
 from energetica.auth import get_current_user
 from energetica.database.player import Player

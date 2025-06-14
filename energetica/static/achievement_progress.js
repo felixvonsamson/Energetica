@@ -10,7 +10,7 @@ const formatting_mapping = {
 
 
 function refresh_achievements() {
-  fetch('/api/get_upcoming_achievements')
+  fetch('/api/v1/achievements')
     .then((response) => response.json())
     .then((upcoming_achievements) => {
       display_achievement_progress(upcoming_achievements);
@@ -20,17 +20,17 @@ function refresh_achievements() {
 function display_achievement_progress(upcoming_achievements) {
   const ua = document.getElementById("achievement_progression");
   ua.innerHTML = "";
-  Object.entries(upcoming_achievements).forEach(([key, upcoming_achievement]) => {
+  upcoming_achievements.achievements.forEach((achievement) => {
     let format = (value) => value;
-    if (key in formatting_mapping) {
-      format = formatting_mapping[key];
+    if (achievement.id in formatting_mapping) {
+      format = formatting_mapping[achievement.id];
     }
     ua.innerHTML += `<div class="progressbar-container">
-    <div class="progressbar-name medium margin-small">${upcoming_achievement.name}</div>
+    <div class="progressbar-name medium margin-small">${achievement.name}</div>
     <div class="progressbar-background">
-        <div class="achievement-progression ${upcoming_achievement.status == 0 ? '' : 'pine'}" style="--width:${100 * upcoming_achievement.status / upcoming_achievement.objective}">&nbsp;${format(upcoming_achievement.status)} / ${format(upcoming_achievement.objective)}</div>
+        <div class="achievement-progression ${achievement.status == 0 ? '' : 'pine'}" style="--width:${100 * achievement.status / achievement.objective}">&nbsp;${format(achievement.status)} / ${format(achievement.objective)}</div>
     </div>
-    <div class="progressbar-name medium txt_center" style="width:60px">+${upcoming_achievement.reward} XP</div>`;
+    <div class="progressbar-name medium txt_center" style="width:60px">+${achievement.reward} XP</div>`;
   });
 }
 
@@ -60,7 +60,6 @@ function answer_quiz(answer) {
 }
 
 function display_quiz_question(question_data) {
-  console.log(question_data);
   const quiz = document.getElementById("quiz_question");
   quiz.innerHTML = `<p>${question_data.question}</p>`;
   if (question_data.hasOwnProperty("player_answer")) {

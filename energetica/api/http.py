@@ -226,12 +226,6 @@ def get_shipments(user: Annotated[Player, Depends(get_current_user)]):  # noqa: 
     return user.package_shipments()
 
 
-@todo_router.get("/get_upcoming_achievements")
-def get_upcoming_achievements(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get the upcoming achievements for this player."""
-    return user.package_upcoming_achievements()
-
-
 @todo_router.get("/get_active_facilities")
 def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the active facilities for this player."""
