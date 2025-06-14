@@ -22,8 +22,6 @@ def create_user(user_id: int, username: str, password: str) -> requests.Session:
     json = {"username": username, "password": password}
     response = session.post(f"{base_url}/sign-up", json=json, allow_redirects=False)
     assert response.status_code == 201
-    print(next(Player.filter_by(username=username)).id)
-    print(user_id)
     assert next(Player.filter_by(username=username)).id == user_id
     return session
 
