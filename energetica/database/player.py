@@ -106,6 +106,7 @@ class Player(DBModel):
         },
     )
 
+    # TODO(mglst): create a custom class for this - some fields are not floats
     progression_metrics: dict[str, float] = field(
         default_factory=lambda: {
             "xp": 0,
@@ -545,25 +546,6 @@ class Player(DBModel):
     def package_all() -> dict[int, dict]:
         """Package data for all players."""
         return {player.id: player.package() for player in Player.all()}
-
-    def package_scoreboard(self) -> dict[int, dict]:
-        """Package the scoreboard data for players with a tile."""
-        players = Player.filter(lambda p: p.tile is not None)
-        include_co2_emissions = self.discovered_greenhouse_gas_effect()
-        return {
-            player.id: (
-                {
-                    "username": player.username,
-                    "network_name": player.network.name if player.network else "-",
-                    "average_hourly_revenues": player.progression_metrics["average_revenues"],
-                    "max_power_consumption": player.progression_metrics["max_power_consumption"],
-                    "total_technology_levels": player.progression_metrics["total_technologies"],
-                    "xp": player.progression_metrics["xp"],
-                }
-                | ({"co2_emissions": player.calculate_net_emissions()} if include_co2_emissions else {})
-            )
-            for player in players
-        }
 
     def package_constructions(self) -> dict[int, dict]:
         """Package the player's ongoing constructions."""

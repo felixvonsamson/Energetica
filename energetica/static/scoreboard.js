@@ -1,12 +1,12 @@
-let data;
+let scoreboard_data;
 let descending = true;
 get_data();
 
 function get_data() {
-    fetch("/api/get_scoreboard") // retrieves array of players with scoreboard data
+    fetch("/api/v1/scoreboard") // retrieves array of players with scoreboard data
         .then((response) => response.json())
         .then((raw_data) => {
-            data = raw_data;
+            scoreboard_data = raw_data;
             sortTable('average_hourly_revenues');
         })
         .catch((error) => {
@@ -28,9 +28,9 @@ function sortTable(columnName) {
     }
 
     // Sort the data based on the selected column
-    const sortedData = Object.entries(data).sort((a, b) => {
-        const aValue = a[1][columnName];
-        const bValue = b[1][columnName];
+    const sortedData = scoreboard_data.rows.sort((a, b) => {
+        const aValue = a[columnName];
+        const bValue = b[columnName];
 
         if (typeof aValue === "string" && typeof bValue === "string") {
             return descending ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
@@ -40,10 +40,7 @@ function sortTable(columnName) {
     });
 
     // Rebuild the HTML table
-    console.log(sortedData);
-    console.log(Object.values(sortedData)[0]);
-    console.log(Object.values(sortedData)[0][1]);
-    let include_co2_emissions = 'co2_emissions' in Object.values(sortedData)[0][1];
+    let include_co2_emissions = sortedData[0].hasOwnProperty('co2_emissions');
     let html = `<tr>
         <th id="username" onclick="sortTable('username')">Username</th>
         <th id="network_name" onclick="sortTable('network_name')">Network</th>
@@ -56,21 +53,21 @@ function sortTable(columnName) {
     }
     html += `</tr>`;
     load_player_id().then((current_player_id) => {
-        for (const [id, player] of sortedData) {
-            if (id == current_player_id) {
+        for (const row of sortedData) {
+            if (row.player_id == current_player_id) {
                 href = "/profile";
             } else {
-                href = `/profile?player_id=${id}`;
+                href = `/profile?player_id=${row.player_id}`;
             }
             html += `<tr>
-            <td><a href="${href}">${player['username']}</a></td>
-            <td>${player['network_name']}</td>
-            <td>${format_money(player['average_hourly_revenues'])}/h</td>
-            <td>${format_power(player['max_power_consumption'])}</td>
-            <td>${player['total_technology_levels']}</td>
-            <td>${player['xp']}</td>`;
+            <td><a href="${href}">${row.username}</a></td>
+            <td>${row.network_name === null ? "-" : row.network_name}</td>
+            <td>${format_money(row.average_hourly_revenues)}/h</td>
+            <td>${format_power(row.max_power_consumption)}</td>
+            <td>${row.total_technology_levels}</td>
+            <td>${row.xp}</td>`;
             if (include_co2_emissions) {
-                html += `<td>${format_mass(player['co2_emissions'])}</td>`;
+                html += `<td>${format_mass(row.co2_emissions)}</td>`;
             }
             html += `</tr > `;
         }

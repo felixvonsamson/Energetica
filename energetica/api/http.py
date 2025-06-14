@@ -232,12 +232,6 @@ def get_upcoming_achievements(user: Annotated[Player, Depends(get_current_user)]
     return user.package_upcoming_achievements()
 
 
-@todo_router.get("/get_scoreboard")
-def get_scoreboard(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get the scoreboard data."""
-    return user.package_scoreboard()
-
-
 @todo_router.get("/get_active_facilities")
 def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the active facilities for this player."""
