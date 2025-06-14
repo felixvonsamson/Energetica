@@ -52,6 +52,7 @@ class Chat(DBModel):
             return len(self.messages)
         return len(self.messages) - last_read_message - 1
 
+    # TODO: make this a frontend piece of code
     def display_name(self, player: Player) -> str:
         """Get the display name for a chat."""
         if self.name is not None:
