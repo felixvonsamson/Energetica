@@ -48,7 +48,7 @@ def create_app(
     rm_instance: bool = False,
     load_checkpoint: bool = False,
     random_seed: int = 42,
-    simulate_file: Any | None = None,
+    simulate_file: str | None = None,
     simulate_stop_on_mismatch: bool = False,
     simulate_stop_on_server_error: bool = False,
     simulate_stop_on_assertion_error: bool = False,
@@ -83,7 +83,7 @@ def create_app(
     if simulate_file:
         # Simulate the game run from a file.
         Path("checkpoints/simulation").mkdir(exist_ok=True)
-        with simulate_file as file:
+        with open(simulate_file, "r", encoding="utf-8") as file:
             actions = [json.loads(line) for line in file]
         assert actions[0]["action_type"] == "init_engine"
 

@@ -6,7 +6,7 @@ Defines utility functions for cookie based auth and endpoints for sign-in and si
 
 import os
 import secrets
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Annotated
 
 import bcrypt
@@ -16,7 +16,8 @@ from itsdangerous import URLSafeTimedSerializer
 
 from energetica.database.player import Player
 from energetica.globals import engine
-from energetica.schemas.auth import LoginData, SignupData
+from energetica.schemas.auth import LoginData, RootSignupData, SignupData
+from energetica.utils import misc
 
 COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a command line argument in the future
 
@@ -124,23 +125,13 @@ def setup_auth(app: FastAPI) -> None:
         if existing_player:
             raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
         pwhash = generate_password_hash(password)
-        new_player = Player(username=username, pwhash=pwhash)
-        log_entry = {
-            "timestamp": datetime.now().isoformat(),
-            "ip": request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
-            "action_type": "create_user",
-            "player_id": new_player.id,
-            "username": new_player.username,
-            "pw_hash": new_player.pwhash,
-        }
-        engine.log_action(log_entry)
-        engine.log(f"{username} created an account")
+        new_player = misc.signup_player(request, username, pwhash)
         return add_session_cookie_to_response(
             JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED),
             new_player,
         )
 
-    @app.post("/root_login")
+    @app.post("/root/login")
     def root_login(request: Request, user_id: Annotated[int, Form()]):
         addr = request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else None)
         if addr is None or addr != "127.0.0.1":
@@ -151,3 +142,17 @@ def setup_auth(app: FastAPI) -> None:
         engine.log(f"{player.username} logged in")
         JSONResponse("Authenticated", status_code=status.HTTP_200_OK)
         return add_session_cookie_to_response(JSONResponse("Authenticated", status_code=status.HTTP_200_OK), player)
+
+    @app.post("/root/sign-up")
+    def root_signup(request: Request, request_data: RootSignupData):
+        """Create a new account."""
+        username = request_data.username
+        pwhash = request_data.pwhash
+        existing_player = next(Player.filter_by(username=username), None)
+        if existing_player:
+            raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
+        new_player = misc.signup_player(request, username, pwhash)
+        return add_session_cookie_to_response(
+            JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED),
+            new_player,
+        )
