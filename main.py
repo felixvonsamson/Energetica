@@ -62,7 +62,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--simulate_file",
-        type=argparse.FileType("r", encoding="UTF-8"),
+        type=str,
         default=None,
         help="If given, the server simulates in fast-forward the game with the given action history log file.",
         metavar="FILE",

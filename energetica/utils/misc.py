@@ -6,6 +6,7 @@ import pickle
 from datetime import datetime, timedelta
 
 import numpy as np
+from fastapi import Request
 from noise import pnoise3
 from scipy.stats import norm
 
@@ -22,6 +23,21 @@ from energetica.globals import engine
 from energetica.utils.astro import DrHI
 
 # Helper functions and data initialization utilities
+
+
+def signup_player(request: Request, username: str, pwhash: str) -> Player:
+    new_player = Player(username=username, pwhash=pwhash)
+    log_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "ip": request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
+        "action_type": "create_user",
+        "player_id": new_player.id,
+        "username": new_player.username,
+        "pw_hash": new_player.pwhash,
+    }
+    engine.log_action(log_entry)
+    engine.log(f"{username} created an account")
+    return new_player
 
 
 def add_player_to_data(player: Player) -> None:
