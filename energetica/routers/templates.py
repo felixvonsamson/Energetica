@@ -1,4 +1,3 @@
-import os
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -47,8 +46,6 @@ def app_context(request: Request) -> dict[str, Any]:
 
 
 templates = Jinja2Templates(directory="energetica/templates", context_processors=[app_context])
-
-print("Current working directory:", os.getcwd())
 
 
 @router.get("/")
