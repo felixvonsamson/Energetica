@@ -63,7 +63,7 @@ function display_quiz_question(question_data) {
   console.log(question_data);
   const quiz = document.getElementById("quiz_question");
   quiz.innerHTML = `<p>${question_data.question}</p>`;
-  if (question_data.player_answer !== null) {
+  if (question_data.hasOwnProperty("player_answer")) {
     quiz.innerHTML += `<div class="quiz_answers_container">
     <button class="quiz_answer medium ${question_data.correct_answer == "answer1" || question_data.correct_answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.answer1}</button>
     <button class="quiz_answer medium ${question_data.correct_answer == "answer2" || question_data.correct_answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.answer2}</button>

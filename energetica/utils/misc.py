@@ -243,10 +243,6 @@ def get_quiz_question(player: Player) -> DailyQuizBase:
             answer1=quiz_data["answer1"],
             answer2=quiz_data["answer2"],
             answer3=quiz_data["answer3"],
-            player_answer=None,
-            answered_correctly=None,
-            correct_answer=None,
-            explanation=None,
         )
 
 

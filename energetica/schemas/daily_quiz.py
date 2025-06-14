@@ -8,10 +8,10 @@ class DailyQuizBase(BaseModel):
     answer1: str
     answer2: str
     answer3: str
-    player_answer: Literal["answer1", "answer2", "answer3"] | None
-    correct_answer: Literal["answer1", "answer2", "answer3", "all correct"] | None
-    answered_correctly: bool | None
-    explanation: str | None
+    player_answer: Literal["answer1", "answer2", "answer3"] | None = None
+    correct_answer: Literal["answer1", "answer2", "answer3", "all correct"] | None = None
+    answered_correctly: bool | None = None
+    explanation: str | None = None
 
 
 class DailyQuizSubmission(BaseModel):
