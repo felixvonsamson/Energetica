@@ -1,3 +1,5 @@
+"""Routes relating to players."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends

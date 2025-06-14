@@ -1,3 +1,9 @@
+"""
+Legacy HTTP API routes.
+
+These are being migrated to `energetica/routers/<xyz>.py`
+"""
+
 import pickle
 from datetime import datetime
 from pathlib import Path

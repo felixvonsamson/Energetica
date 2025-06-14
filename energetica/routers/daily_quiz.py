@@ -1,3 +1,5 @@
+"""Routes for the daily quiz."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends

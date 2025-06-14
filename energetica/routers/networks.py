@@ -1,3 +1,5 @@
+"""Routes relating to networks."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException

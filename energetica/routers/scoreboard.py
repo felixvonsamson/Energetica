@@ -1,3 +1,5 @@
+"""Routes for the scoreboard."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
