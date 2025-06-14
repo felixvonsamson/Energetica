@@ -258,7 +258,7 @@ load_constructions().then((constructions) => {
     }
     for (const shipmentBar of shipmentBars) {
       const id = shipmentBar.id;
-      const shipment = shipment_data[id];
+      const shipment = shipment_data.shipments.find((shipment) => shipment.id == id);
       const now = new Date().getTime() / 1000;
       const current_tick = (now - first_tick_time) / clock_time + 1;
       let new_width;
@@ -329,23 +329,21 @@ function display_progressBars(construction_data, shipment_data) {
     if (shipment_data != null) {
       const us = document.getElementById("shipments");
       us.innerHTML = "";
-      if (Object.keys(shipment_data).length > 0) {
+      if (shipment_data.shipments.length > 0) {
         us.innerHTML = "<h1>&ensp;<img src='/static/images/icons/resource_market.png' class='icon'/>&nbsp;Ongoing Shipments</h1>";
       }
-      for (var id in shipment_data) {
-        shipment = shipment_data[id];
-        us.innerHTML += html_for_shipmentBar(id, shipment);
-      }
+      shipment_data.shipments.forEach(shipment => {
+        us.innerHTML += html_for_shipmentBar(shipment.id, shipment);
+      });
     }
   } else {
     const uc = document.getElementById("under_construction");
     if (uc != null) {
       if (document.title == "Resource Market" && shipment_data != null) {
         uc.innerHTML = "";
-        for (var id in shipment_data) {
-          shipment = shipment_data[id];
-          uc.innerHTML += html_for_shipmentBar(id, shipment);
-        }
+        shipment_data.shipments.forEach(shipment => {
+          uc.innerHTML += html_for_shipmentBar(shipment.id, shipment);
+        });
         return;
       }
       if (construction_data != null) {
@@ -421,13 +419,13 @@ function html_for_shipmentBar(id, shipment) {
     snail = `<div class="progressbar-name medium">
             <span class="hover_info"><img src="/static/images/icons/snail_house.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
         </div>`;
-  } else if (shipment["speed"] < 0.99) {
+  } else if (shipment.speed < 0.99) {
     snail = `<div class="progressbar-name medium">
             <span class="hover_info"><img src="/static/images/icons/snail.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
         </div>`;
   }
   return `<div class="progressbar-container">
-        <div class="progressbar-name medium margin-small">${format_mass(shipment["quantity"])} ${resource_names[shipment["resource"]]}</div>
+        <div class="progressbar-name medium margin-small">${format_mass(shipment.quantity)} ${resource_names[shipment.resource]}</div>
         ${snail}
         <div class="progressbar-background">
             <div id="${id}" class="shipmentbar-bar"></div>

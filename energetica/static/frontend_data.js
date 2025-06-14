@@ -87,7 +87,7 @@ function load_shipments() {
 }
 
 function retrieve_shipments() {
-    return fetch("/api/get_shipments")
+    return fetch("/api/v1/shipments")
         .then((response) => response.json())
         .then((raw_data) => {
             // Save fetched data to sessionStorage

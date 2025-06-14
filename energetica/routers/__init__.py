@@ -24,6 +24,7 @@ from .networks import router as network_router
 from .players import router as player_router
 from .resource_market import router as resource_market_router
 from .scoreboard import router as scoreboard_router
+from .shipments import router as shipments_router
 from .templates import router as templates_router
 
 __all__ = ["templates_router"]
@@ -36,8 +37,8 @@ api_routers = [
     network_router,
     player_router,
     resource_market_router,
+    shipments_router,
     scoreboard_router,
-    # shipments_router,
 ]
 
 
