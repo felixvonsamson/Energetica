@@ -45,6 +45,7 @@ class Chat(DBModel):
         default_factory=lambda: defaultdict(partial(int, -1)),
     )  # {player: message index in messages}
 
+    # TODO: make this a frontend piece of code
     def display_name(self, player: Player) -> str:
         """Get the display name for a chat."""
         if self.name is not None:
