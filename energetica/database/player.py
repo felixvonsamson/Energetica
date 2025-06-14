@@ -423,7 +423,7 @@ class Player(DBModel):
                     subscription_info=subscription,
                     data=json.dumps(notification_data),
                     vapid_private_key=engine.VAPID_PRIVATE_KEY,
-                    vapid_claims={"sub": "mailto:dgaf@gmail.com", "aud": audience},
+                    vapid_claims={"aud": audience},
                 )
             except WebPushException as ex:
                 engine.warn(f"Failed to send notification: {repr(ex)}")
