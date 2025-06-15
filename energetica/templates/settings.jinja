@@ -70,7 +70,7 @@
           class="cross pine"
           style="width:39px">×</div>
   </div>
-  <form id="change-passwor-form" class="padding-large">
+  <form id="change-password-form" class="padding-large">
     <label for="old_password">Old Password</label>
     <input type="password"
             class="input medium"
@@ -94,7 +94,7 @@
     </div>
   </form>
   <script>
-  document.getElementById("change-passwor-form").addEventListener("submit", async (e) => {
+  document.getElementById("change-password-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const form = e.target;
     if (form.new_password.value != form.confirm_new_password.value) {
