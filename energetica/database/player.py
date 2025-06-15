@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -9,8 +10,6 @@ from enum import StrEnum
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
-from flask import current_app
-from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements
@@ -31,7 +30,7 @@ from energetica.enums import (
     WindFacilityType,
     WorkerType,
 )
-from energetica.globals import engine
+from energetica.globals import MAIN_EVENT_LOOP, engine
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -49,7 +48,7 @@ if TYPE_CHECKING:
 
 @dataclass
 # TODO (Felix): add @dataclass(eq=False) on all classes
-class Player(DBModel, UserMixin):
+class Player(DBModel):
     """Class that stores the users and their data."""
 
     # Authentication :
@@ -57,7 +56,7 @@ class Player(DBModel, UserMixin):
     pwhash: str
 
     # inactive: bool = False  # True if account is inactive
-    show_disclaimer: bool = True
+    show_chat_disclaimer: bool = True
     last_opened_chat: int = 0
 
     tile: HexTile | None = None
@@ -103,7 +102,7 @@ class Player(DBModel, UserMixin):
             "warehouse": 0,
             "GHG_effect": 0,
             "storage_facilities": 0,
-        }
+        },
     )
 
     progression_metrics: dict[str, float] = field(
@@ -135,7 +134,7 @@ class Player(DBModel, UserMixin):
             "climate_events": True,
         },
     )
-    socketio_clients: list = field(default_factory=list)
+    socketio_clients: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Post initialization method for Player."""
@@ -330,7 +329,7 @@ class Player(DBModel, UserMixin):
     def emit(self, event: str, *args: Any) -> None:
         """Emit a socketio event to the player's clients."""
         for sid in self.socketio_clients:
-            engine.socketio.emit(event, *args, to=sid)
+            asyncio.run_coroutine_threadsafe(engine.socketio.emit(event, *args, to=sid), MAIN_EVENT_LOOP)
 
     def send_new_data(self, new_values: Any) -> None:
         """Send the new data to the player's clients."""
@@ -419,13 +418,12 @@ class Player(DBModel, UserMixin):
             audience = "https://fcm.googleapis.com"
             if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
                 audience = "https://updates.push.services.mozilla.com"
-            current_app.config["VAPID_CLAIMS"]["aud"] = audience
             try:
                 webpush(
                     subscription_info=subscription,
                     data=json.dumps(notification_data),
-                    vapid_private_key=current_app.config["VAPID_PRIVATE_KEY"],
-                    vapid_claims=current_app.config["VAPID_CLAIMS"],
+                    vapid_private_key=engine.VAPID_PRIVATE_KEY,
+                    vapid_claims={"aud": audience},
                 )
             except WebPushException as ex:
                 engine.warn(f"Failed to send notification: {repr(ex)}")
@@ -668,7 +666,7 @@ class Player(DBModel, UserMixin):
                     / sum(f.max_power_generation for f in group),
                     "hourly_op_cost": self.capacities[group_name]["O&M_cost"] * ticks_per_hour,
                     "remaining_lifespan": min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
-                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable and f.upgrade_cost is not None)
                     if any(f.is_upgradable for f in group)
                     else None,
                     "dismantle_cost": sum(f.dismantle_cost for f in group),
@@ -726,7 +724,7 @@ class Player(DBModel, UserMixin):
                     "remaining_lifespan": None
                     if all(f.decommissioning for f in group)
                     else min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
-                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable and f.upgrade_cost is not None)
                     if any(f.is_upgradable for f in group)
                     else None,
                     "dismantle_cost": None
@@ -773,7 +771,7 @@ class Player(DBModel, UserMixin):
                     "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
                     "max_power_use": sum(f.max_power_use for f in group),
                     "remaining_lifespan": min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
-                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable and f.upgrade_cost is not None)
                     if any(f.is_upgradable for f in group)
                     else None,
                     "dismantle_cost": sum(f.dismantle_cost for f in group),

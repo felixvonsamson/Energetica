@@ -104,7 +104,7 @@
     one research worker. 
     <br>
     Researching 
-    {% if user.achievements.laboratory %}
+    {% if user and user.achievements.laboratory %}
     <a href="{{ url_for('views.technology', _anchor='Building Technology') }}">Building Technology</a>
     {% else %}Building Technology{% endif %}
     will unlock additional construction workers, and increase the speed of construction projects.

@@ -99,9 +99,9 @@ const keys_demand = {
 };
 
 function preload() {
-    font = loadFont("static/fonts/Baloo2-VariableFont_wght.ttf");
-    balooBold = loadFont("static/fonts/Baloo2-SemiBold.ttf");
-    coin = loadImage("static/images/icons/coin.svg");
+    font = loadFont("/static/fonts/Baloo2-VariableFont_wght.ttf");
+    balooBold = loadFont("/static/fonts/Baloo2-SemiBold.ttf");
+    coin = loadImage("/static/images/icons/coin.svg");
 }
 
 update_resolution_button_text(in_game_seconds_per_tick);

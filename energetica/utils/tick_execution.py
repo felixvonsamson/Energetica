@@ -28,15 +28,15 @@ def state_update() -> None:
 @engine.with_lock
 def tick() -> None:
     start = datetime.now()
+    if engine.total_t == 0:
+        engine.first_tick_time = datetime.now()
+    engine.total_t += 1
+    engine.log(f"t = {engine.total_t}")
     log_entry = {
         "timestamp": start.isoformat(),
         "action_type": "tick",
         "total_t": engine.total_t,
     }
-    if engine.total_t == 0:
-        engine.first_tick_time = datetime.now()
-    engine.total_t += 1
-    engine.log(f"t = {engine.total_t}")
     if engine.total_t % 216 == 0:
         save_past_data()
     if (engine.total_t + engine.delta_t) % (24 * 60 * 60 / engine.clock_time) == 0:

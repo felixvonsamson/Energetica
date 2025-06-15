@@ -1,6 +1,11 @@
 """Tests for the NetworkPrices class."""
 
-from energetica import engine
+import json
+import os
+import subprocess
+import sys
+import textwrap
+
 from energetica.database.engine_data import NetworkPrices
 from energetica.database.player import Player
 from energetica.enums import (
@@ -11,6 +16,7 @@ from energetica.enums import (
     WindFacilityType,
 )
 from energetica.game_error import GameError
+from energetica.globals import engine
 
 
 def test_renewables_order() -> None:
@@ -65,3 +71,44 @@ def test_price_randomization() -> None:
         player_a.network_prices.bid_prices[ControllableFacilityType.COAL_BURNER]
         != player_b.network_prices.bid_prices[ControllableFacilityType.COAL_BURNER]
     )
+
+
+def test_seed_determinism() -> None:
+    """Test that prices are stable across processes for a fixed seed."""
+
+    def run_seeded_subprocess(seed: int) -> dict:
+        """Runs the price generation logic in a subprocess with the given seed and returns the result."""
+        subprocess_code = textwrap.dedent(f"""
+            import json
+            from energetica import engine
+            from energetica.database.player import Player
+
+            engine.random_seed = {seed}
+            player = Player("player1", "pwhash")
+            result = {{
+                "bid": player.network_prices.bid_prices,
+                "ask": player.network_prices.ask_prices,
+            }}
+            print(json.dumps(result))
+        """)
+
+        result = subprocess.run(
+            [sys.executable, "-c", subprocess_code],
+            capture_output=True,
+            text=True,
+            env={**os.environ},
+        )
+
+        if result.returncode != 0:
+            raise RuntimeError(f"Subprocess failed:\n{result.stderr}")
+
+        # Only parse the last line of stdout as JSON
+        json_output = result.stdout.strip().split("\n")[-1]
+        return json.loads(json_output)
+
+    seed = 42
+    results = [run_seeded_subprocess(seed) for _ in range(2)]
+
+    first = results[0]
+    for i, res in enumerate(results[1:], start=1):
+        assert res == first, f"Mismatch in subprocess {i}: {res} != {first}"

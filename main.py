@@ -1,8 +1,20 @@
 #!/usr/bin/env -S python3 -u
-"""Launch the game."""
+"""
+Main entry point for the game.
+
+Usage:
+    - Development: `python main.py --env dev`
+    - Production:  `python main.py --env prod --no-reload --keyfile ... --certfile ...`
+    - Simulation:  `python main.py --env dev --simulate_file path/to/actions_history.log`
+
+If using VS Code, see `tasks.json` for quickly launching the server and `launch.json` for debugging.
+"""
 
 import argparse
+import json
 import os
+import subprocess
+import sys
 
 from energetica import create_app
 
@@ -50,7 +62,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--simulate_file",
-        type=argparse.FileType("r", encoding="UTF-8"),
+        type=str,
         default=None,
         help="If given, the server simulates in fast-forward the game with the given action history log file.",
         metavar="FILE",
@@ -107,23 +119,66 @@ if __name__ == "__main__":
         help="Path to the SSL certificate file",
     )
     parser.add_argument(
+        "--env",
+        type=str,
+        choices=["dev", "prod"],
+        help="Run the game in PROD or in DEV",
+        required=True,
+    )
+    parser.add_argument(
+        "--no-reload",
+        action="store_true",
+        help="Disable hot reloading",
+    )
+    parser.add_argument(
+        "--fastapi-log-level",
+        choices=["critical", "error", "warning", "info", "debug", "trace"],
+        default="warning",
+    )
+    parser.add_argument(
         "--disable_signups",
         action="store_true",
         help="Disable sign-ups if game is played with a fixed set of players.",
     )
 
     kwargs = vars(parser.parse_args())
-    ssl_args = {"keyfile": kwargs.pop("keyfile"), "certfile": kwargs.pop("certfile")}
-    ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
+    ssl_args = {"ssl_keyfile": kwargs.pop("keyfile"), "ssl_certfile": kwargs.pop("certfile")}
+    ssl_args = ssl_args if ssl_args["ssl_keyfile"] and ssl_args["ssl_certfile"] else {}
 
-    """Initializes mock app."""
-    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
-        from flask import Flask
-        from flask_socketio import SocketIO
+    fastapi_log_level = kwargs.pop("fastapi_log_level")
+    reload_enabled = not kwargs.pop("no_reload")
 
-        app = Flask(__name__)
-        socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
-    else:
-        socketio, app = create_app(**kwargs)
+    env = os.environ.copy()
+    env["ENERGETICA_APP_CONFIG"] = json.dumps(kwargs)
+    args = [
+        sys.executable,
+        "-m",
+        "uvicorn",
+        "main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(kwargs["port"]),
+        "--log-level",
+        fastapi_log_level,
+    ]
+    if reload_enabled:
+        args.append("--reload")
+    if ssl_args != {}:
+        args += ["--ssl-keyfile", ssl_args["ssl_keyfile"]]
+        args += ["--ssl-certfile", ssl_args["ssl_certfile"]]
+    try:
+        subprocess.run(args, env=env)
+    except KeyboardInterrupt:
+        print("[main.py] Server stopped by user (Ctrl+C)")
 
-    socketio.run(app, debug=True, log_output=False, host="0.0.0.0", port=kwargs["port"], **ssl_args)
+if __name__ != "__main__":
+    try:
+        kwargs_json = os.environ["ENERGETICA_APP_CONFIG"]
+        kwargs = json.loads(kwargs_json)
+    except KeyError:
+        raise RuntimeError("Missing ENERGETICA_APP_CONFIG. Please use `python main.py <args>` as an entry point.")
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"Invalid JSON in ENERGETICA_APP_CONFIG: {e}")
+
+    app = create_app(**kwargs)

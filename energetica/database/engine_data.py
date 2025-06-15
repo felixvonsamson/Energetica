@@ -24,6 +24,7 @@ from energetica.enums import (
 )
 from energetica.game_error import GameError
 from energetica.globals import engine
+from energetica.utils.hashing import stable_hash
 
 if TYPE_CHECKING:
     from typing import Tuple
@@ -90,13 +91,13 @@ class NetworkPrices:
     def init_prices_with_randomness(self, player: Player) -> None:
         """Initialize the prices of the player with added random values."""
         for bid_name in self.bid_prices:
-            seed_hash = hash((engine.random_seed, "bid", bid_name, player.id))
+            seed_hash = stable_hash((engine.random_seed, "bid", bid_name, player.id))
             rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)
             self.bid_prices[bid_name] += added_randomness
 
         for ask_name in self.ask_prices:
-            seed_hash = hash((engine.random_seed, "ask", ask_name, player.id))
+            seed_hash = stable_hash((engine.random_seed, "ask", ask_name, player.id))
             rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)
             self.ask_prices[ask_name] += added_randomness
