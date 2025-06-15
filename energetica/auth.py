@@ -17,7 +17,7 @@ from itsdangerous import URLSafeTimedSerializer
 from energetica.database.player import Player
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.schemas.auth import LoginData, RootSignupData, SignupData
+from energetica.schemas.auth import ChangePasswordData, LoginData, RootSignupData, SignupData
 from energetica.utils import misc
 
 COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a command line argument in the future
@@ -158,31 +158,31 @@ def setup_auth(app: FastAPI) -> None:
             new_player,
         )
 
+    # TODO: relocate endpoint to sign-up as this is standard
+    @app.post("/sign-up", tags=["Authentication"])
+    def signup(request: Request, request_data: SignupData):
+        """Create a new account."""
+        if engine.disable_signups:
+            raise GameError("Sign-ups are disabled.")
+        username = request_data.username
+        password = request_data.password
+        existing_player = next(Player.filter_by(username=username), None)
+        if existing_player:
+            raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
+        pwhash = generate_password_hash(password)
+        new_player = misc.signup_player(request, username, pwhash)
+        return add_session_cookie_to_response(
+            JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED),
+            new_player,
+        )
+
     @app.post("/change-password", tags=["Authentication"])
-    def change_password(
-        player: Annotated[Player, Depends(get_current_user)],
-        old_password: Annotated[str, Form()],
-        new_password: Annotated[str, Form()],
-        confirm_new_password: Annotated[str, Form()],
-    ) -> RedirectResponse:
-        """Allow users to change their password."""
-        if not old_password or not new_password or not confirm_new_password:
-            # flash("All fields are required.", category="error")
-            return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
-
+    def change_password(player: Annotated[Player, Depends(get_current_user)], request_data: ChangePasswordData):
+        """Change the password for the current user."""
+        old_password = request_data.old_password
+        new_password = request_data.new_password
         if not check_password_hash(plain_password=old_password, hashed_password=player.pwhash):
-            # flash("Old password is incorrect.", category="error")
-            return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
-
-        if new_password != confirm_new_password:
-            # flash("New passwords do not match.", category="error")
-            return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
-
-        if len(new_password) < 7:
-            # flash("New password must be at least 7 characters long.", category="error")
-            return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
-
+            raise GameError("Old password is incorrect.")
         player.pwhash = generate_password_hash(new_password)
         engine.log(f"{player.username} changed their password")
-        # flash("Password changed successfully!", category="message")
         return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)

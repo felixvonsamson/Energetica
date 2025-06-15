@@ -70,7 +70,7 @@
           class="cross pine"
           style="width:39px">×</div>
   </div>
-  <form method="post" action="/change-password" class="padding-large">
+  <form id="change-passwor-form" class="padding-large">
     <label for="old_password">Old Password</label>
     <input type="password"
             class="input medium"
@@ -93,6 +93,42 @@
       <button type="submit" class="green login-button padding medium margin">Change Password</button>
     </div>
   </form>
+  <script>
+  document.getElementById("change-passwor-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    if (form.new_password.value != form.confirm_new_password.value) {
+        addError("Passwords do not match");
+        return;
+    }
+    const payload = {
+      old_password: form.old_password.value,
+      new_password: form.new_password.value,
+    };
+
+    const response = await fetch("/change-password", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const response_body = await response.json();
+      if (catch_validation_error(response_body)) return;
+      addError(response_body.detail);
+      return;
+    }
+    document.getElementById('change_password_form').classList.add('hidden');
+    addToast("Password changed successfully");
+  });
+  </script>
+
+
+
+
 </div>
 
 {% endblock content %}

@@ -16,3 +16,8 @@ class SignupData(BaseModel):
 class RootSignupData(BaseModel):
     username: str = Field(min_length=3, max_length=18)
     pwhash: str
+
+
+class ChangePasswordData(BaseModel):
+    old_password: str = Field(min_length=7)
+    new_password: str = Field(min_length=7)
