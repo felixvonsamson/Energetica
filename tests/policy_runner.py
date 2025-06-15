@@ -26,7 +26,8 @@ def run_policies(policies: list[Policy], ticks_to_run: int) -> None:
             print(f"{renewable}: {player.tile.potentials[renewable]}")
     for tick_count in range(1, ticks_to_run + 1):
         for player, policy in zip(players, policies):
-            policy.take_action(player)
+            if not policy.is_done:
+                policy.take_action(player)
         tick()
         # print(f"Tick {tick_count}")
         if all(policy.is_done for policy in policies):

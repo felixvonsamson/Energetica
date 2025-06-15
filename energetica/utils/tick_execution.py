@@ -6,12 +6,13 @@ from datetime import datetime
 from energetica import production_update
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
+from energetica.database.map import HexTile
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.shipment import OngoingShipment
-from energetica.enums import StorageFacilityType
+from energetica.enums import Renewable, StorageFacilityType
 from energetica.globals import engine
-from energetica.utils import assets
+from energetica.utils import assets, map_helpers
 from energetica.utils.assets import remove_asset
 from energetica.utils.climate_helpers import check_climate_events
 from energetica.utils.misc import save_past_data
@@ -55,11 +56,15 @@ def tick() -> None:
     elif engine.total_t % (10 * 60 / engine.clock_time) == 0:
         engine.save()
 
-    # with app.app_context():
-    #     # TODO: perhaps only run the below code conditionally on there being active ws connections
-    #     websocket.rest_notify_scoreboard()
-    #     websocket.rest_notify_weather()
-    #     websocket.rest_notify_global_data()
+    for player, policy in engine.active_policies.items():
+        if player.tile is None:
+            tile = max(
+                HexTile.filter_by(player=None),
+                key=lambda t: t.potentials[Renewable.WIND] * t.potentials[Renewable.HYDRO],
+            )
+            map_helpers.confirm_location(player, tile)
+        if not policy.is_done:
+            policy.take_action(player)
 
 
 def check_events_completion() -> None:
@@ -67,8 +72,8 @@ def check_events_completion() -> None:
     # check if constructions finished
     finished_constructions = list(
         OngoingProject.filter(
-            lambda construction: construction.end_tick_or_ticks_passed <= engine.total_t and construction.status == 2
-        )
+            lambda construction: construction.end_tick_or_ticks_passed <= engine.total_t and construction.status == 2,
+        ),
     )
     for fc in finished_constructions:
         assets.finish_project(fc)

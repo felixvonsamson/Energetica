@@ -21,6 +21,10 @@ import socketio
 from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
 
+if TYPE_CHECKING:
+    from energetica.database.player import Player
+    from tests.policy import Policy
+
 
 # This is the engine object
 class GameEngine(object):
@@ -58,6 +62,7 @@ class GameEngine(object):
         self.env: Literal["dev"] | Literal["prod"] = None  # type: ignore[assignment]
         self.VAPID_PUBLIC_KEY: str = None  # type: ignore[assignment]
         self.VAPID_PRIVATE_KEY: str = None  # type: ignore[assignment]
+        self.active_policies: dict[Player, Policy] = {}
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations

@@ -1,4 +1,1 @@
-user1,38b81773
-user2,34ddf399
-user3,bbafab32
-user4,9d683a6e
+user1,,StarterPolicy()

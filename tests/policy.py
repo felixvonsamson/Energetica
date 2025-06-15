@@ -23,6 +23,13 @@ from energetica.globals import engine
 from energetica.utils import assets
 
 
+def str_to_policy(txt: str) -> Policy:
+    policy = eval(txt)
+    if not isinstance(policy, Policy):
+        raise ValueError(f"{txt} does not define a valid policy")
+    return policy
+
+
 class Policy:
     """
     A policy is a strategy that the agent uses to determine the next action based on the current state.

@@ -73,5 +73,17 @@
 				"isDefault": true
 			}
 		},
+		{
+			"label": "run policies",
+			"type": "shell",
+			"command": "python main.py --env dev --rm_instance --disable_signups --clock_time 1 --in_game_seconds_per_tick 1800",
+			"presentation": {
+				"clear": true
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
 	]
 }

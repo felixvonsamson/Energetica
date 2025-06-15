@@ -2,7 +2,6 @@
 
 __version__ = "0.11.1-b"
 __release_date__ = "03/02/2025"
-
 import asyncio
 import glob
 import json
@@ -13,6 +12,7 @@ import secrets
 import shutil
 import socket
 import tarfile
+import tempfile
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -211,20 +211,23 @@ def create_app(
         from energetica.database.player import Player
 
         if disable_signups:
+            print("disable_signups")
             # if sign-ups are disabled, accounts have to be created from a file.
             with open("players.txt", "r", encoding="utf-8") as file:
                 lines = file.readlines()
 
-            with open("players.txt", "w", encoding="utf-8") as file:
+            with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmpfile:
                 for line in lines:
                     line = line.strip()
                     if not line:
                         continue
-                    parts = line.split(",")
-                    if len(parts) > 2:
+                    parts = line.split(",", maxsplit=2)
+                    if len(parts) > 3:
                         raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
                     username = parts[0].strip()
-                    password = parts[1].strip() if len(parts) > 1 else None
+                    password = parts[1].strip() if len(parts) >= 2 else None
+                    policy_string = parts[2].strip() if len(parts) >= 3 else None
+
                     existing_player = next(Player.filter_by(username=username), None)
                     if existing_player:
                         engine.log(f"players.txt: Did not create new player {username}; username already exists.")
@@ -232,9 +235,20 @@ def create_app(
                     if password is None:
                         password = secrets.token_hex(4)
                     hashed_password = generate_password_hash(password)
-                    Player(username=username, pwhash=hashed_password)
-                    file.write(f"{username},{password}\n")
+                    player = Player(username=username, pwhash=hashed_password)
                     engine.log(f"players.txt: Created player {username} with password {password}")
+                    if policy_string:
+                        if engine.env == "prod":
+                            raise ValueError("Cannot run policies in production.")
+                        from tests.policy import str_to_policy
+
+                        policy = str_to_policy(policy_string)
+                        engine.active_policies[player] = policy
+                        engine.log(f"player {player.username} has an active policy attached: {policy_string}")
+                        tmpfile.write(f"{username},{password},{policy_string}\n")
+                    else:
+                        tmpfile.write(f"{username},{password}\n")
+            shutil.move(tmpfile.name, "players.txt")
 
         if run_init_test_players:
             engine.log("running init_test_players")
