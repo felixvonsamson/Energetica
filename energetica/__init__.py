@@ -214,7 +214,8 @@ def create_app(
             # if sign-ups are disabled, accounts have to be created from a file.
             with open("players.txt", "r", encoding="utf-8") as file:
                 lines = file.readlines()
-            with open("players_new.txt", "w", encoding="utf-8") as new_file:
+
+            with open("players.txt", "w", encoding="utf-8") as file:
                 for line in lines:
                     line = line.strip()
                     if not line:
@@ -232,9 +233,8 @@ def create_app(
                         password = secrets.token_hex(4)
                     hashed_password = generate_password_hash(password)
                     Player(username=username, pwhash=hashed_password)
-                    new_file.write(f"{username},{password}\n")
+                    file.write(f"{username},{password}\n")
                     engine.log(f"Created player {username} with password {password}")
-            shutil.move("players_new.txt", "players.txt")
 
         if run_init_test_players:
             engine.log("running init_test_players")
