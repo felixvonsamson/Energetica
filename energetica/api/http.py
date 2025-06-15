@@ -226,12 +226,6 @@ def get_constructions(user: Annotated[Player, Depends(get_current_user)]):  # no
     return (projects, constructions_by_priority, researches_by_priority)
 
 
-@todo_router.get("/get_shipments")
-def get_shipments(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get list of shipments under way for this player."""
-    return user.package_shipments()
-
-
 @todo_router.get("/get_active_facilities")
 def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the active facilities for this player."""
