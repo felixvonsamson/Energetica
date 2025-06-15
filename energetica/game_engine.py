@@ -112,6 +112,7 @@ class GameEngine(object):
                     "action_type": "init_engine",
                     "random_seed": self.random_seed,
                     "start_date": self.start_date.isoformat(),
+                    "disable_signups": disable_signups,
                 },
             ),
         )
@@ -221,6 +222,7 @@ class GameEngine(object):
             "technology_lvls",
             "db_model_instances",
             "env",
+            "disable_signups",
         ]
         data = {member: getattr(self, member) for member in members_to_save}
         with open("instance/engine_data.pck", "wb") as file:
