@@ -227,14 +227,14 @@ def create_app(
                     password = parts[1].strip() if len(parts) > 1 else None
                     existing_player = next(Player.filter_by(username=username), None)
                     if existing_player:
-                        engine.log(f"Player {username} already exists.")
+                        engine.log(f"players.txt: Did not create new player {username}; username already exists.")
                         continue
                     if password is None:
                         password = secrets.token_hex(4)
                     hashed_password = generate_password_hash(password)
                     Player(username=username, pwhash=hashed_password)
                     file.write(f"{username},{password}\n")
-                    engine.log(f"Created player {username} with password {password}")
+                    engine.log(f"players.txt: Created player {username} with password {password}")
 
         if run_init_test_players:
             engine.log("running init_test_players")
