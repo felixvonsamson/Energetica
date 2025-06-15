@@ -10,10 +10,9 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "env": {
-                "GEVENT_SUPPORT": "True"
-            },
             "args": [
+                "--env", "dev", //maybe add a new test environment
+                "--no-reload",
                 "--port", "5001",
                 "--simulate_file", "actions_history.log",
                 "--simulate_checkpoint_every_k_ticks", "500",

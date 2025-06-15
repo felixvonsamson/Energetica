@@ -59,7 +59,7 @@
                   The warehouse stores physical
                   <strong><a class="txt-blue" id="resources-link" href="/extraction_facilities">resources</a></strong>.
                 {% else %}
-                  {{ facility_data.description }}
+                  {{ facility_data.description | safe }}
                 {% endif %}
               </div>
               {# Requirements #}

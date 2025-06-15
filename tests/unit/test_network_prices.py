@@ -6,7 +6,6 @@ import subprocess
 import sys
 import textwrap
 
-from energetica import engine
 from energetica.database.engine_data import NetworkPrices
 from energetica.database.player import Player
 from energetica.enums import (
@@ -17,6 +16,7 @@ from energetica.enums import (
     WindFacilityType,
 )
 from energetica.game_error import GameError
+from energetica.globals import engine
 
 
 def test_renewables_order() -> None:
@@ -78,7 +78,6 @@ def test_seed_determinism() -> None:
 
     def run_seeded_subprocess(seed: int) -> dict:
         """Runs the price generation logic in a subprocess with the given seed and returns the result."""
-
         subprocess_code = textwrap.dedent(f"""
             import json
             from energetica import engine
@@ -103,7 +102,9 @@ def test_seed_determinism() -> None:
         if result.returncode != 0:
             raise RuntimeError(f"Subprocess failed:\n{result.stderr}")
 
-        return json.loads(result.stdout)
+        # Only parse the last line of stdout as JSON
+        json_output = result.stdout.strip().split("\n")[-1]
+        return json.loads(json_output)
 
     seed = 42
     results = [run_seeded_subprocess(seed) for _ in range(2)]

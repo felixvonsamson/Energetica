@@ -56,5 +56,3 @@ def leave_network(player: Player) -> None:
     if not network.members:
         engine.log(f"The network {network.name} has been deleted because it was empty")
         network.delete()
-    # import energetica.api.websocket as websocket
-    # websocket.rest_notify_network_change()

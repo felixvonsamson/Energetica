@@ -61,7 +61,7 @@
             </div>
             <div class="infobox">
               {# Description #}
-              <div class="infotext">{{ facility_data.description }}</div>
+              <div class="infotext">{{ facility_data.description | safe }}</div>
               {# Requirements #}
               <div class="infobox requirements"
                    {% if facility_data.requirements_status == "satisfied" %}style="display:none"{% endif %}" 

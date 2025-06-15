@@ -49,7 +49,8 @@ class ActiveFacility(DBModel):
 
     @property
     def real_base_cost(self) -> float:
-        """The base cost of the facility.
+        """
+        The base cost of the facility.
 
         This is the cost without any upgrades, but including the special_price_multiplier for hydro facilities.
         """
@@ -119,7 +120,8 @@ class ActiveFacility(DBModel):
 
     @property
     def is_upgradable(self) -> bool:
-        """Whether the facility can be upgraded.
+        """
+        Whether the facility can be upgraded.
 
         Returns true if any of the attributes of the facility are outdated compared to current tech levels.
         This method is undefined for technologies and for functional facilities.

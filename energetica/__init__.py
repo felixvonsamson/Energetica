@@ -1,97 +1,46 @@
 """Initializes the app and the game engine."""
 
-# pylint: disable=wrong-import-order,wrong-import-position
-# ruff: noqa: E402
-
 __version__ = "0.11.1-b"
 __release_date__ = "03/02/2025"
 
-import atexit
-import base64
+import asyncio
 import glob
 import json
 import logging
 import os
 import platform
-import secrets
 import shutil
 import socket
 import tarfile
 import uuid
+from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from typing import Any
-
-from flask import Flask
-from flask_login import LoginManager
-from gevent import monkey
-
-monkey.patch_all(thread=True, time=True)
+from typing import Any, AsyncGenerator, Literal
 
 from apscheduler.events import EVENT_JOB_EXECUTED
-from ecdsa import NIST256p, SigningKey
-from flask_apscheduler import APScheduler
-from flask_sock import Sock
-from flask_socketio import SocketIO
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from fastapi import FastAPI
 
 from energetica import globals
 from energetica.game_engine import GameEngine
 
 engine = GameEngine()
+
+globals.MAIN_EVENT_LOOP = asyncio.get_event_loop()
 globals.engine = engine
 
 from energetica.api.app_services import register_app_services
-from energetica.api.http import http
-from energetica.api.socketio_handlers import add_handlers
-from energetica.api.websocket import add_sock_handlers  # type: ignore
-
-# from energetica.api.websocket import websocket_blueprint
-from energetica.auth import auth
-from energetica.database.player import Player
 from energetica.init_test_players import init_test_players
+from energetica.routers import setup_routes
 from energetica.simulate import simulate
+from energetica.socketio import setup_socketio
 from energetica.utils.tick_execution import state_update
-from energetica.views import changelog, landing, location_choice_views, overviews, views, wiki
-
-
-def get_or_create_flask_secret_key() -> str:
-    """Load or create SECRET_KEY for Flask."""
-    filepath = "instance/flask_secret_key.txt"
-    if os.path.exists(filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    else:
-        secret_key = secrets.token_hex()
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(secret_key)
-        return secret_key
-
-
-def get_or_create_vapid_keys() -> tuple[str, str]:
-    """Load or create VAPID key pair for push notifications."""
-    public_key_filepath = "instance/vapid_public_key.txt"
-    private_key_filepath = "instance/vapid_private_key.txt"
-    if Path(public_key_filepath).exists() and Path(private_key_filepath).exists():
-        public_key = Path(public_key_filepath).read_text(encoding="utf-8").strip()
-        private_key = Path(private_key_filepath).read_text(encoding="utf-8").strip()
-        return public_key, private_key
-    # Generate a new ECDSA key pair
-    private_key_obj = SigningKey.generate(curve=NIST256p)
-    public_key_obj = private_key_obj.get_verifying_key()
-
-    # Encode the keys using URL- and filename-safe base64 without padding
-    private_key = base64.urlsafe_b64encode(private_key_obj.to_string()).rstrip(b"=").decode("utf-8")
-    public_key = base64.urlsafe_b64encode(b"\x04" + public_key_obj.to_string()).rstrip(b"=").decode("utf-8")
-
-    # Write the keys to their respective files
-    Path(public_key_filepath).write_text(public_key, encoding="utf-8")
-    Path(private_key_filepath).write_text(private_key, encoding="utf-8")
-
-    return public_key, private_key
 
 
 def create_app(
+    *,
     port: int = 5001,
     clock_time: int = 30,
     in_game_seconds_per_tick: int = 240,
@@ -99,7 +48,7 @@ def create_app(
     rm_instance: bool = False,
     load_checkpoint: bool = False,
     random_seed: int = 42,
-    simulate_file: Any | None = None,
+    simulate_file: str | None = None,
     simulate_stop_on_mismatch: bool = False,
     simulate_stop_on_server_error: bool = False,
     simulate_stop_on_assertion_error: bool = False,
@@ -108,8 +57,10 @@ def create_app(
     simulate_till: int | None = None,
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
-) -> tuple[SocketIO, Flask]:
+    env: Literal["dev"] | Literal["prod"],
+) -> FastAPI:
     """Set up the app and the game engine."""
+    print(f"Server is running in {env} mode")
     if simulate_checkpoint_ticks is None:
         simulate_checkpoint_ticks = []
     # gets lock to avoid multiple instances
@@ -132,7 +83,7 @@ def create_app(
     if simulate_file:
         # Simulate the game run from a file.
         Path("checkpoints/simulation").mkdir(exist_ok=True)
-        with simulate_file as file:
+        with open(simulate_file, "r", encoding="utf-8") as file:
             actions = [json.loads(line) for line in file]
         assert actions[0]["action_type"] == "init_engine"
 
@@ -172,7 +123,7 @@ def create_app(
     if os.path.isfile("instance/engine_data.pck"):
         engine.load()
         if actions:
-            assert uuid.UUID(actions[0]["uuid"]) == engine.uuid
+            assert uuid.UUID(actions[0]["instance_uuid"]) == engine.uuid
     else:
         if actions:
             kwargs: dict = actions[0].copy()
@@ -181,7 +132,7 @@ def create_app(
             kwargs["start_date"] = datetime.fromisoformat(kwargs["start_date"])
             engine.init_instance(**kwargs)
         else:
-            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed)
+            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env)
 
     action_id_by_tick = {
         action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"
@@ -191,120 +142,85 @@ def create_app(
     last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
     actions_to_simulate = actions[start_action_id : last_action_id + 1]
 
-    # creates the app :
-    app = Flask(__name__)
-    app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
-    app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
-    app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
-    app.config["engine"] = engine
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+        # initialize the schedulers and add the recurrent functions :
+        scheduler = AsyncIOScheduler()
 
-    @app.context_processor
-    def inject_global_context() -> Any:
-        return {"app_version": __version__, "app_release_date": __release_date__}
+        add_ticks_clock = partial(
+            scheduler.add_job,
+            func=state_update,
+            id="state_update",
+            trigger="cron",
+            second=f"*/{clock_time}" if clock_time != 60 else "0",
+            misfire_grace_time=10,
+        )
+        if actions_to_simulate:
+            if simulate_file:
+                kwargs = {
+                    "simulating": True,
+                    "profiling": simulate_profiling,
+                    "stop_on_mismatch": simulate_stop_on_mismatch,
+                    "stop_on_server_error": simulate_stop_on_server_error,
+                    "stop_on_assertion_error": simulate_stop_on_assertion_error,
+                    "checkpoint_every_k_ticks": simulate_checkpoint_every_k_ticks,
+                    "checkpoint_ticks": simulate_checkpoint_ticks,
+                }
+            else:
+                engine.action_logger.setLevel(logging.CRITICAL)
+                kwargs = {
+                    "simulating": False,
+                    "profiling": False,
+                    "stop_on_mismatch": simulate_stop_on_mismatch,
+                    "stop_on_server_error": True,
+                    "stop_on_assertion_error": True,
+                    "checkpoint_every_k_ticks": None,
+                    "checkpoint_ticks": None,
+                }
+            scheduler.add_job(
+                func=simulate,
+                args=(
+                    port,
+                    actions_to_simulate,
+                ),
+                kwargs=kwargs,
+                id="replay",
+                trigger="date",
+                run_date=datetime.now(),
+            )
+            if not simulate_file:
 
-    # initialize socketio :
-    socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
-    engine.socketio = socketio
+                def job_listener(event: Any) -> None:
+                    if event.job_id != "replay" or not event.retval:
+                        return
+                    add_ticks_clock()
+                    engine.serve_local = False
+                    engine.action_logger.setLevel(logging.INFO)
+                    scheduler.remove_listener(job_listener)
 
-    if not skip_adding_handlers:
-        add_handlers(socketio=socketio)
+                scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED)
+        elif not simulate_file:
+            add_ticks_clock()
+            engine.serve_local = False
+        scheduler.start()
+        yield
+        scheduler.shutdown()
+        engine.save()
 
-    # initialize sock for WebSockets:
-    sock = Sock(app)
-    engine.sock = sock
+    app = FastAPI(lifespan=lifespan)
 
-    if not skip_adding_handlers:
-        add_sock_handlers(sock=sock, engine=engine)
+    from energetica.auth import setup_auth
 
+    setup_auth(app)
+    setup_socketio(app)
+    setup_routes(app)
     register_app_services(app)
 
-    # add blueprints (website repositories) :
-    app.register_blueprint(location_choice_views, url_prefix="/")
-    app.register_blueprint(landing, url_prefix="/")
-    app.register_blueprint(views, url_prefix="/")
-    app.register_blueprint(overviews, url_prefix="/production_overview")
-    app.register_blueprint(wiki, url_prefix="/wiki")
-    app.register_blueprint(changelog, url_prefix="/")
-    app.register_blueprint(auth, url_prefix="/")
-    app.register_blueprint(http, url_prefix="/api/")
-    # app.register_blueprint(websocket_blueprint, url_prefix="/api/")
-
-    # initialize login manager
-    login_manager = LoginManager()
-    login_manager.login_view = "auth.login"
-    login_manager.init_app(app)
-
-    @login_manager.user_loader
-    def load_user(id: str) -> Player | None:  # pylint: disable=redefined-builtin
-        return Player.get(int(id))
-
-    # initialize the schedulers and add the recurrent functions :
-
-    scheduler = APScheduler()
-    scheduler.init_app(app)
-
-    add_ticks_clock = partial(
-        scheduler.add_job,
-        func=state_update,
-        id="state_update",
-        trigger="cron",
-        second=f"*/{clock_time}" if clock_time != 60 else "0",
-        misfire_grace_time=10,
-    )
-    if actions_to_simulate:
-        if simulate_file:
-            kwargs = {
-                "simulating": True,
-                "profiling": simulate_profiling,
-                "stop_on_mismatch": simulate_stop_on_mismatch,
-                "stop_on_server_error": simulate_stop_on_server_error,
-                "stop_on_assertion_error": simulate_stop_on_assertion_error,
-                "checkpoint_every_k_ticks": simulate_checkpoint_every_k_ticks,
-                "checkpoint_ticks": simulate_checkpoint_ticks,
-            }
-        else:
-            engine.action_logger.setLevel(logging.CRITICAL)
-            kwargs = {
-                "simulating": False,
-                "profiling": False,
-                "stop_on_mismatch": simulate_stop_on_mismatch,
-                "stop_on_server_error": True,
-                "stop_on_assertion_error": True,
-                "checkpoint_every_k_ticks": None,
-                "checkpoint_ticks": None,
-            }
-        scheduler.add_job(
-            func=simulate,
-            args=(
-                port,
-                actions_to_simulate,
-            ),
-            kwargs=kwargs,
-            id="replay",
-            trigger="date",
-            run_date=datetime.now(),
-        )
-        if not simulate_file:
-
-            def job_listener(event: Any) -> None:
-                if event.job_id != "replay" or not event.retval:
-                    return
-                add_ticks_clock()
-                engine.serve_local = False
-                engine.action_logger.setLevel(logging.INFO)
-                scheduler.remove_listener(job_listener)
-
-            scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED)
-    elif not simulate_file:
-        add_ticks_clock()
-        engine.serve_local = False
-
-    scheduler.start()
-    atexit.register(scheduler.shutdown)
+    ssl_args = {"keyfile": None, "certfile": None}
+    ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
 
     if run_init_test_players:
-        # Temporary automated player creation for testing
         engine.log("running init_test_players")
         init_test_players()
 
-    return socketio, app
+    return app

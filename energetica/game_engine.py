@@ -13,11 +13,10 @@ import tarfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from threading import RLock
+from typing import TYPE_CHECKING, Any, Callable, Literal
 
-from flask_sock import Sock
-from flask_socketio import SocketIO
-from gevent.lock import RLock
+import socketio
 
 from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
@@ -27,8 +26,6 @@ from energetica.enums import Fuel, Renewable
 class GameEngine(object):
     """Run the game engine. Contains all the data and methods to operate the game."""
 
-    sock: Sock
-
     def __init__(self) -> None:
         """Initialize the game engine object."""
         if TYPE_CHECKING:
@@ -36,7 +33,7 @@ class GameEngine(object):
         Path("instance").mkdir(exist_ok=True)
         self.config = config
         self.const_config = const_config
-        self.socketio: SocketIO = None  # type: ignore[assignment]
+        self.socketio: socketio.AsyncServer = None  # type: ignore[assignment]
         self.websocket_dict: dict = {}
         self.console_logger = logging.getLogger("console")  # logs events in the terminal
         self.action_logger = logging.getLogger("action_history")  # logs all called functions to a file
@@ -57,6 +54,9 @@ class GameEngine(object):
         self.daily_question: dict = None  # type: ignore[assignment]
         self.question_order: list[int] = None  # type: ignore[assignment]
         self.technology_lvls: dict = None  # type: ignore[assignment]
+        self.env: Literal["dev"] | Literal["prod"] = None  # type: ignore[assignment]
+        self.VAPID_PUBLIC_KEY: str = None  # type: ignore[assignment]
+        self.VAPID_PRIVATE_KEY: str = None  # type: ignore[assignment]
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations
@@ -79,6 +79,7 @@ class GameEngine(object):
         clock_time: int,
         in_game_seconds_per_tick: int,
         random_seed: int,
+        env: Literal["dev"] | Literal["prod"],
         start_date: datetime | None = None,
         instance_uuid: str | None = None,
     ) -> None:
@@ -94,6 +95,7 @@ class GameEngine(object):
 
         self.uuid = uuid.uuid1() if instance_uuid is None else uuid.UUID(instance_uuid)
         self.random_seed = random_seed
+        self.env = env
         self.total_t = 0  # Number of simulated game ticks since server start
         self.start_date = start_date or datetime.now()  # 0 point of server time
         self.first_tick_time = self.start_date  # will be set to the correct time later on
@@ -101,6 +103,7 @@ class GameEngine(object):
             json.dumps(
                 {
                     "instance_uuid": self.uuid.hex,
+                    "env": self.env,
                     "clock_time": self.clock_time,
                     "in_game_seconds_per_tick": self.in_game_seconds_per_tick,
                     "action_type": "init_engine",
@@ -214,6 +217,7 @@ class GameEngine(object):
             "question_order",
             "technology_lvls",
             "db_model_instances",
+            "env",
         ]
         data = {member: getattr(self, member) for member in members_to_save}
         with open("instance/engine_data.pck", "wb") as file:

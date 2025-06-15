@@ -112,6 +112,6 @@ class DBModel:
         """Filter instances of this class by a list of conditions."""
         return cls.filter(lambda item: all(getattr(item, field) == value for field, value in conditions.items()))
 
-    def delete(self: T) -> None:
+    def delete(self) -> None:
         """Delete the object from the engine database."""
         del self.instances()[self.id]

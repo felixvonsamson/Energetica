@@ -8,7 +8,6 @@ from time import sleep
 from typing import Any
 
 import requests
-from werkzeug.security import generate_password_hash
 
 from energetica.database.player import Player
 from energetica.globals import engine
@@ -17,12 +16,12 @@ from energetica.utils.tick_execution import tick
 base_url: str | None = None
 
 
-def create_user(user_id: int, username: str, pw_hash: Any) -> requests.Session:
+def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
     """Create a user with the given user_id."""
     session = requests.Session()
-    data = {"username": username, "pw_hash": pw_hash}
-    response = session.post(f"{base_url}/sign-up", data=data, allow_redirects=False)
-    assert response.status_code == 302
+    json = {"username": username, "pwhash": pwhash}
+    response = session.post(f"{base_url}/root/sign-up", json=json, allow_redirects=False)
+    assert response.status_code == 201
     assert next(Player.filter_by(username=username)).id == user_id
     return session
 
@@ -31,7 +30,7 @@ def login_user(user_id: int) -> requests.Session:
     """Login a user with the given user_id."""
     session = requests.Session()
     data = {"user_id": user_id}
-    response = session.post(f"{base_url}/root_login", data=data, allow_redirects=False)
+    response = session.post(f"{base_url}/root/login", data=data, allow_redirects=False)
     assert response.status_code == 200
     return session
 
@@ -95,8 +94,8 @@ def _simulate(
         elif action["action_type"] == "create_user":
             player_id = action["player_id"]
             username = action["username"] if not simulating else f"user{player_id}"
-            pw_hash = action["pw_hash"] if not simulating else generate_password_hash("password", method="scrypt")
-            user_sessions[player_id] = create_user(player_id, username, pw_hash)
+            password = "password"
+            user_sessions[player_id] = create_user(player_id, username, password)
         elif action["action_type"] == "request":
             player_id = action["player_id"]
             if player_id not in user_sessions:
@@ -104,7 +103,9 @@ def _simulate(
             url = f"{base_url}{action['request']['endpoint']}"
             content_type = "json" if action["request"]["content_type"] == "application/json" else "data"
             response = user_sessions[player_id].post(
-                url, **{content_type: action["request"]["content"]}, allow_redirects=False
+                url,
+                **{content_type: action["request"]["content"]},
+                allow_redirects=False,
             )
             # TODO (Yassir): mismatch if content type is not the same
             if "money" in action["response"]["content"]:

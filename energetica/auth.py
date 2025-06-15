@@ -1,127 +1,158 @@
-"""Functions for authentication and sign-up of users."""
+"""
+Authentication setup for Energetica.
 
-import re
-from datetime import datetime
-from typing import Any
+Defines utility functions for cookie based auth and endpoints for sign-in and sign-up.
+"""
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
-from flask_login import current_user, login_required, login_user, logout_user
-from werkzeug.security import check_password_hash, generate_password_hash
+import os
+import secrets
+from datetime import timedelta
+from typing import Annotated
 
-import energetica
+import bcrypt
+from fastapi import FastAPI, Form, HTTPException, Request, Response, status
+from fastapi.responses import JSONResponse
+from itsdangerous import URLSafeTimedSerializer
+
 from energetica.database.player import Player
 from energetica.globals import engine
+from energetica.schemas.auth import LoginData, RootSignupData, SignupData
+from energetica.utils import misc
 
-auth = Blueprint("auth", __name__)
+COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a command line argument in the future
+
+InvalidCredentialsException = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
 
-# logic for the login :
-@auth.route("/login", methods=["GET", "POST"])
-def login() -> Any:
-    """Endpoint for attempting to log in."""
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        if not username or not password:
-            flash("Please enter a username and password.", category="error")
-            return
+def get_or_create_secret_key() -> str:
+    """Load or create SECRET_KEY for signing cookies."""
+    filepath = "instance/secret_key.txt"
+    if os.path.exists(filepath):
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    else:
+        secret_key = secrets.token_hex()
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(secret_key)
+        return secret_key
+
+
+SECRET_KEY = get_or_create_secret_key()
+serializer = URLSafeTimedSerializer(SECRET_KEY)
+
+
+def generate_password_hash(password: str) -> str:
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode(), salt)
+    return hashed.decode()
+
+
+def check_password_hash(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
+
+
+def get_current_user(request: Request) -> Player:
+    player = get_current_user_from_request(request)
+    if player is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    return player
+
+
+def get_current_user_from_request(request: Request) -> Player | None:
+    token = request.cookies.get("session")
+    if not token:
+        return None
+    return get_current_user_from_token(token)
+
+
+def get_current_user_from_token(token: str) -> Player | None:
+    try:
+        username = serializer.loads(token, max_age=COOKIE_MAX_AGE)
+        return next(Player.filter_by(username=username), None)
+    except Exception:
+        return None
+
+
+def add_session_cookie_to_response(response: Response, player: Player) -> Response:
+    token = serializer.dumps(player.username)
+    response.set_cookie(
+        key="session",
+        value=token,
+        httponly=True,
+        secure=engine.env != "dev",
+        samesite="lax",
+        max_age=COOKIE_MAX_AGE,
+    )
+    return response
+
+
+def setup_auth(app: FastAPI) -> None:
+    @app.post("/login", tags=["Authentication"])
+    def login(request_data: LoginData):
+        username = request_data.username
+        password = request_data.password
 
         player = next(Player.filter_by(username=username), None)
-        if player:
-            if check_password_hash(player.pwhash, password):
-                flash("Logged in successfully!", category="message")
-                login_user(player, remember=True)
-                engine.log(f"{username} logged in")
-                return redirect(url_for("views.home"))
-            else:
-                flash("Incorrect password, try again.", category="error")
-        else:
-            flash(
-                f"Username does not exist.<br><b>All accounts created before the {energetica.__release_date__} "
-                f"have been<br>deleted due to a server reset for the {energetica.__version__} update.<br>"
-                "If your account has been deleted, please create a new one.</b>",
-                category="error",
-            )
 
-    return render_template("login.jinja", engine=engine, user=current_user)
+        if player is None:
+            raise InvalidCredentialsException
 
+        if not check_password_hash(password, player.pwhash):
+            raise InvalidCredentialsException
 
-@auth.route("/root_login", methods=["POST"])
-def root_login() -> Any:
-    if request.headers.get("X-Forwarded-For", request.remote_addr) != "127.0.0.1":
-        abort(404)
-    user_id = request.form.get("user_id")
-    if not user_id:
-        abort(400, description="User ID is required.")
-    player = Player.get(int(user_id))
-    if player is None:
-        abort(404, description="User not found.")
-    login_user(player, remember=True)
-    engine.log(f"{player.username} logged in")
-    return "Authenticated", 200
+        engine.log(f"{username} logged in")
 
+        return add_session_cookie_to_response(
+            JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK),
+            player,
+        )
 
-# logic for the logout :
-@auth.route("/logout")
-@login_required
-def logout() -> Any:
-    """Log out the current user."""
-    engine.log(f"{current_user.username} logged out")
-    logout_user()
-    return redirect(url_for("auth.login"))
+        # TODO: manage nice messages about old accounts
+        # flash(
+        #     f"Username does not exist.<br><b>All accounts created before the {energetica.__release_date__} "
+        #     f"have been<br>deleted due to a server reset for the {energetica.__version__} update.<br>"
+        #     "If your account has been deleted, please create a new one.</b>",
+        #     category="error",
+        # )
 
-
-def is_valid_hash_format(hash_string: str) -> bool:
-    """Checks if the hash string matches the Werkzeug password hash format via regex"""
-    pattern = r"^[a-z0-9]+:\d+:\d+:\d+\$[a-zA-Z0-9./]+\$[a-fA-F0-9]+$"
-    return bool(re.match(pattern, hash_string))
-
-
-# logic for the sign-up :
-@auth.route("/sign-up", methods=["GET", "POST"])
-def sign_up() -> Any:
-    """Create a new account."""
-    if request.method == "POST":
-        username = request.form.get("username")
-        if not username:
-            flash("Please enter a username.", category="error")
-            return
-        username = username.strip()
-        password1 = request.form.get("password1")
-        password2 = request.form.get("password2")
-        pw_hash = request.form.get("pw_hash")
-
+    # TODO: relocate endpoint to sign-up as this is standard
+    @app.post("/sign-up", tags=["Authentication"])
+    def signup(request: Request, request_data: SignupData):
+        """Create a new account."""
+        username = request_data.username
+        password = request_data.password
         existing_player = next(Player.filter_by(username=username), None)
         if existing_player:
-            flash("Username already exist", category="error")
-        elif len(username) < 3 or len(username) > 18:
-            flash("Username must be between 3 and 18 characters.", category="error")
-        elif not pw_hash and (not password1 or not password2):
-            flash("Please enter a password.", category="error")
-        elif pw_hash and not is_valid_hash_format(pw_hash):
-            flash("Invalid password hash format.", category="error")
-        elif not pw_hash and password1 != password2:
-            flash("Passwords don't match.", category="error")
-        elif not pw_hash and len(password1) < 7:
-            flash("Password must be at least 7 characters.", category="error")
-        else:
-            pwhash = pw_hash or generate_password_hash(password1, method="scrypt")
-            new_player = Player(username=username, pwhash=pwhash)
-            login_user(new_player, remember=True)
-            flash("Account created!", category="message")
-            log_entry = {
-                "timestamp": datetime.now().isoformat(),
-                "ip": request.headers.get("X-Forwarded-For", request.remote_addr),
-                "action_type": "create_user",
-                "player_id": new_player.id,
-                "username": new_player.username,
-                "pw_hash": new_player.pwhash,
-            }
-            engine.log_action(log_entry)
-            engine.log(f"{username} created an account")
-            # websocket.rest_notify_scoreboard()
-            # websocket.rest_notify_new_player()
-            print(f"New user created: {username} with ID {new_player.id}")
-            return redirect(url_for("views.home"))
+            raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
+        pwhash = generate_password_hash(password)
+        new_player = misc.signup_player(request, username, pwhash)
+        return add_session_cookie_to_response(
+            JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED),
+            new_player,
+        )
 
-    return render_template("sign_up.jinja", engine=engine, user=current_user)
+    @app.post("/root/login")
+    def root_login(request: Request, user_id: Annotated[int, Form()]):
+        addr = request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else None)
+        if addr is None or addr != "127.0.0.1":
+            return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+        player = Player.get(int(user_id))
+        if player is None:
+            return Response(status_code=status.HTTP_404_NOT_FOUND)
+        engine.log(f"{player.username} logged in")
+        JSONResponse("Authenticated", status_code=status.HTTP_200_OK)
+        return add_session_cookie_to_response(JSONResponse("Authenticated", status_code=status.HTTP_200_OK), player)
+
+    @app.post("/root/sign-up")
+    def root_signup(request: Request, request_data: RootSignupData):
+        """Create a new account."""
+        username = request_data.username
+        pwhash = request_data.pwhash
+        existing_player = next(Player.filter_by(username=username), None)
+        if existing_player:
+            raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
+        new_player = misc.signup_player(request, username, pwhash)
+        return add_session_cookie_to_response(
+            JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED),
+            new_player,
+        )

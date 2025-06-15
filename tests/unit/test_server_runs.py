@@ -7,7 +7,7 @@ import requests
 
 
 def test_server_runs() -> None:
-    process = subprocess.Popen(["python", "main.py", "--port", "5011", "--rm_instance"])
+    process = subprocess.Popen(["python", "main.py", "--port", "5011", "--rm_instance", "--env", "prod"])
 
     trials = 0
     while True:

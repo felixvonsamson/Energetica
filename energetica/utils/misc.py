@@ -6,7 +6,7 @@ import pickle
 from datetime import datetime, timedelta
 
 import numpy as np
-from flask import flash
+from fastapi import Request
 from noise import pnoise3
 from scipy.stats import norm
 
@@ -25,9 +25,19 @@ from energetica.utils.astro import DrHI
 # Helper functions and data initialization utilities
 
 
-def flash_error(msg: str) -> None:
-    """Flash an error message."""
-    return flash(msg, category="error")
+def signup_player(request: Request, username: str, pwhash: str) -> Player:
+    new_player = Player(username=username, pwhash=pwhash)
+    log_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "ip": request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
+        "action_type": "create_user",
+        "player_id": new_player.id,
+        "username": new_player.username,
+        "pw_hash": new_player.pwhash,
+    }
+    engine.log_action(log_entry)
+    engine.log(f"{username} created an account")
+    return new_player
 
 
 def add_player_to_data(player: Player) -> None:
@@ -117,7 +127,7 @@ def save_past_data() -> None:
     # remove old notifications
     for notification in Notification.filter(
         lambda notification: notification.title != "Tutorial"
-        and notification.time < datetime.now() - timedelta(weeks=2)
+        and notification.time < datetime.now() - timedelta(weeks=2),
     ):
         notification.delete()
 
@@ -174,7 +184,7 @@ def initialize_player(player: Player) -> None:
     - Adding the player to the general chat
     """
     eol = engine.total_t + math.ceil(
-        engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick
+        engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick,
     )
     if player.tile is None:
         raise GameError("noLocation")
