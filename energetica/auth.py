@@ -158,24 +158,6 @@ def setup_auth(app: FastAPI) -> None:
             new_player,
         )
 
-    # TODO: relocate endpoint to sign-up as this is standard
-    @app.post("/sign-up", tags=["Authentication"])
-    def signup(request: Request, request_data: SignupData):
-        """Create a new account."""
-        if engine.disable_signups:
-            raise GameError("Sign-ups are disabled.")
-        username = request_data.username
-        password = request_data.password
-        existing_player = next(Player.filter_by(username=username), None)
-        if existing_player:
-            raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
-        pwhash = generate_password_hash(password)
-        new_player = misc.signup_player(request, username, pwhash)
-        return add_session_cookie_to_response(
-            JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED),
-            new_player,
-        )
-
     @app.post("/change-password", tags=["Authentication"])
     def change_password(player: Annotated[Player, Depends(get_current_user)], request_data: ChangePasswordData):
         """Change the password for the current user."""
