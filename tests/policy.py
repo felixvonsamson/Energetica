@@ -12,6 +12,7 @@ from energetica.enums import (
     ControllableFacilityType,
     FunctionalFacilityType,
     HydroFacilityType,
+    PowerFacilityType,
     ProjectType,
     WindFacilityType,
     WorkerType,
@@ -188,7 +189,7 @@ class StarterPolicy(Policy):
         # Not enough power capacity, build a power facility. The strategy is:
         # - Compute / estimate the LCOE for watermill, windmill, and steam engine
         # - Build the cheapest one, or wait until funds are available
-        costs = {
+        costs: dict[PowerFacilityType, Any] = {
             facility_type: (
                 const_config_assets[facility_type]["base_price"]
                 * technology_effects.price_multiplier(player, facility_type)
