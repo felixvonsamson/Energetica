@@ -38,6 +38,8 @@ function catch_validation_error(response_body) {
         addError(formattedMessages.join("<br>"));
         return true;
     }
+    // TODO: have a dictionary lookup from exception type / code to user-facing message.
+    // This will likely be reviewed in the near future
     if (response_body.hasOwnProperty("game_exception_type")) {
         const exception_type = response_body.game_exception_type;
         addError(exception_type);
