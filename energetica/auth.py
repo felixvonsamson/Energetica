@@ -48,7 +48,7 @@ def generate_password_hash(password: str) -> str:
     return hashed.decode()
 
 
-def check_password_hash(plain_password: str, hashed_password: str) -> bool:
+def check_password_hash(*, plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
 
@@ -98,15 +98,13 @@ def setup_auth(app: FastAPI) -> None:
         if player is None:
             raise InvalidCredentialsException
 
-        if not check_password_hash(password, player.pwhash):
+        if not check_password_hash(plain_password=password, hashed_password=player.pwhash):
             raise InvalidCredentialsException
 
         engine.log(f"{username} logged in")
 
-        return add_session_cookie_to_response(
-            JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK),
-            player,
-        )
+        response = JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK)
+        return add_session_cookie_to_response(response, player)
 
         # TODO: manage nice messages about old accounts
         # flash(
@@ -170,21 +168,21 @@ def setup_auth(app: FastAPI) -> None:
         """Allow users to change their password."""
         if not old_password or not new_password or not confirm_new_password:
             # flash("All fields are required.", category="error")
-            return RedirectResponse("/settings")
+            return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
 
-        if not check_password_hash(player.pwhash, old_password):
+        if not check_password_hash(plain_password=old_password, hashed_password=player.pwhash):
             # flash("Old password is incorrect.", category="error")
-            return RedirectResponse("/settings")
+            return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
 
         if new_password != confirm_new_password:
             # flash("New passwords do not match.", category="error")
-            return RedirectResponse("/settings")
+            return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
 
         if len(new_password) < 7:
             # flash("New password must be at least 7 characters long.", category="error")
-            return RedirectResponse("/settings")
+            return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
 
         player.pwhash = generate_password_hash(new_password)
         engine.log(f"{player.username} changed their password")
         # flash("Password changed successfully!", category="message")
-        return RedirectResponse("/settings")
+        return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)

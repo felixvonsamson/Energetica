@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import platform
+import secrets
 import shutil
 import socket
 import tarfile
@@ -22,7 +23,6 @@ from typing import Any, AsyncGenerator, Literal
 from apscheduler.events import EVENT_JOB_EXECUTED
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
-from werkzeug.security import generate_password_hash
 
 from energetica import globals
 from energetica.game_engine import GameEngine
@@ -206,6 +206,40 @@ def create_app(
             engine.serve_local = False
 
         scheduler.start()
+
+        from energetica.auth import generate_password_hash
+        from energetica.database.player import Player
+
+        if disable_signups:
+            # if sign-ups are disabled, accounts have to be created from a file.
+            with open("players.txt", "r", encoding="utf-8") as file:
+                lines = file.readlines()
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split(",")
+                if len(parts) > 2:
+                    raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
+                username = parts[0].strip()
+                password = parts[1].strip() if len(parts) > 1 else None
+                existing_player = next(Player.filter_by(username=username), None)
+                if existing_player:
+                    engine.log(f"Player {username} already exists.")
+                    continue
+                if password is None:
+                    password = secrets.token_hex(4)
+                hashed_password = generate_password_hash(password)
+                Player(username=username, pwhash=hashed_password)
+                with open("players_new.txt", "a", encoding="utf-8") as file:
+                    file.write(f"{username},{password}\n")
+                engine.log(f"Created player {username} with password {password}")
+            shutil.move("players_new.txt", "players.txt")
+
+        if run_init_test_players:
+            engine.log("running init_test_players")
+            init_test_players()
+
         yield
         scheduler.shutdown()
         engine.save()
@@ -221,35 +255,5 @@ def create_app(
 
     ssl_args = {"keyfile": None, "certfile": None}
     ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
-
-    if disable_signups:
-        # if sign-ups are disabled, accounts have to be created from a file.
-        with open("players.txt", "r") as file:
-            lines = file.readlines()
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split(",")
-            if len(parts) > 2:
-                raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
-            username = parts[0].strip()
-            password = parts[1].strip() if len(parts) > 1 else None
-            existing_player = next(Player.filter_by(username=username), None)
-            if existing_player:
-                engine.log(f"Player {username} already exists.")
-                continue
-            if password is None:
-                password = secrets.token_hex(4)
-            hashed_password = generate_password_hash(password, method="scrypt")
-            Player(username=username, pwhash=hashed_password)
-            with open("players_new.txt", "a") as file:
-                file.write(f"{username},{password}\n")
-            engine.log(f"Created player {username} with password {password}")
-        shutil.move("players_new.txt", "players.txt")
-
-    if run_init_test_players:
-        engine.log("running init_test_players")
-        init_test_players()
 
     return app
