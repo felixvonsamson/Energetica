@@ -62,9 +62,10 @@
       window.location.href = "/home"
     })
     </script>
-    {# TODO (Felix): don't show the following 3 lines when engine.disable_signups is True (react) #}
-    <div class="margin medium txt_center">- OR -</div>
-    <div class="white login-button padding medium txt_center"
-         onclick="window.location.href = '/sign-up';">Create account</div>
-  </div>
+    {% if not engine.disable_signups %}
+      <div class="margin medium txt_center">- OR -</div>
+      <div class="white login-button padding medium txt_center"
+          onclick="window.location.href = '/sign-up';">Create account</div>
+    {% endif %}
+    </div>
 {% endblock base %}
