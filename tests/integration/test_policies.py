@@ -15,7 +15,11 @@ def test_build_one_steam_engine() -> None:
 
 
 def test_starter_policy() -> None:
-    """Test the starter policy."""
+    """
+    Test the starter policy.
+
+    Check that the starter policy succeeds to reach at least industry level 5 in fewer than 100 ticks.
+    """
     policy = StarterPolicy()
     run_policies([policy], ticks_to_run=100)
     players = Player.all()
