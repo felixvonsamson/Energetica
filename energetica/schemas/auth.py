@@ -19,5 +19,5 @@ class RootSignupData(BaseModel):
 
 
 class ChangePasswordData(BaseModel):
-    old_password: str = Field(min_length=7)
+    old_password: str
     new_password: str = Field(min_length=7)
