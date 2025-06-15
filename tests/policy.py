@@ -34,7 +34,7 @@ class Policy:
         self.is_done = False
 
     def take_action(self, _player: Player) -> None:
-        """Every tick the policy will take an action based on the state"""
+        """Every tick the policy will take an action based on the state."""
         self.is_done = True
 
     def __add__(self, other: Policy) -> SequencedPolicy:

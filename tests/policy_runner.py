@@ -9,7 +9,7 @@ from energetica.utils import map_helpers
 from tests.policy import Policy
 
 
-def run_policies(policies: list[Policy], ticks_to_run: int) -> list[Player]:
+def run_policies(policies: list[Policy], ticks_to_run: int) -> None:
     """Run a list of policies with one player per policy."""
     engine.init_instance(30, 3600, 0, env="dev")
     players = [Player(f"player_{i}", "password_hash") for i in range(len(policies))]
@@ -32,4 +32,3 @@ def run_policies(policies: list[Policy], ticks_to_run: int) -> list[Player]:
         if all(policy.is_done for policy in policies):
             print("All policies are done")
             break
-    return players

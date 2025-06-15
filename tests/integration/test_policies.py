@@ -1,5 +1,6 @@
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.ongoing_project import OngoingProject
+from energetica.database.player import Player
 from energetica.enums import ControllableFacilityType, FunctionalFacilityType, HydroFacilityType, WindFacilityType
 from tests.policy import QueueProjectPolicy, StarterPolicy
 from tests.policy_runner import run_policies
@@ -8,15 +9,17 @@ from tests.policy_runner import run_policies
 def test_build_one_steam_engine() -> None:
     """Test building one steam engine."""
     policy = QueueProjectPolicy(ControllableFacilityType.STEAM_ENGINE)
-    players = run_policies([policy], ticks_to_run=10)
-    assert OngoingProject.count_when(player=players[0]) == 1
+    run_policies([policy], ticks_to_run=10)
+    players = Player.all()
+    assert OngoingProject.count_when(player=next(players)) == 1
 
 
 def test_starter_policy() -> None:
     """Test the starter policy."""
     policy = StarterPolicy()
-    players = run_policies([policy], ticks_to_run=100)
-    player = players[0]
+    run_policies([policy], ticks_to_run=100)
+    players = Player.all()
+    player = next(players)
     print(f"Industry: {player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY]}")
     print(
         f"Steam engines: {ActiveFacility.count_when(player=player, facility_type=ControllableFacilityType.STEAM_ENGINE)}",
