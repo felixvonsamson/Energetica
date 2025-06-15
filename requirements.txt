@@ -6,7 +6,6 @@ ecdsa
 requests
 pandas
 pywebpush
-Werkzeug>=3.0.3
 noise
 pytest
 fastapi[standard]

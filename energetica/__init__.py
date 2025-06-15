@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import platform
+import secrets
 import shutil
 import socket
 import tarfile
@@ -58,6 +59,7 @@ def create_app(
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,
     env: Literal["dev"] | Literal["prod"],
+    disable_signups: bool = False,
 ) -> FastAPI:
     """Set up the app and the game engine."""
     print(f"Server is running in {env} mode")
@@ -132,7 +134,7 @@ def create_app(
             kwargs["start_date"] = datetime.fromisoformat(kwargs["start_date"])
             engine.init_instance(**kwargs)
         else:
-            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env)
+            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, disable_signups)
 
     action_id_by_tick = {
         action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"
@@ -202,7 +204,42 @@ def create_app(
         elif not simulate_file:
             add_ticks_clock()
             engine.serve_local = False
+
         scheduler.start()
+
+        from energetica.auth import generate_password_hash
+        from energetica.database.player import Player
+
+        if disable_signups:
+            # if sign-ups are disabled, accounts have to be created from a file.
+            with open("players.txt", "r", encoding="utf-8") as file:
+                lines = file.readlines()
+
+            with open("players.txt", "w", encoding="utf-8") as file:
+                for line in lines:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    parts = line.split(",")
+                    if len(parts) > 2:
+                        raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
+                    username = parts[0].strip()
+                    password = parts[1].strip() if len(parts) > 1 else None
+                    existing_player = next(Player.filter_by(username=username), None)
+                    if existing_player:
+                        engine.log(f"players.txt: Did not create new player {username}; username already exists.")
+                        continue
+                    if password is None:
+                        password = secrets.token_hex(4)
+                    hashed_password = generate_password_hash(password)
+                    Player(username=username, pwhash=hashed_password)
+                    file.write(f"{username},{password}\n")
+                    engine.log(f"players.txt: Created player {username} with password {password}")
+
+        if run_init_test_players:
+            engine.log("running init_test_players")
+            init_test_players()
+
         yield
         scheduler.shutdown()
         engine.save()
@@ -218,9 +255,5 @@ def create_app(
 
     ssl_args = {"keyfile": None, "certfile": None}
     ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
-
-    if run_init_test_players:
-        engine.log("running init_test_players")
-        init_test_players()
 
     return app

@@ -135,6 +135,11 @@ if __name__ == "__main__":
         choices=["critical", "error", "warning", "info", "debug", "trace"],
         default="warning",
     )
+    parser.add_argument(
+        "--disable_signups",
+        action="store_true",
+        help="Disable sign-ups if game is played with a fixed set of players.",
+    )
 
     kwargs = vars(parser.parse_args())
     ssl_args = {"ssl_keyfile": kwargs.pop("keyfile"), "ssl_certfile": kwargs.pop("certfile")}

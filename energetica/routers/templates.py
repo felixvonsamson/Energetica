@@ -99,6 +99,8 @@ def render_location_choice(  # noqa: ANN201
 def render_dashboard(request: Request, user: Annotated[Player, Depends(get_current_user_from_request)]):  # noqa: ANN201
     if user is None:
         return RedirectResponse("/login")
+    if user.tile is None:
+        return RedirectResponse("/location_choice")
     return templates.TemplateResponse(request=request, name="dashboard.jinja")
 
 

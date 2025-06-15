@@ -46,6 +46,7 @@ class GameEngine(object):
 
         self.uuid: uuid.UUID = None  # type: ignore[assignment]
         self.random_seed: int = None  # type: ignore[assignment]
+        self.disable_signups: bool = False
         self.total_t: int = None  # type: ignore[assignment]
         self.start_date: datetime = None  # type: ignore[assignment]
         self.first_tick_time: datetime = None  # type: ignore[assignment]
@@ -80,6 +81,7 @@ class GameEngine(object):
         in_game_seconds_per_tick: int,
         random_seed: int,
         env: Literal["dev"] | Literal["prod"],
+        disable_signups: bool = False,
         start_date: datetime | None = None,
         instance_uuid: str | None = None,
     ) -> None:
@@ -96,6 +98,7 @@ class GameEngine(object):
         self.uuid = uuid.uuid1() if instance_uuid is None else uuid.UUID(instance_uuid)
         self.random_seed = random_seed
         self.env = env
+        self.disable_signups = disable_signups
         self.total_t = 0  # Number of simulated game ticks since server start
         self.start_date = start_date or datetime.now()  # 0 point of server time
         self.first_tick_time = self.start_date  # will be set to the correct time later on
@@ -109,6 +112,7 @@ class GameEngine(object):
                     "action_type": "init_engine",
                     "random_seed": self.random_seed,
                     "start_date": self.start_date.isoformat(),
+                    "disable_signups": disable_signups,
                 },
             ),
         )
@@ -218,6 +222,7 @@ class GameEngine(object):
             "technology_lvls",
             "db_model_instances",
             "env",
+            "disable_signups",
         ]
         data = {member: getattr(self, member) for member in members_to_save}
         with open("instance/engine_data.pck", "wb") as file:

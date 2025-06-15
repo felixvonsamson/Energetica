@@ -60,6 +60,18 @@
 				"kind": "none"
 			},
 			"problemMatcher": [ ]
-		}
+		},
+		{
+			"label": "run sign-up disabled",
+			"type": "shell",
+			"command": "python main.py --env dev --rm_instance --disable_signups",
+			"presentation": {
+				"clear": true
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
 	]
 }

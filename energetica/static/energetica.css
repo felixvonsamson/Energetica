@@ -319,6 +319,7 @@ canvas {
 }
 
 .button2 {
+    border: none;
     display: block;
     color: #000;
     background-color: #e5d9b6;
