@@ -44,8 +44,8 @@
       e.preventDefault();
       const form = e.target;
       if (form.password1.value != form.password2.value) {
-          addError("Passwords do not match");
-          return;
+        addError("Passwords do not match");
+        return;
       }
       const payload = {
         username: form.username.value,
