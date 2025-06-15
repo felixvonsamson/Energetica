@@ -214,26 +214,26 @@ def create_app(
             # if sign-ups are disabled, accounts have to be created from a file.
             with open("players.txt", "r", encoding="utf-8") as file:
                 lines = file.readlines()
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
-                parts = line.split(",")
-                if len(parts) > 2:
-                    raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
-                username = parts[0].strip()
-                password = parts[1].strip() if len(parts) > 1 else None
-                existing_player = next(Player.filter_by(username=username), None)
-                if existing_player:
-                    engine.log(f"Player {username} already exists.")
-                    continue
-                if password is None:
-                    password = secrets.token_hex(4)
-                hashed_password = generate_password_hash(password)
-                Player(username=username, pwhash=hashed_password)
-                with open("players_new.txt", "a", encoding="utf-8") as file:
-                    file.write(f"{username},{password}\n")
-                engine.log(f"Created player {username} with password {password}")
+            with open("players_new.txt", "w", encoding="utf-8") as new_file:
+                for line in lines:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    parts = line.split(",")
+                    if len(parts) > 2:
+                        raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
+                    username = parts[0].strip()
+                    password = parts[1].strip() if len(parts) > 1 else None
+                    existing_player = next(Player.filter_by(username=username), None)
+                    if existing_player:
+                        engine.log(f"Player {username} already exists.")
+                        continue
+                    if password is None:
+                        password = secrets.token_hex(4)
+                    hashed_password = generate_password_hash(password)
+                    Player(username=username, pwhash=hashed_password)
+                    new_file.write(f"{username},{password}\n")
+                    engine.log(f"Created player {username} with password {password}")
             shutil.move("players_new.txt", "players.txt")
 
         if run_init_test_players:
