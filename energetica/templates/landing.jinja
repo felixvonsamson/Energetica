@@ -20,7 +20,9 @@
         </div>
         <div class="flex-center margin">
             <a href="{{ url_for('auth.login') }}" class="white login-button padding large margin" style="text-decoration: none;">Login</a>
-            <a href="{{ url_for('auth.sign_up') }}" class="white login-button padding large margin" style="text-decoration: none;">Sign up</a>
+            {% if not engine.disable_signups %}
+                <a href="{{ url_for('auth.sign_up') }}" class="white login-button padding large margin" style="text-decoration: none;" >Sign up</a>
+            {% endif %}
         </div>
     </div>
 

@@ -10,13 +10,14 @@ from datetime import timedelta
 from typing import Annotated
 
 import bcrypt
-from fastapi import FastAPI, Form, HTTPException, Request, Response, status
-from fastapi.responses import JSONResponse
+from fastapi import Depends, FastAPI, Form, HTTPException, Request, Response, status
+from fastapi.responses import JSONResponse, RedirectResponse
 from itsdangerous import URLSafeTimedSerializer
 
 from energetica.database.player import Player
+from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.schemas.auth import LoginData, RootSignupData, SignupData
+from energetica.schemas.auth import ChangePasswordData, LoginData, RootSignupData, SignupData
 from energetica.utils import misc
 
 COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a command line argument in the future
@@ -47,7 +48,7 @@ def generate_password_hash(password: str) -> str:
     return hashed.decode()
 
 
-def check_password_hash(plain_password: str, hashed_password: str) -> bool:
+def check_password_hash(*, plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
 
@@ -97,15 +98,13 @@ def setup_auth(app: FastAPI) -> None:
         if player is None:
             raise InvalidCredentialsException
 
-        if not check_password_hash(password, player.pwhash):
+        if not check_password_hash(plain_password=password, hashed_password=player.pwhash):
             raise InvalidCredentialsException
 
         engine.log(f"{username} logged in")
 
-        return add_session_cookie_to_response(
-            JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK),
-            player,
-        )
+        response = JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK)
+        return add_session_cookie_to_response(response, player)
 
         # TODO: manage nice messages about old accounts
         # flash(
@@ -119,6 +118,8 @@ def setup_auth(app: FastAPI) -> None:
     @app.post("/sign-up", tags=["Authentication"])
     def signup(request: Request, request_data: SignupData):
         """Create a new account."""
+        if engine.disable_signups:
+            raise GameError("Sign-ups are disabled.")
         username = request_data.username
         password = request_data.password
         existing_player = next(Player.filter_by(username=username), None)
@@ -156,3 +157,14 @@ def setup_auth(app: FastAPI) -> None:
             JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED),
             new_player,
         )
+
+    @app.post("/change-password", tags=["Authentication"])
+    def change_password(player: Annotated[Player, Depends(get_current_user)], request_data: ChangePasswordData):
+        """Change the password for the current user."""
+        old_password = request_data.old_password
+        new_password = request_data.new_password
+        if not check_password_hash(plain_password=old_password, hashed_password=player.pwhash):
+            raise GameError("Old password is incorrect.")
+        player.pwhash = generate_password_hash(new_password)
+        engine.log(f"{player.username} changed their password")
+        return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)

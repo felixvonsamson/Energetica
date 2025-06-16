@@ -25,7 +25,11 @@ def put_resource_on_market(player: Player, fuel: Fuel, quantity: float, unit_pri
 
 
 def buy_resource_from_market(player: Player, quantity: float, sale: ResourceOnSale) -> ResourceOnSale | None:
-    """Buy an offer from the resource market."""
+    """
+    Buy an offer from the resource market.
+
+    Return the resulting ResourceOnSale if this is a partial purchase, return None otherwise.
+    """
     assert player.tile is not None
     assert sale.player.tile is not None
     if quantity is None or quantity <= 0 or quantity > sale.quantity:

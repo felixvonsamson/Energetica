@@ -44,31 +44,31 @@
       e.preventDefault();
       const form = e.target;
       if (form.password1.value != form.password2.value) {
-          addError("Passwords do not match");
-          return;
-        }
-        const payload = {
-          username: form.username.value,
-          password: form.password1.value,
-        };
+        addError("Passwords do not match");
+        return;
+      }
+      const payload = {
+        username: form.username.value,
+        password: form.password1.value,
+      };
 
-        const response = await fetch("/sign-up", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          const response_body = await response.json();
-          if (catch_validation_error(response_body)) return;
-          addError(response_body.detail);
-          return;
-        }
-        window.location.href = "/location_choice";
+      const response = await fetch("/sign-up", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        const response_body = await response.json();
+        if (catch_validation_error(response_body)) return;
+        addError(response_body.detail);
+        return;
+      }
+      window.location.href = "/location_choice";
+    });
     </script>
     <div class="margin medium txt_center">- OR -</div>
     <div class="white login-button padding medium txt_center"

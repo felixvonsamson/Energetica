@@ -26,9 +26,7 @@ def create_network(player: Player, name: str) -> Network:
     """
     Shared API method to create a network.
 
-    Network name must pass validation,
-    namely it must not be too long, nor too short, and must not already be in
-    use.
+    Network name must pass validation, namely it must not be too long, nor too short, and must not already be in use.
     """
     if not player.achievements["network"]:
         raise GameError("networkNotUnlocked")

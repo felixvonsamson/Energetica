@@ -61,8 +61,8 @@ def check_events_completion() -> None:
     # check if constructions finished
     finished_constructions = list(
         OngoingProject.filter(
-            lambda construction: construction.end_tick_or_ticks_passed <= engine.total_t and construction.status == 2
-        )
+            lambda construction: construction.end_tick_or_ticks_passed <= engine.total_t and construction.status == 2,
+        ),
     )
     for fc in finished_constructions:
         assets.finish_project(fc)

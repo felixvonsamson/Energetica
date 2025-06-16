@@ -173,7 +173,8 @@ def power_production_multiplier(player: Player, facility_type: PowerFacilityType
     # Aerodynamics
     if facility_type in const_config["aerodynamics"]["affected_facilities"]:
         mlt *= special_multiplier(
-            const_config["aerodynamics"]["prod_factor"], player.technology_lvl[TechnologyType.AERODYNAMICS]
+            const_config["aerodynamics"]["prod_factor"],
+            player.technology_lvl[TechnologyType.AERODYNAMICS],
         )
     # Nuclear engineering
     if facility_type in const_config["nuclear_engineering"]["affected_facilities"]:
@@ -508,7 +509,8 @@ def requirements_status(player: Player, project_type: ProjectType, requirements:
     # TODO(mglst): this method, and the others about requirements should be revised, as they are unclear
     if all(requirement["status"] == "satisfied" for requirement in requirements):
         if isinstance(project_type, TechnologyType) and OngoingProject.filter_by(
-            project_type=project_type, player=player
+            project_type=project_type,
+            player=player,
         ):
             return "queued"
         return "satisfied"

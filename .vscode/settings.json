@@ -32,7 +32,8 @@
     "[python]": {
         "editor.rulers": [ 120 ],
         "editor.codeActionsOnSave": {
-            "source.organizeImports": "always"
+            "source.organizeImports": "always",
+            "source.fixAll": "always"
         },
         "editor.defaultFormatter": "charliermarsh.ruff"
     },
@@ -104,6 +105,7 @@
         "isnot",
         "isort",
         "itertuples",
+        "itsdangerous",
         "jsonable",
         "jsonify",
         "lacunarity",
@@ -135,6 +137,7 @@
         "renewables",
         "scipy",
         "sessionmaker",
+        "signups",
         "socketio",
         "solars",
         "sqlalchemy",
@@ -152,7 +155,6 @@
         "visualisation",
         "webcredentials",
         "webpush",
-        "werkzeug",
         "wght",
         "windspeed"
     ],

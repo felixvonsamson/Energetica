@@ -78,7 +78,6 @@ def test_seed_determinism() -> None:
 
     def run_seeded_subprocess(seed: int) -> dict:
         """Runs the price generation logic in a subprocess with the given seed and returns the result."""
-
         subprocess_code = textwrap.dedent(f"""
             import json
             from energetica import engine
