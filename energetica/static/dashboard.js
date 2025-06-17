@@ -2,7 +2,7 @@ const weather_conditions = document.getElementById('current_weather_conditions')
 update_weather_conditions();
 
 function update_weather_conditions() {
-    fetch("/api/get_current_weather")
+    fetch("/api/v1/weather")
         .then((response) => response.json())
         .then((weather_data) => {
             weather_conditions.innerHTML = `

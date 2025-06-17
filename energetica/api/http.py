@@ -145,12 +145,6 @@ def get_chart_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa:
     }
 
 
-@todo_router.get("/get_current_weather")
-def get_current_weather(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get the current weather data including date, irradiance, wind speed, and river discharge."""
-    return energetica.utils.misc.package_weather_data(user)
-
-
 @todo_router.get("/get_network_capacities")
 def get_network_capacities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the network capacities for the current player."""
