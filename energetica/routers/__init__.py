@@ -84,6 +84,9 @@ def setup_routes(app: FastAPI):
         with engine.lock:
             response = await call_next(request)
 
+        if request.url.path.startswith("/root"):
+            return response
+
         # Try to decode the request and response
         try:
             request_content = json.loads(body_bytes.decode())
