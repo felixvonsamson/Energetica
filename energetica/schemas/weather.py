@@ -1,29 +1,11 @@
 """Schemas for the weather api."""
 
-from typing import Literal
-
-from pydantic import BaseModel
-
-# TODO: the API should just give a month number and the frontend should convert to a month name
-MonthName = Literal[
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-]
+from pydantic import BaseModel, Field
 
 
 class WeatherOut(BaseModel):
-    year_progress: float
-    month: MonthName  # TODO: rename from month to month_name
+    year_progress: float = Field(ge=0, le=1)
+    month_number: int = Field(ge=1, le=12)
     solar_irradiance: float
     wind_speed: float
     river_discharge: float

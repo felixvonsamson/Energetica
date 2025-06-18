@@ -5,9 +5,23 @@ function update_weather_conditions() {
     fetch("/api/v1/weather")
         .then((response) => response.json())
         .then((weather_data) => {
+            const month_name = [
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+            ][weather_data.month_number - 1];
             weather_conditions.innerHTML = `
         <div class="flex-col flex-grow-1 padding weather_info_container">
-            <div>Month: <b>${weather_data.month}</b></div>
+            <div>Month: <b>${month_name}</b></div>
             <div class="year-background margin-small">
                 <div class="current-date-dot" style="left: calc(${weather_data.year_progress} * 100%);"></div>
             </div>

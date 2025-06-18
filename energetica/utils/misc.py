@@ -20,7 +20,7 @@ from energetica.enums import ControllableFacilityType
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.schemas.daily_quiz import DailyQuizBase
-from energetica.schemas.weather import MonthName, WeatherOut
+from energetica.schemas.weather import WeatherOut
 from energetica.utils.astro import DrHI
 
 # Helper functions and data initialization utilities
@@ -356,23 +356,9 @@ def package_weather_data(player: Player) -> WeatherOut:
     solar_irradiance = calculate_solar_irradiance((x, y), total_seconds, random_seed)
     wind_speed = calculate_wind_speed((x, y), total_seconds, random_seed)
     river_discharge = calculate_river_discharge(total_seconds)
-    months: list[MonthName] = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ]
     return WeatherOut(
         year_progress=(total_seconds / 3600 / 24 / 72) % 1,
-        month=months[math.floor((total_seconds / 3600 / 24 / 6) % 12)],
+        month_number=1 + math.floor((total_seconds / 3600 / 24 / 6) % 12),
         solar_irradiance=solar_irradiance,
         wind_speed=wind_speed,
         river_discharge=river_discharge,
