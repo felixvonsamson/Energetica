@@ -1,8 +1,12 @@
 function delete_notification(element, notification_id) {
   element.parentElement.parentElement.style.display = 'none';
   document.getElementById("notification_" + notification_id).style.display = 'none';
-  send_json("/api/request_delete_notification", {
-    id: notification_id,
+  fetch(`/api/v1/notifications/${notification_id}`, {
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
   })
     .catch((error) => {
       console.error(`caught error ${error}`);
@@ -16,7 +20,7 @@ function read_notifications() {
     badge.style.display = 'none';
   }
   document.getElementById('notification_popup').classList.add('hidden');
-  fetch("/api/request_marked_as_read", { method: "POST" })
+  fetch("/api/v1/notifications/mark-all-read", { method: "PATCH" })
     .catch((error) => {
       console.error(`caught error ${error}`);
     });
