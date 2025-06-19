@@ -5,6 +5,8 @@ function update_weather_conditions() {
     fetch("/api/v1/weather")
         .then((response) => response.json())
         .then((weather_data) => {
+            // TODO(mglst): move this list of months to a separate file.
+            // https://github.com/felixvonsamson/Energetica/pull/273/files/dcf5220902b8ae2981f4801234eec0fbe845207f#r2156131695
             const month_name = [
                 "January",
                 "February",
