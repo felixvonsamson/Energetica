@@ -24,7 +24,7 @@ def delete_notification(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.patch("/mark-all-read")
+@router.post(":markAllRead")
 def marked_all_read(user: Annotated[Player, Depends(get_current_user)]) -> Response:
     """Mark all notification as read."""
     user.notifications_read()

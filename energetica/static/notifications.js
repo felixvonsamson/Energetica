@@ -20,7 +20,7 @@ function read_notifications() {
     badge.style.display = 'none';
   }
   document.getElementById('notification_popup').classList.add('hidden');
-  fetch("/api/v1/notifications/mark-all-read", { method: "PATCH" })
+  fetch("/api/v1/notifications:markAllRead", { method: "POST" })
     .catch((error) => {
       console.error(`caught error ${error}`);
     });
