@@ -240,9 +240,9 @@
                     <td>Industry</td>
                     <td>
                         <input type="number"
-                            class="small_input medium txt_center"
+                            class="small_input medium txt_center ask_price_input"
                             value="{{ user.network_prices.ask_prices.industry }}"
-                            id="price-demand-industry"
+                            data-ask-type="industry"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
@@ -252,9 +252,9 @@
                     <td>Constructions</td>
                     <td>
                         <input type="number"
-                            class="small_input medium txt_center"
+                            class="small_input medium txt_center ask_price_input"
                             value="{{ user.network_prices.ask_prices.construction }}"
-                            id="price-demand-construction"
+                            data-ask-type="constructions"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
@@ -265,9 +265,9 @@
                     <td>Research</td>
                     <td>
                         <input type="number"
-                            class="small_input medium txt_center"
+                            class="small_input medium txt_center ask_price_input"
                             value="{{ user.network_prices.ask_prices.research }}"
-                            id="price-demand-research"
+                            data-ask-type="research"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
@@ -279,9 +279,9 @@
                     <td>Shipments</td>
                     <td>
                         <input type="number"
-                            class="small_input medium txt_center"
+                            class="small_input medium txt_center ask_price_input"
                             value="{{ user.network_prices.ask_prices.transport }}"
-                            id="price-demand-transport"
+                            data-ask-type="transport"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
@@ -300,9 +300,9 @@
                             <td>{{ extraction_facility_display_name(extraction_facility) }}</td>
                             <td>
                                 <input type="number"
-                                    class="small_input medium txt_center"
+                                    class="small_input medium txt_center ask_price_input"
                                     value="{{ extraction_facility_demand_price_value(extraction_facility) }}"
-                                    id="price-demand-{{ extraction_facility }}"
+                                    data-ask-type="{{ extraction_facility }}"
                                     max="50000" />
                                 <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                 /MWh
@@ -315,9 +315,9 @@
                         <td>Carbon Capture</td>
                         <td>
                             <input type="number"
-                                class="small_input medium txt_center"
+                                class="small_input medium txt_center ask_price_input"
                                 value="{{ user.network_prices.ask_prices.carbon_capture }}"
-                                id="price-demand-carbon_capture"
+                                data-ask-type="carbon_capture"
                                 max="50000" />
                             <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                             /MWh
@@ -349,9 +349,9 @@
                                 <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ caps[power_facility].power }});</script>
                                 <td>
                                     <input type="number"
-                                        class="small_input medium txt_center"
+                                        class="small_input medium txt_center bid_price_input"
                                         value="{{ power_facility_supply_price_value(power_facility) }}"
-                                        id="price-supply-{{ power_facility }}"
+                                        data-bid-type="{{ power_facility }}"
                                         min="-4.9"/>
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh
@@ -389,18 +389,18 @@
                                 <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ caps[storage_facility].capacity }});</script>
                                 <td>
                                     <input type="number"
-                                        class="small_input medium txt_center"
+                                        class="small_input medium txt_center bid_price_input"
                                         value="{{ storage_facility_supply_price_value(storage_facility) }}"
-                                        id="price-supply-{{ storage_facility }}"
+                                        data-bid-type="{{ storage_facility }}"
                                         min="-4.9" />
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh
                                 </td>
                                 <td>
                                     <input type="number"
-                                        class="small_input medium txt_center"
+                                        class="small_input medium txt_center ask_price_input"
                                         value="{{ storage_facility_demand_price_value(storage_facility) }}"
-                                        id="price-demand-{{ storage_facility }}"
+                                        data-ask-type="{{ storage_facility }}"
                                         max="50000" />
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh

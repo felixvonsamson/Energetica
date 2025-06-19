@@ -403,26 +403,6 @@ async def request_dismantle_all_of_type(  # noqa: ANN201
     return {"response": "success", "money": user.money}
 
 
-@todo_router.post("/change_network_prices")
-async def change_network_prices(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Change the prices for anything on the network."""
-    if not user.is_in_network:
-        return JSONResponse({"response": "notAuthorized"}, status_code=status.HTTP_404_NOT_FOUND)
-    request_data = await request.json()
-    updated_prices = request_data["prices"]
-    if not all(key in ["supply", "demand"] for key in updated_prices.keys()):
-        raise GameError("malformedRequest")
-    user.network_prices.update(
-        updated_bids=updated_prices["supply"],
-        updated_asks=updated_prices["demand"],
-    )
-    engine.log(f"{user.username} updated their prices")
-    return {"response": "success"}
-
-
 @todo_router.post("/request_change_facility_priority")
 async def request_change_facility_priority(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],

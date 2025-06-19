@@ -261,7 +261,7 @@ function import_overview_sketch(s) {
         s.graphics.background(229, 217, 182);
         s.graphics.push();
         let exports = energy_flux[resolution_list[0]][59];
-        console.log(energy_flux[resolution_list[0]]);
+        // console.log(energy_flux[resolution_list[0]]);
         let max_exports = max(max(0, ...energy_flux[resolution_list[0]]), -min(0, ...energy_flux[resolution_list[0]]));
         let arrow_w = map(abs(exports), 0, max_exports, 0.2 * margin, 0.6 * margin);
         s.graphics.translate(0.5 * margin, 0.5 * s.graph_h - 0.2 * margin);

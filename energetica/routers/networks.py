@@ -2,12 +2,13 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from energetica.auth import get_current_user
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.schemas.networks import NetworkIn, NetworkList, NetworkOut
+from energetica.globals import engine
+from energetica.schemas.networks import ChangeNetworkPrices, NetworkIn, NetworkList, NetworkOut
 from energetica.utils import network_helpers
 
 router = APIRouter(prefix="/networks", tags=["Networks"])
@@ -49,3 +50,19 @@ def create_network(user: Annotated[Player, Depends(get_current_user)], request_d
     """Create a network."""
     new_network = network_helpers.create_network(user, request_data.name)
     return new_network.to_schema()
+
+
+@router.patch("/prices")
+async def change_network_prices(
+    user: Annotated[Player, Depends(get_current_user)],
+    prices_change_request: ChangeNetworkPrices,
+) -> Response:
+    """Change the prices for anything on the network."""
+    if user.network is None:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    user.network_prices.update(
+        updated_bids={bid.type: bid.price for bid in prices_change_request.bids},
+        updated_asks={ask.type: ask.price for ask in prices_change_request.asks},
+    )
+    engine.log(f"{user.username} updated their prices")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

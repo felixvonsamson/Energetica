@@ -183,7 +183,7 @@ class TechnologyType(StrEnum):
 class NonFacilityAskType(StrEnum):
     """Enum for special asks on the market that are not storage, extraction, or functional facilities."""
 
-    CONSTRUCTION = "construction"
+    CONSTRUCTION = "constructions"
     RESEARCH = "research"  # Note: see LABORATORY above. Arguably, these should be merged into one
     TRANSPORT = "transport"
 

@@ -1,4 +1,18 @@
+"""Schemas for API for networks."""
+
+from __future__ import annotations
+
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+from energetica.enums import (
+    ControllableFacilityType,
+    ExtractionFacilityType,
+    FunctionalFacilityType,
+    NonFacilityAskType,
+    StorageFacilityType,
+)
 
 
 class NetworkBase(BaseModel):
@@ -16,3 +30,27 @@ class NetworkIn(NetworkBase):
 
 class NetworkList(BaseModel):
     networks: list[NetworkOut] = Field(description="List of networks")
+
+
+BidType = ControllableFacilityType | StorageFacilityType
+AskType = (
+    NonFacilityAskType
+    | ExtractionFacilityType
+    | Literal[FunctionalFacilityType.INDUSTRY, FunctionalFacilityType.CARBON_CAPTURE]
+    | StorageFacilityType
+)
+
+
+class ChangeNetworkPrices(BaseModel):
+    bids: list[Bid]
+    asks: list[Ask]
+
+
+class Bid(BaseModel):
+    type: BidType
+    price: float = Field(ge=-5)
+
+
+class Ask(BaseModel):
+    type: AskType
+    price: float = Field(ge=-5)

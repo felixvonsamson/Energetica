@@ -24,6 +24,7 @@ from energetica.enums import (
 )
 from energetica.game_error import GameError
 from energetica.globals import engine
+from energetica.schemas.networks import AskType, BidType
 from energetica.utils.hashing import stable_hash
 
 if TYPE_CHECKING:
@@ -31,9 +32,6 @@ if TYPE_CHECKING:
 
     from energetica.database.network import Network
     from energetica.database.player import Player
-
-Bid = ControllableFacilityType | StorageFacilityType
-Ask = NonFacilityAskType | ExtractionFacilityType | FunctionalFacilityType | StorageFacilityType
 
 
 @dataclass
@@ -53,7 +51,7 @@ class NetworkPrices:
     """
 
     renewable_bids: list[ProjectType] = field(default_factory=list)
-    bid_prices: dict[Bid, float] = field(
+    bid_prices: dict[BidType, float] = field(
         default_factory=lambda: {
             ControllableFacilityType.STEAM_ENGINE: 125.0,
             ControllableFacilityType.COAL_BURNER: 600.0,
@@ -67,9 +65,9 @@ class NetworkPrices:
             StorageFacilityType.HYDROGEN_STORAGE: 880.0,
             StorageFacilityType.LITHIUM_ION_BATTERIES: 940.0,
             StorageFacilityType.SOLID_STATE_BATTERIES: 900.0,
-        }
+        },
     )
-    ask_prices: dict[Ask, float] = field(
+    ask_prices: dict[AskType, float] = field(
         default_factory=lambda: {
             FunctionalFacilityType.INDUSTRY: 1000.0,
             NonFacilityAskType.CONSTRUCTION: 1020.0,
@@ -85,7 +83,7 @@ class NetworkPrices:
             StorageFacilityType.HYDROGEN_STORAGE: 230.0,
             StorageFacilityType.LITHIUM_ION_BATTERIES: 425.0,
             StorageFacilityType.SOLID_STATE_BATTERIES: 420.0,
-        }
+        },
     )
 
     def init_prices_with_randomness(self, player: Player) -> None:
@@ -104,30 +102,12 @@ class NetworkPrices:
 
     def update(
         self,
-        updated_bids: dict[ProjectType | NonFacilityAskType, float],
-        updated_asks: dict[ProjectType | NonFacilityAskType, float],
+        updated_bids: dict[BidType, float],
+        updated_asks: dict[AskType, float],
     ) -> None:
         """Update the prices of the player for each facility type."""
-        for facility, new_price in updated_bids.items():
-            if not isinstance(facility, ControllableFacilityType | StorageFacilityType):
-                raise GameError("malformedRequest")
-            if not isinstance(new_price, (int, float)):
-                raise GameError("malformedRequest")
-            if new_price <= -5:
-                raise GameError("priceTooLow")
-        for facility, new_price in updated_asks.items():
-            if not isinstance(
-                facility, NonFacilityAskType | ExtractionFacilityType | FunctionalFacilityType | StorageFacilityType
-            ):
-                raise GameError("malformedRequest")
-            if facility == FunctionalFacilityType.LABORATORY or facility == FunctionalFacilityType.WAREHOUSE:
-                raise GameError("malformedRequest")
-            if not isinstance(new_price, (int, float)):
-                raise GameError("malformedRequest")
-            if new_price <= -5:
-                raise GameError("priceTooLow")
-        self.ask_prices |= updated_asks  # type: ignore
-        self.bid_prices |= updated_bids  # type: ignore
+        self.ask_prices |= updated_asks
+        self.bid_prices |= updated_bids
 
     AskBid = Literal["ask", "bid"]  # Helper type
 
@@ -199,7 +179,9 @@ class CapacityData:
         self._data: dict[str, dict] = {}
 
     def update(
-        self, player: Player, facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType | None
+        self,
+        player: Player,
+        facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType | None,
     ) -> None:
         """Update the capacity data of the player."""
         from energetica.database.active_facility import ActiveFacility
@@ -377,7 +359,8 @@ class CircularBufferPlayer:
         return 0
 
     def init_new_data(self) -> dict:
-        """Generate the new values for the data.
+        """
+        Generate the new values for the data.
 
         Return a dict with the same structure as the data with 0 and with the last value for the storage and resources.
         """
@@ -500,7 +483,7 @@ class EmissionData:
                 engine.in_game_seconds_per_tick,
                 self._data["emissions"]["CO2"][0],
                 engine.random_seed,
-            )
+            ),
         )
 
     def get_last_data(self) -> dict[str, dict]:
