@@ -211,15 +211,6 @@ def get_generation_priority(user: Annotated[Player, Depends(get_current_user)]):
     return (user.network_prices.get_sorted_renewables(), user.network_prices.get_facility_priorities())
 
 
-@todo_router.get("/get_constructions")
-def get_constructions(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get list of facilities under construction for this player."""
-    projects = user.package_constructions()
-    constructions_by_priority = [construction.id for construction in user.constructions_by_priority]
-    researches_by_priority = [research.id for research in user.researches_by_priority]
-    return (projects, constructions_by_priority, researches_by_priority)
-
-
 @todo_router.get("/get_active_facilities")
 def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the active facilities for this player."""

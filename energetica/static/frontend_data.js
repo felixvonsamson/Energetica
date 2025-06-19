@@ -64,7 +64,7 @@ function load_constructions() {
 }
 
 function retrieve_constructions() {
-    return fetch("/api/get_constructions")
+    return fetch("/api/v1/projects")
         .then((response) => response.json())
         .then((raw_data) => {
             // Save fetched data to sessionStorage
