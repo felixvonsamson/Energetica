@@ -58,7 +58,7 @@ class Player(DBModel):
 
     # inactive: bool = False  # True if account is inactive
     show_chat_disclaimer: bool = True
-    last_opened_chat_id: int | None = None
+    last_opened_chat_id: int = field(default_factory=lambda: engine.general_chat.id)
 
     tile: HexTile | None = None
     network: Network | None = None

@@ -177,10 +177,7 @@ def initialize_player(player: Player) -> None:
     )
     player.capacities.update(player, ControllableFacilityType.STEAM_ENGINE)
 
-    general_chat = Chat.get(1)
-    if general_chat is None:
-        raise GameError("chatNotFound")
-    general_chat.participants.add(player)
+    engine.general_chat.participants.add(player)
 
     add_player_to_data(player)
 
