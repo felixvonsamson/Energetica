@@ -340,7 +340,7 @@ def calculate_wind_speed(position: tuple[float, float], total_seconds: float, ra
         * (1 + 0.4 * math.sin(t / 60 / 24 / 72 * math.pi * 2 + 0.5 * math.pi))
         * (1 + 0.1 * math.sin(t / 60 / 24 * math.pi * 2 + 0.4 * math.pi))
         * 85
-    )
+    )  # type: ignore
 
 
 def calculate_river_discharge(total_seconds: float) -> float:
