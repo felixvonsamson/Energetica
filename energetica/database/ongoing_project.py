@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, field
+from enum import IntEnum
 from functools import cached_property
 from typing import TYPE_CHECKING
 
@@ -11,12 +12,13 @@ from energetica import technology_effects
 from energetica.database import DBModel
 from energetica.enums import FunctionalFacilityType, ProjectType, TechnologyType, WorkerType
 from energetica.globals import engine
+from energetica.schemas.projects import ProjectOut
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
 
 
-class ProjectStatus:
+class ProjectStatus(IntEnum):
     """Class that stores the status of ongoing projects."""
 
     PAUSED = 0
@@ -34,7 +36,7 @@ class OngoingProject(DBModel):
     duration: float  # in game ticks
     project_power: float  # Power consumed by the project
     project_pollution: float  # Emissions produced by the project
-    status: int = ProjectStatus.PAUSED  # 0 for paused, 1 for waiting, 2 for ongoing. See ProjectStatus
+    status: ProjectStatus = ProjectStatus.PAUSED  # 0 for paused, 1 for waiting, 2 for ongoing. See ProjectStatus
     end_tick_or_ticks_passed: float = 0  # in game ticks when the project will be finished or ticks passed if paused
 
     # multipliers to keep track of the technology level at the time of the start of the project
@@ -46,7 +48,8 @@ class OngoingProject(DBModel):
     def __post_init__(self) -> None:
         """Post initialization function."""
         self.multipliers = technology_effects.current_multipliers(
-            self.player, self.project_type
+            self.player,
+            self.project_type,
         )  # has to be called before the super().__post_init__()
         super().__post_init__()  # Needed for DBModel to add this new object to the database
 
@@ -59,6 +62,7 @@ class OngoingProject(DBModel):
         """Return True if this project is paused by the player."""
         return self.status == ProjectStatus.PAUSED
 
+    # TODO(mglst): make this method a property
     def is_ongoing(self) -> bool:
         """Return True if this project is not paused and has no requirements."""
         return self.status == ProjectStatus.ONGOING
@@ -191,3 +195,13 @@ class OngoingProject(DBModel):
                     if level + offset - 1 >= candidate_prerequisite_level:
                         prerequisites.append(candidate_prerequisite)
         return prerequisites, level
+
+    def to_schema(self) -> ProjectOut:
+        return ProjectOut(
+            id=self.id,
+            project_type=self.project_type,
+            end_tick=self.end_tick_or_ticks_passed if self.is_ongoing() else None,
+            ticks_passed=None if self.is_ongoing() else self.end_tick_or_ticks_passed,
+            duration=self.duration,
+            status=self.status,
+        )
