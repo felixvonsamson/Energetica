@@ -13,7 +13,7 @@ class ChatListResponse(BaseModel):
     """Response model for the chat list."""
 
     chats: list[ChatOut]
-    last_opened_chat_id: int | None
+    last_opened_chat_id: int
     unread_chat_count: int
 
 
