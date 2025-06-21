@@ -30,6 +30,7 @@ class GameEngine(object):
         """Initialize the game engine object."""
         if TYPE_CHECKING:
             from energetica.database.engine_data import EmissionData
+            from energetica.database.messages import Chat
         Path("instance").mkdir(exist_ok=True)
         self.config = config
         self.const_config = const_config
@@ -58,6 +59,7 @@ class GameEngine(object):
         self.env: Literal["dev"] | Literal["prod"] = None  # type: ignore[assignment]
         self.VAPID_PUBLIC_KEY: str = None  # type: ignore[assignment]
         self.VAPID_PRIVATE_KEY: str = None  # type: ignore[assignment]
+        self.general_chat: Chat = None  # type: ignore[assignment]
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations
@@ -162,7 +164,7 @@ class GameEngine(object):
                     tile.fuel_reserves[fuel] = float(row[fuel])
 
         # creating general chat
-        Chat(
+        self.general_chat = Chat(
             name="General Chat",
             participants=set(),
         )

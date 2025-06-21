@@ -2,12 +2,28 @@ const weather_conditions = document.getElementById('current_weather_conditions')
 update_weather_conditions();
 
 function update_weather_conditions() {
-    fetch("/api/get_current_weather")
+    fetch("/api/v1/weather")
         .then((response) => response.json())
         .then((weather_data) => {
+            // TODO(mglst): move this list of months to a separate file.
+            // https://github.com/felixvonsamson/Energetica/pull/273/files/dcf5220902b8ae2981f4801234eec0fbe845207f#r2156131695
+            const month_name = [
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+            ][weather_data.month_number - 1];
             weather_conditions.innerHTML = `
         <div class="flex-col flex-grow-1 padding weather_info_container">
-            <div>Month: <b>${weather_data.month}</b></div>
+            <div>Month: <b>${month_name}</b></div>
             <div class="year-background margin-small">
                 <div class="current-date-dot" style="left: calc(${weather_data.year_progress} * 100%);"></div>
             </div>

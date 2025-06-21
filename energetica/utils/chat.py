@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from energetica.database.messages import Chat, Message
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.utils.misc import display_new_message
+from energetica.utils.misc import send_new_message_sio
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -61,5 +61,5 @@ def add_message(player: Player, message_text: str, chat: Chat) -> Message:
     chat.messages.append(new_message)
     chat.player_last_read_index[player.id] = len(chat.messages) - 1
 
-    display_new_message(new_message, chat)
+    send_new_message_sio(new_message, chat)
     return new_message

@@ -8,7 +8,7 @@ from energetica.globals import engine
 
 # TODO (Felix): Move this to a method in Player
 def join_network(player: Player, network: Network | None) -> Network:
-    """Shared API method to join a network."""
+    """Add a player to a network."""
     if not player.achievements["network"]:
         raise GameError("networkNotUnlocked")
     if network is None:
@@ -24,7 +24,7 @@ def join_network(player: Player, network: Network | None) -> Network:
 
 def create_network(player: Player, name: str) -> Network:
     """
-    Shared API method to create a network.
+    Create a network.
 
     Network name must pass validation, namely it must not be too long, nor too short, and must not already be in use.
     """
@@ -39,7 +39,7 @@ def create_network(player: Player, name: str) -> Network:
 
 
 def leave_network(player: Player) -> Network | None:
-    """Shared API method for a player to leave a network."""
+    """Make a player leave their network."""
     network = player.network
     if network is None:
         raise GameError("notInNetwork")
