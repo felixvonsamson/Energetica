@@ -346,7 +346,7 @@ function openChat(chatID) {
                 console.error("Error:", error);
             });
     });
-    fetch("/api/v1/players/me/settings", {
+    fetch("/api/v1/players/me/ui-state", {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",

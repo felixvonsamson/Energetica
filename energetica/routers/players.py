@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends
 from energetica.auth import get_current_user
 from energetica.database.player import Player
 from energetica.routers.chats import router
-from energetica.schemas.players import PlayerOut, SettingsRequest
+from energetica.schemas.players import PlayerOut, SettingsRequest, UIStateUpdate
 
 router = APIRouter(prefix="/players", tags=["Players"])
 
@@ -39,7 +39,14 @@ def update_user_settings(
     user: Annotated[Player, Depends(get_current_user)],
     request_data: SettingsRequest,
 ) -> None:
-    if request_data.last_opened_chat_id is not None:
-        user.last_opened_chat_id = request_data.last_opened_chat_id
     if request_data.show_disclaimer is not None:
         user.show_chat_disclaimer = request_data.show_disclaimer
+
+
+@router.patch("/me/ui-state", status_code=204)
+def update_ui_state(
+    user: Annotated[Player, Depends(get_current_user)],
+    request_data: UIStateUpdate,
+) -> None:
+    if request_data.last_opened_chat_id is not None:
+        user.last_opened_chat_id = request_data.last_opened_chat_id
