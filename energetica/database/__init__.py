@@ -64,7 +64,11 @@ class DBModel:
 
     @classmethod
     def getitem(cls: type[T], id: int, error: Exception | None = None) -> T:  # pylint: disable=redefined-builtin
-        """Get an object by its id; if not found raise a KeyError or a custom error."""
+        """
+        Get an object by its id.
+
+        If the id is not found and a custom error is given, it will raise the custom error instead of a KeyError.
+        """
         try:
             return cls.instances()[id]
         except KeyError:
