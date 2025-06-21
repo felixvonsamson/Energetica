@@ -22,7 +22,7 @@ async def get_resource_market_asks() -> AskList:
 
 
 @router.post("/asks", status_code=201)
-async def post_resource_market_bid(
+async def post_resource_market_ask(
     user: Annotated[Player, Depends(get_current_user)],
     request_data: AskCreate,
 ) -> AskOut:
