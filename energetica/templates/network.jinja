@@ -186,7 +186,7 @@
 
         <div id="market_offers_tables">
             <div class="flex-col medium" style="margin-bottom:30px; overflow-x: auto;">
-                <div class="flex-center large padding">Market Offers</div>
+                <div class="flex-center large padding">Market Asks</div>
                 <table id="offers_table" class="table bone margin txt_center">
                     <tr>
                         <th class="username_col" onclick="sortTable('offers_table', 'username_col')">Player</th>
@@ -241,8 +241,8 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center ask_price_input"
-                            value="{{ user.network_prices.ask_prices.industry }}"
-                            data-ask-type="industry"
+                            value="{{ user.network_prices.bid_prices.industry }}"
+                            data-bid-type="industry"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
@@ -253,8 +253,8 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center ask_price_input"
-                            value="{{ user.network_prices.ask_prices.construction }}"
-                            data-ask-type="constructions"
+                            value="{{ user.network_prices.bid_prices.construction }}"
+                            data-bid-type="constructions"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
@@ -266,8 +266,8 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center ask_price_input"
-                            value="{{ user.network_prices.ask_prices.research }}"
-                            data-ask-type="research"
+                            value="{{ user.network_prices.bid_prices.research }}"
+                            data-bid-type="research"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
@@ -280,8 +280,8 @@
                     <td>
                         <input type="number"
                             class="small_input medium txt_center ask_price_input"
-                            value="{{ user.network_prices.ask_prices.transport }}"
-                            data-ask-type="transport"
+                            value="{{ user.network_prices.bid_prices.transport }}"
+                            data-bid-type="transport"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
@@ -292,7 +292,7 @@
                     {{ {"coal_mine": "Coal Mines", "gas_drilling_site": "Gas Extraction", "uranium_mine": "Uranium Mines"}[extraction_facility] }}
                 {%- endmacro %}
                 {% macro extraction_facility_demand_price_value(extraction_facility) -%}
-                    {{ user.network_prices.ask_prices[extraction_facility] }}
+                    {{ user.network_prices.bid_prices[extraction_facility] }}
                 {%- endmacro %}
                 {% for extraction_facility in ["coal_mine", "gas_drilling_site", "uranium_mine"] %}
                     {% if caps[extraction_facility] %}
@@ -302,7 +302,7 @@
                                 <input type="number"
                                     class="small_input medium txt_center ask_price_input"
                                     value="{{ extraction_facility_demand_price_value(extraction_facility) }}"
-                                    data-ask-type="{{ extraction_facility }}"
+                                    data-bid-type="{{ extraction_facility }}"
                                     max="50000" />
                                 <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                 /MWh
@@ -316,8 +316,8 @@
                         <td>
                             <input type="number"
                                 class="small_input medium txt_center ask_price_input"
-                                value="{{ user.network_prices.ask_prices.carbon_capture }}"
-                                data-ask-type="carbon_capture"
+                                value="{{ user.network_prices.bid_prices.carbon_capture }}"
+                                data-bid-type="carbon_capture"
                                 max="50000" />
                             <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                             /MWh
@@ -339,7 +339,7 @@
                         <th>Min selling price</th>
                     </tr>
                     {% macro power_facility_supply_price_value(power_facility) -%}
-                        {{ user.network_prices.bid_prices[power_facility] }}
+                        {{ user.network_prices.ask_prices[power_facility] }}
                     {%- endmacro %}
                     {% for power_facility in ["steam_engine", "coal_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
                         {% if caps[power_facility] %}
@@ -351,7 +351,7 @@
                                     <input type="number"
                                         class="small_input medium txt_center bid_price_input"
                                         value="{{ power_facility_supply_price_value(power_facility) }}"
-                                        data-bid-type="{{ power_facility }}"
+                                        data-ask-type="{{ power_facility }}"
                                         min="-4.9"/>
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh
@@ -376,10 +376,10 @@
                         <th>Max buying price</th>
                     </tr>
                     {% macro storage_facility_supply_price_value(storage_facility) -%}
-                        {{ user.network_prices.bid_prices[storage_facility] }}
+                        {{ user.network_prices.ask_prices[storage_facility] }}
                     {%- endmacro %}
                     {% macro storage_facility_demand_price_value(storage_facility) -%}
-                        {{ user.network_prices.ask_prices[storage_facility] }}
+                        {{ user.network_prices.bid_prices[storage_facility] }}
                     {%- endmacro %}
                     {% for storage_facility in ["small_pumped_hydro", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
                         {% if caps[storage_facility] %}
@@ -391,7 +391,7 @@
                                     <input type="number"
                                         class="small_input medium txt_center bid_price_input"
                                         value="{{ storage_facility_supply_price_value(storage_facility) }}"
-                                        data-bid-type="{{ storage_facility }}"
+                                        data-ask-type="{{ storage_facility }}"
                                         min="-4.9" />
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh
@@ -400,7 +400,7 @@
                                     <input type="number"
                                         class="small_input medium txt_center ask_price_input"
                                         value="{{ storage_facility_demand_price_value(storage_facility) }}"
-                                        data-ask-type="{{ storage_facility }}"
+                                        data-bid-type="{{ storage_facility }}"
                                         max="50000" />
                                     <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                                     /MWh

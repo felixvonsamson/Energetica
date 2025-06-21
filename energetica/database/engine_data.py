@@ -40,8 +40,8 @@ class NetworkPrices:
     Tracks a player's renewable bids, bid prices, and ask prices by facility type.
 
     - `renewable_bids`: A list of renewable facilities.
-    - `bid_prices`: A dictionary of controllable and storage facility types with their bid prices.
-    - `ask_prices`: A dictionary of storage, extraction, and special demand facility types with their ask prices.
+    - `ask_prices`: A dictionary of controllable and storage facility types with their asking prices.
+    - `bid_prices`: A dictionary of storage, extraction, and special demand facility types with their bid prices.
       (e.g., research, transport, industry and construction)
 
     Entries are added or removed as facilities are built or decommissioned.
@@ -88,11 +88,11 @@ class NetworkPrices:
 
     def init_prices_with_randomness(self, player: Player) -> None:
         """Initialize the prices of the player with added random values."""
-        for bid_name in self.ask_prices:
-            seed_hash = stable_hash((engine.random_seed, "bid", bid_name, player.id))
+        for ask_name in self.ask_prices:
+            seed_hash = stable_hash((engine.random_seed, "bid", ask_name, player.id))
             rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)
-            self.ask_prices[bid_name] += added_randomness
+            self.ask_prices[ask_name] += added_randomness
 
         for bid_name in self.bid_prices:
             seed_hash = stable_hash((engine.random_seed, "ask", bid_name, player.id))
@@ -118,10 +118,9 @@ class NetworkPrices:
 
     def get_facility_priorities(self) -> list[Tuple[AskBid, ProjectType | NonFacilityBidType]]:
         """Return the player's priority lists containing asks and bids but not renewables, sorted by price."""
-        # TODO(mglst): ask and bid are swapped around here
         type_key_price: list[Tuple[Literal["ask", "bid"], ProjectType | NonFacilityBidType, float]] = [
-            *(("bid", key, price) for key, price in self.ask_prices.items()),
-            *(("ask", key, price) for key, price in self.bid_prices.items()),
+            *(("ask", key, price) for key, price in self.ask_prices.items()),
+            *(("bid", key, price) for key, price in self.bid_prices.items()),
         ]
         type_key_price.sort(key=lambda x: x[2])
         return [(x[0], x[1]) for x in type_key_price]
@@ -134,10 +133,9 @@ class NetworkPrices:
         that are not in a network.
         """
         # Check if the new priority list is valid, i.e. contains the same elements as the old one
-        # TODO(mglst): ask and bid are swapped around here
         old_set = {
-            *{f"ask-{ask_name}" for ask_name in self.bid_prices},
-            *{f"bid-{bid_name}" for bid_name in self.ask_prices},
+            *{f"bid-{ask_name}" for ask_name in self.bid_prices},
+            *{f"ask-{bid_name}" for bid_name in self.ask_prices},
         }
         if old_set != set(new_priority):
             raise GameError("malformedRequest")
