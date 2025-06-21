@@ -1,5 +1,10 @@
+"""Schemas for API routes for shipments."""
+
+from __future__ import annotations
+
 from pydantic import BaseModel, Field
 
+from energetica.database.shipment import OngoingShipment
 from energetica.enums import Fuel
 
 
@@ -12,6 +17,16 @@ class ShipmentOut(ShipmentBase):
     id: int
     arrival_tick: float = Field(gt=0)
     duration: float
+
+    @classmethod
+    def from_shipment(cls, shipment: OngoingShipment) -> ShipmentOut:
+        return ShipmentOut(
+            id=shipment.id,
+            resource=shipment.resource,
+            quantity=shipment.quantity,
+            arrival_tick=shipment.arrival_tick,
+            duration=shipment.duration,
+        )
 
 
 class ShipmentList(BaseModel):

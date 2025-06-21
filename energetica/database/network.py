@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
 from energetica.database.engine_data import CapacityData, CircularBufferNetwork
-from energetica.schemas.networks import NetworkOut
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -50,6 +49,3 @@ class Network(DBModel):
         network_path = f"instance/data/networks/{self.id}"
         shutil.rmtree(network_path)
         super().delete()
-
-    def to_schema(self) -> NetworkOut:
-        return NetworkOut(id=self.id, name=self.name, member_ids=[member.id for member in self.members])
