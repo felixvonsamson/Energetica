@@ -2,11 +2,12 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from energetica.auth import get_current_user
 from energetica.database.player import Player
-from energetica.schemas.projects import ProjectsOut
+from energetica.schemas.projects import ProjectIn, ProjectsOut
+from energetica.utils import assets
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -22,3 +23,18 @@ def get_constructions(player: Annotated[Player, Depends(get_current_user)]) -> P
         construction_queue=constructions_by_priority,
         research_queue=researches_by_priority,
     )
+
+
+@router.post("", status_code=status.HTTP_201_CREATED)
+async def queue_project(
+    player: Annotated[Player, Depends(get_current_user)],
+    project: ProjectIn,
+    force: bool = False,
+) -> ProjectsOut:
+    """Start a construction or research project for the player."""
+    assets.queue_project(
+        player=player,
+        project_type=project.type,
+        force=force,
+    )
+    return get_constructions(player)

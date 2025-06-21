@@ -10,7 +10,7 @@ from energetica.schemas.common import BaseApiModel
 
 class ProjectOut(BaseApiModel):
     id: int
-    project_type: ProjectType
+    type: ProjectType  # TODO(mglst): rename to just type
     end_tick: float | None = Field(description="Only present if project is ongoing")
     ticks_passed: float | None = Field(description="Only present if project is paused")
     duration: float
@@ -26,7 +26,8 @@ class ProjectsOut(BaseApiModel):
     research_queue: list[int]
 
 
-class QueueProjectIn(BaseApiModel):
+class ProjectIn(BaseApiModel):
+    type: ProjectType
     pass
 
 

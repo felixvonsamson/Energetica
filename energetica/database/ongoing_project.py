@@ -190,7 +190,7 @@ class OngoingProject(DBModel):
     def to_schema(self) -> ProjectOut:
         return ProjectOut(
             id=self.id,
-            project_type=self.project_type,
+            type=self.project_type,
             end_tick=self.end_tick_or_ticks_passed if self.is_ongoing() else None,
             ticks_passed=None if self.is_ongoing() else self.end_tick_or_ticks_passed,
             duration=self.duration,

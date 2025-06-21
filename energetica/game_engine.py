@@ -20,6 +20,7 @@ import socketio
 
 from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
+from energetica.schemas.common import ConfirmResponse
 
 
 # This is the engine object
@@ -288,3 +289,6 @@ class Confirm(Exception):
     def __init__(self, **kwargs: Any) -> None:
         self.__dict__.update(kwargs)
         Exception.__init__(self, "Please confirm this action.")
+
+    def to_schema(self) -> ConfirmResponse:
+        return ConfirmResponse.model_validate(self.__dict__)

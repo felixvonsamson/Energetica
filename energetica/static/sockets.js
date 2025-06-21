@@ -11,10 +11,14 @@ socket.on("infoMessage", addToast);
 
 socket.on("errorMessage", addError);
 
-// TODO: rename this function
-function send_json(endpoint, body) {
+/**
+ * @param {RequestInfo | URL} endpoint
+ * @param {any} body
+ * @param {"POST"} method
+ */
+function send_json(endpoint, body, method = "POST") {
     return fetch(endpoint, {
-        method: "POST",
+        method: method,
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
@@ -40,6 +44,27 @@ function catch_validation_error(response_body) {
         return true;
     }
     return false;
+}
+
+/**
+ * @param {Response} response
+ * @param {any} body
+ */
+function catchGameErrors(response, body) {
+    if (response.status === 400 && body.gameExceptionType != null) {
+        switch (body.gameExceptionType) {
+            case "Not enough money":
+                addError("Not enough money");
+                break;
+            case "Requirements not satisfied":
+                // POST: /projects
+                addError("Requirements not satisfied");
+                break;
+            default:
+                addError(`Uncaught error: ${body.gameExceptionType}`);
+        }
+        return true;
+    }
 }
 
 //debug info for connection error

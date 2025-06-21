@@ -92,37 +92,27 @@ function format_seconds(totalSeconds, show_seconds = true) {
 
 // information sent to the server when a new facility is created
 function start_construction(facility, force = false) {
-  send_json("/api/request_queue_project", {
-    facility: facility,
-    force: force,
-  })
+  send_json(`/api/v1/projects?force=${force}`, { type: facility })
     .then((response) => {
       response.json().then((raw_data) => {
-        let response = raw_data["response"];
-        if (response == "success") {
-          let money = raw_data["money"];
-          var obj = document.getElementById("money");
-          obj.innerHTML = format_money_long(money);
+        if (catch_validation_error(raw_data)) return; // Not sure I want this here yet. Debugging
+        if (catchGameErrors(response, raw_data)) return;
+        if (response.ok) {
+          // let money = raw_data["money"];
+          //TODO(mglst): money needs to be update here
+          // var obj = document.getElementById("money");
+          // obj.innerHTML = format_money_long(money);
           addToast("Construction started");
           sessionStorage.setItem(
             "constructions",
-            JSON.stringify(raw_data["constructions"])
+            JSON.stringify(raw_data)
           );
+          projects_data = raw_data; // This is hacky and I don't like it.
           refresh_progressBar();
-        } else if (response == "areYouSure") {
+        } else if (response.status === 300) {
           const capacity = raw_data["capacity"];
           const construction_power = raw_data["construction_power"];
           are_you_sure_start_construction(facility, capacity, construction_power);
-        } else if (response == "Not enough money") {
-          addError("Not enough money");
-        } else if (response == "locked") {
-          // With the removal of the family, the error message is not longer as straightforward to customize.
-          // So for now, I will just use the technology error message, which works well enough even.
-          // if (family == "Technologies") {
-          addError("Requirements not fulfilled");
-          // } else {
-          //   addError("Facility is locked");
-          // }
         }
       });
     })
@@ -216,11 +206,13 @@ function decrease_project_priority(construction_id) {
     });
 }
 
-let constructions_data, shipment_data;
+let projects_data, shipment_data;
 let progressBars = document.getElementsByClassName("progressbar-bar");
 let shipmentBars = document.getElementsByClassName("shipmentbar-bar");
-load_constructions().then((projects_data) => {
+load_constructions().then((projects_data_2) => {
+  projects_data = projects_data_2;
   setInterval(() => {
+
     for (const progressBar of progressBars) {
       const construction = projects_data.projects.find((project) => project.id === Number(progressBar.id));
       if (construction == null) {
@@ -374,7 +366,7 @@ function display_progressBars(projects_data, shipment_data) {
 /**
  * @param {number} projectIndex
  * @param {number[]} projectsQueue
- * @param {{ id: number; projectType: string; status: number; speed: number; level: number | null }} project
+ * @param {{ id: number; type: string; status: number; speed: number; level: number | null }} project
  */
 function html_for_progressBar(projectIndex, projectsQueue, project) {
   if (project == null) {
@@ -397,7 +389,6 @@ function html_for_progressBar(projectIndex, projectsQueue, project) {
             <span class="hover_info"><img src="/static/images/icons/snail.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
         </div>`;
   }
-  console.log(project);
   return `
     <div class="progressbar-container">
         <div class="progressbar-arrowcontainer">
@@ -410,7 +401,7 @@ function html_for_progressBar(projectIndex, projectsQueue, project) {
                     <i class="fa fa-caret-down"></i>
                 </button>` : ''}
         </div>
-        <div class="progressbar-name medium margin-small">${asset_names[project.projectType]}${project.level !== null ? " " + project.level : ""}</div>
+        <div class="progressbar-name medium margin-small">${asset_names[project.type]}${project.level !== null ? " " + project.level : ""}</div>
         ${snail}
         <div class="progressbar-background">
             <div id="${project.id}" class="progressbar-bar"></div>

@@ -69,6 +69,7 @@ function retrieve_constructions() {
         .then((raw_data) => {
             // Save fetched data to sessionStorage
             sessionStorage.setItem("constructions", JSON.stringify(raw_data));
+            // TODO(mglst): rename the key used here. it should be projects not constructions
             return raw_data;
         })
         .catch((error) => {

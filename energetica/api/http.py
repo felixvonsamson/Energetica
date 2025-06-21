@@ -230,39 +230,6 @@ async def choose_location(  # noqa: ANN201
     return {"response": "success"}
 
 
-@todo_router.post("/request_queue_project")
-async def request_queue_project(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Start a construction or research project for the player."""
-    request_data = await request.json()
-    asset = request_data["facility"]
-    project_type = str_to_project_type[asset]
-    force = request_data["force"]
-    try:
-        energetica.utils.assets.queue_project(
-            player=user,
-            project_type=project_type,
-            force=force,
-        )
-    except Confirm as confirm:
-        return JSONResponse(
-            {
-                "response": "areYouSure",
-                "capacity": confirm.__getattribute__("capacity"),
-                "construction_power": confirm.__getattribute__("construction_power"),
-            },
-            status_code=status.HTTP_300_MULTIPLE_CHOICES,
-        )
-
-    return {
-        "response": "success",
-        "money": user.money,
-        "constructions": package_projects_data(user),
-    }
-
-
 @todo_router.post("/request_cancel_project")
 async def request_cancel_project(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],

@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from energetica.api.http import todo_router
 from energetica.auth import get_current_user
+from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
@@ -69,7 +70,12 @@ def setup_routes(app: FastAPI):
     async def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
         """Handle global game exceptions."""
         content = GameErrorResponse(game_exception_type=exc.exception_type)
-        return JSONResponse(content=content.model_dump(), status_code=status.HTTP_403_FORBIDDEN)
+        return JSONResponse(content=content.model_dump(), status_code=status.HTTP_400_BAD_REQUEST)
+
+    @app.exception_handler(Confirm)
+    async def global_confirm_handler(request: Request, confirm: Confirm):
+        """Handle confirm 'errors'."""
+        return JSONResponse(content=confirm.to_schema().model_dump(), status_code=status.HTTP_300_MULTIPLE_CHOICES)
 
     @app.middleware("log_action")
     async def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

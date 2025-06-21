@@ -16,3 +16,11 @@ class GameErrorResponse(BaseModel):
     """Response model for game errors."""
 
     game_exception_type: str
+
+
+class ConfirmResponse(BaseApiModel):
+    """Response model for confirm 'errors'."""
+
+    capacity: float | None = None
+    construction_power: float | None = None
+    refund: float | None = None
