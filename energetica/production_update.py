@@ -118,7 +118,7 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
             else:
                 usage = new_values["storage"][storage_facility] / player.capacities[storage_facility]["capacity"]
             for af in ActiveFacility.filter_by(player=player, facility_type=storage_facility):
-                af.usage = usage
+                af.usage = usage  # type: ignore
 
     for extraction_facility in ExtractionFacilityType:
         if extraction_facility in player.capacities:
@@ -411,10 +411,10 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
             max_prod = calculate_prod(
                 "max",
                 player,
-                facility,
+                facility,  # type: ignore
                 resource_reservations,
             )
-            price = player.network_prices.bid_prices[facility]
+            price = player.network_prices.bid_prices[facility]  # type: ignore
             capacity = max_prod - generation[facility]
             market = place_bid(market, player.id, capacity, price, facility)
 
@@ -461,7 +461,7 @@ def market_logic(new_values: dict, market: dict) -> None:
         demand["exports"] += quantity
         player.money += quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
         revenue["exports"] += quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
-        add_to_market_data(player.id, quantity, row.facility, export=True)
+        add_to_market_data(player.id, quantity, row.facility, export=True)  # type: ignore
 
     def buy(row: Any, market_price: Any, quantity: float | None = None) -> None:
         """Buy demanded power capacity."""
@@ -474,7 +474,7 @@ def market_logic(new_values: dict, market: dict) -> None:
         generation["imports"] += quantity
         player.money -= quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
         revenue["imports"] -= quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
-        add_to_market_data(player.id, quantity, row.facility, export=False)
+        add_to_market_data(player.id, quantity, row.facility, export=False)  # type: ignore
 
     market["player_exports"] = {}
     market["player_imports"] = {}
@@ -557,15 +557,15 @@ def market_optimum(offers_og: Any, demands_og: Any) -> tuple[float, float]:
     merged_table = merged_table.sort_values(by="cumul_capacities")
 
     for row in merged_table.itertuples():
-        if np.isnan(row.index_offer):
+        if np.isnan(row.index_offer):  # type: ignore
             price_d = row.price
         else:
             price_o = row.price
-        if price_d < price_o:
+        if price_d < price_o:  # type: ignore
             price = price_d
-            if np.isnan(row.index_offer):
+            if np.isnan(row.index_offer):  # type: ignore
                 price = price_o
-            return price, row.cumul_capacities
+            return price, row.cumul_capacities  # type: ignore
     raise ValueError("No market optimum found.")
 
 
@@ -758,7 +758,7 @@ def place_ask(market: dict, player_id: int, demand: float, price: float, facilit
                 "capacity": [demand],
                 "price": [price],
                 "facility": [facility],
-            }
+            },
         )
         market["demands"] = pd.concat([market["demands"], new_row], ignore_index=True)
     return market
