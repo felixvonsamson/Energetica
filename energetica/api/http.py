@@ -15,12 +15,10 @@ from fastapi.responses import JSONResponse
 
 import energetica.utils.assets
 import energetica.utils.map_helpers
-import energetica.utils.misc
 from energetica.auth import get_current_user
 from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
-from energetica.database.messages import Notification
 from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
@@ -32,32 +30,6 @@ from energetica.utils.assets import package_projects_data
 
 # TODO: migrate all these routes to native FastAPI routes
 todo_router = APIRouter(prefix="", tags=["Flask Migration"])
-
-
-@todo_router.post("/request_delete_notification")
-async def request_delete_notification(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """
-    Delete a notification from the player's notification list.
-
-    Request Payload:
-        {
-            "id": int  # The ID of the notification to be deleted
-        }
-    """
-    request_data = await request.json()
-    notification = Notification.getitem(int(request_data["id"]))
-    user.delete_notification(notification)
-    return {"response": "success"}
-
-
-@todo_router.post("/request_marked_as_read")
-def request_marked_as_read(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Mark all notification as read."""
-    user.notifications_read()
-    return {"response": "success"}
 
 
 @todo_router.get("/get_const_config")

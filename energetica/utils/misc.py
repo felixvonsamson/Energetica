@@ -136,7 +136,7 @@ def save_past_data() -> None:
     engine.save()
 
 
-def display_new_message(message: Message, chat: Chat) -> None:
+def send_new_message_sio(message: Message, chat: Chat) -> None:
     """Send a chat message through socketio."""
     for player in chat.participants:
         player.emit(
