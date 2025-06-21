@@ -10,7 +10,7 @@ from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     FunctionalFacilityType,
-    NonFacilityAskType,
+    NonFacilityBidType,
     StorageFacilityType,
 )
 
@@ -32,9 +32,9 @@ class NetworkList(BaseModel):
     networks: list[NetworkOut] = Field(description="List of networks")
 
 
-BidType = ControllableFacilityType | StorageFacilityType
-AskType = (
-    NonFacilityAskType
+AskType = ControllableFacilityType | StorageFacilityType
+BidType = (
+    NonFacilityBidType
     | ExtractionFacilityType
     | Literal[FunctionalFacilityType.INDUSTRY, FunctionalFacilityType.CARBON_CAPTURE]
     | StorageFacilityType
@@ -42,15 +42,15 @@ AskType = (
 
 
 class ChangeNetworkPrices(BaseModel):
-    bids: list[Bid]
     asks: list[Ask]
-
-
-class Bid(BaseModel):
-    type: BidType
-    price: float = Field(ge=-5)
+    bids: list[Bid]
 
 
 class Ask(BaseModel):
     type: AskType
+    price: float = Field(ge=-5)
+
+
+class Bid(BaseModel):
+    type: BidType
     price: float = Field(ge=-5)

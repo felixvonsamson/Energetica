@@ -57,12 +57,12 @@ async def change_network_prices(
     user: Annotated[Player, Depends(get_current_user)],
     prices_change_request: ChangeNetworkPrices,
 ) -> Response:
-    """Change the prices for anything on the network."""
+    """Update the asking prices and bid prices for a player on their electricity market."""
     if user.network is None:
         return Response(status_code=status.HTTP_403_FORBIDDEN)
     user.network_prices.update(
-        updated_bids={bid.type: bid.price for bid in prices_change_request.bids},
         updated_asks={ask.type: ask.price for ask in prices_change_request.asks},
+        updated_bids={bid.type: bid.price for bid in prices_change_request.bids},
     )
     engine.log(f"{user.username} updated their prices")
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -15,7 +15,7 @@ from energetica.enums import (
     ExtractionFacilityType,
     FunctionalFacilityType,
     HydroFacilityType,
-    NonFacilityAskType,
+    NonFacilityBidType,
     PowerFacilityType,
     ProjectType,
     StorageFacilityType,
@@ -51,7 +51,7 @@ class NetworkPrices:
     """
 
     renewable_bids: list[ProjectType] = field(default_factory=list)
-    bid_prices: dict[BidType, float] = field(
+    ask_prices: dict[AskType, float] = field(
         default_factory=lambda: {
             ControllableFacilityType.STEAM_ENGINE: 125.0,
             ControllableFacilityType.COAL_BURNER: 600.0,
@@ -67,12 +67,12 @@ class NetworkPrices:
             StorageFacilityType.SOLID_STATE_BATTERIES: 900.0,
         },
     )
-    ask_prices: dict[AskType, float] = field(
+    bid_prices: dict[BidType, float] = field(
         default_factory=lambda: {
             FunctionalFacilityType.INDUSTRY: 1000.0,
-            NonFacilityAskType.CONSTRUCTION: 1020.0,
-            NonFacilityAskType.RESEARCH: 1200.0,
-            NonFacilityAskType.TRANSPORT: 1050.0,
+            NonFacilityBidType.CONSTRUCTION: 1020.0,
+            NonFacilityBidType.RESEARCH: 1200.0,
+            NonFacilityBidType.TRANSPORT: 1050.0,
             ExtractionFacilityType.COAL_MINE: 960.0,
             ExtractionFacilityType.GAS_DRILLING_SITE: 980.0,
             ExtractionFacilityType.URANIUM_MINE: 990.0,
@@ -88,26 +88,26 @@ class NetworkPrices:
 
     def init_prices_with_randomness(self, player: Player) -> None:
         """Initialize the prices of the player with added random values."""
-        for bid_name in self.bid_prices:
+        for bid_name in self.ask_prices:
             seed_hash = stable_hash((engine.random_seed, "bid", bid_name, player.id))
+            rng = np.random.default_rng(abs(seed_hash))
+            added_randomness = rng.uniform(-15, 15)
+            self.ask_prices[bid_name] += added_randomness
+
+        for bid_name in self.bid_prices:
+            seed_hash = stable_hash((engine.random_seed, "ask", bid_name, player.id))
             rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)
             self.bid_prices[bid_name] += added_randomness
 
-        for ask_name in self.ask_prices:
-            seed_hash = stable_hash((engine.random_seed, "ask", ask_name, player.id))
-            rng = np.random.default_rng(abs(seed_hash))
-            added_randomness = rng.uniform(-15, 15)
-            self.ask_prices[ask_name] += added_randomness
-
     def update(
         self,
-        updated_bids: dict[BidType, float],
         updated_asks: dict[AskType, float],
+        updated_bids: dict[BidType, float],
     ) -> None:
         """Update the prices of the player for each facility type."""
-        self.ask_prices |= updated_asks
         self.bid_prices |= updated_bids
+        self.ask_prices |= updated_asks
 
     AskBid = Literal["ask", "bid"]  # Helper type
 
@@ -116,16 +116,17 @@ class NetworkPrices:
         self.renewable_bids.sort(key=renewable_facility_types.index)
         return self.renewable_bids
 
-    def get_facility_priorities(self) -> list[Tuple[AskBid, ProjectType | NonFacilityAskType]]:
+    def get_facility_priorities(self) -> list[Tuple[AskBid, ProjectType | NonFacilityBidType]]:
         """Return the player's priority lists containing asks and bids but not renewables, sorted by price."""
-        type_key_price: list[Tuple[Literal["ask", "bid"], ProjectType | NonFacilityAskType, float]] = [
-            *(("bid", key, price) for key, price in self.bid_prices.items()),
-            *(("ask", key, price) for key, price in self.ask_prices.items()),
+        # TODO(mglst): ask and bid are swapped around here
+        type_key_price: list[Tuple[Literal["ask", "bid"], ProjectType | NonFacilityBidType, float]] = [
+            *(("bid", key, price) for key, price in self.ask_prices.items()),
+            *(("ask", key, price) for key, price in self.bid_prices.items()),
         ]
         type_key_price.sort(key=lambda x: x[2])
         return [(x[0], x[1]) for x in type_key_price]
 
-    def change_facility_priority(self, new_priority: list[ProjectType | NonFacilityAskType]) -> None:
+    def change_facility_priority(self, new_priority: list[ProjectType | NonFacilityBidType]) -> None:
         """
         Reassign the selling prices of the facilities according to the new priority order.
 
@@ -133,15 +134,16 @@ class NetworkPrices:
         that are not in a network.
         """
         # Check if the new priority list is valid, i.e. contains the same elements as the old one
+        # TODO(mglst): ask and bid are swapped around here
         old_set = {
-            *{f"ask-{ask_name}" for ask_name in self.ask_prices},
-            *{f"bid-{bid_name}" for bid_name in self.bid_prices},
+            *{f"ask-{ask_name}" for ask_name in self.bid_prices},
+            *{f"bid-{bid_name}" for bid_name in self.ask_prices},
         }
         if old_set != set(new_priority):
             raise GameError("malformedRequest")
 
         # Reorder the prices according to the new priority list
-        sorted_prices = sorted((*self.ask_prices.values(), *self.bid_prices.values()))
+        sorted_prices = sorted((*self.bid_prices.values(), *self.ask_prices.values()))
         updated_bid_prices = {}
         updated_ask_prices = {}
         for priority_name, price in zip(new_priority, sorted_prices):

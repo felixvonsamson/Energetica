@@ -52,10 +52,10 @@ def test_update_bogus_prices() -> None:
     network_prices = NetworkPrices()
 
     # This should work, as the price is valid
-    network_prices.update(updated_asks={FunctionalFacilityType.INDUSTRY: -4.999}, updated_bids={})
+    network_prices.update(updated_bids={FunctionalFacilityType.INDUSTRY: -4.999}, updated_asks={})
     try:
         # This should raise an error, as the price is too low
-        network_prices.update(updated_asks={FunctionalFacilityType.INDUSTRY: -5}, updated_bids={})
+        network_prices.update(updated_bids={FunctionalFacilityType.INDUSTRY: -5}, updated_asks={})
     except GameError:
         assert True
     else:
@@ -68,8 +68,8 @@ def test_price_randomization() -> None:
     player_a = Player("player1", "pwhash")
     player_b = Player("player2", "pwhash")
     assert (
-        player_a.network_prices.bid_prices[ControllableFacilityType.COAL_BURNER]
-        != player_b.network_prices.bid_prices[ControllableFacilityType.COAL_BURNER]
+        player_a.network_prices.ask_prices[ControllableFacilityType.COAL_BURNER]
+        != player_b.network_prices.ask_prices[ControllableFacilityType.COAL_BURNER]
     )
 
 

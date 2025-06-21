@@ -341,15 +341,15 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> Non
             )
 
     # demands are demanded on the internal market
-    for ask_type in player.network_prices.ask_prices.keys():
-        if ask_type in demand:
-            price = player.network_prices.ask_prices[ask_type]
+    for bid_type in player.network_prices.bid_prices.keys():
+        if bid_type in demand:
+            price = player.network_prices.bid_prices[bid_type]
             internal_market = place_ask(
                 internal_market,
                 player.id,
-                demand[ask_type],
+                demand[bid_type],
                 price,
-                ask_type,
+                bid_type,
             )
 
     resource_reservations = reset_resource_reservations()
@@ -362,7 +362,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> Non
                 facility,
                 resource_reservations,
             )
-            price = player.network_prices.bid_prices[facility]
+            price = player.network_prices.ask_prices[facility]
             capacity = max_prod - generation[facility]
             internal_market = place_bid(internal_market, player.id, capacity, price, facility)
 
@@ -392,11 +392,11 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
     # are used and replace it with a cashed property or something similar that generates a list of all demands and offer types
-    for demand_type in player.network_prices.ask_prices.keys():
+    for demand_type in player.network_prices.bid_prices.keys():
         if demand_type in demand:
             if player.money >= max_overdraft:
                 bid_q = demand[demand_type]
-                price = player.network_prices.ask_prices[demand_type]
+                price = player.network_prices.bid_prices[demand_type]
                 market = place_ask(market, player.id, bid_q, price, demand_type)
             else:
                 reduce_demand(new_values, demand_type, player.id, 0.0)
@@ -405,7 +405,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
     # offer capacities of remaining facilities on the market
     for facility in player.capacities.get_all():
         if (
-            facility in player.network_prices.bid_prices.keys()
+            facility in player.network_prices.ask_prices.keys()
             and engine.const_config["assets"][facility]["ramping_time"] != 0
         ):
             max_prod = calculate_prod(
@@ -414,7 +414,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
                 facility,
                 resource_reservations,
             )
-            price = player.network_prices.bid_prices[facility]
+            price = player.network_prices.ask_prices[facility]
             capacity = max_prod - generation[facility]
             market = place_bid(market, player.id, capacity, price, facility)
 
@@ -758,7 +758,7 @@ def place_ask(market: dict, player_id: int, demand: float, price: float, facilit
                 "capacity": [demand],
                 "price": [price],
                 "facility": [facility],
-            }
+            },
         )
         market["demands"] = pd.concat([market["demands"], new_row], ignore_index=True)
     return market

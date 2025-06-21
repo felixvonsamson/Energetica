@@ -180,7 +180,7 @@ class TechnologyType(StrEnum):
         return WorkerType.RESEARCH
 
 
-class NonFacilityAskType(StrEnum):
+class NonFacilityBidType(StrEnum):
     """Enum for special asks on the market that are not storage, extraction, or functional facilities."""
 
     CONSTRUCTION = "constructions"
@@ -231,5 +231,5 @@ project_types: set[ProjectType] = {
 
 str_to_project_type: dict[str, ProjectType] = {str(f): f for f in (project_types)}
 
-project_types_extended: set[ProjectType | NonFacilityAskType] = project_types | set(NonFacilityAskType)
-str_to_project_type_extended: dict[str, ProjectType | NonFacilityAskType] = {str(f): f for f in project_types_extended}
+project_types_extended: set[ProjectType | NonFacilityBidType] = project_types | set(NonFacilityBidType)
+str_to_project_type_extended: dict[str, ProjectType | NonFacilityBidType] = {str(f): f for f in project_types_extended}
