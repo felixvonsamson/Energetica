@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from energetica.enums import ProjectStatus, ProjectType
+from energetica.schemas.common import BaseApiModel
 
 
-class ProjectOut(BaseModel):
+class ProjectOut(BaseApiModel):
     id: int
     project_type: ProjectType
     end_tick: float | None = Field(description="Only present if project is ongoing")
@@ -19,13 +20,13 @@ class ProjectOut(BaseModel):
     speed: float
 
 
-class ProjectsOut(BaseModel):
+class ProjectsOut(BaseApiModel):
     projects: list[ProjectOut]
     construction_queue: list[int]
     research_queue: list[int]
 
 
-class QueueProjectIn(BaseModel):
+class QueueProjectIn(BaseApiModel):
     pass
 
 

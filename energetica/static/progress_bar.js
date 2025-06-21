@@ -234,12 +234,12 @@ load_constructions().then((projects_data) => {
       const last_tick = JSON.parse(sessionStorage.getItem("last_value")).total_t;
       let time_since_last_tick = current_tick - last_tick;
       if (construction.status == 2) {
-        ticks_remaining = construction.end_tick - last_tick - time_since_last_tick * construction.speed;
+        ticks_remaining = construction.endTick - last_tick - time_since_last_tick * construction.speed;
         new_width = (1 - ticks_remaining / construction.duration) * 100;
       }
       else {
-        new_width = (construction.ticks_passed / construction.duration) * 100;
-        ticks_remaining = construction.duration - construction.ticks_passed;
+        new_width = (construction.ticksPassed / construction.duration) * 100;
+        ticks_remaining = construction.duration - construction.ticksPassed;
       }
       progressBar.style.setProperty("--width", new_width);
       if (new_width > 0.01) {
@@ -318,21 +318,21 @@ function display_progressBars(projects_data, shipment_data) {
       if (uc === null || ur === null) return;
       uc.innerHTML = "";
       ur.innerHTML = "";
-      const construction_queue = projects_data.construction_queue;
-      const research_queue = projects_data.research_queue;
-      if (construction_queue.length > 0) {
+      const constructionQueue = projects_data.constructionQueue;
+      const researchQueue = projects_data.researchQueue;
+      if (constructionQueue.length > 0) {
         uc.innerHTML = "<h1>&ensp;<img src='/static/images/icons/construction.png' class='icon'/>&nbsp;Ongoing Constructions</h1>";
       }
-      if (research_queue.length > 0) {
+      if (researchQueue.length > 0) {
         ur.innerHTML = "<h1>&ensp;<img src='/static/images/icons/technology.png' class='icon'/>&nbsp;Ongoing Researches</h1>";
       }
-      for (const [index, projectId] of research_queue.entries()) {
+      for (const [index, projectId] of researchQueue.entries()) {
         const construction = projects_data.projects.find((project) => project.id === projectId);
-        ur.innerHTML += html_for_progressBar(index, research_queue, construction);
+        ur.innerHTML += html_for_progressBar(index, researchQueue, construction);
       }
-      for (const [index, projectId] of construction_queue.entries()) {
+      for (const [index, projectId] of constructionQueue.entries()) {
         const construction = constructions_data.projects.find((project) => project.id === projectId);
-        uc.innerHTML += html_for_progressBar(index, construction_queue, construction);
+        uc.innerHTML += html_for_progressBar(index, constructionQueue, construction);
       }
     }
     if (shipment_data != null) {
@@ -359,7 +359,7 @@ function display_progressBars(projects_data, shipment_data) {
       if (projects_data != null) {
         uc.innerHTML = "";
         const projectsQueue = (
-          document.title == "Technologies" ? projects_data.research_queue : projects_data.construction_queue
+          document.title == "Technologies" ? projects_data.researchQueue : projects_data.constructionQueue
         );
         for (const [projectIndex, projectId] of projectsQueue.entries()) {
           const project = projects_data.projects.find((project) => project.id === projectId);
@@ -374,7 +374,7 @@ function display_progressBars(projects_data, shipment_data) {
 /**
  * @param {number} projectIndex
  * @param {number[]} projectsQueue
- * @param {{ id: number; project_type: string; status: number; speed: number; level: number | null }} project
+ * @param {{ id: number; projectType: string; status: number; speed: number; level: number | null }} project
  */
 function html_for_progressBar(projectIndex, projectsQueue, project) {
   if (project == null) {
@@ -410,7 +410,7 @@ function html_for_progressBar(projectIndex, projectsQueue, project) {
                     <i class="fa fa-caret-down"></i>
                 </button>` : ''}
         </div>
-        <div class="progressbar-name medium margin-small">${asset_names[project.project_type]}${project.level !== null ? " " + project.level : ""}</div>
+        <div class="progressbar-name medium margin-small">${asset_names[project.projectType]}${project.level !== null ? " " + project.level : ""}</div>
         ${snail}
         <div class="progressbar-background">
             <div id="${project.id}" class="progressbar-bar"></div>
