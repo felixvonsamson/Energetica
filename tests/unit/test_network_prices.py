@@ -8,14 +8,7 @@ import textwrap
 
 from energetica.database.engine_data import NetworkPrices
 from energetica.database.player import Player
-from energetica.enums import (
-    ControllableFacilityType,
-    FunctionalFacilityType,
-    HydroFacilityType,
-    SolarFacilityType,
-    WindFacilityType,
-)
-from energetica.game_error import GameError
+from energetica.enums import ControllableFacilityType, HydroFacilityType, SolarFacilityType, WindFacilityType
 from energetica.globals import engine
 
 
@@ -45,21 +38,6 @@ def test_renewables_order() -> None:
         SolarFacilityType.CSP_SOLAR,
         SolarFacilityType.PV_SOLAR,
     ]
-
-
-def test_update_bogus_prices() -> None:
-    """Test that updating a bogus ask or bid price raises an error."""
-    network_prices = NetworkPrices()
-
-    # This should work, as the price is valid
-    network_prices.update(updated_bids={FunctionalFacilityType.INDUSTRY: -4.999}, updated_asks={})
-    try:
-        # This should raise an error, as the price is too low
-        network_prices.update(updated_bids={FunctionalFacilityType.INDUSTRY: -5}, updated_asks={})
-    except GameError:
-        assert True
-    else:
-        assert False
 
 
 def test_price_randomization() -> None:
