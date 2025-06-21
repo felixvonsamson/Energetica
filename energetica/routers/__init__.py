@@ -72,7 +72,7 @@ def setup_routes(app: FastAPI):
         return JSONResponse(content=content.model_dump(), status_code=status.HTTP_403_FORBIDDEN)
 
     @app.middleware("log_action")
-    def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    async def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         # Restrict access to the API during the simulation.
         if (
             engine.serve_local
