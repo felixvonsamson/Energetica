@@ -23,21 +23,12 @@ router = APIRouter(prefix="/chats", tags=["Chats"])
 
 
 @router.get("")
-def get_chat_list(user: Annotated[Player, Depends(get_current_user)]) -> ChatListResponse:
+def get_chat_list(player: Annotated[Player, Depends(get_current_user)]) -> ChatListResponse:
     """Get the chat list for the current user."""
     return ChatListResponse(
-        chats=[
-            ChatOut(
-                id=chat.id,
-                display_name=chat.display_name(user),
-                initials=chat.initials(user),
-                is_group=chat.is_group(),
-                unread_messages_count=chat.unread_messages_count_for_player(user),
-            )
-            for chat in Chat.filter(lambda chat: user in chat.participants)
-        ],
-        last_opened_chat_id=user.last_opened_chat_id,
-        unread_chat_count=user.unread_chat_count(),
+        chats=[ChatOut.from_chat(player, chat) for chat in Chat.filter(lambda chat: player in chat.participants)],
+        last_opened_chat_id=player.last_opened_chat_id,
+        unread_chat_count=player.unread_chat_count(),
     )
 
 

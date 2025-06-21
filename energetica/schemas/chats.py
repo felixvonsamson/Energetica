@@ -6,7 +6,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from energetica.database.messages import Message
+from energetica.database.messages import Chat, Message
+from energetica.database.player import Player
 
 
 class ChatListResponse(BaseModel):
@@ -25,6 +26,16 @@ class ChatOut(BaseModel):
     initials: list[str]
     is_group: bool
     unread_messages_count: int
+
+    @classmethod
+    def from_chat(cls, player: Player, chat: Chat) -> ChatOut:
+        return ChatOut(
+            id=chat.id,
+            display_name=chat.display_name(player),
+            initials=chat.initials(player),
+            is_group=chat.is_group(),
+            unread_messages_count=chat.unread_messages_count_for_player(player),
+        )
 
 
 class MessageOut(BaseModel):
