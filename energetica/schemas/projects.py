@@ -2,14 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from pydantic import BaseModel, Field
 
-from energetica.enums import ProjectType
-
-if TYPE_CHECKING:
-    from energetica.database.ongoing_project import ProjectStatus
+from energetica.enums import ProjectStatus, ProjectType
 
 
 class ProjectOut(BaseModel):
@@ -19,6 +14,9 @@ class ProjectOut(BaseModel):
     ticks_passed: float | None = Field(description="Only present if project is paused")
     duration: float
     status: ProjectStatus  # TODO(mglst): It would be better if the status were serialized as strings rather than ints
+    display_name: str  # TODO(mglst): move this to the frontend
+    level: int | None
+    speed: float
 
 
 class ProjectsOut(BaseModel):
@@ -34,3 +32,6 @@ class QueueProjectIn(BaseModel):
 # Changes
 # - list -> dict
 # - end_tick_or_ticks_passed now split
+# JS variable names to look out for
+# * constructions_data
+# * project_priority

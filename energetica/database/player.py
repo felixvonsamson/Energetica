@@ -17,13 +17,14 @@ from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, NetworkPrices
 from energetica.database.messages import Chat, Notification
-from energetica.database.ongoing_project import OngoingProject, ProjectStatus
+from energetica.database.ongoing_project import OngoingProject
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
     FunctionalFacilityType,
     PowerFacilityType,
+    ProjectStatus,
     ProjectType,
     StorageFacilityType,
     TechnologyType,
@@ -551,6 +552,7 @@ class Player(DBModel):
         """Package data for all players."""
         return {player.id: player.package() for player in Player.all()}
 
+    # TODO(mglst): deprecate this function
     def package_constructions(self) -> dict[int, dict]:
         """Package the player's ongoing constructions."""
         return {

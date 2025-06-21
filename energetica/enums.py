@@ -7,7 +7,7 @@ Planned future enums include facility names
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import IntEnum, StrEnum
 
 
 class WorkerType(StrEnum):
@@ -233,3 +233,11 @@ str_to_project_type: dict[str, ProjectType] = {str(f): f for f in (project_types
 
 project_types_extended: set[ProjectType | NonFacilityAskType] = project_types | set(NonFacilityAskType)
 str_to_project_type_extended: dict[str, ProjectType | NonFacilityAskType] = {str(f): f for f in project_types_extended}
+
+
+class ProjectStatus(IntEnum):
+    """Class that stores the status of ongoing projects."""
+
+    PAUSED = 0
+    WAITING = 1
+    ONGOING = 2

@@ -14,7 +14,7 @@ from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.network import Network
-from energetica.database.ongoing_project import OngoingProject, ProjectStatus
+from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
@@ -23,6 +23,7 @@ from energetica.enums import (
     Fuel,
     FunctionalFacilityType,
     HydroFacilityType,
+    ProjectStatus,
     ProjectType,
     SolarFacilityType,
     StorageFacilityType,
@@ -758,7 +759,7 @@ def place_ask(market: dict, player_id: int, demand: float, price: float, facilit
                 "capacity": [demand],
                 "price": [price],
                 "facility": [facility],
-            }
+            },
         )
         market["demands"] = pd.concat([market["demands"], new_row], ignore_index=True)
     return market
