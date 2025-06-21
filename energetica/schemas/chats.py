@@ -56,5 +56,5 @@ class NewMessageRequest(BaseModel):
 class NewChatRequest(BaseModel):
     """Request model for creating a new group chat."""
 
-    group_chat_name: str | None = Field(None, min_length=1, max_length=100)
+    group_chat_name: str | None = Field(None, min_length=1, max_length=30)
     group_member_ids: list[int] = Field(min_length=1)
