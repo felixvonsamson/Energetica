@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 
 import energetica.utils.chat
 from energetica.auth import get_current_user
@@ -58,21 +58,27 @@ def new_message(
     return MessageOut.from_message(new_message)
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_group_chat(
-    user: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_current_user)],
     request_data: NewChatRequest,
 ) -> ChatOut:
     """Create a chat."""
     group_members = {
-        Player.getitem(member_id, error=HTTPException(status_code=404, detail="One or more group members not found"))
-        for member_id in request_data.group_member_ids
+        *{
+            Player.getitem(
+                member_id,
+                error=HTTPException(status_code=404, detail="One or more group members not found"),
+            )
+            for member_id in request_data.group_member_ids
+        },
+        player,
     }
-    new_chat = energetica.utils.chat.create_chat(user, request_data.group_chat_name, group_members)
+    new_chat = energetica.utils.chat.create_chat(player, request_data.group_chat_name, group_members)
     return ChatOut(
         id=new_chat.id,
-        display_name=new_chat.display_name(user),
-        initials=new_chat.initials(user),
+        display_name=new_chat.display_name(player),
+        initials=new_chat.initials(player),
         is_group=new_chat.is_group(),
-        unread_messages_count=new_chat.unread_messages_count_for_player(user),
+        unread_messages_count=new_chat.unread_messages_count_for_player(player),
     )

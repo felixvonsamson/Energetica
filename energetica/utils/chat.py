@@ -28,8 +28,6 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
     """
     if chat_name and (len(chat_name) == 0 or len(chat_name) > 25):
         raise GameError("wrongTitleLength")
-    if len(participants) < 2:
-        raise GameError("groupTooSmall")
     if check_existing_chats(participants):
         raise GameError("chatAlreadyExist")
     new_chat = Chat(

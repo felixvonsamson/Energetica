@@ -117,7 +117,7 @@ def setup_routes(app: FastAPI):
 
         # Buffer the response body
         response_body = b""
-        for chunk in response.__dict__.get("body_iterator", []):
+        async for chunk in response.__dict__.get("body_iterator", []):
             response_body += chunk
 
         # Rebuild the response so FastAPI can send it
