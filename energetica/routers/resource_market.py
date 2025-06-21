@@ -8,7 +8,7 @@ from energetica.auth import get_current_user
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.schemas.resource_market import AskCreate, AskList, AskOut, PurchaseOrderCreate
-from energetica.utils.resource_market import buy_resource_from_market, create_resource_market_ask
+from energetica.utils.resource_market import create_ask, purchase_resource
 
 router = APIRouter(prefix="/resource_market", tags=["Resource Market"])
 
@@ -27,7 +27,7 @@ async def post_resource_market_ask(
     request_data: AskCreate,
 ) -> AskOut:
     """Post a resource market bid."""
-    return create_resource_market_ask(
+    return create_ask(
         player=user,
         fuel=request_data.resource_type,
         quantity=request_data.quantity,
@@ -46,7 +46,7 @@ async def post_resource_market_purchase(
     # TODO(mglst): Add the following check in the future
     # if sale.player == user:
     #     raise HTTPException(status_code=403, detail="You cannot buy your own ask")
-    new_sale = buy_resource_from_market(
+    new_sale = purchase_resource(
         player=user,
         quantity=request_data.quantity,
         sale=sale,
