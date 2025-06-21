@@ -11,7 +11,7 @@ from energetica.globals import engine
 from energetica.utils.formatting import display_money, format_mass
 
 
-def put_resource_on_market(player: Player, fuel: Fuel, quantity: float, unit_price: float) -> ResourceOnSale:
+def create_resource_market_ask(player: Player, fuel: Fuel, quantity: float, unit_price: float) -> ResourceOnSale:
     """Put an offer on the resource market."""
     if player.resources[fuel] - player.resources_on_sale[fuel] < quantity:
         raise GameError("notEnoughResource")

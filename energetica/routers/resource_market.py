@@ -8,7 +8,7 @@ from energetica.auth import get_current_user
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.schemas.resource_market import AskCreate, AskList, AskOut, PurchaseOrderCreate
-from energetica.utils.resource_market import buy_resource_from_market, put_resource_on_market
+from energetica.utils.resource_market import buy_resource_from_market, create_resource_market_ask
 
 router = APIRouter(prefix="/resource_market", tags=["Resource Market"])
 
@@ -27,7 +27,7 @@ async def post_resource_market_ask(
     request_data: AskCreate,
 ) -> AskOut:
     """Post a resource market bid."""
-    return put_resource_on_market(
+    return create_resource_market_ask(
         player=user,
         fuel=request_data.resource_type,
         quantity=request_data.quantity,
@@ -36,7 +36,7 @@ async def post_resource_market_ask(
 
 
 @router.post("/asks/{ask_id}/purchase")
-async def post_resource_market_ask_purchase(
+async def post_resource_market_purchase(
     user: Annotated[Player, Depends(get_current_user)],
     ask_id: int,
     request_data: PurchaseOrderCreate,
@@ -60,7 +60,7 @@ async def post_resource_market_ask_purchase(
 async def patch_resource_market_ask(
     user: Annotated[Player, Depends(get_current_user)],
     ask_id: int,
-    request_data: AskCreate,
+    request_data: AskCreate,  # TODO: remove resource_type from schema for this route
 ) -> AskOut:
     """Patch a resource market ask."""
     sale = ResourceOnSale.getitem(ask_id, error=HTTPException(status_code=404, detail="Ask not found"))
