@@ -50,7 +50,7 @@ class MessageListResponse(BaseModel):
 class NewMessageRequest(BaseModel):
     """Request model for sending a new message."""
 
-    new_message: str = Field(min_length=1, max_length=500)
+    new_message: str = Field(min_length=1, max_length=1000)
 
 
 class NewChatRequest(BaseModel):
