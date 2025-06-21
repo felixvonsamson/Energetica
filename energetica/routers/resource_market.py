@@ -14,7 +14,7 @@ router = APIRouter(prefix="/resource_market", tags=["Resource Market"])
 
 
 @router.get("/asks")
-async def get_resource_market_asks() -> AskList:
+def get_resource_market_asks() -> AskList:
     """Get the resource market."""
     return AskList(
         asks=[ask.to_schema() for ask in ResourceOnSale.all()],
@@ -22,7 +22,7 @@ async def get_resource_market_asks() -> AskList:
 
 
 @router.post("/asks", status_code=201)
-async def post_resource_market_ask(
+def post_resource_market_ask(
     user: Annotated[Player, Depends(get_current_user)],
     request_data: AskCreate,
 ) -> AskOut:
@@ -36,7 +36,7 @@ async def post_resource_market_ask(
 
 
 @router.post("/asks/{ask_id}/purchase")
-async def post_resource_market_purchase(
+def post_resource_market_purchase(
     user: Annotated[Player, Depends(get_current_user)],
     ask_id: int,
     request_data: PurchaseOrderCreate,
@@ -57,7 +57,7 @@ async def post_resource_market_purchase(
 
 
 @router.patch("/asks/{ask_id}")
-async def patch_resource_market_ask(
+def patch_resource_market_ask(
     user: Annotated[Player, Depends(get_current_user)],
     ask_id: int,
     request_data: AskCreate,  # TODO: remove resource_type from schema for this route
@@ -74,7 +74,7 @@ async def patch_resource_market_ask(
 
 
 @router.delete("/asks/{ask_id}", status_code=204)
-async def delete_resource_market_ask(
+def delete_resource_market_ask(
     user: Annotated[Player, Depends(get_current_user)],
     ask_id: int,
 ) -> None:

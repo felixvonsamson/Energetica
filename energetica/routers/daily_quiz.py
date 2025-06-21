@@ -21,7 +21,7 @@ def get_quiz_question(
 
 
 @router.post("", response_model_exclude_unset=True)
-async def submit_quiz_answer(
+def submit_quiz_answer(
     player: Annotated[Player, Depends(get_current_user)],
     submission: DailyQuizSubmission,
 ) -> DailyQuizBase:

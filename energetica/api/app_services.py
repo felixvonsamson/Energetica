@@ -48,12 +48,12 @@ class Subscription(BaseModel):
 
 def register_app_services(app: FastAPI) -> None:
     @app.get("/subscribe")
-    async def get_vapid_key(request: Request) -> JSONResponse:
+    def get_vapid_key(request: Request) -> JSONResponse:
         """Return VAPID public key."""
         return JSONResponse(content={"public_key": engine.VAPID_PUBLIC_KEY})
 
     @app.post("/subscribe")
-    async def subscribe(
+    def subscribe(
         subscription: Subscription,
         current_user: Player = Depends(get_current_user),
     ) -> JSONResponse:
@@ -62,7 +62,7 @@ def register_app_services(app: FastAPI) -> None:
         return JSONResponse(content={"response": "Subscription successful"})
 
     @app.post("/unsubscribe")
-    async def unsubscribe(
+    def unsubscribe(
         subscription: Subscription,
         current_user: Player = Depends(get_current_user),
     ) -> JSONResponse:
@@ -74,7 +74,7 @@ def register_app_services(app: FastAPI) -> None:
         return JSONResponse(content={"response": "Unsubscription successful"})
 
     @app.get("/apple-app-site-association")
-    async def apple_app_site_association() -> FileResponse:
+    def apple_app_site_association() -> FileResponse:
         """
         Return the apple-app-site-association JSON data.
         Needed for supporting associated domains needed for shared webcredentials.

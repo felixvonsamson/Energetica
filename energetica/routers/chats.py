@@ -23,7 +23,7 @@ router = APIRouter(prefix="/chats", tags=["Chats"])
 
 
 @router.get("")
-async def get_chat_list(user: Annotated[Player, Depends(get_current_user)]) -> ChatListResponse:
+def get_chat_list(user: Annotated[Player, Depends(get_current_user)]) -> ChatListResponse:
     """Get the chat list for the current user."""
     return ChatListResponse(
         chats=[
@@ -42,7 +42,7 @@ async def get_chat_list(user: Annotated[Player, Depends(get_current_user)]) -> C
 
 
 @router.get("/{chat_id}/messages")
-async def get_chat_messages(
+def get_chat_messages(
     user: Annotated[Player, Depends(get_current_user)],
     chat_id: int,
 ) -> MessageListResponse:
@@ -54,7 +54,7 @@ async def get_chat_messages(
 
 
 @router.post("/{chat_id}/messages")
-async def new_message(
+def new_message(
     user: Annotated[Player, Depends(get_current_user)],
     chat_id: int,
     request_data: NewMessageRequest,
@@ -68,7 +68,7 @@ async def new_message(
 
 
 @router.post("", status_code=201)
-async def create_group_chat(
+def create_group_chat(
     user: Annotated[Player, Depends(get_current_user)],
     request_data: NewChatRequest,
 ) -> ChatOut:

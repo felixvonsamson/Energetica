@@ -56,7 +56,7 @@ logging.getLogger("uvicorn.access").addFilter(SocketIOFilter())
 
 def setup_routes(app: FastAPI):
     @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
         return JSONResponse(
             content={
                 "detail": jsonable_encoder(exc.errors()),
@@ -66,13 +66,13 @@ def setup_routes(app: FastAPI):
         )
 
     @app.exception_handler(GameError)
-    async def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
+    def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
         """Handle global game exceptions."""
         content = GameErrorResponse(game_exception_type=exc.exception_type)
         return JSONResponse(content=content.model_dump(), status_code=status.HTTP_403_FORBIDDEN)
 
     @app.middleware("log_action")
-    async def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         # Restrict access to the API during the simulation.
         if (
             engine.serve_local
@@ -101,7 +101,7 @@ def setup_routes(app: FastAPI):
         body_bytes = await request.body()
 
         # Reattach body for downstream consumers (endpoint handlers)
-        async def receive() -> dict:
+        def receive() -> dict:
             return {"type": "http.request", "body": body_bytes, "more_body": False}
 
         request = Request(request.scope, receive=receive)
@@ -117,7 +117,7 @@ def setup_routes(app: FastAPI):
 
         # Buffer the response body
         response_body = b""
-        async for chunk in response.__dict__.get("body_iterator", []):
+        for chunk in response.__dict__.get("body_iterator", []):
             response_body += chunk
 
         # Rebuild the response so FastAPI can send it
