@@ -15,7 +15,7 @@ from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
-from energetica.schemas.common import GameErrorResponse
+from energetica.schemas.common import GameErrorOut
 
 from .achievements import router as achievements_router
 from .chats import router as chat_router
@@ -59,7 +59,7 @@ logging.getLogger("uvicorn.access").addFilter(SocketIOFilter())
 
 def setup_routes(app: FastAPI):
     @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
         return JSONResponse(
             content={
                 "detail": jsonable_encoder(exc.errors()),
@@ -69,9 +69,9 @@ def setup_routes(app: FastAPI):
         )
 
     @app.exception_handler(GameError)
-    async def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
+    def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
         """Handle global game exceptions."""
-        content = GameErrorResponse(game_exception_type=exc.exception_type)
+        content = GameErrorOut.from_game_error(exc)
         return JSONResponse(content=content.model_dump(), status_code=status.HTTP_400_BAD_REQUEST)
 
     @app.exception_handler(Confirm)
@@ -109,7 +109,7 @@ def setup_routes(app: FastAPI):
         body_bytes = await request.body()
 
         # Reattach body for downstream consumers (endpoint handlers)
-        async def receive() -> dict:
+        def receive() -> dict:
             return {"type": "http.request", "body": body_bytes, "more_body": False}
 
         request = Request(request.scope, receive=receive)

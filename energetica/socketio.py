@@ -25,7 +25,7 @@ def setup_socketio(app: FastAPI) -> None:
     connected_users_by_sid: dict[str, Player] = {}
 
     @sio.event
-    async def connect(sid: str, environ: dict[str, Any], auth: Any) -> None:
+    def connect(sid: str, environ: dict[str, Any], auth: Any) -> None:
         """Authenticate a connecting client via session cookie."""
         cookie_header = environ.get("HTTP_COOKIE")
         if cookie_header is None:
@@ -42,7 +42,7 @@ def setup_socketio(app: FastAPI) -> None:
         connected_users_by_sid[sid] = user
 
     @sio.event
-    async def disconnect(sid: str, reason: str) -> None:
+    def disconnect(sid: str, reason: str) -> None:
         """Clean up user on disconnect."""
         user = connected_users_by_sid.pop(sid, None)
         if user:

@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
 from energetica.enums import Fuel
-from energetica.schemas.shipments import ShipmentOut
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -43,12 +42,3 @@ class OngoingShipment(DBModel):
         """Reset the speed of the shipment to 1 and stores the previous speed."""
         self.previous_speed = self.speed
         self.speed = 1
-
-    def to_schema(self) -> ShipmentOut:
-        return ShipmentOut(
-            id=self.id,
-            resource=self.resource,
-            quantity=self.quantity,
-            arrival_tick=self.arrival_tick,
-            duration=self.duration,
-        )
