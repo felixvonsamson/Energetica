@@ -11,7 +11,6 @@ from energetica import technology_effects
 from energetica.database import DBModel
 from energetica.enums import FunctionalFacilityType, ProjectStatus, ProjectType, TechnologyType, WorkerType
 from energetica.globals import engine
-from energetica.schemas.projects import ProjectOut
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -186,16 +185,3 @@ class OngoingProject(DBModel):
                     if level + offset - 1 >= candidate_prerequisite_level:
                         prerequisites.append(candidate_prerequisite)
         return prerequisites, level
-
-    def to_schema(self) -> ProjectOut:
-        return ProjectOut(
-            id=self.id,
-            type=self.project_type,
-            end_tick=self.end_tick_or_ticks_passed if self.is_ongoing() else None,
-            ticks_passed=None if self.is_ongoing() else self.end_tick_or_ticks_passed,
-            duration=self.duration,
-            status=self.status,
-            display_name=engine.const_config["assets"][self.project_type]["name"],
-            level=self.level,
-            speed=self.speed,
-        )

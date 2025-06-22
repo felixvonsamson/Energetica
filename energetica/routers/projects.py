@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, status
 
 from energetica.auth import get_current_user
 from energetica.database.player import Player
-from energetica.schemas.projects import ProjectIn, ProjectsOut
+from energetica.schemas.projects import ProjectIn, ProjectOut, ProjectsOut
 from energetica.utils import assets
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
@@ -15,7 +15,10 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 @router.get("")
 def get_constructions(player: Annotated[Player, Depends(get_current_user)]) -> ProjectsOut:
     """Get list of facilities under construction for this player."""
-    projects = [project.to_schema() for project in (*player.constructions_by_priority, *player.researches_by_priority)]
+    projects = [
+        ProjectOut.from_ongoing_project(project)
+        for project in (*player.constructions_by_priority, *player.researches_by_priority)
+    ]
     constructions_by_priority = [construction.id for construction in player.constructions_by_priority]
     researches_by_priority = [research.id for research in player.researches_by_priority]
     return ProjectsOut(

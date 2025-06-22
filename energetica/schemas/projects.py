@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+from globals import engine
 from pydantic import Field
 
 from energetica.enums import ProjectStatus, ProjectType
 from energetica.schemas.common import BaseApiModel
+
+if TYPE_CHECKING:
+    from energetica.database.ongoing_project import OngoingProject
 
 
 class ProjectOut(BaseApiModel):
@@ -19,6 +25,20 @@ class ProjectOut(BaseApiModel):
     level: int | None
     speed: float
 
+    @classmethod
+    def from_ongoing_project(cls, ongoing_project: OngoingProject) -> ProjectOut:
+        return ProjectOut(
+            id=ongoing_project.id,
+            type=ongoing_project.project_type,
+            end_tick=ongoing_project.end_tick_or_ticks_passed if ongoing_project.is_ongoing() else None,
+            ticks_passed=None if ongoing_project.is_ongoing() else ongoing_project.end_tick_or_ticks_passed,
+            duration=ongoing_project.duration,
+            status=ongoing_project.status,
+            display_name=engine.const_config["assets"][ongoing_project.project_type]["name"],
+            level=ongoing_project.level,
+            speed=ongoing_project.speed,
+        )
+
 
 class ProjectsOut(BaseApiModel):
     projects: list[ProjectOut]
@@ -28,7 +48,6 @@ class ProjectsOut(BaseApiModel):
 
 class ProjectIn(BaseApiModel):
     type: ProjectType
-    pass
 
 
 # Changes
