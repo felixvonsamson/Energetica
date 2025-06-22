@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
-from energetica.game_error import GameError
+if TYPE_CHECKING:
+    from energetica.game_error import GameError
 
 
 # TODO: switch to this as a base model

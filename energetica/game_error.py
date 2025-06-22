@@ -6,7 +6,7 @@ These include game-level for API response like "not enough money".
 
 from typing import Any
 
-from energetica.schemas.common import GameErrorResponse
+from energetica.schemas.common import GameErrorOut
 
 
 class GameError(Exception):
@@ -17,5 +17,5 @@ class GameError(Exception):
         self.kwargs = kwargs
         Exception.__init__(self, exception_type)
 
-    def to_schema(self) -> GameErrorResponse:
-        return GameErrorResponse(game_exception_type=self.exception_type)
+    def to_schema(self) -> GameErrorOut:
+        return GameErrorOut(game_exception_type=self.exception_type)
