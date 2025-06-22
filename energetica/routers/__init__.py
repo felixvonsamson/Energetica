@@ -15,7 +15,7 @@ from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
-from energetica.schemas.common import GameErrorOut
+from energetica.schemas.common import ConfirmOut, GameErrorOut
 
 from .achievements import router as achievements_router
 from .chats import router as chat_router
@@ -77,7 +77,7 @@ def setup_routes(app: FastAPI):
     @app.exception_handler(Confirm)
     async def global_confirm_handler(request: Request, confirm: Confirm):
         """Handle confirm 'errors'."""
-        return JSONResponse(content=confirm.to_schema().model_dump(), status_code=status.HTTP_300_MULTIPLE_CHOICES)
+        return JSONResponse(content=ConfirmOut.from_confirm(confirm), status_code=status.HTTP_300_MULTIPLE_CHOICES)
 
     @app.middleware("log_action")
     async def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

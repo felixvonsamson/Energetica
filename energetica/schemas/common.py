@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
 if TYPE_CHECKING:
+    from energetica.game_engine import Confirm
     from energetica.game_error import GameError
 
 
@@ -29,9 +30,13 @@ class GameErrorOut(BaseModel):
         return GameErrorOut(game_exception_type=game_error.exception_type)
 
 
-class ConfirmResponse(BaseApiModel):
+class ConfirmOut(BaseApiModel):
     """Response model for confirm 'errors'."""
 
     capacity: float | None = None
     construction_power: float | None = None
     refund: float | None = None
+
+    @classmethod
+    def from_confirm(cls, confirm: Confirm) -> ConfirmOut:
+        return ConfirmOut.model_validate(confirm.__dict__)

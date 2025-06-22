@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from globals import engine
 from pydantic import Field
 
 from energetica.enums import ProjectStatus, ProjectType
+from energetica.globals import engine
 from energetica.schemas.common import BaseApiModel
 
 if TYPE_CHECKING:
