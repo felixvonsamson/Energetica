@@ -4,9 +4,20 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Literal
+
 from pydantic import BaseModel, Field
 
-from energetica.database.network import Network
+from energetica.enums import (
+    ControllableFacilityType,
+    ExtractionFacilityType,
+    FunctionalFacilityType,
+    NonFacilityBidType,
+    StorageFacilityType,
+)
+
+if TYPE_CHECKING:
+    from energetica.database.network import Network
 
 
 class NetworkBase(BaseModel):
@@ -28,3 +39,27 @@ class NetworkCreate(NetworkBase):
 
 class NetworkListOut(BaseModel):
     networks: list[NetworkOut] = Field(description="List of networks")
+
+
+AskType = ControllableFacilityType | StorageFacilityType
+BidType = (
+    NonFacilityBidType
+    | ExtractionFacilityType
+    | Literal[FunctionalFacilityType.INDUSTRY, FunctionalFacilityType.CARBON_CAPTURE]
+    | StorageFacilityType
+)
+
+
+class ChangeNetworkPrices(BaseModel):
+    asks: list[Ask]
+    bids: list[Bid]
+
+
+class Ask(BaseModel):
+    type: AskType
+    price: float = Field(ge=-5)
+
+
+class Bid(BaseModel):
+    type: BidType
+    price: float = Field(ge=-5)
