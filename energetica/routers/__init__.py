@@ -75,16 +75,20 @@ def setup_routes(app: FastAPI):
         return JSONResponse(content=content.model_dump(), status_code=status.HTTP_400_BAD_REQUEST)
 
     @app.exception_handler(Confirm)
-    async def global_confirm_handler(request: Request, confirm: Confirm):
+    def global_confirm_handler(request: Request, confirm: Confirm):
         """Handle confirm 'errors'."""
-        return JSONResponse(content=ConfirmOut.from_confirm(confirm), status_code=status.HTTP_300_MULTIPLE_CHOICES)
+        print(ConfirmOut.from_confirm(confirm))
+        return JSONResponse(
+            content=ConfirmOut.from_confirm(confirm).model_dump(),
+            status_code=status.HTTP_300_MULTIPLE_CHOICES,
+        )
 
     @app.middleware("log_action")
     async def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         # Restrict access to the API during the simulation.
         if (
             engine.serve_local
-            and request.method == "POST"
+            and request.method != "GET"
             and request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "")
             != "127.0.0.1"
         ):
@@ -94,7 +98,7 @@ def setup_routes(app: FastAPI):
             )
 
         # GET requests can be served immediately
-        if request.method != "POST" or request.url.path == "/socket.io/":
+        if request.method == "GET" or request.url.path == "/socket.io/":
             response = await call_next(request)
             path = request.url.path
             if path.startswith("/api") or request.url.path == "/socket.io/":
@@ -109,7 +113,7 @@ def setup_routes(app: FastAPI):
         body_bytes = await request.body()
 
         # Reattach body for downstream consumers (endpoint handlers)
-        def receive() -> dict:
+        async def receive() -> dict:
             return {"type": "http.request", "body": body_bytes, "more_body": False}
 
         request = Request(request.scope, receive=receive)

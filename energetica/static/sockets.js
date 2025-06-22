@@ -5,6 +5,7 @@ This code contains the main functions that communicate with the server (client s
 /**
  * @type {typeof import('./frontend_data.js').load_chats}
  * @type {typeof import('./display_functions.js')}
+ * * @type {typeof import('./toasts.js')}
  */
 
 socket.on("infoMessage", addToast);
@@ -14,7 +15,7 @@ socket.on("errorMessage", addError);
 /**
  * @param {RequestInfo | URL} endpoint
  * @param {any} body
- * @param {"POST"} method
+ * @param {"POST" | "DELETE"} method
  */
 function send_json(endpoint, body, method = "POST") {
     return fetch(endpoint, {
@@ -27,8 +28,13 @@ function send_json(endpoint, body, method = "POST") {
     });
 }
 
-function catch_validation_error(response_body) {
-    const { meta, detail } = response_body;
+/**
+ * @param {Response} response
+ * @param {{meta: any;detail: any;}} body
+ */
+function catchValidationErrors(response, body) {
+    if (response.status !== 400) return false;
+    const { meta, detail } = body;
     if (meta?.error_type === "request_validation_error" && Array.isArray(detail)) {
         const formattedMessages = detail.map(item => {
             const field = item.loc?.[item.loc.length - 1] || "Field";
@@ -51,20 +57,20 @@ function catch_validation_error(response_body) {
  * @param {any} body
  */
 function catchGameErrors(response, body) {
-    if (response.status === 400 && body.gameExceptionType != null) {
-        switch (body.gameExceptionType) {
-            case "Not enough money":
-                addError("Not enough money");
-                break;
-            case "Requirements not satisfied":
-                // POST: /projects
-                addError("Requirements not satisfied");
-                break;
-            default:
-                addError(`Uncaught error: ${body.gameExceptionType}`);
-        }
-        return true;
+    if (response.status !== 400 || body.gameExceptionType == null) return false;
+    switch (body.gameExceptionType) {
+        case "Not enough money":
+            addError("Not enough money");
+            break;
+        case "Requirements not satisfied":
+            // Routes where this error can occur:
+            // POST: /projects
+            addError("Requirements not satisfied");
+            break;
+        default:
+            addError(`Uncaught error: ${body.gameExceptionType}`);
     }
+    return true;
 }
 
 //debug info for connection error

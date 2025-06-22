@@ -370,7 +370,7 @@ def queue_project(
             if gen in player.capacities:
                 capacity += player.capacities[gen]["power"]
         if construction_power > capacity:
-            raise Confirm(capacity=capacity, construction_power=construction_power)
+            raise Confirm(type="areYouSure", capacity=capacity, construction_power=construction_power)
 
     if not ignore_requirements_and_money:
         player.money -= real_price
@@ -433,7 +433,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
         raise GameError(msg, dependents=dependents)
 
     if not force:
-        raise Confirm(refund=f"{round(80 * (1 - project.progress()))}%")
+        raise Confirm(type="areYouSure", refund=f"{round(80 * (1 - project.progress()))}%")
 
     refund = (
         0.8

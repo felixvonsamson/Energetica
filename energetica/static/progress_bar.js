@@ -95,20 +95,13 @@ function start_construction(facility, force = false) {
   send_json(`/api/v1/projects?force=${force}`, { type: facility })
     .then((response) => {
       response.json().then((raw_data) => {
-        if (catch_validation_error(raw_data)) return; // Not sure I want this here yet. Debugging
+        if (catchValidationErrors(response, raw_data)) return; // Not sure I want this here yet. Debugging
         if (catchGameErrors(response, raw_data)) return;
         if (response.ok) {
-          // let money = raw_data["money"];
-          //TODO(mglst): money needs to be update here
-          // var obj = document.getElementById("money");
-          // obj.innerHTML = format_money_long(money);
-          addToast("Construction started");
-          sessionStorage.setItem(
-            "constructions",
-            JSON.stringify(raw_data)
-          );
-          projects_data = raw_data; // This is hacky and I don't like it.
+          refreshMoney();
+          retrieve_constructions();
           refresh_progressBar();
+          addToast("Construction started");
         } else if (response.status === 300) {
           const capacity = raw_data["capacity"];
           const construction_power = raw_data["construction_power"];
@@ -122,29 +115,29 @@ function start_construction(facility, force = false) {
 }
 
 function cancel_construction(construction_id, force = false) {
-  send_json("/api/request_cancel_project", {
-    id: construction_id,
-    force: force,
-  })
+  send_json(`/api/v1/projects/${construction_id}?force=${force}`, {}, "DELETE")
     .then((response) => {
-      response.json().then((raw_data) => {
-        let response = raw_data["response"];
-        if (response == "success") {
-          let money = raw_data["money"];
-          var obj = document.getElementById("money");
-          obj.innerHTML = format_money_long(money);
+      response.json().then((body) => {
+        if (catchValidationErrors(response, body)) return;
+        if (catchGameErrors(response, body)) return;
+        // if (catchConfirm(response, body)) return;
+        if (response.status === 204) {
           addToast("Construction cancelled");
-          sessionStorage.setItem(
-            "constructions",
-            JSON.stringify(raw_data["constructions"])
-          );
+          refreshMoney();
+          retrieve_constructions();
           refresh_progressBar();
-        } else if (response == "HasDependents") {
-          let dependents = raw_data["dependents"];
-          has_dependents_cancel_construction(construction_id, dependents);
-        } else if (response == "areYouSure") {
-          refund = raw_data["refund"];
-          are_you_sure_cancel_construction(construction_id, refund);
+        } else if (response.status === 300) {
+          if (body.type == "HasDependents") {
+            const dependents = body.dependents;
+            has_dependents_cancel_construction(construction_id, dependents);
+          } else if (body.type == "areYouSure") {
+            const refund = body.refund;
+            are_you_sure_cancel_construction(construction_id, refund);
+          } else {
+            addError("Something went wrong");
+          }
+        } else {
+          addError("Something went wrong");
         }
       });
     })
@@ -294,6 +287,8 @@ load_constructions().then((projects_data_2) => {
 });
 
 function refresh_progressBar() {
+  // TODO(mglst): this function can REFRESH progress bars, but is not capable of CREATING or REMOVING html elements.
+  // e.g. this works when pausing and resuming projects, but not when queueing a new project or canceling one.
   load_constructions().then((projects_data) => {
     load_shipments().then((shipment_list) => {
       shipment_data = shipment_list;

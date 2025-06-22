@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends
 from energetica.auth import get_current_user
 from energetica.database.player import Player
 from energetica.routers.chats import router
-from energetica.schemas.players import PlayerOut, SettingsPatch, UIStatePatch
+from energetica.schemas.players import MoneyOut, PlayerOut, SettingsPatch, UIStatePatch
 
 router = APIRouter(prefix="/players", tags=["Players"])
 
@@ -50,3 +50,10 @@ def update_ui_state(
 ) -> None:
     if request_data.last_opened_chat_id is not None:
         user.last_opened_chat_id = request_data.last_opened_chat_id
+
+
+@router.get("/me/money")
+def get_money(
+    player: Annotated[Player, Depends(get_current_user)],
+) -> MoneyOut:
+    return MoneyOut(money=player.money)

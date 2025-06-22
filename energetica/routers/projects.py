@@ -2,9 +2,10 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.auth import get_current_user
+from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.schemas.projects import ProjectIn, ProjectOut, ProjectsOut
 from energetica.utils import assets
@@ -13,7 +14,9 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
 @router.get("")
-def get_constructions(player: Annotated[Player, Depends(get_current_user)]) -> ProjectsOut:
+def get_constructions(
+    player: Annotated[Player, Depends(get_current_user)],
+) -> ProjectsOut:
     """Get list of facilities under construction for this player."""
     projects = [
         ProjectOut.from_ongoing_project(project)
@@ -29,15 +32,24 @@ def get_constructions(player: Annotated[Player, Depends(get_current_user)]) -> P
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-async def queue_project(
+def queue_project(
     player: Annotated[Player, Depends(get_current_user)],
     project: ProjectIn,
     force: bool = False,
-) -> ProjectsOut:
+) -> None:
     """Start a construction or research project for the player."""
-    assets.queue_project(
-        player=player,
-        project_type=project.type,
-        force=force,
-    )
-    return get_constructions(player)
+    assets.queue_project(player=player, project_type=project.type, force=force)
+
+
+@router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+def cancel_project(
+    player: Annotated[Player, Depends(get_current_user)],
+    project_id: int,
+    force: bool = False,
+) -> None:
+    """Cancel an ongoing project."""
+    project = OngoingProject.get(project_id)
+    if project is None or project.player != player:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    assets.cancel_project(player=player, project=project, force=force)
+    return None

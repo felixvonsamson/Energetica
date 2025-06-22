@@ -45,12 +45,29 @@ function check_new_connection() {
 }
 
 function retrieve_all() {
+    refreshMoney();
     retrieve_chart_data();
     retrieve_constructions();
     retrieve_shipments();
     retrieve_players();
     retrieve_player_data();
     retrieve_chats();
+}
+
+function refreshMoney() {
+    return fetch("/api/v1/players/me/money")
+        .then((response) => response.json())
+        .then((body) => {
+            let money = body["money"];
+            var obj = document.getElementById("money");
+            if (obj != null) {
+                obj.innerHTML = format_money_long(money);
+            }
+            return money;
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
 }
 
 function load_constructions() {

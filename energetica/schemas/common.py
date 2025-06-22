@@ -30,13 +30,19 @@ class GameErrorOut(BaseModel):
         return GameErrorOut(game_exception_type=game_error.exception_type)
 
 
-class ConfirmOut(BaseApiModel):
+class ConfirmOut(BaseModel):
     """Response model for confirm 'errors'."""
 
+    type: str
     capacity: float | None = None
     construction_power: float | None = None
-    refund: float | None = None
+    refund: str | None = None
 
     @classmethod
     def from_confirm(cls, confirm: Confirm) -> ConfirmOut:
-        return ConfirmOut.model_validate(confirm.__dict__)
+        return ConfirmOut(
+            type=confirm.__dict__.__getitem__("type"),
+            capacity=confirm.__dict__.get("capacity"),
+            construction_power=confirm.__dict__.get("construction_power"),
+            refund=confirm.__dict__.get("refund"),
+        )

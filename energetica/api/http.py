@@ -23,7 +23,6 @@ from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType, str_to_project_type
-from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.assets import package_projects_data
@@ -200,35 +199,6 @@ async def choose_location(  # noqa: ANN201
     tile = HexTile.getitem(selected_id + 1)
     energetica.utils.map_helpers.confirm_location(player=user, tile=tile)
     return {"response": "success"}
-
-
-@todo_router.post("/request_cancel_project")
-async def request_cancel_project(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Cancel an ongoing projects."""
-    request_data = await request.json()
-    project_id = int(request_data["id"])
-    project = OngoingProject.get(int(project_id))
-    if project is None or project.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    force = request_data["force"]
-    try:
-        energetica.utils.assets.cancel_project(player=user, project=project, force=force)
-    except Confirm as confirm:
-        return JSONResponse(
-            {
-                "response": "areYouSure",
-                "refund": confirm.__getattribute__("refund"),
-            },
-            status_code=status.HTTP_300_MULTIPLE_CHOICES,
-        )
-    return {
-        "response": "success",
-        "money": user.money,
-        "projects": package_projects_data(user),
-    }
 
 
 @todo_router.post("/request_toggle_pause_project")
