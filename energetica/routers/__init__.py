@@ -14,7 +14,7 @@ from energetica.auth import get_current_user
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
-from energetica.schemas.common import GameErrorResponse
+from energetica.schemas.common import GameErrorOut
 
 from .achievements import router as achievements_router
 from .chats import router as chat_router
@@ -68,7 +68,7 @@ def setup_routes(app: FastAPI):
     @app.exception_handler(GameError)
     def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
         """Handle global game exceptions."""
-        content = GameErrorResponse(game_exception_type=exc.exception_type)
+        content = GameErrorOut.from_game_error(exc)
         return JSONResponse(content=content.model_dump(), status_code=status.HTTP_403_FORBIDDEN)
 
     @app.middleware("log_action")

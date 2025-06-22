@@ -17,7 +17,7 @@ from itsdangerous import URLSafeTimedSerializer
 from energetica.database.player import Player
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.schemas.auth import ChangePasswordData, LoginData, RootSignupData, SignupData
+from energetica.schemas.auth import ChangePasswordRequest, LoginRequest, RootSignupRequest, SignupRequest
 from energetica.utils import misc
 
 COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a command line argument in the future
@@ -89,7 +89,7 @@ def add_session_cookie_to_response(response: Response, player: Player) -> Respon
 
 def setup_auth(app: FastAPI) -> None:
     @app.post("/login", tags=["Authentication"])
-    def login(request_data: LoginData):
+    def login(request_data: LoginRequest):
         username = request_data.username
         password = request_data.password
 
@@ -116,7 +116,7 @@ def setup_auth(app: FastAPI) -> None:
 
     # TODO: relocate endpoint to sign-up as this is standard
     @app.post("/sign-up", tags=["Authentication"])
-    def signup(request: Request, request_data: SignupData):
+    def signup(request: Request, request_data: SignupRequest):
         """Create a new account."""
         if engine.disable_signups:
             raise GameError("Sign-ups are disabled.")
@@ -145,7 +145,7 @@ def setup_auth(app: FastAPI) -> None:
         return add_session_cookie_to_response(JSONResponse("Authenticated", status_code=status.HTTP_200_OK), player)
 
     @app.post("/root/sign-up")
-    def root_signup(request: Request, request_data: RootSignupData):
+    def root_signup(request: Request, request_data: RootSignupRequest):
         """Create a new account."""
         username = request_data.username
         pwhash = request_data.pwhash
@@ -159,7 +159,7 @@ def setup_auth(app: FastAPI) -> None:
         )
 
     @app.post("/change-password", tags=["Authentication"])
-    def change_password(player: Annotated[Player, Depends(get_current_user)], request_data: ChangePasswordData):
+    def change_password(player: Annotated[Player, Depends(get_current_user)], request_data: ChangePasswordRequest):
         """Change the password for the current user."""
         old_password = request_data.old_password
         new_password = request_data.new_password

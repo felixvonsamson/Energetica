@@ -22,9 +22,9 @@ class NetworkOut(NetworkBase):
         return NetworkOut(id=network.id, name=network.name, member_ids=[member.id for member in network.members])
 
 
-class NetworkIn(NetworkBase):
+class NetworkCreate(NetworkBase):
     pass
 
 
-class NetworkList(BaseModel):
+class NetworkListOut(BaseModel):
     networks: list[NetworkOut] = Field(description="List of networks")

@@ -31,7 +31,7 @@ from energetica.enums import (
     WorkerType,
 )
 from energetica.globals import MAIN_EVENT_LOOP, engine
-from energetica.schemas.achievements import Achievement
+from energetica.schemas.achievements import AchievementOut
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -499,16 +499,16 @@ class Player(DBModel):
                 )
                 self.notify("Achievement", message)
 
-    def package_upcoming_achievements(self) -> list[Achievement]:
+    def package_upcoming_achievements(self) -> list[AchievementOut]:
         """Package the progress information for the upcoming achievements."""
-        upcoming_achievements: list[Achievement] = []
+        upcoming_achievements: list[AchievementOut] = []
         for achievement_id, achievement_data in achievements.items():
             requirements_met = all(self.achievements[requirement] for requirement in achievement_data["requirements"])
             if not requirements_met:
                 continue
             if achievement_id in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
                 if not self.achievements[achievement_id]:
-                    achievement = Achievement(
+                    achievement = AchievementOut(
                         id=achievement_id,
                         name=achievement_data["name"],
                         reward=achievement_data["reward"],
@@ -520,7 +520,7 @@ class Player(DBModel):
                 current_lvl = self.achievements[achievement_id]
                 if current_lvl < len(achievement_data["milestones"]):
                     status = self.progression_metrics[achievement_data["metric"]]
-                    achievement = Achievement(
+                    achievement = AchievementOut(
                         id=achievement_id,
                         name=f"{achievement_data['name']} {current_lvl + 1}",
                         reward=achievement_data["rewards"][current_lvl],

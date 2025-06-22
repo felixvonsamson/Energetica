@@ -46,7 +46,7 @@ class AskPatch(BaseModel):
     quantity: float = Field(gt=0, description="Quantity of the resource in kg.")
 
 
-class AskList(BaseModel):
+class AskListOut(BaseModel):
     """Schema for the resource market."""
 
     asks: list[AskOut]

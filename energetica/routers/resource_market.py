@@ -7,16 +7,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from energetica.auth import get_current_user
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.schemas.resource_market import AskCreate, AskList, AskOut, PurchaseOrderCreate
+from energetica.schemas.resource_market import AskCreate, AskListOut, AskOut, PurchaseOrderCreate
 from energetica.utils.resource_market import create_ask, purchase_resource
 
 router = APIRouter(prefix="/resource_market", tags=["Resource Market"])
 
 
 @router.get("/asks")
-def get_resource_market_asks() -> AskList:
+def get_resource_market_asks() -> AskListOut:
     """Get the resource market."""
-    return AskList(
+    return AskListOut(
         asks=[AskOut.from_resource_on_sale(ask) for ask in ResourceOnSale.all()],
     )
 

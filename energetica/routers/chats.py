@@ -10,22 +10,15 @@ import energetica.utils.chat
 from energetica.auth import get_current_user
 from energetica.database.messages import Chat
 from energetica.database.player import Player
-from energetica.schemas.chats import (
-    ChatListResponse,
-    ChatOut,
-    MessageListResponse,
-    MessageOut,
-    NewChatRequest,
-    NewMessageRequest,
-)
+from energetica.schemas.chats import ChatCreate, ChatListOut, ChatOut, MessageCreate, MessageListOut, MessageOut
 
 router = APIRouter(prefix="/chats", tags=["Chats"])
 
 
 @router.get("")
-def get_chat_list(player: Annotated[Player, Depends(get_current_user)]) -> ChatListResponse:
+def get_chat_list(player: Annotated[Player, Depends(get_current_user)]) -> ChatListOut:
     """Get the chat list for the current user."""
-    return ChatListResponse(
+    return ChatListOut(
         chats=[ChatOut.from_chat(player, chat) for chat in Chat.filter(lambda chat: player in chat.participants)],
         last_opened_chat_id=player.last_opened_chat_id,
         unread_chat_count=player.unread_chat_count(),
@@ -36,19 +29,19 @@ def get_chat_list(player: Annotated[Player, Depends(get_current_user)]) -> ChatL
 def get_chat_messages(
     user: Annotated[Player, Depends(get_current_user)],
     chat_id: int,
-) -> MessageListResponse:
+) -> MessageListOut:
     """Get the messages for a chat."""
     chat = Chat.getitem(chat_id, error=HTTPException(status_code=404, detail="Chat not found"))
     if user not in chat.participants:
         raise HTTPException(status_code=403, detail="You are not a participant in this chat")
-    return MessageListResponse(messages=[MessageOut.from_message(message) for message in chat.messages])
+    return MessageListOut(messages=[MessageOut.from_message(message) for message in chat.messages])
 
 
 @router.post("/{chat_id}/messages")
 def new_message(
     user: Annotated[Player, Depends(get_current_user)],
     chat_id: int,
-    request_data: NewMessageRequest,
+    request_data: MessageCreate,
 ) -> MessageOut:
     """Send a message."""
     chat = Chat.getitem(chat_id, error=HTTPException(status_code=404, detail="Chat not found"))
@@ -61,7 +54,7 @@ def new_message(
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_group_chat(
     player: Annotated[Player, Depends(get_current_user)],
-    request_data: NewChatRequest,
+    request_data: ChatCreate,
 ) -> ChatOut:
     """Create a chat."""
     group_members = {

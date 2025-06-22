@@ -10,7 +10,7 @@ from energetica.database.messages import Chat, Message
 from energetica.database.player import Player
 
 
-class ChatListResponse(BaseModel):
+class ChatListOut(BaseModel):
     """Response model for the chat list."""
 
     chats: list[ChatOut]
@@ -52,19 +52,19 @@ class MessageOut(BaseModel):
         return MessageOut(id=message.id, text=message.text, player_id=message.player.id, timestamp=message.timestamp)
 
 
-class MessageListResponse(BaseModel):
+class MessageListOut(BaseModel):
     """Response model for the message list."""
 
     messages: list[MessageOut]
 
 
-class NewMessageRequest(BaseModel):
+class MessageCreate(BaseModel):
     """Request model for sending a new message."""
 
     new_message: str = Field(min_length=1, max_length=1000)
 
 
-class NewChatRequest(BaseModel):
+class ChatCreate(BaseModel):
     """Request model for creating a new group chat."""
 
     group_chat_name: str | None = Field(None, min_length=1, max_length=30)

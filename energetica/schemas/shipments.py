@@ -29,5 +29,5 @@ class ShipmentOut(ShipmentBase):
         )
 
 
-class ShipmentList(BaseModel):
+class ShipmentListOut(BaseModel):
     shipments: list[ShipmentOut] = Field(description="List of shipments")

@@ -14,5 +14,5 @@ class DailyQuizBase(BaseModel):
     explanation: str | None = None
 
 
-class DailyQuizSubmission(BaseModel):
+class DailyQuizSubmitRequest(BaseModel):
     player_answer: Literal["answer1", "answer2", "answer3"]
