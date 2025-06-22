@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 
 from energetica.auth import get_current_user
 from energetica.database.player import Player
-from energetica.schemas.scoreboard import ScoreboardResponse, ScoreboardRow
+from energetica.schemas.scoreboard import ScoreboardOut, ScoreboardRowOut
 
 router = APIRouter(prefix="/scoreboard", tags=["Scoreboard"])
 
@@ -14,12 +14,12 @@ router = APIRouter(prefix="/scoreboard", tags=["Scoreboard"])
 @router.get("")
 def get_scoreboard(
     player: Annotated[Player, Depends(get_current_user)],
-) -> ScoreboardResponse:
+) -> ScoreboardOut:
     """Get the scoreboard data."""
     players = Player.filter(lambda p: p.tile is not None)
     include_co2_emissions = player.discovered_greenhouse_gas_effect()
     rows = [
-        ScoreboardRow(
+        ScoreboardRowOut(
             player_id=player.id,
             username=player.username,
             network_name=player.network.name if player.network is not None else None,
@@ -31,4 +31,4 @@ def get_scoreboard(
         )
         for player in players
     ]
-    return ScoreboardResponse(rows=rows)
+    return ScoreboardOut(rows=rows)

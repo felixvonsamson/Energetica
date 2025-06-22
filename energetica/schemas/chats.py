@@ -6,10 +6,11 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from energetica.database.messages import Message
+from energetica.database.messages import Chat, Message
+from energetica.database.player import Player
 
 
-class ChatListResponse(BaseModel):
+class ChatListOut(BaseModel):
     """Response model for the chat list."""
 
     chats: list[ChatOut]
@@ -26,6 +27,16 @@ class ChatOut(BaseModel):
     is_group: bool
     unread_messages_count: int
 
+    @classmethod
+    def from_chat(cls, player: Player, chat: Chat) -> ChatOut:
+        return ChatOut(
+            id=chat.id,
+            display_name=chat.display_name(player),
+            initials=chat.initials(player),
+            is_group=chat.is_group(),
+            unread_messages_count=chat.unread_messages_count_for_player(player),
+        )
+
 
 class MessageOut(BaseModel):
     """Response model for a message."""
@@ -41,19 +52,19 @@ class MessageOut(BaseModel):
         return MessageOut(id=message.id, text=message.text, player_id=message.player.id, timestamp=message.timestamp)
 
 
-class MessageListResponse(BaseModel):
+class MessageListOut(BaseModel):
     """Response model for the message list."""
 
     messages: list[MessageOut]
 
 
-class NewMessageRequest(BaseModel):
+class MessageCreate(BaseModel):
     """Request model for sending a new message."""
 
     new_message: str = Field(min_length=1, max_length=1000)
 
 
-class NewChatRequest(BaseModel):
+class ChatCreate(BaseModel):
     """Request model for creating a new group chat."""
 
     group_chat_name: str | None = Field(None, min_length=1, max_length=30)

@@ -3,12 +3,12 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class ScoreboardResponse(BaseModel):
-    rows: list[ScoreboardRow]
+class ScoreboardOut(BaseModel):
+    rows: list[ScoreboardRowOut]
     pass
 
 
-class ScoreboardRow(BaseModel):
+class ScoreboardRowOut(BaseModel):
     player_id: int
     username: str
     network_name: str | None

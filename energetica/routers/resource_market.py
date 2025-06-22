@@ -7,36 +7,38 @@ from fastapi import APIRouter, Depends, HTTPException
 from energetica.auth import get_current_user
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.schemas.resource_market import AskCreate, AskList, AskOut, PurchaseOrderCreate
+from energetica.schemas.resource_market import AskCreate, AskListOut, AskOut, PurchaseOrderCreate
 from energetica.utils.resource_market import create_ask, purchase_resource
 
 router = APIRouter(prefix="/resource_market", tags=["Resource Market"])
 
 
 @router.get("/asks")
-async def get_resource_market_asks() -> AskList:
+def get_resource_market_asks() -> AskListOut:
     """Get the resource market."""
-    return AskList(
-        asks=[ask.to_schema() for ask in ResourceOnSale.all()],
+    return AskListOut(
+        asks=[AskOut.from_resource_on_sale(ask) for ask in ResourceOnSale.all()],
     )
 
 
 @router.post("/asks", status_code=201)
-async def post_resource_market_ask(
+def post_resource_market_ask(
     user: Annotated[Player, Depends(get_current_user)],
     request_data: AskCreate,
 ) -> AskOut:
     """Post a resource market bid."""
-    return create_ask(
-        player=user,
-        fuel=request_data.resource_type,
-        quantity=request_data.quantity,
-        unit_price=request_data.unit_price,
-    ).to_schema()
+    return AskOut.from_resource_on_sale(
+        create_ask(
+            player=user,
+            fuel=request_data.resource_type,
+            quantity=request_data.quantity,
+            unit_price=request_data.unit_price,
+        ),
+    )
 
 
 @router.post("/asks/{ask_id}/purchase")
-async def post_resource_market_purchase(
+def post_resource_market_purchase(
     user: Annotated[Player, Depends(get_current_user)],
     ask_id: int,
     request_data: PurchaseOrderCreate,
@@ -53,11 +55,11 @@ async def post_resource_market_purchase(
     )
     if new_sale is None:
         return None
-    return new_sale.to_schema()
+    return AskOut.from_resource_on_sale(new_sale)
 
 
 @router.patch("/asks/{ask_id}")
-async def patch_resource_market_ask(
+def patch_resource_market_ask(
     user: Annotated[Player, Depends(get_current_user)],
     ask_id: int,
     request_data: AskCreate,  # TODO: remove resource_type from schema for this route
@@ -70,11 +72,11 @@ async def patch_resource_market_ask(
         sale.unit_price = request_data.unit_price
     if request_data.quantity is not None:
         sale.quantity = request_data.quantity
-    return sale.to_schema()
+    return AskOut.from_resource_on_sale(sale)
 
 
 @router.delete("/asks/{ask_id}", status_code=204)
-async def delete_resource_market_ask(
+def delete_resource_market_ask(
     user: Annotated[Player, Depends(get_current_user)],
     ask_id: int,
 ) -> None:

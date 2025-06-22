@@ -2,7 +2,9 @@
 This code creates a list of suggestions when typing names in a field
 */
 
-// @type { typeof import('./frontend_data.js').load_players; }
+/**
+ * @type { typeof import('./frontend_data.js') }
+ */
 
 let sortedNames;
 let group = [];
@@ -211,11 +213,18 @@ async function createChat() {
 
     try {
         const response = await send_json("/api/v1/chats", { group_member_ids: [Number(buddy_id)] });
-
-        if (response.status == 204) {
-            // No content, chat created successfully
-            retrieve_chats();
-            document.getElementById('add_chat').classList.add('hidden');
+        console.log(response.status);
+        if (response.status == 201) {
+            // Chat created successfully
+            response.json().then((new_chat) => {
+                retrieve_chats().then((chat_data) => {
+                    chat_data.last_opened_chat_id = new_chat.id;
+                    chat_data.chats.push(new_chat);
+                    sessionStorage.setItem("chats_data", JSON.stringify(chat_data));
+                    document.getElementById('add_chat').classList.add('hidden');
+                    openChat(new_chat.id);
+                });
+            });
         } else if (response.status == 400) {
             response.json().then((raw_data) => {
                 const description = {
@@ -242,7 +251,7 @@ function createGroupChat() {
         group_chat_name: title,
         group_member_ids: group,
     }).then((response) => {
-        if (response.status == 204) {
+        if (response.status == 201) {
             retrieve_chats();
             document.querySelector(".group_members").innerHTML = "";
             document.getElementById('add_group_chat').classList.add('hidden');
@@ -346,7 +355,7 @@ function openChat(chatID) {
                 console.error("Error:", error);
             });
     });
-    fetch("/api/v1/players/me/settings", {
+    fetch("/api/v1/players/me/ui-state", {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
