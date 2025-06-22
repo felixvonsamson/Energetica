@@ -41,6 +41,8 @@ class ProjectOut(BaseApiModel):
 
 
 class ProjectsOut(BaseApiModel):
+    # TODO(mglst): it would make more sense for projects to be broken up into constructions_projects and
+    # research_projects. For example, when canceling a research project, we need to also fetch all constructions.
     projects: list[ProjectOut]
     construction_queue: list[int]
     research_queue: list[int]
