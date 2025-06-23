@@ -170,12 +170,12 @@ socket.on("new_values", function (changes) {
 
         construction_updates = changes.construction_updates;
         if (Object.keys(construction_updates).length > 0) {
-            constructions_data = JSON.parse(sessionStorage.getItem("constructions"));
+            constructions_data = JSON.parse(sessionStorage.getItem("projectsData"));
             for (var construction_id in construction_updates) {
                 let construction = constructions_data[0][construction_id];
                 construction.speed = construction_updates[construction_id].speed;
             }
-            sessionStorage.setItem("constructions", JSON.stringify(constructions_data));
+            sessionStorage.setItem("projectsData", JSON.stringify(constructions_data));
             if (typeof display_progressBars === "function") {
                 display_progressBars(constructions_data, null);
             }
@@ -212,7 +212,7 @@ socket.on("new_values", function (changes) {
 
 // get information about finished construction
 socket.on("finish_construction", function (construction_data) {
-    sessionStorage.setItem("constructions", JSON.stringify(construction_data));
+    sessionStorage.setItem("projectsData", JSON.stringify(construction_data));
     if (typeof refresh_progressBar === "function") {
         refresh_progressBar();
     }

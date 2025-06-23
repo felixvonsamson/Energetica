@@ -72,7 +72,7 @@ function refreshMoney() {
 
 function load_constructions() {
     if (typeof (Storage) !== "undefined") {
-        const constructionsData = sessionStorage.getItem("constructions");
+        const constructionsData = sessionStorage.getItem("projectsData");
         if (constructionsData) {
             return Promise.resolve(JSON.parse(constructionsData));
         }
@@ -85,7 +85,7 @@ function retrieve_constructions() {
         .then((response) => response.json())
         .then((raw_data) => {
             // Save fetched data to sessionStorage
-            sessionStorage.setItem("constructions", JSON.stringify(raw_data));
+            sessionStorage.setItem("projectsData", JSON.stringify(raw_data));
             // TODO(mglst): rename the key used here. it should be projects not constructions
             return raw_data;
         })

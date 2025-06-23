@@ -227,14 +227,14 @@ function increase_project_priority(project_id) {
     });
 }
 
-let projects_data, shipment_data;
+let projectsData, shipment_data;
 let progressBars = document.getElementsByClassName("progressbar-bar");
 let shipmentBars = document.getElementsByClassName("shipmentbar-bar");
 setInterval(() => {
-  load_constructions().then((projects_data) => {
+  load_constructions().then((projectsData) => {
 
     for (const progressBar of progressBars) {
-      const construction = projects_data.projects.find((project) => project.id === Number(progressBar.id));
+      const construction = projectsData.projects.find((project) => project.id === Number(progressBar.id));
       if (construction == null) {
         console.error("Construction ");
         throw new Error(`Could not find construction with id ${progressBar.id}`);
@@ -315,24 +315,24 @@ setInterval(() => {
 function refresh_progressBar() {
   // TODO(mglst): this function can REFRESH progress bars, but is not capable of CREATING or REMOVING html elements.
   // e.g. this works when pausing and resuming projects, but not when queueing a new project or canceling one.
-  load_constructions().then((projects_data) => {
+  load_constructions().then((projectsData) => {
     load_shipments().then((shipment_list) => {
       shipment_data = shipment_list;
-      display_progressBars(projects_data, shipment_data);
+      display_progressBars(projectsData, shipment_data);
     });
   });
 }
 
-function display_progressBars(projects_data, shipment_data) {
+function display_progressBars(projectsData, shipment_data) {
   if (document.title == "Dashboard") {
-    if (projects_data != null) {
+    if (projectsData != null) {
       const uc = document.getElementById("under_construction");
       const ur = document.getElementById("under_research");
       if (uc === null || ur === null) return;
       uc.innerHTML = "";
       ur.innerHTML = "";
-      const constructionQueue = projects_data.constructionQueue;
-      const researchQueue = projects_data.researchQueue;
+      const constructionQueue = projectsData.constructionQueue;
+      const researchQueue = projectsData.researchQueue;
       if (constructionQueue.length > 0) {
         uc.innerHTML = "<h1>&ensp;<img src='/static/images/icons/construction.png' class='icon'/>&nbsp;Ongoing Constructions</h1>";
       }
@@ -340,11 +340,11 @@ function display_progressBars(projects_data, shipment_data) {
         ur.innerHTML = "<h1>&ensp;<img src='/static/images/icons/technology.png' class='icon'/>&nbsp;Ongoing Researches</h1>";
       }
       for (const [index, projectId] of researchQueue.entries()) {
-        const construction = projects_data.projects.find((project) => project.id === projectId);
+        const construction = projectsData.projects.find((project) => project.id === projectId);
         ur.innerHTML += html_for_progressBar(index, researchQueue, construction);
       }
       for (const [index, projectId] of constructionQueue.entries()) {
-        const construction = projects_data.projects.find((project) => project.id === projectId);
+        const construction = projectsData.projects.find((project) => project.id === projectId);
         uc.innerHTML += html_for_progressBar(index, constructionQueue, construction);
       }
     }
@@ -369,13 +369,13 @@ function display_progressBars(projects_data, shipment_data) {
         });
         return;
       }
-      if (projects_data != null) {
+      if (projectsData != null) {
         uc.innerHTML = "";
         const projectsQueue = (
-          document.title == "Technologies" ? projects_data.researchQueue : projects_data.constructionQueue
+          document.title == "Technologies" ? projectsData.researchQueue : projectsData.constructionQueue
         );
         for (const [projectIndex, projectId] of projectsQueue.entries()) {
-          const project = projects_data.projects.find((project) => project.id === projectId);
+          const project = projectsData.projects.find((project) => project.id === projectId);
           uc.innerHTML += html_for_progressBar(projectIndex, projectsQueue, project);
         }
       }
