@@ -95,7 +95,7 @@ function start_construction(facility, force = false) {
   send_json(`/api/v1/projects?force=${force}`, { type: facility })
     .then((response) => {
       response.json().then((body) => {
-        if (catchValidationErrors(response, body)) return; // Not sure I want this here yet. Debugging
+        if (catchValidationErrors(response, body)) return;
         if (catchGameErrors(response, body)) return;
         if (response.ok) {
           refreshMoney();
@@ -118,7 +118,6 @@ function cancel_construction(construction_id, force = false) {
       response.json().then((body) => {
         if (catchValidationErrors(response, body)) return;
         if (catchGameErrors(response, body)) return;
-        // if (catchConfirm(response, body)) return;
         if (response.status === 204) {
           addToast("Construction cancelled");
           refreshMoney();
