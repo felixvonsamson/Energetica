@@ -12,6 +12,7 @@ from energetica.schemas.common import BaseApiModel
 
 if TYPE_CHECKING:
     from energetica.database.ongoing_project import OngoingProject
+    from energetica.database.player import Player
 
 
 class ProjectOut(BaseApiModel):
@@ -46,6 +47,20 @@ class ProjectListOut(BaseApiModel):
     projects: list[ProjectOut]
     construction_queue: list[int]
     research_queue: list[int]
+
+    @classmethod
+    def from_player(cls, player: Player) -> ProjectListOut:
+        projects = [
+            ProjectOut.from_ongoing_project(project)
+            for project in (*player.constructions_by_priority, *player.researches_by_priority)
+        ]
+        constructions_by_priority = [construction.id for construction in player.constructions_by_priority]
+        researches_by_priority = [research.id for research in player.researches_by_priority]
+        return ProjectListOut(
+            projects=projects,
+            construction_queue=constructions_by_priority,
+            research_queue=researches_by_priority,
+        )
 
 
 class ProjectIn(BaseApiModel):

@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from energetica.auth import get_current_user
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
-from energetica.schemas.projects import ProjectIn, ProjectListOut, ProjectOut
+from energetica.schemas.projects import ProjectIn, ProjectListOut
 from energetica.utils import assets
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
@@ -18,17 +18,7 @@ def get_constructions(
     player: Annotated[Player, Depends(get_current_user)],
 ) -> ProjectListOut:
     """Get list of facilities under construction for this player."""
-    projects = [
-        ProjectOut.from_ongoing_project(project)
-        for project in (*player.constructions_by_priority, *player.researches_by_priority)
-    ]
-    constructions_by_priority = [construction.id for construction in player.constructions_by_priority]
-    researches_by_priority = [research.id for research in player.researches_by_priority]
-    return ProjectListOut(
-        projects=projects,
-        construction_queue=constructions_by_priority,
-        research_queue=researches_by_priority,
-    )
+    return ProjectListOut.from_player(player)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
