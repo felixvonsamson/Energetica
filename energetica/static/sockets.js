@@ -174,8 +174,6 @@ socket.on("new_values", function (changes) {
             for (var construction_id in construction_updates) {
                 let construction = constructions_data[0][construction_id];
                 construction.speed = construction_updates[construction_id].speed;
-                // TODO(mglst): something isn't right here - end_tick_or_ticks_passed
-                construction.end_tick_or_ticks_passed = construction_updates[construction_id].end_tick;
             }
             sessionStorage.setItem("constructions", JSON.stringify(constructions_data));
             if (typeof display_progressBars === "function") {

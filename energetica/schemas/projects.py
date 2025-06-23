@@ -65,11 +65,3 @@ class ProjectListOut(BaseApiModel):
 
 class ProjectIn(BaseApiModel):
     type: ProjectType
-
-
-# Changes
-# - list -> dict
-# - end_tick_or_ticks_passed now split
-# JS variable names to look out for
-# * constructions_data
-# * project_priority
