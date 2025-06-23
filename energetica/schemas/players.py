@@ -2,6 +2,8 @@
 
 from pydantic import BaseModel, Field
 
+from energetica.schemas.common import BaseApiModel
+
 
 class PlayerOut(BaseModel):
     """Response model for player information."""
@@ -22,7 +24,7 @@ class UIStatePatch(BaseModel):
     last_opened_chat_id: int | None = Field(None, description="ID of the last opened chat")
 
 
-class MoneyOut(BaseModel):
+class MoneyOut(BaseApiModel):
     """Model for the player's money."""
 
     money: float
