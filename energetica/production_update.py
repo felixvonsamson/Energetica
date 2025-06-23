@@ -265,10 +265,10 @@ def industry_demand_and_revenues(player: Player, demand: dict, revenues: dict) -
 def projects_demand(player: Player, demand: dict) -> None:
     """Calculate power consumption for ongoing projects."""
     for research in player.researches_by_priority:
-        if research.is_ongoing():
+        if research.is_ongoing:
             demand["research"] += research.project_power
     for construction in player.constructions_by_priority:
-        if construction.is_ongoing():
+        if construction.is_ongoing:
             demand["construction"] += construction.project_power
 
 
@@ -891,7 +891,7 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
         cumul_demand = 0.0
         for i in range(min(len(player.constructions_by_priority), player.workers[WorkerType.CONSTRUCTION])):
             construction = player.constructions_by_priority[i]
-            if not construction.is_ongoing():
+            if not construction.is_ongoing:
                 continue
             cumul_demand += construction.project_power
             if cumul_demand > satisfaction:
@@ -904,7 +904,7 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
         cumul_demand = 0.0
         for i in range(min(len(researches_by_priority), player.workers[WorkerType.RESEARCH])):
             construction = researches_by_priority[i]
-            if not construction.is_ongoing():
+            if not construction.is_ongoing:
                 continue
             cumul_demand += construction.project_power
             if cumul_demand > satisfaction:

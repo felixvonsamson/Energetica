@@ -198,7 +198,7 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
         if construction.status == ProjectStatus.PAUSED:
             # Only the player can unpause a paused construction
             return
-        if construction.is_ongoing():
+        if construction.is_ongoing:
             continue
         construction.recompute_prerequisites_and_level()  # force recompute
         if construction.prerequisites:
@@ -207,7 +207,7 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
         available_workers -= 1
         insertion_index = None
         for insertion_index_candidate, possibly_paused_construction in enumerate(priority_list[:priority_index]):
-            if not possibly_paused_construction.is_ongoing():
+            if not possibly_paused_construction.is_ongoing:
                 insertion_index = insertion_index_candidate
                 break
         if insertion_index is not None:
@@ -511,13 +511,13 @@ def increase_project_priority(player: Player, project: OngoingProject) -> None:
 
 
 def pause_project(player: Player, project: OngoingProject) -> None:
-    if not project.is_ongoing():
+    if not project.is_ongoing:
         raise GameError("cannotPause")
     toggle_pause_project(player, project)
 
 
 def resume_project(player: Player, project: OngoingProject) -> None:
-    if project.is_ongoing():
+    if project.is_ongoing:
         raise GameError("cannotResume")
     toggle_pause_project(player, project)
 

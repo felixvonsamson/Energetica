@@ -52,7 +52,7 @@ class OngoingProject(DBModel):
         """Return True if this project is paused by the player."""
         return self.status == ProjectStatus.PAUSED
 
-    # TODO(mglst): make this method a property
+    @property
     def is_ongoing(self) -> bool:
         """Return True if this project is not paused and has no requirements."""
         return self.status == ProjectStatus.ONGOING
@@ -60,7 +60,7 @@ class OngoingProject(DBModel):
     def pause(self) -> None:
         """Make this facility go from waiting or ongoing to paused."""
         assert not self.was_paused_by_player()
-        if self.is_ongoing():
+        if self.is_ongoing:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.total_t + 1)
         self.status = ProjectStatus.PAUSED
 
@@ -98,7 +98,7 @@ class OngoingProject(DBModel):
 
     def delay_by(self, ticks: float) -> None:
         """Delay the project by the given number of ticks."""
-        assert self.is_ongoing()
+        assert self.is_ongoing
         self.end_tick_or_ticks_passed += ticks
         self.speed = 1 - ticks
 

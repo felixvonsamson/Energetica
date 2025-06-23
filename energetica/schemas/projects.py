@@ -30,8 +30,8 @@ class ProjectOut(BaseApiModel):
         return ProjectOut(
             id=ongoing_project.id,
             type=ongoing_project.project_type,
-            end_tick=ongoing_project.end_tick_or_ticks_passed if ongoing_project.is_ongoing() else None,
-            ticks_passed=None if ongoing_project.is_ongoing() else ongoing_project.end_tick_or_ticks_passed,
+            end_tick=ongoing_project.end_tick_or_ticks_passed if ongoing_project.is_ongoing else None,
+            ticks_passed=None if ongoing_project.is_ongoing else ongoing_project.end_tick_or_ticks_passed,
             duration=ongoing_project.duration,
             status=ongoing_project.status,
             display_name=engine.const_config["assets"][ongoing_project.project_type]["name"],
