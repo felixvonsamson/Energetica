@@ -219,24 +219,6 @@ async def request_pause_project(  # noqa: ANN201
     }
 
 
-@todo_router.post("/request_decrease_project_priority")
-async def request_decrease_project_priority(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Change the order of ongoing projects."""
-    request_data = await request.json()
-    project_id = request_data["id"]
-    project = OngoingProject.get(int(project_id))
-    if project is None or project.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.decrease_project_priority(player=user, project=project)
-    return {
-        "response": "success",
-        "projects": package_projects_data(user),
-    }
-
-
 @todo_router.post("/request_upgrade_facility")
 async def request_upgrade_facility(  # noqa: ANN201
     user: Annotated[Player, Depends(get_current_user)],

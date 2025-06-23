@@ -463,14 +463,10 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
     This function is executed when a player changes the order of ongoing projects.
     Note : When a project is moved in the priority list, it may be paused or unpaused.
     """
-    if project is None or project.player != player:
-        msg = "Project not found"
-        raise GameError(msg)
-
     priority_list = player.projects_by_priority[project.project_type.worker_type]
     index = priority_list.index(project)
     if index == len(priority_list) - 1:
-        return
+        return  # TODO(mglst): raise a GameError
 
     project_1: OngoingProject = project
     project_2: OngoingProject = priority_list[index + 1]
@@ -487,7 +483,7 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
         raise GameError("requirementsPreventReorder")
     if not project_1.was_paused_by_player() and project_2.was_paused_by_player():
         msg = "CannotSwapPausedProject"
-        raise GameError(msg, project_1=project_1.project_type, project_2=project_2.project_type)
+        raise GameError(msg, first_project_type=project_1.project_type, second_project_type=project_2.project_type)
 
     if project_1.status == ProjectStatus.ONGOING and project_2.status == ProjectStatus.WAITING:
         # Case 2
@@ -497,6 +493,21 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
         project_2.set_ongoing()
 
     priority_list[index + 1], priority_list[index] = (priority_list[index], priority_list[index + 1])
+
+
+def increase_project_priority(player: Player, project: OngoingProject) -> None:
+    """
+    Decrease the priority of an ongoing project.
+
+    This function is executed when a player changes the order of ongoing projects.
+    Note : When a project is moved in the priority list, it may be paused or unpaused.
+    """
+    priority_list = player.projects_by_priority[project.project_type.worker_type]
+    index = priority_list.index(project)
+    if index == 0:
+        return  # TODO(mglst): raise a GameError
+    # Here, to increase the priority of this project, we decrease the priority of the project just above it
+    decrease_project_priority(player, priority_list[index - 1])
 
 
 def pause_project(player: Player, project: OngoingProject) -> None:

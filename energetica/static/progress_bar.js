@@ -184,27 +184,40 @@ function resume_construction(projectId) {
     });
 }
 
-function decrease_project_priority(construction_id) {
-  send_json("/api/request_decrease_project_priority", {
-    id: construction_id,
-  })
+function decrease_project_priority(project_id) {
+  send_json(`/api/v1/projects/${project_id}:decrease-priority`, {})
     .then((response) => {
-      response.json().then((raw_data) => {
-        let response = raw_data["response"];
-        if (response == "success") {
+      response.json().then((body) => {
+        if (catchGameErrors(response, body)) return;
+        if (response.status === 200) {
           sessionStorage.setItem(
             "constructions",
-            JSON.stringify(raw_data["constructions"])
+            JSON.stringify(body)
           );
           refresh_progressBar();
+        } else {
+          addError("An unknown error occurred.");
         }
-        else if (response == "requirementsPreventReorder") {
-          addError("The order of these two constructions cannot be swapped as one depends on the other.");
-        }
-        else if (response == "CannotSwapPausedProject") {
-          construction_1 = raw_data["construction_1"];
-          construction_2 = raw_data["construction_2"];
-          addError(`Cannot change order. Unpause ${construction_2} or pause ${construction_1} first.`);
+      });
+    })
+    .catch((error) => {
+      console.error(`caught error ${error}`);
+    });
+}
+
+function increase_project_priority(project_id) {
+  send_json(`/api/v1/projects/${project_id}:increase-priority`, {})
+    .then((response) => {
+      response.json().then((body) => {
+        if (catchGameErrors(response, body)) return;
+        if (response.status === 200) {
+          sessionStorage.setItem(
+            "constructions",
+            JSON.stringify(body)
+          );
+          refresh_progressBar();
+        } else {
+          addError("An unknown error occurred.");
         }
       });
     })
@@ -237,7 +250,6 @@ setInterval(() => {
       } else {
         new_width = (construction.ticksPassed / construction.duration) * 100;
         ticks_remaining = construction.duration - construction.ticksPassed;
-        console.log(ticks_remaining);
       }
       progressBar.style.setProperty("--width", new_width);
       if (new_width > 0.01) {
@@ -381,7 +393,7 @@ function html_for_progressBar(projectIndex, projectsQueue, project) {
     throw Error("html_for_progressBar: project is null");
   }
   let playPauseLogo = "fa-pause";
-  let togglePauseButtonFunctionName = project.status === 2 ? "pause_construction" : "resume_construction";
+  const togglePauseButtonFunctionName = project.status === 2 ? "pause_construction" : "resume_construction";
   if (project.status == 0) {
     playPauseLogo = "fa-play";
   }
@@ -402,7 +414,7 @@ function html_for_progressBar(projectIndex, projectsQueue, project) {
     <div class="progressbar-container">
         <div class="progressbar-arrowcontainer">
             ${projectIndex > 0 ? `
-                <button class="progressbar-arrow progressbar-button" onclick="decrease_project_priority(${projectsQueue[projectIndex - 1]})">
+                <button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(${project.id})">
                     <i class="fa fa-caret-up"></i>
                 </button>` : ''}
             ${projectIndex + 1 != projectsQueue.length ? `

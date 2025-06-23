@@ -59,19 +59,28 @@ function catchValidationErrors(response, body) {
 function catchGameErrors(response, body) {
     if (response.status !== 400 || body.gameExceptionType == null) return false;
     switch (body.gameExceptionType) {
+        // Routes where the error can occur are listed as comments
         case "Not enough money":
             addError("Not enough money");
             break;
         case "Requirements not satisfied":
-            // Routes where this error can occur:
             // POST: /projects
             addError("Requirements not satisfied");
             break;
         case "PausedPrerequisitePreventUnpause":
-            // Routes where this error can occur:
             // POST: /projects/{id}:pause
             // POST: /projects/{id}:resume
             addError("This construction cannot be unpaused as it has a paused prerequisite. Unpause these first.");
+            break;
+        case "requirementsPreventReorder":
+            // POST: /projects/{id}:increase-priority
+            // POST: /projects/{id}:decrease-priority
+            addError("The order of these two constructions cannot be swapped as one depends on the other.");
+            break;
+        case "CannotSwapPausedProject":
+            // POST: /projects/{id}:increase-priority
+            // POST: /projects/{id}:decrease-priority
+            addError(`Cannot change order. Unpause ${body.secondProjectType} or pause ${body.firstProjectType} first.`);
             break;
         default:
             addError(`Uncaught error: ${body.gameExceptionType}`);

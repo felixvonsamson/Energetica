@@ -79,3 +79,29 @@ def request_resume_project(  # noqa: ANN201
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     assets.resume_project(player=player, project=project)
     return get_constructions(player)
+
+
+@router.post("/{project_id}:decrease-priority")
+async def decrease_project_priority(
+    player: Annotated[Player, Depends(get_current_user)],
+    project_id: int,
+) -> ProjectListOut:
+    """Decrease the priority of a projects."""
+    project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
+    if project.player != player:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    assets.decrease_project_priority(player=player, project=project)
+    return get_constructions(player)
+
+
+@router.post("/{project_id}:increase-priority")
+async def increase_project_priority(
+    player: Annotated[Player, Depends(get_current_user)],
+    project_id: int,
+) -> ProjectListOut:
+    """Increase the priority of a projects."""
+    project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
+    if project.player != player:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    assets.increase_project_priority(player=player, project=project)
+    return get_constructions(player)
