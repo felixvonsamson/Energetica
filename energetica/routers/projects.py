@@ -31,18 +31,18 @@ def queue_project(
     assets.queue_project(player=player, project_type=project.type, force=force)
 
 
-@router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{project_id}")
 def cancel_project(
     player: Annotated[Player, Depends(get_current_user)],
     project_id: int,
     force: bool = False,
-) -> None:
+) -> ProjectListOut:
     """Cancel an ongoing project."""
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     assets.cancel_project(player=player, project=project, force=force)
-    return None
+    return get_constructions(player)
 
 
 @router.post("/{project_id}:pause")

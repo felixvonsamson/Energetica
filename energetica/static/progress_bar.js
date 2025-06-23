@@ -124,7 +124,10 @@ function cancel_construction(construction_id, force = false) {
         if (response.status === 204) {
           addToast("Construction cancelled");
           refreshMoney();
-          retrieve_constructions();
+          sessionStorage.setItem(
+            "constructions",
+            JSON.stringify(body)
+          );
           refresh_progressBar();
         } else if (response.status === 300) {
           if (body.type == "HasDependents") {
