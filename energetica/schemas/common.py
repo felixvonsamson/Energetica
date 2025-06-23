@@ -30,7 +30,7 @@ class GameErrorOut(BaseModel):
         return GameErrorOut(game_exception_type=game_error.exception_type)
 
 
-class ConfirmOut(BaseModel):
+class ConfirmOut(BaseApiModel):
     """Response model for confirm 'errors'."""
 
     type: str

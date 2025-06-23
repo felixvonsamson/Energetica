@@ -94,18 +94,16 @@ function format_seconds(totalSeconds, show_seconds = true) {
 function start_construction(facility, force = false) {
   send_json(`/api/v1/projects?force=${force}`, { type: facility })
     .then((response) => {
-      response.json().then((raw_data) => {
-        if (catchValidationErrors(response, raw_data)) return; // Not sure I want this here yet. Debugging
-        if (catchGameErrors(response, raw_data)) return;
+      response.json().then((body) => {
+        if (catchValidationErrors(response, body)) return; // Not sure I want this here yet. Debugging
+        if (catchGameErrors(response, body)) return;
         if (response.ok) {
           refreshMoney();
           retrieve_constructions();
           refresh_progressBar();
           addToast("Construction started");
         } else if (response.status === 300) {
-          const capacity = raw_data["capacity"];
-          const construction_power = raw_data["construction_power"];
-          are_you_sure_start_construction(facility, capacity, construction_power);
+          are_you_sure_start_construction(facility, body.capacity, body.constructionPower);
         }
       });
     })
