@@ -110,7 +110,7 @@ def _simulate(
             # TODO (Yassir): mismatch if content type is not the same
             if "money" in action["response"]["content"]:
                 money = action["response"]["content"]["money"]
-                real_money = Player.get(player_id).money
+                real_money = Player.getitem(player_id).money
                 if abs(money - real_money) > 1:
                     print(
                         f"""\033[31mMoney {real_money} does not match expected money """

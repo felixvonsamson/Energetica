@@ -56,7 +56,7 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
         engine.log(f"{player.username} : Industry levelled down by {climate_events[event_name].name}.")
     facilities_list = climate_events[event_name].destruction_chance.keys()
     facilities_at_risk = list(
-        ActiveFacility.filter(lambda facility: facility.facility_type in facilities_list and facility.player == player)
+        ActiveFacility.filter(lambda facility: facility.facility_type in facilities_list and facility.player == player),
     )
     for facility in facilities_at_risk:
         if rng.random() < climate_events[event_name].destruction_chance[facility.facility_type]:
@@ -74,7 +74,6 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
 
 def check_climate_events() -> None:
     """Check if a climate event happens on this tick."""
-
     seed_hash = stable_hash((engine.random_seed, "check_climate_events", engine.total_t))
     rng = np.random.default_rng(abs(seed_hash))
 
@@ -141,7 +140,7 @@ def check_climate_events() -> None:
     hurricane_probability = climate_events["hurricane"].base_probability / ticks_per_day * climate_change**2
     if rng.random() < hurricane_probability:
         random_tile_id = rng.integers(1, HexTile.count() + 1)
-        tile = HexTile.getitem(random_tile_id)
+        tile = HexTile.getitem(random_tile_id)  # type: ignore
         affected_tiles = tile.get_neighbors(n=2)
         for affected_tile in affected_tiles:
             climate_event_impact(affected_tile, "hurricane", rng)
@@ -172,7 +171,7 @@ def data_init_climate(seconds_per_tick: int, random_seed: int, delta_t: int) -> 
         for j in range(360):
             ref_temp[i].append(calculate_reference_gta(delta_t - (359 - j) * pow(6, i), seconds_per_tick))
             temp_deviation[i].append(
-                calculate_temperature_deviation(delta_t - (359 - j) * pow(6, i), seconds_per_tick, 4e10, random_seed)
+                calculate_temperature_deviation(delta_t - (359 - j) * pow(6, i), seconds_per_tick, 4e10, random_seed),
             )
 
     return {
