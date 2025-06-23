@@ -5,7 +5,8 @@ This code contains the main functions that communicate with the server (client s
 /**
  * @type {typeof import('./frontend_data.js').load_chats}
  * @type {typeof import('./display_functions.js')}
- * * @type {typeof import('./toasts.js')}
+ * @type {typeof import('./toasts.js')}
+ * @type {typeof import('./progress_bar.js').load_chats}
  */
 
 socket.on("infoMessage", addToast);

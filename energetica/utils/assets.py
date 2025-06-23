@@ -29,6 +29,7 @@ from energetica.enums import (
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
+from energetica.schemas.projects import ProjectListOut
 from energetica.utils.hashing import stable_hash
 
 if TYPE_CHECKING:
@@ -144,7 +145,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         player.capacities.update(player, project.project_type)
     engine.config.update_config_for_user(player)
     player.emit("retrieve_player_data")
-    player.emit("finish_construction", package_projects_data(player))
+    player.emit("finish_construction", ProjectListOut.from_player(player).model_dump())
 
     if isinstance(project.project_type, FunctionalFacilityType):
         player.invalidate_recompute_and_dispatch_data_for_pages(
@@ -326,16 +327,6 @@ def dismantle_all_of_type(
     for facility in facilities:
         with contextlib.suppress(GameError):
             dismantle_facility(player, facility)
-
-
-def package_projects_data(player: Player) -> dict:
-    """Package ongoing constructions for a particular player."""
-    # TODO(mglst): Rework the return dict structure (involves back + front end)
-    return {
-        0: player.package_constructions(),
-        1: [c.id for c in player.constructions_by_priority],
-        2: [r.id for r in player.researches_by_priority],
-    }
 
 
 def queue_project(
