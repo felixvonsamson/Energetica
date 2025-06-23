@@ -457,7 +457,7 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
     priority_list = player.projects_by_priority[project.project_type.worker_type]
     index = priority_list.index(project)
     if index == len(priority_list) - 1:
-        return  # TODO(mglst): raise a GameError
+        raise GameError("CannotDecreasePriorityOfLastProject")
 
     project_1: OngoingProject = project
     project_2: OngoingProject = priority_list[index + 1]
@@ -496,7 +496,7 @@ def increase_project_priority(player: Player, project: OngoingProject) -> None:
     priority_list = player.projects_by_priority[project.project_type.worker_type]
     index = priority_list.index(project)
     if index == 0:
-        return  # TODO(mglst): raise a GameError
+        raise GameError("CannotIncreasePriorityOfFirstProject")
     # Here, to increase the priority of this project, we decrease the priority of the project just above it
     decrease_project_priority(player, priority_list[index - 1])
 

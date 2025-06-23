@@ -83,6 +83,14 @@ function catchGameErrors(response, body) {
             // POST: /projects/{id}:decrease-priority
             addError(`Cannot change order. Unpause ${body.secondProjectType} or pause ${body.firstProjectType} first.`);
             break;
+        case "CannotDecreasePriorityOfLastProject":
+            // POST: /projects/{id}:decrease-priority
+            addError("Cannot decrease the priority of the last project.");
+            break;
+        case "CannotIncreasePriorityOfFirstProject":
+            // POST: /projects/{id}:increase-priority
+            addError("Cannot increase the priority of the first project.");
+            break;
         default:
             addError(`Uncaught error: ${body.gameExceptionType}`);
     }
