@@ -20,12 +20,10 @@ from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
 from energetica.database.network import Network
-from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType, str_to_project_type
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.utils.assets import package_projects_data
 
 # TODO: migrate all these routes to native FastAPI routes
 todo_router = APIRouter(prefix="", tags=["Flask Migration"])
@@ -199,24 +197,6 @@ async def choose_location(  # noqa: ANN201
     tile = HexTile.getitem(selected_id + 1)
     energetica.utils.map_helpers.confirm_location(player=user, tile=tile)
     return {"response": "success"}
-
-
-@todo_router.post("/request_toggle_pause_project")
-async def request_pause_project(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Pause or unpause an ongoing project."""
-    request_data = await request.json()
-    project_id = int(request_data["id"])
-    project = OngoingProject.get(int(project_id))
-    if project is None or project.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.toggle_pause_project(player=user, project=project)
-    return {
-        "response": "success",
-        "projects": package_projects_data(user),
-    }
 
 
 @todo_router.post("/request_upgrade_facility")
