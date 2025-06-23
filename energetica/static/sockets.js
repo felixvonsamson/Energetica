@@ -67,6 +67,12 @@ function catchGameErrors(response, body) {
             // POST: /projects
             addError("Requirements not satisfied");
             break;
+        case "PausedPrerequisitePreventUnpause":
+            // Routes where this error can occur:
+            // POST: /projects/{id}:pause
+            // POST: /projects/{id}:resume
+            addError("This construction cannot be unpaused as it has a paused prerequisite. Unpause these first.");
+            break;
         default:
             addError(`Uncaught error: ${body.gameExceptionType}`);
     }
@@ -150,6 +156,7 @@ socket.on("new_values", function (changes) {
             for (var construction_id in construction_updates) {
                 let construction = constructions_data[0][construction_id];
                 construction.speed = construction_updates[construction_id].speed;
+                // TODO(mglst): something isn't right here - end_tick_or_ticks_passed
                 construction.end_tick_or_ticks_passed = construction_updates[construction_id].end_tick;
             }
             sessionStorage.setItem("constructions", JSON.stringify(constructions_data));

@@ -146,22 +146,36 @@ function cancel_construction(construction_id, force = false) {
     });
 }
 
-function pause_construction(construction_id) {
-  send_json("/api/request_toggle_pause_project", {
-    id: construction_id,
-  })
+function pause_construction(projectId) {
+  send_json(`/api/v1/projects/${projectId}:pause`, { id: projectId })
     .then((response) => {
-      response.json().then((raw_data) => {
-        let response = raw_data["response"];
-        if (response == "success") {
+      response.json().then((body) => {
+        if (catchGameErrors(response, body)) return;
+        if (response.status === 200) {
           sessionStorage.setItem(
             "constructions",
-            JSON.stringify(raw_data["constructions"])
+            JSON.stringify(body)
           );
           refresh_progressBar();
         }
-        else if (response == "PausedPrerequisitePreventUnpause") {
-          addError("This construction cannot be unpaused as it has a paused prerequisite. Unpause these first.");
+      });
+    })
+    .catch((error) => {
+      console.error(`caught error ${error}`);
+    });
+}
+
+function resume_construction(projectId) {
+  send_json(`/api/v1/projects/${projectId}:resume`, { id: projectId })
+    .then((response) => {
+      response.json().then((body) => {
+        if (catchGameErrors(response, body)) return;
+        if (response.status === 200) {
+          sessionStorage.setItem(
+            "constructions",
+            JSON.stringify(body)
+          );
+          refresh_progressBar();
         }
       });
     })
@@ -202,9 +216,8 @@ function decrease_project_priority(construction_id) {
 let projects_data, shipment_data;
 let progressBars = document.getElementsByClassName("progressbar-bar");
 let shipmentBars = document.getElementsByClassName("shipmentbar-bar");
-load_constructions().then((projects_data_2) => {
-  projects_data = projects_data_2;
-  setInterval(() => {
+setInterval(() => {
+  load_constructions().then((projects_data) => {
 
     for (const progressBar of progressBars) {
       const construction = projects_data.projects.find((project) => project.id === Number(progressBar.id));
@@ -221,10 +234,10 @@ load_constructions().then((projects_data_2) => {
       if (construction.status == 2) {
         ticks_remaining = construction.endTick - last_tick - time_since_last_tick * construction.speed;
         new_width = (1 - ticks_remaining / construction.duration) * 100;
-      }
-      else {
+      } else {
         new_width = (construction.ticksPassed / construction.duration) * 100;
         ticks_remaining = construction.duration - construction.ticksPassed;
+        console.log(ticks_remaining);
       }
       progressBar.style.setProperty("--width", new_width);
       if (new_width > 0.01) {
@@ -283,8 +296,8 @@ load_constructions().then((projects_data_2) => {
         shipmentBar.innerHTML = `&nbsp; <span class="hover_info">${time}<span class="popup_info small">in-game time</span></span> &ensp; <span class="transparency_txt hover_info">(${real_time})<span class="popup_info small">real time</span></span>`;
       }
     }
-  }, 100);
-});
+  });
+}, 100);
 
 function refresh_progressBar() {
   // TODO(mglst): this function can REFRESH progress bars, but is not capable of CREATING or REMOVING html elements.
@@ -318,7 +331,7 @@ function display_progressBars(projects_data, shipment_data) {
         ur.innerHTML += html_for_progressBar(index, researchQueue, construction);
       }
       for (const [index, projectId] of constructionQueue.entries()) {
-        const construction = constructions_data.projects.find((project) => project.id === projectId);
+        const construction = projects_data.projects.find((project) => project.id === projectId);
         uc.innerHTML += html_for_progressBar(index, constructionQueue, construction);
       }
     }
@@ -368,6 +381,7 @@ function html_for_progressBar(projectIndex, projectsQueue, project) {
     throw Error("html_for_progressBar: project is null");
   }
   let playPauseLogo = "fa-pause";
+  let togglePauseButtonFunctionName = project.status === 2 ? "pause_construction" : "resume_construction";
   if (project.status == 0) {
     playPauseLogo = "fa-play";
   }
@@ -401,7 +415,7 @@ function html_for_progressBar(projectIndex, projectsQueue, project) {
         <div class="progressbar-background">
             <div id="${project.id}" class="progressbar-bar"></div>
         </div>
-        <button class="progressbar-icon progressbar-button" onclick="pause_construction(${project.id})">
+        <button class="progressbar-icon progressbar-button" onclick="${togglePauseButtonFunctionName}(${project.id})">
             <i class="fa ${playPauseLogo}"></i>
         </button>
         <button class="progressbar-icon progressbar-button" onclick="cancel_construction(${project.id})">

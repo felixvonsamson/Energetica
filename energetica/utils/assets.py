@@ -499,12 +499,26 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
     priority_list[index + 1], priority_list[index] = (priority_list[index], priority_list[index + 1])
 
 
+def pause_project(player: Player, project: OngoingProject) -> None:
+    if not project.is_ongoing():
+        raise GameError("cannotPause")
+    toggle_pause_project(player, project)
+
+
+def resume_project(player: Player, project: OngoingProject) -> None:
+    if project.is_ongoing():
+        raise GameError("cannotResume")
+    toggle_pause_project(player, project)
+
+
 def toggle_pause_project(player: Player, project: OngoingProject) -> None:
     """
     Pause or unpauses an ongoing project.
 
     Note : When a project is paused or unpaused, it's position in the priority list has to be updated.
     """
+    # TODO(mglst): this function should call pause_project and resume_project - that's where the logic should reside
+    # Ultimately, this function should be deprecated
     if project is None or project.player != player:
         msg = "Project not found"
         raise GameError(msg)

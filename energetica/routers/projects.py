@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from energetica.auth import get_current_user
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
-from energetica.schemas.projects import ProjectIn, ProjectOut, ProjectsOut
+from energetica.schemas.projects import ProjectIn, ProjectListOut, ProjectOut
 from energetica.utils import assets
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 @router.get("")
 def get_constructions(
     player: Annotated[Player, Depends(get_current_user)],
-) -> ProjectsOut:
+) -> ProjectListOut:
     """Get list of facilities under construction for this player."""
     projects = [
         ProjectOut.from_ongoing_project(project)
@@ -24,7 +24,7 @@ def get_constructions(
     ]
     constructions_by_priority = [construction.id for construction in player.constructions_by_priority]
     researches_by_priority = [research.id for research in player.researches_by_priority]
-    return ProjectsOut(
+    return ProjectListOut(
         projects=projects,
         construction_queue=constructions_by_priority,
         research_queue=researches_by_priority,
@@ -48,8 +48,34 @@ def cancel_project(
     force: bool = False,
 ) -> None:
     """Cancel an ongoing project."""
-    project = OngoingProject.get(project_id)
-    if project is None or project.player != player:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
+    if project.player != player:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     assets.cancel_project(player=player, project=project, force=force)
     return None
+
+
+@router.post("/{project_id}:pause")
+def request_pause_project(  # noqa: ANN201
+    player: Annotated[Player, Depends(get_current_user)],
+    project_id: int,
+) -> ProjectListOut:
+    """Pause or unpause an ongoing project."""
+    project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
+    if project.player != player:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    assets.pause_project(player=player, project=project)
+    return get_constructions(player)
+
+
+@router.post("/{project_id}:resume")
+def request_resume_project(  # noqa: ANN201
+    player: Annotated[Player, Depends(get_current_user)],
+    project_id: int,
+) -> ProjectListOut:
+    """Pause or unpause an ongoing project."""
+    project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
+    if project.player != player:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    assets.resume_project(player=player, project=project)
+    return get_constructions(player)
