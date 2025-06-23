@@ -682,7 +682,7 @@ def package_power_facilities(player: Player) -> list[dict]:
         )
         | (
             {"high_hydro_cost": hydro_price_multiplier(player, power_facility) >= 13.0}
-            if power_facility in HydroFacilityType
+            if isinstance(power_facility, HydroFacilityType)
             else {}
         )
         | (

@@ -1,5 +1,6 @@
 import json
 import logging
+import urllib.parse
 from datetime import datetime
 from typing import Awaitable, Callable
 
@@ -121,11 +122,19 @@ def setup_routes(app: FastAPI):
         with engine.lock:
             response = await call_next(request)
 
+        if request.url.path.startswith("/root"):
+            return response
+
         # Try to decode the request and response
-        try:
-            request_content = json.loads(body_bytes.decode())
-        except Exception:
-            request_content = "unparsable or not JSON"
+        if request.headers.get("content-type") == "application/x-www-form-urlencoded":
+            request_content = {
+                k: v[0] if len(v) == 1 else v for k, v in urllib.parse.parse_qs(body_bytes.decode()).items()
+            }
+        else:
+            try:
+                request_content = json.loads(body_bytes.decode())
+            except Exception:
+                request_content = "unparsable or not JSON"
 
         # Buffer the response body
         response_body = b""
