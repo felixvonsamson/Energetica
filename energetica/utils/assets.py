@@ -1,8 +1,7 @@
 """Utils relating to player assets."""
 
-import contextlib
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
@@ -223,10 +222,6 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
 
 def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
     """Upgrade a facility."""
-    if facility is None or facility.player != player:
-        msg = "Construction not found"
-        raise GameError(msg)
-
     upgrade_cost = facility.upgrade_cost
     if upgrade_cost is None:
         msg = "Facility not upgradable"
@@ -247,7 +242,15 @@ def upgrade_all_of_type(
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> None:
     """Upgrade all facilities of a certain type."""
-    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, facility_type=facility_type)
+    facilities: Iterator[ActiveFacility] = ActiveFacility.filter(
+        lambda facility: facility.player == player
+        and facility.facility_type == facility_type
+        and facility.upgrade_cost is not None
+        and not facility.decommissioning,
+    )
+    if player.money < sum(map(lambda facility: cast(float, facility.upgrade_cost), facilities)):
+        msg = "Not enough money"
+        raise GameError(msg)
     for facility in facilities:
         upgrade_facility(player, facility)
 
@@ -307,9 +310,6 @@ def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str
 
 def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
     """Dismantle a facility."""
-    if facility is None or facility.player != player:
-        msg = "Facility not found"
-        raise GameError(msg)
     cost = facility.dismantle_cost
     if player.money < cost:
         msg = "Not enough money"
@@ -323,10 +323,16 @@ def dismantle_all_of_type(
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> None:
     """Dismantle all facilities of a certain type."""
-    facilities = list(ActiveFacility.filter_by(player=player, facility_type=facility_type))
+    facilities: Iterator[ActiveFacility] = ActiveFacility.filter(
+        lambda facility: facility.player == player
+        and facility.facility_type == facility_type
+        and not facility.decommissioning,
+    )
+    if player.money < sum(map(lambda facility: cast(float, facility.dismantle_cost), facilities)):
+        msg = "Not enough money"
+        raise GameError(msg)
     for facility in facilities:
-        with contextlib.suppress(GameError):
-            dismantle_facility(player, facility)
+        dismantle_facility(player, facility)
 
 
 def queue_project(
