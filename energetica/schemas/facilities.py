@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from energetica.database.active_facility import ActiveFacility
 from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType, WindFacilityType
 from energetica.schemas.common import BaseApiModel
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
 
 
 class PowerFacilityOut(BaseApiModel):
@@ -92,4 +97,26 @@ class ExtractionFacilityOut(BaseApiModel):
             remaining_lifespan=storage_facility.remaining_lifespan,
             upgrade_cost=None if storage_facility.decommissioning else storage_facility.upgrade_cost,
             dismantle_cost=None if storage_facility.decommissioning else storage_facility.dismantle_cost,
+        )
+
+
+class FacilitiesListOut(BaseApiModel):
+    power_facilities: list[PowerFacilityOut]
+    storage_facilities: list[StorageFacilityOut]
+    extraction_facilities: list[ExtractionFacilityOut]
+
+    @classmethod
+    def from_player(cls, player: Player) -> FacilitiesListOut:
+        return FacilitiesListOut(
+            power_facilities=[
+                PowerFacilityOut.from_active_facility(power_facility) for power_facility in player.power_facilities
+            ],
+            storage_facilities=[
+                StorageFacilityOut.from_active_facility(storage_facility)
+                for storage_facility in player.storage_facilities
+            ],
+            extraction_facilities=[
+                ExtractionFacilityOut.from_active_facility(extraction_facility)
+                for extraction_facility in player.extraction_facilities
+            ],
         )

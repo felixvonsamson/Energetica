@@ -8,7 +8,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import StrEnum
 from functools import cached_property
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable
 
 from pywebpush import WebPushException, webpush
 
@@ -571,6 +571,27 @@ class Player(DBModel):
     def package_construction_queue(self) -> list:
         """Package the player's construction queue (list of construction_ids)."""
         return self.constructions_by_priority
+
+    @property
+    def power_facilities(self) -> Iterable[ActiveFacility]:
+        return ActiveFacility.filter(
+            lambda active_facility: active_facility.player == self
+            and isinstance(active_facility.facility_type, PowerFacilityType),
+        )
+
+    @property
+    def storage_facilities(self) -> Iterable[ActiveFacility]:
+        return ActiveFacility.filter(
+            lambda active_facility: active_facility.player == self
+            and isinstance(active_facility.facility_type, StorageFacilityType),
+        )
+
+    @property
+    def extraction_facilities(self) -> Iterable[ActiveFacility]:
+        return ActiveFacility.filter(
+            lambda active_facility: active_facility.player == self
+            and isinstance(active_facility.facility_type, ExtractionFacilityType),
+        )
 
     def package_active_facilities(self) -> dict[str, dict[int, dict[str, Any]]]:
         """Package the player's active facilities."""

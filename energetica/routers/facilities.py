@@ -8,10 +8,19 @@ from energetica.auth import get_current_user
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.player import Player
 from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType
+from energetica.schemas.facilities import FacilitiesListOut
 from energetica.schemas.players import MoneyOut
 from energetica.utils import assets
 
 router = APIRouter(prefix="/facilities", tags=["Facilities"])
+
+
+@router.get("")
+def get_active_facilities(
+    player: Annotated[Player, Depends(get_current_user)],
+) -> FacilitiesListOut:
+    """Get the active facilities for this player."""
+    return FacilitiesListOut.from_player(player)
 
 
 @router.post("{facility_id}:upgrade")
