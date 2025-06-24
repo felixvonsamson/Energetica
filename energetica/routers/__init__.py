@@ -21,6 +21,7 @@ from energetica.schemas.common import ConfirmOut, GameErrorOut
 from .achievements import router as achievements_router
 from .chats import router as chat_router
 from .daily_quiz import router as daily_quiz_router
+from .facilities import router as facilities_router
 from .map import router as map_router
 from .networks import router as network_router
 from .notifications import router as notifications_router
@@ -38,6 +39,7 @@ api_routers = [
     achievements_router,
     chat_router,
     daily_quiz_router,
+    facilities_router,
     map_router,
     network_router,
     notifications_router,
