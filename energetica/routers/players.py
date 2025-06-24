@@ -56,4 +56,4 @@ def update_ui_state(
 def get_money(
     player: Annotated[Player, Depends(get_current_user)],
 ) -> MoneyOut:
-    return MoneyOut(money=player.money)
+    return MoneyOut.from_player(player)
