@@ -38,4 +38,4 @@ class MoneyOut(BaseApiModel):
 
     @classmethod
     def from_player(cls, player: Player) -> MoneyOut:
-        return MoneyOut.from_player(player)
+        return MoneyOut(money=player.money)
