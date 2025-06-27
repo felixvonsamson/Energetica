@@ -78,7 +78,6 @@ def setup_routes(app: FastAPI):
     @app.exception_handler(Confirm)
     def global_confirm_handler(request: Request, confirm: Confirm):
         """Handle confirm 'errors'."""
-        print(ConfirmOut.from_confirm(confirm))
         return JSONResponse(
             content=ConfirmOut.from_confirm(confirm).model_dump(),
             status_code=status.HTTP_300_MULTIPLE_CHOICES,
