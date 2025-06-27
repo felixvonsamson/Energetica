@@ -488,7 +488,7 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
 
 def increase_project_priority(player: Player, project: OngoingProject) -> None:
     """
-    Decrease the priority of an ongoing project.
+    Increase the priority of an ongoing project.
 
     This function is executed when a player changes the order of ongoing projects.
     Note : When a project is moved in the priority list, it may be paused or unpaused.
