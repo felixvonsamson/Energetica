@@ -102,6 +102,7 @@ function start_construction(facility, force = false) {
           retrieve_constructions();
           refresh_progressBar();
           addToast("Construction started");
+          setTimeout(() => { window.location = window.location; }, 100);
         } else if (response.status === 300) {
           are_you_sure_start_construction(facility, body.capacity, body.constructionPower);
         }
@@ -126,6 +127,7 @@ function cancel_construction(construction_id, force = false) {
             JSON.stringify(body)
           );
           refresh_progressBar();
+          setTimeout(() => { window.location = window.location; }, 100);
         } else if (response.status === 300) {
           if (body.type == "HasDependents") {
             const dependents = body.dependents;
