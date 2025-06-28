@@ -108,7 +108,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             engine.log(f"{player.username} : + 1 {project_name}")
     if isinstance(project.project_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
         eol = engine.total_t + math.ceil(
-            engine.const_config["assets"][project.project_type]["lifespan"] / engine.in_game_seconds_per_tick
+            engine.const_config["assets"][project.project_type]["lifespan"] / engine.in_game_seconds_per_tick,
         )
         # Create a RNG, seeded with the server seed, the player's tile coordinates, the project name, and number of
         # facilities of that type the player has built. This ensures that the facility's random position is generated
@@ -121,7 +121,8 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
                 player.id,
                 project.project_type,
                 ActiveFacility.count_when(
-                    facility_type=project.project_type, player=player
+                    facility_type=project.project_type,
+                    player=player,
                 ),  # TODO (mglst): This is not good, we should use the facility id or the "location"
             ),
         )
@@ -240,7 +241,8 @@ def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
 
 
 def upgrade_all_of_type(
-    player: Player, facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
+    player: Player,
+    facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> None:
     """Upgrade all facilities of a certain type."""
     facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, facility_type=facility_type)
@@ -315,7 +317,8 @@ def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
 
 
 def dismantle_all_of_type(
-    player: Player, facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
+    player: Player,
+    facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> None:
     """Dismantle all facilities of a certain type."""
     facilities = list(ActiveFacility.filter_by(player=player, facility_type=facility_type))
@@ -343,7 +346,6 @@ def queue_project(
     skip_notifications: bool = False,
 ) -> OngoingProject:
     """Queue a construction or research project."""
-
     asset_requirement_status = technology_effects.requirements_status(
         player,
         project_type,
