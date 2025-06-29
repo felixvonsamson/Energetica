@@ -383,7 +383,7 @@ def queue_project(
     )
     player.projects_by_priority[project_type.worker_type].append(new_construction)
     try:
-        toggle_pause_project(player, new_construction)
+        resume_project(player, new_construction)
     except GameError:
         # if the new construction depends on a construction that is paused.
         pass
@@ -494,7 +494,7 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
 
 def increase_project_priority(player: Player, project: OngoingProject) -> None:
     """
-    Decrease the priority of an ongoing project.
+    Increase the priority of an ongoing project.
 
     This function is executed when a player changes the order of ongoing projects.
     Note : When a project is moved in the priority list, it may be paused or unpaused.
@@ -508,25 +508,58 @@ def increase_project_priority(player: Player, project: OngoingProject) -> None:
 
 
 def pause_project(player: Player, project: OngoingProject) -> None:
-    if not project.is_ongoing:
+    """Pause an ongoing project, changing its position in the priority list."""
+    if project is None or project.player != player:
+        msg = "Project not found"
+        raise GameError(msg)
+
+    worker_type = project.project_type.worker_type
+
+    if project.was_paused_by_player():
         raise GameError("cannotPause")
-    toggle_pause_project(player, project)
+
+    priority_list = player.projects_by_priority[worker_type]
+    project_index = priority_list.index(project)
+    project.pause()
+    dependency = [project]
+    dependency_indices = [project_index]
+    insertion_index: int | None = len(priority_list)
+    for index, other_project in enumerate(priority_list[project_index + 1 :]):
+        other_project_index = index + project_index + 1
+        if other_project.was_paused_by_player():
+            insertion_index = other_project_index
+            break
+        for prerequisite in other_project.prerequisites:
+            if prerequisite in dependency:
+                other_project.pause()
+                dependency.append(other_project)
+                dependency_indices.append(other_project_index)
+                break
+    # Remove all dependent projects from the priority list, and reinsert them at the right place
+    if insertion_index is None:
+        # If insertion_index is None, then there are no preexisting paused projects
+        for dependent in dependency:
+            priority_list.remove(dependent)
+        for dependent in dependency:
+            priority_list.append(dependent)
+    else:
+        # If insertion_index is not None, then there are preexisting paused projects
+        priority_list = [
+            *[id for id in priority_list[:insertion_index] if id not in dependency],
+            *dependency,
+            *priority_list[insertion_index:],
+        ]
+        player.projects_by_priority[worker_type] = priority_list
+
+    # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
+    deploy_available_workers(player, worker_type)
+    player.send_worker_info()
+
+    engine.log(f"{player.username} paused the project {project.id} {project.project_type}")
 
 
 def resume_project(player: Player, project: OngoingProject) -> None:
-    if project.is_ongoing:
-        raise GameError("cannotResume")
-    toggle_pause_project(player, project)
-
-
-def toggle_pause_project(player: Player, project: OngoingProject) -> None:
-    """
-    Pause or unpauses an ongoing project.
-
-    Note : When a project is paused or unpaused, it's position in the priority list has to be updated.
-    """
-    # TODO(mglst): this function should call pause_project and resume_project - that's where the logic should reside
-    # Ultimately, this function should be deprecated
+    """Resume an ongoing project, changing its position in the priority list."""
     if project is None or project.player != player:
         msg = "Project not found"
         raise GameError(msg)
@@ -534,65 +567,38 @@ def toggle_pause_project(player: Player, project: OngoingProject) -> None:
     worker_type = project.project_type.worker_type
 
     if not project.was_paused_by_player():
-        # project is currently not paused by player, and should be paused
-        priority_list = player.projects_by_priority[worker_type]
-        project_index = priority_list.index(project)
-        project.pause()
-        dependency = [project]
-        dependency_indices = [project_index]
-        insertion_index: int | None = len(priority_list)
-        for index, other_project in enumerate(priority_list[project_index + 1 :]):
-            other_project_index = index + project_index + 1
-            if other_project.was_paused_by_player():
-                insertion_index = other_project_index
-                break
-            for prerequisite in other_project.prerequisites:
-                if prerequisite in dependency:
-                    other_project.pause()
-                    dependency.append(other_project)
-                    dependency_indices.append(other_project_index)
-                    break
-        # Remove all dependent projects from the priority list, and reinsert them at the right place
-        if insertion_index is None:
-            # If insertion_index is None, then there are no preexisting paused projects
-            for dependent in dependency:
-                priority_list.remove(dependent)
-            for dependent in dependency:
-                priority_list.append(dependent)
-        else:
-            # If insertion_index is not None, then there are preexisting paused projects
-            priority_list = [
-                *[id for id in priority_list[:insertion_index] if id not in dependency],
-                *dependency,
-                *priority_list[insertion_index:],
-            ]
-            player.projects_by_priority[worker_type] = priority_list
+        raise GameError("cannotResume")
 
-        # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
-        deploy_available_workers(player, worker_type)
-        player.send_worker_info()
+    # project is currently pause, and should be unpaused
+    if "_prerequisites_and_level" in project.__dict__:
+        del project._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
+    for prerequisite in project.prerequisites:
+        if prerequisite.status == ProjectStatus.PAUSED:
+            raise GameError("PausedPrerequisitePreventUnpause")
 
-        engine.log(f"{player.username} paused the project {project.id} {project.project_type}")
+    project.unpause()
+    # project status is now ONGOING or WAITING.
+    # Reorder the priority list
+    priority_list = player.projects_by_priority[worker_type]
+    priority_list.remove(project)
+    insertion_index = None
+    for new_index, other_project in enumerate(priority_list):
+        if other_project.status < project.status:
+            insertion_index = new_index
+            break
+    if insertion_index is not None:
+        priority_list.insert(insertion_index, project)
     else:
-        # project is currently pause, and should be unpaused
-        if "_prerequisites_and_level" in project.__dict__:
-            del project._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
-        for prerequisite in project.prerequisites:
-            if prerequisite.status == ProjectStatus.PAUSED:
-                raise GameError("PausedPrerequisitePreventUnpause")
+        priority_list.append(project)
+    engine.log(f"{player.username} unpaused the project {project.id} {project.project_type}")
 
-        project.unpause()
-        # project status is now ONGOING or WAITING.
-        # Reorder the priority list
-        priority_list = player.projects_by_priority[worker_type]
-        priority_list.remove(project)
-        insertion_index = None
-        for new_index, other_project in enumerate(priority_list):
-            if other_project.status < project.status:
-                insertion_index = new_index
-                break
-        if insertion_index is not None:
-            priority_list.insert(insertion_index, project)
-        else:
-            priority_list.append(project)
-        engine.log(f"{player.username} unpaused the project {project.id} {project.project_type}")
+
+def toggle_pause_project(player: Player, project: OngoingProject) -> None:
+    """Pause or unpauses an ongoing project, changing its position in the priority list."""
+    # TODO(mglst): this function is now used only in tests. I suggest that these calls to toggle in the tests should be
+    # replaced with calls to pause and resume - the two functions above which have now replaced this one - and that this
+    # function should be deprecated.
+    if not project.was_paused_by_player():
+        pause_project(player, project)
+    else:
+        resume_project(player, project)
