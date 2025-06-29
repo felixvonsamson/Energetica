@@ -17,11 +17,9 @@ import energetica.utils.assets
 import energetica.utils.map_helpers
 from energetica.auth import get_current_user
 from energetica.config.assets import wind_power_curve
-from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType, str_to_project_type
 from energetica.game_error import GameError
 from energetica.globals import engine
 
@@ -197,66 +195,6 @@ async def choose_location(  # noqa: ANN201
     tile = HexTile.getitem(selected_id + 1)
     energetica.utils.map_helpers.confirm_location(player=user, tile=tile)
     return {"response": "success"}
-
-
-@todo_router.post("/request_upgrade_facility")
-async def request_upgrade_facility(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Upgrade a facility."""
-    request_data = await request.json()
-    facility_id = request_data["facility_id"]
-    facility = ActiveFacility.get(int(facility_id))
-    if facility is None or facility.player != user:
-        return JSONResponse({"response": "facilityNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.upgrade_facility(player=user, facility=facility)
-    return {"response": "success", "money": user.money}
-
-
-@todo_router.post("/request_upgrade_all_of_type")
-async def request_upgrade_all_of_type(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Upgrade all facilities of a certain type."""
-    request_data = await request.json()
-    facility_type = str_to_project_type[request_data["facility"]]
-    if not isinstance(facility_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
-        return JSONResponse({"response": "malformedRequest"}, status_code=status.HTTP_400_BAD_REQUEST)
-    energetica.utils.assets.upgrade_all_of_type(player=user, facility_type=facility_type)
-    return {"response": "success", "money": user.money}
-
-
-@todo_router.post("/request_dismantle_facility")
-async def request_dismantle_facility(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Dismantle a facility."""
-    request_data = await request.json()
-    facility_id = request_data["facility_id"]
-    facility = ActiveFacility.get(int(facility_id))
-    if facility is None or facility.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.dismantle_facility(player=user, facility=facility)
-    return {
-        "response": "success",
-        "facility_name": facility.facility_type,
-        "money": user.money,
-    }
-
-
-@todo_router.post("/request_dismantle_all_of_type")
-async def request_dismantle_all_of_type(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Dismantle all facilities of a certain type."""
-    request_data = await request.json()
-    facility = request_data["facility"]
-    energetica.utils.assets.dismantle_all_of_type(player=user, facility_type=facility)
-    return {"response": "success", "money": user.money}
 
 
 @todo_router.post("/request_change_facility_priority")

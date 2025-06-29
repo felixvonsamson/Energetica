@@ -23,7 +23,7 @@ def get_active_facilities(
     return FacilitiesListOut.from_player(player)
 
 
-@router.post("{facility_id}:upgrade")
+@router.post("/{facility_id}:upgrade")
 def upgrade_facility(
     player: Annotated[Player, Depends(get_current_user)],
     facility_id: int,
@@ -46,7 +46,7 @@ async def upgrade_all_of_type(
     return MoneyOut.from_player(player)
 
 
-@router.post("{facility_id}:dismantle")
+@router.post("/{facility_id}:dismantle")
 async def dismantle_facility(
     player: Annotated[Player, Depends(get_current_user)],
     facility_id: int,

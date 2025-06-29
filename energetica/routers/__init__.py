@@ -75,7 +75,7 @@ def setup_routes(app: FastAPI):
     def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
         """Handle global game exceptions."""
         content = GameErrorOut.from_game_error(exc)
-        return JSONResponse(content=content.model_dump(), status_code=status.HTTP_400_BAD_REQUEST)
+        return JSONResponse(content=content.model_dump(by_alias=True), status_code=status.HTTP_400_BAD_REQUEST)
 
     @app.exception_handler(Confirm)
     def global_confirm_handler(request: Request, confirm: Confirm):

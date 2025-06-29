@@ -242,11 +242,13 @@ def upgrade_all_of_type(
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> None:
     """Upgrade all facilities of a certain type."""
-    facilities: Iterator[ActiveFacility] = ActiveFacility.filter(
-        lambda facility: facility.player == player
-        and facility.facility_type == facility_type
-        and facility.upgrade_cost is not None
-        and not facility.decommissioning,
+    facilities = list(
+        ActiveFacility.filter(
+            lambda facility: facility.player == player
+            and facility.facility_type == facility_type
+            and facility.upgrade_cost is not None
+            and not facility.decommissioning,
+        ),
     )
     if player.money < sum(map(lambda facility: cast(float, facility.upgrade_cost), facilities)):
         msg = "Not enough money"
@@ -323,10 +325,12 @@ def dismantle_all_of_type(
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> None:
     """Dismantle all facilities of a certain type."""
-    facilities: Iterator[ActiveFacility] = ActiveFacility.filter(
-        lambda facility: facility.player == player
-        and facility.facility_type == facility_type
-        and not facility.decommissioning,
+    facilities = list(
+        ActiveFacility.filter(
+            lambda facility: facility.player == player
+            and facility.facility_type == facility_type
+            and not facility.decommissioning,
+        ),
     )
     if player.money < sum(map(lambda facility: cast(float, facility.dismantle_cost), facilities)):
         msg = "Not enough money"
