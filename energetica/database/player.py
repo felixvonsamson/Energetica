@@ -17,13 +17,14 @@ from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, NetworkPrices
 from energetica.database.messages import Chat, Notification
-from energetica.database.ongoing_project import OngoingProject, ProjectStatus
+from energetica.database.ongoing_project import OngoingProject
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
     FunctionalFacilityType,
     PowerFacilityType,
+    ProjectStatus,
     ProjectType,
     StorageFacilityType,
     TechnologyType,
@@ -550,25 +551,6 @@ class Player(DBModel):
     def package_all() -> dict[int, dict]:
         """Package data for all players."""
         return {player.id: player.package() for player in Player.all()}
-
-    def package_constructions(self) -> dict[int, dict]:
-        """Package the player's ongoing constructions."""
-        return {
-            construction.id: {
-                k: getattr(construction, k)
-                for k in [
-                    "id",
-                    "project_type",
-                    "end_tick_or_ticks_passed",
-                    "duration",
-                    "status",
-                ]
-            }
-            | {"display_name": engine.const_config["assets"][construction.project_type]["name"]}
-            | ({"level": construction.level} if construction.level is not None else {})
-            | {"speed": construction.speed}
-            for construction in (*self.constructions_by_priority, *self.researches_by_priority)
-        }
 
     def package_shipments(self) -> dict[int, dict]:
         """Package the player's ongoing shipments."""

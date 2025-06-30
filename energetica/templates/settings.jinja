@@ -117,7 +117,7 @@
 
     if (!response.ok) {
       const response_body = await response.json();
-      if (catch_validation_error(response_body)) return;
+      if (catch_validation_error(response, response_body)) return;
       addError(response_body.detail);
       return;
     }

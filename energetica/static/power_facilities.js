@@ -17,7 +17,7 @@ function launch_power_facility_project(facility, high_hydro_cost, low_wind_speed
             Learn more: <a href="/wiki/map#hydro_potential">Hydro Potential</a>.`;
         // @ts-ignore
         document.getElementById('yes_im_sure').onclick = () => {
-            start_construction(facility, 'Power Facilities');
+            start_construction(facility);
             document.getElementById('are_you_sure_popup')?.classList.add('hidden');
         };
         const no_cancel = document.getElementById('no_cancel');
@@ -32,13 +32,13 @@ function launch_power_facility_project(facility, high_hydro_cost, low_wind_speed
             `;
         // @ts-ignore
         document.getElementById('yes_im_sure').onclick = () => {
-            start_construction(facility, 'Power Facilities');
+            start_construction(facility);
             document.getElementById('are_you_sure_popup')?.classList.add('hidden');
         };
         const no_cancel = document.getElementById('no_cancel');
         // @ts-ignore
         no_cancel.innerHTML = '<b>Cancel</b>';
     } else {
-        start_construction(facility, 'Power Facilities');
+        start_construction(facility);
     }
 }
