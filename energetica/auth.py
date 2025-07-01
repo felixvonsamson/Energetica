@@ -161,8 +161,6 @@ def setup_auth(app: FastAPI) -> None:
     @app.post("/change-password", tags=["Authentication"])
     def change_password(player: Annotated[Player, Depends(get_current_user)], request_data: ChangePasswordRequest):
         """Change the password for the current user."""
-        if player.username == "admin":
-            raise GameError("The password of the admin account cannont be changed.")
         old_password = request_data.old_password
         new_password = request_data.new_password
         if not check_password_hash(plain_password=old_password, hashed_password=player.pwhash):

@@ -99,7 +99,7 @@ def render_location_choice(  # noqa: ANN201
 def render_admin_dashboard(request: Request, user: Annotated[Player, Depends(get_current_user_from_request)]):  # noqa: ANN201
     if user is None:
         return RedirectResponse("/login")
-    if user.username != "admin":
+    if not user.is_admin:
         return RedirectResponse("/home")
     return templates.TemplateResponse(request=request, name="admin_dashboard.jinja")
 
@@ -108,7 +108,7 @@ def render_admin_dashboard(request: Request, user: Annotated[Player, Depends(get
 def render_dashboard(request: Request, user: Annotated[Player, Depends(get_current_user_from_request)]):  # noqa: ANN201
     if user is None:
         return RedirectResponse("/login")
-    if user.username == "admin":
+    if user.is_admin:
         return RedirectResponse("/admin_dashboard")
     if user.tile is None:
         return RedirectResponse("/location_choice")

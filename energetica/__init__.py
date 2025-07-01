@@ -210,11 +210,11 @@ def create_app(
         from energetica.auth import generate_password_hash
         from energetica.database.player import Player
 
-        # Creating the admin account if it does not exist.
+        # Creating the root admin account if it does not exist.
         if not list(Player.filter_by(username="admin")):
             admin_password = "admin"  # TODO(Felix): setup admin password in a config file
             hashed_password = generate_password_hash(admin_password)
-            Player(username="admin", pwhash=hashed_password)
+            Player(username="admin", pwhash=hashed_password, is_admin=True)
             engine.log(f"Admin account created with username 'admin' and password '{admin_password}'")
 
         if disable_signups:
