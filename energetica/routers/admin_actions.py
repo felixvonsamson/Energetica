@@ -10,6 +10,7 @@ from energetica.database.player import Player
 router = APIRouter(prefix="/admin-actions", tags=["Admin Actions"])
 
 
+# ensure the actions on this router are only accessible by admins
 @router.get("/chart-data/{player_id}")
 def chart_data(player_id: int):
     """Get chart data for the admin dashboard."""

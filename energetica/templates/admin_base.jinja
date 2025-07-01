@@ -8,10 +8,12 @@
 </div>
 {% if user != None %}
 <div class="topRight_info">
-  <div class="resources medium tan_green">
-    <div class="money_font large money">
-      {# TODO (Felix): Create a selector for the account to observe #}
-    </div>
+  <div class="margin flex-col">
+    <label for="admin_player_selection">Observed account</label>
+    <select class="create_chat_input medium txt_center"
+            id="admin_player_selection"
+            onchange="change_observed_account(this.value)">
+    </select>
   </div>
 </div>
 
@@ -190,6 +192,7 @@
   </script>
   <script src="{{ url_for('static', filename='interactive_nav_bar.js') }}"></script>
   <script src="{{ url_for('static', filename='notifications.js') }}"></script>
+  <script src="{{ url_for('static', filename='admin_player_selection.js') }}"></script>
   {% block additional_script %}
   {% endblock additional_script %}
 {% endblock scripts %}
