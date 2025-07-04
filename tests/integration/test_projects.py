@@ -7,9 +7,9 @@ import pytest
 from energetica import create_app
 from energetica.auth import generate_password_hash
 from energetica.database.map import HexTile
-from energetica.database.ongoing_project import OngoingProject, ProjectStatus
+from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
-from energetica.enums import ControllableFacilityType, FunctionalFacilityType, TechnologyType, WorkerType
+from energetica.enums import ControllableFacilityType, FunctionalFacilityType, ProjectStatus, TechnologyType, WorkerType
 from energetica.globals import engine
 from energetica.utils.assets import (
     cancel_project,

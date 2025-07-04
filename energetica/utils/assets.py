@@ -1,14 +1,13 @@
 """Utils relating to player assets."""
 
-import contextlib
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
 from energetica import technology_effects
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.ongoing_project import OngoingProject, ProjectStatus
+from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.enums import (
     ControllableFacilityType,
@@ -17,6 +16,7 @@ from energetica.enums import (
     FunctionalFacilityType,
     HydroFacilityType,
     PowerFacilityType,
+    ProjectStatus,
     ProjectType,
     RenewableFacilityType,
     StorageFacilityType,
@@ -28,6 +28,7 @@ from energetica.enums import (
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
+from energetica.schemas.projects import ProjectListOut
 from energetica.utils.hashing import stable_hash
 
 if TYPE_CHECKING:
@@ -143,7 +144,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         player.capacities.update(player, project.project_type)
     engine.config.update_config_for_user(player)
     player.emit("retrieve_player_data")
-    player.emit("finish_construction", package_projects_data(player))
+    player.emit("finish_construction", ProjectListOut.from_player(player).model_dump())
 
     if isinstance(project.project_type, FunctionalFacilityType):
         player.invalidate_recompute_and_dispatch_data_for_pages(
@@ -197,7 +198,7 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
         if construction.status == ProjectStatus.PAUSED:
             # Only the player can unpause a paused construction
             return
-        if construction.is_ongoing():
+        if construction.is_ongoing:
             continue
         construction.recompute_prerequisites_and_level()  # force recompute
         if construction.prerequisites:
@@ -206,7 +207,7 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
         available_workers -= 1
         insertion_index = None
         for insertion_index_candidate, possibly_paused_construction in enumerate(priority_list[:priority_index]):
-            if not possibly_paused_construction.is_ongoing():
+            if not possibly_paused_construction.is_ongoing:
                 insertion_index = insertion_index_candidate
                 break
         if insertion_index is not None:
@@ -219,25 +220,21 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
 # Utilities relating to managing facilities and assets
 
 
-def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
+def upgrade_facility(facility: ActiveFacility) -> None:
     """Upgrade a facility."""
-    if facility is None or facility.player != player:
-        msg = "Construction not found"
-        raise GameError(msg)
-
     upgrade_cost = facility.upgrade_cost
     if upgrade_cost is None:
         msg = "Facility not upgradable"
         raise GameError(msg)
-    if player.money < upgrade_cost:
+    if facility.player.money < upgrade_cost:
         msg = "Not enough money"
         raise GameError(msg)
     if facility.decommissioning:
         msg = "FacilityIsDecommissioning"
         raise GameError(msg)
-    player.money -= upgrade_cost
-    facility.multipliers = technology_effects.current_multipliers(player, facility.facility_type)
-    player.capacities.update(player, facility.facility_type)
+    facility.player.money -= upgrade_cost
+    facility.multipliers = technology_effects.current_multipliers(facility.player, facility.facility_type)
+    facility.player.capacities.update(facility.player, facility.facility_type)
 
 
 def upgrade_all_of_type(
@@ -245,9 +242,19 @@ def upgrade_all_of_type(
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> None:
     """Upgrade all facilities of a certain type."""
-    facilities: Iterator[ActiveFacility] = ActiveFacility.filter_by(player=player, facility_type=facility_type)
+    facilities = list(
+        ActiveFacility.filter(
+            lambda facility: facility.player == player
+            and facility.facility_type == facility_type
+            and facility.upgrade_cost is not None
+            and not facility.decommissioning,
+        ),
+    )
+    if player.money < sum(map(lambda facility: cast(float, facility.upgrade_cost), facilities)):
+        msg = "Not enough money"
+        raise GameError(msg)
     for facility in facilities:
-        upgrade_facility(player, facility)
+        upgrade_facility(facility)
 
 
 def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: bool = True) -> None:
@@ -303,11 +310,9 @@ def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str
     engine.log(f"{player.username} : {facility.facility_type} destroyed by {event_name}.")
 
 
-def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
+def dismantle_facility(facility: ActiveFacility) -> None:
     """Dismantle a facility."""
-    if facility is None or facility.player != player:
-        msg = "Facility not found"
-        raise GameError(msg)
+    player = facility.player
     cost = facility.dismantle_cost
     if player.money < cost:
         msg = "Not enough money"
@@ -321,20 +326,18 @@ def dismantle_all_of_type(
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> None:
     """Dismantle all facilities of a certain type."""
-    facilities = list(ActiveFacility.filter_by(player=player, facility_type=facility_type))
+    facilities = list(
+        ActiveFacility.filter(
+            lambda facility: facility.player == player
+            and facility.facility_type == facility_type
+            and not facility.decommissioning,
+        ),
+    )
+    if player.money < sum(map(lambda facility: cast(float, facility.dismantle_cost), facilities)):
+        msg = "Not enough money"
+        raise GameError(msg)
     for facility in facilities:
-        with contextlib.suppress(GameError):
-            dismantle_facility(player, facility)
-
-
-def package_projects_data(player: Player) -> dict:
-    """Package ongoing constructions for a particular player."""
-    # TODO(mglst): Rework the return dict structure (involves back + front end)
-    return {
-        0: player.package_constructions(),
-        1: [c.id for c in player.constructions_by_priority],
-        2: [r.id for r in player.researches_by_priority],
-    }
+        dismantle_facility(facility)
 
 
 def queue_project(
@@ -369,7 +372,7 @@ def queue_project(
             if gen in player.capacities:
                 capacity += player.capacities[gen]["power"]
         if construction_power > capacity:
-            raise Confirm(capacity=capacity, construction_power=construction_power)
+            raise Confirm(type="areYouSure", capacity=capacity, construction_power=construction_power)
 
     if not ignore_requirements_and_money:
         player.money -= real_price
@@ -385,7 +388,7 @@ def queue_project(
     )
     player.projects_by_priority[project_type.worker_type].append(new_construction)
     try:
-        toggle_pause_project(player, new_construction)
+        resume_project(player, new_construction)
     except GameError:
         # if the new construction depends on a construction that is paused.
         pass
@@ -432,7 +435,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
         raise GameError(msg, dependents=dependents)
 
     if not force:
-        raise Confirm(refund=f"{round(80 * (1 - project.progress()))}%")
+        raise Confirm(type="areYouSure", refund=f"{round(80 * (1 - project.progress()))}%")
 
     refund = (
         0.8
@@ -462,14 +465,10 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
     This function is executed when a player changes the order of ongoing projects.
     Note : When a project is moved in the priority list, it may be paused or unpaused.
     """
-    if project is None or project.player != player:
-        msg = "Project not found"
-        raise GameError(msg)
-
     priority_list = player.projects_by_priority[project.project_type.worker_type]
     index = priority_list.index(project)
     if index == len(priority_list) - 1:
-        return
+        raise GameError("CannotDecreasePriorityOfLastProject")
 
     project_1: OngoingProject = project
     project_2: OngoingProject = priority_list[index + 1]
@@ -486,7 +485,7 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
         raise GameError("requirementsPreventReorder")
     if not project_1.was_paused_by_player() and project_2.was_paused_by_player():
         msg = "CannotSwapPausedProject"
-        raise GameError(msg, project_1=project_1.project_type, project_2=project_2.project_type)
+        raise GameError(msg, first_project_type=project_1.project_type, second_project_type=project_2.project_type)
 
     if project_1.status == ProjectStatus.ONGOING and project_2.status == ProjectStatus.WAITING:
         # Case 2
@@ -498,12 +497,74 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
     priority_list[index + 1], priority_list[index] = (priority_list[index], priority_list[index + 1])
 
 
-def toggle_pause_project(player: Player, project: OngoingProject) -> None:
+def increase_project_priority(player: Player, project: OngoingProject) -> None:
     """
-    Pause or unpauses an ongoing project.
+    Increase the priority of an ongoing project.
 
-    Note : When a project is paused or unpaused, it's position in the priority list has to be updated.
+    This function is executed when a player changes the order of ongoing projects.
+    Note : When a project is moved in the priority list, it may be paused or unpaused.
     """
+    priority_list = player.projects_by_priority[project.project_type.worker_type]
+    index = priority_list.index(project)
+    if index == 0:
+        raise GameError("CannotIncreasePriorityOfFirstProject")
+    # Here, to increase the priority of this project, we decrease the priority of the project just above it
+    decrease_project_priority(player, priority_list[index - 1])
+
+
+def pause_project(player: Player, project: OngoingProject) -> None:
+    """Pause an ongoing project, changing its position in the priority list."""
+    if project is None or project.player != player:
+        msg = "Project not found"
+        raise GameError(msg)
+
+    worker_type = project.project_type.worker_type
+
+    if project.was_paused_by_player():
+        raise GameError("cannotPause")
+
+    priority_list = player.projects_by_priority[worker_type]
+    project_index = priority_list.index(project)
+    project.pause()
+    dependency = [project]
+    dependency_indices = [project_index]
+    insertion_index: int | None = len(priority_list)
+    for index, other_project in enumerate(priority_list[project_index + 1 :]):
+        other_project_index = index + project_index + 1
+        if other_project.was_paused_by_player():
+            insertion_index = other_project_index
+            break
+        for prerequisite in other_project.prerequisites:
+            if prerequisite in dependency:
+                other_project.pause()
+                dependency.append(other_project)
+                dependency_indices.append(other_project_index)
+                break
+    # Remove all dependent projects from the priority list, and reinsert them at the right place
+    if insertion_index is None:
+        # If insertion_index is None, then there are no preexisting paused projects
+        for dependent in dependency:
+            priority_list.remove(dependent)
+        for dependent in dependency:
+            priority_list.append(dependent)
+    else:
+        # If insertion_index is not None, then there are preexisting paused projects
+        priority_list = [
+            *[id for id in priority_list[:insertion_index] if id not in dependency],
+            *dependency,
+            *priority_list[insertion_index:],
+        ]
+        player.projects_by_priority[worker_type] = priority_list
+
+    # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
+    deploy_available_workers(player, worker_type)
+    player.send_worker_info()
+
+    engine.log(f"{player.username} paused the project {project.id} {project.project_type}")
+
+
+def resume_project(player: Player, project: OngoingProject) -> None:
+    """Resume an ongoing project, changing its position in the priority list."""
     if project is None or project.player != player:
         msg = "Project not found"
         raise GameError(msg)
@@ -511,65 +572,38 @@ def toggle_pause_project(player: Player, project: OngoingProject) -> None:
     worker_type = project.project_type.worker_type
 
     if not project.was_paused_by_player():
-        # project is currently not paused by player, and should be paused
-        priority_list = player.projects_by_priority[worker_type]
-        project_index = priority_list.index(project)
-        project.pause()
-        dependency = [project]
-        dependency_indices = [project_index]
-        insertion_index: int | None = len(priority_list)
-        for index, other_project in enumerate(priority_list[project_index + 1 :]):
-            other_project_index = index + project_index + 1
-            if other_project.was_paused_by_player():
-                insertion_index = other_project_index
-                break
-            for prerequisite in other_project.prerequisites:
-                if prerequisite in dependency:
-                    other_project.pause()
-                    dependency.append(other_project)
-                    dependency_indices.append(other_project_index)
-                    break
-        # Remove all dependent projects from the priority list, and reinsert them at the right place
-        if insertion_index is None:
-            # If insertion_index is None, then there are no preexisting paused projects
-            for dependent in dependency:
-                priority_list.remove(dependent)
-            for dependent in dependency:
-                priority_list.append(dependent)
-        else:
-            # If insertion_index is not None, then there are preexisting paused projects
-            priority_list = [
-                *[id for id in priority_list[:insertion_index] if id not in dependency],
-                *dependency,
-                *priority_list[insertion_index:],
-            ]
-            player.projects_by_priority[worker_type] = priority_list
+        raise GameError("cannotResume")
 
-        # There is now (at least one) free worker, which must now be deployed on any WAITING projects, if possible
-        deploy_available_workers(player, worker_type)
-        player.send_worker_info()
+    # project is currently pause, and should be unpaused
+    if "_prerequisites_and_level" in project.__dict__:
+        del project._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
+    for prerequisite in project.prerequisites:
+        if prerequisite.status == ProjectStatus.PAUSED:
+            raise GameError("PausedPrerequisitePreventUnpause")
 
-        engine.log(f"{player.username} paused the project {project.id} {project.project_type}")
+    project.unpause()
+    # project status is now ONGOING or WAITING.
+    # Reorder the priority list
+    priority_list = player.projects_by_priority[worker_type]
+    priority_list.remove(project)
+    insertion_index = None
+    for new_index, other_project in enumerate(priority_list):
+        if other_project.status < project.status:
+            insertion_index = new_index
+            break
+    if insertion_index is not None:
+        priority_list.insert(insertion_index, project)
     else:
-        # project is currently pause, and should be unpaused
-        if "_prerequisites_and_level" in project.__dict__:
-            del project._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
-        for prerequisite in project.prerequisites:
-            if prerequisite.status == ProjectStatus.PAUSED:
-                raise GameError("PausedPrerequisitePreventUnpause")
+        priority_list.append(project)
+    engine.log(f"{player.username} unpaused the project {project.id} {project.project_type}")
 
-        project.unpause()
-        # project status is now ONGOING or WAITING.
-        # Reorder the priority list
-        priority_list = player.projects_by_priority[worker_type]
-        priority_list.remove(project)
-        insertion_index = None
-        for new_index, other_project in enumerate(priority_list):
-            if other_project.status < project.status:
-                insertion_index = new_index
-                break
-        if insertion_index is not None:
-            priority_list.insert(insertion_index, project)
-        else:
-            priority_list.append(project)
-        engine.log(f"{player.username} unpaused the project {project.id} {project.project_type}")
+
+def toggle_pause_project(player: Player, project: OngoingProject) -> None:
+    """Pause or unpauses an ongoing project, changing its position in the priority list."""
+    # TODO(mglst): this function is now used only in tests. I suggest that these calls to toggle in the tests should be
+    # replaced with calls to pause and resume - the two functions above which have now replaced this one - and that this
+    # function should be deprecated.
+    if not project.was_paused_by_player():
+        pause_project(player, project)
+    else:
+        resume_project(player, project)

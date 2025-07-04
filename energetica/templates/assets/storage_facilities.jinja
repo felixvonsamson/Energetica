@@ -93,12 +93,12 @@
           <div class="flex-col construction_button_container hidden">
             {% if facility_data.requirements_status == "unsatisfied" %}
               <b id="construction_button" class="padding medium margin txt_center white txt-red"
-                 onclick="start_construction('{{ facility }}', 'Storage Facilities');">
+                 onclick="start_construction('{{ facility }}');">
                 Locked
               </b>
             {% else %}
               <b id="construction_button" class="padding medium button margin txt_center white"
-                 onclick="start_construction('{{ facility }}', 'Storage Facilities');">
+                 onclick="start_construction('{{ facility }}');">
                 Start construction
               </b>
             {% endif %}
@@ -133,12 +133,12 @@
           <div class="flex-col">
             {% if facility_data.requirements_status == "unsatisfied" %}
               <b id="construction_button_mobile" class="padding medium margin txt_center white txt-red"
-                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Storage Facilities');">
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}');">
                 Locked
               </b>
             {% else %}
               <b id="construction_button_mobile" class="padding medium button margin txt_center white"
-                 onclick="event.stopPropagation(); start_construction('{{ facility }}', 'Storage Facilities');">
+                 onclick="event.stopPropagation(); start_construction('{{ facility }}');">
                 Start construction
               </b>
             {% endif %}

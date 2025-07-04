@@ -17,16 +17,11 @@ import energetica.utils.assets
 import energetica.utils.map_helpers
 from energetica.auth import get_current_user
 from energetica.config.assets import wind_power_curve
-from energetica.database.active_facility import ActiveFacility
 from energetica.database.map import HexTile
 from energetica.database.network import Network
-from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
-from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType, str_to_project_type
-from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.utils.assets import package_projects_data
 
 # TODO: migrate all these routes to native FastAPI routes
 todo_router = APIRouter(prefix="", tags=["Flask Migration"])
@@ -183,15 +178,6 @@ def get_generation_priority(user: Annotated[Player, Depends(get_current_user)]):
     return (user.network_prices.get_sorted_renewables(), user.network_prices.get_facility_priorities())
 
 
-@todo_router.get("/get_constructions")
-def get_constructions(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get list of facilities under construction for this player."""
-    projects = user.package_constructions()
-    constructions_by_priority = [construction.id for construction in user.constructions_by_priority]
-    researches_by_priority = [research.id for research in user.researches_by_priority]
-    return (projects, constructions_by_priority, researches_by_priority)
-
-
 @todo_router.get("/get_active_facilities")
 def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the active facilities for this player."""
@@ -209,164 +195,6 @@ async def choose_location(  # noqa: ANN201
     tile = HexTile.getitem(selected_id + 1)
     energetica.utils.map_helpers.confirm_location(player=user, tile=tile)
     return {"response": "success"}
-
-
-@todo_router.post("/request_queue_project")
-async def request_queue_project(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Start a construction or research project for the player."""
-    request_data = await request.json()
-    asset = request_data["facility"]
-    project_type = str_to_project_type[asset]
-    force = request_data["force"]
-    try:
-        energetica.utils.assets.queue_project(
-            player=user,
-            project_type=project_type,
-            force=force,
-        )
-    except Confirm as confirm:
-        return JSONResponse(
-            {
-                "response": "areYouSure",
-                "capacity": confirm.__getattribute__("capacity"),
-                "construction_power": confirm.__getattribute__("construction_power"),
-            },
-            status_code=status.HTTP_300_MULTIPLE_CHOICES,
-        )
-
-    return {
-        "response": "success",
-        "money": user.money,
-        "constructions": package_projects_data(user),
-    }
-
-
-@todo_router.post("/request_cancel_project")
-async def request_cancel_project(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Cancel an ongoing projects."""
-    request_data = await request.json()
-    project_id = int(request_data["id"])
-    project = OngoingProject.get(int(project_id))
-    if project is None or project.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    force = request_data["force"]
-    try:
-        energetica.utils.assets.cancel_project(player=user, project=project, force=force)
-    except Confirm as confirm:
-        return JSONResponse(
-            {
-                "response": "areYouSure",
-                "refund": confirm.__getattribute__("refund"),
-            },
-            status_code=status.HTTP_300_MULTIPLE_CHOICES,
-        )
-    return {
-        "response": "success",
-        "money": user.money,
-        "projects": package_projects_data(user),
-    }
-
-
-@todo_router.post("/request_toggle_pause_project")
-async def request_pause_project(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Pause or unpause an ongoing project."""
-    request_data = await request.json()
-    project_id = int(request_data["id"])
-    project = OngoingProject.get(int(project_id))
-    if project is None or project.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.toggle_pause_project(player=user, project=project)
-    return {
-        "response": "success",
-        "projects": package_projects_data(user),
-    }
-
-
-@todo_router.post("/request_decrease_project_priority")
-async def request_decrease_project_priority(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Change the order of ongoing projects."""
-    request_data = await request.json()
-    project_id = request_data["id"]
-    project = OngoingProject.get(int(project_id))
-    if project is None or project.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.decrease_project_priority(player=user, project=project)
-    return {
-        "response": "success",
-        "projects": package_projects_data(user),
-    }
-
-
-@todo_router.post("/request_upgrade_facility")
-async def request_upgrade_facility(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Upgrade a facility."""
-    request_data = await request.json()
-    facility_id = request_data["facility_id"]
-    facility = ActiveFacility.get(int(facility_id))
-    if facility is None or facility.player != user:
-        return JSONResponse({"response": "facilityNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.upgrade_facility(player=user, facility=facility)
-    return {"response": "success", "money": user.money}
-
-
-@todo_router.post("/request_upgrade_all_of_type")
-async def request_upgrade_all_of_type(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Upgrade all facilities of a certain type."""
-    request_data = await request.json()
-    facility_type = str_to_project_type[request_data["facility"]]
-    if not isinstance(facility_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
-        return JSONResponse({"response": "malformedRequest"}, status_code=status.HTTP_400_BAD_REQUEST)
-    energetica.utils.assets.upgrade_all_of_type(player=user, facility_type=facility_type)
-    return {"response": "success", "money": user.money}
-
-
-@todo_router.post("/request_dismantle_facility")
-async def request_dismantle_facility(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Dismantle a facility."""
-    request_data = await request.json()
-    facility_id = request_data["facility_id"]
-    facility = ActiveFacility.get(int(facility_id))
-    if facility is None or facility.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.dismantle_facility(player=user, facility=facility)
-    return {
-        "response": "success",
-        "facility_name": facility.facility_type,
-        "money": user.money,
-    }
-
-
-@todo_router.post("/request_dismantle_all_of_type")
-async def request_dismantle_all_of_type(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Dismantle all facilities of a certain type."""
-    request_data = await request.json()
-    facility = request_data["facility"]
-    energetica.utils.assets.dismantle_all_of_type(player=user, facility_type=facility)
-    return {"response": "success", "money": user.money}
 
 
 @todo_router.post("/request_change_facility_priority")

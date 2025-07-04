@@ -10,6 +10,8 @@ from energetica.database.player import Player
 
 router = APIRouter(prefix="/notifications", tags=["Game Notifications"])
 
+# TODO(mglst): review the response codes and type annotations for these two routes
+
 
 @router.delete("/{notification_id}")
 def delete_notification(

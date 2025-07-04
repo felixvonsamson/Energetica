@@ -5,16 +5,22 @@ This code contains the main functions that communicate with the server (client s
 /**
  * @type {typeof import('./frontend_data.js').load_chats}
  * @type {typeof import('./display_functions.js')}
+ * @type {typeof import('./toasts.js')}
+ * @type {typeof import('./progress_bar.js').load_chats}
  */
 
 socket.on("infoMessage", addToast);
 
 socket.on("errorMessage", addError);
 
-// TODO: rename this function
-function send_json(endpoint, body) {
+/**
+ * @param {RequestInfo | URL} endpoint
+ * @param {any} body
+ * @param {"POST" | "DELETE"} method
+ */
+function send_json(endpoint, body, method = "POST") {
     return fetch(endpoint, {
-        method: "POST",
+        method: method,
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
@@ -23,8 +29,13 @@ function send_json(endpoint, body) {
     });
 }
 
-function catch_validation_error(response_body) {
-    const { meta, detail } = response_body;
+/**
+ * @param {Response} response
+ * @param {{meta: any;detail: any;}} body
+ */
+function catchValidationErrors(response, body) {
+    if (response.status !== 400) return false;
+    const { meta, detail } = body;
     if (meta?.error_type === "request_validation_error" && Array.isArray(detail)) {
         const formattedMessages = detail.map(item => {
             const field = item.loc?.[item.loc.length - 1] || "Field";
@@ -40,6 +51,58 @@ function catch_validation_error(response_body) {
         return true;
     }
     return false;
+}
+
+/**
+ * @param {Response} response
+ * @param {any} body
+ */
+function catchGameErrors(response, body) {
+    if (response.status !== 400 || body.gameExceptionType == null) return false;
+    switch (body.gameExceptionType) {
+        // Routes where the error can occur are listed as comments
+        case "Not enough money":
+            addError("Not enough money");
+            break;
+        case "Requirements not satisfied":
+            // POST: /projects
+            addError("Requirements not satisfied");
+            break;
+        case "PausedPrerequisitePreventUnpause":
+            // POST: /projects/{id}:pause
+            // POST: /projects/{id}:resume
+            addError("This construction cannot be unpaused as it has a paused prerequisite. Unpause these first.");
+            break;
+        case "requirementsPreventReorder":
+            // POST: /projects/{id}:increase-priority
+            // POST: /projects/{id}:decrease-priority
+            addError("The order of these two constructions cannot be swapped as one depends on the other.");
+            break;
+        case "CannotSwapPausedProject":
+            // POST: /projects/{id}:increase-priority
+            // POST: /projects/{id}:decrease-priority
+            addError(`Cannot change order. Unpause ${body.secondProjectType} or pause ${body.firstProjectType} first.`);
+            break;
+        case "CannotDecreasePriorityOfLastProject":
+            // POST: /projects/{id}:decrease-priority
+            addError("Cannot decrease the priority of the last project.");
+            break;
+        case "CannotIncreasePriorityOfFirstProject":
+            // POST: /projects/{id}:increase-priority
+            addError("Cannot increase the priority of the first project.");
+            break;
+        case "Facility not upgradable":
+            // POST: /api/v1/facilities/${facilityId}:upgrade
+            addError("This facility not upgradable.");
+            break;
+        case "FacilityIsDecommissioning":
+            // POST: /api/v1/facilities/${facilityId}:upgrade
+            addError("This facility is being decommissioned and cannot be upgraded.");
+            break;
+        default:
+            addError(`Uncaught error: ${body.gameExceptionType}`);
+    }
+    return true;
 }
 
 //debug info for connection error
@@ -115,13 +178,12 @@ socket.on("new_values", function (changes) {
 
         construction_updates = changes.construction_updates;
         if (Object.keys(construction_updates).length > 0) {
-            constructions_data = JSON.parse(sessionStorage.getItem("constructions"));
+            constructions_data = JSON.parse(sessionStorage.getItem("projectsData"));
             for (var construction_id in construction_updates) {
                 let construction = constructions_data[0][construction_id];
                 construction.speed = construction_updates[construction_id].speed;
-                construction.end_tick_or_ticks_passed = construction_updates[construction_id].end_tick;
             }
-            sessionStorage.setItem("constructions", JSON.stringify(constructions_data));
+            sessionStorage.setItem("projectsData", JSON.stringify(constructions_data));
             if (typeof display_progressBars === "function") {
                 display_progressBars(constructions_data, null);
             }
@@ -158,7 +220,7 @@ socket.on("new_values", function (changes) {
 
 // get information about finished construction
 socket.on("finish_construction", function (construction_data) {
-    sessionStorage.setItem("constructions", JSON.stringify(construction_data));
+    sessionStorage.setItem("projectsData", JSON.stringify(construction_data));
     if (typeof refresh_progressBar === "function") {
         refresh_progressBar();
     }

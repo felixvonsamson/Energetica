@@ -45,6 +45,7 @@ function check_new_connection() {
 }
 
 function retrieve_all() {
+    refreshMoney();
     retrieve_chart_data();
     retrieve_constructions();
     retrieve_shipments();
@@ -53,9 +54,25 @@ function retrieve_all() {
     retrieve_chats();
 }
 
+function refreshMoney() {
+    return fetch("/api/v1/players/me/money")
+        .then((response) => response.json())
+        .then((body) => {
+            let money = body["money"];
+            var obj = document.getElementById("money");
+            if (obj != null) {
+                obj.innerHTML = format_money_long(money);
+            }
+            return money;
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+}
+
 function load_constructions() {
     if (typeof (Storage) !== "undefined") {
-        const constructionsData = sessionStorage.getItem("constructions");
+        const constructionsData = sessionStorage.getItem("projectsData");
         if (constructionsData) {
             return Promise.resolve(JSON.parse(constructionsData));
         }
@@ -64,11 +81,12 @@ function load_constructions() {
 }
 
 function retrieve_constructions() {
-    return fetch("/api/get_constructions")
+    return fetch("/api/v1/projects")
         .then((response) => response.json())
         .then((raw_data) => {
             // Save fetched data to sessionStorage
-            sessionStorage.setItem("constructions", JSON.stringify(raw_data));
+            sessionStorage.setItem("projectsData", JSON.stringify(raw_data));
+            // TODO(mglst): rename the key used here. it should be projects not constructions
             return raw_data;
         })
         .catch((error) => {

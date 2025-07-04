@@ -12,18 +12,21 @@ from fastapi.staticfiles import StaticFiles
 
 from energetica.api.http import todo_router
 from energetica.auth import get_current_user
+from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
-from energetica.schemas.common import GameErrorOut
+from energetica.schemas.common import ConfirmOut, GameErrorOut
 
 from .achievements import router as achievements_router
 from .chats import router as chat_router
 from .daily_quiz import router as daily_quiz_router
+from .facilities import router as facilities_router
 from .map import router as map_router
 from .networks import router as network_router
 from .notifications import router as notifications_router
 from .players import router as player_router
+from .projects import router as projects_router
 from .resource_market import router as resource_market_router
 from .scoreboard import router as scoreboard_router
 from .shipments import router as shipments_router
@@ -36,10 +39,12 @@ api_routers = [
     achievements_router,
     chat_router,
     daily_quiz_router,
+    facilities_router,
     map_router,
     network_router,
     notifications_router,
     player_router,
+    projects_router,
     resource_market_router,
     shipments_router,
     scoreboard_router,
@@ -70,14 +75,22 @@ def setup_routes(app: FastAPI):
     def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
         """Handle global game exceptions."""
         content = GameErrorOut.from_game_error(exc)
-        return JSONResponse(content=content.model_dump(), status_code=status.HTTP_403_FORBIDDEN)
+        return JSONResponse(content=content.model_dump(by_alias=True), status_code=status.HTTP_400_BAD_REQUEST)
+
+    @app.exception_handler(Confirm)
+    def global_confirm_handler(request: Request, confirm: Confirm):
+        """Handle confirm 'errors'."""
+        return JSONResponse(
+            content=ConfirmOut.from_confirm(confirm).model_dump(),
+            status_code=status.HTTP_300_MULTIPLE_CHOICES,
+        )
 
     @app.middleware("log_action")
     async def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         # Restrict access to the API during the simulation.
         if (
             engine.serve_local
-            and request.method == "POST"
+            and request.method != "GET"
             and request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "")
             != "127.0.0.1"
         ):
@@ -87,7 +100,7 @@ def setup_routes(app: FastAPI):
             )
 
         # GET requests can be served immediately
-        if request.method != "POST" or request.url.path == "/socket.io/":
+        if request.method == "GET" or request.url.path == "/socket.io/":
             response = await call_next(request)
             path = request.url.path
             if path.startswith("/api") or request.url.path == "/socket.io/":
@@ -102,7 +115,7 @@ def setup_routes(app: FastAPI):
         body_bytes = await request.body()
 
         # Reattach body for downstream consumers (endpoint handlers)
-        def receive() -> dict:
+        async def receive() -> dict:
             return {"type": "http.request", "body": body_bytes, "more_body": False}
 
         request = Request(request.scope, receive=receive)
