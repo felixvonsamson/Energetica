@@ -1,7 +1,7 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.datastructures import URL
 from starlette.requests import Request
@@ -101,7 +101,8 @@ def render_admin_dashboard(request: Request, user: Annotated[Player, Depends(get
         return RedirectResponse("/login")
     if not user.is_admin:
         return RedirectResponse("/home")
-    return templates.TemplateResponse(request=request, name="admin_dashboard.jinja")
+    # return templates.TemplateResponse(request=request, name="admin_dashboard.jinja")
+    return FileResponse("energetica/static/react/index.html")
 
 
 @router.get("/home", response_class=HTMLResponse, name="views.home")

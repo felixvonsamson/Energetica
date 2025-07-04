@@ -3,3 +3,4 @@ tests/*/instance/*
 checkpoints/*
 __pycache__
 .DS_Store
+frontend/node_modules/*
