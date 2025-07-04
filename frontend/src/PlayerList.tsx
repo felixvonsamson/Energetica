@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 
 export default function PlayerList() {
-    const { isPending, error, data: players, isFetching } = useQuery({
+    const { isPending, error, data: players, isFetching } = useQuery<Player[]>({
         queryKey: ['players'],
         queryFn: async () => {
             const response = await fetch('/api/v1/players')
-            return await response.json() as Promise<Player[]>
+            return await response.json()
         },
     })
 
