@@ -65,6 +65,17 @@ options:
   --rm_instance         remove the instance folder
 ```
 
+## Building the frontend
+
+We use npm.
+```
+npm install
+```
+```
+npm run build
+```
+If using VSCode, a build task is configured, and can be invoked with `Tasks: Run Build Task`.
+
 ## Source Code Formatting and Linting
 
 <!-- TODO: restructure the below information to be more readable -->
