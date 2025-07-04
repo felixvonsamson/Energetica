@@ -220,21 +220,21 @@ def deploy_available_workers(player: Player, worker_type: WorkerType, *, start_n
 # Utilities relating to managing facilities and assets
 
 
-def upgrade_facility(player: Player, facility: ActiveFacility) -> None:
+def upgrade_facility(facility: ActiveFacility) -> None:
     """Upgrade a facility."""
     upgrade_cost = facility.upgrade_cost
     if upgrade_cost is None:
         msg = "Facility not upgradable"
         raise GameError(msg)
-    if player.money < upgrade_cost:
+    if facility.player.money < upgrade_cost:
         msg = "Not enough money"
         raise GameError(msg)
     if facility.decommissioning:
         msg = "FacilityIsDecommissioning"
         raise GameError(msg)
-    player.money -= upgrade_cost
-    facility.multipliers = technology_effects.current_multipliers(player, facility.facility_type)
-    player.capacities.update(player, facility.facility_type)
+    facility.player.money -= upgrade_cost
+    facility.multipliers = technology_effects.current_multipliers(facility.player, facility.facility_type)
+    facility.player.capacities.update(facility.player, facility.facility_type)
 
 
 def upgrade_all_of_type(
@@ -254,7 +254,7 @@ def upgrade_all_of_type(
         msg = "Not enough money"
         raise GameError(msg)
     for facility in facilities:
-        upgrade_facility(player, facility)
+        upgrade_facility(facility)
 
 
 def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: bool = True) -> None:
@@ -310,8 +310,9 @@ def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str
     engine.log(f"{player.username} : {facility.facility_type} destroyed by {event_name}.")
 
 
-def dismantle_facility(player: Player, facility: ActiveFacility) -> None:
+def dismantle_facility(facility: ActiveFacility) -> None:
     """Dismantle a facility."""
+    player = facility.player
     cost = facility.dismantle_cost
     if player.money < cost:
         msg = "Not enough money"
@@ -336,7 +337,7 @@ def dismantle_all_of_type(
         msg = "Not enough money"
         raise GameError(msg)
     for facility in facilities:
-        dismantle_facility(player, facility)
+        dismantle_facility(facility)
 
 
 def queue_project(

@@ -32,7 +32,7 @@ def upgrade_facility(
     facility = ActiveFacility.getitem(facility_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if facility.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    assets.upgrade_facility(player=player, facility=facility)
+    assets.upgrade_facility(facility=facility)
     return MoneyOut.from_player(player)
 
 
@@ -55,7 +55,7 @@ async def dismantle_facility(
     facility = ActiveFacility.getitem(facility_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if facility.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    assets.dismantle_facility(player=player, facility=facility)
+    assets.dismantle_facility(facility=facility)
     return MoneyOut.from_player(player)
 
 
