@@ -1,4 +1,4 @@
-import PlayerList from "./PlayerList";
+import PlayerList from "./components/PlayerList";
 
 export default function App() {
     return <>
