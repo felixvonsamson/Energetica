@@ -20,7 +20,7 @@ class BaseApiModel(BaseModel):
     )
 
 
-class GameErrorOut(BaseModel):
+class GameErrorOut(BaseApiModel):
     """Response model for game errors."""
 
     game_exception_type: str

@@ -91,6 +91,14 @@ function catchGameErrors(response, body) {
             // POST: /projects/{id}:increase-priority
             addError("Cannot increase the priority of the first project.");
             break;
+        case "Facility not upgradable":
+            // POST: /api/v1/facilities/${facilityId}:upgrade
+            addError("This facility not upgradable.");
+            break;
+        case "FacilityIsDecommissioning":
+            // POST: /api/v1/facilities/${facilityId}:upgrade
+            addError("This facility is being decommissioned and cannot be upgraded.");
+            break;
         default:
             addError(`Uncaught error: ${body.gameExceptionType}`);
     }
