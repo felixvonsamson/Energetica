@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.datastructures import URL
@@ -131,7 +131,7 @@ def render_profile(  # noqa: ANN201
     else:
         profile = Player.get(player_id)
         if profile is None:
-            return Response(status_code=status.HTTP_404_NOT_FOUND)
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     return templates.TemplateResponse(request=request, name="profile.jinja", context={"profile": profile})
 
