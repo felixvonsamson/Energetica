@@ -1,4 +1,4 @@
-"""Util functions for formatting things into text."""
+"""Utility functions for formatting things into text."""
 
 
 def display_money(price: float) -> str:
