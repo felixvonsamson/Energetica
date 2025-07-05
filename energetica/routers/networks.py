@@ -20,7 +20,7 @@ def get_networks_list() -> NetworkListOut:
     return NetworkListOut(networks=[NetworkOut.from_network(network) for network in Network.all()])
 
 
-@router.post("/{network_id}/join")
+@router.post("/{network_id}:join")
 def join_network(
     user: Annotated[Player, Depends(get_current_user)],
     network_id: int,
@@ -30,7 +30,7 @@ def join_network(
     return NetworkOut.from_network(network_helpers.join_network(user, network))
 
 
-@router.post("/{network_id}/leave")
+@router.post("/{network_id}:leave")
 def leave_network(
     user: Annotated[Player, Depends(get_current_user)],
     network_id: int,

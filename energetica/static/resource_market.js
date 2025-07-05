@@ -37,7 +37,7 @@ function buy_resource(saleId) {
         addError("Please enter a valid quantity");
         return;
     }
-    send_json(`/api/v1/resource_market/asks/${saleId}/purchase`, { "quantity": quantity * 1000 })
+    send_json(`/api/v1/resource_market/asks/${saleId}:purchase`, { "quantity": quantity * 1000 })
         .then((response) => {
             response.json().then((raw_data) => {
                 if (response.status == 200) {

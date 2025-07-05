@@ -39,7 +39,7 @@ def get_map() -> list[HexTileOut]:
     return hex_list
 
 
-@router.post("/{region_id}/settle", status_code=204)
+@router.post("/{region_id}:settle", status_code=204)
 def settle_region(
     user: Annotated[Player, Depends(get_current_user)],
     region_id: int,

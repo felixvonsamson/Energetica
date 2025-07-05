@@ -114,7 +114,7 @@ function start_construction(facility, force = false) {
 }
 
 function cancel_construction(construction_id, force = false) {
-  send_json(`/api/v1/projects/${construction_id}?force=${force}`, {}, "DELETE")
+  send_json(`/api/v1/projects/${construction_id}:cancel?force=${force}`, {})
     .then((response) => {
       response.json().then((body) => {
         if (catchValidationErrors(response, body)) return;

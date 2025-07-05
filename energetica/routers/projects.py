@@ -31,7 +31,7 @@ def queue_project(
     assets.queue_project(player=player, project_type=project.type, force=force)
 
 
-@router.delete("/{project_id}")
+@router.post("/{project_id}:cancel")
 def cancel_project(
     player: Annotated[Player, Depends(get_current_user)],
     project_id: int,

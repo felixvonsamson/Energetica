@@ -37,7 +37,7 @@ def post_resource_market_ask(
     )
 
 
-@router.post("/asks/{ask_id}/purchase")
+@router.post("/asks/{ask_id}:purchase")
 def post_resource_market_purchase(
     user: Annotated[Player, Depends(get_current_user)],
     ask_id: int,
