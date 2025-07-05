@@ -61,6 +61,9 @@ function catchGameErrors(response, body) {
     if (response.status !== 400 || body.game_exception_type == null) return false;
     switch (body.game_exception_type) {
         // Routes where the error can occur are listed as comments
+        case "locationOccupied":
+            addError("This location is already occupied!");
+            break;
         case "Not enough money":
             addError("Not enough money");
             break;
