@@ -41,8 +41,8 @@ def get_map() -> list[HexTileOut]:
 
 @router.post("/{region_id}:settle", status_code=204)
 def settle_region(
-    user: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_current_user)],
     region_id: int,
 ) -> None:
     region = HexTile.getitem(region_id, error=HTTPException(status_code=404, detail="Region not found"))
-    map_helpers.confirm_location(user, region)
+    map_helpers.confirm_location(player, region)

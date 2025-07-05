@@ -27,27 +27,27 @@ def get_chat_list(player: Annotated[Player, Depends(get_current_user)]) -> ChatL
 
 @router.get("/{chat_id}/messages")
 def get_chat_messages(
-    user: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_current_user)],
     chat_id: int,
 ) -> MessageListOut:
     """Get the messages for a chat."""
     chat = Chat.getitem(chat_id, error=HTTPException(status_code=404, detail="Chat not found"))
-    if user not in chat.participants:
+    if player not in chat.participants:
         raise HTTPException(status_code=403, detail="You are not a participant in this chat")
     return MessageListOut(messages=[MessageOut.from_message(message) for message in chat.messages])
 
 
 @router.post("/{chat_id}/messages")
 def new_message(
-    user: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_current_user)],
     chat_id: int,
     request_data: MessageCreate,
 ) -> MessageOut:
     """Send a message."""
     chat = Chat.getitem(chat_id, error=HTTPException(status_code=404, detail="Chat not found"))
-    if user not in chat.participants:
+    if player not in chat.participants:
         raise HTTPException(status_code=403, detail="You are not a participant in this chat")
-    new_message = energetica.utils.chat.add_message(user, request_data.new_message, chat)
+    new_message = energetica.utils.chat.add_message(player, request_data.new_message, chat)
     return MessageOut.from_message(new_message)
 
 

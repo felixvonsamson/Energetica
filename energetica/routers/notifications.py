@@ -26,6 +26,6 @@ def delete_notification(
 
 
 @router.post(":markAllRead")
-def marked_all_read(user: Annotated[Player, Depends(get_current_user)]) -> None:
+def marked_all_read(player: Annotated[Player, Depends(get_current_user)]) -> None:
     """Mark all notification as read."""
-    user.notifications_read()
+    player.notifications_read()
