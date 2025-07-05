@@ -104,7 +104,7 @@ function start_construction(facility, force = false) {
           addToast("Construction started");
           setTimeout(() => { window.location = window.location; }, 100);
         } else if (response.status === 300) {
-          are_you_sure_start_construction(facility, body.capacity, body.constructionPower);
+          are_you_sure_start_construction(facility, body.capacity, body.construction_power);
         }
       });
     })
@@ -247,11 +247,11 @@ setInterval(() => {
       const last_tick = JSON.parse(sessionStorage.getItem("last_value")).total_t;
       let time_since_last_tick = current_tick - last_tick;
       if (construction.status == 2) {
-        ticks_remaining = construction.endTick - last_tick - time_since_last_tick * construction.speed;
+        ticks_remaining = construction.end_tick - last_tick - time_since_last_tick * construction.speed;
         new_width = (1 - ticks_remaining / construction.duration) * 100;
       } else {
-        new_width = (construction.ticksPassed / construction.duration) * 100;
-        ticks_remaining = construction.duration - construction.ticksPassed;
+        new_width = (construction.ticks_passed / construction.duration) * 100;
+        ticks_remaining = construction.duration - construction.ticks_passed;
       }
       progressBar.style.setProperty("--width", new_width);
       if (new_width > 0.01) {
@@ -332,8 +332,8 @@ function display_progressBars(projectsData, shipment_data) {
       if (uc === null || ur === null) return;
       uc.innerHTML = "";
       ur.innerHTML = "";
-      const constructionQueue = projectsData.constructionQueue;
-      const researchQueue = projectsData.researchQueue;
+      const constructionQueue = projectsData.construction_queue;
+      const researchQueue = projectsData.research_queue;
       if (constructionQueue.length > 0) {
         uc.innerHTML = "<h1>&ensp;<img src='/static/images/icons/construction.png' class='icon'/>&nbsp;Ongoing Constructions</h1>";
       }
@@ -373,7 +373,7 @@ function display_progressBars(projectsData, shipment_data) {
       if (projectsData != null) {
         uc.innerHTML = "";
         const projectsQueue = (
-          document.title == "Technologies" ? projectsData.researchQueue : projectsData.constructionQueue
+          document.title == "Technologies" ? projectsData.research_queue : projectsData.construction_queue
         );
         for (const [projectIndex, projectId] of projectsQueue.entries()) {
           const project = projectsData.projects.find((project) => project.id === projectId);

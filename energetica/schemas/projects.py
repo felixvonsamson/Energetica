@@ -4,18 +4,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from energetica.enums import ProjectStatus, ProjectType
 from energetica.globals import engine
-from energetica.schemas.common import BaseApiModel
 
 if TYPE_CHECKING:
     from energetica.database.ongoing_project import OngoingProject
     from energetica.database.player import Player
 
 
-class ProjectOut(BaseApiModel):
+class ProjectOut(BaseModel):
     id: int
     type: ProjectType  # TODO(mglst): rename to just type
     end_tick: float | None = Field(description="Only present if project is ongoing")
@@ -41,7 +40,7 @@ class ProjectOut(BaseApiModel):
         )
 
 
-class ProjectListOut(BaseApiModel):
+class ProjectListOut(BaseModel):
     # TODO(mglst): it would make more sense for projects to be broken up into constructions_projects and
     # research_projects. For example, when canceling a research project, we need to also fetch all constructions.
     projects: list[ProjectOut]
@@ -63,5 +62,5 @@ class ProjectListOut(BaseApiModel):
         )
 
 
-class ProjectIn(BaseApiModel):
+class ProjectIn(BaseModel):
     type: ProjectType

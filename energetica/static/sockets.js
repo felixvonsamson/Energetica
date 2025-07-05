@@ -58,8 +58,8 @@ function catchValidationErrors(response, body) {
  * @param {any} body
  */
 function catchGameErrors(response, body) {
-    if (response.status !== 400 || body.gameExceptionType == null) return false;
-    switch (body.gameExceptionType) {
+    if (response.status !== 400 || body.game_exception_type == null) return false;
+    switch (body.game_exception_type) {
         // Routes where the error can occur are listed as comments
         case "Not enough money":
             addError("Not enough money");
@@ -100,7 +100,7 @@ function catchGameErrors(response, body) {
             addError("This facility is being decommissioned and cannot be upgraded.");
             break;
         default:
-            addError(`Uncaught error: ${body.gameExceptionType}`);
+            addError(`Uncaught error: ${body.game_exception_type}`);
     }
     return true;
 }
