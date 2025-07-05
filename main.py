@@ -127,6 +127,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--no-reload",
+        default=True,
         action="store_true",
         help="Disable hot reloading",
     )
