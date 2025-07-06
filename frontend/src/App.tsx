@@ -1,8 +1,7 @@
-import PlayerList from "./components/PlayerList";
+import PageLayout from "./components/PageLayout";
 
 export default function App() {
     return <>
-        <h1>Welcome to Energetica!</h1>
-        <PlayerList />
+        <PageLayout />
     </>
 }
