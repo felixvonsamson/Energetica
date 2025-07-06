@@ -1,14 +1,14 @@
 import NavBar from './NavBar';
+import RightSidebar from './RightSidebar';
+import PageContent from './PageContent';
 
 
 export default function PageLayout() {
   return <>
     <GameLogo />
     <NavBar />
-    {/* 
+    <RightSidebar />
     <PageContent />
-    <RightSidebar /> 
-    */}
   </>
 }
 
