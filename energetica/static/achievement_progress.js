@@ -39,14 +39,14 @@ setInterval(() => {
 }, 10000);
 
 
-fetch('/api/v1/daily_quiz')
+fetch('/api/v1/daily-quiz')
   .then((response) => response.json())
   .then((quiz_question) => {
     display_quiz_question(quiz_question);
   });
 
 function answer_quiz(answer) {
-  send_json("/api/v1/daily_quiz", { player_answer: answer })
+  send_json("/api/v1/daily-quiz", { player_answer: answer })
     .then((response) => {
       response.json().then((response_data) => {
         if (response_data.answered_correctly) {

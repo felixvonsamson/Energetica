@@ -1,3 +1,5 @@
+"""Utility functions for climate events."""
+
 from __future__ import annotations
 
 import math

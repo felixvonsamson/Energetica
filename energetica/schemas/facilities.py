@@ -4,15 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pydantic import BaseModel
+
 from energetica.database.active_facility import ActiveFacility
 from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType, WindFacilityType
-from energetica.schemas.common import BaseApiModel
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
 
 
-class PowerFacilityOut(BaseApiModel):
+class PowerFacilityOut(BaseModel):
     id: int
     facility: PowerFacilityType
     max_power_generation: float
@@ -44,7 +45,7 @@ class PowerFacilityOut(BaseApiModel):
         )
 
 
-class StorageFacilityOut(BaseApiModel):
+class StorageFacilityOut(BaseModel):
     id: int
     facility: StorageFacilityType
     storage_capacity: float
@@ -72,7 +73,7 @@ class StorageFacilityOut(BaseApiModel):
         )
 
 
-class ExtractionFacilityOut(BaseApiModel):
+class ExtractionFacilityOut(BaseModel):
     id: int
     facility: ExtractionFacilityType
     extraction_rate: float
@@ -100,7 +101,7 @@ class ExtractionFacilityOut(BaseApiModel):
         )
 
 
-class FacilitiesListOut(BaseApiModel):
+class FacilitiesListOut(BaseModel):
     power_facilities: list[PowerFacilityOut]
     storage_facilities: list[StorageFacilityOut]
     extraction_facilities: list[ExtractionFacilityOut]

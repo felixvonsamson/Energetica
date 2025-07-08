@@ -1,3 +1,5 @@
+"""Utility functions for astronomical calculations for solar irradiance computations."""
+
 from typing import Any
 
 import numpy as np
@@ -62,12 +64,12 @@ def DrHI(unix_time: Any, latitude: Any, longitude: Any) -> Any:
             [cos(EARTH_TILT_ANGLE), 0, -sin(EARTH_TILT_ANGLE)],
             [0, 1, 0],
             [sin(EARTH_TILT_ANGLE), 0, cos(EARTH_TILT_ANGLE)],
-        ]
+        ],
     )
 
     # Calculate the zenith angle (angle between the Sun's rays and the observer)
     zenith_angle = arccos(
-        (-v1[..., None, :] @ (rot_matrix @ v2[..., None]))[..., 0, 0] / (norm(v1, axis=-1) * norm(v2, axis=-1))
+        (-v1[..., None, :] @ (rot_matrix @ v2[..., None]))[..., 0, 0] / (norm(v1, axis=-1) * norm(v2, axis=-1)),
     )
 
     # Calculate solar elevation angle
