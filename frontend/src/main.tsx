@@ -1,14 +1,31 @@
-import React from "react";
+import React, { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { RouterProvider, createBrowserHistory, createRouter } from '@tanstack/react-router'
+
+import App from "./App";
+
+import { routeTree } from './routeTree.gen'
+
+const router = createRouter({
+    routeTree,
+    basepath: '/admin-dashboard'
+})
+
+declare module '@tanstack/react-router' {
+    interface Register {
+        router: typeof router
+    }
+}
 
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-    <React.StrictMode>
-        <QueryClientProvider client={queryClient}>
-            <App />
-        </QueryClientProvider>
-    </React.StrictMode>
+    <StrictMode>
+        {/* <QueryClientProvider client={queryClient}> */}
+        {/* <App /> */}
+        <RouterProvider router={router} />
+        {/* </QueryClientProvider> */}
+    </StrictMode>
 );

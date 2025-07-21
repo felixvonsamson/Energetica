@@ -1,3 +1,5 @@
+"""Routes for serving Jinja and React pages."""
+
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -95,13 +97,17 @@ def render_location_choice(  # noqa: ANN201
     return templates.TemplateResponse(request=request, name="location_choice.jinja")
 
 
-@router.get("/admin_dashboard", response_class=HTMLResponse, name="views.admin_dashboard")
-def render_admin_dashboard(request: Request, user: Annotated[Player, Depends(get_current_user_from_request)]):  # noqa: ANN201
+@router.get("/admin-dashboard", response_class=HTMLResponse, name="views.admin_dashboard")
+@router.get("/admin-dashboard/{full_path}", response_class=HTMLResponse, name="views.admin_dashboard")
+def render_admin_dashboard(  # noqa: ANN201
+    request: Request,
+    user: Annotated[Player, Depends(get_current_user_from_request)],
+):
+    """Manage returning pages for SPA admin dashboard views."""
     if user is None:
         return RedirectResponse("/login")
     if not user.is_admin:
         return RedirectResponse("/home")
-    # return templates.TemplateResponse(request=request, name="admin_dashboard.jinja")
     return FileResponse("energetica/static/react/index.html")
 
 
@@ -110,7 +116,7 @@ def render_dashboard(request: Request, user: Annotated[Player, Depends(get_curre
     if user is None:
         return RedirectResponse("/login")
     if user.is_admin:
-        return RedirectResponse("/admin_dashboard")
+        return RedirectResponse("/admin-dashboard")
     if user.tile is None:
         return RedirectResponse("/location_choice")
     return templates.TemplateResponse(request=request, name="dashboard.jinja")
