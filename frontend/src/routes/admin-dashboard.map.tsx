@@ -5,5 +5,9 @@ export const Route = createFileRoute('/admin-dashboard/map')({
 })
 
 function RouteComponent() {
-    return <div>Hello "/admin-dashboard/map"!</div>
+    return (
+        <div className="p-2">
+            <h3>Welcome to map!</h3>
+        </div>
+    )
 }
