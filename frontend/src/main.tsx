@@ -4,8 +4,6 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, createBrowserHistory, createRouter } from '@tanstack/react-router'
 
-import App from "./App";
-
 import { routeTree } from './routeTree.gen'
 
 const router = createRouter({
