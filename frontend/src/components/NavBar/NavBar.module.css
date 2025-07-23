@@ -27,7 +27,13 @@
 }
 
 .navbar-item:hover {
-    background-color: var(--color-pine);
+    background-color: var(--color-green);
     /* A scale effect - the button gets slightly larger when hovered */
     /* transform: scale(1.02); */
+}
+
+.navbar-item.active {
+    background-color: var(--color-pine);
+    font-weight: bold;
+    box-shadow: inset 0px 0px 5px black;
 }
