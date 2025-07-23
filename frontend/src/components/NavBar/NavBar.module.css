@@ -7,4 +7,24 @@
     /* top: 100px; */
     display: flex;
     flex-direction: column;
+    background-color: var(--color-green);
+    padding: 10px;
+    gap: 10px;
+}
+
+.navbar-item {
+    height: 45px;
+    background-color: var(--color-tan-green);
+    color: var(--text-on-light);
+    /* Remove underline for links */
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+
+    /* transition: background-color 0.3s ease; */
+    &:hover {
+        background-color: var(--color-green);
+    }
 }
