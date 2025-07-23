@@ -58,15 +58,12 @@ def create_group_chat(
 ) -> ChatOut:
     """Create a chat."""
     group_members = {
-        *{
-            Player.getitem(
-                member_id,
-                error=HTTPException(status_code=404, detail="One or more group members not found"),
-            )
-            for member_id in request_data.group_member_ids
-        },
-        player,
-    }
+        Player.getitem(
+            member_id,
+            error=HTTPException(status_code=404, detail="One or more group members not found"),
+        )
+        for member_id in request_data.group_member_ids
+    } | {player}
     new_chat = energetica.utils.chat.create_chat(player, request_data.group_chat_name, group_members)
     return ChatOut(
         id=new_chat.id,

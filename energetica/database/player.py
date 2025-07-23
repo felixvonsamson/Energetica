@@ -254,12 +254,8 @@ class Player(DBModel):
 
     def unread_chat_count(self) -> int:
         """Return the number of unread chats."""
-        return len(
-            [
-                chat
-                for chat in Chat.filter(lambda chat: self in chat.participants)
-                if chat.unread_messages_count_for_player(self) > 0
-            ],
+        return Chat.count(
+            condition=lambda chat: self in chat.participants and chat.unread_messages_count_for_player(self) > 0,
         )
 
     def package_chats(self) -> dict:
