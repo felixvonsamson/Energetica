@@ -1,10 +1,8 @@
 .navbar {
-    /* display: block; */
-    /* max-width: 230px; */
     width: 15%;
-    /* position: fixed; */
-    /* overflow: auto; */
-    /* top: 100px; */
+    min-width: 160px;
+    max-width: 230px;
+    overflow: auto;
     display: flex;
     flex-direction: column;
     background-color: var(--color-green);
@@ -13,6 +11,7 @@
 }
 
 .navbar-item {
+    box-sizing: border-box;
     height: 45px;
     background-color: var(--color-tan-green);
     color: var(--text-on-light);
@@ -22,9 +21,13 @@
     border-radius: 10px;
     display: flex;
     align-items: center;
+    /* transition: background-color 0.2s ease, color 0.2s ease; */
+    transition: background-color 0.1s ease;
+    box-shadow: 0px 0px 5px var(--color-pine);
+}
 
-    /* transition: background-color 0.3s ease; */
-    &:hover {
-        background-color: var(--color-green);
-    }
+.navbar-item:hover {
+    background-color: var(--color-pine);
+    /* A scale effect - the button gets slightly larger when hovered */
+    /* transform: scale(1.02); */
 }
