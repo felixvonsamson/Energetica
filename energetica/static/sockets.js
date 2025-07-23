@@ -5,15 +5,22 @@ This code contains the main functions that communicate with the server (client s
 /**
  * @type {typeof import('./frontend_data.js').load_chats}
  * @type {typeof import('./display_functions.js')}
+ * @type {typeof import('./toasts.js')}
+ * @type {typeof import('./progress_bar.js').load_chats}
  */
 
 socket.on("infoMessage", addToast);
 
 socket.on("errorMessage", addError);
 
-function send_json(endpoint, body) {
+/**
+ * @param {RequestInfo | URL} endpoint
+ * @param {any} body
+ * @param {"POST" | "DELETE"} method
+ */
+function send_json(endpoint, body, method = "POST") {
     return fetch(endpoint, {
-        method: "POST",
+        method: method,
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
@@ -22,8 +29,13 @@ function send_json(endpoint, body) {
     });
 }
 
-function catch_validation_error(response_body) {
-    const { meta, detail } = response_body;
+/**
+ * @param {Response} response
+ * @param {{meta: any;detail: any;}} body
+ */
+function catchValidationErrors(response, body) {
+    if (response.status !== 400) return false;
+    const { meta, detail } = body;
     if (meta?.error_type === "request_validation_error" && Array.isArray(detail)) {
         const formattedMessages = detail.map(item => {
             const field = item.loc?.[item.loc.length - 1] || "Field";
@@ -38,14 +50,62 @@ function catch_validation_error(response_body) {
         addError(formattedMessages.join("<br>"));
         return true;
     }
-    // TODO: have a dictionary lookup from exception type / code to user-facing message.
-    // This will likely be reviewed in the near future
-    if (response_body.hasOwnProperty("game_exception_type")) {
-        const exception_type = response_body.game_exception_type;
-        addError(exception_type);
-        return true;
-    }
     return false;
+}
+
+/**
+ * @param {Response} response
+ * @param {any} body
+ */
+function catchGameErrors(response, body) {
+    if (response.status !== 400 || body.game_exception_type == null) return false;
+    switch (body.game_exception_type) {
+        // Routes where the error can occur are listed as comments
+        case "locationOccupied":
+            addError("This location is already occupied!");
+            break;
+        case "Not enough money":
+            addError("Not enough money");
+            break;
+        case "Requirements not satisfied":
+            // POST: /projects
+            addError("Requirements not satisfied");
+            break;
+        case "PausedPrerequisitePreventUnpause":
+            // POST: /projects/{id}:pause
+            // POST: /projects/{id}:resume
+            addError("This construction cannot be unpaused as it has a paused prerequisite. Unpause these first.");
+            break;
+        case "requirementsPreventReorder":
+            // POST: /projects/{id}:increase-priority
+            // POST: /projects/{id}:decrease-priority
+            addError("The order of these two constructions cannot be swapped as one depends on the other.");
+            break;
+        case "CannotSwapPausedProject":
+            // POST: /projects/{id}:increase-priority
+            // POST: /projects/{id}:decrease-priority
+            addError(`Cannot change order. Unpause ${body.secondProjectType} or pause ${body.firstProjectType} first.`);
+            break;
+        case "CannotDecreasePriorityOfLastProject":
+            // POST: /projects/{id}:decrease-priority
+            addError("Cannot decrease the priority of the last project.");
+            break;
+        case "CannotIncreasePriorityOfFirstProject":
+            // POST: /projects/{id}:increase-priority
+            addError("Cannot increase the priority of the first project.");
+            break;
+        case "Facility not upgradable":
+            // POST: /api/v1/facilities/${facilityId}:upgrade
+            addError("This facility not upgradable.");
+            break;
+        case "FacilityIsDecommissioning":
+            // POST: /api/v1/facilities/${facilityId}:upgrade
+            addError("This facility is being decommissioned and cannot be upgraded.");
+            break;
+        default:
+            addError(`Uncaught error: ${body.game_exception_type}`);
+    }
+    return true;
 }
 
 //debug info for connection error
@@ -121,13 +181,12 @@ socket.on("new_values", function (changes) {
 
         construction_updates = changes.construction_updates;
         if (Object.keys(construction_updates).length > 0) {
-            constructions_data = JSON.parse(sessionStorage.getItem("constructions"));
+            constructions_data = JSON.parse(sessionStorage.getItem("projectsData"));
             for (var construction_id in construction_updates) {
                 let construction = constructions_data[0][construction_id];
                 construction.speed = construction_updates[construction_id].speed;
-                construction.end_tick_or_ticks_passed = construction_updates[construction_id].end_tick;
             }
-            sessionStorage.setItem("constructions", JSON.stringify(constructions_data));
+            sessionStorage.setItem("projectsData", JSON.stringify(constructions_data));
             if (typeof display_progressBars === "function") {
                 display_progressBars(constructions_data, null);
             }
@@ -164,7 +223,7 @@ socket.on("new_values", function (changes) {
 
 // get information about finished construction
 socket.on("finish_construction", function (construction_data) {
-    sessionStorage.setItem("constructions", JSON.stringify(construction_data));
+    sessionStorage.setItem("projectsData", JSON.stringify(construction_data));
     if (typeof refresh_progressBar === "function") {
         refresh_progressBar();
     }
@@ -283,8 +342,11 @@ socket.on("display_new_message", function (message) {
                         let username = "";
                         if (message.player_id == player_id) {
                             alignment = "right";
-                        } else if (chat_data.chat_list[message.chat_id].group_chat) {
-                            username = players[message.player_id].username + "&emsp;";
+                        } else {
+                            chat = chat_data.chats.find(c => c.id == message.chat_id);
+                            if (chat.group_chat) {
+                                username = players[message.player_id].username + "&emsp;";
+                            }
                         }
                         obj.innerHTML += `<div class="message ${alignment}">
                         <div class="message_infos">
@@ -296,14 +358,15 @@ socket.on("display_new_message", function (message) {
                     });
                 }
             }
-            if (!chat_data.chat_list[message.chat_id]) {
+            const chat = chat_data.chats.find(c => c.id == message.chat_id);
+            if (!chat.group_chat) {
                 retrieve_chats();
             } else {
-                if (chat_data.chat_list[message.chat_id].unread_messages == 0) {
+                if (chat.unread_messages_count == 0) {
                     chat_data.unread_chats += 1;
                 }
-                chat_data.chat_list[message.chat_id].unread_messages += 1;
-                sessionStorage.setItem("chats", JSON.stringify(chat_data));
+                chat.unread_messages_count += 1;
+                sessionStorage.setItem("chats_data", JSON.stringify(chat_data));
                 if (typeof refresh_chats === 'function') {
                     refresh_chats();
                 }

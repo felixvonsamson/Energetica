@@ -1,4 +1,4 @@
-"""Miscellaneous util functions."""
+"""Miscellaneous utility functions."""
 
 import math
 import os
@@ -13,13 +13,14 @@ from scipy.stats import norm
 from energetica import technology_effects
 from energetica.config.assets import river_discharge_seasonal
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.map import HexTile
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.enums import ControllableFacilityType
 from energetica.game_error import GameError
 from energetica.globals import engine
+from energetica.schemas.daily_quiz import DailyQuizBase
+from energetica.schemas.weather import WeatherOut
 from energetica.utils.astro import DrHI
 
 # Helper functions and data initialization utilities
@@ -135,44 +136,21 @@ def save_past_data() -> None:
     engine.save()
 
 
-def display_new_message(message: Message, chat: Chat) -> None:
-    """Send a chat message to all relevant sources through socketio and websocket."""
-    # websocket_message = websocket.rest_new_chat_message(chat.id, message)
+def send_new_message_sio(message: Message, chat: Chat) -> None:
+    """Send a chat message through socketio."""
     for player in chat.participants:
         player.emit(
             "display_new_message",
             {
-                "time": message.time.isoformat(),
+                "time": message.timestamp.isoformat(),
                 "player_id": message.player.id,
                 "text": message.text,
                 "chat_id": message.chat.id,
             },
         )
-        # websocket.rest_notify_player(player, websocket_message)
 
 
 # Map
-
-
-def confirm_location(player: Player, tile: HexTile) -> None:
-    """
-    Confirm a location choice.
-
-    Return either success or an explanatory error message in the form of a dictionary.
-    Called when a web client uses the choose_location socket.io endpoint, or the REST websocket API.
-    """
-    if tile.player is not None:
-        # Location already taken
-        raise GameError("locationOccupied", by=tile.player.id)
-    if player.tile is not None:
-        # Player has already chosen a location and cannot chose again
-        raise GameError("choiceUnmodifiable")
-
-    # Checks have succeeded, proceed
-    tile.player = player
-    player.tile = tile
-    initialize_player(player)
-    engine.log(f"{player.username} chose the location {tile.id}")
 
 
 def initialize_player(player: Player) -> None:
@@ -199,10 +177,7 @@ def initialize_player(player: Player) -> None:
     )
     player.capacities.update(player, ControllableFacilityType.STEAM_ENGINE)
 
-    general_chat = Chat.get(1)
-    if general_chat is None:
-        raise GameError("chatNotFound")
-    general_chat.participants.add(player)
+    engine.general_chat.participants.add(player)
 
     add_player_to_data(player)
 
@@ -244,17 +219,16 @@ def initialize_player(player: Player) -> None:
     player.rolling_history.add_subcategory("op_costs", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
-    # websocket.rest_notify_player_location(player)
 
 
 # Quiz
-def submit_quiz_answer(player: Player, answer: str) -> bool:
+def submit_quiz_answer(player: Player, player_answer: str) -> bool:
     """Return True if the answer was correct, False otherwise."""
     quiz_data = engine.daily_question
     if player.id in quiz_data["player_answers"]:
         raise GameError("quizAlreadyAnswered")
-    quiz_data["player_answers"][player.id] = answer
-    if answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
+    quiz_data["player_answers"][player.id] = player_answer
+    if player_answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
         player.progression_metrics["xp"] += 1
         engine.log(f"{player.username} answered the quiz correctly")
         return True
@@ -262,13 +236,28 @@ def submit_quiz_answer(player: Player, answer: str) -> bool:
     return False
 
 
-def get_quiz_question(player: Player) -> dict:
-    """Return the data for the quiz question in the form of a dictionary with only the answer of the current player."""
-    question_data = engine.daily_question.copy()
-    if player.id in question_data["player_answers"]:
-        question_data["player_answer"] = question_data["player_answers"][player.id]
-    del question_data["player_answers"]
-    return question_data
+def get_quiz_question(player: Player) -> DailyQuizBase:
+    """Return the data for the quiz question with only the answer of the current player."""
+    quiz_data = engine.daily_question
+    if player.id in quiz_data["player_answers"]:
+        return DailyQuizBase(
+            question=quiz_data["question"],
+            answer1=quiz_data["answer1"],
+            answer2=quiz_data["answer2"],
+            answer3=quiz_data["answer3"],
+            player_answer=quiz_data["player_answers"][player.id],
+            answered_correctly=quiz_data["player_answers"][player.id] == quiz_data["answer"]
+            or quiz_data["answer"] == "all correct",
+            correct_answer=quiz_data["answer"],
+            explanation=quiz_data["explanation"],
+        )
+    else:
+        return DailyQuizBase(
+            question=quiz_data["question"],
+            answer1=quiz_data["answer1"],
+            answer2=quiz_data["answer2"],
+            answer3=quiz_data["answer3"],
+        )
 
 
 # Weather
@@ -353,7 +342,7 @@ def calculate_river_discharge(total_seconds: float) -> float:
     return discharge_factor * 150  # in m^3/s
 
 
-def package_weather_data(player: Player) -> dict:
+def package_weather_data(player: Player) -> WeatherOut:
     """Package date and weather data for a player."""
     if player.tile is None:
         raise GameError("noLocation")
@@ -364,24 +353,10 @@ def package_weather_data(player: Player) -> dict:
     solar_irradiance = calculate_solar_irradiance((x, y), total_seconds, random_seed)
     wind_speed = calculate_wind_speed((x, y), total_seconds, random_seed)
     river_discharge = calculate_river_discharge(total_seconds)
-    months = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ]
-    return {
-        "year_progress": (total_seconds / 3600 / 24 / 72) % 1,
-        "month": months[math.floor((total_seconds / 3600 / 24 / 6) % 12)],
-        "solar_irradiance": solar_irradiance,
-        "wind_speed": wind_speed,
-        "river_discharge": river_discharge,
-    }
+    return WeatherOut(
+        year_progress=(total_seconds / 3600 / 24 / 72) % 1,
+        month_number=1 + math.floor((total_seconds / 3600 / 24 / 6) % 12),
+        solar_irradiance=solar_irradiance,
+        wind_speed=wind_speed,
+        river_discharge=river_discharge,
+    )

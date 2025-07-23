@@ -1,31 +1,5 @@
 let networks;
 
-fetch("/api/get_networks") // retrieves list of all networks using api.py
-    .then((response) => response.json())
-    .then((data) => {
-        networks = data;
-        if (networks.length == 0) {
-            var warning = document.getElementById("warning");
-            warning.innerHTML =
-                '<div class="medium toast error txt_center margin" \
-        style="padding:8px 16px">No network has been created yet, \
-        please create one.</div>';
-            var joinNetworkForm = document.getElementById("join_network_form");
-            joinNetworkForm.style.display = "none";
-        }
-        var selectElement = document.getElementById("choose_network");
-        for (const [network_id, network_name] of Object.entries(networks)) {
-            var option = document.createElement("option");
-            option.value = network_id;
-            option.text = network_name;
-            selectElement.appendChild(option);
-        }
-    })
-    .catch((error) => {
-        console.log(error);
-        console.error("Error:", error);
-    });
-
 let sortedNames;
 let invitations = [];
 
@@ -102,3 +76,125 @@ function removePlayer(name) {
     invitations = invitations.filter((i) => i != name);
     document.getElementById("groupMember_" + name).remove();
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetch("/api/get_networks") // retrieves list of all networks using api.py
+        .then((response) => response.json())
+        .then((data) => {
+            networks = data;
+            if (networks.length == 0) {
+                var warning = document.getElementById("warning");
+                warning.innerHTML =
+                    '<div class="medium toast error txt_center margin" \
+        style="padding:8px 16px">No network has been created yet, \
+        please create one.</div>';
+                var joinNetworkForm = document.getElementById("join_network_form");
+                joinNetworkForm.style.display = "none";
+            }
+            var selectElement = document.getElementById("choose_network");
+            for (const [network_id, network_name] of Object.entries(networks)) {
+                var option = document.createElement("option");
+                option.value = network_id;
+                option.text = network_name;
+                selectElement.appendChild(option);
+            }
+        })
+        .catch((error) => {
+            console.log(error);
+            console.error("Error:", error);
+        });
+
+    const leave_network_form = document.getElementById("leave-network-form");
+    if (leave_network_form) {
+        leave_network_form.addEventListener("submit", (event) => {
+            event.preventDefault();  // Prevent the default form submission
+            load_player_id()
+                .then((player_id) => {
+                    if (player_id === undefined) {
+                        addError("An error occurred");
+                        console.error("failed to get self player id");
+                        return;
+                    }
+                    load_players()
+                        .then((players) => {
+                            if (players === undefined) {
+                                addError("An error occurred");
+                                console.error("failed to get players");
+                                return;
+                            }
+                            const player_network_id = players[player_id].network_id;
+                            if (player_network_id === undefined) {
+                                addError("An error occurred");
+                                console.error("player is not in a network?");
+                                console.log(players);
+                                console.log(player_id);
+                                console.log(players[player_id]);
+                                console.log(players[player_id].network_id);
+                                return;
+                            }
+                            send_json(`/api/v1/networks/${player_network_id}:leave`).then((response) => {
+                                if (response.status == 200) {
+                                    sessionStorage.removeItem("players");
+                                    sessionStorage.removeItem("networks");
+                                    window.location = window.location;
+                                } else {
+                                    addError("An error occurred");
+                                    console.error(response.status);
+                                    console.error(response);
+                                }
+                            }).catch((error) => {
+                                addError("An error occurred");
+                                console.error(error);
+                            });
+                        });
+                });
+        });
+    }
+
+    const join_network_form = document.getElementById("join-network-form");
+    if (join_network_form) {
+        join_network_form.addEventListener("submit", (event) => {
+            event.preventDefault();  // Prevent the default form submission
+            const network_id = join_network_form.elements["choose_network"].value;
+            send_json(`/api/v1/networks/${network_id}:join`).then((response) => {
+                if (response.status == 200) {
+                    sessionStorage.removeItem("players");
+                    sessionStorage.removeItem("networks");
+                    window.location = window.location;
+                } else {
+                    addError("An error occurred");
+                    console.error(response.status);
+                    console.error(response);
+                }
+            }).catch((error) => {
+                addError("An error occurred");
+                console.error(error);
+            });
+        });
+    }
+
+    const create_network_form = document.getElementById("create-network-form");
+    if (create_network_form) {
+        create_network_form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const network_name = create_network_form.elements["network_name"].value;
+            if (network_name.length < 3 || network_name.length > 40) {
+                addError("Name must be between 3 and 40 characters");
+                return;
+            }
+            send_json("/api/v1/networks", { name: network_name }).then((response) => {
+                if (response.status == 200) {
+                    sessionStorage.removeItem("players");
+                    sessionStorage.removeItem("networks");
+                    window.location = window.location;
+                } else {
+                    addError("An error occurred");
+                }
+            }).catch((error) => {
+                addError("An error occurred");
+                console.error(error);
+            });
+        });
+    }
+});
+

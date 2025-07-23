@@ -1,5 +1,6 @@
 /** @type {typeof import('./table.js')} */
 /** @type {typeof import('./display_functions.js')} */
+/** @type {typeof import('./sockets.js')} */
 
 /**
  * 
@@ -295,21 +296,17 @@ function are_you_sure_upgrade_all_of_type(facility_name, facility_display_name, 
     document.getElementById('no_cancel').innerHTML = '<b>Cancel</b>';
 }
 
-function upgrade(id) {
-    send_json("/api/request_upgrade_facility", {
-        facility_id: id,
-    }).then((response) => {
-        response.json().then((raw_data) => {
-            let response = raw_data["response"];
-            if (response == "success") {
-                let money = raw_data["money"];
+function upgrade(facilityId) {
+    send_json(`/api/v1/facilities/${facilityId}:upgrade`, {}).then((response) => {
+        response.json().then((body) => {
+            if (catchGameErrors(response, body)) return;
+            if (response.ok) {
                 var obj = document.getElementById("money");
-                obj.innerHTML = format_money_long(money);
+                obj.innerHTML = format_money_long(body.money);
                 retrieve_player_data().then(() => {
                     get_active_facilities();
                 });
-            } else if (response == "Not enough money") {
-                addError("Not enough money");
+                addToast("The facility has been upgraded");
             }
         });
     })
@@ -318,21 +315,17 @@ function upgrade(id) {
         });
 }
 
-function upgrade_all_of_type(facility) {
-    send_json("/api/request_upgrade_all_of_type", {
-        facility: facility,
-    }).then((response) => {
-        response.json().then((raw_data) => {
-            let response = raw_data["response"];
-            if (response == "success") {
-                let money = raw_data["money"];
+function upgrade_all_of_type(facilityType) {
+    send_json(`/api/v1/facilities:upgrade-all?facility_type=${facilityType}`, {}).then((response) => {
+        response.json().then((body) => {
+            if (catchGameErrors(response, body)) return;
+            if (response.ok) {
                 var obj = document.getElementById("money");
-                obj.innerHTML = format_money_long(money);
+                obj.innerHTML = format_money_long(body.money);
                 retrieve_player_data().then(() => {
                     get_active_facilities();
                 });
-            } else if (response == "Not enough money") {
-                addError("Not enough money");
+                addToast("The facilities have been upgraded");
             }
         });
     })
@@ -341,21 +334,17 @@ function upgrade_all_of_type(facility) {
         });
 }
 
-function dismantle(id) {
-    send_json("/api/request_dismantle_facility", {
-        facility_id: id,
-    }).then((response) => {
-        response.json().then((raw_data) => {
-            let response = raw_data["response"];
-            if (response == "success") {
-                let money = raw_data["money"];
+function dismantle(facilityId) {
+    send_json(`/api/v1/facilities/${facilityId}:dismantle`, {}).then((response) => {
+        response.json().then((body) => {
+            if (catchGameErrors(response, body)) return;
+            if (response.ok) {
                 var obj = document.getElementById("money");
-                obj.innerHTML = format_money_long(money);
-                get_active_facilities();
-            } else if (response == "Not enough money") {
-                addError("Not enough money");
-            } else if (response == "notUpgradable") {
-                addError("Facility is not upgradable");
+                obj.innerHTML = format_money_long(body.money);
+                retrieve_player_data().then(() => {
+                    get_active_facilities();
+                });
+                addToast("The facility has been dismantled");
             }
         });
     })
@@ -364,19 +353,17 @@ function dismantle(id) {
         });
 }
 
-function dismantle_all_of_type(facility) {
-    send_json("/api/request_dismantle_all_of_type", {
-        facility: facility,
-    }).then((response) => {
-        response.json().then((raw_data) => {
-            let response = raw_data["response"];
-            if (response == "success") {
-                let money = raw_data["money"];
+function dismantle_all_of_type(facilityType) {
+    send_json(`/api/v1/facilities:dismantle-all?facility_type=${facilityType}`, {}).then((response) => {
+        response.json().then((body) => {
+            if (catchGameErrors(response, body)) return;
+            if (response.ok) {
                 var obj = document.getElementById("money");
-                obj.innerHTML = format_money_long(money);
-                get_active_facilities();
-            } else if (response == "Not enough money") {
-                addError("Not enough money");
+                obj.innerHTML = format_money_long(body.money);
+                retrieve_player_data().then(() => {
+                    get_active_facilities();
+                });
+                addToast("The facilities have dismantled");
             }
         });
     })

@@ -8,14 +8,7 @@ import textwrap
 
 from energetica.database.engine_data import NetworkPrices
 from energetica.database.player import Player
-from energetica.enums import (
-    ControllableFacilityType,
-    FunctionalFacilityType,
-    HydroFacilityType,
-    SolarFacilityType,
-    WindFacilityType,
-)
-from energetica.game_error import GameError
+from energetica.enums import ControllableFacilityType, HydroFacilityType, SolarFacilityType, WindFacilityType
 from energetica.globals import engine
 
 
@@ -47,29 +40,14 @@ def test_renewables_order() -> None:
     ]
 
 
-def test_update_bogus_prices() -> None:
-    """Test that updating a bogus ask or bid price raises an error."""
-    network_prices = NetworkPrices()
-
-    # This should work, as the price is valid
-    network_prices.update(updated_asks={FunctionalFacilityType.INDUSTRY: -4.999}, updated_bids={})
-    try:
-        # This should raise an error, as the price is too low
-        network_prices.update(updated_asks={FunctionalFacilityType.INDUSTRY: -5}, updated_bids={})
-    except GameError:
-        assert True
-    else:
-        assert False
-
-
 def test_price_randomization() -> None:
     """Test that the prices are randomized."""
     engine.random_seed = 0
     player_a = Player("player1", "pwhash")
     player_b = Player("player2", "pwhash")
     assert (
-        player_a.network_prices.bid_prices[ControllableFacilityType.COAL_BURNER]
-        != player_b.network_prices.bid_prices[ControllableFacilityType.COAL_BURNER]
+        player_a.network_prices.ask_prices[ControllableFacilityType.COAL_BURNER]
+        != player_b.network_prices.ask_prices[ControllableFacilityType.COAL_BURNER]
     )
 
 
@@ -82,7 +60,8 @@ def test_seed_determinism() -> None:
             import json
             from energetica import engine
             from energetica.database.player import Player
-
+            engine.init_instance(30, 3600, 0, env="dev")
+            
             engine.random_seed = {seed}
             player = Player("player1", "pwhash")
             result = {{

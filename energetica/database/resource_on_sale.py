@@ -18,5 +18,5 @@ class ResourceOnSale(DBModel):
 
     resource: Fuel
     quantity: float
-    price: float
+    unit_price: float
     player: Player

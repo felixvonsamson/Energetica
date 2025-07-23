@@ -1,4 +1,4 @@
-"""Util functions relating to the GameEngine class."""
+"""Utility functions relating to the GameEngine class."""
 
 import time
 from datetime import datetime
@@ -55,20 +55,14 @@ def tick() -> None:
     elif engine.total_t % (10 * 60 / engine.clock_time) == 0:
         engine.save()
 
-    # with app.app_context():
-    #     # TODO: perhaps only run the below code conditionally on there being active ws connections
-    #     websocket.rest_notify_scoreboard()
-    #     websocket.rest_notify_weather()
-    #     websocket.rest_notify_global_data()
-
 
 def check_events_completion() -> None:
     """Check if projects have finished, shipments have arrived or facilities arrived at end of life."""
     # check if constructions finished
     finished_constructions = list(
         OngoingProject.filter(
-            lambda construction: construction.end_tick_or_ticks_passed <= engine.total_t and construction.status == 2
-        )
+            lambda construction: construction.end_tick_or_ticks_passed <= engine.total_t and construction.status == 2,
+        ),
     )
     for fc in finished_constructions:
         assets.finish_project(fc)

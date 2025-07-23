@@ -2,7 +2,14 @@
 This code generates the progress bars on top of the pages that show the facilities under construction
 */
 
-asset_names = {
+
+/** 
+* @type { typeof import('./sockets.js') } 
+* @type { typeof import('./toasts.js') } 
+* @type { typeof import('./notifications.js') } 
+*/;
+
+const asset_names = {
   "steam_engine": "Steam Engine",
   "windmill": "Windmill",
   "watermill": "Watermill",
@@ -44,19 +51,19 @@ asset_names = {
   "nuclear_engineering": "Nuclear Engineering",
 };
 
-resource_names = {
+const resource_names = {
   "coal": "Coal",
   "gas": "Gas",
   "uranium": "Uranium",
 };
 
 function format_ticks(ticks) {
-  totalSeconds = ticks * in_game_seconds_per_tick;
+  const totalSeconds = ticks * in_game_seconds_per_tick;
   return format_seconds(totalSeconds, show_seconds = false);
 }
 
 function format_ticks_real_time(ticks) {
-  totalSeconds = ticks * clock_time;
+  const totalSeconds = ticks * clock_time;
   return format_seconds(totalSeconds);
 }
 
@@ -85,37 +92,19 @@ function format_seconds(totalSeconds, show_seconds = true) {
 
 // information sent to the server when a new facility is created
 function start_construction(facility, force = false) {
-  send_json("/api/request_queue_project", {
-    facility: facility,
-    force: force,
-  })
+  send_json(`/api/v1/projects?force=${force}`, { type: facility })
     .then((response) => {
-      response.json().then((raw_data) => {
-        let response = raw_data["response"];
-        if (response == "success") {
-          let money = raw_data["money"];
-          var obj = document.getElementById("money");
-          obj.innerHTML = format_money_long(money);
-          addToast("Construction started");
-          sessionStorage.setItem(
-            "constructions",
-            JSON.stringify(raw_data["constructions"])
-          );
+      response.json().then((body) => {
+        if (catchValidationErrors(response, body)) return;
+        if (catchGameErrors(response, body)) return;
+        if (response.ok) {
+          refreshMoney();
+          retrieve_constructions();
           refresh_progressBar();
-        } else if (response == "areYouSure") {
-          capacity = raw_data["capacity"];
-          construction_power = raw_data["construction_power"];
-          are_you_sure_start_construction(facility, capacity, construction_power);
-        } else if (response == "Not enough money") {
-          addError("Not enough money");
-        } else if (response == "locked") {
-          // With the removal of the family, the error message is not longer as straightforward to customize.
-          // So for now, I will just use the technology error message, which works well enough even.
-          // if (family == "Technologies") {
-          addError("Requirements not fulfilled");
-          // } else {
-          //   addError("Facility is locked");
-          // }
+          addToast("Construction started");
+          setTimeout(() => { window.location = window.location; }, 100);
+        } else if (response.status === 300) {
+          are_you_sure_start_construction(facility, body.capacity, body.construction_power);
         }
       });
     })
@@ -125,29 +114,32 @@ function start_construction(facility, force = false) {
 }
 
 function cancel_construction(construction_id, force = false) {
-  send_json("/api/request_cancel_project", {
-    id: construction_id,
-    force: force,
-  })
+  send_json(`/api/v1/projects/${construction_id}:cancel?force=${force}`, {})
     .then((response) => {
-      response.json().then((raw_data) => {
-        let response = raw_data["response"];
-        if (response == "success") {
-          let money = raw_data["money"];
-          var obj = document.getElementById("money");
-          obj.innerHTML = format_money_long(money);
+      response.json().then((body) => {
+        if (catchValidationErrors(response, body)) return;
+        if (catchGameErrors(response, body)) return;
+        if (response.status === 204) {
           addToast("Construction cancelled");
+          refreshMoney();
           sessionStorage.setItem(
             "constructions",
-            JSON.stringify(raw_data["constructions"])
+            JSON.stringify(body)
           );
           refresh_progressBar();
-        } else if (response == "HasDependents") {
-          let dependents = raw_data["dependents"];
-          has_dependents_cancel_construction(construction_id, dependents);
-        } else if (response == "areYouSure") {
-          refund = raw_data["refund"];
-          are_you_sure_cancel_construction(construction_id, refund);
+          setTimeout(() => { window.location = window.location; }, 100);
+        } else if (response.status === 300) {
+          if (body.type == "HasDependents") {
+            const dependents = body.dependents;
+            has_dependents_cancel_construction(construction_id, dependents);
+          } else if (body.type == "areYouSure") {
+            const refund = body.refund;
+            are_you_sure_cancel_construction(construction_id, refund);
+          } else {
+            addError("Something went wrong");
+          }
+        } else {
+          addError("Something went wrong");
         }
       });
     })
@@ -156,22 +148,17 @@ function cancel_construction(construction_id, force = false) {
     });
 }
 
-function pause_construction(construction_id) {
-  send_json("/api/request_toggle_pause_project", {
-    id: construction_id,
-  })
+function pause_construction(projectId) {
+  send_json(`/api/v1/projects/${projectId}:pause`, { id: projectId })
     .then((response) => {
-      response.json().then((raw_data) => {
-        let response = raw_data["response"];
-        if (response == "success") {
+      response.json().then((body) => {
+        if (catchGameErrors(response, body)) return;
+        if (response.status === 200) {
           sessionStorage.setItem(
             "constructions",
-            JSON.stringify(raw_data["constructions"])
+            JSON.stringify(body)
           );
           refresh_progressBar();
-        }
-        else if (response == "PausedPrerequisitePreventUnpause") {
-          addError("This construction cannot be unpaused as it has a paused prerequisite. Unpause these first.");
         }
       });
     })
@@ -180,27 +167,17 @@ function pause_construction(construction_id) {
     });
 }
 
-function decrease_project_priority(construction_id) {
-  send_json("/api/request_decrease_project_priority", {
-    id: construction_id,
-  })
+function resume_construction(projectId) {
+  send_json(`/api/v1/projects/${projectId}:resume`, { id: projectId })
     .then((response) => {
-      response.json().then((raw_data) => {
-        let response = raw_data["response"];
-        if (response == "success") {
+      response.json().then((body) => {
+        if (catchGameErrors(response, body)) return;
+        if (response.status === 200) {
           sessionStorage.setItem(
             "constructions",
-            JSON.stringify(raw_data["constructions"])
+            JSON.stringify(body)
           );
           refresh_progressBar();
-        }
-        else if (response == "requirementsPreventReorder") {
-          addError("The order of these two constructions cannot be swapped as one depends on the other.");
-        }
-        else if (response == "CannotSwapPausedProject") {
-          construction_1 = raw_data["construction_1"];
-          construction_2 = raw_data["construction_2"];
-          addError(`Cannot change order. Unpause ${construction_2} or pause ${construction_1} first.`);
         }
       });
     })
@@ -209,15 +186,60 @@ function decrease_project_priority(construction_id) {
     });
 }
 
-let constructions_data, shipment_data;
+function decrease_project_priority(project_id) {
+  send_json(`/api/v1/projects/${project_id}:decrease-priority`, {})
+    .then((response) => {
+      response.json().then((body) => {
+        if (catchGameErrors(response, body)) return;
+        if (response.status === 200) {
+          sessionStorage.setItem(
+            "constructions",
+            JSON.stringify(body)
+          );
+          refresh_progressBar();
+        } else {
+          addError("An unknown error occurred.");
+        }
+      });
+    })
+    .catch((error) => {
+      console.error(`caught error ${error}`);
+    });
+}
+
+function increase_project_priority(project_id) {
+  send_json(`/api/v1/projects/${project_id}:increase-priority`, {})
+    .then((response) => {
+      response.json().then((body) => {
+        if (catchGameErrors(response, body)) return;
+        if (response.status === 200) {
+          sessionStorage.setItem(
+            "constructions",
+            JSON.stringify(body)
+          );
+          refresh_progressBar();
+        } else {
+          addError("An unknown error occurred.");
+        }
+      });
+    })
+    .catch((error) => {
+      console.error(`caught error ${error}`);
+    });
+}
+
+let projectsData, shipment_data;
 let progressBars = document.getElementsByClassName("progressbar-bar");
 let shipmentBars = document.getElementsByClassName("shipmentbar-bar");
-load_constructions().then((constructions) => {
-  constructions_data = constructions;
-  setInterval(() => {
+setInterval(() => {
+  load_constructions().then((projectsData) => {
+
     for (const progressBar of progressBars) {
-      const id = progressBar.id;
-      const construction = constructions_data[0][id];
+      const construction = projectsData.projects.find((project) => project.id === Number(progressBar.id));
+      if (construction == null) {
+        console.error("Construction ");
+        throw new Error(`Could not find construction with id ${progressBar.id}`);
+      }
       const now = new Date().getTime() / 1000;
       const current_tick = (now - first_tick_time) / clock_time + 1;
       let new_width;
@@ -225,12 +247,11 @@ load_constructions().then((constructions) => {
       const last_tick = JSON.parse(sessionStorage.getItem("last_value")).total_t;
       let time_since_last_tick = current_tick - last_tick;
       if (construction.status == 2) {
-        ticks_remaining = construction.end_tick_or_ticks_passed - last_tick - time_since_last_tick * construction.speed;
+        ticks_remaining = construction.end_tick - last_tick - time_since_last_tick * construction.speed;
         new_width = (1 - ticks_remaining / construction.duration) * 100;
-      }
-      else {
-        new_width = (construction.end_tick_or_ticks_passed / construction.duration) * 100;
-        ticks_remaining = construction.duration - construction.end_tick_or_ticks_passed;
+      } else {
+        new_width = (construction.ticks_passed / construction.duration) * 100;
+        ticks_remaining = construction.duration - construction.ticks_passed;
       }
       progressBar.style.setProperty("--width", new_width);
       if (new_width > 0.01) {
@@ -258,7 +279,7 @@ load_constructions().then((constructions) => {
     }
     for (const shipmentBar of shipmentBars) {
       const id = shipmentBar.id;
-      const shipment = shipment_data[id];
+      const shipment = shipment_data.shipments.find((shipment) => shipment.id == id);
       const now = new Date().getTime() / 1000;
       const current_tick = (now - first_tick_time) / clock_time + 1;
       let new_width;
@@ -289,81 +310,74 @@ load_constructions().then((constructions) => {
         shipmentBar.innerHTML = `&nbsp; <span class="hover_info">${time}<span class="popup_info small">in-game time</span></span> &ensp; <span class="transparency_txt hover_info">(${real_time})<span class="popup_info small">real time</span></span>`;
       }
     }
-  }, 100);
-});
+  });
+}, 100);
 
 function refresh_progressBar() {
-  load_constructions().then((construction_list) => {
+  // TODO(mglst): this function can REFRESH progress bars, but is not capable of CREATING or REMOVING html elements.
+  // e.g. this works when pausing and resuming projects, but not when queueing a new project or canceling one.
+  load_constructions().then((projectsData) => {
     load_shipments().then((shipment_list) => {
-      constructions_data = construction_list;
       shipment_data = shipment_list;
-      display_progressBars(constructions_data, shipment_data);
+      display_progressBars(projectsData, shipment_data);
     });
   });
 }
 
-function display_progressBars(construction_data, shipment_data) {
+function display_progressBars(projectsData, shipment_data) {
   if (document.title == "Dashboard") {
-    if (construction_data != null) {
+    if (projectsData != null) {
       const uc = document.getElementById("under_construction");
       const ur = document.getElementById("under_research");
+      if (uc === null || ur === null) return;
       uc.innerHTML = "";
       ur.innerHTML = "";
-      construction_priority = construction_data[1];
-      research_priority = construction_data[2];
-      if (construction_priority.length > 0) {
+      const constructionQueue = projectsData.construction_queue;
+      const researchQueue = projectsData.research_queue;
+      if (constructionQueue.length > 0) {
         uc.innerHTML = "<h1>&ensp;<img src='/static/images/icons/construction.png' class='icon'/>&nbsp;Ongoing Constructions</h1>";
       }
-      if (research_priority.length > 0) {
+      if (researchQueue.length > 0) {
         ur.innerHTML = "<h1>&ensp;<img src='/static/images/icons/technology.png' class='icon'/>&nbsp;Ongoing Researches</h1>";
       }
-      for (const [index, c_id] of research_priority.entries()) {
-        construction = construction_data[0][c_id];
-        ur.innerHTML += html_for_progressBar(c_id, index, research_priority, construction);
+      for (const [index, projectId] of researchQueue.entries()) {
+        const construction = projectsData.projects.find((project) => project.id === projectId);
+        ur.innerHTML += html_for_progressBar(index, researchQueue, construction);
       }
-      for (const [index, c_id] of construction_priority.entries()) {
-        construction = construction_data[0][c_id];
-        uc.innerHTML += html_for_progressBar(c_id, index, construction_priority, construction);
+      for (const [index, projectId] of constructionQueue.entries()) {
+        const construction = projectsData.projects.find((project) => project.id === projectId);
+        uc.innerHTML += html_for_progressBar(index, constructionQueue, construction);
       }
     }
     if (shipment_data != null) {
       const us = document.getElementById("shipments");
+      if (us === null) return;
       us.innerHTML = "";
-      if (Object.keys(shipment_data).length > 0) {
+      if (shipment_data.shipments.length > 0) {
         us.innerHTML = "<h1>&ensp;<img src='/static/images/icons/resource_market.png' class='icon'/>&nbsp;Ongoing Shipments</h1>";
       }
-      for (var id in shipment_data) {
-        shipment = shipment_data[id];
-        us.innerHTML += html_for_shipmentBar(id, shipment);
-      }
+      shipment_data.shipments.forEach(shipment => {
+        us.innerHTML += html_for_shipmentBar(shipment.id, shipment);
+      });
     }
   } else {
     const uc = document.getElementById("under_construction");
     if (uc != null) {
       if (document.title == "Resource Market" && shipment_data != null) {
         uc.innerHTML = "";
-        for (var id in shipment_data) {
-          shipment = shipment_data[id];
-          uc.innerHTML += html_for_shipmentBar(id, shipment);
-        }
+        shipment_data.shipments.forEach(shipment => {
+          uc.innerHTML += html_for_shipmentBar(shipment.id, shipment);
+        });
         return;
       }
-      if (construction_data != null) {
+      if (projectsData != null) {
         uc.innerHTML = "";
-        if (document.title == "Technologies") {
-          project_priority = construction_data[2];
-        } else {
-          project_priority = construction_data[1];
-        }
-        for (const [index, c_id] of project_priority.entries()) {
-          construction = construction_data[0][c_id];
-          // TODO(mglst): with the removal of the family, this "feature" of only showing the constructions of the 
-          // current family is not longer as straightforward as it was before. But there was also discussion of
-          // removing this feature or rethinking it. So for now, I will just comment it out, which means that all
-          // constructions will be shown on all pages for queueing constructions.
-          // if (construction["family"] == document.title) {
-          uc.innerHTML += html_for_progressBar(c_id, index, project_priority, construction);
-          // }
+        const projectsQueue = (
+          document.title == "Technologies" ? projectsData.research_queue : projectsData.construction_queue
+        );
+        for (const [projectIndex, projectId] of projectsQueue.entries()) {
+          const project = projectsData.projects.find((project) => project.id === projectId);
+          uc.innerHTML += html_for_progressBar(projectIndex, projectsQueue, project);
         }
       }
     }
@@ -371,20 +385,29 @@ function display_progressBars(construction_data, shipment_data) {
 }
 
 
-function html_for_progressBar(c_id, index, project_priority, construction) {
+/**
+ * @param {number} projectIndex
+ * @param {number[]} projectsQueue
+ * @param {{ id: number; type: string; status: number; speed: number; level: number | null }} project
+ */
+function html_for_progressBar(projectIndex, projectsQueue, project) {
+  if (project == null) {
+    throw Error("html_for_progressBar: project is null");
+  }
   let playPauseLogo = "fa-pause";
-  if (construction["status"] == 0) {
+  const togglePauseButtonFunctionName = project.status === 2 ? "pause_construction" : "resume_construction";
+  if (project.status == 0) {
     playPauseLogo = "fa-play";
   }
-  if (construction["status"] == 1) {
+  if (project.status == 1) {
     playPauseLogo = "fa-hourglass-half";
   }
   let snail = "";
-  if (construction["speed"] < 0.01) {
+  if (project.speed < 0.01) {
     snail = `<div class="progressbar-name medium">
             <span class="hover_info"><img src="/static/images/icons/snail_house.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
         </div>`;
-  } else if (construction["speed"] < 0.99) {
+  } else if (project.speed < 0.99) {
     snail = `<div class="progressbar-name medium">
             <span class="hover_info"><img src="/static/images/icons/snail.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
         </div>`;
@@ -392,24 +415,24 @@ function html_for_progressBar(c_id, index, project_priority, construction) {
   return `
     <div class="progressbar-container">
         <div class="progressbar-arrowcontainer">
-            ${index > 0 ? `
-                <button class="progressbar-arrow progressbar-button" onclick="decrease_project_priority(${project_priority[index - 1]})">
+            ${projectIndex > 0 ? `
+                <button class="progressbar-arrow progressbar-button" onclick="increase_project_priority(${project.id})">
                     <i class="fa fa-caret-up"></i>
                 </button>` : ''}
-            ${index + 1 != project_priority.length ? `
-                <button class="progressbar-arrow progressbar-button" onclick="decrease_project_priority(${c_id})">
+            ${projectIndex + 1 != projectsQueue.length ? `
+                <button class="progressbar-arrow progressbar-button" onclick="decrease_project_priority(${project.id})">
                     <i class="fa fa-caret-down"></i>
                 </button>` : ''}
         </div>
-        <div class="progressbar-name medium margin-small">${asset_names[construction["project_type"]]}${"level" in construction ? " " + construction["level"] : ""}</div>
+        <div class="progressbar-name medium margin-small">${asset_names[project.type]}${project.level !== null ? " " + project.level : ""}</div>
         ${snail}
         <div class="progressbar-background">
-            <div id="${c_id}" class="progressbar-bar"></div>
+            <div id="${project.id}" class="progressbar-bar"></div>
         </div>
-        <button class="progressbar-icon progressbar-button" onclick="pause_construction(${c_id})">
+        <button class="progressbar-icon progressbar-button" onclick="${togglePauseButtonFunctionName}(${project.id})">
             <i class="fa ${playPauseLogo}"></i>
         </button>
-        <button class="progressbar-icon progressbar-button" onclick="cancel_construction(${c_id})">
+        <button class="progressbar-icon progressbar-button" onclick="cancel_construction(${project.id})">
             <i class="fa fa-times"></i>
         </button>
     </div>`;
@@ -421,13 +444,13 @@ function html_for_shipmentBar(id, shipment) {
     snail = `<div class="progressbar-name medium">
             <span class="hover_info"><img src="/static/images/icons/snail_house.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
         </div>`;
-  } else if (shipment["speed"] < 0.99) {
+  } else if (shipment.speed < 0.99) {
     snail = `<div class="progressbar-name medium">
             <span class="hover_info"><img src="/static/images/icons/snail.png" class="icon"/><span class="popup_info small">Energy Shortage</span>
         </div>`;
   }
   return `<div class="progressbar-container">
-        <div class="progressbar-name medium margin-small">${format_mass(shipment["quantity"])} ${resource_names[shipment["resource"]]}</div>
+        <div class="progressbar-name medium margin-small">${format_mass(shipment.quantity)} ${resource_names[shipment.resource]}</div>
         ${snail}
         <div class="progressbar-background">
             <div id="${id}" class="shipmentbar-bar"></div>

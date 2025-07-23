@@ -10,7 +10,7 @@ const formatting_mapping = {
 
 
 function refresh_achievements() {
-  fetch('/api/get_upcoming_achievements')
+  fetch('/api/v1/achievements')
     .then((response) => response.json())
     .then((upcoming_achievements) => {
       display_achievement_progress(upcoming_achievements);
@@ -20,17 +20,17 @@ function refresh_achievements() {
 function display_achievement_progress(upcoming_achievements) {
   const ua = document.getElementById("achievement_progression");
   ua.innerHTML = "";
-  Object.entries(upcoming_achievements).forEach(([key, upcoming_achievement]) => {
+  upcoming_achievements.achievements.forEach((achievement) => {
     let format = (value) => value;
-    if (key in formatting_mapping) {
-      format = formatting_mapping[key];
+    if (achievement.id in formatting_mapping) {
+      format = formatting_mapping[achievement.id];
     }
     ua.innerHTML += `<div class="progressbar-container">
-    <div class="progressbar-name medium margin-small">${upcoming_achievement.name}</div>
+    <div class="progressbar-name medium margin-small">${achievement.name}</div>
     <div class="progressbar-background">
-        <div class="achievement-progression ${upcoming_achievement.status == 0 ? '' : 'pine'}" style="--width:${100 * upcoming_achievement.status / upcoming_achievement.objective}">&nbsp;${format(upcoming_achievement.status)} / ${format(upcoming_achievement.objective)}</div>
+        <div class="achievement-progression ${achievement.status == 0 ? '' : 'pine'}" style="--width:${100 * achievement.status / achievement.objective}">&nbsp;${format(achievement.status)} / ${format(achievement.objective)}</div>
     </div>
-    <div class="progressbar-name medium txt_center" style="width:60px">+${upcoming_achievement.reward} XP</div>`;
+    <div class="progressbar-name medium txt_center" style="width:60px">+${achievement.reward} XP</div>`;
   });
 }
 
@@ -39,22 +39,22 @@ setInterval(() => {
 }, 10000);
 
 
-fetch('/api/get_quiz_question')
+fetch('/api/v1/daily-quiz')
   .then((response) => response.json())
   .then((quiz_question) => {
     display_quiz_question(quiz_question);
   });
 
 function answer_quiz(answer) {
-  send_json("/api/submit_quiz_answer", { answer: answer })
+  send_json("/api/v1/daily-quiz", { player_answer: answer })
     .then((response) => {
       response.json().then((response_data) => {
-        if (response_data.response == "correct") {
+        if (response_data.answered_correctly) {
           addToast("Correct answer! You earned 1XP");
         } else {
           addError("Incorrect answer! Try again tomorrow.");
         }
-        display_quiz_question(response_data.question_data);
+        display_quiz_question(response_data);
       });
     });
 }
@@ -62,19 +62,19 @@ function answer_quiz(answer) {
 function display_quiz_question(question_data) {
   const quiz = document.getElementById("quiz_question");
   quiz.innerHTML = `<p>${question_data.question}</p>`;
-  if ("player_answer" in question_data) {
+  if (question_data.hasOwnProperty("player_answer")) {
     quiz.innerHTML += `<div class="quiz_answers_container">
-    <button class="quiz_answer medium ${question_data.answer == "p1" || question_data.answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.p1}</button>
-    <button class="quiz_answer medium ${question_data.answer == "p2" || question_data.answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.p2}</button>
-    <button class="quiz_answer medium ${question_data.answer == "p3" || question_data.answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.p3}</button>
+    <button class="quiz_answer medium ${question_data.correct_answer == "answer1" || question_data.correct_answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.answer1}</button>
+    <button class="quiz_answer medium ${question_data.correct_answer == "answer2" || question_data.correct_answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.answer2}</button>
+    <button class="quiz_answer medium ${question_data.correct_answer == "answer3" || question_data.correct_answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.answer3}</button>
     </div>
     <p>${question_data.explanation}</p>
     <p class="txt_center"><a href="${question_data.Link}" target="_blank">Learn more</a></p>`;
   } else {
     quiz.innerHTML += `<div class="quiz_answers_container">
-    <button class="quiz_answer medium" onclick="answer_quiz('p1')">${question_data.p1}</button>
-    <button class="quiz_answer medium" onclick="answer_quiz('p2')">${question_data.p2}</button>
-    <button class="quiz_answer medium" onclick="answer_quiz('p3')">${question_data.p3}</button>
+    <button class="quiz_answer medium" onclick="answer_quiz('answer1')">${question_data.answer1}</button>
+    <button class="quiz_answer medium" onclick="answer_quiz('answer2')">${question_data.answer2}</button>
+    <button class="quiz_answer medium" onclick="answer_quiz('answer3')">${question_data.answer3}</button>
     </div>`;
   }
 }

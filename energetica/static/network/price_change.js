@@ -182,31 +182,40 @@ function reset_icons() {
 }
 
 function change_prices() {
-    const priceInputs = Array.from(document.querySelectorAll("input")).filter(input => input.id.includes("price-"));
+    const bidPriceInputs = document.querySelectorAll('input.bid_price_input');
+    const askPriceInputs = document.querySelectorAll('input.ask_price_input');
 
-    let prices = { "supply": {}, "demand": {} };
-    priceInputs.forEach((input) => {
-        let price_type = input.id.split("-")[1];
-        let facility = input.id.split("-")[2];
-        prices[price_type][facility] = parseFloat(input.value);
-    });
-    send_json("/api/change_network_prices", {
-        prices: prices,
+    const payload = {
+        // bids: [bidPriceInputs.forEach((input) => ({ type: input.payloadKey, price: input.value }))],
+        bids: Array.from(
+            bidPriceInputs,
+            (node) => ({
+                type: node.dataset.bidType,
+                price: node.value
+            }),
+        ),
+        asks: Array.from(
+            askPriceInputs,
+            (node) => ({
+                type: node.dataset.askType,
+                price: node.value
+            }),
+        )
+    };
+    fetch("/api/v1/networks/prices", {
+        method: "PATCH",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    }).then((response) => {
+        if (response.ok) {
+            addToast("Changes saved");
+            return;
+        }
+        addError("This is a frustrating message telling you that something went wrong but not what");
     })
-        .then((response) => {
-            response.json().then((raw_data) => {
-                let response = raw_data["response"];
-                if (response == "success") {
-                    addToast("Changes saved");
-                    return;
-                }
-                if (response == "priceTooLow") {
-                    addError("Prices need to be greater than -5");
-                    return;
-                }
-                addError("This is a frustrating message telling you that something went wrong but not what");
-            });
-        })
         .catch((error) => {
             console.error("Error:", error);
         });

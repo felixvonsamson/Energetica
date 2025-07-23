@@ -45,6 +45,7 @@ function check_new_connection() {
 }
 
 function retrieve_all() {
+    refreshMoney();
     retrieve_chart_data();
     retrieve_constructions();
     retrieve_shipments();
@@ -53,9 +54,25 @@ function retrieve_all() {
     retrieve_chats();
 }
 
+function refreshMoney() {
+    return fetch("/api/v1/players/me/money")
+        .then((response) => response.json())
+        .then((body) => {
+            let money = body["money"];
+            var obj = document.getElementById("money");
+            if (obj != null) {
+                obj.innerHTML = format_money_long(money);
+            }
+            return money;
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+}
+
 function load_constructions() {
     if (typeof (Storage) !== "undefined") {
-        const constructionsData = sessionStorage.getItem("constructions");
+        const constructionsData = sessionStorage.getItem("projectsData");
         if (constructionsData) {
             return Promise.resolve(JSON.parse(constructionsData));
         }
@@ -64,12 +81,12 @@ function load_constructions() {
 }
 
 function retrieve_constructions() {
-    console.log("Fetching construction data from the server");
-    return fetch("/api/get_constructions")
+    return fetch("/api/v1/projects")
         .then((response) => response.json())
         .then((raw_data) => {
             // Save fetched data to sessionStorage
-            sessionStorage.setItem("constructions", JSON.stringify(raw_data));
+            sessionStorage.setItem("projectsData", JSON.stringify(raw_data));
+            // TODO(mglst): rename the key used here. it should be projects not constructions
             return raw_data;
         })
         .catch((error) => {
@@ -88,8 +105,7 @@ function load_shipments() {
 }
 
 function retrieve_shipments() {
-    console.log("Fetching shipments data from the server");
-    return fetch("/api/get_shipments")
+    return fetch("/api/v1/shipments")
         .then((response) => response.json())
         .then((raw_data) => {
             // Save fetched data to sessionStorage
@@ -117,7 +133,6 @@ function load_chart_data(return_data = "data") {
 }
 
 function retrieve_chart_data(return_data = "data") {
-    console.log("Fetching chart data from the server");
     return fetch("/api/get_chart_data")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -168,7 +183,6 @@ function load_player_data() {
 }
 
 function retrieve_player_data() {
-    console.log("Fetching player data from the server");
     return fetch("/api/get_player_data")
         .then((response) => response.json())
         .then((raw_data) => {
@@ -218,7 +232,7 @@ function load_const_config() {
 
 function load_chats() {
     if (typeof (Storage) !== "undefined") {
-        const chats = sessionStorage.getItem("chats");
+        const chats = sessionStorage.getItem("chats_data");
         if (chats) {
             return Promise.resolve(JSON.parse(chats));
         }
@@ -227,12 +241,10 @@ function load_chats() {
 }
 
 function retrieve_chats() {
-    fetch("/api/get_chat_list")
+    return fetch("/api/v1/chats")
         .then((response) => response.json())
         .then((data) => {
-            const unread_chat_count = Object.values(data.chat_list).reduce((count, chat) => count + (chat.unread_messages > 0 ? 1 : 0), 0);
-            data.unread_chats = unread_chat_count;
-            sessionStorage.setItem("chats", JSON.stringify(data));
+            sessionStorage.setItem("chats_data", JSON.stringify(data));
             if (typeof refresh_chats === 'function') {
                 refresh_chats();
             }
@@ -245,7 +257,7 @@ function retrieve_chats() {
 }
 
 function show_unread_badges() {
-    const chats = sessionStorage.getItem("chats");
+    const chats = sessionStorage.getItem("chats_data");
     if (chats) {
         const unread_chat_count = JSON.parse(chats).unread_chats;
         if (unread_chat_count > 0) {

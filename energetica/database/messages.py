@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from functools import partial
 from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
@@ -15,20 +13,21 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class Message(DBModel):
+class Message:
     """Class for storing data about messages for the in-game messaging system."""
 
+    id: int
     text: str
     chat: Chat
     player: Player
-    time: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=datetime.now)
 
     def package(self) -> dict:
         """Package this message's data into a dictionary."""
         return {
             "id": self.id,
             "text": self.text,
-            "date": self.time.timestamp(),
+            "date": self.timestamp.timestamp(),
             "player_id": self.player.id,
         }
 
@@ -40,10 +39,18 @@ class Chat(DBModel):
     name: str | None
     participants: set[Player]
     messages: list[Message] = field(default_factory=list)
+    player_last_read_index: dict[int, int] = field(default_factory=dict)
 
-    last_read_message: dict[int, int | None] = field(
-        default_factory=lambda: defaultdict(partial(int, -1)),
-    )  # {player: message index in messages}
+    def is_group(self) -> bool:
+        """Check if the chat is a group chat."""
+        return len(self.participants) > 2
+
+    def unread_messages_count_for_player(self, player: Player) -> int:
+        """Get the number of unread messages for a player."""
+        last_read_message = self.player_last_read_index.get(player.id)
+        if last_read_message is None:
+            return len(self.messages)
+        return len(self.messages) - last_read_message - 1
 
     # TODO: make this a frontend piece of code
     def display_name(self, player: Player) -> str:

@@ -1,7 +1,9 @@
 /* 
 This code is the p5.js script that enables the player to choose a location on an
-interactive map just after having registerd to the game.
+interactive map just after having registered to the game.
 */
+
+/** @type {typeof import('./sockets.js')} */
 
 max_q = [1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10];
 // Tile item :
@@ -142,7 +144,7 @@ function setup() {
     textFont(font);
     textAlign(CENTER, CENTER);
     //filling map
-    fetch("/api/get_map") // retrieves map data from the database using api.py
+    fetch("/api/v1/map") // retrieves map data from the database using api.py
         .then((response) => response.json())
         .then((data) => {
             load_players().then((_players_ids) => {
@@ -553,6 +555,32 @@ function mousePressed() {
     }
 }
 
+function settleLocation(locationId) {
+    // TODO(mglst): there is an off-by-one error / quirk here with the tile ids with the + 1 workaround
+    send_json(`/api/v1/map/${locationId + 1}:settle`, {})
+        .then((response) => {
+            if (response.ok) {
+                window.location.href = "/home";
+            } else {
+                response.json().then((body) => {
+                    if (catchGameErrors(response, body)) {
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1000);
+                        return;
+                    }
+                    addError("An unknown error occurred");
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1000);
+                });
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+}
+
 function mousePressed_monitor() {
     // button pressed :
     if (
@@ -561,23 +589,7 @@ function mousePressed_monitor() {
     ) {
         if (validate.is_clicked()) {
             if (selected_id != null) {
-                send_json("/api/choose_location", { selected_id: selected_id })
-                    .then((response) => {
-                        response.json().then((raw_data) => {
-                            if (raw_data["response"] == "locationOccupied") {
-                                addError("This location is already occupied!");
-                                setTimeout(function () {
-                                    location.reload();
-                                }, 1000);
-                            } else {
-                                // success or choiceUnmodifiable
-                                window.location.href = "/home";
-                            }
-                        });
-                    })
-                    .catch((error) => {
-                        console.error("Error:", error);
-                    });
+                settleLocation(selected_id);
             } else {
                 addError("No location has been selected");
             }
@@ -630,23 +642,7 @@ function mousePressed_smartphone() {
     ) {
         if (validate.is_clicked()) {
             if (selected_id != null) {
-                send_json("/api/choose_location", { selected_id: selected_id })
-                    .then((response) => {
-                        response.json().then((raw_data) => {
-                            if (raw_data["response"] == "locationOccupied") {
-                                addError("This location is already occupied!");
-                                setTimeout(function () {
-                                    location.reload();
-                                }, 1000);
-                            } else {
-                                // success or choiceUnmodifiable
-                                window.location.href = "/home";
-                            }
-                        });
-                    })
-                    .catch((error) => {
-                        console.error("Error:", error);
-                    });
+                settleLocation(selected_id);
             } else {
                 addError("No location has been selected!");
             }

@@ -7,17 +7,10 @@ from typing import TYPE_CHECKING
 from energetica.database.messages import Chat, Message
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.utils.misc import display_new_message
+from energetica.utils.misc import send_new_message_sio
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
-
-
-def hide_chat_disclaimer(player: Player) -> None:
-    """Store the player's choice to not show the chat disclaimer anymore."""
-    player.show_chat_disclaimer = False
-    #    # message = websocket.rest_get_show_chat_disclaimer(player)
-    # websocket.rest_notify_player(player, message)
 
 
 def check_existing_chats(participants: set[Player]) -> bool:
@@ -33,13 +26,8 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
     :param str chat_name: a string for the name of the chat
     :param participant_ids: a list of numbers corresponding to player ids
     """
-    if None in participants:
-        # TODO (Felix): Catch this error in the frontend
-        raise GameError("playerDoesNotExist")
     if chat_name and (len(chat_name) == 0 or len(chat_name) > 25):
         raise GameError("wrongTitleLength")
-    if len(participants) < 2:
-        raise GameError("groupTooSmall")
     if check_existing_chats(participants):
         raise GameError("chatAlreadyExist")
     new_chat = Chat(
@@ -51,7 +39,6 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
         engine.log(f"{player.username} created a chat with {participant_list}")
     else:
         engine.log(f"{player.username} created a group chat called {chat_name} with {participant_list}")
-    # websocket.notify_new_chat(new_chat)
     return new_chat
 
 
@@ -62,14 +49,15 @@ def add_message(player: Player, message_text: str, chat: Chat) -> Message:
     if len(message_text) == 0:
         raise GameError("noMessage")
     if len(message_text) > 500:
-        raise GameError("messageTooLong", message=message_text)
+        raise GameError("messageTooLong")
     new_message = Message(
+        id=len(chat.messages),
         text=message_text,
         player=player,
         chat=chat,
     )
     chat.messages.append(new_message)
-    chat.last_read_message[player.id] = len(chat.messages) - 1
+    chat.player_last_read_index[player.id] = len(chat.messages) - 1
 
-    display_new_message(new_message, chat)
+    send_new_message_sio(new_message, chat)
     return new_message

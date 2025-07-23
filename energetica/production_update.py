@@ -14,7 +14,7 @@ from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.network import Network
-from energetica.database.ongoing_project import OngoingProject, ProjectStatus
+from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
@@ -23,6 +23,7 @@ from energetica.enums import (
     Fuel,
     FunctionalFacilityType,
     HydroFacilityType,
+    ProjectStatus,
     ProjectType,
     SolarFacilityType,
     StorageFacilityType,
@@ -264,10 +265,10 @@ def industry_demand_and_revenues(player: Player, demand: dict, revenues: dict) -
 def projects_demand(player: Player, demand: dict) -> None:
     """Calculate power consumption for ongoing projects."""
     for research in player.researches_by_priority:
-        if research.is_ongoing():
+        if research.is_ongoing:
             demand["research"] += research.project_power
     for construction in player.constructions_by_priority:
-        if construction.is_ongoing():
+        if construction.is_ongoing:
             demand["construction"] += construction.project_power
 
 
@@ -341,15 +342,15 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> Non
             )
 
     # demands are demanded on the internal market
-    for ask_type in player.network_prices.ask_prices.keys():
-        if ask_type in demand:
-            price = player.network_prices.ask_prices[ask_type]
+    for bid_type in player.network_prices.bid_prices.keys():
+        if bid_type in demand:
+            price = player.network_prices.bid_prices[bid_type]
             internal_market = place_ask(
                 internal_market,
                 player.id,
-                demand[ask_type],
+                demand[bid_type],
                 price,
-                ask_type,
+                bid_type,
             )
 
     resource_reservations = reset_resource_reservations()
@@ -362,7 +363,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> Non
                 facility,
                 resource_reservations,
             )
-            price = player.network_prices.bid_prices[facility]
+            price = player.network_prices.ask_prices[facility]
             capacity = max_prod - generation[facility]
             internal_market = place_bid(internal_market, player.id, capacity, price, facility)
 
@@ -392,11 +393,11 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
     # are used and replace it with a cashed property or something similar that generates a list of all demands and offer types
-    for demand_type in player.network_prices.ask_prices.keys():
+    for demand_type in player.network_prices.bid_prices.keys():
         if demand_type in demand:
             if player.money >= max_overdraft:
                 bid_q = demand[demand_type]
-                price = player.network_prices.ask_prices[demand_type]
+                price = player.network_prices.bid_prices[demand_type]
                 market = place_ask(market, player.id, bid_q, price, demand_type)
             else:
                 reduce_demand(new_values, demand_type, player.id, 0.0)
@@ -405,7 +406,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
     # offer capacities of remaining facilities on the market
     for facility in player.capacities.get_all():
         if (
-            facility in player.network_prices.bid_prices.keys()
+            facility in player.network_prices.ask_prices.keys()
             and engine.const_config["assets"][facility]["ramping_time"] != 0
         ):
             max_prod = calculate_prod(
@@ -414,7 +415,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
                 facility,  # type: ignore
                 resource_reservations,
             )
-            price = player.network_prices.bid_prices[facility]  # type: ignore
+            price = player.network_prices.ask_prices[facility]  # type: ignore
             capacity = max_prod - generation[facility]
             market = place_bid(market, player.id, capacity, price, facility)
 
@@ -890,7 +891,7 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
         cumul_demand = 0.0
         for i in range(min(len(player.constructions_by_priority), player.workers[WorkerType.CONSTRUCTION])):
             construction = player.constructions_by_priority[i]
-            if not construction.is_ongoing():
+            if not construction.is_ongoing:
                 continue
             cumul_demand += construction.project_power
             if cumul_demand > satisfaction:
@@ -903,7 +904,7 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
         cumul_demand = 0.0
         for i in range(min(len(researches_by_priority), player.workers[WorkerType.RESEARCH])):
             construction = researches_by_priority[i]
-            if not construction.is_ongoing():
+            if not construction.is_ongoing:
                 continue
             cumul_demand += construction.project_power
             if cumul_demand > satisfaction:

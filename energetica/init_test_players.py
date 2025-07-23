@@ -4,6 +4,7 @@ from energetica.auth import generate_password_hash
 from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player
+from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -181,6 +182,9 @@ def init_test_players() -> None:
     add_asset(player2, FunctionalFacilityType.WAREHOUSE, 20)
     add_asset(player2, ControllableFacilityType.STEAM_ENGINE, 20)
     add_asset(player2, FunctionalFacilityType.INDUSTRY, 10)
+
+    OngoingShipment(resource=Fuel.COAL, quantity=10, arrival_tick=100, duration=200, power_demand=10, player=player1)
+
     # Player 3
     # add_asset(player3, TechnologyType.MATHEMATICS, 1)
     # add_asset(player3, TechnologyType.MECHANICAL_ENGINEERING, 1)

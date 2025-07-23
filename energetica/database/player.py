@@ -8,7 +8,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import StrEnum
 from functools import cached_property
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable
 
 from pywebpush import WebPushException, webpush
 
@@ -17,13 +17,14 @@ from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, NetworkPrices
 from energetica.database.messages import Chat, Notification
-from energetica.database.ongoing_project import OngoingProject, ProjectStatus
+from energetica.database.ongoing_project import OngoingProject
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
     FunctionalFacilityType,
     PowerFacilityType,
+    ProjectStatus,
     ProjectType,
     StorageFacilityType,
     TechnologyType,
@@ -31,6 +32,7 @@ from energetica.enums import (
     WorkerType,
 )
 from energetica.globals import MAIN_EVENT_LOOP, engine
+from energetica.schemas.achievements import AchievementOut
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -57,7 +59,7 @@ class Player(DBModel):
 
     # inactive: bool = False  # True if account is inactive
     show_chat_disclaimer: bool = True
-    last_opened_chat: int = 0
+    last_opened_chat_id: int = field(default_factory=lambda: engine.general_chat.id)
 
     tile: HexTile | None = None
     network: Network | None = None
@@ -105,6 +107,7 @@ class Player(DBModel):
         },
     )
 
+    # TODO(mglst): create a custom class for this - some fields are not floats
     progression_metrics: dict[str, float] = field(
         default_factory=lambda: {
             "xp": 0,
@@ -236,7 +239,7 @@ class Player(DBModel):
         """Package the last 20 messages of a chat."""
         messages_list = [
             {
-                "time": message.time.isoformat(),
+                "time": message.timestamp.isoformat(),
                 "player_id": message.player.id,
                 "text": message.text,
             }
@@ -246,53 +249,14 @@ class Player(DBModel):
 
     def mark_chat_as_read(self, chat: Chat) -> None:
         """Mark a chat as read."""
-        self.last_opened_chat = chat.id
-        chat.last_read_message[self.id] = len(chat.messages) - 1
+        self.last_opened_chat_id = chat.id
+        chat.player_last_read_index[self.id] = len(chat.messages) - 1
 
-    def package_chat_list(self) -> dict:
-        """Package the chats of a player."""
-
-        def chat_name(chat: Chat) -> str:
-            if chat.name is not None:
-                return chat.name
-            for participant in chat.participants:
-                if participant != self:
-                    return participant.username
-            msg = "Chat has no name and no other participant"
-            raise ValueError(msg)
-
-        def find_initials(chat: Chat) -> list[str]:
-            if chat.name is None:
-                for participant in chat.participants:
-                    if participant != self:
-                        return [participant.username[0]]
-            max_initials_size = 4
-            initials = []
-            for participant in chat.participants:
-                initials.append(participant.username[0])
-                if len(initials) == max_initials_size:
-                    break
-            return initials
-
-        def unread_message_count(chat: Chat) -> int:
-            last_read_message = chat.last_read_message.get(self.id, 1)
-            if last_read_message is None:
-                return len(chat.messages)
-            return len(chat.messages) - last_read_message - 1
-
-        chat_dict = {
-            chat.id: {
-                "name": chat_name(chat),
-                "initials": find_initials(chat),
-                "group_chat": chat.name is not None,
-                "unread_messages": unread_message_count(chat),
-            }
-            for chat in Chat.filter(lambda chat: self in chat.participants)
-        }
-        return {
-            "chat_list": chat_dict,
-            "last_opened_chat": self.last_opened_chat,
-        }
+    def unread_chat_count(self) -> int:
+        """Return the number of unread chats."""
+        return Chat.count(
+            condition=lambda chat: self in chat.participants and chat.unread_messages_count_for_player(self) > 0,
+        )
 
     def package_chats(self) -> dict:
         """Package chats for the iOS frontend."""
@@ -532,31 +496,35 @@ class Player(DBModel):
                 )
                 self.notify("Achievement", message)
 
-    def package_upcoming_achievements(self) -> dict:
+    def package_upcoming_achievements(self) -> list[AchievementOut]:
         """Package the progress information for the upcoming achievements."""
-        upcoming_achievements = {}
-        for achievement, achievement_data in achievements.items():
+        upcoming_achievements: list[AchievementOut] = []
+        for achievement_id, achievement_data in achievements.items():
             requirements_met = all(self.achievements[requirement] for requirement in achievement_data["requirements"])
             if not requirements_met:
                 continue
-            if achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
-                if not self.achievements[achievement]:
-                    upcoming_achievements[achievement] = {
-                        "name": achievement_data["name"],
-                        "reward": achievement_data["reward"],
-                        "objective": 1,
-                        "status": 0,
-                    }
+            if achievement_id in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
+                if not self.achievements[achievement_id]:
+                    achievement = AchievementOut(
+                        id=achievement_id,
+                        name=achievement_data["name"],
+                        reward=achievement_data["reward"],
+                        objective=1,
+                        status=0,
+                    )
+                    upcoming_achievements.append(achievement)
             else:
-                current_lvl = self.achievements[achievement]
+                current_lvl = self.achievements[achievement_id]
                 if current_lvl < len(achievement_data["milestones"]):
                     status = self.progression_metrics[achievement_data["metric"]]
-                    upcoming_achievements[achievement] = {
-                        "name": f"{achievement_data['name']} {current_lvl + 1}",
-                        "reward": achievement_data["rewards"][current_lvl],
-                        "objective": achievement_data["milestones"][current_lvl],
-                        "status": round(status),
-                    }
+                    achievement = AchievementOut(
+                        id=achievement_id,
+                        name=f"{achievement_data['name']} {current_lvl + 1}",
+                        reward=achievement_data["rewards"][current_lvl],
+                        objective=achievement_data["milestones"][current_lvl],
+                        status=round(status),
+                    )
+                    upcoming_achievements.append(achievement)
         return upcoming_achievements
 
     def __repr__(self) -> str:
@@ -574,48 +542,11 @@ class Player(DBModel):
             | ({"cell_id": self.tile.id} if self.tile is not None else {})
         )
 
+    # TODO(mglst): this method should be deprecated
     @staticmethod
     def package_all() -> dict[int, dict]:
         """Package data for all players."""
         return {player.id: player.package() for player in Player.all()}
-
-    def package_scoreboard(self) -> dict[int, dict]:
-        """Package the scoreboard data for players with a tile."""
-        players = Player.filter(lambda p: p.tile is not None)
-        include_co2_emissions = self.discovered_greenhouse_gas_effect()
-        return {
-            player.id: (
-                {
-                    "username": player.username,
-                    "network_name": player.network.name if player.network else "-",
-                    "average_hourly_revenues": player.progression_metrics["average_revenues"],
-                    "max_power_consumption": player.progression_metrics["max_power_consumption"],
-                    "total_technology_levels": player.progression_metrics["total_technologies"],
-                    "xp": player.progression_metrics["xp"],
-                }
-                | ({"co2_emissions": player.calculate_net_emissions()} if include_co2_emissions else {})
-            )
-            for player in players
-        }
-
-    def package_constructions(self) -> dict[int, dict]:
-        """Package the player's ongoing constructions."""
-        return {
-            construction.id: {
-                k: getattr(construction, k)
-                for k in [
-                    "id",
-                    "project_type",
-                    "end_tick_or_ticks_passed",
-                    "duration",
-                    "status",
-                ]
-            }
-            | {"display_name": engine.const_config["assets"][construction.project_type]["name"]}
-            | ({"level": construction.level} if construction.level is not None else {})
-            | {"speed": construction.speed}
-            for construction in (*self.constructions_by_priority, *self.researches_by_priority)
-        }
 
     def package_shipments(self) -> dict[int, dict]:
         """Package the player's ongoing shipments."""
@@ -636,6 +567,27 @@ class Player(DBModel):
     def package_construction_queue(self) -> list:
         """Package the player's construction queue (list of construction_ids)."""
         return self.constructions_by_priority
+
+    @property
+    def power_facilities(self) -> Iterable[ActiveFacility]:
+        return ActiveFacility.filter(
+            lambda active_facility: active_facility.player == self
+            and isinstance(active_facility.facility_type, PowerFacilityType),
+        )
+
+    @property
+    def storage_facilities(self) -> Iterable[ActiveFacility]:
+        return ActiveFacility.filter(
+            lambda active_facility: active_facility.player == self
+            and isinstance(active_facility.facility_type, StorageFacilityType),
+        )
+
+    @property
+    def extraction_facilities(self) -> Iterable[ActiveFacility]:
+        return ActiveFacility.filter(
+            lambda active_facility: active_facility.player == self
+            and isinstance(active_facility.facility_type, ExtractionFacilityType),
+        )
 
     def package_active_facilities(self) -> dict[str, dict[int, dict[str, Any]]]:
         """Package the player's active facilities."""
@@ -815,7 +767,6 @@ class Player(DBModel):
         if technologies and "technologies_data" in self.__dict__:
             del self.technologies_data
         if self.socketio_clients:
-            # TODO(mglst): update clients over websocket
             pages_data: dict = {}
             if power_facilities:
                 pages_data |= {"power_facilities": self.power_facilities_data}

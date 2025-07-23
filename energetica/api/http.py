@@ -1,68 +1,27 @@
+"""
+Legacy HTTP API routes.
+
+These are being migrated to `energetica/routers/<xyz>.py`
+"""
+
 import pickle
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
 import numpy as np
-from fastapi import APIRouter, Depends, Form, Request, status
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi import APIRouter, Depends, Request, status
+from fastapi.responses import JSONResponse
 
-import energetica.utils.assets
-import energetica.utils.chat
-import energetica.utils.map_helpers
-import energetica.utils.misc
-import energetica.utils.network_helpers
-import energetica.utils.resource_market
 from energetica.auth import get_current_user
 from energetica.config.assets import wind_power_curve
-from energetica.database.active_facility import ActiveFacility
-from energetica.database.map import HexTile
-from energetica.database.messages import Chat, Notification
 from energetica.database.network import Network
-from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
-from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.enums import (
-    ExtractionFacilityType,
-    Fuel,
-    PowerFacilityType,
-    Renewable,
-    StorageFacilityType,
-    str_to_project_type,
-)
-from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.utils.assets import package_projects_data
 
 # TODO: migrate all these routes to native FastAPI routes
 todo_router = APIRouter(prefix="", tags=["Flask Migration"])
-
-
-@todo_router.post("/request_delete_notification")
-async def request_delete_notification(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """
-    Delete a notification from the player's notification list.
-
-    Request Payload:
-        {
-            "id": int  # The ID of the notification to be deleted
-        }
-    """
-    request_data = await request.json()
-    notification = Notification.getitem(int(request_data["id"]))
-    user.delete_notification(notification)
-    return {"response": "success"}
-
-
-@todo_router.post("/request_marked_as_read")
-def request_marked_as_read(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Mark all notification as read."""
-    user.notifications_read()
-    return {"response": "success"}
 
 
 @todo_router.get("/get_const_config")
@@ -77,57 +36,11 @@ def get_wind_power_curve():  # noqa: ANN201
     return wind_power_curve
 
 
-# gets the map data from the database and returns it as a array of dictionaries :
-@todo_router.get("/get_map")
-def get_map():  # noqa: ANN201
-    """Get the map data from the database and returns it as a array of dictionaries."""
-    hex_map = HexTile.all()
-    hex_list = [
-        {
-            "id": tile.id,
-            "q": tile.coordinates[0],
-            "r": tile.coordinates[1],
-            "solar": tile.potentials[Renewable.SOLAR],
-            "wind": tile.potentials[Renewable.WIND],
-            "hydro": tile.potentials[Renewable.HYDRO],
-            "coal": tile.fuel_reserves[Fuel.COAL],
-            "gas": tile.fuel_reserves[Fuel.GAS],
-            "uranium": tile.fuel_reserves[Fuel.URANIUM],
-            "climate_risk": tile.climate_risk,
-            "player_id": tile.player.id if tile.player else None,
-        }
-        for tile in hex_map
-    ]
-    return hex_list
-
-
 @todo_router.get("/get_networks")
 def get_networks():  # noqa: ANN201
     """Get all the network names and returns it as a list."""
     networks = {network.id: network.name for network in Network.all()}
     return networks
-
-
-@todo_router.get("/get_chat_messages")
-async def get_chat_messages(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Get the last 20 messages from a chat and returns it as a list."""
-    request_data = await request.json()
-    chat = Chat.get(int(request_data["chatID"]))
-    if chat is None:
-        return JSONResponse({"response": "chatNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    packaged_messages = user.package_chat_messages(chat)
-    user.mark_chat_as_read(chat)
-    return {"response": "success", "messages": packaged_messages}
-
-
-@todo_router.get("/get_chat_list")
-def get_chat_list(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get the list of chats for the current player."""
-    response = user.package_chat_list()
-    return {"response": "success"} | response
 
 
 @todo_router.get("/get_resource_data")
@@ -196,12 +109,6 @@ def get_chart_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa:
     }
 
 
-@todo_router.get("/get_current_weather")
-def get_current_weather(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get the current weather data including date, irradiance, wind speed, and river discharge."""
-    return energetica.utils.misc.package_weather_data(user)
-
-
 @todo_router.get("/get_network_capacities")
 def get_network_capacities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the network capacities for the current player."""
@@ -268,250 +175,10 @@ def get_generation_priority(user: Annotated[Player, Depends(get_current_user)]):
     return (user.network_prices.get_sorted_renewables(), user.network_prices.get_facility_priorities())
 
 
-@todo_router.get("/get_constructions")
-def get_constructions(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get list of facilities under construction for this player."""
-    projects = user.package_constructions()
-    constructions_by_priority = [construction.id for construction in user.constructions_by_priority]
-    researches_by_priority = [research.id for research in user.researches_by_priority]
-    return (projects, constructions_by_priority, researches_by_priority)
-
-
-@todo_router.get("/get_shipments")
-def get_shipments(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get list of shipments under way for this player."""
-    return user.package_shipments()
-
-
-@todo_router.get("/get_upcoming_achievements")
-def get_upcoming_achievements(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get the upcoming achievements for this player."""
-    return user.package_upcoming_achievements()
-
-
-@todo_router.get("/get_scoreboard")
-def get_scoreboard(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get the scoreboard data."""
-    return user.package_scoreboard()
-
-
-@todo_router.get("/get_quiz_question")
-def get_quiz_question(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get the daily quiz question."""
-    return energetica.utils.misc.get_quiz_question(user)
-
-
-@todo_router.post("/submit_quiz_answer")
-async def submit_quiz_answer(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Submit the daily quiz answer from a player."""
-    # TODO: even for correct answers, the frontend displays "Incorrect answer! Try again tomorrow."
-    request_data = await request.json()
-    answer = request_data["answer"]
-    answer_correct = energetica.utils.misc.submit_quiz_answer(user, answer)
-    return {
-        "response": "correct" if answer_correct else "incorrect",
-        "question_data": energetica.utils.misc.get_quiz_question(user),
-    }
-
-
 @todo_router.get("/get_active_facilities")
 def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the active facilities for this player."""
     return user.package_active_facilities()
-
-
-@todo_router.post("/choose_location")
-async def choose_location(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Set the location for the player."""
-    request_data = await request.json()
-    selected_id = request_data["selected_id"]
-    tile = HexTile.getitem(selected_id + 1)
-    energetica.utils.map_helpers.confirm_location(player=user, tile=tile)
-    return {"response": "success"}
-
-
-@todo_router.post("/request_queue_project")
-async def request_queue_project(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Start a construction or research project for the player."""
-    request_data = await request.json()
-    asset = request_data["facility"]
-    project_type = str_to_project_type[asset]
-    force = request_data["force"]
-    try:
-        energetica.utils.assets.queue_project(
-            player=user,
-            project_type=project_type,
-            force=force,
-        )
-    except Confirm as confirm:
-        return JSONResponse(
-            {
-                "response": "areYouSure",
-                "capacity": confirm.__getattribute__("capacity"),
-                "construction_power": confirm.__getattribute__("construction_power"),
-            },
-            status_code=status.HTTP_300_MULTIPLE_CHOICES,
-        )
-
-    return {
-        "response": "success",
-        "money": user.money,
-        "constructions": package_projects_data(user),
-    }
-
-
-@todo_router.post("/request_cancel_project")
-async def request_cancel_project(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Cancel an ongoing projects."""
-    request_data = await request.json()
-    project_id = int(request_data["id"])
-    project = OngoingProject.get(int(project_id))
-    if project is None or project.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    force = request_data["force"]
-    try:
-        energetica.utils.assets.cancel_project(player=user, project=project, force=force)
-    except Confirm as confirm:
-        return JSONResponse(
-            {
-                "response": "areYouSure",
-                "refund": confirm.__getattribute__("refund"),
-            },
-            status_code=status.HTTP_300_MULTIPLE_CHOICES,
-        )
-    return {
-        "response": "success",
-        "money": user.money,
-        "projects": package_projects_data(user),
-    }
-
-
-@todo_router.post("/request_toggle_pause_project")
-async def request_pause_project(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Pause or unpause an ongoing project."""
-    request_data = await request.json()
-    project_id = int(request_data["id"])
-    project = OngoingProject.get(int(project_id))
-    if project is None or project.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.toggle_pause_project(player=user, project=project)
-    return {
-        "response": "success",
-        "projects": package_projects_data(user),
-    }
-
-
-@todo_router.post("/request_decrease_project_priority")
-async def request_decrease_project_priority(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Change the order of ongoing projects."""
-    request_data = await request.json()
-    project_id = request_data["id"]
-    project = OngoingProject.get(int(project_id))
-    if project is None or project.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.decrease_project_priority(player=user, project=project)
-    return {
-        "response": "success",
-        "projects": package_projects_data(user),
-    }
-
-
-@todo_router.post("/request_upgrade_facility")
-async def request_upgrade_facility(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Upgrade a facility."""
-    request_data = await request.json()
-    facility_id = request_data["facility_id"]
-    facility = ActiveFacility.get(int(facility_id))
-    if facility is None or facility.player != user:
-        return JSONResponse({"response": "facilityNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.upgrade_facility(player=user, facility=facility)
-    return {"response": "success", "money": user.money}
-
-
-@todo_router.post("/request_upgrade_all_of_type")
-async def request_upgrade_all_of_type(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Upgrade all facilities of a certain type."""
-    request_data = await request.json()
-    facility_type = str_to_project_type[request_data["facility"]]
-    if not isinstance(facility_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
-        return JSONResponse({"response": "malformedRequest"}, status_code=status.HTTP_400_BAD_REQUEST)
-    energetica.utils.assets.upgrade_all_of_type(player=user, facility_type=facility_type)
-    return {"response": "success", "money": user.money}
-
-
-@todo_router.post("/request_dismantle_facility")
-async def request_dismantle_facility(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Dismantle a facility."""
-    request_data = await request.json()
-    facility_id = request_data["facility_id"]
-    facility = ActiveFacility.get(int(facility_id))
-    if facility is None or facility.player != user:
-        return JSONResponse({"response": "projectNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.assets.dismantle_facility(player=user, facility=facility)
-    return {
-        "response": "success",
-        "facility_name": facility.facility_type,
-        "money": user.money,
-    }
-
-
-@todo_router.post("/request_dismantle_all_of_type")
-async def request_dismantle_all_of_type(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Dismantle all facilities of a certain type."""
-    request_data = await request.json()
-    facility = request_data["facility"]
-    energetica.utils.assets.dismantle_all_of_type(player=user, facility_type=facility)
-    return {"response": "success", "money": user.money}
-
-
-@todo_router.post("/change_network_prices")
-async def change_network_prices(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Change the prices for anything on the network."""
-    if not user.is_in_network:
-        return JSONResponse({"response": "notAuthorized"}, status_code=status.HTTP_404_NOT_FOUND)
-    request_data = await request.json()
-    updated_prices = request_data["prices"]
-    if not all(key in ["supply", "demand"] for key in updated_prices.keys()):
-        raise GameError("malformedRequest")
-    user.network_prices.update(
-        updated_bids=updated_prices["supply"],
-        updated_asks=updated_prices["demand"],
-    )
-    engine.log(f"{user.username} updated their prices")
-    return {"response": "success"}
 
 
 @todo_router.post("/request_change_facility_priority")
@@ -525,162 +192,6 @@ async def request_change_facility_priority(  # noqa: ANN201
     request_data = await request.json()
     priority = request_data["priority"]
     user.network_prices.change_facility_priority(new_priority=priority)
-    return {"response": "success"}
-
-
-@todo_router.post("/put_resource_on_sale")  # noqa: ANN201
-def put_resource_on_sale(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    resource: Annotated[Fuel, Form()],
-    quantity: Annotated[float, Form()],
-    price: Annotated[float, Form()],
-):
-    """Put a resource on sale."""
-    try:
-        energetica.utils.resource_market.put_resource_on_market(user, resource, quantity * 1000, price / 1000)
-    except GameError as game_exception:
-        if game_exception.exception_type != "notEnoughResource":
-            raise
-        # TODO: flash
-        # flash_error(f"You have not enough {resource} available")
-    else:
-        # TODO: flash
-        # flash(
-        #     f"You put {quantity}t of {resource} on sale for "
-        #     f"{price}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/t",
-        #     category="message",
-        # )
-        pass
-    return RedirectResponse("/resource_market", status_code=status.HTTP_303_SEE_OTHER)
-
-
-@todo_router.post("/buy_resource")
-async def buy_resource(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Buy a resource from the market."""
-    request_data = await request.json()
-    id = int(request_data["id"])
-    quantity = float(request_data["quantity"]) * 1000
-    sale = ResourceOnSale.get(id)
-    if sale is None:
-        return JSONResponse({"response": "saleNotFound"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.resource_market.buy_resource_from_market(user, quantity, sale)
-    if user == sale.player:
-        return {
-            "response": "removedFromMarket",
-            "quantity": quantity,
-            "available_quantity": sale.quantity,
-            "resource": sale.resource,
-        }
-    return {
-        "response": "success",
-        "resource": sale.resource,
-        "total_price": sale.price * quantity,
-        "quantity": quantity,
-        "seller": sale.player.username,
-        "available_quantity": sale.quantity,
-        "shipments": user.package_shipments(),
-    }
-
-
-@todo_router.post("/join_network")
-def join_network(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    choose_network: Annotated[int, Form()],
-):
-    """Join a network."""
-    network = energetica.utils.network_helpers.join_network(user, Network.get(choose_network))
-    # TODO: flash
-    # flash(f"You joined the network {network.name}", category="message")
-    engine.log(f"{user.username} joined the network {network.name}")
-    return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
-
-
-@todo_router.post("/create_network")
-def create_network(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    network_name: Annotated[str, Form()],
-):
-    """Create a network."""
-    try:
-        energetica.utils.network_helpers.create_network(user, network_name)
-    except GameError as game_exception:
-        # TODO: flash
-        # match game_exception.exception_type:
-        #     case "nameLengthInvalid":
-        #         flash("Network name must be between 3 and 40 characters", category="error")
-        #     case "nameAlreadyUsed":
-        #         flash("A network with this name already exists", category="error")
-        raise
-    # flash(f"You created the network {network_name}", category="message")
-    return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
-
-
-@todo_router.post("/leave_network")
-def leave_network(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-):
-    """Leave the current network."""
-    network = user.network
-    if network is None:
-        return JSONResponse({"response": "notInNetwork"}, status_code=status.HTTP_404_NOT_FOUND)
-    energetica.utils.network_helpers.leave_network(user)
-    # TODO: flash
-    # flash(f"You left network {network.name}", category="message")
-    return RedirectResponse("/network", status_code=status.HTTP_303_SEE_OTHER)
-
-
-# TODO(Felix): This should probably be a post or a patch request
-@todo_router.get("/hide_chat_disclaimer")
-def hide_chat_disclaimer(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-):
-    """Permanently hide the chat disclaimer."""
-    energetica.utils.chat.hide_chat_disclaimer(user)
-    return {"response": "success"}
-
-
-@todo_router.post("/create_chat")
-async def create_chat(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Create a chat with one other player."""
-    request_data = await request.json()
-    buddy = Player.getitem(int(request_data["buddy_id"]))
-    energetica.utils.chat.create_chat(user, None, {user, buddy})
-    return {"response": "success"}
-
-
-@todo_router.post("/create_group_chat")
-async def create_group_chat(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Create a group chat."""
-    request_data = await request.json()
-    chat_title = str(request_data["chat_title"])
-    group_members = {user, *(map(Player.getitem, map(int, request_data["group_members"])))}
-    energetica.utils.chat.create_chat(user, chat_title, group_members)
-    return {"response": "success"}
-
-
-@todo_router.post("new_message")
-async def new_message(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Send a message."""
-    request_data = await request.json()
-    message = request_data["new_message"]
-    chat_id = int(request_data["chat_id"])
-    chat = Chat.get(chat_id)
-    if chat is None:
-        # TODO(mglst) here we should throw a GameError
-        return JSONResponse({"response": "NoChatID"}, status_code=status.HTTP_403_FORBIDDEN)
-    energetica.utils.chat.add_message(user, message, chat)
     return {"response": "success"}
 
 
