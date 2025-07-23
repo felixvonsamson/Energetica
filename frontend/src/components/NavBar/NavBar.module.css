@@ -1,0 +1,10 @@
+.navbar {
+    /* display: block; */
+    /* max-width: 230px; */
+    width: 15%;
+    /* position: fixed; */
+    /* overflow: auto; */
+    /* top: 100px; */
+    display: flex;
+    flex-direction: column;
+}

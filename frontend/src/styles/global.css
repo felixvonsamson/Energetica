@@ -1,0 +1,24 @@
+/* Disable scrolling */
+html,
+body,
+#root {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+:root {
+    --color-white: #ffffff;
+    --color-bone: #e5d9b6;
+    --color-tan-green: #a4be7b;
+    --color-green: #5f8d4e;
+    --color-pine: #285430;
+    --color-red: #f44336;
+    --color-orange: #f59f00;
+
+    --text-on-light: #000000;
+    --text-on-dark: #ffffff;
+
+    /* An example for a font */
+    --font-sans: system-ui, sans-serif;
+}

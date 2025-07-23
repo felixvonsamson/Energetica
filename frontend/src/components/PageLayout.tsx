@@ -1,4 +1,4 @@
-import NavBar from './NavBar';
+import OldNavBar from './OldNavBar';
 import RightSidebar from './RightSidebar';
 import PageContent from './PageContent';
 
@@ -6,7 +6,7 @@ import PageContent from './PageContent';
 export default function PageLayout() {
   return <>
     <GameLogo />
-    <NavBar />
+    <OldNavBar />
     <RightSidebar />
     <PageContent />
   </>

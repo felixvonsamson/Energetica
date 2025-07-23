@@ -6,6 +6,8 @@ import { RouterProvider, createBrowserHistory, createRouter } from '@tanstack/re
 
 import { routeTree } from './routeTree.gen'
 
+import "./styles/global.css"
+
 const router = createRouter({
     routeTree,
     basepath: '/admin-dashboard'
