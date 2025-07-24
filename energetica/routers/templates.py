@@ -25,13 +25,13 @@ def flask_style_url_for(request: Request, name: str, **params: Any) -> URL:
         params["path"] = params.pop("filename")
 
     # Get the base URL
-    url = request.url_for(name, **params)
+    path = request.app.url_path_for(name, **params)
 
     # Append the anchor manually, if present
     if anchor:
-        url = URL(f"{url}#{anchor}")
+        return URL(f"{path}#{anchor}")
 
-    return url
+    return URL(path)
 
 
 def app_context(request: Request) -> dict[str, Any]:
