@@ -44,3 +44,31 @@
     font-weight: bold;
     box-shadow: inset 0px 0px 5px black;
 }
+
+.logo-container {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    gap: 4px;
+}
+
+.logo {
+    box-sizing: border-box;
+    object-fit: contain;
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    max-height: 100%;
+    padding: 4px 0px;
+    /* I couldn't manage to change the color of the logo using the below */
+    /* fill: var(--color-pine-darker);
+    stroke: var(--color-pine-darker);
+    color: var(--color-pine-darker); */
+}
+
+.fancy-title {
+    font-family: 'Expletus Sans', cursive;
+    color: var(--color-pine-darker);
+}

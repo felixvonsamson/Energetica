@@ -1,12 +1,20 @@
+import { ReactNode } from "react";
 import { Link, useMatchRoute } from "@tanstack/react-router";
-import clsx from "clsx"
+import clsx from "clsx";
 import { ArrowUpDown, Leaf, Map, Settings, Users } from 'lucide-react';
 
-import styles from "./NavBar.module.css"
-import { ReactNode } from "react";
+import styles from "./NavBar.module.css";
+
+import energeticaLogo from "../../assets/icon_green.svg";
 
 export default function NavBar() {
     return <nav className={styles['navbar']}>
+        <div className={styles['logo-container']}>
+            <img src={energeticaLogo} className={styles["logo"]} alt="Energetica logo" />
+            <h1 className={styles["fancy-title"]} >
+                Energetica
+            </h1>
+        </div>
         <NavBarItem to='/admin-dashboard/map'>
             <Map />
             Map
