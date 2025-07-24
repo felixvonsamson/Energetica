@@ -1,26 +1,43 @@
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import clsx from "clsx"
+import { ArrowUpDown, Leaf, Map, Settings, Users } from 'lucide-react';
 
 import styles from "./NavBar.module.css"
+import { ReactNode } from "react";
 
 export default function NavBar() {
     return <nav className={styles['navbar']}>
-        <NavBarItem to='/admin-dashboard/map' text="Map" />
-        <NavBarItem to='/admin-dashboard/players' text="Players" />
-        <NavBarItem to='/admin-dashboard/networks' text="Networks" />
-        <NavBarItem to='/admin-dashboard/climate' text="Climate" />
-        <NavBarItem to='/admin-dashboard/settings' text="Settings" className={styles['settings']} />
+        <NavBarItem to='/admin-dashboard/map'>
+            <Map />
+            Map
+        </NavBarItem>
+        <NavBarItem to='/admin-dashboard/players'>
+            <Users />
+            Players
+        </NavBarItem>
+        <NavBarItem to='/admin-dashboard/networks'>
+            <ArrowUpDown />
+            Networks
+        </NavBarItem>
+        <NavBarItem to='/admin-dashboard/climate'>
+            <Leaf />
+            Climate
+        </NavBarItem>
+        <NavBarItem to='/admin-dashboard/settings' className={styles['settings']}>
+            <Settings />
+            Settings
+        </NavBarItem>
     </nav >
 }
 
 function NavBarItem({
     to,
-    text,
     className,
+    children
 }: {
     to: string;
-    text: string;
     className?: string;
+    children: ReactNode;
 }) {
     const matchRoute = useMatchRoute()
     const isActive = matchRoute({ to })
@@ -32,7 +49,7 @@ function NavBarItem({
                 [styles.active]: isActive,
             })}
         >
-            {text}
+            {children}
         </Link>
     )
 }

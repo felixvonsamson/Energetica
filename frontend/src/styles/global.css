@@ -1,10 +1,16 @@
-/* Disable scrolling */
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&display=swap');
+
 html,
 body,
 #root {
     height: 100%;
     margin: 0;
+    /* Disable scrolling */
     overflow: hidden;
+}
+
+body {
+    font-family: 'Baloo 2', sans-serif;
 }
 
 :root {
