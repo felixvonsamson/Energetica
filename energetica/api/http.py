@@ -13,11 +13,8 @@ import numpy as np
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-import energetica.utils.assets
-import energetica.utils.map_helpers
 from energetica.auth import get_current_user
 from energetica.config.assets import wind_power_curve
-from energetica.database.map import HexTile
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.game_error import GameError
@@ -182,19 +179,6 @@ def get_generation_priority(user: Annotated[Player, Depends(get_current_user)]):
 def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the active facilities for this player."""
     return user.package_active_facilities()
-
-
-@todo_router.post("/choose_location")
-async def choose_location(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Set the location for the player."""
-    request_data = await request.json()
-    selected_id = request_data["selected_id"]
-    tile = HexTile.getitem(selected_id + 1)
-    energetica.utils.map_helpers.confirm_location(player=user, tile=tile)
-    return {"response": "success"}
 
 
 @todo_router.post("/request_change_facility_priority")

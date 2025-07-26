@@ -128,8 +128,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--no-reload",
         action="store_true",
-        help="Disable hot reloading",
         default=True,
+        help="Disable hot reloading",
     )
     parser.add_argument(
         "--fastapi-log-level",

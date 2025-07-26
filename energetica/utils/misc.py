@@ -1,4 +1,4 @@
-"""Miscellaneous util functions."""
+"""Miscellaneous utility functions."""
 
 import math
 import os

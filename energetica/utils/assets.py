@@ -1,4 +1,5 @@
-"""Utils relating to player assets."""
+"""Utility functions relating to player assets."""
+# TODO(mglst): This file name should be renamed, e.g. to ongoing projects, constructions, the likes
 
 import math
 from typing import TYPE_CHECKING, cast

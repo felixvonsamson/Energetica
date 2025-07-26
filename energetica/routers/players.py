@@ -37,20 +37,20 @@ def get_all_users() -> list[PlayerOut]:
 
 @router.patch("/me/settings", status_code=204)
 def update_user_settings(
-    user: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_current_user)],
     request_data: SettingsPatch,
 ) -> None:
     if request_data.show_disclaimer is not None:
-        user.show_chat_disclaimer = request_data.show_disclaimer
+        player.show_chat_disclaimer = request_data.show_disclaimer
 
 
 @router.patch("/me/ui-state", status_code=204)
 def update_ui_state(
-    user: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_current_user)],
     request_data: UIStatePatch,
 ) -> None:
     if request_data.last_opened_chat_id is not None:
-        user.last_opened_chat_id = request_data.last_opened_chat_id
+        player.last_opened_chat_id = request_data.last_opened_chat_id
 
 
 @router.get("/me/money")

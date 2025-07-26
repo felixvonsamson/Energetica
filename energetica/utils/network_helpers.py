@@ -1,4 +1,4 @@
-"""Utility functions relating to networks."""
+"""Utility functions relating to electricity market networks."""
 
 from energetica.database.network import Network
 from energetica.database.player import Player

@@ -1,4 +1,4 @@
-"""Util functions relating to the resource market."""
+"""Utility functions relating to the resource market."""
 
 import math
 
