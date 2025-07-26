@@ -2,6 +2,9 @@ import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/admin-dashboard/networks')({
     component: RouteComponent,
+    staticData: {
+        title: 'Networks'
+    }
 })
 
 function RouteComponent() {

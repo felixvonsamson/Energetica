@@ -8,6 +8,7 @@
     background-color: var(--color-green);
     padding: 10px;
     gap: 10px;
+    border-right: 1px solid var(--color-pine);
 }
 
 .navbar-item {

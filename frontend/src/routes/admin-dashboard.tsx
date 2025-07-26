@@ -8,5 +8,8 @@ export const Route = createFileRoute('/admin-dashboard')({
             throw redirect({ to: '/admin-dashboard/players' })
         }
     },
+    staticData: {
+        title: 'Dashboard'
+    },
     component: AdminDashboardLayout,
 })
