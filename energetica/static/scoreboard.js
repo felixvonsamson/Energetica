@@ -40,7 +40,7 @@ function sortTable(columnName) {
     });
 
     // Rebuild the HTML table
-    let include_co2_emissions = sortedData[0].hasOwnProperty('co2_emissions');
+    let include_co2_emissions = sortedData[0].hasOwnProperty('co2_emissions') && sortedData[0].co2_emissions !== null;
     let html = `<tr>
         <th id="username" onclick="sortTable('username')">Username</th>
         <th id="network_name" onclick="sortTable('network_name')">Network</th>
@@ -67,7 +67,12 @@ function sortTable(columnName) {
             <td>${row.total_technology_levels}</td>
             <td>${row.xp}</td>`;
             if (include_co2_emissions) {
-                html += `<td>${format_mass(row.co2_emissions)}</td>`;
+                console.log(row.co2_emissions);
+                if (row.co2_emissions === null) {
+                    html += "<td>?</td>";
+                } else {
+                    html += `<td>${format_mass(row.co2_emissions)}</td>`;
+                }
             }
             html += `</tr > `;
         }
