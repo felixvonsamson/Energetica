@@ -12,6 +12,7 @@ from energetica.enums import (
     ControllableFacilityType,
     FunctionalFacilityType,
     HydroFacilityType,
+    PowerFacilityType,
     ProjectType,
     WindFacilityType,
     WorkerType,
@@ -20,6 +21,13 @@ from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils import assets
+
+
+def str_to_policy(txt: str) -> Policy:
+    policy = eval(txt)
+    if not isinstance(policy, Policy):
+        raise ValueError(f"{txt} does not define a valid policy")
+    return policy
 
 
 class Policy:
@@ -34,7 +42,11 @@ class Policy:
         self.is_done = False
 
     def take_action(self, _player: Player) -> None:
-        """Every tick the policy will take an action based on the state"""
+        """
+        Every tick the policy will take an action based on the state.
+
+        Calling this method when self.is_done is true is undefined behavior.
+        """
         self.is_done = True
 
     def __add__(self, other: Policy) -> SequencedPolicy:
@@ -65,8 +77,6 @@ class SequencedPolicy(Policy):
         self.policies = policies
 
     def take_action(self, player: Player) -> None:
-        if self.is_done:
-            return
         if not self.policies:
             self.is_done = True
             return
@@ -129,15 +139,16 @@ class QueueProjectPolicy(Policy):
     It first waits for the project to be available, and for funds to be available.
     """
 
-    def __init__(self, project_type: ProjectType, wait_for_funds: bool = True, wait_for_available_workers: bool = True):
+    def __init__(
+        self,
+        project_type: ProjectType,
+        wait_for_available_workers: bool = True,
+    ):
         super().__init__(f"queue project {str(project_type)}")
         self.project_type = project_type
-        self.wait_for_funds = wait_for_funds
         self.wait_for_available_workers = wait_for_available_workers
 
     def take_action(self, player: Player) -> None:
-        if self.is_done:
-            return
         try:
             assets.queue_project(player, self.project_type)
             print(f"player {player.id} queued project {self.project_type}")
@@ -157,10 +168,7 @@ class StarterPolicy(Policy):
         super().__init__("starter policy")
 
     def take_action(self, player: Player) -> None:
-        if self.is_done:
-            return
-
-        # Wait until all (until the) construction worker is free
+        # Wait until a construction worker is free
         if player.available_workers(WorkerType.CONSTRUCTION) < 1:
             return
 
@@ -174,7 +182,8 @@ class StarterPolicy(Policy):
         )
         current_capacity = sum(gen["power"] for gen in player.capacities.get_all().values())
         # print(
-        #     f"player {player.id} current capacity: {int(current_capacity / 1000)}KW next industry consumption: {int(next_industry_average_consumption / 1000)} kW"
+        #     f"player {player.id} current capacity: {int(current_capacity / 1000)}KW"
+        #     f"next industry consumption: {int(next_industry_average_consumption / 1000)} kW",
         # )
         if next_industry_average_consumption < current_capacity:
             try:
@@ -185,11 +194,13 @@ class StarterPolicy(Policy):
                 # Not enough money. Wait for funds - return early
                 return
 
-        # Not enough power capacity, build a power facility. The strategy is:
-        # - Compute / estimate the LCOE for watermill, windmill, and steam engine
+        # Not enough power capacity for more industry, build a power facility. The strategy is:
+        # - Estimate the LCOE for watermill, windmill, and steam engine
         # - Build the cheapest one, or wait until funds are available
-        costs = {
-            facility_type: (
+
+        def estimated_lcoe(facility_type: PowerFacilityType) -> float:
+            """Estimate the LCOE for building one additional facility of the given type."""
+            lcoe = (
                 const_config_assets[facility_type]["base_price"]
                 * technology_effects.price_multiplier(player, facility_type)
                 * (
@@ -204,36 +215,42 @@ class StarterPolicy(Policy):
                     * technology_effects.power_production_multiplier(player, facility_type)
                 )
             )
+            if facility_type == WindFacilityType.WINDMILL:
+                # TODO: review these hardcoded values
+                wind_speed_multiplier = technology_effects.wind_speed_multiplier(player, WindFacilityType.WINDMILL)
+
+                def capacity_factor_wind(wind_speed: float) -> float:
+                    """Fit of empirical data for wind speeds."""
+                    return 0.5280542813 - 0.5374832237 * np.exp(-2.226120465 * wind_speed**2.38728403)
+
+                lcoe /= capacity_factor_wind(wind_speed_multiplier)
+
+            if facility_type == HydroFacilityType.WATERMILL:
+                # TODO: review this hardcoded value
+                lcoe /= 0.55
+
+            return lcoe
+
+        lcoe_for_facility: dict[PowerFacilityType, Any] = {
+            facility_type: estimated_lcoe(facility_type)
             for facility_type in (
                 ControllableFacilityType.STEAM_ENGINE,
                 HydroFacilityType.WATERMILL,
                 WindFacilityType.WINDMILL,
             )
         }
-        if WindFacilityType.WINDMILL in costs:
-            wind_speed_multiplier = technology_effects.wind_speed_multiplier(player, WindFacilityType.WINDMILL)
-
-            def capacity_factor_wind(wind_speed: float) -> float:
-                """Fit of empirical data for wind speeds."""
-                return 0.5280542813 - 0.5374832237 * np.exp(-2.226120465 * wind_speed**2.38728403)
-
-            # print(f"Capacity factor wind: {capacity_factor_wind(wind_speed_multiplier)}")
-            costs[WindFacilityType.WINDMILL] /= capacity_factor_wind(wind_speed_multiplier)
-
-        if HydroFacilityType.WATERMILL in costs:
-            costs[HydroFacilityType.WATERMILL] /= 0.55
 
         # print(", ".join(f"{facility}: {1000000 * cost:.2f}" for facility, cost in costs.items()))
-        # find the cheapest facility from the dictionary costs
-        while costs:
-            cheapest_facility = min(costs, key=lambda key: costs[key])
+        # find the cheapest facility which is within the construction budget from the dictionary costs
+        while lcoe_for_facility:
+            cheapest_facility = min(lcoe_for_facility, key=lambda key: lcoe_for_facility[key])
             try:
                 assets.queue_project(player, cheapest_facility)
                 print(f"player {player.id} queued project {cheapest_facility}")
                 return
             except Confirm:
                 # Not enough power! Try the next cheapest facility
-                costs.pop(cheapest_facility)
+                lcoe_for_facility.pop(cheapest_facility)
                 continue
             except GameError:
                 # Not enough money. Wait for funds - return early
