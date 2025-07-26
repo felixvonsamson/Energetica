@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2&family=Expletus+Sans&display=swap');
+
+html,
+body,
+#root {
+    height: 100%;
+    margin: 0;
+    /* Disable scrolling */
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Baloo 2', sans-serif;
+}
+
+main {
+    width: 100%;
+}
+
+:root {
+    --color-white: #ffffff;
+    --color-bone: #e5d9b6;
+    --color-tan-green: #a4be7b;
+    --color-tan-hover: #B5CA95;
+    --color-green: #5f8d4e;
+    --color-pine: #285430;
+    --color-pine-darker: #1B3820;
+    --color-red: #f44336;
+    --color-orange: #f59f00;
+
+    --text-on-light: #000000;
+    --text-on-dark: #ffffff;
+
+    /* An example for a font */
+    --font-sans: system-ui, sans-serif;
+}
+
+h1 {
+    font-weight: 500;
+    color: var(--color-pine-darker);
+}
