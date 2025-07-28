@@ -37,7 +37,7 @@ function buy_resource(saleId) {
         addError("Please enter a valid quantity");
         return;
     }
-    send_json(`/api/v1/resource_market/asks/${saleId}/purchase`, { "quantity": quantity * 1000 })
+    send_json(`/api/v1/resource-market/asks/${saleId}:purchase`, { "quantity": quantity * 1000 })
         .then((response) => {
             response.json().then((raw_data) => {
                 if (response.status == 200) {
@@ -100,7 +100,7 @@ function place_ask(resource, quantity, unit_price) {
         addError("Please enter a valid price");
         return;
     }
-    send_json("/api/v1/resource_market/asks", { "resource_type": resource, "quantity": quantity, "unit_price": unit_price })
+    send_json("/api/v1/resource-market/asks", { "resource_type": resource, "quantity": quantity, "unit_price": unit_price })
         .then((response) => {
             if (response.status == 201) {
                 window.location = window.location;

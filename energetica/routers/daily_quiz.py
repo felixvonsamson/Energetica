@@ -9,7 +9,7 @@ from energetica.database.player import Player
 from energetica.schemas.daily_quiz import DailyQuizBase, DailyQuizSubmitRequest
 from energetica.utils import misc
 
-router = APIRouter(prefix="/daily_quiz", tags=["Daily Quiz"])
+router = APIRouter(prefix="/daily-quiz", tags=["Daily Quiz"])
 
 
 @router.get("", response_model_exclude_unset=True)

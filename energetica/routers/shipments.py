@@ -14,7 +14,7 @@ router = APIRouter(prefix="/shipments", tags=["Shipment"])
 
 @router.get("")
 def get_shipments(
-    user: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_current_user)],
 ) -> ShipmentListOut:
-    shipments = [ShipmentOut.from_shipment(shipment) for shipment in OngoingShipment.filter_by(player=user)]
+    shipments = [ShipmentOut.from_shipment(shipment) for shipment in OngoingShipment.filter_by(player=player)]
     return ShipmentListOut(shipments=shipments)

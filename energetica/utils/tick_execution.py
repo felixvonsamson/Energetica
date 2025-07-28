@@ -1,4 +1,4 @@
-"""Util functions relating to the GameEngine class."""
+"""Utility functions relating to the GameEngine class."""
 
 import time
 from datetime import datetime
