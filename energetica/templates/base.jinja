@@ -67,7 +67,7 @@
       {% for notification in user.unread_notifications() %}
         <div id="notification_{{ notification.id }}" class="notification padding-small margin-small">
           <b>{{ notification.title }}</b><br>
-          {{ notification.content }}
+          {{ notification.content | safe }}
         </div>
       {% endfor %}
     </div>
@@ -90,7 +90,7 @@
         <b>{{ notification.title }}{% if not notification.read %}<i class="fa fa-circle small padding"></i>{% endif %}</b>
         <span onclick="delete_notification(this, {{ notification.id }});" class="cross">×</span>
       </div>
-      {{ notification.content }}
+      {{ notification.content | safe }}
     </div>
   {% endfor %}
   </div>
