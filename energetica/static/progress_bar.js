@@ -119,7 +119,7 @@ function cancel_construction(construction_id, force = false) {
       response.json().then((body) => {
         if (catchValidationErrors(response, body)) return;
         if (catchGameErrors(response, body)) return;
-        if (response.status === 204) {
+        if (response.status === 200) {
           addToast("Construction cancelled");
           refreshMoney();
           sessionStorage.setItem(
