@@ -1,3 +1,6 @@
+/** @type {typeof import('../sockets.js')} */
+/** @type { typeof import('../toasts.js') } */
+
 const sortableList = document.querySelector(".priority_list");
 
 const storageFacilities = [
@@ -71,27 +74,31 @@ const initSortableList = (e) => {
 };
 
 function send_new_list() {
-    new_priority = [];
+    let new_priority = [];
     sortableList.childNodes.forEach(item => {
         if (item.draggable) {
-            new_priority.push(item.id);
+            new_priority.push({
+                side: item.dataset.side,
+                type: item.dataset.type
+            });
         }
     });
-    send_json("/api/request_change_facility_priority", {
-        priority: new_priority,
-    }).catch((error) => {
+    send_json("/api/v1/power-priorities", {
+        power_priorities: new_priority,
+    }, "PUT").catch((error) => {
         console.error(`caught error ${error}`);
         // TODO(mglst): error is possible if new data arrives before the old data is saved
     });
 }
 
 if (sortableList) {
-    fetch("/api/get_generation_priority")
+    fetch("/api/v1/power-priorities")
         .then((response) => response.json())
         .then((raw_data) => {
             load_const_config().then((const_config) => {
-                renewables = raw_data[0];
-                for (facility of raw_data[0]) {
+                renewables = raw_data.renewables;
+                const power_priorities = raw_data.power_priorities;
+                for (let facility of renewables) {
                     let name = const_config.assets[facility].name;
                     sortableList.innerHTML += `<li class="item medium gen" style="margin-left:2.1em;" id="${facility}">
                 <div class="details padding">
@@ -100,9 +107,9 @@ if (sortableList) {
                 <i id="priority_list_icon" class="fa fa-lock priority_list_icon"></i>
             </li>`;
                 }
-                for (let tuple_data of raw_data[1]) {
-                    let facility = tuple_data[1];
-                    let generation = tuple_data[0] == "bid";
+                for (let item of power_priorities) {
+                    let facility = item.type;
+                    let generation = item.side == "bid";
                     var name = "";
                     if (facility == "transport") {
                         name = "Shipments";
@@ -121,22 +128,16 @@ if (sortableList) {
                             }
                         }
                     }
-                    let element_id = tuple_data[0] + "-" + facility;
-                    if (generation) {
-                        sortableList.innerHTML += `<li class="item medium draggable gen" draggable="true" id="${element_id}">
+                    // let element_id = item.side + "-" + facility;
+                    const element_id = "TODO";
+                    sortableList.innerHTML +=
+                        `<li class="item medium draggable ${generation ? "gen" : "cons"}" draggable="true" data-side="${item.side}" data-type="${item.type}">
+                        ${!generation ? `<i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>` : ""}
                         <div class="details padding">
                         <span>${name}</span>
                         </div>
-                        <i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>
+                        ${generation ? `<i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>` : ""}
                         </li>`;
-                    } else {
-                        sortableList.innerHTML += `<li class="item medium draggable cons" draggable="true" id="${element_id}">
-                        <i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>
-                        <div class="details padding">
-                        <span>${name}</span>
-                        </div>
-                        </li>`;
-                    }
                 }
                 const items = sortableList.querySelectorAll(".item");
                 items.forEach(item => {

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -63,3 +63,26 @@ class Ask(BaseModel):
 class Bid(BaseModel):
     type: BidType
     price: float = Field(ge=-5)
+
+
+# TODO(mglst): The following class definitions shouldn't be placed here - this temporarily resolves a circular import
+# is the reason for this. The `enums.py` file should also be reworked
+
+
+class BidItem(BaseModel):
+    side: Literal["bid"]
+    type: BidType
+
+    class Config:
+        frozen = True
+
+
+class AskItem(BaseModel):
+    side: Literal["ask"]
+    type: AskType
+
+    class Config:
+        frozen = True
+
+
+PowerPriorityItem = Annotated[BidItem | AskItem, Field(discriminator="side")]

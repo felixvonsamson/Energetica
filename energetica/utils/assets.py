@@ -24,7 +24,6 @@ from energetica.enums import (
     TechnologyType,
     WorkerType,
     power_facility_types,
-    renewable_facility_types,
 )
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
@@ -83,7 +82,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             player.rolling_history.add_subcategory("emissions", project.project_type)
             player.cumul_emissions.add_category(project.project_type)
         # add facility to player's NetworkPrices
-        if project.project_type in renewable_facility_types:
+        if isinstance(project.project_type, RenewableFacilityType):
             player.network_prices.renewable_bids.append(project.project_type)
 
     player.check_construction_achievements(project.project_type)

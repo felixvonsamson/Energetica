@@ -169,30 +169,10 @@ def get_players():  # noqa: ANN201
     return Player.package_all()
 
 
-@todo_router.get("/get_generation_priority")
-def get_generation_priority(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
-    """Get generation and demand priority for this player."""
-    return (user.network_prices.get_sorted_renewables(), user.network_prices.get_facility_priorities())
-
-
 @todo_router.get("/get_active_facilities")
 def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the active facilities for this player."""
     return user.package_active_facilities()
-
-
-@todo_router.post("/request_change_facility_priority")
-async def request_change_facility_priority(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
-    request: Request,
-):
-    """Change the generation priority."""
-    if not user.achievements["network"]:
-        return JSONResponse({"response": "notAuthorized"}, status_code=status.HTTP_404_NOT_FOUND)
-    request_data = await request.json()
-    priority = request_data["priority"]
-    user.network_prices.change_facility_priority(new_priority=priority)
-    return {"response": "success"}
 
 
 @todo_router.post("/change_graph_view")
