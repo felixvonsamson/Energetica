@@ -123,7 +123,7 @@ function cancel_construction(construction_id, force = false) {
           addToast("Construction cancelled");
           refreshMoney();
           sessionStorage.setItem(
-            "constructions",
+            "projectsData",
             JSON.stringify(body)
           );
           refresh_progressBar();
@@ -155,7 +155,7 @@ function pause_construction(projectId) {
         if (catchGameErrors(response, body)) return;
         if (response.status === 200) {
           sessionStorage.setItem(
-            "constructions",
+            "projectsData",
             JSON.stringify(body)
           );
           refresh_progressBar();
@@ -174,7 +174,7 @@ function resume_construction(projectId) {
         if (catchGameErrors(response, body)) return;
         if (response.status === 200) {
           sessionStorage.setItem(
-            "constructions",
+            "projectsData",
             JSON.stringify(body)
           );
           refresh_progressBar();
@@ -193,7 +193,7 @@ function decrease_project_priority(project_id) {
         if (catchGameErrors(response, body)) return;
         if (response.status === 200) {
           sessionStorage.setItem(
-            "constructions",
+            "projectsData",
             JSON.stringify(body)
           );
           refresh_progressBar();
@@ -214,7 +214,7 @@ function increase_project_priority(project_id) {
         if (catchGameErrors(response, body)) return;
         if (response.status === 200) {
           sessionStorage.setItem(
-            "constructions",
+            "projectsData",
             JSON.stringify(body)
           );
           refresh_progressBar();
