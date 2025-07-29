@@ -1148,11 +1148,13 @@ input:checked+.slider:before {
     overflow: scroll;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    width:100%;
 }
 
 .notification_list-small {
     flex-grow: 1;
     overflow: scroll;
+    width:100%;
 }
 
 .notification_list::-webkit-scrollbar {
