@@ -18,6 +18,7 @@ from energetica.enums import (
     NonFacilityBidType,
     PowerFacilityType,
     ProjectType,
+    RenewableFacilityType,
     StorageFacilityType,
     renewable_facility_types,
     str_to_project_type_extended,
@@ -50,7 +51,7 @@ class NetworkPrices:
     dynamics, while still having reasonable default prices.
     """
 
-    renewable_bids: list[ProjectType] = field(default_factory=list)
+    renewable_bids: list[RenewableFacilityType] = field(default_factory=list)
     ask_prices: dict[AskType, float] = field(
         default_factory=lambda: {
             ControllableFacilityType.STEAM_ENGINE: 125.0,
@@ -111,7 +112,7 @@ class NetworkPrices:
 
     AskBid = Literal["ask", "bid"]  # Helper type
 
-    def get_sorted_renewables(self) -> list[ProjectType]:
+    def get_sorted_renewables(self) -> list[RenewableFacilityType]:
         """Return the player's renewable bids sorted by price."""
         self.renewable_bids.sort(key=renewable_facility_types.index)
         return self.renewable_bids
