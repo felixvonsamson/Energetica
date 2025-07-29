@@ -106,7 +106,7 @@ if (sortableList) {
                     var name = "";
                     if (facility == "transport") {
                         name = "Shipments";
-                    } else if (facility == "constructions") {
+                    } else if (facility == "construction") {
                         name = "Construction";
                     } else if (facility == "research") {
                         name = "Research";
