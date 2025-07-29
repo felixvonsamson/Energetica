@@ -17,15 +17,14 @@ from energetica.enums import (
     HydroFacilityType,
     NonFacilityBidType,
     PowerFacilityType,
-    ProjectType,
     RenewableFacilityType,
     StorageFacilityType,
     renewable_facility_types,
-    str_to_project_type_extended,
 )
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.schemas.networks import AskType, BidType
+from energetica.schemas.networks import AskItem, AskType, BidItem, BidType
+from energetica.schemas.power_priorities import PowerPriorityItem
 from energetica.utils.hashing import stable_hash
 
 if TYPE_CHECKING:
@@ -103,6 +102,7 @@ class NetworkPrices:
 
     def update(
         self,
+        *,
         updated_asks: dict[AskType, float],
         updated_bids: dict[BidType, float],
     ) -> None:
@@ -117,16 +117,16 @@ class NetworkPrices:
         self.renewable_bids.sort(key=renewable_facility_types.index)
         return self.renewable_bids
 
-    def get_facility_priorities(self) -> list[Tuple[AskBid, ProjectType | NonFacilityBidType]]:
+    def get_facility_priorities(self) -> list[PowerPriorityItem]:
         """Return the player's priority lists containing asks and bids but not renewables, sorted by price."""
-        type_key_price: list[Tuple[Literal["ask", "bid"], ProjectType | NonFacilityBidType, float]] = [
-            *(("ask", key, price) for key, price in self.ask_prices.items()),
-            *(("bid", key, price) for key, price in self.bid_prices.items()),
+        type_key_price: list[Tuple[PowerPriorityItem, float]] = [
+            *((AskItem(side="ask", type=key), price) for key, price in self.ask_prices.items()),
+            *((BidItem(side="bid", type=key), price) for key, price in self.bid_prices.items()),
         ]
-        type_key_price.sort(key=lambda x: x[2])
-        return [(x[0], x[1]) for x in type_key_price]
+        type_key_price.sort(key=lambda x: x[1])
+        return [x[0] for x in type_key_price]
 
-    def change_facility_priority(self, new_priority: list[ProjectType | NonFacilityBidType]) -> None:
+    def change_facility_priority(self, new_priority: list[PowerPriorityItem]) -> None:
         """
         Reassign the selling prices of the facilities according to the new priority order.
 
@@ -134,24 +134,21 @@ class NetworkPrices:
         that are not in a network.
         """
         # Check if the new priority list is valid, i.e. contains the same elements as the old one
-        old_set = {
-            *{f"bid-{ask_name}" for ask_name in self.bid_prices},
-            *{f"ask-{bid_name}" for bid_name in self.ask_prices},
-        }
-        if old_set != set(new_priority):
+        old_priority = self.get_facility_priorities()
+        if set(old_priority) != set(new_priority):
             raise GameError("malformedRequest")
 
         # Reorder the prices according to the new priority list
         sorted_prices = sorted((*self.bid_prices.values(), *self.ask_prices.values()))
         updated_bid_prices = {}
         updated_ask_prices = {}
-        for priority_name, price in zip(new_priority, sorted_prices):
-            project_type = str_to_project_type_extended[priority_name[4:]]
-            if priority_name.startswith("ask-"):
-                updated_ask_prices[project_type] = price
+        for item, price in zip(new_priority, sorted_prices):
+            if item.side == "ask":
+                updated_ask_prices[item.type] = price
             else:
-                updated_bid_prices[project_type] = price
-        self.update(updated_bid_prices, updated_ask_prices)
+                updated_bid_prices[item.type] = price
+
+        self.update(updated_asks=updated_ask_prices, updated_bids=updated_bid_prices)
 
 
 class CapacityData:

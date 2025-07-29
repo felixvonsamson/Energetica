@@ -16,7 +16,7 @@ socket.on("errorMessage", addError);
 /**
  * @param {RequestInfo | URL} endpoint
  * @param {any} body
- * @param {"POST" | "DELETE"} method
+ * @param {"POST" | "DELETE" | "PATCH" | "PUT"} method
  */
 function send_json(endpoint, body, method = "POST") {
     return fetch(endpoint, {

@@ -26,6 +26,7 @@ from .map import router as map_router
 from .networks import router as network_router
 from .notifications import router as notifications_router
 from .players import router as player_router
+from .power_priorities import router as power_priorities
 from .projects import router as projects_router
 from .resource_market import router as resource_market_router
 from .scoreboard import router as scoreboard_router
@@ -44,6 +45,7 @@ api_routers = [
     network_router,
     notifications_router,
     player_router,
+    power_priorities,
     projects_router,
     resource_market_router,
     shipments_router,
