@@ -276,6 +276,8 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     # The cost of decommissioning is 20% of the building cost.
     cost = facility.dismantle_cost
     player.money -= cost
+    facility.delete()
+    # TODO(Felix): do we need to remove the renewable facility from the priorities?
     if not ActiveFacility.filter_by(facility_type=facility.facility_type, player=player):
         # remove facility from facility priorities if it was the last one
         if isinstance(facility.facility_type, RenewableFacilityType):
@@ -293,7 +295,6 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
     player.capacities.update(player, facility.facility_type)
     engine.config.update_config_for_user(player)
-    facility.delete()
 
 
 def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str) -> None:
