@@ -21,6 +21,9 @@ import socketio
 from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
 
+if TYPE_CHECKING:
+    from energetica.database.messages import Chat
+
 
 # This is the engine object
 class GameEngine(object):
@@ -30,7 +33,6 @@ class GameEngine(object):
         """Initialize the game engine object."""
         if TYPE_CHECKING:
             from energetica.database.engine_data import EmissionData
-            from energetica.database.messages import Chat
         Path("instance").mkdir(exist_ok=True)
         self.config = config
         self.const_config = const_config
@@ -59,7 +61,7 @@ class GameEngine(object):
         self.env: Literal["dev"] | Literal["prod"] = None  # type: ignore[assignment]
         self.VAPID_PUBLIC_KEY: str = None  # type: ignore[assignment]
         self.VAPID_PRIVATE_KEY: str = None  # type: ignore[assignment]
-        self.general_chat: Chat = None  # type: ignore[assignment]
+        self.general_chat_id: int = None  # type: ignore[assignment]
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations
@@ -164,10 +166,11 @@ class GameEngine(object):
                     tile.fuel_reserves[fuel] = float(row[fuel])
 
         # creating general chat
-        self.general_chat = Chat(
+        general_chat = Chat(
             name="General Chat",
             participants=set(),
         )
+        self.general_chat_id = general_chat.id
 
         Path("instance/data/players").mkdir(parents=True, exist_ok=True)
         Path("instance/data/servers").mkdir(parents=True, exist_ok=True)
@@ -225,6 +228,7 @@ class GameEngine(object):
             "db_model_instances",
             "env",
             "disable_signups",
+            "general_chat_id",
         ]
         data = {member: getattr(self, member) for member in members_to_save}
         with open("instance/engine_data.pck", "wb") as file:
@@ -277,6 +281,12 @@ class GameEngine(object):
         self.daily_question = csv_reader[self.question_order[question_index]]
         self.daily_question["index"] = question_index
         self.daily_question["player_answers"] = {}
+
+    @property
+    def general_chat(self) -> Chat:
+        from energetica.database.messages import Chat
+
+        return Chat.getitem(self.general_chat_id)
 
 
 # TODO(mglst): Convert this class to an instance of GameError
