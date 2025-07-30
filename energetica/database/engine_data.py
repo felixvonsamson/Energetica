@@ -44,8 +44,6 @@ class NetworkPrices:
     - `bid_prices`: A dictionary of storage, extraction, and special demand facility types with their bid prices.
       (e.g., research, transport, industry and construction)
 
-    Entries are added or removed as facilities are built or decommissioned.
-
     Prices are randomized so that each player's prices are slightly different. This leads to more interesting market
     dynamics, while still having reasonable default prices.
     """
