@@ -27,5 +27,4 @@ def put_power_priorities(
 ) -> None:
     if not player.achievements["network"]:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="You must unlock the Network achievement first")
-    player.network_prices.change_facility_priority(data.power_priorities)
-    player.network_prices.change_facility_priority(data.power_priorities)
+    player.network_prices.change_facility_priority(player, data.power_priorities)

@@ -115,16 +115,38 @@ class NetworkPrices:
         self.renewable_bids.sort(key=renewable_facility_types.index)
         return self.renewable_bids
 
-    def get_facility_priorities(self) -> list[PowerPriorityItem]:
+    def get_facility_priorities(self, player: Player) -> list[PowerPriorityItem]:
         """Return the player's priority lists containing asks and bids but not renewables, sorted by price."""
-        type_key_price: list[Tuple[PowerPriorityItem, float]] = [
-            *((AskItem(side="ask", type=key), price) for key, price in self.ask_prices.items()),
-            *((BidItem(side="bid", type=key), price) for key, price in self.bid_prices.items()),
-        ]
+        type_key_price: list[Tuple[PowerPriorityItem, float]] = []
+
+        for key, price in self.ask_prices.items():
+            if key not in player.capacities or player.capacities[key]["power"] == 0:
+                continue
+            type_key_price.append((AskItem(side="ask", type=key), price))
+
+        for key, price in self.bid_prices.items():
+            if isinstance(key, StorageFacilityType):
+                if key not in player.capacities or player.capacities[key]["power"] == 0:
+                    continue
+            elif isinstance(key, ExtractionFacilityType):
+                if key not in player.capacities or player.capacities[key]["power_use"] == 0:
+                    continue
+            elif isinstance(key, FunctionalFacilityType):
+                # This covers industry and carbon capture. Industry should always have lvl > 0
+                if player.functional_facility_lvl[key] == 0:
+                    continue
+            elif key == NonFacilityBidType.RESEARCH:
+                if player.functional_facility_lvl[FunctionalFacilityType.LABORATORY] == 0:
+                    continue
+            elif key == NonFacilityBidType.TRANSPORT:
+                if player.functional_facility_lvl[FunctionalFacilityType.WAREHOUSE] == 0:
+                    continue
+            type_key_price.append((BidItem(side="bid", type=key), price))
+
         type_key_price.sort(key=lambda x: x[1])
         return [x[0] for x in type_key_price]
 
-    def change_facility_priority(self, new_priority: list[PowerPriorityItem]) -> None:
+    def change_facility_priority(self, player: Player, new_priority: list[PowerPriorityItem]) -> None:
         """
         Reassign the selling prices of the facilities according to the new priority order.
 
@@ -132,12 +154,18 @@ class NetworkPrices:
         that are not in a network.
         """
         # Check if the new priority list is valid, i.e. contains the same elements as the old one
-        old_priority = self.get_facility_priorities()
+        old_priority = self.get_facility_priorities(player)
         if set(old_priority) != set(new_priority):
             raise GameError("malformedRequest")
 
         # Reorder the prices according to the new priority list
-        sorted_prices = sorted((*self.bid_prices.values(), *self.ask_prices.values()))
+        sorted_prices = sorted(
+            [
+                self.bid_prices[item.type] if item.side == "bid" else self.ask_prices[item.type]
+                for item in old_priority
+                if item.side in {"bid", "ask"}
+            ],
+        )
         updated_bid_prices = {}
         updated_ask_prices = {}
         for item, price in zip(new_priority, sorted_prices):
