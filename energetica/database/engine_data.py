@@ -134,6 +134,7 @@ class NetworkPrices:
                 if key not in player.capacities or player.capacities[key]["power_use"] == 0:
                     continue
             elif isinstance(key, FunctionalFacilityType):
+                # This covers industry and carbon capture. Industry should always have lvl > 0
                 if player.functional_facility_lvl[key] == 0:
                     continue
             elif key == NonFacilityBidType.RESEARCH:
