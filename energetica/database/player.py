@@ -99,7 +99,7 @@ class Player(DBModel):
             "technology": 0,
             "trading_export": 0,
             "trading_import": 0,
-            "network": 1,
+            "network": 0,
             "laboratory": 0,
             "warehouse": 0,
             "GHG_effect": 0,
