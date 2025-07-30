@@ -48,6 +48,7 @@ class NetworkPrices:
     dynamics, while still having reasonable default prices.
     """
 
+    # TODO (Felix): The list of renewables is not consistent with the rest and is dynamically generated. I think it has nothing to do here or it should be initialized with all renewables.
     renewable_bids: list[RenewableFacilityType] = field(default_factory=list)
     ask_prices: dict[AskType, float] = field(
         default_factory=lambda: {
