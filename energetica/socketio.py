@@ -42,7 +42,7 @@ def setup_socketio(app: FastAPI) -> None:
         connected_users_by_sid[sid] = user
 
     @sio.event
-    def disconnect(sid: str, reason: str) -> None:
+    def disconnect(sid: str) -> None:
         """Clean up user on disconnect."""
         user = connected_users_by_sid.pop(sid, None)
         if user:

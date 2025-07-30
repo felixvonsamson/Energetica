@@ -23,7 +23,7 @@ def get_me(user: Player = Depends(get_current_user)) -> PlayerOut:
 
 @router.get("")
 def get_all_users() -> list[PlayerOut]:
-    """Get all users' information."""
+    """Get all users' id and username. (excluding admins)"""
     all_users = Player.all()
     return [
         PlayerOut(
@@ -31,6 +31,7 @@ def get_all_users() -> list[PlayerOut]:
             username=u.username,
         )
         for u in all_users
+        if not u.is_admin
     ]
 
 

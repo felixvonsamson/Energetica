@@ -56,6 +56,7 @@ class Player(DBModel):
     # Authentication :
     username: str
     pwhash: str
+    is_admin: bool = False
 
     # inactive: bool = False  # True if account is inactive
     show_chat_disclaimer: bool = True

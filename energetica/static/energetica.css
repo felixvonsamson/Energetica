@@ -3,6 +3,8 @@
 /* TODO: class selector names should use kebab case */
 /* TODO: rename and fix "Gauge" typo */
 
+@import url("react.css");
+
 html {
     -ms-text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%
@@ -645,6 +647,13 @@ input:checked+.slider:before {
     text-decoration: none;
     align-items: center;
     transition: background-color 0.3s ease;
+    background-color: #a4be7b;
+    color: #000;
+}
+
+.dropdown-menu .navbar_item {
+    background-color: #e5d9b6;
+    color: #000;
 }
 
 .navbar_item.active {

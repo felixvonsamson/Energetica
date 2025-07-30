@@ -1,7 +1,9 @@
+"""Routes for serving Jinja and React pages."""
+
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.datastructures import URL
 from starlette.requests import Request
@@ -90,9 +92,25 @@ def render_location_choice(  # noqa: ANN201
 ):
     if player is None:
         return RedirectResponse("/login")
+    if player.is_admin:
+        return RedirectResponse("/admin-dashboard")
     if player.tile is not None:
         return RedirectResponse("/home")
     return templates.TemplateResponse(request=request, name="location_choice.jinja")
+
+
+@router.get("/admin-dashboard", response_class=HTMLResponse, name="views.admin_dashboard")
+@router.get("/admin-dashboard/{full_path}", response_class=HTMLResponse, name="views.admin_dashboard")
+def render_admin_dashboard(  # noqa: ANN201
+    request: Request,
+    player: Annotated[Player, Depends(get_current_user_from_request)],
+):
+    """Manage returning pages for SPA admin dashboard views."""
+    if player is None:
+        return RedirectResponse("/login")
+    if not player.is_admin:
+        return RedirectResponse("/home")
+    return FileResponse("energetica/static/react/index.html")
 
 
 @router.get("/home", response_class=HTMLResponse, name="views.home")
@@ -154,6 +172,8 @@ def render_network(  # noqa: ANN201
 ):
     if player is None:
         return RedirectResponse("/login")
+    if player.is_admin:
+        return RedirectResponse("/admin-dashboard")
     if not player.achievements["network"]:
         return RedirectResponse("/home")
     return templates.TemplateResponse(request=request, name="network.jinja")
