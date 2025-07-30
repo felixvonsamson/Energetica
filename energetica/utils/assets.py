@@ -278,7 +278,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     player.money -= cost
     facility.delete()
     # TODO(Felix): do we need to remove the renewable facility from the priorities?
-    if not ActiveFacility.filter_by(facility_type=facility.facility_type, player=player):
+    if not list(ActiveFacility.filter_by(facility_type=facility.facility_type, player=player)):
         # remove facility from facility priorities if it was the last one
         if isinstance(facility.facility_type, RenewableFacilityType):
             player.network_prices.renewable_bids.remove(facility.facility_type)
@@ -293,6 +293,36 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
             ),
         )
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
+        # if there is no generation capacity anymore, a new steam engine is created for the player in order to avoid accounts with no power generation
+        active_power_facilities = list(
+            ActiveFacility.filter(lambda af: af.player == player and af.facility_type in power_facility_types),
+        )
+        if not active_power_facilities:
+            eol = engine.total_t + math.ceil(
+                engine.const_config["assets"][ControllableFacilityType.STEAM_ENGINE]["lifespan"]
+                / engine.in_game_seconds_per_tick,
+            )
+            ActiveFacility(
+                facility_type=ControllableFacilityType.STEAM_ENGINE,
+                position=(
+                    player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1],
+                    player.tile.coordinates[1] * 0.5 * 3**0.5,
+                ),
+                end_of_life=eol,
+                player=player,
+                multipliers=technology_effects.current_multipliers(
+                    player,
+                    ControllableFacilityType.STEAM_ENGINE,
+                ),
+            )
+            player.notify(
+                "Emergency Power Generation",
+                (
+                    "Due to the decommissioning of your last power generation facility, a new steam engine has been "
+                    "created for you."
+                ),
+            )
+            engine.log(f"Emergency power steam engine created for {player.username}.")
     player.capacities.update(player, facility.facility_type)
     engine.config.update_config_for_user(player)
 
