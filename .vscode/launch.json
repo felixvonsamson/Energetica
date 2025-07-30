@@ -5,6 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug Run",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--env", "prod", //maybe add a new test environment
+                "--port", "5001",
+                "--clock_time", "2",
+                "--in_game_seconds_per_tick", "1800",
+            ]
+        },
+        {
             "name": "Simulation",
             "type": "debugpy",
             "request": "launch",
