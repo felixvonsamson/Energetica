@@ -97,7 +97,7 @@ def setup_routes(app: FastAPI):
             != "127.0.0.1"
         ):
             return Response(
-                status_code=503,
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 content="Service temporarily unavailable. Please try again in a few seconds",
             )
 

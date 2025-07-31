@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.auth import get_current_user
 from energetica.database.player import Player
@@ -47,7 +47,7 @@ def post_resource_market_purchase(
     sale = ResourceOnSale.getitem(ask_id, error=HTTPException(status_code=404, detail="Ask not found"))
     # TODO(mglst): Add the following check in the future
     # if sale.player == user:
-    #     raise HTTPException(status_code=403, detail="You cannot buy your own ask")
+    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot buy your own ask")
     new_sale = purchase_resource(
         player=player,
         quantity=request_data.quantity,
@@ -67,7 +67,7 @@ def patch_resource_market_ask(
     """Patch a resource market ask."""
     sale = ResourceOnSale.getitem(ask_id, error=HTTPException(status_code=404, detail="Ask not found"))
     if sale.player != player:
-        raise HTTPException(status_code=403, detail="You are not the owner of this ask")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the owner of this ask")
     if request_data.unit_price is not None:
         sale.unit_price = request_data.unit_price
     if request_data.quantity is not None:
@@ -81,7 +81,9 @@ def delete_resource_market_ask(
     ask_id: int,
 ) -> None:
     """Delete a resource market ask."""
-    sale = ResourceOnSale.getitem(ask_id, error=HTTPException(status_code=404, detail="Ask not found"))
+    sale = ResourceOnSale.getitem(
+        ask_id,
+        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ask not found"),
+    )
     if sale.player != player:
-        raise HTTPException(status_code=403, detail="You are not the owner of this ask")
-    sale.delete()
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the owner of this ask")

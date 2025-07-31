@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.auth import get_current_user
 from energetica.database.map import HexTile
@@ -44,5 +44,8 @@ def settle_region(
     player: Annotated[Player, Depends(get_current_user)],
     region_id: int,
 ) -> None:
-    region = HexTile.getitem(region_id, error=HTTPException(status_code=404, detail="Region not found"))
+    region = HexTile.getitem(
+        region_id,
+        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Region not found"),
+    )
     map_helpers.confirm_location(player, region)

@@ -26,7 +26,10 @@ def join_network(
     network_id: int,
 ) -> NetworkOut:
     """Join a network."""
-    network = Network.getitem(network_id, error=HTTPException(status_code=404, detail="Network not found"))
+    network = Network.getitem(
+        network_id,
+        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Network not found"),
+    )
     return NetworkOut.from_network(network_helpers.join_network(player, network))
 
 
@@ -36,9 +39,12 @@ def leave_network(
     network_id: int,
 ) -> NetworkOut | None:
     """Leave the network."""
-    network = Network.getitem(network_id, error=HTTPException(status_code=404, detail="Network not found"))
+    network = Network.getitem(
+        network_id,
+        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Network not found"),
+    )
     if player not in network.members:
-        raise HTTPException(status_code=403, detail="User is not in this network")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not in this network")
     new_network = network_helpers.leave_network(player)
     if new_network is None:
         return None

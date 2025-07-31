@@ -31,9 +31,9 @@ def get_chat_messages(
     chat_id: int,
 ) -> MessageListOut:
     """Get the messages for a chat."""
-    chat = Chat.getitem(chat_id, error=HTTPException(status_code=404, detail="Chat not found"))
+    chat = Chat.getitem(chat_id, error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"))
     if player not in chat.participants:
-        raise HTTPException(status_code=403, detail="You are not a participant in this chat")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a participant in this chat")
     return MessageListOut(messages=[MessageOut.from_message(message) for message in chat.messages])
 
 
@@ -44,9 +44,9 @@ def new_message(
     request_data: MessageCreate,
 ) -> MessageOut:
     """Send a message."""
-    chat = Chat.getitem(chat_id, error=HTTPException(status_code=404, detail="Chat not found"))
+    chat = Chat.getitem(chat_id, error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"))
     if player not in chat.participants:
-        raise HTTPException(status_code=403, detail="You are not a participant in this chat")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a participant in this chat")
     new_message = energetica.utils.chat.add_message(player, request_data.new_message, chat)
     return MessageOut.from_message(new_message)
 
@@ -60,7 +60,7 @@ def create_group_chat(
     group_members = {
         Player.getitem(
             member_id,
-            error=HTTPException(status_code=404, detail="One or more group members not found"),
+            error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="One or more group members not found"),
         )
         for member_id in request_data.group_member_ids
     } | {player}
