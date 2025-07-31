@@ -1,15 +1,15 @@
 import base64
 from pathlib import Path
-from typing import Dict, cast
+from typing import cast
 
 from ecdsa import NIST256p, SigningKey, VerifyingKey
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel
 
 from energetica.auth import get_current_user
 from energetica.database.player import Player
 from energetica.globals import engine
+from energetica.schemas.app_services import Subscription
 
 
 def get_or_create_vapid_keys() -> tuple[str, str]:
@@ -36,14 +36,6 @@ def get_or_create_vapid_keys() -> tuple[str, str]:
 
 
 engine.VAPID_PUBLIC_KEY, engine.VAPID_PRIVATE_KEY = get_or_create_vapid_keys()
-
-# TODO: move schemas, relocate endpoints for REST compliance / standard location compliance
-
-
-# Define a Pydantic model for validation
-class Subscription(BaseModel):
-    endpoint: str
-    keys: Dict[str, str] = {}
 
 
 def register_app_services(app: FastAPI) -> None:
