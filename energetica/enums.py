@@ -238,6 +238,11 @@ str_to_project_type_extended: dict[str, ProjectType | NonFacilityBidType] = {str
 class ProjectStatus(IntEnum):
     """Class that stores the status of ongoing projects."""
 
+    # TODO(mglst): make this class a StrEnum. This will be useful for schemas and JSON serialization for APIs.
+    # PAUSED = "paused"
+    # WAITING = "waiting"
+    # ONGOING = "ongoing"
+
     PAUSED = 0
     WAITING = 1
     ONGOING = 2

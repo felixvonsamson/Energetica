@@ -16,11 +16,11 @@ if TYPE_CHECKING:
 
 class ProjectOut(BaseModel):
     id: int
-    type: ProjectType  # TODO(mglst): rename to just type
+    type: ProjectType
     end_tick: float | None = Field(description="Only present if project is ongoing")
     ticks_passed: float | None = Field(description="Only present if project is paused")
     duration: float
-    status: ProjectStatus  # TODO(mglst): It would be better if the status were serialized as strings rather than ints
+    status: ProjectStatus
     display_name: str  # TODO(mglst): move this to the frontend
     level: int | None
     speed: float
@@ -43,6 +43,7 @@ class ProjectOut(BaseModel):
 class ProjectListOut(BaseModel):
     # TODO(mglst): it would make more sense for projects to be broken up into constructions_projects and
     # research_projects. For example, when canceling a research project, we need to also fetch all constructions.
+    # In fact separating them out would make construction_queue and research_queue redundant, which would be nice
     projects: list[ProjectOut]
     construction_queue: list[int]
     research_queue: list[int]

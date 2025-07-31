@@ -7,8 +7,6 @@ from pydantic import BaseModel, Field
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.enums import Fuel
 
-# TODO: Add units to descriptions
-
 
 class AskBase(BaseModel):
     """Schema for creating an ask in the resource market."""
