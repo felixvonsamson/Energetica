@@ -17,7 +17,7 @@ from energetica.utils.auth import get_current_user
 from energetica.config.assets import wind_power_curve
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_error import GameError
+from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 
 # TODO: migrate all these routes to native FastAPI routes
@@ -152,7 +152,7 @@ def get_player_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa
 def get_resource_reserves(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the natural resources reserves for this player."""
     if user.tile is None:
-        raise GameError("noTile")
+        raise GameError(GameExceptionType.NO_TILE)
     reserves = user.tile.fuel_reserves
     return reserves
 

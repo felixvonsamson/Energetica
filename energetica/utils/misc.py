@@ -17,7 +17,7 @@ from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.enums import ControllableFacilityType
-from energetica.game_error import GameError
+from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.schemas.daily_quiz import DailyQuizBase
 from energetica.schemas.weather import WeatherOut
@@ -165,7 +165,7 @@ def initialize_player(player: Player) -> None:
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick,
     )
     if player.tile is None:
-        raise GameError("noLocation")
+        raise GameError(GameExceptionType.NO_LOCATION)
     pos_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     pos_y = player.tile.coordinates[1]
     ActiveFacility(
@@ -226,7 +226,7 @@ def submit_quiz_answer(player: Player, player_answer: str) -> bool:
     """Return True if the answer was correct, False otherwise."""
     quiz_data = engine.daily_question
     if player.id in quiz_data["player_answers"]:
-        raise GameError("quizAlreadyAnswered")
+        raise GameError(GameExceptionType.QUIZ_ALREADY_ANSWERED)
     quiz_data["player_answers"][player.id] = player_answer
     if player_answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
         player.progression_metrics["xp"] += 1
@@ -345,7 +345,7 @@ def calculate_river_discharge(total_seconds: float) -> float:
 def package_weather_data(player: Player) -> WeatherOut:
     """Package date and weather data for a player."""
     if player.tile is None:
-        raise GameError("noLocation")
+        raise GameError(GameExceptionType.NO_LOCATION)
     x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     y = player.tile.coordinates[1] * 0.5 * 3**0.5
     total_seconds = (engine.total_t + engine.delta_t) * engine.in_game_seconds_per_tick

@@ -25,7 +25,7 @@ from energetica.enums import (
     power_facility_types,
 )
 from energetica.game_engine import Confirm
-from energetica.game_error import GameError
+from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.schemas.projects import ProjectListOut
 from energetica.utils.hashing import stable_hash
@@ -111,7 +111,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         # facilities of that type the player has built. This ensures that the facility's random position is generated
         # deterministically.
         if player.tile is None:
-            raise GameError("Player has no tile")
+            raise GameError(GameExceptionType.PLAYER_HAS_NO_TILE)
         seed_hash = stable_hash(
             (
                 engine.random_seed,
@@ -220,14 +220,11 @@ def upgrade_facility(facility: ActiveFacility) -> None:
     """Upgrade a facility."""
     upgrade_cost = facility.upgrade_cost
     if upgrade_cost is None:
-        msg = "Facility not upgradable"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.FACILITY_NOT_UPGRADABLE)
     if facility.player.money < upgrade_cost:
-        msg = "Not enough money"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
     if facility.decommissioning:
-        msg = "FacilityIsDecommissioning"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.FACILITY_IS_DECOMMISSIONING)
     facility.player.money -= upgrade_cost
     facility.multipliers = technology_effects.current_multipliers(facility.player, facility.facility_type)
     facility.player.capacities.update(facility.player, facility.facility_type)
@@ -247,8 +244,7 @@ def upgrade_all_of_type(
         ),
     )
     if player.money < sum(map(lambda facility: cast(float, facility.upgrade_cost), facilities)):
-        msg = "Not enough money"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
     for facility in facilities:
         upgrade_facility(facility)
 
@@ -261,11 +257,9 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     """
     assert player.tile is not None
     if facility is None or facility.player != player:
-        msg = "Facility not found"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.FACILITY_NOT_FOUND)
     if isinstance(facility.facility_type, TechnologyType | FunctionalFacilityType):
-        msg = "Cannot remove technologies or functional facilities"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.CANNOT_REMOVE_TECHNOLOGY_OR_FUNCTIONAL_FACILITIES)
     if isinstance(facility.facility_type, StorageFacilityType) and not decommissioning:
         facility.end_of_life = 0
         player.capacities.update(player, facility.facility_type)
@@ -339,8 +333,7 @@ def dismantle_facility(facility: ActiveFacility) -> None:
     player = facility.player
     cost = facility.dismantle_cost
     if player.money < cost:
-        msg = "Not enough money"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
     remove_asset(player, facility, decommissioning=False)
     engine.log(f"{player.username} dismantled the facility {facility.facility_type}.")
 
@@ -358,8 +351,7 @@ def dismantle_all_of_type(
         ),
     )
     if player.money < sum(map(lambda facility: cast(float, facility.dismantle_cost), facilities)):
-        msg = "Not enough money"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
     for facility in facilities:
         dismantle_facility(facility)
 
@@ -379,15 +371,13 @@ def queue_project(
         technology_effects.project_requirements(player, project_type),
     )
     if asset_requirement_status == "unsatisfied" and not ignore_requirements_and_money:
-        msg = "Requirements not satisfied"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.REQUIREMENTS_NOT_SATISFIED)
 
     real_price = technology_effects.construction_price(player, project_type)
     duration = technology_effects.construction_time(player, project_type)
 
     if player.money < real_price and not ignore_requirements_and_money:
-        msg = "Not enough money"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
 
     construction_power = technology_effects.construction_power(player, project_type)
     if not force and not player.is_in_network:
@@ -445,8 +435,7 @@ def invalidate_data_on_project_update(player: Player, asset_type: str) -> None:
 def cancel_project(player: Player, project: OngoingProject, *, force: bool = False) -> None:
     """Cancel an ongoing project."""
     if project is None or project.player != player:
-        msg = "Project not found"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.PROJECT_NOT_FOUND)
 
     dependents = []
     priority_list = player.projects_by_priority[project.project_type.worker_type]
@@ -455,8 +444,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
         if project in candidate_dependent.prerequisites:
             dependents.append([candidate_dependent.project_type, candidate_dependent.level])
     if dependents:
-        msg = "HasDependents"
-        raise GameError(msg, dependents=dependents)
+        raise GameError(GameExceptionType.HAS_DEPENDENTS, dependents=dependents)
 
     if not force:
         raise Confirm(type="areYouSure", refund=f"{round(80 * (1 - project.progress()))}%")
@@ -492,7 +480,7 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
     priority_list = player.projects_by_priority[project.project_type.worker_type]
     index = priority_list.index(project)
     if index == len(priority_list) - 1:
-        raise GameError("CannotDecreasePriorityOfLastProject")
+        raise GameError(GameExceptionType.CANNOT_DECREASE_PRIORITY_OF_LAST_PROJECT)
 
     project_1: OngoingProject = project
     project_2: OngoingProject = priority_list[index + 1]
@@ -506,10 +494,13 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
     # 6. paused , paused  (swap)
 
     if project_1 in project_2.prerequisites:
-        raise GameError("requirementsPreventReorder")
+        raise GameError(GameExceptionType.REQUIREMENTS_PREVENT_REORDER)
     if not project_1.was_paused_by_player() and project_2.was_paused_by_player():
-        msg = "CannotSwapPausedProject"
-        raise GameError(msg, first_project_type=project_1.project_type, second_project_type=project_2.project_type)
+        raise GameError(
+            GameExceptionType.CANNOT_SWAP_PAUSED_PROJECT,
+            first_project_type=project_1.project_type,
+            second_project_type=project_2.project_type,
+        )
 
     if project_1.status == ProjectStatus.ONGOING and project_2.status == ProjectStatus.WAITING:
         # Case 2
@@ -531,7 +522,7 @@ def increase_project_priority(player: Player, project: OngoingProject) -> None:
     priority_list = player.projects_by_priority[project.project_type.worker_type]
     index = priority_list.index(project)
     if index == 0:
-        raise GameError("CannotIncreasePriorityOfFirstProject")
+        raise GameError(GameExceptionType.CANNOT_INCREASE_PRIORITY_OF_FIRST_PROJECT)
     # Here, to increase the priority of this project, we decrease the priority of the project just above it
     decrease_project_priority(player, priority_list[index - 1])
 
@@ -539,13 +530,12 @@ def increase_project_priority(player: Player, project: OngoingProject) -> None:
 def pause_project(player: Player, project: OngoingProject) -> None:
     """Pause an ongoing project, changing its position in the priority list."""
     if project is None or project.player != player:
-        msg = "Project not found"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.PROJECT_NOT_FOUND)
 
     worker_type = project.project_type.worker_type
 
     if project.was_paused_by_player():
-        raise GameError("cannotPause")
+        raise GameError(GameExceptionType.CANNOT_PAUSE)
 
     priority_list = player.projects_by_priority[worker_type]
     project_index = priority_list.index(project)
@@ -590,20 +580,19 @@ def pause_project(player: Player, project: OngoingProject) -> None:
 def resume_project(player: Player, project: OngoingProject) -> None:
     """Resume an ongoing project, changing its position in the priority list."""
     if project is None or project.player != player:
-        msg = "Project not found"
-        raise GameError(msg)
+        raise GameError(GameExceptionType.PROJECT_NOT_FOUND)
 
     worker_type = project.project_type.worker_type
 
     if not project.was_paused_by_player():
-        raise GameError("cannotResume")
+        raise GameError(GameExceptionType.CANNOT_RESUME)
 
     # project is currently pause, and should be unpaused
     if "_prerequisites_and_level" in project.__dict__:
         del project._prerequisites_and_level  # Needed to force recompute, as prerequisites aren't
     for prerequisite in project.prerequisites:
         if prerequisite.status == ProjectStatus.PAUSED:
-            raise GameError("PausedPrerequisitePreventUnpause")
+            raise GameError(GameExceptionType.PAUSED_PREREQUISITE_PREVENT_UNPAUSE)
 
     project.unpause()
     # project status is now ONGOING or WAITING.
