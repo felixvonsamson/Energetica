@@ -38,18 +38,6 @@
 			}
 		},
 		{
-			"label": "pytest",
-			"type": "shell",
-			"command": "pytest",
-			"presentation": {
-				"clear": true
-			},
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			}
-		},
-		{
 			"label": "remove instance",
 			"type": "shell",
 			"command": "rm -rf instance/ checkpoints/",
