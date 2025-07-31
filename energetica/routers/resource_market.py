@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from energetica.auth import get_current_user
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.schemas.resource_market import AskCreate, AskListOut, AskOut, PurchaseOrderCreate
+from energetica.schemas.resource_market import AskCreate, AskListOut, AskOut, AskPatch, PurchaseOrderCreate
 from energetica.utils.resource_market import create_ask, purchase_resource
 
 router = APIRouter(prefix="/resource-market", tags=["Resource Market"])
@@ -62,7 +62,7 @@ def post_resource_market_purchase(
 def patch_resource_market_ask(
     player: Annotated[Player, Depends(get_current_user)],
     ask_id: int,
-    request_data: AskCreate,  # TODO: remove resource_type from schema for this route
+    request_data: AskPatch,
 ) -> AskOut:
     """Patch a resource market ask."""
     sale = ResourceOnSale.getitem(ask_id, error=HTTPException(status_code=404, detail="Ask not found"))
