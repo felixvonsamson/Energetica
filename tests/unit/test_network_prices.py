@@ -6,38 +6,9 @@ import subprocess
 import sys
 import textwrap
 
-from energetica.database.engine_data import NetworkPrices
 from energetica.database.player import Player
-from energetica.enums import ControllableFacilityType, HydroFacilityType, SolarFacilityType, WindFacilityType
+from energetica.enums import ControllableFacilityType
 from energetica.globals import engine
-
-
-def test_renewables_order() -> None:
-    """
-    Test that the renewable bids in the right order.
-
-    This order was determined by Felix, according to what looks best for the frontend.
-    """
-    network_prices = NetworkPrices()
-    network_prices.renewable_bids.append(WindFacilityType.OFFSHORE_WIND_TURBINE)
-    network_prices.renewable_bids.append(SolarFacilityType.PV_SOLAR)
-    network_prices.renewable_bids.append(HydroFacilityType.SMALL_WATER_DAM)
-    network_prices.renewable_bids.append(WindFacilityType.WINDMILL)
-    network_prices.renewable_bids.append(WindFacilityType.ONSHORE_WIND_TURBINE)
-    network_prices.renewable_bids.append(HydroFacilityType.WATERMILL)
-    network_prices.renewable_bids.append(HydroFacilityType.LARGE_WATER_DAM)
-    network_prices.renewable_bids.append(SolarFacilityType.CSP_SOLAR)
-
-    assert network_prices.get_sorted_renewables() == [
-        HydroFacilityType.SMALL_WATER_DAM,
-        HydroFacilityType.LARGE_WATER_DAM,
-        HydroFacilityType.WATERMILL,
-        WindFacilityType.ONSHORE_WIND_TURBINE,
-        WindFacilityType.OFFSHORE_WIND_TURBINE,
-        WindFacilityType.WINDMILL,
-        SolarFacilityType.CSP_SOLAR,
-        SolarFacilityType.PV_SOLAR,
-    ]
 
 
 def test_price_randomization() -> None:

@@ -19,7 +19,6 @@ from energetica.enums import (
     PowerFacilityType,
     ProjectStatus,
     ProjectType,
-    RenewableFacilityType,
     StorageFacilityType,
     TechnologyType,
     WorkerType,
@@ -81,9 +80,6 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         if isinstance(project.project_type, ControllableFacilityType | ExtractionFacilityType):
             player.rolling_history.add_subcategory("emissions", project.project_type)
             player.cumul_emissions.add_category(project.project_type)
-        # add facility to player's NetworkPrices
-        if isinstance(project.project_type, RenewableFacilityType):
-            player.network_prices.renewable_bids.append(project.project_type)
 
     player.check_construction_achievements(project.project_type)
 
@@ -278,11 +274,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     cost = facility.dismantle_cost
     player.money -= cost
     facility.delete()
-    # TODO(Felix): do we need to remove the renewable facility from the priorities?
-    if not list(ActiveFacility.filter_by(facility_type=facility.facility_type, player=player)):
-        # remove facility from facility priorities if it was the last one
-        if isinstance(facility.facility_type, RenewableFacilityType):
-            player.network_prices.renewable_bids.remove(facility.facility_type)
+
     facility_name = engine.const_config["assets"][facility.facility_type]["name"]
     if decommissioning:
         player.notify(

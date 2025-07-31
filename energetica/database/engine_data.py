@@ -39,7 +39,6 @@ class NetworkPrices:
     """
     Tracks a player's renewable bids, bid prices, and ask prices by facility type.
 
-    - `renewable_bids`: A list of renewable facilities.
     - `ask_prices`: A dictionary of controllable and storage facility types with their asking prices.
     - `bid_prices`: A dictionary of storage, extraction, and special demand facility types with their bid prices.
       (e.g., research, transport, industry and construction)
@@ -48,8 +47,6 @@ class NetworkPrices:
     dynamics, while still having reasonable default prices.
     """
 
-    # TODO (Felix): The list of renewables is not consistent with the rest and is dynamically generated. I think it has nothing to do here or it should be initialized with all renewables.
-    renewable_bids: list[RenewableFacilityType] = field(default_factory=list)
     ask_prices: dict[AskType, float] = field(
         default_factory=lambda: {
             ControllableFacilityType.STEAM_ENGINE: 125.0,
@@ -111,10 +108,17 @@ class NetworkPrices:
 
     AskBid = Literal["ask", "bid"]  # Helper type
 
-    def get_sorted_renewables(self) -> list[RenewableFacilityType]:
+    def get_sorted_renewables(self, player: Player) -> list[RenewableFacilityType]:
         """Return the player's renewable bids sorted by price."""
-        self.renewable_bids.sort(key=renewable_facility_types.index)
-        return self.renewable_bids
+        return list(
+            filter(
+                lambda renewable_facility_type: (
+                    renewable_facility_type in player.capacities
+                    and player.capacities[renewable_facility_type]["power"] > 0
+                ),
+                renewable_facility_types,
+            ),
+        )
 
     def get_facility_priorities(self, player: Player) -> list[PowerPriorityItem]:
         """Return the player's priority lists containing asks and bids but not renewables, sorted by price."""

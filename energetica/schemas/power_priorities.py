@@ -20,7 +20,7 @@ class PowerPrioritiesListOut(BaseModel):
     @classmethod
     def from_player(cls, player: Player) -> PowerPrioritiesListOut:
         return PowerPrioritiesListOut(
-            renewables=player.network_prices.get_sorted_renewables(),
+            renewables=player.network_prices.get_sorted_renewables(player),
             power_priorities=player.network_prices.get_facility_priorities(player),
         )
 
