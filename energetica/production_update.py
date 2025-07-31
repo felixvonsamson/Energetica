@@ -927,7 +927,6 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
             None,
         )
         if last_shipment:
-            # TODO(mglst): OngoingShipment has no member called power!
             last_shipment.delay_by(1 - satisfaction / last_shipment.power_demand)
         return
 
