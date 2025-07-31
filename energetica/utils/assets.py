@@ -263,6 +263,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
 
     This function is executed when a facility is decommissioned.
     """
+    assert player.tile is not None
     if facility is None or facility.player != player:
         msg = "Facility not found"
         raise GameError(msg)
