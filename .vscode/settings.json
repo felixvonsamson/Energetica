@@ -32,7 +32,9 @@
     "[python]": {
         "editor.rulers": [ 120 ],
         "editor.codeActionsOnSave": {
-            "source.organizeImports": "always",
+            // TODO(mglst): source.organizeImports was causing conflicts. Look
+            // Into renabling it somehow, perhaps explicitly calling Ruff 
+            // "source.organizeImports": "always",
             "source.fixAll": "always"
         },
         "editor.defaultFormatter": "charliermarsh.ruff"
