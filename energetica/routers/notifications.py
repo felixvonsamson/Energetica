@@ -10,8 +10,6 @@ from energetica.database.player import Player
 
 router = APIRouter(prefix="/notifications", tags=["Game Notifications"])
 
-# TODO(mglst): review the response codes and type annotations for these two routes
-
 
 @router.delete("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_notification(
@@ -25,7 +23,7 @@ def delete_notification(
     player.delete_notification(notification)
 
 
-@router.post(":markAllRead")
+@router.post(":markAllRead", status_code=status.HTTP_204_NO_CONTENT)
 def marked_all_read(player: Annotated[Player, Depends(get_current_user)]) -> None:
     """Mark all notification as read."""
     player.notifications_read()
