@@ -912,8 +912,7 @@ river_discharge_seasonal = [
 
 
 def warehouse_capacity_for_level(warehouse_level: int, fuel: Fuel) -> float | None:
-    """Returns how much capacity in kg a player with a warehouse with
-    `warehouse_level` has for the specified `resource`"""
+    """Return the capacity in kg of the specified resource for a warehouse of a specified level."""
     if warehouse_level == 0:
         return None
     else:
@@ -924,14 +923,14 @@ def warehouse_capacity_for_level(warehouse_level: int, fuel: Fuel) -> float | No
 
 
 class Config(object):
-    """Config object that contains the modified data for a specific player considering the technologies he owns"""
+    """Config object that contains the modified data for a specific player considering the technologies he owns."""
 
     def __init__(self) -> None:
-        """Constructor of the Config object"""
+        """Constructor of the Config object."""
         self.for_player: dict = {}
 
     def update_config_for_user(self, player: Player) -> None:
-        """Updates the config values according to the players technology level"""
+        """Update the config values according to the players technology level."""
         # TODO: deprecate this method eventually
         self.for_player[player.id] = {
             "industry": {},
@@ -991,10 +990,10 @@ class Config(object):
         # setting the number of workers
         player.workers = {
             WorkerType.CONSTRUCTION: WorkerType.construction_workers_for_level(
-                player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY]
+                player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY],
             ),
             WorkerType.RESEARCH: WorkerType.lab_workers_for_level(
-                player.functional_facility_lvl[FunctionalFacilityType.LABORATORY]
+                player.functional_facility_lvl[FunctionalFacilityType.LABORATORY],
             ),
         }
 
