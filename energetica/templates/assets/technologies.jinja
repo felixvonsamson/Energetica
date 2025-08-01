@@ -248,7 +248,7 @@
               {% macro render_effect_row(label, data_key, sign="+", precision=0, suffix="%", hover_info="", round_value=True) %}
                 {% if data_key in technology_data %}
                   <tr>
-                    <td>{{ label }}</td>
+                    <td>{{ label | safe }}</td>
                     <td id="{{data_key}}" class="txt_center{% if hover_info %} hover_info{% endif %}">
                       {% if round_value %}
                         {{ sign }}{{ technology_data[data_key] | round(precision) }}{{ suffix }}
