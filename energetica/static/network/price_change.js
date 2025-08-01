@@ -109,7 +109,7 @@ if (sortableList) {
                 }
                 for (let item of power_priorities) {
                     let facility = item.type;
-                    let generation = item.side == "bid";
+                    let generation = item.side == "ask";
                     var name = "";
                     if (facility == "transport") {
                         name = "Shipments";
