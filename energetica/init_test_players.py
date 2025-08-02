@@ -142,7 +142,7 @@ def init_test_players() -> None:
     add_asset(player1, ExtractionFacilityType.COAL_MINE, 2)
     add_asset(player1, ExtractionFacilityType.URANIUM_MINE, 1)
     add_asset(player1, FunctionalFacilityType.WAREHOUSE, 1)
-    add_asset(player1, FunctionalFacilityType.INDUSTRY, 12)
+    add_asset(player1, FunctionalFacilityType.INDUSTRY, 16)
     add_asset(player1, FunctionalFacilityType.LABORATORY, 4)
     add_asset(player1, ControllableFacilityType.GAS_BURNER, 1)
     add_asset(player1, TechnologyType.MECHANICAL_ENGINEERING, 1)
