@@ -125,7 +125,10 @@ class ActiveFacility(DBModel):
 
         Returns true if any of the attributes of the facility are outdated compared to current tech levels.
         This method is undefined for technologies and for functional facilities.
+        When decommissioning storage facilities, these must first be emptied. In this state, they cannot be upgraded.
         """
+        if self.decommissioning:
+            return False
         for multiplier_name, multiplier in self.multipliers.items():
             if multiplier_name == "next_available_location":
                 continue
