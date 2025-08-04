@@ -706,7 +706,7 @@ def calculate_prod(
             )  # max available storage content
         max_resources = max(
             0.0,
-            min(energy_capacity, (2 * energy_capacity * ramping_speed) ** 0.5 - 0.5 * ramping_speed),
+            min(energy_capacity, (2 * energy_capacity * ramping_speed) ** 0.5),
         )  # ramping down
     if minmax == "max":
         if filling:

@@ -76,7 +76,7 @@ def check_events_completion() -> None:
         player.emit("finish_shipment", player.package_shipments())
 
     # check end of lifespan of facilities
-    eolt_facilities = list(ActiveFacility.filter(lambda facility: facility.end_of_life <= engine.total_t))
+    eolt_facilities = list(ActiveFacility.filter_by(remaining_lifespan=None))
     for facility in eolt_facilities:
         player = facility.player
         if facility.facility_type in StorageFacilityType:
