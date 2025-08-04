@@ -88,7 +88,7 @@ class ActiveFacility(DBModel):
     @property
     def state_of_charge(self) -> float:
         """Current charge of the facility as a percentage of maximum."""
-        return self.usage
+        return min(1, self.usage)
 
     @property
     def efficiency(self) -> float:

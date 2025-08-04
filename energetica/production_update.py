@@ -115,7 +115,7 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
     for storage_facility in StorageFacilityType:
         if storage_facility in player.capacities:
             if player.capacities[storage_facility]["capacity"] == 0:
-                usage = None  # TODO (Felix): update frontend to show "draining..."
+                usage = np.inf  # TODO (Felix): update frontend to show "draining..."
             else:
                 usage = new_values["storage"][storage_facility] / player.capacities[storage_facility]["capacity"]
             for af in ActiveFacility.filter_by(player=player, facility_type=storage_facility):

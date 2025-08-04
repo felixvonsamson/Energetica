@@ -669,7 +669,7 @@ class Player(DBModel):
                     "display_name": engine.const_config["assets"][group_name]["name"],
                     "count": len(group),
                     "storage_capacity": sum(f.storage_capacity for f in group),
-                    "state_of_charge": 1 if group[0].state_of_charge is None else group[0].state_of_charge,
+                    "state_of_charge": group[0].state_of_charge,
                     "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
                     "efficiency": sum(f.efficiency * f.storage_capacity for f in group)
                     / sum(f.storage_capacity for f in group),
