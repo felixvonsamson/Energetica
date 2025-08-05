@@ -3,6 +3,7 @@ tests/*/instance/*
 checkpoints/*
 __pycache__
 .DS_Store
+.venv
 frontend/node_modules/*
 energetica/static/react/*
 frontend/src/routeTree.gen.ts
