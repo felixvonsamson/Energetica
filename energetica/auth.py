@@ -80,7 +80,7 @@ def add_session_cookie_to_response(response: Response, player: Player) -> Respon
         key="session",
         value=token,
         httponly=True,
-        secure=engine.env != "dev",
+        secure=False,
         samesite="lax",
         max_age=COOKIE_MAX_AGE,
     )
@@ -141,8 +141,8 @@ def setup_auth(app: FastAPI) -> None:
         if player is None:
             return Response(status_code=status.HTTP_404_NOT_FOUND)
         engine.log(f"{player.username} logged in")
-        JSONResponse("Authenticated", status_code=status.HTTP_200_OK)
-        return add_session_cookie_to_response(JSONResponse("Authenticated", status_code=status.HTTP_200_OK), player)
+        response = JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK)
+        return add_session_cookie_to_response(response, player)
 
     @app.post("/root/sign-up")
     def root_signup(request: Request, request_data: RootSignupRequest):

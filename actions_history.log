@@ -7,7 +7,6 @@
 {"timestamp": "2025-08-04T21:23:44.001903", "action_type": "tick", "total_t": 6, "elapsed": 0.001053}
 {"timestamp": "2025-08-04T21:23:46.001339", "action_type": "tick", "total_t": 7, "elapsed": 0.001248}
 {"timestamp": "2025-08-04T21:23:48.031406", "ip": "127.0.0.1", "action_type": "create_user", "player_id": 2, "username": "Felix", "pw_hash": "$2b$12$A5AoAepG0My5u2Xo8uAoQuUbXOUUfbPvnBYw9B0JENyNhyfITFwnu"}
-{"timestamp": "2025-08-04T21:23:47.542969", "elapsed": 0.490264, "ip": "127.0.0.1", "action_type": "request", "player_id": null, "request": {"endpoint": "/sign-up", "content_type": "application/json", "content": {"username": "Felix", "password": "boissapin"}}, "response": {"status_code": 201, "content_type": "application/json", "content": {"response": "success"}}}
 {"timestamp": "2025-08-04T21:23:48.033673", "action_type": "tick", "total_t": 8, "elapsed": 0.000418}
 {"timestamp": "2025-08-04T21:23:50.001768", "action_type": "tick", "total_t": 9, "elapsed": 0.00144}
 {"timestamp": "2025-08-04T21:23:52.002282", "action_type": "tick", "total_t": 10, "elapsed": 0.00168}
@@ -19,17 +18,17 @@
 {"timestamp": "2025-08-04T21:24:02.002059", "action_type": "tick", "total_t": 15, "elapsed": 0.035273}
 {"timestamp": "2025-08-04T21:24:04.001108", "action_type": "tick", "total_t": 16, "elapsed": 0.056019}
 {"timestamp": "2025-08-04T21:24:06.001029", "action_type": "tick", "total_t": 17, "elapsed": 0.039589}
-{"timestamp": "2025-08-04T21:24:06.646678", "elapsed": 0.014253, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:24:06.646678", "elapsed": 0.014253, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:24:08.001552", "action_type": "tick", "total_t": 18, "elapsed": 0.040834}
-{"timestamp": "2025-08-04T21:24:08.769174", "elapsed": 0.016539, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:24:08.769174", "elapsed": 0.016539, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:24:10.001930", "action_type": "tick", "total_t": 19, "elapsed": 0.034643}
 {"timestamp": "2025-08-04T21:24:12.001272", "action_type": "tick", "total_t": 20, "elapsed": 0.036369}
 {"timestamp": "2025-08-04T21:24:14.001227", "action_type": "tick", "total_t": 21, "elapsed": 0.041111}
-{"timestamp": "2025-08-04T21:24:14.750324", "elapsed": 0.009564, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "steam_engine"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:24:14.750324", "elapsed": 0.009564, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "steam_engine"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:24:16.000908", "action_type": "tick", "total_t": 22, "elapsed": 0.039788}
 {"timestamp": "2025-08-04T21:24:18.001374", "action_type": "tick", "total_t": 23, "elapsed": 0.038416}
 {"timestamp": "2025-08-04T21:24:20.001590", "action_type": "tick", "total_t": 24, "elapsed": 0.036491}
-{"timestamp": "2025-08-04T21:24:21.354593", "elapsed": 0.014969, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:24:21.354593", "elapsed": 0.014969, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:24:22.000405", "action_type": "tick", "total_t": 25, "elapsed": 0.012766}
 {"timestamp": "2025-08-04T21:24:24.001606", "action_type": "tick", "total_t": 26, "elapsed": 0.049815}
 {"timestamp": "2025-08-04T21:24:26.001540", "action_type": "tick", "total_t": 27, "elapsed": 0.037588}
@@ -70,7 +69,7 @@
 {"timestamp": "2025-08-04T21:25:34.001290", "action_type": "tick", "total_t": 61, "elapsed": 0.049492}
 {"timestamp": "2025-08-04T21:25:36.000592", "action_type": "tick", "total_t": 62, "elapsed": 0.046212}
 {"timestamp": "2025-08-04T21:25:38.001577", "action_type": "tick", "total_t": 63, "elapsed": 0.038794}
-{"timestamp": "2025-08-04T21:25:38.333541", "elapsed": 0.006099, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "steam_engine"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:25:38.333541", "elapsed": 0.006099, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "steam_engine"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:25:40.000994", "action_type": "tick", "total_t": 64, "elapsed": 0.047965}
 {"timestamp": "2025-08-04T21:25:42.001373", "action_type": "tick", "total_t": 65, "elapsed": 0.038145}
 {"timestamp": "2025-08-04T21:25:44.001324", "action_type": "tick", "total_t": 66, "elapsed": 0.043392}
@@ -92,7 +91,7 @@
 {"timestamp": "2025-08-04T21:26:16.000644", "action_type": "tick", "total_t": 82, "elapsed": 0.024204}
 {"timestamp": "2025-08-04T21:26:18.001413", "action_type": "tick", "total_t": 83, "elapsed": 0.039057}
 {"timestamp": "2025-08-04T21:26:20.001405", "action_type": "tick", "total_t": 84, "elapsed": 0.047581}
-{"timestamp": "2025-08-04T21:26:21.464323", "elapsed": 0.013657, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:26:21.464323", "elapsed": 0.013657, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:26:22.013512", "action_type": "tick", "total_t": 85, "elapsed": 0.013617}
 {"timestamp": "2025-08-04T21:26:24.001939", "action_type": "tick", "total_t": 86, "elapsed": 0.035741}
 {"timestamp": "2025-08-04T21:26:26.001898", "action_type": "tick", "total_t": 87, "elapsed": 0.067353}
@@ -121,7 +120,7 @@
 {"timestamp": "2025-08-04T21:27:12.000635", "action_type": "tick", "total_t": 110, "elapsed": 0.01977}
 {"timestamp": "2025-08-04T21:27:14.001287", "action_type": "tick", "total_t": 111, "elapsed": 0.032961}
 {"timestamp": "2025-08-04T21:27:16.001925", "action_type": "tick", "total_t": 112, "elapsed": 0.034088}
-{"timestamp": "2025-08-04T21:27:17.104063", "elapsed": 0.017527, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:27:17.104063", "elapsed": 0.017527, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:27:18.001703", "action_type": "tick", "total_t": 113, "elapsed": 0.027038}
 {"timestamp": "2025-08-04T21:27:20.021108", "action_type": "tick", "total_t": 114, "elapsed": 0.013593}
 {"timestamp": "2025-08-04T21:27:22.001334", "action_type": "tick", "total_t": 115, "elapsed": 0.093316}
@@ -147,7 +146,7 @@
 {"timestamp": "2025-08-04T21:28:02.001651", "action_type": "tick", "total_t": 135, "elapsed": 0.053772}
 {"timestamp": "2025-08-04T21:28:04.001902", "action_type": "tick", "total_t": 136, "elapsed": 0.062913}
 {"timestamp": "2025-08-04T21:28:06.001593", "action_type": "tick", "total_t": 137, "elapsed": 0.060244}
-{"timestamp": "2025-08-04T21:28:07.530745", "elapsed": 0.011452, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "steam_engine"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:28:07.530745", "elapsed": 0.011452, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "steam_engine"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:28:08.016783", "action_type": "tick", "total_t": 138, "elapsed": 0.111676}
 {"timestamp": "2025-08-04T21:28:10.001598", "action_type": "tick", "total_t": 139, "elapsed": 0.040663}
 {"timestamp": "2025-08-04T21:28:12.000646", "action_type": "tick", "total_t": 140, "elapsed": 0.028399}
@@ -169,7 +168,7 @@
 {"timestamp": "2025-08-04T21:28:44.000860", "action_type": "tick", "total_t": 156, "elapsed": 0.011283}
 {"timestamp": "2025-08-04T21:28:46.002050", "action_type": "tick", "total_t": 157, "elapsed": 0.042706}
 {"timestamp": "2025-08-04T21:28:48.000989", "action_type": "tick", "total_t": 158, "elapsed": 0.032705}
-{"timestamp": "2025-08-04T21:28:48.848265", "elapsed": 0.025587, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "watermill"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:28:48.848265", "elapsed": 0.025587, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "watermill"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:28:50.001387", "action_type": "tick", "total_t": 159, "elapsed": 0.048516}
 {"timestamp": "2025-08-04T21:28:52.001993", "action_type": "tick", "total_t": 160, "elapsed": 0.036704}
 {"timestamp": "2025-08-04T21:28:54.002142", "action_type": "tick", "total_t": 161, "elapsed": 0.040245}
@@ -179,7 +178,7 @@
 {"timestamp": "2025-08-04T21:29:02.020836", "action_type": "tick", "total_t": 165, "elapsed": 0.022886}
 {"timestamp": "2025-08-04T21:29:04.001586", "action_type": "tick", "total_t": 166, "elapsed": 0.042308}
 {"timestamp": "2025-08-04T21:29:06.001572", "action_type": "tick", "total_t": 167, "elapsed": 0.049967}
-{"timestamp": "2025-08-04T21:29:06.943956", "elapsed": 0.016445, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/power-priorities", "content_type": "application/json", "content": {"power_priorities": [{"side": "ask", "type": "steam_engine"}, {"side": "bid", "type": "construction"}, {"side": "bid", "type": "industry"}]}}, "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"}}
+{"timestamp": "2025-08-04T21:29:06.943956", "elapsed": 0.016445, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"method": "put", "endpoint": "/api/v1/power-priorities", "content_type": "application/json", "content": {"power_priorities": [{"side": "ask", "type": "steam_engine"}, {"side": "bid", "type": "construction"}, {"side": "bid", "type": "industry"}]}}, "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"}}
 {"timestamp": "2025-08-04T21:29:08.001722", "action_type": "tick", "total_t": 168, "elapsed": 0.034611}
 {"timestamp": "2025-08-04T21:29:10.000686", "action_type": "tick", "total_t": 169, "elapsed": 0.026374}
 {"timestamp": "2025-08-04T21:29:12.001258", "action_type": "tick", "total_t": 170, "elapsed": 0.036987}
@@ -343,19 +342,19 @@
 {"timestamp": "2025-08-04T21:34:28.001287", "action_type": "tick", "total_t": 328, "elapsed": 0.044294}
 {"timestamp": "2025-08-04T21:34:30.001992", "action_type": "tick", "total_t": 329, "elapsed": 0.047457}
 {"timestamp": "2025-08-04T21:34:32.001425", "action_type": "tick", "total_t": 330, "elapsed": 0.048947}
-{"timestamp": "2025-08-04T21:34:33.693809", "elapsed": 0.018293, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "windmill"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:34:33.693809", "elapsed": 0.018293, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "windmill"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:34:34.031915", "action_type": "tick", "total_t": 331, "elapsed": 0.06287}
 {"timestamp": "2025-08-04T21:34:36.000356", "action_type": "tick", "total_t": 332, "elapsed": 0.015851}
 {"timestamp": "2025-08-04T21:34:38.001483", "action_type": "tick", "total_t": 333, "elapsed": 0.032766}
 {"timestamp": "2025-08-04T21:34:40.000318", "action_type": "tick", "total_t": 334, "elapsed": 0.018451}
-{"timestamp": "2025-08-04T21:34:41.627985", "elapsed": 0.009756, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "small_pumped_hydro"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:34:41.627985", "elapsed": 0.009756, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "small_pumped_hydro"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:34:42.021237", "action_type": "tick", "total_t": 335, "elapsed": 0.067076}
 {"timestamp": "2025-08-04T21:34:44.001637", "action_type": "tick", "total_t": 336, "elapsed": 0.028265}
 {"timestamp": "2025-08-04T21:34:46.000653", "action_type": "tick", "total_t": 337, "elapsed": 0.018721}
-{"timestamp": "2025-08-04T21:34:47.430305", "elapsed": 0.01379, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:34:47.430305", "elapsed": 0.01379, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:34:48.001093", "action_type": "tick", "total_t": 338, "elapsed": 0.024902}
 {"timestamp": "2025-08-04T21:34:50.001272", "action_type": "tick", "total_t": 339, "elapsed": 0.037633}
-{"timestamp": "2025-08-04T21:34:50.300782", "elapsed": 0.007505, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:34:50.300782", "elapsed": 0.007505, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:34:52.001095", "action_type": "tick", "total_t": 340, "elapsed": 0.011138}
 {"timestamp": "2025-08-04T21:34:54.001073", "action_type": "tick", "total_t": 341, "elapsed": 0.013671}
 {"timestamp": "2025-08-04T21:34:56.001780", "action_type": "tick", "total_t": 342, "elapsed": 0.034673}
@@ -371,7 +370,7 @@
 {"timestamp": "2025-08-04T21:35:16.001693", "action_type": "tick", "total_t": 352, "elapsed": 0.0389}
 {"timestamp": "2025-08-04T21:35:18.001170", "action_type": "tick", "total_t": 353, "elapsed": 0.054507}
 {"timestamp": "2025-08-04T21:35:20.000731", "action_type": "tick", "total_t": 354, "elapsed": 0.027798}
-{"timestamp": "2025-08-04T21:35:21.329758", "elapsed": 0.013593, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "laboratory"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:35:21.329758", "elapsed": 0.013593, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "laboratory"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:35:22.000905", "action_type": "tick", "total_t": 355, "elapsed": 0.027675}
 {"timestamp": "2025-08-04T21:35:24.001229", "action_type": "tick", "total_t": 356, "elapsed": 0.037833}
 {"timestamp": "2025-08-04T21:35:26.001428", "action_type": "tick", "total_t": 357, "elapsed": 0.036602}
@@ -472,7 +471,7 @@
 {"timestamp": "2025-08-04T21:38:34.001594", "action_type": "tick", "total_t": 451, "elapsed": 0.067563}
 {"timestamp": "2025-08-04T21:38:36.016738", "action_type": "tick", "total_t": 452, "elapsed": 0.021189}
 {"timestamp": "2025-08-04T21:38:38.001324", "action_type": "tick", "total_t": 453, "elapsed": 0.056078}
-{"timestamp": "2025-08-04T21:38:39.196680", "elapsed": 0.011906, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "warehouse"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:38:39.196680", "elapsed": 0.011906, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "warehouse"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:38:40.000544", "action_type": "tick", "total_t": 454, "elapsed": 0.020392}
 {"timestamp": "2025-08-04T21:38:42.001838", "action_type": "tick", "total_t": 455, "elapsed": 0.046695}
 {"timestamp": "2025-08-04T21:38:44.001120", "action_type": "tick", "total_t": 456, "elapsed": 0.044872}
@@ -491,7 +490,7 @@
 {"timestamp": "2025-08-04T21:39:10.002399", "action_type": "tick", "total_t": 469, "elapsed": 0.067829}
 {"timestamp": "2025-08-04T21:39:12.001298", "action_type": "tick", "total_t": 470, "elapsed": 0.054913}
 {"timestamp": "2025-08-04T21:39:14.001760", "action_type": "tick", "total_t": 471, "elapsed": 0.065623}
-{"timestamp": "2025-08-04T21:39:14.596649", "elapsed": 0.009746, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/power-priorities", "content_type": "application/json", "content": {"power_priorities": [{"side": "bid", "type": "small_pumped_hydro"}, {"side": "ask", "type": "steam_engine"}, {"side": "ask", "type": "small_pumped_hydro"}, {"side": "bid", "type": "construction"}, {"side": "bid", "type": "industry"}]}}, "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"}}
+{"timestamp": "2025-08-04T21:39:14.596649", "elapsed": 0.009746, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"method": "put", "endpoint": "/api/v1/power-priorities", "content_type": "application/json", "content": {"power_priorities": [{"side": "bid", "type": "small_pumped_hydro"}, {"side": "ask", "type": "steam_engine"}, {"side": "ask", "type": "small_pumped_hydro"}, {"side": "bid", "type": "construction"}, {"side": "bid", "type": "industry"}]}}, "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"}}
 {"timestamp": "2025-08-04T21:39:16.001615", "action_type": "tick", "total_t": 472, "elapsed": 0.053139}
 {"timestamp": "2025-08-04T21:39:18.001869", "action_type": "tick", "total_t": 473, "elapsed": 0.06327}
 {"timestamp": "2025-08-04T21:39:20.000521", "action_type": "tick", "total_t": 474, "elapsed": 0.022479}
@@ -544,17 +543,17 @@
 {"timestamp": "2025-08-04T21:40:52.000552", "action_type": "tick", "total_t": 520, "elapsed": 0.028031}
 {"timestamp": "2025-08-04T21:40:54.000595", "action_type": "tick", "total_t": 521, "elapsed": 0.026458}
 {"timestamp": "2025-08-04T21:40:56.001299", "action_type": "tick", "total_t": 522, "elapsed": 0.039089}
-{"timestamp": "2025-08-04T21:40:56.887167", "elapsed": 0.016449, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "mathematics"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:40:56.887167", "elapsed": 0.016449, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "mathematics"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:40:58.001082", "action_type": "tick", "total_t": 523, "elapsed": 0.021032}
 {"timestamp": "2025-08-04T21:41:00.001615", "action_type": "tick", "total_t": 524, "elapsed": 0.043927}
 {"timestamp": "2025-08-04T21:41:02.000984", "action_type": "tick", "total_t": 525, "elapsed": 0.059251}
 {"timestamp": "2025-08-04T21:41:04.001248", "action_type": "tick", "total_t": 526, "elapsed": 0.042971}
 {"timestamp": "2025-08-04T21:41:06.001402", "action_type": "tick", "total_t": 527, "elapsed": 0.061539}
 {"timestamp": "2025-08-04T21:41:08.001633", "action_type": "tick", "total_t": 528, "elapsed": 0.054631}
-{"timestamp": "2025-08-04T21:41:08.295216", "elapsed": 0.022773, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "mineral_extraction"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:41:08.295216", "elapsed": 0.022773, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "mineral_extraction"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:41:10.000586", "action_type": "tick", "total_t": 529, "elapsed": 0.021847}
 {"timestamp": "2025-08-04T21:41:12.001323", "action_type": "tick", "total_t": 530, "elapsed": 0.041251}
-{"timestamp": "2025-08-04T21:41:13.833215", "elapsed": 0.018423, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "building_technology"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:41:13.833215", "elapsed": 0.018423, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "building_technology"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:41:14.001742", "action_type": "tick", "total_t": 531, "elapsed": 0.060299}
 {"timestamp": "2025-08-04T21:41:16.000929", "action_type": "tick", "total_t": 532, "elapsed": 0.01736}
 {"timestamp": "2025-08-04T21:41:18.001058", "action_type": "tick", "total_t": 533, "elapsed": 0.051674}
@@ -564,7 +563,7 @@
 {"timestamp": "2025-08-04T21:41:24.001232", "action_type": "tick", "total_t": 536, "elapsed": 0.056471}
 {"timestamp": "2025-08-04T21:41:26.002176", "action_type": "tick", "total_t": 537, "elapsed": 0.052189}
 {"timestamp": "2025-08-04T21:41:28.001110", "action_type": "tick", "total_t": 538, "elapsed": 0.04562}
-{"timestamp": "2025-08-04T21:41:28.100769", "elapsed": 0.027418, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "mechanical_engineering"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:41:28.100769", "elapsed": 0.027418, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "mechanical_engineering"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:41:30.000549", "action_type": "tick", "total_t": 539, "elapsed": 0.022218}
 {"timestamp": "2025-08-04T21:41:32.021203", "action_type": "tick", "total_t": 540, "elapsed": 0.039327}
 {"timestamp": "2025-08-04T21:41:34.001210", "action_type": "tick", "total_t": 541, "elapsed": 0.037848}
@@ -589,14 +588,14 @@
 {"timestamp": "2025-08-04T21:42:10.001098", "action_type": "tick", "total_t": 559, "elapsed": 0.045353}
 {"timestamp": "2025-08-04T21:42:12.001447", "action_type": "tick", "total_t": 560, "elapsed": 0.044847}
 {"timestamp": "2025-08-04T21:42:14.000640", "action_type": "tick", "total_t": 561, "elapsed": 0.016618}
-{"timestamp": "2025-08-04T21:42:15.735673", "elapsed": 0.009875, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "windmill"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:42:15.735673", "elapsed": 0.009875, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "windmill"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:42:16.022143", "action_type": "tick", "total_t": 562, "elapsed": 0.045174}
 {"timestamp": "2025-08-04T21:42:18.000452", "action_type": "tick", "total_t": 563, "elapsed": 0.027416}
 {"timestamp": "2025-08-04T21:42:20.001072", "action_type": "tick", "total_t": 564, "elapsed": 0.03728}
 {"timestamp": "2025-08-04T21:42:22.001170", "action_type": "tick", "total_t": 565, "elapsed": 0.046673}
 {"timestamp": "2025-08-04T21:42:24.001172", "action_type": "tick", "total_t": 566, "elapsed": 0.042402}
 {"timestamp": "2025-08-04T21:42:26.001405", "action_type": "tick", "total_t": 567, "elapsed": 0.077636}
-{"timestamp": "2025-08-04T21:42:27.742903", "elapsed": 0.020255, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "watermill"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:42:27.742903", "elapsed": 0.020255, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "watermill"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:42:28.015385", "action_type": "tick", "total_t": 568, "elapsed": 0.065438}
 {"timestamp": "2025-08-04T21:42:30.001573", "action_type": "tick", "total_t": 569, "elapsed": 0.023824}
 {"timestamp": "2025-08-04T21:42:31.230023", "elapsed": 0.009342, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects/12:increase-priority", "content_type": "application/json", "content": {}}, "response": {"status_code": 200, "content_type": "application/json", "content": {"projects": [{"id": 12, "type": "watermill", "end_tick": 620.0, "ticks_passed": null, "duration": 50.0, "status": 2, "display_name": "Watermill", "level": null, "speed": 1.0}, {"id": 11, "type": "windmill", "end_tick": null, "ticks_passed": 3.0, "duration": 60.0, "status": 1, "display_name": "Windmill", "level": null, "speed": 1.0}, {"id": 8, "type": "mineral_extraction", "end_tick": 604.0, "ticks_passed": null, "duration": 36.0, "status": 2, "display_name": "Mineral Extraction", "level": 1, "speed": 1.0}, {"id": 9, "type": "building_technology", "end_tick": null, "ticks_passed": 0.0, "duration": 72.0, "status": 1, "display_name": "Building Technology", "level": 1, "speed": 1.0}, {"id": 10, "type": "mechanical_engineering", "end_tick": null, "ticks_passed": 0.0, "duration": 45.0, "status": 1, "display_name": "Mechanical Engineering", "level": 1, "speed": 1.0}], "construction_queue": [12, 11], "research_queue": [8, 9, 10]}}}
@@ -642,7 +641,7 @@
 {"timestamp": "2025-08-04T21:43:48.002216", "action_type": "tick", "total_t": 608, "elapsed": 0.032091}
 {"timestamp": "2025-08-04T21:43:50.001207", "action_type": "tick", "total_t": 609, "elapsed": 0.038652}
 {"timestamp": "2025-08-04T21:43:52.001011", "action_type": "tick", "total_t": 610, "elapsed": 0.045051}
-{"timestamp": "2025-08-04T21:43:53.115188", "elapsed": 0.010475, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "coal_mine"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:43:53.115188", "elapsed": 0.010475, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "coal_mine"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:43:54.001409", "action_type": "tick", "total_t": 611, "elapsed": 0.051687}
 {"timestamp": "2025-08-04T21:43:56.000915", "action_type": "tick", "total_t": 612, "elapsed": 0.041377}
 {"timestamp": "2025-08-04T21:43:58.001244", "action_type": "tick", "total_t": 613, "elapsed": 0.043916}
@@ -690,7 +689,7 @@
 {"timestamp": "2025-08-04T21:45:20.001570", "action_type": "tick", "total_t": 654, "elapsed": 0.042788}
 {"timestamp": "2025-08-04T21:45:22.001024", "action_type": "tick", "total_t": 655, "elapsed": 0.026318}
 {"timestamp": "2025-08-04T21:45:24.001745", "action_type": "tick", "total_t": 656, "elapsed": 0.062518}
-{"timestamp": "2025-08-04T21:45:24.599468", "elapsed": 0.013297, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/power-priorities", "content_type": "application/json", "content": {"power_priorities": [{"side": "bid", "type": "small_pumped_hydro"}, {"side": "ask", "type": "steam_engine"}, {"side": "bid", "type": "construction"}, {"side": "ask", "type": "small_pumped_hydro"}, {"side": "bid", "type": "industry"}, {"side": "bid", "type": "transport"}, {"side": "bid", "type": "research"}]}}, "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"}}
+{"timestamp": "2025-08-04T21:45:24.599468", "elapsed": 0.013297, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"method": "put", "endpoint": "/api/v1/power-priorities", "content_type": "application/json", "content": {"power_priorities": [{"side": "bid", "type": "small_pumped_hydro"}, {"side": "ask", "type": "steam_engine"}, {"side": "bid", "type": "construction"}, {"side": "ask", "type": "small_pumped_hydro"}, {"side": "bid", "type": "industry"}, {"side": "bid", "type": "transport"}, {"side": "bid", "type": "research"}]}}, "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"}}
 {"timestamp": "2025-08-04T21:45:26.002126", "action_type": "tick", "total_t": 657, "elapsed": 0.053755}
 {"timestamp": "2025-08-04T21:45:28.004200", "action_type": "tick", "total_t": 658, "elapsed": 0.03509}
 {"timestamp": "2025-08-04T21:45:30.001760", "action_type": "tick", "total_t": 659, "elapsed": 0.041407}
@@ -775,7 +774,7 @@
 {"timestamp": "2025-08-04T21:48:08.002964", "action_type": "tick", "total_t": 738, "elapsed": 0.091289}
 {"timestamp": "2025-08-04T21:48:10.001250", "action_type": "tick", "total_t": 739, "elapsed": 0.057163}
 {"timestamp": "2025-08-04T21:48:12.001384", "action_type": "tick", "total_t": 740, "elapsed": 0.059251}
-{"timestamp": "2025-08-04T21:48:13.388528", "elapsed": 0.014887, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "thermodynamics"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:48:13.388528", "elapsed": 0.014887, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "thermodynamics"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:48:14.016429", "action_type": "tick", "total_t": 741, "elapsed": 0.134498}
 {"timestamp": "2025-08-04T21:48:16.001380", "action_type": "tick", "total_t": 742, "elapsed": 0.101715}
 {"timestamp": "2025-08-04T21:48:18.000853", "action_type": "tick", "total_t": 743, "elapsed": 0.074473}
@@ -787,11 +786,11 @@
 {"timestamp": "2025-08-04T21:48:30.001513", "action_type": "tick", "total_t": 749, "elapsed": 0.076383}
 {"timestamp": "2025-08-04T21:48:32.001665", "action_type": "tick", "total_t": 750, "elapsed": 0.101404}
 {"timestamp": "2025-08-04T21:48:34.000807", "action_type": "tick", "total_t": 751, "elapsed": 0.047922}
-{"timestamp": "2025-08-04T21:48:34.148391", "elapsed": 0.013441, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:48:34.148391", "elapsed": 0.013441, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:48:36.007440", "action_type": "tick", "total_t": 752, "elapsed": 0.121803}
 {"timestamp": "2025-08-04T21:48:38.000881", "action_type": "tick", "total_t": 753, "elapsed": 0.051258}
 {"timestamp": "2025-08-04T21:48:40.001016", "action_type": "tick", "total_t": 754, "elapsed": 0.050723}
-{"timestamp": "2025-08-04T21:48:40.377428", "elapsed": 0.01096, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:48:40.377428", "elapsed": 0.01096, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:48:42.001585", "action_type": "tick", "total_t": 755, "elapsed": 0.053694}
 {"timestamp": "2025-08-04T21:48:44.001362", "action_type": "tick", "total_t": 756, "elapsed": 0.055625}
 {"timestamp": "2025-08-04T21:48:46.017318", "action_type": "tick", "total_t": 757, "elapsed": 0.089908}
@@ -837,7 +836,7 @@
 {"timestamp": "2025-08-04T21:50:02.001478", "action_type": "tick", "total_t": 795, "elapsed": 0.071628}
 {"timestamp": "2025-08-04T21:50:04.001458", "action_type": "tick", "total_t": 796, "elapsed": 0.076633}
 {"timestamp": "2025-08-04T21:50:06.001694", "action_type": "tick", "total_t": 797, "elapsed": 0.063486}
-{"timestamp": "2025-08-04T21:50:07.106631", "elapsed": 0.016432, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "coal_burner"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:50:07.106631", "elapsed": 0.016432, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "coal_burner"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:50:08.022417", "action_type": "tick", "total_t": 798, "elapsed": 0.133037}
 {"timestamp": "2025-08-04T21:50:10.000866", "action_type": "tick", "total_t": 799, "elapsed": 0.064865}
 {"timestamp": "2025-08-04T21:50:12.001269", "action_type": "tick", "total_t": 800, "elapsed": 0.051324}
@@ -868,7 +867,7 @@
 {"timestamp": "2025-08-04T21:51:02.001413", "action_type": "tick", "total_t": 825, "elapsed": 0.072102}
 {"timestamp": "2025-08-04T21:51:04.001050", "action_type": "tick", "total_t": 826, "elapsed": 0.058712}
 {"timestamp": "2025-08-04T21:51:06.001001", "action_type": "tick", "total_t": 827, "elapsed": 0.046446}
-{"timestamp": "2025-08-04T21:51:06.708335", "elapsed": 0.012368, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:51:06.708335", "elapsed": 0.012368, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:51:08.003806", "action_type": "tick", "total_t": 828, "elapsed": 0.076863}
 {"timestamp": "2025-08-04T21:51:10.001232", "action_type": "tick", "total_t": 829, "elapsed": 0.068889}
 {"timestamp": "2025-08-04T21:51:12.000903", "action_type": "tick", "total_t": 830, "elapsed": 0.051191}
@@ -914,7 +913,7 @@
 {"timestamp": "2025-08-04T21:52:32.002169", "action_type": "tick", "total_t": 870, "elapsed": 0.101778}
 {"timestamp": "2025-08-04T21:52:34.000960", "action_type": "tick", "total_t": 871, "elapsed": 0.051944}
 {"timestamp": "2025-08-04T21:52:36.001243", "action_type": "tick", "total_t": 872, "elapsed": 0.073757}
-{"timestamp": "2025-08-04T21:52:37.586275", "elapsed": 0.012996, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:52:37.586275", "elapsed": 0.012996, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:52:38.013939", "action_type": "tick", "total_t": 873, "elapsed": 0.141795}
 {"timestamp": "2025-08-04T21:52:40.001758", "action_type": "tick", "total_t": 874, "elapsed": 0.084133}
 {"timestamp": "2025-08-04T21:52:42.000684", "action_type": "tick", "total_t": 875, "elapsed": 0.070473}
@@ -925,10 +924,10 @@
 {"timestamp": "2025-08-04T21:52:52.003389", "action_type": "tick", "total_t": 880, "elapsed": 0.078965}
 {"timestamp": "2025-08-04T21:52:54.001114", "action_type": "tick", "total_t": 881, "elapsed": 0.049809}
 {"timestamp": "2025-08-04T21:52:56.001795", "action_type": "tick", "total_t": 882, "elapsed": 0.063869}
-{"timestamp": "2025-08-04T21:52:56.074261", "elapsed": 0.058988, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/power-priorities", "content_type": "application/json", "content": {"power_priorities": [{"side": "bid", "type": "small_pumped_hydro"}, {"side": "ask", "type": "steam_engine"}, {"side": "bid", "type": "coal_mine"}, {"side": "ask", "type": "small_pumped_hydro"}, {"side": "bid", "type": "construction"}, {"side": "bid", "type": "industry"}, {"side": "bid", "type": "transport"}, {"side": "bid", "type": "research"}]}}, "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"}}
+{"timestamp": "2025-08-04T21:52:56.074261", "elapsed": 0.058988, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"method": "put", "endpoint": "/api/v1/power-priorities", "content_type": "application/json", "content": {"power_priorities": [{"side": "bid", "type": "small_pumped_hydro"}, {"side": "ask", "type": "steam_engine"}, {"side": "bid", "type": "coal_mine"}, {"side": "ask", "type": "small_pumped_hydro"}, {"side": "bid", "type": "construction"}, {"side": "bid", "type": "industry"}, {"side": "bid", "type": "transport"}, {"side": "bid", "type": "research"}]}}, "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"}}
 {"timestamp": "2025-08-04T21:52:58.001626", "action_type": "tick", "total_t": 883, "elapsed": 0.071996}
 {"timestamp": "2025-08-04T21:53:00.001098", "action_type": "tick", "total_t": 884, "elapsed": 0.066954}
-{"timestamp": "2025-08-04T21:53:01.581001", "elapsed": 0.009123, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/power-priorities", "content_type": "application/json", "content": {"power_priorities": [{"side": "bid", "type": "small_pumped_hydro"}, {"side": "ask", "type": "steam_engine"}, {"side": "bid", "type": "coal_mine"}, {"side": "ask", "type": "small_pumped_hydro"}, {"side": "bid", "type": "construction"}, {"side": "bid", "type": "industry"}, {"side": "bid", "type": "transport"}, {"side": "bid", "type": "research"}]}}, "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"}}
+{"timestamp": "2025-08-04T21:53:01.581001", "elapsed": 0.009123, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"method": "put", "endpoint": "/api/v1/power-priorities", "content_type": "application/json", "content": {"power_priorities": [{"side": "bid", "type": "small_pumped_hydro"}, {"side": "ask", "type": "steam_engine"}, {"side": "bid", "type": "coal_mine"}, {"side": "ask", "type": "small_pumped_hydro"}, {"side": "bid", "type": "construction"}, {"side": "bid", "type": "industry"}, {"side": "bid", "type": "transport"}, {"side": "bid", "type": "research"}]}}, "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"}}
 {"timestamp": "2025-08-04T21:53:02.000950", "action_type": "tick", "total_t": 885, "elapsed": 0.071135}
 {"timestamp": "2025-08-04T21:53:04.001380", "action_type": "tick", "total_t": 886, "elapsed": 0.062778}
 {"timestamp": "2025-08-04T21:53:06.001589", "action_type": "tick", "total_t": 887, "elapsed": 0.07869}
@@ -954,7 +953,7 @@
 {"timestamp": "2025-08-04T21:53:46.002181", "action_type": "tick", "total_t": 907, "elapsed": 0.068793}
 {"timestamp": "2025-08-04T21:53:48.002607", "action_type": "tick", "total_t": 908, "elapsed": 0.056304}
 {"timestamp": "2025-08-04T21:53:50.001457", "action_type": "tick", "total_t": 909, "elapsed": 0.050225}
-{"timestamp": "2025-08-04T21:53:50.725916", "elapsed": 0.046532, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 201, "content_type": "application/json", "content": null}}
+{"timestamp": "2025-08-04T21:53:50.725916", "elapsed": 0.046532, "ip": "127.0.0.1", "action_type": "request", "player_id": 2, "request": {"endpoint": "/api/v1/projects", "content_type": "application/json", "content": {"type": "industry"}}, "response": {"status_code": 204, "content_type": "application/json", "content": null}}
 {"timestamp": "2025-08-04T21:53:52.009929", "action_type": "tick", "total_t": 910, "elapsed": 0.156191}
 {"timestamp": "2025-08-04T21:53:54.000741", "action_type": "tick", "total_t": 911, "elapsed": 0.077639}
 {"timestamp": "2025-08-04T21:53:56.001379", "action_type": "tick", "total_t": 912, "elapsed": 0.066371}

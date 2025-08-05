@@ -1,6 +1,7 @@
 """Module for simulating user actions on the server."""
 
 from __future__ import annotations
+from fastapi import status
 
 import cProfile
 import pstats
@@ -36,7 +37,10 @@ def login_user(user_id: int) -> requests.Session:
 
 
 def verify() -> None:
-    assert True
+    if len(list(Player.all())) > 1:
+        session = login_user(2)
+        chart_data_request = session.get(f"{base_url}/api/get_chart_data")
+        assert chart_data_request.status_code == 200
 
 
 def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: Any) -> None:
@@ -102,13 +106,23 @@ def _simulate(
                 user_sessions[player_id] = login_user(player_id)
             url = f"{base_url}{action['request']['endpoint']}"
             content_type = "json" if action["request"]["content_type"] == "application/json" else "data"
-            response = user_sessions[player_id].post(
-                url,
-                **{content_type: action["request"]["content"]},
-                allow_redirects=False,
-            )
+            method = action["request"].get("method", "post").lower()
+            if method == "post":
+                response = user_sessions[player_id].post(
+                    url,
+                    **{content_type: action["request"]["content"]},
+                    allow_redirects=False,
+                )
+            elif method == "put":
+                response = user_sessions[player_id].put(
+                    url,
+                    **{content_type: action["request"]["content"]},
+                    allow_redirects=False,
+                )
+            else:
+                raise ValueError(f"Unknown method: {method}")
             # TODO (Yassir): mismatch if content type is not the same
-            if "money" in action["response"]["content"]:
+            if action["response"]["content"] and "money" in action["response"]["content"]:
                 money = action["response"]["content"]["money"]
                 real_money = Player.getitem(player_id).money
                 if abs(money - real_money) > 1:
@@ -121,6 +135,8 @@ def _simulate(
             if (
                 action["response"]["content_type"] == "application/json"
                 and response.headers["Content-Type"] == "application/json"
+                and response.status_code != status.HTTP_204_NO_CONTENT
+                and "response" in action["response"]["content"]
                 and response.json()["response"] != action["response"]["content"]["response"]
             ):
                 print(
