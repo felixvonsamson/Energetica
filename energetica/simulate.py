@@ -1,15 +1,17 @@
 """Module for simulating user actions on the server."""
 
 from __future__ import annotations
+import json
 from fastapi import status
 
 import cProfile
 import pstats
 from time import sleep
-from typing import Any
+from typing import Any, cast
 
 import requests
 
+from energetica.api.http import get_chart_data
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.utils.tick_execution import tick
@@ -37,10 +39,7 @@ def login_user(user_id: int) -> requests.Session:
 
 
 def verify() -> None:
-    if len(list(Player.all())) > 1:
-        session = login_user(2)
-        chart_data_request = session.get(f"{base_url}/api/get_chart_data")
-        assert chart_data_request.status_code == 200
+    pass
 
 
 def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: Any) -> None:
@@ -160,11 +159,23 @@ def _simulate(
                     print("\033[31mServer error, look at the stack above.\033[0m")
                     if stop_on_server_error:
                         break
-        try:
-            verify()
-        except AssertionError:
-            print(print("\033[31m" + "Assertion error.\033[0m"))
-            if stop_on_assertion_error:
+        # try:
+        # verify()
+        requests.get(base_url, timeout=1)
+        if len(list(Player.all())) > 1 and Player.getitem(2).tile is not None and engine.total_t >= 864:
+            chart_data = get_chart_data(Player.getitem(2))
+            # print(chart_data)
+            json_dump = json.dumps(chart_data)  # This line causes an error, specifically:
+            # TypeError: Object of type int64 is not JSON serializable
+            # print(json_dump)
+            session = cast(requests.Session, user_sessions[2])
+            print("GET on /api/get_chart_data ...")
+            chart_data_response = session.get(f"{base_url}/api/get_chart_data")
+            if chart_data_response.status_code != 200:
+                raise ValueError(f"Server error for GET /api/get_chart_data")
+                # except AssertionError:
+                #     print(print("\033[31m" + "Assertion error.\033[0m"))
+                #     if stop_on_assertion_error:
                 break
     else:
         return True
