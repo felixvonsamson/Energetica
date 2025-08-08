@@ -207,7 +207,7 @@ def create_app(
 
         scheduler.start()
 
-        from energetica.auth import generate_password_hash
+        from energetica.utils.auth import generate_password_hash
         from energetica.database.player import Player
 
         # Creating the root admin account if it does not exist.
@@ -253,9 +253,6 @@ def create_app(
 
     app = FastAPI(lifespan=lifespan)
 
-    from energetica.auth import setup_auth
-
-    setup_auth(app)
     setup_socketio(app)
     setup_routes(app)
     register_app_services(app)

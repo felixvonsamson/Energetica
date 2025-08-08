@@ -13,7 +13,7 @@ import numpy as np
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-from energetica.auth import get_current_user
+from energetica.utils.auth import get_current_user
 from energetica.config.assets import wind_power_curve
 from energetica.database.network import Network
 from energetica.database.player import Player

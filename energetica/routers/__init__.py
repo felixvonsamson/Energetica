@@ -11,14 +11,15 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from energetica.api.http import todo_router
-from energetica.auth import get_current_user
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import ConfirmOut, GameErrorOut
+from energetica.utils.auth import get_current_user
 
 from .achievements import router as achievements_router
+from .auth import router as auth_router
 from .chats import router as chat_router
 from .daily_quiz import router as daily_quiz_router
 from .facilities import router as facilities_router
@@ -38,6 +39,7 @@ __all__ = ["templates_router"]
 
 api_routers = [
     achievements_router,
+    auth_router,
     chat_router,
     daily_quiz_router,
     facilities_router,
@@ -102,11 +104,10 @@ def setup_routes(app: FastAPI):
             )
 
         # GET requests can be served immediately
-        if request.method == "GET" or request.url.path == "/socket.io/":
+        path = request.url.path
+        dont_log = request.method == "GET" or path == "/socket.io/" or "/auth/" in path
+        if dont_log:
             response = await call_next(request)
-            path = request.url.path
-            if path.startswith("/api") or request.url.path == "/socket.io/":
-                return response
             if response.status_code == status.HTTP_401_UNAUTHORIZED:
                 return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
             return response
@@ -125,7 +126,7 @@ def setup_routes(app: FastAPI):
         with engine.lock:
             response = await call_next(request)
 
-        if request.url.path.startswith("/root"):
+        if request.url.path.startswith("/auth"):
             return response
 
         # Try to decode the request and response

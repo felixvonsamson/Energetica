@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.auth import get_current_user
+from energetica.utils.auth import get_current_user
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.schemas.resource_market import AskCreate, AskListOut, AskOut, AskPatch, PurchaseOrderCreate

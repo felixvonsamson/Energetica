@@ -15,6 +15,10 @@ class SignupRequest(BaseModel):
     password: str = Field(min_length=7)
 
 
+class RootLoginRequest(BaseModel):
+    user_id: int
+
+
 class RootSignupRequest(BaseModel):
     username: str = Field(min_length=3, max_length=18)
     pwhash: str

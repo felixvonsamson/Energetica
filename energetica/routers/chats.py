@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 import energetica.utils.chat
-from energetica.auth import get_current_user
+from energetica.utils.auth import get_current_user
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 from energetica.schemas.chats import ChatCreate, ChatListOut, ChatOut, MessageCreate, MessageListOut, MessageOut

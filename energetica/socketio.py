@@ -11,7 +11,7 @@ import socketio
 from fastapi import FastAPI
 from socketio.exceptions import ConnectionRefusedError
 
-from energetica.auth import get_current_user_from_token
+from energetica.utils.auth import get_current_user_from_token
 from energetica.database.player import Player
 from energetica.globals import engine
 

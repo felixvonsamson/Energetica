@@ -7,7 +7,6 @@
 {"timestamp": "2025-08-04T21:23:44.001903", "action_type": "tick", "total_t": 6, "elapsed": 0.001053}
 {"timestamp": "2025-08-04T21:23:46.001339", "action_type": "tick", "total_t": 7, "elapsed": 0.001248}
 {"timestamp": "2025-08-04T21:23:48.031406", "ip": "127.0.0.1", "action_type": "create_user", "player_id": 2, "username": "Felix", "pw_hash": "$2b$12$A5AoAepG0My5u2Xo8uAoQuUbXOUUfbPvnBYw9B0JENyNhyfITFwnu"}
-{"timestamp": "2025-08-04T21:23:47.542969", "elapsed": 0.490264, "ip": "127.0.0.1", "action_type": "request", "player_id": null, "request": {"endpoint": "/sign-up", "content_type": "application/json", "content": {"username": "Felix", "password": "boissapin"}}, "response": {"status_code": 201, "content_type": "application/json", "content": {"response": "success"}}}
 {"timestamp": "2025-08-04T21:23:48.033673", "action_type": "tick", "total_t": 8, "elapsed": 0.000418}
 {"timestamp": "2025-08-04T21:23:50.001768", "action_type": "tick", "total_t": 9, "elapsed": 0.00144}
 {"timestamp": "2025-08-04T21:23:52.002282", "action_type": "tick", "total_t": 10, "elapsed": 0.00168}

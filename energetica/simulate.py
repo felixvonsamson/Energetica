@@ -19,8 +19,8 @@ base_url: str | None = None
 def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
     """Create a user with the given user_id."""
     session = requests.Session()
-    json = {"username": username, "pwhash": pwhash}
-    response = session.post(f"{base_url}/root/sign-up", json=json, allow_redirects=False)
+    payload = {"username": username, "pwhash": pwhash}
+    response = session.post(f"{base_url}/api/v1/auth/root/sign-up", json=payload, allow_redirects=False)
     assert response.status_code == 201
     assert next(Player.filter_by(username=username)).id == user_id
     return session
@@ -29,8 +29,8 @@ def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
 def login_user(user_id: int) -> requests.Session:
     """Login a user with the given user_id."""
     session = requests.Session()
-    data = {"user_id": user_id}
-    response = session.post(f"{base_url}/root/login", data=data, allow_redirects=False)
+    payload = {"user_id": user_id}
+    response = session.post(f"{base_url}/api/v1/auth/root/login", json=payload, allow_redirects=False)
     assert response.status_code == 200
     return session
 
