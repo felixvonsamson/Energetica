@@ -5,7 +5,7 @@ from __future__ import annotations
 import cProfile
 import pstats
 from time import sleep
-from typing import Any
+from typing import Any, cast
 
 import requests
 
@@ -102,11 +102,34 @@ def _simulate(
                 user_sessions[player_id] = login_user(player_id)
             url = f"{base_url}{action['request']['endpoint']}"
             content_type = "json" if action["request"]["content_type"] == "application/json" else "data"
-            response = user_sessions[player_id].post(
-                url,
-                **{content_type: action["request"]["content"]},
-                allow_redirects=False,
-            )
+            method = action["request"]["method"]
+            user_session = cast(requests.Session, user_sessions[player_id])
+            if method == "POST":
+                response = user_session.post(
+                    url,
+                    **{content_type: action["request"]["content"]},
+                    allow_redirects=False,
+                )
+            elif method == "DELETE":
+                response = user_session.delete(
+                    url,
+                    **{content_type: action["request"]["content"]},
+                    allow_redirects=False,
+                )
+            elif method == "PATCH":
+                response = user_session.patch(
+                    url,
+                    **{content_type: action["request"]["content"]},
+                    allow_redirects=False,
+                )
+            elif method == "PUT":
+                response = user_session.put(
+                    url,
+                    **{content_type: action["request"]["content"]},
+                    allow_redirects=False,
+                )
+            else:
+                raise ValueError(f"Cannot manage the following method: {method}")
             # TODO (Yassir): mismatch if content type is not the same
             if "money" in action["response"]["content"]:
                 money = action["response"]["content"]["money"]

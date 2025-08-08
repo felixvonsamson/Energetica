@@ -21,7 +21,7 @@ def get_constructions(
     return ProjectListOut.from_player(player)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_204_NO_CONTENT)
 def queue_project(
     player: Annotated[Player, Depends(get_current_user)],
     project: ProjectIn,
