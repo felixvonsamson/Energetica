@@ -20,7 +20,7 @@ def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
     """Create a user with the given user_id."""
     session = requests.Session()
     json = {"username": username, "pwhash": pwhash}
-    response = session.post(f"{base_url}/root/sign-up", json=json, allow_redirects=False)
+    response = session.post(f"{base_url}/auth/root/sign-up", json=json, allow_redirects=False)
     assert response.status_code == 201
     assert next(Player.filter_by(username=username)).id == user_id
     return session
@@ -30,7 +30,7 @@ def login_user(user_id: int) -> requests.Session:
     """Login a user with the given user_id."""
     session = requests.Session()
     data = {"user_id": user_id}
-    response = session.post(f"{base_url}/root/login", data=data, allow_redirects=False)
+    response = session.post(f"{base_url}/auth/root/login", data=data, allow_redirects=False)
     assert response.status_code == 200
     return session
 
