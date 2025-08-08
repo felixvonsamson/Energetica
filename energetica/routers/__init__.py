@@ -104,11 +104,10 @@ def setup_routes(app: FastAPI):
             )
 
         # GET requests can be served immediately
-        if request.method == "GET" or request.url.path == "/socket.io/":
+        path = request.url.path
+        dont_log = request.method == "GET" or path == "/socket.io/" or "/auth/" in path
+        if dont_log:
             response = await call_next(request)
-            path = request.url.path
-            if path.startswith("/api") or request.url.path == "/socket.io/":
-                return response
             if response.status_code == status.HTTP_401_UNAUTHORIZED:
                 return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
             return response

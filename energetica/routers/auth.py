@@ -6,13 +6,19 @@ Defines utility functions for cookie based auth and endpoints for sign-in and si
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from energetica.database.player import Player
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.schemas.auth import ChangePasswordRequest, LoginRequest, RootSignupRequest, SignupRequest
+from energetica.schemas.auth import (
+    ChangePasswordRequest,
+    LoginRequest,
+    RootLoginRequest,
+    RootSignupRequest,
+    SignupRequest,
+)
 from energetica.utils import misc
 from energetica.utils.auth import (
     InvalidCredentialsException,
@@ -71,11 +77,11 @@ def signup(request: Request, request_data: SignupRequest) -> Response:
 
 
 @router.post("/root/login")
-def root_login(request: Request, user_id: Annotated[int, Form()]) -> Response:
+def root_login(request: Request, request_data: RootLoginRequest) -> Response:
     addr = request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else None)
     if addr is None or addr != "127.0.0.1":
         return Response(status_code=status.HTTP_401_UNAUTHORIZED)
-    player = Player.get(int(user_id))
+    player = Player.get(request_data.user_id)
     if player is None:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
     engine.log(f"{player.username} logged in")

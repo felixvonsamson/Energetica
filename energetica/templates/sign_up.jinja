@@ -52,7 +52,7 @@
         password: form.password1.value,
       };
 
-      const response = await fetch("/auth/signup", {
+      const response = await fetch("/api/v1/auth/signup", {
         method: "POST",
         credentials: "same-origin",
         headers: {
