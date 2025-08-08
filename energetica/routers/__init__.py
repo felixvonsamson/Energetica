@@ -127,7 +127,7 @@ def setup_routes(app: FastAPI):
         with engine.lock:
             response = await call_next(request)
 
-        if request.url.path.startswith("/root"):
+        if request.url.path.startswith("/auth"):
             return response
 
         # Try to decode the request and response
