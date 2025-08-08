@@ -6,7 +6,7 @@ from ecdsa import NIST256p, SigningKey, VerifyingKey
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 
-from energetica.auth import get_current_user
+from energetica.utils.auth import get_current_user
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.schemas.app_services import Subscription

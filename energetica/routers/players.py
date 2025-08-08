@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from energetica.auth import get_current_user
+from energetica.utils.auth import get_current_user
 from energetica.database.player import Player
 from energetica.routers.chats import router
 from energetica.schemas.players import MoneyOut, PlayerOut, SettingsPatch, UIStatePatch

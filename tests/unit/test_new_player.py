@@ -1,5 +1,5 @@
 from energetica import create_app
-from energetica.auth import generate_password_hash
+from energetica.utils.auth import generate_password_hash
 from energetica.database.map import HexTile
 from energetica.database.player import Player
 from energetica.utils.map_helpers import confirm_location

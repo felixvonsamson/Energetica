@@ -4,87 +4,23 @@ Authentication setup for Energetica.
 Defines utility functions for cookie based auth and endpoints for sign-in and sign-up.
 """
 
-import os
-import secrets
-from datetime import timedelta
 from typing import Annotated
 
-import bcrypt
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse, RedirectResponse
-from itsdangerous import URLSafeTimedSerializer
 
 from energetica.database.player import Player
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.schemas.auth import ChangePasswordRequest, LoginRequest, RootSignupRequest, SignupRequest
 from energetica.utils import misc
-
-COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a command line argument in the future
-
-InvalidCredentialsException = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-
-
-def get_or_create_secret_key() -> str:
-    """Load or create SECRET_KEY for signing cookies."""
-    filepath = "instance/secret_key.txt"
-    if os.path.exists(filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    else:
-        secret_key = secrets.token_hex()
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(secret_key)
-        return secret_key
-
-
-SECRET_KEY = get_or_create_secret_key()
-serializer = URLSafeTimedSerializer(SECRET_KEY)
-
-
-def generate_password_hash(password: str) -> str:
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode(), salt)
-    return hashed.decode()
-
-
-def check_password_hash(*, plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
-
-
-def get_current_user(request: Request) -> Player:
-    player = get_current_user_from_request(request)
-    if player is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    return player
-
-
-def get_current_user_from_request(request: Request) -> Player | None:
-    token = request.cookies.get("session")
-    if not token:
-        return None
-    return get_current_user_from_token(token)
-
-
-def get_current_user_from_token(token: str) -> Player | None:
-    try:
-        username = serializer.loads(token, max_age=COOKIE_MAX_AGE)
-        return next(Player.filter_by(username=username), None)
-    except Exception:
-        return None
-
-
-def add_session_cookie_to_response(response: Response, player: Player) -> Response:
-    token = serializer.dumps(player.username)
-    response.set_cookie(
-        key="session",
-        value=token,
-        httponly=True,
-        secure=engine.env != "dev",
-        samesite="lax",
-        max_age=COOKIE_MAX_AGE,
-    )
-    return response
+from energetica.utils.auth import (
+    InvalidCredentialsException,
+    add_session_cookie_to_response,
+    check_password_hash,
+    generate_password_hash,
+    get_current_user,
+)
 
 
 def setup_auth(app: FastAPI) -> None:

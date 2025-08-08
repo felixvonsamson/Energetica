@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from energetica.api.http import todo_router
-from energetica.auth import get_current_user
+from energetica.utils.auth import get_current_user
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
