@@ -11,14 +11,15 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from energetica.api.http import todo_router
-from energetica.utils.auth import get_current_user
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import ConfirmOut, GameErrorOut
+from energetica.utils.auth import get_current_user
 
 from .achievements import router as achievements_router
+from .auth import router as auth_router
 from .chats import router as chat_router
 from .daily_quiz import router as daily_quiz_router
 from .facilities import router as facilities_router
@@ -38,6 +39,7 @@ __all__ = ["templates_router"]
 
 api_routers = [
     achievements_router,
+    auth_router,
     chat_router,
     daily_quiz_router,
     facilities_router,

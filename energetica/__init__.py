@@ -253,7 +253,7 @@ def create_app(
 
     app = FastAPI(lifespan=lifespan)
 
-    from energetica.auth import setup_auth
+    from energetica.routers.auth import setup_auth
 
     setup_auth(app)
     setup_socketio(app)
