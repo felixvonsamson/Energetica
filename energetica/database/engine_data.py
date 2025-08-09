@@ -315,6 +315,84 @@ class CapacityData:
         return facility in self._data
 
 
+class TimeSeries360:
+    def __init__(self):
+        self.data = deque([0.0] * 360, maxlen=360)
+
+    def append(self, value: float):
+        self.data.append(float(value))
+
+    def get_last(self) -> float:
+        return self.data[-1]
+
+    def get_last_n(self, n: int = 360) -> list[float]:
+        return list(self.data)[-n:]
+
+
+class MultiResolutionArchive:
+    def __init__(self, path: Path):
+        self.path = path
+        self.levels = [[0.0] * 360, [0.0] * 360, [0.0] * 360, [0.0] * 360]  # x6, x36, x216, x1296
+        self._load()
+
+    def _load(self):
+        if self.path.exists():
+            with gzip.open(self.path, "rb") as f:
+                self.levels = pickle.load(f)
+
+    def append_from_fullres(self, fullres_data: list[float]):
+        assert len(fullres_data) == 216
+        reduced = np.array(fullres_data)
+        for i in range(3):
+            reduced = reduced.reshape(-1, 6).mean(axis=1)
+            self.levels[i].extend(reduced.tolist())
+            self.levels[i] = self.levels[i][-360:]
+
+        # x1296 updated every 1296 ticks
+        if engine.total_t % 1296 == 0:
+            self.levels[3].append(np.mean(self.levels[2][-6:]))
+            self.levels[3] = self.levels[i][-360:]
+
+    def save(self):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with gzip.open(self.path, "wb") as f:
+            pickle.dump(self.levels, f)
+
+    def get_level(self, level: int) -> list[float]:
+        return self.levels[level]
+
+
+class PlayerTimeSeriesManager:
+    def __init__(self, player_id: int):
+        self.player_id = player_id
+        self.base_path = f"instance/data/playersplayer_{player_id}"
+        self._data = defaultdict(dict)  # category -> subcategory -> TimeSeries360
+
+    def append(self, updates: dict[str, dict[str, float]]):
+        for category, subcats in updates.items():
+            for subcat, value in subcats.items():
+                if subcat not in self._data[category]:
+                    self._data[category][subcat] = TimeSeries360()
+                self._data[category][subcat].append(value)
+
+    def get(self, category: str, subcat: str, resolution: int = 0) -> list[float]:
+        if resolution == 0:
+            return self._data[category][subcat].get_last_n()
+        else:
+            archive = MultiResolutionArchive(self._archive_path(category, subcat))
+            return archive.get_level(resolution - 1)
+
+    def update_archives(self):
+        for category, subcats in self._data.items():
+            for subcat, ts in subcats.items():
+                archive = MultiResolutionArchive(self._archive_path(category, subcat))
+                archive.append_from_fullres(ts.get_last_n(216))
+                archive.save()
+
+    def _archive_path(self, category: str, subcat: str) -> Path:
+        return self.base_path / f"{category}_{subcat}.pck.gz"
+
+
 class CircularBufferPlayer:
     """Class that stores the active data of a player (last 360 ticks of the graph data)."""
 
