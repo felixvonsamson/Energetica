@@ -5,7 +5,6 @@ __release_date__ = "03/02/2025"
 
 import asyncio
 import glob
-import json
 import logging
 import os
 import platform
@@ -18,11 +17,12 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from typing import Any, AsyncGenerator, Literal
+from typing import Any, AsyncGenerator, Literal, cast
 
 from apscheduler.events import EVENT_JOB_EXECUTED
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
+from pydantic import TypeAdapter
 
 from energetica import globals
 from energetica.game_engine import GameEngine
@@ -35,7 +35,7 @@ globals.engine = engine
 from energetica.api.app_services import register_app_services
 from energetica.init_test_players import init_test_players
 from energetica.routers import setup_routes
-from energetica.simulate import simulate
+from energetica.simulate import Action, simulate
 from energetica.socketio import setup_socketio
 from energetica.utils.tick_execution import state_update
 
@@ -86,8 +86,8 @@ def create_app(
         # Simulate the game run from a file.
         Path("checkpoints/simulation").mkdir(exist_ok=True)
         with open(simulate_file, "r", encoding="utf-8") as file:
-            actions = [json.loads(line) for line in file]
-        assert actions[0]["action_type"] == "init_engine"
+            actions = cast(list[Action], [TypeAdapter(Action).validate_json(line) for line in file])
+        assert actions[0].action_type == "init_engine"
 
         checkpoints = {
             int(save.split("checkpoint_")[1].rstrip(".tar.gz")): save
@@ -119,25 +119,26 @@ def create_app(
             engine.log("Loaded last checkpoint")
         if os.path.isfile("instance/actions_history.log"):
             with open("instance/actions_history.log", "r") as file:
-                actions = [json.loads(line) for line in file]
+                actions = cast(list[Action], [TypeAdapter(Action).validate_json(line) for line in file])
             if actions:
-                assert actions[0]["action_type"] == "init_engine"
+                assert actions[0].action_type == "init_engine"
     if os.path.isfile("instance/engine_data.pck"):
         engine.load()
         if actions:
-            assert uuid.UUID(actions[0]["instance_uuid"]) == engine.uuid
+            assert actions[0].action_type == "init_engine"
+            assert uuid.UUID(actions[0].instance_uuid) == engine.uuid
     else:
         if actions:
-            kwargs: dict = actions[0].copy()
+            kwargs: dict = actions[0].model_dump()
             kwargs.pop("action_type")
             # datetime.fromisoformat
-            kwargs["start_date"] = datetime.fromisoformat(kwargs["start_date"])
+            kwargs["start_date"] = kwargs["start_date"]
             engine.init_instance(**kwargs)
         else:
             engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, disable_signups)
 
     action_id_by_tick = {
-        action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"
+        action.total_t: action_id for action_id, action in enumerate(actions) if action.action_type == "tick"
     }
     loaded_tick = engine.total_t
     start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 1

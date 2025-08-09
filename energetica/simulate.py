@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import cProfile
+from datetime import datetime
 import pstats
 from time import sleep
-from typing import Any, cast
+from typing import Annotated, Any, Literal, cast
 
+from pydantic import BaseModel, Field
 import requests
 
 from energetica.database.player import Player
@@ -51,7 +53,7 @@ def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: An
 
 def _simulate(
     port: int,
-    actions: list[dict],
+    actions: list[Action],
     simulating: bool,
     stop_on_mismatch: bool,
     stop_on_server_error: bool,
@@ -83,56 +85,57 @@ def _simulate(
 
     for action in actions:
         print(action)
-        if action["action_type"] == "tick":
+        if action.action_type == "tick":
             tick()
             if (
                 checkpoint_every_k_ticks
-                and action["total_t"] % checkpoint_every_k_ticks == 0
-                or action["total_t"] in checkpoint_ticks
+                and action.total_t % checkpoint_every_k_ticks == 0
+                or action.total_t in checkpoint_ticks
             ):
-                engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action['total_t']}.tar.gz")
-        elif action["action_type"] == "create_user":
-            player_id = action["player_id"]
-            username = action["username"] if not simulating else f"user{player_id}"
+                engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action.total_t}.tar.gz")
+        elif action.action_type == "create_user":
+            player_id = action.player_id
+            username = action.username if not simulating else f"user{player_id}"
             password = "password"
             user_sessions[player_id] = create_user(player_id, username, password)
-        elif action["action_type"] == "request":
-            player_id = action["player_id"]
+        elif action.action_type == "request":
+            player_id = action.player_id
             if player_id not in user_sessions:
                 user_sessions[player_id] = login_user(player_id)
-            url = f"{base_url}{action['request']['endpoint']}"
-            content_type = "json" if action["request"]["content_type"] == "application/json" else "data"
-            method = action["request"]["method"]
+            url = f"{base_url}{action.request['endpoint']}"
+            content_type = "json" if action.request["content_type"] == "application/json" else "data"
+            # method = action.request["method"]
+            method = action.request.get("method", "POST")
             user_session = cast(requests.Session, user_sessions[player_id])
             if method == "POST":
                 response = user_session.post(
                     url,
-                    **{content_type: action["request"]["content"]},
+                    **{content_type: action.request["content"]},
                     allow_redirects=False,
                 )
             elif method == "DELETE":
                 response = user_session.delete(
                     url,
-                    **{content_type: action["request"]["content"]},
+                    **{content_type: action.request["content"]},
                     allow_redirects=False,
                 )
             elif method == "PATCH":
                 response = user_session.patch(
                     url,
-                    **{content_type: action["request"]["content"]},
+                    **{content_type: action.request["content"]},
                     allow_redirects=False,
                 )
             elif method == "PUT":
                 response = user_session.put(
                     url,
-                    **{content_type: action["request"]["content"]},
+                    **{content_type: action.request["content"]},
                     allow_redirects=False,
                 )
             else:
                 raise ValueError(f"Cannot manage the following method: {method}")
             # TODO (Yassir): mismatch if content type is not the same
-            if "money" in action["response"]["content"]:
-                money = action["response"]["content"]["money"]
+            if "money" in action.response["content"]:
+                money = action.response["content"]["money"]
                 real_money = Player.getitem(player_id).money
                 if abs(money - real_money) > 1:
                     print(
@@ -142,20 +145,20 @@ def _simulate(
                     if stop_on_mismatch:
                         break
             if (
-                action["response"]["content_type"] == "application/json"
+                action.response["content_type"] == "application/json"
                 and response.headers["Content-Type"] == "application/json"
-                and response.json()["response"] != action["response"]["content"]["response"]
+                and response.json()["response"] != action.response["content"]["response"]
             ):
                 print(
                     f"""\033[31mResponse {response.json()["response"]} does not match expected response """
-                    f"""{action["response"]["content"]["response"]}.\033[0m""",
+                    f"""{action.response["content"]["response"]}.\033[0m""",
                 )
                 if stop_on_mismatch:
                     break
-            if response.status_code != action["response"]["status_code"]:
+            if response.status_code != action.response["status_code"]:
                 print(
                     f"""\033[31mStatus code {response.status_code} does not match expected status code """
-                    f"""{action["response"]["status_code"]}.\033[0m""",
+                    f"""{action.response["status_code"]}.\033[0m""",
                 )
                 if stop_on_mismatch:
                     break
@@ -176,3 +179,47 @@ def _simulate(
     else:
         return True
     return False
+
+
+class InitEngineAction(BaseModel):
+    instance_uuid: str
+    env: Literal["dev", "prod"]
+    clock_time: int
+    in_game_seconds_per_tick: int
+    action_type: Literal["init_engine"]
+    random_seed: int
+    start_date: datetime
+    disable_signups: bool
+
+
+class CreateUserAction(BaseModel):
+    timestamp: datetime
+    ip: str
+    action_type: Literal["create_user"]
+    player_id: int
+    username: str
+    pw_hash: str
+
+
+class TickAction(BaseModel):
+    timestamp: datetime
+    action_type: Literal["tick"]
+    total_t: int
+    elapsed: float
+
+
+class RequestAction(BaseModel):
+    timestamp: datetime
+    elapsed: float
+    ip: str
+    action_type: Literal["request"]
+    player_id: int
+    request: dict
+    response: dict
+
+    # "request": {"endpoint": "/api/v1/map/252:settle", "content_type": "application/json", "content": {}},
+    # "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"},
+
+
+ActionUnionType = InitEngineAction | CreateUserAction | TickAction | RequestAction
+Action = Annotated[ActionUnionType, Field(discriminator="action_type")]
