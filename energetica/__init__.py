@@ -214,7 +214,7 @@ def create_app(
 
         # Creating the root admin account if it does not exist.
         if not list(Player.filter_by(username="admin")):
-            admin_password = "admin"  # TODO(Felix): setup admin password in a config file
+            admin_password = secrets.token_hex(4)
             hashed_password = generate_password_hash(admin_password)
             Player(username="admin", pwhash=hashed_password, is_admin=True)
             engine.log(f"Admin account created with username 'admin' and password '{admin_password}'")
