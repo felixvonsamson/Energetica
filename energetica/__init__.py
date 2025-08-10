@@ -216,8 +216,10 @@ def create_app(
         if not list(Player.filter_by(username="admin")):
             admin_password = secrets.token_hex(4)
             hashed_password = generate_password_hash(admin_password)
-            Player(username="admin", pwhash=hashed_password, is_admin=True)
-            engine.log(f"Admin account created with username 'admin' and password '{admin_password}'")
+            new_admin = Player(username="admin", pwhash=hashed_password, is_admin=True)
+            engine.log(f"Admin account created with username '{new_admin.username}'")
+            with open("admin_accounts.txt", "w", encoding="utf-8") as file:
+                file.write(f"{new_admin.username},{admin_password}\n")
 
         if disable_signups:
             # if sign-ups are disabled, accounts have to be created from a file.
