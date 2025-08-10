@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import csv
-import json
 import logging
 import math
 import os
@@ -20,7 +19,7 @@ import socketio
 
 from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
-from energetica.simulate import Action
+from energetica.simulate import Action, InitEngineAction
 
 if TYPE_CHECKING:
     from energetica.database.messages import Chat
@@ -107,20 +106,17 @@ class GameEngine(object):
         self.total_t = 0  # Number of simulated game ticks since server start
         self.start_date = start_date or datetime.now()  # 0 point of server time
         self.first_tick_time = self.start_date  # will be set to the correct time later on
-        self.action_logger.info(
-            json.dumps(
-                {
-                    "instance_uuid": self.uuid.hex,
-                    "env": self.env,
-                    "clock_time": self.clock_time,
-                    "in_game_seconds_per_tick": self.in_game_seconds_per_tick,
-                    "action_type": "init_engine",
-                    "random_seed": self.random_seed,
-                    "start_date": self.start_date.isoformat(),
-                    "disable_signups": disable_signups,
-                },
-            ),
+        log_entry = InitEngineAction(
+            instance_uuid=self.uuid.hex,
+            env=self.env,
+            clock_time=self.clock_time,
+            in_game_seconds_per_tick=self.in_game_seconds_per_tick,
+            action_type="init_engine",
+            random_seed=self.random_seed,
+            start_date=self.start_date,
+            disable_signups=disable_signups,
         )
+        self.log_action(log_entry)
         last_midnight = self.start_date.replace(hour=0, minute=0, second=0, microsecond=0)
         # time shift in ticks. Defines the number of ticks between
         # the first simulated tick and the beginning of in-game year 0.
