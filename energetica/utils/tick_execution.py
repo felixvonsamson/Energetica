@@ -11,6 +11,7 @@ from energetica.database.player import Player
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import StorageFacilityType
 from energetica.globals import engine
+from energetica.simulate import TickAction
 from energetica.utils import assets
 from energetica.utils.assets import remove_asset
 from energetica.utils.climate_helpers import check_climate_events
@@ -32,11 +33,6 @@ def tick() -> None:
         engine.first_tick_time = datetime.now()
     engine.total_t += 1
     engine.log(f"t = {engine.total_t}")
-    log_entry = {
-        "timestamp": start.isoformat(),
-        "action_type": "tick",
-        "total_t": engine.total_t,
-    }
     if engine.total_t % 216 == 0:
         save_past_data()
     if (engine.total_t + engine.delta_t) % (24 * 60 * 60 / engine.clock_time) == 0:
@@ -45,7 +41,12 @@ def tick() -> None:
     check_climate_events()
     production_update.update_electricity()
 
-    log_entry["elapsed"] = (datetime.now() - start).total_seconds()
+    log_entry = TickAction(
+        timestamp=start,
+        action_type="tick",
+        total_t=engine.total_t,
+        elapsed=(datetime.now() - start).total_seconds(),
+    )
     engine.log_action(log_entry)
 
     # save a checkpoint every 6 hours in case of data corruption

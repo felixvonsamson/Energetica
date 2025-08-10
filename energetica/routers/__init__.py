@@ -16,6 +16,7 @@ from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import ConfirmOut, GameErrorOut
+from energetica.simulate import RequestAction
 from energetica.utils.auth import get_current_user
 
 from .achievements import router as achievements_router
@@ -161,27 +162,27 @@ def setup_routes(app: FastAPI):
         try:
             user = get_current_user(request)
             player_id = user.id
-        except HTTPException:
-            player_id = None
+        except HTTPException as e:
+            raise e
 
-        log_entry = {
-            "timestamp": start.isoformat(),
-            "elapsed": (datetime.now() - start).total_seconds(),
-            "ip": request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
-            "action_type": "request",
-            "player_id": player_id,
-            "request": {
+        log_entry = RequestAction(
+            timestamp=start,
+            elapsed=(datetime.now() - start).total_seconds(),
+            ip=request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
+            action_type="request",
+            player_id=player_id,
+            request={
                 "endpoint": request.url.path,
                 "method": request.method,
                 "content_type": request.headers.get("content-type"),
                 "content": request_content,
             },
-            "response": {
+            response={
                 "status_code": response.status_code,
                 "content_type": response.headers.get("content-type", "unknown"),
                 "content": response_content,
             },
-        }
+        )
         engine.log_action(log_entry)
         return new_response
 

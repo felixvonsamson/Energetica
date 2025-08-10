@@ -20,6 +20,7 @@ import socketio
 
 from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
+from energetica.simulate import Action
 
 if TYPE_CHECKING:
     from energetica.database.messages import Chat
@@ -206,9 +207,9 @@ class GameEngine(object):
         """Log a warning message in the terminal."""
         self.console_logger.warning(message)
 
-    def log_action(self, action: dict) -> None:
+    def log_action(self, action: Action) -> None:
         """Log an action in the action history file."""
-        self.action_logger.info(json.dumps(action))
+        self.action_logger.info(action.model_dump_json())
 
     def save(self) -> None:
         """Save the game engine data to a file."""
