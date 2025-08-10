@@ -26,6 +26,7 @@ from pydantic import TypeAdapter
 
 from energetica import globals
 from energetica.game_engine import GameEngine
+from energetica.schemas.simulate import Action
 
 engine = GameEngine()
 
@@ -35,7 +36,7 @@ globals.engine = engine
 from energetica.api.app_services import register_app_services
 from energetica.init_test_players import init_test_players
 from energetica.routers import setup_routes
-from energetica.simulate import Action, simulate
+from energetica.simulate import simulate
 from energetica.socketio import setup_socketio
 from energetica.utils.tick_execution import state_update
 
@@ -208,8 +209,8 @@ def create_app(
 
         scheduler.start()
 
-        from energetica.utils.auth import generate_password_hash
         from energetica.database.player import Player
+        from energetica.utils.auth import generate_password_hash
 
         # Creating the root admin account if it does not exist.
         if not list(Player.filter_by(username="admin")):

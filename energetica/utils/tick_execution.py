@@ -11,7 +11,7 @@ from energetica.database.player import Player
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import StorageFacilityType
 from energetica.globals import engine
-from energetica.simulate import TickAction
+from energetica.schemas.simulate import TickAction
 from energetica.utils import assets
 from energetica.utils.assets import remove_asset
 from energetica.utils.climate_helpers import check_climate_events

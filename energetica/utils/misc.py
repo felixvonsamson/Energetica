@@ -20,8 +20,8 @@ from energetica.enums import ControllableFacilityType
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.schemas.daily_quiz import DailyQuizBase
+from energetica.schemas.simulate import CreateUserAction
 from energetica.schemas.weather import WeatherOut
-from energetica.simulate import CreateUserAction
 from energetica.utils.astro import DrHI
 
 # Helper functions and data initialization utilities

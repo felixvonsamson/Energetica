@@ -16,7 +16,7 @@ from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import ConfirmOut, GameErrorOut
-from energetica.simulate import RequestAction
+from energetica.schemas.simulate import RequestAction
 from energetica.utils.auth import get_current_user
 
 from .achievements import router as achievements_router

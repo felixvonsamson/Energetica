@@ -19,7 +19,7 @@ import socketio
 
 from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
-from energetica.simulate import Action, InitEngineAction
+from energetica.schemas.simulate import Action, InitEngineAction
 
 if TYPE_CHECKING:
     from energetica.database.messages import Chat
