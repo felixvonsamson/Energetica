@@ -7,3 +7,4 @@ __pycache__
 frontend/node_modules/*
 energetica/static/react/*
 frontend/src/routeTree.gen.ts
+admin_accounts.txt
