@@ -5,9 +5,11 @@ from __future__ import annotations
 import math
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 import noise
+import h5py
 import numpy as np
 
 from energetica.enums import (
@@ -315,7 +317,7 @@ class CapacityData:
         return facility in self._data
 
 
-class TimeSeries360:
+class TimeSeriesBuffer:
     def __init__(self):
         self.data = deque([0.0] * 360, maxlen=360)
 
@@ -325,72 +327,91 @@ class TimeSeries360:
     def get_last(self) -> float:
         return self.data[-1]
 
-    def get_last_n(self, n: int = 360) -> list[float]:
-        return list(self.data)[-n:]
+    def as_numpy(self, length: int = 216) -> np.ndarray:
+        return np.array(self.data[-length:], dtype=np.float64)
 
 
 class MultiResolutionArchive:
     def __init__(self, path: Path):
         self.path = path
-        self.levels = [[0.0] * 360, [0.0] * 360, [0.0] * 360, [0.0] * 360]  # x6, x36, x216, x1296
-        self._load()
+        self.level_names = ["x6", "x36", "x216", "x1296"]
+        if not self.path.exists():
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            with h5py.File(self.path, "w") as f:
+                for level in self.level_names:
+                    f.create_group(level)
 
-    def _load(self):
-        if self.path.exists():
-            with gzip.open(self.path, "rb") as f:
-                self.levels = pickle.load(f)
+    def add_subcategory(self, subcategory: str):
+        """Create a new subcategory in the archive."""
+        if not self.path.exists():
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        with h5py.File(self.path, "a") as f:
+            if subcategory in f["x6"]:
+                return  # Subcategory already exists
+            for level in self.level_names:
+                f[level].create_dataset(
+                    subcategory,
+                    data=np.zeros(360, dtype=np.float64),
+                    shape=(360,),
+                    dtype=np.float64,
+                    compression="gzip",
+                )
 
-    def append_from_fullres(self, fullres_data: list[float]):
-        assert len(fullres_data) == 216
-        reduced = np.array(fullres_data)
-        for i in range(3):
-            reduced = reduced.reshape(-1, 6).mean(axis=1)
-            self.levels[i].extend(reduced.tolist())
-            self.levels[i] = self.levels[i][-360:]
+    def update_archives(self, fullres_data: dict[str, list[float]]) -> None:
+        """Append new aggregated points to each resolution level."""
+        with h5py.File(self.path, "a") as f:
+            for subcategory, data in fullres_data.items():
+                assert len(data) == 216, "Archives can only be updated with 216 data points."
+                reduced = np.array(data, dtype=np.float64)
 
-        # x1296 updated every 1296 ticks
-        if engine.total_t % 1296 == 0:
-            self.levels[3].append(np.mean(self.levels[2][-6:]))
-            self.levels[3] = self.levels[i][-360:]
+                # x6, x36, x216
+                for i in range(3):
+                    reduced = reduced.reshape(-1, 6).mean(axis=1)
+                    current = f[self.level_names[i]][subcategory][:]
+                    updated = np.append(current, reduced)[-360:]
+                    f[self.level_names[i]][subcategory][...] = updated
 
-    def save(self):
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with gzip.open(self.path, "wb") as f:
-            pickle.dump(self.levels, f)
+                # x1296 updated every 1296 ticks
+                if engine.total_t % 1296 == 0:
+                    current = f[self.level_names[3]][subcategory][:]
+                    new_point = np.mean(f[self.level_names[2]][subcategory][-6:])
+                    updated = np.append(current, new_point)[-360:]
+                    f[self.level_names[3]][subcategory][...] = updated
 
-    def get_level(self, level: int) -> list[float]:
-        return self.levels[level]
+    def get_level(self, level: int) -> np.ndarray:
+        """Load one resolution level."""
+        with h5py.File(self.path, "r") as f:
+            assert 0 <= level < len(self.level_names), "Invalid level index."
+            return f[self.level_names[level]][:]
 
 
 class PlayerTimeSeriesManager:
-    def __init__(self, player_id: int):
+    def __init__(self, player_id: int, save_dir: str = "instance/data/players") -> None:
         self.player_id = player_id
-        self.base_path = f"instance/data/playersplayer_{player_id}"
-        self._data = defaultdict(dict)  # category -> subcategory -> TimeSeries360
+        self.save_path = f"{save_dir}/player_{player_id}.h5"
+        self._buffers = defaultdict(dict)  # category -> subcategory -> TimeSeriesBuffer
+        self._archives = defaultdict(dict)  # category -> MultiResolutionArchive -> resolution -> subcategory
+
+    def _add_subcategory(self, category: str, subcategory: str):
+        """Create a buffer if it doesn't exist yet."""
+        if category not in self._buffers:
+            self._buffers[category] = {}
+            self._archives[category] = MultiResolutionArchive(Path(f"{self.save_path}/{category}.h5"))
+        if subcategory not in self._buffers[category]:
+            self._buffers[category][subcategory] = TimeSeriesBuffer()
+            self._archives[category].add_subcategory(subcategory)
 
     def append(self, updates: dict[str, dict[str, float]]):
-        for category, subcats in updates.items():
-            for subcat, value in subcats.items():
-                if subcat not in self._data[category]:
-                    self._data[category][subcat] = TimeSeries360()
-                self._data[category][subcat].append(value)
+        for category, subcategories in updates.items():
+            for subcategory, value in subcategories.items():
+                self._add_subcategory(category, subcategory)
+                self._buffers[category][subcategory].append(float(value))
 
-    def get(self, category: str, subcat: str, resolution: int = 0) -> list[float]:
-        if resolution == 0:
-            return self._data[category][subcat].get_last_n()
-        else:
-            archive = MultiResolutionArchive(self._archive_path(category, subcat))
-            return archive.get_level(resolution - 1)
-
-    def update_archives(self):
-        for category, subcats in self._data.items():
-            for subcat, ts in subcats.items():
-                archive = MultiResolutionArchive(self._archive_path(category, subcat))
-                archive.append_from_fullres(ts.get_last_n(216))
-                archive.save()
-
-    def _archive_path(self, category: str, subcat: str) -> Path:
-        return self.base_path / f"{category}_{subcat}.pck.gz"
+    def get_last_value(self, category: str, subcategory: str) -> float:
+        """Get the last value of a subcategory."""
+        if category in self._buffers and subcategory in self._buffers[category]:
+            return self._buffers[category][subcategory].get_last()
+        return 0.0
 
 
 class CircularBufferPlayer:
