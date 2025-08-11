@@ -46,7 +46,7 @@ def update_electricity() -> None:
     for player in players:
         if player.tile is None:
             continue
-        new_values[player.id] = player.rolling_history.init_new_data()
+        new_values[player.id] = player.time_series.init_new_data()
 
     # reset progress speeds fot all ongoing projects and shipments
     ongoing_projects = OngoingProject.filter_by(status=2)
@@ -96,7 +96,7 @@ def update_electricity() -> None:
         calculate_net_import(new_values[player.id])
         update_storage_lvls(new_values[player.id], player)
         resources_and_pollution(new_values[player.id], player)
-        player.rolling_history.append_value(new_values[player.id])
+        player.time_series.append_value(new_values[player.id])
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
         update_player_progress_values(player, new_values)
@@ -690,7 +690,7 @@ def calculate_prod(
             energy_capacity = (
                 max(
                     0.0,
-                    player.capacities[facility]["capacity"] - player.rolling_history.get_last_data("storage", facility),
+                    player.capacities[facility]["capacity"] - player.time_series.get_last_value("storage", facility),
                 )
                 * 3600
                 / engine.in_game_seconds_per_tick
@@ -699,7 +699,7 @@ def calculate_prod(
         else:
             energy_capacity = max(
                 0.0,
-                player.rolling_history.get_last_data("storage", facility)
+                player.time_series.get_last_value("storage", facility)
                 * 3600
                 / engine.in_game_seconds_per_tick
                 * (player.capacities[facility]["efficiency"] ** 0.5),
@@ -710,14 +710,14 @@ def calculate_prod(
         )  # ramping down
     if minmax == "max":
         if filling:
-            max_ramping = player.rolling_history.get_last_data("demand", facility) + ramping_speed
+            max_ramping = player.time_series.get_last_value("demand", facility) + ramping_speed
         else:
-            max_ramping = player.rolling_history.get_last_data("generation", facility) + ramping_speed
+            max_ramping = player.time_series.get_last_value("generation", facility) + ramping_speed
         max_generation = min(max_resources, max_ramping, player.capacities[facility]["power"])
         reserve_resources(max_generation)
         return max_generation
     else:
-        min_ramping = player.rolling_history.get_last_data("generation", facility) - ramping_speed
+        min_ramping = player.time_series.get_last_value("generation", facility) - ramping_speed
         min_generation = max(0.0, min(max_resources, min_ramping, player.capacities[facility]["power"]))
         reserve_resources(min_generation)
         return min_generation
@@ -882,7 +882,7 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
     demand[demand_type] = satisfaction
     if isinstance(demand_type, ExtractionFacilityType | StorageFacilityType) or demand_type == "carbon_capture":
         return
-    if satisfaction > (1 + 0.0008 * engine.in_game_seconds_per_tick) * player.rolling_history.get_last_data(
+    if satisfaction > (1 + 0.0008 * engine.in_game_seconds_per_tick) * player.time_series.get_last_value(
         "demand",
         demand_type,
     ):

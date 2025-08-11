@@ -15,7 +15,12 @@ from pywebpush import WebPushException, webpush
 from energetica.config.achievements import achievements
 from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, NetworkPrices
+from energetica.database.engine_data import (
+    CapacityData,
+    PlayerTimeSeriesManager,
+    CumulativeEmissionsData,
+    NetworkPrices,
+)
 from energetica.database.messages import Chat, Notification
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.shipment import OngoingShipment
@@ -86,7 +91,7 @@ class Player(DBModel):
         return list(Notification.filter_by(player=self))
 
     network_prices: NetworkPrices = field(default_factory=NetworkPrices)
-    rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
+    time_series: PlayerTimeSeriesManager = field(default_factory=PlayerTimeSeriesManager)
     capacities: CapacityData = field(default_factory=CapacityData)
     cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
 

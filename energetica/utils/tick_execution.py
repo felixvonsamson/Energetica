@@ -82,7 +82,7 @@ def check_events_completion() -> None:
         if facility.facility_type in StorageFacilityType:
             if facility.end_of_life == engine.total_t:
                 player.capacities.update(player, facility.facility_type)
-            stored_energy = player.rolling_history.get_last_data("storage", facility.facility_type)
+            stored_energy = player.time_series.get_last_value("storage", facility.facility_type)
             available_capacity = player.capacities[facility.facility_type]["capacity"]
             if stored_energy > available_capacity:
                 continue

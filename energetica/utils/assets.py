@@ -58,27 +58,27 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     elif isinstance(project.project_type, FunctionalFacilityType):
         if player.functional_facility_lvl[project.project_type] == 0:
             if project.project_type == "carbon_capture":
-                player.rolling_history.add_subcategory("demand", project.project_type)
-                player.rolling_history.add_subcategory("emissions", project.project_type)
+                player.time_series.add_subcategory("demand", project.project_type)
+                player.time_series.add_subcategory("emissions", project.project_type)
                 player.cumul_emissions.add_category(project.project_type)
             if project.project_type == "warehouse":
                 for fuel in Fuel:
-                    player.rolling_history.add_subcategory("resources", fuel.value)
+                    player.time_series.add_subcategory("resources", fuel.value)
 
         player.functional_facility_lvl[project.project_type] += 1
 
     elif not ActiveFacility.count_when(facility_type=project.project_type, player=player):
         # initialize array for facility if it is the first one built
         if isinstance(project.project_type, StorageFacilityType | PowerFacilityType | ExtractionFacilityType):
-            player.rolling_history.add_subcategory("op_costs", project.project_type)
+            player.time_series.add_subcategory("op_costs", project.project_type)
         if isinstance(project.project_type, StorageFacilityType | PowerFacilityType):
-            player.rolling_history.add_subcategory("generation", project.project_type)
+            player.time_series.add_subcategory("generation", project.project_type)
         if isinstance(project.project_type, StorageFacilityType | ExtractionFacilityType):
-            player.rolling_history.add_subcategory("demand", project.project_type)
+            player.time_series.add_subcategory("demand", project.project_type)
         if isinstance(project.project_type, StorageFacilityType):
-            player.rolling_history.add_subcategory("storage", project.project_type)
+            player.time_series.add_subcategory("storage", project.project_type)
         if isinstance(project.project_type, ControllableFacilityType | ExtractionFacilityType):
-            player.rolling_history.add_subcategory("emissions", project.project_type)
+            player.time_series.add_subcategory("emissions", project.project_type)
             player.cumul_emissions.add_category(project.project_type)
 
     player.check_construction_achievements(project.project_type)

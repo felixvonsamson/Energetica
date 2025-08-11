@@ -318,6 +318,8 @@ class CapacityData:
 
 
 class TimeSeriesBuffer:
+    """Class that stores the last 360 ticks of data for a subcategory."""
+
     def __init__(self):
         self.data = deque([0.0] * 360, maxlen=360)
 
@@ -332,6 +334,8 @@ class TimeSeriesBuffer:
 
 
 class MultiResolutionArchive:
+    """Class that stores the last 360 aggregated points of a subcategory in multiple resolution levels."""
+
     def __init__(self, path: Path):
         self.path = path
         self.level_names = ["x6", "x36", "x216", "x1296"]
@@ -357,7 +361,7 @@ class MultiResolutionArchive:
                     compression="gzip",
                 )
 
-    def update_archives(self, fullres_data: dict[str, list[float]]) -> None:
+    def append_new_data(self, fullres_data: dict[str, list[float]]) -> None:
         """Append new aggregated points to each resolution level."""
         with h5py.File(self.path, "a") as f:
             for subcategory, data in fullres_data.items():
@@ -386,13 +390,15 @@ class MultiResolutionArchive:
 
 
 class PlayerTimeSeriesManager:
+    """Class that manages the time series data of a player, storing it in buffers and archives."""
+
     def __init__(self, player_id: int, save_dir: str = "instance/data/players") -> None:
         self.player_id = player_id
         self.save_path = f"{save_dir}/player_{player_id}.h5"
         self._buffers = defaultdict(dict)  # category -> subcategory -> TimeSeriesBuffer
         self._archives = defaultdict(dict)  # category -> MultiResolutionArchive -> resolution -> subcategory
 
-    def _add_subcategory(self, category: str, subcategory: str):
+    def add_subcategory(self, category: str, subcategory: str):
         """Create a buffer if it doesn't exist yet."""
         if category not in self._buffers:
             self._buffers[category] = {}
@@ -404,7 +410,6 @@ class PlayerTimeSeriesManager:
     def append(self, updates: dict[str, dict[str, float]]):
         for category, subcategories in updates.items():
             for subcategory, value in subcategories.items():
-                self._add_subcategory(category, subcategory)
                 self._buffers[category][subcategory].append(float(value))
 
     def get_last_value(self, category: str, subcategory: str) -> float:
@@ -412,6 +417,43 @@ class PlayerTimeSeriesManager:
         if category in self._buffers and subcategory in self._buffers[category]:
             return self._buffers[category][subcategory].get_last()
         return 0.0
+
+    def init_new_data(self) -> dict[str, dict[str, float]]:
+        """Return a new data structure with 0 values for each subcategory and the last value for storage and resources."""
+        result: dict[str, dict[str, float]] = defaultdict(dict)
+        for category, subcategories in self._buffers.items():
+            for subcategory, buffer in subcategories.items():
+                if category in ["storage", "resources"]:
+                    result[category][subcategory] = buffer.get_last()
+                else:
+                    result[category][subcategory] = 0.0
+        return result
+
+    def update_archives(self):
+        """Update the archives with the full resolution data."""
+        for category, data in self._buffers.items():
+            last_216 = {subcategory: data[subcategory].as_numpy() for subcategory in self._buffers[category]}
+            self._archives[category].append_new_data(last_216)
+
+    def get_chart_data(self, category: str, resolution: int = 0):
+        """
+        Get the chart data for a specific category and a given resolution.
+        Resolutions:
+        0: Full resolution
+        1: x6
+        2: x36
+        3: x216
+        4: x1296
+        """
+        non_archived_data = {}
+        unsaved_ticks = engine.total_t % 216 + 1
+        if resolution == 0:
+            unsaved_ticks = 360
+        for subcategory, buffer in self._buffers[category].items():
+            non_archived_data[subcategory] = buffer.as_numpy(t=unsaved_ticks)
+        if resolution == 0:
+            return non_archived_data
+        archieved_data = self._archives[category].get_level(resolution - 1)
 
 
 class CircularBufferPlayer:

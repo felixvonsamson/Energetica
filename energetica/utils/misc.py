@@ -78,24 +78,7 @@ def save_past_data() -> None:
     for player in Player.all():
         if player.tile is None:
             continue
-        past_data = {}
-        with open(
-            f"instance/data/players/player_{player.id}.pck",
-            "rb",
-        ) as file:
-            past_data = pickle.load(file)
-        new_data = player.rolling_history.get_data()
-        for category in new_data:
-            for element in new_data[category]:
-                new_el_data = new_data[category][element]
-                if element not in past_data[category]:
-                    # if facility didn't exist in past data, initialize it
-                    past_data[category][element] = [[0.0] * 360 for _ in range(5)]
-                past_el_data = past_data[category][element]
-                reduce_resolution(past_el_data, np.array(new_el_data))
-
-        with open(f"instance/data/players/player_{player.id}.pck", "wb") as file:
-            pickle.dump(past_data, file)
+        player.time_series.update_archives()
 
     # remove old network files AND save past prices
     networks = Network.all()
@@ -216,9 +199,9 @@ def initialize_player(player: Player) -> None:
     }
     with open(f"instance/data/players/player_{player.id}.pck", "wb") as file:
         pickle.dump(past_data, file)
-    player.rolling_history.add_subcategory("op_costs", ControllableFacilityType.STEAM_ENGINE)
-    player.rolling_history.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
-    player.rolling_history.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
+    player.time_series.add_subcategory("op_costs", ControllableFacilityType.STEAM_ENGINE)
+    player.time_series.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
+    player.time_series.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
 
 
 # Quiz
