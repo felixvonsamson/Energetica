@@ -392,8 +392,8 @@ class MultiResolutionArchive:
 class PlayerTimeSeriesManager:
     """Class that manages the time series data of a player, storing it in buffers and archives."""
 
+    # TODO (Felix): Here I need the player id but don't know how to get it in the constructor.
     def __init__(self, player_id: int, save_dir: str = "instance/data/players") -> None:
-        self.player_id = player_id
         self.save_path = f"{save_dir}/player_{player_id}.h5"
         self._buffers = defaultdict(dict)  # category -> subcategory -> TimeSeriesBuffer
         self._archives = defaultdict(dict)  # category -> MultiResolutionArchive -> resolution -> subcategory
@@ -454,6 +454,27 @@ class PlayerTimeSeriesManager:
         if resolution == 0:
             return non_archived_data
         archieved_data = self._archives[category].get_level(resolution - 1)
+        # TODO(Felix): Finish implementing this by merging the archieved data with the appropriately downsampled
+        # non_archived_data. Could not be done right now because we also need to change the frontend to request only one
+        # resolution level. CircularBufferNetwork and EmissionData should also be updated to use the same framework.
+
+    def TEMP_get_data(self, t: int = 216) -> dict[str, dict[str, list[float]]]:
+        """
+        Return the last t ticks of the data and the archived data in two separate dicts.
+        This is a temporary method and should get removed once the frontend is updated to request data for a specific
+        resolution level.
+        """
+        non_archived_data: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+        for category, subcategories in self._buffers.items():
+            for subcategory, buffer in subcategories.items():
+                non_archived_data[category][subcategory] = buffer.as_numpy(t=t).tolist()
+        archived_data: dict[str, dict[str, list[list[float]]]] = defaultdict(lambda: defaultdict(list))
+        for category, archive in self._archives.items():
+            for resolution in archive.level_names:
+                archived_data_level_x = archive.get_level(archive.level_names.index(resolution))
+                for subcategory in archived_data_level_x:
+                    archived_data[category][subcategory].append(archived_data_level_x[subcategory].tolist())
+        return non_archived_data, archived_data
 
 
 class CircularBufferPlayer:
@@ -547,6 +568,8 @@ class CircularBufferPlayer:
 
 class CumulativeEmissionsData:
     """Class storing the cumulative emissions of all facilities of a player."""
+
+    # TODO (Felix): Why tf is this in a separate class?
 
     def __init__(self) -> None:
         self._data: dict[str, float] = {

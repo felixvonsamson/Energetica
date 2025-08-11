@@ -52,6 +52,8 @@ def get_resource_data(user: Annotated[Player, Depends(get_current_user)]):  # no
 @todo_router.get("/get_chart_data")
 def get_chart_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
     """Get the data for the overview charts."""
+    # TODO(Felix): PlayerTimeSeriesManager.get_chart_data() should be used instead of this function. Frontend has to be
+    # updated to request data for a specific resolution level.
 
     def calculate_mean_subarrays(array: list, x: int) -> list:
         return [np.mean(array[i : i + x]) for i in range(0, len(array), x)]
