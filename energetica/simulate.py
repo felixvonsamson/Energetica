@@ -103,46 +103,28 @@ def _simulate(
                 user_sessions[player_id] = login_user(player_id)
             url = f"{base_url}{action.request.endpoint}"
             content_type = "json" if action.request.content_type == "application/json" else "data"
-            # method = action.request["method"]
             method = action.request.method
             user_session = cast(requests.Session, user_sessions[player_id])
-            if method == "POST":
-                response = user_session.post(
-                    url,
-                    **{content_type: action.request.payload},
-                    allow_redirects=False,
-                )
-            elif method == "DELETE":
-                response = user_session.delete(
-                    url,
-                    **{content_type: action.request.payload},
-                    allow_redirects=False,
-                )
-            elif method == "PATCH":
-                response = user_session.patch(
-                    url,
-                    **{content_type: action.request.payload},
-                    allow_redirects=False,
-                )
-            elif method == "PUT":
-                response = user_session.put(
-                    url,
-                    **{content_type: action.request.payload},
-                    allow_redirects=False,
-                )
-            else:
+            try:
+                method_func = getattr(user_session, method.lower())
+            except AttributeError:
                 raise ValueError(f"Cannot manage the following method: {method}")
+            response = method_func(
+                url,
+                **{content_type: action.request.payload},
+                allow_redirects=False,
+            )
             # TODO (Yassir): mismatch if content type is not the same
-            if "money" in action.response["content"]:
-                money = action.response["content"]["money"]
-                real_money = Player.getitem(player_id).money
-                if abs(money - real_money) > 1:
-                    print(
-                        f"""\033[31mMoney {real_money} does not match expected money """
-                        f"""{money}.\033[0m""",
-                    )
-                    if stop_on_mismatch:
-                        break
+            # if "money" in action.response.payload:
+            #     money = action.response.payload["money"]
+            #     real_money = Player.getitem(player_id).money
+            #     if abs(money - real_money) > 1:
+            #         print(
+            #             f"""\033[31mMoney {real_money} does not match expected money """
+            #             f"""{money}.\033[0m""",
+            #         )
+            #         if stop_on_mismatch:
+            #             break
             # if (
             #     action.response["content_type"] == "application/json"
             #     and response.headers["Content-Type"] == "application/json"
@@ -154,10 +136,10 @@ def _simulate(
             #     )
             #     if stop_on_mismatch:
             #         break
-            if response.status_code != action.response["status_code"]:
+            if response.status_code != action.response.status_code:
                 print(
                     f"""\033[31mStatus code {response.status_code} does not match expected status code """
-                    f"""{action.response["status_code"]}.\033[0m""",
+                    f"""{action.response.status_code}.\033[0m""",
                 )
                 if stop_on_mismatch:
                     break

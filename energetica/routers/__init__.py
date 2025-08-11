@@ -16,7 +16,7 @@ from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import ConfirmOut, GameErrorOut
-from energetica.schemas.simulate import ApiAction, ApiActionRequest, Method
+from energetica.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
 from energetica.utils.auth import get_current_user
 
 from .achievements import router as achievements_router
@@ -177,11 +177,11 @@ def setup_routes(app: FastAPI):
                 content_type=request.headers.get("content-type"),
                 payload=str(request_content),
             ),
-            response={
-                "status_code": response.status_code,
-                "content_type": response.headers.get("content-type", "unknown"),
-                "content": response_content,
-            },
+            response=ApiActionResponse(
+                status_code=response.status_code,
+                content_type=response.headers.get("content-type", "unknown"),
+                payload=response_content,
+            ),
         )
         engine.log_action(log_entry)
         return new_response

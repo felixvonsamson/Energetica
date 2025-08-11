@@ -42,15 +42,19 @@ class ApiAction(BaseModel):
     action_type: Literal["request"]
     player_id: int
     request: ApiActionRequest
-    response: dict
-    # "request": {"endpoint": "/api/v1/map/252:settle", "content_type": "application/json", "content": {}},
-    # "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"},
+    response: ApiActionResponse
 
 
 class ApiActionRequest(BaseModel):
     endpoint: str
     method: Method
     content_type: str | None
+    payload: str
+
+
+class ApiActionResponse(BaseModel):
+    status_code: int
+    content_type: str
     payload: str
 
 
