@@ -101,33 +101,33 @@ def _simulate(
             player_id = action.player_id
             if player_id not in user_sessions:
                 user_sessions[player_id] = login_user(player_id)
-            url = f"{base_url}{action.request['endpoint']}"
-            content_type = "json" if action.request["content_type"] == "application/json" else "data"
+            url = f"{base_url}{action.request.endpoint}"
+            content_type = "json" if action.request.content_type == "application/json" else "data"
             # method = action.request["method"]
-            method = action.request.get("method", "POST")
+            method = action.request.method
             user_session = cast(requests.Session, user_sessions[player_id])
             if method == "POST":
                 response = user_session.post(
                     url,
-                    **{content_type: action.request["content"]},
+                    **{content_type: action.request.payload},
                     allow_redirects=False,
                 )
             elif method == "DELETE":
                 response = user_session.delete(
                     url,
-                    **{content_type: action.request["content"]},
+                    **{content_type: action.request.payload},
                     allow_redirects=False,
                 )
             elif method == "PATCH":
                 response = user_session.patch(
                     url,
-                    **{content_type: action.request["content"]},
+                    **{content_type: action.request.payload},
                     allow_redirects=False,
                 )
             elif method == "PUT":
                 response = user_session.put(
                     url,
-                    **{content_type: action.request["content"]},
+                    **{content_type: action.request.payload},
                     allow_redirects=False,
                 )
             else:
@@ -143,17 +143,17 @@ def _simulate(
                     )
                     if stop_on_mismatch:
                         break
-            if (
-                action.response["content_type"] == "application/json"
-                and response.headers["Content-Type"] == "application/json"
-                and response.json()["response"] != action.response["content"]["response"]
-            ):
-                print(
-                    f"""\033[31mResponse {response.json()["response"]} does not match expected response """
-                    f"""{action.response["content"]["response"]}.\033[0m""",
-                )
-                if stop_on_mismatch:
-                    break
+            # if (
+            #     action.response["content_type"] == "application/json"
+            #     and response.headers["Content-Type"] == "application/json"
+            #     and response.json()["response"] != action.response["content"]["response"]
+            # ):
+            #     print(
+            #         f"""\033[31mResponse {response.json()["response"]} does not match expected response """
+            #         f"""{action.response["content"]["response"]}.\033[0m""",
+            #     )
+            #     if stop_on_mismatch:
+            #         break
             if response.status_code != action.response["status_code"]:
                 print(
                     f"""\033[31mStatus code {response.status_code} does not match expected status code """

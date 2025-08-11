@@ -2,7 +2,7 @@ import json
 import logging
 import urllib.parse
 from datetime import datetime
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, cast
 
 from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.encoders import jsonable_encoder
@@ -16,7 +16,7 @@ from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import ConfirmOut, GameErrorOut
-from energetica.schemas.simulate import RequestAction
+from energetica.schemas.simulate import ApiAction, ApiActionRequest, Method
 from energetica.utils.auth import get_current_user
 
 from .achievements import router as achievements_router
@@ -165,18 +165,18 @@ def setup_routes(app: FastAPI):
         except HTTPException as e:
             raise e
 
-        log_entry = RequestAction(
+        log_entry = ApiAction(
             timestamp=start,
             elapsed=(datetime.now() - start).total_seconds(),
             ip=request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
             action_type="request",
             player_id=player_id,
-            request={
-                "endpoint": request.url.path,
-                "method": request.method,
-                "content_type": request.headers.get("content-type"),
-                "content": request_content,
-            },
+            request=ApiActionRequest(
+                endpoint=request.url.path,
+                method=cast(Method, request.method),
+                content_type=request.headers.get("content-type"),
+                payload=str(request_content),
+            ),
             response={
                 "status_code": response.status_code,
                 "content_type": response.headers.get("content-type", "unknown"),
