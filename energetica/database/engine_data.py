@@ -366,7 +366,7 @@ class CircularBufferPlayer:
         """Add one new tick of data to the buffer."""
         for category, subcategories in new_value.items():
             for subcategory, value in subcategories.items():
-                self._data[category][subcategory].append(value)
+                self._data[category][subcategory].append(float(value))
 
     def add_subcategory(self, category: str, subcategory: str) -> None:
         """Add a new subcategory to the data."""
@@ -454,7 +454,7 @@ class CircularBufferNetwork:
             for group, value in new_value[category].items():
                 if group not in category_value:
                     category_value[group] = deque([0.0] * 360, maxlen=360)
-                category_value[group].append(value)
+                category_value[group].append(float(value))
             for group, value in category_value.items():
                 if group not in new_value[category]:
                     value.append(0.0)
