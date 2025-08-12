@@ -2123,3 +2123,7 @@ img.small.graph-container {
         margin: 10px
     }
 }
+
+.no-margin {
+    margin: 0;
+}
