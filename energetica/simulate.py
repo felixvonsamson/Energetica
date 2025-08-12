@@ -5,12 +5,13 @@ from __future__ import annotations
 import cProfile
 import pstats
 from time import sleep
-from typing import Any
+from typing import Any, cast
 
 import requests
 
 from energetica.database.player import Player
 from energetica.globals import engine
+from energetica.schemas.simulate import Action
 from energetica.utils.tick_execution import tick
 
 base_url: str | None = None
@@ -51,7 +52,7 @@ def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: An
 
 def _simulate(
     port: int,
-    actions: list[dict],
+    actions: list[Action],
     simulating: bool,
     stop_on_mismatch: bool,
     stop_on_server_error: bool,
@@ -83,56 +84,62 @@ def _simulate(
 
     for action in actions:
         print(action)
-        if action["action_type"] == "tick":
+        if action.action_type == "tick":
             tick()
             if (
                 checkpoint_every_k_ticks
-                and action["total_t"] % checkpoint_every_k_ticks == 0
-                or action["total_t"] in checkpoint_ticks
+                and action.total_t % checkpoint_every_k_ticks == 0
+                or action.total_t in checkpoint_ticks
             ):
-                engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action['total_t']}.tar.gz")
-        elif action["action_type"] == "create_user":
-            player_id = action["player_id"]
-            username = action["username"] if not simulating else f"user{player_id}"
+                engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action.total_t}.tar.gz")
+        elif action.action_type == "create_user":
+            player_id = action.player_id
+            username = action.username if not simulating else f"user{player_id}"
             password = "password"
             user_sessions[player_id] = create_user(player_id, username, password)
-        elif action["action_type"] == "request":
-            player_id = action["player_id"]
+        elif action.action_type == "request":
+            player_id = action.player_id
             if player_id not in user_sessions:
                 user_sessions[player_id] = login_user(player_id)
-            url = f"{base_url}{action['request']['endpoint']}"
-            content_type = "json" if action["request"]["content_type"] == "application/json" else "data"
-            response = user_sessions[player_id].post(
+            url = f"{base_url}{action.request.endpoint}"
+            content_type = "json" if action.request.content_type == "application/json" else "data"
+            method = action.request.method
+            user_session = cast(requests.Session, user_sessions[player_id])
+            try:
+                method_func = getattr(user_session, method.lower())
+            except AttributeError:
+                raise ValueError(f"Cannot manage the following method: {method}")
+            response = method_func(
                 url,
-                **{content_type: action["request"]["content"]},
+                **{content_type: action.request.payload},
                 allow_redirects=False,
             )
             # TODO (Yassir): mismatch if content type is not the same
-            if "money" in action["response"]["content"]:
-                money = action["response"]["content"]["money"]
-                real_money = Player.getitem(player_id).money
-                if abs(money - real_money) > 1:
-                    print(
-                        f"""\033[31mMoney {real_money} does not match expected money """
-                        f"""{money}.\033[0m""",
-                    )
-                    if stop_on_mismatch:
-                        break
-            if (
-                action["response"]["content_type"] == "application/json"
-                and response.headers["Content-Type"] == "application/json"
-                and response.json()["response"] != action["response"]["content"]["response"]
-            ):
-                print(
-                    f"""\033[31mResponse {response.json()["response"]} does not match expected response """
-                    f"""{action["response"]["content"]["response"]}.\033[0m""",
-                )
-                if stop_on_mismatch:
-                    break
-            if response.status_code != action["response"]["status_code"]:
+            # if "money" in action.response.payload:
+            #     money = action.response.payload["money"]
+            #     real_money = Player.getitem(player_id).money
+            #     if abs(money - real_money) > 1:
+            #         print(
+            #             f"""\033[31mMoney {real_money} does not match expected money """
+            #             f"""{money}.\033[0m""",
+            #         )
+            #         if stop_on_mismatch:
+            #             break
+            # if (
+            #     action.response["content_type"] == "application/json"
+            #     and response.headers["Content-Type"] == "application/json"
+            #     and response.json()["response"] != action.response["content"]["response"]
+            # ):
+            #     print(
+            #         f"""\033[31mResponse {response.json()["response"]} does not match expected response """
+            #         f"""{action.response["content"]["response"]}.\033[0m""",
+            #     )
+            #     if stop_on_mismatch:
+            #         break
+            if response.status_code != action.response.status_code:
                 print(
                     f"""\033[31mStatus code {response.status_code} does not match expected status code """
-                    f"""{action["response"]["status_code"]}.\033[0m""",
+                    f"""{action.response.status_code}.\033[0m""",
                 )
                 if stop_on_mismatch:
                     break

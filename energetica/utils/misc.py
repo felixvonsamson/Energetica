@@ -20,6 +20,7 @@ from energetica.enums import ControllableFacilityType
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.schemas.daily_quiz import DailyQuizBase
+from energetica.schemas.simulate import CreateUserAction
 from energetica.schemas.weather import WeatherOut
 from energetica.utils.astro import DrHI
 
@@ -28,14 +29,15 @@ from energetica.utils.astro import DrHI
 
 def signup_player(request: Request, username: str, pwhash: str) -> Player:
     new_player = Player(username=username, pwhash=pwhash)
-    log_entry = {
-        "timestamp": datetime.now().isoformat(),
-        "ip": request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
-        "action_type": "create_user",
-        "player_id": new_player.id,
-        "username": new_player.username,
-        "pw_hash": new_player.pwhash,
-    }
+
+    log_entry = CreateUserAction(
+        timestamp=datetime.now(),
+        ip=request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
+        action_type="create_user",
+        player_id=new_player.id,
+        username=new_player.username,
+        pw_hash=new_player.pwhash,
+    )
     engine.log_action(log_entry)
     engine.log(f"{username} created an account")
     return new_player
