@@ -34,7 +34,7 @@ function send_json(endpoint, body, method = "POST") {
  * @param {{meta: any;detail: any;}} body
  */
 function catchValidationErrors(response, body) {
-    if (response.status !== 400) return false;
+    if (response.status !== 422) return false;
     const { meta, detail } = body;
     if (meta?.error_type === "request_validation_error" && Array.isArray(detail)) {
         const formattedMessages = detail.map(item => {
