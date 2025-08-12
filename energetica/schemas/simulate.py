@@ -58,7 +58,7 @@ class ApiActionResponse(BaseModel):
     payload: str
 
 
-Method = Literal["POST"]
+Method = Literal["POST", "PUT", "DELETE", "PATCH"]
 
 ActionUnionType = InitEngineAction | CreateUserAction | TickAction | ApiAction
 Action = Annotated[ActionUnionType, Field(discriminator="action_type")]
