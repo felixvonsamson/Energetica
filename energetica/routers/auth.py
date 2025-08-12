@@ -62,7 +62,7 @@ def login(request_data: LoginRequest) -> Response:
 def signup(request: Request, request_data: SignupRequest) -> Response:
     """Create a new account."""
     if engine.disable_signups:
-        raise GameError(GameExceptionType.TILE_NOT_FOUND)
+        raise GameError(GameExceptionType.SIGNUP_DISABLED)
     username = request_data.username
     password = request_data.password
     existing_player = next(Player.filter_by(username=username), None)
