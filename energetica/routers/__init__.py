@@ -4,7 +4,7 @@ import urllib.parse
 from datetime import datetime
 from typing import Awaitable, Callable, cast
 
-from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -17,7 +17,7 @@ from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import ConfirmOut, GameErrorOut
 from energetica.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
-from energetica.utils.auth import get_current_user
+from energetica.utils.auth import get_current_user_from_request
 
 from .achievements import router as achievements_router
 from .auth import router as auth_router
@@ -159,11 +159,8 @@ def setup_routes(app: FastAPI):
         except Exception:
             response_payload = "unparsable"
 
-        try:
-            user = get_current_user(request)
-            player_id = user.id
-        except HTTPException as e:
-            raise e
+        user = get_current_user_from_request(request)
+        player_id = user.id if user is not None else None
 
         log_entry = ApiAction(
             timestamp=start,

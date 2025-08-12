@@ -40,7 +40,7 @@ class ApiAction(BaseModel):
     elapsed: float
     ip: str
     action_type: Literal["request"]
-    player_id: int
+    player_id: int | None
     request: ApiActionRequest
     response: ApiActionResponse
 
