@@ -96,10 +96,10 @@ function start_construction(facility, force = false) {
     .then((response) => {
       if (response.status === 204) {
         refreshMoney();
+        sessionStorage.removeItem("projectsData"); // this will force a API request
         retrieve_constructions();
         refresh_progressBar();
         addToast("Construction started");
-        setTimeout(() => { window.location = window.location; }, 100);
       } else {
         response.json().then((body) => {
           if (response.status === 300) {
