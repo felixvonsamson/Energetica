@@ -132,14 +132,14 @@ def setup_routes(app: FastAPI):
 
         # Try to decode the request and response
         if request.headers.get("content-type") == "application/x-www-form-urlencoded":
-            request_content = {
+            request_payload = {
                 k: v[0] if len(v) == 1 else v for k, v in urllib.parse.parse_qs(body_bytes.decode()).items()
             }
         else:
             try:
-                request_content = json.loads(body_bytes.decode())
+                request_payload = json.loads(body_bytes.decode())
             except Exception:
-                request_content = "unparsable or not JSON"
+                request_payload = "unparsable or not JSON"
 
         # Buffer the response body
         response_body = b""
@@ -155,9 +155,9 @@ def setup_routes(app: FastAPI):
         )
 
         try:
-            response_content = json.loads(response_body.decode())
+            response_payload = json.loads(response_body.decode())
         except Exception:
-            response_content = "unparsable"
+            response_payload = "unparsable"
 
         try:
             user = get_current_user(request)
@@ -175,12 +175,12 @@ def setup_routes(app: FastAPI):
                 endpoint=request.url.path,
                 method=cast(Method, request.method),
                 content_type=request.headers.get("content-type"),
-                payload=str(request_content),
+                payload=str(request_payload),
             ),
             response=ApiActionResponse(
                 status_code=response.status_code,
                 content_type=response.headers.get("content-type", "unknown"),
-                payload=response_content,
+                payload=str(response_payload),
             ),
         )
         engine.log_action(log_entry)
