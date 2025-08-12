@@ -124,12 +124,6 @@ def setup_routes(app: FastAPI):
 
         request = Request(request.scope, receive=receive)
 
-        with engine.lock:
-            response = await call_next(request)
-
-        if request.url.path.startswith("/auth"):
-            return response
-
         # Try to decode the request and response
         if request.headers.get("content-type") == "application/x-www-form-urlencoded":
             request_payload = {
@@ -140,6 +134,19 @@ def setup_routes(app: FastAPI):
                 request_payload = json.loads(body_bytes.decode())
             except Exception:
                 request_payload = "unparsable or not JSON"
+
+        with engine.lock:
+            try:
+                response = await call_next(request)
+            except Exception as e:
+                print("There was an error when constructing the response for the following request:")
+                print(f"{request.method} {request.url.path}")
+                print(f"content-type: {request.headers.get('content-type')}")
+                print(f"payload: {request_payload}")
+                raise e
+
+        if request.url.path.startswith("/auth"):
+            return response
 
         # Buffer the response body
         response_body = b""
