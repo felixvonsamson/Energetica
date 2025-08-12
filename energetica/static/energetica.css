@@ -3,8 +3,6 @@
 /* TODO: class selector names should use kebab case */
 /* TODO: rename and fix "Gauge" typo */
 
-@import url("react.css");
-
 html {
     -ms-text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%
