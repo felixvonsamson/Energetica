@@ -21,7 +21,7 @@ from energetica.enums import (
     StorageFacilityType,
     renewable_facility_types,
 )
-from energetica.game_error import GameError
+from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.schemas.networks import AskItem, AskType, BidItem, BidType
 from energetica.schemas.power_priorities import PowerPriorityItem
@@ -161,7 +161,7 @@ class NetworkPrices:
         # Check if the new priority list is valid, i.e. contains the same elements as the old one
         old_priority = self.get_facility_priorities(player)
         if set(old_priority) != set(new_priority):
-            raise GameError("malformedRequest")
+            raise GameError(GameExceptionType.MALFORMED_REQUEST)
 
         # Reorder the prices according to the new priority list
         sorted_prices = sorted(

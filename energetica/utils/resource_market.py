@@ -6,7 +6,7 @@ from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import Fuel
-from energetica.game_error import GameError
+from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.utils.formatting import display_money, format_mass
 
@@ -14,7 +14,7 @@ from energetica.utils.formatting import display_money, format_mass
 def create_ask(player: Player, fuel: Fuel, quantity: float, unit_price: float) -> ResourceOnSale:
     """Put an offer on the resource market."""
     if player.resources[fuel] - player.resources_on_sale[fuel] < quantity:
-        raise GameError("notEnoughResource")
+        raise GameError(GameExceptionType.NOT_ENOUGH_RESOURCE)
     player.resources_on_sale[fuel] += quantity
     return ResourceOnSale(
         resource=fuel,
@@ -33,7 +33,7 @@ def purchase_resource(player: Player, quantity: float, sale: ResourceOnSale) -> 
     assert player.tile is not None
     assert sale.player.tile is not None
     if quantity is None or quantity <= 0 or quantity > sale.quantity:
-        raise GameError("invalidQuantity")
+        raise GameError(GameExceptionType.INVALID_QUANTITY)
     total_price = sale.unit_price * quantity
     if player == sale.player:
         # TODO(mglst): this should be a different function
@@ -46,7 +46,7 @@ def purchase_resource(player: Player, quantity: float, sale: ResourceOnSale) -> 
         return sale
     else:
         if total_price > player.money:
-            raise GameError("Not enough money")
+            raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
         # Player buys form another player
         sale.quantity -= quantity
         player.money -= total_price
