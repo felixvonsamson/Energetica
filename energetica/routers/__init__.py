@@ -108,7 +108,13 @@ def setup_routes(app: FastAPI):
         path = request.url.path
         dont_log = request.method == "GET" or path == "/socket.io/" or "/auth/" in path
         if dont_log:
-            response = await call_next(request)
+            try:
+                response = await call_next(request)
+            except Exception as e:
+                print("There was an error when constructing the response for the following request:")
+                print(f"{request.method} {request.url.path}")
+                print(f"content-type: {request.headers.get('content-type')}")
+                raise e
             if response.status_code == status.HTTP_401_UNAUTHORIZED:
                 return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
             return response
