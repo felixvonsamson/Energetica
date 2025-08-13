@@ -19,7 +19,7 @@ import socketio
 
 from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
-from energetica.schemas.simulate import Action, InitEngineAction
+from energetica.schemas.simulate import Action, InitEngineAction, SaveInstanceAction
 
 if TYPE_CHECKING:
     from energetica.database.messages import Chat
@@ -230,6 +230,7 @@ class GameEngine(object):
         data = {member: getattr(self, member) for member in members_to_save}
         with open("instance/engine_data.pck", "wb") as file:
             pickle.dump(data, file)
+        self.log_action(SaveInstanceAction(timestamp=datetime.now(), action_type="save_game_engine_instance"))
 
     def load(self) -> None:
         """Load the game engine data from a file."""

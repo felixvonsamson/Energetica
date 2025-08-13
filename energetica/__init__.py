@@ -141,8 +141,14 @@ def create_app(
     action_id_by_tick = {
         action.total_t: action_id for action_id, action in enumerate(actions) if action.action_type == "tick"
     }
+    save_action_ids = [
+        action_id for action_id, action in enumerate(actions) if action.action_type == "save_game_engine_instance"
+    ]
     loaded_tick = engine.total_t
-    start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 1
+    if simulate_file:
+        start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 1
+    else:
+        start_action_id = save_action_ids[-1] + 1 if save_action_ids else 1
     last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
     actions_to_simulate = actions[start_action_id : last_action_id + 1]
 

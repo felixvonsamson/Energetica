@@ -58,7 +58,12 @@ class ApiActionResponse(BaseModel):
     payload: str
 
 
+class SaveInstanceAction(BaseModel):
+    timestamp: datetime
+    action_type: Literal["save_game_engine_instance"]
+
+
 Method = Literal["POST", "PUT", "DELETE", "PATCH"]
 
-ActionUnionType = InitEngineAction | CreateUserAction | TickAction | ApiAction
+ActionUnionType = InitEngineAction | CreateUserAction | TickAction | ApiAction | SaveInstanceAction
 Action = Annotated[ActionUnionType, Field(discriminator="action_type")]
