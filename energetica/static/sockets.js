@@ -106,6 +106,10 @@ function catchGameErrors(response, body) {
             // POST: /api/v1/projects/${project_id}:pause
             addError("This project cannot be resumed.");
             break;
+        case "chatAlreadyExist":
+            // POST: /api/v1/chats
+            addError("A chat with these participants already exists.");
+            break;
         default:
             addError(`Uncaught error: ${body.game_exception_type}`);
     }
