@@ -49,13 +49,13 @@ class ApiActionRequest(BaseModel):
     endpoint: str
     method: Method
     content_type: str | None
-    payload: str
+    payload: dict | Literal["unparsable or not JSON"]
 
 
 class ApiActionResponse(BaseModel):
     status_code: int
     content_type: str
-    payload: str
+    payload: dict | Literal["unparsable or not JSON"]
 
 
 Method = Literal["POST", "PUT", "DELETE", "PATCH"]

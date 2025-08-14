@@ -56,6 +56,7 @@ def _simulate(
     stop_on_mismatch: bool,
     stop_on_server_error: bool,
     stop_on_assertion_error: bool,
+    stop_on_unauthenticated_actions: bool,
     checkpoint_every_k_ticks: int = 10000,
     checkpoint_ticks: list[int] | None = None,
 ) -> bool:
@@ -98,14 +99,22 @@ def _simulate(
             user_sessions[player_id] = create_user(player_id, username, password)
         elif action.action_type == "request":
             player_id = action.player_id
-            if player_id not in user_sessions:
-                user_sessions[player_id] = login_user(player_id)
+            if player_id:
+                if player_id not in user_sessions:
+                    user_sessions[player_id] = login_user(player_id)
+                session = cast(requests.Session, user_sessions[player_id])
+            else:
+                print(
+                    f"""\033[31mUnauthenticated action encountered""",
+                )
+                if stop_on_unauthenticated_actions:
+                    break
+                session = requests.Session()
             url = f"{base_url}{action.request.endpoint}"
             content_type = "json" if action.request.content_type == "application/json" else "data"
             method = action.request.method
-            user_session = cast(requests.Session, user_sessions[player_id])
             try:
-                method_func = getattr(user_session, method.lower())
+                method_func = getattr(session, method.lower())
             except AttributeError:
                 raise ValueError(f"Cannot manage the following method: {method}")
             response = method_func(

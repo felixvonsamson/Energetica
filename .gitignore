@@ -8,3 +8,4 @@ frontend/node_modules/*
 energetica/static/react/*
 frontend/src/routeTree.gen.ts
 admin_accounts.txt
+*actions_history.log

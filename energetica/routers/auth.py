@@ -29,7 +29,7 @@ from energetica.utils.auth import (
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/login", tags=["Authentication"])
+@router.post("/login", tags=["Authentication"], status_code=status.HTTP_200_OK)
 def login(request_data: LoginRequest) -> Response:
     username = request_data.username
     password = request_data.password
@@ -56,7 +56,7 @@ def login(request_data: LoginRequest) -> Response:
     # )
 
 
-@router.post("/signup", tags=["Authentication"])
+@router.post("/signup", tags=["Authentication"], status_code=status.HTTP_201_CREATED)
 def signup(request: Request, request_data: SignupRequest) -> Response:
     """Create a new account."""
     if engine.disable_signups:
