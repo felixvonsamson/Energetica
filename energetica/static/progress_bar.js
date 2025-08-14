@@ -398,7 +398,7 @@ function html_for_progressBar(projectIndex, projectsQueue, project) {
     throw Error("html_for_progressBar: project is null");
   }
   let playPauseLogo = "fa-pause";
-  const togglePauseButtonFunctionName = project.status === 2 ? "pause_construction" : "resume_construction";
+  const togglePauseButtonFunctionName = project.status !== 0 ? "pause_construction" : "resume_construction";
   if (project.status == 0) {
     playPauseLogo = "fa-play";
   }
