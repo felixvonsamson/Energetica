@@ -63,21 +63,21 @@ export default function SetNewPassword() {
                 aria-describedby="verify_error"
             />
 
+            {matchError && (
+                <p
+                    id="verify_error"
+                    className={styles.error}
+                    role="alert"
+                >
+                    {matchError}
+                </p>
+            )
+            }
+
             <div className={styles['submit-container']}>
                 <button type="submit">
                     Update password
                 </button>
-
-                {matchError ? (
-                    <p
-                        id="verify_error"
-                        className={styles.error}
-                        role="alert"
-                    >
-                        {matchError}
-                    </p>) :
-                    (<p>&nbsp</p>)
-                }
             </div>
         </form>
     )

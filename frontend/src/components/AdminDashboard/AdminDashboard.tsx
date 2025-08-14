@@ -21,7 +21,9 @@ export function AdminDashboardLayout() {
                             {title}
                         </h1>
                     </div>
-                    <Outlet />
+                    <div className={styles["content-container"]}>
+                        <Outlet />
+                    </div>
                 </div>
             </main >
         </div >

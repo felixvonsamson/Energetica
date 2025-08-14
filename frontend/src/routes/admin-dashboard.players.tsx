@@ -9,7 +9,7 @@ export const Route = createFileRoute('/admin-dashboard/players')({
 
 function AdminPlayerPage() {
     return (
-        <div className="p-2">
+        <div>
             <h3>Welcome to players!</h3>
         </div>
     )

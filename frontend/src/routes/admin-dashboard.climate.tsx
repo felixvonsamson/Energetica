@@ -9,7 +9,7 @@ export const Route = createFileRoute('/admin-dashboard/climate')({
 
 function RouteComponent() {
     return (
-        <div className="p-2">
+        <div>
             <h3>Welcome to climate!</h3>
         </div>
     )

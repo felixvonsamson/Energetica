@@ -10,7 +10,7 @@ export const Route = createFileRoute('/admin-dashboard/settings')({
 
 function AdminSettingsPage() {
     return (
-        <div className="p-2">
+        <div>
             <h3>Welcome to settings!</h3>
             <SetNewPassword />
         </div>

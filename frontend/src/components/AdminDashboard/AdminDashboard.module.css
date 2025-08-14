@@ -18,3 +18,7 @@
     padding-left: 16px;
     /* justify-content: center; */
 }
+
+.content-container {
+    padding: 16px;
+}
