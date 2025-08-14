@@ -102,6 +102,14 @@ function catchGameErrors(response, body) {
             // POST: /api/v1/facilities/${facilityId}:upgrade
             addError("This facility is being decommissioned and cannot be upgraded.");
             break;
+        case "cannotResume":
+            // POST: /api/v1/projects/${project_id}:pause
+            addError("This project cannot be resumed.");
+            break;
+        case "chatAlreadyExist":
+            // POST: /api/v1/chats
+            addError("A chat with these participants already exists.");
+            break;
         default:
             addError(`Uncaught error: ${body.game_exception_type}`);
     }
@@ -692,9 +700,9 @@ socket.on("worker_info", function (worker_data) {
     construction_worker_cont = document.getElementById("construction_worker_cont");
     lab_worker_cont = document.getElementById("lab_worker_cont");
     if (construction_worker_cont != null) {
-        construction_worker_cont.innerHTML = `${worker_data.construction.available}/${worker_data.construction.total}`;
+        construction_worker_cont.firstElementChild.innerHTML = `${worker_data.construction.available}/${worker_data.construction.total}`;
     }
     if (lab_worker_cont != null) {
-        lab_worker_cont.innerHTML = `${worker_data.laboratory.available}/${worker_data.laboratory.total}`;
+        lab_worker_cont.firstElementChild.innerHTML = `${worker_data.laboratory.available}/${worker_data.laboratory.total}`;
     }
 });

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 def check_existing_chats(participants: set[Player]) -> bool:
     """Return true if a chat with exactly these participants already exists."""
-    return any(chat.participants == participants for chat in Chat.all())
+    return any(chat.participants == participants and chat.id != engine.general_chat_id for chat in Chat.all())
 
 
 def create_chat(player: Player, chat_name: str | None, participants: set[Player]) -> Chat:

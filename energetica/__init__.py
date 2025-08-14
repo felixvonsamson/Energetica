@@ -256,7 +256,9 @@ def create_app(
 
         yield
         scheduler.shutdown()
-        engine.save()
+        # mglst: See discussion for #302
+        # https://github.com/felixvonsamson/Energetica/issues/302
+        # engine.save()
 
     app = FastAPI(lifespan=lifespan)
 

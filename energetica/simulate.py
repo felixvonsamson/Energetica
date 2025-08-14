@@ -94,9 +94,7 @@ def _simulate(
                 engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action.total_t}.tar.gz")
         elif action.action_type == "create_user":
             player_id = action.player_id
-            username = action.username if not simulating else f"user{player_id}"
-            password = "password"
-            user_sessions[player_id] = create_user(player_id, username, password)
+            user_sessions[player_id] = create_user(player_id, action.username, action.pw_hash)
         elif action.action_type == "request":
             player_id = action.player_id
             if player_id:

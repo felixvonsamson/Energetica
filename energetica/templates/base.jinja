@@ -38,12 +38,14 @@
     </div>
     {% endif %}
     <div class="workers_container">
-      <div id="construction_worker_cont" class="flex-space-around hover_info">{{ user.available_workers('construction') }}/{{ user.workers.construction }} 
+      <div id="construction_worker_cont" class="flex-space-around hover_info">
+        <p class="no-margin">{{ user.available_workers('construction') }}/{{ user.workers.construction }}</p>
         <img src="{{ url_for('static', filename='images/icons/construction.png') }}"
           class="navbar_icon padding-small" alt="Construction workers icon"/>
         <span class="popup_info small">Construction workers</span>
       </div>
-      <div id="lab_worker_cont" class="flex-space-around hover_info">{{ user.available_workers('research') }}/{{ user.workers.research }} 
+      <div id="lab_worker_cont" class="flex-space-around hover_info">
+        <p class="no-margin">{{ user.available_workers('research') }}/{{ user.workers.research }}</p>
         <img src="{{ url_for('static', filename='images/icons/technology.png') }}"
           class="navbar_icon padding-small" alt="Lab workers icon"/>
         <span class="popup_info small">Lab workers</span>
