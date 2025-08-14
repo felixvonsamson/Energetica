@@ -225,20 +225,12 @@ async function createChat() {
                     openChat(new_chat.id);
                 });
             });
-        } else if (response.status == 400) {
-            response.json().then((raw_data) => {
-                const description = {
-                    "chatAlreadyExist": "This chat already exists",
-                    "cannotChatWithYourself": "You cannot create a chat with yourself",
-                    "buddyIDDoesNotExist": "This player does not exist",
-                }[raw_data["exception_type"]];
-                if (description) {
-                    addError(description);
-                } else {
-                    addError("An unknown error occurred");
-                }
-            });
+            return;
         }
+        response.json().then((body) => {
+            if (catchValidationErrors(response, body)) return;
+            if (catchGameErrors(response, body)) return;
+        });
     } catch (error) {
         console.error(`caught error: ${error}`);
     }
@@ -251,25 +243,17 @@ function createGroupChat() {
         group_chat_name: title,
         group_member_ids: group,
     }).then((response) => {
-        if (response.status == 201) {
+        if (response.status === 201) {
             retrieve_chats();
             document.querySelector(".group_members").innerHTML = "";
             document.getElementById('add_group_chat').classList.add('hidden');
             group = [];
-        } else if (response.status == 400) {
-            response.json().then((raw_data) => {
-                const description = {
-                    "wrongTitleLength": "The chat title cannot be empty and cannot have more than 25 characters",
-                    "groupTooSmall": "Group chats have to have at least 3 members",
-                    "chatAlreadyExist": "This chat already exists",
-                }[raw_data["exception_type"]];
-                if (description) {
-                    addError(description);
-                } else {
-                    addError("An unknown error occurred");
-                }
-            });
+            return;
         }
+        response.json().then((body) => {
+            if (catchValidationErrors(response, body)) return;
+            if (catchGameErrors(response, body)) return;
+        });
     })
         .catch((error) => {
             console.error(`caught error ${error}`);

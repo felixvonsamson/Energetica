@@ -21,7 +21,7 @@ from energetica.enums import (
     StorageFacilityType,
     renewable_facility_types,
 )
-from energetica.game_error import GameError
+from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.schemas.networks import AskItem, AskType, BidItem, BidType
 from energetica.schemas.power_priorities import PowerPriorityItem
@@ -89,12 +89,14 @@ class NetworkPrices:
             rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)
             self.ask_prices[ask_name] += added_randomness
+            self.ask_prices[ask_name] = round(self.ask_prices[ask_name], 2)
 
         for bid_name in self.bid_prices:
             seed_hash = stable_hash((engine.random_seed, "ask", bid_name, player.id))
             rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)
             self.bid_prices[bid_name] += added_randomness
+            self.bid_prices[bid_name] = round(self.bid_prices[bid_name], 2)
 
     def update(
         self,
@@ -161,7 +163,7 @@ class NetworkPrices:
         # Check if the new priority list is valid, i.e. contains the same elements as the old one
         old_priority = self.get_facility_priorities(player)
         if set(old_priority) != set(new_priority):
-            raise GameError("malformedRequest")
+            raise GameError(GameExceptionType.MALFORMED_REQUEST)
 
         # Reorder the prices according to the new priority list
         sorted_prices = sorted(
@@ -366,7 +368,7 @@ class CircularBufferPlayer:
         """Add one new tick of data to the buffer."""
         for category, subcategories in new_value.items():
             for subcategory, value in subcategories.items():
-                self._data[category][subcategory].append(value)
+                self._data[category][subcategory].append(float(value))
 
     def add_subcategory(self, category: str, subcategory: str) -> None:
         """Add a new subcategory to the data."""
@@ -454,7 +456,7 @@ class CircularBufferNetwork:
             for group, value in new_value[category].items():
                 if group not in category_value:
                     category_value[group] = deque([0.0] * 360, maxlen=360)
-                category_value[group].append(value)
+                category_value[group].append(float(value))
             for group, value in category_value.items():
                 if group not in new_value[category]:
                     value.append(0.0)

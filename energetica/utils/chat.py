@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from energetica.database.messages import Chat, Message
-from energetica.game_error import GameError
+from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.utils.misc import send_new_message_sio
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 def check_existing_chats(participants: set[Player]) -> bool:
     """Return true if a chat with exactly these participants already exists."""
-    return any(chat.participants == participants for chat in Chat.all())
+    return any(chat.participants == participants and chat.id != engine.general_chat_id for chat in Chat.all())
 
 
 def create_chat(player: Player, chat_name: str | None, participants: set[Player]) -> Chat:
@@ -27,9 +27,9 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
     :param participant_ids: a list of numbers corresponding to player ids
     """
     if chat_name and (len(chat_name) == 0 or len(chat_name) > 25):
-        raise GameError("wrongTitleLength")
+        raise GameError(GameExceptionType.WRONG_TITLE_LENGTH)
     if check_existing_chats(participants):
-        raise GameError("chatAlreadyExist")
+        raise GameError(GameExceptionType.CHAT_ALREADY_EXISTS)
     new_chat = Chat(
         name=chat_name,
         participants=set(participants),
@@ -45,11 +45,15 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
 def add_message(player: Player, message_text: str, chat: Chat) -> Message:
     """Add a player sent message to a chat."""
     if player not in chat.participants:
-        raise GameError("notInChat")
+        # TODO(mglst): this logic should be handled by the router so that it can return a relevant HTTP error code such
+        # as HTTP_401_UNAUTHORIZED
+        raise GameError(GameExceptionType.NOT_IN_CHAT)
     if len(message_text) == 0:
-        raise GameError("noMessage")
+        # TODO(mglst): this validation logic should be handled by pydantic
+        raise GameError(GameExceptionType.NO_MESSAGE)
     if len(message_text) > 500:
-        raise GameError("messageTooLong")
+        # TODO(mglst): this validation logic should be handled by pydantic
+        raise GameError(GameExceptionType.MESSAGE_TOO_LONG)
     new_message = Message(
         id=len(chat.messages),
         text=message_text,

@@ -57,6 +57,7 @@ def _simulate(
     stop_on_mismatch: bool,
     stop_on_server_error: bool,
     stop_on_assertion_error: bool,
+    stop_on_unauthenticated_actions: bool,
     checkpoint_every_k_ticks: int = 10000,
     checkpoint_ticks: list[int] | None = None,
 ) -> bool:
@@ -94,70 +95,58 @@ def _simulate(
                 engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action.total_t}.tar.gz")
         elif action.action_type == "create_user":
             player_id = action.player_id
-            username = action.username if not simulating else f"user{player_id}"
-            password = "password"
-            user_sessions[player_id] = create_user(player_id, username, password)
+            user_sessions[player_id] = create_user(player_id, action.username, action.pw_hash)
         elif action.action_type == "request":
             player_id = action.player_id
-            if player_id not in user_sessions:
-                user_sessions[player_id] = login_user(player_id)
-            url = f"{base_url}{action.request['endpoint']}"
-            content_type = "json" if action.request["content_type"] == "application/json" else "data"
-            # method = action.request["method"]
-            method = action.request.get("method", "POST")
-            user_session = cast(requests.Session, user_sessions[player_id])
-            if method == "POST":
-                response = user_session.post(
-                    url,
-                    **{content_type: action.request["content"]},
-                    allow_redirects=False,
-                )
-            elif method == "DELETE":
-                response = user_session.delete(
-                    url,
-                    **{content_type: action.request["content"]},
-                    allow_redirects=False,
-                )
-            elif method == "PATCH":
-                response = user_session.patch(
-                    url,
-                    **{content_type: action.request["content"]},
-                    allow_redirects=False,
-                )
-            elif method == "PUT":
-                response = user_session.put(
-                    url,
-                    **{content_type: action.request["content"]},
-                    allow_redirects=False,
-                )
+            if player_id:
+                if player_id not in user_sessions:
+                    user_sessions[player_id] = login_user(player_id)
+                session = cast(requests.Session, user_sessions[player_id])
             else:
-                raise ValueError(f"Cannot manage the following method: {method}")
-            # TODO (Yassir): mismatch if content type is not the same
-            if "money" in action.response["content"]:
-                money = action.response["content"]["money"]
-                real_money = Player.getitem(player_id).money
-                if abs(money - real_money) > 1:
-                    print(
-                        f"""\033[31mMoney {real_money} does not match expected money """
-                        f"""{money}.\033[0m""",
-                    )
-                    if stop_on_mismatch:
-                        break
-            if (
-                action.response["content_type"] == "application/json"
-                and response.headers["Content-Type"] == "application/json"
-                and response.json()["response"] != action.response["content"]["response"]
-            ):
                 print(
-                    f"""\033[31mResponse {response.json()["response"]} does not match expected response """
-                    f"""{action.response["content"]["response"]}.\033[0m""",
+                    f"""\033[31mUnauthenticated action encountered""",
                 )
-                if stop_on_mismatch:
+                if stop_on_unauthenticated_actions:
                     break
-            if response.status_code != action.response["status_code"]:
+                session = requests.Session()
+            url = f"{base_url}{action.request.endpoint}"
+            content_type = "json" if action.request.content_type == "application/json" else "data"
+            method = action.request.method
+            try:
+                method_func = getattr(session, method.lower())
+            except AttributeError:
+                raise ValueError(f"Cannot manage the following method: {method}")
+            response = method_func(
+                url,
+                **{content_type: action.request.payload},
+                allow_redirects=False,
+            )
+            # TODO (Yassir): mismatch if content type is not the same
+            # if "money" in action.response.payload:
+            #     money = action.response.payload["money"]
+            #     real_money = Player.getitem(player_id).money
+            #     if abs(money - real_money) > 1:
+            #         print(
+            #             f"""\033[31mMoney {real_money} does not match expected money """
+            #             f"""{money}.\033[0m""",
+            #         )
+            #         if stop_on_mismatch:
+            #             break
+            # if (
+            #     action.response["content_type"] == "application/json"
+            #     and response.headers["Content-Type"] == "application/json"
+            #     and response.json()["response"] != action.response["content"]["response"]
+            # ):
+            #     print(
+            #         f"""\033[31mResponse {response.json()["response"]} does not match expected response """
+            #         f"""{action.response["content"]["response"]}.\033[0m""",
+            #     )
+            #     if stop_on_mismatch:
+            #         break
+            if response.status_code != action.response.status_code:
                 print(
                     f"""\033[31mStatus code {response.status_code} does not match expected status code """
-                    f"""{action.response["status_code"]}.\033[0m""",
+                    f"""{action.response.status_code}.\033[0m""",
                 )
                 if stop_on_mismatch:
                     break

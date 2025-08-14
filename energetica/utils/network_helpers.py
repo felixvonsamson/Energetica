@@ -2,7 +2,7 @@
 
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_error import GameError
+from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 
 
@@ -10,11 +10,13 @@ from energetica.globals import engine
 def join_network(player: Player, network: Network | None) -> Network:
     """Add a player to a network."""
     if not player.achievements["network"]:
-        raise GameError("networkNotUnlocked")
+        raise GameError(GameExceptionType.NETWORK_NOT_UNLOCKED)
     if network is None:
-        raise GameError("noSuchNetwork")
+        # TODO(mglst): this logic should be handled by the router so that it can return a relevant HTTP error code such
+        # as HTTP_404_NOT_FOUND
+        raise GameError(GameExceptionType.NO_SUCH_NETWORK)
     if player.network is not None:
-        raise GameError("playerAlreadyInNetwork")
+        raise GameError(GameExceptionType.PLAYER_ALREADY_IN_NETWORK)
     player.network = network
     network.members.append(player)
     network.capacities.update_network(network)
@@ -29,9 +31,9 @@ def create_network(player: Player, name: str) -> Network:
     Network name must pass validation, namely it must not be too long, nor too short, and must not already be in use.
     """
     if not player.achievements["network"]:
-        raise GameError("networkNotUnlocked")
+        raise GameError(GameExceptionType.NETWORK_NOT_UNLOCKED)
     if len(list(Network.filter_by(name=name))):
-        raise GameError("nameAlreadyUsed")
+        raise GameError(GameExceptionType.NAME_ALREADY_USED)
     new_network = Network(name=name, members=[player])
     player.network = new_network
     engine.log(f"{player.username} created the network {name}")
@@ -42,7 +44,7 @@ def leave_network(player: Player) -> Network | None:
     """Make a player leave their network."""
     network = player.network
     if network is None:
-        raise GameError("notInNetwork")
+        raise GameError(GameExceptionType.NOT_IN_NETWORK)
     player.network = None
     network.members.remove(player)
     engine.log(f"{player.username} left the network {network.name}")

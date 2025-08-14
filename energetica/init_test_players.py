@@ -17,7 +17,7 @@ from energetica.enums import (
     TechnologyType,
     WindFacilityType,
 )
-from energetica.game_error import GameError
+from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.utils.assets import finish_project, queue_project
 from energetica.utils.map_helpers import confirm_location
@@ -50,7 +50,7 @@ def init_test_players() -> None:
         # If tile_id is None, find any tile that isn't assigned to a player
         hex_tile = HexTile.get(tile_id) if tile_id else next(HexTile.filter_by(player=None))
         if not hex_tile:
-            raise GameError("TileNotFound")  # TODO(mglst): centralize error handling, create static list of errors
+            raise GameError(GameExceptionType.TILE_NOT_FOUND)
         confirm_location(player, hex_tile)
         engine.log(f"create_player: player {username} created")
         return player

@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from energetica.database.player import Player
-from energetica.game_error import GameError
+from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.schemas.auth import (
     ChangePasswordRequest,
@@ -31,7 +31,7 @@ from energetica.utils.auth import (
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/login", tags=["Authentication"])
+@router.post("/login", tags=["Authentication"], status_code=status.HTTP_200_OK)
 def login(request_data: LoginRequest) -> Response:
     username = request_data.username
     password = request_data.password
@@ -58,11 +58,11 @@ def login(request_data: LoginRequest) -> Response:
     # )
 
 
-@router.post("/signup", tags=["Authentication"])
+@router.post("/signup", tags=["Authentication"], status_code=status.HTTP_201_CREATED)
 def signup(request: Request, request_data: SignupRequest) -> Response:
     """Create a new account."""
     if engine.disable_signups:
-        raise GameError("Sign-ups are disabled.")
+        raise GameError(GameExceptionType.SIGNUP_DISABLED)
     username = request_data.username
     password = request_data.password
     existing_player = next(Player.filter_by(username=username), None)
@@ -113,7 +113,7 @@ def change_password(
     old_password = request_data.old_password
     new_password = request_data.new_password
     if not check_password_hash(plain_password=old_password, hashed_password=player.pwhash):
-        raise GameError("Old password is incorrect.")
+        raise GameError(GameExceptionType.OLD_PASSWORD_INCORRECT)
     player.pwhash = generate_password_hash(new_password)
     engine.log(f"{player.username} changed their password")
     return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)

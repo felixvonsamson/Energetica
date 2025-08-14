@@ -46,7 +46,7 @@ def cancel_project(
 
 
 @router.post("/{project_id}:pause")
-def request_pause_project(  # noqa: ANN201
+def request_pause_project(
     player: Annotated[Player, Depends(get_current_user)],
     project_id: int,
 ) -> ProjectListOut:
@@ -59,7 +59,7 @@ def request_pause_project(  # noqa: ANN201
 
 
 @router.post("/{project_id}:resume")
-def request_resume_project(  # noqa: ANN201
+def request_resume_project(
     player: Annotated[Player, Depends(get_current_user)],
     project_id: int,
 ) -> ProjectListOut:

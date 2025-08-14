@@ -1,5 +1,7 @@
 """Schemas for the action logger."""
 
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Annotated, Literal
 
@@ -33,17 +35,30 @@ class TickAction(BaseModel):
     elapsed: float
 
 
-class RequestAction(BaseModel):
+class ApiAction(BaseModel):
     timestamp: datetime
     elapsed: float
     ip: str
     action_type: Literal["request"]
-    player_id: int
-    request: dict
-    response: dict
-    # "request": {"endpoint": "/api/v1/map/252:settle", "content_type": "application/json", "content": {}},
-    # "response": {"status_code": 204, "content_type": "application/json", "content": "unparsable"},
+    player_id: int | None
+    request: ApiActionRequest
+    response: ApiActionResponse
 
 
-ActionUnionType = InitEngineAction | CreateUserAction | TickAction | RequestAction
+class ApiActionRequest(BaseModel):
+    endpoint: str
+    method: Method
+    content_type: str | None
+    payload: dict | Literal["unparsable or not JSON"]
+
+
+class ApiActionResponse(BaseModel):
+    status_code: int
+    content_type: str
+    payload: dict | Literal["unparsable or not JSON"]
+
+
+Method = Literal["POST", "PUT", "DELETE", "PATCH"]
+
+ActionUnionType = InitEngineAction | CreateUserAction | TickAction | ApiAction
 Action = Annotated[ActionUnionType, Field(discriminator="action_type")]

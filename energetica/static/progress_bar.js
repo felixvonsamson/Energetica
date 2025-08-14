@@ -94,19 +94,22 @@ function format_seconds(totalSeconds, show_seconds = true) {
 function start_construction(facility, force = false) {
   send_json(`/api/v1/projects?force=${force}`, { type: facility })
     .then((response) => {
-      response.json().then((body) => {
-        if (catchValidationErrors(response, body)) return;
-        if (catchGameErrors(response, body)) return;
-        if (response.ok) {
-          refreshMoney();
-          retrieve_constructions();
-          refresh_progressBar();
-          addToast("Construction started");
-          setTimeout(() => { window.location = window.location; }, 100);
-        } else if (response.status === 300) {
-          are_you_sure_start_construction(facility, body.capacity, body.construction_power);
-        }
-      });
+      if (response.status === 204) {
+        refreshMoney();
+        sessionStorage.removeItem("projectsData"); // this will force a API request
+        retrieve_constructions();
+        refresh_progressBar();
+        addToast("Construction started");
+      } else {
+        response.json().then((body) => {
+          if (response.status === 300) {
+            are_you_sure_start_construction(facility, body.capacity, body.construction_power);
+          } else {
+            if (catchValidationErrors(response, body)) return;
+            if (catchGameErrors(response, body)) return;
+          }
+        });
+      }
     })
     .catch((error) => {
       console.error(`caught error ${error}`);
@@ -395,7 +398,7 @@ function html_for_progressBar(projectIndex, projectsQueue, project) {
     throw Error("html_for_progressBar: project is null");
   }
   let playPauseLogo = "fa-pause";
-  const togglePauseButtonFunctionName = project.status === 2 ? "pause_construction" : "resume_construction";
+  const togglePauseButtonFunctionName = project.status !== 0 ? "pause_construction" : "resume_construction";
   if (project.status == 0) {
     playPauseLogo = "fa-play";
   }

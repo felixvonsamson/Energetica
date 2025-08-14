@@ -2,9 +2,9 @@ import json
 import logging
 import urllib.parse
 from datetime import datetime
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, cast
 
-from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -16,8 +16,8 @@ from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import ConfirmOut, GameErrorOut
-from energetica.schemas.simulate import RequestAction
-from energetica.utils.auth import get_current_user
+from energetica.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
+from energetica.utils.auth import get_current_user_from_request
 
 from .achievements import router as achievements_router
 from .auth import router as auth_router
@@ -106,10 +106,17 @@ def setup_routes(app: FastAPI):
 
         # GET requests can be served immediately
         path = request.url.path
-        dont_log = request.method == "GET" or path == "/socket.io/" or "/auth/" in path
-        if dont_log:
-            response = await call_next(request)
-            if response.status_code == status.HTTP_401_UNAUTHORIZED:
+        auth_request = "/auth/" in path
+        get_request = path == "/socket.io/" or request.method == "GET"
+        if auth_request or get_request:
+            try:
+                response = await call_next(request)
+            except Exception as e:
+                print("There was an error when constructing the response for the following request:")
+                print(f"{request.method} {request.url.path}")
+                print(f"content-type: {request.headers.get('content-type')}")
+                raise e
+            if get_request and response.status_code == status.HTTP_401_UNAUTHORIZED:
                 return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
             return response
 
@@ -124,22 +131,29 @@ def setup_routes(app: FastAPI):
 
         request = Request(request.scope, receive=receive)
 
-        with engine.lock:
-            response = await call_next(request)
-
-        if request.url.path.startswith("/auth"):
-            return response
-
         # Try to decode the request and response
         if request.headers.get("content-type") == "application/x-www-form-urlencoded":
-            request_content = {
+            request_payload = {
                 k: v[0] if len(v) == 1 else v for k, v in urllib.parse.parse_qs(body_bytes.decode()).items()
             }
         else:
             try:
-                request_content = json.loads(body_bytes.decode())
+                request_payload = json.loads(body_bytes.decode())
             except Exception:
-                request_content = "unparsable or not JSON"
+                request_payload = "unparsable or not JSON"
+
+        with engine.lock:
+            try:
+                response = await call_next(request)
+            except Exception as e:
+                print("There was an error when constructing the response for the following request:")
+                print(f"{request.method} {request.url.path}")
+                print(f"content-type: {request.headers.get('content-type')}")
+                print(f"payload: {request_payload}")
+                raise e
+
+        if request.url.path.startswith("/auth"):
+            return response
 
         # Buffer the response body
         response_body = b""
@@ -155,33 +169,30 @@ def setup_routes(app: FastAPI):
         )
 
         try:
-            response_content = json.loads(response_body.decode())
+            response_payload = json.loads(response_body.decode())
         except Exception:
-            response_content = "unparsable"
+            response_payload = "unparsable or not JSON"
 
-        try:
-            user = get_current_user(request)
-            player_id = user.id
-        except HTTPException as e:
-            raise e
+        user = get_current_user_from_request(request)
+        player_id = user.id if user is not None else None
 
-        log_entry = RequestAction(
+        log_entry = ApiAction(
             timestamp=start,
             elapsed=(datetime.now() - start).total_seconds(),
             ip=request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
             action_type="request",
             player_id=player_id,
-            request={
-                "endpoint": request.url.path,
-                "method": request.method,
-                "content_type": request.headers.get("content-type"),
-                "content": request_content,
-            },
-            response={
-                "status_code": response.status_code,
-                "content_type": response.headers.get("content-type", "unknown"),
-                "content": response_content,
-            },
+            request=ApiActionRequest(
+                endpoint=request.url.path,
+                method=cast(Method, request.method),
+                content_type=request.headers.get("content-type"),
+                payload=request_payload,
+            ),
+            response=ApiActionResponse(
+                status_code=response.status_code,
+                content_type=response.headers.get("content-type", "unknown"),
+                payload=response_payload,
+            ),
         )
         engine.log_action(log_entry)
         return new_response

@@ -27,7 +27,7 @@ from energetica.enums import (
     power_facility_types,
     str_to_project_type,
 )
-from energetica.game_error import GameError
+from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 
 if TYPE_CHECKING:
@@ -123,7 +123,7 @@ def current_multiplier(player: Player, multiplier: str, facility_type: ProjectTy
     if multiplier == "extraction_emissions_multiplier":
         assert isinstance(facility_type, ExtractionFacilityType)
         return extraction_emissions_multiplier(player, facility_type)
-    raise GameError("InvalidMultiplier")
+    raise GameError(GameExceptionType.INVALID_MULTIPLIER)
 
 
 def current_multipliers(player: Player, facility_type: ProjectType) -> dict[str, float]:
@@ -230,7 +230,7 @@ def hydro_price_multiplier(player: Player, hydro_facility_type: HydroFacilityTyp
     This is determined by the tile's hydro potential, and the number of hydro facilities / the next available location.
     """
     if not player.tile:
-        raise GameError("TileNotFound")  # TODO(mglst): handle this case
+        raise GameError(GameExceptionType.TILE_NOT_FOUND)  # TODO(mglst): handle this case
     return hydro_price_function(
         next_available_location(player, hydro_facility_type),
         player.tile.potentials[Renewable.HYDRO],
@@ -246,7 +246,7 @@ def wind_speed_multiplier(player: Player, wind_facility_type: WindFacilityType) 
     """
     # calculating the wind speed multiplier linked to the number of wind turbines
     if not player.tile:
-        raise GameError("TileNotFound")  # TODO(mglst): handle this case
+        raise GameError(GameExceptionType.TILE_NOT_FOUND)  # TODO(mglst): handle this case
     return wind_speed_function(
         next_available_location(player, wind_facility_type),
         player.tile.potentials[Renewable.WIND],
@@ -636,7 +636,7 @@ def _capacity_factors(player: Player, renewable_power_facility_type: ProjectType
             return capacity_factors[latitude]
 
         if not player.tile:
-            raise GameError("TileNotFound")
+            raise GameError(GameExceptionType.TILE_NOT_FOUND)
         return {
             "capacity_factor": f"{100 * capacity_factor_solar(player.tile.coordinates[1]):.0f}%",
         }
@@ -726,7 +726,7 @@ def package_extraction_facilities(player: Player) -> list[dict]:
         return tile.fuel_reserves[fuel] < limits[fuel]
 
     if not player.tile:
-        raise GameError("TileNotFound")
+        raise GameError(GameExceptionType.TILE_NOT_FOUND)
 
     return [
         _package_project_base(player, extraction_facility)
