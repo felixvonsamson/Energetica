@@ -157,7 +157,7 @@ def setup_routes(app: FastAPI):
         try:
             response_payload = json.loads(response_body.decode())
         except Exception:
-            response_payload = "unparsable"
+            response_payload = "unparsable or not JSON"
 
         user = get_current_user_from_request(request)
         player_id = user.id if user is not None else None
@@ -172,12 +172,12 @@ def setup_routes(app: FastAPI):
                 endpoint=request.url.path,
                 method=cast(Method, request.method),
                 content_type=request.headers.get("content-type"),
-                payload=str(request_payload),
+                payload=request_payload,
             ),
             response=ApiActionResponse(
                 status_code=response.status_code,
                 content_type=response.headers.get("content-type", "unknown"),
-                payload=str(response_payload),
+                payload=response_payload,
             ),
         )
         engine.log_action(log_entry)
