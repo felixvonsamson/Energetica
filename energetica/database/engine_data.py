@@ -89,12 +89,14 @@ class NetworkPrices:
             rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)
             self.ask_prices[ask_name] += added_randomness
+            self.ask_prices[ask_name] = round(self.ask_prices[ask_name], 2)
 
         for bid_name in self.bid_prices:
             seed_hash = stable_hash((engine.random_seed, "ask", bid_name, player.id))
             rng = np.random.default_rng(abs(seed_hash))
             added_randomness = rng.uniform(-15, 15)
             self.bid_prices[bid_name] += added_randomness
+            self.bid_prices[bid_name] = round(self.bid_prices[bid_name], 2)
 
     def update(
         self,
