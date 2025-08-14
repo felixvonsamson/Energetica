@@ -102,6 +102,10 @@ function catchGameErrors(response, body) {
             // POST: /api/v1/facilities/${facilityId}:upgrade
             addError("This facility is being decommissioned and cannot be upgraded.");
             break;
+        case "cannotResume":
+            // POST: /api/v1/projects/${project_id}:pause
+            addError("This project cannot be resumed.");
+            break;
         default:
             addError(`Uncaught error: ${body.game_exception_type}`);
     }
