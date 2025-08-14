@@ -54,6 +54,7 @@ def create_app(
     simulate_stop_on_mismatch: bool = False,
     simulate_stop_on_server_error: bool = False,
     simulate_stop_on_assertion_error: bool = False,
+    simulate_stop_on_unauthenticated_actions: bool = False,
     simulate_checkpoint_every_k_ticks: int = 10000,
     simulate_checkpoint_ticks: list[int] | None = None,
     simulate_till: int | None = None,
@@ -167,6 +168,7 @@ def create_app(
                     "stop_on_mismatch": simulate_stop_on_mismatch,
                     "stop_on_server_error": simulate_stop_on_server_error,
                     "stop_on_assertion_error": simulate_stop_on_assertion_error,
+                    "stop_on_unauthenticated_actions": simulate_stop_on_unauthenticated_actions,
                     "checkpoint_every_k_ticks": simulate_checkpoint_every_k_ticks,
                     "checkpoint_ticks": simulate_checkpoint_ticks,
                 }
@@ -178,6 +180,7 @@ def create_app(
                     "stop_on_mismatch": simulate_stop_on_mismatch,
                     "stop_on_server_error": True,
                     "stop_on_assertion_error": True,
+                    "stop_on_unauthenticated_actions": True,
                     "checkpoint_every_k_ticks": None,
                     "checkpoint_ticks": None,
                 }
@@ -214,10 +217,12 @@ def create_app(
 
         # Creating the root admin account if it does not exist.
         if not list(Player.filter_by(username="admin")):
-            admin_password = "admin"  # TODO(Felix): setup admin password in a config file
+            admin_password = secrets.token_hex(4)
             hashed_password = generate_password_hash(admin_password)
-            Player(username="admin", pwhash=hashed_password, is_admin=True)
-            engine.log(f"Admin account created with username 'admin' and password '{admin_password}'")
+            new_admin = Player(username="admin", pwhash=hashed_password, is_admin=True)
+            engine.log(f"Admin account created with username '{new_admin.username}'")
+            with open("admin_accounts.txt", "w", encoding="utf-8") as file:
+                file.write(f"{new_admin.username},{admin_password}\n")
 
         if disable_signups:
             # if sign-ups are disabled, accounts have to be created from a file.
@@ -251,7 +256,9 @@ def create_app(
 
         yield
         scheduler.shutdown()
-        engine.save()
+        # mglst: See discussion for #302
+        # https://github.com/felixvonsamson/Energetica/issues/302
+        # engine.save()
 
     app = FastAPI(lifespan=lifespan)
 

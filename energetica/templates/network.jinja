@@ -240,7 +240,7 @@
                     <td>Industry</td>
                     <td>
                         <input type="number"
-                            class="small_input medium txt_center ask_price_input"
+                            class="small_input medium txt_center bid_price_input"
                             value="{{ user.network_prices.bid_prices.industry }}"
                             data-bid-type="industry"
                             max="50000" />
@@ -252,9 +252,9 @@
                     <td>Constructions</td>
                     <td>
                         <input type="number"
-                            class="small_input medium txt_center ask_price_input"
+                            class="small_input medium txt_center bid_price_input"
                             value="{{ user.network_prices.bid_prices.construction }}"
-                            data-bid-type="constructions"
+                            data-bid-type="construction"
                             max="50000" />
                         <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>
                         /MWh
@@ -265,7 +265,7 @@
                     <td>Research</td>
                     <td>
                         <input type="number"
-                            class="small_input medium txt_center ask_price_input"
+                            class="small_input medium txt_center bid_price_input"
                             value="{{ user.network_prices.bid_prices.research }}"
                             data-bid-type="research"
                             max="50000" />
@@ -279,7 +279,7 @@
                     <td>Shipments</td>
                     <td>
                         <input type="number"
-                            class="small_input medium txt_center ask_price_input"
+                            class="small_input medium txt_center bid_price_input"
                             value="{{ user.network_prices.bid_prices.transport }}"
                             data-bid-type="transport"
                             max="50000" />
@@ -300,7 +300,7 @@
                             <td>{{ extraction_facility_display_name(extraction_facility) }}</td>
                             <td>
                                 <input type="number"
-                                    class="small_input medium txt_center ask_price_input"
+                                    class="small_input medium txt_center bid_price_input"
                                     value="{{ extraction_facility_demand_price_value(extraction_facility) }}"
                                     data-bid-type="{{ extraction_facility }}"
                                     max="50000" />
@@ -315,7 +315,7 @@
                         <td>Carbon Capture</td>
                         <td>
                             <input type="number"
-                                class="small_input medium txt_center ask_price_input"
+                                class="small_input medium txt_center bid_price_input"
                                 value="{{ user.network_prices.bid_prices.carbon_capture }}"
                                 data-bid-type="carbon_capture"
                                 max="50000" />
@@ -349,7 +349,7 @@
                                 <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ caps[power_facility].power }});</script>
                                 <td>
                                     <input type="number"
-                                        class="small_input medium txt_center bid_price_input"
+                                        class="small_input medium txt_center ask_price_input"
                                         value="{{ power_facility_supply_price_value(power_facility) }}"
                                         data-ask-type="{{ power_facility }}"
                                         min="-4.9"/>
@@ -389,7 +389,7 @@
                                 <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ caps[storage_facility].capacity }});</script>
                                 <td>
                                     <input type="number"
-                                        class="small_input medium txt_center bid_price_input"
+                                        class="small_input medium txt_center ask_price_input"
                                         value="{{ storage_facility_supply_price_value(storage_facility) }}"
                                         data-ask-type="{{ storage_facility }}"
                                         min="-4.9" />
@@ -398,7 +398,7 @@
                                 </td>
                                 <td>
                                     <input type="number"
-                                        class="small_input medium txt_center ask_price_input"
+                                        class="small_input medium txt_center bid_price_input"
                                         value="{{ storage_facility_demand_price_value(storage_facility) }}"
                                         data-bid-type="{{ storage_facility }}"
                                         max="50000" />
