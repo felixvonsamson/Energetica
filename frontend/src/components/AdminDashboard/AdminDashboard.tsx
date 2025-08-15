@@ -8,7 +8,6 @@ export function AdminDashboardLayout() {
     const matches = useMatches()
 
     const currentMatch = matches[matches.length - 1]
-    console.log(currentMatch)
     const { title = 'Dashboard' } = currentMatch?.staticData || {}
 
     return (

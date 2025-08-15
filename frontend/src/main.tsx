@@ -23,9 +23,9 @@ const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <StrictMode>
-        {/* <QueryClientProvider client={queryClient}> */}
-        {/* <App /> */}
-        <RouterProvider router={router} />
-        {/* </QueryClientProvider> */}
+        <QueryClientProvider client={queryClient}>
+            {/* <App /> */}
+            <RouterProvider router={router} />
+        </QueryClientProvider>
     </StrictMode>
 );

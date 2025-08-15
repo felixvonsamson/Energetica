@@ -1,10 +1,35 @@
 import { useState } from "react";
 import styles from "./SetNewPassword.module.css";
 
+import { useMutation } from "@tanstack/react-query"
+
+interface ChangePasswordPayload {
+    old_password: string;
+    new_password: string;
+}
+
 export default function SetNewPassword() {
-    const [newPassword, setNewPassword] = useState("");
-    const [verifyPassword, setVerifyPassword] = useState("");
+    const [currentPassword, setCurrentPassword] = useState("password")
+    const [newPassword, setNewPassword] = useState("new-password");
+    const [verifyPassword, setVerifyPassword] = useState("new-password");
     const [matchError, setMatchError] = useState("");
+
+    const mutation = useMutation({
+        mutationFn: (data: ChangePasswordPayload) => {
+            const res = await fetch(
+                "/api/v1/auth/change-password",
+                {
+                    method: "POST",
+                    body: JSON.stringify(data),
+                    headers: {
+                        "Content-Type": "application/json",
+                    }
+                }
+            )
+            if (!res.ok) throw new Error("Failed to change password");
+            return ""
+        }
+    });
 
     const handleVerifyChange = (e: { target: { value: any; }; }) => {
         const value = e.target.value;
@@ -23,11 +48,11 @@ export default function SetNewPassword() {
             setMatchError("Passwords do not match");
             return;
         }
-        // 🔐 Submit to server here
+        mutation.mutate({ old_password: currentPassword, new_password: newPassword })
     };
 
     return (
-        <form className={styles['set-new-password-container']}>
+        <form className={styles['set-new-password-container']} onSubmit={handleSubmit}>
             <label htmlFor="old_password">Current password</label>
             <input
                 type="password"
@@ -35,6 +60,8 @@ export default function SetNewPassword() {
                 name="current-password"
                 autoComplete="current-password"
                 placeholder="Current password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
                 required
             />
 
