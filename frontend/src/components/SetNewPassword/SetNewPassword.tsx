@@ -2,11 +2,8 @@ import { useState } from "react";
 import styles from "./SetNewPassword.module.css";
 
 import { useMutation } from "@tanstack/react-query"
-
-interface ChangePasswordPayload {
-    old_password: string;
-    new_password: string;
-}
+import { changePassword } from "../../api/auth/auth.api";
+import { ChangePasswordRequest } from "../../api/auth/auth.types";
 
 export default function SetNewPassword() {
     const [currentPassword, setCurrentPassword] = useState("password")
@@ -15,20 +12,8 @@ export default function SetNewPassword() {
     const [matchError, setMatchError] = useState("");
 
     const mutation = useMutation({
-        mutationFn: (data: ChangePasswordPayload) => {
-            const res = await fetch(
-                "/api/v1/auth/change-password",
-                {
-                    method: "POST",
-                    body: JSON.stringify(data),
-                    headers: {
-                        "Content-Type": "application/json",
-                    }
-                }
-            )
-            if (!res.ok) throw new Error("Failed to change password");
-            return ""
-        }
+        mutationFn: async (data: ChangePasswordRequest) => { changePassword(data) }
+        // TODO: add toast on error
     });
 
     const handleVerifyChange = (e: { target: { value: any; }; }) => {
