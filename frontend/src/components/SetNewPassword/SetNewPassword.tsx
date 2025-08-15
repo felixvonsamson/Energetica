@@ -12,7 +12,10 @@ export default function SetNewPassword() {
     const [matchError, setMatchError] = useState("");
 
     const mutation = useMutation({
-        mutationFn: async (data: ChangePasswordRequest) => { changePassword(data) }
+        mutationFn: async (data: ChangePasswordRequest) => changePassword(data),
+        onError: (error) => {
+            console.error("Query failed:", error);
+        }
         // TODO: add toast on error
     });
 

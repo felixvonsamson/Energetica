@@ -1,30 +1,35 @@
 type GameExceptionType = ""
 
 export class GameError extends Error {
-    exception_type: GameExceptionType
+    game_exception_type: GameExceptionType
 
-    constructor(exception_type: GameExceptionType) {
+    constructor(game_exception_type: GameExceptionType) {
         super()
-        this.exception_type = exception_type
+        this.game_exception_type = game_exception_type
+    }
+
+    toString() {
+        return `GameError (${this.game_exception_type})`;
     }
 }
 
 export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
     const res = await fetch(`/api/v1${url}`, {
-        headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) }
+        headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
+        ...options
     });
 
     if (!res.ok) {
         console.error(`url: ${url}`)
         if (res.status === 422) {
-            throw new Error(`Received an input validation error, but this is 
-                not yet handled properly in api/client.ts.`)
+            throw new Error("Input validation error (422) — not yet handled");
         }
         if (res.status === 400) {
-            throw new Error(`Received a GameError error, but this is 
-                not yet handled properly in api/client.ts.`)
+            const body = await res.json() as { game_exception_type: GameExceptionType }
+            console.log(body)
+            throw new GameError(body.game_exception_type)
         }
-        throw new Error("Unknown unhandled exception in api/client.ts")
+        throw new Error(`Unhandled HTTP error ${res.status}: ${res.statusText}`);
     }
 
     return res.json() as Promise<T>
