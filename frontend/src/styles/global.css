@@ -50,9 +50,14 @@ h1 {
     z-index: 9999;
     max-width: 90%;
     align-items: center;
+
+    /* padding-top replaces the first toast’s margin */
+    /* padding-top: 8px; */
 }
 
+/* all toasts get margin-top */
 .toast {
+    margin-top: 8px;
     padding: 0.75rem 1rem;
     border-radius: 4px;
     color: #fff;
@@ -60,46 +65,33 @@ h1 {
     min-width: 200px;
     text-align: center;
     background: #3498db;
-    /* demo default */
     overflow: hidden;
-    /* so height collapse is clean */
     box-sizing: border-box;
-
-    /* enter state */
     opacity: 0;
     transform: translateY(-10px);
-
-    /* we’ll transition these on show/close */
     transition:
-        opacity 300ms ease,
-        transform 300ms ease,
+        opacity 200ms ease,
+        transform 200ms ease,
         height 300ms ease,
         margin-top 300ms ease,
         padding-top 300ms ease,
         padding-bottom 300ms ease;
 }
 
-.toast+.toast {
-    margin-top: 8px;
-}
-
-/* after insertion, add .show for fade/slide in */
 .toast.show {
     opacity: 1;
     transform: translateY(0);
 }
 
-/* when closing, collapse space too */
 .toast.closing {
     opacity: 0;
     transform: translateY(-10px);
     margin-top: 0;
+    /* works for all toasts now */
     padding-top: 0;
     padding-bottom: 0;
-    /* height transitions to 0 via inline style from JS */
 }
 
-/* optional color variants */
 .toast.success {
     background: #2ecc71;
 }
