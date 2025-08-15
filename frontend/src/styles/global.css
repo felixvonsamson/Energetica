@@ -47,52 +47,67 @@ h1 {
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
     z-index: 9999;
     max-width: 90%;
-    /* prevent overflows on small screens */
     align-items: center;
-    /* ensures each toast is centered */
 }
 
 .toast {
     padding: 0.75rem 1rem;
     border-radius: 4px;
-    color: white;
+    color: #fff;
     font-size: 0.9rem;
-    animation: fadeIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
     min-width: 200px;
-    /* optional: gives them a consistent size */
     text-align: center;
+    background: #3498db;
+    /* demo default */
+    overflow: hidden;
+    /* so height collapse is clean */
+    box-sizing: border-box;
+
+    /* enter state */
+    opacity: 0;
+    transform: translateY(-10px);
+
+    /* we’ll transition these on show/close */
+    transition:
+        opacity 300ms ease,
+        transform 300ms ease,
+        height 300ms ease,
+        margin-top 300ms ease,
+        padding-top 300ms ease,
+        padding-bottom 300ms ease;
 }
 
-.toast.info {
-    background-color: #3498db;
+.toast+.toast {
+    margin-top: 8px;
 }
 
+/* after insertion, add .show for fade/slide in */
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* when closing, collapse space too */
+.toast.closing {
+    opacity: 0;
+    transform: translateY(-10px);
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    /* height transitions to 0 via inline style from JS */
+}
+
+/* optional color variants */
 .toast.success {
-    background-color: #2ecc71;
+    background: #2ecc71;
 }
 
 .toast.error {
-    background-color: #e74c3c;
+    background: #e74c3c;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeOut {
-    to {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
+.toast.info {
+    background: #3498db;
 }
