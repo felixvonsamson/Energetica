@@ -7,6 +7,7 @@ import { RouterProvider, createBrowserHistory, createRouter } from '@tanstack/re
 import { routeTree } from './routeTree.gen'
 
 import "./styles/global.css"
+import { queryClient } from "./queryClient";
 
 const router = createRouter({
     routeTree,
@@ -18,8 +19,6 @@ declare module '@tanstack/react-router' {
         router: typeof router
     }
 }
-
-const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <StrictMode>

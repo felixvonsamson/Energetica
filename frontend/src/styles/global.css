@@ -39,3 +39,60 @@ h1 {
     font-weight: 500;
     color: var(--color-pine-darker);
 }
+
+#toast-container {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 9999;
+    max-width: 90%;
+    /* prevent overflows on small screens */
+    align-items: center;
+    /* ensures each toast is centered */
+}
+
+.toast {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    color: white;
+    font-size: 0.9rem;
+    animation: fadeIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+    min-width: 200px;
+    /* optional: gives them a consistent size */
+    text-align: center;
+}
+
+.toast.info {
+    background-color: #3498db;
+}
+
+.toast.success {
+    background-color: #2ecc71;
+}
+
+.toast.error {
+    background-color: #e74c3c;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}

@@ -1,4 +1,4 @@
-type GameExceptionType = ""
+type GameExceptionType = "" // TODO: replicate and populate from backend
 
 export class GameError extends Error {
     game_exception_type: GameExceptionType
