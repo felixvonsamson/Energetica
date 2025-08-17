@@ -43,6 +43,7 @@ def test_signup() -> None:
     payload5 = ChangePasswordRequest(old_password="my-WRONG-password", new_password="my-new-password")
     response5 = client.post(change_password_url, json=payload5.model_dump())
     assert response5.status_code == 400
+    # NOTE: this is given as a 400 error because we wrap the error in a GameError
 
     # Change password, correctly this time
     payload6 = ChangePasswordRequest(old_password="my-strong-password", new_password="my-new-password")
