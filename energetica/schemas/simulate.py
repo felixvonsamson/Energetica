@@ -21,7 +21,7 @@ class InitEngineAction(BaseModel):
 
 class CreateUserAction(BaseModel):
     timestamp: datetime
-    ip: str
+    ip: str | None
     action_type: Literal["create_user"]
     player_id: int
     username: str

@@ -36,16 +36,17 @@ def signup_player(request: Request | None, username: str, pwhash: str) -> Player
     """
     new_player = Player(username=username, pwhash=pwhash)
 
-    if request:
-        log_entry = CreateUserAction(
-            timestamp=datetime.now(),
-            ip=request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
-            action_type="create_user",
-            player_id=new_player.id,
-            username=new_player.username,
-            pw_hash=new_player.pwhash,
-        )
-        engine.log_action(log_entry)
+    log_entry = CreateUserAction(
+        timestamp=datetime.now(),
+        ip=request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null")
+        if request is not None
+        else None,
+        action_type="create_user",
+        player_id=new_player.id,
+        username=new_player.username,
+        pw_hash=new_player.pwhash,
+    )
+    engine.log_action(log_entry)
 
     engine.log(f"{username} created an account")
     return new_player
