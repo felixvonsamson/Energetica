@@ -5,6 +5,7 @@ import secrets
 from datetime import timedelta
 
 import bcrypt
+import requests
 from fastapi import HTTPException, Request, Response, status
 from itsdangerous import URLSafeTimedSerializer
 
@@ -78,3 +79,15 @@ def add_session_cookie_to_response(response: Response, player: Player) -> Respon
         max_age=COOKIE_MAX_AGE,
     )
     return response
+
+
+def add_session_cookie_to_session(session: requests.Session, player: Player) -> requests.Session:
+    token = serializer.dumps(player.username)
+    session.cookies.set(
+        name="session",
+        value=token,
+        path="/",
+        secure=False,
+        rest={"HttpOnly": True, "SameSite": "Lax"},
+    )
+    return session
