@@ -15,8 +15,6 @@ from energetica.globals import engine
 from energetica.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
-    RootLoginRequest,
-    RootSignupRequest,
     SignupRequest,
 )
 from energetica.utils import misc
@@ -69,34 +67,6 @@ def signup(request: Request, request_data: SignupRequest) -> Response:
     if existing_player:
         raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
     pwhash = generate_password_hash(password)
-    new_player = misc.signup_player(request, username, pwhash)
-    return add_session_cookie_to_response(
-        JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED),
-        new_player,
-    )
-
-
-@router.post("/root/login")
-def root_login(request: Request, request_data: RootLoginRequest) -> Response:
-    addr = request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else None)
-    if addr is None or addr != "127.0.0.1":
-        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
-    player = Player.get(request_data.user_id)
-    if player is None:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
-    engine.log(f"{player.username} logged in")
-    JSONResponse("Authenticated", status_code=status.HTTP_200_OK)
-    return add_session_cookie_to_response(JSONResponse("Authenticated", status_code=status.HTTP_200_OK), player)
-
-
-@router.post("/root/sign-up")
-def root_signup(request: Request, request_data: RootSignupRequest) -> Response:
-    """Create a new account."""
-    username = request_data.username
-    pwhash = request_data.pwhash
-    existing_player = next(Player.filter_by(username=username), None)
-    if existing_player:
-        raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
     new_player = misc.signup_player(request, username, pwhash)
     return add_session_cookie_to_response(
         JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED),

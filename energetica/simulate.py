@@ -12,6 +12,8 @@ import requests
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.schemas.simulate import Action
+from energetica.utils import misc
+from energetica.utils.auth import add_session_cookie_to_session
 from energetica.utils.tick_execution import tick
 
 base_url: str | None = None
@@ -19,20 +21,17 @@ base_url: str | None = None
 
 def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
     """Create a user with the given user_id."""
+    new_player = misc.signup_player(None, username, pwhash)
     session = requests.Session()
-    payload = {"username": username, "pwhash": pwhash}
-    response = session.post(f"{base_url}/api/v1/auth/root/sign-up", json=payload, allow_redirects=False)
-    assert response.status_code == 201
-    assert next(Player.filter_by(username=username)).id == user_id
+    add_session_cookie_to_session(session, new_player)
     return session
 
 
 def login_user(user_id: int) -> requests.Session:
     """Login a user with the given user_id."""
+    player = Player.getitem(user_id, ValueError(f"Cannot log in player: player with id {user_id} does not exist"))
     session = requests.Session()
-    payload = {"user_id": user_id}
-    response = session.post(f"{base_url}/api/v1/auth/root/login", json=payload, allow_redirects=False)
-    assert response.status_code == 200
+    add_session_cookie_to_session(session, player)
     return session
 
 

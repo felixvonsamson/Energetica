@@ -27,18 +27,26 @@ from energetica.utils.astro import DrHI
 # Helper functions and data initialization utilities
 
 
-def signup_player(request: Request, username: str, pwhash: str) -> Player:
+def signup_player(request: Request | None, username: str, pwhash: str) -> Player:
+    """
+    Signup a player.
+
+    Calling with request set to null is reserved for simulation - when APIs call this function, they must pass the
+    corresponding request object.
+    """
     new_player = Player(username=username, pwhash=pwhash)
 
-    log_entry = CreateUserAction(
-        timestamp=datetime.now(),
-        ip=request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
-        action_type="create_user",
-        player_id=new_player.id,
-        username=new_player.username,
-        pw_hash=new_player.pwhash,
-    )
-    engine.log_action(log_entry)
+    if request:
+        log_entry = CreateUserAction(
+            timestamp=datetime.now(),
+            ip=request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
+            action_type="create_user",
+            player_id=new_player.id,
+            username=new_player.username,
+            pw_hash=new_player.pwhash,
+        )
+        engine.log_action(log_entry)
+
     engine.log(f"{username} created an account")
     return new_player
 
