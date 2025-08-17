@@ -15,8 +15,11 @@ from pywebpush import WebPushException, webpush
 from energetica.config.achievements import achievements
 from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, NetworkPrices
+from energetica.database.engine_data.capacity_data import CapacityData
+from energetica.database.engine_data.circular_buffer_player import CircularBufferPlayer
+from energetica.database.engine_data.cumulative_emissions_data import CumulativeEmissionsData
 from energetica.database.messages import Chat, Notification
+from energetica.database.network_prices import NetworkPrices
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
@@ -44,7 +47,7 @@ from energetica.technology_effects import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from energetica.database.map import HexTile
+    from energetica.database.map.hex_tile import HexTile
     from energetica.database.network import Network
 
 

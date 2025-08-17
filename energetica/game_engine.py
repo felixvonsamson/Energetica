@@ -32,7 +32,7 @@ class GameEngine(object):
     def __init__(self) -> None:
         """Initialize the game engine object."""
         if TYPE_CHECKING:
-            from energetica.database.engine_data import EmissionData
+            from energetica.database.emission_data import EmissionData
         Path("instance").mkdir(exist_ok=True)
         self.config = config
         self.const_config = const_config
@@ -90,8 +90,8 @@ class GameEngine(object):
         instance_uuid: str | None = None,
     ) -> None:
         """Initialize the instance data / the GameEngine members."""
-        from energetica.database.engine_data import EmissionData
-        from energetica.database.map import HexTile
+        from energetica.database.emission_data import EmissionData
+        from energetica.database.map.hex_tile import HexTile
         from energetica.database.messages import Chat
         from energetica.utils.climate_helpers import data_init_climate
 

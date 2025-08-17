@@ -5,8 +5,7 @@ from typing import Iterable
 import pytest
 
 from energetica import create_app
-from energetica.utils.auth import generate_password_hash
-from energetica.database.map import HexTile
+from energetica.database.map.hex_tile import HexTile
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.enums import ControllableFacilityType, FunctionalFacilityType, ProjectStatus, TechnologyType, WorkerType
@@ -18,6 +17,7 @@ from energetica.utils.assets import (
     queue_project,
     toggle_pause_project,
 )
+from energetica.utils.auth import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 
 
