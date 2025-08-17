@@ -15,8 +15,8 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
-from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,

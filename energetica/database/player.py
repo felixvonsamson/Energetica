@@ -21,7 +21,7 @@ from energetica.database.engine_data.cumulative_emissions_data import Cumulative
 from energetica.database.messages import Chat, Notification
 from energetica.database.network_prices import NetworkPrices
 from energetica.database.ongoing_project import OngoingProject
-from energetica.database.shipment import OngoingShipment
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
