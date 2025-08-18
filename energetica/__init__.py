@@ -198,8 +198,9 @@ def create_app(
             if not simulate_file:
 
                 def job_listener(event: JobExecutionEvent) -> None:
-                    """This function allows to restart normal server behavior after resimulation has finished successfully."""
+                    """This function allows to restart normal server behavior after re-simulation has finished successfully."""
                     if event.job_id != "replay" or not event.retval:
+                        # The simulation was not successful, stop here.
                         return
                     add_ticks_clock()
                     engine.serve_local = False
