@@ -44,9 +44,10 @@ def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: An
         return _simulate(*simulate_args, **simulate_kwargs)
     else:
         with cProfile.Profile() as profile:
-            return _simulate(*simulate_args, **simulate_kwargs)
+            retval = _simulate(*simulate_args, **simulate_kwargs)
             stats = pstats.Stats(profile)
         stats.sort_stats(pstats.SortKey.CUMULATIVE).print_stats(30)
+        return retval
 
 
 def _simulate(
