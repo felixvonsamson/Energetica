@@ -7,7 +7,7 @@ Defines utility functions for cookie based auth and endpoints for sign-in and si
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse
 
 from energetica.database.player import Player
 from energetica.game_error import GameError, GameExceptionType
@@ -74,11 +74,11 @@ def signup(request: Request, request_data: SignupRequest) -> Response:
     )
 
 
-@router.post("/change-password", tags=["Authentication"])
+@router.post("/change-password", tags=["Authentication"], status_code=status.HTTP_204_NO_CONTENT)
 def change_password(
     player: Annotated[Player, Depends(get_current_user)],
     request_data: ChangePasswordRequest,
-) -> Response:
+) -> None:
     """Change the password for the current user."""
     old_password = request_data.old_password
     new_password = request_data.new_password
@@ -86,5 +86,3 @@ def change_password(
         raise GameError(GameExceptionType.OLD_PASSWORD_INCORRECT)
     player.pwhash = generate_password_hash(new_password)
     engine.log(f"{player.username} changed their password")
-    return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
-    # TODO(mglst): as this is an API, the client should do the redirect on the browser side, not the API
