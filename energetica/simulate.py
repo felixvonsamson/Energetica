@@ -39,7 +39,8 @@ def verify() -> None:
     assert True
 
 
-def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: Any) -> None:
+def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: Any) -> bool:
+    """Wrapper around _simulate. Allows to run profiling if requested."""
     if not profiling:
         return _simulate(*simulate_args, **simulate_kwargs)
     else:
