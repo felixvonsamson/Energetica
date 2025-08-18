@@ -18,7 +18,7 @@ Frontend: Jinja, JS, and p5.js
 ## Running a Local Instance
 
 <!-- Using StrEnum requires >=3.11 -->
-Make sure you have Python version 3.11 or 3.12 installed.
+Make sure you have Python version 3.11, 3.12, or 3.13 installed.
 
 Clone the repository:
 
