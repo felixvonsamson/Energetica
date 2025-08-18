@@ -11,7 +11,7 @@ Thanks for your interest in improving Energetica – an educational strategy gam
 6. Run backend: `python main.py --env dev`
 7. Run tests: `pytest`
 8. Lint & format: `ruff check .` (and other tooling below)
-9. Commit following Conventional Commit style (see below) and open a Pull Request (PR).
+9. Commit following Conventional Commit style (see below) and open a Pull Request (PR) against `dev`.
 
 ## Code of Conduct
 Be respectful, constructive, and empathetic. Disagreement is fine; disrespect is not. If in doubt, be kind. Harassment or exclusionary behavior is not tolerated. Report concerns privately to the maintainers.
@@ -40,7 +40,8 @@ All contributions are made under the existing project license (AGPL-3.0+). By su
 ## Branching & Workflow
 - Default branch: `dev`
 - Use short-lived feature branches: `feature/<summary>`, `fix/<issue-id>-<summary>`, `refactor/...`, `docs/...`
-- For larger restructuring (e.g. current `refactor/restructure-and-rename-databse`) sync frequently with `dev` to reduce merge pain.
+- For larger restructuring (e.g. current `refactor/restructure-and-rename-database`) sync frequently with `dev` to reduce merge pain.
+- All PRs should target `dev` (only merge `dev` -> `main` during release workflow).
 - Keep PRs focused and reasonably small (< ~600 LOC diff when possible).
 
 ## Commit Message Guidelines
@@ -88,7 +89,7 @@ npm install
 npm run dev  # Vite dev server
 npm run build
 ```
-The new React frontend is new and in active development.
+The React frontend is in active development; some legacy vanilla JS / p5.js + Jinja pieces may remain during migration.
 
 ## Testing
 We use `pytest`.
@@ -117,15 +118,22 @@ Configured via `pyproject.toml`.
 ruff check .
 ruff fix .  # to apply safe fixes
 ```
-- isort (if needed separately):
+(If using Ruff's formatter:)
 ```
-isort .
+ruff format .
 ```
 - Pylint (optional deeper static analysis): run in editors / CI if configured.
 - Max line length: 120
 - Docstring style: If docstring fits on one line, open & close quotes on that line; otherwise use multi-line form with triple quotes on their own lines.
 - JS: use VS Code default formatter / Prettier (see `.prettierrc.json`)
 - Jinja: use `djLint` for template formatting.
+
+<!-- (Optional) If a `.pre-commit-config.yaml` exists:
+```
+pip install pre-commit
+pre-commit install
+```
+This runs linters/formatters automatically before each commit. -->
 
 ## Database / State Notes
 Runtime state lives under `instance/` and `checkpoints/`. Never commit these. To reset quickly:
@@ -154,7 +162,7 @@ Use profiling with `--simulate_profiling` and investigate hotspots before optimi
 
 ## Pull Request Checklist
 Before opening a PR, ensure:
-- [ ] Branch up to date with `main`
+- [ ] Branch up to date with `dev` (or with `main` only when preparing a release)
 - [ ] Tests pass locally (`pytest`)
 - [ ] New/changed code is covered by tests
 - [ ] Lint passes (`ruff check .`)
@@ -169,8 +177,8 @@ Before opening a PR, ensure:
 4. Squash or rebase if requested; default merge strategy decided by maintainers.
 
 ## Security / Responsible Disclosure
-If you find a potential security, privacy, or integrity issue (e.g., auth bypass, data corruption vector), DO NOT open a public issue. Instead, contact the maintainers privately (add email or contact channel here if available). Provide steps to reproduce and impact summary.
-
+If you find a potential security, privacy, or integrity issue (e.g., auth bypass, data corruption vector), DO NOT open a public issue. Instead, contact the maintainers privately. Provide steps to reproduce and impact summary.
+<!-- (TODO: add security contact email or private channel here) -->
 ## Documentation Improvements
 Small fixes (typos, clarity) are welcome. For conceptual docs (architecture, gameplay mechanics), open an issue first if the scope is broad.
 
