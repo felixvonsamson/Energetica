@@ -19,7 +19,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any, AsyncGenerator, Literal, cast
 
-from apscheduler.events import EVENT_JOB_EXECUTED
+from apscheduler.events import EVENT_JOB_EXECUTED, JobExecutionEvent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from pydantic import TypeAdapter
@@ -197,7 +197,7 @@ def create_app(
             )
             if not simulate_file:
 
-                def job_listener(event: Any) -> None:
+                def job_listener(event: JobExecutionEvent) -> None:
                     if event.job_id != "replay" or not event.retval:
                         return
                     add_ticks_clock()
