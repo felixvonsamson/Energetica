@@ -41,10 +41,10 @@ def verify() -> None:
 
 def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: Any) -> None:
     if not profiling:
-        _simulate(*simulate_args, **simulate_kwargs)
+        return _simulate(*simulate_args, **simulate_kwargs)
     else:
         with cProfile.Profile() as profile:
-            _simulate(*simulate_args, **simulate_kwargs)
+            return _simulate(*simulate_args, **simulate_kwargs)
             stats = pstats.Stats(profile)
         stats.sort_stats(pstats.SortKey.CUMULATIVE).print_stats(30)
 
