@@ -5,7 +5,7 @@
     overflow: auto;
     display: flex;
     flex-direction: column;
-    background-color: var(--color-green);
+    background-color: var(--color-pine-light);
     padding: 10px;
     gap: 10px;
     border-right: 1px solid var(--color-pine);
@@ -70,6 +70,6 @@
 }
 
 .fancy-title {
-    font-family: 'Expletus Sans', cursive;
+    font-family: "Expletus Sans", cursive;
     color: var(--color-pine-darker);
 }
