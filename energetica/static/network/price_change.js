@@ -210,11 +210,13 @@ function change_prices() {
             "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-    }).then((response) => {
+    }).then(async (response) => {
         if (response.ok) {
             addToast("Changes saved");
             return;
         }
+        const body = await response.json();
+        if (catchValidationErrors(response, body)) return;
         addError("This is a frustrating message telling you that something went wrong but not what");
     })
         .catch((error) => {
