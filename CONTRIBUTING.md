@@ -13,19 +13,20 @@ Thanks for your interest in improving Energetica – an educational strategy gam
 8. Lint & format: `ruff check .` (and other tooling below)
 9. Commit following Conventional Commit style (see below) and open a Pull Request (PR) against `dev`.
 
-## Code of Conduct
-Be respectful, constructive, and empathetic. Disagreement is fine; disrespect is not. If in doubt, be kind. Harassment or exclusionary behavior is not tolerated. Report concerns privately to the maintainers.
+## Community Standards
+Energetica welcomes contributors of all backgrounds. Please use inclusive, respectful language and provide constructive feedback. Harassment, discrimination, or inappropriate conduct will not be tolerated. If you encounter any issues, report them privately to the maintainers.
 
 ## Licensing
 All contributions are made under the existing project license (AGPL-3.0+). By submitting a PR you agree your work will be licensed accordingly. Ensure you only contribute code you are allowed to license under AGPL.
 
 ## Project Architecture (High-Level)
-- `main.py`: Entry point, launches FastAPI (via Uvicorn) with game config encoded in `ENERGETICA_APP_CONFIG`.
-- `energetica/`: Core backend modules (game engine, API layer, database models, config, utilities).
-- `frontend/`: Static & build assets (Vite + vanilla JS / p5.js + Jinja templating).
-- `tests/`: Split into `unit/` and `integration/` suites. Add new tests accordingly.
-- `map_generation/`: Tools to generate map layouts.
-- `instance/`: Runtime state & checkpoints (do not commit). Can be safely removed with `--rm_instance` flag or dedicated task.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for diagrams, module interactions, and engine data flow.
+- `main.py`: Entry point launching the API + game tick loop.
+- `energetica/`: Core engine logic & API.
+- `frontend/`: Vite/JS frontend (migration in progress).
+- `tests/`: Unit vs integration suites.
+- `map_generation/`: Map layout tooling.
+- `instance/`: Runtime state (never commit).
 
 ## Issues & Feature Requests
 - Search existing issues first to avoid duplicates.
@@ -147,8 +148,7 @@ When replaying logs:
 ```
 python main.py --env dev --simulate_file actions_history.log --clock_time 1 --in_game_seconds_per_tick 3600
 ```
-Optional early stops and checkpoints: `--simulate_till`, `--simulate_checkpoint_every_k_ticks`, `--simulate_checkpoint_ticks 100 500 1000`.
-Use profiling with `--simulate_profiling` and investigate hotspots before optimizing.
+Checkpoint & profiling flags: `--simulate_till`, `--simulate_checkpoint_every_k_ticks`, `--simulate_checkpoint_ticks 100 500 1000`, `--simulate_profiling`.
 
 ## Adding / Modifying Game Logic
 1. Locate relevant engine modules under `energetica/` (e.g. production updates, climate events, technology effects).
@@ -183,23 +183,15 @@ If you find a potential security, privacy, or integrity issue (e.g., auth bypass
 Small fixes (typos, clarity) are welcome. For conceptual docs (architecture, gameplay mechanics), open an issue first if the scope is broad.
 
 ## Style Summary
+Condensed overview—see full guidelines in [STYLEGUIDE.md](STYLEGUIDE.md):
 - Python: explicit, typed where practical (ruff enforces selected ANN rules)
-- Avoid premature optimization; favor clarity
-- Keep functions focused; consider splitting if > ~80 lines or handling many concerns
-- Avoid cyclic imports; restructure modules or use local imports when necessary
+- Keep functions focused; consider splitting if > ~80 lines or many concerns
 
 ## Adding Dependencies
 - Justify the need (size, maintenance, security)
 - Prefer widely used, actively maintained libraries
 - Update `requirements.txt` and pin if reproducibility becomes an issue (currently unpinned)
 - Avoid heavy frameworks for small utilities
-
-## Roadmap Ideas (Open for Contribution)
-- Improved simulation tooling & metrics output
-- Enhanced frontend UI/UX polish
-- Achievement / progression balancing
-- Performance instrumentation & profiling dashboards
-- Better save/load & migration tooling
 
 ## Getting Help
 Open a discussion / issue with: context, what you tried, logs / tracebacks, and environment info. Be concise but complete.
