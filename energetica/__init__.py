@@ -223,6 +223,7 @@ def create_app(
             hashed_password = generate_password_hash(admin_password)
             new_admin = Player(username="admin", pwhash=hashed_password, is_admin=True)
             engine.log(f"Admin account created with username '{new_admin.username}'")
+            # TODO(mglst): I think it would make more sense to move this under the instance/ folder
             with open("admin_accounts.txt", "w", encoding="utf-8") as file:
                 file.write(f"{new_admin.username},{admin_password}\n")
 
