@@ -131,11 +131,12 @@ def create_app(
             assert uuid.UUID(actions[0].instance_uuid) == engine.uuid
     else:
         if actions:
-            kwargs: dict = actions[0].model_dump()
-            kwargs.pop("action_type")
-            assert kwargs["game_version"] == __version__, (
+            assert actions[0].action_type == "init_engine"
+            assert actions[0].game_version == __version__, (
                 "Game version mismatch. This actions history is not compatible with this version of the game."
             )
+            kwargs: dict = actions[0].model_dump()
+            kwargs.pop("action_type")
             engine.init_instance(**kwargs)
         else:
             engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, __version__, disable_signups)
