@@ -1,3 +1,6 @@
+"""Routers for app services."""
+# TODO(mglst): move to energetica/routers/
+
 import base64
 from pathlib import Path
 from typing import cast

@@ -17,7 +17,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from typing import Any, AsyncGenerator, Literal, cast
+from typing import AsyncGenerator, Literal, cast
 
 from apscheduler.events import EVENT_JOB_EXECUTED, JobExecutionEvent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
