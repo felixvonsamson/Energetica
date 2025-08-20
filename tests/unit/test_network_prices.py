@@ -31,7 +31,8 @@ def test_seed_determinism() -> None:
             import json
             from energetica import engine
             from energetica.database.player import Player
-            engine.init_instance(30, 3600, 0, env="dev")
+            from energetica import __version__
+            engine.init_instance(30, 3600, 0, env="dev", game_version=__version__)
             
             engine.random_seed = {seed}
             player = Player("player1", "pwhash")

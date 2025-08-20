@@ -1,7 +1,7 @@
 """Initializes the app and the game engine."""
 
-__version__ = "0.11.1-b"
-__release_date__ = "03/02/2025"
+__version__ = "0.11.2-b"
+__release_date__ = "20/08/2025"
 
 import asyncio
 import glob
@@ -131,13 +131,15 @@ def create_app(
             assert uuid.UUID(actions[0].instance_uuid) == engine.uuid
     else:
         if actions:
+            assert actions[0].action_type == "init_engine"
+            assert actions[0].game_version == __version__, (
+                "Game version mismatch. This actions history is not compatible with this version of the game."
+            )
             kwargs: dict = actions[0].model_dump()
             kwargs.pop("action_type")
-            # datetime.fromisoformat
-            kwargs["start_date"] = kwargs["start_date"]
             engine.init_instance(**kwargs)
         else:
-            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, disable_signups)
+            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, __version__, disable_signups)
 
     action_id_by_tick = {
         action.total_t: action_id for action_id, action in enumerate(actions) if action.action_type == "tick"
