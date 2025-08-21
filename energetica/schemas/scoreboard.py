@@ -1,3 +1,5 @@
+"""Schemas for API for the scoreboard."""
+
 from __future__ import annotations
 
 from pydantic import BaseModel

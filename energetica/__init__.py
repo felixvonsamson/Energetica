@@ -17,7 +17,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from typing import Any, AsyncGenerator, Literal, cast
+from typing import AsyncGenerator, Literal, cast
 
 from apscheduler.events import EVENT_JOB_EXECUTED, JobExecutionEvent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -87,8 +87,9 @@ def create_app(
     if simulate_file:
         # Simulate the game run from a file.
         Path("checkpoints/simulation").mkdir(exist_ok=True)
+        TypeAdapterAction = TypeAdapter(Action)
         with open(simulate_file, "r", encoding="utf-8") as file:
-            actions = cast(list[Action], [TypeAdapter(Action).validate_json(line) for line in file])
+            actions = cast(list[Action], [TypeAdapterAction.validate_json(line) for line in file])
         assert actions[0].action_type == "init_engine"
 
         checkpoints = {

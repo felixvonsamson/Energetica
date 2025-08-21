@@ -110,6 +110,21 @@ function catchGameErrors(response, body) {
             // POST: /api/v1/chats
             addError("A chat with these participants already exists.");
             break;
+        case "HasDependents":
+            // POST: /${project_id}:cancel
+            // dependents = []
+            // priority_list = player.projects_by_priority[project.project_type.worker_type]
+            // project_priority_index = priority_list.index(project)
+            // for candidate_dependent in priority_list[project_priority_index + 1 :]:
+            //     if project in candidate_dependent.prerequisites:
+            //         dependents.append([candidate_dependent.project_type, candidate_dependent.level])
+            const dependents = body.kwargs.dependents;
+            const formattedDependents = dependents.map(dep => `${dep[0]} lvl ${dep[1]}`).join("<br>");
+            const plural = dependents.length > 1;
+            addError(`Cannot cancel this project as ${plural ? "" : "an"}other project${plural ? "s" : ""} depend${plural ? "" : "s"} on it.<br>
+                The following project${plural ? "s" : ""} must be cancelled first:<br>
+                ${formattedDependents}`);
+            break;
         default:
             addError(`Uncaught error: ${body.game_exception_type}`);
     }

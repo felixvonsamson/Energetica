@@ -1,3 +1,5 @@
+"""Schemas for API for game achievements."""
+
 from __future__ import annotations
 
 from pydantic import BaseModel
