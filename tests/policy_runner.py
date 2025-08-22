@@ -1,5 +1,6 @@
 """Run a list of policies with one player per policy."""
 
+from energetica import __version__
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
 from energetica.enums import Renewable
@@ -11,7 +12,7 @@ from tests.policy import Policy
 
 def run_policies(policies: list[Policy], ticks_to_run: int) -> list[Player]:
     """Run a list of policies with one player per policy."""
-    engine.init_instance(30, 3600, 0, env="dev")
+    engine.init_instance(30, 3600, 0, env="dev", game_version=__version__)
     players = [Player(f"player_{i}", "password_hash") for i in range(len(policies))]
     for player in players:
         # tile = HexTile.getitem(player.id)

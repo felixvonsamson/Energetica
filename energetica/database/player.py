@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Iterable
 
 from pywebpush import WebPushException, webpush
 
-from energetica.config.achievements import achievements
+from energetica.config.achievements import achievements, format_power, format_energy, format_mass
 from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data.capacity_data import CapacityData
@@ -442,18 +442,29 @@ class Player(DBModel):
             ):
                 self.achievements[achievement] += 1
                 self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
-                message = achievement_data["message"]
+                # Determine which format function to use
+                metric = achievement_data["metric"]
+                milestone_value = achievement_data["milestones"][current_lvl]
+                if metric in ("max_power_consumption",):
+                    formatted_value = format_power(milestone_value)
+                elif metric in ("max_energy_stored", "imported_energy", "exported_energy"):
+                    formatted_value = format_energy(milestone_value)
+                elif metric in ("extracted_resources", "sold_resources", "bought_resources"):
+                    formatted_value = format_mass(milestone_value)
+                else:
+                    formatted_value = milestone_value  # fallback for integer values
+
                 if achievement == "network":
-                    message = message.format(reward=achievement_data["rewards"][current_lvl])
+                    message = achievement_data["message"].format(reward=achievement_data["rewards"][current_lvl])
                 elif "comparisons" in achievement_data:
-                    message = message.format(
-                        value=achievement_data["milestones"][current_lvl],
+                    message = achievement_data["message"].format(
+                        value=formatted_value,
+                        comparison=achievement_data.get("comparisons", [""])[current_lvl],
                         reward=achievement_data["rewards"][current_lvl],
-                        comparison=achievement_data["comparisons"][current_lvl],
                     )
                 else:
-                    message = message.format(
-                        value=achievement_data["milestones"][current_lvl],
+                    message = achievement_data["message"].format(
+                        value=formatted_value,
                         reward=achievement_data["rewards"][current_lvl],
                     )
                 self.notify("Achievement", message)
@@ -477,8 +488,9 @@ class Player(DBModel):
         ):
             self.achievements["technology"] += 1
             self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
+            formatted_value = achievement_data["milestones"][current_lvl]
             message = achievements["technology"]["message"].format(
-                value=achievement_data["milestones"][current_lvl],
+                value=formatted_value,
                 reward=achievements["technology"]["rewards"][current_lvl],
             )
             self.notify("Achievement", message)
@@ -494,8 +506,14 @@ class Player(DBModel):
             ):
                 self.achievements[achievement] += 1
                 self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
+                metric = achievement_data["metric"]
+                milestone_value = achievement_data["milestones"][current_lvl]
+                if metric in ("sold_resources", "bought_resources"):
+                    formatted_value = format_mass(milestone_value)
+                else:
+                    formatted_value = milestone_value
                 message = achievement_data["message"].format(
-                    value=achievement_data["milestones"][current_lvl],
+                    value=formatted_value,
                     reward=achievement_data["rewards"][current_lvl],
                 )
                 self.notify("Achievement", message)

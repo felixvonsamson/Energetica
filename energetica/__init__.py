@@ -1,7 +1,7 @@
 """Initializes the app and the game engine."""
 
-__version__ = "0.11.1-b"
-__release_date__ = "03/02/2025"
+__version__ = "0.11.2-b"
+__release_date__ = "21/08/2025"
 
 import asyncio
 import glob
@@ -17,9 +17,9 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from typing import Any, AsyncGenerator, Literal, cast
+from typing import AsyncGenerator, Literal, cast
 
-from apscheduler.events import EVENT_JOB_EXECUTED
+from apscheduler.events import EVENT_JOB_EXECUTED, JobExecutionEvent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from pydantic import TypeAdapter
@@ -87,8 +87,9 @@ def create_app(
     if simulate_file:
         # Simulate the game run from a file.
         Path("checkpoints/simulation").mkdir(exist_ok=True)
+        TypeAdapterAction = TypeAdapter(Action)
         with open(simulate_file, "r", encoding="utf-8") as file:
-            actions = cast(list[Action], [TypeAdapter(Action).validate_json(line) for line in file])
+            actions = cast(list[Action], [TypeAdapterAction.validate_json(line) for line in file])
         assert actions[0].action_type == "init_engine"
 
         checkpoints = {
@@ -131,13 +132,15 @@ def create_app(
             assert uuid.UUID(actions[0].instance_uuid) == engine.uuid
     else:
         if actions:
+            assert actions[0].action_type == "init_engine"
+            assert actions[0].game_version == __version__, (
+                "Game version mismatch. This actions history is not compatible with this version of the game."
+            )
             kwargs: dict = actions[0].model_dump()
             kwargs.pop("action_type")
-            # datetime.fromisoformat
-            kwargs["start_date"] = kwargs["start_date"]
             engine.init_instance(**kwargs)
         else:
-            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, disable_signups)
+            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, __version__, disable_signups)
 
     action_id_by_tick = {
         action.total_t: action_id for action_id, action in enumerate(actions) if action.action_type == "tick"
@@ -197,8 +200,10 @@ def create_app(
             )
             if not simulate_file:
 
-                def job_listener(event: Any) -> None:
+                def job_listener(event: JobExecutionEvent) -> None:
+                    """This function allows to restart normal server behavior after re-simulation has finished successfully."""
                     if event.job_id != "replay" or not event.retval:
+                        # The simulation was not successful, stop here.
                         return
                     add_ticks_clock()
                     engine.serve_local = False
@@ -221,6 +226,7 @@ def create_app(
             hashed_password = generate_password_hash(admin_password)
             new_admin = Player(username="admin", pwhash=hashed_password, is_admin=True)
             engine.log(f"Admin account created with username '{new_admin.username}'")
+            # TODO(mglst): I think it would make more sense to move this under the instance/ folder
             with open("admin_accounts.txt", "w", encoding="utf-8") as file:
                 file.write(f"{new_admin.username},{admin_password}\n")
 

@@ -39,14 +39,20 @@ def verify() -> None:
     assert True
 
 
-def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: Any) -> None:
+def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: Any) -> bool:
+    """
+    Wrapper around _simulate. Allows to run profiling if requested.
+
+    Returns true if the simulation was successful, false otherwise.
+    """
     if not profiling:
-        _simulate(*simulate_args, **simulate_kwargs)
+        return _simulate(*simulate_args, **simulate_kwargs)
     else:
         with cProfile.Profile() as profile:
-            _simulate(*simulate_args, **simulate_kwargs)
+            retval = _simulate(*simulate_args, **simulate_kwargs)
             stats = pstats.Stats(profile)
         stats.sort_stats(pstats.SortKey.CUMULATIVE).print_stats(30)
+        return retval
 
 
 def _simulate(
