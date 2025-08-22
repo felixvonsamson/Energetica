@@ -1,3 +1,5 @@
+"""Schemas for API routes for the daily quiz."""
+
 from typing import Literal
 
 from pydantic import BaseModel
