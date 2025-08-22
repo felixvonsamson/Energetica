@@ -1,8 +1,5 @@
-"""
-Legacy HTTP API routes.
-
-These are being migrated to `energetica/routers/<xyz>.py`
-"""
+"""Legacy HTTP API routes."""
+# TODO(mglst): migrate to `energetica/routers/<xyz>.py`
 
 import pickle
 from datetime import datetime
@@ -13,12 +10,12 @@ import numpy as np
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-from energetica.utils.auth import get_current_user
 from energetica.config.assets import wind_power_curve
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
+from energetica.utils.auth import get_current_user
 
 # TODO: migrate all these routes to native FastAPI routes
 todo_router = APIRouter(prefix="", tags=["Flask Migration"])

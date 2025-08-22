@@ -1,3 +1,6 @@
+"""Routes for app services."""
+# TODO(mglst): migrate to `energetica/routers/<xyz>.py`
+
 import base64
 from pathlib import Path
 from typing import cast
