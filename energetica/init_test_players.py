@@ -1,10 +1,9 @@
 """Module to initialize the database with test players and networks."""
 
-from energetica.utils.auth import generate_password_hash
-from energetica.database.map import HexTile
+from energetica.database.map.hex_tile import HexTile
 from energetica.database.network import Network
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
-from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -20,6 +19,7 @@ from energetica.enums import (
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.utils.assets import finish_project, queue_project
+from energetica.utils.auth import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
 

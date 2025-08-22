@@ -7,8 +7,8 @@ from energetica import production_update
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.ongoing_project import OngoingProject
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
-from energetica.database.shipment import OngoingShipment
 from energetica.enums import StorageFacilityType
 from energetica.globals import engine
 from energetica.schemas.simulate import TickAction

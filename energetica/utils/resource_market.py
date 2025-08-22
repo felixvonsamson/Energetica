@@ -2,9 +2,9 @@
 
 import math
 
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.database.shipment import OngoingShipment
 from energetica.enums import Fuel
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine

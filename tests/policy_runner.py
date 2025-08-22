@@ -1,7 +1,7 @@
 """Run a list of policies with one player per policy."""
 
 from energetica import __version__
-from energetica.database.map import HexTile
+from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
 from energetica.enums import Renewable
 from energetica.globals import engine
