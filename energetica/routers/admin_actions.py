@@ -1,4 +1,4 @@
-"""roots for admin actions."""
+"""routes for admin actions."""
 
 from __future__ import annotations
 

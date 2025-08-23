@@ -79,21 +79,18 @@ function subscribeUserToPush() {
     }).then(function (subscription) {
 
         // Send subscription to your server
-        fetch('/subscribe', {
+        fetch('/api/v1/browser-notifications:subscribe', {
             method: 'POST',
             body: JSON.stringify(subscription),
             headers: {
                 'Content-Type': 'application/json'
             }
         }).then((response) => {
-            response.json().then((raw_data) => {
-                let response = raw_data["response"];
-                if (response == "Subscription successful") {
-                    isSubscribed = true;
-                } else {
-                    addError("Browser notification subscription not possible");
-                }
-            });
+            if (response.ok) {
+                isSubscribed = true;
+            } else {
+                addError("Browser notification subscription failed");
+            }
         });
     }).catch(function (error) {
         console.error('Failed to subscribe user:', error);
@@ -105,7 +102,7 @@ function unsubscribeUserFromPush() {
         if (subscription) {
             subscription.unsubscribe().then(function () {
                 // notify the server about the unsubscription
-                fetch('/unsubscribe', {
+                fetch('/api/v1/browser-notifications:unsubscribe', {
                     method: 'POST',
                     body: JSON.stringify(subscription),
                     headers: {
