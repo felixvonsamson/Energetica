@@ -5,12 +5,12 @@ import { useMutation } from "@tanstack/react-query"
 import { changePassword } from "../../api/auth/auth.api";
 import { ChangePasswordRequest } from "../../api/auth/auth.types";
 import Popup from "../Popup/Popup";
+import { showToast } from "../../toast";
 
 export default function SetNewPassword() {
     const [currentPassword, setCurrentPassword] = useState("password")
     const [newPassword, setNewPassword] = useState("new-password");
     const [verifyPassword, setVerifyPassword] = useState("new-password");
-    const [matchError, setMatchError] = useState("");
 
     const mutation = useMutation({
         mutationFn: async (data: ChangePasswordRequest) => changePassword(data),
@@ -23,18 +23,12 @@ export default function SetNewPassword() {
     const handleVerifyChange = (e: { target: { value: any; }; }) => {
         const value = e.target.value;
         setVerifyPassword(value);
-
-        if (value && value !== newPassword) {
-            setMatchError("Passwords do not match");
-        } else {
-            setMatchError("");
-        }
     };
 
     const handleSubmit = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         if (newPassword !== verifyPassword) {
-            setMatchError("Passwords do not match");
+            showToast("Passwords do not match", "error");
             return;
         }
         mutation.mutate({ old_password: currentPassword, new_password: newPassword })
@@ -75,21 +69,10 @@ export default function SetNewPassword() {
                     autoComplete="new-password"
                     placeholder="Verify password"
                     value={verifyPassword}
-                    onChange={handleVerifyChange}
+                    onChange={(e) => setVerifyPassword(e.target.value)}
                     required
                     aria-describedby="verify_error"
                 />
-
-                {matchError && (
-                    <p
-                        id="verify_error"
-                        className={styles.error}
-                        role="alert"
-                    >
-                        {matchError}
-                    </p>
-                )
-                }
 
                 <div className={styles['submit-container']}>
                     <button type="submit">

@@ -29,6 +29,10 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
             console.log(body)
             throw new GameError(body.game_exception_type)
         }
+        if (res.status === 401) {
+            // TODO: redirect
+            throw new Error("Unauthorized (TODO: redirect)")
+        }
         throw new Error(`Unhandled HTTP error ${res.status}: ${res.statusText}`);
     }
 
