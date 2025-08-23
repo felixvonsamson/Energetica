@@ -4,11 +4,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.utils.auth import get_current_user
-from energetica.database.map import HexTile
+from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
 from energetica.schemas.map import HexTileOut
 from energetica.utils import map_helpers
+from energetica.utils.auth import get_current_user
 
 router = APIRouter(prefix="/map", tags=["Map"])
 
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/map", tags=["Map"])
 @router.get("")
 def get_map() -> list[HexTileOut]:
     """Get the map data."""
-    from energetica.database.map import HexTile
+    from energetica.database.map.hex_tile import HexTile
     from energetica.enums import Fuel, Renewable
 
     hex_map = HexTile.all()

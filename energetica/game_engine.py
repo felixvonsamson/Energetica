@@ -32,7 +32,7 @@ class GameEngine(object):
     def __init__(self) -> None:
         """Initialize the game engine object."""
         if TYPE_CHECKING:
-            from energetica.database.engine_data import EmissionData
+            from energetica.database.engine_data.emission_data import EmissionData
         Path("instance").mkdir(exist_ok=True)
         self.config = config
         self.const_config = const_config
@@ -85,13 +85,14 @@ class GameEngine(object):
         in_game_seconds_per_tick: int,
         random_seed: int,
         env: Literal["dev"] | Literal["prod"],
+        game_version: str,
         disable_signups: bool = False,
         start_date: datetime | None = None,
         instance_uuid: str | None = None,
     ) -> None:
         """Initialize the instance data / the GameEngine members."""
-        from energetica.database.engine_data import EmissionData
-        from energetica.database.map import HexTile
+        from energetica.database.engine_data.emission_data import EmissionData
+        from energetica.database.map.hex_tile import HexTile
         from energetica.database.messages import Chat
         from energetica.utils.climate_helpers import data_init_climate
 
@@ -109,6 +110,7 @@ class GameEngine(object):
         log_entry = InitEngineAction(
             instance_uuid=self.uuid.hex,
             env=self.env,
+            game_version=game_version,
             clock_time=self.clock_time,
             in_game_seconds_per_tick=self.in_game_seconds_per_tick,
             action_type="init_engine",

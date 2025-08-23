@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from energetica.database import DBModel
-from energetica.database.engine_data import CapacityData, CircularBufferNetwork
+from energetica.database.engine_data.capacity_data import CapacityData
+from energetica.database.engine_data.circular_buffer_network import CircularBufferNetwork
 
 if TYPE_CHECKING:
     from energetica.database.player import Player

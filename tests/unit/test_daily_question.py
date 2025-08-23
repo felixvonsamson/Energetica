@@ -1,3 +1,5 @@
+"""Unit tests for the daily quiz."""
+
 from energetica import create_app, engine
 
 

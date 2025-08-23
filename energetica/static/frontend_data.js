@@ -15,7 +15,7 @@ if (window.location.pathname != "/login" && window.location.pathname != "/sign-u
             });
     }
     if (!sessionStorage.getItem('applicationServerPublicKey')) {
-        fetch("/subscribe")
+        fetch("/api/v1/browser-notifications/vapid-public-key")
             .then((response) => response.json())
             .then((data) => {
                 sessionStorage.setItem('applicationServerPublicKey', data.public_key);

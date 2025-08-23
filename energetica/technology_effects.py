@@ -31,7 +31,7 @@ from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 
 if TYPE_CHECKING:
-    from energetica.database.map import HexTile
+    from energetica.database.map.hex_tile import HexTile
     from energetica.database.player import Player
 
 

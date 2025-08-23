@@ -4,10 +4,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from energetica.utils.auth import get_current_user
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
-from energetica.database.shipment import OngoingShipment
 from energetica.schemas.shipments import ShipmentListOut, ShipmentOut
+from energetica.utils.auth import get_current_user
 
 router = APIRouter(prefix="/shipments", tags=["Shipment"])
 

@@ -153,7 +153,7 @@ def save_as_csv(map: list[Tile], m: int) -> None:
         for tile in map:
             f.write(
                 f"{tile.q},{tile.r},{tile.solar},{tile.wind},{tile.hydro},{tile.coal * 2_000_000_000},"
-                f"{tile.gas * 600_000_000},{tile.uranium * 8_000_000},{math.floor(tile.risk * 10.9)},{tile.score}\n"
+                f"{tile.gas * 600_000_000},{tile.uranium * 8_000_000},{math.floor(tile.risk * 10.9)},{tile.score}\n",
             )
     print(f"Map {m} saved.")
 

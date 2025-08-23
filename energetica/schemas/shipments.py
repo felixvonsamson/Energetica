@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from energetica.database.shipment import OngoingShipment
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.enums import Fuel
 
 

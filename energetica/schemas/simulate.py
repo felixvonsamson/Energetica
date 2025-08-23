@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 class InitEngineAction(BaseModel):
     instance_uuid: str
     env: Literal["dev", "prod"]
+    game_version: str
     clock_time: int
     in_game_seconds_per_tick: int
     action_type: Literal["init_engine"]
@@ -58,7 +59,7 @@ class ApiActionResponse(BaseModel):
     payload: dict | Literal["unparsable or not JSON"]
 
 
-Method = Literal["POST", "PUT", "DELETE", "PATCH"]
+Method = Literal["POST", "PUT", "DELETE", "PATCH", "CONNECT", "HEAD", "OPTIONS", "TRACE", "GET"]
 
 ActionUnionType = InitEngineAction | CreateUserAction | TickAction | ApiAction
 Action = Annotated[ActionUnionType, Field(discriminator="action_type")]

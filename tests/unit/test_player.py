@@ -1,7 +1,9 @@
+"""Tests for the Player class."""
+
 from energetica import create_app
-from energetica.utils.auth import generate_password_hash
-from energetica.database.map import HexTile
+from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
+from energetica.utils.auth import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 
 

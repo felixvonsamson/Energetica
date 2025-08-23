@@ -1,5 +1,4 @@
 """Module for the `HexTile` class, which contains resource information, and which makes up the map."""
-# TODO(mglst): rename this file to `hex_tile.py`
 
 from __future__ import annotations
 
