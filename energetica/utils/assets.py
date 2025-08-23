@@ -312,6 +312,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
             engine.log(f"Emergency power steam engine created for {player.username}.")
     player.capacities.update(player, facility.facility_type)
     engine.config.update_config_for_user(player)
+    invalidate_data_on_project_update(player, facility.facility_type)
 
 
 def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str) -> None:
@@ -415,7 +416,7 @@ def queue_project(
     return new_construction
 
 
-def invalidate_data_on_project_update(player: Player, asset_type: str) -> None:
+def invalidate_data_on_project_update(player: Player, asset_type: ProjectType) -> None:
     """Check for data page invalidation when project has been queued or cancelled."""
     if asset_type in {
         "watermill",
