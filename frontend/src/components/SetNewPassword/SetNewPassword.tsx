@@ -4,6 +4,7 @@ import styles from "./SetNewPassword.module.css";
 import { useMutation } from "@tanstack/react-query"
 import { changePassword } from "../../api/auth/auth.api";
 import { ChangePasswordRequest } from "../../api/auth/auth.types";
+import Popup from "../Popup/Popup";
 
 export default function SetNewPassword() {
     const [currentPassword, setCurrentPassword] = useState("password")
@@ -40,60 +41,62 @@ export default function SetNewPassword() {
     };
 
     return (
-        <form className={styles['set-new-password-container']} onSubmit={handleSubmit}>
-            <label htmlFor="old_password">Current password</label>
-            <input
-                type="password"
-                id="old_password"
-                name="current-password"
-                autoComplete="current-password"
-                placeholder="Current password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-            />
+        <Popup>
+            <form className={styles['set-new-password-container']} onSubmit={handleSubmit}>
+                <label htmlFor="old_password">Current password</label>
+                <input
+                    type="password"
+                    id="old_password"
+                    name="current-password"
+                    autoComplete="current-password"
+                    placeholder="Current password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                />
 
-            <label htmlFor="new_password">New password</label>
-            <input
-                type="password"
-                id="new_password"
-                name="new-password"
-                autoComplete="new-password"
-                placeholder="New password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-            />
+                <label htmlFor="new_password">New password</label>
+                <input
+                    type="password"
+                    id="new_password"
+                    name="new-password"
+                    autoComplete="new-password"
+                    placeholder="New password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                />
 
-            <label htmlFor="new_password_check">Verify password</label>
-            <input
-                type="password"
-                id="new_password_check"
-                name="new-password"
-                autoComplete="new-password"
-                placeholder="Verify password"
-                value={verifyPassword}
-                onChange={handleVerifyChange}
-                required
-                aria-describedby="verify_error"
-            />
+                <label htmlFor="new_password_check">Verify password</label>
+                <input
+                    type="password"
+                    id="new_password_check"
+                    name="new-password"
+                    autoComplete="new-password"
+                    placeholder="Verify password"
+                    value={verifyPassword}
+                    onChange={handleVerifyChange}
+                    required
+                    aria-describedby="verify_error"
+                />
 
-            {matchError && (
-                <p
-                    id="verify_error"
-                    className={styles.error}
-                    role="alert"
-                >
-                    {matchError}
-                </p>
-            )
-            }
+                {matchError && (
+                    <p
+                        id="verify_error"
+                        className={styles.error}
+                        role="alert"
+                    >
+                        {matchError}
+                    </p>
+                )
+                }
 
-            <div className={styles['submit-container']}>
-                <button type="submit">
-                    Update password
-                </button>
-            </div>
-        </form>
+                <div className={styles['submit-container']}>
+                    <button type="submit">
+                        Update password
+                    </button>
+                </div>
+            </form>
+        </Popup>
     )
 }

@@ -1,0 +1,38 @@
+.popup-backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.popup-container {
+    position: fixed;
+    z-index: 30;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+}
+
+.popup-close-button {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 38px;
+    height: 38px;
+    text-align: center;
+    line-height: 38px;
+    border-radius: 8px;
+    font-size: 30px;
+    color: #fff;
+    background-color: var(--color-pine);
+}
+
+.popup-close-button:hover {
+    background-color: var(--color-green);
+    cursor: pointer;
+    transition: background-color 0.05s ease;
+}
