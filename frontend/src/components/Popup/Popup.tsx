@@ -18,7 +18,7 @@ export default function Popup(
             {/* Trigger */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="p-2 bg-blue-500 text-white rounded"
+                className={styles['trigger-button']}
             >
                 {triggerLabel}
             </button>

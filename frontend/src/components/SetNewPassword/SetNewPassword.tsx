@@ -35,7 +35,7 @@ export default function SetNewPassword() {
     };
 
     return (
-        <Popup>
+        <Popup triggerLabel="Update password">
             <form className={styles['set-new-password-container']} onSubmit={handleSubmit}>
                 <label htmlFor="old_password">Current password</label>
                 <input

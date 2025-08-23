@@ -1,3 +1,14 @@
+.trigger-button {
+    border: none;
+    display: block;
+    color: #000;
+    background-color: #e5d9b6;
+    /* padding: 12px 24px; */
+    padding: 8px 16px;
+    /* font-size: min(20px, 3.5vh) */
+    font-size: 16px;
+}
+
 .popup-backdrop {
     position: fixed;
     inset: 0;
