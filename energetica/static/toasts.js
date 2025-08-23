@@ -1,5 +1,10 @@
 function addToast(message) {
-    document.getElementById("toasts").innerHTML += `
+    const toasts = document.getElementById("toasts");
+    if (toasts === null) {
+        console.error('Toast container not found');
+        return;
+    }
+    toasts.innerHTML += `
         <div class="toast message medium">
             <i class="fa fa-info-circle info-circle"></i>
             <div class="txt_center">${message}</div>
@@ -9,7 +14,12 @@ function addToast(message) {
 }
 
 function addError(message) {
-    document.getElementById("toasts").innerHTML += `
+    const toasts = document.getElementById("toasts");
+    if (toasts === null) {
+        console.error('Toast container not found');
+        return;
+    }
+    toasts.innerHTML += `
         <div class="toast error medium">
             <i class="fa fa-exclamation-circle exclamation-circle"></i>
             <div class="txt_center">${message}</div>
@@ -19,6 +29,7 @@ function addError(message) {
 }
 
 let isSubscribed = false;
+/** @type {ServiceWorkerRegistration | null} */
 let swRegistration = null;
 
 
@@ -32,13 +43,17 @@ if ('serviceWorker' in navigator && 'PushManager' in window) {
         });
 } else {
     const browserNotification = document.getElementById('web_push_notification_switch');
-    browserNotification.innerHTML = "Browser notifications not supported";
+    if (browserNotification) {
+        browserNotification.innerHTML = "Browser notifications not supported";
+    }
 }
 
 function update_switch() {
+    /** @type {HTMLInputElement | null} */
+    // @ts-ignore
     const checkbox = document.getElementById('web_push_notifications-checkbox');
 
-    if (checkbox == null) {
+    if (checkbox === null) {
         return;
     }
     checkbox.addEventListener('change', function () {
@@ -48,7 +63,10 @@ function update_switch() {
             unsubscribeUserFromPush();
         }
     });
-
+    if (swRegistration == null) {
+        console.error('Service Worker registration not ready');
+        return;
+    }
     swRegistration.pushManager.getSubscription()
         .then(function (subscription) {
             isSubscribed = !(subscription === null);
@@ -63,7 +81,9 @@ function requestNotificationPermission() {
         if (permission === 'granted') {
             subscribeUserToPush();
             let notification_settings = document.getElementById('notification_settings_list');
-            notification_settings.classList.remove('collapsed');
+            if (notification_settings) {
+                notification_settings.classList.remove('collapsed');
+            }
         }
     });
 }
@@ -72,12 +92,14 @@ function subscribeUserToPush() {
     const publicVapidKey = sessionStorage.getItem('applicationServerPublicKey');
     const convertedVapidKey = urlBase64ToUint8Array(publicVapidKey);
 
+    if (swRegistration === null) {
+        console.error('Service Worker registration not ready');
+        return;
+    }
     swRegistration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: convertedVapidKey
-
     }).then(function (subscription) {
-
         // Send subscription to your server
         fetch('/api/v1/browser-notifications:subscribe', {
             method: 'POST',
@@ -98,6 +120,10 @@ function subscribeUserToPush() {
 }
 
 function unsubscribeUserFromPush() {
+    if (swRegistration === null) {
+        console.error('Service Worker registration not ready');
+        return;
+    }
     swRegistration.pushManager.getSubscription().then(function (subscription) {
         if (subscription) {
             subscription.unsubscribe().then(function () {
@@ -110,7 +136,9 @@ function unsubscribeUserFromPush() {
                     }
                 });
                 let notification_settings = document.getElementById('notification_settings_list');
-                notification_settings.classList.add('collapsed');
+                if (notification_settings) {
+                    notification_settings.classList.add('collapsed');
+                }
             }).catch(function (error) {
                 console.error('Failed to unsubscribe user:', error);
             });

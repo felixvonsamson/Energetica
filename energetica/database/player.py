@@ -36,6 +36,7 @@ from energetica.enums import (
 )
 from energetica.globals import MAIN_EVENT_LOOP, engine
 from energetica.schemas.achievements import AchievementOut
+from energetica.schemas.browser_notifications import Subscription
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -130,7 +131,7 @@ class Player(DBModel):
 
     # Browser notifications & preferences
     # TODO(mglst): type annotation seems wrong. is it not a dictionary?
-    notification_subscriptions: list = field(default_factory=list)
+    notification_subscriptions: list[Subscription] = field(default_factory=list)
     notification_preferences: dict = field(
         default_factory=lambda: {
             "messages": True,
@@ -384,11 +385,11 @@ class Player(DBModel):
         }
         for subscription in self.notification_subscriptions:
             audience = "https://fcm.googleapis.com"
-            if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
+            if "https://updates.push.services.mozilla.com" in subscription.endpoint:
                 audience = "https://updates.push.services.mozilla.com"
             try:
                 webpush(
-                    subscription_info=subscription,
+                    subscription_info=subscription.model_dump(),
                     data=json.dumps(notification_data),
                     vapid_private_key=engine.VAPID_PRIVATE_KEY,
                     vapid_claims={"aud": audience},

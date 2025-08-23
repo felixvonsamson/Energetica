@@ -22,7 +22,7 @@ def subscribe(
     current_user: Player = Depends(get_current_user),
 ) -> None:
     """Create a new subscription."""
-    current_user.notification_subscriptions.append(subscription.model_dump())
+    current_user.notification_subscriptions.append(subscription)
 
 
 @router.post(":unsubscribe", status_code=status.HTTP_204_NO_CONTENT)
@@ -32,6 +32,6 @@ def unsubscribe(
 ) -> None:
     """Remove a subscription."""
     try:
-        current_user.notification_subscriptions.remove(subscription.model_dump())
+        current_user.notification_subscriptions.remove(subscription)
     except ValueError:
         pass
