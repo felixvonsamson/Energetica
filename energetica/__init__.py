@@ -271,7 +271,7 @@ def create_app(
 
     setup_socketio(app)
     setup_routes(app)
-    load_or_create_vapid_keys()
+    load_or_create_vapid_keys(engine)
     register_app_services(app)
 
     ssl_args = {"keyfile": None, "certfile": None}

@@ -1,16 +1,15 @@
 """Utility functions for browser notifications."""
 
-from ecdsa import NIST256p, SigningKey, VerifyingKey
-
-
 import base64
 from pathlib import Path
 from typing import cast
 
-from energetica.globals import engine
+from ecdsa import NIST256p, SigningKey, VerifyingKey
+
+from energetica.game_engine import GameEngine
 
 
-def load_or_create_vapid_keys() -> None:
+def load_or_create_vapid_keys(engine: GameEngine) -> None:
     """Load or create VAPID key pair for push notifications."""
     public_key_filepath = "instance/vapid_public_key.txt"
     private_key_filepath = "instance/vapid_private_key.txt"
