@@ -59,7 +59,7 @@ class ApiActionResponse(BaseModel):
     payload: dict | Literal["unparsable or not JSON"]
 
 
-Method = Literal["POST", "PUT", "DELETE", "PATCH"]
+Method = Literal["POST", "PUT", "DELETE", "PATCH", "CONNECT", "HEAD", "OPTIONS", "TRACE", "GET"]
 
 ActionUnionType = InitEngineAction | CreateUserAction | TickAction | ApiAction
 Action = Annotated[ActionUnionType, Field(discriminator="action_type")]
