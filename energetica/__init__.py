@@ -27,6 +27,7 @@ from pydantic import TypeAdapter
 from energetica import globals
 from energetica.game_engine import GameEngine
 from energetica.schemas.simulate import Action
+from energetica.utils.browser_notifications import load_or_create_vapid_keys
 
 engine = GameEngine()
 
@@ -270,6 +271,7 @@ def create_app(
 
     setup_socketio(app)
     setup_routes(app)
+    load_or_create_vapid_keys(engine)
     register_app_services(app)
 
     ssl_args = {"keyfile": None, "certfile": None}

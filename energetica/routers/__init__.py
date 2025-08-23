@@ -21,6 +21,7 @@ from energetica.utils.auth import get_current_user_from_request
 
 from .achievements import router as achievements_router
 from .auth import router as auth_router
+from .browser_notifications import router as browser_notifications_router
 from .chats import router as chat_router
 from .daily_quiz import router as daily_quiz_router
 from .facilities import router as facilities_router
@@ -41,6 +42,7 @@ __all__ = ["templates_router"]
 api_routers = [
     achievements_router,
     auth_router,
+    browser_notifications_router,
     chat_router,
     daily_quiz_router,
     facilities_router,
