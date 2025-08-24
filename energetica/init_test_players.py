@@ -24,21 +24,22 @@ from energetica.utils.map_helpers import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
 
 
+def add_asset(player: Player, project_type: ProjectType, n: int) -> None:
+    """Create a project that will instantly finish."""
+    for _ in range(n):
+        ongoing_project = queue_project(
+            player,
+            project_type,
+            force=True,
+            ignore_requirements_and_money=True,
+            skip_notifications=True,
+        )
+        finish_project(ongoing_project, skip_notifications=True)
+    engine.log(f"Added {n} {project_type} for {player.username}")
+
+
 def init_test_players() -> None:
     """Initialize the database with test players and networks."""
-
-    def add_asset(player: Player, project_type: ProjectType, n: int) -> None:
-        """Create a project that will instantly finish."""
-        for _ in range(n):
-            ongoing_project = queue_project(
-                player,
-                project_type,
-                force=True,
-                ignore_requirements_and_money=True,
-                skip_notifications=True,
-            )
-            finish_project(ongoing_project, skip_notifications=True)
-        engine.log(f"Added {n} {project_type} for {player.username}")
 
     def create_player(username: str, password: str, tile_id: int | None = None) -> Player:
         """Create and initialize a player."""
