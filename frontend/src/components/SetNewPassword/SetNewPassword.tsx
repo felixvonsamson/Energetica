@@ -8,16 +8,21 @@ import Popup from "../Popup/Popup";
 import { showToast } from "../../toast";
 
 export default function SetNewPassword() {
-    const [currentPassword, setCurrentPassword] = useState("password")
-    const [newPassword, setNewPassword] = useState("new-password");
-    const [verifyPassword, setVerifyPassword] = useState("new-password");
+    const [isOpen, setIsOpen] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState("")
+    const [newPassword, setNewPassword] = useState("");
+    const [verifyPassword, setVerifyPassword] = useState("");
 
     const mutation = useMutation({
         mutationFn: async (data: ChangePasswordRequest) => changePassword(data),
         onError: (error) => {
             console.error("Query failed:", error);
+            // TODO: add toast on error
+        },
+        onSuccess: (data) => {
+            showToast("Password updated successfully", "success");
+            setIsOpen(false);
         }
-        // TODO: add toast on error
     });
 
     const handleVerifyChange = (e: { target: { value: any; }; }) => {
@@ -35,7 +40,7 @@ export default function SetNewPassword() {
     };
 
     return (
-        <Popup triggerLabel="Update password">
+        <Popup isOpen={isOpen} setIsOpen={setIsOpen} triggerLabel="Update password">
             <form className={styles['set-new-password-container']} onSubmit={handleSubmit}>
                 <label htmlFor="old_password">Current password</label>
                 <input

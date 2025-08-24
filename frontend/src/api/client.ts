@@ -36,5 +36,6 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
         throw new Error(`Unhandled HTTP error ${res.status}: ${res.statusText}`);
     }
 
+    if (res.status === 204) return null as unknown as T
     return res.json() as Promise<T>
 }

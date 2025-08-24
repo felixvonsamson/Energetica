@@ -5,14 +5,16 @@ import styles from "./Popup.module.css";
 export default function Popup(
     {
         children,
+        isOpen,
+        setIsOpen,
         triggerLabel = "Open Popup"
     }: {
         children: React.ReactNode;
+        isOpen: boolean;
+        setIsOpen: (isOpen: boolean) => void;
         triggerLabel?: string
     }
 ) {
-    const [isOpen, setIsOpen] = useState(false);
-
     return (
         <>
             {/* Trigger */}
