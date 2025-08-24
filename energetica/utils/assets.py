@@ -226,8 +226,11 @@ def upgrade_facility(facility: ActiveFacility) -> None:
     if facility.decommissioning:
         raise GameError(GameExceptionType.FACILITY_IS_DECOMMISSIONING)
     facility.player.money -= upgrade_cost
-    facility.multipliers = technology_effects.current_multipliers(facility.player, facility.facility_type)
+    new_multipliers = technology_effects.current_multipliers(facility.player, facility.facility_type)
+    new_multipliers.pop("next_available_location", None)
+    facility.multipliers.update(new_multipliers)
     facility.player.capacities.update(facility.player, facility.facility_type)
+    engine.log(f"{facility.player.username} upgraded the facility {facility.facility_type}.")
 
 
 def upgrade_all_of_type(
@@ -247,6 +250,7 @@ def upgrade_all_of_type(
         raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
     for facility in facilities:
         upgrade_facility(facility)
+    engine.log(f"All facilities of type {facility_type} upgraded for {player.username}.")
 
 
 def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: bool = True) -> None:
