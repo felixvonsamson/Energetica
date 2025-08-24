@@ -22,6 +22,9 @@ export default function SetNewPassword() {
         onSuccess: (data) => {
             showToast("Password updated successfully", "success");
             setIsOpen(false);
+            setCurrentPassword("");
+            setNewPassword("");
+            setVerifyPassword("");
         }
     });
 
@@ -41,50 +44,60 @@ export default function SetNewPassword() {
 
     return (
         <Popup isOpen={isOpen} setIsOpen={setIsOpen} triggerLabel="Update password">
-            <form className={styles['set-new-password-container']} onSubmit={handleSubmit}>
-                <label htmlFor="old_password">Current password</label>
+            <form
+                className={styles['set-new-password-container']}
+                onSubmit={handleSubmit}
+                aria-label="Change password"
+            >
+                {/* <input
+                    type="text"
+                    name="username"
+                    autoComplete="username"
+                    value={"admin"} // get this from context or props
+                    style={{ display: "none" }}
+                    readOnly
+                /> */}
+                {/* <label htmlFor="old_password">Current password</label> */}
                 <input
                     type="password"
                     id="old_password"
-                    name="current-password"
+                    name="user[old_password]"
                     autoComplete="current-password"
                     placeholder="Current password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     required
                 />
-
-                <label htmlFor="new_password">New password</label>
+                {/* <label htmlFor="new_password">New password</label> */}
                 <input
                     type="password"
                     id="new_password"
-                    name="new-password"
-                    autoComplete="new-password"
+                    name="user[password]"
+                    autoComplete="off"
                     placeholder="New password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
+                    // passwordrules="minlength: 7; allowed: unicode;"
+                    aria-describedby="password-req-note-sign-in-methods"
                 />
-
-                <label htmlFor="new_password_check">Verify password</label>
+                {/* <label htmlFor="new_password_check">Verify password</label> */}
                 <input
                     type="password"
                     id="new_password_check"
-                    name="new-password"
+                    name="user[password_confirmation]"
                     autoComplete="new-password"
                     placeholder="Verify password"
                     value={verifyPassword}
                     onChange={(e) => setVerifyPassword(e.target.value)}
                     required
-                    aria-describedby="verify_error"
                 />
-
                 <div className={styles['submit-container']}>
                     <button type="submit">
                         Update password
                     </button>
                 </div>
             </form>
-        </Popup>
+        </Popup >
     )
 }

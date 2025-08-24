@@ -21,7 +21,8 @@ function handleGlobalError(error: unknown) {
     console.error("Global API error:", error);
 
     if (error instanceof GameError) {
-        showToast(`Game error: ${error.game_exception_type}`, "error");
+        // showToast(`Game error: ${error.game_exception_type}`, "error");
+        showToast(error.message, "error");
     } else if (error instanceof Error) {
         showToast(error.message, "error");
     } else {
