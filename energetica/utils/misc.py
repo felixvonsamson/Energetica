@@ -76,9 +76,9 @@ def init_array() -> list[list[float]]:
     return [[0.0] * 360 for _ in range(5)]
 
 
-def init_player_data_file(player_id: int) -> None:
-    """Initialize the past production data file for a player."""
-    past_data = {
+def empty_player_data() -> None:
+    """return an empty data structure for a new player."""
+    return {
         "revenues": {
             "industry": init_array(),
             "exports": init_array(),
@@ -108,13 +108,11 @@ def init_player_data_file(player_id: int) -> None:
             "construction": init_array(),
         },
     }
-    with open(f"instance/data/players/player_{player_id}.pck", "wb") as file:
-        pickle.dump(past_data, file)
 
 
-def init_network_data_file(network_id: int) -> None:
-    """Initialize the past production data file for a network."""
-    past_data = {
+def empty_network_data() -> None:
+    """return an empty data structure for a new network."""
+    return {
         "network_data": {
             "price": init_array(),
             "quantity": init_array(),
@@ -124,9 +122,6 @@ def init_network_data_file(network_id: int) -> None:
         "generation": {},
         "consumption": {},
     }
-    Path(f"instance/data/networks/{network_id}").mkdir(parents=True, exist_ok=True)
-    with open(f"instance/data/networks/{network_id}/time_series.pck", "wb") as file:
-        pickle.dump(past_data, file)
 
 
 def save_past_data() -> None:
@@ -149,7 +144,8 @@ def save_past_data() -> None:
             continue
         past_data = {}
         if not os.path.exists(f"instance/data/players/player_{player.id}.pck"):
-            init_player_data_file(player.id)
+            with open(f"instance/data/players/player_{player.id}.pck", "wb") as file:
+                pickle.dump(empty_player_data(), file)
         with open(
             f"instance/data/players/player_{player.id}.pck",
             "rb",
@@ -179,7 +175,9 @@ def save_past_data() -> None:
                 os.remove(os.path.join(network_dir, filename))
 
         if not os.path.exists(f"instance/data/networks/{network.id}/time_series.pck"):
-            init_network_data_file(network.id)
+            Path(f"instance/data/networks/{network.id}").mkdir(parents=True, exist_ok=True)
+            with open(f"instance/data/networks/{network.id}/time_series.pck", "wb") as file:
+                pickle.dump(empty_network_data(), file)
         past_data = {}
         with open(
             f"instance/data/networks/{network.id}/time_series.pck",
