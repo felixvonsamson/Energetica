@@ -16,6 +16,7 @@ from energetica.database.player import Player
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.utils.auth import get_current_user
+from energetica.utils.misc import empty_network_data, empty_player_data
 
 # TODO: migrate all these routes to native FastAPI routes
 todo_router = APIRouter(prefix="", tags=["Flask Migration"])
@@ -81,15 +82,21 @@ def get_chart_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa:
     total_t = engine.total_t
     rolling_history = user.rolling_history.get_data(t=total_t % 216 + 1)
     filename = f"instance/data/players/player_{user.id}.pck"
-    with open(filename, "rb") as file:
-        data = pickle.load(file)
+    if not Path(filename).is_file():
+        data = empty_player_data()
+    else:
+        with open(filename, "rb") as file:
+            data = pickle.load(file)
     concat_slices(data, rolling_history)
 
     network_data = None
     if user.network is not None:
         filename = f"instance/data/networks/{user.network.id}/time_series.pck"
-        with open(filename, "rb") as file:
-            network_data = pickle.load(file)
+        if not Path(filename).is_file():
+            network_data = empty_network_data()
+        else:
+            with open(filename, "rb") as file:
+                network_data = pickle.load(file)
         concat_slices(network_data, user.network.rolling_history.get_data(t=total_t % 216 + 1))
 
     current_climate_data = engine.current_climate_data.get_data(t=total_t % 216 + 1)
