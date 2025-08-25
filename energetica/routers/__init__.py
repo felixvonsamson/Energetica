@@ -139,6 +139,7 @@ def setup_routes(app: FastAPI):
                 k: v[0] if len(v) == 1 else v for k, v in urllib.parse.parse_qs(body_bytes.decode()).items()
             }
         else:
+            request_payload = None
             try:
                 request_payload = json.loads(body_bytes.decode())
             except Exception:
@@ -170,6 +171,7 @@ def setup_routes(app: FastAPI):
             media_type=response.media_type,
         )
 
+        response_payload = None
         try:
             response_payload = json.loads(response_body.decode())
         except Exception:

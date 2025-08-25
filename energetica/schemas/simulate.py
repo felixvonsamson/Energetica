@@ -50,13 +50,13 @@ class ApiActionRequest(BaseModel):
     endpoint: str
     method: Method
     content_type: str | None
-    payload: dict | Literal["unparsable or not JSON"]
+    payload: dict | Literal["unparsable or not JSON"] | None
 
 
 class ApiActionResponse(BaseModel):
     status_code: int
     content_type: str
-    payload: dict | Literal["unparsable or not JSON"]
+    payload: dict | Literal["unparsable or not JSON"] | None
 
 
 Method = Literal["POST", "PUT", "DELETE", "PATCH", "CONNECT", "HEAD", "OPTIONS", "TRACE", "GET"]
