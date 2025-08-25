@@ -2,6 +2,7 @@
 
 import math
 import os
+from pathlib import Path
 import pickle
 from datetime import datetime, timedelta
 
@@ -71,6 +72,63 @@ def reduce_resolution(array: list, new_values: np.ndarray) -> None:
         array[4].append(np.mean(array[3][-6:]))
 
 
+def init_array() -> list[list[float]]:
+    return [[0.0] * 360 for _ in range(5)]
+
+
+def init_player_data_file(player_id: int) -> None:
+    """Initialize the past production data file for a player."""
+    past_data = {
+        "revenues": {
+            "industry": init_array(),
+            "exports": init_array(),
+            "imports": init_array(),
+            "dumping": init_array(),
+            "climate_events": init_array(),
+        },
+        "op_costs": {
+            "steam_engine": init_array(),
+        },
+        "generation": {
+            "steam_engine": init_array(),
+            "imports": init_array(),
+        },
+        "demand": {
+            "industry": init_array(),
+            "construction": init_array(),
+            "research": init_array(),
+            "transport": init_array(),
+            "exports": init_array(),
+            "dumping": init_array(),
+        },
+        "storage": {},
+        "resources": {},
+        "emissions": {
+            "steam_engine": init_array(),
+            "construction": init_array(),
+        },
+    }
+    with open(f"instance/data/players/player_{player_id}.pck", "wb") as file:
+        pickle.dump(past_data, file)
+
+
+def init_network_data_file(network_id: int) -> None:
+    """Initialize the past production data file for a network."""
+    past_data = {
+        "network_data": {
+            "price": init_array(),
+            "quantity": init_array(),
+        },
+        "exports": {},
+        "imports": {},
+        "generation": {},
+        "consumption": {},
+    }
+    Path(f"instance/data/networks/{network_id}").mkdir(parents=True, exist_ok=True)
+    with open(f"instance/data/networks/{network_id}/time_series.pck", "wb") as file:
+        pickle.dump(past_data, file)
+
+
 def save_past_data() -> None:
     """Save the past production data to files every 216 ticks AND remove network data older than 24h."""
     # save climate data
@@ -90,6 +148,8 @@ def save_past_data() -> None:
         if player.tile is None:
             continue
         past_data = {}
+        if not os.path.exists(f"instance/data/players/player_{player.id}.pck"):
+            init_player_data_file(player.id)
         with open(
             f"instance/data/players/player_{player.id}.pck",
             "rb",
@@ -118,6 +178,8 @@ def save_past_data() -> None:
             if t_value < engine.total_t - 1440:
                 os.remove(os.path.join(network_dir, filename))
 
+        if not os.path.exists(f"instance/data/networks/{network.id}/time_series.pck"):
+            init_network_data_file(network.id)
         past_data = {}
         with open(
             f"instance/data/networks/{network.id}/time_series.pck",
@@ -192,41 +254,6 @@ def initialize_player(player: Player) -> None:
 
     add_player_to_data(player)
 
-    def init_array() -> list[list[float]]:
-        return [[0.0] * 360 for _ in range(5)]
-
-    past_data = {
-        "revenues": {
-            "industry": init_array(),
-            "exports": init_array(),
-            "imports": init_array(),
-            "dumping": init_array(),
-            "climate_events": init_array(),
-        },
-        "op_costs": {
-            "steam_engine": init_array(),
-        },
-        "generation": {
-            "steam_engine": init_array(),
-            "imports": init_array(),
-        },
-        "demand": {
-            "industry": init_array(),
-            "construction": init_array(),
-            "research": init_array(),
-            "transport": init_array(),
-            "exports": init_array(),
-            "dumping": init_array(),
-        },
-        "storage": {},
-        "resources": {},
-        "emissions": {
-            "steam_engine": init_array(),
-            "construction": init_array(),
-        },
-    }
-    with open(f"instance/data/players/player_{player.id}.pck", "wb") as file:
-        pickle.dump(past_data, file)
     player.rolling_history.add_subcategory("op_costs", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
