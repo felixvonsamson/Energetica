@@ -228,6 +228,8 @@ def upgrade_facility(facility: ActiveFacility) -> None:
     facility.player.money -= upgrade_cost
     new_multipliers = technology_effects.current_multipliers(facility.player, facility.facility_type)
     new_multipliers.pop("next_available_location", None)
+    new_multipliers.pop("hydro_price_multiplier", None)
+    new_multipliers.pop("wind_speed_multiplier", None)
     facility.multipliers.update(new_multipliers)
     facility.player.capacities.update(facility.player, facility.facility_type)
     engine.log(f"{facility.player.username} upgraded the facility {facility.facility_type}.")
