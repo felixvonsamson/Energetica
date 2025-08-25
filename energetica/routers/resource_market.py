@@ -49,10 +49,13 @@ def post_resource_market_purchase(
     # if sale.player == user:
     #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot buy your own ask")
     new_sale = purchase_resource(
-        player=player,
+        buyer=player,
         quantity=request_data.quantity,
         sale=sale,
     )
+    # TODO(mglst) rethink the return structure of this route.
+    # If None is returned, then the appropriate status code would be 204.
+    # If we still want to return a response body, we could return an empty object or a success message or something.
     if new_sale is None:
         return None
     return AskOut.from_resource_on_sale(new_sale)

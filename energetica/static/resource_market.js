@@ -1,3 +1,7 @@
+/** 
+* @type { typeof import('./frontend_data.js') } 
+*/;
+
 function expand_tile(sale_id) {
     let additionalContent = document.getElementById("buyForm_" + sale_id);
 
@@ -48,10 +52,7 @@ function buy_resource(saleId) {
                     } else {
                         document.getElementById("tile_" + saleId).remove();
                     }
-                    sessionStorage.setItem(
-                        "shipments",
-                        JSON.stringify(raw_data["shipments"])
-                    );
+                    retrieve_shipments();
                     refresh_progressBar();
                 } else if (response.status == 400) {
                     if (raw_data.exception_type == "Not enough money") {
