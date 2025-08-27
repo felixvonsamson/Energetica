@@ -84,12 +84,18 @@ function requestNotificationPermission() {
             if (notification_settings) {
                 notification_settings.classList.remove('collapsed');
             }
+        } else {
+            addError("Notification permission denied");
         }
     });
 }
 
 function subscribeUserToPush() {
     const publicVapidKey = sessionStorage.getItem('applicationServerPublicKey');
+    if (publicVapidKey === null) {
+        addError("Public VAPID key not found");
+        return;
+    }
     const convertedVapidKey = urlBase64ToUint8Array(publicVapidKey);
 
     if (swRegistration === null) {

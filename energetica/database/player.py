@@ -373,8 +373,9 @@ class Player(DBModel):
                 "content": new_notification.content,
             },
         )
-        if (  # This probably doesn't work anymore
-            self.notifications
+        print("Alright, time to send a notification")
+        if (
+            len(self.notifications) > 1
             and new_notification.content == self.notifications[len(self.notifications) - 2].content
             and new_notification.time == self.notifications[len(self.notifications) - 2].time
         ):
@@ -392,7 +393,7 @@ class Player(DBModel):
                     subscription_info=subscription.model_dump(),
                     data=json.dumps(notification_data),
                     vapid_private_key=engine.VAPID_PRIVATE_KEY,
-                    vapid_claims={"aud": audience},
+                    vapid_claims={"aud": audience, "sub": "mailto:felixvonsamson@gmail.com"},
                 )
             except WebPushException as ex:
                 engine.warn(f"Failed to send notification: {repr(ex)}")
