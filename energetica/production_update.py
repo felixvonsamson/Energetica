@@ -44,8 +44,6 @@ def update_electricity() -> None:
 
     new_values = {}
     for player in players:
-        if player.tile is None:
-            continue
         new_values[player.id] = player.rolling_history.init_new_data()
 
     # reset progress speeds fot all ongoing projects and shipments
@@ -86,8 +84,6 @@ def update_electricity() -> None:
             pickle.dump(market, file)
 
     for player in players:
-        if player.tile is None:
-            continue
         # Power generation calculation for players that are not in a network
         if player.network is None:
             calculate_demand(new_values[player.id], player)

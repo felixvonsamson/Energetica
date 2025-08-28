@@ -4,16 +4,16 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.utils.auth import get_current_user
 from energetica.database.messages import Notification
 from energetica.database.player import Player
+from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/notifications", tags=["Game Notifications"])
 
 
 @router.delete("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_notification(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     notification_id: int,
 ) -> None:
     """Delete a notification from the player's notification list."""
@@ -24,6 +24,6 @@ def delete_notification(
 
 
 @router.post(":markAllRead", status_code=status.HTTP_204_NO_CONTENT)
-def marked_all_read(player: Annotated[Player, Depends(get_current_user)]) -> None:
+def marked_all_read(player: Annotated[Player, Depends(get_settled_player)]) -> None:
     """Mark all notification as read."""
     player.notifications_read()

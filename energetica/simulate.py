@@ -21,9 +21,9 @@ base_url: str | None = None
 
 def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
     """Create a user with the given user_id."""
-    new_player = misc.signup_player(None, username, pwhash)
+    user = misc.signup_playing_user(None, username, pwhash)
     session = requests.Session()
-    add_session_cookie_to_session(session, new_player)
+    add_session_cookie_to_session(session, user)
     return session
 
 
@@ -31,7 +31,7 @@ def login_user(user_id: int) -> requests.Session:
     """Login a user with the given user_id."""
     player = Player.getitem(user_id, ValueError(f"Cannot log in player: player with id {user_id} does not exist"))
     session = requests.Session()
-    add_session_cookie_to_session(session, player)
+    add_session_cookie_to_session(session, player.user)
     return session
 
 
@@ -126,28 +126,6 @@ def _simulate(
                 **{content_type: action.request.payload},
                 allow_redirects=False,
             )
-            # TODO (Yassir): mismatch if content type is not the same
-            # if "money" in action.response.payload:
-            #     money = action.response.payload["money"]
-            #     real_money = Player.getitem(player_id).money
-            #     if abs(money - real_money) > 1:
-            #         print(
-            #             f"""\033[31mMoney {real_money} does not match expected money """
-            #             f"""{money}.\033[0m""",
-            #         )
-            #         if stop_on_mismatch:
-            #             break
-            # if (
-            #     action.response["content_type"] == "application/json"
-            #     and response.headers["Content-Type"] == "application/json"
-            #     and response.json()["response"] != action.response["content"]["response"]
-            # ):
-            #     print(
-            #         f"""\033[31mResponse {response.json()["response"]} does not match expected response """
-            #         f"""{action.response["content"]["response"]}.\033[0m""",
-            #     )
-            #     if stop_on_mismatch:
-            #         break
             if response.status_code != action.response.status_code:
                 print(
                     f"""\033[31mStatus code {response.status_code} does not match expected status code """

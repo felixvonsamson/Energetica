@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.schemas.browser_notifications import Subscription, VapidPublicKey
-from energetica.utils.auth import get_current_user
+from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/browser-notifications", tags=["Browser Notifications"])
 
@@ -19,7 +19,7 @@ def get_vapid_key() -> VapidPublicKey:
 @router.post(":subscribe", status_code=status.HTTP_204_NO_CONTENT)
 def subscribe(
     subscription: Subscription,
-    current_user: Player = Depends(get_current_user),
+    current_user: Player = Depends(get_settled_player),
 ) -> None:
     """Create a new subscription."""
     current_user.notification_subscriptions.append(subscription)
@@ -28,7 +28,7 @@ def subscribe(
 @router.post(":unsubscribe", status_code=status.HTTP_204_NO_CONTENT)
 def unsubscribe(
     subscription: Subscription,
-    current_user: Player = Depends(get_current_user),
+    current_user: Player = Depends(get_settled_player),
 ) -> None:
     """Remove a subscription."""
     try:

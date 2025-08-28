@@ -4,19 +4,19 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from energetica.utils.auth import get_current_user
 from energetica.database.player import Player
 from energetica.schemas.scoreboard import ScoreboardOut, ScoreboardRowOut
+from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/scoreboard", tags=["Scoreboard"])
 
 
 @router.get("")
 def get_scoreboard(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
 ) -> ScoreboardOut:
     """Get the scoreboard data."""
-    players = Player.filter(lambda p: p.tile is not None)
+    players = Player.all()
     include_co2_emissions = player.discovered_greenhouse_gas_effect()
     rows = [
         ScoreboardRowOut(

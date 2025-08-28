@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Iterable
 
 from pywebpush import WebPushException, webpush
 
-from energetica.config.achievements import achievements, format_power, format_energy, format_mass
+from energetica.config.achievements import achievements, format_energy, format_mass, format_power
 from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data.capacity_data import CapacityData
@@ -50,6 +50,7 @@ if TYPE_CHECKING:
 
     from energetica.database.map.hex_tile import HexTile
     from energetica.database.network import Network
+    from energetica.database.user import User
 
 
 @dataclass
@@ -57,16 +58,18 @@ if TYPE_CHECKING:
 class Player(DBModel):
     """Class that stores the users and their data."""
 
-    # Authentication :
-    username: str
-    pwhash: str
-    is_admin: bool = False
+    user: User
+    tile: HexTile
+
+    @property
+    def username(self) -> str:
+        """Return the username of the associated user."""
+        return self.user.username
 
     # inactive: bool = False  # True if account is inactive
     show_chat_disclaimer: bool = True
     last_opened_chat_id: int = field(default_factory=lambda: engine.general_chat.id)
 
-    tile: HexTile | None = None
     network: Network | None = None
 
     # TODO (Felix): Modify the post__init__ of DBModel to store the following objects in engine or in the player
@@ -563,7 +566,7 @@ class Player(DBModel):
                 "username": self.username,
             }
             | ({"network_id": self.network.id} if self.network is not None else {})
-            | ({"cell_id": self.tile.id} if self.tile is not None else {})
+            | ({"cell_id": self.tile.id})
         )
 
     # TODO(mglst): this method should be deprecated

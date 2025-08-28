@@ -10,6 +10,7 @@ from fastapi import HTTPException, Request, Response, status
 from itsdangerous import URLSafeTimedSerializer
 
 from energetica.database.player import Player
+from energetica.database.user import User
 from energetica.globals import engine
 
 
@@ -43,33 +44,44 @@ def check_password_hash(*, plain_password: str, hashed_password: str) -> bool:
 COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a command line argument in the future
 
 
-def get_current_user_from_token(token: str) -> Player | None:
+def get_user_from_token(token: str) -> User | None:
     try:
         username = serializer.loads(token, max_age=COOKIE_MAX_AGE)
-        return next(Player.filter_by(username=username), None)
+        return next(User.filter_by(username=username), None)
     except Exception:
         return None
 
 
-def get_current_user_from_request(request: Request) -> Player | None:
+def get_user(request: Request) -> User | None:
     token = request.cookies.get("session")
     if not token:
         return None
-    return get_current_user_from_token(token)
+    return get_user_from_token(token)
 
 
-def get_current_user(request: Request) -> Player:
-    player = get_current_user_from_request(request)
-    if player is None:
+def get_playing_user(request: Request) -> User:
+    user = get_user(request)
+    if user is None or user.role != "player":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not a player")
+    return user
+
+
+def get_settled_player(request: Request) -> Player:
+    user = get_user(request)
+    if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    return player
+    if user.role != "player":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not a player")
+    if user.player is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Player not set up")
+    return user.player
 
 
 InvalidCredentialsException = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
 
-def add_session_cookie_to_response(response: Response, player: Player) -> Response:
-    token = serializer.dumps(player.username)
+def add_session_cookie_to_response(response: Response, user: User) -> Response:
+    token = serializer.dumps(user.username)
     response.set_cookie(
         key="session",
         value=token,
@@ -81,8 +93,8 @@ def add_session_cookie_to_response(response: Response, player: Player) -> Respon
     return response
 
 
-def add_session_cookie_to_session(session: requests.Session, player: Player) -> requests.Session:
-    token = serializer.dumps(player.username)
+def add_session_cookie_to_session(session: requests.Session, user: User) -> requests.Session:
+    token = serializer.dumps(user.username)
     session.cookies.set(
         name="session",
         value=token,

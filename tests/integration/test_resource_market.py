@@ -2,7 +2,7 @@
 
 from energetica import create_app
 from energetica.database.map.hex_tile import HexTile
-from energetica.database.player import Player
+from energetica.database.user import User
 from energetica.enums import (
     Fuel,
     FunctionalFacilityType,
@@ -16,9 +16,9 @@ from energetica.utils.resource_market import create_ask, purchase_resource, stor
 def test_store_import() -> None:
     """Test upgrading active facilities."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    player1 = Player(username="username", pwhash=generate_password_hash("password"))
+    user1 = User(username="username", pwhash=generate_password_hash("password"), role="player")
     hex_tile = HexTile.getitem(1)
-    confirm_location(player1, hex_tile)
+    player1 = confirm_location(user1, hex_tile)
 
     add_asset(player1, FunctionalFacilityType.WAREHOUSE, 1)
     assert player1.resources[Fuel.COAL] == 0
@@ -33,10 +33,10 @@ def test_store_import() -> None:
 def test_purchase_resource() -> None:
     """Test purchasing a resource off the resource market."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    player1 = Player(username="user1", pwhash=generate_password_hash("password"))
-    player2 = Player(username="user2", pwhash=generate_password_hash("password"))
-    confirm_location(player1, HexTile.getitem(1))
-    confirm_location(player2, HexTile.getitem(2))
+    user1 = User(username="user1", pwhash=generate_password_hash("password"), role="player")
+    user2 = User(username="user2", pwhash=generate_password_hash("password"), role="player")
+    player1 = confirm_location(user1, HexTile.getitem(1))
+    player2 = confirm_location(user2, HexTile.getitem(2))
     add_asset(player1, FunctionalFacilityType.WAREHOUSE, 1)
     add_asset(player2, FunctionalFacilityType.WAREHOUSE, 1)
     player1.resources[Fuel.COAL] = 250_000

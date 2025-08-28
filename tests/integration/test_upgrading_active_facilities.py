@@ -3,7 +3,7 @@
 from energetica import create_app
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map.hex_tile import HexTile
-from energetica.database.player import Player
+from energetica.database.user import User
 from energetica.enums import (
     TechnologyType,
     WindFacilityType,
@@ -22,9 +22,9 @@ def test_upgrading_active_facilities() -> None:
     See https://github.com/felixvonsamson/Energetica/issues/371
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    player1 = Player(username="username", pwhash=generate_password_hash("password"))
+    user1 = User(username="username", pwhash=generate_password_hash("password"), role="player")
     hex_tile = HexTile.getitem(1)
-    confirm_location(player1, hex_tile)
+    player1 = confirm_location(user1, hex_tile)
 
     add_asset(player1, TechnologyType.PHYSICS, 6)
     add_asset(player1, TechnologyType.AERODYNAMICS, 1)
