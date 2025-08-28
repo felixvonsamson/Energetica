@@ -218,14 +218,14 @@ def create_app(
 
         scheduler.start()
 
-        from energetica.database.player import Player
+        from energetica.database.user import User
         from energetica.utils.auth import generate_password_hash
 
         # Creating the root admin account if it does not exist.
-        if not list(Player.filter_by(username="admin")):
+        if not list(User.filter_by(role="admin")):
             admin_password = secrets.token_hex(4)
             hashed_password = generate_password_hash(admin_password)
-            new_admin = Player(username="admin", pwhash=hashed_password, is_admin=True)
+            new_admin = User(username="admin", pwhash=hashed_password, role="admin")
             engine.log(f"Admin account created with username '{new_admin.username}'")
             # TODO(mglst): I think it would make more sense to move this under the instance/ folder
             with open("admin_accounts.txt", "w", encoding="utf-8") as file:
@@ -246,14 +246,14 @@ def create_app(
                         raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
                     username = parts[0].strip()
                     password = parts[1].strip() if len(parts) > 1 else None
-                    existing_player = next(Player.filter_by(username=username), None)
+                    existing_player = next(User.filter_by(username=username), None)
                     if existing_player:
                         engine.log(f"players.txt: Did not create new player {username}; username already exists.")
                         continue
                     if password is None:
                         password = secrets.token_hex(4)
                     hashed_password = generate_password_hash(password)
-                    Player(username=username, pwhash=hashed_password)
+                    User(username=username, pwhash=hashed_password, role="player")
                     file.write(f"{username},{password}\n")
                     engine.log(f"players.txt: Created player {username} with password {password}")
 

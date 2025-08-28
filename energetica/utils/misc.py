@@ -2,9 +2,9 @@
 
 import math
 import os
-from pathlib import Path
 import pickle
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 from fastapi import Request
@@ -17,6 +17,7 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player
+from energetica.database.user import User
 from energetica.enums import ControllableFacilityType
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
@@ -28,14 +29,14 @@ from energetica.utils.astro import DrHI
 # Helper functions and data initialization utilities
 
 
-def signup_player(request: Request | None, username: str, pwhash: str) -> Player:
+def signup_playing_user(request: Request | None, username: str, pwhash: str) -> User:
     """
-    Signup a player.
+    Sign up a User with the player role.
 
     Calling with request set to null is reserved for simulation - when APIs call this function, they must pass the
     corresponding request object.
     """
-    new_player = Player(username=username, pwhash=pwhash)
+    new_user = User(username=username, pwhash=pwhash, role="player")
 
     log_entry = CreateUserAction(
         timestamp=datetime.now(),
@@ -43,14 +44,14 @@ def signup_player(request: Request | None, username: str, pwhash: str) -> Player
         if request is not None
         else None,
         action_type="create_user",
-        player_id=new_player.id,
-        username=new_player.username,
-        pw_hash=new_player.pwhash,
+        player_id=new_user.id,
+        username=new_user.username,
+        pw_hash=new_user.pwhash,
     )
     engine.log_action(log_entry)
 
     engine.log(f"{username} created an account")
-    return new_player
+    return new_user
 
 
 def add_player_to_data(player: Player) -> None:
@@ -140,8 +141,6 @@ def save_past_data() -> None:
 
     # save player data
     for player in Player.all():
-        if player.tile is None:
-            continue
         past_data = {}
         if not os.path.exists(f"instance/data/players/player_{player.id}.pck"):
             with open(f"instance/data/players/player_{player.id}.pck", "wb") as file:
@@ -235,8 +234,6 @@ def initialize_player(player: Player) -> None:
     eol = engine.total_t + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick,
     )
-    if player.tile is None:
-        raise GameError(GameExceptionType.NO_LOCATION)
     pos_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     pos_y = player.tile.coordinates[1]
     ActiveFacility(
@@ -380,8 +377,6 @@ def calculate_river_discharge(total_seconds: float) -> float:
 
 def package_weather_data(player: Player) -> WeatherOut:
     """Package date and weather data for a player."""
-    if player.tile is None:
-        raise GameError(GameExceptionType.NO_LOCATION)
     x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     y = player.tile.coordinates[1] * 0.5 * 3**0.5
     total_seconds = (engine.total_t + engine.delta_t) * engine.in_game_seconds_per_tick

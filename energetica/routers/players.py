@@ -4,16 +4,16 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from energetica.utils.auth import get_current_user
 from energetica.database.player import Player
 from energetica.routers.chats import router
 from energetica.schemas.players import MoneyOut, PlayerOut, SettingsPatch, UIStatePatch
+from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/players", tags=["Players"])
 
 
 @router.get("/me")
-def get_me(user: Player = Depends(get_current_user)) -> PlayerOut:
+def get_me(user: Player = Depends(get_settled_player)) -> PlayerOut:
     """Get the current user's information."""
     return PlayerOut(
         id=user.id,
@@ -31,13 +31,12 @@ def get_all_users() -> list[PlayerOut]:
             username=u.username,
         )
         for u in all_users
-        if not u.is_admin
     ]
 
 
 @router.patch("/me/settings", status_code=204)
 def update_user_settings(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     request_data: SettingsPatch,
 ) -> None:
     if request_data.show_disclaimer is not None:
@@ -46,7 +45,7 @@ def update_user_settings(
 
 @router.patch("/me/ui-state", status_code=204)
 def update_ui_state(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     request_data: UIStatePatch,
 ) -> None:
     if request_data.last_opened_chat_id is not None:
@@ -55,6 +54,6 @@ def update_ui_state(
 
 @router.get("/me/money")
 def get_money(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
 ) -> MoneyOut:
     return MoneyOut.from_player(player)

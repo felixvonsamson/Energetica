@@ -11,9 +11,9 @@ import socketio
 from fastapi import FastAPI
 from socketio.exceptions import ConnectionRefusedError
 
-from energetica.utils.auth import get_current_user_from_token
 from energetica.database.player import Player
 from energetica.globals import engine
+from energetica.utils.auth import get_user_from_token
 
 
 def setup_socketio(app: FastAPI) -> None:
@@ -35,15 +35,15 @@ def setup_socketio(app: FastAPI) -> None:
         session_token = cookie.get("session")
         if session_token is None:
             raise ConnectionRefusedError("authentication failed")
-        user = get_current_user_from_token(cast(str, session_token.value))
-        if user is None:
+        user = get_user_from_token(cast(str, session_token.value))
+        if user is None or user.role != "player" or user.player is None:
             raise ConnectionRefusedError("authentication failed")
-        user.socketio_clients.append(sid)
-        connected_users_by_sid[sid] = user
+        user.player.socketio_clients.append(sid)
+        connected_users_by_sid[sid] = user.player
 
     @sio.event
     def disconnect(sid: str) -> None:
         """Clean up user on disconnect."""
-        user = connected_users_by_sid.pop(sid, None)
-        if user:
-            user.socketio_clients.remove(sid)
+        player = connected_users_by_sid.pop(sid, None)
+        if player:
+            player.socketio_clients.remove(sid)

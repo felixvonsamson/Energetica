@@ -5,10 +5,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.database.map.hex_tile import HexTile
-from energetica.database.player import Player
+from energetica.database.user import User
 from energetica.schemas.map import HexTileOut
 from energetica.utils import map_helpers
-from energetica.utils.auth import get_current_user
+from energetica.utils.auth import get_playing_user
 
 router = APIRouter(prefix="/map", tags=["Map"])
 
@@ -41,11 +41,13 @@ def get_map() -> list[HexTileOut]:
 
 @router.post("/{region_id}:settle", status_code=204)
 def settle_region(
-    player: Annotated[Player, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_playing_user)],
     region_id: int,
 ) -> None:
+    if user.player is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already has a player")
     region = HexTile.getitem(
         region_id,
         error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Region not found"),
     )
-    map_helpers.confirm_location(player, region)
+    map_helpers.confirm_location(user, region)

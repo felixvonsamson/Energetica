@@ -110,8 +110,6 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         # Create a RNG, seeded with the server seed, the player's tile coordinates, the project name, and number of
         # facilities of that type the player has built. This ensures that the facility's random position is generated
         # deterministically.
-        if player.tile is None:
-            raise GameError(GameExceptionType.PLAYER_HAS_NO_TILE)
         seed_hash = stable_hash(
             (
                 engine.random_seed,

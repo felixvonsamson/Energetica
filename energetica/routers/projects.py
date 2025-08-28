@@ -4,18 +4,18 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.utils.auth import get_current_user
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.schemas.projects import ProjectIn, ProjectListOut
 from energetica.utils import assets
+from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
 @router.get("")
 def get_constructions(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
 ) -> ProjectListOut:
     """Get list of facilities under construction for this player."""
     return ProjectListOut.from_player(player)
@@ -23,7 +23,7 @@ def get_constructions(
 
 @router.post("", status_code=status.HTTP_204_NO_CONTENT)
 def queue_project(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     project: ProjectIn,
     force: bool = False,
 ) -> None:
@@ -33,7 +33,7 @@ def queue_project(
 
 @router.post("/{project_id}:cancel")
 def cancel_project(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
     force: bool = False,
 ) -> ProjectListOut:
@@ -47,7 +47,7 @@ def cancel_project(
 
 @router.post("/{project_id}:pause")
 def request_pause_project(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
 ) -> ProjectListOut:
     """Pause or unpause an ongoing project."""
@@ -60,7 +60,7 @@ def request_pause_project(
 
 @router.post("/{project_id}:resume")
 def request_resume_project(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
 ) -> ProjectListOut:
     """Pause or unpause an ongoing project."""
@@ -73,7 +73,7 @@ def request_resume_project(
 
 @router.post("/{project_id}:decrease-priority")
 async def decrease_project_priority(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
 ) -> ProjectListOut:
     """Decrease the priority of a projects."""
@@ -86,7 +86,7 @@ async def decrease_project_priority(
 
 @router.post("/{project_id}:increase-priority")
 async def increase_project_priority(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
 ) -> ProjectListOut:
     """Increase the priority of a projects."""

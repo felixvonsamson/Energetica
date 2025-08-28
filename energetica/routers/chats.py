@@ -7,16 +7,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 import energetica.utils.chat
-from energetica.utils.auth import get_current_user
 from energetica.database.messages import Chat
 from energetica.database.player import Player
 from energetica.schemas.chats import ChatCreate, ChatListOut, ChatOut, MessageCreate, MessageListOut, MessageOut
+from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/chats", tags=["Chats"])
 
 
 @router.get("")
-def get_chat_list(player: Annotated[Player, Depends(get_current_user)]) -> ChatListOut:
+def get_chat_list(player: Annotated[Player, Depends(get_settled_player)]) -> ChatListOut:
     """Get the chat list for the current user."""
     return ChatListOut(
         chats=[ChatOut.from_chat(player, chat) for chat in Chat.filter(lambda chat: player in chat.participants)],
@@ -27,7 +27,7 @@ def get_chat_list(player: Annotated[Player, Depends(get_current_user)]) -> ChatL
 
 @router.get("/{chat_id}/messages")
 def get_chat_messages(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     chat_id: int,
 ) -> MessageListOut:
     """Get the messages for a chat."""
@@ -39,7 +39,7 @@ def get_chat_messages(
 
 @router.post("/{chat_id}/messages")
 def new_message(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     chat_id: int,
     request_data: MessageCreate,
 ) -> MessageOut:
@@ -53,7 +53,7 @@ def new_message(
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_group_chat(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     request_data: ChatCreate,
 ) -> ChatOut:
     """Create a chat."""

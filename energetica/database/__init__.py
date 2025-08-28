@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from itertools import count
-from typing import TYPE_CHECKING, Generic, TypedDict, TypeVar, Unpack
+from typing import TYPE_CHECKING, Generic, Literal, TypedDict, TypeVar, Unpack
 
 from energetica.globals import engine
 
@@ -95,6 +95,7 @@ class DBModel:
         project_type: ProjectType
         facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
         worker_type: WorkerType
+        remaining_lifespan: float | None
         name: str
         username: str
         player: Player | None  # None because of HexTile
@@ -102,6 +103,8 @@ class DBModel:
         coordinates: tuple[int, int]
         # OngoingProject
         status: int
+        # User
+        role: Literal["player", "admin"]
 
     @classmethod
     def count_when(cls: type[T], **conditions: Unpack[WhitelistedConditions]) -> int:
