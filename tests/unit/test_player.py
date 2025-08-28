@@ -22,6 +22,7 @@ def test_player_hashable() -> None:
     Hashability is required for the Player class to be used as a key in a dictionary or a set.
     This is the case for Chat's participants attribute, which is a set of Player instances.
     """
+    create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
     user = User(username="username", pwhash=generate_password_hash("password"), role="player")
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
