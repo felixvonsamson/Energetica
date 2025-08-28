@@ -419,12 +419,12 @@ function temporal_imports_sketch(s) {
 
         data_len = energy_flux[res].length;
         s.lower_bounds = {
-            energy: min(0, ...energy_flux[res]),
-            revenues: min(0, ...revenue_flux[res]),
+            energy: min(-0.0001, ...energy_flux[res]),
+            revenues: min(-0.0001, ...revenue_flux[res]),
         };
         s.upper_bounds = {
-            energy: max(0, ...energy_flux[res]),
-            revenues: max(0, ...revenue_flux[res]),
+            energy: max(0.0001, ...energy_flux[res]),
+            revenues: max(0.0001, ...revenue_flux[res]),
         };
         let range_energy = s.upper_bounds.energy - s.lower_bounds.energy;
         let range_revenues = s.upper_bounds.revenues - s.lower_bounds.revenues;
