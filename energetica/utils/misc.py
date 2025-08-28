@@ -77,7 +77,7 @@ def init_array() -> list[list[float]]:
     return [[0.0] * 360 for _ in range(5)]
 
 
-def empty_player_data() -> None:
+def empty_player_data() -> dict:
     """return an empty data structure for a new player."""
     return {
         "revenues": {
@@ -111,7 +111,7 @@ def empty_player_data() -> None:
     }
 
 
-def empty_network_data() -> None:
+def empty_network_data() -> dict:
     """return an empty data structure for a new network."""
     return {
         "network_data": {
