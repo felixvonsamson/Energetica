@@ -11,7 +11,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 
-from energetica.database.player import Player
 from energetica.database.user import User
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
@@ -66,8 +65,8 @@ def signup(request: Request, request_data: SignupRequest) -> Response:
         raise GameError(GameExceptionType.SIGNUP_DISABLED)
     username = request_data.username
     password = request_data.password
-    existing_player = next(Player.filter_by(username=username), None)
-    if existing_player:
+    existing_user = next(User.filter_by(username=username), None)
+    if existing_user:
         raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
     pwhash = generate_password_hash(password)
     user = misc.signup_playing_user(request, username, pwhash)
