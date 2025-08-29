@@ -129,12 +129,16 @@ ruff format .
 - JS: use VS Code default formatter / Prettier (see `.prettierrc.json`)
 - Jinja: use `djLint` for template formatting.
 
-<!-- (Optional) If a `.pre-commit-config.yaml` exists:
+### Pre-Commit Hooks
+
+Pre-commit hooks ensure code quality by running linters and formatters on staged files before each commit.
+
+```bash
+pip install pre-commit # Install pre-commit
+pre-commit install # Enable hooks. Hooks run automatically on commit.
+pre-commit run --all-files # Manually check all files
+pre-commit autoupdate # Update hooks after having modified `.pre-commit-config.yaml`
 ```
-pip install pre-commit
-pre-commit install
-```
-This runs linters/formatters automatically before each commit. -->
 
 ## Database / State Notes
 Runtime state lives under `instance/` and `checkpoints/`. Never commit these. To reset quickly:
