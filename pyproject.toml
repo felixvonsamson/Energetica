@@ -1,6 +1,10 @@
 [tool.ruff]
-line-length = 120 # Let's keep this at 120 for now, there are some files that need it
+line-length = 120
 target-version = "py312"
+lint.extend-select = ["I"]
+
+# Ruff rules documentation:
+#   https://docs.astral.sh/ruff/rules/
 lint.select = [
     "D100",
     "D200",
@@ -8,25 +12,19 @@ lint.select = [
     "D202",
     "D209",
     "D213",
-    "D400", 
-    "D415", 
-    "COM812", 
-    "F401", 
+    "D400",
+    "D415",
+    "F401",
     # "TD004", TODOs
-    "PIE794", 
-    "ANN001", 
-    "ANN201", 
-    "F404"
+    "PIE794",
+    "ANN001",
+    "ANN201",
+    "F404",
 ]
 # select = ["ALL"]
-lint.ignore = [
-    "D212", 
-    "ANN401",
-    "RET503",
-    "DTZ005",
-]
+lint.ignore = ["D212", "ANN401", "RET503", "DTZ005"]
 
 [tool.pytest.ini_options]
-testpaths = [ "tests" ]
+testpaths = ["tests"]
 filterwarnings = ["ignore::DeprecationWarning"]
 python_files = "tests/**/*.py"
