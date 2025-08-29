@@ -509,8 +509,12 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
 
     if project_1.status == ProjectStatus.ONGOING and project_2.status == ProjectStatus.WAITING:
         # Case 2
-        # This case can only happen when project 1 is using the last available worker. (Indeed, the other case is
-        # when project 1 is a prerequisite of project 2, but in this case, the swap is not possible)
+        # Project 1 is using the last available worker. If project 2 can resume, swap them, else raise error.
+        project_2.recompute_prerequisites_and_level()
+        # Here we need to recompute prerequisites. Indeed, if project_2 had a prerequisite but which has not been
+        # completed, it will not be removed from the project_2.prerequisites list - not unless we recompute.
+        if project_2.prerequisites:
+            raise GameError(GameExceptionType.REQUIREMENTS_PREVENT_REORDER)
         project_1.set_waiting()
         project_2.set_ongoing()
 
