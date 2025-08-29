@@ -181,8 +181,6 @@ class GameEngine(object):
         with open("instance/data/servers/climate_data.pck", "wb") as file:
             pickle.dump(climate_data, file)
 
-        self.save()
-
     def init_loggers(self) -> None:
         """Initialize the loggers for the engine."""
         self.console_logger.setLevel(logging.INFO)
