@@ -194,16 +194,22 @@ def calculate_net_import(new_values: dict) -> None:
     """
     exp = new_values["demand"]["exports"]
     imp = new_values["generation"]["imports"]
-    new_values["demand"]["exports"] = max(0.0, exp - imp)
-    new_values["generation"]["imports"] = max(0.0, imp - exp)
+    net_exchange = exp - imp
+    if abs(net_exchange) < 1:
+        net_exchange = 0.0
+    new_values["demand"]["exports"] = max(0.0, net_exchange)
+    new_values["generation"]["imports"] = max(0.0, -net_exchange)
     exp_rev = new_values["revenues"]["exports"]
     imp_rev = new_values["revenues"]["imports"]
+    net_exchange_revenues = exp_rev + imp_rev
+    if net_exchange == 0:
+        net_exchange_revenues = 0.0
     if exp_rev < 0 or imp_rev > 0:
-        new_values["revenues"]["exports"] = min(0.0, exp_rev + imp_rev)
-        new_values["revenues"]["imports"] = max(0.0, exp_rev + imp_rev)
+        new_values["revenues"]["exports"] = min(0.0, net_exchange_revenues)
+        new_values["revenues"]["imports"] = max(0.0, net_exchange_revenues)
     else:
-        new_values["revenues"]["exports"] = max(0.0, exp_rev + imp_rev)
-        new_values["revenues"]["imports"] = min(0.0, exp_rev + imp_rev)
+        new_values["revenues"]["exports"] = max(0.0, net_exchange_revenues)
+        new_values["revenues"]["imports"] = min(0.0, net_exchange_revenues)
 
 
 def extraction_facility_demand(new_values: dict, player: Player, demand: dict) -> None:
