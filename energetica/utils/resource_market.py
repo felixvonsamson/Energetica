@@ -100,11 +100,10 @@ def store_import(player: Player, fuel: Fuel, quantity: float) -> None:
     assert player.tile is not None
     max_cap: float = player.config["warehouse_capacities"][fuel]
     if player.resources[fuel] + quantity > max_cap:
-        player.resources[fuel] = max_cap
         # excess resources are stored in the ground
         # TODO(mglst): what if instead it was a political fiasco that the player had to deal with?
-        # TODO(mglst): the logic here is broken. player.resources[fuel] is updated too early
         player.tile.fuel_reserves[fuel] += player.resources[fuel] + quantity - max_cap
+        player.resources[fuel] = max_cap
         player.notify(
             "OngoingShipments",
             f"A shipment of {format_mass(quantity)} {fuel} arrived, but "
