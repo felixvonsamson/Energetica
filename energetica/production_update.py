@@ -190,20 +190,24 @@ def calculate_net_import(new_values: dict) -> None:
     Calculate the net import of a player.
 
     For players in network, subtract the difference between import and exports to ignore energy that has been bought
-    from themselves.
+    from themselves. (players can be either exporting or importing, not both at the same time)
     """
     exp = new_values["demand"]["exports"]
     imp = new_values["generation"]["imports"]
     net_exchange = exp - imp
+    # getting rid of rounding errors
     if abs(net_exchange) < 1:
         net_exchange = 0.0
+    # The exports is the positive part of the net exchange and imports are the negative part
     new_values["demand"]["exports"] = max(0.0, net_exchange)
     new_values["generation"]["imports"] = max(0.0, -net_exchange)
     exp_rev = new_values["revenues"]["exports"]
     imp_rev = new_values["revenues"]["imports"]
     net_exchange_revenues = exp_rev + imp_rev
+    # getting rid of rounding errors
     if net_exchange == 0:
         net_exchange_revenues = 0.0
+    # if the market price is negative, the revenues of exports and imports are inverted
     if exp_rev < 0 or imp_rev > 0:
         new_values["revenues"]["exports"] = min(0.0, net_exchange_revenues)
         new_values["revenues"]["imports"] = max(0.0, net_exchange_revenues)
