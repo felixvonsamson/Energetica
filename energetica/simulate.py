@@ -16,8 +16,6 @@ from energetica.utils import misc
 from energetica.utils.auth import add_session_cookie_to_session
 from energetica.utils.tick_execution import tick
 
-base_url: str | None = None
-
 
 def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
     """Create a user with the given user_id."""
@@ -67,13 +65,12 @@ def _simulate(
     checkpoint_ticks: list[int] | None = None,
 ) -> bool:
     """Simulate the list of actions. Returns true if the simulation was successful, false otherwise."""
-    global base_url
-
     base_url = f"http://localhost:{port}"
 
     if checkpoint_ticks is None:
         checkpoint_ticks = []
 
+    # NOTE(mglst): I suspect that with FastAPI there are better ways to handle checking that the server is running
     trials = 0
     while True:
         try:
@@ -86,7 +83,7 @@ def _simulate(
             sleep(1)
             continue
         break
-    user_sessions = {}
+    user_sessions: dict[int, requests.Session] = {}
 
     for action in actions:
         print(action)
@@ -142,9 +139,10 @@ def _simulate(
                     if stop_on_server_error:
                         break
         try:
+            # After every tick and action, verify the state of the engine
             verify()
         except AssertionError:
-            print(print("\033[31m" + "Assertion error.\033[0m"))
+            print("\033[31m" + "Assertion error.\033[0m")
             if stop_on_assertion_error:
                 break
     else:
