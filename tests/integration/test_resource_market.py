@@ -23,11 +23,20 @@ def test_store_import() -> None:
     add_asset(player1, FunctionalFacilityType.WAREHOUSE, 1)
     assert player1.resources[Fuel.COAL] == 0
 
+    # The warehouse has capacity for 500,000, so all the shipment can be stored
     store_import(player1, Fuel.COAL, 250_000)
     assert player1.resources[Fuel.COAL] == 250_000
 
+    # The warehouse cannot store more than its capacity, the rest is stored in the ground
+    stored_and_ground = player1.tile.fuel_reserves[Fuel.COAL] + player1.resources[Fuel.COAL]
     store_import(player1, Fuel.COAL, 1_000_000)
+
+    # Check that the warehouse is full
     assert player1.resources[Fuel.COAL] == 500_000
+
+    # Check that the ground storage has increased, and that conservation of mass holds
+    new_stored_and_ground = player1.tile.fuel_reserves[Fuel.COAL] + player1.resources[Fuel.COAL]
+    assert new_stored_and_ground - stored_and_ground == 1_000_000
 
 
 def test_purchase_resource() -> None:
