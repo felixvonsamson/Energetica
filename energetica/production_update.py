@@ -391,22 +391,24 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
 
     # allow a maximum overdraft of the equivalent of the daily income of the industry
     max_overdraft = -player.config["industry"]["income_per_day"]
-    if player.money < max_overdraft:
+    notification_txt = "You exceeded your credit limit, you can't buy electricity on the market anymore."
+    do_not_send = len(player.notifications) > 0 and player.notifications[-1].content == notification_txt
+    if player.money < max_overdraft and player.network is not None and not do_not_send:
         player.notify(
             "Not enough money",
-            "You exceeded your credit limit, you can't buy electricity on the market anymore.",
+            notification_txt,
         )
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
     # are used and replace it with a cashed property or something similar that generates a list of all demands and offer types
     for demand_type in player.network_prices.bid_prices.keys():
         if demand_type in demand:
-            if player.money >= max_overdraft:
+            if player.money < max_overdraft and player.network is not None:
+                reduce_demand(new_values, demand_type, player.id, 0.0)
+            else:
                 bid_q = demand[demand_type]
                 price = player.network_prices.bid_prices[demand_type]
                 market = place_ask(market, player.id, bid_q, price, demand_type)
-            else:
-                reduce_demand(new_values, demand_type, player.id, 0.0)
 
     resource_reservations = reset_resource_reservations()
     # offer capacities of remaining facilities on the market
