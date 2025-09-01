@@ -10,6 +10,7 @@ import pickle
 import random
 import tarfile
 import uuid
+import numpy as np
 from datetime import datetime
 from pathlib import Path
 from threading import RLock
@@ -120,8 +121,8 @@ class GameEngine(object):
         )
         self.log_action(log_entry)
         # Random time shift in number of ticks to start the game at a random season of the year
-        rng = random.Random(self.random_seed)
-        self.delta_t = rng.randint(0, 72 * 3600 * 24 // self.in_game_seconds_per_tick)
+        rng = np.random.default_rng(self.random_seed)
+        self.delta_t = int(rng.integers(0, 72 * 3600 * 24 // self.in_game_seconds_per_tick))
         # transform start_date to a seconds timestamp corresponding to the time of the first tick
         self.start_date = datetime.fromtimestamp(math.floor(self.start_date.timestamp() / clock_time) * clock_time)
 
