@@ -171,10 +171,10 @@ const_config: dict = {
             "type": "Controllable",
             "base_price": 840_000,
             "base_power_generation": 167_000_000,
-            "base_construction_time": timedelta(days=25).total_seconds(),
+            "base_construction_time": timedelta(days=31).total_seconds(),
             "construction_power_factor": 0.08,
             "base_construction_pollution": 6_800_000,
-            "O&M_factor_per_day": 0.144,
+            "O&M_factor_per_day": 0.288,
             "consumed_resource": {"uranium": 0.044},
             "base_pollution": 2,
             "ramping_time": timedelta(hours=13).total_seconds(),
@@ -265,10 +265,10 @@ const_config: dict = {
             "type": "Controllable",
             "base_price": 1_800_000,
             "base_power_generation": 335_000_000,
-            "base_construction_time": timedelta(days=30).total_seconds(),
+            "base_construction_time": timedelta(days=37).total_seconds(),
             "construction_power_factor": 0.06,
             "base_construction_pollution": 12_000_000,
-            "O&M_factor_per_day": 0.12,
+            "O&M_factor_per_day": 0.24,
             "consumed_resource": {"uranium": 0.000_57},
             "base_pollution": 3,
             "ramping_time": timedelta(hours=8, minutes=20).total_seconds(),
@@ -281,14 +281,14 @@ const_config: dict = {
         "small_pumped_hydro": {
             "name": "Small Pumped Hydro",
             "type": "Storage",
-            "base_price": 19_500,  # [¤]
-            "base_storage_capacity": 260_000_000,  # [Wh]
+            "base_price": 26_500,  # [¤]
+            "base_storage_capacity": 520_000_000,  # [Wh]
             "base_power_generation": 2_600_000,  # [W]
             "base_efficiency": 0.75,
             "base_construction_time": timedelta(days=1, hours=2).total_seconds(),  # [in-game seconds]
             "construction_power_factor": 0.005,  # fraction of capacity demanded during construction
             "base_construction_pollution": 80_000,  # [kg]
-            "O&M_factor_per_day": 0.088,  # [fraction of price per in-game day]
+            "O&M_factor_per_day": 0.068,  # [fraction of price per in-game day]
             "ramping_time": timedelta(minutes=9).total_seconds(),  # [in-game seconds]
             "lifespan": timedelta(days=525).total_seconds(),  # [in-game seconds]
             "image_extension": "png",
@@ -319,14 +319,14 @@ const_config: dict = {
         "large_pumped_hydro": {
             "name": "Large Pumped Hydro",
             "type": "Storage",
-            "base_price": 166_000,
-            "base_storage_capacity": 4_200_000_000,
+            "base_price": 266_000,
+            "base_storage_capacity": 12_600_000_000,
             "base_power_generation": 249_000_000,
             "base_efficiency": 0.8,
             "base_construction_time": timedelta(days=19, hours=9).total_seconds(),
             "construction_power_factor": 0.003,
             "base_construction_pollution": 3_000_000,
-            "O&M_factor_per_day": 0.11,
+            "O&M_factor_per_day": 0.07,
             "ramping_time": timedelta(minutes=16).total_seconds(),
             "lifespan": timedelta(days=630).total_seconds(),
             "image_extension": "jpg",
@@ -446,7 +446,7 @@ const_config: dict = {
             "base_construction_pollution": 250_000,
             "O&M_factor_per_day": 0.000_49,  # not used for now
             "base_power_consumption": 10_000_000,  # [W]
-            "base_absorption_per_day": 0.000_024,  # [fraction of atmospheric CO2 absorbed per in-game day]
+            "base_absorption_per_day": 0.000_005,  # [fraction of atmospheric CO2 absorbed per in-game day]
             "price_multiplier": 1.5,
             "absorption_factor": 1.55,
             "power_factor": 1.5,
@@ -658,7 +658,7 @@ const_config: dict = {
             "base_price": 28_000,
             "base_construction_time": timedelta(hours=20).total_seconds(),
             "base_construction_energy": 16_000_000,
-            "price_multiplier": 1.5,
+            "price_multiplier": 1.2,
             "price_factor": 1.2,
             "prod_factor": 1.2,
             "capacity_factor": 1.05,
