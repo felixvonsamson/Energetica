@@ -182,8 +182,8 @@ def init_test_players() -> None:
     player2.resources = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
 
     add_asset(player2, FunctionalFacilityType.WAREHOUSE, 20)
-    add_asset(player2, ControllableFacilityType.STEAM_ENGINE, 20)
-    add_asset(player2, FunctionalFacilityType.INDUSTRY, 10)
+    add_asset(player2, ControllableFacilityType.STEAM_ENGINE, 18)
+    add_asset(player2, FunctionalFacilityType.INDUSTRY, 11)
 
     OngoingShipment(resource=Fuel.COAL, quantity=10, arrival_tick=100, duration=200, power_demand=10, player=player1)
 

@@ -202,24 +202,25 @@ socket.on("new_values", function (changes) {
 
         sessionStorage.setItem("cumulative_emissions", JSON.stringify(changes.cumulative_emissions));
 
-        construction_updates = changes.construction_updates;
-        if (Object.keys(construction_updates).length > 0) {
-            constructions_data = JSON.parse(sessionStorage.getItem("projectsData"));
-            for (var construction_id in construction_updates) {
-                let construction = constructions_data[0][construction_id];
-                construction.speed = construction_updates[construction_id].speed;
+        let project_updates = changes.construction_updates;
+        if (Object.keys(project_updates).length > 0) {
+            let projects_data = JSON.parse(sessionStorage.getItem("projectsData"));
+            for (var project_id in project_updates) {
+                const project = projects_data.projects.find(p => p.id == project_id);
+                project.speed = project_updates[project_id].speed;
+                project.end_tick = project_updates[project_id].end_tick;
             }
-            sessionStorage.setItem("projectsData", JSON.stringify(constructions_data));
+            sessionStorage.setItem("projectsData", JSON.stringify(projects_data));
             if (typeof display_progressBars === "function") {
-                display_progressBars(constructions_data, null);
+                display_progressBars(projects_data, null);
             }
         }
 
-        shipment_updates = changes.shipment_updates;
+        let shipment_updates = changes.shipment_updates;
         if (Object.keys(shipment_updates).length > 0) {
-            shipments_data = JSON.parse(sessionStorage.getItem("shipments"));
+            let shipments_data = JSON.parse(sessionStorage.getItem("shipments"));
             for (var shipment_id in shipment_updates) {
-                let shipment = shipments_data[0][shipment_id];
+                const shipment = shipments_data.shipments.find(s => s.id == shipment_id);
                 shipment.speed = shipment_updates[shipment_id].speed;
                 shipment.arrival_tick = shipment_updates[shipment_id].arrival_tick;
             }

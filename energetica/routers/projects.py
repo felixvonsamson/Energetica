@@ -14,7 +14,7 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
 @router.get("")
-def get_constructions(
+def get_projects(
     player: Annotated[Player, Depends(get_settled_player)],
 ) -> ProjectListOut:
     """Get list of facilities under construction for this player."""
@@ -42,7 +42,7 @@ def cancel_project(
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     assets.cancel_project(player=player, project=project, force=force)
-    return get_constructions(player)
+    return get_projects(player)
 
 
 @router.post("/{project_id}:pause")
@@ -55,7 +55,7 @@ def request_pause_project(
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     assets.pause_project(player=player, project=project)
-    return get_constructions(player)
+    return get_projects(player)
 
 
 @router.post("/{project_id}:resume")
@@ -68,7 +68,7 @@ def request_resume_project(
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     assets.resume_project(player=player, project=project)
-    return get_constructions(player)
+    return get_projects(player)
 
 
 @router.post("/{project_id}:decrease-priority")
@@ -81,7 +81,7 @@ async def decrease_project_priority(
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     assets.decrease_project_priority(player=player, project=project)
-    return get_constructions(player)
+    return get_projects(player)
 
 
 @router.post("/{project_id}:increase-priority")
@@ -94,4 +94,4 @@ async def increase_project_priority(
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     assets.increase_project_priority(player=player, project=project)
-    return get_constructions(player)
+    return get_projects(player)

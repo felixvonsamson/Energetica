@@ -11,9 +11,9 @@
             "program": "main.py",
             "console": "integratedTerminal",
             "args": [
-                "--env", "prod", //maybe add a new test environment
+                "--env", "dev", //maybe add a new test environment
                 "--port", "5001",
-                "--clock_time", "2",
+                "--clock_time", "3",
                 "--in_game_seconds_per_tick", "1800",
                 "--run_init_test_players",
             ]
