@@ -63,12 +63,14 @@ class OngoingProject(DBModel):
         if self.is_ongoing:
             self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.total_t + 1)
         self.status = ProjectStatus.PAUSED
+        self.speed = 1  # only for the display of the progress bar
 
     def set_waiting(self) -> None:
         """Make this facility go from ongoing to waiting."""
         assert self.status == ProjectStatus.ONGOING
         self.end_tick_or_ticks_passed = self.duration - self.end_tick_or_ticks_passed + (engine.total_t + 1)
         self.status = ProjectStatus.WAITING
+        self.speed = 1  # only for the display of the progress bar
 
     def set_ongoing(self, *, start_now: bool = False) -> None:
         """
