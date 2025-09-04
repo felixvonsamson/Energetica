@@ -661,7 +661,7 @@ const_config: dict = {
             "price_multiplier": 1.2,
             "price_factor": 1.2,
             "prod_factor": 1.2,
-            "capacity_factor": 1.05,
+            "capacity_factor": 1.15,
             "affected_facilities": [
                 "small_water_dam",
                 "large_water_dam",
