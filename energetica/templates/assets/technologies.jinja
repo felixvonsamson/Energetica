@@ -245,16 +245,12 @@
                   lvl {{ technology_data.level-1 }} -> lvl {{ technology_data.level }}
                 </th>
               </tr>
-              {% macro render_effect_row(label, data_key, sign="+", precision=0, suffix="%", hover_info="", round_value=True) %}
+              {% macro render_effect_row(label, data_key, sign="+", precision=1, suffix="%", hover_info="") %}
                 {% if data_key in technology_data %}
                   <tr>
                     <td>{{ label | safe }}</td>
                     <td id="{{data_key}}" class="txt_center{% if hover_info %} hover_info{% endif %}">
-                      {% if round_value %}
-                        {{ sign }}{{ technology_data[data_key] | round(precision) }}{{ suffix }}
-                      {% else %}
-                        {{ sign }}{{ technology_data[data_key] }}{{ suffix }}
-                      {% endif %}
+                      {{ sign }}{{ technology_data[data_key] | round(precision) }}{{ suffix }}
                       {% if hover_info %}
                         <span class="popup_info small">{{ hover_info }}</span>
                       {% endif %}
@@ -264,9 +260,9 @@
               {% endmacro %}
               {{ render_effect_row('Power generation', 'power_generation_bonus') }}
               {{ render_effect_row('Extraction speed', 'extraction_speed_bonus') }}
-              {{ render_effect_row("Fuel use", "fuel_use_reduction_bonus", sign="-", precision=1) }}
-              {{ render_effect_row("CO<sub>2</sub> emissions", "co2_emissions_reduction_bonus", sign="-", precision=1) }}
-              {{ render_effect_row("Effic. molten salt", "molten_salt_efficiency_bonus", suffix="pp", precision=1, hover_info="percentage point") }}
+              {{ render_effect_row("Fuel use", "fuel_use_reduction_bonus", sign="-") }}
+              {{ render_effect_row("CO<sub>2</sub> emissions", "co2_emissions_reduction_bonus", sign="-") }}
+              {{ render_effect_row("Effic. molten salt", "molten_salt_efficiency_bonus", suffix="pp", hover_info="percentage point") }}
               {{ render_effect_row("Construction time", "construction_time_reduction_bonus", sign="-") }}
               {% if "construction_workers" in technology_data %}
                 <tr id="construction_workers_tr" {% if technology_data.construction_workers is none %}style="display:none"{% endif %}>
