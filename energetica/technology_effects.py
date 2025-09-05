@@ -45,7 +45,7 @@ def special_multiplier(pf: float, lvl: int) -> float:
 
 def special_multiplier_gain(pf: float, lvl: int) -> float:
     """Returns the value multiplier for one additional level in percent."""
-    return (special_multiplier(pf, lvl + 1) / special_multiplier(pf, lvl)) * 100 - 100
+    return (special_multiplier(pf, lvl) / special_multiplier(pf, lvl - 1)) * 100 - 100
 
 
 def special_linear_multiplier(pf: float, lvl: int) -> float:
@@ -55,7 +55,7 @@ def special_linear_multiplier(pf: float, lvl: int) -> float:
 
 def special_linear_multiplier_gain(pf: float, lvl: int) -> float:
     """Returns the value multiplier for one additional level in percent."""
-    return (special_linear_multiplier(pf, lvl + 1) / special_linear_multiplier(pf, lvl)) * 100 - 100
+    return (special_linear_multiplier(pf, lvl) / special_linear_multiplier(pf, lvl - 1)) * 100 - 100
 
 
 def research_prevalence(technology_name: ProjectType, level: int) -> int:
@@ -1014,10 +1014,10 @@ def package_available_technologies(player: Player) -> list[dict]:
         )
         | (
             {
-                "extraction_speed_bonus": 100
-                * extraction_rate_multiplier(player, mineral_extraction_level=levels[technology])
-                / extraction_rate_multiplier(player, mineral_extraction_level=levels[technology] - 1)
-                - 100,
+                "extraction_speed_bonus": special_linear_multiplier_gain(
+                    const_config_assets[technology]["extract_factor"],
+                    levels[technology],
+                ),
                 "power_consumption_penalty": special_linear_multiplier_gain(
                     const_config_assets[technology]["energy_factor"],
                     levels[technology],

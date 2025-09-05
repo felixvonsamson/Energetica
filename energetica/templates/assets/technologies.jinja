@@ -273,14 +273,14 @@
                 </tr>
               {% endif %}
               {{ render_effect_row("Shipment time", "shipment_time_reduction_bonus", sign="-") }}
-              {{ render_effect_row("Power consumption", "power_consumption_reduction_bonus", sign="+") }}
-              {{ render_effect_row("Power consumption", "power_consumption_penalty", sign="+") }}
-              {{ render_effect_row("CO<sub>2</sub> emissions", "co2_emissions_penalty", sign="+") }}
+              {{ render_effect_row("Power consumption", "power_consumption_reduction_bonus") }}
+              {{ render_effect_row("Power consumption", "power_consumption_penalty") }}
+              {{ render_effect_row("CO<sub>2</sub> emissions", "co2_emissions_penalty") }}
               {{ render_effect_row('Storage capacity', 'storage_capacity_bonus') }}
               {{ render_effect_row("Efficiency hydrogen", "hydrogen_efficiency_bonus", suffix="pp", precision=2, hover_info="percentage point") }}
               {{ render_effect_row("Efficiency Li-ion", "lithium_ion_efficiency_bonus", suffix="pp", precision=2, hover_info="percentage point") }}
               {{ render_effect_row("Efficiency solid state", "solid_state_efficiency_bonus", suffix="pp", precision=2, hover_info="percentage point") }}
-              {{ render_effect_row("Price", "price_penalty", sign="+") }}
+              {{ render_effect_row("Price", "price_penalty") }}
               {{ render_effect_row("Price", "price_reduction_bonus", sign="") }}
               {{ render_effect_row("Construction power", "construction_power_reduction_bonus", sign="-") }}
             </table>
