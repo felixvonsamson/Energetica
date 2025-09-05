@@ -49,7 +49,7 @@ def special_multiplier_gain(pf: float, lvl: int) -> float:
 
 
 def special_linear_multiplier(pf: float, lvl: int) -> float:
-    """Return a linear multiplier"""
+    """Return a linear multiplier."""
     return 1 + pf * lvl
 
 
