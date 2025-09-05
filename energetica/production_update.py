@@ -890,11 +890,7 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
     demand[demand_type] = satisfaction
     if isinstance(demand_type, ExtractionFacilityType | StorageFacilityType) or demand_type == "carbon_capture":
         return
-    if satisfaction > (1 + 0.0008 * engine.in_game_seconds_per_tick) * player.rolling_history.get_last_data(
-        "demand",
-        demand_type,
-    ):
-        return
+
     if demand_type == "construction":
         cumul_demand = 0.0
         for i in range(min(len(player.constructions_by_priority), player.workers[WorkerType.CONSTRUCTION])):
