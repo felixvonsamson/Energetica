@@ -56,8 +56,22 @@
       if (!response.ok) {
         const response_body = await response.json();
         if (catchValidationErrors(response, response_body)) return;
-          addError(response_body.detail);
+        if (response_body.detail == "Invalid password") {
+          addError("Invalid password");
           return;
+        }
+        if (response_body.detail == "User not found") {
+            console.log(response.headers);
+            const release_date = response.headers.get("release-date");
+            const version = response.headers.get("version");
+          addError(`Username does not exist.<br>
+            All accounts created before the <b>${release_date}</b> 
+            have been<br>deleted due to a server reset for the <b>${version}</b> update.<br>
+            If your account has been deleted, please create a new one.`);
+          return;
+        }
+        addError(response_body.detail);
+        return;
       }
       window.location.href = "/home"
     })

@@ -77,9 +77,6 @@ def get_settled_player(request: Request) -> Player:
     return user.player
 
 
-InvalidCredentialsException = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-
-
 def add_session_cookie_to_response(response: Response, user: User) -> Response:
     token = serializer.dumps(user.username)
     response.set_cookie(

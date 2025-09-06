@@ -70,6 +70,7 @@ logging.getLogger("uvicorn.access").addFilter(SocketIOFilter())
 def setup_routes(app: FastAPI):
     @app.exception_handler(RequestValidationError)
     def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+        """If the validation of pydantic schemas fails (e.g. string too short), return a 422 with details."""
         return JSONResponse(
             content={
                 "detail": jsonable_encoder(exc.errors()),

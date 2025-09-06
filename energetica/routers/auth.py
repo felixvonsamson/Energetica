@@ -11,6 +11,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 
+from energetica import __release_date__, __version__
 from energetica.database.user import User
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
@@ -21,7 +22,6 @@ from energetica.schemas.auth import (
 )
 from energetica.utils import misc
 from energetica.utils.auth import (
-    InvalidCredentialsException,
     add_session_cookie_to_response,
     check_password_hash,
     generate_password_hash,
@@ -39,23 +39,19 @@ def login(request_data: LoginRequest) -> Response:
     user = next(User.filter_by(username=username), None)
 
     if user is None:
-        raise InvalidCredentialsException
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"release-date": __release_date__, "version": __version__},
+        )
 
     if not check_password_hash(plain_password=password, hashed_password=user.pwhash):
-        raise InvalidCredentialsException
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
 
     engine.log(f"{username} logged in")
 
     response = JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK)
     return add_session_cookie_to_response(response, user)
-
-    # TODO: manage nice messages about old accounts
-    # flash(
-    #     f"Username does not exist.<br><b>All accounts created before the {energetica.__release_date__} "
-    #     f"have been<br>deleted due to a server reset for the {energetica.__version__} update.<br>"
-    #     "If your account has been deleted, please create a new one.</b>",
-    #     category="error",
-    # )
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
