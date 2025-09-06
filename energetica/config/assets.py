@@ -602,7 +602,7 @@ const_config: dict = {
             "base_construction_time": timedelta(hours=20).total_seconds(),
             "base_construction_energy": 8_000_000,
             "price_multiplier": 1.4,
-            "price_factor": 1.2,
+            "price_factor": 0.27,
             "extract_factor": 0.30,
             "energy_factor": 0.25,
             "pollution_factor": 0.05,
