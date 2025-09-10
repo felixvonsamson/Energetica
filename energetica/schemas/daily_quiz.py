@@ -14,6 +14,7 @@ class DailyQuizBase(BaseModel):
     correct_answer: Literal["answer1", "answer2", "answer3", "all correct"] | None = None
     answered_correctly: bool | None = None
     explanation: str | None = None
+    learn_more_link: str | None = None
 
 
 class DailyQuizSubmitRequest(BaseModel):

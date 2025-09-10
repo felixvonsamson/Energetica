@@ -283,6 +283,7 @@ def get_quiz_question(player: Player) -> DailyQuizBase:
             or quiz_data["answer"] == "all correct",
             correct_answer=quiz_data["answer"],
             explanation=quiz_data["explanation"],
+            learn_more_link=quiz_data["learn_more_link"],
         )
     else:
         return DailyQuizBase(
