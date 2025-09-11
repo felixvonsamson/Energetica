@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from energetica.enums import ExtractionFacilityType, HydroFacilityType, PowerFacilityType, StorageFacilityType
+from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType
 from energetica.globals import engine
 
 if TYPE_CHECKING:
@@ -62,8 +62,6 @@ class CapacityData:
             base_data = engine.const_config["assets"][facility.facility_type]
             effective_values = self._data[facility.facility_type]
             op_costs = facility.daily_op_cost * engine.in_game_seconds_per_tick / (24 * 3600)
-            if isinstance(facility.facility_type, HydroFacilityType):
-                op_costs *= facility.multipliers["hydro_price_multiplier"]
             effective_values["O&M_cost"] += op_costs
             if isinstance(facility.facility_type, PowerFacilityType):
                 power_gen = facility.max_power_generation
