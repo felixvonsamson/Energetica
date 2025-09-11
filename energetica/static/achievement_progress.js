@@ -69,7 +69,7 @@ function display_quiz_question(question_data) {
     <button class="quiz_answer medium ${question_data.correct_answer == "answer3" || question_data.correct_answer == "all correct" ? "correct" : "incorrect"}" disabled>${question_data.answer3}</button>
     </div>
     <p>${question_data.explanation}</p>
-    <p class="txt_center"><a href="${question_data.Link}" target="_blank">Learn more</a></p>`;
+    <p class="txt_center"><a href="${question_data.learn_more_link}" target="_blank">Learn more</a></p>`;
   } else {
     quiz.innerHTML += `<div class="quiz_answers_container">
     <button class="quiz_answer medium" onclick="answer_quiz('answer1')">${question_data.answer1}</button>
