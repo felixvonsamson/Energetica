@@ -84,11 +84,16 @@ def price_multiplier(player: Player, project_type: ProjectType) -> float:
     """Return the price multiplier according to the technology level of the player."""
     const_config = engine.const_config["assets"]
     mlt = 1.0
+    # special linear price increase for the mineral extraction technology
+    if project_type in const_config[TechnologyType.MINERAL_EXTRACTION]["affected_facilities"]:
+        mlt *= special_linear_multiplier(
+            const_config[TechnologyType.MINERAL_EXTRACTION]["price_factor"],
+            player.technology_lvl[TechnologyType.MINERAL_EXTRACTION],
+        )
     # This is a list of all the facilities that affect the price of the facility
     for research in [
         TechnologyType.MECHANICAL_ENGINEERING,
         TechnologyType.PHYSICS,
-        TechnologyType.MINERAL_EXTRACTION,
         TechnologyType.MATERIALS,
         TechnologyType.CIVIL_ENGINEERING,
         TechnologyType.AERODYNAMICS,
