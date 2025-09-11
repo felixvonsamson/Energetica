@@ -508,8 +508,8 @@ def market_logic(new_values: dict, market: dict) -> None:
             sold_cap = row.capacity - row.cumul_capacities + market_quantity
             if sold_cap > 0.1:
                 sell(row, market_price, quantity=sold_cap)
-            # dumping electricity that is offered for negative price and not sold
-            if row.price < 0:
+            # dumping electricity that is offered at the minimal price and not sold
+            if row.price <= -5:
                 dump_cap = max(0.0, min(row.capacity, row.capacity - sold_cap))
                 player = Player.get(row.player_id)
                 assert player is not None

@@ -57,12 +57,12 @@ class ChangeNetworkPrices(BaseModel):
 
 class Ask(BaseModel):
     type: AskType
-    price: float = Field(ge=-5)
+    price: float = Field(gt=-5)
 
 
 class Bid(BaseModel):
     type: BidType
-    price: float = Field(ge=-5)
+    price: float = Field(gt=-5)
 
 
 # TODO(mglst): The following class definitions shouldn't be placed here - this temporarily resolves a circular import
