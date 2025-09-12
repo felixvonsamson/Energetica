@@ -105,9 +105,7 @@ def _simulate(
                     user_sessions[player_id] = login_user(player_id)
                 session = cast(requests.Session, user_sessions[player_id])
             else:
-                print(
-                    f"""\033[31mUnauthenticated action encountered""",
-                )
+                print("\033[31mUnauthenticated action encountered\033[0m")
                 if stop_on_unauthenticated_actions:
                     break
                 session = requests.Session()
@@ -142,7 +140,7 @@ def _simulate(
             # After every tick and action, verify the state of the engine
             verify()
         except AssertionError:
-            print("\033[31m" + "Assertion error.\033[0m")
+            print("\033[31mAssertion error.\033[0m")
             if stop_on_assertion_error:
                 break
     else:
