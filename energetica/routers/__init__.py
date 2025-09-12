@@ -156,7 +156,7 @@ def setup_routes(app: FastAPI):
                 print(f"payload: {request_payload}")
                 raise e
 
-        if request.url.path.startswith("/auth"):
+        if request.url.path.startswith("/auth") or ":settle" in request.url.path:
             return response
 
         # Buffer the response body

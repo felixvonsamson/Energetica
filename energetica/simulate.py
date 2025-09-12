@@ -9,7 +9,9 @@ from typing import Any, cast
 
 import requests
 
+from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
+from energetica.database.user import User
 from energetica.globals import engine
 from energetica.schemas.simulate import Action
 from energetica.utils import misc
@@ -96,8 +98,21 @@ def _simulate(
             ):
                 engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action.total_t}.tar.gz")
         elif action.action_type == "create_user":
-            player_id = action.player_id
+            player_id = action.user_id
             user_sessions[player_id] = create_user(player_id, action.username, action.pw_hash)
+        elif action.action_type == "create_player":
+            user = User.getitem(
+                action.user_id,
+                ValueError(f"Cannot create player: user with id {action.user_id} does not exist"),
+            )
+            if user.player is not None:
+                print("\033[31mUser already has a player.\033[0m")
+                break
+            tile = HexTile.getitem(
+                action.player_id,
+                ValueError(f"Cannot create player: tile with id {action.player_id} does not exist"),
+            )
+            misc.initialize_player(user, tile)
         elif action.action_type == "request":
             player_id = action.player_id
             if player_id:
