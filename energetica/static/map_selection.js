@@ -555,9 +555,12 @@ function mousePressed() {
     }
 }
 
+/**
+ * @param {number} locationId
+ */
 function settleLocation(locationId) {
     // TODO(mglst): there is an off-by-one error / quirk here with the tile ids with the + 1 workaround
-    send_json(`/api/v1/map/${locationId + 1}:settle`, {})
+    send_json("/api/v1/auth/settle", { region_id: locationId + 1 })
         .then((response) => {
             if (response.ok) {
                 window.location.href = "/home";

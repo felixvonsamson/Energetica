@@ -18,3 +18,7 @@ class SignupRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):  # TODO(mglst): use PUT or something
     old_password: str
     new_password: str = Field(min_length=7)
+
+
+class SettleRequest(BaseModel):
+    region_id: int
