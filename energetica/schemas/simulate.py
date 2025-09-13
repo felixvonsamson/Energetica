@@ -34,6 +34,7 @@ class CreatePlayerAction(BaseModel):
     action_type: Literal["create_player"]
     user_id: int
     player_id: int
+    tile_id: int
 
 
 class TickAction(BaseModel):

@@ -109,9 +109,12 @@ def _simulate(
                 print("\033[31mUser already has a player.\033[0m")
                 break
             tile = HexTile.getitem(
-                action.player_id,
-                ValueError(f"Cannot create player: tile with id {action.player_id} does not exist"),
+                action.tile_id,
+                ValueError(f"Cannot create player: tile with id {action.tile_id} does not exist"),
             )
+            if tile.player is not None:
+                print("\033[31mTile already occupied.\033[0m")
+                break
             misc.initialize_player(user, tile)
         elif action.action_type == "request":
             player_id = action.player_id

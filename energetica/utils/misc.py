@@ -266,7 +266,8 @@ def initialize_player(user: User, tile: HexTile) -> Player:
             action_type="create_player",
             player_id=player.id,
             user_id=user.id,
-        )
+            tile_id=tile.id,
+        ),
     )
     engine.log(f"{player.username} chose the location {tile.id}")
     return player
