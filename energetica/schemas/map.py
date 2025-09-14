@@ -15,3 +15,11 @@ class HexTileOut(BaseModel):
     uranium: float
     climate_risk: float
     player_id: int | None
+
+
+class SettleRequest(BaseModel):
+    region_id: int
+
+
+class SettleResponse(BaseModel):
+    player_id: int

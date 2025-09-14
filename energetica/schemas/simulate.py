@@ -29,14 +29,6 @@ class CreateUserAction(BaseModel):
     pw_hash: str
 
 
-class CreatePlayerAction(BaseModel):
-    timestamp: datetime
-    action_type: Literal["create_player"]
-    user_id: int
-    player_id: int
-    tile_id: int
-
-
 class TickAction(BaseModel):
     timestamp: datetime
     action_type: Literal["tick"]
@@ -69,5 +61,5 @@ class ApiActionResponse(BaseModel):
 
 Method = Literal["POST", "PUT", "DELETE", "PATCH", "CONNECT", "HEAD", "OPTIONS", "TRACE", "GET"]
 
-ActionUnionType = InitEngineAction | CreateUserAction | CreatePlayerAction | TickAction | ApiAction
+ActionUnionType = InitEngineAction | CreateUserAction | TickAction | ApiAction
 Action = Annotated[ActionUnionType, Field(discriminator="action_type")]

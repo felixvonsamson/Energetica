@@ -12,7 +12,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 
 from energetica import __release_date__, __version__
-from energetica.database.map.hex_tile import HexTile
 from energetica.database.user import User
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
@@ -20,15 +19,13 @@ from energetica.routers.map import router
 from energetica.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
-    SettleRequest,
     SignupRequest,
 )
-from energetica.utils import map_helpers, misc
+from energetica.utils import misc
 from energetica.utils.auth import (
     add_session_cookie_to_response,
     check_password_hash,
     generate_password_hash,
-    get_playing_user,
     get_user,
 )
 
@@ -90,17 +87,3 @@ def change_password(  # noqa: ANN201
         raise GameError(GameExceptionType.OLD_PASSWORD_INCORRECT)
     user.pwhash = generate_password_hash(new_password)
     engine.log(f"{user.username} changed their password")
-
-
-@router.post("/settle", status_code=status.HTTP_204_NO_CONTENT)
-def settle_region(  # noqa: ANN201
-    user: Annotated[User, Depends(get_playing_user)],
-    request_data: SettleRequest,
-):
-    if user.player is not None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already has a player")
-    region = HexTile.getitem(
-        request_data.region_id,
-        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Region not found"),
-    )
-    map_helpers.confirm_location(user, region)

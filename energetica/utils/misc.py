@@ -23,7 +23,7 @@ from energetica.enums import ControllableFacilityType
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.schemas.daily_quiz import DailyQuizBase
-from energetica.schemas.simulate import CreatePlayerAction, CreateUserAction
+from energetica.schemas.simulate import CreateUserAction
 from energetica.schemas.weather import WeatherOut
 from energetica.utils.astro import DrHI
 from energetica.database.player import Player
@@ -260,15 +260,6 @@ def initialize_player(user: User, tile: HexTile) -> Player:
     player.rolling_history.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
 
-    engine.log_action(
-        CreatePlayerAction(
-            timestamp=datetime.now(),
-            action_type="create_player",
-            player_id=player.id,
-            user_id=user.id,
-            tile_id=tile.id,
-        ),
-    )
     engine.log(f"{player.username} chose the location {tile.id}")
     return player
 
