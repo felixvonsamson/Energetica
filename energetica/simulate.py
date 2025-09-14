@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import requests
 
-from energetica.database.player import Player
+from energetica.database.user import User
 from energetica.globals import engine
 from energetica.schemas.simulate import Action
 from energetica.utils import misc
@@ -27,9 +27,9 @@ def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
 
 def login_user(user_id: int) -> requests.Session:
     """Login a user with the given user_id."""
-    player = Player.getitem(user_id, ValueError(f"Cannot log in player: player with id {user_id} does not exist"))
+    user = User.getitem(user_id, ValueError(f"Cannot log in user: user with id {user_id} does not exist"))
     session = requests.Session()
-    add_session_cookie_to_session(session, player.user)
+    add_session_cookie_to_session(session, user)
     return session
 
 
