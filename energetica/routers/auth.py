@@ -15,7 +15,6 @@ from energetica import __release_date__, __version__
 from energetica.database.user import User
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
-from energetica.routers.map import router
 from energetica.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
