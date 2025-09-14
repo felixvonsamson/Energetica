@@ -55,12 +55,11 @@ def create_app(
     simulate_stop_on_mismatch: bool = False,
     simulate_stop_on_server_error: bool = False,
     simulate_stop_on_assertion_error: bool = False,
-    simulate_stop_on_unauthenticated_actions: bool = False,
     simulate_checkpoint_every_k_ticks: int = 10000,
     simulate_checkpoint_ticks: list[int] | None = None,
     simulate_till: int | None = None,
     simulate_profiling: bool = False,
-    skip_adding_handlers: bool = False,
+    skip_adding_handlers: bool = False,  # TODO(mglst): revisit if this is still needed, currently unused
     env: Literal["dev"] | Literal["prod"],
     disable_signups: bool = False,
 ) -> FastAPI:
@@ -172,7 +171,6 @@ def create_app(
                     "stop_on_mismatch": simulate_stop_on_mismatch,
                     "stop_on_server_error": simulate_stop_on_server_error,
                     "stop_on_assertion_error": simulate_stop_on_assertion_error,
-                    "stop_on_unauthenticated_actions": simulate_stop_on_unauthenticated_actions,
                     "checkpoint_every_k_ticks": simulate_checkpoint_every_k_ticks,
                     "checkpoint_ticks": simulate_checkpoint_ticks,
                 }
@@ -184,7 +182,6 @@ def create_app(
                     "stop_on_mismatch": simulate_stop_on_mismatch,
                     "stop_on_server_error": True,
                     "stop_on_assertion_error": True,
-                    "stop_on_unauthenticated_actions": True,
                     "checkpoint_every_k_ticks": None,
                     "checkpoint_ticks": None,
                 }

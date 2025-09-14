@@ -60,7 +60,6 @@ def _simulate(
     stop_on_mismatch: bool,
     stop_on_server_error: bool,
     stop_on_assertion_error: bool,
-    stop_on_unauthenticated_actions: bool,
     checkpoint_every_k_ticks: int = 10000,
     checkpoint_ticks: list[int] | None = None,
 ) -> bool:
@@ -99,16 +98,10 @@ def _simulate(
             user_id = action.user_id
             user_sessions[user_id] = create_user(user_id, action.username, action.pw_hash)
         elif action.action_type == "request":
-            player_id = action.player_id
-            if player_id:
-                if player_id not in user_sessions:
-                    user_sessions[player_id] = login_user(player_id)
-                session = cast(requests.Session, user_sessions[player_id])
-            else:
-                print("\033[31mUnauthenticated action encountered\033[0m")
-                if stop_on_unauthenticated_actions:
-                    break
-                session = requests.Session()
+            user_id = action.user_id
+            if user_id not in user_sessions:
+                user_sessions[user_id] = login_user(user_id)
+            session = cast(requests.Session, user_sessions[user_id])
             url = f"{base_url}{action.request.endpoint}"
             content_type = "json" if action.request.content_type == "application/json" else "data"
             method = action.request.method

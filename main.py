@@ -83,11 +83,6 @@ if __name__ == "__main__":
         help="If game is simulated, stops the simulation if the verification raises an assertion error.",
     )
     parser.add_argument(
-        "--simulate_stop_on_unauthenticated_actions",
-        action="store_true",
-        help="If game is simulated, stops the simulation if the verification raises an assertion error.",
-    )
-    parser.add_argument(
         "--simulate_checkpoint_every_k_ticks",
         type=int,
         default=10000,

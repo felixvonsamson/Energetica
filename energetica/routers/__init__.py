@@ -156,9 +156,6 @@ def setup_routes(app: FastAPI):
                 print(f"payload: {request_payload}")
                 raise e
 
-        if request.url.path.startswith("/auth"):
-            return response
-
         # Buffer the response body
         response_body = b""
         async for chunk in response.__dict__.get("body_iterator", []):
@@ -179,14 +176,18 @@ def setup_routes(app: FastAPI):
             response_payload = "unparsable or not JSON"
 
         user = get_user(request)
-        player_id = user.player.id if user is not None and user.role == "player" and user.player is not None else None
+        if user is None:
+            return new_response
 
         log_entry = ApiAction(
             timestamp=start,
             elapsed=(datetime.now() - start).total_seconds(),
-            ip=request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
+            ip=request.headers.get(
+                "X-Forwarded-For",
+                request.client.host if request.client is not None else "null",
+            ),
             action_type="request",
-            player_id=player_id,
+            user_id=user.id,
             request=ApiActionRequest(
                 endpoint=request.url.path,
                 method=cast(Method, request.method),
