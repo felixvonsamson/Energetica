@@ -50,7 +50,7 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
     # check destructions
     if rng.random() < climate_events[event_name].industry_destruction_chance:
         player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY] -= 1
-        engine.config.update_config_for_user(player)
+        player.update_config()
         player.notify(
             "Destruction",
             f"Your industry has been levelled down by 1 due to the {climate_events[event_name].name} event.",

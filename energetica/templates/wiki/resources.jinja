@@ -1,7 +1,5 @@
 {% extends "wiki/wiki_template.jinja" %} {% block title %}Energetica Wiki{% endblock %} {% block wiki_content %}
 
-{% set const_data = engine.const_config["assets"] %}
-
 <div class="flex-row huge title">Wiki - Natural Resources</div>
 
 <div class="medium margin-large">
@@ -83,15 +81,15 @@
       </tr>
       <tr>
         <td>Coal</td>
-        <td>{{ (const_data.coal_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
+        <td>{{ (engine.new_config.extraction_facilities.coal_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Gas</td>
-        <td>{{ (const_data.gas_drilling_site.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
+        <td>{{ (engine.new_config.extraction_facilities.gas_drilling_site.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
       <tr>
         <td>Uranium</td>
-        <td>{{ (const_data.uranium_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
+        <td>{{ (engine.new_config.extraction_facilities.uranium_mine.base_extraction_rate_per_day*100) | round(4) }}% /day (ig)</td>
       </tr>
     </table>
     <span>ig = <a href="{{ url_for('wiki.render_template_wiki', template_name='time_and_weather', _anchor='game_time') }}">in-game time</a></span>
@@ -128,8 +126,8 @@
     The shipment duration and electricity consumption are calculated based on the following formulas:
   </p>
   <ul style="list-style: none;"><li>
-    <i class="fa fa-angle-double-right padding"></i>\(t_{ship} = t_{base} \times dist \times {{ const_data.transport_technology["time_factor"] }}^{TT} \) &emsp;&emsp;&emsp; \(P_{ship} = \frac{E_{base} \times
-    q_{ship} \times {{ const_data.transport_technology["energy_factor"] }}^{TT} }{ t_{base} \times {{ const_data.transport_technology["time_factor"] }}^{TT} } \)<br>
+    <i class="fa fa-angle-double-right padding"></i>\(t_{ship} = t_{base} \times dist \times {{ engine.new_config.technologies.transport_technology["time_factor"] }}^{TT} \) &emsp;&emsp;&emsp; \(P_{ship} = \frac{E_{base} \times
+    q_{ship} \times {{ engine.new_config.technologies.transport_technology["energy_factor"] }}^{TT} }{ t_{base} \times {{ engine.new_config.technologies.transport_technology["time_factor"] }}^{TT} } \)<br>
     with:
     <ul style="list-style: none;"><li>
       \(t_{ship}\) : shipment duration in hours

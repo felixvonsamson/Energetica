@@ -1,0 +1,109 @@
+"""WIP."""
+
+from typing import TypeVar
+from pydantic import BaseModel
+from pydantic_yaml import parse_yaml_file_as
+from energetica.config.base_project_config import BaseProjectConfig
+from energetica.config.extraction_facility_config import ExtractionFacilitiesConfig
+from energetica.config.functional_facility_config import FunctionalFacilitiesConfig
+from energetica.config.level_project_config import LevelProjectConfig
+from energetica.config.operating_facility_config import OperatingFacilityConfig
+from energetica.config.power_facility_config import PowerFacilitiesConfig
+from energetica.config.power_producing_facility_config import PowerProducingFacilityConfig
+from energetica.config.storage_facility_config import StorageFacilitiesConfig
+from energetica.config.technology_config import TechnologiesConfig
+from energetica.enums import (
+    ExtractionFacilityType,
+    FunctionalFacilityType,
+    PowerFacilityType,
+    ProjectType,
+    StorageFacilityType,
+    TechnologyType,
+)
+
+
+class Config(BaseModel):
+    power_facilities: PowerFacilitiesConfig
+    storage_facilities: StorageFacilitiesConfig
+    extraction_facilities: ExtractionFacilitiesConfig
+    functional_facilities: FunctionalFacilitiesConfig
+    technologies: TechnologiesConfig
+
+    def get_base_config(self, project_type: ProjectType) -> BaseProjectConfig:
+        """Return the base configuration for the specified project type."""
+        if isinstance(project_type, PowerFacilityType):
+            return self.power_facilities[project_type]
+        if isinstance(project_type, StorageFacilityType):
+            return self.storage_facilities[project_type]
+        if isinstance(project_type, ExtractionFacilityType):
+            return self.extraction_facilities[project_type]
+        if isinstance(project_type, FunctionalFacilityType):
+            return self.functional_facilities[project_type]
+        if isinstance(project_type, TechnologyType):
+            return self.technologies[project_type]
+        raise ValueError(f"Invalid facility type: {project_type}")
+
+    def get_operating_config(
+        self,
+        project_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
+    ) -> OperatingFacilityConfig:
+        if isinstance(project_type, PowerFacilityType):
+            return self.power_facilities[project_type]
+        if isinstance(project_type, StorageFacilityType):
+            return self.storage_facilities[project_type]
+        if isinstance(project_type, ExtractionFacilityType):
+            return self.extraction_facilities[project_type]
+        raise ValueError(f"Invalid facility type: {project_type}")
+
+    def get_power_producing_config(
+        self,
+        project_type: PowerFacilityType | StorageFacilityType,
+    ) -> PowerProducingFacilityConfig:
+        if isinstance(project_type, PowerFacilityType):
+            return self.power_facilities[project_type]
+        if isinstance(project_type, StorageFacilityType):
+            return self.storage_facilities[project_type]
+        raise ValueError(f"Invalid facility type: {project_type}")
+
+    def get_level_config(self, project_type: TechnologyType | FunctionalFacilityType) -> LevelProjectConfig:
+        """Return the level configuration for the specified project type."""
+        if isinstance(project_type, TechnologyType):
+            return self.technologies[project_type]
+        if isinstance(project_type, FunctionalFacilityType):
+            return self.functional_facilities[project_type]
+        raise ValueError(f"Invalid facility type: {project_type}")
+
+
+def load_config() -> Config:
+    # return None
+    return Config(
+        power_facilities=parse_yaml_file_as(
+            PowerFacilitiesConfig,
+            "config/power-facilities.yaml",
+        ),
+        storage_facilities=parse_yaml_file_as(
+            StorageFacilitiesConfig,
+            "config/storage-facilities.yaml",
+        ),
+        extraction_facilities=parse_yaml_file_as(
+            ExtractionFacilitiesConfig,
+            "config/extraction-facilities.yaml",
+        ),
+        functional_facilities=parse_yaml_file_as(
+            FunctionalFacilitiesConfig,
+            "config/functional-facilities.yaml",
+        ),
+        technologies=parse_yaml_file_as(
+            TechnologiesConfig,
+            "config/technologies.yaml",
+        ),
+    )
+
+
+T = TypeVar("T")
+
+
+def unwrap(x: T | None, msg: str = "unexpected None") -> T:
+    if x is None:
+        raise ValueError(msg)
+    return x

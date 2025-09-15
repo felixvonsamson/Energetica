@@ -63,7 +63,7 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
         dq = buyer.tile.coordinates[0] - sale.player.tile.coordinates[0]
         dr = buyer.tile.coordinates[1] - sale.player.tile.coordinates[1]
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
-        shipment_duration = distance * buyer.config["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
+        shipment_duration = distance * buyer.config.transport_time_per_tile / engine.in_game_seconds_per_tick
         shipment_duration = math.ceil(shipment_duration)
 
         OngoingShipment(
@@ -71,7 +71,7 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
             quantity=quantity,
             arrival_tick=engine.total_t + 1 + shipment_duration,
             duration=shipment_duration,
-            power_demand=quantity * buyer.config["transport"]["power_per_kg"],
+            power_demand=quantity * buyer.config.transport_power_per_kg,
             player=buyer,
         )
         sale.player.notify(
@@ -98,7 +98,7 @@ def store_import(player: Player, fuel: Fuel, quantity: float) -> None:
     This function is executed when a resource shipment arrives.
     """
     assert player.tile is not None
-    max_cap: float = player.config["warehouse_capacities"][fuel]
+    max_cap = player.config.warehouse_capacities[fuel]
     if player.resources[fuel] + quantity > max_cap:
         # excess resources are stored in the ground
         # TODO(mglst): what if instead it was a political fiasco that the player had to deal with?

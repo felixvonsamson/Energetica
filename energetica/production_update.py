@@ -23,13 +23,14 @@ from energetica.enums import (
     Fuel,
     FunctionalFacilityType,
     HydroFacilityType,
+    PowerFacilityType,
     ProjectStatus,
-    ProjectType,
     SolarFacilityType,
     StorageFacilityType,
     WindFacilityType,
     WorkerType,
     power_facility_types,
+    str_to_project_type,
 )
 from energetica.globals import engine
 from energetica.utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
@@ -220,7 +221,7 @@ def extraction_facility_demand(new_values: dict, player: Player, demand: dict) -
     """Calculate power consumption of extraction facilities."""
     assert player.tile is not None
     player_resources = new_values["resources"]
-    warehouse_caps = player.config["warehouse_capacities"]
+    warehouse_caps = player.config.warehouse_capacities
     for fuel in Fuel:
         extraction_facility = fuel.associated_mine
         if player.capacities.get(extraction_facility) is not None:
@@ -246,23 +247,23 @@ def industry_demand_and_revenues(player: Player, demand: dict, revenues: dict) -
     seasonal_factor = (sf1 * (ticks_per_day - real_t % ticks_per_day) + sf2 * (real_t % ticks_per_day)) / ticks_per_day
     intra_day_t = real_t % ticks_per_day
     intra_day_factor = engine.industry_demand[round(intra_day_t * 1440 / ticks_per_day)]
-    demand["industry"] = intra_day_factor * seasonal_factor * player.config["industry"]["power_consumption"]
+    demand["industry"] = intra_day_factor * seasonal_factor * player.config.industry_power_consumption
     # calculate income of industry per tick
-    revenues["industry"] = player.config["industry"]["income_per_day"] / ticks_per_day
+    revenues["industry"] = player.config.industry_income_per_day / ticks_per_day
     industry_upgrade = next(OngoingProject.filter_by(player=player, project_type=FunctionalFacilityType.INDUSTRY), None)
     if industry_upgrade:
         additional_demand = (
             industry_upgrade.progress()
             * demand["industry"]
-            * (engine.const_config["assets"]["industry"]["power_factor"] - 1)
+            * (engine.new_config.functional_facilities.industry.power_factor - 1)
         )
         additional_revenue = (
             industry_upgrade.progress()
             * (
                 revenues["industry"]
-                - engine.const_config["assets"]["industry"]["universal_income_per_day"] / ticks_per_day
+                - engine.new_config.functional_facilities.industry.universal_income_per_day / ticks_per_day
             )
-            * (engine.const_config["assets"]["industry"]["income_factor"] - 1)
+            * (engine.new_config.functional_facilities.industry.income_factor - 1)
         )
         demand["industry"] += additional_demand
         revenues["industry"] += additional_revenue
@@ -318,7 +319,7 @@ def calculate_demand(new_values: dict, player: Player) -> None:
     climate_event_recovery_cost(player, revenues)
 
     if player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE] > 0:
-        demand["carbon_capture"] = player.config["carbon_capture"]["power_consumption"]
+        demand["carbon_capture"] = player.config.carbon_capture_power_consumption
 
 
 def reset_resource_reservations() -> dict[Fuel, float]:
@@ -390,7 +391,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
             market = place_bid(market, player.id, generation[facility], -5, facility)
 
     # allow a maximum overdraft of the equivalent of the daily income of the industry
-    max_overdraft = -player.config["industry"]["income_per_day"]
+    max_overdraft = -player.config.industry_income_per_day
     notification_txt = "You exceeded your credit limit, you can't buy electricity on the market anymore."
     do_not_send = len(player.notifications) > 0 and player.notifications[-1].content == notification_txt
     if player.money < max_overdraft and player.network is not None and not do_not_send:
@@ -412,10 +413,13 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
 
     resource_reservations = reset_resource_reservations()
     # offer capacities of remaining facilities on the market
-    for facility in player.capacities.get_all():
+    for facility_str in player.capacities.get_all():
+        facility = str_to_project_type[facility_str]
+        if not isinstance(facility, PowerFacilityType | StorageFacilityType):
+            continue
         if (
             facility in player.network_prices.ask_prices.keys()
-            and engine.const_config["assets"][facility]["ramping_time"] != 0
+            and engine.new_config.get_power_producing_config(facility).ramping_time != 0
         ):
             max_prod = calculate_prod(
                 "max",
@@ -612,7 +616,7 @@ def solar_generation(player: Player, generation: dict, in_game_seconds_passed: i
                     engine.random_seed,
                 )
                 max_power = (
-                    engine.const_config["assets"][facility_type]["base_power_generation"]
+                    engine.new_config.power_facilities[facility_type].base_power_generation
                     * facility.multipliers["power_production_multiplier"]
                 )
                 facility.usage = irradiance / 950.0
@@ -644,7 +648,7 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
             for facility in ActiveFacility.filter_by(player=player, facility_type=facility_type):
                 wind_speed = calculate_wind_speed(facility.position, in_game_seconds_passed, engine.random_seed)
                 max_power = (
-                    engine.const_config["assets"][facility_type]["base_power_generation"]
+                    engine.new_config.power_facilities[facility_type].base_power_generation
                     * facility.multipliers["power_production_multiplier"]
                 )
                 effective_wind_speed = wind_speed * facility.multipliers["wind_speed_multiplier"]
@@ -659,12 +663,12 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
 def calculate_prod(
     minmax: Literal["min", "max"],
     player: Player,
-    facility: ProjectType,
+    facility: PowerFacilityType | StorageFacilityType,
     resource_reservations: dict[Fuel, float] | None,
     filling: bool = False,
 ) -> float:
     """
-    Calculate the min or max power production of controllable facilities for this tick.
+    Calculate the min or max power production of power and storage facilities for this tick.
 
     This takes into consideration :
     - ramping constraints
@@ -683,7 +687,7 @@ def calculate_prod(
     max_resources = np.inf
     ramping_speed = (
         player.capacities[facility]["power"]
-        / engine.const_config["assets"][facility]["ramping_time"]
+        / engine.new_config.get_power_producing_config(facility).ramping_time
         * engine.in_game_seconds_per_tick
     )
     if "fuel_use" in player.capacities[facility]:
@@ -788,7 +792,7 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
                 quantity = amount * generation[facility] / player.capacities[facility]["power"]
                 player.resources[fuel] -= quantity
             facility_emissions = (
-                engine.const_config["assets"][facility]["base_pollution"]
+                engine.new_config.power_facilities[facility].base_pollution
                 * generation[facility]
                 / 3600
                 * engine.in_game_seconds_per_tick
@@ -823,9 +827,9 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
 
     # Carbon capture CO2 absorption
     if player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE] > 0:
-        satisfaction = demand["carbon_capture"] / player.config["carbon_capture"]["power_consumption"]
+        satisfaction = demand["carbon_capture"] / player.config.carbon_capture_power_consumption
         captured_co2 = (
-            player.config["carbon_capture"]["absorption"]
+            player.config.carbon_capture_absorption
             * engine.current_climate_data.get_co2()
             * engine.in_game_seconds_per_tick
             / 86400

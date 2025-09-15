@@ -21,12 +21,6 @@ from energetica.utils.misc import empty_network_data, empty_player_data
 todo_router = APIRouter(prefix="", tags=["Flask Migration"])
 
 
-@todo_router.get("/get_const_config")
-def get_const_config():  # noqa: ANN201
-    """Get constant config data."""
-    return engine.const_config
-
-
 @todo_router.get("/get_wind_power_curve")
 def get_wind_power_curve():  # noqa: ANN201
     """Get the wind power curve."""

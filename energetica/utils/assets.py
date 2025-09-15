@@ -92,7 +92,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
 
     deploy_available_workers(player, worker_type, start_now=True)
 
-    project_name = engine.const_config["assets"][project.project_type]["name"]
+    project_name = engine.new_config.get_base_config(project.project_type).name
     if not skip_notifications:
         if isinstance(project.project_type, TechnologyType):
             player.notify("Technologies", f"+ 1 lvl <b>{project_name}</b>.")
@@ -105,7 +105,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             engine.log(f"{player.username} : + 1 {project_name}")
     if isinstance(project.project_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
         eol = engine.total_t + math.ceil(
-            engine.const_config["assets"][project.project_type]["lifespan"] / engine.in_game_seconds_per_tick,
+            engine.new_config.get_operating_config(project.project_type).lifespan / engine.in_game_seconds_per_tick,
         )
         # Create a RNG, seeded with the server seed, the player's tile coordinates, the project name, and number of
         # facilities of that type the player has built. This ensures that the facility's random position is generated
@@ -136,7 +136,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         player.capacities.update(player, None)
     elif not isinstance(project.project_type, FunctionalFacilityType):
         player.capacities.update(player, project.project_type)
-    engine.config.update_config_for_user(player)
+    player.update_config()
     player.emit("retrieve_player_data")
     player.emit("finish_construction", ProjectListOut.from_player(player).model_dump())
 
@@ -273,7 +273,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     player.money -= cost
     facility.delete()
 
-    facility_name = engine.const_config["assets"][facility.facility_type]["name"]
+    facility_name = engine.new_config.get_base_config(facility.facility_type).name
     if decommissioning:
         player.notify(
             "Decommissioning",
@@ -290,7 +290,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
         )
         if not active_power_facilities:
             eol = engine.total_t + math.ceil(
-                engine.const_config["assets"][ControllableFacilityType.STEAM_ENGINE]["lifespan"]
+                engine.new_config.power_facilities[ControllableFacilityType.STEAM_ENGINE].lifespan
                 / engine.in_game_seconds_per_tick,
             )
             ActiveFacility(
@@ -315,7 +315,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
             )
             engine.log(f"Emergency power steam engine created for {player.username}.")
     player.capacities.update(player, facility.facility_type)
-    engine.config.update_config_for_user(player)
+    player.update_config()
     invalidate_data_on_project_update(player, facility.facility_type)
 
 
@@ -456,7 +456,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
 
     refund = (
         0.8
-        * engine.const_config["assets"][project.project_type]["base_price"]
+        * engine.new_config.get_base_config(project.project_type).base_price
         * project.multipliers["price_multiplier"]
         * (1 - project.progress())
     )

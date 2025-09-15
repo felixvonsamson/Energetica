@@ -232,7 +232,8 @@ def initialize_player(player: Player) -> None:
     - Adding the player to the general chat
     """
     eol = engine.total_t + math.ceil(
-        engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick,
+        engine.new_config.power_facilities[ControllableFacilityType.STEAM_ENGINE].lifespan
+        / engine.in_game_seconds_per_tick,
     )
     pos_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     pos_y = player.tile.coordinates[1]

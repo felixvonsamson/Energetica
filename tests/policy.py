@@ -174,11 +174,10 @@ class StarterPolicy(Policy):
 
         # Check if there is enough electric capacity to support an additional level of industry
         current_industry = player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY]
-        const_config_assets = engine.const_config["assets"]
         next_industry_average_consumption = (
             1.2
-            * const_config_assets["industry"]["base_power_consumption"]
-            * const_config_assets["industry"]["power_factor"] ** (current_industry + 1)
+            * engine.new_config.functional_facilities.industry.base_power_consumption
+            * engine.new_config.functional_facilities.industry.power_factor ** (current_industry + 1)
         )
         current_capacity = sum(gen["power"] for gen in player.capacities.get_all().values())
         # print(
@@ -201,17 +200,17 @@ class StarterPolicy(Policy):
         def estimated_lcoe(facility_type: PowerFacilityType) -> float:
             """Estimate the LCOE for building one additional facility of the given type."""
             lcoe = (
-                const_config_assets[facility_type]["base_price"]
+                engine.new_config.power_facilities[facility_type].base_price
                 * technology_effects.price_multiplier(player, facility_type)
                 * (
                     technology_effects.hydro_price_multiplier(player, facility_type)
                     if isinstance(facility_type, HydroFacilityType)
                     else 1.0
                 )
-                * const_config_assets[facility_type]["O&M_factor_per_day"]
+                * engine.new_config.power_facilities[facility_type].o_and_m_factor_per_day
                 * 1.0
                 / (
-                    const_config_assets[facility_type]["base_power_generation"]
+                    engine.new_config.power_facilities[facility_type].base_power_generation
                     * technology_effects.power_production_multiplier(player, facility_type)
                 )
             )

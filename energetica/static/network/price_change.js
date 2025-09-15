@@ -91,68 +91,108 @@ function send_new_list() {
     });
 }
 
+const facility_to_name = {
+    "steam_engine": "Steam Engine",
+    "windmill": "Windmill",
+    "watermill": "Watermill",
+    "coal_burner": "Coal Burner",
+    "gas_burner": "Gas Burner",
+    "small_water_dam": "Small Water Dam",
+    "onshore_wind_turbine": "Onshore Wind Turbine",
+    "combined_cycle": "Combined Cycle",
+    "nuclear_reactor": "Nuclear Reactor",
+    "large_water_dam": "Large Water Dam",
+    "CSP_solar": "Concentrated Solar Power",
+    "PV_solar": "Photovoltaics",
+    "offshore_wind_turbine": "Offshore Wind Turbine",
+    "nuclear_reactor_gen4": "4th Generation Nuclear",
+    "small_pumped_hydro": "Small Pumped Hydro",
+    "molten_salt": "Molten Salt",
+    "large_pumped_hydro": "Large Pumped Hydro",
+    "hydrogen_storage": "Hydrogen Hydrolysis",
+    "lithium_ion_batteries": "Lithium-Ion Batteries",
+    "solid_state_batteries": "Solid State Batteries",
+    "laboratory": "Laboratory",
+    "warehouse": "Warehouse",
+    "industry": "Industry",
+    "carbon_capture": "Carbon Capture",
+    "coal_mine": "Coal Mine",
+    "gas_drilling_site": "Gas Drilling Site",
+    "uranium_mine": "Uranium Mine",
+    "mathematics": "Mathematics",
+    "mechanical_engineering": "Mechanical Engineering",
+    "thermodynamics": "Thermodynamics",
+    "physics": "Physics",
+    "building_technology": "Building Technology",
+    "mineral_extraction": "Mineral Extraction",
+    "transport_technology": "Transport Technology",
+    "materials": "Materials",
+    "civil_engineering": "Civil Engineering",
+    "aerodynamics": "Aerodynamics",
+    "chemistry": "Chemistry",
+    "nuclear_engineering": "Nuclear Engineering",
+}
+
 if (sortableList) {
     fetch("/api/v1/power-priorities")
         .then((response) => response.json())
         .then((raw_data) => {
-            load_const_config().then((const_config) => {
-                renewables = raw_data.renewables;
-                const power_priorities = raw_data.power_priorities;
-                for (let facility of renewables) {
-                    let name = const_config.assets[facility].name;
-                    sortableList.innerHTML += `<li class="item medium gen" style="margin-left:2.1em;" id="${facility}">
-                <div class="details padding">
-                <span>${name}</span>
-                </div>
-                <i id="priority_list_icon" class="fa fa-lock priority_list_icon"></i>
-            </li>`;
-                }
-                for (let item of power_priorities) {
-                    let facility = item.type;
-                    let generation = item.side == "ask";
-                    var name = "";
-                    if (facility == "transport") {
-                        name = "Shipments";
-                    } else if (facility == "construction") {
-                        name = "Construction";
-                    } else if (facility == "research") {
-                        name = "Research";
-                    } else {
-                        console.log(facility);
-                        name = const_config.assets[facility].name;
-                        if (storageFacilities.includes(facility)) {
-                            if (generation) {
-                                name += " (discharge)";
-                            } else {
-                                name += " (charge)";
-                            }
+            renewables = raw_data.renewables;
+            const power_priorities = raw_data.power_priorities;
+            for (let facility of renewables) {
+                let name = facility_to_name[facility];
+                sortableList.innerHTML += `<li class="item medium gen" style="margin-left:2.1em;" id="${facility}">
+            <div class="details padding">
+            <span>${name}</span>
+            </div>
+            <i id="priority_list_icon" class="fa fa-lock priority_list_icon"></i>
+        </li>`;
+            }
+            for (let item of power_priorities) {
+                let facility = item.type;
+                let generation = item.side == "ask";
+                var name = "";
+                if (facility == "transport") {
+                    name = "Shipments";
+                } else if (facility == "construction") {
+                    name = "Construction";
+                } else if (facility == "research") {
+                    name = "Research";
+                } else {
+                    console.log(facility);
+                    name = facility_to_name[facility];
+                    if (storageFacilities.includes(facility)) {
+                        if (generation) {
+                            name += " (discharge)";
+                        } else {
+                            name += " (charge)";
                         }
                     }
-                    // let element_id = item.side + "-" + facility;
-                    const element_id = "TODO";
-                    sortableList.innerHTML +=
-                        `<li class="item medium draggable ${generation ? "gen" : "cons"}" draggable="true" data-side="${item.side}" data-type="${item.type}">
-                        ${!generation ? `<i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>` : ""}
-                        <div class="details padding">
-                        <span>${name}</span>
-                        </div>
-                        ${generation ? `<i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>` : ""}
-                        </li>`;
                 }
-                const items = sortableList.querySelectorAll(".item");
-                items.forEach(item => {
-                    item.addEventListener("dragstart", () => item.classList.add("dragging"));
-                    item.addEventListener("dragend", () => {
-                        item.classList.remove("dragging");
-                        send_new_list();
-                        reset_icons();
-                    });
-                    item.addEventListener("touchstart", () => item.classList.add("dragging"));
-                    item.addEventListener("touchend", () => {
-                        item.classList.remove("dragging");
-                        send_new_list();
-                        reset_icons();
-                    });
+                // let element_id = item.side + "-" + facility;
+                const element_id = "TODO";
+                sortableList.innerHTML +=
+                    `<li class="item medium draggable ${generation ? "gen" : "cons"}" draggable="true" data-side="${item.side}" data-type="${item.type}">
+                    ${!generation ? `<i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>` : ""}
+                    <div class="details padding">
+                    <span>${name}</span>
+                    </div>
+                    ${generation ? `<i id="priority_list_icon" class="fa fa-sort priority_list_icon"></i>` : ""}
+                    </li>`;
+            }
+            const items = sortableList.querySelectorAll(".item");
+            items.forEach(item => {
+                item.addEventListener("dragstart", () => item.classList.add("dragging"));
+                item.addEventListener("dragend", () => {
+                    item.classList.remove("dragging");
+                    send_new_list();
+                    reset_icons();
+                });
+                item.addEventListener("touchstart", () => item.classList.add("dragging"));
+                item.addEventListener("touchend", () => {
+                    item.classList.remove("dragging");
+                    send_new_list();
+                    reset_icons();
                 });
             });
         })

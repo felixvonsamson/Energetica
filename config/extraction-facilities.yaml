@@ -1,0 +1,51 @@
+coal_mine:
+  base_construction_pollution: 200000.0
+  base_construction_time: 144000.0
+  base_extraction_rate_per_day: 0.001
+  base_pollution: 0.065
+  base_power_consumption: 3000000.0
+  base_price: 28500
+  construction_power_factor: 1.5
+  description: The O&M costs of the coal mine are composed of 20% fixed costs 
+    and 80% variable costs.
+  lifespan: 13910400.0
+  name: Coal Mine
+  o_and_m_factor_per_day: 0.24
+  requirements:
+    mineral_extraction: 1
+    warehouse: 1
+  wikipedia_link: https://en.wikipedia.org/wiki/Coal_mining
+gas_drilling_site:
+  base_construction_pollution: 700000.0
+  base_construction_time: 270000.0
+  base_extraction_rate_per_day: 0.002
+  base_pollution: 0.523
+  base_power_consumption: 5100000.0
+  base_price: 110000
+  construction_power_factor: 2.5
+  description: The O&M costs of the coal mine are composed of 20% fixed costs 
+    and 80% variable costs.
+  lifespan: 6048000.0
+  name: Gas Drilling Site
+  o_and_m_factor_per_day: 0.36
+  requirements:
+    mineral_extraction: 2
+    warehouse: 1
+  wikipedia_link: https://en.wikipedia.org/wiki/Natural_gas
+uranium_mine:
+  base_construction_pollution: 500000.0
+  base_construction_time: 432000.0
+  base_extraction_rate_per_day: 5e-05
+  base_pollution: 86.0
+  base_power_consumption: 18000000.0
+  base_price: 350000
+  construction_power_factor: 2.0
+  description: The O&M costs of the coal mine are composed of 20% fixed costs 
+    and 80% variable costs.
+  lifespan: 10886400.0
+  name: Uranium Mine
+  o_and_m_factor_per_day: 0.48
+  requirements:
+    mineral_extraction: 5
+    warehouse: 3
+  wikipedia_link: https://en.wikipedia.org/wiki/Uranium_mining

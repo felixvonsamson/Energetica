@@ -42,8 +42,6 @@
   </div>
   {% for technology_data in available_technologies %}
     {% set technology = technology_data.name %}
-    {# TODO: remove the above for loop and replace this line #}
-    {% set const_data = engine.const_config["assets"][facility] %}
     <div id="{{ technology_data.name }}"
          class="bone margin facility small"
          onclick="show_construction('{{ technology_data.name }}');">

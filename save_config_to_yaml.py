@@ -1,0 +1,817 @@
+#!/usr/bin/env -S python3 -u
+""""""
+
+from __future__ import annotations
+
+from datetime import timedelta
+
+from pydantic_yaml import to_yaml_file
+
+from energetica.config.extraction_facility_config import ExtractionFacilitiesConfig
+from energetica.config.functional_facility_config import FunctionalFacilitiesConfig
+from energetica.config.power_facility_config import PowerFacilitiesConfig
+from energetica.config.storage_facility_config import StorageFacilitiesConfig
+from energetica.config.technology_config import TechnologiesConfig
+from energetica.enums import (
+    ExtractionFacilityType,
+    Fuel,
+    PowerFacilityType,
+    StorageFacilityType,
+    TechnologyType,
+    str_to_project_type,
+)
+
+
+def save_config() -> None:
+    print("Saving power facilities config to yaml...")
+    # save to yaml const_config
+    yaml_files = {}
+    yaml_files["config/power-facilities.yaml"] = PowerFacilitiesConfig(
+        {
+            power_facility: data
+            for power_facility, data in const_config["assets"].items()
+            if isinstance(str_to_project_type[power_facility], PowerFacilityType)
+        },
+    )
+    yaml_files["config/storage-facilities.yaml"] = StorageFacilitiesConfig(
+        {
+            storage_facility: data
+            for storage_facility, data in const_config["assets"].items()
+            if isinstance(str_to_project_type[storage_facility], StorageFacilityType)
+        },
+    )
+    yaml_files["config/extraction-facilities.yaml"] = ExtractionFacilitiesConfig(
+        {
+            extraction_facility: data
+            for extraction_facility, data in const_config["assets"].items()
+            if isinstance(str_to_project_type[extraction_facility], ExtractionFacilityType)
+        },
+    )
+    yaml_files["config/functional-facilities.yaml"] = FunctionalFacilitiesConfig(
+        industry=const_config["assets"]["industry"],
+        laboratory=const_config["assets"]["laboratory"],
+        warehouse={
+            **const_config["assets"]["warehouse"],
+            "capacities": {
+                Fuel(resource): capacity for resource, capacity in const_config["warehouse_capacities"].items()
+            },
+            "time_per_tile": const_config["transport"]["time_per_tile"],
+            "energy_per_kg_per_tile": const_config["transport"]["energy_per_kg_per_tile"],
+        },  # type: ignore
+        carbon_capture=const_config["assets"]["carbon_capture"],
+    )
+    yaml_files["config/technologies.yaml"] = TechnologiesConfig(
+        mathematics=const_config["assets"][TechnologyType.MATHEMATICS],
+        mechanical_engineering=const_config["assets"][TechnologyType.MECHANICAL_ENGINEERING],
+        thermodynamics=const_config["assets"][TechnologyType.THERMODYNAMICS],
+        physics=const_config["assets"][TechnologyType.PHYSICS],
+        building_technology=const_config["assets"][TechnologyType.BUILDING_TECHNOLOGY],
+        mineral_extraction=const_config["assets"][TechnologyType.MINERAL_EXTRACTION],
+        transport_technology=const_config["assets"][TechnologyType.TRANSPORT_TECHNOLOGY],
+        materials=const_config["assets"][TechnologyType.MATERIALS],
+        civil_engineering=const_config["assets"][TechnologyType.CIVIL_ENGINEERING],
+        aerodynamics=const_config["assets"][TechnologyType.AERODYNAMICS],
+        chemistry=const_config["assets"][TechnologyType.CHEMISTRY],
+        nuclear_engineering=const_config["assets"][TechnologyType.NUCLEAR_ENGINEERING],
+    )
+
+    for output_path, model in yaml_files.items():
+        with open(output_path, "w") as file:
+            to_yaml_file(file, model)
+
+    print("{")
+    for facility, data in const_config["assets"].items():
+        print(f'    "{facility}": "{data["name"]}",')
+    print("}")
+
+
+const_config: dict = {
+    "assets": {
+        "steam_engine": {
+            "name": "Steam Engine",
+            "type": "Controllable",
+            "base_price": 10_000,  # [¤]
+            "base_power_generation": 820_000,  # [W]
+            "base_construction_time": timedelta(hours=8).total_seconds(),  # [in-game seconds]
+            "construction_power_factor": 0.4,  # fraction of power gen during construction
+            "base_construction_pollution": 17_520,  # [kg]
+            "O&M_factor_per_day": 0.8,  # [fraction of price per in-game day]
+            "consumed_resources": {},  # [kg/MWh]
+            "base_pollution": 988,  # [kg CO2/MWh]
+            "ramping_time": timedelta(minutes=15).total_seconds(),  # [in-game seconds]
+            "lifespan": timedelta(days=70).total_seconds(),  # [in-game seconds]
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Steam_engine",
+            "description": "The O&M costs of the steam engine are composed of 20% fixed costs and 80% variable costs.",
+            "danger_description": "Risk of steam explosion",
+            "requirements": {},
+        },
+        "windmill": {
+            "name": "Windmill",
+            "type": "Renewable",
+            "base_price": 22_200,
+            "base_power_generation": 3_350_000,
+            "base_construction_time": timedelta(days=1, hours=6).total_seconds(),
+            "construction_power_factor": 0.56,
+            "base_construction_pollution": 1_600,
+            "O&M_factor_per_day": 0.048,
+            "consumed_resources": {"wind": 0},
+            "base_pollution": 0,
+            "ramping_time": 0,
+            "lifespan": timedelta(days=140).total_seconds(),
+            "description": "The amount of electricity generated by the windmill will vary according to the strength of "
+            "the wind at the facilities location. The capacity factor will decrease with each "
+            "additional windmill. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Windmill",
+            "danger_description": "Risk of structural failure in high winds",
+            "requirements": {},
+        },
+        "watermill": {
+            "name": "Watermill",
+            "type": "Renewable",
+            "base_price": 15_000,
+            "base_power_generation": 2_700_000,
+            "base_construction_time": timedelta(days=1, hours=1).total_seconds(),
+            "construction_power_factor": 0.48,
+            "base_construction_pollution": 2_200,
+            "O&M_factor_per_day": 0.056,
+            "consumed_resources": {"water": 0},
+            "base_pollution": 0,
+            "ramping_time": 0,
+            "lifespan": timedelta(days=175).total_seconds(),
+            "description": "The amount of electricity generated by the watermill will vary according to the river "
+            "discharge rate. Each new watermill will have higher building and operational costs. "
+            "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Watermill",
+            "danger_description": "Risk of structural failure due to floods",
+            "requirements": {},
+        },
+        "coal_burner": {
+            "name": "Coal Burner",
+            "type": "Controllable",
+            "base_price": 105_000,
+            "base_power_generation": 21_000_000,
+            "base_construction_time": timedelta(days=11, hours=6).total_seconds(),
+            "construction_power_factor": 0.28,
+            "base_construction_pollution": 1_100_000,
+            "O&M_factor_per_day": 0.096,
+            "consumed_resources": {"coal": 640},
+            "base_pollution": 1_664,
+            "ramping_time": timedelta(hours=2).total_seconds(),
+            "lifespan": timedelta(days=210).total_seconds(),
+            "description": "The O&M costs of the coal burner are composed of 20% fixed costs and 80% variable costs.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Coal-fired_power_station",
+            "requirements": {"mechanical_engineering": 1, "thermodynamics": 1, "warehouse": 1},
+        },
+        "gas_burner": {
+            "name": "Gas Burner",
+            "type": "Controllable",
+            "base_price": 90_000,
+            "base_power_generation": 11_000_000,
+            "base_construction_time": timedelta(days=2, hours=12).total_seconds(),
+            "construction_power_factor": 0.56,
+            "base_construction_pollution": 657_000,
+            "O&M_factor_per_day": 0.116,
+            "consumed_resources": {"gas": 353},
+            "base_pollution": 1_006,
+            "ramping_time": timedelta(minutes=8).total_seconds(),
+            "lifespan": timedelta(days=140).total_seconds(),
+            "description": "The O&M costs of the gas burner are composed of 20% fixed costs and 80% variable costs.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Gas-fired_power_facility",
+            "danger_description": "Risk of gas leaks",
+            "requirements": {"mechanical_engineering": 1, "thermodynamics": 1, "warehouse": 1},
+        },
+        "small_water_dam": {
+            "name": "Small Water Dam",
+            "type": "Renewable",
+            "base_price": 45_000,
+            "base_power_generation": 27_500_000,
+            "base_construction_time": timedelta(days=12, hours=12).total_seconds(),
+            "construction_power_factor": 0.3,
+            "base_construction_pollution": 876_000,
+            "O&M_factor_per_day": 0.032,
+            "consumed_resources": {"hydropower": 0},
+            "base_pollution": 0,
+            "ramping_time": 0,
+            "lifespan": timedelta(days=525).total_seconds(),
+            "description": "The amount of electricity generated by the small water dam will vary according to the river "
+            "discharge rate. Each new small water dam will have higher building and operational costs. "
+            "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
+            "danger_description": "Risk of structural failure due to floods",
+            "requirements": {"civil_engineering": 1},
+        },
+        "onshore_wind_turbine": {
+            "name": "Onshore Wind Turbine",
+            "type": "Renewable",
+            "base_price": 270_000,
+            "base_power_generation": 11_000_000,
+            "base_construction_time": timedelta(days=3, hours=18).total_seconds(),
+            "construction_power_factor": 1.3,
+            "base_construction_pollution": 420_000,
+            "O&M_factor_per_day": 0.028,
+            "consumed_resources": {"wind": 0},
+            "base_pollution": 0,
+            "ramping_time": 0,
+            "lifespan": timedelta(days=224).total_seconds(),
+            "description": "The amount of electricity generated by the onshore wind turbine will vary according to the strength of "
+            "the wind at the facilities location. The capacity factor will decrease with each "
+            "additional onshore wind turbine. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
+            "danger_description": "Risk of structural failure in high winds",
+            "requirements": {"aerodynamics": 1, "materials": 2, "mechanical_engineering": 3},
+        },
+        "combined_cycle": {
+            "name": "Combined Cycle",
+            "type": "Controllable",
+            "base_price": 310_000,
+            "base_power_generation": 54_000_000,
+            "base_construction_time": timedelta(days=6, hours=6).total_seconds(),
+            "construction_power_factor": 0.56,
+            "base_construction_pollution": 1_500_000,
+            "O&M_factor_per_day": 0.056,
+            "consumed_resources": {"gas": 210, "coal": 76},
+            "base_pollution": 797,
+            "ramping_time": timedelta(hours=1, minutes=15).total_seconds(),
+            "lifespan": timedelta(days=245).total_seconds(),
+            "description": "The O&M costs of the combined cycle are composed of 20% fixed costs and 80% variable costs.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Combined_cycle_power_facility",
+            "danger_description": "Risk of gas leaks",
+            "requirements": {"thermodynamics": 3, "mechanical_engineering": 3, "warehouse": 2},
+        },
+        "nuclear_reactor": {
+            "name": "Nuclear Reactor",
+            "type": "Controllable",
+            "base_price": 840_000,
+            "base_power_generation": 167_000_000,
+            "base_construction_time": timedelta(days=31).total_seconds(),
+            "construction_power_factor": 0.08,
+            "base_construction_pollution": 6_800_000,
+            "O&M_factor_per_day": 0.288,
+            "consumed_resources": {"uranium": 0.044},
+            "base_pollution": 2,
+            "ramping_time": timedelta(hours=13).total_seconds(),
+            "lifespan": timedelta(days=350).total_seconds(),
+            "description": "The O&M costs of the nuclear reactor are composed of 50% fixed costs and 50% variable costs.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Nuclear_power_facility",
+            "danger_description": "Risk of reactor meltdown",
+            "requirements": {"chemistry": 3, "nuclear_engineering": 1, "warehouse": 3},
+        },
+        "large_water_dam": {
+            "name": "Large Water Dam",
+            "type": "Renewable",
+            "base_price": 320_000,
+            "base_power_generation": 410_000_000,
+            "base_construction_time": timedelta(days=17, hours=12).total_seconds(),
+            "construction_power_factor": 0.15,
+            "base_construction_pollution": 8_760_000,
+            "O&M_factor_per_day": 0.024,
+            "consumed_resources": {"hydropower": 0},
+            "base_pollution": 0,
+            "ramping_time": 0,
+            "lifespan": timedelta(days=700).total_seconds(),
+            "description": "The amount of electricity generated by the large water dam will vary according to the river "
+            "discharge rate. Each new large water dam will have higher building and operational costs. "
+            "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
+            "danger_description": "Risk of structural failure due to floods",
+            "requirements": {"civil_engineering": 4},
+        },
+        "CSP_solar": {
+            "name": "Concentrated Solar Power",
+            "type": "Renewable",
+            "base_price": 123_000,
+            "base_power_generation": 38_000_000,
+            "base_construction_time": timedelta(days=7, hours=12).total_seconds(),
+            "construction_power_factor": 0.4,
+            "base_construction_pollution": 1_260_000,
+            "O&M_factor_per_day": 0.1,
+            "consumed_resources": {"irradiance": 0},
+            "base_pollution": 0,
+            "ramping_time": 0,
+            "lifespan": timedelta(days=161).total_seconds(),
+            "description": "The amount of electricity generated by the concentrated solar power will vary according to the "
+            "level of irradiance at the facilities location. (<a href='/wiki/power_facilities#Solar_Power_Generation'>See wiki</a>)",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Concentrated_solar_power",
+            "requirements": {"physics": 5, "thermodynamics": 5},
+        },
+        "PV_solar": {
+            "name": "Photovoltaics",
+            "type": "Renewable",
+            "base_price": 900_000,
+            "base_power_generation": 59_000_000,
+            "base_construction_time": timedelta(days=1, hours=21).total_seconds(),
+            "construction_power_factor": 3,
+            "base_construction_pollution": 12_000_000,
+            "O&M_factor_per_day": 0.028,
+            "consumed_resources": {"irradiance": 0},
+            "base_pollution": 0,
+            "ramping_time": 0,
+            "lifespan": timedelta(days=126).total_seconds(),
+            "description": "The amount of electricity generated by the photovoltaic panels will vary according to the "
+            "level of irradiance at the facilities location. (<a href='/wiki/power_facilities#Solar_Power_Generation'>See wiki</a>)",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Photovoltaics",
+            "requirements": {"physics": 6, "materials": 4},
+        },
+        "offshore_wind_turbine": {
+            "name": "Offshore Wind Turbine",
+            "type": "Renewable",
+            "base_price": 2_000_000,
+            "base_power_generation": 130_000_000,
+            "base_construction_time": timedelta(days=10).total_seconds(),
+            "construction_power_factor": 1.2,
+            "base_construction_pollution": 4_900_000,
+            "O&M_factor_per_day": 0.032,
+            "consumed_resources": {"wind": 0},
+            "base_pollution": 0,
+            "ramping_time": 0,
+            "lifespan": timedelta(days=266).total_seconds(),
+            "description": "The amount of electricity generated by the offshore wind turbine will vary according to the strength of "
+            "the wind at the facilities location. The capacity factor will decrease with each "
+            "additional offshore wind turbine. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
+            "danger_description": "Risk of structural failure due to storms",
+            "requirements": {"aerodynamics": 3, "materials": 4, "mechanical_engineering": 6},
+        },
+        "nuclear_reactor_gen4": {
+            "name": "4th Generation Nuclear",
+            "type": "Controllable",
+            "base_price": 1_800_000,
+            "base_power_generation": 335_000_000,
+            "base_construction_time": timedelta(days=37).total_seconds(),
+            "construction_power_factor": 0.06,
+            "base_construction_pollution": 12_000_000,
+            "O&M_factor_per_day": 0.24,
+            "consumed_resources": {"uranium": 0.000_57},
+            "base_pollution": 3,
+            "ramping_time": timedelta(hours=8, minutes=20).total_seconds(),
+            "lifespan": timedelta(days=490).total_seconds(),
+            "description": "The O&M costs of the 4th generation nuclear reactor are composed of 50% fixed costs and 50% variable costs.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Generation_IV_reactor",
+            "danger_description": "Risk of reactor meltdown",
+            "requirements": {"chemistry": 5, "nuclear_engineering": 5, "warehouse": 3},
+        },
+        "small_pumped_hydro": {
+            "name": "Small Pumped Hydro",
+            "type": "Storage",
+            "base_price": 26_500,  # [¤]
+            "base_storage_capacity": 520_000_000,  # [Wh]
+            "base_power_generation": 2_600_000,  # [W]
+            "base_efficiency": 0.75,
+            "base_construction_time": timedelta(days=1, hours=2).total_seconds(),  # [in-game seconds]
+            "construction_power_factor": 0.005,  # fraction of capacity demanded during construction
+            "base_construction_pollution": 80_000,  # [kg]
+            "O&M_factor_per_day": 0.068,  # [fraction of price per in-game day]
+            "ramping_time": timedelta(minutes=9).total_seconds(),  # [in-game seconds]
+            "lifespan": timedelta(days=525).total_seconds(),  # [in-game seconds]
+            "image_extension": "png",
+            "initial_efficiency": 0.75,
+            "description": "The small pumped hydro storage pumps water to a higher reservoir to store energy.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
+            "requirements": {},
+        },
+        "molten_salt": {
+            "name": "Molten Salt",
+            "type": "Storage",
+            "base_price": 27_500,
+            "base_storage_capacity": 3_000_000_000,
+            "base_power_generation": 55_000_000,
+            "base_efficiency": 0.63,
+            "base_construction_time": timedelta(days=5).total_seconds(),
+            "construction_power_factor": 0.001,
+            "base_construction_pollution": 1_200_000,
+            "O&M_factor_per_day": 0.24,
+            "ramping_time": timedelta(hours=1).total_seconds(),
+            "lifespan": timedelta(days=105).total_seconds(),
+            "image_extension": "jpg",
+            "initial_efficiency": 0.63,
+            "description": "The molten salt storage stores energy in the form of high temperature molten salt.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Thermal_energy_storage",
+            "requirements": {"mechanical_engineering": 2, "thermodynamics": 3},
+        },
+        "large_pumped_hydro": {
+            "name": "Large Pumped Hydro",
+            "type": "Storage",
+            "base_price": 266_000,
+            "base_storage_capacity": 12_600_000_000,
+            "base_power_generation": 249_000_000,
+            "base_efficiency": 0.8,
+            "base_construction_time": timedelta(days=19, hours=9).total_seconds(),
+            "construction_power_factor": 0.003,
+            "base_construction_pollution": 3_000_000,
+            "O&M_factor_per_day": 0.07,
+            "ramping_time": timedelta(minutes=16).total_seconds(),
+            "lifespan": timedelta(days=630).total_seconds(),
+            "image_extension": "jpg",
+            "initial_efficiency": 0.8,
+            "description": "The large pumped hydro storage pumps water to a higher reservoir to store large amounts of energy.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
+            "requirements": {"civil_engineering": 3},
+        },
+        "hydrogen_storage": {
+            "name": "Hydrogen Hydrolysis",
+            "type": "Storage",
+            "base_price": 420_000,
+            "base_storage_capacity": 30_000_000_000,
+            "base_power_generation": 90_000_000,
+            "base_efficiency": 0.33,
+            "base_construction_time": timedelta(days=2, hours=12).total_seconds(),
+            "construction_power_factor": 0.000_25,
+            "base_construction_pollution": 2_400_000,
+            "O&M_factor_per_day": 0.028,
+            "ramping_time": timedelta(minutes=8).total_seconds(),
+            "lifespan": timedelta(days=315).total_seconds(),
+            "image_extension": "jpg",
+            "initial_efficiency": 0.33,
+            "description": "The hydrogen storage facility uses electricity to produce hydrogen by electrolysis of water. "
+            "This hydrogen can be used to generate electricity in a fuel cell.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Hydrogen_storage",
+            "requirements": {"chemistry": 3, "materials": 3},
+        },
+        "lithium_ion_batteries": {
+            "name": "Lithium-Ion Batteries",
+            "type": "Storage",
+            "base_price": 660_000,
+            "base_storage_capacity": 3_200_000_000,
+            "base_power_generation": 86_000_000,
+            "base_efficiency": 0.69,
+            "base_construction_time": timedelta(days=3, hours=18).total_seconds(),
+            "construction_power_factor": 0.1,
+            "base_construction_pollution": 8_000_000,
+            "O&M_factor_per_day": 0.002_8,
+            "ramping_time": timedelta(minutes=3).total_seconds(),
+            "lifespan": timedelta(days=112).total_seconds(),
+            "image_extension": "jpg",
+            "initial_efficiency": 0.69,
+            "description": "The lithium-ion batteries store energy with a high efficiency in the form of chemical energy.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Lithium-ion_battery",
+            "requirements": {"chemistry": 4, "materials": 4},
+        },
+        "solid_state_batteries": {
+            "name": "Solid State Batteries",
+            "type": "Storage",
+            "base_price": 1_000_000,
+            "base_storage_capacity": 5_000_000_000,
+            "base_power_generation": 107_000_000,
+            "base_efficiency": 0.79,
+            "base_construction_time": timedelta(days=3, hours=3).total_seconds(),
+            "construction_power_factor": 0.07,
+            "base_construction_pollution": 6_000_000,
+            "O&M_factor_per_day": 0.002,
+            "ramping_time": timedelta(minutes=3).total_seconds(),
+            "lifespan": timedelta(days=210).total_seconds(),
+            "image_extension": "jpg",
+            "initial_efficiency": 0.79,
+            "description": "The solid state batteries store energy with a high efficiency in the form of chemical energy.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Solid-state_battery",
+            "requirements": {"chemistry": 6, "materials": 5, "physics": 6},
+        },
+        "laboratory": {
+            "name": "Laboratory",
+            "type": "Functional facility",
+            "base_price": 32_000,  # [¤]
+            "base_construction_time": timedelta(hours=7).total_seconds(),  # [in-game seconds]
+            "base_construction_energy": 750_000,  # [Wh]
+            "base_construction_pollution": 100_000,  # [kg]
+            "price_multiplier": 1.5,
+            "time_factor": 0.9,
+            "description": "The laboratory is needed to research Technologies.<br>+1 lab worker every 3rd level.",
+            "wikipedia_link": None,
+            "requirements": {},
+        },
+        "warehouse": {
+            "name": "Warehouse",
+            "type": "Functional facility",
+            "base_price": 25_000,
+            "base_construction_time": timedelta(days=1, hours=1).total_seconds(),
+            "base_construction_energy": 500_000,
+            "base_construction_pollution": 25_000,
+            "price_multiplier": 1.5,
+            "capacity_factor": 1.5,
+            "description": "The warehouse stores physical resources.",
+            "wikipedia_link": None,
+            "requirements": {},
+        },
+        "industry": {
+            "name": "Industry",
+            "type": "Functional facility",
+            "base_price": 2_400,
+            "base_construction_time": timedelta(hours=4).total_seconds(),
+            "base_construction_energy": 200_000,
+            "base_construction_pollution": 4_000,
+            "base_power_consumption": 200_000,  # [W]
+            "base_income_per_day": 8_000,  # [¤/in-game day]
+            "universal_income_per_day": 4_400,  # [¤/in-game day]
+            "price_multiplier": 1.4,
+            "power_factor": 1.4,
+            "income_factor": 1.33,
+            "description": "The industry generates revenue from energy. The Power consumption of the Industry varies "
+            "daily and seasonally. (<a href='/wiki/functional_facilities#The_Industry'>See wiki</a>)",
+            "wikipedia_link": None,
+            "requirements": {},
+        },
+        "carbon_capture": {
+            "name": "Carbon Capture",
+            "type": "Functional facility",
+            "base_price": 250_000,
+            "base_construction_time": timedelta(days=2, hours=2).total_seconds(),
+            "base_construction_energy": 50_000_000,
+            "base_construction_pollution": 250_000,
+            "O&M_factor_per_day": 0.000_49,  # not used for now
+            "base_power_consumption": 10_000_000,  # [W]
+            "base_absorption_per_day": 0.000_005,  # [fraction of atmospheric CO2 absorbed per in-game day]
+            "price_multiplier": 1.5,
+            "absorption_factor": 1.55,
+            "power_factor": 1.5,
+            "description": "Carbon Capture consumes energy to absorb and store CO2 underground.",
+            "wikipedia_link": None,
+            "requirements": {"mathematics": 3, "physics": 3, "chemistry": 3},
+        },
+        "coal_mine": {
+            "name": "Coal Mine",
+            "type": "Extraction facility",
+            "base_price": 28_500,  # [¤]
+            "base_construction_time": timedelta(days=1, hours=16).total_seconds(),  # [in-game seconds]
+            "construction_power_factor": 1.5,  # fraction of power consumption during construction
+            "base_construction_pollution": 200_000,  # [kg]
+            "O&M_factor_per_day": 0.24,  # [fraction of price per in-game day]
+            "base_power_consumption": 3_000_000,  # [W]
+            "base_pollution": 0.065,  # [kg CO2/kg extracted]
+            "lifespan": timedelta(days=161).total_seconds(),  # [in-game seconds]
+            "base_extraction_rate_per_day": 0.001,  # [fraction of total stock that can be extracted every in-game
+            # day by one mine]
+            "description": "The O&M costs of the coal mine are composed of 20% fixed costs and 80% variable costs.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Coal_mining",
+            "requirements": {"mineral_extraction": 1, "warehouse": 1},
+        },
+        "gas_drilling_site": {
+            "name": "Gas Drilling Site",
+            "type": "Extraction facility",
+            "base_price": 110_000,
+            "base_construction_time": timedelta(days=3, hours=3).total_seconds(),
+            "construction_power_factor": 2.5,
+            "base_construction_pollution": 700_000,
+            "O&M_factor_per_day": 0.36,
+            "base_power_consumption": 5_100_000,
+            "base_pollution": 0.523,
+            "lifespan": timedelta(days=70).total_seconds(),
+            "base_extraction_rate_per_day": 0.002,
+            "description": "The O&M costs of the coal mine are composed of 20% fixed costs and 80% variable costs.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Natural_gas",
+            "requirements": {"mineral_extraction": 2, "warehouse": 1},
+        },
+        "uranium_mine": {
+            "name": "Uranium Mine",
+            "type": "Extraction facility",
+            "base_price": 350_000,
+            "base_construction_time": timedelta(days=5).total_seconds(),
+            "construction_power_factor": 2,
+            "base_construction_pollution": 500_000,
+            "O&M_factor_per_day": 0.48,
+            "base_power_consumption": 18_000_000,
+            "base_pollution": 86,
+            "lifespan": timedelta(days=126).total_seconds(),
+            "base_extraction_rate_per_day": 0.000_05,
+            "description": "The O&M costs of the coal mine are composed of 20% fixed costs and 80% variable costs.",
+            "wikipedia_link": "https://en.wikipedia.org/wiki/Uranium_mining",
+            "requirements": {"mineral_extraction": 5, "warehouse": 3},
+        },
+        "mathematics": {
+            "name": "Mathematics",
+            "type": "Technology",
+            "base_price": 36_000,  # [¤]
+            "base_construction_time": timedelta(days=1, hours=1).total_seconds(),  # [in-game seconds]
+            "base_construction_energy": 5_000_000,  # [Wh]
+            "price_multiplier": 1.3,
+            "affected_facilities": [],
+            "description": "Mathematics is a prerequisite for many other technologies.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173657&",  # cspell:disable-line
+            "requirements": {"laboratory": 1},
+        },
+        "mechanical_engineering": {
+            "name": "Mechanical Engineering",
+            "type": "Technology",
+            "base_price": 36_000,
+            "base_construction_time": timedelta(days=1, hours=1).total_seconds(),
+            "base_construction_energy": 5_000_000,
+            "price_multiplier": 1.3,
+            "price_factor": 1.15,
+            "prod_factor": 1.2,
+            "affected_facilities": [
+                "steam_engine",
+                "watermill",
+                "coal_burner",
+                "gas_burner",
+                "combined_cycle",
+                "molten_salt",
+            ],
+            "description": "Mechanical Engineering is the branch of engineering for machines and mechanical systems.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172711&",  # cspell:disable-line
+            "requirements": {"laboratory": 1, "mathematics": 1},
+        },
+        "thermodynamics": {
+            "name": "Thermodynamics",
+            "type": "Technology",
+            "base_price": 36_000,
+            "base_construction_time": timedelta(days=1, hours=1).total_seconds(),
+            "base_construction_energy": 5_000_000,
+            "price_multiplier": 1.3,
+            "efficiency_factor": 1 / (1 - 0.075),
+            "affected_facilities": [
+                "steam_engine",
+                "coal_burner",
+                "gas_burner",
+                "combined_cycle",
+                "nuclear_reactor",
+                "nuclear_reactor_gen4",
+                "molten_salt",
+            ],
+            "description": "Thermodynamics is the study of heat and energy transfer in systems.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173159&",  # cspell:disable-line
+            "requirements": {"laboratory": 1, "mathematics": 1},
+        },
+        "physics": {
+            "name": "Physics",
+            "type": "Technology",
+            "base_price": 36_000,
+            "base_construction_time": timedelta(days=1, hours=1).total_seconds(),
+            "base_construction_energy": 5_000_000,
+            "price_multiplier": 1.3,
+            "price_factor": 1.15,
+            "prod_factor": 1.2,
+            "affected_facilities": [
+                "CSP_solar",
+                "PV_solar",
+                "hydrogen_storage",
+                "lithium_ion_batteries",
+                "solid_state_batteries",
+            ],
+            "description": "Physics is the study of matter, energy, and the fundamental forces of nature.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=177068&",  # cspell:disable-line
+            "requirements": {"laboratory": 1, "mathematics": 1, "chemistry": -2},
+        },
+        "building_technology": {
+            "name": "Building Technology",
+            "type": "Technology",
+            "base_price": 56_000,
+            "base_construction_time": timedelta(days=1, hours=16).total_seconds(),
+            "base_construction_energy": 16_000_000,
+            "price_multiplier": 1.3,
+            "time_factor": 0.9,
+            "affected_facilities": [],  # (all power and storage facilities)
+            "description": "Building Technology enables more efficient construction of facilities.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172899&",  # cspell:disable-line
+            "requirements": {"laboratory": 1, "transport_technology": -2},
+        },
+        "mineral_extraction": {
+            "name": "Mineral Extraction",
+            "type": "Technology",
+            "base_price": 32_000,
+            "base_construction_time": timedelta(hours=20).total_seconds(),
+            "base_construction_energy": 8_000_000,
+            "price_multiplier": 1.4,
+            "price_factor": 1.2,
+            "extract_factor": 0.30,
+            "energy_factor": 0.25,
+            "pollution_factor": 0.05,
+            "affected_facilities": [  # Note: this list is ignored in the extraction_rate_multiplier function
+                "coal_mine",
+                "gas_drilling_site",
+                "uranium_mine",
+            ],
+            "description": "Mineral Extraction improves the efficiency of the extraction of natural resources.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173723&",  # cspell:disable-line
+            "requirements": {"laboratory": 1, "mathematics": 1},
+        },
+        "transport_technology": {
+            "name": "Transport Technology",
+            "type": "Technology",
+            "base_price": 56_000,
+            "base_construction_time": timedelta(days=1, hours=16).total_seconds(),
+            "base_construction_energy": 24_000_000,
+            "price_multiplier": 1.4,
+            "time_factor": 0.9,
+            "energy_factor": 1.035,
+            "affected_facilities": [],
+            "description": "Transport Technology enables more efficient shipping of natural resources.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172788&",  # cspell:disable-line
+            "requirements": {"laboratory": 2, "mechanical_engineering": 1},
+        },
+        "materials": {
+            "name": "Materials",
+            "type": "Technology",
+            "base_price": 84_000,
+            "base_construction_time": timedelta(days=2, hours=12).total_seconds(),
+            "base_construction_energy": 48_000_000,
+            "price_multiplier": 1.4,
+            "price_factor": 0.9,
+            "construction_energy_factor": 0.9,
+            "affected_facilities": [
+                "onshore_wind_turbine",
+                "offshore_wind_turbine",
+                "PV_solar",
+                "lithium_ion_batteries",
+                "solid_state_batteries",
+            ],
+            "description": "Materials sciences are essential for the development of new improved materials.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2024S&ansicht=ALLE&lerneinheitId=178386&",  # cspell:disable-line
+            "requirements": {"laboratory": 2, "chemistry": 0},
+        },
+        "civil_engineering": {
+            "name": "Civil Engineering",
+            "type": "Technology",
+            "base_price": 28_000,
+            "base_construction_time": timedelta(hours=20).total_seconds(),
+            "base_construction_energy": 16_000_000,
+            "price_multiplier": 1.2,
+            "price_factor": 1.2,
+            "prod_factor": 1.2,
+            "capacity_factor": 1.15,
+            "affected_facilities": [
+                "small_water_dam",
+                "large_water_dam",
+                "small_pumped_hydro",
+                "large_pumped_hydro",
+            ],
+            "description": "Civil Engineering is the branch of engineering for large infrastructure projects.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=173564&",  # cspell:disable-line
+            "requirements": {"laboratory": 3, "mathematics": 2, "building_technology": 2},
+        },
+        "aerodynamics": {
+            "name": "Aerodynamics",
+            "type": "Technology",
+            "base_price": 84_000,
+            "base_construction_time": timedelta(days=2, hours=12).total_seconds(),
+            "base_construction_energy": 60_000_000,
+            "price_multiplier": 1.5,
+            "price_factor": 1.15,
+            "prod_factor": 1.2,
+            "affected_facilities": [
+                "windmill",
+                "onshore_wind_turbine",
+                "offshore_wind_turbine",
+            ],
+            "description": "Aerodynamics is the study of the motion of air and other gases.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172719&",  # cspell:disable-line
+            "requirements": {"laboratory": 3, "physics": 3},
+        },
+        "chemistry": {
+            "name": "Chemistry",
+            "type": "Technology",
+            "base_price": 60_000,
+            "base_construction_time": timedelta(days=1, hours=16).total_seconds(),
+            "base_construction_energy": 40_000_000,
+            "price_multiplier": 1.4,
+            "price_factor": 1.25,
+            "inefficiency_factor": 0.9,
+            "affected_facilities": [
+                "hydrogen_storage",
+                "lithium_ion_batteries",
+                "solid_state_batteries",
+            ],
+            "description": "Chemistry is the study of matter and the changes it undergoes.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=174071&",  # cspell:disable-line
+            "requirements": {"laboratory": 3, "physics": -1},
+        },
+        "nuclear_engineering": {
+            "name": "Nuclear Engineering",
+            "type": "Technology",
+            "base_price": 140_000,
+            "base_construction_time": timedelta(days=3, hours=18).total_seconds(),
+            "base_construction_energy": 108_000_000,
+            "price_multiplier": 1.5,
+            "price_factor": 1.2,
+            "prod_factor": 1.25,
+            "affected_facilities": [
+                "nuclear_reactor",
+                "nuclear_reactor_gen4",
+            ],
+            "description": "Nuclear Engineering is the branch of engineering for nuclear power plants.",
+            "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
+            "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172874&",  # cspell:disable-line
+            "requirements": {"laboratory": 4, "physics": 3, "mechanical_engineering": 3},
+        },
+    },
+    "warehouse_capacities": {
+        "coal": 500_000 / 1.5,  # [kg]
+        "gas": 300_000 / 1.5,
+        "uranium": 1_000 / 1.5,
+    },
+    "transport": {
+        "time_per_tile": timedelta(hours=5, minutes=20).total_seconds(),  # [in-game seconds/distance unit]
+        "energy_per_kg_per_tile": 5,  # [Wh/kg/distance unit]
+    },
+}
+
+if __name__ == "__main__":
+    save_config()

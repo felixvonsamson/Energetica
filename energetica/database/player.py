@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Iterable
 from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements, format_energy, format_mass, format_power
+from energetica.config.player_config import PlayerConfig
 from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data.capacity_data import CapacityData
@@ -151,10 +152,15 @@ class Player(DBModel):
         """Post initialization method for Player."""
         super().__post_init__()
         self.network_prices.init_prices_with_randomness(self)
+        self.config = PlayerConfig(self)
 
     def __hash__(self) -> int:
         """Return the hash of the player's id."""
         return hash(self.id)
+
+    def update_config(self) -> None:
+        """Update the player's configuration."""
+        self.config = PlayerConfig(self)
 
     def get_level(self, functional_facility_or_technology: ProjectType) -> int:
         """Return the technology or functional facility level of the player."""
@@ -198,11 +204,6 @@ class Player(DBModel):
     technology_lvl: dict[TechnologyType, int] = field(
         default_factory=lambda: {tech: 0 for tech in TechnologyType},
     )
-
-    @property
-    def config(self) -> dict:
-        """Return the player's configuration."""
-        return engine.config[self]
 
     @cached_property
     def power_facilities_data(self) -> list:
@@ -632,13 +633,16 @@ class Player(DBModel):
             for active_facility in ActiveFacility.filter_by(player=self)
             if isinstance(active_facility.facility_type, PowerFacilityType)
         ]
-        power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
+        power_facility_groups: dict[
+            PowerFacilityType | ExtractionFacilityType | StorageFacilityType,
+            list[ActiveFacility],
+        ] = defaultdict(list)
         for power_facility in active_power_facilities:
             power_facility_groups[power_facility.facility_type].append(power_facility)
         return {
             "summary": {
                 group_name: {
-                    "display_name": engine.const_config["assets"][group_name]["name"],
+                    "display_name": engine.new_config.get_base_config(group_name).name,
                     "count": len(group),
                     "installed_cap": self.capacities[group_name]["power"],
                     "usage": sum(f.usage * f.max_power_generation for f in group)
@@ -686,13 +690,16 @@ class Player(DBModel):
             for active_facility in ActiveFacility.filter_by(player=self)
             if isinstance(active_facility.facility_type, StorageFacilityType)
         ]
-        storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
+        storage_facility_groups: dict[
+            PowerFacilityType | ExtractionFacilityType | StorageFacilityType,
+            list[ActiveFacility],
+        ] = defaultdict(list)
         for storage_facility in active_storage_facilities:
             storage_facility_groups[storage_facility.facility_type].append(storage_facility)
         return {
             "summary": {
                 group_name: {
-                    "display_name": engine.const_config["assets"][group_name]["name"],
+                    "display_name": engine.new_config.get_base_config(group_name).name,
                     "count": len(group),
                     "storage_capacity": sum(f.storage_capacity for f in group),
                     "state_of_charge": group[0].state_of_charge,
@@ -736,13 +743,16 @@ class Player(DBModel):
             for active_facility in ActiveFacility.filter_by(player=self)
             if isinstance(active_facility.facility_type, ExtractionFacilityType)
         ]
-        extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
+        extraction_facility_groups: dict[
+            PowerFacilityType | ExtractionFacilityType | StorageFacilityType,
+            list[ActiveFacility],
+        ] = defaultdict(list)
         for extraction_facility in active_extraction_facilities:
             extraction_facility_groups[extraction_facility.facility_type].append(extraction_facility)
         return {
             "summary": {
                 group_name: {
-                    "display_name": engine.const_config["assets"][group_name]["name"],
+                    "display_name": engine.new_config.get_base_config(group_name).name,
                     "count": len(group),
                     "extraction_rate": sum(f.extraction_rate for f in group),
                     "usage": sum(f.usage * f.extraction_rate for f in group) / sum(f.extraction_rate for f in group),

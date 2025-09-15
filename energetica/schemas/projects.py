@@ -34,7 +34,7 @@ class ProjectOut(BaseModel):
             ticks_passed=None if ongoing_project.is_ongoing else ongoing_project.end_tick_or_ticks_passed,
             duration=ongoing_project.duration,
             status=ongoing_project.status,
-            display_name=engine.const_config["assets"][ongoing_project.project_type]["name"],
+            display_name=engine.new_config.get_base_config(ongoing_project.project_type).name,
             level=ongoing_project.level,
             speed=ongoing_project.speed,
         )

@@ -6,7 +6,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from energetica import technology_effects
-from energetica.config.assets import const_config
+from energetica.config.extraction_facility_config import ExtractionFacilityConfig
+from energetica.config.power_facility_config import PowerFacilityConfig
+from energetica.config.storage_facility_config import StorageFacilityConfig
 from energetica.database import DBModel
 from energetica.enums import ExtractionFacilityType, HydroFacilityType, PowerFacilityType, StorageFacilityType
 from energetica.globals import engine
@@ -38,14 +40,20 @@ class ActiveFacility(DBModel):
         return self.end_of_life <= engine.total_t
 
     @property
-    def const_config(self) -> dict:
-        """The base configuration of the facility."""
-        return const_config["assets"][self.facility_type]
+    def new_config(self) -> PowerFacilityConfig | StorageFacilityConfig | ExtractionFacilityConfig:
+        """The current configuration of the facility, including tech upgrades."""
+        if isinstance(self.facility_type, PowerFacilityType):
+            return engine.new_config.power_facilities[self.facility_type]
+        elif isinstance(self.facility_type, StorageFacilityType):
+            return engine.new_config.storage_facilities[self.facility_type]
+        elif isinstance(self.facility_type, ExtractionFacilityType):
+            return engine.new_config.extraction_facilities[self.facility_type]
+        raise ValueError("Invalid facility type")
 
     @property
     def display_name(self) -> str:
         """The name of the facility."""
-        return self.const_config["name"]
+        return self.new_config.name
 
     @property
     def real_base_cost(self) -> float:
@@ -55,8 +63,8 @@ class ActiveFacility(DBModel):
         This is the cost without any upgrades, but including the special_price_multiplier for hydro facilities.
         """
         if isinstance(self.facility_type, HydroFacilityType):
-            return self.const_config["base_price"] * self.multipliers["hydro_price_multiplier"]
-        return self.const_config["base_price"]
+            return self.new_config.base_price * self.multipliers["hydro_price_multiplier"]
+        return self.new_config.base_price
 
     @property
     def total_cost(self) -> float:
@@ -66,20 +74,27 @@ class ActiveFacility(DBModel):
     @property
     def max_power_generation(self) -> float:
         """Max power output of the facility in W."""
-        return self.const_config["base_power_generation"] * self.multipliers["power_production_multiplier"]
+        if not isinstance(self.new_config, (PowerFacilityConfig, StorageFacilityConfig)):
+            raise ValueError("Max power generation is only defined for power and storage facilities")
+        return self.new_config.base_power_generation * self.multipliers["power_production_multiplier"]
 
     @property
     def storage_capacity(self) -> float:
         """Storage capacity of the facility in Wh."""
-        return self.const_config["base_storage_capacity"] * self.multipliers["capacity_multiplier"]
+        if not isinstance(self.new_config, StorageFacilityConfig):
+            raise ValueError("Storage capacity is only defined for storage facilities")
+        return self.new_config.base_storage_capacity * self.multipliers["capacity_multiplier"]
 
     @property
     def extraction_rate(self) -> float:
         """Rate at which the facility extracts resources from the ground. Defined only for extraction facilities."""
-        assert self.player.tile is not None
-        assert isinstance(self.facility_type, ExtractionFacilityType)
+        if not (
+            isinstance(self.facility_type, ExtractionFacilityType)
+            and isinstance(self.new_config, ExtractionFacilityConfig)
+        ):
+            raise ValueError("Extraction rate is only defined for extraction facilities")
         return (
-            self.const_config["base_extraction_rate_per_day"]
+            self.new_config.base_extraction_rate_per_day
             * self.multipliers["extraction_rate_multiplier"]
             * self.player.tile.fuel_reserves[self.facility_type.associated_fuel]
             / 24
@@ -93,12 +108,14 @@ class ActiveFacility(DBModel):
     @property
     def efficiency(self) -> float:
         """Efficiency of the facility as a number from 0 to 1."""
-        return self.const_config["base_efficiency"] * self.multipliers["efficiency_multiplier"]
+        if not isinstance(self.new_config, StorageFacilityConfig):
+            raise ValueError("Efficiency is only defined for storage facilities")
+        return self.new_config.base_efficiency * self.multipliers["efficiency_multiplier"]
 
     @property
     def daily_op_cost(self) -> float:
         """Cost to operate the facility per in-game day."""
-        return self.total_cost * self.const_config["O&M_factor_per_day"]
+        return self.total_cost * self.new_config.o_and_m_factor_per_day
 
     @property
     def hourly_op_cost(self) -> float:
@@ -108,7 +125,9 @@ class ActiveFacility(DBModel):
     @property
     def max_power_use(self) -> float:
         """Maximum power consumption of the facility in W. Defined only for extraction facilities."""
-        return self.const_config["base_power_consumption"] * self.multipliers["power_consumption_multiplier"]
+        if not isinstance(self.new_config, ExtractionFacilityConfig):
+            raise ValueError("Max power use is only defined for extraction facilities")
+        return self.new_config.base_power_consumption * self.multipliers["power_consumption_multiplier"]
 
     @property
     def remaining_lifespan(self) -> float | None:

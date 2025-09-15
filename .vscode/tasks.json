@@ -2,6 +2,18 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "save config to yaml",
+			"type": "shell",
+			"command": "${command:python.interpreterPath} save_config_to_yaml.py",
+			"presentation": {
+				"clear": true
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
 			"label": "run server",
 			"type": "shell",
 			"command": "${command:python.interpreterPath} main.py --env dev",

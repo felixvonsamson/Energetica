@@ -59,19 +59,19 @@ class CapacityData:
             self.init_facility(facility_type)
 
         for facility in active_facilities:
-            base_data = engine.const_config["assets"][facility.facility_type]
             effective_values = self._data[facility.facility_type]
             op_costs = facility.daily_op_cost * engine.in_game_seconds_per_tick / (24 * 3600)
             if isinstance(facility.facility_type, HydroFacilityType):
                 op_costs *= facility.multipliers["hydro_price_multiplier"]
             effective_values["O&M_cost"] += op_costs
             if isinstance(facility.facility_type, PowerFacilityType):
+                base_data = engine.new_config.power_facilities[facility.facility_type]
                 power_gen = facility.max_power_generation
                 effective_values["power"] += power_gen
                 for fuel in effective_values["fuel_use"]:
                     # if effective_values["fuel_use"] is not None, then it is a controllable facility
                     effective_values["fuel_use"][fuel] += (
-                        base_data["consumed_resource"][fuel]
+                        base_data.consumed_resources[fuel]
                         / facility.multipliers["efficiency_multiplier"]
                         * power_gen
                         * engine.in_game_seconds_per_tick
@@ -79,24 +79,26 @@ class CapacityData:
                         / 1_000_000
                     )
             elif isinstance(facility.facility_type, StorageFacilityType):
+                base_data = engine.new_config.storage_facilities[facility.facility_type]
                 power_gen = facility.max_power_generation
                 # mean efficiency
                 effective_values["efficiency"] = (
                     (effective_values["efficiency"] * effective_values["power"])
-                    + (base_data["base_efficiency"] * facility.multipliers["efficiency_multiplier"] * power_gen)
+                    + (base_data.base_efficiency * facility.multipliers["efficiency_multiplier"] * power_gen)
                 ) / (effective_values["power"] + power_gen)
                 effective_values["power"] += power_gen
                 if facility.end_of_life > 0:
                     effective_values["capacity"] += facility.storage_capacity
             elif isinstance(facility.facility_type, ExtractionFacilityType):
+                base_data = engine.new_config.extraction_facilities[facility.facility_type]
                 effective_values["extraction_rate_per_day"] += (
-                    base_data["base_extraction_rate_per_day"] * facility.multipliers["extraction_rate_multiplier"]
+                    base_data.base_extraction_rate_per_day * facility.multipliers["extraction_rate_multiplier"]
                 )
                 effective_values["power_use"] += (
-                    base_data["base_power_consumption"] * facility.multipliers["power_consumption_multiplier"]
+                    base_data.base_power_consumption * facility.multipliers["power_consumption_multiplier"]
                 )
                 effective_values["pollution"] += (
-                    base_data["base_pollution"] * facility.multipliers["extraction_emissions_multiplier"]
+                    base_data.base_pollution * facility.multipliers["extraction_emissions_multiplier"]
                 )
 
         if player.network is not None:
@@ -115,11 +117,10 @@ class CapacityData:
 
     def init_facility(self, facility: str) -> None:
         """Initialize the capacity data of a facility."""
-        const_config = engine.const_config["assets"]
         if isinstance(facility, PowerFacilityType):
             self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
-            for resource in const_config[facility]["consumed_resource"]:
-                if const_config[facility]["consumed_resource"][resource] > 0:
+            for resource in engine.new_config.power_facilities[facility].consumed_resources:
+                if engine.new_config.power_facilities[facility].consumed_resources[resource] > 0:
                     self._data[facility]["fuel_use"][resource] = 0.0
             return
         if isinstance(facility, StorageFacilityType):

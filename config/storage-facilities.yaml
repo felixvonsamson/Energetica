@@ -1,0 +1,113 @@
+hydrogen_storage:
+  base_construction_pollution: 2400000.0
+  base_construction_time: 216000.0
+  base_efficiency: 0.33
+  base_power_generation: 90000000.0
+  base_price: 420000
+  base_storage_capacity: 30000000000.0
+  construction_power_factor: 0.00025
+  description: The hydrogen storage facility uses electricity to produce 
+    hydrogen by electrolysis of water. This hydrogen can be used to generate 
+    electricity in a fuel cell.
+  initial_efficiency: 0.33
+  lifespan: 27216000.0
+  name: Hydrogen Hydrolysis
+  o_and_m_factor_per_day: 0.028
+  ramping_time: 480.0
+  requirements:
+    chemistry: 3
+    materials: 3
+  wikipedia_link: https://en.wikipedia.org/wiki/Hydrogen_storage
+large_pumped_hydro:
+  base_construction_pollution: 3000000.0
+  base_construction_time: 1674000.0
+  base_efficiency: 0.8
+  base_power_generation: 249000000.0
+  base_price: 266000
+  base_storage_capacity: 12600000000.0
+  construction_power_factor: 0.003
+  description: The large pumped hydro storage pumps water to a higher reservoir 
+    to store large amounts of energy.
+  initial_efficiency: 0.8
+  lifespan: 54432000.0
+  name: Large Pumped Hydro
+  o_and_m_factor_per_day: 0.07
+  ramping_time: 960.0
+  requirements:
+    civil_engineering: 3
+  wikipedia_link: https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity
+lithium_ion_batteries:
+  base_construction_pollution: 8000000.0
+  base_construction_time: 324000.0
+  base_efficiency: 0.69
+  base_power_generation: 86000000.0
+  base_price: 660000
+  base_storage_capacity: 3200000000.0
+  construction_power_factor: 0.1
+  description: The lithium-ion batteries store energy with a high efficiency in 
+    the form of chemical energy.
+  initial_efficiency: 0.69
+  lifespan: 9676800.0
+  name: Lithium-Ion Batteries
+  o_and_m_factor_per_day: 0.0028
+  ramping_time: 180.0
+  requirements:
+    chemistry: 4
+    materials: 4
+  wikipedia_link: https://en.wikipedia.org/wiki/Lithium-ion_battery
+molten_salt:
+  base_construction_pollution: 1200000.0
+  base_construction_time: 432000.0
+  base_efficiency: 0.63
+  base_power_generation: 55000000.0
+  base_price: 27500
+  base_storage_capacity: 3000000000.0
+  construction_power_factor: 0.001
+  description: The molten salt storage stores energy in the form of high 
+    temperature molten salt.
+  initial_efficiency: 0.63
+  lifespan: 9072000.0
+  name: Molten Salt
+  o_and_m_factor_per_day: 0.24
+  ramping_time: 3600.0
+  requirements:
+    mechanical_engineering: 2
+    thermodynamics: 3
+  wikipedia_link: https://en.wikipedia.org/wiki/Thermal_energy_storage
+small_pumped_hydro:
+  base_construction_pollution: 80000.0
+  base_construction_time: 93600.0
+  base_efficiency: 0.75
+  base_power_generation: 2600000.0
+  base_price: 26500
+  base_storage_capacity: 520000000.0
+  construction_power_factor: 0.005
+  description: The small pumped hydro storage pumps water to a higher reservoir 
+    to store energy.
+  initial_efficiency: 0.75
+  lifespan: 45360000.0
+  name: Small Pumped Hydro
+  o_and_m_factor_per_day: 0.068
+  ramping_time: 540.0
+  requirements: {}
+  wikipedia_link: https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity
+solid_state_batteries:
+  base_construction_pollution: 6000000.0
+  base_construction_time: 270000.0
+  base_efficiency: 0.79
+  base_power_generation: 107000000.0
+  base_price: 1000000
+  base_storage_capacity: 5000000000.0
+  construction_power_factor: 0.07
+  description: The solid state batteries store energy with a high efficiency in 
+    the form of chemical energy.
+  initial_efficiency: 0.79
+  lifespan: 18144000.0
+  name: Solid State Batteries
+  o_and_m_factor_per_day: 0.002
+  ramping_time: 180.0
+  requirements:
+    chemistry: 6
+    materials: 5
+    physics: 6
+  wikipedia_link: https://en.wikipedia.org/wiki/Solid-state_battery

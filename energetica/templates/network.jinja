@@ -3,7 +3,6 @@
     Network
 {% endblock title %}
 {% block content %}
-    {% set const_config = engine.const_config["assets"] %}
     <div class="flex-row huge title">
         Network{% if user.network %}:&nbsp;<b>{{ user.network.name }}</b>{% endif %}
         <div class="pine info_icon_container"
@@ -341,10 +340,11 @@
                     {% macro power_facility_supply_price_value(power_facility) -%}
                         {{ user.network_prices.ask_prices[power_facility] }}
                     {%- endmacro %}
+                    {# TODO(mglst): remove this hard coded list #}
                     {% for power_facility in ["steam_engine", "coal_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
                         {% if caps[power_facility] %}
                             <tr>
-                                <td>{{ const_config[power_facility].name }}</td>
+                                <td>{{ engine.new_config.power_facilities[power_facility].name }}</td>
                                 <td class="txt_center"></td>
                                 <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ caps[power_facility].power }});</script>
                                 <td>
@@ -381,10 +381,11 @@
                     {% macro storage_facility_demand_price_value(storage_facility) -%}
                         {{ user.network_prices.bid_prices[storage_facility] }}
                     {%- endmacro %}
+                    {# TODO(mglst): remove this hard coded list #}
                     {% for storage_facility in ["small_pumped_hydro", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
                         {% if caps[storage_facility] %}
                             <tr>
-                                <td>{{ const_config[storage_facility].name }}</td>
+                                <td>{{ engine.new_config.storage_facilities[storage_facility].name }}</td>
                                 <td class="txt_center"></td>
                                 <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ caps[storage_facility].capacity }});</script>
                                 <td>

@@ -212,24 +212,6 @@ function load_player_id() {
         });
 }
 
-function load_const_config() {
-    if (typeof (Storage) !== "undefined") {
-        const const_config = sessionStorage.getItem("const_config");
-        if (const_config) {
-            return Promise.resolve(JSON.parse(const_config));
-        }
-    }
-    return fetch("/api/get_const_config")
-        .then((response) => response.json())
-        .then((raw_data) => {
-            sessionStorage.setItem("const_config", JSON.stringify(raw_data));
-            return raw_data;
-        })
-        .catch((error) => {
-            console.error(`caught error ${error}`);
-        });
-}
-
 function load_chats() {
     if (typeof (Storage) !== "undefined") {
         const chats = sessionStorage.getItem("chats_data");

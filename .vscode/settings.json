@@ -56,6 +56,10 @@
     ],
     // JSON
     "json.format.keepLines": true,
+    // YAML
+    "[yaml]": {
+        "editor.formatOnSave": false
+    },
     // cSpell
     "cSpell.words": [
         "APPROXIMATIVE",

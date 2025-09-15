@@ -161,8 +161,7 @@ class OngoingProject(DBModel):
                     level += 1
         elif isinstance(self.project_type, TechnologyType):
             # For technologies, const config needs to be checked
-            const_config = engine.const_config["assets"]
-            requirements = const_config[self.project_type]["requirements"]
+            requirements = engine.new_config.technologies[self.project_type].requirements
             priority_list = self.player.researches_by_priority
             this_priority_index = priority_list.index(self)
             # Compute this technologies level by looking at technologies higher up in the priority list with same name
@@ -172,12 +171,15 @@ class OngoingProject(DBModel):
                     level += 1
             num_ongoing_researches_of: dict[str, int] = defaultdict(int)
             for candidate_prerequisite in priority_list[:this_priority_index]:
+                # Add them as a prerequisite, if they are of the same type
+                if not isinstance(candidate_prerequisite.project_type, (TechnologyType, FunctionalFacilityType)):
+                    continue
                 if candidate_prerequisite.project_type == self.project_type:
                     prerequisites.append(candidate_prerequisite)
                     continue
                 if candidate_prerequisite.project_type in requirements:
                     num_ongoing_researches_of[candidate_prerequisite.project_type] += 1
-                    # Add them as a prerequisite, if they are, according to const_config
+                    # Add them as a prerequisite, if they are
                     offset: int = requirements[candidate_prerequisite.project_type]
                     assert isinstance(candidate_prerequisite.project_type, TechnologyType)
                     candidate_prerequisite_level: int = (

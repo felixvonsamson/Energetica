@@ -1,0 +1,64 @@
+carbon_capture:
+  absorption_factor: 1.55
+  base_absorption_per_day: 5e-06
+  base_construction_energy: 50000000.0
+  base_construction_pollution: 250000.0
+  base_construction_time: 180000.0
+  base_power_consumption: 10000000.0
+  base_price: 250000
+  description: Carbon Capture consumes energy to absorb and store CO2 
+    underground.
+  name: Carbon Capture
+  power_factor: 1.5
+  price_multiplier: 1.5
+  requirements:
+    chemistry: 3
+    mathematics: 3
+    physics: 3
+  wikipedia_link: null
+industry:
+  base_construction_energy: 200000.0
+  base_construction_pollution: 4000.0
+  base_construction_time: 14400.0
+  base_income_per_day: 8000.0
+  base_power_consumption: 200000.0
+  base_price: 2400
+  description: The industry generates revenue from energy. The Power consumption
+    of the Industry varies daily and seasonally. (<a 
+    href='/wiki/functional_facilities#The_Industry'>See wiki</a>)
+  income_factor: 1.33
+  name: Industry
+  power_factor: 1.4
+  price_multiplier: 1.4
+  requirements: {}
+  universal_income_per_day: 4400.0
+  wikipedia_link: null
+laboratory:
+  base_construction_energy: 750000.0
+  base_construction_pollution: 100000.0
+  base_construction_time: 25200.0
+  base_price: 32000
+  description: The laboratory is needed to research Technologies.<br>+1 lab 
+    worker every 3rd level.
+  name: Laboratory
+  price_multiplier: 1.5
+  requirements: {}
+  time_factor: 0.9
+  wikipedia_link: null
+warehouse:
+  base_construction_energy: 500000.0
+  base_construction_pollution: 25000.0
+  base_construction_time: 90000.0
+  base_price: 25000
+  capacities:
+    coal: 333333.3333333333
+    gas: 200000.0
+    uranium: 666.6666666666666
+  capacity_factor: 1.5
+  description: The warehouse stores physical resources.
+  energy_per_kg_per_tile: 5.0
+  name: Warehouse
+  price_multiplier: 1.5
+  requirements: {}
+  time_per_tile: 19200.0
+  wikipedia_link: null

@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any, Callable, Literal
 
 import socketio
 
-from energetica.config.assets import config, const_config
+from energetica.config import load_config
 from energetica.enums import Fuel, Renewable
 from energetica.schemas.simulate import Action, InitEngineAction
 
@@ -35,8 +35,7 @@ class GameEngine(object):
         if TYPE_CHECKING:
             from energetica.database.engine_data.emission_data import EmissionData
         Path("instance").mkdir(exist_ok=True)
-        self.config = config
-        self.const_config = const_config
+        self.new_config = load_config()
         self.socketio: socketio.AsyncServer = None  # type: ignore[assignment]
         self.websocket_dict: dict = {}
         self.console_logger = logging.getLogger("console")  # logs events in the terminal
