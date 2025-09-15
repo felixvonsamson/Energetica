@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import requests
 
-from energetica.database.player import Player
+from energetica.database.user import User
 from energetica.globals import engine
 from energetica.schemas.simulate import Action
 from energetica.utils import misc
@@ -27,9 +27,9 @@ def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
 
 def login_user(user_id: int) -> requests.Session:
     """Login a user with the given user_id."""
-    player = Player.getitem(user_id, ValueError(f"Cannot log in player: player with id {user_id} does not exist"))
+    user = User.getitem(user_id, ValueError(f"Cannot log in user: user with id {user_id} does not exist"))
     session = requests.Session()
-    add_session_cookie_to_session(session, player.user)
+    add_session_cookie_to_session(session, user)
     return session
 
 
@@ -60,7 +60,6 @@ def _simulate(
     stop_on_mismatch: bool,
     stop_on_server_error: bool,
     stop_on_assertion_error: bool,
-    stop_on_unauthenticated_actions: bool,
     checkpoint_every_k_ticks: int = 10000,
     checkpoint_ticks: list[int] | None = None,
 ) -> bool:
@@ -96,19 +95,13 @@ def _simulate(
             ):
                 engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action.total_t}.tar.gz")
         elif action.action_type == "create_user":
-            player_id = action.player_id
-            user_sessions[player_id] = create_user(player_id, action.username, action.pw_hash)
+            user_id = action.user_id
+            user_sessions[user_id] = create_user(user_id, action.username, action.pw_hash)
         elif action.action_type == "request":
-            player_id = action.player_id
-            if player_id:
-                if player_id not in user_sessions:
-                    user_sessions[player_id] = login_user(player_id)
-                session = cast(requests.Session, user_sessions[player_id])
-            else:
-                print("\033[31mUnauthenticated action encountered\033[0m")
-                if stop_on_unauthenticated_actions:
-                    break
-                session = requests.Session()
+            user_id = action.user_id
+            if user_id not in user_sessions:
+                user_sessions[user_id] = login_user(user_id)
+            session = cast(requests.Session, user_sessions[user_id])
             url = f"{base_url}{action.request.endpoint}"
             content_type = "json" if action.request.content_type == "application/json" else "data"
             method = action.request.method

@@ -14,6 +14,7 @@ from scipy.stats import norm
 from energetica import technology_effects
 from energetica.config.assets import river_discharge_seasonal
 from energetica.database.active_facility import ActiveFacility
+from energetica.database.map.hex_tile import HexTile
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player
@@ -25,6 +26,8 @@ from energetica.schemas.daily_quiz import DailyQuizBase
 from energetica.schemas.simulate import CreateUserAction
 from energetica.schemas.weather import WeatherOut
 from energetica.utils.astro import DrHI
+from energetica.database.player import Player
+from energetica.database.user import User
 
 # Helper functions and data initialization utilities
 
@@ -44,7 +47,7 @@ def signup_playing_user(request: Request | None, username: str, pwhash: str) -> 
         if request is not None
         else None,
         action_type="create_user",
-        player_id=new_user.id,
+        user_id=new_user.id,
         username=new_user.username,
         pw_hash=new_user.pwhash,
     )
@@ -223,7 +226,7 @@ def send_new_message_sio(message: Message, chat: Chat) -> None:
 # Map
 
 
-def initialize_player(player: Player) -> None:
+def initialize_player(user: User, tile: HexTile) -> Player:
     """
     Initialize a player's data after they have chosen a location.
 
@@ -231,6 +234,10 @@ def initialize_player(player: Player) -> None:
     - Giving the player an initial steam engine
     - Adding the player to the general chat
     """
+    player = Player(user=user, tile=tile)
+    user.player = player
+    tile.player = player
+
     eol = engine.total_t + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick,
     )
@@ -252,6 +259,9 @@ def initialize_player(player: Player) -> None:
     player.rolling_history.add_subcategory("op_costs", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
+
+    engine.log(f"{player.username} chose the location {tile.id}")
+    return player
 
 
 # Quiz
