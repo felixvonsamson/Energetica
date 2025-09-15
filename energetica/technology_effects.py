@@ -279,12 +279,12 @@ def efficiency_multiplier_for_storage_facilities(
         if storage_facility_type == StorageFacilityType.HYDROGEN_STORAGE:
             return (
                 0.65
-                / engine.new_config.storage_facilities[storage_facility_type].initial_efficiency
+                / engine.new_config.storage_facilities[storage_facility_type].base_efficiency
                 * (1 - chemistry_factor)
                 + chemistry_factor
             )
         return (
-            1 / engine.new_config.storage_facilities[storage_facility_type].initial_efficiency * (1 - chemistry_factor)
+            1 / engine.new_config.storage_facilities[storage_facility_type].base_efficiency * (1 - chemistry_factor)
             + chemistry_factor
         )
     if storage_facility_type == StorageFacilityType.MOLTEN_SALT:
@@ -295,7 +295,7 @@ def efficiency_multiplier_for_storage_facilities(
         )
         return (
             1
-            / engine.new_config.storage_facilities[storage_facility_type].initial_efficiency
+            / engine.new_config.storage_facilities[storage_facility_type].base_efficiency
             * (1 - 1 / thermodynamic_factor)
             + 1 / thermodynamic_factor
         )

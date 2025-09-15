@@ -9,7 +9,6 @@ from energetica.enums import StorageFacilityType
 class StorageFacilityConfig(PowerProducingFacilityConfig):
     base_storage_capacity: float = Field(description="Base storage capacity in Wh")
     base_efficiency: float = Field(description="Base efficiency as a fraction")
-    initial_efficiency: float = Field(description="Initial efficiency as a fraction")
 
 
 class StorageFacilitiesConfig(RootModel[dict[StorageFacilityType, StorageFacilityConfig]]):
