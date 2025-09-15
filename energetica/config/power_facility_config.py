@@ -11,7 +11,7 @@ class PowerFacilityConfig(PowerProducingFacilityConfig):
     consumed_resources: dict[Fuel | Literal["wind", "water", "hydropower", "irradiance"], float] = Field(
         description="Resources consumed by the power facility in kg/MWh",
     )
-    base_pollution: float = Field(description="Base pollution in kg CO2/MWh")
+    base_pollution: float = Field(ge=0.0, description="Base pollution in kg CO2/MWh")
     requirements: dict[TechnologyType | FunctionalFacilityType, int] = Field(
         description="Requirements for building the power facility",
     )

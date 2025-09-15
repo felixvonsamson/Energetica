@@ -22,11 +22,11 @@ class FunctionalFacilityConfig(LevelProjectConfig):
 
 
 class IndustryConfig(FunctionalFacilityConfig):
-    base_power_consumption: float = Field(description="Base power consumption in W")
-    base_income_per_day: float = Field(description="Base income per in-game day in ¤")
-    universal_income_per_day: float = Field(description="Universal base income per in-game day in ¤")
-    power_factor: float = Field(description="Power consumption factor as a multiplier")
-    income_factor: float = Field(description="Income factor as a multiplier")
+    base_power_consumption: float = Field(ge=0.0, description="Base power consumption in W")
+    base_income_per_day: float = Field(ge=0.0, description="Base income per in-game day in ¤")
+    universal_income_per_day: float = Field(ge=0.0, description="Universal base income per in-game day in ¤")
+    power_factor: float = Field(gt=1.0, description="Power consumption multiplier for every level upgrade")
+    income_factor: float = Field(description="Income multiplier for every level upgrade")
 
 
 class LaboratoryConfig(FunctionalFacilityConfig):
@@ -40,15 +40,22 @@ class LaboratoryConfig(FunctionalFacilityConfig):
 
 class WarehouseConfig(FunctionalFacilityConfig):
     capacities: dict[Fuel, float] = Field(description="Storage capacities for different resources")
-    capacity_factor: float = Field(description="Multiplier that increases storage capacity per level")
-    time_per_tile: float = Field(description="Time to transport goods per tile in in-game seconds")
-    energy_per_kg_per_tile: float = Field(description="Energy to transport goods per kg and tile in Wh/kg/tile")
+    capacity_factor: float = Field(
+        gt=1.0,
+        description="Multiplier that increases storage capacity for every level upgrade",
+    )
+    time_per_tile: float = Field(gt=1.0, description="Time to transport goods per tile in in-game seconds")
+    energy_per_kg_per_tile: float = Field(
+        gt=1.0,
+        description="Energy to transport goods per kg and tile in Wh/kg/tile",
+    )
 
 
 class CarbonCaptureConfig(FunctionalFacilityConfig):
-    base_power_consumption: float = Field(description="Base power consumption in W")
+    base_power_consumption: float = Field(gt=1.0, description="Base power consumption in W")
     base_absorption_per_day: float = Field(
+        gt=0.0,
         description="Base CO2 absorption per in-game day as a fraction of atmospheric CO2",
     )
-    power_factor: float = Field(description="Power consumption factor as a multiplier")
-    absorption_factor: float = Field(description="CO2 absorption factor as a multiplier")
+    power_factor: float = Field(gt=1.0, description="Power consumption multiplier for each level upgrade")
+    absorption_factor: float = Field(gt=1.0, description="CO2 absorption multiplier for each level upgrade")
