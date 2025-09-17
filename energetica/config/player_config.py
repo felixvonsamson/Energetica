@@ -62,17 +62,15 @@ class PlayerConfig(object):
             )
 
         # calculating the transport speed and energy consumption from the level of transport technology
-        time_factor = engine.new_config.technologies.transport_technology.time_factor
-        assert time_factor is not None
         self.transport_time_per_tile = (
             engine.new_config.functional_facilities.warehouse.time_per_tile
-            * time_factor ** player.technology_lvl[TechnologyType.TRANSPORT_TECHNOLOGY]
+            * engine.new_config.technologies.transport_technology.time_factor
+            ** player.technology_lvl[TechnologyType.TRANSPORT_TECHNOLOGY]
         )
-        energy_factor = engine.new_config.technologies.transport_technology.energy_factor
-        assert energy_factor is not None
         self.transport_power_per_kg = (
             engine.new_config.functional_facilities.warehouse.energy_per_kg_per_tile
-            * energy_factor ** player.technology_lvl[TechnologyType.TRANSPORT_TECHNOLOGY]
+            * engine.new_config.technologies.transport_technology.energy_factor
+            ** player.technology_lvl[TechnologyType.TRANSPORT_TECHNOLOGY]
             * 3600
             / self.transport_time_per_tile
         )

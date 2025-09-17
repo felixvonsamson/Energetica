@@ -163,22 +163,24 @@ def power_production_multiplier(player: Player, facility_type: PowerFacilityType
 
 def power_consumption_multiplier(player: Player, facility_type: ExtractionFacilityType) -> float:
     """Return by how much an extraction facility's `base_power_consumption` should be multiplied."""
-    energy_factor = engine.new_config.technologies.mineral_extraction.energy_factor
-    assert energy_factor is not None
     mlt = 1
     # Mineral extraction (in this case it is the energy consumption)
     if facility_type in engine.new_config.technologies[TechnologyType.MINERAL_EXTRACTION].affected_facilities:
-        mlt += energy_factor * player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
+        mlt += (
+            engine.new_config.technologies.mineral_extraction.energy_factor
+            * player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
+        )
     return mlt
 
 
 def capacity_multiplier(player: Player, storage_facility_type: StorageFacilityType) -> float:
     """Return by how much the storage facility's `base_storage_capacity` should be multiplied."""
-    capacity_factor = engine.new_config.technologies.civil_engineering.capacity_factor
-    assert capacity_factor is not None
     if storage_facility_type in [StorageFacilityType.SMALL_PUMPED_HYDRO, StorageFacilityType.LARGE_PUMPED_HYDRO]:
         # Civil engineering
-        return special_multiplier(capacity_factor, player.technology_lvl[TechnologyType.CIVIL_ENGINEERING])
+        return special_multiplier(
+            engine.new_config.technologies.civil_engineering.capacity_factor,
+            player.technology_lvl[TechnologyType.CIVIL_ENGINEERING],
+        )
     return 1
 
 
@@ -191,8 +193,7 @@ def extraction_rate_multiplier(player: Player, *, mineral_extraction_level: int 
     """
     if mineral_extraction_level is None:
         mineral_extraction_level = player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
-    extraction_factor = engine.new_config.technologies.mineral_extraction.extract_factor
-    return 1 + extraction_factor * mineral_extraction_level
+    return 1 + engine.new_config.technologies.mineral_extraction.extract_factor * mineral_extraction_level
 
 
 def hydro_price_multiplier(player: Player, hydro_facility_type: HydroFacilityType) -> float:
@@ -257,9 +258,7 @@ def efficiency_multiplier_for_controllable_facilities(
         return 1
     if thermodynamics_level is None:
         thermodynamics_level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
-    efficiency_factor = engine.new_config.technologies.thermodynamics.efficiency_factor
-    assert efficiency_factor is not None
-    return efficiency_factor**thermodynamics_level
+    return engine.new_config.technologies.thermodynamics.efficiency_factor**thermodynamics_level
 
 
 def efficiency_multiplier_for_storage_facilities(
@@ -370,17 +369,19 @@ def construction_time(player: Player, project_type: ProjectType) -> float:
     # building technology time reduction
 
     if not isinstance(project_type, TechnologyType):
-        time_factor = engine.new_config.technologies.building_technology.time_factor
-        assert time_factor is not None
-        duration *= time_factor ** player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY]
+        duration *= (
+            engine.new_config.technologies.building_technology.time_factor
+            ** player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY]
+        )
     return duration
 
 
 def construction_power(player: Player, project_type: ProjectType) -> float:
     """Return the construction power in W according to the technology level of the player."""
-    time_factor = engine.new_config.technologies.building_technology.time_factor
-    assert time_factor is not None
-    bt_factor = time_factor ** player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY]
+    bt_factor = (
+        engine.new_config.technologies.building_technology.time_factor
+        ** player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY]
+    )
     # construction power in relation of facilities characteristics
     if isinstance(project_type, PowerFacilityType):
         # Materials (in this case it is the energy consumption for construction)

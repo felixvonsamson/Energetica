@@ -36,7 +36,7 @@ class BuildingTechConfig(TechnologyConfig):
 
 
 class MineralExtractionConfig(PriceModifyingConfig):
-    extract_factor: float  # NOTE: see name `extract_factor`
+    extract_factor: float
     pollution_factor: float
     energy_factor: float
 
