@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 
-from energetica.config import unwrap
 from energetica.config.player_config import warehouse_capacity_for_level
 from energetica.config.technology_config import PowerModifyingConfig, PriceModifyingConfig
 from energetica.database.ongoing_project import OngoingProject
@@ -192,7 +191,7 @@ def extraction_rate_multiplier(player: Player, *, mineral_extraction_level: int 
     """
     if mineral_extraction_level is None:
         mineral_extraction_level = player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
-    extraction_factor = unwrap(engine.new_config.technologies.mineral_extraction.extract_factor)
+    extraction_factor = engine.new_config.technologies.mineral_extraction.extract_factor
     return 1 + extraction_factor * mineral_extraction_level
 
 
@@ -274,7 +273,7 @@ def efficiency_multiplier_for_storage_facilities(
     if storage_facility_type in engine.new_config.technologies[TechnologyType.CHEMISTRY].affected_facilities:
         if chemistry_level is None:
             chemistry_level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
-        chemistry_factor = unwrap(engine.new_config.technologies.chemistry.inefficiency_factor) ** chemistry_level
+        chemistry_factor = engine.new_config.technologies.chemistry.inefficiency_factor**chemistry_level
         if storage_facility_type == StorageFacilityType.HYDROGEN_STORAGE:
             return (
                 0.65
@@ -289,9 +288,7 @@ def efficiency_multiplier_for_storage_facilities(
     if storage_facility_type == StorageFacilityType.MOLTEN_SALT:
         if thermodynamics_level is None:
             thermodynamics_level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
-        thermodynamic_factor = (
-            unwrap(engine.new_config.technologies.thermodynamics.efficiency_factor) ** thermodynamics_level
-        )
+        thermodynamic_factor = engine.new_config.technologies.thermodynamics.efficiency_factor**thermodynamics_level
         return (
             1
             / engine.new_config.storage_facilities[storage_facility_type].base_efficiency
@@ -308,7 +305,7 @@ def extraction_emissions_multiplier(player: Player, extraction_facility_type: Ex
         in engine.new_config.technologies[TechnologyType.MINERAL_EXTRACTION].affected_facilities
     ):
         return 1 + (
-            unwrap(engine.new_config.technologies.mineral_extraction.pollution_factor)
+            engine.new_config.technologies.mineral_extraction.pollution_factor
             * player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
         )
     return 1
@@ -390,7 +387,7 @@ def construction_power(player: Player, project_type: ProjectType) -> float:
         mlt = 1
         if project_type in engine.new_config.technologies[TechnologyType.MATERIALS].affected_facilities:
             mlt *= (
-                unwrap(engine.new_config.technologies.materials.construction_energy_factor)
+                engine.new_config.technologies.materials.construction_energy_factor
                 ** player.technology_lvl[TechnologyType.MATERIALS]
             )
         config = engine.new_config.get_power_producing_config(project_type)
@@ -921,22 +918,22 @@ def package_available_technologies(player: Player) -> list[dict]:
         )
         | (
             {
-                "power_generation_bonus": unwrap(technologies_config.mechanical_engineering.prod_factor) * 100 - 100,
-                "price_penalty": (unwrap(technologies_config.mechanical_engineering.price_factor) * 100 - 100),
+                "power_generation_bonus": technologies_config.mechanical_engineering.prod_factor * 100 - 100,
+                "price_penalty": (technologies_config.mechanical_engineering.price_factor * 100 - 100),
             }
             if technology == TechnologyType.MECHANICAL_ENGINEERING
             else {}
         )
         | (
             {
-                "fuel_use_reduction_bonus": (unwrap(technologies_config.thermodynamics.efficiency_factor) - 1)
-                / unwrap(technologies_config.thermodynamics.efficiency_factor)
+                "fuel_use_reduction_bonus": (technologies_config.thermodynamics.efficiency_factor - 1)
+                / technologies_config.thermodynamics.efficiency_factor
                 * 100,
-                "co2_emissions_reduction_bonus": (unwrap(technologies_config.thermodynamics.efficiency_factor) - 1)
-                / unwrap(technologies_config.thermodynamics.efficiency_factor)
+                "co2_emissions_reduction_bonus": (technologies_config.thermodynamics.efficiency_factor - 1)
+                / technologies_config.thermodynamics.efficiency_factor
                 * 100,
                 "molten_salt_efficiency_bonus": (
-                    (1 - 1 / unwrap(technologies_config.thermodynamics.efficiency_factor))
+                    (1 - 1 / technologies_config.thermodynamics.efficiency_factor)
                     * (
                         1
                         - engine.new_config.storage_facilities[StorageFacilityType.MOLTEN_SALT].base_efficiency
@@ -954,17 +951,15 @@ def package_available_technologies(player: Player) -> list[dict]:
         )
         | (
             {
-                "price_penalty": (unwrap(technologies_config.physics.price_factor) * 100 - 100),
-                "power_generation_bonus": (unwrap(technologies_config.physics.prod_factor) * 100 - 100),
+                "price_penalty": (technologies_config.physics.price_factor * 100 - 100),
+                "power_generation_bonus": (technologies_config.physics.prod_factor * 100 - 100),
             }
             if technology == TechnologyType.PHYSICS
             else {}
         )
         | (
             {
-                "construction_time_reduction_bonus": (
-                    100 - unwrap(technologies_config.building_technology.time_factor) * 100
-                ),
+                "construction_time_reduction_bonus": (100 - technologies_config.building_technology.time_factor * 100),
                 "construction_workers": package_change(
                     WorkerType.construction_workers_for_level(levels[technology] - 1),
                     WorkerType.construction_workers_for_level(levels[technology]),
@@ -980,23 +975,22 @@ def package_available_technologies(player: Player) -> list[dict]:
                 / extraction_rate_multiplier(player, mineral_extraction_level=levels[technology] - 1)
                 - 100,
                 "power_consumption_penalty": 100
-                * unwrap(technologies_config.mineral_extraction.energy_factor)
-                / (1 + unwrap(technologies_config.mineral_extraction.energy_factor) * (levels[technology] - 1)),
+                * technologies_config.mineral_extraction.energy_factor
+                / (1 + technologies_config.mineral_extraction.energy_factor * (levels[technology] - 1)),
                 "co2_emissions_penalty": 100
-                * unwrap(technologies_config.mineral_extraction.pollution_factor)
-                / (1 + unwrap(technologies_config.mineral_extraction.pollution_factor) * (levels[technology] - 1)),
-                "price_penalty": (unwrap(technologies_config.mineral_extraction.price_factor) * 100 - 100),
+                * technologies_config.mineral_extraction.pollution_factor
+                / (1 + technologies_config.mineral_extraction.pollution_factor * (levels[technology] - 1)),
+                "price_penalty": (technologies_config.mineral_extraction.price_factor * 100 - 100),
             }
             if technology == TechnologyType.MINERAL_EXTRACTION
             else {}
         )
         | (
             {
-                "shipment_time_reduction_bonus": 100
-                - unwrap(technologies_config.transport_technology.time_factor) * 100,
+                "shipment_time_reduction_bonus": 100 - technologies_config.transport_technology.time_factor * 100,
                 "power_consumption_reduction_bonus": (
-                    unwrap(technologies_config.transport_technology.energy_factor)
-                    / unwrap(technologies_config.transport_technology.time_factor)
+                    technologies_config.transport_technology.energy_factor
+                    / technologies_config.transport_technology.time_factor
                     - 1
                 )
                 * 100,
@@ -1006,33 +1000,33 @@ def package_available_technologies(player: Player) -> list[dict]:
         )
         | (
             {
-                "price_reduction_bonus": (unwrap(technologies_config.materials.price_factor) * 100 - 100),
+                "price_reduction_bonus": (technologies_config.materials.price_factor * 100 - 100),
                 "construction_power_reduction_bonus": 100
-                - unwrap(technologies_config.materials.construction_energy_factor) * 100,
+                - technologies_config.materials.construction_energy_factor * 100,
             }
             if technology == TechnologyType.MATERIALS
             else {}
         )
         | (
             {
-                "storage_capacity_bonus": (unwrap(technologies_config.civil_engineering.capacity_factor) * 100 - 100),
-                "power_generation_bonus": (unwrap(technologies_config.civil_engineering.prod_factor) * 100 - 100),
-                "price_penalty": (unwrap(technologies_config.civil_engineering.price_factor) * 100 - 100),
+                "storage_capacity_bonus": (technologies_config.civil_engineering.capacity_factor * 100 - 100),
+                "power_generation_bonus": (technologies_config.civil_engineering.prod_factor * 100 - 100),
+                "price_penalty": (technologies_config.civil_engineering.price_factor * 100 - 100),
             }
             if technology == TechnologyType.CIVIL_ENGINEERING
             else {}
         )
         | (
             {
-                "power_generation_bonus": (unwrap(technologies_config.aerodynamics.prod_factor) * 100 - 100),
-                "price_penalty": (unwrap(technologies_config.aerodynamics.price_factor) * 100 - 100),
+                "power_generation_bonus": (technologies_config.aerodynamics.prod_factor * 100 - 100),
+                "price_penalty": (technologies_config.aerodynamics.price_factor * 100 - 100),
             }
             if technology == TechnologyType.AERODYNAMICS
             else {}
         )
         | (
             {
-                "hydrogen_efficiency_bonus": (1 - unwrap(technologies_config.chemistry.inefficiency_factor))
+                "hydrogen_efficiency_bonus": (1 - technologies_config.chemistry.inefficiency_factor)
                 * (
                     0.65
                     - engine.new_config.storage_facilities[StorageFacilityType.HYDROGEN_STORAGE].base_efficiency
@@ -1043,7 +1037,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                     )
                 )
                 * 100,
-                "lithium_ion_efficiency_bonus": (1 - unwrap(technologies_config.chemistry.inefficiency_factor))
+                "lithium_ion_efficiency_bonus": (1 - technologies_config.chemistry.inefficiency_factor)
                 * (
                     1
                     - engine.new_config.storage_facilities[StorageFacilityType.LITHIUM_ION_BATTERIES].base_efficiency
@@ -1054,7 +1048,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                     )
                 )
                 * 100,
-                "solid_state_efficiency_bonus": (1 - unwrap(technologies_config.chemistry.inefficiency_factor))
+                "solid_state_efficiency_bonus": (1 - technologies_config.chemistry.inefficiency_factor)
                 * (
                     1
                     - engine.new_config.storage_facilities[StorageFacilityType.SOLID_STATE_BATTERIES].base_efficiency
@@ -1065,15 +1059,15 @@ def package_available_technologies(player: Player) -> list[dict]:
                     )
                 )
                 * 100,
-                "price_penalty": (unwrap(technologies_config.chemistry.price_factor) * 100 - 100),
+                "price_penalty": (technologies_config.chemistry.price_factor * 100 - 100),
             }
             if technology == TechnologyType.CHEMISTRY
             else {}
         )
         | (
             {
-                "power_generation_bonus": (unwrap(technologies_config.nuclear_engineering.prod_factor) * 100 - 100),
-                "price_penalty": (unwrap(technologies_config.nuclear_engineering.price_factor) * 100 - 100),
+                "power_generation_bonus": (technologies_config.nuclear_engineering.prod_factor * 100 - 100),
+                "price_penalty": (technologies_config.nuclear_engineering.price_factor * 100 - 100),
             }
             if technology == TechnologyType.NUCLEAR_ENGINEERING
             else {}

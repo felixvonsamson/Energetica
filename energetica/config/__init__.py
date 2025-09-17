@@ -98,12 +98,3 @@ def load_config() -> Config:
             "config/technologies.yaml",
         ),
     )
-
-
-T = TypeVar("T")
-
-
-def unwrap(x: T | None, msg: str = "unexpected None") -> T:
-    if x is None:
-        raise ValueError(msg)
-    return x
