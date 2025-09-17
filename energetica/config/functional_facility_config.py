@@ -1,4 +1,4 @@
-"""WIP."""
+"""FunctionalFacilitiesConfig and all other related classes."""
 
 from __future__ import annotations
 

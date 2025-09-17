@@ -1,6 +1,5 @@
-"""WIP."""
+"""Main Config object and related loading method."""
 
-from typing import TypeVar
 from pydantic import BaseModel
 from pydantic_yaml import parse_yaml_file_as
 from energetica.config.base_project_config import BaseProjectConfig
@@ -23,6 +22,11 @@ from energetica.enums import (
 
 
 class Config(BaseModel):
+    """
+    Main config class for all configurable values of the game.
+    It provides methods to retrieve specific configurations based on the project type.
+    """
+
     power_facilities: PowerFacilitiesConfig
     storage_facilities: StorageFacilitiesConfig
     extraction_facilities: ExtractionFacilitiesConfig
@@ -30,7 +34,7 @@ class Config(BaseModel):
     technologies: TechnologiesConfig
 
     def get_base_config(self, project_type: ProjectType) -> BaseProjectConfig:
-        """Return the base configuration for the specified project type."""
+        """Return the BaseProjectConfig for the specified ProjectType."""
         if isinstance(project_type, PowerFacilityType):
             return self.power_facilities[project_type]
         if isinstance(project_type, StorageFacilityType):
@@ -47,6 +51,7 @@ class Config(BaseModel):
         self,
         project_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
     ) -> OperatingFacilityConfig:
+        """Return the OperatingFacilityConfig for operating facilities."""
         if isinstance(project_type, PowerFacilityType):
             return self.power_facilities[project_type]
         if isinstance(project_type, StorageFacilityType):
@@ -59,6 +64,7 @@ class Config(BaseModel):
         self,
         project_type: PowerFacilityType | StorageFacilityType,
     ) -> PowerProducingFacilityConfig:
+        """Return the PowerProducingFacilityConfig for power producing facilities."""
         if isinstance(project_type, PowerFacilityType):
             return self.power_facilities[project_type]
         if isinstance(project_type, StorageFacilityType):
@@ -66,7 +72,7 @@ class Config(BaseModel):
         raise ValueError(f"Invalid facility type: {project_type}")
 
     def get_level_config(self, project_type: TechnologyType | FunctionalFacilityType) -> LevelProjectConfig:
-        """Return the level configuration for the specified project type."""
+        """Return the LevelProjectConfig for level based technologies and functional facilities."""
         if isinstance(project_type, TechnologyType):
             return self.technologies[project_type]
         if isinstance(project_type, FunctionalFacilityType):
@@ -75,7 +81,7 @@ class Config(BaseModel):
 
 
 def load_config() -> Config:
-    # return None
+    """Load the main Config object from disk."""
     return Config(
         power_facilities=parse_yaml_file_as(
             PowerFacilitiesConfig,

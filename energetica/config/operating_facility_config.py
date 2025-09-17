@@ -1,4 +1,4 @@
-"""WIP."""
+"""OperatingFacilityConfig class."""
 
 from pydantic import Field
 from energetica.config.base_project_config import BaseProjectConfig

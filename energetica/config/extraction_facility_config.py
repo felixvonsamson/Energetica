@@ -1,4 +1,4 @@
-"""WIP."""
+"""ExtractionFacilitiesConfig and ExtractionFacilityConfig classes."""
 
 from pydantic import Field, RootModel
 from energetica.config.operating_facility_config import OperatingFacilityConfig

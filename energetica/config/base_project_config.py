@@ -1,4 +1,4 @@
-"""WIP."""
+"""BaseProjectConfig class."""
 
 from pydantic import BaseModel, Field, HttpUrl
 

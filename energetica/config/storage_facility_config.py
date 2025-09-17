@@ -1,4 +1,4 @@
-"""WIP."""
+"""StorageFacilitiesConfig and StorageFacilityConfig class."""
 
 from pydantic import Field, RootModel
 
