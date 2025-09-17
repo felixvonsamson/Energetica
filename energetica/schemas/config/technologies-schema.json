@@ -1,0 +1,1255 @@
+{
+    "$defs": {
+        "BuildingTechConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "affected_facilities": {
+                    "description": "List of facilities affected by this technology.",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/WindFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/HydroFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/SolarFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ControllableFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/StorageFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ExtractionFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/FunctionalFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/TechnologyType"
+                            }
+                        ]
+                    },
+                    "title": "Affected Facilities",
+                    "type": "array"
+                },
+                "time_factor": {
+                    "title": "Time Factor",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "time_factor"
+            ],
+            "title": "BuildingTechConfig",
+            "type": "object"
+        },
+        "ChemistryConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "affected_facilities": {
+                    "description": "List of facilities affected by this technology.",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/WindFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/HydroFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/SolarFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ControllableFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/StorageFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ExtractionFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/FunctionalFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/TechnologyType"
+                            }
+                        ]
+                    },
+                    "title": "Affected Facilities",
+                    "type": "array"
+                },
+                "price_factor": {
+                    "title": "Price Factor",
+                    "type": "number"
+                },
+                "inefficiency_factor": {
+                    "title": "Inefficiency Factor",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "price_factor",
+                "inefficiency_factor"
+            ],
+            "title": "ChemistryConfig",
+            "type": "object"
+        },
+        "CivilEngineeringConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "affected_facilities": {
+                    "description": "List of facilities affected by this technology.",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/WindFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/HydroFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/SolarFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ControllableFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/StorageFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ExtractionFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/FunctionalFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/TechnologyType"
+                            }
+                        ]
+                    },
+                    "title": "Affected Facilities",
+                    "type": "array"
+                },
+                "price_factor": {
+                    "title": "Price Factor",
+                    "type": "number"
+                },
+                "prod_factor": {
+                    "title": "Prod Factor",
+                    "type": "number"
+                },
+                "capacity_factor": {
+                    "title": "Capacity Factor",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "price_factor",
+                "prod_factor",
+                "capacity_factor"
+            ],
+            "title": "CivilEngineeringConfig",
+            "type": "object"
+        },
+        "ControllableFacilityType": {
+            "description": "Enum for controllable facilities.",
+            "enum": [
+                "steam_engine",
+                "coal_burner",
+                "gas_burner",
+                "combined_cycle",
+                "nuclear_reactor",
+                "nuclear_reactor_gen4"
+            ],
+            "title": "ControllableFacilityType",
+            "type": "string"
+        },
+        "ExtractionFacilityType": {
+            "description": "Enum for extraction facilities.",
+            "enum": [
+                "coal_mine",
+                "gas_drilling_site",
+                "uranium_mine"
+            ],
+            "title": "ExtractionFacilityType",
+            "type": "string"
+        },
+        "FunctionalFacilityType": {
+            "description": "Enum for functional facilities.",
+            "enum": [
+                "industry",
+                "laboratory",
+                "warehouse",
+                "carbon_capture"
+            ],
+            "title": "FunctionalFacilityType",
+            "type": "string"
+        },
+        "HydroFacilityType": {
+            "description": "Enum for hydro facilities.",
+            "enum": [
+                "watermill",
+                "small_water_dam",
+                "large_water_dam"
+            ],
+            "title": "HydroFacilityType",
+            "type": "string"
+        },
+        "MaterialsConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "affected_facilities": {
+                    "description": "List of facilities affected by this technology.",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/WindFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/HydroFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/SolarFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ControllableFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/StorageFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ExtractionFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/FunctionalFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/TechnologyType"
+                            }
+                        ]
+                    },
+                    "title": "Affected Facilities",
+                    "type": "array"
+                },
+                "price_factor": {
+                    "title": "Price Factor",
+                    "type": "number"
+                },
+                "construction_energy_factor": {
+                    "title": "Construction Energy Factor",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "price_factor",
+                "construction_energy_factor"
+            ],
+            "title": "MaterialsConfig",
+            "type": "object"
+        },
+        "MineralExtractionConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "affected_facilities": {
+                    "description": "List of facilities affected by this technology.",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/WindFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/HydroFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/SolarFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ControllableFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/StorageFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ExtractionFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/FunctionalFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/TechnologyType"
+                            }
+                        ]
+                    },
+                    "title": "Affected Facilities",
+                    "type": "array"
+                },
+                "price_factor": {
+                    "title": "Price Factor",
+                    "type": "number"
+                },
+                "extract_factor": {
+                    "title": "Extract Factor",
+                    "type": "number"
+                },
+                "pollution_factor": {
+                    "title": "Pollution Factor",
+                    "type": "number"
+                },
+                "energy_factor": {
+                    "title": "Energy Factor",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "price_factor",
+                "extract_factor",
+                "pollution_factor",
+                "energy_factor"
+            ],
+            "title": "MineralExtractionConfig",
+            "type": "object"
+        },
+        "PowerModifyingConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "affected_facilities": {
+                    "description": "List of facilities affected by this technology.",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/WindFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/HydroFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/SolarFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ControllableFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/StorageFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ExtractionFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/FunctionalFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/TechnologyType"
+                            }
+                        ]
+                    },
+                    "title": "Affected Facilities",
+                    "type": "array"
+                },
+                "price_factor": {
+                    "title": "Price Factor",
+                    "type": "number"
+                },
+                "prod_factor": {
+                    "title": "Prod Factor",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "price_factor",
+                "prod_factor"
+            ],
+            "title": "PowerModifyingConfig",
+            "type": "object"
+        },
+        "SolarFacilityType": {
+            "description": "Enum for solar facilities.",
+            "enum": [
+                "CSP_solar",
+                "PV_solar"
+            ],
+            "title": "SolarFacilityType",
+            "type": "string"
+        },
+        "StorageFacilityType": {
+            "description": "Enum for storage facilities.",
+            "enum": [
+                "small_pumped_hydro",
+                "molten_salt",
+                "large_pumped_hydro",
+                "hydrogen_storage",
+                "lithium_ion_batteries",
+                "solid_state_batteries"
+            ],
+            "title": "StorageFacilityType",
+            "type": "string"
+        },
+        "TechnologyConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "affected_facilities": {
+                    "description": "List of facilities affected by this technology.",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/WindFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/HydroFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/SolarFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ControllableFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/StorageFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ExtractionFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/FunctionalFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/TechnologyType"
+                            }
+                        ]
+                    },
+                    "title": "Affected Facilities",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier"
+            ],
+            "title": "TechnologyConfig",
+            "type": "object"
+        },
+        "TechnologyType": {
+            "description": "Enum for technologies.",
+            "enum": [
+                "mathematics",
+                "mechanical_engineering",
+                "thermodynamics",
+                "physics",
+                "building_technology",
+                "mineral_extraction",
+                "transport_technology",
+                "materials",
+                "civil_engineering",
+                "aerodynamics",
+                "chemistry",
+                "nuclear_engineering"
+            ],
+            "title": "TechnologyType",
+            "type": "string"
+        },
+        "ThermodynamicsConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "affected_facilities": {
+                    "description": "List of facilities affected by this technology.",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/WindFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/HydroFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/SolarFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ControllableFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/StorageFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ExtractionFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/FunctionalFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/TechnologyType"
+                            }
+                        ]
+                    },
+                    "title": "Affected Facilities",
+                    "type": "array"
+                },
+                "efficiency_factor": {
+                    "title": "Efficiency Factor",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "efficiency_factor"
+            ],
+            "title": "ThermodynamicsConfig",
+            "type": "object"
+        },
+        "TransportTechConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "affected_facilities": {
+                    "description": "List of facilities affected by this technology.",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/WindFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/HydroFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/SolarFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ControllableFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/StorageFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/ExtractionFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/FunctionalFacilityType"
+                            },
+                            {
+                                "$ref": "#/$defs/TechnologyType"
+                            }
+                        ]
+                    },
+                    "title": "Affected Facilities",
+                    "type": "array"
+                },
+                "energy_factor": {
+                    "title": "Energy Factor",
+                    "type": "number"
+                },
+                "time_factor": {
+                    "title": "Time Factor",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "energy_factor",
+                "time_factor"
+            ],
+            "title": "TransportTechConfig",
+            "type": "object"
+        },
+        "WindFacilityType": {
+            "description": "Enum for wind facilities.",
+            "enum": [
+                "windmill",
+                "onshore_wind_turbine",
+                "offshore_wind_turbine"
+            ],
+            "title": "WindFacilityType",
+            "type": "string"
+        }
+    },
+    "properties": {
+        "mathematics": {
+            "$ref": "#/$defs/TechnologyConfig"
+        },
+        "mechanical_engineering": {
+            "$ref": "#/$defs/PowerModifyingConfig"
+        },
+        "thermodynamics": {
+            "$ref": "#/$defs/ThermodynamicsConfig"
+        },
+        "physics": {
+            "$ref": "#/$defs/PowerModifyingConfig"
+        },
+        "building_technology": {
+            "$ref": "#/$defs/BuildingTechConfig"
+        },
+        "mineral_extraction": {
+            "$ref": "#/$defs/MineralExtractionConfig"
+        },
+        "transport_technology": {
+            "$ref": "#/$defs/TransportTechConfig"
+        },
+        "materials": {
+            "$ref": "#/$defs/MaterialsConfig"
+        },
+        "civil_engineering": {
+            "$ref": "#/$defs/CivilEngineeringConfig"
+        },
+        "aerodynamics": {
+            "$ref": "#/$defs/PowerModifyingConfig"
+        },
+        "chemistry": {
+            "$ref": "#/$defs/ChemistryConfig"
+        },
+        "nuclear_engineering": {
+            "$ref": "#/$defs/PowerModifyingConfig"
+        }
+    },
+    "required": [
+        "mathematics",
+        "mechanical_engineering",
+        "thermodynamics",
+        "physics",
+        "building_technology",
+        "mineral_extraction",
+        "transport_technology",
+        "materials",
+        "civil_engineering",
+        "aerodynamics",
+        "chemistry",
+        "nuclear_engineering"
+    ],
+    "title": "TechnologiesConfig",
+    "type": "object"
+}

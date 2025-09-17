@@ -1,0 +1,129 @@
+{
+    "$defs": {
+        "ExtractionFacilityConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "lifespan": {
+                    "description": "Lifespan in seconds",
+                    "title": "Lifespan",
+                    "type": "number"
+                },
+                "o_and_m_factor_per_day": {
+                    "description": "O&M cost as a fraction of price per in-game day",
+                    "exclusiveMinimum": 0.0,
+                    "title": "O And M Factor Per Day",
+                    "type": "number"
+                },
+                "construction_power_factor": {
+                    "description": "Construction power factor, as fraction of power generation / consumption",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Construction Power Factor",
+                    "type": "number"
+                },
+                "base_power_consumption": {
+                    "description": "Base power consumption in watts when the facility is operating",
+                    "minimum": 0.0,
+                    "title": "Base Power Consumption",
+                    "type": "number"
+                },
+                "base_pollution": {
+                    "description": "Base pollution in kg CO2 emitted per kg of resource extracted",
+                    "minimum": 0.0,
+                    "title": "Base Pollution",
+                    "type": "number"
+                },
+                "base_extraction_rate_per_day": {
+                    "description": "Base extraction rate per day as a fraction of the total stock in the ground",
+                    "minimum": 0.0,
+                    "title": "Base Extraction Rate Per Day",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "lifespan",
+                "o_and_m_factor_per_day",
+                "construction_power_factor",
+                "base_power_consumption",
+                "base_pollution",
+                "base_extraction_rate_per_day"
+            ],
+            "title": "ExtractionFacilityConfig",
+            "type": "object"
+        },
+        "ExtractionFacilityType": {
+            "description": "Enum for extraction facilities.",
+            "enum": [
+                "coal_mine",
+                "gas_drilling_site",
+                "uranium_mine"
+            ],
+            "title": "ExtractionFacilityType",
+            "type": "string"
+        }
+    },
+    "additionalProperties": {
+        "$ref": "#/$defs/ExtractionFacilityConfig"
+    },
+    "propertyNames": {
+        "$ref": "#/$defs/ExtractionFacilityType"
+    },
+    "title": "ExtractionFacilitiesConfig",
+    "type": "object"
+}

@@ -1,0 +1,125 @@
+{
+    "$defs": {
+        "PowerFacilityConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements for building the power facility",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "lifespan": {
+                    "description": "Lifespan in seconds",
+                    "title": "Lifespan",
+                    "type": "number"
+                },
+                "o_and_m_factor_per_day": {
+                    "description": "O&M cost as a fraction of price per in-game day",
+                    "exclusiveMinimum": 0.0,
+                    "title": "O And M Factor Per Day",
+                    "type": "number"
+                },
+                "construction_power_factor": {
+                    "description": "Construction power factor, as fraction of power generation / consumption",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Construction Power Factor",
+                    "type": "number"
+                },
+                "base_power_generation": {
+                    "description": "Base power generation in W",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Power Generation",
+                    "type": "number"
+                },
+                "ramping_time": {
+                    "description": "Ramping time in seconds",
+                    "minimum": 0.0,
+                    "title": "Ramping Time",
+                    "type": "number"
+                },
+                "consumed_resources": {
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Resources consumed by the power facility in kg/MWh",
+                    "title": "Consumed Resources",
+                    "type": "object"
+                },
+                "base_pollution": {
+                    "description": "Base pollution in kg CO2/MWh",
+                    "minimum": 0.0,
+                    "title": "Base Pollution",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "lifespan",
+                "o_and_m_factor_per_day",
+                "construction_power_factor",
+                "base_power_generation",
+                "ramping_time",
+                "consumed_resources",
+                "base_pollution"
+            ],
+            "title": "PowerFacilityConfig",
+            "type": "object"
+        }
+    },
+    "additionalProperties": {
+        "$ref": "#/$defs/PowerFacilityConfig"
+    },
+    "title": "PowerFacilitiesConfig",
+    "type": "object"
+}

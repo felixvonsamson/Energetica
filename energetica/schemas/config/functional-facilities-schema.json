@@ -1,0 +1,459 @@
+{
+    "$defs": {
+        "CarbonCaptureConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "base_power_consumption": {
+                    "description": "Base power consumption in W",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Base Power Consumption",
+                    "type": "number"
+                },
+                "base_absorption_per_day": {
+                    "description": "Base CO2 absorption per in-game day as a fraction of atmospheric CO2",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Absorption Per Day",
+                    "type": "number"
+                },
+                "power_factor": {
+                    "description": "Power consumption multiplier for each level upgrade",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Power Factor",
+                    "type": "number"
+                },
+                "absorption_factor": {
+                    "description": "CO2 absorption multiplier for each level upgrade",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Absorption Factor",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "base_power_consumption",
+                "base_absorption_per_day",
+                "power_factor",
+                "absorption_factor"
+            ],
+            "title": "CarbonCaptureConfig",
+            "type": "object"
+        },
+        "Fuel": {
+            "description": "Enum for fuel names.",
+            "enum": [
+                "coal",
+                "gas",
+                "uranium"
+            ],
+            "title": "Fuel",
+            "type": "string"
+        },
+        "IndustryConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "base_power_consumption": {
+                    "description": "Base power consumption in W",
+                    "minimum": 0.0,
+                    "title": "Base Power Consumption",
+                    "type": "number"
+                },
+                "base_income_per_day": {
+                    "description": "Base income per in-game day in \u00a4",
+                    "minimum": 0.0,
+                    "title": "Base Income Per Day",
+                    "type": "number"
+                },
+                "universal_income_per_day": {
+                    "description": "Universal base income per in-game day in \u00a4",
+                    "minimum": 0.0,
+                    "title": "Universal Income Per Day",
+                    "type": "number"
+                },
+                "power_factor": {
+                    "description": "Power consumption multiplier for every level upgrade",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Power Factor",
+                    "type": "number"
+                },
+                "income_factor": {
+                    "description": "Income multiplier for every level upgrade",
+                    "title": "Income Factor",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "base_power_consumption",
+                "base_income_per_day",
+                "universal_income_per_day",
+                "power_factor",
+                "income_factor"
+            ],
+            "title": "IndustryConfig",
+            "type": "object"
+        },
+        "LaboratoryConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "time_factor": {
+                    "description": "Multiplier that decreases research time for each lab level.",
+                    "exclusiveMaximum": 1.0,
+                    "exclusiveMinimum": 0.0,
+                    "title": "Time Factor",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "time_factor"
+            ],
+            "title": "LaboratoryConfig",
+            "type": "object"
+        },
+        "WarehouseConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "base_construction_energy": {
+                    "description": "Base construction energy in Wh",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Construction Energy",
+                    "type": "number"
+                },
+                "price_multiplier": {
+                    "description": "Price multiplier per level",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Price Multiplier",
+                    "type": "number"
+                },
+                "capacities": {
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Storage capacities for different resources",
+                    "propertyNames": {
+                        "$ref": "#/$defs/Fuel"
+                    },
+                    "title": "Capacities",
+                    "type": "object"
+                },
+                "capacity_factor": {
+                    "description": "Multiplier that increases storage capacity for every level upgrade",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Capacity Factor",
+                    "type": "number"
+                },
+                "time_per_tile": {
+                    "description": "Time to transport goods per tile in in-game seconds",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Time Per Tile",
+                    "type": "number"
+                },
+                "energy_per_kg_per_tile": {
+                    "description": "Energy to transport goods per kg and tile in Wh/kg/tile",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Energy Per Kg Per Tile",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "base_construction_energy",
+                "price_multiplier",
+                "capacities",
+                "capacity_factor",
+                "time_per_tile",
+                "energy_per_kg_per_tile"
+            ],
+            "title": "WarehouseConfig",
+            "type": "object"
+        }
+    },
+    "properties": {
+        "industry": {
+            "$ref": "#/$defs/IndustryConfig"
+        },
+        "laboratory": {
+            "$ref": "#/$defs/LaboratoryConfig"
+        },
+        "warehouse": {
+            "$ref": "#/$defs/WarehouseConfig"
+        },
+        "carbon_capture": {
+            "$ref": "#/$defs/CarbonCaptureConfig"
+        }
+    },
+    "required": [
+        "industry",
+        "laboratory",
+        "warehouse",
+        "carbon_capture"
+    ],
+    "title": "FunctionalFacilitiesConfig",
+    "type": "object"
+}

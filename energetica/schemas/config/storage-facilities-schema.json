@@ -1,0 +1,140 @@
+{
+    "$defs": {
+        "StorageFacilityConfig": {
+            "properties": {
+                "name": {
+                    "description": "Name, to be shown in-game",
+                    "title": "Name",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "title": "Description",
+                    "type": "string"
+                },
+                "wikipedia_link": {
+                    "anyOf": [
+                        {
+                            "format": "uri",
+                            "maxLength": 2083,
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Wikipedia link for more information",
+                    "title": "Wikipedia Link"
+                },
+                "base_price": {
+                    "description": "Base price",
+                    "minimum": 0,
+                    "title": "Base Price",
+                    "type": "integer"
+                },
+                "base_construction_time": {
+                    "description": "Base construction time in seconds",
+                    "minimum": 0,
+                    "title": "Base Construction Time",
+                    "type": "number"
+                },
+                "base_construction_pollution": {
+                    "default": 0,
+                    "description": "Base pollution cost in kg CO2",
+                    "minimum": 0,
+                    "title": "Base Construction Pollution",
+                    "type": "number"
+                },
+                "requirements": {
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "description": "Requirements",
+                    "title": "Requirements",
+                    "type": "object"
+                },
+                "lifespan": {
+                    "description": "Lifespan in seconds",
+                    "title": "Lifespan",
+                    "type": "number"
+                },
+                "o_and_m_factor_per_day": {
+                    "description": "O&M cost as a fraction of price per in-game day",
+                    "exclusiveMinimum": 0.0,
+                    "title": "O And M Factor Per Day",
+                    "type": "number"
+                },
+                "construction_power_factor": {
+                    "description": "Construction power factor, as fraction of power generation / consumption",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Construction Power Factor",
+                    "type": "number"
+                },
+                "base_power_generation": {
+                    "description": "Base power generation in W",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Power Generation",
+                    "type": "number"
+                },
+                "ramping_time": {
+                    "description": "Ramping time in seconds",
+                    "minimum": 0.0,
+                    "title": "Ramping Time",
+                    "type": "number"
+                },
+                "base_storage_capacity": {
+                    "description": "Base storage capacity in Wh",
+                    "exclusiveMinimum": 1.0,
+                    "title": "Base Storage Capacity",
+                    "type": "number"
+                },
+                "base_efficiency": {
+                    "description": "Base efficiency as a fraction",
+                    "exclusiveMaximum": 1.0,
+                    "exclusiveMinimum": 0.0,
+                    "title": "Base Efficiency",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "description",
+                "wikipedia_link",
+                "base_price",
+                "base_construction_time",
+                "requirements",
+                "lifespan",
+                "o_and_m_factor_per_day",
+                "construction_power_factor",
+                "base_power_generation",
+                "ramping_time",
+                "base_storage_capacity",
+                "base_efficiency"
+            ],
+            "title": "StorageFacilityConfig",
+            "type": "object"
+        },
+        "StorageFacilityType": {
+            "description": "Enum for storage facilities.",
+            "enum": [
+                "small_pumped_hydro",
+                "molten_salt",
+                "large_pumped_hydro",
+                "hydrogen_storage",
+                "lithium_ion_batteries",
+                "solid_state_batteries"
+            ],
+            "title": "StorageFacilityType",
+            "type": "string"
+        }
+    },
+    "additionalProperties": {
+        "$ref": "#/$defs/StorageFacilityConfig"
+    },
+    "propertyNames": {
+        "$ref": "#/$defs/StorageFacilityType"
+    },
+    "title": "StorageFacilitiesConfig",
+    "type": "object"
+}

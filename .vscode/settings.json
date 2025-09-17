@@ -60,6 +60,13 @@
     "[yaml]": {
         "editor.formatOnSave": false
     },
+    "yaml.schemas": {
+        "energetica/schemas/config/power-facilities-schema.json": ["power-facilities.yaml"],
+        "energetica/schemas/config/storage-facilities-schema.json": ["storage-facilities.yaml"],
+        "energetica/schemas/config/extraction-facilities-schema.json": ["extraction-facilities.yaml"],
+        "energetica/schemas/config/functional-facilities-schema.json": ["functional-facilities.yaml"],
+        "energetica/schemas/config/technologies-schema.json": ["technologies.yaml"]
+    },
     // cSpell
     "cSpell.words": [
         "APPROXIMATIVE",
