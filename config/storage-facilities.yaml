@@ -9,7 +9,6 @@ hydrogen_storage:
   description: The hydrogen storage facility uses electricity to produce 
     hydrogen by electrolysis of water. This hydrogen can be used to generate 
     electricity in a fuel cell.
-  initial_efficiency: 0.33
   lifespan: 27216000.0
   name: Hydrogen Hydrolysis
   o_and_m_factor_per_day: 0.028
@@ -28,7 +27,6 @@ large_pumped_hydro:
   construction_power_factor: 0.003
   description: The large pumped hydro storage pumps water to a higher reservoir 
     to store large amounts of energy.
-  initial_efficiency: 0.8
   lifespan: 54432000.0
   name: Large Pumped Hydro
   o_and_m_factor_per_day: 0.07
@@ -46,7 +44,6 @@ lithium_ion_batteries:
   construction_power_factor: 0.1
   description: The lithium-ion batteries store energy with a high efficiency in 
     the form of chemical energy.
-  initial_efficiency: 0.69
   lifespan: 9676800.0
   name: Lithium-Ion Batteries
   o_and_m_factor_per_day: 0.0028
@@ -65,7 +62,6 @@ molten_salt:
   construction_power_factor: 0.001
   description: The molten salt storage stores energy in the form of high 
     temperature molten salt.
-  initial_efficiency: 0.63
   lifespan: 9072000.0
   name: Molten Salt
   o_and_m_factor_per_day: 0.24
@@ -84,7 +80,6 @@ small_pumped_hydro:
   construction_power_factor: 0.005
   description: The small pumped hydro storage pumps water to a higher reservoir 
     to store energy.
-  initial_efficiency: 0.75
   lifespan: 45360000.0
   name: Small Pumped Hydro
   o_and_m_factor_per_day: 0.068
@@ -101,7 +96,6 @@ solid_state_batteries:
   construction_power_factor: 0.07
   description: The solid state batteries store energy with a high efficiency in 
     the form of chemical energy.
-  initial_efficiency: 0.79
   lifespan: 18144000.0
   name: Solid State Batteries
   o_and_m_factor_per_day: 0.002

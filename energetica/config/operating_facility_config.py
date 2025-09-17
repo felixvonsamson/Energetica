@@ -9,7 +9,7 @@ class OperatingFacilityConfig(BaseProjectConfig):
     o_and_m_factor_per_day: float = Field(
         gt=0.0,
         description="O&M cost as a fraction of price per in-game day",
-        # alias="O&M_factor_per_day",
+        validation_alias="O&M_factor_per_day",
     )
     construction_power_factor: float = Field(
         gt=0.0,
