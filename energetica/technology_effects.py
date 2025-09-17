@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 
 from energetica.config.player_config import warehouse_capacity_for_level
-from energetica.config.technology_config import PowerModifyingConfig, PriceModifyingConfig
+from energetica.schemas.config.technology import PowerModifyingConfig, PriceModifyingConfig
 from energetica.database.ongoing_project import OngoingProject
 from energetica.enums import (
     ControllableFacilityType,

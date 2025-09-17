@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
-from energetica.config.level_project_config import LevelProjectConfig
+from energetica.schemas.config.level_project import LevelProjectConfig
 from energetica.enums import Fuel, FunctionalFacilityType
 
 

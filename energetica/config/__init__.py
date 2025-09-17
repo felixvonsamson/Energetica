@@ -3,17 +3,17 @@
 import pathlib
 from pydantic import BaseModel
 from pydantic_yaml import parse_yaml_file_as
-from energetica.config.base_project_config import BaseProjectConfig
-from energetica.config.extraction_facility_config import ExtractionFacilitiesConfig
-from energetica.config.functional_facility_config import FunctionalFacilitiesConfig
-from energetica.config.level_project_config import LevelProjectConfig
-from energetica.config.operating_facility_config import OperatingFacilityConfig
-from energetica.config.power_facility_config import PowerFacilitiesConfig
-from energetica.config.power_producing_facility_config import PowerProducingFacilityConfig
-from energetica.config.seasonal_river_discharge_config import SeasonalRiverDischargeConfig
-from energetica.config.storage_facility_config import StorageFacilitiesConfig
-from energetica.config.technology_config import TechnologiesConfig
-from energetica.config.wind_power_curve_config import WindPowerCurveConfig
+from energetica.schemas.config.base_project import BaseProjectConfig
+from energetica.schemas.config.extraction_facility import ExtractionFacilitiesConfig
+from energetica.schemas.config.functional_facility import FunctionalFacilitiesConfig
+from energetica.schemas.config.level_project import LevelProjectConfig
+from energetica.schemas.config.operating_facility import OperatingFacilityConfig
+from energetica.schemas.config.power_facility import PowerFacilitiesConfig
+from energetica.schemas.config.power_producing_facility import PowerProducingFacilityConfig
+from energetica.schemas.config.seasonal_river_discharge import SeasonalRiverDischargeConfig
+from energetica.schemas.config.storage_facility import StorageFacilitiesConfig
+from energetica.schemas.config.technology import TechnologiesConfig
+from energetica.schemas.config.wind_power_curve import WindPowerCurveConfig
 from energetica.enums import (
     ExtractionFacilityType,
     FunctionalFacilityType,

@@ -1,7 +1,7 @@
 """OperatingFacilityConfig class."""
 
 from pydantic import Field
-from energetica.config.base_project_config import BaseProjectConfig
+from energetica.schemas.config.base_project import BaseProjectConfig
 
 
 class OperatingFacilityConfig(BaseProjectConfig):

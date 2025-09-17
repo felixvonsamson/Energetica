@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from energetica import technology_effects
-from energetica.config.extraction_facility_config import ExtractionFacilityConfig
-from energetica.config.power_facility_config import PowerFacilityConfig
-from energetica.config.storage_facility_config import StorageFacilityConfig
+from energetica.schemas.config.extraction_facility import ExtractionFacilityConfig
+from energetica.schemas.config.power_facility import PowerFacilityConfig
+from energetica.schemas.config.storage_facility import StorageFacilityConfig
 from energetica.database import DBModel
 from energetica.enums import ExtractionFacilityType, HydroFacilityType, PowerFacilityType, StorageFacilityType
 from energetica.globals import engine

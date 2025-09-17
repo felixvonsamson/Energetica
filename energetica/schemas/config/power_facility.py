@@ -3,7 +3,7 @@
 from typing_extensions import Literal
 from pydantic import Field, RootModel
 
-from energetica.config.power_producing_facility_config import PowerProducingFacilityConfig
+from energetica.schemas.config.power_producing_facility import PowerProducingFacilityConfig
 from energetica.enums import Fuel, PowerFacilityType
 
 

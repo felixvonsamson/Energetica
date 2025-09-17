@@ -1,7 +1,7 @@
 """ExtractionFacilitiesConfig and ExtractionFacilityConfig classes."""
 
 from pydantic import Field, RootModel
-from energetica.config.operating_facility_config import OperatingFacilityConfig
+from energetica.schemas.config.operating_facility import OperatingFacilityConfig
 from energetica.enums import ExtractionFacilityType
 
 
