@@ -29,7 +29,6 @@ from energetica.enums import (
     FunctionalFacilityType,
     PowerFacilityType,
     ProjectStatus,
-    ProjectType,
     StorageFacilityType,
     TechnologyType,
     WindFacilityType,
@@ -162,7 +161,7 @@ class Player(DBModel):
         """Update the player's configuration."""
         self.config = PlayerConfig(self)
 
-    def get_level(self, functional_facility_or_technology: ProjectType) -> int:
+    def get_level(self, functional_facility_or_technology: FunctionalFacilityType | TechnologyType) -> int:
         """Return the technology or functional facility level of the player."""
         if isinstance(functional_facility_or_technology, FunctionalFacilityType):
             return self.functional_facility_lvl[functional_facility_or_technology]

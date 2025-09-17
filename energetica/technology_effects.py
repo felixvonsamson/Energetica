@@ -26,7 +26,6 @@ from energetica.enums import (
     WindFacilityType,
     WorkerType,
     power_facility_types,
-    str_to_project_type,
 )
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
@@ -470,9 +469,9 @@ def project_requirements(player: Player, project_type: ProjectType) -> list[dict
             "level": level + level_offset,
             "status": (
                 "satisfied"
-                if player.get_level(str_to_project_type[requirement]) >= level + level_offset
+                if player.get_level(requirement) >= level + level_offset
                 else "queued"
-                if next_level(player, str_to_project_type[requirement]) - 1 >= level + level_offset
+                if next_level(player, requirement) - 1 >= level + level_offset
                 and isinstance(project_type, TechnologyType)
                 and isinstance(requirement, TechnologyType)
                 else "unsatisfied"
@@ -747,7 +746,7 @@ def project_is_hidden(player: Player, project_type: ProjectType) -> bool:
     return project_type == FunctionalFacilityType.CARBON_CAPTURE and not player.discovered_greenhouse_gas_effect()
 
 
-def next_level(player: Player, facility_or_technology: ProjectType) -> int:
+def next_level(player: Player, facility_or_technology: FunctionalFacilityType | TechnologyType) -> int:
     """Return the level of the next `facility_or_technology` upgrade, e.g. current level + # ongoing upgrades + one."""
     return (
         player.get_level(facility_or_technology)
