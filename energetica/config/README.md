@@ -18,7 +18,7 @@ The files contained are structured named as follows:
 
 ## Pydantic Models
 
-The pydantic models are located in the `energetica/config/` module.
+The pydantic models are located in the `energetica/schemas/config/` module.
 These ensure correct validation of the config files on startup.
 For example, verifying that values are non-negative, or that appropriate
 multipliers are in specific numeric intervals.
@@ -26,10 +26,9 @@ multipliers are in specific numeric intervals.
 ## IDE Validation
 
 The validation rules are also exported to JSON schemas. The
-`save_config_schemas.py` is responsible for generating these JSON schemas.
-These are used by the `redhat.vscode-yaml` extension within VSCode to give IDE
-validation. The JSON schemas are exported to the `energetica/schemas/config`
-directory.
+`./save_config_schemas.py` module is responsible for generating these.
+The `redhat.vscode-yaml` extension for VSCode can then offer in IDE validation.
+The JSON schemas are exported to the `./config-schemas` directory.
 
 ### Hierarchy for Project Models
 
