@@ -68,6 +68,7 @@
         "energetica/schemas/config/technologies-schema.json": ["technologies.yaml"]
     },
     // cSpell
+    "cSpell.language": "en-GB",
     "cSpell.words": [
         "APPROXIMATIVE",
         "apscheduler",

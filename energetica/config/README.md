@@ -1,24 +1,33 @@
-# Configuration for game entities
+# Configuration for Game Values
 
-## Loading Configuration
+## Config Files
 
-Configuration files are saved as YAML files, loaded from the `config/` top level
-directory, and are named as follows:
+Game values are stored in configuration files as YAML. These can be found in the
+`config/` directory. The files contained are structured named as follows:
 
--   `power-facilities.yaml`: Configuration for power-producing facilities.
--   `storage-facilities.yaml`: Configuration for storage facilities.
--   `extraction-facilities.yaml`: Configuration for resource extraction facilities.
--   `functional-facilities.yaml`: Configuration for functional facilities.
--   `technologies.yaml`: Configuration for technologies.
+-   `config/power-facilities.yaml`
+-   `config/storage-facilities.yaml`
+-   `config/extraction-facilities.yaml`
+-   `config/functional-facilities.yaml`
+-   `config/technologies.yaml`
 
-The Pydantic models defining the schema for theses YAML files are defined in the
-`energetica/config/` modules.
+## Config Models
 
-## Configuration Models
+The YAML files are loaded into memory at startup, when the main `GameEngine`
+object is initialised. These conform to pydantic models, which are located in
+the `energetica/config/` module.
 
-Each configuration file is represented by a Pydantic model in the
-`energetica/config` module. They are structured according to the following
-hierarchy:
+These models are used to validate that the YAML config files are correctly
+structured. This includes verifying that values are non-negative, or that some
+multipliers are in the interval of zero to one exclusive, for example.
+
+The validation rules are also exported to JSON schemas. The
+`save_config_schemas.py` is responsible for generating these JSON schemas.
+These are used by the `redhat.vscode-yaml` extension within VSCode to give IDE
+validation. The JSON schemas are exported to the `energetica/schemas/config`
+directory.
+
+### Config Models Hierarchy
 
 ```mermaid
 classDiagram
