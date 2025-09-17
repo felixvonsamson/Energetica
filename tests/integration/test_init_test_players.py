@@ -9,7 +9,7 @@ import requests
 
 from energetica.schemas.auth import LoginRequest
 
-port = 5001
+port = 5012
 base_url = f"http://localhost:{port}"
 
 login_url = f"{base_url}/api/v1/auth/login"
@@ -19,7 +19,7 @@ change_password_url = f"{base_url}/api/v1/auth/change-password"
 
 def test_server_runs() -> None:
     process = subprocess.Popen(
-        ["python", "main.py", "--port", str(port), "--rm_instance", "--env", "prod", "--init_test_players"],
+        ["python", "main.py", "--port", str(port), "--rm_instance", "--env", "prod", "--run_init_test_players"],
     )
 
     session = requests.session()
