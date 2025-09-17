@@ -161,7 +161,7 @@ class OngoingProject(DBModel):
                     level += 1
         elif isinstance(self.project_type, TechnologyType):
             # For technologies, const config needs to be checked
-            requirements = engine.new_config.technologies[self.project_type].requirements
+            requirements = engine.config.technologies[self.project_type].requirements
             priority_list = self.player.researches_by_priority
             this_priority_index = priority_list.index(self)
             # Compute this technologies level by looking at technologies higher up in the priority list with same name

@@ -43,11 +43,11 @@ class ActiveFacility(DBModel):
     def new_config(self) -> PowerFacilityConfig | StorageFacilityConfig | ExtractionFacilityConfig:
         """The current configuration of the facility, including tech upgrades."""
         if isinstance(self.facility_type, PowerFacilityType):
-            return engine.new_config.power_facilities[self.facility_type]
+            return engine.config.power_facilities[self.facility_type]
         elif isinstance(self.facility_type, StorageFacilityType):
-            return engine.new_config.storage_facilities[self.facility_type]
+            return engine.config.storage_facilities[self.facility_type]
         elif isinstance(self.facility_type, ExtractionFacilityType):
-            return engine.new_config.extraction_facilities[self.facility_type]
+            return engine.config.extraction_facilities[self.facility_type]
         raise ValueError("Invalid facility type")
 
     @property

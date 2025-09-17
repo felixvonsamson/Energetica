@@ -18,8 +18,8 @@
   <h2 id="The_Industry">The Industry</h2>
   <p>
     The Industry serves as a central element in the game, initially starting at level 1. It generates revenue by consuming
-    electricity. With each level upgrade, revenue increase by {{ ((engine.new_config.functional_facilities.industry.income_factor-1)*100) | round | int }}% 
-    and electricity demand increases by {{ ((engine.new_config.functional_facilities.industry.power_factor-1)*100) | round | int }}%. It is worth 
+    electricity. With each level upgrade, revenue increase by {{ ((engine.config.functional_facilities.industry.income_factor-1)*100) | round | int }}% 
+    and electricity demand increases by {{ ((engine.config.functional_facilities.industry.power_factor-1)*100) | round | int }}%. It is worth 
     noting that because of these rates, the industries economic efficiency (in <img src='/static/images/icons/coin.svg' class='coin' alt='coin'>/MWh) is decreasing with higher levels of industry.
     Revenues and power demand gradually increase during the upgrade duration.
   </p>
@@ -46,13 +46,13 @@
   <h2 id="The_Laboratory">The Laboratory</h2>
   <p>
     The laboratory is needed for researching <a href="{{ url_for('wiki.render_template_wiki', template_name='technologies') }}">technologies</a>. Different technology levels require corresponding
-    laboratory levels. It also enhances research speed by {{ ((1-engine.new_config.functional_facilities.laboratory.time_factor)*100) | round | int }}% 
+    laboratory levels. It also enhances research speed by {{ ((1-engine.config.functional_facilities.laboratory.time_factor)*100) | round | int }}% 
     and for every 3rd upgrade, a new lab worker is unlocked.
   </p>
   <h2 id="The_Warehouse">The Warehouse</h2>
   <p>
     The warehouse is essential for storing natural resources. Each level increment increases the maximum storage
-    capacity by {{ ((engine.new_config.functional_facilities.warehouse.capacity_factor-1)*100) | round | int }}% for all resources. The following 
+    capacity by {{ ((engine.config.functional_facilities.warehouse.capacity_factor-1)*100) | round | int }}% for all resources. The following 
     table defines the initial storage capacities at level 1.
     <div class="flex-col">
     <table class="table bone txt_center">
@@ -78,8 +78,8 @@
   <h2 id="Carbon_Capture">Carbon Capture</h2>
   <p>
     The carbon capture facility consumes electricity to extract CO<sub>2</sub> from the atmosphere and store it underground. 
-    With each level upgrade, CO<sub>2</sub> absorption increase by {{ ((engine.new_config.functional_facilities.carbon_capture.absorption_factor-1)*100) | round | int }}% 
-    and power consumption increases by {{ ((engine.new_config.functional_facilities.carbon_capture.power_factor-1)*100) | round | int }}%.
+    With each level upgrade, CO<sub>2</sub> absorption increase by {{ ((engine.config.functional_facilities.carbon_capture.absorption_factor-1)*100) | round | int }}% 
+    and power consumption increases by {{ ((engine.config.functional_facilities.carbon_capture.power_factor-1)*100) | round | int }}%.
     Contrary to the industry, CO<sub>2</sub> absorption is more efficient with higher carbon capture levels.
     The absorption rate of CO<sub>2</sub> is proportional to the amount of CO<sub>2</sub> in the atmosphere witch make it harder to absorb CO<sub>2</sub> 
     when its concentration is low.
@@ -93,7 +93,7 @@
     <ul style="list-style: none;"><li>
       \(ar_{CO_2}\) : CO<sub>2</sub> absorption rate in kg/h
     </li><li>
-      \(ar_{base}\) : base value for fraction of CO<sub>2</sub> that can be absorbed from the atmosphere : {{ engine.new_config.functional_facilities.carbon_capture.base_absorption_per_day / 24 }}/h
+      \(ar_{base}\) : base value for fraction of CO<sub>2</sub> that can be absorbed from the atmosphere : {{ engine.config.functional_facilities.carbon_capture.base_absorption_per_day / 24 }}/h
     </li><li>
       \(q_{CO_2,atm}\) : amount of CO<sub>2</sub> in the atmosphere in kg
     </li><li>
@@ -102,7 +102,7 @@
       \(P_{CC}\) : power consumed by carbon capture
     </li><li>
       \(P_{base}\) : base power consumption of carbon capture : <span></span>
-      <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ engine.new_config.functional_facilities.carbon_capture.base_power_consumption }});</script>
+      <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ engine.config.functional_facilities.carbon_capture.base_power_consumption }});</script>
     </li>
     </ul>
   </li></ul>

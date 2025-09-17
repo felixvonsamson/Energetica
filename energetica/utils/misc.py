@@ -231,7 +231,7 @@ def initialize_player(player: Player) -> None:
     - Adding the player to the general chat
     """
     eol = engine.total_t + math.ceil(
-        engine.new_config.power_facilities[ControllableFacilityType.STEAM_ENGINE].lifespan
+        engine.config.power_facilities[ControllableFacilityType.STEAM_ENGINE].lifespan
         / engine.in_game_seconds_per_tick,
     )
     pos_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
@@ -369,9 +369,9 @@ def calculate_river_discharge(total_seconds: float) -> float:
     """Calculate the river discharge by interpolating the values from the seasonal variation."""
     days_since_start = math.floor(total_seconds / 3600 / 24)
     current_day_fraction = (total_seconds % (3600 * 24)) / (3600 * 24)
-    discharge_factor = engine.new_config.seasonal_river_discharge[days_since_start % 72] + current_day_fraction * (
-        engine.new_config.seasonal_river_discharge[(days_since_start + 1) % 72]
-        - engine.new_config.seasonal_river_discharge[days_since_start % 72]
+    discharge_factor = engine.config.seasonal_river_discharge[days_since_start % 72] + current_day_fraction * (
+        engine.config.seasonal_river_discharge[(days_since_start + 1) % 72]
+        - engine.config.seasonal_river_discharge[days_since_start % 72]
     )
     return discharge_factor * 150  # in m^3/s
 

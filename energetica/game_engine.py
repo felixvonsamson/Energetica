@@ -35,7 +35,7 @@ class GameEngine(object):
         if TYPE_CHECKING:
             from energetica.database.engine_data.emission_data import EmissionData
         Path("instance").mkdir(exist_ok=True)
-        self.new_config = load_config()
+        self.config = load_config()
         self.socketio: socketio.AsyncServer = None  # type: ignore[assignment]
         self.websocket_dict: dict = {}
         self.console_logger = logging.getLogger("console")  # logs events in the terminal

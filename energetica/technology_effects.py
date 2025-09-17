@@ -69,9 +69,9 @@ def price_multiplier(player: Player, project_type: ProjectType) -> float:
     mlt = 1.0
     # Iterate through all technology types to calculate the price multiplier
     for technology in TechnologyType:
-        if project_type not in engine.new_config.technologies[technology].affected_facilities:
+        if project_type not in engine.config.technologies[technology].affected_facilities:
             continue
-        technology_data = engine.new_config.technologies[technology]
+        technology_data = engine.config.technologies[technology]
         if not isinstance(technology_data, PriceModifyingConfig):
             continue
         mlt *= special_multiplier(technology_data.price_factor, player.technology_lvl[technology])
@@ -79,9 +79,9 @@ def price_multiplier(player: Player, project_type: ProjectType) -> float:
     if isinstance(project_type, FunctionalFacilityType | TechnologyType):
         asset_next_level = next_level(player, project_type)
         if isinstance(project_type, FunctionalFacilityType):
-            price_multiplier = engine.new_config.functional_facilities[project_type].price_multiplier
+            price_multiplier = engine.config.functional_facilities[project_type].price_multiplier
         else:
-            price_multiplier = engine.new_config.technologies[project_type].price_multiplier
+            price_multiplier = engine.config.technologies[project_type].price_multiplier
         mlt *= price_multiplier ** (asset_next_level - 1)
         # knowledge spilling for technologies
         if isinstance(project_type, TechnologyType):
@@ -152,9 +152,9 @@ def power_production_multiplier(player: Player, facility_type: PowerFacilityType
     """Return by how much the `facility`'s `base_power_generation` should be multiplied."""
     mlt = 1.0
     for technology in TechnologyType:
-        if facility_type not in engine.new_config.technologies[technology].affected_facilities:
+        if facility_type not in engine.config.technologies[technology].affected_facilities:
             continue
-        technology_data = engine.new_config.technologies[technology]
+        technology_data = engine.config.technologies[technology]
         if not isinstance(technology_data, PowerModifyingConfig):
             continue
         mlt *= special_multiplier(technology_data.prod_factor, player.technology_lvl[technology])
@@ -165,9 +165,9 @@ def power_consumption_multiplier(player: Player, facility_type: ExtractionFacili
     """Return by how much an extraction facility's `base_power_consumption` should be multiplied."""
     mlt = 1
     # Mineral extraction (in this case it is the energy consumption)
-    if facility_type in engine.new_config.technologies[TechnologyType.MINERAL_EXTRACTION].affected_facilities:
+    if facility_type in engine.config.technologies[TechnologyType.MINERAL_EXTRACTION].affected_facilities:
         mlt += (
-            engine.new_config.technologies.mineral_extraction.energy_factor
+            engine.config.technologies.mineral_extraction.energy_factor
             * player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
         )
     return mlt
@@ -178,7 +178,7 @@ def capacity_multiplier(player: Player, storage_facility_type: StorageFacilityTy
     if storage_facility_type in [StorageFacilityType.SMALL_PUMPED_HYDRO, StorageFacilityType.LARGE_PUMPED_HYDRO]:
         # Civil engineering
         return special_multiplier(
-            engine.new_config.technologies.civil_engineering.capacity_factor,
+            engine.config.technologies.civil_engineering.capacity_factor,
             player.technology_lvl[TechnologyType.CIVIL_ENGINEERING],
         )
     return 1
@@ -193,7 +193,7 @@ def extraction_rate_multiplier(player: Player, *, mineral_extraction_level: int 
     """
     if mineral_extraction_level is None:
         mineral_extraction_level = player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
-    return 1 + engine.new_config.technologies.mineral_extraction.extract_factor * mineral_extraction_level
+    return 1 + engine.config.technologies.mineral_extraction.extract_factor * mineral_extraction_level
 
 
 def hydro_price_multiplier(player: Player, hydro_facility_type: HydroFacilityType) -> float:
@@ -251,14 +251,11 @@ def efficiency_multiplier_for_controllable_facilities(
 
     If `thermodynamics_level` is not provided, the `player`'s current `thermodynamics` level is used.
     """
-    if (
-        controllable_facility_type
-        not in engine.new_config.technologies[TechnologyType.THERMODYNAMICS].affected_facilities
-    ):
+    if controllable_facility_type not in engine.config.technologies[TechnologyType.THERMODYNAMICS].affected_facilities:
         return 1
     if thermodynamics_level is None:
         thermodynamics_level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
-    return engine.new_config.technologies.thermodynamics.efficiency_factor**thermodynamics_level
+    return engine.config.technologies.thermodynamics.efficiency_factor**thermodynamics_level
 
 
 def efficiency_multiplier_for_storage_facilities(
@@ -269,29 +266,25 @@ def efficiency_multiplier_for_storage_facilities(
     thermodynamics_level: int | None = None,
 ) -> float:
     """Return by how much the storage facility's `base_efficiency` should be multiplied."""
-    if storage_facility_type in engine.new_config.technologies[TechnologyType.CHEMISTRY].affected_facilities:
+    if storage_facility_type in engine.config.technologies[TechnologyType.CHEMISTRY].affected_facilities:
         if chemistry_level is None:
             chemistry_level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
-        chemistry_factor = engine.new_config.technologies.chemistry.inefficiency_factor**chemistry_level
+        chemistry_factor = engine.config.technologies.chemistry.inefficiency_factor**chemistry_level
         if storage_facility_type == StorageFacilityType.HYDROGEN_STORAGE:
             return (
-                0.65
-                / engine.new_config.storage_facilities[storage_facility_type].base_efficiency
-                * (1 - chemistry_factor)
+                0.65 / engine.config.storage_facilities[storage_facility_type].base_efficiency * (1 - chemistry_factor)
                 + chemistry_factor
             )
         return (
-            1 / engine.new_config.storage_facilities[storage_facility_type].base_efficiency * (1 - chemistry_factor)
+            1 / engine.config.storage_facilities[storage_facility_type].base_efficiency * (1 - chemistry_factor)
             + chemistry_factor
         )
     if storage_facility_type == StorageFacilityType.MOLTEN_SALT:
         if thermodynamics_level is None:
             thermodynamics_level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
-        thermodynamic_factor = engine.new_config.technologies.thermodynamics.efficiency_factor**thermodynamics_level
+        thermodynamic_factor = engine.config.technologies.thermodynamics.efficiency_factor**thermodynamics_level
         return (
-            1
-            / engine.new_config.storage_facilities[storage_facility_type].base_efficiency
-            * (1 - 1 / thermodynamic_factor)
+            1 / engine.config.storage_facilities[storage_facility_type].base_efficiency * (1 - 1 / thermodynamic_factor)
             + 1 / thermodynamic_factor
         )
     return 1
@@ -299,12 +292,9 @@ def efficiency_multiplier_for_storage_facilities(
 
 def extraction_emissions_multiplier(player: Player, extraction_facility_type: ExtractionFacilityType) -> float:
     """Return by how much the `facility`'s `base_pollution` should be multiplied."""
-    if (
-        extraction_facility_type
-        in engine.new_config.technologies[TechnologyType.MINERAL_EXTRACTION].affected_facilities
-    ):
+    if extraction_facility_type in engine.config.technologies[TechnologyType.MINERAL_EXTRACTION].affected_facilities:
         return 1 + (
-            engine.new_config.technologies.mineral_extraction.pollution_factor
+            engine.config.technologies.mineral_extraction.pollution_factor
             * player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
         )
     return 1
@@ -340,7 +330,7 @@ def construction_price(player: Player, project_type: ProjectType) -> float:
     when no other levels are queued, or or a level far in advance when many levels are already in progress and queued
     """
     return (
-        engine.new_config.get_base_config(project_type).base_price
+        engine.config.get_base_config(project_type).base_price
         * price_multiplier(player, project_type)
         * (hydro_price_multiplier(player, project_type) if isinstance(project_type, HydroFacilityType) else 1)
     )
@@ -349,28 +339,26 @@ def construction_price(player: Player, project_type: ProjectType) -> float:
 def construction_time(player: Player, project_type: ProjectType) -> float:
     """Return the construction time in ticks."""
     # transforming in game seconds in ticks
-    duration = engine.new_config.get_base_config(project_type).base_construction_time / engine.in_game_seconds_per_tick
+    duration = engine.config.get_base_config(project_type).base_construction_time / engine.in_game_seconds_per_tick
     # construction time increases with higher levels
     if isinstance(project_type, FunctionalFacilityType | TechnologyType):
         level_with_constructions = OngoingProject.count_when(
             player=player,
             project_type=project_type,
         ) + player.get_level(project_type)
-        duration *= engine.new_config.get_level_config(project_type).price_multiplier ** (
-            0.6 * level_with_constructions
-        )
+        duration *= engine.config.get_level_config(project_type).price_multiplier ** (0.6 * level_with_constructions)
         # knowledge spillover and laboratory time reduction
         if isinstance(project_type, TechnologyType):
             duration *= 0.92 ** research_prevalence(project_type, next_level(player, project_type))
             duration *= (
-                engine.new_config.functional_facilities.laboratory.time_factor
+                engine.config.functional_facilities.laboratory.time_factor
                 ** player.functional_facility_lvl[FunctionalFacilityType.LABORATORY]
             )
     # building technology time reduction
 
     if not isinstance(project_type, TechnologyType):
         duration *= (
-            engine.new_config.technologies.building_technology.time_factor
+            engine.config.technologies.building_technology.time_factor
             ** player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY]
         )
     return duration
@@ -379,19 +367,19 @@ def construction_time(player: Player, project_type: ProjectType) -> float:
 def construction_power(player: Player, project_type: ProjectType) -> float:
     """Return the construction power in W according to the technology level of the player."""
     bt_factor = (
-        engine.new_config.technologies.building_technology.time_factor
+        engine.config.technologies.building_technology.time_factor
         ** player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY]
     )
     # construction power in relation of facilities characteristics
     if isinstance(project_type, PowerFacilityType):
         # Materials (in this case it is the energy consumption for construction)
         mlt = 1
-        if project_type in engine.new_config.technologies[TechnologyType.MATERIALS].affected_facilities:
+        if project_type in engine.config.technologies[TechnologyType.MATERIALS].affected_facilities:
             mlt *= (
-                engine.new_config.technologies.materials.construction_energy_factor
+                engine.config.technologies.materials.construction_energy_factor
                 ** player.technology_lvl[TechnologyType.MATERIALS]
             )
-        config = engine.new_config.get_power_producing_config(project_type)
+        config = engine.config.get_power_producing_config(project_type)
         return (
             config.base_power_generation
             * config.construction_power_factor
@@ -400,7 +388,7 @@ def construction_power(player: Player, project_type: ProjectType) -> float:
             / bt_factor
         )
     if isinstance(project_type, ExtractionFacilityType):
-        config = engine.new_config.extraction_facilities[project_type]
+        config = engine.config.extraction_facilities[project_type]
         return (
             config.base_power_consumption
             * config.construction_power_factor
@@ -408,7 +396,7 @@ def construction_power(player: Player, project_type: ProjectType) -> float:
             / bt_factor
         )
     if isinstance(project_type, StorageFacilityType):
-        config = engine.new_config.storage_facilities[project_type]
+        config = engine.config.storage_facilities[project_type]
         return (
             config.base_storage_capacity
             * config.construction_power_factor
@@ -416,7 +404,7 @@ def construction_power(player: Player, project_type: ProjectType) -> float:
             / bt_factor
         )
     power = (
-        engine.new_config.get_level_config(project_type).base_construction_energy
+        engine.config.get_level_config(project_type).base_construction_energy
         / construction_time(player, project_type)
         / engine.in_game_seconds_per_tick
         * 3600
@@ -426,7 +414,7 @@ def construction_power(player: Player, project_type: ProjectType) -> float:
         facility_next_level = next_level(player, project_type)
         # TODO(mglst): It looks like using `price_multiplier` here is a bug, but it's been like this for a while.
         # Should it be `construction_power_multiplier` instead?
-        price_multiplier = engine.new_config.get_level_config(project_type).price_multiplier
+        price_multiplier = engine.config.get_level_config(project_type).price_multiplier
         power *= price_multiplier ** (facility_next_level - 1)
     return power
 
@@ -435,11 +423,11 @@ def construction_pollution_per_tick(player: Player, project_type: ProjectType) -
     """Return the construction pollution per tick according to the technology level of the player."""
     if isinstance(project_type, TechnologyType):
         return 0
-    base_construction_pollution = engine.new_config.get_base_config(project_type).base_construction_pollution
+    base_construction_pollution = engine.config.get_base_config(project_type).base_construction_pollution
     pollution = base_construction_pollution / construction_time(player, project_type)
     # construction pollution increases with higher levels for functional facilities
     if isinstance(project_type, FunctionalFacilityType):
-        price_multiplier = engine.new_config.get_level_config(project_type).price_multiplier
+        price_multiplier = engine.config.get_level_config(project_type).price_multiplier
         pollution *= price_multiplier ** player.get_level(project_type)
     return pollution
 
@@ -456,14 +444,14 @@ def wind_speed_function(count: int, potential: float) -> float:
 
 def project_requirements(player: Player, project_type: ProjectType) -> list[dict[str, str | int]]:
     """Return the list of requirements (name, level, and satisfaction status) for the specified asset."""
-    requirements = engine.new_config.get_base_config(project_type).requirements
+    requirements = engine.config.get_base_config(project_type).requirements
     level_offset = 0
     if isinstance(project_type, (FunctionalFacilityType, TechnologyType)):
         level_offset = next_level(player, project_type) - 1
     return [
         {
             "name": requirement,
-            "display_name": engine.new_config.get_base_config(requirement).name,
+            "display_name": engine.config.get_base_config(requirement).name,
             "level": level + level_offset,
             "status": (
                 "satisfied"
@@ -518,7 +506,7 @@ def power_facility_resource_consumption(
     power_facility_type: PowerFacilityType,
 ) -> dict[Fuel | Literal["wind", "water", "hydropower", "irradiance"], float]:
     """Return a dictionary of the resources consumed by the power_facility for this player."""
-    consumed_resources = engine.new_config.power_facilities[power_facility_type].consumed_resources.copy()
+    consumed_resources = engine.config.power_facilities[power_facility_type].consumed_resources.copy()
     multiplier = efficiency_multiplier(player, power_facility_type)
     if multiplier == 0:
         multiplier = 1
@@ -529,7 +517,7 @@ def power_facility_resource_consumption(
 
 def _package_project_base(player: Player, project_type: ProjectType) -> dict:
     """Package data shared between power, storage, extraction, functional facilities, and technologies."""
-    project_data = engine.new_config.get_base_config(project_type)
+    project_data = engine.config.get_base_config(project_type)
     return {
         "name": project_type,
         "display_name": project_data.name,
@@ -546,7 +534,7 @@ def _package_power_generating_facility_base(
     power_facility_type: PowerFacilityType | StorageFacilityType,
 ) -> dict:
     """Package data shared by power and storage facilities."""
-    power_facility_data = engine.new_config.get_power_producing_config(power_facility_type)
+    power_facility_data = engine.config.get_power_producing_config(power_facility_type)
     return (
         {
             "power_generation": power_facility_data.base_power_generation
@@ -631,7 +619,7 @@ def _package_power_storage_extraction_facility_base(
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> dict:
     """Package data shared by power, storage, and extraction facilities."""
-    operating_facility_data = engine.new_config.get_operating_config(facility_type)
+    operating_facility_data = engine.config.get_operating_config(facility_type)
     return {
         "operating_costs": operating_facility_data.base_price
         * price_multiplier(player, facility_type)
@@ -659,7 +647,7 @@ def package_power_facilities(player: Player) -> list[dict]:
         }
         | (
             {
-                "pollution": engine.new_config.power_facilities[power_facility].base_pollution
+                "pollution": engine.config.power_facilities[power_facility].base_pollution
                 / efficiency_multiplier(player, power_facility),
             }
             if isinstance(power_facility, ControllableFacilityType | StorageFacilityType)
@@ -686,9 +674,9 @@ def package_storage_facilities(player: Player) -> list[dict]:
         | _package_power_generating_facility_base(player, storage_facility)
         | _package_power_storage_extraction_facility_base(player, storage_facility)
         | {
-            "storage_capacity": engine.new_config.storage_facilities[storage_facility].base_storage_capacity
+            "storage_capacity": engine.config.storage_facilities[storage_facility].base_storage_capacity
             * capacity_multiplier(player, storage_facility),
-            "efficiency": engine.new_config.storage_facilities[storage_facility].base_efficiency
+            "efficiency": engine.config.storage_facilities[storage_facility].base_efficiency
             * efficiency_multiplier(player, storage_facility)
             * 100,
         }
@@ -715,15 +703,15 @@ def package_extraction_facilities(player: Player) -> list[dict]:
         _package_project_base(player, extraction_facility)
         | _package_power_storage_extraction_facility_base(player, extraction_facility)
         | {
-            "power_consumption": engine.new_config.extraction_facilities[extraction_facility].base_power_consumption
+            "power_consumption": engine.config.extraction_facilities[extraction_facility].base_power_consumption
             * power_consumption_multiplier(player, extraction_facility),
-            "pollution": engine.new_config.extraction_facilities[extraction_facility].base_pollution
+            "pollution": engine.config.extraction_facilities[extraction_facility].base_pollution
             * 1000
             * extraction_emissions_multiplier(player, extraction_facility),
             # TODO(mglst): remove this, let the frontend compute it (since tile resource can change often)
             "resource_production": {
                 "name": extraction_facility.associated_fuel,
-                "rate": engine.new_config.extraction_facilities[extraction_facility].base_extraction_rate_per_day
+                "rate": engine.config.extraction_facilities[extraction_facility].base_extraction_rate_per_day
                 * extraction_rate_multiplier(player)
                 * player.tile.fuel_reserves[extraction_facility.associated_fuel]
                 # * tile_resource_amount(player.tile, facility_to_resource[extraction_facility])
@@ -777,31 +765,31 @@ def package_functional_facilities(player: Player) -> list[dict]:
 
     def industry_average_consumption_for_level(level: int) -> float:
         return (
-            engine.new_config.functional_facilities.industry.base_power_consumption
-            * engine.new_config.functional_facilities.industry.power_factor**level
+            engine.config.functional_facilities.industry.base_power_consumption
+            * engine.config.functional_facilities.industry.power_factor**level
         )
 
     def industry_hourly_revenues_for_level(level: int) -> float:
         return (
-            engine.new_config.functional_facilities.industry.base_income_per_day
-            * engine.new_config.functional_facilities.industry.income_factor**level
-            + engine.new_config.functional_facilities.industry.universal_income_per_day
+            engine.config.functional_facilities.industry.base_income_per_day
+            * engine.config.functional_facilities.industry.income_factor**level
+            + engine.config.functional_facilities.industry.universal_income_per_day
         ) / 24
 
     def carbon_capture_power_consumption_for_level(level: int) -> float | None:
         if level == 0:
             return None
         return (
-            engine.new_config.functional_facilities.carbon_capture.base_power_consumption
-            * engine.new_config.functional_facilities.carbon_capture.power_factor**level
+            engine.config.functional_facilities.carbon_capture.base_power_consumption
+            * engine.config.functional_facilities.carbon_capture.power_factor**level
         )
 
     def carbon_capture_absorption(level: int) -> float | None:
         if level == 0:
             return None
         return (
-            engine.new_config.functional_facilities.carbon_capture.base_absorption_per_day
-            * engine.new_config.functional_facilities.carbon_capture.absorption_factor**level
+            engine.config.functional_facilities.carbon_capture.base_absorption_per_day
+            * engine.config.functional_facilities.carbon_capture.absorption_factor**level
             * engine.current_climate_data.get_co2()  # TODO(mglst): make this part be a client side computation
             / 24
         )
@@ -832,7 +820,7 @@ def package_functional_facilities(player: Player) -> list[dict]:
         }
         | (
             {
-                "research_speed_bonus": 100 - engine.new_config.functional_facilities.laboratory.time_factor * 100,
+                "research_speed_bonus": 100 - engine.config.functional_facilities.laboratory.time_factor * 100,
             }
             if next_laboratory_level > 1  # Don't show for research_speed_bonus 0 -> 1, only for 1 -> 2 onwards
             else {}
@@ -863,10 +851,10 @@ def package_functional_facilities(player: Player) -> list[dict]:
         _package_project_base(player, functional_facility)
         | (
             {
-                "construction_pollution": engine.new_config.functional_facilities[
+                "construction_pollution": engine.config.functional_facilities[
                     functional_facility
                 ].base_construction_pollution
-                * engine.new_config.functional_facilities[functional_facility].price_multiplier
+                * engine.config.functional_facilities[functional_facility].price_multiplier
                 ** player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY],
             }
             if player.discovered_greenhouse_gas_effect()
@@ -898,14 +886,14 @@ def package_available_technologies(player: Player) -> list[dict]:
     """Package data relevant for the frontend for technologies."""
     # TODO(mglst): Check all invoked functions and rename facility to asset if needed
     # Because these methods are common to both facilities and technologies, hence should use the name "asset"
-    technologies_config = engine.new_config.technologies
+    technologies_config = engine.config.technologies
     levels: dict[str, int] = {technology: next_level(player, technology) for technology in TechnologyType}
     return [
         _package_project_base(player, technology)
         | {
             "level": levels[technology],
             "affected_facilities": [
-                engine.new_config.get_base_config(facility).name
+                engine.config.get_base_config(facility).name
                 for facility in technologies_config[technology].affected_facilities
             ],
         }
@@ -937,7 +925,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                     (1 - 1 / technologies_config.thermodynamics.efficiency_factor)
                     * (
                         1
-                        - engine.new_config.storage_facilities[StorageFacilityType.MOLTEN_SALT].base_efficiency
+                        - engine.config.storage_facilities[StorageFacilityType.MOLTEN_SALT].base_efficiency
                         * efficiency_multiplier_for_storage_facilities(
                             player,
                             StorageFacilityType.MOLTEN_SALT,
@@ -1030,7 +1018,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                 "hydrogen_efficiency_bonus": (1 - technologies_config.chemistry.inefficiency_factor)
                 * (
                     0.65
-                    - engine.new_config.storage_facilities[StorageFacilityType.HYDROGEN_STORAGE].base_efficiency
+                    - engine.config.storage_facilities[StorageFacilityType.HYDROGEN_STORAGE].base_efficiency
                     * efficiency_multiplier_for_storage_facilities(
                         player,
                         StorageFacilityType.HYDROGEN_STORAGE,
@@ -1041,7 +1029,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                 "lithium_ion_efficiency_bonus": (1 - technologies_config.chemistry.inefficiency_factor)
                 * (
                     1
-                    - engine.new_config.storage_facilities[StorageFacilityType.LITHIUM_ION_BATTERIES].base_efficiency
+                    - engine.config.storage_facilities[StorageFacilityType.LITHIUM_ION_BATTERIES].base_efficiency
                     * efficiency_multiplier_for_storage_facilities(
                         player,
                         StorageFacilityType.LITHIUM_ION_BATTERIES,
@@ -1052,7 +1040,7 @@ def package_available_technologies(player: Player) -> list[dict]:
                 "solid_state_efficiency_bonus": (1 - technologies_config.chemistry.inefficiency_factor)
                 * (
                     1
-                    - engine.new_config.storage_facilities[StorageFacilityType.SOLID_STATE_BATTERIES].base_efficiency
+                    - engine.config.storage_facilities[StorageFacilityType.SOLID_STATE_BATTERIES].base_efficiency
                     * efficiency_multiplier_for_storage_facilities(
                         player,
                         StorageFacilityType.SOLID_STATE_BATTERIES,

@@ -23,7 +23,7 @@ todo_router = APIRouter(prefix="", tags=["Flask Migration"])
 @todo_router.get("/get_wind_power_curve")
 def get_wind_power_curve():  # noqa: ANN201
     """Get the wind power curve."""
-    return engine.new_config.wind_power_curve
+    return engine.config.wind_power_curve
 
 
 @todo_router.get("/get_networks")

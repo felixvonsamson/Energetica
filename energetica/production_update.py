@@ -254,15 +254,15 @@ def industry_demand_and_revenues(player: Player, demand: dict, revenues: dict) -
         additional_demand = (
             industry_upgrade.progress()
             * demand["industry"]
-            * (engine.new_config.functional_facilities.industry.power_factor - 1)
+            * (engine.config.functional_facilities.industry.power_factor - 1)
         )
         additional_revenue = (
             industry_upgrade.progress()
             * (
                 revenues["industry"]
-                - engine.new_config.functional_facilities.industry.universal_income_per_day / ticks_per_day
+                - engine.config.functional_facilities.industry.universal_income_per_day / ticks_per_day
             )
-            * (engine.new_config.functional_facilities.industry.income_factor - 1)
+            * (engine.config.functional_facilities.industry.income_factor - 1)
         )
         demand["industry"] += additional_demand
         revenues["industry"] += additional_revenue
@@ -418,7 +418,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
             continue
         if (
             facility in player.network_prices.ask_prices.keys()
-            and engine.new_config.get_power_producing_config(facility).ramping_time != 0
+            and engine.config.get_power_producing_config(facility).ramping_time != 0
         ):
             max_prod = calculate_prod(
                 "max",
@@ -615,7 +615,7 @@ def solar_generation(player: Player, generation: dict, in_game_seconds_passed: i
                     engine.random_seed,
                 )
                 max_power = (
-                    engine.new_config.power_facilities[facility_type].base_power_generation
+                    engine.config.power_facilities[facility_type].base_power_generation
                     * facility.multipliers["power_production_multiplier"]
                 )
                 facility.usage = irradiance / 950.0
@@ -639,7 +639,7 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
             return 0
         i = math.floor(wind_speed)
         f = wind_speed - i
-        pc = engine.new_config.wind_power_curve
+        pc = engine.config.wind_power_curve
         return pc[i] + (pc[(i + 1) % 90] - pc[i]) * f
 
     for facility_type in WindFacilityType:
@@ -647,7 +647,7 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
             for facility in ActiveFacility.filter_by(player=player, facility_type=facility_type):
                 wind_speed = calculate_wind_speed(facility.position, in_game_seconds_passed, engine.random_seed)
                 max_power = (
-                    engine.new_config.power_facilities[facility_type].base_power_generation
+                    engine.config.power_facilities[facility_type].base_power_generation
                     * facility.multipliers["power_production_multiplier"]
                 )
                 effective_wind_speed = wind_speed * facility.multipliers["wind_speed_multiplier"]
@@ -686,7 +686,7 @@ def calculate_prod(
     max_resources = np.inf
     ramping_speed = (
         player.capacities[facility]["power"]
-        / engine.new_config.get_power_producing_config(facility).ramping_time
+        / engine.config.get_power_producing_config(facility).ramping_time
         * engine.in_game_seconds_per_tick
     )
     if "fuel_use" in player.capacities[facility]:
@@ -791,7 +791,7 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
                 quantity = amount * generation[facility] / player.capacities[facility]["power"]
                 player.resources[fuel] -= quantity
             facility_emissions = (
-                engine.new_config.power_facilities[facility].base_pollution
+                engine.config.power_facilities[facility].base_pollution
                 * generation[facility]
                 / 3600
                 * engine.in_game_seconds_per_tick

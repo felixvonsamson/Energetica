@@ -641,7 +641,7 @@ class Player(DBModel):
         return {
             "summary": {
                 group_name: {
-                    "display_name": engine.new_config.get_base_config(group_name).name,
+                    "display_name": engine.config.get_base_config(group_name).name,
                     "count": len(group),
                     "installed_cap": self.capacities[group_name]["power"],
                     "usage": sum(f.usage * f.max_power_generation for f in group)
@@ -698,7 +698,7 @@ class Player(DBModel):
         return {
             "summary": {
                 group_name: {
-                    "display_name": engine.new_config.get_base_config(group_name).name,
+                    "display_name": engine.config.get_base_config(group_name).name,
                     "count": len(group),
                     "storage_capacity": sum(f.storage_capacity for f in group),
                     "state_of_charge": group[0].state_of_charge,
@@ -751,7 +751,7 @@ class Player(DBModel):
         return {
             "summary": {
                 group_name: {
-                    "display_name": engine.new_config.get_base_config(group_name).name,
+                    "display_name": engine.config.get_base_config(group_name).name,
                     "count": len(group),
                     "extraction_rate": sum(f.extraction_rate for f in group),
                     "usage": sum(f.usage * f.extraction_rate for f in group) / sum(f.extraction_rate for f in group),

@@ -344,7 +344,7 @@
                     {% for power_facility in ["steam_engine", "coal_burner", "gas_burner", "combined_cycle", "nuclear_reactor", "nuclear_reactor_gen4"] %}
                         {% if caps[power_facility] %}
                             <tr>
-                                <td>{{ engine.new_config.power_facilities[power_facility].name }}</td>
+                                <td>{{ engine.config.power_facilities[power_facility].name }}</td>
                                 <td class="txt_center"></td>
                                 <script>document.currentScript.previousElementSibling.innerHTML = format_power({{ caps[power_facility].power }});</script>
                                 <td>
@@ -385,7 +385,7 @@
                     {% for storage_facility in ["small_pumped_hydro", "molten_salt", "large_pumped_hydro", "hydrogen_storage", "lithium_ion_batteries", "solid_state_batteries"] %}
                         {% if caps[storage_facility] %}
                             <tr>
-                                <td>{{ engine.new_config.storage_facilities[storage_facility].name }}</td>
+                                <td>{{ engine.config.storage_facilities[storage_facility].name }}</td>
                                 <td class="txt_center"></td>
                                 <script>document.currentScript.previousElementSibling.innerHTML = format_energy({{ caps[storage_facility].capacity }});</script>
                                 <td>

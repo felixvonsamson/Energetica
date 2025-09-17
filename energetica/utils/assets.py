@@ -92,7 +92,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
 
     deploy_available_workers(player, worker_type, start_now=True)
 
-    project_name = engine.new_config.get_base_config(project.project_type).name
+    project_name = engine.config.get_base_config(project.project_type).name
     if not skip_notifications:
         if isinstance(project.project_type, TechnologyType):
             player.notify("Technologies", f"+ 1 lvl <b>{project_name}</b>.")
@@ -105,7 +105,7 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
             engine.log(f"{player.username} : + 1 {project_name}")
     if isinstance(project.project_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
         eol = engine.total_t + math.ceil(
-            engine.new_config.get_operating_config(project.project_type).lifespan / engine.in_game_seconds_per_tick,
+            engine.config.get_operating_config(project.project_type).lifespan / engine.in_game_seconds_per_tick,
         )
         # Create a RNG, seeded with the server seed, the player's tile coordinates, the project name, and number of
         # facilities of that type the player has built. This ensures that the facility's random position is generated
@@ -273,7 +273,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
     player.money -= cost
     facility.delete()
 
-    facility_name = engine.new_config.get_base_config(facility.facility_type).name
+    facility_name = engine.config.get_base_config(facility.facility_type).name
     if decommissioning:
         player.notify(
             "Decommissioning",
@@ -290,7 +290,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
         )
         if not active_power_facilities:
             eol = engine.total_t + math.ceil(
-                engine.new_config.power_facilities[ControllableFacilityType.STEAM_ENGINE].lifespan
+                engine.config.power_facilities[ControllableFacilityType.STEAM_ENGINE].lifespan
                 / engine.in_game_seconds_per_tick,
             )
             ActiveFacility(
@@ -456,7 +456,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
 
     refund = (
         0.8
-        * engine.new_config.get_base_config(project.project_type).base_price
+        * engine.config.get_base_config(project.project_type).base_price
         * project.multipliers["price_multiplier"]
         * (1 - project.progress())
     )
