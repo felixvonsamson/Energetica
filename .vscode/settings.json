@@ -67,6 +67,20 @@
         "energetica/schemas/config/functional-facilities-schema.json": ["functional-facilities.yaml"],
         "energetica/schemas/config/technologies-schema.json": ["technologies.yaml"]
     },
+    "json.schemas": [
+        {
+            "fileMatch": ["seasonal-river-discharge.json"],
+            "url": "./energetica/schemas/config/seasonal-river-discharge-schema.json"
+        },
+        {
+            "fileMatch": ["wind-power-curve.json"],
+            "url": "./energetica/schemas/config/wind-power-curve-schema.json"
+        }
+    ],
+    // {
+    //     "energetica/schemas/config/seasonal-river-discharge-schema.json": ["seasonal-river-discharge.json"],
+    //     "energetica/schemas/config/wind-power-curve-schema.json": ["wind-power-curve.json"]
+    // },
     // cSpell
     "cSpell.language": "en-GB",
     "cSpell.words": [
@@ -134,6 +148,7 @@
         "minmax",
         "mult",
         "nbsp",
+        "ndarray",
         "numpy",
         "onclick",
         "oninput",

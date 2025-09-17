@@ -12,7 +12,6 @@ from noise import pnoise3
 from scipy.stats import norm
 
 from energetica import technology_effects
-from energetica.config.assets import river_discharge_seasonal
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
@@ -370,8 +369,9 @@ def calculate_river_discharge(total_seconds: float) -> float:
     """Calculate the river discharge by interpolating the values from the seasonal variation."""
     days_since_start = math.floor(total_seconds / 3600 / 24)
     current_day_fraction = (total_seconds % (3600 * 24)) / (3600 * 24)
-    discharge_factor = river_discharge_seasonal[days_since_start % 72] + current_day_fraction * (
-        river_discharge_seasonal[(days_since_start + 1) % 72] - river_discharge_seasonal[days_since_start % 72]
+    discharge_factor = engine.new_config.seasonal_river_discharge[days_since_start % 72] + current_day_fraction * (
+        engine.new_config.seasonal_river_discharge[(days_since_start + 1) % 72]
+        - engine.new_config.seasonal_river_discharge[days_since_start % 72]
     )
     return discharge_factor * 150  # in m^3/s
 

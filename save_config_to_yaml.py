@@ -5,13 +5,16 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+from pydantic import BaseModel
 from pydantic_yaml import to_yaml_file
 
 from energetica.config.extraction_facility_config import ExtractionFacilitiesConfig
 from energetica.config.functional_facility_config import FunctionalFacilitiesConfig
 from energetica.config.power_facility_config import PowerFacilitiesConfig
+from energetica.config.seasonal_river_discharge_config import SeasonalRiverDischargeConfig
 from energetica.config.storage_facility_config import StorageFacilitiesConfig
 from energetica.config.technology_config import TechnologiesConfig
+from energetica.config.wind_power_curve_config import WindPowerCurveConfig
 from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
@@ -25,7 +28,8 @@ from energetica.enums import (
 def save_config() -> None:
     print("Saving power facilities config to yaml...")
     # save to yaml const_config
-    yaml_files = {}
+    yaml_files: dict[str, BaseModel] = {}
+    json_files: dict[str, BaseModel] = {}
     yaml_files["config/power-facilities.yaml"] = PowerFacilitiesConfig(
         {
             power_facility: data
@@ -74,15 +78,16 @@ def save_config() -> None:
         chemistry=const_config["assets"][TechnologyType.CHEMISTRY],
         nuclear_engineering=const_config["assets"][TechnologyType.NUCLEAR_ENGINEERING],
     )
+    json_files["config/wind-power-curve.json"] = WindPowerCurveConfig(wind_power_curve)
+    json_files["config/seasonal-river-discharge.json"] = SeasonalRiverDischargeConfig(river_discharge_seasonal)
 
     for output_path, model in yaml_files.items():
         with open(output_path, "w") as file:
             to_yaml_file(file, model)
 
-    print("{")
-    for facility, data in const_config["assets"].items():
-        print(f'    "{facility}": "{data["name"]}",')
-    print("}")
+    for output_path, model in json_files.items():
+        with open(output_path, "w") as file:
+            file.write(model.model_dump_json(indent=4))
 
 
 const_config: dict = {
@@ -95,7 +100,7 @@ const_config: dict = {
             "base_construction_time": timedelta(hours=8).total_seconds(),  # [in-game seconds]
             "construction_power_factor": 0.4,  # fraction of power gen during construction
             "base_construction_pollution": 17_520,  # [kg]
-            "O&M_factor_per_day": 0.8,  # [fraction of price per in-game day]
+            "o_and_m_factor_per_day": 0.8,  # [fraction of price per in-game day]
             "consumed_resources": {},  # [kg/MWh]
             "base_pollution": 988,  # [kg CO2/MWh]
             "ramping_time": timedelta(minutes=15).total_seconds(),  # [in-game seconds]
@@ -113,7 +118,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=1, hours=6).total_seconds(),
             "construction_power_factor": 0.56,
             "base_construction_pollution": 1_600,
-            "O&M_factor_per_day": 0.048,
+            "o_and_m_factor_per_day": 0.048,
             "consumed_resources": {"wind": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -133,7 +138,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=1, hours=1).total_seconds(),
             "construction_power_factor": 0.48,
             "base_construction_pollution": 2_200,
-            "O&M_factor_per_day": 0.056,
+            "o_and_m_factor_per_day": 0.056,
             "consumed_resources": {"water": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -153,7 +158,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=11, hours=6).total_seconds(),
             "construction_power_factor": 0.28,
             "base_construction_pollution": 1_100_000,
-            "O&M_factor_per_day": 0.096,
+            "o_and_m_factor_per_day": 0.096,
             "consumed_resources": {"coal": 640},
             "base_pollution": 1_664,
             "ramping_time": timedelta(hours=2).total_seconds(),
@@ -170,7 +175,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=2, hours=12).total_seconds(),
             "construction_power_factor": 0.56,
             "base_construction_pollution": 657_000,
-            "O&M_factor_per_day": 0.116,
+            "o_and_m_factor_per_day": 0.116,
             "consumed_resources": {"gas": 353},
             "base_pollution": 1_006,
             "ramping_time": timedelta(minutes=8).total_seconds(),
@@ -188,7 +193,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=12, hours=12).total_seconds(),
             "construction_power_factor": 0.3,
             "base_construction_pollution": 876_000,
-            "O&M_factor_per_day": 0.032,
+            "o_and_m_factor_per_day": 0.032,
             "consumed_resources": {"hydropower": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -208,7 +213,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=3, hours=18).total_seconds(),
             "construction_power_factor": 1.3,
             "base_construction_pollution": 420_000,
-            "O&M_factor_per_day": 0.028,
+            "o_and_m_factor_per_day": 0.028,
             "consumed_resources": {"wind": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -228,7 +233,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=6, hours=6).total_seconds(),
             "construction_power_factor": 0.56,
             "base_construction_pollution": 1_500_000,
-            "O&M_factor_per_day": 0.056,
+            "o_and_m_factor_per_day": 0.056,
             "consumed_resources": {"gas": 210, "coal": 76},
             "base_pollution": 797,
             "ramping_time": timedelta(hours=1, minutes=15).total_seconds(),
@@ -246,7 +251,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=31).total_seconds(),
             "construction_power_factor": 0.08,
             "base_construction_pollution": 6_800_000,
-            "O&M_factor_per_day": 0.288,
+            "o_and_m_factor_per_day": 0.288,
             "consumed_resources": {"uranium": 0.044},
             "base_pollution": 2,
             "ramping_time": timedelta(hours=13).total_seconds(),
@@ -264,7 +269,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=17, hours=12).total_seconds(),
             "construction_power_factor": 0.15,
             "base_construction_pollution": 8_760_000,
-            "O&M_factor_per_day": 0.024,
+            "o_and_m_factor_per_day": 0.024,
             "consumed_resources": {"hydropower": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -284,7 +289,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=7, hours=12).total_seconds(),
             "construction_power_factor": 0.4,
             "base_construction_pollution": 1_260_000,
-            "O&M_factor_per_day": 0.1,
+            "o_and_m_factor_per_day": 0.1,
             "consumed_resources": {"irradiance": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -302,7 +307,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=1, hours=21).total_seconds(),
             "construction_power_factor": 3,
             "base_construction_pollution": 12_000_000,
-            "O&M_factor_per_day": 0.028,
+            "o_and_m_factor_per_day": 0.028,
             "consumed_resources": {"irradiance": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -320,7 +325,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=10).total_seconds(),
             "construction_power_factor": 1.2,
             "base_construction_pollution": 4_900_000,
-            "O&M_factor_per_day": 0.032,
+            "o_and_m_factor_per_day": 0.032,
             "consumed_resources": {"wind": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -340,7 +345,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=37).total_seconds(),
             "construction_power_factor": 0.06,
             "base_construction_pollution": 12_000_000,
-            "O&M_factor_per_day": 0.24,
+            "o_and_m_factor_per_day": 0.24,
             "consumed_resources": {"uranium": 0.000_57},
             "base_pollution": 3,
             "ramping_time": timedelta(hours=8, minutes=20).total_seconds(),
@@ -360,7 +365,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=1, hours=2).total_seconds(),  # [in-game seconds]
             "construction_power_factor": 0.005,  # fraction of capacity demanded during construction
             "base_construction_pollution": 80_000,  # [kg]
-            "O&M_factor_per_day": 0.068,  # [fraction of price per in-game day]
+            "o_and_m_factor_per_day": 0.068,  # [fraction of price per in-game day]
             "ramping_time": timedelta(minutes=9).total_seconds(),  # [in-game seconds]
             "lifespan": timedelta(days=525).total_seconds(),  # [in-game seconds]
             "image_extension": "png",
@@ -379,7 +384,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=5).total_seconds(),
             "construction_power_factor": 0.001,
             "base_construction_pollution": 1_200_000,
-            "O&M_factor_per_day": 0.24,
+            "o_and_m_factor_per_day": 0.24,
             "ramping_time": timedelta(hours=1).total_seconds(),
             "lifespan": timedelta(days=105).total_seconds(),
             "image_extension": "jpg",
@@ -398,7 +403,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=19, hours=9).total_seconds(),
             "construction_power_factor": 0.003,
             "base_construction_pollution": 3_000_000,
-            "O&M_factor_per_day": 0.07,
+            "o_and_m_factor_per_day": 0.07,
             "ramping_time": timedelta(minutes=16).total_seconds(),
             "lifespan": timedelta(days=630).total_seconds(),
             "image_extension": "jpg",
@@ -417,7 +422,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=2, hours=12).total_seconds(),
             "construction_power_factor": 0.000_25,
             "base_construction_pollution": 2_400_000,
-            "O&M_factor_per_day": 0.028,
+            "o_and_m_factor_per_day": 0.028,
             "ramping_time": timedelta(minutes=8).total_seconds(),
             "lifespan": timedelta(days=315).total_seconds(),
             "image_extension": "jpg",
@@ -437,7 +442,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=3, hours=18).total_seconds(),
             "construction_power_factor": 0.1,
             "base_construction_pollution": 8_000_000,
-            "O&M_factor_per_day": 0.002_8,
+            "o_and_m_factor_per_day": 0.002_8,
             "ramping_time": timedelta(minutes=3).total_seconds(),
             "lifespan": timedelta(days=112).total_seconds(),
             "image_extension": "jpg",
@@ -456,7 +461,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=3, hours=3).total_seconds(),
             "construction_power_factor": 0.07,
             "base_construction_pollution": 6_000_000,
-            "O&M_factor_per_day": 0.002,
+            "o_and_m_factor_per_day": 0.002,
             "ramping_time": timedelta(minutes=3).total_seconds(),
             "lifespan": timedelta(days=210).total_seconds(),
             "image_extension": "jpg",
@@ -516,7 +521,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=2, hours=2).total_seconds(),
             "base_construction_energy": 50_000_000,
             "base_construction_pollution": 250_000,
-            "O&M_factor_per_day": 0.000_49,  # not used for now
+            "o_and_m_factor_per_day": 0.000_49,  # not used for now
             "base_power_consumption": 10_000_000,  # [W]
             "base_absorption_per_day": 0.000_005,  # [fraction of atmospheric CO2 absorbed per in-game day]
             "price_multiplier": 1.5,
@@ -533,7 +538,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=1, hours=16).total_seconds(),  # [in-game seconds]
             "construction_power_factor": 1.5,  # fraction of power consumption during construction
             "base_construction_pollution": 200_000,  # [kg]
-            "O&M_factor_per_day": 0.24,  # [fraction of price per in-game day]
+            "o_and_m_factor_per_day": 0.24,  # [fraction of price per in-game day]
             "base_power_consumption": 3_000_000,  # [W]
             "base_pollution": 0.065,  # [kg CO2/kg extracted]
             "lifespan": timedelta(days=161).total_seconds(),  # [in-game seconds]
@@ -550,7 +555,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=3, hours=3).total_seconds(),
             "construction_power_factor": 2.5,
             "base_construction_pollution": 700_000,
-            "O&M_factor_per_day": 0.36,
+            "o_and_m_factor_per_day": 0.36,
             "base_power_consumption": 5_100_000,
             "base_pollution": 0.523,
             "lifespan": timedelta(days=70).total_seconds(),
@@ -566,7 +571,7 @@ const_config: dict = {
             "base_construction_time": timedelta(days=5).total_seconds(),
             "construction_power_factor": 2,
             "base_construction_pollution": 500_000,
-            "O&M_factor_per_day": 0.48,
+            "o_and_m_factor_per_day": 0.48,
             "base_power_consumption": 18_000_000,
             "base_pollution": 86,
             "lifespan": timedelta(days=126).total_seconds(),
@@ -812,6 +817,175 @@ const_config: dict = {
         "energy_per_kg_per_tile": 5,  # [Wh/kg/distance unit]
     },
 }
+
+wind_power_curve: list[float] = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0.001_345,
+    0.008_21,
+    0.015_678,
+    0.024_249,
+    0.034_402,
+    0.046_221,
+    0.059_494,
+    0.074,
+    0.089_609,
+    0.106_56,
+    0.125_18,
+    0.145_81,
+    0.168_63,
+    0.193_65,
+    0.220_89,
+    0.250_34,
+    0.281_97,
+    0.315_75,
+    0.351_65,
+    0.389_68,
+    0.430_03,
+    0.472_9,
+    0.518_44,
+    0.566_01,
+    0.614_38,
+    0.662_3,
+    0.708_58,
+    0.752_33,
+    0.792_72,
+    0.828_94,
+    0.860_76,
+    0.888_69,
+    0.913_32,
+    0.935_14,
+    0.954_07,
+    0.969_78,
+    0.981_93,
+    0.990_48,
+    0.996_02,
+    0.999_22,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0.8,
+    0.6,
+    0.4,
+    0.2,
+    0,
+]  # from 0 to 90 km/h
+
+river_discharge_seasonal = [
+    0.252,
+    0.245,
+    0.238,
+    0.233,
+    0.230,
+    0.230,
+    0.234,
+    0.241,
+    0.251,
+    0.264,
+    0.281,
+    0.300,
+    0.322,
+    0.347,
+    0.377,
+    0.411,
+    0.452,
+    0.500,
+    0.555,
+    0.615,
+    0.678,
+    0.740,
+    0.798,
+    0.850,
+    0.893,
+    0.928,
+    0.956,
+    0.976,
+    0.991,
+    1.000,
+    1.000,
+    1.000,
+    1.000,
+    0.997,
+    0.990,
+    0.980,
+    0.969,
+    0.955,
+    0.938,
+    0.915,
+    0.886,
+    0.850,
+    0.806,
+    0.755,
+    0.702,
+    0.648,
+    0.597,
+    0.550,
+    0.511,
+    0.478,
+    0.452,
+    0.431,
+    0.414,
+    0.400,
+    0.389,
+    0.379,
+    0.371,
+    0.364,
+    0.357,
+    0.350,
+    0.342,
+    0.334,
+    0.325,
+    0.316,
+    0.308,
+    0.300,
+    0.293,
+    0.286,
+    0.280,
+    0.274,
+    0.267,
+    0.260,
+]
 
 if __name__ == "__main__":
     save_config()

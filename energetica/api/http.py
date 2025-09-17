@@ -10,7 +10,6 @@ import numpy as np
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-from energetica.config.assets import wind_power_curve
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.globals import engine
@@ -24,7 +23,7 @@ todo_router = APIRouter(prefix="", tags=["Flask Migration"])
 @todo_router.get("/get_wind_power_curve")
 def get_wind_power_curve():  # noqa: ANN201
     """Get the wind power curve."""
-    return wind_power_curve
+    return engine.new_config.wind_power_curve
 
 
 @todo_router.get("/get_networks")

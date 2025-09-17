@@ -1,0 +1,12 @@
+{
+    "description": "Fraction of maximum power output, for speeds between 0 to 90 km/h",
+    "items": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+    },
+    "maxItems": 91,
+    "minItems": 91,
+    "title": "WindPowerCurveConfig",
+    "type": "array"
+}

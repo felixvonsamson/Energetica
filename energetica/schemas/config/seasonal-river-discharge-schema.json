@@ -1,0 +1,11 @@
+{
+    "items": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+    },
+    "maxItems": 72,
+    "minItems": 72,
+    "title": "SeasonalRiverDischargeConfig",
+    "type": "array"
+}

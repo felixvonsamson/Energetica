@@ -10,7 +10,6 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.network import Network
@@ -640,7 +639,7 @@ def wind_generation(player: Player, generation: dict, in_game_seconds_passed: in
             return 0
         i = math.floor(wind_speed)
         f = wind_speed - i
-        pc = wind_power_curve
+        pc = engine.new_config.wind_power_curve
         return pc[i] + (pc[(i + 1) % 90] - pc[i]) * f
 
     for facility_type in WindFacilityType:
