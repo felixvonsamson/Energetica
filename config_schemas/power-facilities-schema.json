@@ -50,7 +50,7 @@
                     "additionalProperties": {
                         "type": "integer"
                     },
-                    "description": "Requirements for building the power facility",
+                    "description": "Requirements",
                     "title": "Requirements",
                     "type": "object"
                 },

@@ -11,23 +11,23 @@ from energetica.schemas.config.technology import TechnologiesConfig
 from energetica.schemas.config.wind_power_curve import WindPowerCurveConfig
 
 
-with open("./config-schemas/power-facilities-schema.json", "w") as f:
+with open("./config_schemas/power-facilities-schema.json", "w") as f:
     json.dump(PowerFacilitiesConfig.model_json_schema(), f, indent=4)
 
-with open("./config-schemas/storage-facilities-schema.json", "w") as f:
+with open("./config_schemas/storage-facilities-schema.json", "w") as f:
     json.dump(StorageFacilitiesConfig.model_json_schema(), f, indent=4)
 
-with open("./config-schemas/extraction-facilities-schema.json", "w") as f:
+with open("./config_schemas/extraction-facilities-schema.json", "w") as f:
     json.dump(ExtractionFacilitiesConfig.model_json_schema(), f, indent=4)
 
-with open("./config-schemas/functional-facilities-schema.json", "w") as f:
+with open("./config_schemas/functional-facilities-schema.json", "w") as f:
     json.dump(FunctionalFacilitiesConfig.model_json_schema(), f, indent=4)
 
-with open("./config-schemas/technologies-schema.json", "w") as f:
+with open("./config_schemas/technologies-schema.json", "w") as f:
     json.dump(TechnologiesConfig.model_json_schema(), f, indent=4)
 
-with open("./config-schemas/seasonal-river-discharge-schema.json", "w") as f:
+with open("./config_schemas/seasonal-river-discharge-schema.json", "w") as f:
     json.dump(SeasonalRiverDischargeConfig.model_json_schema(), f, indent=4)
 
-with open("./config-schemas/wind-power-curve-schema.json", "w") as f:
+with open("./config_schemas/wind-power-curve-schema.json", "w") as f:
     json.dump(WindPowerCurveConfig.model_json_schema(), f, indent=4)
