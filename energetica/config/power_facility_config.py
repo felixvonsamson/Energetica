@@ -4,7 +4,7 @@ from typing_extensions import Literal
 from pydantic import Field, RootModel
 
 from energetica.config.power_producing_facility_config import PowerProducingFacilityConfig
-from energetica.enums import Fuel, FunctionalFacilityType, PowerFacilityType, TechnologyType
+from energetica.enums import Fuel, PowerFacilityType
 
 
 class PowerFacilityConfig(PowerProducingFacilityConfig):
@@ -12,9 +12,6 @@ class PowerFacilityConfig(PowerProducingFacilityConfig):
         description="Resources consumed by the power facility in kg/MWh",
     )
     base_pollution: float = Field(ge=0.0, description="Base pollution in kg CO2/MWh")
-    requirements: dict[TechnologyType | FunctionalFacilityType, int] = Field(
-        description="Requirements for building the power facility",
-    )
 
 
 class PowerFacilitiesConfig(RootModel[dict[PowerFacilityType, PowerFacilityConfig]]):

@@ -2,24 +2,28 @@
 
 ## Config Files
 
-Game values are stored in configuration files as YAML. These can be found in the
-`config/` directory. The files contained are structured named as follows:
+Game values are stored in configuration files as JSON and YAML. These can be
+found in the `config/` directory. The config files are loaded into memory at
+startup, when the main `GameEngine` object is initialised.
+
+The files contained are structured named as follows:
 
 -   `config/power-facilities.yaml`
 -   `config/storage-facilities.yaml`
 -   `config/extraction-facilities.yaml`
 -   `config/functional-facilities.yaml`
 -   `config/technologies.yaml`
+-   `config/seasonal-river-discharge.json`
+-   `config/wind-power-curve.json`
 
-## Config Models
+## Pydantic Models
 
-The YAML files are loaded into memory at startup, when the main `GameEngine`
-object is initialised. These conform to pydantic models, which are located in
-the `energetica/config/` module.
+The pydantic models are located in the `energetica/config/` module.
+These ensure correct validation of the config files on startup.
+For example, verifying that values are non-negative, or that appropriate
+multipliers are in specific numeric intervals.
 
-These models are used to validate that the YAML config files are correctly
-structured. This includes verifying that values are non-negative, or that some
-multipliers are in the interval of zero to one exclusive, for example.
+## IDE Validation
 
 The validation rules are also exported to JSON schemas. The
 `save_config_schemas.py` is responsible for generating these JSON schemas.
@@ -27,7 +31,9 @@ These are used by the `redhat.vscode-yaml` extension within VSCode to give IDE
 validation. The JSON schemas are exported to the `energetica/schemas/config`
 directory.
 
-### Config Models Hierarchy
+### Hierarchy for Project Models
+
+below, concrete models have a solid border, abstract models have a dashed border.
 
 ```mermaid
 classDiagram
@@ -36,7 +42,6 @@ classDiagram
         +str description
         +str wikipedia_link
         +int base_price
-        +dict requirements
         +float base_construction_time
         +float base_construction_pollution
         +dict requirements
@@ -54,25 +59,25 @@ classDiagram
         +float base_construction_energy
         +float price_multiplier
     }
-    class PowerFacilityConfig:::final {
+    class PowerFacilityConfig:::concrete {
         +dict consumed_resources
+        +float base_pollution
     }
-    class StorageFacilityConfig:::final {
+    class StorageFacilityConfig:::concrete {
         +float base_storage_capacity
         +float base_efficiency
-        +float initial_efficiency
     }
-    class ExtractionFacilityConfig:::final {
+    class ExtractionFacilityConfig:::concrete {
         +float base_power_consumption
         +float base_pollution
         +float base_extraction_rate_per_day
     }
-    class FunctionalFacilityConfig:::final {
-        various
+    class FunctionalFacilityConfig:::abstract {
+        ...
     }
-    class TechnologyConfig:::final {
+    class TechnologyConfig:::abstract {
         +list affected_facilities
-        various
+        ...
     }
     BaseFacilityConfig <|-- OperatingFacilityConfig
     OperatingFacilityConfig <|-- PowerProducingFacilityConfig
@@ -84,5 +89,3 @@ classDiagram
     LevelProjectConfig <|-- TechnologyConfig
     classDef abstract stroke:#cc,stroke-dasharray: 5 5;
 ```
-
-<!-- classDef final stroke:#cc,stroke-width:3px,stroke-dasharray: 5 2; -->
