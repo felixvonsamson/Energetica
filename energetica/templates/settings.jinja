@@ -29,7 +29,7 @@
     <b>Browser notifications</b> &ensp;
     <label class="switch"><input type="checkbox" id="web_push_notifications-checkbox"><span class="slider round"></span></label>
   </div>
-  <div id="notification_settings_list" class="notification_settings collapsed flex-col">
+  {# <div id="notification_settings_list" class="notification_settings collapsed flex-col">
     <div class="padding">
       Messages &ensp;
       <label class="switch"><input type="checkbox" id="web_push_notifications-messages"><span class="slider round"></span></label>
@@ -54,11 +54,11 @@
       Climate events &ensp;
       <label class="switch"><input type="checkbox" id="web_push_notifications-climate_events"><span class="slider round"></span></label>
     </div>
-  </div>
+  </div> #}
 </div>
 
 <div class="padding"></div>
-  <button class="button2 padding medium notification_button" onclick="document.getElementById('change_password_form').classList.remove('hidden');">
+  <button class="button2 padding medium" onclick="document.getElementById('change_password_form').classList.remove('hidden');">
     Change Password
   </button>
 </div>
@@ -106,7 +106,7 @@
       new_password: form.new_password.value,
     };
 
-    const response = await fetch("/change-password", {
+    const response = await fetch("/api/v1/auth/change-password", {
       method: "POST",
       credentials: "same-origin",
       headers: {

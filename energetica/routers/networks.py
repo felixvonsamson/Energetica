@@ -4,12 +4,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.utils.auth import get_current_user
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.schemas.networks import ChangeNetworkPrices, NetworkCreate, NetworkListOut, NetworkOut
 from energetica.utils import network_helpers
+from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/networks", tags=["Networks"])
 
@@ -22,7 +22,7 @@ def get_networks_list() -> NetworkListOut:
 
 @router.post("/{network_id}:join")
 def join_network(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     network_id: int,
 ) -> NetworkOut:
     """Join a network."""
@@ -35,7 +35,7 @@ def join_network(
 
 @router.post("/{network_id}:leave")
 def leave_network(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     network_id: int,
 ) -> NetworkOut | None:
     """Leave the network."""
@@ -52,7 +52,7 @@ def leave_network(
 
 
 @router.post("")
-def create_network(player: Annotated[Player, Depends(get_current_user)], request_data: NetworkCreate) -> NetworkOut:
+def create_network(player: Annotated[Player, Depends(get_settled_player)], request_data: NetworkCreate) -> NetworkOut:
     """Create a network."""
     new_network = network_helpers.create_network(player, request_data.name)
     return NetworkOut.from_network(new_network)
@@ -60,7 +60,7 @@ def create_network(player: Annotated[Player, Depends(get_current_user)], request
 
 @router.patch("/prices", status_code=status.HTTP_204_NO_CONTENT)
 async def change_network_prices(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     prices_change_request: ChangeNetworkPrices,
 ) -> None:
     """Update the asking prices and bid prices for a player on their electricity market."""

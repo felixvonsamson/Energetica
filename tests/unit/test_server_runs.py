@@ -1,3 +1,6 @@
+"""Test that the server runs."""
+# TODO(mglst): @yassir-akram should this be a unit test or an integration test?
+
 import os
 import signal
 import subprocess

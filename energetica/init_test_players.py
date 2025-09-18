@@ -1,10 +1,10 @@
 """Module to initialize the database with test players and networks."""
 
-from energetica.utils.auth import generate_password_hash
-from energetica.database.map import HexTile
+from energetica.database.map.hex_tile import HexTile
 from energetica.database.network import Network
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
-from energetica.database.shipment import OngoingShipment
+from energetica.database.user import User
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -20,25 +20,27 @@ from energetica.enums import (
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.utils.assets import finish_project, queue_project
+from energetica.utils.auth import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
 
 
+def add_asset(player: Player, project_type: ProjectType, n: int) -> None:
+    """Create a project that will instantly finish."""
+    for _ in range(n):
+        ongoing_project = queue_project(
+            player,
+            project_type,
+            force=True,
+            ignore_requirements_and_money=True,
+            skip_notifications=True,
+        )
+        finish_project(ongoing_project, skip_notifications=True)
+    engine.log(f"Added {n} {project_type} for {player.username}")
+
+
 def init_test_players() -> None:
     """Initialize the database with test players and networks."""
-
-    def add_asset(player: Player, project_type: ProjectType, n: int) -> None:
-        """Create a project that will instantly finish."""
-        for _ in range(n):
-            ongoing_project = queue_project(
-                player,
-                project_type,
-                force=True,
-                ignore_requirements_and_money=True,
-                skip_notifications=True,
-            )
-            finish_project(ongoing_project, skip_notifications=True)
-        engine.log(f"Added {n} {project_type} for {player.username}")
 
     def create_player(username: str, password: str, tile_id: int | None = None) -> Player:
         """Create and initialize a player."""
@@ -46,12 +48,12 @@ def init_test_players() -> None:
         if player:
             engine.log(f"create_player: player {username} already exists")
             return player
-        player = Player(username=username, pwhash=generate_password_hash(password))
+        user = User(username=username, pwhash=generate_password_hash(password), role="player")
         # If tile_id is None, find any tile that isn't assigned to a player
         hex_tile = HexTile.get(tile_id) if tile_id else next(HexTile.filter_by(player=None))
         if not hex_tile:
             raise GameError(GameExceptionType.TILE_NOT_FOUND)
-        confirm_location(player, hex_tile)
+        player = confirm_location(user, hex_tile)
         engine.log(f"create_player: player {username} created")
         return player
 
@@ -180,8 +182,8 @@ def init_test_players() -> None:
     player2.resources = {Fuel.COAL: 300_000, Fuel.GAS: 100_000, Fuel.URANIUM: 500}
 
     add_asset(player2, FunctionalFacilityType.WAREHOUSE, 20)
-    add_asset(player2, ControllableFacilityType.STEAM_ENGINE, 20)
-    add_asset(player2, FunctionalFacilityType.INDUSTRY, 10)
+    add_asset(player2, ControllableFacilityType.STEAM_ENGINE, 18)
+    add_asset(player2, FunctionalFacilityType.INDUSTRY, 11)
 
     OngoingShipment(resource=Fuel.COAL, quantity=10, arrival_tick=100, duration=200, power_demand=10, player=player1)
 

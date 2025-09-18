@@ -11,3 +11,4 @@ pytest
 fastapi[standard]
 python-socketio[asgi]
 itsdangerous
+pre-commit

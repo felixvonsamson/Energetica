@@ -12,13 +12,16 @@ from typing import TYPE_CHECKING, Any, Iterable
 
 from pywebpush import WebPushException, webpush
 
-from energetica.config.achievements import achievements
+from energetica.config.achievements import achievements, format_energy, format_mass, format_power
 from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData, NetworkPrices
+from energetica.database.engine_data.capacity_data import CapacityData
+from energetica.database.engine_data.circular_buffer_player import CircularBufferPlayer
+from energetica.database.engine_data.cumulative_emissions_data import CumulativeEmissionsData
 from energetica.database.messages import Chat, Notification
+from energetica.database.network_prices import NetworkPrices
 from energetica.database.ongoing_project import OngoingProject
-from energetica.database.shipment import OngoingShipment
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
@@ -33,6 +36,7 @@ from energetica.enums import (
 )
 from energetica.globals import MAIN_EVENT_LOOP, engine
 from energetica.schemas.achievements import AchievementOut
+from energetica.schemas.browser_notifications import Subscription
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -44,8 +48,9 @@ from energetica.technology_effects import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from energetica.database.map import HexTile
+    from energetica.database.map.hex_tile import HexTile
     from energetica.database.network import Network
+    from energetica.database.user import User
 
 
 @dataclass
@@ -53,16 +58,18 @@ if TYPE_CHECKING:
 class Player(DBModel):
     """Class that stores the users and their data."""
 
-    # Authentication :
-    username: str
-    pwhash: str
-    is_admin: bool = False
+    user: User
+    tile: HexTile
+
+    @property
+    def username(self) -> str:
+        """Return the username of the associated user."""
+        return self.user.username
 
     # inactive: bool = False  # True if account is inactive
     show_chat_disclaimer: bool = True
     last_opened_chat_id: int = field(default_factory=lambda: engine.general_chat.id)
 
-    tile: HexTile | None = None
     network: Network | None = None
 
     # TODO (Felix): Modify the post__init__ of DBModel to store the following objects in engine or in the player
@@ -127,7 +134,7 @@ class Player(DBModel):
 
     # Browser notifications & preferences
     # TODO(mglst): type annotation seems wrong. is it not a dictionary?
-    notification_subscriptions: list = field(default_factory=list)
+    notification_subscriptions: list[Subscription] = field(default_factory=list)
     notification_preferences: dict = field(
         default_factory=lambda: {
             "messages": True,
@@ -369,8 +376,9 @@ class Player(DBModel):
                 "content": new_notification.content,
             },
         )
-        if (  # This probably doesn't work anymore
-            self.notifications
+        print("Alright, time to send a notification")
+        if (
+            len(self.notifications) > 1
             and new_notification.content == self.notifications[len(self.notifications) - 2].content
             and new_notification.time == self.notifications[len(self.notifications) - 2].time
         ):
@@ -381,14 +389,14 @@ class Player(DBModel):
         }
         for subscription in self.notification_subscriptions:
             audience = "https://fcm.googleapis.com"
-            if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
+            if "https://updates.push.services.mozilla.com" in subscription.endpoint:
                 audience = "https://updates.push.services.mozilla.com"
             try:
                 webpush(
-                    subscription_info=subscription,
+                    subscription_info=subscription.model_dump(),
                     data=json.dumps(notification_data),
                     vapid_private_key=engine.VAPID_PRIVATE_KEY,
-                    vapid_claims={"aud": audience},
+                    vapid_claims={"aud": audience, "sub": "mailto:felixvonsamson@gmail.com"},
                 )
             except WebPushException as ex:
                 engine.warn(f"Failed to send notification: {repr(ex)}")
@@ -439,18 +447,29 @@ class Player(DBModel):
             ):
                 self.achievements[achievement] += 1
                 self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
-                message = achievement_data["message"]
+                # Determine which format function to use
+                metric = achievement_data["metric"]
+                milestone_value = achievement_data["milestones"][current_lvl]
+                if metric in ("max_power_consumption",):
+                    formatted_value = format_power(milestone_value)
+                elif metric in ("max_energy_stored", "imported_energy", "exported_energy"):
+                    formatted_value = format_energy(milestone_value)
+                elif metric in ("extracted_resources", "sold_resources", "bought_resources"):
+                    formatted_value = format_mass(milestone_value)
+                else:
+                    formatted_value = milestone_value  # fallback for integer values
+
                 if achievement == "network":
-                    message = message.format(reward=achievement_data["rewards"][current_lvl])
+                    message = achievement_data["message"].format(reward=achievement_data["rewards"][current_lvl])
                 elif "comparisons" in achievement_data:
-                    message = message.format(
-                        value=achievement_data["milestones"][current_lvl],
+                    message = achievement_data["message"].format(
+                        value=formatted_value,
+                        comparison=achievement_data.get("comparisons", [""])[current_lvl],
                         reward=achievement_data["rewards"][current_lvl],
-                        comparison=achievement_data["comparisons"][current_lvl],
                     )
                 else:
-                    message = message.format(
-                        value=achievement_data["milestones"][current_lvl],
+                    message = achievement_data["message"].format(
+                        value=formatted_value,
                         reward=achievement_data["rewards"][current_lvl],
                     )
                 self.notify("Achievement", message)
@@ -474,8 +493,9 @@ class Player(DBModel):
         ):
             self.achievements["technology"] += 1
             self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
+            formatted_value = achievement_data["milestones"][current_lvl]
             message = achievements["technology"]["message"].format(
-                value=achievement_data["milestones"][current_lvl],
+                value=formatted_value,
                 reward=achievements["technology"]["rewards"][current_lvl],
             )
             self.notify("Achievement", message)
@@ -491,8 +511,14 @@ class Player(DBModel):
             ):
                 self.achievements[achievement] += 1
                 self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
+                metric = achievement_data["metric"]
+                milestone_value = achievement_data["milestones"][current_lvl]
+                if metric in ("sold_resources", "bought_resources"):
+                    formatted_value = format_mass(milestone_value)
+                else:
+                    formatted_value = milestone_value
                 message = achievement_data["message"].format(
-                    value=achievement_data["milestones"][current_lvl],
+                    value=formatted_value,
                     reward=achievement_data["rewards"][current_lvl],
                 )
                 self.notify("Achievement", message)
@@ -540,7 +566,7 @@ class Player(DBModel):
                 "username": self.username,
             }
             | ({"network_id": self.network.id} if self.network is not None else {})
-            | ({"cell_id": self.tile.id} if self.tile is not None else {})
+            | ({"cell_id": self.tile.id})
         )
 
     # TODO(mglst): this method should be deprecated

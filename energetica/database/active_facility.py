@@ -130,7 +130,11 @@ class ActiveFacility(DBModel):
         if self.decommissioning:
             return False
         for multiplier_name, multiplier in self.multipliers.items():
-            if multiplier_name == "next_available_location":
+            if (
+                multiplier_name == "next_available_location"
+                or multiplier_name == "hydro_price_multiplier"
+                or multiplier_name == "wind_speed_multiplier"
+            ):
                 continue
             new_multiplier = technology_effects.current_multiplier(self.player, multiplier_name, self.facility_type)
             # Note: The following check relies on multipliers only ever increasing

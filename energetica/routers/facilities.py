@@ -4,20 +4,20 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.utils.auth import get_current_user
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.player import Player
 from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType
 from energetica.schemas.facilities import FacilitiesListOut
 from energetica.schemas.players import MoneyOut
 from energetica.utils import assets
+from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/facilities", tags=["Facilities"])
 
 
 @router.get("")
 def get_active_facilities(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
 ) -> FacilitiesListOut:
     """Get the active facilities for this player."""
     return FacilitiesListOut.from_player(player)
@@ -25,7 +25,7 @@ def get_active_facilities(
 
 @router.post("/{facility_id}:upgrade")
 def upgrade_facility(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     facility_id: int,
 ) -> MoneyOut:
     """Upgrade a facility."""
@@ -38,7 +38,7 @@ def upgrade_facility(
 
 @router.post(":upgrade-all")
 async def upgrade_all_of_type(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> MoneyOut:
     """Upgrade all facilities of a certain type."""
@@ -48,7 +48,7 @@ async def upgrade_all_of_type(
 
 @router.post("/{facility_id}:dismantle")
 async def dismantle_facility(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     facility_id: int,
 ) -> MoneyOut:
     """Dismantle a facility."""
@@ -61,7 +61,7 @@ async def dismantle_facility(
 
 @router.post(":dismantle-all")
 async def dismantle_all_of_type(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> MoneyOut:
     """Dismantle all facilities of a certain type."""

@@ -4,10 +4,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.utils.auth import get_current_user
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.schemas.resource_market import AskCreate, AskListOut, AskOut, AskPatch, PurchaseOrderCreate
+from energetica.utils.auth import get_settled_player
 from energetica.utils.resource_market import create_ask, purchase_resource
 
 router = APIRouter(prefix="/resource-market", tags=["Resource Market"])
@@ -23,7 +23,7 @@ def get_resource_market_asks() -> AskListOut:
 
 @router.post("/asks", status_code=201)
 def post_resource_market_ask(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     request_data: AskCreate,
 ) -> AskOut:
     """Post a resource market bid."""
@@ -39,7 +39,7 @@ def post_resource_market_ask(
 
 @router.post("/asks/{ask_id}:purchase")
 def post_resource_market_purchase(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     ask_id: int,
     request_data: PurchaseOrderCreate,
 ) -> AskOut | None:
@@ -49,10 +49,13 @@ def post_resource_market_purchase(
     # if sale.player == user:
     #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot buy your own ask")
     new_sale = purchase_resource(
-        player=player,
+        buyer=player,
         quantity=request_data.quantity,
         sale=sale,
     )
+    # TODO(mglst) rethink the return structure of this route.
+    # If None is returned, then the appropriate status code would be 204.
+    # If we still want to return a response body, we could return an empty object or a success message or something.
     if new_sale is None:
         return None
     return AskOut.from_resource_on_sale(new_sale)
@@ -60,7 +63,7 @@ def post_resource_market_purchase(
 
 @router.patch("/asks/{ask_id}")
 def patch_resource_market_ask(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     ask_id: int,
     request_data: AskPatch,
 ) -> AskOut:
@@ -77,7 +80,7 @@ def patch_resource_market_ask(
 
 @router.delete("/asks/{ask_id}", status_code=204)
 def delete_resource_market_ask(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     ask_id: int,
 ) -> None:
     """Delete a resource market ask."""

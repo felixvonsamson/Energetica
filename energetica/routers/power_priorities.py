@@ -4,16 +4,16 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.utils.auth import get_current_user
 from energetica.database.player import Player
 from energetica.schemas.power_priorities import PowerPrioritiesListIn, PowerPrioritiesListOut
+from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/power-priorities", tags=["Power Priorities"])
 
 
 @router.get("")
 def get_power_priorities(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
 ) -> PowerPrioritiesListOut:
     if not player.achievements["network"]:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="You must unlock the Network achievement first")
@@ -22,7 +22,7 @@ def get_power_priorities(
 
 @router.put("", status_code=status.HTTP_204_NO_CONTENT)
 def put_power_priorities(
-    player: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     data: PowerPrioritiesListIn,
 ) -> None:
     if not player.achievements["network"]:

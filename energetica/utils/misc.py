@@ -4,6 +4,7 @@ import math
 import os
 import pickle
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 from fastapi import Request
@@ -13,9 +14,11 @@ from scipy.stats import norm
 from energetica import technology_effects
 from energetica.config.assets import river_discharge_seasonal
 from energetica.database.active_facility import ActiveFacility
+from energetica.database.map.hex_tile import HexTile
 from energetica.database.messages import Chat, Message, Notification
 from energetica.database.network import Network
 from energetica.database.player import Player
+from energetica.database.user import User
 from energetica.enums import ControllableFacilityType
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
@@ -23,18 +26,20 @@ from energetica.schemas.daily_quiz import DailyQuizBase
 from energetica.schemas.simulate import CreateUserAction
 from energetica.schemas.weather import WeatherOut
 from energetica.utils.astro import DrHI
+from energetica.database.player import Player
+from energetica.database.user import User
 
 # Helper functions and data initialization utilities
 
 
-def signup_player(request: Request | None, username: str, pwhash: str) -> Player:
+def signup_playing_user(request: Request | None, username: str, pwhash: str) -> User:
     """
-    Signup a player.
+    Sign up a User with the player role.
 
     Calling with request set to null is reserved for simulation - when APIs call this function, they must pass the
     corresponding request object.
     """
-    new_player = Player(username=username, pwhash=pwhash)
+    new_user = User(username=username, pwhash=pwhash, role="player")
 
     log_entry = CreateUserAction(
         timestamp=datetime.now(),
@@ -42,14 +47,14 @@ def signup_player(request: Request | None, username: str, pwhash: str) -> Player
         if request is not None
         else None,
         action_type="create_user",
-        player_id=new_player.id,
-        username=new_player.username,
-        pw_hash=new_player.pwhash,
+        user_id=new_user.id,
+        username=new_user.username,
+        pw_hash=new_user.pwhash,
     )
     engine.log_action(log_entry)
 
     engine.log(f"{username} created an account")
-    return new_player
+    return new_user
 
 
 def add_player_to_data(player: Player) -> None:
@@ -71,6 +76,58 @@ def reduce_resolution(array: list, new_values: np.ndarray) -> None:
         array[4].append(np.mean(array[3][-6:]))
 
 
+def init_array() -> list[list[float]]:
+    return [[0.0] * 360 for _ in range(5)]
+
+
+def empty_player_data() -> dict:
+    """return an empty data structure for a new player."""
+    return {
+        "revenues": {
+            "industry": init_array(),
+            "exports": init_array(),
+            "imports": init_array(),
+            "dumping": init_array(),
+            "climate_events": init_array(),
+        },
+        "op_costs": {
+            "steam_engine": init_array(),
+        },
+        "generation": {
+            "steam_engine": init_array(),
+            "imports": init_array(),
+        },
+        "demand": {
+            "industry": init_array(),
+            "construction": init_array(),
+            "research": init_array(),
+            "transport": init_array(),
+            "exports": init_array(),
+            "dumping": init_array(),
+        },
+        "storage": {},
+        "resources": {},
+        "emissions": {
+            "steam_engine": init_array(),
+            "construction": init_array(),
+        },
+    }
+
+
+def empty_network_data() -> dict:
+    """return an empty data structure for a new network."""
+    return {
+        "network_data": {
+            "price": init_array(),
+            "quantity": init_array(),
+        },
+        "exports": {},
+        "imports": {},
+        "generation": {},
+        "consumption": {},
+    }
+
+
 def save_past_data() -> None:
     """Save the past production data to files every 216 ticks AND remove network data older than 24h."""
     # save climate data
@@ -87,9 +144,10 @@ def save_past_data() -> None:
 
     # save player data
     for player in Player.all():
-        if player.tile is None:
-            continue
         past_data = {}
+        if not os.path.exists(f"instance/data/players/player_{player.id}.pck"):
+            with open(f"instance/data/players/player_{player.id}.pck", "wb") as file:
+                pickle.dump(empty_player_data(), file)
         with open(
             f"instance/data/players/player_{player.id}.pck",
             "rb",
@@ -118,6 +176,10 @@ def save_past_data() -> None:
             if t_value < engine.total_t - 1440:
                 os.remove(os.path.join(network_dir, filename))
 
+        if not os.path.exists(f"instance/data/networks/{network.id}/time_series.pck"):
+            Path(f"instance/data/networks/{network.id}").mkdir(parents=True, exist_ok=True)
+            with open(f"instance/data/networks/{network.id}/time_series.pck", "wb") as file:
+                pickle.dump(empty_network_data(), file)
         past_data = {}
         with open(
             f"instance/data/networks/{network.id}/time_series.pck",
@@ -164,7 +226,7 @@ def send_new_message_sio(message: Message, chat: Chat) -> None:
 # Map
 
 
-def initialize_player(player: Player) -> None:
+def initialize_player(user: User, tile: HexTile) -> Player:
     """
     Initialize a player's data after they have chosen a location.
 
@@ -172,11 +234,13 @@ def initialize_player(player: Player) -> None:
     - Giving the player an initial steam engine
     - Adding the player to the general chat
     """
+    player = Player(user=user, tile=tile)
+    user.player = player
+    tile.player = player
+
     eol = engine.total_t + math.ceil(
         engine.const_config["assets"]["steam_engine"]["lifespan"] / engine.in_game_seconds_per_tick,
     )
-    if player.tile is None:
-        raise GameError(GameExceptionType.NO_LOCATION)
     pos_x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     pos_y = player.tile.coordinates[1]
     ActiveFacility(
@@ -192,44 +256,12 @@ def initialize_player(player: Player) -> None:
 
     add_player_to_data(player)
 
-    def init_array() -> list[list[float]]:
-        return [[0.0] * 360 for _ in range(5)]
-
-    past_data = {
-        "revenues": {
-            "industry": init_array(),
-            "exports": init_array(),
-            "imports": init_array(),
-            "dumping": init_array(),
-            "climate_events": init_array(),
-        },
-        "op_costs": {
-            "steam_engine": init_array(),
-        },
-        "generation": {
-            "steam_engine": init_array(),
-            "imports": init_array(),
-        },
-        "demand": {
-            "industry": init_array(),
-            "construction": init_array(),
-            "research": init_array(),
-            "transport": init_array(),
-            "exports": init_array(),
-            "dumping": init_array(),
-        },
-        "storage": {},
-        "resources": {},
-        "emissions": {
-            "steam_engine": init_array(),
-            "construction": init_array(),
-        },
-    }
-    with open(f"instance/data/players/player_{player.id}.pck", "wb") as file:
-        pickle.dump(past_data, file)
     player.rolling_history.add_subcategory("op_costs", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
+
+    engine.log(f"{player.username} chose the location {tile.id}")
+    return player
 
 
 # Quiz
@@ -261,6 +293,7 @@ def get_quiz_question(player: Player) -> DailyQuizBase:
             or quiz_data["answer"] == "all correct",
             correct_answer=quiz_data["answer"],
             explanation=quiz_data["explanation"],
+            learn_more_link=quiz_data["learn_more_link"],
         )
     else:
         return DailyQuizBase(
@@ -355,8 +388,6 @@ def calculate_river_discharge(total_seconds: float) -> float:
 
 def package_weather_data(player: Player) -> WeatherOut:
     """Package date and weather data for a player."""
-    if player.tile is None:
-        raise GameError(GameExceptionType.NO_LOCATION)
     x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     y = player.tile.coordinates[1] * 0.5 * 3**0.5
     total_seconds = (engine.total_t + engine.delta_t) * engine.in_game_seconds_per_tick

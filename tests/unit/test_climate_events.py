@@ -1,7 +1,9 @@
+"""Tests for climate events."""
+
 import numpy as np
 
 from energetica import create_app
-from energetica.database.map import HexTile
+from energetica.database.map.hex_tile import HexTile
 from energetica.utils.climate_helpers import climate_event_impact
 
 

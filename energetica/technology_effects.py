@@ -31,7 +31,7 @@ from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 
 if TYPE_CHECKING:
-    from energetica.database.map import HexTile
+    from energetica.database.map.hex_tile import HexTile
     from energetica.database.player import Player
 
 
@@ -41,6 +41,21 @@ def special_multiplier(pf: float, lvl: int) -> float:
     if pf < 1:
         return pf**lvl
     return (0.5 + 0.5 * pf) ** lvl + np.log(pf / (0.5 + 0.5 * pf)) * lvl
+
+
+def special_multiplier_gain(pf: float, lvl: int) -> float:
+    """Returns the value multiplier for one additional level in percent."""
+    return (special_multiplier(pf, lvl) / special_multiplier(pf, lvl - 1)) * 100 - 100
+
+
+def special_linear_multiplier(pf: float, lvl: int) -> float:
+    """Return a linear multiplier."""
+    return 1 + pf * lvl
+
+
+def special_linear_multiplier_gain(pf: float, lvl: int) -> float:
+    """Returns the value multiplier for one additional level in percent."""
+    return (special_linear_multiplier(pf, lvl) / special_linear_multiplier(pf, lvl - 1)) * 100 - 100
 
 
 def research_prevalence(technology_name: ProjectType, level: int) -> int:
@@ -69,11 +84,16 @@ def price_multiplier(player: Player, project_type: ProjectType) -> float:
     """Return the price multiplier according to the technology level of the player."""
     const_config = engine.const_config["assets"]
     mlt = 1.0
+    # special linear price increase for the mineral extraction technology
+    if project_type in const_config[TechnologyType.MINERAL_EXTRACTION]["affected_facilities"]:
+        mlt *= special_linear_multiplier(
+            const_config[TechnologyType.MINERAL_EXTRACTION]["price_factor"],
+            player.technology_lvl[TechnologyType.MINERAL_EXTRACTION],
+        )
     # This is a list of all the facilities that affect the price of the facility
     for research in [
         TechnologyType.MECHANICAL_ENGINEERING,
         TechnologyType.PHYSICS,
-        TechnologyType.MINERAL_EXTRACTION,
         TechnologyType.MATERIALS,
         TechnologyType.CIVIL_ENGINEERING,
         TechnologyType.AERODYNAMICS,
@@ -185,17 +205,13 @@ def power_production_multiplier(player: Player, facility_type: PowerFacilityType
     return mlt
 
 
-def power_consumption_multiplier(player: Player, facility_type: ExtractionFacilityType) -> float:
+def power_consumption_multiplier(player: Player, extraction_facility_type: ExtractionFacilityType) -> float:
     """Return by how much an extraction facility's `base_power_consumption` should be multiplied."""
     const_config = engine.const_config["assets"]
-    mlt = 1
-    # Mineral extraction (in this case it is the energy consumption)
-    if facility_type in const_config["mineral_extraction"]["affected_facilities"]:
-        mlt += (
-            const_config["mineral_extraction"]["energy_factor"]
-            * player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
-        )
-    return mlt
+    return special_linear_multiplier(
+        const_config["mineral_extraction"]["energy_factor"],
+        player.technology_lvl[TechnologyType.MINERAL_EXTRACTION],
+    )
 
 
 def capacity_multiplier(player: Player, storage_facility_type: StorageFacilityType) -> float:
@@ -220,7 +236,10 @@ def extraction_rate_multiplier(player: Player, *, mineral_extraction_level: int 
     if mineral_extraction_level is None:
         mineral_extraction_level = player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
     const_config = engine.const_config["assets"]
-    return 1 + const_config["mineral_extraction"]["extract_factor"] * mineral_extraction_level
+    return special_linear_multiplier(
+        const_config["mineral_extraction"]["extract_factor"],
+        mineral_extraction_level,
+    )
 
 
 def hydro_price_multiplier(player: Player, hydro_facility_type: HydroFacilityType) -> float:
@@ -318,11 +337,12 @@ def efficiency_multiplier_for_storage_facilities(
 
 def extraction_emissions_multiplier(player: Player, extraction_facility_type: ExtractionFacilityType) -> float:
     """Return by how much the `facility`'s `base_pollution` should be multiplied."""
+    # TODO(Felix): The if is is redundant no, this function is always called for extraction facilities.
     const_config = engine.const_config["assets"]
     if extraction_facility_type in const_config["mineral_extraction"]["affected_facilities"]:
-        return 1 + (
-            const_config["mineral_extraction"]["pollution_factor"]
-            * player.technology_lvl[TechnologyType.MINERAL_EXTRACTION]
+        return special_linear_multiplier(
+            const_config["mineral_extraction"]["pollution_factor"],
+            player.technology_lvl[TechnologyType.MINERAL_EXTRACTION],
         )
     return 1
 
@@ -935,8 +955,14 @@ def package_available_technologies(player: Player) -> list[dict]:
         )
         | (
             {
-                "power_generation_bonus": const_config_assets[technology]["prod_factor"] * 100 - 100,
-                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+                "power_generation_bonus": special_multiplier_gain(
+                    const_config_assets[technology]["prod_factor"],
+                    levels[technology],
+                ),
+                "price_penalty": special_multiplier_gain(
+                    const_config_assets[technology]["price_factor"],
+                    levels[technology],
+                ),
             }
             if technology == TechnologyType.MECHANICAL_ENGINEERING
             else {}
@@ -968,10 +994,16 @@ def package_available_technologies(player: Player) -> list[dict]:
         )
         | (
             {
-                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
-                "power_generation_bonus": const_config_assets[technology]["prod_factor"] * 100 - 100,
+                "price_penalty": special_multiplier_gain(
+                    const_config_assets[technology]["price_factor"],
+                    levels[technology],
+                ),
+                "power_generation_bonus": special_multiplier_gain(
+                    const_config_assets[technology]["prod_factor"],
+                    levels[technology],
+                ),
             }
-            if technology == "physics"
+            if technology == TechnologyType.PHYSICS
             else {}
         )
         | (
@@ -987,17 +1019,22 @@ def package_available_technologies(player: Player) -> list[dict]:
         )
         | (
             {
-                "extraction_speed_bonus": 100
-                * extraction_rate_multiplier(player, mineral_extraction_level=levels[technology])
-                / extraction_rate_multiplier(player, mineral_extraction_level=levels[technology] - 1)
-                - 100,
-                "power_consumption_penalty": 100
-                * const_config_assets[technology]["energy_factor"]
-                / (1 + const_config_assets[technology]["energy_factor"] * (levels[technology] - 1)),
-                "co2_emissions_penalty": 100
-                * const_config_assets[technology]["pollution_factor"]
-                / (1 + const_config_assets[technology]["pollution_factor"] * (levels[technology] - 1)),
-                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+                "extraction_speed_bonus": special_linear_multiplier_gain(
+                    const_config_assets[technology]["extract_factor"],
+                    levels[technology],
+                ),
+                "power_consumption_penalty": special_linear_multiplier_gain(
+                    const_config_assets[technology]["energy_factor"],
+                    levels[technology],
+                ),
+                "co2_emissions_penalty": special_linear_multiplier_gain(
+                    const_config_assets[technology]["pollution_factor"],
+                    levels[technology],
+                ),
+                "price_penalty": special_linear_multiplier_gain(
+                    const_config_assets[technology]["price_factor"],
+                    levels[technology],
+                ),
             }
             if technology == TechnologyType.MINERAL_EXTRACTION
             else {}
@@ -1025,17 +1062,32 @@ def package_available_technologies(player: Player) -> list[dict]:
         )
         | (
             {
-                "storage_capacity_bonus": const_config_assets[technology]["capacity_factor"] * 100 - 100,
-                "power_generation_bonus": const_config_assets[technology]["prod_factor"] * 100 - 100,
-                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+                "storage_capacity_bonus": special_multiplier_gain(
+                    const_config_assets[technology]["capacity_factor"],
+                    levels[technology],
+                ),
+                "power_generation_bonus": special_multiplier_gain(
+                    const_config_assets[technology]["prod_factor"],
+                    levels[technology],
+                ),
+                "price_penalty": special_multiplier_gain(
+                    const_config_assets[technology]["price_factor"],
+                    levels[technology],
+                ),
             }
             if technology == TechnologyType.CIVIL_ENGINEERING
             else {}
         )
         | (
             {
-                "power_generation_bonus": const_config_assets[technology]["prod_factor"] * 100 - 100,
-                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+                "power_generation_bonus": special_multiplier_gain(
+                    const_config_assets[technology]["prod_factor"],
+                    levels[technology],
+                ),
+                "price_penalty": special_multiplier_gain(
+                    const_config_assets[technology]["price_factor"],
+                    levels[technology],
+                ),
             }
             if technology == TechnologyType.AERODYNAMICS
             else {}
@@ -1075,15 +1127,24 @@ def package_available_technologies(player: Player) -> list[dict]:
                     )
                 )
                 * 100,
-                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+                "price_penalty": special_multiplier_gain(
+                    const_config_assets[technology]["price_factor"],
+                    levels[technology],
+                ),
             }
             if technology == TechnologyType.CHEMISTRY
             else {}
         )
         | (
             {
-                "power_generation_bonus": const_config_assets[technology]["prod_factor"] * 100 - 100,
-                "price_penalty": (const_config_assets[technology]["price_factor"] * 100 - 100),
+                "power_generation_bonus": special_multiplier_gain(
+                    const_config_assets[technology]["prod_factor"],
+                    levels[technology],
+                ),
+                "price_penalty": special_multiplier_gain(
+                    const_config_assets[technology]["price_factor"],
+                    levels[technology],
+                ),
             }
             if technology == TechnologyType.NUCLEAR_ENGINEERING
             else {}

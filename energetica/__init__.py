@@ -1,7 +1,7 @@
 """Initializes the app and the game engine."""
 
-__version__ = "0.11.1-b"
-__release_date__ = "03/02/2025"
+__version__ = "0.11.2-rc1"
+__release_date__ = "06/09/2025"
 
 import asyncio
 import glob
@@ -17,9 +17,9 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from typing import Any, AsyncGenerator, Literal, cast
+from typing import AsyncGenerator, Literal, cast
 
-from apscheduler.events import EVENT_JOB_EXECUTED
+from apscheduler.events import EVENT_JOB_EXECUTED, JobExecutionEvent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from pydantic import TypeAdapter
@@ -27,6 +27,7 @@ from pydantic import TypeAdapter
 from energetica import globals
 from energetica.game_engine import GameEngine
 from energetica.schemas.simulate import Action
+from energetica.utils.browser_notifications import load_or_create_vapid_keys
 
 engine = GameEngine()
 
@@ -54,12 +55,11 @@ def create_app(
     simulate_stop_on_mismatch: bool = False,
     simulate_stop_on_server_error: bool = False,
     simulate_stop_on_assertion_error: bool = False,
-    simulate_stop_on_unauthenticated_actions: bool = False,
     simulate_checkpoint_every_k_ticks: int = 10000,
     simulate_checkpoint_ticks: list[int] | None = None,
     simulate_till: int | None = None,
     simulate_profiling: bool = False,
-    skip_adding_handlers: bool = False,
+    skip_adding_handlers: bool = False,  # TODO(mglst): revisit if this is still needed, currently unused
     env: Literal["dev"] | Literal["prod"],
     disable_signups: bool = False,
 ) -> FastAPI:
@@ -87,8 +87,9 @@ def create_app(
     if simulate_file:
         # Simulate the game run from a file.
         Path("checkpoints/simulation").mkdir(exist_ok=True)
+        TypeAdapterAction = TypeAdapter(Action)
         with open(simulate_file, "r", encoding="utf-8") as file:
-            actions = cast(list[Action], [TypeAdapter(Action).validate_json(line) for line in file])
+            actions = cast(list[Action], [TypeAdapterAction.validate_json(line) for line in file])
         assert actions[0].action_type == "init_engine"
 
         checkpoints = {
@@ -131,13 +132,15 @@ def create_app(
             assert uuid.UUID(actions[0].instance_uuid) == engine.uuid
     else:
         if actions:
+            assert actions[0].action_type == "init_engine"
+            assert actions[0].game_version == __version__, (
+                "Game version mismatch. This actions history is not compatible with this version of the game."
+            )
             kwargs: dict = actions[0].model_dump()
             kwargs.pop("action_type")
-            # datetime.fromisoformat
-            kwargs["start_date"] = kwargs["start_date"]
             engine.init_instance(**kwargs)
         else:
-            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, disable_signups)
+            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, __version__, disable_signups)
 
     action_id_by_tick = {
         action.total_t: action_id for action_id, action in enumerate(actions) if action.action_type == "tick"
@@ -168,7 +171,6 @@ def create_app(
                     "stop_on_mismatch": simulate_stop_on_mismatch,
                     "stop_on_server_error": simulate_stop_on_server_error,
                     "stop_on_assertion_error": simulate_stop_on_assertion_error,
-                    "stop_on_unauthenticated_actions": simulate_stop_on_unauthenticated_actions,
                     "checkpoint_every_k_ticks": simulate_checkpoint_every_k_ticks,
                     "checkpoint_ticks": simulate_checkpoint_ticks,
                 }
@@ -180,7 +182,6 @@ def create_app(
                     "stop_on_mismatch": simulate_stop_on_mismatch,
                     "stop_on_server_error": True,
                     "stop_on_assertion_error": True,
-                    "stop_on_unauthenticated_actions": True,
                     "checkpoint_every_k_ticks": None,
                     "checkpoint_ticks": None,
                 }
@@ -197,8 +198,10 @@ def create_app(
             )
             if not simulate_file:
 
-                def job_listener(event: Any) -> None:
+                def job_listener(event: JobExecutionEvent) -> None:
+                    """This function allows to restart normal server behavior after re-simulation has finished successfully."""
                     if event.job_id != "replay" or not event.retval:
+                        # The simulation was not successful, stop here.
                         return
                     add_ticks_clock()
                     engine.serve_local = False
@@ -212,15 +215,16 @@ def create_app(
 
         scheduler.start()
 
-        from energetica.database.player import Player
+        from energetica.database.user import User
         from energetica.utils.auth import generate_password_hash
 
         # Creating the root admin account if it does not exist.
-        if not list(Player.filter_by(username="admin")):
+        if not list(User.filter_by(role="admin")):
             admin_password = secrets.token_hex(4)
             hashed_password = generate_password_hash(admin_password)
-            new_admin = Player(username="admin", pwhash=hashed_password, is_admin=True)
+            new_admin = User(username="admin", pwhash=hashed_password, role="admin")
             engine.log(f"Admin account created with username '{new_admin.username}'")
+            # TODO(mglst): I think it would make more sense to move this under the instance/ folder
             with open("admin_accounts.txt", "w", encoding="utf-8") as file:
                 file.write(f"{new_admin.username},{admin_password}\n")
 
@@ -239,14 +243,14 @@ def create_app(
                         raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
                     username = parts[0].strip()
                     password = parts[1].strip() if len(parts) > 1 else None
-                    existing_player = next(Player.filter_by(username=username), None)
+                    existing_player = next(User.filter_by(username=username), None)
                     if existing_player:
                         engine.log(f"players.txt: Did not create new player {username}; username already exists.")
                         continue
                     if password is None:
                         password = secrets.token_hex(4)
                     hashed_password = generate_password_hash(password)
-                    Player(username=username, pwhash=hashed_password)
+                    User(username=username, pwhash=hashed_password, role="player")
                     file.write(f"{username},{password}\n")
                     engine.log(f"players.txt: Created player {username} with password {password}")
 
@@ -264,6 +268,7 @@ def create_app(
 
     setup_socketio(app)
     setup_routes(app)
+    load_or_create_vapid_keys(engine)
     register_app_services(app)
 
     ssl_args = {"keyfile": None, "certfile": None}

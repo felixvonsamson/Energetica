@@ -1,7 +1,7 @@
 [tool.ruff]
 line-length = 120 # Let's keep this at 120 for now, there are some files that need it
 target-version = "py312"
-select = [
+lint.select = [
     "D100",
     "D200",
     "D201",
@@ -19,7 +19,7 @@ select = [
     "F404"
 ]
 # select = ["ALL"]
-ignore = [
+lint.ignore = [
     "D212", 
     "ANN401",
     "RET503",

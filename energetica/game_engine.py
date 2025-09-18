@@ -10,6 +10,7 @@ import pickle
 import random
 import tarfile
 import uuid
+import numpy as np
 from datetime import datetime
 from pathlib import Path
 from threading import RLock
@@ -32,7 +33,7 @@ class GameEngine(object):
     def __init__(self) -> None:
         """Initialize the game engine object."""
         if TYPE_CHECKING:
-            from energetica.database.engine_data import EmissionData
+            from energetica.database.engine_data.emission_data import EmissionData
         Path("instance").mkdir(exist_ok=True)
         self.config = config
         self.const_config = const_config
@@ -85,13 +86,14 @@ class GameEngine(object):
         in_game_seconds_per_tick: int,
         random_seed: int,
         env: Literal["dev"] | Literal["prod"],
+        game_version: str,
         disable_signups: bool = False,
         start_date: datetime | None = None,
         instance_uuid: str | None = None,
     ) -> None:
         """Initialize the instance data / the GameEngine members."""
-        from energetica.database.engine_data import EmissionData
-        from energetica.database.map import HexTile
+        from energetica.database.engine_data.emission_data import EmissionData
+        from energetica.database.map.hex_tile import HexTile
         from energetica.database.messages import Chat
         from energetica.utils.climate_helpers import data_init_climate
 
@@ -109,6 +111,7 @@ class GameEngine(object):
         log_entry = InitEngineAction(
             instance_uuid=self.uuid.hex,
             env=self.env,
+            game_version=game_version,
             clock_time=self.clock_time,
             in_game_seconds_per_tick=self.in_game_seconds_per_tick,
             action_type="init_engine",
@@ -117,10 +120,9 @@ class GameEngine(object):
             disable_signups=disable_signups,
         )
         self.log_action(log_entry)
-        last_midnight = self.start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        # time shift in ticks. Defines the number of ticks between
-        # the first simulated tick and the beginning of in-game year 0.
-        self.delta_t = round((self.start_date - last_midnight).total_seconds() // self.clock_time)
+        # Random time shift in number of ticks to start the game at a random season of the year
+        rng = np.random.default_rng(self.random_seed)
+        self.delta_t = int(rng.integers(0, 72 * 3600 * 24 // self.in_game_seconds_per_tick))
         # transform start_date to a seconds timestamp corresponding to the time of the first tick
         self.start_date = datetime.fromtimestamp(math.floor(self.start_date.timestamp() / clock_time) * clock_time)
 
@@ -178,8 +180,6 @@ class GameEngine(object):
         )
         with open("instance/data/servers/climate_data.pck", "wb") as file:
             pickle.dump(climate_data, file)
-
-        self.save()
 
     def init_loggers(self) -> None:
         """Initialize the loggers for the engine."""

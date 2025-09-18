@@ -17,10 +17,11 @@ from energetica.globals import engine
 from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import ConfirmOut, GameErrorOut
 from energetica.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
-from energetica.utils.auth import get_current_user_from_request
+from energetica.utils.auth import get_user
 
 from .achievements import router as achievements_router
 from .auth import router as auth_router
+from .browser_notifications import router as browser_notifications_router
 from .chats import router as chat_router
 from .daily_quiz import router as daily_quiz_router
 from .facilities import router as facilities_router
@@ -41,6 +42,7 @@ __all__ = ["templates_router"]
 api_routers = [
     achievements_router,
     auth_router,
+    browser_notifications_router,
     chat_router,
     daily_quiz_router,
     facilities_router,
@@ -68,6 +70,7 @@ logging.getLogger("uvicorn.access").addFilter(SocketIOFilter())
 def setup_routes(app: FastAPI):
     @app.exception_handler(RequestValidationError)
     def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+        """If the validation of pydantic schemas fails (e.g. string too short), return a 422 with details."""
         return JSONResponse(
             content={
                 "detail": jsonable_encoder(exc.errors()),
@@ -137,6 +140,7 @@ def setup_routes(app: FastAPI):
                 k: v[0] if len(v) == 1 else v for k, v in urllib.parse.parse_qs(body_bytes.decode()).items()
             }
         else:
+            request_payload = None
             try:
                 request_payload = json.loads(body_bytes.decode())
             except Exception:
@@ -152,9 +156,6 @@ def setup_routes(app: FastAPI):
                 print(f"payload: {request_payload}")
                 raise e
 
-        if request.url.path.startswith("/auth"):
-            return response
-
         # Buffer the response body
         response_body = b""
         async for chunk in response.__dict__.get("body_iterator", []):
@@ -168,20 +169,25 @@ def setup_routes(app: FastAPI):
             media_type=response.media_type,
         )
 
+        response_payload = None
         try:
             response_payload = json.loads(response_body.decode())
         except Exception:
             response_payload = "unparsable or not JSON"
 
-        user = get_current_user_from_request(request)
-        player_id = user.id if user is not None else None
+        user = get_user(request)
+        if user is None:
+            return new_response
 
         log_entry = ApiAction(
             timestamp=start,
             elapsed=(datetime.now() - start).total_seconds(),
-            ip=request.headers.get("X-Forwarded-For", request.client.host if request.client is not None else "null"),
+            ip=request.headers.get(
+                "X-Forwarded-For",
+                request.client.host if request.client is not None else "null",
+            ),
             action_type="request",
-            player_id=player_id,
+            user_id=user.id,
             request=ApiActionRequest(
                 endpoint=request.url.path,
                 method=cast(Method, request.method),

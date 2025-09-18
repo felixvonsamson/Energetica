@@ -1,8 +1,5 @@
-"""
-Legacy HTTP API routes.
-
-These are being migrated to `energetica/routers/<xyz>.py`
-"""
+"""Legacy HTTP API routes."""
+# TODO(mglst): migrate to `energetica/routers/<xyz>.py`
 
 import pickle
 from datetime import datetime
@@ -13,12 +10,12 @@ import numpy as np
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-from energetica.utils.auth import get_current_user
 from energetica.config.assets import wind_power_curve
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
+from energetica.utils.auth import get_settled_player
+from energetica.utils.misc import empty_network_data, empty_player_data
 
 # TODO: migrate all these routes to native FastAPI routes
 todo_router = APIRouter(prefix="", tags=["Flask Migration"])
@@ -44,13 +41,13 @@ def get_networks():  # noqa: ANN201
 
 
 @todo_router.get("/get_resource_data")
-def get_resource_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def get_resource_data(player: Annotated[Player, Depends(get_settled_player)]):  # noqa: ANN201
     """Get production rates and quantity on sale for every resource."""
-    return user.resources_on_sale
+    return player.resources_on_sale
 
 
 @todo_router.get("/get_chart_data")
-def get_chart_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def get_chart_data(player: Annotated[Player, Depends(get_settled_player)]):  # noqa: ANN201
     """Get the data for the overview charts."""
 
     def calculate_mean_subarrays(array: list, x: int) -> list:
@@ -79,21 +76,25 @@ def get_chart_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa:
                 dict1[key][sub_key][3] = dict1[key][sub_key][3][len(new_6month) :]
                 dict1[key][sub_key][3].extend(new_6month)
 
-    if user.tile is None:
-        return JSONResponse("", status_code=status.HTTP_404_NOT_FOUND)
     total_t = engine.total_t
-    rolling_history = user.rolling_history.get_data(t=total_t % 216 + 1)
-    filename = f"instance/data/players/player_{user.id}.pck"
-    with open(filename, "rb") as file:
-        data = pickle.load(file)
+    rolling_history = player.rolling_history.get_data(t=total_t % 216 + 1)
+    filename = f"instance/data/players/player_{player.id}.pck"
+    if not Path(filename).is_file():
+        data = empty_player_data()
+    else:
+        with open(filename, "rb") as file:
+            data = pickle.load(file)
     concat_slices(data, rolling_history)
 
     network_data = None
-    if user.network is not None:
-        filename = f"instance/data/networks/{user.network.id}/time_series.pck"
-        with open(filename, "rb") as file:
-            network_data = pickle.load(file)
-        concat_slices(network_data, user.network.rolling_history.get_data(t=total_t % 216 + 1))
+    if player.network is not None:
+        filename = f"instance/data/networks/{player.network.id}/time_series.pck"
+        if not Path(filename).is_file():
+            network_data = empty_network_data()
+        else:
+            with open(filename, "rb") as file:
+                network_data = pickle.load(file)
+        concat_slices(network_data, player.network.rolling_history.get_data(t=total_t % 216 + 1))
 
     current_climate_data = engine.current_climate_data.get_data(t=total_t % 216 + 1)
     with open("instance/data/servers/climate_data.pck", "rb") as file:
@@ -105,25 +106,25 @@ def get_chart_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa:
         "data": data,
         "network_data": network_data,
         "climate_data": climate_data,
-        "cumulative_emissions": user.cumul_emissions.get_all(),
+        "cumulative_emissions": player.cumul_emissions.get_all(),
     }
 
 
 @todo_router.get("/get_network_capacities")
-def get_network_capacities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def get_network_capacities(player: Annotated[Player, Depends(get_settled_player)]):  # noqa: ANN201
     """Get the network capacities for the current player."""
-    if user.network is None:
+    if player.network is None:
         return JSONResponse("", status_code=status.HTTP_404_NOT_FOUND)
-    return user.network.capacities.get_all()
+    return player.network.capacities.get_all()
 
 
 @todo_router.get("/get_market_data")
-def get_market_data(user: Annotated[Player, Depends(get_current_user)], t: int):  # noqa: ANN201
+def get_market_data(player: Annotated[Player, Depends(get_settled_player)], t: int):  # noqa: ANN201
     """Get the data for the market graph at a specific tick."""
     market_data = {}
-    if user.network is None:
+    if player.network is None:
         return JSONResponse("", status_code=status.HTTP_404_NOT_FOUND)
-    filename_state = f"instance/data/networks/{user.network.id}/charts/market_t{engine.total_t - t}.pck"
+    filename_state = f"instance/data/networks/{player.network.id}/charts/market_t{engine.total_t - t}.pck"
     if Path(filename_state).is_file():
         with open(filename_state, "rb") as file:
             market_data = pickle.load(file)
@@ -135,32 +136,28 @@ def get_market_data(user: Annotated[Player, Depends(get_current_user)], t: int):
 
 
 @todo_router.get("/get_player_data")
-def get_player_data(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def get_player_data(player: Annotated[Player, Depends(get_settled_player)]):  # noqa: ANN201
     """Get count of assets and config for this player."""
-    if user.tile is None:
-        return JSONResponse("", status_code=status.HTTP_404_NOT_FOUND)
-    levels = user.get_lvls()
-    capacities = user.capacities.get_all()
+    levels = player.get_lvls()
+    capacities = player.capacities.get_all()
     return {
         "levels": levels,
-        "config": user.config,
+        "config": player.config,
         "capacities": capacities,
     }
 
 
 @todo_router.get("/get_resource_reserves")
-def get_resource_reserves(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def get_resource_reserves(player: Annotated[Player, Depends(get_settled_player)]):  # noqa: ANN201
     """Get the natural resources reserves for this player."""
-    if user.tile is None:
-        raise GameError(GameExceptionType.NO_TILE)
-    reserves = user.tile.fuel_reserves
+    reserves = player.tile.fuel_reserves
     return reserves
 
 
 @todo_router.get("/get_player_id")
-def get_player_id(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def get_player_id(player: Annotated[Player, Depends(get_settled_player)]):  # noqa: ANN201
     """Get the id for this player."""
-    return user.id
+    return player.id
 
 
 @todo_router.get("/get_players")
@@ -170,37 +167,37 @@ def get_players():  # noqa: ANN201
 
 
 @todo_router.get("/get_active_facilities")
-def get_active_facilities(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def get_active_facilities(player: Annotated[Player, Depends(get_settled_player)]):  # noqa: ANN201
     """Get the active facilities for this player."""
-    return user.package_active_facilities()
+    return player.package_active_facilities()
 
 
 @todo_router.post("/change_graph_view")
 async def change_graph_view(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     request: Request,
 ):
     """Change the view mode for the graphs (basic, normal, expert)."""
     request_data = await request.json()
     view = Player.NetworkGraphView(request_data["view"])
-    user.change_graph_view(view)
+    player.change_graph_view(view)
     return {"response": "success"}
 
 
 @todo_router.get("/test_notification")
-def test_notification(user: Annotated[Player, Depends(get_current_user)]):  # noqa: ANN201
+def test_notification(player: Annotated[Player, Depends(get_settled_player)]):  # noqa: ANN201
     """Send a dummy browser notification to the player."""
-    user.notify("Test notification", f"{engine.total_t} ({datetime.now()})")
+    player.notify("Test notification", f"{engine.total_t} ({datetime.now()})")
     return {"response": "success"}
 
 
 @todo_router.post("/set_notification_preferences")
 async def set_notification_preferences(  # noqa: ANN201
-    user: Annotated[Player, Depends(get_current_user)],
+    player: Annotated[Player, Depends(get_settled_player)],
     request: Request,
 ):
     """Set notification preferences for a player."""
     request_data = await request.json()
     preferences = request_data["notification_preferences"]
-    user.notification_preferences = preferences
+    player.notification_preferences = preferences
     return {"response": "success"}

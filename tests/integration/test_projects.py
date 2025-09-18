@@ -5,19 +5,23 @@ from typing import Iterable
 import pytest
 
 from energetica import create_app
-from energetica.utils.auth import generate_password_hash
-from energetica.database.map import HexTile
+from energetica.database.map.hex_tile import HexTile
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
+from energetica.database.user import User
 from energetica.enums import ControllableFacilityType, FunctionalFacilityType, ProjectStatus, TechnologyType, WorkerType
+from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.assets import (
     cancel_project,
     decrease_project_priority,
     finish_project,
+    increase_project_priority,
+    pause_project,
     queue_project,
     toggle_pause_project,
 )
+from energetica.utils.auth import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 
 
@@ -131,7 +135,7 @@ def validate_rule_7(player: Player) -> None:
                 )
 
 
-def test_swap_paused_and_unpaused_constructions() -> None:
+def test_swap_waiting_and_ongoing_constructions() -> None:
     """
     Setup:
     Player has one construction worker, constructions A and B are launched, A is ongoing, B is waiting.
@@ -139,9 +143,9 @@ def test_swap_paused_and_unpaused_constructions() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    player = Player(username="username", pwhash=generate_password_hash("password"))
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
     hex_tile = HexTile.getitem(1)
-    confirm_location(player, hex_tile)
+    player = confirm_location(user, hex_tile)
     validate_rules(player)
     construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
     validate_rules(player)
@@ -162,9 +166,9 @@ def test_cancel_construction() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    player = Player(username="username", pwhash=generate_password_hash("password"))
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
     hex_tile = HexTile.getitem(1)
-    confirm_location(player, hex_tile)
+    player = confirm_location(user, hex_tile)
     validate_rules(player)
     construction = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
     validate_rules(player)
@@ -182,9 +186,9 @@ def test_pause_construction() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    player = Player(username="username", pwhash=generate_password_hash("password"))
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
     hex_tile = HexTile.getitem(1)
-    confirm_location(player, hex_tile)
+    player = confirm_location(user, hex_tile)
     validate_rules(player)
     construction = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
     validate_rules(player)
@@ -204,9 +208,9 @@ def test_queue_two_pause_one() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    player = Player(username="username", pwhash=generate_password_hash("password"))
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
     hex_tile = HexTile.getitem(1)
-    confirm_location(player, hex_tile)
+    player = confirm_location(user, hex_tile)
     validate_rules(player)
     construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
     validate_rules(player)
@@ -224,10 +228,10 @@ def test_three_constructions_with_pause() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    player = Player(username="username", pwhash=generate_password_hash("password"))
-    player.money = 1_000_000_000
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
     hex_tile = HexTile.getitem(1)
-    confirm_location(player, hex_tile)
+    player = confirm_location(user, hex_tile)
+    player.money = 1_000_000_000
     validate_rules(player)
     construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
     validate_rules(player)
@@ -246,10 +250,10 @@ def test_add_two_and_cancel_one() -> None:
     """Setup: queue(1), queue(2), cancel(1)."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    player = Player(username="username", pwhash=generate_password_hash("password"))
-    player.money = 1_000_000_000
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
     hex_tile = HexTile.getitem(1)
-    confirm_location(player, hex_tile)
+    player = confirm_location(user, hex_tile)
+    player.money = 1_000_000_000
     validate_rules(player)
     construction_1 = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
     validate_rules(player)
@@ -268,10 +272,10 @@ def test_technologies_pausing_propagates_requirements() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    player = Player(username="username", pwhash=generate_password_hash("password"))
-    player.money = 1_000_000_000
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
     hex_tile = HexTile.getitem(1)
-    confirm_location(player, hex_tile)
+    player = confirm_location(user, hex_tile)
+    player.money = 1_000_000_000
     finish_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
 
     validate_rules(player)
@@ -294,10 +298,10 @@ def test_math_and_building_tech() -> None:
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
 
-    player = Player(username="username", pwhash=generate_password_hash("password"))
-    player.money = 1_000_000_000
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
     hex_tile = HexTile.getitem(1)
-    confirm_location(player, hex_tile)
+    player = confirm_location(user, hex_tile)
+    player.money = 1_000_000_000
     finish_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
 
     validate_rules(player)
@@ -307,3 +311,73 @@ def test_math_and_building_tech() -> None:
     technology_c = queue_project(player=player, project_type=TechnologyType.MECHANICAL_ENGINEERING, force=True)
     validate_rules(player)
     assert technology_c.status == ProjectStatus.WAITING
+
+
+def test_swapping_waiting_and_paused_researches() -> None:
+    """
+    Setup: player attempts to increase the priority of a project that is paused, swapping it with an unpaused project -
+    this is not allowed.
+
+    Research priority: at point (*)
+    * TECH A (ONGOING): Mathematics. All prerequisites satisfied
+    * TECH B (WAITING): Building tech. All prerequisites satisfied
+    * TECH C (PAUSED):  Mech. Engineering. Depends on TECH A - Mathematics
+    """
+    create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
+
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
+    hex_tile = HexTile.getitem(1)
+    player = confirm_location(user, hex_tile)
+    player.money = 1_000_000_000
+    finish_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
+
+    validate_rules(player)
+    technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS, force=True)
+    validate_rules(player)
+    technology_b = queue_project(player=player, project_type=TechnologyType.BUILDING_TECHNOLOGY, force=True)
+    validate_rules(player)
+    technology_c = queue_project(player=player, project_type=TechnologyType.MECHANICAL_ENGINEERING, force=True)
+    validate_rules(player)
+    pause_project(player, technology_c)
+    validate_rules(player)
+    with pytest.raises(GameError):
+        # (*)
+        increase_project_priority(player, technology_c)
+    validate_rules(player)
+
+
+def test_increasing_priority_of_paused_and_blocked_research() -> None:
+    """
+    Setup: player attempts to increase the priority of a project that is paused, and that has unfinished prerequisites.
+
+    This is a scenario that came up in testing v0.11.2-b. This is a minimal recreation of this situation. In practice,
+    the setup was much trickier, and came about on tick >> 15,000 with a large number of research workers.
+
+    Setup before the issue occurs with increase priority, at point (*):
+    * TECH A (ONGOING): Mathematics. All prerequisites satisfied
+    * TECH B (ONGOING): Building tech. All prerequisites satisfied
+    * TECH C (WAITING):  Mech. Engineering. **DEPENDS on TECH A - Mathematics**
+
+    We're trying to increase the priority of C, but it cannot go from waiting to ongoing since it has unfinished
+    prerequisites. This should therefore not be allowed.
+    """
+    create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
+
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
+    hex_tile = HexTile.getitem(1)
+    player = confirm_location(user, hex_tile)
+    player.money = 1_000_000_000
+    finish_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
+    player.workers[WorkerType.RESEARCH] = 2
+
+    validate_rules(player)
+    technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS, force=True)
+    validate_rules(player)
+    technology_b = queue_project(player=player, project_type=TechnologyType.BUILDING_TECHNOLOGY, force=True)
+    validate_rules(player)
+    technology_c = queue_project(player=player, project_type=TechnologyType.MECHANICAL_ENGINEERING, force=True)
+    validate_rules(player)
+    with pytest.raises(GameError):
+        # (*)
+        increase_project_priority(player, technology_c)
+    validate_rules(player)

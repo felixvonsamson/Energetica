@@ -2,9 +2,9 @@
 
 import math
 
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.database.shipment import OngoingShipment
 from energetica.enums import Fuel
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
@@ -24,58 +24,63 @@ def create_ask(player: Player, fuel: Fuel, quantity: float, unit_price: float) -
     )
 
 
-def purchase_resource(player: Player, quantity: float, sale: ResourceOnSale) -> ResourceOnSale | None:
+def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> ResourceOnSale | None:
     """
     Buy an offer from the resource market.
 
     Return the resulting ResourceOnSale if this is a partial purchase, return None otherwise.
     """
-    assert player.tile is not None
+    assert buyer.tile is not None
     assert sale.player.tile is not None
-    if quantity is None or quantity <= 0 or quantity > sale.quantity:
+    if quantity > sale.quantity:
         raise GameError(GameExceptionType.INVALID_QUANTITY)
     total_price = sale.unit_price * quantity
-    if player == sale.player:
+    if buyer == sale.player:
         # TODO(mglst): this should be a different function
         # Player is buying their own resource
         sale.quantity -= quantity
-        player.resources_on_sale[sale.resource] -= quantity
+        buyer.resources_on_sale[sale.resource] -= quantity
         if sale.quantity == 0:
             sale.delete()
             return None
         return sale
     else:
-        if total_price > player.money:
+        if total_price > buyer.money:
             raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
         # Player buys form another player
         sale.quantity -= quantity
-        player.money -= total_price
+        buyer.money -= total_price
         sale.player.money += total_price
-        player.resources[sale.resource] -= quantity
-        player.resources_on_sale[sale.resource] -= quantity
+        sale.player.resources[sale.resource] -= quantity
+        buyer.resources[sale.resource] += quantity
+        sale.player.resources_on_sale[sale.resource] -= quantity
+        buyer.progression_metrics["bought_resources"] += quantity
         sale.player.progression_metrics["sold_resources"] += quantity
-        player.progression_metrics["bought_resources"] += quantity
-        player.check_trading_achievement()
-        dq = player.tile.coordinates[0] - sale.player.tile.coordinates[0]
-        dr = player.tile.coordinates[1] - sale.player.tile.coordinates[1]
+        buyer.check_trading_achievement()
+        sale.player.check_trading_achievement()
+
+        # Calculate shipment duration
+        dq = buyer.tile.coordinates[0] - sale.player.tile.coordinates[0]
+        dr = buyer.tile.coordinates[1] - sale.player.tile.coordinates[1]
         distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
-        shipment_duration = distance * player.config["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
+        shipment_duration = distance * buyer.config["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
         shipment_duration = math.ceil(shipment_duration)
+
         OngoingShipment(
             resource=sale.resource,
             quantity=quantity,
             arrival_tick=engine.total_t + 1 + shipment_duration,
             duration=shipment_duration,
-            power_demand=quantity * player.config["transport"]["power_per_kg"],
-            player=player,
+            power_demand=quantity * buyer.config["transport"]["power_per_kg"],
+            player=buyer,
         )
         sale.player.notify(
             "Resource transaction",
-            f"{player.username} bought {format_mass(quantity)} of "
+            f"{buyer.username} bought {format_mass(quantity)} of "
             f"{sale.resource} for a total cost of {display_money(total_price)}.",
         )
         engine.log(
-            f"{player.username} bought {format_mass(quantity)} of "
+            f"{buyer.username} bought {format_mass(quantity)} of "
             f"{sale.resource} from {sale.player.username} for a total cost of "
             f"{display_money(total_price)}.",
         )
@@ -95,11 +100,10 @@ def store_import(player: Player, fuel: Fuel, quantity: float) -> None:
     assert player.tile is not None
     max_cap: float = player.config["warehouse_capacities"][fuel]
     if player.resources[fuel] + quantity > max_cap:
-        player.resources[fuel] = max_cap
         # excess resources are stored in the ground
         # TODO(mglst): what if instead it was a political fiasco that the player had to deal with?
-        # TODO(mglst): the logic here is broken. player.resources[fuel] is updated too early
         player.tile.fuel_reserves[fuel] += player.resources[fuel] + quantity - max_cap
+        player.resources[fuel] = max_cap
         player.notify(
             "OngoingShipments",
             f"A shipment of {format_mass(quantity)} {fuel} arrived, but "

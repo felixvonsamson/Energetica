@@ -110,8 +110,6 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
         # Create a RNG, seeded with the server seed, the player's tile coordinates, the project name, and number of
         # facilities of that type the player has built. This ensures that the facility's random position is generated
         # deterministically.
-        if player.tile is None:
-            raise GameError(GameExceptionType.PLAYER_HAS_NO_TILE)
         seed_hash = stable_hash(
             (
                 engine.random_seed,
@@ -226,8 +224,13 @@ def upgrade_facility(facility: ActiveFacility) -> None:
     if facility.decommissioning:
         raise GameError(GameExceptionType.FACILITY_IS_DECOMMISSIONING)
     facility.player.money -= upgrade_cost
-    facility.multipliers = technology_effects.current_multipliers(facility.player, facility.facility_type)
+    new_multipliers = technology_effects.current_multipliers(facility.player, facility.facility_type)
+    new_multipliers.pop("next_available_location", None)
+    new_multipliers.pop("hydro_price_multiplier", None)
+    new_multipliers.pop("wind_speed_multiplier", None)
+    facility.multipliers.update(new_multipliers)
     facility.player.capacities.update(facility.player, facility.facility_type)
+    engine.log(f"{facility.player.username} upgraded the facility {facility.facility_type}.")
 
 
 def upgrade_all_of_type(
@@ -247,6 +250,7 @@ def upgrade_all_of_type(
         raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
     for facility in facilities:
         upgrade_facility(facility)
+    engine.log(f"All facilities of type {facility_type} upgraded for {player.username}.")
 
 
 def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: bool = True) -> None:
@@ -312,6 +316,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
             engine.log(f"Emergency power steam engine created for {player.username}.")
     player.capacities.update(player, facility.facility_type)
     engine.config.update_config_for_user(player)
+    invalidate_data_on_project_update(player, facility.facility_type)
 
 
 def facility_destroyed(player: Player, facility: ActiveFacility, event_name: str) -> None:
@@ -415,7 +420,7 @@ def queue_project(
     return new_construction
 
 
-def invalidate_data_on_project_update(player: Player, asset_type: str) -> None:
+def invalidate_data_on_project_update(player: Player, asset_type: ProjectType) -> None:
     """Check for data page invalidation when project has been queued or cancelled."""
     if asset_type in {
         "watermill",
@@ -504,8 +509,12 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
 
     if project_1.status == ProjectStatus.ONGOING and project_2.status == ProjectStatus.WAITING:
         # Case 2
-        # This case can only happen when project 1 is using the last available worker. (Indeed, the other case is
-        # when project 1 is a prerequisite of project 2, but in this case, the swap is not possible)
+        # Project 1 is using the last available worker. If project 2 can resume, swap them, else raise error.
+        project_2.recompute_prerequisites_and_level()
+        # Here we need to recompute prerequisites. Indeed, if project_2 had a prerequisite but which has not been
+        # completed, it will not be removed from the project_2.prerequisites list - not unless we recompute.
+        if project_2.prerequisites:
+            raise GameError(GameExceptionType.REQUIREMENTS_PREVENT_REORDER)
         project_1.set_waiting()
         project_2.set_ongoing()
 

@@ -6,16 +6,20 @@ import subprocess
 import sys
 import textwrap
 
-from energetica.database.player import Player
+from energetica.database.map.hex_tile import HexTile
+from energetica.database.user import User
 from energetica.enums import ControllableFacilityType
 from energetica.globals import engine
+from energetica.utils.map_helpers import confirm_location
 
 
 def test_price_randomization() -> None:
     """Test that the prices are randomized."""
     engine.random_seed = 0
-    player_a = Player("player1", "pwhash")
-    player_b = Player("player2", "pwhash")
+    user_a = User("player1", "pwhash", role="player")
+    user_b = User("player2", "pwhash", role="player")
+    player_a = confirm_location(user_a, HexTile.getitem(1))
+    player_b = confirm_location(user_b, HexTile.getitem(2))
     assert (
         player_a.network_prices.ask_prices[ControllableFacilityType.COAL_BURNER]
         != player_b.network_prices.ask_prices[ControllableFacilityType.COAL_BURNER]
@@ -31,7 +35,8 @@ def test_seed_determinism() -> None:
             import json
             from energetica import engine
             from energetica.database.player import Player
-            engine.init_instance(30, 3600, 0, env="dev")
+            from energetica import __version__
+            engine.init_instance(30, 3600, 0, env="dev", game_version=__version__)
             
             engine.random_seed = {seed}
             player = Player("player1", "pwhash")

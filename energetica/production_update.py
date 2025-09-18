@@ -15,8 +15,8 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
-from energetica.database.shipment import OngoingShipment
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -44,8 +44,6 @@ def update_electricity() -> None:
 
     new_values = {}
     for player in players:
-        if player.tile is None:
-            continue
         new_values[player.id] = player.rolling_history.init_new_data()
 
     # reset progress speeds fot all ongoing projects and shipments
@@ -86,8 +84,6 @@ def update_electricity() -> None:
             pickle.dump(market, file)
 
     for player in players:
-        if player.tile is None:
-            continue
         # Power generation calculation for players that are not in a network
         if player.network is None:
             calculate_demand(new_values[player.id], player)
@@ -194,20 +190,30 @@ def calculate_net_import(new_values: dict) -> None:
     Calculate the net import of a player.
 
     For players in network, subtract the difference between import and exports to ignore energy that has been bought
-    from themselves.
+    from themselves. (players can be either exporting or importing, not both at the same time)
     """
     exp = new_values["demand"]["exports"]
     imp = new_values["generation"]["imports"]
-    new_values["demand"]["exports"] = max(0.0, exp - imp)
-    new_values["generation"]["imports"] = max(0.0, imp - exp)
+    net_exchange = exp - imp
+    # getting rid of rounding errors
+    if abs(net_exchange) < 1:
+        net_exchange = 0.0
+    # The exports is the positive part of the net exchange and imports are the negative part
+    new_values["demand"]["exports"] = max(0.0, net_exchange)
+    new_values["generation"]["imports"] = max(0.0, -net_exchange)
     exp_rev = new_values["revenues"]["exports"]
     imp_rev = new_values["revenues"]["imports"]
+    net_exchange_revenues = exp_rev + imp_rev
+    # getting rid of rounding errors
+    if net_exchange == 0:
+        net_exchange_revenues = 0.0
+    # if the market price is negative, the revenues of exports and imports are inverted
     if exp_rev < 0 or imp_rev > 0:
-        new_values["revenues"]["exports"] = min(0.0, exp_rev + imp_rev)
-        new_values["revenues"]["imports"] = max(0.0, exp_rev + imp_rev)
+        new_values["revenues"]["exports"] = min(0.0, net_exchange_revenues)
+        new_values["revenues"]["imports"] = max(0.0, net_exchange_revenues)
     else:
-        new_values["revenues"]["exports"] = max(0.0, exp_rev + imp_rev)
-        new_values["revenues"]["imports"] = min(0.0, exp_rev + imp_rev)
+        new_values["revenues"]["exports"] = max(0.0, net_exchange_revenues)
+        new_values["revenues"]["imports"] = min(0.0, net_exchange_revenues)
 
 
 def extraction_facility_demand(new_values: dict, player: Player, demand: dict) -> None:
@@ -385,22 +391,24 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
 
     # allow a maximum overdraft of the equivalent of the daily income of the industry
     max_overdraft = -player.config["industry"]["income_per_day"]
-    if player.money < max_overdraft:
+    notification_txt = "You exceeded your credit limit, you can't buy electricity on the market anymore."
+    do_not_send = len(player.notifications) > 0 and player.notifications[-1].content == notification_txt
+    if player.money < max_overdraft and player.network is not None and not do_not_send:
         player.notify(
             "Not enough money",
-            "You exceeded your credit limit, you can't buy electricity on the market anymore.",
+            notification_txt,
         )
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
     # are used and replace it with a cashed property or something similar that generates a list of all demands and offer types
     for demand_type in player.network_prices.bid_prices.keys():
         if demand_type in demand:
-            if player.money >= max_overdraft:
+            if player.money < max_overdraft and player.network is not None:
+                reduce_demand(new_values, demand_type, player.id, 0.0)
+            else:
                 bid_q = demand[demand_type]
                 price = player.network_prices.bid_prices[demand_type]
                 market = place_ask(market, player.id, bid_q, price, demand_type)
-            else:
-                reduce_demand(new_values, demand_type, player.id, 0.0)
 
     resource_reservations = reset_resource_reservations()
     # offer capacities of remaining facilities on the market
@@ -500,8 +508,8 @@ def market_logic(new_values: dict, market: dict) -> None:
             sold_cap = row.capacity - row.cumul_capacities + market_quantity
             if sold_cap > 0.1:
                 sell(row, market_price, quantity=sold_cap)
-            # dumping electricity that is offered for negative price and not sold
-            if row.price < 0:
+            # dumping electricity that is offered at the minimal price and not sold
+            if row.price <= -5:
                 dump_cap = max(0.0, min(row.capacity, row.capacity - sold_cap))
                 player = Player.get(row.player_id)
                 assert player is not None
@@ -882,11 +890,7 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
     demand[demand_type] = satisfaction
     if isinstance(demand_type, ExtractionFacilityType | StorageFacilityType) or demand_type == "carbon_capture":
         return
-    if satisfaction > (1 + 0.0008 * engine.in_game_seconds_per_tick) * player.rolling_history.get_last_data(
-        "demand",
-        demand_type,
-    ):
-        return
+
     if demand_type == "construction":
         cumul_demand = 0.0
         for i in range(min(len(player.constructions_by_priority), player.workers[WorkerType.CONSTRUCTION])):

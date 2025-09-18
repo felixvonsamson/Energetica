@@ -7,8 +7,8 @@ from energetica import production_update
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.ongoing_project import OngoingProject
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
-from energetica.database.shipment import OngoingShipment
 from energetica.enums import StorageFacilityType
 from energetica.globals import engine
 from energetica.schemas.simulate import TickAction
@@ -29,8 +29,10 @@ def state_update() -> None:
 @engine.with_lock
 def tick() -> None:
     start = datetime.now()
-    if engine.total_t == 0:
+    # if first_tick_time == start_date then the first tick time has not been defined yet
+    if engine.total_t == 0 and engine.first_tick_time == engine.start_date:
         engine.first_tick_time = datetime.now()
+        engine.save()
     engine.total_t += 1
     engine.log(f"t = {engine.total_t}")
     if engine.total_t % 216 == 0:
