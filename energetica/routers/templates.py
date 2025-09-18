@@ -117,7 +117,7 @@ def render_admin_dashboard(  # noqa: ANN201
     return FileResponse("energetica/static/react/index.html")
 
 
-@router.get("landing-page", response_class=HTMLResponse, name="views.landing-page")
+@router.get("/landing-page", response_class=HTMLResponse, name="views.landing-page")
 def render_landing_page() -> FileResponse:
     return FileResponse("energetica/static/react/index.html")
 
