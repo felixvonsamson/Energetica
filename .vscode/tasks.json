@@ -1,85 +1,105 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "run server",
-			"type": "shell",
-			"command": "${command:python.interpreterPath} main.py --env dev",
-			"presentation": {
-				"clear": true
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		},
-		{
-			"label": "run server (fast clock)",
-			"type": "shell",
-			"command": "${command:python.interpreterPath} main.py --env dev --clock_time 1 --in_game_seconds_per_tick 3600",
-			"presentation": {
-				"clear": true
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		},
-		{
-			"label": "run with init_test_players",
-			"type": "shell",
-			"command": "${command:python.interpreterPath} main.py --env dev --rm_instance --run_init_test_players",
-			"presentation": {
-				"clear": true,
-				"focus": true
-			},
-			"group": {
-				"kind": "build"
-			}
-		},
-		{
-			"label": "remove instance",
-			"type": "shell",
-			"command": "rm -rf instance/ checkpoints/",
-			"presentation": {
-				"reveal": "never"
-			},
-			"group": {
-				"kind": "none"
-			},
-			"problemMatcher": [ ]
-		},
-		{
-			"label": "run sign-up disabled",
-			"type": "shell",
-			"command": "${command:python.interpreterPath} main.py --env dev --rm_instance --disable_signups",
-			"presentation": {
-				"clear": true
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		},
-		{
-			"type": "npm",
-			"script": "build",
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"problemMatcher": [ ],
-			"options": {
-				"cwd": "${workspaceFolder}/frontend"
-			},
-			"presentation": {
-				"echo": true,
-				"reveal": "silent",
-				"focus": false,
-				"panel": "dedicated",
-				"showReuseMessage": true,
-				"clear": true
-			}
-		}
-	]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "run server",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} main.py --env dev",
+            "presentation": {
+                "clear": true
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "run server (fast clock)",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} main.py --env dev --clock_time 1 --in_game_seconds_per_tick 3600",
+            "presentation": {
+                "clear": true
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "run with init_test_players",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} main.py --env dev --rm_instance --run_init_test_players",
+            "presentation": {
+                "clear": true,
+                "focus": true
+            },
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "remove instance",
+            "type": "shell",
+            "command": "rm -rf instance/ checkpoints/",
+            "presentation": {
+                "reveal": "never"
+            },
+            "group": {
+                "kind": "none"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "run sign-up disabled",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} main.py --env dev --rm_instance --disable_signups",
+            "presentation": {
+                "clear": true
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "npm",
+            "script": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}/frontend"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": true
+            }
+        },
+        {
+            "type": "npm",
+            "script": "dev",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}/frontend"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": true
+            }
+        }
+    ]
 }

@@ -14,7 +14,6 @@ import "./styles/global.css";
 
 const router = createRouter({
     routeTree,
-    basepath: "/admin-dashboard",
 });
 
 declare module "@tanstack/react-router" {
