@@ -48,7 +48,7 @@ function RouteComponent() {
                         {team.map((member) => (
                             <div
                                 key={member.name}
-                                className="p-6 bg-gray-200 rounded-xl shadow text-center"
+                                className="p-6 bg-gray-200 rounded-xl shadow text-center shadow-md"
                             >
                                 <h3 className="text-xl font-bold">
                                     {member.name}

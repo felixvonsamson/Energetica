@@ -52,7 +52,7 @@ export function Header() {
                 <div className="hidden lg:flex lg:flex-1 lg:justify-end">
                     <a
                         href="/login"
-                        className="bg-gray-800 text-light-green px-6 py-2 rounded-4xl text-sm font-semibold hover:bg-gray-700"
+                        className="bg-gray-800 text-light-green px-6 py-2 rounded-4xl text-sm font-semibold hover:bg-gray-700 shadow-md hover:shadow-lg"
                     >
                         Log In
                     </a>

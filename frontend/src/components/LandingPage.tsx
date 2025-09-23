@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { HomeLayout } from "./HomeLayout";
 import { Cable, ChevronRight, Lightbulb, Unlink, Zap } from "lucide-react";
 
@@ -35,7 +36,7 @@ export function LandingPage() {
                 {/* Background illustration */}
                 <section className="flex flex-col gap-8">
                     <div className="relative">
-                        <div className="absolute inset-0 overflow-hidden rounded-4xl bg-pine">
+                        <div className="absolute inset-0 overflow-hidden rounded-4xl bg-pine shadow-md">
                             {/* Rounded mask overlay */}
                         </div>
                         {/* Content overlay */}
@@ -54,14 +55,20 @@ export function LandingPage() {
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="text-light-green bg-pine p-4 rounded-4xl flex flex-row justify-end items-center">
+                        <Link
+                            to="/learning-tool"
+                            className="text-light-green bg-pine p-4 rounded-4xl flex flex-row justify-end items-center shadow-md hover:shadow-xl"
+                        >
                             <p className="text-xl">Learn more</p>
                             <ChevronRight />
-                        </div>
-                        <div className="text-light-green bg-pine p-4 rounded-4xl flex flex-row justify-end items-center">
+                        </Link>
+                        <a
+                            href="/login"
+                            className="text-light-green bg-pine p-4 rounded-4xl flex flex-row justify-end items-center shadow-md hover:shadow-lg"
+                        >
                             <p className="text-xl">Play now</p>
                             <ChevronRight />
-                        </div>
+                        </a>
                     </div>
                 </section>
                 <section className="px-6 max-w-5xl mx-auto text-center">
@@ -78,7 +85,7 @@ export function LandingPage() {
                         {features.map((f) => (
                             <div
                                 key={f.title}
-                                className="flex flex-col gap-4 p-6 text-center bg-gray-200 rounded-4xl"
+                                className="flex flex-col gap-4 p-6 text-center bg-gray-200 rounded-4xl shadow-md"
                             >
                                 <div className="flex flex-row items-center justify-center gap-4">
                                     {/* <f.icon className="mx-auto h-10 w-10 text-indigo-600 mb-4" /> */}
