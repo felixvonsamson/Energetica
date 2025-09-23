@@ -33,13 +33,13 @@ export function Header() {
                             to={"/landing-page"}
                             className="text-md font-semibold text-gray-800 hover:text-gray-700"
                         >
-                            Mission
+                            The Game
                         </Link>
                         <Link
                             to="/learning-tool"
                             className="text-md font-semibold text-gray-800 hover:text-gray-700"
                         >
-                            Learning Tool
+                            Learning Through Play
                         </Link>
                         <Link
                             to="/about"

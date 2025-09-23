@@ -79,6 +79,9 @@
     .text-pine-darker {
         color: var(--color-pine-darker);
     }
+    .text-dark-brown {
+        color: #4b2e05;
+    }
     .text-light-green {
         color: var(--color-light-green);
     }

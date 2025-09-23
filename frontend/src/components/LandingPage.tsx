@@ -1,5 +1,3 @@
-import { Link } from "@tanstack/react-router";
-import { Footer } from "./Footer";
 import { HomeLayout } from "./HomeLayout";
 import { Cable, ChevronRight, Lightbulb, Unlink, Zap } from "lucide-react";
 
