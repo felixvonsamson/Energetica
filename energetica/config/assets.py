@@ -30,7 +30,6 @@ const_config: dict = {
             "lifespan": timedelta(days=70).total_seconds(),  # [in-game seconds]
             "wikipedia_link": "https://en.wikipedia.org/wiki/Steam_engine",
             "description": "The O&M costs of the steam engine are composed of 20% fixed costs and 80% variable costs.",
-            "danger_description": "Risk of steam explosion",
             "requirements": {},
         },
         "windmill": {
@@ -50,7 +49,6 @@ const_config: dict = {
             "the wind at the facilities location. The capacity factor will decrease with each "
             "additional windmill. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Windmill",
-            "danger_description": "Risk of structural failure in high winds",
             "requirements": {},
         },
         "watermill": {
@@ -70,7 +68,6 @@ const_config: dict = {
             "discharge rate. Each new watermill will have higher building and operational costs. "
             "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Watermill",
-            "danger_description": "Risk of structural failure due to floods",
             "requirements": {},
         },
         "coal_burner": {
@@ -105,7 +102,6 @@ const_config: dict = {
             "lifespan": timedelta(days=140).total_seconds(),
             "description": "The O&M costs of the gas burner are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Gas-fired_power_facility",
-            "danger_description": "Risk of gas leaks",
             "requirements": {"mechanical_engineering": 1, "thermodynamics": 1, "warehouse": 1},
         },
         "small_water_dam": {
@@ -125,7 +121,6 @@ const_config: dict = {
             "discharge rate. Each new small water dam will have higher building and operational costs. "
             "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
-            "danger_description": "Risk of structural failure due to floods",
             "requirements": {"civil_engineering": 1},
         },
         "onshore_wind_turbine": {
@@ -145,7 +140,6 @@ const_config: dict = {
             "the wind at the facilities location. The capacity factor will decrease with each "
             "additional onshore wind turbine. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
-            "danger_description": "Risk of structural failure in high winds",
             "requirements": {"aerodynamics": 1, "materials": 2, "mechanical_engineering": 3},
         },
         "combined_cycle": {
@@ -163,7 +157,6 @@ const_config: dict = {
             "lifespan": timedelta(days=245).total_seconds(),
             "description": "The O&M costs of the combined cycle are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Combined_cycle_power_facility",
-            "danger_description": "Risk of gas leaks",
             "requirements": {"thermodynamics": 3, "mechanical_engineering": 3, "warehouse": 2},
         },
         "nuclear_reactor": {
@@ -181,7 +174,6 @@ const_config: dict = {
             "lifespan": timedelta(days=350).total_seconds(),
             "description": "The O&M costs of the nuclear reactor are composed of 50% fixed costs and 50% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Nuclear_power_facility",
-            "danger_description": "Risk of reactor meltdown",
             "requirements": {"chemistry": 3, "nuclear_engineering": 1, "warehouse": 3},
         },
         "large_water_dam": {
@@ -201,7 +193,6 @@ const_config: dict = {
             "discharge rate. Each new large water dam will have higher building and operational costs. "
             "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
-            "danger_description": "Risk of structural failure due to floods",
             "requirements": {"civil_engineering": 4},
         },
         "CSP_solar": {
@@ -257,7 +248,6 @@ const_config: dict = {
             "the wind at the facilities location. The capacity factor will decrease with each "
             "additional offshore wind turbine. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
-            "danger_description": "Risk of structural failure due to storms",
             "requirements": {"aerodynamics": 3, "materials": 4, "mechanical_engineering": 6},
         },
         "nuclear_reactor_gen4": {
@@ -275,7 +265,6 @@ const_config: dict = {
             "lifespan": timedelta(days=490).total_seconds(),
             "description": "The O&M costs of the 4th generation nuclear reactor are composed of 50% fixed costs and 50% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Generation_IV_reactor",
-            "danger_description": "Risk of reactor meltdown",
             "requirements": {"chemistry": 5, "nuclear_engineering": 5, "warehouse": 3},
         },
         "small_pumped_hydro": {
