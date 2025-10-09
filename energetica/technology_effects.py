@@ -320,16 +320,16 @@ def efficiency_multiplier_for_storage_facilities(
         chemistry_factor = const_config["chemistry"]["inefficiency_factor"] ** chemistry_level
         if storage_facility_type == StorageFacilityType.HYDROGEN_STORAGE:
             return (
-                0.65 / const_config[storage_facility_type]["initial_efficiency"] * (1 - chemistry_factor)
+                0.65 / const_config[storage_facility_type]["base_efficiency"] * (1 - chemistry_factor)
                 + chemistry_factor
             )
-        return 1 / const_config[storage_facility_type]["initial_efficiency"] * (1 - chemistry_factor) + chemistry_factor
+        return 1 / const_config[storage_facility_type]["base_efficiency"] * (1 - chemistry_factor) + chemistry_factor
     if storage_facility_type == StorageFacilityType.MOLTEN_SALT:
         if thermodynamics_level is None:
             thermodynamics_level = player.technology_lvl[TechnologyType.THERMODYNAMICS]
         thermodynamic_factor = const_config["thermodynamics"]["efficiency_factor"] ** thermodynamics_level
         return (
-            1 / const_config[storage_facility_type]["initial_efficiency"] * (1 - 1 / thermodynamic_factor)
+            1 / const_config[storage_facility_type]["base_efficiency"] * (1 - 1 / thermodynamic_factor)
             + 1 / thermodynamic_factor
         )
     return 1
