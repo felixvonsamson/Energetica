@@ -314,11 +314,14 @@ function openChat(chatID) {
                         chat_title.innerHTML = `<b>${chat.display_name}</b>`;
                         document.getElementById("message_input_field").classList.remove("hidden");
                         for (let i = 0; i < messages.length; i++) {
+                            // Names should be shown only for:
+                            // * messages sent by other users
+                            // * group chats / non 1-1 chats
                             let alignment = "left";
                             let username = "";
                             if (messages[i].player_id == player_id) {
                                 alignment = "right";
-                            } else if (chat.group_chat) {
+                            } else if (chat.is_group) {
                                 username = players[messages[i].player_id].username + "&emsp;";
                             }
                             html += `<div class="message ${alignment}">
