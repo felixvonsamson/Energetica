@@ -234,7 +234,11 @@ class GameEngine(object):
     def load(self) -> None:
         """Load the game engine data from a file."""
         engine_data_last_modified = Path("instance/engine_data.pck").stat().st_mtime
-        instance_data_last_modified = max(f.stat().st_mtime for f in Path("instance/data").glob("**/*") if f.is_file())
+        instance_data_last_modified = max(
+            f.stat().st_mtime
+            for f in Path("instance/data").glob("**/*")
+            if f.is_file() and not f.match("instance/data/networks/*/charts/*")
+        )
         if instance_data_last_modified > engine_data_last_modified:
             raise RuntimeError("The data has not been saved correctly, please restart form the last checkpoint.")
         with open("instance/engine_data.pck", "rb") as file:
