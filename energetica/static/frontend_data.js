@@ -259,7 +259,8 @@ function retrieve_chats() {
 function show_unread_badges() {
     const chats = sessionStorage.getItem("chats_data");
     if (chats) {
-        const unread_chat_count = JSON.parse(chats).unread_chats;
+        console.log(JSON.parse(chats));
+        const unread_chat_count = JSON.parse(chats).unread_chat_count;
         if (unread_chat_count > 0) {
             let community_nav = document.getElementById("community");
             let messages_nav = document.getElementById("messages");
