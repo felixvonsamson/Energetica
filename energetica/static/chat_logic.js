@@ -37,7 +37,7 @@ function refresh_chats() {
             let profile_icon;
             if (chat.id == 1) {
                 profile_icon = '<div class="profile-icon green large"><i class="fa fa-star"></i></div>';
-            } else if (chat.group_chat) {
+            } else if (chat.is_group) {
                 profile_icon = '<div class="profile-icon green">';
                 for (let initial of chat.initials) {
                     profile_icon += `<span class="small_letter">${initial}</span>`;
@@ -298,7 +298,7 @@ function openChat(chatID) {
         const chat = chats.find(chat => chat.id == chatID);
         if (chat.unread_messages_count > 0) {
             chat.unread_messages_count = 0;
-            chat_data.unread_chats -= 1;
+            chat_data.unread_chat_count -= 1;
             document.getElementById(`chat_${chatID}`).querySelector("#unread_badge_chat").classList.add("hidden");
         }
         chat_data.last_opened_chat_id = chatID;
