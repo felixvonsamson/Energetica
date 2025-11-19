@@ -57,14 +57,14 @@ export function LandingPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Link
                             to="/learning-tool"
-                            className="text-light-green bg-pine p-4 rounded-4xl flex flex-row justify-end items-center shadow-md hover:shadow-xl"
+                            className="text-light-green bg-pine p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-xl"
                         >
                             <p className="text-xl">Learn more</p>
                             <ChevronRight />
                         </Link>
                         <a
                             href="/login"
-                            className="text-light-green bg-pine p-4 rounded-4xl flex flex-row justify-end items-center shadow-md hover:shadow-lg"
+                            className="text-light-green bg-pine p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
                         >
                             <p className="text-xl">Play now</p>
                             <ChevronRight />
