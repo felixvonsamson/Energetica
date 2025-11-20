@@ -7,6 +7,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSocket, useSocketEvent } from "@/contexts/SocketContext";
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
+import { GameLayout } from "@/components/layout";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/app/dashboard")({
@@ -19,7 +20,9 @@ export const Route = createFileRoute("/app/dashboard")({
 function DashboardPage() {
     return (
         <RequireSettledPlayer>
-            <DashboardContent />
+            <GameLayout>
+                <DashboardContent />
+            </GameLayout>
         </RequireSettledPlayer>
     );
 }
