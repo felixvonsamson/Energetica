@@ -585,6 +585,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/players/me/workers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Workers */
+        get: operations["get_workers_api_v1_players_me_workers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/power-priorities": {
         parameters: {
             query?: never;
@@ -2471,6 +2488,32 @@ export interface components {
             | "windmill"
             | "onshore_wind_turbine"
             | "offshore_wind_turbine";
+        /**
+         * WorkerInfo
+         * @description Information about a specific worker type.
+         */
+        WorkerInfo: {
+            /**
+             * Available
+             * @description Number of available workers
+             */
+            available: number;
+            /**
+             * Total
+             * @description Total number of workers
+             */
+            total: number;
+        };
+        /**
+         * WorkersOut
+         * @description Model for the player's workers.
+         */
+        WorkersOut: {
+            /** @description Construction workers */
+            construction: components["schemas"]["WorkerInfo"];
+            /** @description Laboratory/research workers */
+            laboratory: components["schemas"]["WorkerInfo"];
+        };
     };
     responses: never;
     parameters: never;
@@ -3393,6 +3436,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MoneyOut"];
+                };
+            };
+        };
+    };
+    get_workers_api_v1_players_me_workers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkersOut"];
                 };
             };
         };

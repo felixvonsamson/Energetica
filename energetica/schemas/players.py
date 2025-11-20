@@ -37,3 +37,32 @@ class MoneyOut(BaseModel):
     @classmethod
     def from_player(cls, player: Player) -> MoneyOut:
         return MoneyOut(money=player.money)
+
+
+class WorkerInfo(BaseModel):
+    """Information about a specific worker type."""
+
+    available: int = Field(description="Number of available workers")
+    total: int = Field(description="Total number of workers")
+
+
+class WorkersOut(BaseModel):
+    """Model for the player's workers."""
+
+    construction: WorkerInfo = Field(description="Construction workers")
+    laboratory: WorkerInfo = Field(description="Laboratory/research workers")
+
+    @classmethod
+    def from_player(cls, player: Player) -> WorkersOut:
+        from energetica.enums import WorkerType
+
+        return WorkersOut(
+            construction=WorkerInfo(
+                available=player.available_workers(WorkerType.CONSTRUCTION),
+                total=player.workers[WorkerType.CONSTRUCTION],
+            ),
+            laboratory=WorkerInfo(
+                available=player.available_workers(WorkerType.RESEARCH),
+                total=player.workers[WorkerType.RESEARCH],
+            ),
+        )

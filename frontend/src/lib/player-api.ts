@@ -25,4 +25,12 @@ export const playerApi = {
         apiClient.get<ApiResponse<"/api/v1/players/me/money", "get">>(
             "/players/me/money",
         ),
+
+    /**
+     * Get current player's workers.
+     */
+    getWorkers: () =>
+        apiClient.get<ApiResponse<"/api/v1/players/me/workers", "get">>(
+            "/players/me/workers",
+        ),
 };

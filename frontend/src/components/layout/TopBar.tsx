@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayerMoney } from "@/hooks/usePlayerMoney";
+import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { NotificationPopup } from "./NotificationPopup";
 
@@ -14,9 +15,14 @@ export function TopBar() {
     const {
         data: moneyData,
         isLoading: isMoneyLoading,
-        isError,
-        error,
+        isError: isMoneyError,
+        error: moneyError,
     } = usePlayerMoney();
+    const {
+        data: workersData,
+        isLoading: isWorkersLoading,
+        isError: isWorkersError,
+    } = usePlayerWorkers();
     const { isConnected } = useOnlineStatus();
     const [showNotifications, setShowNotifications] = useState(false);
 
@@ -49,11 +55,11 @@ export function TopBar() {
                                 ) : (
                                     <>
                                         {/* Show offline indicator if error */}
-                                        {isError && !isConnected && (
+                                        {isMoneyError && !isConnected && (
                                             <span
                                                 className="absolute -top-1 -right-1 text-xs text-red-600"
                                                 title={
-                                                    error?.message ||
+                                                    moneyError?.message ||
                                                     "Connection lost"
                                                 }
                                             >
@@ -63,7 +69,7 @@ export function TopBar() {
                                         {/* Show stale data even if error */}
                                         <span
                                             className={
-                                                isError ? "opacity-75" : ""
+                                                isMoneyError ? "opacity-75" : ""
                                             }
                                         >
                                             $
@@ -124,7 +130,15 @@ export function TopBar() {
                             <div className="flex gap-3 text-sm">
                                 {/* Construction Workers */}
                                 <div className="flex items-center gap-1 relative group">
-                                    <span>0/0</span>
+                                    <span
+                                        className={
+                                            isWorkersError ? "opacity-75" : ""
+                                        }
+                                    >
+                                        {isWorkersLoading && !workersData
+                                            ? "..."
+                                            : `${workersData?.construction.available ?? 0}/${workersData?.construction.total ?? 0}`}
+                                    </span>
                                     <img
                                         src="/static/images/icons/construction.png"
                                         alt="Construction"
@@ -137,7 +151,15 @@ export function TopBar() {
 
                                 {/* Lab Workers */}
                                 <div className="flex items-center gap-1 relative group">
-                                    <span>0/0</span>
+                                    <span
+                                        className={
+                                            isWorkersError ? "opacity-75" : ""
+                                        }
+                                    >
+                                        {isWorkersLoading && !workersData
+                                            ? "..."
+                                            : `${workersData?.laboratory.available ?? 0}/${workersData?.laboratory.total ?? 0}`}
+                                    </span>
                                     <img
                                         src="/static/images/icons/technology.png"
                                         alt="Technology"
