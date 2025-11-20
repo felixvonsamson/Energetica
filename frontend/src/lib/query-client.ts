@@ -12,18 +12,33 @@ export const queryClient = new QueryClient({
             staleTime: 5 * 60 * 1000,
             // Keep unused data in cache for 10 minutes
             gcTime: 10 * 60 * 1000,
-            // Retry failed requests once
-            retry: 1,
+            // Retry failed requests - important for mobile users with spotty connections
+            retry: (failureCount, error) => {
+                // Don't retry on 4xx errors (client errors)
+                if (error instanceof Error && "status" in error) {
+                    const status = (error as any).status;
+                    if (status >= 400 && status < 500) return false;
+                }
+                // Retry up to 3 times for network errors
+                return failureCount < 3;
+            },
+            // Exponential backoff for retries (better for mobile)
+            retryDelay: (attemptIndex) =>
+                Math.min(1000 * 2 ** attemptIndex, 30000),
             // Refetch on window focus for important data
             refetchOnWindowFocus: true,
             // Refetch on mount if data is stale
             refetchOnMount: true,
-            // Don't refetch on reconnect by default
-            refetchOnReconnect: false,
+            // Refetch when connection restored
+            refetchOnReconnect: true,
+            // Network mode: 'online' = only fetch when online, keep stale data when offline
+            networkMode: "online",
         },
         mutations: {
-            // Retry failed mutations once
+            // Retry failed mutations once (cautious with mutations to avoid duplicates)
             retry: 1,
+            // Network mode for mutations
+            networkMode: "online",
         },
     },
 });

@@ -5,10 +5,19 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlayerMoney } from "@/hooks/usePlayerMoney";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { NotificationPopup } from "./NotificationPopup";
 
 export function TopBar() {
     const { user } = useAuth();
+    const {
+        data: moneyData,
+        isLoading: isMoneyLoading,
+        isError,
+        error,
+    } = usePlayerMoney();
+    const { isConnected } = useOnlineStatus();
     const [showNotifications, setShowNotifications] = useState(false);
 
     if (!user) return null;
@@ -32,9 +41,41 @@ export function TopBar() {
                         {/* Money and Resources */}
                         <div className="bg-[#c9d4b5] text-black rounded px-4 py-2">
                             {/* Money */}
-                            <div className="text-2xl font-bold mb-2">
-                                {/* TODO: Format money properly */}$
-                                {(0).toLocaleString()}
+                            <div className="text-2xl font-bold mb-2 relative">
+                                {isMoneyLoading && !moneyData ? (
+                                    <span className="text-gray-500">
+                                        Loading...
+                                    </span>
+                                ) : (
+                                    <>
+                                        {/* Show offline indicator if error */}
+                                        {isError && !isConnected && (
+                                            <span
+                                                className="absolute -top-1 -right-1 text-xs text-red-600"
+                                                title={
+                                                    error?.message ||
+                                                    "Connection lost"
+                                                }
+                                            >
+                                                <i className="fa fa-exclamation-circle"></i>
+                                            </span>
+                                        )}
+                                        {/* Show stale data even if error */}
+                                        <span
+                                            className={
+                                                isError ? "opacity-75" : ""
+                                            }
+                                        >
+                                            $
+                                            {(
+                                                moneyData?.money ?? 0
+                                            ).toLocaleString(undefined, {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
+                                        </span>
+                                    </>
+                                )}
                             </div>
 
                             {/* Resource Gauges - TODO: Only show if warehouse unlocked */}

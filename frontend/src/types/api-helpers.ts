@@ -57,9 +57,7 @@ export type ApiPathParams<Path extends keyof paths> = paths[Path] extends {
 export type ApiQueryParams<
     Path extends keyof paths,
     Method extends keyof paths[Path],
-> = paths[Path][Method] extends { parameters: { query: infer Q } }
-    ? Q
-    : never;
+> = paths[Path][Method] extends { parameters: { query: infer Q } } ? Q : never;
 
 /**
  * Direct access to schema components (models).

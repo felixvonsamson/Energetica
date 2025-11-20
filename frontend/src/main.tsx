@@ -8,6 +8,7 @@ import { routeTree } from "./routeTree.gen";
 import { queryClient } from "@/lib/query-client";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SocketProvider } from "@/contexts/SocketContext";
+import { GameTickProvider } from "@/contexts/GameTickContext";
 
 import "./styles/global.css";
 
@@ -29,7 +30,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
                 <SocketProvider>
-                    <RouterProvider router={router} />
+                    <GameTickProvider>
+                        <RouterProvider router={router} />
+                    </GameTickProvider>
                 </SocketProvider>
             </AuthProvider>
         </QueryClientProvider>

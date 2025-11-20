@@ -59,7 +59,9 @@ def tick() -> None:
     elif engine.total_t % (10 * 60 / engine.clock_time) == 0:
         engine.save()
 
-    asyncio.run_coroutine_threadsafe(engine.socketio.emit("tick"), MAIN_EVENT_LOOP)
+    asyncio.run_coroutine_threadsafe(
+        engine.socketio.emit("tick", {"tick": engine.total_t}), MAIN_EVENT_LOOP
+    )
 
 
 def check_events_completion() -> None:

@@ -77,7 +77,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                         <button
                                             onClick={() =>
                                                 handleDeleteNotification(
-                                                    notification.id
+                                                    notification.id,
                                                 )
                                             }
                                             className="text-white hover:text-red-300 text-xl leading-none"
@@ -87,7 +87,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                     </div>
                                     <div className="text-xs text-gray-300 mb-2">
                                         {new Date(
-                                            notification.time
+                                            notification.time,
                                         ).toLocaleString()}
                                     </div>
                                     <div

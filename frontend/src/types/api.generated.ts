@@ -1717,7 +1717,9 @@ export interface components {
         /** Ask */
         Ask: {
             /** Type */
-            type: components["schemas"]["ControllableFacilityType"] | components["schemas"]["StorageFacilityType"];
+            type:
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"];
             /** Price */
             price: number;
         };
@@ -1746,7 +1748,9 @@ export interface components {
              */
             side: "ask";
             /** Type */
-            type: components["schemas"]["ControllableFacilityType"] | components["schemas"]["StorageFacilityType"];
+            type:
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"];
         };
         /**
          * AskListOut
@@ -1797,7 +1801,11 @@ export interface components {
         /** Bid */
         Bid: {
             /** Type */
-            type: components["schemas"]["NonFacilityBidType"] | components["schemas"]["ExtractionFacilityType"] | ("industry" | "carbon_capture") | components["schemas"]["StorageFacilityType"];
+            type:
+                | components["schemas"]["NonFacilityBidType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | ("industry" | "carbon_capture")
+                | components["schemas"]["StorageFacilityType"];
             /** Price */
             price: number;
         };
@@ -1809,7 +1817,11 @@ export interface components {
              */
             side: "bid";
             /** Type */
-            type: components["schemas"]["NonFacilityBidType"] | components["schemas"]["ExtractionFacilityType"] | ("industry" | "carbon_capture") | components["schemas"]["StorageFacilityType"];
+            type:
+                | components["schemas"]["NonFacilityBidType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | ("industry" | "carbon_capture")
+                | components["schemas"]["StorageFacilityType"];
         };
         /** ChangeNetworkPrices */
         ChangeNetworkPrices: {
@@ -1868,7 +1880,13 @@ export interface components {
          * @description Enum for controllable facilities.
          * @enum {string}
          */
-        ControllableFacilityType: "steam_engine" | "coal_burner" | "gas_burner" | "combined_cycle" | "nuclear_reactor" | "nuclear_reactor_gen4";
+        ControllableFacilityType:
+            | "steam_engine"
+            | "coal_burner"
+            | "gas_burner"
+            | "combined_cycle"
+            | "nuclear_reactor"
+            | "nuclear_reactor_gen4";
         /** DailyQuizBase */
         DailyQuizBase: {
             /** Question */
@@ -1882,7 +1900,9 @@ export interface components {
             /** Player Answer */
             player_answer?: ("answer1" | "answer2" | "answer3") | null;
             /** Correct Answer */
-            correct_answer?: ("answer1" | "answer2" | "answer3" | "all correct") | null;
+            correct_answer?:
+                | ("answer1" | "answer2" | "answer3" | "all correct")
+                | null;
             /** Answered Correctly */
             answered_correctly?: boolean | null;
             /** Explanation */
@@ -1923,7 +1943,10 @@ export interface components {
          * @description Enum for extraction facilities.
          * @enum {string}
          */
-        ExtractionFacilityType: "coal_mine" | "gas_drilling_site" | "uranium_mine";
+        ExtractionFacilityType:
+            | "coal_mine"
+            | "gas_drilling_site"
+            | "uranium_mine";
         /** FacilitiesListOut */
         FacilitiesListOut: {
             /** Power Facilities */
@@ -1944,7 +1967,11 @@ export interface components {
          * @description Enum for functional facilities.
          * @enum {string}
          */
-        FunctionalFacilityType: "industry" | "laboratory" | "warehouse" | "carbon_capture";
+        FunctionalFacilityType:
+            | "industry"
+            | "laboratory"
+            | "warehouse"
+            | "carbon_capture";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -2090,7 +2117,11 @@ export interface components {
             /** Id */
             id: number;
             /** Facility */
-            facility: components["schemas"]["WindFacilityType"] | components["schemas"]["HydroFacilityType"] | components["schemas"]["SolarFacilityType"] | components["schemas"]["ControllableFacilityType"];
+            facility:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"];
             /** Max Power Generation */
             max_power_generation: number;
             /** Usage */
@@ -2109,19 +2140,37 @@ export interface components {
         /** PowerPrioritiesListIn */
         PowerPrioritiesListIn: {
             /** Power Priorities */
-            power_priorities: (components["schemas"]["BidItem"] | components["schemas"]["AskItem"])[];
+            power_priorities: (
+                | components["schemas"]["BidItem"]
+                | components["schemas"]["AskItem"]
+            )[];
         };
         /** PowerPrioritiesListOut */
         PowerPrioritiesListOut: {
             /** Renewables */
-            renewables: (components["schemas"]["WindFacilityType"] | components["schemas"]["HydroFacilityType"] | components["schemas"]["SolarFacilityType"])[];
+            renewables: (
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+            )[];
             /** Power Priorities */
-            power_priorities: (components["schemas"]["BidItem"] | components["schemas"]["AskItem"])[];
+            power_priorities: (
+                | components["schemas"]["BidItem"]
+                | components["schemas"]["AskItem"]
+            )[];
         };
         /** ProjectIn */
         ProjectIn: {
             /** Type */
-            type: components["schemas"]["WindFacilityType"] | components["schemas"]["HydroFacilityType"] | components["schemas"]["SolarFacilityType"] | components["schemas"]["ControllableFacilityType"] | components["schemas"]["StorageFacilityType"] | components["schemas"]["ExtractionFacilityType"] | components["schemas"]["FunctionalFacilityType"] | components["schemas"]["TechnologyType"];
+            type:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | components["schemas"]["FunctionalFacilityType"]
+                | components["schemas"]["TechnologyType"];
         };
         /** ProjectListOut */
         ProjectListOut: {
@@ -2137,7 +2186,15 @@ export interface components {
             /** Id */
             id: number;
             /** Type */
-            type: components["schemas"]["WindFacilityType"] | components["schemas"]["HydroFacilityType"] | components["schemas"]["SolarFacilityType"] | components["schemas"]["ControllableFacilityType"] | components["schemas"]["StorageFacilityType"] | components["schemas"]["ExtractionFacilityType"] | components["schemas"]["FunctionalFacilityType"] | components["schemas"]["TechnologyType"];
+            type:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | components["schemas"]["FunctionalFacilityType"]
+                | components["schemas"]["TechnologyType"];
             /**
              * End Tick
              * @description Only present if project is ongoing
@@ -2282,7 +2339,13 @@ export interface components {
          * @description Enum for storage facilities.
          * @enum {string}
          */
-        StorageFacilityType: "small_pumped_hydro" | "molten_salt" | "large_pumped_hydro" | "hydrogen_storage" | "lithium_ion_batteries" | "solid_state_batteries";
+        StorageFacilityType:
+            | "small_pumped_hydro"
+            | "molten_salt"
+            | "large_pumped_hydro"
+            | "hydrogen_storage"
+            | "lithium_ion_batteries"
+            | "solid_state_batteries";
         /** Subscription */
         Subscription: {
             /** Endpoint */
@@ -2301,7 +2364,19 @@ export interface components {
          * @description Enum for technologies.
          * @enum {string}
          */
-        TechnologyType: "mathematics" | "mechanical_engineering" | "thermodynamics" | "physics" | "building_technology" | "mineral_extraction" | "transport_technology" | "materials" | "civil_engineering" | "aerodynamics" | "chemistry" | "nuclear_engineering";
+        TechnologyType:
+            | "mathematics"
+            | "mechanical_engineering"
+            | "thermodynamics"
+            | "physics"
+            | "building_technology"
+            | "mineral_extraction"
+            | "transport_technology"
+            | "materials"
+            | "civil_engineering"
+            | "aerodynamics"
+            | "chemistry"
+            | "nuclear_engineering";
         /**
          * UIStatePatch
          * @description Model for updating the state of the UI.
@@ -2392,7 +2467,10 @@ export interface components {
          * @description Enum for wind facilities.
          * @enum {string}
          */
-        WindFacilityType: "windmill" | "onshore_wind_turbine" | "offshore_wind_turbine";
+        WindFacilityType:
+            | "windmill"
+            | "onshore_wind_turbine"
+            | "offshore_wind_turbine";
     };
     responses: never;
     parameters: never;
@@ -2847,7 +2925,13 @@ export interface operations {
     upgrade_all_of_type_api_v1_facilities_upgrade_all_post: {
         parameters: {
             query: {
-                facility_type: components["schemas"]["WindFacilityType"] | components["schemas"]["HydroFacilityType"] | components["schemas"]["SolarFacilityType"] | components["schemas"]["ControllableFacilityType"] | components["schemas"]["StorageFacilityType"] | components["schemas"]["ExtractionFacilityType"];
+                facility_type:
+                    | components["schemas"]["WindFacilityType"]
+                    | components["schemas"]["HydroFacilityType"]
+                    | components["schemas"]["SolarFacilityType"]
+                    | components["schemas"]["ControllableFacilityType"]
+                    | components["schemas"]["StorageFacilityType"]
+                    | components["schemas"]["ExtractionFacilityType"];
             };
             header?: never;
             path?: never;
@@ -2909,7 +2993,13 @@ export interface operations {
     dismantle_all_of_type_api_v1_facilities_dismantle_all_post: {
         parameters: {
             query: {
-                facility_type: components["schemas"]["WindFacilityType"] | components["schemas"]["HydroFacilityType"] | components["schemas"]["SolarFacilityType"] | components["schemas"]["ControllableFacilityType"] | components["schemas"]["StorageFacilityType"] | components["schemas"]["ExtractionFacilityType"];
+                facility_type:
+                    | components["schemas"]["WindFacilityType"]
+                    | components["schemas"]["HydroFacilityType"]
+                    | components["schemas"]["SolarFacilityType"]
+                    | components["schemas"]["ControllableFacilityType"]
+                    | components["schemas"]["StorageFacilityType"]
+                    | components["schemas"]["ExtractionFacilityType"];
             };
             header?: never;
             path?: never;
@@ -3091,7 +3181,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NetworkOut"] | null;
+                    "application/json":
+                        | components["schemas"]["NetworkOut"]
+                        | null;
                 };
             };
             /** @description Validation Error */

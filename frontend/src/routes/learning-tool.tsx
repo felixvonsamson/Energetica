@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { HomeLayout } from "../components/HomeLayout";
-import { TrendingUp, Package, BarChart3, CloudLightning, Sun, Handshake, BookOpen } from "lucide-react";
+import {
+    TrendingUp,
+    Package,
+    BarChart3,
+    CloudLightning,
+    Sun,
+    Handshake,
+    BookOpen,
+} from "lucide-react";
 
 export const Route = createFileRoute("/learning-tool")({
     component: RouteComponent,
@@ -13,66 +21,73 @@ function RouteComponent() {
     const game_elements = [
         {
             title: "Investment Strategies",
-            description:(
+            description: (
                 <>
-                    Players learn to analyze the Levelised Cost of Electricity (LCOE) to make strategic 
-                    decisions across energy technologies. As conditions change, they 
-                    must continuously adapt their strategy to stay competitive.
+                    Players learn to analyze the Levelised Cost of Electricity
+                    (LCOE) to make strategic decisions across energy
+                    technologies. As conditions change, they must continuously
+                    adapt their strategy to stay competitive.
                 </>
             ),
             icon: <TrendingUp />,
         },
         {
             title: "Resources Management",
-            description:(
+            description: (
                 <>
-                    Scarcity of natural resources forces players to think efficiently. 
-                    As fossil fuels are depleted and extraction costs increase, 
-                    they must plan a smooth transition to sustainable technologies.
+                    Scarcity of natural resources forces players to think
+                    efficiently. As fossil fuels are depleted and extraction
+                    costs increase, they must plan a smooth transition to
+                    sustainable technologies.
                 </>
             ),
             icon: <Package />,
         },
         {
             title: "Dynamic Energy Markets",
-            description:(
+            description: (
                 <>
-                    A realistic energy market reacts to supply and demand, 
-                    creating fluctuating prices. Players explore how storage technologies 
-                    and strategic pricing can stabilize the grid and generate profit.
+                    A realistic energy market reacts to supply and demand,
+                    creating fluctuating prices. Players explore how storage
+                    technologies and strategic pricing can stabilize the grid
+                    and generate profit.
                 </>
             ),
             icon: <BarChart3 />,
         },
         {
             title: "Renewable Intermittency",
-            description:(
+            description: (
                 <>
-                    Wind and solar power are clean but variable and unreliable. 
-                    A realistic weather model drives the simulation, making the player experience
-                    the challenge of balancing this variability and the role of 
-                    storage in creating a fully renewable energy system.
+                    Wind and solar power are clean but variable and unreliable.
+                    A realistic weather model drives the simulation, making the
+                    player experience the challenge of balancing this
+                    variability and the role of storage in creating a fully
+                    renewable energy system.
                 </>
             ),
             icon: <Sun />,
         },
         {
             title: "Collective Action",
-            description:(
+            description: (
                 <>
-                    High CO2 emissions affect a shared atmosphere, leading to increasingly severe climate events
-                    that harm everyone, showing the global nature of climate change. 
-                    Players experience how collective action is vital to address shared risks.
+                    High CO2 emissions affect a shared atmosphere, leading to
+                    increasingly severe climate events that harm everyone,
+                    showing the global nature of climate change. Players
+                    experience how collective action is vital to address shared
+                    risks.
                 </>
             ),
             icon: <Handshake />,
         },
         {
             title: "Daily Knowledge Boost",
-            description:(
+            description: (
                 <>
-                A daily quiz expands the learning experience, covering energy, climate, and social justice topics. 
-                It helps players connect game concepts to real-world issues.
+                    A daily quiz expands the learning experience, covering
+                    energy, climate, and social justice topics. It helps players
+                    connect game concepts to real-world issues.
                 </>
             ),
             icon: <BookOpen />,
@@ -120,7 +135,11 @@ function RouteComponent() {
                                     {(index === 1 || index === 3) && (
                                         <div className="overflow-hidden rounded-4xl shadow-md">
                                             <img
-                                                src={tile_images[index === 1 ? 0 : 1]}
+                                                src={
+                                                    tile_images[
+                                                        index === 1 ? 0 : 1
+                                                    ]
+                                                }
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>
