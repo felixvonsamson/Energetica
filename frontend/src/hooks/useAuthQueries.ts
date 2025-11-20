@@ -5,11 +5,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth-api";
 import { queryKeys } from "@/lib/query-client";
-import type {
-    LoginRequest,
-    SignupRequest,
-    ChangePasswordRequest,
-} from "@/types/api";
+import type { ApiRequestBody } from "@/types/api-helpers";
+
+type LoginRequest = ApiRequestBody<"/api/v1/auth/login", "post">;
+type SignupRequest = ApiRequestBody<"/api/v1/auth/signup", "post">;
+type ChangePasswordRequest = ApiRequestBody<
+    "/api/v1/auth/change-password",
+    "post"
+>;
 
 /**
  * Mutation hook for login.

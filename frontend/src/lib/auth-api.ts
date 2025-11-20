@@ -3,37 +3,43 @@
  */
 
 import { apiClient } from "./api-client";
-import type {
-    User,
-    LoginRequest,
-    SignupRequest,
-    ChangePasswordRequest,
-    SuccessResponse,
-} from "@/types/api";
+import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 
 export const authApi = {
     /**
      * Get current authenticated user.
      */
-    me: () => apiClient.get<User>("/auth/me"),
+    me: () =>
+        apiClient.get<ApiResponse<"/api/v1/auth/me", "get">>("/auth/me"),
 
     /**
      * Login with username and password.
      */
-    login: (credentials: LoginRequest) =>
-        apiClient.post<SuccessResponse>("/auth/login", credentials),
+    login: (credentials: ApiRequestBody<"/api/v1/auth/login", "post">) =>
+        apiClient.post<ApiResponse<"/api/v1/auth/login", "post">>(
+            "/auth/login",
+            credentials
+        ),
 
     /**
      * Sign up new user.
      */
-    signup: (data: SignupRequest) =>
-        apiClient.post<SuccessResponse>("/auth/signup", data),
+    signup: (data: ApiRequestBody<"/api/v1/auth/signup", "post">) =>
+        apiClient.post<ApiResponse<"/api/v1/auth/signup", "post">>(
+            "/auth/signup",
+            data
+        ),
 
     /**
      * Change password for current user.
      */
-    changePassword: (data: ChangePasswordRequest) =>
-        apiClient.post<void>("/auth/change-password", data),
+    changePassword: (
+        data: ApiRequestBody<"/api/v1/auth/change-password", "post">
+    ) =>
+        apiClient.post<ApiResponse<"/api/v1/auth/change-password", "post">>(
+            "/auth/change-password",
+            data
+        ),
 
     /**
      * Logout (clears session cookie).

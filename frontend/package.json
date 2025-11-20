@@ -2,7 +2,9 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "generate-types": "bash scripts/generate-types.sh",
+        "generate-types:check": "npm run generate-types && git diff --exit-code src/types/api.generated.ts || (echo '⚠️  Generated types are out of sync! Run: npm run generate-types' && exit 1)"
     },
     "dependencies": {
         "@tailwindcss/vite": "^4.1.12",
@@ -21,6 +23,7 @@
         "@types/react": "^19.1.8",
         "@types/react-dom": "^19.1.6",
         "@vitejs/plugin-react": "^4.6.0",
+        "openapi-typescript": "^7.10.1",
         "typescript": "^5.8.3",
         "vite": "^7.0.5",
         "vite-plugin-dts": "^4.5.4"

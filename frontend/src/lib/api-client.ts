@@ -3,9 +3,11 @@
  * Handles authentication, error handling, and type safety.
  */
 
-import type { ApiError } from "@/types/api";
-
 const API_BASE_URL = import.meta.env.DEV ? "/api/v1" : "/api/v1";
+
+interface ApiError {
+    detail: string;
+}
 
 export class ApiClientError extends Error {
     constructor(
