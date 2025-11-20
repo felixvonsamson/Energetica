@@ -16,7 +16,9 @@ module.exports = {
         bone: "#e5d9b6",
         "tan-green": "#a4be7b",
         "tan-hover": "#b5ca95",
-        greenbrand: "#5f8d4e",       // renamed to avoid clobbering Tailwind's green scale
+        brand: {
+            green: "#5f8d4e",       // renamed to avoid clobbering Tailwind's green scale
+        },
         pine: {
           DEFAULT: "#285430",
           darker: "#1b3820"

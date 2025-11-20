@@ -29,15 +29,19 @@ def setup_socketio(app: FastAPI) -> None:
         """Authenticate a connecting client via session cookie."""
         cookie_header = environ.get("HTTP_COOKIE")
         if cookie_header is None:
-            raise ConnectionRefusedError("authentication failed")
+            raise ConnectionRefusedError("authentication failed: no cookies")
         cookie = SimpleCookie()
         cookie.load(cast(str, cookie_header))
         session_token = cookie.get("session")
         if session_token is None:
-            raise ConnectionRefusedError("authentication failed")
+            raise ConnectionRefusedError("authentication failed: no session token")
         user = get_user_from_token(cast(str, session_token.value))
-        if user is None or user.role != "player" or user.player is None:
-            raise ConnectionRefusedError("authentication failed")
+        if user is None:
+            raise ConnectionRefusedError("authentication failed: invalid token")
+        if user.role != "player":
+            raise ConnectionRefusedError("authentication failed: not a player")
+        if user.player is None:
+            raise ConnectionRefusedError("authentication failed: not settled")
         user.player.socketio_clients.append(sid)
         connected_users_by_sid[sid] = user.player
 

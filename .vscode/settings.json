@@ -25,6 +25,10 @@
         "editor.wordWrapColumn": 120,
         "editor.rulers": [120]
     },
+    // Typescript
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
     // Python
     "files.exclude": {
         "**/__pycache__": true
@@ -116,6 +120,7 @@
         "isort",
         "itertuples",
         "itsdangerous",
+        "Jinja",
         "jsonable",
         "jsonify",
         "kwargs",
@@ -177,5 +182,6 @@
     "python.testing.pytestArgs": ["tests"],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "js/ts.implicitProjectConfig.checkJs": true
+    "js/ts.implicitProjectConfig.checkJs": true,
+    "editor.detectIndentation": false
 }

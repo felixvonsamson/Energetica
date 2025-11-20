@@ -1,5 +1,6 @@
 """Utility functions relating to the GameEngine class."""
 
+import asyncio
 import time
 from datetime import datetime
 
@@ -10,7 +11,7 @@ from energetica.database.ongoing_project import OngoingProject
 from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
 from energetica.enums import StorageFacilityType
-from energetica.globals import engine
+from energetica.globals import MAIN_EVENT_LOOP, engine
 from energetica.schemas.simulate import TickAction
 from energetica.utils import assets
 from energetica.utils.assets import remove_asset
@@ -57,6 +58,8 @@ def tick() -> None:
     # save instance every 10 minutes in case of server crash or reload
     elif engine.total_t % (10 * 60 / engine.clock_time) == 0:
         engine.save()
+
+    asyncio.run_coroutine_threadsafe(engine.socketio.emit("tick"), MAIN_EVENT_LOOP)
 
 
 def check_events_completion() -> None:

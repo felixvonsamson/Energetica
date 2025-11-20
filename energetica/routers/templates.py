@@ -103,8 +103,21 @@ def render_location_choice(  # noqa: ANN201
     return templates.TemplateResponse(request=request, name="location_choice.jinja")
 
 
+@router.get("/app/{full_path:path}", response_class=HTMLResponse, name="views.react_app")
+def render_react_app(  # noqa: ANN201
+    request: Request,
+    full_path: str,
+    user: Annotated[User | None, Depends(get_user)],
+):
+    """Serve React SPA for /app/* routes (modern migration path)."""
+    # Note: Authentication checks can be done client-side via useAuth
+    # Or add specific checks here based on the path.
+    # For now, we will rely on client side checks.
+    return FileResponse("energetica/static/react/index.html")
+
+
 @router.get("/admin-dashboard", response_class=HTMLResponse, name="views.admin_dashboard")
-@router.get("/admin-dashboard/{full_path}", response_class=HTMLResponse, name="views.admin_dashboard")
+@router.get("/admin-dashboard/{full_path:path}", response_class=HTMLResponse, name="views.admin_dashboard")
 def render_admin_dashboard(  # noqa: ANN201
     request: Request,
     user: Annotated[User | None, Depends(get_user)],

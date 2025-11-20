@@ -19,6 +19,7 @@ from energetica.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
     SignupRequest,
+    UserOut,
 )
 from energetica.utils import misc
 from energetica.utils.auth import (
@@ -29,6 +30,24 @@ from energetica.utils.auth import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+@router.get("/me")
+def get_current_user(user: Annotated[User | None, Depends(get_user)]) -> UserOut:
+    """Get the current authenticated user's information."""
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
+    return UserOut(
+        id=user.id,
+        username=user.username,
+        role=user.role,
+        player_id=user.player.id if user.player is not None else None,
+        is_settled=user.player is not None,
+    )
 
 
 @router.post("/login", tags=["Authentication"], status_code=status.HTTP_200_OK)
