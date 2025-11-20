@@ -29,29 +29,37 @@ export default defineConfig(({ mode }) => ({
     server: {
         proxy: {
             "^/landing$": {
-                target: "http://localhost:5001/landing",
+                target: "http://localhost:5001",
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/landing/, ""),
+            },
+            "/home": {
+                target: "http://localhost:5001",
+                changeOrigin: true,
             },
             "/sign-up": {
-                target: "http://localhost:5001/sign-up",
+                target: "http://localhost:5001",
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/sign-up/, ""),
             },
             "/login": {
-                target: "http://localhost:5001/login",
+                target: "http://localhost:5001",
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/login/, ""),
+            },
+            "/logout": {
+                target: "http://localhost:5001",
+                changeOrigin: true,
             },
             "/static": {
-                target: "http://localhost:5001/static",
+                target: "http://localhost:5001",
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/static/, ""),
             },
             "/api": {
-                target: "http://localhost:5001/api",
+                target: "http://localhost:5001",
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api/, ""),
+            },
+            "/socket.io": {
+                target: "http://localhost:5001",
+                changeOrigin: true,
+                ws: true,
             },
         },
     },
