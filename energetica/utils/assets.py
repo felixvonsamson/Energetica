@@ -284,7 +284,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
             ),
         )
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
-        # if there is no generation capacity anymore, a new steam engine is created for the player in order to avoid accounts with no power generation
+        # if there is no generation capacity any more, a new steam engine is created for the player in order to avoid accounts with no power generation
         active_power_facilities = list(
             ActiveFacility.filter(lambda af: af.player == player and af.facility_type in power_facility_types),
         )
@@ -565,13 +565,13 @@ def pause_project(player: Player, project: OngoingProject) -> None:
                 break
     # Remove all dependent projects from the priority list, and reinsert them at the right place
     if insertion_index is None:
-        # If insertion_index is None, then there are no preexisting paused projects
+        # If insertion_index is None, then there are no pre-existing paused projects
         for dependent in dependency:
             priority_list.remove(dependent)
         for dependent in dependency:
             priority_list.append(dependent)
     else:
-        # If insertion_index is not None, then there are preexisting paused projects
+        # If insertion_index is not None, then there are pre-existing paused projects
         priority_list = [
             *[id for id in priority_list[:insertion_index] if id not in dependency],
             *dependency,
@@ -617,6 +617,8 @@ def resume_project(player: Player, project: OngoingProject) -> None:
         priority_list.insert(insertion_index, project)
     else:
         priority_list.append(project)
+
+    player.send_worker_info()
     engine.log(f"{player.username} unpaused the project {project.id} {project.project_type}")
 
 

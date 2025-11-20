@@ -33,4 +33,12 @@ export const playerApi = {
         apiClient.get<ApiResponse<"/api/v1/players/me/workers", "get">>(
             "/players/me/workers",
         ),
+
+    /**
+     * Get current player's resources.
+     */
+    getResources: () =>
+        apiClient.get<ApiResponse<"/api/v1/players/me/resources", "get">>(
+            "/players/me/resources",
+        ),
 };

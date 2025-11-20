@@ -66,3 +66,39 @@ class WorkersOut(BaseModel):
                 total=player.workers[WorkerType.RESEARCH],
             ),
         )
+
+
+class ResourceStock(BaseModel):
+    """Information about a specific resource stock."""
+
+    stock: float = Field(description="Current stock in kg")
+    capacity: float = Field(description="Maximum capacity in kg")
+
+
+class ResourcesOut(BaseModel):
+    """Model for the player's resource stocks."""
+
+    coal: ResourceStock = Field(description="Coal stock")
+    gas: ResourceStock = Field(description="Gas stock")
+    uranium: ResourceStock = Field(description="Uranium stock")
+
+    @classmethod
+    def from_player(cls, player: Player) -> ResourcesOut:
+        from energetica.enums import Fuel
+
+        warehouse_capacities = player.config["warehouse_capacities"]
+
+        return ResourcesOut(
+            coal=ResourceStock(
+                stock=player.resources[Fuel.COAL],
+                capacity=warehouse_capacities[Fuel.COAL],
+            ),
+            gas=ResourceStock(
+                stock=player.resources[Fuel.GAS],
+                capacity=warehouse_capacities[Fuel.GAS],
+            ),
+            uranium=ResourceStock(
+                stock=player.resources[Fuel.URANIUM],
+                capacity=warehouse_capacities[Fuel.URANIUM],
+            ),
+        )

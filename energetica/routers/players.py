@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 
 from energetica.database.player import Player
 from energetica.routers.chats import router
-from energetica.schemas.players import MoneyOut, PlayerOut, SettingsPatch, UIStatePatch, WorkersOut
+from energetica.schemas.players import MoneyOut, PlayerOut, ResourcesOut, SettingsPatch, UIStatePatch, WorkersOut
 from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/players", tags=["Players"])
@@ -64,3 +64,10 @@ def get_workers(
     player: Annotated[Player, Depends(get_settled_player)],
 ) -> WorkersOut:
     return WorkersOut.from_player(player)
+
+
+@router.get("/me/resources")
+def get_resources(
+    player: Annotated[Player, Depends(get_settled_player)],
+) -> ResourcesOut:
+    return ResourcesOut.from_player(player)

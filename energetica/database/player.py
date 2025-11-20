@@ -403,19 +403,11 @@ class Player(DBModel):
 
     def send_worker_info(self) -> None:
         """Send the number of available construction and lab workers to the player's clients."""
-        self.emit(
-            "worker_info",
-            {
-                "construction": {
-                    "available": self.available_workers(WorkerType.CONSTRUCTION),
-                    "total": self.workers[WorkerType.CONSTRUCTION],
-                },
-                "laboratory": {
-                    "available": self.available_workers(WorkerType.RESEARCH),
-                    "total": self.workers[WorkerType.RESEARCH],
-                },
-            },
-        )
+        from energetica.schemas.players import WorkersOut
+
+        # Use the same schema as the API endpoint to avoid duplication
+        data = WorkersOut.from_player(self).model_dump()
+        self.emit("worker_info", data)
 
     def calculate_net_emissions(self) -> float:
         """Calculate the net emissions of the player."""

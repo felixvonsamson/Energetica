@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayerMoney } from "@/hooks/usePlayerMoney";
 import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
+import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { NotificationPopup } from "./NotificationPopup";
 
@@ -23,6 +24,11 @@ export function TopBar() {
         isLoading: isWorkersLoading,
         isError: isWorkersError,
     } = usePlayerWorkers();
+    const {
+        data: resourcesData,
+        isLoading: isResourcesLoading,
+        isError: isResourcesError,
+    } = usePlayerResources();
     const { isConnected } = useOnlineStatus();
     const [showNotifications, setShowNotifications] = useState(false);
 
@@ -90,12 +96,28 @@ export function TopBar() {
                                 <div className="relative group">
                                     <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-gray-800"
-                                            style={{ width: "0%" }}
+                                            className={`h-full bg-gray-800 ${isResourcesError ? "opacity-75" : ""}`}
+                                            style={{
+                                                width: isResourcesLoading
+                                                    ? "0%"
+                                                    : `${Math.min(
+                                                          100,
+                                                          ((resourcesData?.coal
+                                                              .stock ?? 0) /
+                                                              (resourcesData
+                                                                  ?.coal
+                                                                  .capacity ||
+                                                                  1)) *
+                                                              100
+                                                      )}%`,
+                                            }}
                                         ></div>
                                     </div>
-                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                        Coal stock
+                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                        Coal stock:{" "}
+                                        {isResourcesLoading
+                                            ? "..."
+                                            : `${(resourcesData?.coal.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.coal.capacity ?? 0).toFixed(0)}kg`}
                                     </div>
                                 </div>
 
@@ -103,12 +125,28 @@ export function TopBar() {
                                 <div className="relative group">
                                     <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-amber-600"
-                                            style={{ width: "0%" }}
+                                            className={`h-full bg-amber-600 ${isResourcesError ? "opacity-75" : ""}`}
+                                            style={{
+                                                width: isResourcesLoading
+                                                    ? "0%"
+                                                    : `${Math.min(
+                                                          100,
+                                                          ((resourcesData?.gas
+                                                              .stock ?? 0) /
+                                                              (resourcesData
+                                                                  ?.gas
+                                                                  .capacity ||
+                                                                  1)) *
+                                                              100
+                                                      )}%`,
+                                            }}
                                         ></div>
                                     </div>
-                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                        Gas stock
+                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                        Gas stock:{" "}
+                                        {isResourcesLoading
+                                            ? "..."
+                                            : `${(resourcesData?.gas.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.gas.capacity ?? 0).toFixed(0)}kg`}
                                     </div>
                                 </div>
 
@@ -116,12 +154,29 @@ export function TopBar() {
                                 <div className="relative group">
                                     <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-green-600"
-                                            style={{ width: "0%" }}
+                                            className={`h-full bg-green-600 ${isResourcesError ? "opacity-75" : ""}`}
+                                            style={{
+                                                width: isResourcesLoading
+                                                    ? "0%"
+                                                    : `${Math.min(
+                                                          100,
+                                                          ((resourcesData
+                                                              ?.uranium.stock ??
+                                                              0) /
+                                                              (resourcesData
+                                                                  ?.uranium
+                                                                  .capacity ||
+                                                                  1)) *
+                                                              100
+                                                      )}%`,
+                                            }}
                                         ></div>
                                     </div>
-                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                        Uranium stock
+                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                        Uranium stock:{" "}
+                                        {isResourcesLoading
+                                            ? "..."
+                                            : `${(resourcesData?.uranium.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.uranium.capacity ?? 0).toFixed(0)}kg`}
                                     </div>
                                 </div>
                             </div>

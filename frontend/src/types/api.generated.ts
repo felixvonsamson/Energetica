@@ -602,6 +602,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/players/me/resources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Resources */
+        get: operations["get_resources_api_v1_players_me_resources_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/power-priorities": {
         parameters: {
             query?: never;
@@ -2249,6 +2266,34 @@ export interface components {
              */
             quantity: number;
         };
+        /**
+         * ResourceStock
+         * @description Information about a specific resource stock.
+         */
+        ResourceStock: {
+            /**
+             * Stock
+             * @description Current stock in kg
+             */
+            stock: number;
+            /**
+             * Capacity
+             * @description Maximum capacity in kg
+             */
+            capacity: number;
+        };
+        /**
+         * ResourcesOut
+         * @description Model for the player's resource stocks.
+         */
+        ResourcesOut: {
+            /** @description Coal stock */
+            coal: components["schemas"]["ResourceStock"];
+            /** @description Gas stock */
+            gas: components["schemas"]["ResourceStock"];
+            /** @description Uranium stock */
+            uranium: components["schemas"]["ResourceStock"];
+        };
         /** ScoreboardOut */
         ScoreboardOut: {
             /** Rows */
@@ -3456,6 +3501,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkersOut"];
+                };
+            };
+        };
+    };
+    get_resources_api_v1_players_me_resources_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResourcesOut"];
                 };
             };
         };

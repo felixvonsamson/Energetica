@@ -127,6 +127,13 @@ export function GameTickProvider({ children }: GameTickProviderProps) {
         queryClient.setQueryData(["players", "me", "money"], event.data);
     });
 
+    // Listen for worker info updates (sent when workers change)
+    // Data is sent directly (not wrapped), using WorkersOut schema from backend
+    useSocketEvent("worker_info", (data) => {
+        console.log("[GameTick] Worker info updated:", data);
+        queryClient.setQueryData(["players", "me", "workers"], data);
+    });
+
     const value: GameTickContextValue = {
         currentTick,
         invalidateQueries,
