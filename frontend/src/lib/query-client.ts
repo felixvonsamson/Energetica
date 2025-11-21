@@ -76,4 +76,7 @@ export const queryKeys = {
     config: {
         const: ["config", "const"] as const,
     },
+    weather: {
+        current: ["weather", "current"] as const,
+    },
 } as const;
