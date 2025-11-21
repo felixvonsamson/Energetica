@@ -17,6 +17,7 @@
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
         "socket.io-client": "^4.8.1",
+        "tailwind-merge": "^3.4.0",
         "tailwindcss": "^4.1.12"
     },
     "devDependencies": {
@@ -24,6 +25,7 @@
         "@types/react": "^19.1.8",
         "@types/react-dom": "^19.1.6",
         "@vitejs/plugin-react": "^4.6.0",
+        "baseline-browser-mapping": "^2.8.30",
         "openapi-typescript": "^7.10.1",
         "typescript": "^5.8.3",
         "vite": "^7.0.5",

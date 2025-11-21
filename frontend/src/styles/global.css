@@ -1,27 +1,79 @@
-/* 1. Import your Google font first (keep it exactly as before) */
+/* 1. Import Google font */
 @import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Expletus+Sans&display=swap");
 
-/* 2. Tailwind layer injection points */
+/* 2. Tailwind layer injection */
 @import "tailwindcss";
 
-/* 3. Base layer: replicate your existing global rules + variables */
+/* 3. Tailwind v4 Theme Configuration */
+/* stylelint-disable-next-line at-rule-no-unknown */
+@theme inline {
+    /* Base color palette - light mode */
+    --color-bone: #e5d9b6;
+    --color-bone-text: #000000;
+    --color-tan-green: #a4be7b;
+    --color-tan-hover: #b5ca95;
+    --color-tan-green-text: #000000;
+    --color-brand-green: #5f8d4e;
+    --color-pine: #285430;
+    --color-pine-darker: #1b3820;
+    --color-pine-lighter: #5f8d4e;
+    --color-pine-text: #ffffff;
+    --color-alert-red: #f44336;
+    --color-alert-orange: #f59f00;
+
+    /* Dark mode specific colours */
+    --color-dark-bg-primary: #1a1a1a;
+    --color-dark-bg-secondary: #2d2d2d;
+    --color-dark-bg-tertiary: #3a3a3a;
+    --color-dark-text-primary: #ffffff;
+    --color-dark-text-secondary: #e5e5e5;
+    --color-dark-text-muted: #a0a0a0;
+    --color-dark-border: #404040;
+}
+
+/* Configure dark mode selector */
+/* stylelint-disable-next-line at-rule-no-unknown */
+@variant dark (&:where(.dark, .dark *));
+
+/* 4. Base layer with theme variables */
 @layer base {
+    /* Light mode (default) */
     :root {
+        /* Base colours */
         --color-white: #ffffff;
         --color-bone: #e5d9b6;
-        --color-light-green: #ffffe6;
         --color-tan-green: #a4be7b;
         --color-tan-hover: #b5ca95;
         --color-pine-light: #5f8d4e;
         --color-pine: #285430;
         --color-pine-darker: #1b3820;
-        --color-red: #f44336;
-        --color-orange: #f59f00;
 
-        --text-on-light: #000000;
-        --text-on-dark: #ffffff;
+        /* Semantic colours for light mode */
+        --game-bg: #a4be7b;
+        --content-bg: #c9d4b5;
+        --card-bg: #e5d9b6;
 
-        --font-sans: system-ui, sans-serif;
+        --text-primary: #285430;
+        --text-secondary: #1b3820;
+        --text-muted: #5f8d4e;
+        --text-on-card: #000000;
+
+        --border-default: #a4be7b;
+    }
+
+    /* Dark mode */
+    .dark {
+        /* Semantic colours for dark mode */
+        --game-bg: #0a0a0a;
+        --content-bg: #1a1a1a;
+        --card-bg: #2d2d2d;
+
+        --text-primary: #ffffff;
+        --text-secondary: #e5e5e5;
+        --text-muted: #a0a0a0;
+        --text-on-card: #ffffff;
+
+        --border-default: #404040;
     }
 
     html,
@@ -29,60 +81,28 @@
     #root {
         height: 100%;
         margin: 0;
-        /* Disable scrolling (same as original) */
-        overflow: hidden;
     }
 
     body {
-        /* Use Tailwind font stack extension while preserving original intent */
         font-family: "Baloo 2", system-ui, sans-serif;
+        color: var(--text-primary);
+        background-color: var(--game-bg);
     }
 
     main {
         width: 100%;
     }
 
-    /* h1 styling (converted so you can override with utilities if desired) */
     h1 {
-        font-weight: 500; /* = font-medium in Tailwind */
-        color: var(--color-pine-darker);
+        font-weight: 500;
+        color: var(--text-primary);
     }
-}
 
-/* 4. (Optional) Provide utility-aligned aliases if you want to start swapping usage */
-/* These do not affect existing markup unless you add the classes. */
-@layer utilities {
-    .text-on-light {
-        color: var(--text-on-light);
-    }
-    .text-on-dark {
-        color: var(--text-on-dark);
-    }
-    .bg-bone {
-        background-color: var(--color-bone);
-    }
-    .bg-tan-green {
-        background-color: var(--color-tan-green);
-    }
-    .bg-tan-hover {
-        background-color: var(--color-tan-hover);
-    }
-    .bg-pine-light {
-        background-color: var(--color-pine-light);
-    }
-    .bg-pine {
-        background-color: var(--color-pine);
-    }
-    .bg-pine-darker {
-        background-color: var(--color-pine-darker);
-    }
-    .text-pine-darker {
-        color: var(--color-pine-darker);
-    }
-    .text-dark-brown {
-        color: #413422;
-    }
-    .text-light-green {
-        color: var(--color-light-green);
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        color: var(--text-primary);
     }
 }

@@ -36,17 +36,17 @@ export function LandingPage() {
                 {/* Background illustration */}
                 <section className="flex flex-col gap-8">
                     <div className="relative">
-                        <div className="absolute inset-0 overflow-hidden rounded-4xl bg-pine shadow-md">
+                        <div className="absolute inset-0 overflow-hidden rounded-4xl bg-pine dark:bg-dark-bg-secondary shadow-md">
                             {/* Rounded mask overlay */}
                         </div>
                         {/* Content overlay */}
 
                         <div className="relative mx-8  py-24 sm:py-32 lg:py-32 ">
                             <div className="text-center">
-                                <h1 className="text-4xl font-bold tracking-tight text-light-green sm:text-6xl lg:text-7xl leading-tight">
+                                <h1 className="text-4xl font-bold tracking-tight text-bone dark:text-dark-text-primary sm:text-6xl lg:text-7xl leading-tight">
                                     Learn Energy Systems by Playing
                                 </h1>
-                                <p className="mt-8 text-lg text-light-green sm:text-xl max-w-3xl mx-auto leading-relaxed">
+                                <p className="mt-8 text-lg text-bone dark:text-dark-text-secondary sm:text-xl max-w-3xl mx-auto leading-relaxed">
                                     Energetica is multiplayer real-time
                                     simulation game about building sustainable
                                     futures.
@@ -57,14 +57,14 @@ export function LandingPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Link
                             to="/learning-tool"
-                            className="text-light-green bg-pine p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-xl"
+                            className="text-bone dark:text-dark-text-primary bg-pine dark:bg-dark-bg-secondary p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-xl"
                         >
                             <p className="text-xl">Learn more</p>
                             <ChevronRight />
                         </Link>
                         <a
                             href="/login"
-                            className="text-light-green bg-pine p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
+                            className="text-bone dark:text-dark-text-primary bg-pine dark:bg-dark-bg-secondary p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
                         >
                             <p className="text-xl">Play now</p>
                             <ChevronRight />
@@ -72,8 +72,8 @@ export function LandingPage() {
                     </div>
                 </section>
                 <section className="px-6 max-w-5xl mx-auto text-center">
-                    <h2 className="text-3xl font-bold mb-6">Why Energetica?</h2>
-                    <p className="text-lg max-w-3xl">
+                    <h2 className="text-3xl font-bold mb-6 text-primary">Why Energetica?</h2>
+                    <p className="text-lg max-w-3xl text-primary">
                         Climate change and the energy transition are defining
                         challenges. Energetica helps players experience the
                         trade-offs, strategies, and cooperation needed to build
@@ -85,16 +85,16 @@ export function LandingPage() {
                         {features.map((f) => (
                             <div
                                 key={f.title}
-                                className="flex flex-col gap-4 p-6 text-center bg-gray-200 rounded-4xl shadow-md"
+                                className="flex flex-col gap-4 p-6 text-center bg-bone dark:bg-dark-bg-secondary rounded-4xl shadow-md"
                             >
                                 <div className="flex flex-row items-center justify-center gap-4">
                                     {/* <f.icon className="mx-auto h-10 w-10 text-indigo-600 mb-4" /> */}
                                     {f.icon}
-                                    <h3 className="text-xl font-semibold">
+                                    <h3 className="text-xl font-semibold text-bone-text dark:text-dark-text-primary">
                                         {f.title}
                                     </h3>
                                 </div>
-                                <p className="text-gray-600">{f.description}</p>
+                                <p className="text-bone-text dark:text-dark-text-secondary">{f.description}</p>
                             </div>
                         ))}
                     </div>

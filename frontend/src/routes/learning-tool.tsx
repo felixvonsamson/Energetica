@@ -118,15 +118,15 @@ function RouteComponent() {
                                     {/* Text tiles */}
                                     <div
                                         key={f.title}
-                                        className="flex flex-col gap-4 p-6 bg-bone rounded-4xl shadow-md"
+                                        className="flex flex-col gap-4 p-6 bg-bone dark:bg-dark-bg-secondary rounded-4xl shadow-md"
                                     >
-                                        <div className="flex flex-row items-center justify-center gap-4">
+                                        <div className="flex flex-row items-center justify-center gap-4 text-bone-text dark:text-dark-text-primary">
                                             {f.icon}
                                             <h3 className="text-xl font-semibold">
                                                 {f.title}
                                             </h3>
                                         </div>
-                                        <p className="text-dark-brown">
+                                        <p className="text-bone-text dark:text-dark-text-secondary">
                                             {f.description}
                                         </p>
                                     </div>

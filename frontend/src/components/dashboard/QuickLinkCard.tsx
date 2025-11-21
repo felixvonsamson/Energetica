@@ -1,0 +1,36 @@
+import { type LucideIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
+
+interface QuickLinkCardProps {
+    href: string;
+    icon?: LucideIcon;
+    title: string;
+    className?: string;
+}
+
+/**
+ * Quick link card for dashboard navigation.
+ */
+export function QuickLinkCard({
+    href,
+    icon: Icon,
+    title,
+    className,
+}: QuickLinkCardProps) {
+    return (
+        <Link
+            to={href}
+            className={cn(
+                "bg-tan-green dark:bg-dark-bg-secondary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary",
+                "p-6 rounded-lg text-center transition-colors block",
+                className
+            )}
+        >
+            {Icon && (
+                <Icon className="w-8 h-8 mx-auto mb-2 text-pine dark:text-dark-text-primary" />
+            )}
+            <h2 className="text-xl font-bold text-pine dark:text-dark-text-primary">{title}</h2>
+        </Link>
+    );
+}

@@ -9,6 +9,7 @@ import { queryClient } from "@/lib/query-client";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SocketProvider } from "@/contexts/SocketContext";
 import { GameTickProvider } from "@/contexts/GameTickContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 import "./styles/global.css";
 
@@ -28,13 +29,15 @@ declare module "@tanstack/react-router" {
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-                <SocketProvider>
-                    <GameTickProvider>
-                        <RouterProvider router={router} />
-                    </GameTickProvider>
-                </SocketProvider>
-            </AuthProvider>
+            <ThemeProvider>
+                <AuthProvider>
+                    <SocketProvider>
+                        <GameTickProvider>
+                            <RouterProvider router={router} />
+                        </GameTickProvider>
+                    </SocketProvider>
+                </AuthProvider>
+            </ThemeProvider>
         </QueryClientProvider>
     </StrictMode>,
 );

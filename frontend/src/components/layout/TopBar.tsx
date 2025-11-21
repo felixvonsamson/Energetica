@@ -10,6 +10,7 @@ import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { NotificationPopup } from "./NotificationPopup";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export function TopBar() {
     const { user } = useAuth();
@@ -36,22 +37,23 @@ export function TopBar() {
 
     return (
         <>
-            <div className="bg-[#2d5016] border-b border-[#1a2f0d] px-4 py-3">
+            <div className="bg-game-bg border-b border-pine-darker px-4 py-3">
                 <div className="flex items-start justify-between gap-4">
                     {/* Logo */}
                     <div className="flex items-center gap-2">
                         <img
                             src="/static/images/icon.svg"
                             alt="Energetica"
-                            className="w-8 h-8"
+                            className="w-8 h-8 brightness-0 saturate-100 hue-rotate-90 opacity-70 dark:invert dark:brightness-100 dark:saturate-100 dark:hue-rotate-0 dark:opacity-100"
+                            style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(18%) saturate(2873%) hue-rotate(88deg) brightness(95%) contrast(88%)' }}
                         />
-                        <span className="text-xl font-bold">Energetica</span>
+                        <span className="text-xl font-bold text-primary">Energetica</span>
                     </div>
 
                     {/* Resources and Actions */}
                     <div className="flex items-start gap-4">
                         {/* Money and Resources */}
-                        <div className="bg-[#c9d4b5] text-black rounded px-4 py-2">
+                        <div className="bg-content-bg text-primary rounded px-4 py-2">
                             {/* Money */}
                             <div className="text-2xl font-bold mb-2 relative">
                                 {isMoneyLoading && !moneyData ? (
@@ -227,11 +229,11 @@ export function TopBar() {
                             </div>
                         </div>
 
-                        {/* Settings and Notifications */}
+                        {/* Settings, Notifications and Theme Toggle */}
                         <div className="flex flex-col gap-2">
                             <a
                                 href="/settings"
-                                className="bg-[#e8dcc0] text-black px-4 py-2 rounded hover:bg-[#d4c8ac] transition-colors text-center"
+                                className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-4 py-2 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors text-center flex items-center justify-center"
                             >
                                 <i className="fa fa-cog"></i>
                                 <span className="ml-2">Settings</span>
@@ -239,17 +241,22 @@ export function TopBar() {
 
                             <button
                                 onClick={() => setShowNotifications(true)}
-                                className="bg-[#e8dcc0] text-black px-4 py-2 rounded hover:bg-[#d4c8ac] transition-colors text-center relative"
+                                className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-4 py-2 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors text-center relative flex items-center justify-center"
                             >
                                 <i className="fa fa-bell"></i>
                                 <span className="ml-2">Notifications</span>
                                 {/* Unread badge - TODO: Show actual count */}
                                 {0 > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-[#2d5016] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                    <span className="absolute -top-1 -right-1 bg-pine dark:bg-brand-green text-pine-text text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                         {0}
                                     </span>
                                 )}
                             </button>
+
+                            {/* Theme toggle placed next to settings/notifications to avoid overlap */}
+                            <div className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-3 py-2 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors text-center flex items-center justify-center">
+                                <ThemeToggle />
+                            </div>
 
                             {/* Small notification list - shows on button hover/click */}
                             {/* TODO: Implement small dropdown notification list */}

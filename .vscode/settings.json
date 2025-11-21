@@ -6,6 +6,8 @@
         "*.js": "javascript"
     },
     "editor.rulers": [80],
+    // CSS
+    "css.customData": [".vscode/css-custom-data.json"],
     // Jinja
     "[jinja-html]": {
         "editor.defaultFormatter": "monosans.djlint",
