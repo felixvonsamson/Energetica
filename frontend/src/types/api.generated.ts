@@ -2131,6 +2131,26 @@ export interface components {
          */
         NonFacilityBidType: "construction" | "research" | "transport";
         /**
+         * PlayerCapabilities
+         * @description Feature capability flags for a player.
+         *
+         *     These flags control UI visibility and route access in the frontend.
+         *     Updated when player builds functional facilities (laboratory, warehouse, etc.).
+         *
+         *     All flags are boolean for efficient serialization (~50 bytes total).
+         *     Sent with auth response and invalidated on facility construction.
+         */
+        PlayerCapabilities: {
+            /** Has Laboratory */
+            has_laboratory: boolean;
+            /** Has Warehouse */
+            has_warehouse: boolean;
+            /** Has Storage */
+            has_storage: boolean;
+            /** Has Network */
+            has_network: boolean;
+        };
+        /**
          * PlayerOut
          * @description Response model for player information.
          */
@@ -2481,6 +2501,8 @@ export interface components {
              * @description Whether the user has chosen a location (only relevant for players)
              */
             is_settled: boolean;
+            /** @description Feature capability flags (null for non-players or unsettled players) */
+            capabilities?: components["schemas"]["PlayerCapabilities"] | null;
         };
         /** ValidationError */
         ValidationError: {

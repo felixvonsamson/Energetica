@@ -9,11 +9,13 @@ import { usePlayerMoney } from "@/hooks/usePlayerMoney";
 import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { NotificationPopup } from "./NotificationPopup";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export function TopBar() {
     const { user } = useAuth();
+    const capabilities = useCapabilities();
     const {
         data: moneyData,
         isLoading: isMoneyLoading,
@@ -92,8 +94,9 @@ export function TopBar() {
                                 )}
                             </div>
 
-                            {/* Resource Gauges - TODO: Only show if warehouse unlocked */}
-                            <div className="flex gap-2 mb-2">
+                            {/* Resource Gauges - only show if warehouse unlocked */}
+                            {capabilities?.has_warehouse && (
+                                <div className="flex gap-2 mb-2">
                                 {/* Coal */}
                                 <div className="relative group">
                                     <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
@@ -182,6 +185,7 @@ export function TopBar() {
                                     </div>
                                 </div>
                             </div>
+                            )}
 
                             {/* Workers */}
                             <div className="flex gap-3 text-sm">
@@ -206,26 +210,28 @@ export function TopBar() {
                                     </div>
                                 </div>
 
-                                {/* Lab Workers */}
-                                <div className="flex items-center gap-1 relative group">
-                                    <span
-                                        className={
-                                            isWorkersError ? "opacity-75" : ""
-                                        }
-                                    >
-                                        {isWorkersLoading && !workersData
-                                            ? "..."
-                                            : `${workersData?.laboratory.available ?? 0}/${workersData?.laboratory.total ?? 0}`}
-                                    </span>
-                                    <img
-                                        src="/static/images/icons/technology.png"
-                                        alt="Technology"
-                                        className="w-4 h-4"
-                                    />
-                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                        Lab workers
+                                {/* Lab Workers - only show if laboratory unlocked */}
+                                {capabilities?.has_laboratory && (
+                                    <div className="flex items-center gap-1 relative group">
+                                        <span
+                                            className={
+                                                isWorkersError ? "opacity-75" : ""
+                                            }
+                                        >
+                                            {isWorkersLoading && !workersData
+                                                ? "..."
+                                                : `${workersData?.laboratory.available ?? 0}/${workersData?.laboratory.total ?? 0}`}
+                                        </span>
+                                        <img
+                                            src="/static/images/icons/technology.png"
+                                            alt="Technology"
+                                            className="w-4 h-4"
+                                        />
+                                        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                            Lab workers
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 

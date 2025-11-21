@@ -5,6 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from energetica.database.user import UserRole
+from energetica.schemas.capabilities import PlayerCapabilities
 
 
 class LoginRequest(BaseModel):
@@ -30,3 +31,7 @@ class UserOut(BaseModel):
     role: UserRole = Field(description="User role")
     player_id: int | None = Field(None, description="Player ID if role is 'player' and settled")
     is_settled: bool = Field(description="Whether the user has chosen a location (only relevant for players)")
+    capabilities: PlayerCapabilities | None = Field(
+        None,
+        description="Feature capability flags (null for non-players or unsettled players)",
+    )

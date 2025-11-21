@@ -141,6 +141,9 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     player.emit("finish_construction", ProjectListOut.from_player(player).model_dump())
 
     if isinstance(project.project_type, FunctionalFacilityType):
+        # Invalidate auth/me to update player capabilities when functional facilities are built
+        # Capabilities control UI visibility (lab workers, resource gauges, page access, etc.)
+        player.emit("invalidate", {"queries": [["auth", "me"]]})
         player.invalidate_recompute_and_dispatch_data_for_pages(
             # Update power page if project is a warehouse, since all fuel-consuming power facilities require some level
             # of warehouse to be built

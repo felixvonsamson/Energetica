@@ -24,6 +24,7 @@ import { AchievementCard } from "@/components/dashboard/AchievementCard";
 import { useWeather } from "@/hooks/useWeather";
 import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
 import { useAchievements } from "@/hooks/useAchievements";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { getMonthName } from "@/lib/date-utils";
 
 export const Route = createFileRoute("/app/dashboard")({
@@ -45,11 +46,9 @@ function DashboardPage() {
 
 function DashboardContent() {
     const [showInfoPopup, setShowInfoPopup] = useState(false);
+    const capabilities = useCapabilities();
 
-    // TODO: Fetch real data from API
-    const hasNetworkAchievement = false;
-    const hasStorageAchievement = true;
-    const hasWarehouseAchievement = true;
+    // TODO: Fetch real data from API for these non-capability flags
     const hasDiscoveredGreenhouse = true;
     const hasNetwork = false;
 
@@ -139,25 +138,31 @@ function DashboardContent() {
                     {/* TODO: Fetch from API */}
                 </DashboardSection>
 
-                <DashboardSection
-                    title="🔬 Under Research"
-                    emptyIcon={FlaskConical}
-                    emptyMessage="No technologies under research"
-                >
-                    {/* TODO: Fetch from API */}
-                </DashboardSection>
+                {/* Under research - only show if player has laboratory */}
+                {capabilities?.has_laboratory && (
+                    <DashboardSection
+                        title="🔬 Under Research"
+                        emptyIcon={FlaskConical}
+                        emptyMessage="No technologies under research"
+                    >
+                        {/* TODO: Fetch from API */}
+                    </DashboardSection>
+                )}
 
-                <DashboardSection
-                    title="🚚 Shipments"
-                    emptyIcon={Truck}
-                    emptyMessage="No shipments on the way"
-                >
-                    {/* TODO: Fetch from API */}
-                </DashboardSection>
+                {/* Shipments - only show if player has warehouse */}
+                {capabilities?.has_warehouse && (
+                    <DashboardSection
+                        title="🚚 Shipments"
+                        emptyIcon={Truck}
+                        emptyMessage="No shipments on the way"
+                    >
+                        {/* TODO: Fetch from API */}
+                    </DashboardSection>
+                )}
             </div>
 
             {/* Beginners guide */}
-            {!hasNetworkAchievement && <BeginnersGuide />}
+            {!capabilities?.has_network && <BeginnersGuide />}
 
             {/* Quick links grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
@@ -171,7 +176,7 @@ function DashboardContent() {
                     icon={Zap}
                     title="Power Production"
                 />
-                {hasStorageAchievement && (
+                {capabilities?.has_storage && (
                     <QuickLinkCard
                         href="/app/overviews/storage"
                         icon={Battery}
@@ -192,7 +197,7 @@ function DashboardContent() {
                         title="Market Prices"
                     />
                 )}
-                {hasWarehouseAchievement && (
+                {capabilities?.has_warehouse && (
                     <QuickLinkCard
                         href="/app/resource-market"
                         icon={Package}

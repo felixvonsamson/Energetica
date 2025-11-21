@@ -40,6 +40,10 @@ export default defineConfig(({ mode }) => ({
                 target: "http://localhost:5001",
                 changeOrigin: true,
             },
+            "/location_choice": {
+                target: "http://localhost:5001",
+                changeOrigin: true,
+            },
             "/login": {
                 target: "http://localhost:5001",
                 changeOrigin: true,
