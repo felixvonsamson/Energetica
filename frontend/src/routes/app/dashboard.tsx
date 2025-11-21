@@ -22,6 +22,7 @@ import { DashboardSection } from "@/components/dashboard/DashboardSection";
 import { QuickLinkCard } from "@/components/dashboard/QuickLinkCard";
 import { AchievementCard } from "@/components/dashboard/AchievementCard";
 import { useWeather } from "@/hooks/useWeather";
+import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
 import { getMonthName } from "@/lib/date-utils";
 
 export const Route = createFileRoute("/app/dashboard")({
@@ -74,9 +75,14 @@ function DashboardContent() {
                 title="Help : Dashboard"
             >
                 <div className="space-y-3">
-                    <p>This is the dashboard of your account. Here you will find:</p>
+                    <p>
+                        This is the dashboard of your account. Here you will
+                        find:
+                    </p>
                     <ul className="list-none space-y-1 ml-4">
-                        <li>🌡️ Current weather conditions and the in-game season</li>
+                        <li>
+                            🌡️ Current weather conditions and the in-game season
+                        </li>
                         <li>🏗️ Ongoing or planned construction projects</li>
                         <li>🔬 Ongoing or planned research projects</li>
                         <li>🚚 Ongoing shipments</li>
@@ -234,7 +240,8 @@ function WeatherSection() {
                         {/* Month with year progress indicator */}
                         <div className="px-2">
                             <div className="mb-2 whitespace-nowrap">
-                                Month: <b>{getMonthName(weatherData.month_number)}</b>
+                                Month:{" "}
+                                <b>{getMonthName(weatherData.month_number)}</b>
                             </div>
                             <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full">
                                 {/* Current date dot indicator */}
@@ -251,7 +258,10 @@ function WeatherSection() {
                         <div className="px-2">
                             <div className="mb-2 whitespace-nowrap">
                                 Irradiance:{" "}
-                                <b>{Math.round(weatherData.solar_irradiance)} W/m²</b>
+                                <b>
+                                    {Math.round(weatherData.solar_irradiance)}{" "}
+                                    W/m²
+                                </b>
                             </div>
                             <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div
@@ -283,7 +293,10 @@ function WeatherSection() {
                         <div className="px-2">
                             <div className="mb-2 whitespace-nowrap">
                                 River discharge:{" "}
-                                <b>{Math.round(weatherData.river_discharge)} m³/s</b>
+                                <b>
+                                    {Math.round(weatherData.river_discharge)}{" "}
+                                    m³/s
+                                </b>
                             </div>
                             <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div
@@ -403,6 +416,86 @@ function AchievementSection() {
 }
 
 function DailyQuizSection() {
+    // TODO: correctly answering the daily quiz earns the player 1 XP point. This is not communicated in the new UI
+    const { data: quizData, isLoading, isError } = useDailyQuiz();
+    const { mutate: submitAnswer, isPending } = useSubmitQuizAnswer();
+
+    const handleAnswerClick = (answer: "answer1" | "answer2" | "answer3") => {
+        if (!quizData || quizData.player_answer) return; // Already answered
+        submitAnswer(answer);
+    };
+
+    const hasAnswered =
+        quizData?.player_answer !== undefined &&
+        quizData?.player_answer !== null;
+
+    // Helper to determine if an answer is correct
+    const isCorrectAnswer = (answer: "answer1" | "answer2" | "answer3") => {
+        if (!quizData?.correct_answer) return false;
+        return (
+            quizData.correct_answer === answer ||
+            quizData.correct_answer === "all correct"
+        );
+    };
+
+    // Helper to get button styling based on state
+    const getButtonClass = (answer: "answer1" | "answer2" | "answer3") => {
+        const baseClass =
+            "w-full px-4 py-3 rounded-lg font-medium transition-all duration-300 ease-out relative";
+
+        if (!hasAnswered) {
+            // Before answering - normal clickable button
+            return `${baseClass} bg-bone dark:bg-dark-bg-secondary border-2 border-pine dark:border-dark-border hover:border-brand-green dark:hover:border-brand-green hover:shadow-md text-primary disabled:opacity-50 disabled:cursor-not-allowed`;
+        }
+
+        // After answering - show feedback
+        const isCorrect = isCorrectAnswer(answer);
+        const wasSelected = quizData.player_answer === answer;
+
+        if (wasSelected && isCorrect) {
+            // User selected correct answer
+            return `${baseClass} bg-green-50 dark:bg-green-900/20 border-2 border-green-600 dark:border-green-500 text-green-800 dark:text-green-300 cursor-default`;
+        } else if (wasSelected && !isCorrect) {
+            // User selected wrong answer
+            return `${baseClass} bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-400 text-red-800 dark:text-red-300 cursor-default`;
+        } else if (isCorrect) {
+            // Correct answer (not selected)
+            return `${baseClass} bg-green-50 dark:bg-green-900/20 border-2 border-green-500 dark:border-green-400 text-green-800 dark:text-green-300 cursor-default`;
+        } else {
+            // Incorrect answer (not selected)
+            return `${baseClass} bg-bone dark:bg-dark-bg-secondary border-2 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 cursor-default opacity-60`;
+        }
+    };
+
+    // Helper to render answer icon/indicator
+    const getAnswerIndicator = (answer: "answer1" | "answer2" | "answer3") => {
+        if (!hasAnswered) return null;
+
+        const isCorrect = isCorrectAnswer(answer);
+        const wasSelected = quizData.player_answer === answer;
+
+        if (wasSelected && isCorrect) {
+            return (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 dark:text-green-400 font-bold">
+                    ✓ Your answer
+                </span>
+            );
+        } else if (wasSelected && !isCorrect) {
+            return (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600 dark:text-red-400 font-bold">
+                    ✗ Your answer
+                </span>
+            );
+        } else if (isCorrect) {
+            return (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 dark:text-green-400 font-bold">
+                    ✓ Correct
+                </span>
+            );
+        }
+        return null;
+    };
+
     return (
         <div className="flex justify-center mb-8">
             <Card className="border-2 border-pine dark:border-dark-border max-w-2xl w-full">
@@ -419,9 +512,86 @@ function DailyQuizSection() {
                         alt=""
                     />
                 </CardTitle>
-                <div className="text-center text-gray-600 dark:text-gray-400">
-                    {/* TODO: Fetch and display daily quiz from API */}
-                    <p>Loading quiz question...</p>
+
+                <div className="space-y-4">
+                    {isLoading ? (
+                        <div className="text-center text-gray-500">
+                            Loading quiz question...
+                        </div>
+                    ) : isError ? (
+                        <div className="text-center text-alert-red">
+                            Failed to load quiz question
+                        </div>
+                    ) : quizData ? (
+                        <>
+                            {/* Question */}
+                            <p className="text-lg text-center mb-4">
+                                {quizData.question}
+                            </p>
+
+                            {/* Answer Buttons */}
+                            <div className="space-y-3">
+                                <button
+                                    onClick={() => handleAnswerClick("answer1")}
+                                    disabled={hasAnswered || isPending}
+                                    className={getButtonClass("answer1")}
+                                >
+                                    <span className="block pr-24">
+                                        {quizData.answer1}
+                                    </span>
+                                    {getAnswerIndicator("answer1")}
+                                </button>
+                                <button
+                                    onClick={() => handleAnswerClick("answer2")}
+                                    disabled={hasAnswered || isPending}
+                                    className={getButtonClass("answer2")}
+                                >
+                                    <span className="block pr-24">
+                                        {quizData.answer2}
+                                    </span>
+                                    {getAnswerIndicator("answer2")}
+                                </button>
+                                <button
+                                    onClick={() => handleAnswerClick("answer3")}
+                                    disabled={hasAnswered || isPending}
+                                    className={getButtonClass("answer3")}
+                                >
+                                    <span className="block pr-24">
+                                        {quizData.answer3}
+                                    </span>
+                                    {getAnswerIndicator("answer3")}
+                                </button>
+                            </div>
+
+                            {/* Explanation and Learn More (only shown after answering) */}
+                            {hasAnswered && quizData.explanation && (
+                                <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                                    <p className="text-center mb-3">
+                                        {quizData.explanation}
+                                    </p>
+                                    {quizData.learn_more_link && (
+                                        <p className="text-center">
+                                            <a
+                                                href={quizData.learn_more_link}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                                            >
+                                                Learn more
+                                            </a>
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Submitting state */}
+                            {isPending && (
+                                <p className="text-center text-gray-500 text-sm">
+                                    Submitting answer...
+                                </p>
+                            )}
+                        </>
+                    ) : null}
                 </div>
             </Card>
         </div>

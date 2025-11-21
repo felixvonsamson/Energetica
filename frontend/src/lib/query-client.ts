@@ -79,4 +79,7 @@ export const queryKeys = {
     weather: {
         current: ["weather", "current"] as const,
     },
+    dailyQuiz: {
+        today: ["daily-quiz", "today"] as const,
+    },
 } as const;
