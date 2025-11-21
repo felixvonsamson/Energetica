@@ -23,6 +23,7 @@ import { QuickLinkCard } from "@/components/dashboard/QuickLinkCard";
 import { AchievementCard } from "@/components/dashboard/AchievementCard";
 import { useWeather } from "@/hooks/useWeather";
 import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
+import { useAchievements } from "@/hooks/useAchievements";
 import { getMonthName } from "@/lib/date-utils";
 
 export const Route = createFileRoute("/app/dashboard")({
@@ -389,12 +390,7 @@ function BeginnersGuide() {
 }
 
 function AchievementSection() {
-    // TODO: Fetch from API
-    const achievements = [
-        { name: "Power Producer", progress: 75 },
-        { name: "Energy Tycoon", progress: 40 },
-        { name: "Green Pioneer", progress: 20 },
-    ];
+    const { data: achievementsData, isLoading, isError } = useAchievements();
 
     return (
         <Card className="mb-6">
@@ -402,15 +398,42 @@ function AchievementSection() {
                 <Trophy className="inline w-6 h-6 mr-2" />
                 Achievement Progression
             </CardTitle>
-            <div className="space-y-3">
-                {achievements.map((achievement) => (
-                    <AchievementCard
-                        key={achievement.name}
-                        name={achievement.name}
-                        progress={achievement.progress}
-                    />
-                ))}
-            </div>
+
+            {isLoading ? (
+                <div className="text-center text-gray-500 py-4">
+                    Loading achievements...
+                </div>
+            ) : isError ? (
+                <div className="text-center text-red-600 dark:text-red-400 py-4">
+                    Failed to load achievements
+                </div>
+            ) : achievementsData?.achievements &&
+              achievementsData.achievements.length > 0 ? (
+                <div className="space-y-3">
+                    {achievementsData.achievements.map(
+                        (achievement: {
+                            id: string;
+                            name: string;
+                            status: number;
+                            objective: number;
+                            reward: number;
+                        }) => (
+                            <AchievementCard
+                                key={achievement.id}
+                                id={achievement.id}
+                                name={achievement.name}
+                                status={achievement.status}
+                                objective={achievement.objective}
+                                reward={achievement.reward}
+                            />
+                        ),
+                    )}
+                </div>
+            ) : (
+                <div className="text-center text-gray-500 py-4">
+                    No upcoming achievements
+                </div>
+            )}
         </Card>
     );
 }

@@ -82,4 +82,7 @@ export const queryKeys = {
     dailyQuiz: {
         today: ["daily-quiz", "today"] as const,
     },
+    achievements: {
+        upcoming: ["achievements", "upcoming"] as const,
+    },
 } as const;
