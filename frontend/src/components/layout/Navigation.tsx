@@ -6,16 +6,20 @@
 import { useState } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
 import { Menu, ChevronDown } from "lucide-react";
+import { useCapabilities } from "@/hooks/useCapabilities";
 
 export function Navigation() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const capabilities = useCapabilities();
 
-    // TODO: Get these from user achievements/progress
-    const hasWarehouse = false;
-    const hasNetwork = false;
-    const hasLaboratory = false;
-    const hasStorageFacilities = false;
+    // Get capability flags
+    const hasWarehouse = capabilities?.has_warehouse ?? false;
+    const hasNetwork = capabilities?.has_network ?? false;
+    const hasLaboratory = capabilities?.has_laboratory ?? false;
+    const hasStorageFacilities = capabilities?.has_storage ?? false;
+
+    // TODO: Get from capabilities when available
     const discoveredGreenhouse = false;
 
     const toggleDropdown = (dropdown: string) => {
@@ -23,7 +27,7 @@ export function Navigation() {
     };
 
     return (
-        <nav className="bg-[#c9d4b5] border-b-2 border-[#1a2f0d]">
+        <nav className="bg-tan-green dark:bg-dark-bg-secondary border-b-2 border-pine-darker dark:border-dark-border">
             <div className="px-4">
                 {/* Mobile menu button */}
                 <div className="flex items-center justify-between md:hidden py-3">
@@ -33,11 +37,12 @@ export function Navigation() {
                             alt="Energetica"
                             className="w-6 h-6"
                         />
-                        <span className="text-black font-bold">Energetica</span>
+                        <span className="text-pine dark:text-dark-text-primary font-bold">Energetica</span>
                     </div>
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="text-black p-2"
+                        className="text-pine dark:text-dark-text-primary p-2 hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary rounded transition-colors"
+                        aria-label="Toggle navigation menu"
                     >
                         <Menu size={24} />
                     </button>
@@ -216,10 +221,13 @@ interface NavItemProps {
 
 function NavItem({ to, icon, children }: NavItemProps) {
     return (
-        <li className="w-full md:w-auto">
+        <li className="w-full md:w-auto border-b border-pine/10 dark:border-dark-border/30 md:border-none">
             <Link
                 to={to}
-                className="flex items-center gap-2 px-4 py-3 text-black hover:bg-[#b5c09d] transition-colors"
+                className="flex items-center gap-2 px-4 py-3 text-pine dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors"
+                activeProps={{
+                    className: "bg-tan-hover dark:bg-dark-bg-tertiary font-semibold"
+                }}
             >
                 <img
                     src={`/static/images/icons/${icon}`}
@@ -248,17 +256,19 @@ function NavDropdown({
     children,
 }: NavDropdownProps) {
     return (
-        <li className="w-full md:w-auto md:relative">
+        <li className="w-full md:w-auto md:relative border-b-2 border-pine/20 dark:border-dark-border/50 md:border-none">
             <button
                 onClick={onToggle}
-                className="flex items-center gap-2 px-4 py-3 text-black hover:bg-[#b5c09d] transition-colors w-full"
+                className={`flex items-center gap-2 px-4 py-3 text-pine dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors w-full ${
+                    isOpen ? "bg-tan-hover dark:bg-dark-bg-tertiary" : ""
+                }`}
             >
                 <img
                     src={`/static/images/icons/${icon}`}
                     alt=""
                     className="w-5 h-5"
                 />
-                <span>{label}</span>
+                <span className="font-medium">{label}</span>
                 <ChevronDown
                     size={16}
                     className={`ml-auto transition-transform ${
@@ -269,7 +279,7 @@ function NavDropdown({
 
             {/* Dropdown menu */}
             {isOpen && (
-                <ul className="md:absolute md:left-0 md:top-full md:bg-[#e8dcc0] md:shadow-lg md:min-w-[200px] md:border-2 md:border-[#1a2f0d]">
+                <ul className="bg-bone/50 dark:bg-dark-bg-tertiary md:absolute md:left-0 md:top-full md:bg-bone dark:md:bg-dark-bg-secondary md:shadow-lg md:min-w-[200px] md:border-2 md:border-pine-darker dark:md:border-dark-border">
                     {children}
                 </ul>
             )}

@@ -165,7 +165,8 @@ function DashboardContent() {
             {!capabilities?.has_network && <BeginnersGuide />}
 
             {/* Quick links grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+            <section className="mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <QuickLinkCard
                     href="/app/overviews/revenues"
                     icon={DollarSign}
@@ -209,7 +210,8 @@ function DashboardContent() {
                     icon={Trophy}
                     title="Ranking"
                 />
-            </div>
+                </div>
+            </section>
 
             {/* Achievement progression */}
             <AchievementSection />
@@ -228,101 +230,104 @@ function WeatherSection() {
     } = useWeather();
 
     return (
-        <Card className="mb-6">
-            <CardTitle className="text-center mb-4">
-                Current weather conditions
-            </CardTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-2">
-                {isWeatherLoading && !weatherData ? (
-                    <div className="col-span-full text-center text-gray-500">
-                        Loading...
-                    </div>
-                ) : isWeatherError ? (
-                    <div className="col-span-full text-center text-alert-red">
-                        Failed to load weather data
-                    </div>
-                ) : weatherData ? (
-                    <>
-                        {/* Month with year progress indicator */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                Month:{" "}
-                                <b>{getMonthName(weatherData.month_number)}</b>
-                            </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                {/* Current date dot indicator */}
-                                <div
-                                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-pine dark:bg-brand-green rounded-full"
-                                    style={{
-                                        left: `calc(${weatherData.year_progress * 100}%)`,
-                                    }}
-                                />
-                            </div>
+        <section className="mb-6">
+            <Card>
+                <CardTitle className="text-center mb-4">
+                    Current weather conditions
+                </CardTitle>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-2">
+                    {isWeatherLoading && !weatherData ? (
+                        <div className="col-span-full text-center text-gray-500">
+                            Loading...
                         </div>
+                    ) : isWeatherError ? (
+                        <div className="col-span-full text-center text-alert-red">
+                            Failed to load weather data
+                        </div>
+                    ) : weatherData ? (
+                        <>
+                            {/* Month with year progress indicator */}
+                            <div className="px-2">
+                                <div className="mb-2 whitespace-nowrap">
+                                    Month:{" "}
+                                    <b>{getMonthName(weatherData.month_number)}</b>
+                                </div>
+                                <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                    {/* Current date dot indicator */}
+                                    <div
+                                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-pine dark:bg-brand-green rounded-full"
+                                        style={{
+                                            left: `calc(${weatherData.year_progress * 100}%)`,
+                                        }}
+                                    />
+                                </div>
+                            </div>
 
-                        {/* Solar Irradiance with visual bar */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                Irradiance:{" "}
-                                <b>
-                                    {Math.round(weatherData.solar_irradiance)}{" "}
-                                    W/m²
-                                </b>
+                            {/* Solar Irradiance with visual bar */}
+                            <div className="px-2">
+                                <div className="mb-2 whitespace-nowrap">
+                                    Irradiance:{" "}
+                                    <b>
+                                        {Math.round(weatherData.solar_irradiance)}{" "}
+                                        W/m²
+                                    </b>
+                                </div>
+                                <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-yellow-500 dark:bg-yellow-400 transition-all duration-300"
+                                        style={{
+                                            width: `${Math.min(100, (weatherData.solar_irradiance / 1000) * 100)}%`,
+                                        }}
+                                    />
+                                </div>
                             </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-yellow-500 dark:bg-yellow-400 transition-all duration-300"
-                                    style={{
-                                        width: `${Math.min(100, (weatherData.solar_irradiance / 1000) * 100)}%`,
-                                    }}
-                                />
-                            </div>
-                        </div>
 
-                        {/* Wind Speed with visual bar */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                Wind speed:{" "}
-                                <b>{Math.round(weatherData.wind_speed)} km/h</b>
+                            {/* Wind Speed with visual bar */}
+                            <div className="px-2">
+                                <div className="mb-2 whitespace-nowrap">
+                                    Wind speed:{" "}
+                                    <b>{Math.round(weatherData.wind_speed)} km/h</b>
+                                </div>
+                                <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-cyan-500 dark:bg-cyan-400 transition-all duration-300"
+                                        style={{
+                                            width: `${Math.min(100, (weatherData.wind_speed / 60) * 100)}%`,
+                                        }}
+                                    />
+                                </div>
                             </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-cyan-500 dark:bg-cyan-400 transition-all duration-300"
-                                    style={{
-                                        width: `${Math.min(100, (weatherData.wind_speed / 60) * 100)}%`,
-                                    }}
-                                />
-                            </div>
-                        </div>
 
-                        {/* River Discharge with visual bar */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                River discharge:{" "}
-                                <b>
-                                    {Math.round(weatherData.river_discharge)}{" "}
-                                    m³/s
-                                </b>
+                            {/* River Discharge with visual bar */}
+                            <div className="px-2">
+                                <div className="mb-2 whitespace-nowrap">
+                                    River discharge:{" "}
+                                    <b>
+                                        {Math.round(weatherData.river_discharge)}{" "}
+                                        m³/s
+                                    </b>
+                                </div>
+                                <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-blue-500 dark:bg-blue-400 transition-all duration-300"
+                                        style={{
+                                            width: `${Math.min(100, (weatherData.river_discharge / 150) * 100)}%`,
+                                        }}
+                                    />
+                                </div>
                             </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-blue-500 dark:bg-blue-400 transition-all duration-300"
-                                    style={{
-                                        width: `${Math.min(100, (weatherData.river_discharge / 150) * 100)}%`,
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </>
-                ) : null}
-            </div>
-        </Card>
+                        </>
+                    ) : null}
+                </div>
+            </Card>
+        </section>
     );
 }
 
 function BeginnersGuide() {
     return (
-        <Card className="mb-6 border-2 border-pine dark:border-dark-border">
+        <section className="mb-6">
+            <Card className="border-2 border-pine dark:border-dark-border">
             <CardTitle className="mb-4">Beginners guide</CardTitle>
             <div className="space-y-4 text-base">
                 <p>Welcome to Energetica!</p>
@@ -391,6 +396,7 @@ function BeginnersGuide() {
                 <p>Best of luck in your energy adventure!</p>
             </div>
         </Card>
+        </section>
     );
 }
 
@@ -398,48 +404,50 @@ function AchievementSection() {
     const { data: achievementsData, isLoading, isError } = useAchievements();
 
     return (
-        <Card className="mb-6">
-            <CardTitle className="mb-4">
-                <Trophy className="inline w-6 h-6 mr-2" />
-                Achievement Progression
-            </CardTitle>
+        <section className="mb-6">
+            <Card>
+                <CardTitle className="mb-4">
+                    <Trophy className="inline w-6 h-6 mr-2" />
+                    Achievement Progression
+                </CardTitle>
 
-            {isLoading ? (
-                <div className="text-center text-gray-500 py-4">
-                    Loading achievements...
-                </div>
-            ) : isError ? (
-                <div className="text-center text-red-600 dark:text-red-400 py-4">
-                    Failed to load achievements
-                </div>
-            ) : achievementsData?.achievements &&
-              achievementsData.achievements.length > 0 ? (
-                <div className="space-y-3">
-                    {achievementsData.achievements.map(
-                        (achievement: {
-                            id: string;
-                            name: string;
-                            status: number;
-                            objective: number;
-                            reward: number;
-                        }) => (
-                            <AchievementCard
-                                key={achievement.id}
-                                id={achievement.id}
-                                name={achievement.name}
-                                status={achievement.status}
-                                objective={achievement.objective}
-                                reward={achievement.reward}
-                            />
-                        ),
-                    )}
-                </div>
-            ) : (
-                <div className="text-center text-gray-500 py-4">
-                    No upcoming achievements
-                </div>
-            )}
-        </Card>
+                {isLoading ? (
+                    <div className="text-center text-gray-500 py-4">
+                        Loading achievements...
+                    </div>
+                ) : isError ? (
+                    <div className="text-center text-red-600 dark:text-red-400 py-4">
+                        Failed to load achievements
+                    </div>
+                ) : achievementsData?.achievements &&
+                  achievementsData.achievements.length > 0 ? (
+                    <div className="space-y-3">
+                        {achievementsData.achievements.map(
+                            (achievement: {
+                                id: string;
+                                name: string;
+                                status: number;
+                                objective: number;
+                                reward: number;
+                            }) => (
+                                <AchievementCard
+                                    key={achievement.id}
+                                    id={achievement.id}
+                                    name={achievement.name}
+                                    status={achievement.status}
+                                    objective={achievement.objective}
+                                    reward={achievement.reward}
+                                />
+                            ),
+                        )}
+                    </div>
+                ) : (
+                    <div className="text-center text-gray-500 py-4">
+                        No upcoming achievements
+                    </div>
+                )}
+            </Card>
+        </section>
     );
 }
 
@@ -525,8 +533,9 @@ function DailyQuizSection() {
     };
 
     return (
-        <div className="flex justify-center mb-8">
-            <Card className="border-2 border-pine dark:border-dark-border max-w-2xl w-full">
+        <section className="mb-6">
+            <div className="flex justify-center">
+                <Card className="border-2 border-pine dark:border-dark-border max-w-2xl w-full">
                 <CardTitle className="text-center mb-4">
                     <img
                         src="/static/images/icons/quiz.png"
@@ -622,6 +631,7 @@ function DailyQuizSection() {
                     ) : null}
                 </div>
             </Card>
-        </div>
+            </div>
+        </section>
     );
 }

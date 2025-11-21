@@ -22,15 +22,16 @@ export function QuickLinkCard({
         <Link
             to={href}
             className={cn(
-                "bg-tan-green dark:bg-dark-bg-secondary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary",
+                "bg-bone dark:bg-dark-bg-secondary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary",
                 "p-6 rounded-lg text-center transition-colors block",
+                "border border-transparent hover:border-pine dark:hover:border-brand-green",
                 className
             )}
         >
             {Icon && (
                 <Icon className="w-8 h-8 mx-auto mb-2 text-pine dark:text-dark-text-primary" />
             )}
-            <h2 className="text-xl font-bold text-pine dark:text-dark-text-primary">{title}</h2>
+            <h2 className="text-xl font-bold text-bone-text dark:text-dark-text-primary">{title}</h2>
         </Link>
     );
 }
