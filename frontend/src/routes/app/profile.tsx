@@ -14,6 +14,7 @@ import { useFacilities } from "@/hooks/useFacilities";
 import { FacilityGroupTable } from "@/components/profile/FacilityGroupTable";
 import type { ApiResponse } from "@/types/api-helpers";
 import { formatPower, formatEnergy, formatMassRate } from "@/lib/format-utils";
+import { dummyFacilities } from "@/data/dummyFacilities";
 
 // Type aliases from generated API types
 type FacilitiesData = ApiResponse<"/api/v1/facilities", "get">;
@@ -43,7 +44,10 @@ function ProfileContent() {
     const { user } = useAuth();
     const { data: facilities, isLoading, error } = useFacilities();
 
-    if (isLoading) {
+    // TEMPORARY: Set to true to showcase all asset colors with dummy data
+    const SHOW_DUMMY_DATA = false;
+
+    if (isLoading && !SHOW_DUMMY_DATA) {
         return (
             <div className="p-4 md:p-8 text-center">
                 <p className="text-lg">Loading facilities...</p>
@@ -51,7 +55,7 @@ function ProfileContent() {
         );
     }
 
-    if (error) {
+    if (error && !SHOW_DUMMY_DATA) {
         return (
             <div className="p-4 md:p-8 text-center text-red-600">
                 <p className="text-lg">Error loading facilities</p>
@@ -59,7 +63,9 @@ function ProfileContent() {
         );
     }
 
-    if (!facilities) {
+    const displayFacilities = SHOW_DUMMY_DATA ? dummyFacilities : facilities;
+
+    if (!displayFacilities) {
         return null;
     }
 
@@ -118,7 +124,7 @@ function ProfileContent() {
                     <CardTitle className="mb-4">Power Facilities</CardTitle>
                     <div className="overflow-x-auto">
                         <FacilityGroupTable
-                            facilities={facilities.power_facilities}
+                            facilities={displayFacilities.power_facilities}
                             columns={[
                                 {
                                     header: "Max Power",
@@ -207,7 +213,7 @@ function ProfileContent() {
                     <CardTitle className="mb-4">Storage Facilities</CardTitle>
                     <div className="overflow-x-auto">
                         <FacilityGroupTable
-                            facilities={facilities.storage_facilities}
+                            facilities={displayFacilities.storage_facilities}
                             columns={[
                                 {
                                     header: "Capacity",
@@ -299,7 +305,7 @@ function ProfileContent() {
                     </CardTitle>
                     <div className="overflow-x-auto">
                         <FacilityGroupTable
-                            facilities={facilities.extraction_facilities}
+                            facilities={displayFacilities.extraction_facilities}
                             columns={[
                                 {
                                     header: "Extraction Rate",
