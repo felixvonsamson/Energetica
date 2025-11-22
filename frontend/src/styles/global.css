@@ -59,6 +59,58 @@
         --text-on-card: #000000;
 
         --border-default: #a4be7b;
+
+        /* Asset colours - Power facilities (water) */
+        --asset-color-watermill: rgb(0, 180, 216);
+        --asset-color-small-water-dam: rgb(0, 119, 182);
+        --asset-color-large-water-dam: rgb(3, 4, 94);
+
+        /* Asset colours - Power facilities (nuclear) */
+        --asset-color-nuclear-reactor: rgb(191, 210, 0);
+        --asset-color-nuclear-reactor-gen4: rgb(128, 185, 24);
+
+        /* Asset colours - Power facilities (fossil) */
+        --asset-color-steam-engine: rgb(151, 157, 172);
+        --asset-color-coal-burner: rgb(0, 0, 0);
+        --asset-color-gas-burner: rgb(171, 196, 255);
+        --asset-color-combined-cycle: rgb(92, 77, 125);
+
+        /* Asset colours - Power facilities (wind) */
+        --asset-color-windmill: rgb(156, 197, 161);
+        --asset-color-onshore-wind-turbine: rgb(73, 160, 120);
+        --asset-color-offshore-wind-turbine: rgb(33, 104, 105);
+
+        /* Asset colours - Power facilities (solar) */
+        --asset-color-csp-solar: rgb(255, 170, 0);
+        --asset-color-pv-solar: rgb(255, 234, 0);
+
+        /* Asset colours - Storage facilities */
+        --asset-color-small-pumped-hydro: rgb(0, 150, 199);
+        --asset-color-large-pumped-hydro: rgb(2, 62, 138);
+        --asset-color-lithium-ion-batteries: rgb(108, 88, 76);
+        --asset-color-solid-state-batteries: rgb(169, 132, 103);
+        --asset-color-molten-salt: rgb(119, 47, 26);
+        --asset-color-hydrogen-storage: rgb(144, 241, 239);
+
+        /* Asset colours - Extraction facilities */
+        --asset-color-coal-mine: rgb(73, 80, 87);
+        --asset-color-gas-drilling-site: rgb(76, 201, 240);
+        --asset-color-uranium-mine: rgb(238, 239, 32);
+
+        /* Asset colours - Resources */
+        --asset-color-coal: rgb(0, 0, 0);
+        --asset-color-gas: rgb(171, 196, 255);
+        --asset-color-uranium: rgb(191, 210, 0);
+        --asset-color-imports: rgb(255, 89, 94);
+        --asset-color-exports: rgb(138, 201, 38);
+        --asset-color-dumping: rgb(208, 0, 0);
+
+        /* Asset colours - Functional facilities */
+        --asset-color-industry: rgb(188, 108, 37);
+        --asset-color-research: rgb(255, 255, 255);
+        --asset-color-construction: rgb(255, 123, 0);
+        --asset-color-transport: rgb(106, 0, 244);
+        --asset-color-carbon-capture: rgb(173, 181, 189);
     }
 
     /* Dark mode */
@@ -74,6 +126,58 @@
         --text-on-card: #ffffff;
 
         --border-default: #404040;
+
+        /* Asset colours - Power facilities (water) - adjusted for dark mode */
+        --asset-color-watermill: rgb(100, 210, 236);
+        --asset-color-small-water-dam: rgb(80, 169, 222);
+        --asset-color-large-water-dam: rgb(100, 120, 200);
+
+        /* Asset colours - Power facilities (nuclear) */
+        --asset-color-nuclear-reactor: rgb(206, 220, 80);
+        --asset-color-nuclear-reactor-gen4: rgb(158, 210, 84);
+
+        /* Asset colours - Power facilities (fossil) */
+        --asset-color-steam-engine: rgb(171, 177, 192);
+        --asset-color-coal-burner: rgb(120, 120, 120);
+        --asset-color-gas-burner: rgb(141, 176, 255);
+        --asset-color-combined-cycle: rgb(142, 127, 175);
+
+        /* Asset colours - Power facilities (wind) */
+        --asset-color-windmill: rgb(136, 207, 141);
+        --asset-color-onshore-wind-turbine: rgb(103, 190, 150);
+        --asset-color-offshore-wind-turbine: rgb(83, 154, 155);
+
+        /* Asset colours - Power facilities (solar) */
+        --asset-color-csp-solar: rgb(255, 190, 60);
+        --asset-color-pv-solar: rgb(255, 244, 80);
+
+        /* Asset colours - Storage facilities */
+        --asset-color-small-pumped-hydro: rgb(80, 190, 229);
+        --asset-color-large-pumped-hydro: rgb(82, 132, 208);
+        --asset-color-lithium-ion-batteries: rgb(158, 138, 126);
+        --asset-color-solid-state-batteries: rgb(199, 162, 133);
+        --asset-color-molten-salt: rgb(189, 107, 76);
+        --asset-color-hydrogen-storage: rgb(124, 231, 229);
+
+        /* Asset colours - Extraction facilities */
+        --asset-color-coal-mine: rgb(133, 140, 147);
+        --asset-color-gas-drilling-site: rgb(96, 211, 250);
+        --asset-color-uranium-mine: rgb(214, 214, 60);
+
+        /* Asset colours - Resources */
+        --asset-color-coal: rgb(120, 120, 120);
+        --asset-color-gas: rgb(141, 176, 255);
+        --asset-color-uranium: rgb(206, 220, 80);
+        --asset-color-imports: rgb(255, 129, 134);
+        --asset-color-exports: rgb(168, 221, 78);
+        --asset-color-dumping: rgb(248, 80, 80);
+
+        /* Asset colours - Functional facilities */
+        --asset-color-industry: rgb(218, 148, 77);
+        --asset-color-research: rgb(220, 220, 220);
+        --asset-color-construction: rgb(255, 163, 60);
+        --asset-color-transport: rgb(156, 80, 255);
+        --asset-color-carbon-capture: rgb(153, 161, 169);
     }
 
     html,
