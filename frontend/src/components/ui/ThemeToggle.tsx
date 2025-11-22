@@ -19,7 +19,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
                 "p-2 rounded-lg transition-colors",
                 "hover:bg-pine/10 dark:hover:bg-white/10",
                 "focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-white",
-                className
+                className,
             )}
             aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
         >

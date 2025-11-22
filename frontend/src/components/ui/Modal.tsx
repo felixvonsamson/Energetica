@@ -28,7 +28,7 @@ export function Modal({
                 className={cn(
                     "bg-brand-green dark:bg-dark-bg-tertiary rounded-lg max-w-2xl w-full p-6",
                     "text-white",
-                    className
+                    className,
                 )}
             >
                 <div className="flex items-center justify-between mb-4">

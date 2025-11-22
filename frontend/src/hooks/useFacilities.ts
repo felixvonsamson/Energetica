@@ -32,8 +32,12 @@ export function useUpgradeFacility() {
         mutationFn: facilitiesApi.upgrade,
         onSuccess: () => {
             // Invalidate facilities and money queries after upgrade
-            queryClient.invalidateQueries({ queryKey: queryKeys.facilities.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.players.money });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.facilities.all,
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.players.money,
+            });
         },
     });
 }
@@ -48,8 +52,12 @@ export function useUpgradeAllOfType() {
         mutationFn: facilitiesApi.upgradeAll,
         onSuccess: () => {
             // Invalidate facilities and money queries after mass upgrade
-            queryClient.invalidateQueries({ queryKey: queryKeys.facilities.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.players.money });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.facilities.all,
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.players.money,
+            });
         },
     });
 }
@@ -64,8 +72,12 @@ export function useDismantleFacility() {
         mutationFn: facilitiesApi.dismantle,
         onSuccess: () => {
             // Invalidate facilities and money queries after dismantle
-            queryClient.invalidateQueries({ queryKey: queryKeys.facilities.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.players.money });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.facilities.all,
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.players.money,
+            });
         },
     });
 }
@@ -80,8 +92,12 @@ export function useDismantleAllOfType() {
         mutationFn: facilitiesApi.dismantleAll,
         onSuccess: () => {
             // Invalidate facilities and money queries after mass dismantle
-            queryClient.invalidateQueries({ queryKey: queryKeys.facilities.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.players.money });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.facilities.all,
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.players.money,
+            });
         },
     });
 }

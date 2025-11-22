@@ -50,7 +50,12 @@ function formatMoneyValue(amount: number, long: boolean = false): string {
  * <Money amount={1500000} /> // "1'500k$"
  * <Money amount={1500} long /> // "1'500$" (no scaling)
  */
-export function Money({ amount, long = false, className, iconSize = "sm" }: MoneyProps) {
+export function Money({
+    amount,
+    long = false,
+    className,
+    iconSize = "sm",
+}: MoneyProps) {
     const sizeClasses = {
         sm: "w-3 h-3",
         md: "w-4 h-4",
@@ -63,7 +68,7 @@ export function Money({ amount, long = false, className, iconSize = "sm" }: Mone
             <DollarSign
                 className={cn(
                     sizeClasses[iconSize],
-                    "text-amber-500 dark:text-amber-400"
+                    "text-amber-500 dark:text-amber-400",
                 )}
                 strokeWidth={2.5}
             />

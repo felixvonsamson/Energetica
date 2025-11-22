@@ -167,49 +167,49 @@ function DashboardContent() {
             {/* Quick links grid */}
             <section className="mb-6">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <QuickLinkCard
-                    href="/app/overviews/revenues"
-                    icon={DollarSign}
-                    title="Revenues"
-                />
-                <QuickLinkCard
-                    href="/app/overviews/electricity"
-                    icon={Zap}
-                    title="Power Production"
-                />
-                {capabilities?.has_storage && (
                     <QuickLinkCard
-                        href="/app/overviews/storage"
-                        icon={Battery}
-                        title="Stored Energy"
+                        href="/app/overviews/revenues"
+                        icon={DollarSign}
+                        title="Revenues"
                     />
-                )}
-                {hasDiscoveredGreenhouse && (
                     <QuickLinkCard
-                        href="/app/overviews/emissions"
-                        icon={Leaf}
-                        title="Emissions"
+                        href="/app/overviews/electricity"
+                        icon={Zap}
+                        title="Power Production"
                     />
-                )}
-                {hasNetwork && (
+                    {capabilities?.has_storage && (
+                        <QuickLinkCard
+                            href="/app/overviews/storage"
+                            icon={Battery}
+                            title="Stored Energy"
+                        />
+                    )}
+                    {hasDiscoveredGreenhouse && (
+                        <QuickLinkCard
+                            href="/app/overviews/emissions"
+                            icon={Leaf}
+                            title="Emissions"
+                        />
+                    )}
+                    {hasNetwork && (
+                        <QuickLinkCard
+                            href="/app/community/network"
+                            icon={TrendingUp}
+                            title="Market Prices"
+                        />
+                    )}
+                    {capabilities?.has_warehouse && (
+                        <QuickLinkCard
+                            href="/app/resource-market"
+                            icon={Package}
+                            title="Resource Market"
+                        />
+                    )}
                     <QuickLinkCard
-                        href="/app/community/network"
-                        icon={TrendingUp}
-                        title="Market Prices"
+                        href="/app/community/scoreboard"
+                        icon={Trophy}
+                        title="Ranking"
                     />
-                )}
-                {capabilities?.has_warehouse && (
-                    <QuickLinkCard
-                        href="/app/resource-market"
-                        icon={Package}
-                        title="Resource Market"
-                    />
-                )}
-                <QuickLinkCard
-                    href="/app/community/scoreboard"
-                    icon={Trophy}
-                    title="Ranking"
-                />
                 </div>
             </section>
 
@@ -250,7 +250,9 @@ function WeatherSection() {
                             <div className="px-2">
                                 <div className="mb-2 whitespace-nowrap">
                                     Month:{" "}
-                                    <b>{getMonthName(weatherData.month_number)}</b>
+                                    <b>
+                                        {getMonthName(weatherData.month_number)}
+                                    </b>
                                 </div>
                                 <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full">
                                     {/* Current date dot indicator */}
@@ -268,7 +270,9 @@ function WeatherSection() {
                                 <div className="mb-2 whitespace-nowrap">
                                     Irradiance:{" "}
                                     <b>
-                                        {Math.round(weatherData.solar_irradiance)}{" "}
+                                        {Math.round(
+                                            weatherData.solar_irradiance,
+                                        )}{" "}
                                         W/m²
                                     </b>
                                 </div>
@@ -286,7 +290,10 @@ function WeatherSection() {
                             <div className="px-2">
                                 <div className="mb-2 whitespace-nowrap">
                                     Wind speed:{" "}
-                                    <b>{Math.round(weatherData.wind_speed)} km/h</b>
+                                    <b>
+                                        {Math.round(weatherData.wind_speed)}{" "}
+                                        km/h
+                                    </b>
                                 </div>
                                 <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                     <div
@@ -303,7 +310,9 @@ function WeatherSection() {
                                 <div className="mb-2 whitespace-nowrap">
                                     River discharge:{" "}
                                     <b>
-                                        {Math.round(weatherData.river_discharge)}{" "}
+                                        {Math.round(
+                                            weatherData.river_discharge,
+                                        )}{" "}
                                         m³/s
                                     </b>
                                 </div>
@@ -328,74 +337,75 @@ function BeginnersGuide() {
     return (
         <section className="mb-6">
             <Card className="border-2 border-pine dark:border-dark-border">
-            <CardTitle className="mb-4">Beginners guide</CardTitle>
-            <div className="space-y-4 text-base">
-                <p>Welcome to Energetica!</p>
-                <p>
-                    You begin your journey with <b>1 steam engine</b> and a
-                    small <b>industry</b>, generating revenues. You can monitor
-                    their{" "}
-                    <a
-                        href="/app/overviews/electricity"
-                        className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
-                    >
-                        power generation and consumption
-                    </a>{" "}
-                    as well as your{" "}
-                    <a
-                        href="/app/overviews/revenues"
-                        className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
-                    >
-                        revenues
-                    </a>{" "}
-                    under the <i>Production Overview</i> tab in the top menu.
-                </p>
-                <p>
-                    The first thing you will probably want to do is to{" "}
-                    <b>expand your production</b> by investing in{" "}
-                    <a
-                        href="/app/facilities/power"
-                        className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
-                    >
-                        Power Facilities
-                    </a>{" "}
-                    and upgrading your industry on the{" "}
-                    <a
-                        href="/app/facilities/functional"
-                        className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
-                    >
-                        Functional Facilities
-                    </a>{" "}
-                    page. You also have access to{" "}
-                    <a
-                        href="/app/facilities/storage"
-                        className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
-                    >
-                        Storage Facilities
-                    </a>{" "}
-                    to store energy. You will unlock new technologies and more
-                    game mechanics as you progress.
-                </p>
-                <p>
-                    Engage with other players via the <i>Community</i> tab.
-                </p>
-                <p>
-                    If you are lost, click on the{" "}
-                    <HelpCircle className="inline w-4 h-4" /> icon on the right
-                    side of the title, you will find explanations about the
-                    content of the page. For detailed explanations on any game
-                    mechanics, consult the{" "}
-                    <a
-                        href="/wiki/introduction"
-                        className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
-                    >
-                        wiki
-                    </a>
-                    .
-                </p>
-                <p>Best of luck in your energy adventure!</p>
-            </div>
-        </Card>
+                <CardTitle className="mb-4">Beginners guide</CardTitle>
+                <div className="space-y-4 text-base">
+                    <p>Welcome to Energetica!</p>
+                    <p>
+                        You begin your journey with <b>1 steam engine</b> and a
+                        small <b>industry</b>, generating revenues. You can
+                        monitor their{" "}
+                        <a
+                            href="/app/overviews/electricity"
+                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                        >
+                            power generation and consumption
+                        </a>{" "}
+                        as well as your{" "}
+                        <a
+                            href="/app/overviews/revenues"
+                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                        >
+                            revenues
+                        </a>{" "}
+                        under the <i>Production Overview</i> tab in the top
+                        menu.
+                    </p>
+                    <p>
+                        The first thing you will probably want to do is to{" "}
+                        <b>expand your production</b> by investing in{" "}
+                        <a
+                            href="/app/facilities/power"
+                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                        >
+                            Power Facilities
+                        </a>{" "}
+                        and upgrading your industry on the{" "}
+                        <a
+                            href="/app/facilities/functional"
+                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                        >
+                            Functional Facilities
+                        </a>{" "}
+                        page. You also have access to{" "}
+                        <a
+                            href="/app/facilities/storage"
+                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                        >
+                            Storage Facilities
+                        </a>{" "}
+                        to store energy. You will unlock new technologies and
+                        more game mechanics as you progress.
+                    </p>
+                    <p>
+                        Engage with other players via the <i>Community</i> tab.
+                    </p>
+                    <p>
+                        If you are lost, click on the{" "}
+                        <HelpCircle className="inline w-4 h-4" /> icon on the
+                        right side of the title, you will find explanations
+                        about the content of the page. For detailed explanations
+                        on any game mechanics, consult the{" "}
+                        <a
+                            href="/wiki/introduction"
+                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                        >
+                            wiki
+                        </a>
+                        .
+                    </p>
+                    <p>Best of luck in your energy adventure!</p>
+                </div>
+            </Card>
         </section>
     );
 }
@@ -536,101 +546,109 @@ function DailyQuizSection() {
         <section className="mb-6">
             <div className="flex justify-center">
                 <Card className="border-2 border-pine dark:border-dark-border max-w-2xl w-full">
-                <CardTitle className="text-center mb-4">
-                    <img
-                        src="/static/images/icons/quiz.png"
-                        className="inline w-6 h-6"
-                        alt=""
-                    />
-                    <span className="mx-2">Daily Quiz</span>
-                    <img
-                        src="/static/images/icons/quiz.png"
-                        className="inline w-6 h-6"
-                        alt=""
-                    />
-                </CardTitle>
+                    <CardTitle className="text-center mb-4">
+                        <img
+                            src="/static/images/icons/quiz.png"
+                            className="inline w-6 h-6"
+                            alt=""
+                        />
+                        <span className="mx-2">Daily Quiz</span>
+                        <img
+                            src="/static/images/icons/quiz.png"
+                            className="inline w-6 h-6"
+                            alt=""
+                        />
+                    </CardTitle>
 
-                <div className="space-y-4">
-                    {isLoading ? (
-                        <div className="text-center text-gray-500">
-                            Loading quiz question...
-                        </div>
-                    ) : isError ? (
-                        <div className="text-center text-alert-red">
-                            Failed to load quiz question
-                        </div>
-                    ) : quizData ? (
-                        <>
-                            {/* Question */}
-                            <p className="text-lg text-center mb-4">
-                                {quizData.question}
-                            </p>
-
-                            {/* Answer Buttons */}
-                            <div className="space-y-3">
-                                <button
-                                    onClick={() => handleAnswerClick("answer1")}
-                                    disabled={hasAnswered || isPending}
-                                    className={getButtonClass("answer1")}
-                                >
-                                    <span className="block pr-24">
-                                        {quizData.answer1}
-                                    </span>
-                                    {getAnswerIndicator("answer1")}
-                                </button>
-                                <button
-                                    onClick={() => handleAnswerClick("answer2")}
-                                    disabled={hasAnswered || isPending}
-                                    className={getButtonClass("answer2")}
-                                >
-                                    <span className="block pr-24">
-                                        {quizData.answer2}
-                                    </span>
-                                    {getAnswerIndicator("answer2")}
-                                </button>
-                                <button
-                                    onClick={() => handleAnswerClick("answer3")}
-                                    disabled={hasAnswered || isPending}
-                                    className={getButtonClass("answer3")}
-                                >
-                                    <span className="block pr-24">
-                                        {quizData.answer3}
-                                    </span>
-                                    {getAnswerIndicator("answer3")}
-                                </button>
+                    <div className="space-y-4">
+                        {isLoading ? (
+                            <div className="text-center text-gray-500">
+                                Loading quiz question...
                             </div>
-
-                            {/* Explanation and Learn More (only shown after answering) */}
-                            {hasAnswered && quizData.explanation && (
-                                <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
-                                    <p className="text-center mb-3">
-                                        {quizData.explanation}
-                                    </p>
-                                    {quizData.learn_more_link && (
-                                        <p className="text-center">
-                                            <a
-                                                href={quizData.learn_more_link}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
-                                            >
-                                                Learn more
-                                            </a>
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Submitting state */}
-                            {isPending && (
-                                <p className="text-center text-gray-500 text-sm">
-                                    Submitting answer...
+                        ) : isError ? (
+                            <div className="text-center text-alert-red">
+                                Failed to load quiz question
+                            </div>
+                        ) : quizData ? (
+                            <>
+                                {/* Question */}
+                                <p className="text-lg text-center mb-4">
+                                    {quizData.question}
                                 </p>
-                            )}
-                        </>
-                    ) : null}
-                </div>
-            </Card>
+
+                                {/* Answer Buttons */}
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={() =>
+                                            handleAnswerClick("answer1")
+                                        }
+                                        disabled={hasAnswered || isPending}
+                                        className={getButtonClass("answer1")}
+                                    >
+                                        <span className="block pr-24">
+                                            {quizData.answer1}
+                                        </span>
+                                        {getAnswerIndicator("answer1")}
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            handleAnswerClick("answer2")
+                                        }
+                                        disabled={hasAnswered || isPending}
+                                        className={getButtonClass("answer2")}
+                                    >
+                                        <span className="block pr-24">
+                                            {quizData.answer2}
+                                        </span>
+                                        {getAnswerIndicator("answer2")}
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            handleAnswerClick("answer3")
+                                        }
+                                        disabled={hasAnswered || isPending}
+                                        className={getButtonClass("answer3")}
+                                    >
+                                        <span className="block pr-24">
+                                            {quizData.answer3}
+                                        </span>
+                                        {getAnswerIndicator("answer3")}
+                                    </button>
+                                </div>
+
+                                {/* Explanation and Learn More (only shown after answering) */}
+                                {hasAnswered && quizData.explanation && (
+                                    <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                                        <p className="text-center mb-3">
+                                            {quizData.explanation}
+                                        </p>
+                                        {quizData.learn_more_link && (
+                                            <p className="text-center">
+                                                <a
+                                                    href={
+                                                        quizData.learn_more_link
+                                                    }
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                                                >
+                                                    Learn more
+                                                </a>
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Submitting state */}
+                                {isPending && (
+                                    <p className="text-center text-gray-500 text-sm">
+                                        Submitting answer...
+                                    </p>
+                                )}
+                            </>
+                        ) : null}
+                    </div>
+                </Card>
             </div>
         </section>
     );

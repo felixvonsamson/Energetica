@@ -609,7 +609,11 @@ class Player(DBModel):
         )
 
     def package_active_facilities(self) -> dict[str, dict[int, dict[str, Any]]]:
-        """Package the player's active facilities."""
+        """
+        Package the player's active facilities.
+
+        This function is deprecated and superseded by PowerFacilityOut in energetica/schemas/facilities.py
+        """
         return {
             "power_facilities": self.package_active_power_facilities(),
             "storage_facilities": self.package_active_storage_facilities(),

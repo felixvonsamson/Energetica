@@ -10,17 +10,15 @@ export const facilitiesApi = {
      * Get all active facilities for the current player.
      */
     getAll: () =>
-        apiClient.get<ApiResponse<"/api/v1/facilities", "get">>(
-            "/facilities"
-        ),
+        apiClient.get<ApiResponse<"/api/v1/facilities", "get">>("/facilities"),
 
     /**
      * Upgrade a single facility by ID.
      */
     upgrade: (facilityId: number) =>
-        apiClient.post<ApiResponse<"/api/v1/facilities/{facility_id}:upgrade", "post">>(
-            `/facilities/${facilityId}:upgrade`
-        ),
+        apiClient.post<
+            ApiResponse<"/api/v1/facilities/{facility_id}:upgrade", "post">
+        >(`/facilities/${facilityId}:upgrade`),
 
     /**
      * Upgrade all facilities of a certain type.
@@ -29,16 +27,16 @@ export const facilitiesApi = {
         apiClient.post<ApiResponse<"/api/v1/facilities:upgrade-all", "post">>(
             "/facilities:upgrade-all",
             undefined,
-            { params: { facility_type: facilityType } }
+            { params: { facility_type: facilityType } },
         ),
 
     /**
      * Dismantle a single facility by ID.
      */
     dismantle: (facilityId: number) =>
-        apiClient.post<ApiResponse<"/api/v1/facilities/{facility_id}:dismantle", "post">>(
-            `/facilities/${facilityId}:dismantle`
-        ),
+        apiClient.post<
+            ApiResponse<"/api/v1/facilities/{facility_id}:dismantle", "post">
+        >(`/facilities/${facilityId}:dismantle`),
 
     /**
      * Dismantle all facilities of a certain type.
@@ -47,6 +45,6 @@ export const facilitiesApi = {
         apiClient.post<ApiResponse<"/api/v1/facilities:dismantle-all", "post">>(
             "/facilities:dismantle-all",
             undefined,
-            { params: { facility_type: facilityType } }
+            { params: { facility_type: facilityType } },
         ),
 };

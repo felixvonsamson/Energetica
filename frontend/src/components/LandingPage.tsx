@@ -72,7 +72,9 @@ export function LandingPage() {
                     </div>
                 </section>
                 <section className="px-6 max-w-5xl mx-auto text-center">
-                    <h2 className="text-3xl font-bold mb-6 text-primary">Why Energetica?</h2>
+                    <h2 className="text-3xl font-bold mb-6 text-primary">
+                        Why Energetica?
+                    </h2>
                     <p className="text-lg max-w-3xl text-primary">
                         Climate change and the energy transition are defining
                         challenges. Energetica helps players experience the
@@ -94,7 +96,9 @@ export function LandingPage() {
                                         {f.title}
                                     </h3>
                                 </div>
-                                <p className="text-bone-text dark:text-dark-text-secondary">{f.description}</p>
+                                <p className="text-bone-text dark:text-dark-text-secondary">
+                                    {f.description}
+                                </p>
                             </div>
                         ))}
                     </div>

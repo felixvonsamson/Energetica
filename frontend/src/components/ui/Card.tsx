@@ -11,11 +11,13 @@ interface CardProps {
  */
 export function Card({ children, className }: CardProps) {
     return (
-        <div className={cn(
-            "bg-bone dark:bg-dark-bg-secondary p-6 rounded-lg",
-            "text-bone-text dark:text-dark-text-primary",
-            className
-        )}>
+        <div
+            className={cn(
+                "bg-bone dark:bg-dark-bg-secondary p-6 rounded-lg",
+                "text-bone-text dark:text-dark-text-primary",
+                className,
+            )}
+        >
             {children}
         </div>
     );
@@ -27,11 +29,7 @@ interface CardHeaderProps {
 }
 
 export function CardHeader({ children, className }: CardHeaderProps) {
-    return (
-        <div className={cn("mb-4", className)}>
-            {children}
-        </div>
-    );
+    return <div className={cn("mb-4", className)}>{children}</div>;
 }
 
 interface CardTitleProps {
@@ -41,11 +39,13 @@ interface CardTitleProps {
 
 export function CardTitle({ children, className }: CardTitleProps) {
     return (
-        <h2 className={cn(
-            "text-2xl font-bold",
-            "text-bone-text dark:text-dark-text-primary",
-            className
-        )}>
+        <h2
+            className={cn(
+                "text-2xl font-bold",
+                "text-bone-text dark:text-dark-text-primary",
+                className,
+            )}
+        >
             {children}
         </h2>
     );
@@ -57,9 +57,5 @@ interface CardContentProps {
 }
 
 export function CardContent({ children, className }: CardContentProps) {
-    return (
-        <div className={cn("space-y-2", className)}>
-            {children}
-        </div>
-    );
+    return <div className={cn("space-y-2", className)}>{children}</div>;
 }

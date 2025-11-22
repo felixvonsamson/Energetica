@@ -24,7 +24,7 @@ export function EmptyState({
         <div
             className={cn(
                 "flex flex-col items-center justify-center py-12 text-center",
-                className
+                className,
             )}
         >
             {Icon && (
@@ -34,7 +34,9 @@ export function EmptyState({
                 {title}
             </h3>
             {description && (
-                <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-sm">{description}</p>
+                <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-sm">
+                    {description}
+                </p>
             )}
             {action}
         </div>

@@ -13,11 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFacilities } from "@/hooks/useFacilities";
 import { FacilityGroupTable } from "@/components/profile/FacilityGroupTable";
 import type { ApiResponse } from "@/types/api-helpers";
-import {
-    formatPower,
-    formatEnergy,
-    formatMassRate,
-} from "@/lib/format-utils";
+import { formatPower, formatEnergy, formatMassRate } from "@/lib/format-utils";
 
 // Type aliases from generated API types
 type FacilitiesData = ApiResponse<"/api/v1/facilities", "get">;
@@ -131,7 +127,9 @@ function ProfileContent() {
                                     sortKey: "max_power_generation",
                                     render: (f) => (
                                         <span className="font-mono">
-                                            {formatPower(f.max_power_generation)}
+                                            {formatPower(
+                                                f.max_power_generation,
+                                            )}
                                         </span>
                                     ),
                                     renderSummary: (facilities) => (
@@ -141,8 +139,8 @@ function ProfileContent() {
                                                     (sum, f) =>
                                                         sum +
                                                         f.max_power_generation,
-                                                    0
-                                                )
+                                                    0,
+                                                ),
                                             )}
                                         </span>
                                     ),
@@ -167,7 +165,7 @@ function ProfileContent() {
                                         const avgUsage =
                                             facilities.reduce(
                                                 (sum, f) => sum + f.usage,
-                                                0
+                                                0,
                                             ) / facilities.length;
                                         return (
                                             <div className="relative w-full min-w-[120px] h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -215,9 +213,10 @@ function ProfileContent() {
                                             {formatEnergy(
                                                 facilities.reduce(
                                                     (sum, f) =>
-                                                        sum + f.storage_capacity,
-                                                    0
-                                                )
+                                                        sum +
+                                                        f.storage_capacity,
+                                                    0,
+                                                ),
                                             )}
                                         </span>
                                     ),
@@ -235,7 +234,7 @@ function ProfileContent() {
                                             />
                                             <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800 dark:text-white">
                                                 {Math.round(
-                                                    f.state_of_charge * 100
+                                                    f.state_of_charge * 100,
                                                 )}
                                                 %
                                             </span>
@@ -246,7 +245,7 @@ function ProfileContent() {
                                             facilities.reduce(
                                                 (sum, f) =>
                                                     sum + f.state_of_charge,
-                                                0
+                                                0,
                                             ) / facilities.length;
                                         return (
                                             <div className="relative w-full min-w-[120px] h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -296,8 +295,8 @@ function ProfileContent() {
                                                 facilities.reduce(
                                                     (sum, f) =>
                                                         sum + f.extraction_rate,
-                                                    0
-                                                )
+                                                    0,
+                                                ),
                                             )}
                                         </span>
                                     ),
@@ -322,7 +321,7 @@ function ProfileContent() {
                                         const avgUsage =
                                             facilities.reduce(
                                                 (sum, f) => sum + f.usage,
-                                                0
+                                                0,
                                             ) / facilities.length;
                                         return (
                                             <div className="relative w-full min-w-[120px] h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">

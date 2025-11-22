@@ -47,9 +47,13 @@ export function TopBar() {
                             src="/static/images/icon.svg"
                             alt="Energetica"
                             className="w-8 h-8 brightness-0 saturate-100 hue-rotate-90 opacity-70 dark:invert dark:brightness-100 dark:saturate-100 dark:hue-rotate-0 dark:opacity-100"
-                            style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(18%) saturate(2873%) hue-rotate(88deg) brightness(95%) contrast(88%)' }}
+                            style={{
+                                filter: "brightness(0) saturate(100%) invert(18%) sepia(18%) saturate(2873%) hue-rotate(88deg) brightness(95%) contrast(88%)",
+                            }}
                         />
-                        <span className="text-xl font-bold text-primary">Energetica</span>
+                        <span className="text-xl font-bold text-primary">
+                            Energetica
+                        </span>
                     </div>
 
                     {/* Resources and Actions */}
@@ -97,94 +101,96 @@ export function TopBar() {
                             {/* Resource Gauges - only show if warehouse unlocked */}
                             {capabilities?.has_warehouse && (
                                 <div className="flex gap-2 mb-2">
-                                {/* Coal */}
-                                <div className="relative group">
-                                    <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full bg-gray-800 ${isResourcesError ? "opacity-75" : ""}`}
-                                            style={{
-                                                width: isResourcesLoading
-                                                    ? "0%"
-                                                    : `${Math.min(
-                                                          100,
-                                                          ((resourcesData?.coal
-                                                              .stock ?? 0) /
-                                                              (resourcesData
+                                    {/* Coal */}
+                                    <div className="relative group">
+                                        <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full bg-gray-800 ${isResourcesError ? "opacity-75" : ""}`}
+                                                style={{
+                                                    width: isResourcesLoading
+                                                        ? "0%"
+                                                        : `${Math.min(
+                                                              100,
+                                                              ((resourcesData
                                                                   ?.coal
-                                                                  .capacity ||
-                                                                  1)) *
-                                                              100
-                                                      )}%`,
-                                            }}
-                                        ></div>
+                                                                  .stock ?? 0) /
+                                                                  (resourcesData
+                                                                      ?.coal
+                                                                      .capacity ||
+                                                                      1)) *
+                                                                  100,
+                                                          )}%`,
+                                                }}
+                                            ></div>
+                                        </div>
+                                        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                            Coal stock:{" "}
+                                            {isResourcesLoading
+                                                ? "..."
+                                                : `${(resourcesData?.coal.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.coal.capacity ?? 0).toFixed(0)}kg`}
+                                        </div>
                                     </div>
-                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                                        Coal stock:{" "}
-                                        {isResourcesLoading
-                                            ? "..."
-                                            : `${(resourcesData?.coal.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.coal.capacity ?? 0).toFixed(0)}kg`}
-                                    </div>
-                                </div>
 
-                                {/* Gas */}
-                                <div className="relative group">
-                                    <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full bg-amber-600 ${isResourcesError ? "opacity-75" : ""}`}
-                                            style={{
-                                                width: isResourcesLoading
-                                                    ? "0%"
-                                                    : `${Math.min(
-                                                          100,
-                                                          ((resourcesData?.gas
-                                                              .stock ?? 0) /
-                                                              (resourcesData
-                                                                  ?.gas
-                                                                  .capacity ||
-                                                                  1)) *
-                                                              100
-                                                      )}%`,
-                                            }}
-                                        ></div>
+                                    {/* Gas */}
+                                    <div className="relative group">
+                                        <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full bg-amber-600 ${isResourcesError ? "opacity-75" : ""}`}
+                                                style={{
+                                                    width: isResourcesLoading
+                                                        ? "0%"
+                                                        : `${Math.min(
+                                                              100,
+                                                              ((resourcesData
+                                                                  ?.gas.stock ??
+                                                                  0) /
+                                                                  (resourcesData
+                                                                      ?.gas
+                                                                      .capacity ||
+                                                                      1)) *
+                                                                  100,
+                                                          )}%`,
+                                                }}
+                                            ></div>
+                                        </div>
+                                        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                            Gas stock:{" "}
+                                            {isResourcesLoading
+                                                ? "..."
+                                                : `${(resourcesData?.gas.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.gas.capacity ?? 0).toFixed(0)}kg`}
+                                        </div>
                                     </div>
-                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                                        Gas stock:{" "}
-                                        {isResourcesLoading
-                                            ? "..."
-                                            : `${(resourcesData?.gas.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.gas.capacity ?? 0).toFixed(0)}kg`}
-                                    </div>
-                                </div>
 
-                                {/* Uranium */}
-                                <div className="relative group">
-                                    <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full bg-green-600 ${isResourcesError ? "opacity-75" : ""}`}
-                                            style={{
-                                                width: isResourcesLoading
-                                                    ? "0%"
-                                                    : `${Math.min(
-                                                          100,
-                                                          ((resourcesData
-                                                              ?.uranium.stock ??
-                                                              0) /
-                                                              (resourcesData
+                                    {/* Uranium */}
+                                    <div className="relative group">
+                                        <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full bg-green-600 ${isResourcesError ? "opacity-75" : ""}`}
+                                                style={{
+                                                    width: isResourcesLoading
+                                                        ? "0%"
+                                                        : `${Math.min(
+                                                              100,
+                                                              ((resourcesData
                                                                   ?.uranium
-                                                                  .capacity ||
-                                                                  1)) *
-                                                              100
-                                                      )}%`,
-                                            }}
-                                        ></div>
-                                    </div>
-                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                                        Uranium stock:{" "}
-                                        {isResourcesLoading
-                                            ? "..."
-                                            : `${(resourcesData?.uranium.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.uranium.capacity ?? 0).toFixed(0)}kg`}
+                                                                  .stock ?? 0) /
+                                                                  (resourcesData
+                                                                      ?.uranium
+                                                                      .capacity ||
+                                                                      1)) *
+                                                                  100,
+                                                          )}%`,
+                                                }}
+                                            ></div>
+                                        </div>
+                                        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                            Uranium stock:{" "}
+                                            {isResourcesLoading
+                                                ? "..."
+                                                : `${(resourcesData?.uranium.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.uranium.capacity ?? 0).toFixed(0)}kg`}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
                             )}
 
                             {/* Workers */}
@@ -215,7 +221,9 @@ export function TopBar() {
                                     <div className="flex items-center gap-1 relative group">
                                         <span
                                             className={
-                                                isWorkersError ? "opacity-75" : ""
+                                                isWorkersError
+                                                    ? "opacity-75"
+                                                    : ""
                                             }
                                         >
                                             {isWorkersLoading && !workersData

@@ -37,7 +37,9 @@ export function Navigation() {
                             alt="Energetica"
                             className="w-6 h-6"
                         />
-                        <span className="text-pine dark:text-dark-text-primary font-bold">Energetica</span>
+                        <span className="text-pine dark:text-dark-text-primary font-bold">
+                            Energetica
+                        </span>
                     </div>
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -226,7 +228,8 @@ function NavItem({ to, icon, children }: NavItemProps) {
                 to={to}
                 className="flex items-center gap-2 px-4 py-3 text-pine dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors"
                 activeProps={{
-                    className: "bg-tan-hover dark:bg-dark-bg-tertiary font-semibold"
+                    className:
+                        "bg-tan-hover dark:bg-dark-bg-tertiary font-semibold",
                 }}
             >
                 <img
