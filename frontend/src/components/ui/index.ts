@@ -6,3 +6,11 @@ export { ProgressBar } from "./ProgressBar";
 export { ThemeToggle } from "./ThemeToggle";
 export { Money } from "./Money";
 export { ConfirmDialog } from "./ConfirmDialog";
+export {
+    AssetName,
+    FacilityName,
+    TechnologyName,
+    ResourceName,
+    useAssetName,
+} from "./AssetName";
+export type { AssetNameMode, AssetNameProps } from "./AssetName";

@@ -4,7 +4,7 @@
  */
 
 import { useState, ReactNode } from "react";
-import { Money } from "@/components/ui";
+import { Money, FacilityName } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
     useUpgradeFacility,
@@ -61,7 +61,8 @@ function ConfirmationContent({
             <p>
                 Are you sure you want to{" "}
                 {isDismantling ? "dismantle" : "upgrade"} all{" "}
-                <strong>{facilityName}</strong> facilities?
+                <FacilityName facility={facilityName} as="strong" mode="long" />{" "}
+                facilities?
             </p>
             <div className="bg-tan-green/20 dark:bg-dark-bg-tertiary/50 p-4 rounded-lg space-y-2">
                 <div className="flex justify-between">
@@ -263,47 +264,76 @@ export function FacilityGroupTable<T extends FacilityBase>({
 
             const compareResult = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 
-            return sortConfig.direction === "asc" ? compareResult : -compareResult;
+            return sortConfig.direction === "asc"
+                ? compareResult
+                : -compareResult;
         });
     };
 
     // Sort the group entries based on aggregated values
     const sortedGroupEntries = Object.entries(groupedFacilities)
-        .map(([name, facilitiesList]) => [name, sortFacilities(facilitiesList)] as [string, T[]])
+        .map(
+            ([name, facilitiesList]) =>
+                [name, sortFacilities(facilitiesList)] as [string, T[]],
+        )
         .sort(([nameA, facilitiesA], [nameB, facilitiesB]) => {
-        if (!sortConfig) return 0;
+            if (!sortConfig) return 0;
 
-        let aVal: any;
-        let bVal: any;
+            let aVal: any;
+            let bVal: any;
 
-        if (sortConfig.key === "facility") {
-            // Sort by facility name
-            aVal = nameA;
-            bVal = nameB;
-        } else if (sortConfig.key === "hourly_op_cost") {
-            // Sort by total O&M cost
-            aVal = facilitiesA.reduce((sum, f) => sum + f.hourly_op_cost, 0);
-            bVal = facilitiesB.reduce((sum, f) => sum + f.hourly_op_cost, 0);
-        } else if (sortConfig.key === "remaining_lifespan") {
-            // Sort by average lifespan
-            const avgA = facilitiesA.reduce((sum, f) => sum + (f.remaining_lifespan || Infinity), 0) / facilitiesA.length;
-            const avgB = facilitiesB.reduce((sum, f) => sum + (f.remaining_lifespan || Infinity), 0) / facilitiesB.length;
-            aVal = avgA;
-            bVal = avgB;
-        } else {
-            // Sort by sum of column values
-            aVal = facilitiesA.reduce((sum, f) => sum + ((f[sortConfig.key as keyof T] as any) || 0), 0);
-            bVal = facilitiesB.reduce((sum, f) => sum + ((f[sortConfig.key as keyof T] as any) || 0), 0);
-        }
+            if (sortConfig.key === "facility") {
+                // Sort by facility name
+                aVal = nameA;
+                bVal = nameB;
+            } else if (sortConfig.key === "hourly_op_cost") {
+                // Sort by total O&M cost
+                aVal = facilitiesA.reduce(
+                    (sum, f) => sum + f.hourly_op_cost,
+                    0,
+                );
+                bVal = facilitiesB.reduce(
+                    (sum, f) => sum + f.hourly_op_cost,
+                    0,
+                );
+            } else if (sortConfig.key === "remaining_lifespan") {
+                // Sort by average lifespan
+                const avgA =
+                    facilitiesA.reduce(
+                        (sum, f) => sum + (f.remaining_lifespan || Infinity),
+                        0,
+                    ) / facilitiesA.length;
+                const avgB =
+                    facilitiesB.reduce(
+                        (sum, f) => sum + (f.remaining_lifespan || Infinity),
+                        0,
+                    ) / facilitiesB.length;
+                aVal = avgA;
+                bVal = avgB;
+            } else {
+                // Sort by sum of column values
+                aVal = facilitiesA.reduce(
+                    (sum, f) =>
+                        sum + ((f[sortConfig.key as keyof T] as any) || 0),
+                    0,
+                );
+                bVal = facilitiesB.reduce(
+                    (sum, f) =>
+                        sum + ((f[sortConfig.key as keyof T] as any) || 0),
+                    0,
+                );
+            }
 
-        if (aVal == null && bVal == null) return 0;
-        if (aVal == null) return 1;
-        if (bVal == null) return -1;
+            if (aVal == null && bVal == null) return 0;
+            if (aVal == null) return 1;
+            if (bVal == null) return -1;
 
-        const compareResult = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+            const compareResult = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 
-        return sortConfig.direction === "asc" ? compareResult : -compareResult;
-    });
+            return sortConfig.direction === "asc"
+                ? compareResult
+                : -compareResult;
+        });
 
     const toggleGroup = (name: string) => {
         setExpandedGroups((prev) => {
@@ -323,12 +353,12 @@ export function FacilityGroupTable<T extends FacilityBase>({
         setSortConfig((current) => {
             if (current?.key === key) {
                 // Toggle direction or clear
-                if (current.direction === "asc") {
-                    return { key, direction: "desc" };
+                if (current.direction === "desc") {
+                    return { key, direction: "asc" };
                 }
                 return null; // Clear sort
             }
-            return { key, direction: "asc" };
+            return { key, direction: "desc" };
         });
     };
 
@@ -388,126 +418,122 @@ export function FacilityGroupTable<T extends FacilityBase>({
                 </tr>
             </thead>
             <tbody>
-                {sortedGroupEntries.map(
-                    ([facilityName, facilityGroup]) => {
-                        const isExpanded = expandedGroups.has(facilityName);
-                        const count = facilityGroup.length;
+                {sortedGroupEntries.map(([facilityName, facilityGroup]) => {
+                    const isExpanded = expandedGroups.has(facilityName);
+                    const count = facilityGroup.length;
 
-                        // Calculate summary values
-                        const totalOpCost = facilityGroup.reduce(
-                            (sum, f) => sum + f.hourly_op_cost,
+                    // Calculate summary values
+                    const totalOpCost = facilityGroup.reduce(
+                        (sum, f) => sum + f.hourly_op_cost,
+                        0,
+                    );
+                    const avgLifespan =
+                        facilityGroup.reduce(
+                            (sum, f) => sum + (f.remaining_lifespan || 0),
                             0,
-                        );
-                        const avgLifespan =
-                            facilityGroup.reduce(
-                                (sum, f) => sum + (f.remaining_lifespan || 0),
-                                0,
-                            ) / count;
-                        const hasInfiniteLifespan = facilityGroup.some(
-                            (f) => f.remaining_lifespan === null,
-                        );
-                        const hasUpgrades = facilityGroup.some(
-                            (f) => f.upgrade_cost !== null,
-                        );
-                        const totalUpgradeCost = facilityGroup.reduce(
-                            (sum, f) => sum + (f.upgrade_cost || 0),
-                            0,
-                        );
-                        const totalDismantleCost = facilityGroup.reduce(
-                            (sum, f) => sum + (f.dismantle_cost || 0),
-                            0,
-                        );
+                        ) / count;
+                    const hasInfiniteLifespan = facilityGroup.some(
+                        (f) => f.remaining_lifespan === null,
+                    );
+                    const hasUpgrades = facilityGroup.some(
+                        (f) => f.upgrade_cost !== null,
+                    );
+                    const totalUpgradeCost = facilityGroup.reduce(
+                        (sum, f) => sum + (f.upgrade_cost || 0),
+                        0,
+                    );
+                    const totalDismantleCost = facilityGroup.reduce(
+                        (sum, f) => sum + (f.dismantle_cost || 0),
+                        0,
+                    );
 
-                        return (
-                            <>
-                                {/* Summary Row */}
-                                <tr
-                                    key={facilityName}
-                                    className="border-b-2 border-pine/20 dark:border-dark-border/50 bg-tan-green/20 dark:bg-dark-bg-tertiary/50 font-semibold cursor-pointer hover:bg-tan-green/30 dark:hover:bg-dark-bg-tertiary/70 transition-colors"
-                                    onClick={() => toggleGroup(facilityName)}
-                                >
-                                    <td className="py-3 px-4">
-                                        <span className="inline-block w-4 mr-2 text-center">
-                                            {isExpanded ? "▼" : "▶"}
-                                        </span>
-                                        {facilityName} ({count})
+                    return (
+                        <>
+                            {/* Summary Row */}
+                            <tr
+                                key={facilityName}
+                                className="border-b-2 border-pine/20 dark:border-dark-border/50 bg-tan-green/20 dark:bg-dark-bg-tertiary/50 font-semibold cursor-pointer hover:bg-tan-green/30 dark:hover:bg-dark-bg-tertiary/70 transition-colors"
+                                onClick={() => toggleGroup(facilityName)}
+                            >
+                                <td className="py-3 px-4">
+                                    <span className="inline-block w-4 mr-2 text-center">
+                                        {isExpanded ? "▼" : "▶"}
+                                    </span>
+                                    <FacilityName
+                                        facility={facilityName}
+                                        mode="long"
+                                    />{" "}
+                                    ({count})
+                                </td>
+                                {columns.map((col, idx) => (
+                                    <td
+                                        key={idx}
+                                        className={`py-3 px-4 ${col.className || ""}`}
+                                    >
+                                        {col.renderSummary(facilityGroup)}
                                     </td>
-                                    {columns.map((col, idx) => (
-                                        <td
-                                            key={idx}
-                                            className={`py-3 px-4 ${col.className || ""}`}
-                                        >
-                                            {col.renderSummary(facilityGroup)}
+                                ))}
+                                <td className="py-3 px-4 text-right">
+                                    <Money amount={totalOpCost} />
+                                    /h
+                                </td>
+                                <td className="py-3 px-4 text-right font-mono">
+                                    {hasInfiniteLifespan
+                                        ? "∞"
+                                        : `${Math.round(avgLifespan)} d`}
+                                </td>
+                                <GroupActions
+                                    facilityName={facilityName}
+                                    count={count}
+                                    hasUpgrades={hasUpgrades}
+                                    totalUpgradeCost={totalUpgradeCost}
+                                    totalDismantleCost={totalDismantleCost}
+                                    upgradeAllMutation={upgradeAllMutation}
+                                    dismantleAllMutation={dismantleAllMutation}
+                                />
+                            </tr>
+
+                            {/* Detail Rows */}
+                            {isExpanded &&
+                                facilityGroup.map((facility) => (
+                                    <tr
+                                        key={facility.id}
+                                        className="border-b border-pine/10 dark:border-dark-border/30 hover:bg-tan-green/20 dark:hover:bg-dark-bg-tertiary/30 transition-colors"
+                                    >
+                                        <td className="py-3 px-4 pl-12 opacity-0">
+                                            {facility.facility}
                                         </td>
-                                    ))}
-                                    <td className="py-3 px-4 text-right">
-                                        <Money amount={totalOpCost} />
-                                        /h
-                                    </td>
-                                    <td className="py-3 px-4 text-right font-mono">
-                                        {hasInfiniteLifespan
-                                            ? "∞"
-                                            : `${Math.round(avgLifespan)} d`}
-                                    </td>
-                                    <GroupActions
-                                        facilityName={facilityName}
-                                        count={count}
-                                        hasUpgrades={hasUpgrades}
-                                        totalUpgradeCost={totalUpgradeCost}
-                                        totalDismantleCost={totalDismantleCost}
-                                        upgradeAllMutation={upgradeAllMutation}
-                                        dismantleAllMutation={
-                                            dismantleAllMutation
-                                        }
-                                    />
-                                </tr>
-
-                                {/* Detail Rows */}
-                                {isExpanded &&
-                                    facilityGroup.map((facility) => (
-                                        <tr
-                                            key={facility.id}
-                                            className="border-b border-pine/10 dark:border-dark-border/30 hover:bg-tan-green/20 dark:hover:bg-dark-bg-tertiary/30 transition-colors"
-                                        >
-                                            <td className="py-3 px-4 pl-12 opacity-0">
-                                                {facility.facility}
+                                        {columns.map((col, idx) => (
+                                            <td
+                                                key={idx}
+                                                className={`py-3 px-4 ${col.className || ""}`}
+                                            >
+                                                {col.render(facility)}
                                             </td>
-                                            {columns.map((col, idx) => (
-                                                <td
-                                                    key={idx}
-                                                    className={`py-3 px-4 ${col.className || ""}`}
-                                                >
-                                                    {col.render(facility)}
-                                                </td>
-                                            ))}
-                                            <td className="py-3 px-4 text-right">
-                                                <Money
-                                                    amount={
-                                                        facility.hourly_op_cost
-                                                    }
-                                                />
-                                                /h
-                                            </td>
-                                            <td className="py-3 px-4 text-right font-mono">
-                                                {facility.remaining_lifespan
-                                                    ? `${Math.round(facility.remaining_lifespan)} d`
-                                                    : "∞"}
-                                            </td>
-                                            <FacilityActions
-                                                facility={facility}
-                                                upgradeMutation={
-                                                    upgradeMutation
-                                                }
-                                                dismantleMutation={
-                                                    dismantleMutation
-                                                }
+                                        ))}
+                                        <td className="py-3 px-4 text-right">
+                                            <Money
+                                                amount={facility.hourly_op_cost}
                                             />
-                                        </tr>
-                                    ))}
-                            </>
-                        );
-                    },
-                )}
+                                            /h
+                                        </td>
+                                        <td className="py-3 px-4 text-right font-mono">
+                                            {facility.remaining_lifespan
+                                                ? `${Math.round(facility.remaining_lifespan)} d`
+                                                : "∞"}
+                                        </td>
+                                        <FacilityActions
+                                            facility={facility}
+                                            upgradeMutation={upgradeMutation}
+                                            dismantleMutation={
+                                                dismantleMutation
+                                            }
+                                        />
+                                    </tr>
+                                ))}
+                        </>
+                    );
+                })}
             </tbody>
         </table>
     );
