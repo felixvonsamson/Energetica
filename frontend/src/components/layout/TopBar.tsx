@@ -103,9 +103,9 @@ export function TopBar() {
                                 <div className="flex gap-2 mb-2">
                                     {/* Coal */}
                                     <div className="relative group">
-                                        <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
+                                        <div className="w-16 h-4 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
                                             <div
-                                                className={`h-full bg-gray-800 ${isResourcesError ? "opacity-75" : ""}`}
+                                                className={`h-full ${isResourcesError ? "opacity-75" : ""}`}
                                                 style={{
                                                     width: isResourcesLoading
                                                         ? "0%"
@@ -120,6 +120,8 @@ export function TopBar() {
                                                                       1)) *
                                                                   100,
                                                           )}%`,
+                                                    backgroundColor:
+                                                        "var(--asset-color-coal)",
                                                 }}
                                             ></div>
                                         </div>
@@ -133,9 +135,9 @@ export function TopBar() {
 
                                     {/* Gas */}
                                     <div className="relative group">
-                                        <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
+                                        <div className="w-16 h-4 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
                                             <div
-                                                className={`h-full bg-amber-600 ${isResourcesError ? "opacity-75" : ""}`}
+                                                className={`h-full ${isResourcesError ? "opacity-75" : ""}`}
                                                 style={{
                                                     width: isResourcesLoading
                                                         ? "0%"
@@ -150,6 +152,8 @@ export function TopBar() {
                                                                       1)) *
                                                                   100,
                                                           )}%`,
+                                                    backgroundColor:
+                                                        "var(--asset-color-gas)",
                                                 }}
                                             ></div>
                                         </div>
@@ -163,9 +167,9 @@ export function TopBar() {
 
                                     {/* Uranium */}
                                     <div className="relative group">
-                                        <div className="w-16 h-4 bg-gray-300 rounded-full overflow-hidden">
+                                        <div className="w-16 h-4 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
                                             <div
-                                                className={`h-full bg-green-600 ${isResourcesError ? "opacity-75" : ""}`}
+                                                className={`h-full ${isResourcesError ? "opacity-75" : ""}`}
                                                 style={{
                                                     width: isResourcesLoading
                                                         ? "0%"
@@ -180,6 +184,8 @@ export function TopBar() {
                                                                       1)) *
                                                                   100,
                                                           )}%`,
+                                                    backgroundColor:
+                                                        "var(--asset-color-uranium)",
                                                 }}
                                             ></div>
                                         </div>
