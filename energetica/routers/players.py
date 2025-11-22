@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 
 from energetica.database.player import Player
 from energetica.routers.chats import router
-from energetica.schemas.players import MoneyOut, PlayerOut, ResourcesOut, SettingsPatch, UIStatePatch, WorkersOut
+from energetica.schemas.players import MoneyOut, PlayerOut, ProfileOut, ResourcesOut, SettingsPatch, UIStatePatch, WorkersOut
 from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/players", tags=["Players"])
@@ -71,3 +71,11 @@ def get_resources(
     player: Annotated[Player, Depends(get_settled_player)],
 ) -> ResourcesOut:
     return ResourcesOut.from_player(player)
+
+
+@router.get("/me/profile")
+def get_profile(
+    player: Annotated[Player, Depends(get_settled_player)],
+) -> ProfileOut:
+    """Get the player's complete profile information including levels and statistics."""
+    return ProfileOut.from_player(player)

@@ -11,17 +11,13 @@
  */
 
 import { useAuth } from "@/contexts/AuthContext";
+import type { ApiSchema } from "@/types/api-helpers";
 
 /**
  * Player capability flags that control feature access.
  * Null if user is not a settled player.
  */
-export interface PlayerCapabilities {
-    has_laboratory: boolean; // Can access /technology page
-    has_warehouse: boolean; // Can access /resource-market
-    has_storage: boolean; // Can access /storage page
-    has_network: boolean; // Can access /network page
-}
+export type PlayerCapabilities = ApiSchema<"PlayerCapabilities">;
 
 /**
  * Hook to access player's capability flags.

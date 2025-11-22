@@ -31,9 +31,9 @@ class PlayerCapabilities(BaseModel):
     has_warehouse: bool  # Can access /resource-market, shipments section
     has_storage: bool  # Can access /storage page
     has_network: bool  # Can access /network page, market features
+    has_greenhouse_gas_effect: bool  # Has discovered climate/emissions tracking
 
     # Future capabilities (for when new features are added)
-    # has_climate_monitoring: bool  # Climate/emissions tracking
     # has_advanced_analytics: bool  # Advanced charts/analytics
 
     @classmethod
@@ -50,4 +50,5 @@ class PlayerCapabilities(BaseModel):
             has_warehouse=bool(player.achievements.get("warehouse", 0)),
             has_storage=bool(player.achievements.get("storage_facilities", 0)),
             has_network=bool(player.achievements.get("network", 0)),
+            has_greenhouse_gas_effect=bool(player.achievements.get("GHG_effect", 0)),
         )

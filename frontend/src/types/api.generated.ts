@@ -619,6 +619,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/players/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Profile
+         * @description Get the player's complete profile information including levels and statistics.
+         */
+        get: operations["get_profile_api_v1_players_me_profile_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/power-priorities": {
         parameters: {
             query?: never;
@@ -1997,6 +2017,32 @@ export interface components {
          */
         Fuel: "coal" | "gas" | "uranium";
         /**
+         * FunctionalFacilityLevels
+         * @description Levels of functional facilities.
+         */
+        FunctionalFacilityLevels: {
+            /**
+             * Industry
+             * @description Industry level
+             */
+            industry: number;
+            /**
+             * Laboratory
+             * @description Laboratory level
+             */
+            laboratory: number;
+            /**
+             * Warehouse
+             * @description Warehouse level
+             */
+            warehouse: number;
+            /**
+             * Carbon Capture
+             * @description Carbon capture level
+             */
+            carbon_capture: number;
+        };
+        /**
          * FunctionalFacilityType
          * @description Enum for functional facilities.
          * @enum {string}
@@ -2149,6 +2195,8 @@ export interface components {
             has_storage: boolean;
             /** Has Network */
             has_network: boolean;
+            /** Has Greenhouse Gas Effect */
+            has_greenhouse_gas_effect: boolean;
         };
         /**
          * PlayerOut
@@ -2212,6 +2260,94 @@ export interface components {
                 | components["schemas"]["BidItem"]
                 | components["schemas"]["AskItem"]
             )[];
+        };
+        /**
+         * ProfileOut
+         * @description Complete player profile information.
+         */
+        ProfileOut: {
+            /**
+             * Username
+             * @description Player username
+             */
+            username: string;
+            /**
+             * Network Name
+             * @description Network name if player is in a network
+             */
+            network_name?: string | null;
+            /** @description Functional facility levels */
+            functional_facility_lvl: components["schemas"]["FunctionalFacilityLevels"];
+            /** @description Technology levels */
+            technology_lvl: components["schemas"]["TechnologyLevels"];
+            /** @description Progression metrics and statistics */
+            progression_metrics: components["schemas"]["ProgressionMetrics"];
+        };
+        /**
+         * ProgressionMetrics
+         * @description Player progression metrics and statistics.
+         */
+        ProgressionMetrics: {
+            /**
+             * Average Revenues
+             * @description Average revenues per hour
+             */
+            average_revenues: number;
+            /**
+             * Max Power Consumption
+             * @description Maximum power consumption in W
+             */
+            max_power_consumption: number;
+            /**
+             * Max Energy Stored
+             * @description Maximum energy stored in J
+             */
+            max_energy_stored: number;
+            /**
+             * Imported Energy
+             * @description Total imported energy in J
+             */
+            imported_energy: number;
+            /**
+             * Exported Energy
+             * @description Total exported energy in J
+             */
+            exported_energy: number;
+            /**
+             * Extracted Resources
+             * @description Total extracted resources in kg
+             */
+            extracted_resources: number;
+            /**
+             * Bought Resources
+             * @description Total bought resources in kg
+             */
+            bought_resources: number;
+            /**
+             * Sold Resources
+             * @description Total sold resources in kg
+             */
+            sold_resources: number;
+            /**
+             * Total Technologies
+             * @description Total number of technologies researched
+             */
+            total_technologies: number;
+            /**
+             * Xp
+             * @description Player experience points
+             */
+            xp: number;
+            /**
+             * Captured Co2
+             * @description Total captured CO2 in kg
+             */
+            captured_co2: number;
+            /**
+             * Net Emissions
+             * @description Net CO2 emissions in kg
+             */
+            net_emissions: number;
         };
         /** ProjectIn */
         ProjectIn: {
@@ -2440,6 +2576,72 @@ export interface components {
             p256dh: string;
             /** Auth */
             auth: string;
+        };
+        /**
+         * TechnologyLevels
+         * @description Levels of technologies.
+         */
+        TechnologyLevels: {
+            /**
+             * Mathematics
+             * @description Mathematics level
+             */
+            mathematics: number;
+            /**
+             * Mechanical Engineering
+             * @description Mechanical Engineering level
+             */
+            mechanical_engineering: number;
+            /**
+             * Thermodynamics
+             * @description Thermodynamics level
+             */
+            thermodynamics: number;
+            /**
+             * Physics
+             * @description Physics level
+             */
+            physics: number;
+            /**
+             * Building Technology
+             * @description Building Technology level
+             */
+            building_technology: number;
+            /**
+             * Mineral Extraction
+             * @description Mineral Extraction level
+             */
+            mineral_extraction: number;
+            /**
+             * Transport Technology
+             * @description Transport Technology level
+             */
+            transport_technology: number;
+            /**
+             * Materials
+             * @description Materials level
+             */
+            materials: number;
+            /**
+             * Civil Engineering
+             * @description Civil Engineering level
+             */
+            civil_engineering: number;
+            /**
+             * Aerodynamics
+             * @description Aerodynamics level
+             */
+            aerodynamics: number;
+            /**
+             * Chemistry
+             * @description Chemistry level
+             */
+            chemistry: number;
+            /**
+             * Nuclear Engineering
+             * @description Nuclear Engineering level
+             */
+            nuclear_engineering: number;
         };
         /**
          * TechnologyType
@@ -3543,6 +3745,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResourcesOut"];
+                };
+            };
+        };
+    };
+    get_profile_api_v1_players_me_profile_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileOut"];
                 };
             };
         };

@@ -11,9 +11,16 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Card, CardTitle, Money } from "@/components/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFacilities } from "@/hooks/useFacilities";
+import { usePlayerProfile } from "@/hooks/usePlayerProfile";
+import { useHasCapability } from "@/hooks/useCapabilities";
 import { FacilityGroupTable } from "@/components/profile/FacilityGroupTable";
 import type { ApiResponse } from "@/types/api-helpers";
-import { formatPower, formatEnergy, formatMassRate } from "@/lib/format-utils";
+import {
+    formatPower,
+    formatEnergy,
+    formatMassRate,
+    formatMass,
+} from "@/lib/format-utils";
 import { dummyFacilities } from "@/data/dummyFacilities";
 
 // Type aliases from generated API types
@@ -42,15 +49,30 @@ function ProfilePage() {
 function ProfileContent() {
     const [showInfoPopup, setShowInfoPopup] = useState(false);
     const { user } = useAuth();
-    const { data: facilities, isLoading, error } = useFacilities();
+    const {
+        data: facilities,
+        isLoading: facilitiesLoading,
+        error: facilitiesError,
+    } = useFacilities();
+    const {
+        data: profile,
+        isLoading: profileLoading,
+        error: profileError,
+    } = usePlayerProfile();
+    const hasGreenhouseGasEffect = useHasCapability(
+        "has_greenhouse_gas_effect",
+    );
 
     // TEMPORARY: Set to true to showcase all asset colors with dummy data
     const SHOW_DUMMY_DATA = false;
 
+    const isLoading = facilitiesLoading || profileLoading;
+    const error = facilitiesError || profileError;
+
     if (isLoading && !SHOW_DUMMY_DATA) {
         return (
             <div className="p-4 md:p-8 text-center">
-                <p className="text-lg">Loading facilities...</p>
+                <p className="text-lg">Loading profile...</p>
             </div>
         );
     }
@@ -58,14 +80,14 @@ function ProfileContent() {
     if (error && !SHOW_DUMMY_DATA) {
         return (
             <div className="p-4 md:p-8 text-center text-red-600">
-                <p className="text-lg">Error loading facilities</p>
+                <p className="text-lg">Error loading profile</p>
             </div>
         );
     }
 
     const displayFacilities = SHOW_DUMMY_DATA ? dummyFacilities : facilities;
 
-    if (!displayFacilities) {
+    if (!displayFacilities || !profile) {
         return null;
     }
 
@@ -114,7 +136,7 @@ function ProfileContent() {
             {/* Username */}
             <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-primary">
-                    {user?.username || "Player"}
+                    {profile.username}
                 </h2>
             </div>
 
@@ -383,6 +405,409 @@ function ProfileContent() {
                         />
                     </div>
                 </Card>
+            </section>
+
+            {/* Bottom section: Functional Facilities, Technologies, and Other Information */}
+            <section className="mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Functional Facilities */}
+                    <Card>
+                        <CardTitle className="mb-4">
+                            Functional Facilities
+                        </CardTitle>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <tbody>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">Industry</td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile
+                                                        .functional_facility_lvl
+                                                        .industry
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Laboratory
+                                        </td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile
+                                                        .functional_facility_lvl
+                                                        .laboratory
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">Warehouse</td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile
+                                                        .functional_facility_lvl
+                                                        .warehouse
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="py-2 px-3">
+                                            Carbon Capture
+                                        </td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile
+                                                        .functional_facility_lvl
+                                                        .carbon_capture
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+
+                    {/* Technologies */}
+                    <Card>
+                        <CardTitle className="mb-4">Technologies</CardTitle>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <tbody>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Mathematics
+                                        </td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile.technology_lvl
+                                                        .mathematics
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Mechanical Engineering
+                                        </td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile.technology_lvl
+                                                        .mechanical_engineering
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Thermodynamics
+                                        </td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile.technology_lvl
+                                                        .thermodynamics
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">Physics</td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {profile.technology_lvl.physics}
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Building Technology
+                                        </td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile.technology_lvl
+                                                        .building_technology
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Mineral Extraction
+                                        </td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile.technology_lvl
+                                                        .mineral_extraction
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Transport Technology
+                                        </td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile.technology_lvl
+                                                        .transport_technology
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">Materials</td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile.technology_lvl
+                                                        .materials
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Civil Engineering
+                                        </td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile.technology_lvl
+                                                        .civil_engineering
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Aerodynamics
+                                        </td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile.technology_lvl
+                                                        .aerodynamics
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">Chemistry</td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile.technology_lvl
+                                                        .chemistry
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="py-2 px-3">
+                                            Nuclear Engineering
+                                        </td>
+                                        <td className="py-2 px-3 text-right">
+                                            lvl{" "}
+                                            <strong>
+                                                {
+                                                    profile.technology_lvl
+                                                        .nuclear_engineering
+                                                }
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+
+                    {/* Other Information */}
+                    <Card>
+                        <CardTitle className="mb-4">
+                            Other Information
+                        </CardTitle>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <tbody>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">Network</td>
+                                        <td className="py-2 px-3 text-center">
+                                            {profile.network_name || "-"}
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">Revenues</td>
+                                        <td className="py-2 px-3 text-center">
+                                            <Money
+                                                amount={
+                                                    profile.progression_metrics
+                                                        .average_revenues
+                                                }
+                                            />{" "}
+                                            /h
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">Max Power</td>
+                                        <td className="py-2 px-3 text-center">
+                                            {formatPower(
+                                                profile.progression_metrics
+                                                    .max_power_consumption,
+                                            )}
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Max Storage
+                                        </td>
+                                        <td className="py-2 px-3 text-center">
+                                            {formatEnergy(
+                                                profile.progression_metrics
+                                                    .max_energy_stored,
+                                            )}
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Imported Energy
+                                        </td>
+                                        <td className="py-2 px-3 text-center">
+                                            {formatEnergy(
+                                                profile.progression_metrics
+                                                    .imported_energy,
+                                            )}
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Exported Energy
+                                        </td>
+                                        <td className="py-2 px-3 text-center">
+                                            {formatEnergy(
+                                                profile.progression_metrics
+                                                    .exported_energy,
+                                            )}
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Extracted Resources
+                                        </td>
+                                        <td className="py-2 px-3 text-center">
+                                            {formatMass(
+                                                profile.progression_metrics
+                                                    .extracted_resources,
+                                            )}
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Bought Resources
+                                        </td>
+                                        <td className="py-2 px-3 text-center">
+                                            {formatMass(
+                                                profile.progression_metrics
+                                                    .bought_resources,
+                                            )}
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Sold Resources
+                                        </td>
+                                        <td className="py-2 px-3 text-center">
+                                            {formatMass(
+                                                profile.progression_metrics
+                                                    .sold_resources,
+                                            )}
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <td className="py-2 px-3">
+                                            Technology
+                                        </td>
+                                        <td className="py-2 px-3 text-center">
+                                            {
+                                                profile.progression_metrics
+                                                    .total_technologies
+                                            }
+                                        </td>
+                                    </tr>
+                                    <tr
+                                        className={
+                                            hasGreenhouseGasEffect
+                                                ? "border-b border-gray-200 dark:border-gray-700"
+                                                : ""
+                                        }
+                                    >
+                                        <td className="py-2 px-3">XP</td>
+                                        <td className="py-2 px-3 text-center">
+                                            {Math.round(
+                                                profile.progression_metrics.xp,
+                                            )}
+                                        </td>
+                                    </tr>
+                                    {hasGreenhouseGasEffect && (
+                                        <>
+                                            <tr className="border-b border-gray-200 dark:border-gray-700">
+                                                <td className="py-2 px-3">
+                                                    Emissions
+                                                </td>
+                                                <td className="py-2 px-3 text-center">
+                                                    {formatMass(
+                                                        profile
+                                                            .progression_metrics
+                                                            .net_emissions,
+                                                    )}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td className="py-2 px-3">
+                                                    Captured CO<sub>2</sub>
+                                                </td>
+                                                <td className="py-2 px-3 text-center">
+                                                    {formatMass(
+                                                        profile
+                                                            .progression_metrics
+                                                            .captured_co2,
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        </>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                </div>
             </section>
         </div>
     );

@@ -41,4 +41,12 @@ export const playerApi = {
         apiClient.get<ApiResponse<"/api/v1/players/me/resources", "get">>(
             "/players/me/resources",
         ),
+
+    /**
+     * Get current player's complete profile.
+     */
+    getProfile: () =>
+        apiClient.get<ApiResponse<"/api/v1/players/me/profile", "get">>(
+            "/players/me/profile",
+        ),
 };
