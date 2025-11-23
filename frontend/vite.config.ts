@@ -44,6 +44,14 @@ export default defineConfig(({ mode }) => ({
                 target: "http://localhost:5001",
                 changeOrigin: true,
             },
+            "/changelog": {
+                target: "http://localhost:5001",
+                changeOrigin: true,
+            },
+            "/wiki": {
+                target: "http://localhost:5001",
+                changeOrigin: true,
+            },
             "/login": {
                 target: "http://localhost:5001",
                 changeOrigin: true,
