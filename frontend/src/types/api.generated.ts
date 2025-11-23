@@ -781,6 +781,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/catalog/power-facilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Power Facilities Catalog
+         * @description Get the catalog of all power facilities available for construction for this player.
+         */
+        get: operations["get_power_facilities_catalog_api_v1_projects_catalog_power_facilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/resource-market/asks": {
         parameters: {
             query?: never;
@@ -2214,6 +2234,64 @@ export interface components {
              */
             username: string;
         };
+        /**
+         * PowerFacilityCatalogListOut
+         * @description List of all power facilities available for construction.
+         */
+        PowerFacilityCatalogListOut: {
+            /** Power Facilities */
+            power_facilities: components["schemas"]["PowerFacilityCatalogOut"][];
+        };
+        /**
+         * PowerFacilityCatalogOut
+         * @description Represents a power facility available for construction.
+         */
+        PowerFacilityCatalogOut: {
+            /** Name */
+            name:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"];
+            /** Description */
+            description: string;
+            /** Wikipedia Link */
+            wikipedia_link: string;
+            /** Price */
+            price: number;
+            /** Construction Power */
+            construction_power: number;
+            /** Construction Time */
+            construction_time: number;
+            /** Construction Pollution */
+            construction_pollution?: number | null;
+            /** Requirements */
+            requirements: components["schemas"]["RequirementOut"][];
+            /** Requirements Status */
+            requirements_status: string;
+            /** Power Generation */
+            power_generation: number;
+            /** Ramping Time */
+            ramping_time?: number | null;
+            /** Ramping Speed */
+            ramping_speed?: number | null;
+            /** Capacity Factor */
+            capacity_factor?: string | null;
+            /** Operating Costs */
+            operating_costs: number;
+            /** Lifespan */
+            lifespan: number;
+            /** Consumed Resources */
+            consumed_resources: {
+                [key: string]: number;
+            };
+            /** Pollution */
+            pollution?: number | null;
+            /** High Hydro Cost */
+            high_hydro_cost?: boolean | null;
+            /** Low Wind Speed */
+            low_wind_speed?: boolean | null;
+        };
         /** PowerFacilityOut */
         PowerFacilityOut: {
             /** Id */
@@ -2421,6 +2499,21 @@ export interface components {
              * @description Quantity of the resource in kg.
              */
             quantity: number;
+        };
+        /**
+         * RequirementOut
+         * @description Represents a requirement for building a facility or researching technology.
+         */
+        RequirementOut: {
+            /** Name */
+            name: string;
+            /** Level */
+            level: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "satisfied" | "queued" | "unsatisfied";
         };
         /**
          * ResourceStock
@@ -4026,6 +4119,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_power_facilities_catalog_api_v1_projects_catalog_power_facilities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PowerFacilityCatalogListOut"];
                 };
             };
         };
