@@ -2291,6 +2291,12 @@ export interface components {
             high_hydro_cost?: boolean | null;
             /** Low Wind Speed */
             low_wind_speed?: boolean | null;
+            /** Wind Potential */
+            wind_potential?: number | null;
+            /** Hydro Potential */
+            hydro_potential?: number | null;
+            /** Solar Potential */
+            solar_potential?: number | null;
         };
         /** PowerFacilityOut */
         PowerFacilityOut: {

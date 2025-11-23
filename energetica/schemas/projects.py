@@ -98,6 +98,9 @@ class PowerFacilityCatalogOut(BaseModel):
     pollution: float | None = None
     high_hydro_cost: bool | None = None
     low_wind_speed: bool | None = None
+    wind_potential: float | None = None
+    hydro_potential: float | None = None
+    solar_potential: float | None = None
 
 
 class PowerFacilityCatalogListOut(BaseModel):
@@ -143,6 +146,9 @@ class PowerFacilityCatalogListOut(BaseModel):
                     pollution=facility_data.get("pollution"),
                     high_hydro_cost=facility_data.get("high_hydro_cost"),
                     low_wind_speed=facility_data.get("low_wind_speed"),
+                    wind_potential=facility_data.get("wind_potential"),
+                    hydro_potential=facility_data.get("hydro_potential"),
+                    solar_potential=facility_data.get("solar_potential"),
                 ),
             )
 

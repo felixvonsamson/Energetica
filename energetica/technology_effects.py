@@ -682,8 +682,6 @@ def _package_power_storage_extraction_facility_base(player: Player, facility_typ
 
 def package_power_facilities(player: Player) -> list[dict]:
     """Package data relevant for the power_facilities frontend."""
-    # TODO(mglst): add wind and hydro potential
-    # https://github.com/users/felixvonsamson/projects/1/views/15?pane=issue&itemId=71832436
     const_config_assets = engine.const_config["assets"]
     return [
         _package_project_base(player, power_facility)
@@ -701,13 +699,24 @@ def package_power_facilities(player: Player) -> list[dict]:
             else {}
         )
         | (
-            {"high_hydro_cost": hydro_price_multiplier(player, power_facility) >= 13.0}
+            {
+                "high_hydro_cost": hydro_price_multiplier(player, power_facility) >= 13.0,
+                "hydro_potential": player.tile.potentials[Renewable.HYDRO],
+            }
             if isinstance(power_facility, HydroFacilityType)
             else {}
         )
         | (
-            {"low_wind_speed": wind_speed_multiplier(player, power_facility) <= 0.55}
+            {
+                "low_wind_speed": wind_speed_multiplier(player, power_facility) <= 0.55,
+                "wind_potential": player.tile.potentials[Renewable.WIND],
+            }
             if isinstance(power_facility, WindFacilityType)
+            else {}
+        )
+        | (
+            {"solar_potential": player.tile.potentials[Renewable.SOLAR]}
+            if isinstance(power_facility, SolarFacilityType)
             else {}
         )
         for power_facility in power_facility_types
