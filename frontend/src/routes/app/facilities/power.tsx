@@ -325,34 +325,49 @@ function ResourceStockIndicators({
     return (
         <>
             {/* Wind Potential */}
-            {isWindFacility && (
-                <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
-                    <Info className="w-4 h-4 flex-shrink-0" />
-                    <span>
-                        Wind potential: <strong>TODO (API)</strong>
-                    </span>
-                </div>
-            )}
+            {isWindFacility &&
+                facility.wind_potential !== undefined &&
+                facility.wind_potential !== null && (
+                    <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
+                        <Info className="w-4 h-4 flex-shrink-0" />
+                        <span>
+                            Wind potential:{" "}
+                            <strong>
+                                {Math.round(facility.wind_potential * 100)}%
+                            </strong>
+                        </span>
+                    </div>
+                )}
 
             {/* Solar Potential */}
-            {isSolarFacility && (
-                <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
-                    <Info className="w-4 h-4 flex-shrink-0" />
-                    <span>
-                        Solar potential: <strong>TODO (API)</strong>
-                    </span>
-                </div>
-            )}
+            {isSolarFacility &&
+                facility.solar_potential !== undefined &&
+                facility.solar_potential !== null && (
+                    <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
+                        <Info className="w-4 h-4 flex-shrink-0" />
+                        <span>
+                            Solar potential:{" "}
+                            <strong>
+                                {Math.round(facility.solar_potential * 100)}%
+                            </strong>
+                        </span>
+                    </div>
+                )}
 
             {/* Hydro Potential */}
-            {isHydroFacility && (
-                <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
-                    <Info className="w-4 h-4 flex-shrink-0" />
-                    <span>
-                        Hydro potential: <strong>TODO (API)</strong>
-                    </span>
-                </div>
-            )}
+            {isHydroFacility &&
+                facility.hydro_potential !== undefined &&
+                facility.hydro_potential !== null && (
+                    <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
+                        <Info className="w-4 h-4 flex-shrink-0" />
+                        <span>
+                            Hydro potential:{" "}
+                            <strong>
+                                {Math.round(facility.hydro_potential * 100)}%
+                            </strong>
+                        </span>
+                    </div>
+                )}
 
             {/* High Hydro Cost Warning */}
             {facility.high_hydro_cost && (
