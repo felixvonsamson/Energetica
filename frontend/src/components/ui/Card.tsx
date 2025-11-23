@@ -4,12 +4,13 @@ import { cn } from "@/lib/utils";
 interface CardProps {
     children: ReactNode;
     className?: string;
+    onClick?: () => void;
 }
 
 /**
  * Base card component for consistent styling across the app.
  */
-export function Card({ children, className }: CardProps) {
+export function Card({ children, className, onClick }: CardProps) {
     return (
         <div
             className={cn(
@@ -17,6 +18,7 @@ export function Card({ children, className }: CardProps) {
                 "text-bone-text dark:text-dark-text-primary",
                 className,
             )}
+            onClick={onClick}
         >
             {children}
         </div>
