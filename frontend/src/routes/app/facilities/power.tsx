@@ -1,11 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { HelpCircle, Clock, Zap, Cloud, ExternalLink } from "lucide-react";
+import {
+    HelpCircle,
+    Clock,
+    Zap,
+    Cloud,
+    ExternalLink,
+    Info,
+    AlertTriangle,
+} from "lucide-react";
 
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Card, Money, FacilityName } from "@/components/ui";
 import { formatPower, formatMass } from "@/lib/format-utils";
+import {
+    usePowerFacilitiesCatalog,
+    useQueueProject,
+} from "@/hooks/useProjects";
+import { usePlayerResources } from "@/hooks/usePlayerResources";
+import type { ApiSchema } from "@/types/api-helpers";
 
 export const Route = createFileRoute("/app/facilities/power")({
     component: PowerFacilitiesPage,
@@ -28,46 +42,7 @@ function PowerFacilitiesPage() {
 // Types
 // ============================================================================
 
-interface Requirement {
-    name: string;
-    display_name: string;
-    level: number;
-    status: "satisfied" | "unsatisfied";
-}
-
-interface FacilityData {
-    name: string;
-    display_name: string;
-    description: string;
-    price: number;
-    construction_time: number;
-    construction_power: number;
-    construction_pollution?: number;
-    power_generation: number;
-    ramping_speed?: number;
-    operating_costs: number;
-    capacity_factor?: string;
-    consumed_resources: Record<string, number>; // resource name -> amount
-    pollution?: number;
-    lifespan: number;
-    wikipedia_link: string;
-    requirements: Requirement[];
-    requirements_status: "satisfied" | "unsatisfied";
-    high_hydro_cost?: boolean;
-    low_wind_speed?: boolean;
-}
-
-interface TilePotentials {
-    wind: number;
-    solar: number;
-    hydro: number;
-}
-
-interface PlayerResources {
-    coal: number;
-    gas: number;
-    uranium: number;
-}
+type PowerFacility = ApiSchema<"PowerFacilityCatalogOut">;
 
 // ============================================================================
 // Main Content Component
@@ -76,10 +51,25 @@ interface PlayerResources {
 function PowerFacilitiesContent() {
     const [showInfoPopup, setShowInfoPopup] = useState(false);
 
-    // TODO: Fetch real data from API
-    const constructions: FacilityData[] = MOCK_FACILITIES;
-    const tilePotentials: TilePotentials = MOCK_POTENTIALS;
-    const playerResources: PlayerResources = MOCK_RESOURCES;
+    const {
+        data: catalogData,
+        isLoading: isCatalogLoading,
+        isError: isCatalogError,
+    } = usePowerFacilitiesCatalog();
+
+    const { data: resourcesData, isLoading: isResourcesLoading } =
+        usePlayerResources();
+
+    const facilities = catalogData?.power_facilities ?? [];
+
+    // Extract stock values from resource data
+    const playerResources = resourcesData
+        ? {
+              coal: resourcesData.coal.stock,
+              gas: resourcesData.gas.stock,
+              uranium: resourcesData.uranium.stock,
+          }
+        : { coal: 0, gas: 0, uranium: 0 };
 
     return (
         <div className="p-4 md:p-8">
@@ -135,17 +125,34 @@ function PowerFacilitiesContent() {
             {/* TODO: Under construction facilities will show here */}
             <div id="under_construction" className="mb-6"></div>
 
+            {/* Loading state */}
+            {(isCatalogLoading || isResourcesLoading) && (
+                <div className="text-center py-8 text-gray-500">
+                    Loading facilities...
+                </div>
+            )}
+
+            {/* Error state */}
+            {isCatalogError && (
+                <div className="text-center py-8 text-alert-red">
+                    Failed to load power facilities. Please try again.
+                </div>
+            )}
+
             {/* Facilities list */}
-            <div className="space-y-4">
-                {constructions.map((facility) => (
-                    <FacilityCard
-                        key={facility.name}
-                        facility={facility}
-                        tilePotentials={tilePotentials}
-                        playerResources={playerResources}
-                    />
-                ))}
-            </div>
+            {!isCatalogLoading &&
+                !isResourcesLoading &&
+                facilities.length > 0 && (
+                    <div className="space-y-4">
+                        {facilities.map((facility) => (
+                            <FacilityCard
+                                key={facility.name}
+                                facility={facility}
+                                playerResources={playerResources}
+                            />
+                        ))}
+                    </div>
+                )}
         </div>
     );
 }
@@ -155,21 +162,16 @@ function PowerFacilitiesContent() {
 // ============================================================================
 
 interface FacilityCardProps {
-    facility: FacilityData;
-    tilePotentials: TilePotentials;
-    playerResources: PlayerResources;
+    facility: PowerFacility;
+    playerResources: { coal: number; gas: number; uranium: number };
 }
 
-function FacilityCard({
-    facility,
-    tilePotentials,
-    playerResources,
-}: FacilityCardProps) {
+function FacilityCard({ facility, playerResources }: FacilityCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const queueProjectMutation = useQueueProject();
 
     const handleConstruction = () => {
-        // TODO: Implement construction launch
-        console.log("Starting construction of", facility.name);
+        queueProjectMutation.mutate({ type: facility.name });
     };
 
     // Determine image extension
@@ -193,7 +195,7 @@ function FacilityCard({
                 <div className="flex-shrink-0">
                     <img
                         src={imageUrl}
-                        alt={`${facility.display_name} power plant`}
+                        alt={`${facility.name} power plant`}
                         className="w-full lg:w-64 h-auto rounded"
                     />
                 </div>
@@ -203,7 +205,10 @@ function FacilityCard({
                     {/* Header */}
                     <div className="flex flex-wrap items-center gap-3">
                         <h2 className="text-xl font-bold">
-                            {facility.display_name}
+                            <FacilityName
+                                facility={facility.name}
+                                mode="long"
+                            />
                         </h2>
                         <a
                             href={facility.wikipedia_link}
@@ -215,7 +220,7 @@ function FacilityCard({
                             <ExternalLink className="w-5 h-5" />
                         </a>
                         <div className="text-lg font-semibold">
-                            <Money amount={facility.price} iconSize="md" />
+                            <Money amount={facility.price} iconSize="md" long />
                         </div>
                     </div>
 
@@ -228,10 +233,9 @@ function FacilityCard({
                             }}
                         />
 
-                        {/* Potential Indicators */}
-                        <PotentialIndicators
+                        {/* Resource Stock Indicators */}
+                        <ResourceStockIndicators
                             facility={facility}
-                            tilePotentials={tilePotentials}
                             playerResources={playerResources}
                         />
                     </div>
@@ -288,20 +292,18 @@ function FacilityCard({
 }
 
 // ============================================================================
-// Potential Indicators Component (Reusable)
+// Resource Stock Indicators Component (Reusable)
 // ============================================================================
 
-interface PotentialIndicatorsProps {
-    facility: FacilityData;
-    tilePotentials: TilePotentials;
-    playerResources: PlayerResources;
+interface ResourceStockIndicatorsProps {
+    facility: PowerFacility;
+    playerResources: { coal: number; gas: number; uranium: number };
 }
 
-function PotentialIndicators({
+function ResourceStockIndicators({
     facility,
-    tilePotentials,
     playerResources,
-}: PotentialIndicatorsProps) {
+}: ResourceStockIndicatorsProps) {
     const windFacilities = [
         "windmill",
         "onshore_wind_turbine",
@@ -316,32 +318,59 @@ function PotentialIndicators({
         uranium: ["nuclear_reactor", "nuclear_reactor_gen4"],
     };
 
+    const isWindFacility = windFacilities.includes(facility.name);
+    const isSolarFacility = solarFacilities.includes(facility.name);
+    const isHydroFacility = hydroFacilities.includes(facility.name);
+
     return (
         <>
             {/* Wind Potential */}
-            {windFacilities.includes(facility.name) && (
-                <div className="text-blue-600 dark:text-blue-400 italic">
-                    <span className="mr-1">ℹ️</span>
-                    Wind potential:{" "}
-                    <strong>{Math.round(tilePotentials.wind * 100)}%</strong>
+            {isWindFacility && (
+                <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
+                    <Info className="w-4 h-4 flex-shrink-0" />
+                    <span>
+                        Wind potential: <strong>TODO (API)</strong>
+                    </span>
                 </div>
             )}
 
             {/* Solar Potential */}
-            {solarFacilities.includes(facility.name) && (
-                <div className="text-blue-600 dark:text-blue-400 italic">
-                    <span className="mr-1">ℹ️</span>
-                    Solar potential:{" "}
-                    <strong>{Math.round(tilePotentials.solar * 100)}%</strong>
+            {isSolarFacility && (
+                <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
+                    <Info className="w-4 h-4 flex-shrink-0" />
+                    <span>
+                        Solar potential: <strong>TODO (API)</strong>
+                    </span>
                 </div>
             )}
 
             {/* Hydro Potential */}
-            {hydroFacilities.includes(facility.name) && (
-                <div className="text-blue-600 dark:text-blue-400 italic">
-                    <span className="mr-1">ℹ️</span>
-                    Hydro potential:{" "}
-                    <strong>{Math.round(tilePotentials.hydro * 100)}%</strong>
+            {isHydroFacility && (
+                <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
+                    <Info className="w-4 h-4 flex-shrink-0" />
+                    <span>
+                        Hydro potential: <strong>TODO (API)</strong>
+                    </span>
+                </div>
+            )}
+
+            {/* High Hydro Cost Warning */}
+            {facility.high_hydro_cost && (
+                <div className="text-amber-600 dark:text-amber-400 italic flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    <span>
+                        High construction cost due to limited hydro potential
+                    </span>
+                </div>
+            )}
+
+            {/* Low Wind Speed Warning */}
+            {facility.low_wind_speed && (
+                <div className="text-amber-600 dark:text-amber-400 italic flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    <span>
+                        Low wind speed in this location may reduce efficiency
+                    </span>
                 </div>
             )}
 
@@ -350,15 +379,19 @@ function PotentialIndicators({
                 ([resource, facilities]) => {
                     if (facilities.includes(facility.name)) {
                         const stock =
-                            playerResources[resource as keyof PlayerResources];
+                            playerResources[
+                                resource as keyof typeof playerResources
+                            ];
                         return (
                             <div
                                 key={resource}
-                                className="text-blue-600 dark:text-blue-400 italic"
+                                className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1"
                             >
-                                <span className="mr-1">ℹ️</span>
-                                Current stock of {resource}:{" "}
-                                <strong>{formatMass(stock)}</strong>
+                                <Info className="w-4 h-4 flex-shrink-0" />
+                                <span>
+                                    Current stock of {resource}:{" "}
+                                    <strong>{formatMass(stock)}</strong>
+                                </span>
                             </div>
                         );
                     }
@@ -374,7 +407,7 @@ function PotentialIndicators({
 // ============================================================================
 
 interface RequirementsDisplayProps {
-    requirements: Requirement[];
+    requirements: PowerFacility["requirements"];
 }
 
 function RequirementsDisplay({ requirements }: RequirementsDisplayProps) {
@@ -383,17 +416,20 @@ function RequirementsDisplay({ requirements }: RequirementsDisplayProps) {
             <div className="font-bold mb-2">Unlock with:</div>
             <ul className="space-y-1 ml-4">
                 {requirements.map((req, idx) => {
+                    // Format display name
                     const techName =
                         req.name === "mechanical_engineering"
                             ? "Mech. engineering"
-                            : req.display_name;
+                            : req.name.replace(/_/g, " ");
                     return (
                         <li
                             key={idx}
                             className={
                                 req.status === "satisfied"
                                     ? "text-green-600 dark:text-green-400"
-                                    : "text-red-600 dark:text-red-400"
+                                    : req.status === "queued"
+                                      ? "text-yellow-600 dark:text-yellow-400"
+                                      : "text-red-600 dark:text-red-400"
                             }
                         >
                             - {techName} lvl {req.level}
@@ -410,7 +446,7 @@ function RequirementsDisplay({ requirements }: RequirementsDisplayProps) {
 // ============================================================================
 
 interface ConstructionInfoProps {
-    facility: FacilityData;
+    facility: PowerFacility;
 }
 
 function ConstructionInfo({ facility }: ConstructionInfoProps) {
@@ -431,15 +467,18 @@ function ConstructionInfo({ facility }: ConstructionInfoProps) {
                 <strong>{formatPower(facility.construction_power)}</strong>
                 <span className="text-xs text-gray-500">(Power)</span>
             </div>
-            {facility.construction_pollution !== undefined && (
-                <div className="flex items-center gap-2">
-                    <Cloud className="w-4 h-4" />
-                    <strong>
-                        {formatMass(facility.construction_pollution)} CO₂
-                    </strong>
-                    <span className="text-xs text-gray-500">(Emissions)</span>
-                </div>
-            )}
+            {facility.construction_pollution !== undefined &&
+                facility.construction_pollution !== null && (
+                    <div className="flex items-center gap-2">
+                        <Cloud className="w-4 h-4" />
+                        <strong>
+                            {formatMass(facility.construction_pollution)} CO₂
+                        </strong>
+                        <span className="text-xs text-gray-500">
+                            (Emissions)
+                        </span>
+                    </div>
+                )}
         </div>
     );
 }
@@ -449,7 +488,7 @@ function ConstructionInfo({ facility }: ConstructionInfoProps) {
 // ============================================================================
 
 interface FacilityStatsTableProps {
-    facility: FacilityData;
+    facility: PowerFacility;
 }
 
 function FacilityStatsTable({ facility }: FacilityStatsTableProps) {
@@ -473,16 +512,17 @@ function FacilityStatsTable({ facility }: FacilityStatsTableProps) {
                     </tr>
 
                     {/* Ramping Speed */}
-                    {facility.ramping_speed !== undefined && (
-                        <tr className="border-b border-pine/10 dark:border-dark-border/30">
-                            <td className="py-2 px-4 font-semibold">
-                                Ramping speed
-                            </td>
-                            <td className="py-2 px-4 text-center font-mono">
-                                {formatPower(facility.ramping_speed)}/min
-                            </td>
-                        </tr>
-                    )}
+                    {facility.ramping_speed !== undefined &&
+                        facility.ramping_speed !== null && (
+                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                                <td className="py-2 px-4 font-semibold">
+                                    Ramping speed
+                                </td>
+                                <td className="py-2 px-4 text-center font-mono">
+                                    {formatPower(facility.ramping_speed)}/min
+                                </td>
+                            </tr>
+                        )}
 
                     {/* Operation Cost */}
                     <tr className="border-b border-pine/10 dark:border-dark-border/30">
@@ -545,16 +585,17 @@ function FacilityStatsTable({ facility }: FacilityStatsTableProps) {
                     )}
 
                     {/* CO2 Emissions */}
-                    {facility.pollution !== undefined && (
-                        <tr className="border-b border-pine/10 dark:border-dark-border/30">
-                            <td className="py-2 px-4 font-semibold">
-                                CO₂ emissions
-                            </td>
-                            <td className="py-2 px-4 text-center font-mono">
-                                {formatMass(facility.pollution)}/MWh
-                            </td>
-                        </tr>
-                    )}
+                    {facility.pollution !== undefined &&
+                        facility.pollution !== null && (
+                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                                <td className="py-2 px-4 font-semibold">
+                                    CO₂ emissions
+                                </td>
+                                <td className="py-2 px-4 text-center font-mono">
+                                    {formatMass(facility.pollution)}/MWh
+                                </td>
+                            </tr>
+                        )}
 
                     {/* Lifespan */}
                     <tr>
@@ -568,84 +609,3 @@ function FacilityStatsTable({ facility }: FacilityStatsTableProps) {
         </div>
     );
 }
-
-// ============================================================================
-// Mock Data (TODO: Replace with API calls)
-// ============================================================================
-
-const MOCK_POTENTIALS: TilePotentials = {
-    wind: 0.65,
-    solar: 0.8,
-    hydro: 0.45,
-};
-
-const MOCK_RESOURCES: PlayerResources = {
-    coal: 15000,
-    gas: 8000,
-    uranium: 500,
-};
-
-const MOCK_FACILITIES: FacilityData[] = [
-    {
-        name: "coal_burner",
-        display_name: "Coal Burner",
-        description:
-            "A basic coal-fired power plant that generates electricity by burning coal.",
-        price: 50000,
-        construction_time: 100,
-        construction_power: 1000,
-        construction_pollution: 5000,
-        power_generation: 5000,
-        ramping_speed: 500,
-        operating_costs: 100,
-        consumed_resources: { coal: 0.4 },
-        pollution: 0.9,
-        lifespan: 3650,
-        wikipedia_link:
-            "https://en.wikipedia.org/wiki/Coal-fired_power_station",
-        requirements: [],
-        requirements_status: "satisfied",
-    },
-    {
-        name: "PV_solar",
-        display_name: "Photovoltaic Solar Plant",
-        description:
-            "Converts sunlight directly into electricity using solar panels.",
-        price: 120000,
-        construction_time: 150,
-        construction_power: 2000,
-        power_generation: 10000,
-        operating_costs: 50,
-        capacity_factor: "Variable",
-        consumed_resources: {},
-        lifespan: 9125,
-        wikipedia_link:
-            "https://en.wikipedia.org/wiki/Photovoltaic_power_station",
-        requirements: [
-            {
-                name: "solar_energy",
-                display_name: "Solar Energy",
-                level: 1,
-                status: "unsatisfied",
-            },
-        ],
-        requirements_status: "unsatisfied",
-    },
-    {
-        name: "onshore_wind_turbine",
-        display_name: "Onshore Wind Turbine",
-        description:
-            "Harnesses wind energy to generate clean electricity on land.",
-        price: 80000,
-        construction_time: 120,
-        construction_power: 1500,
-        power_generation: 8000,
-        operating_costs: 75,
-        capacity_factor: "Variable",
-        consumed_resources: {},
-        lifespan: 7300,
-        wikipedia_link: "https://en.wikipedia.org/wiki/Wind_turbine",
-        requirements: [],
-        requirements_status: "satisfied",
-    },
-];

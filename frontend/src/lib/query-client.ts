@@ -86,4 +86,14 @@ export const queryKeys = {
     achievements: {
         upcoming: ["achievements", "upcoming"] as const,
     },
+    projects: {
+        all: ["projects"] as const,
+        catalog: {
+            powerFacilities: [
+                "projects",
+                "catalog",
+                "power-facilities",
+            ] as const,
+        },
+    },
 } as const;
