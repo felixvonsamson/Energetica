@@ -94,6 +94,21 @@ export const queryKeys = {
                 "catalog",
                 "power-facilities",
             ] as const,
+            storageFacilities: [
+                "projects",
+                "catalog",
+                "storage-facilities",
+            ] as const,
+            extractionFacilities: [
+                "projects",
+                "catalog",
+                "extraction-facilities",
+            ] as const,
+            functionalFacilities: [
+                "projects",
+                "catalog",
+                "functional-facilities",
+            ] as const,
         },
     },
 } as const;

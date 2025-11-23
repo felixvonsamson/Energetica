@@ -72,4 +72,28 @@ export const projectsApi = {
         apiClient.get<
             ApiResponse<"/api/v1/projects/catalog/power-facilities", "get">
         >("/projects/catalog/power-facilities"),
+
+    /**
+     * Get the catalog of all storage facilities available for construction.
+     */
+    getStorageFacilitiesCatalog: () =>
+        apiClient.get<
+            ApiResponse<"/api/v1/projects/catalog/storage-facilities", "get">
+        >("/projects/catalog/storage-facilities"),
+
+    /**
+     * Get the catalog of all extraction facilities available for construction.
+     */
+    getExtractionFacilitiesCatalog: () =>
+        apiClient.get<
+            ApiResponse<"/api/v1/projects/catalog/extraction-facilities", "get">
+        >("/projects/catalog/extraction-facilities"),
+
+    /**
+     * Get the catalog of all functional facilities available for construction.
+     */
+    getFunctionalFacilitiesCatalog: () =>
+        apiClient.get<
+            ApiResponse<"/api/v1/projects/catalog/functional-facilities", "get">
+        >("/projects/catalog/functional-facilities"),
 };

@@ -801,6 +801,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/catalog/storage-facilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Storage Facilities Catalog
+         * @description Get the catalog of all storage facilities available for construction for this player.
+         */
+        get: operations["get_storage_facilities_catalog_api_v1_projects_catalog_storage_facilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/catalog/extraction-facilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Extraction Facilities Catalog
+         * @description Get the catalog of all extraction facilities available for construction for this player.
+         */
+        get: operations["get_extraction_facilities_catalog_api_v1_projects_catalog_extraction_facilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/catalog/functional-facilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Functional Facilities Catalog
+         * @description Get the catalog of all functional facilities available for construction for this player.
+         */
+        get: operations["get_functional_facilities_catalog_api_v1_projects_catalog_functional_facilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/resource-market/asks": {
         parameters: {
             query?: never;
@@ -1992,6 +2052,51 @@ export interface components {
              */
             player_answer: "answer1" | "answer2" | "answer3";
         };
+        /**
+         * ExtractionFacilityCatalogListOut
+         * @description List of all extraction facilities available for construction.
+         */
+        ExtractionFacilityCatalogListOut: {
+            /** Extraction Facilities */
+            extraction_facilities: components["schemas"]["ExtractionFacilityCatalogOut"][];
+        };
+        /**
+         * ExtractionFacilityCatalogOut
+         * @description Represents an extraction facility available for construction.
+         */
+        ExtractionFacilityCatalogOut: {
+            name: components["schemas"]["ExtractionFacilityType"];
+            /** Description */
+            description: string;
+            /** Wikipedia Link */
+            wikipedia_link: string;
+            /** Price */
+            price: number;
+            /** Construction Power */
+            construction_power: number;
+            /** Construction Time */
+            construction_time: number;
+            /** Construction Pollution */
+            construction_pollution?: number | null;
+            /** Requirements */
+            requirements: components["schemas"]["RequirementOut"][];
+            /**
+             * Requirements Status
+             * @enum {string}
+             */
+            requirements_status: "satisfied" | "queued" | "unsatisfied";
+            /** Operating Costs */
+            operating_costs: number;
+            /** Lifespan */
+            lifespan: number;
+            /** Power Consumption */
+            power_consumption: number;
+            /** Pollution */
+            pollution: number;
+            resource_production: components["schemas"]["ResourceProduction"];
+            /** Poor Resource Production */
+            poor_resource_production: boolean;
+        };
         /** ExtractionFacilityOut */
         ExtractionFacilityOut: {
             /** Id */
@@ -2036,6 +2141,53 @@ export interface components {
          * @enum {string}
          */
         Fuel: "coal" | "gas" | "uranium";
+        /**
+         * FunctionalFacilityCatalogListOut
+         * @description List of all functional facilities available for construction.
+         */
+        FunctionalFacilityCatalogListOut: {
+            /** Functional Facilities */
+            functional_facilities: components["schemas"]["FunctionalFacilityCatalogOut"][];
+        };
+        /**
+         * FunctionalFacilityCatalogOut
+         * @description Represents a functional facility available for construction/upgrade.
+         */
+        FunctionalFacilityCatalogOut: {
+            name: components["schemas"]["FunctionalFacilityType"];
+            /** Description */
+            description: string;
+            /** Wikipedia Link */
+            wikipedia_link: string;
+            /** Price */
+            price: number;
+            /** Construction Power */
+            construction_power: number;
+            /** Construction Time */
+            construction_time: number;
+            /** Construction Pollution */
+            construction_pollution?: number | null;
+            /** Requirements */
+            requirements: components["schemas"]["RequirementOut"][];
+            /**
+             * Requirements Status
+             * @enum {string}
+             */
+            requirements_status: "satisfied" | "queued" | "unsatisfied";
+            /** Level */
+            level: number;
+            average_consumption?: components["schemas"]["ValueChange"] | null;
+            revenue_generation?: components["schemas"]["ValueChange"] | null;
+            lab_workers?: components["schemas"]["ValueChange"] | null;
+            /** Research Speed Bonus */
+            research_speed_bonus?: number | null;
+            /** Warehouse Capacities */
+            warehouse_capacities?: {
+                [key: string]: components["schemas"]["ValueChange"] | null;
+            } | null;
+            power_consumption?: components["schemas"]["ValueChange"] | null;
+            co2_absorption?: components["schemas"]["ValueChange"] | null;
+        };
         /**
          * FunctionalFacilityLevels
          * @description Levels of functional facilities.
@@ -2267,8 +2419,11 @@ export interface components {
             construction_pollution?: number | null;
             /** Requirements */
             requirements: components["schemas"]["RequirementOut"][];
-            /** Requirements Status */
-            requirements_status: string;
+            /**
+             * Requirements Status
+             * @enum {string}
+             */
+            requirements_status: "satisfied" | "queued" | "unsatisfied";
             /** Power Generation */
             power_generation: number;
             /** Ramping Time */
@@ -2522,6 +2677,16 @@ export interface components {
             status: "satisfied" | "queued" | "unsatisfied";
         };
         /**
+         * ResourceProduction
+         * @description Represents resource production info for an extraction facility.
+         */
+        ResourceProduction: {
+            /** Name */
+            name: string;
+            /** Rate */
+            rate: number;
+        };
+        /**
          * ResourceStock
          * @description Information about a specific resource stock.
          */
@@ -2631,6 +2796,56 @@ export interface components {
          * @enum {string}
          */
         SolarFacilityType: "CSP_solar" | "PV_solar";
+        /**
+         * StorageFacilityCatalogListOut
+         * @description List of all storage facilities available for construction.
+         */
+        StorageFacilityCatalogListOut: {
+            /** Storage Facilities */
+            storage_facilities: components["schemas"]["StorageFacilityCatalogOut"][];
+        };
+        /**
+         * StorageFacilityCatalogOut
+         * @description Represents a storage facility available for construction.
+         */
+        StorageFacilityCatalogOut: {
+            name: components["schemas"]["StorageFacilityType"];
+            /** Description */
+            description: string;
+            /** Wikipedia Link */
+            wikipedia_link: string;
+            /** Price */
+            price: number;
+            /** Construction Power */
+            construction_power: number;
+            /** Construction Time */
+            construction_time: number;
+            /** Construction Pollution */
+            construction_pollution?: number | null;
+            /** Requirements */
+            requirements: components["schemas"]["RequirementOut"][];
+            /**
+             * Requirements Status
+             * @enum {string}
+             */
+            requirements_status: "satisfied" | "queued" | "unsatisfied";
+            /** Power Generation */
+            power_generation: number;
+            /** Ramping Time */
+            ramping_time?: number | null;
+            /** Ramping Speed */
+            ramping_speed?: number | null;
+            /** Capacity Factor */
+            capacity_factor?: string | null;
+            /** Operating Costs */
+            operating_costs: number;
+            /** Lifespan */
+            lifespan: number;
+            /** Storage Capacity */
+            storage_capacity: number;
+            /** Efficiency */
+            efficiency: number;
+        };
         /** StorageFacilityOut */
         StorageFacilityOut: {
             /** Id */
@@ -2813,6 +3028,16 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * ValueChange
+         * @description Represents a value change from current to upgraded level.
+         */
+        ValueChange: {
+            /** Current */
+            current: number | null;
+            /** Upgraded */
+            upgraded: number | null;
         };
         /** VapidPublicKey */
         VapidPublicKey: {
@@ -4145,6 +4370,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PowerFacilityCatalogListOut"];
+                };
+            };
+        };
+    };
+    get_storage_facilities_catalog_api_v1_projects_catalog_storage_facilities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageFacilityCatalogListOut"];
+                };
+            };
+        };
+    };
+    get_extraction_facilities_catalog_api_v1_projects_catalog_extraction_facilities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtractionFacilityCatalogListOut"];
+                };
+            };
+        };
+    };
+    get_functional_facilities_catalog_api_v1_projects_catalog_functional_facilities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FunctionalFacilityCatalogListOut"];
                 };
             };
         };

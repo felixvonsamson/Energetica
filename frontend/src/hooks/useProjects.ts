@@ -35,8 +35,50 @@ export function usePowerFacilitiesCatalog() {
     return useQuery({
         queryKey: queryKeys.projects.catalog.powerFacilities,
         queryFn: projectsApi.getPowerFacilitiesCatalog,
-        // Power facilities catalog doesn't change often - only when tech is researched
+        // Catalog doesn't change often - only when tech is researched
         // We'll invalidate this manually when needed
+        staleTime: 10 * 60 * 1000, // 10 minutes
+        gcTime: 15 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+}
+
+/**
+ * Get the catalog of all storage facilities available for construction.
+ * This data changes when technologies are researched.
+ */
+export function useStorageFacilitiesCatalog() {
+    return useQuery({
+        queryKey: queryKeys.projects.catalog.storageFacilities,
+        queryFn: projectsApi.getStorageFacilitiesCatalog,
+        staleTime: 10 * 60 * 1000, // 10 minutes
+        gcTime: 15 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+}
+
+/**
+ * Get the catalog of all extraction facilities available for construction.
+ * This data changes when technologies are researched.
+ */
+export function useExtractionFacilitiesCatalog() {
+    return useQuery({
+        queryKey: queryKeys.projects.catalog.extractionFacilities,
+        queryFn: projectsApi.getExtractionFacilitiesCatalog,
+        staleTime: 10 * 60 * 1000, // 10 minutes
+        gcTime: 15 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+}
+
+/**
+ * Get the catalog of all functional facilities available for construction/upgrade.
+ * This data changes when technologies are researched or facilities are upgraded.
+ */
+export function useFunctionalFacilitiesCatalog() {
+    return useQuery({
+        queryKey: queryKeys.projects.catalog.functionalFacilities,
+        queryFn: projectsApi.getFunctionalFacilitiesCatalog,
         staleTime: 10 * 60 * 1000, // 10 minutes
         gcTime: 15 * 60 * 1000,
         refetchOnWindowFocus: false,
