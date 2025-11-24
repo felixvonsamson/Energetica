@@ -60,7 +60,7 @@ def tick() -> None:
         engine.save()
 
     asyncio.run_coroutine_threadsafe(
-        engine.socketio.emit("tick", {"tick": engine.total_t}), MAIN_EVENT_LOOP
+        engine.socketio.emit("tick", {"tick": engine.total_t}), MAIN_EVENT_LOOP,
     )
 
 
