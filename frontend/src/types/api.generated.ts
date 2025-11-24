@@ -2701,6 +2701,11 @@ export interface components {
              * @description Maximum capacity in kg
              */
             capacity: number;
+            /**
+             * Reserves
+             * @description Fuel reserves on the player's tile in kg
+             */
+            reserves: number;
         };
         /**
          * ResourcesOut

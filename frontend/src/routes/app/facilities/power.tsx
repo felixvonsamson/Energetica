@@ -1,25 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-    HelpCircle,
-    Clock,
-    Zap,
-    Cloud,
-    ExternalLink,
-    Info,
-    AlertTriangle,
-} from "lucide-react";
+import { HelpCircle, ExternalLink } from "lucide-react";
 
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Card, Money, FacilityName } from "@/components/ui";
-import { formatPower, formatMass } from "@/lib/format-utils";
 import {
     usePowerFacilitiesCatalog,
     useQueueProject,
 } from "@/hooks/useProjects";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import type { ApiSchema } from "@/types/api-helpers";
+import {
+    RequirementsDisplay,
+    ConstructionInfo,
+    ResourceStockIndicators,
+} from "@/components/facilities";
+import { formatPower, formatMass } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/facilities/power")({
     component: PowerFacilitiesPage,
@@ -235,7 +232,12 @@ function FacilityCard({ facility, playerResources }: FacilityCardProps) {
 
                         {/* Resource Stock Indicators */}
                         <ResourceStockIndicators
-                            facility={facility}
+                            facilityName={facility.name}
+                            windPotential={facility.wind_potential}
+                            solarPotential={facility.solar_potential}
+                            hydroPotential={facility.hydro_potential}
+                            highHydroCost={facility.high_hydro_cost}
+                            lowWindSpeed={facility.low_wind_speed}
                             playerResources={playerResources}
                         />
                     </div>
@@ -251,7 +253,7 @@ function FacilityCard({ facility, playerResources }: FacilityCardProps) {
                 {/* Stats Table (visible on desktop when not expanded) */}
                 {!isExpanded && (
                     <div className="hidden xl:block flex-shrink-0">
-                        <FacilityStatsTable facility={facility} />
+                        <PowerFacilityStatsTable facility={facility} />
                     </div>
                 )}
             </div>
@@ -280,11 +282,17 @@ function FacilityCard({ facility, playerResources }: FacilityCardProps) {
                                 : "Start Construction"}
                         </button>
 
-                        <ConstructionInfo facility={facility} />
+                        <ConstructionInfo
+                            constructionTime={facility.construction_time}
+                            constructionPower={facility.construction_power}
+                            constructionPollution={
+                                facility.construction_pollution
+                            }
+                        />
                     </div>
 
                     {/* Full Stats Table */}
-                    <FacilityStatsTable facility={facility} />
+                    <PowerFacilityStatsTable facility={facility} />
                 </div>
             )}
         </Card>
@@ -292,221 +300,14 @@ function FacilityCard({ facility, playerResources }: FacilityCardProps) {
 }
 
 // ============================================================================
-// Resource Stock Indicators Component (Reusable)
+// Power Facility Stats Table Component
 // ============================================================================
 
-interface ResourceStockIndicatorsProps {
-    facility: PowerFacility;
-    playerResources: { coal: number; gas: number; uranium: number };
-}
-
-function ResourceStockIndicators({
-    facility,
-    playerResources,
-}: ResourceStockIndicatorsProps) {
-    const windFacilities = [
-        "windmill",
-        "onshore_wind_turbine",
-        "offshore_wind_turbine",
-    ];
-    const solarFacilities = ["CSP_solar", "PV_solar"];
-    const hydroFacilities = ["watermill", "small_water_dam", "large_water_dam"];
-
-    const resourceFacilities: Record<string, string[]> = {
-        gas: ["gas_burner", "combined_cycle"],
-        coal: ["coal_burner", "combined_cycle"],
-        uranium: ["nuclear_reactor", "nuclear_reactor_gen4"],
-    };
-
-    const isWindFacility = windFacilities.includes(facility.name);
-    const isSolarFacility = solarFacilities.includes(facility.name);
-    const isHydroFacility = hydroFacilities.includes(facility.name);
-
-    return (
-        <>
-            {/* Wind Potential */}
-            {isWindFacility &&
-                facility.wind_potential !== undefined &&
-                facility.wind_potential !== null && (
-                    <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
-                        <Info className="w-4 h-4 flex-shrink-0" />
-                        <span>
-                            Wind potential:{" "}
-                            <strong>
-                                {Math.round(facility.wind_potential * 100)}%
-                            </strong>
-                        </span>
-                    </div>
-                )}
-
-            {/* Solar Potential */}
-            {isSolarFacility &&
-                facility.solar_potential !== undefined &&
-                facility.solar_potential !== null && (
-                    <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
-                        <Info className="w-4 h-4 flex-shrink-0" />
-                        <span>
-                            Solar potential:{" "}
-                            <strong>
-                                {Math.round(facility.solar_potential * 100)}%
-                            </strong>
-                        </span>
-                    </div>
-                )}
-
-            {/* Hydro Potential */}
-            {isHydroFacility &&
-                facility.hydro_potential !== undefined &&
-                facility.hydro_potential !== null && (
-                    <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1">
-                        <Info className="w-4 h-4 flex-shrink-0" />
-                        <span>
-                            Hydro potential:{" "}
-                            <strong>
-                                {Math.round(facility.hydro_potential * 100)}%
-                            </strong>
-                        </span>
-                    </div>
-                )}
-
-            {/* High Hydro Cost Warning */}
-            {facility.high_hydro_cost && (
-                <div className="text-amber-600 dark:text-amber-400 italic flex items-center gap-1">
-                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                    <span>
-                        High construction cost due to limited hydro potential
-                    </span>
-                </div>
-            )}
-
-            {/* Low Wind Speed Warning */}
-            {facility.low_wind_speed && (
-                <div className="text-amber-600 dark:text-amber-400 italic flex items-center gap-1">
-                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                    <span>
-                        Low wind speed in this location may reduce efficiency
-                    </span>
-                </div>
-            )}
-
-            {/* Resource Stock */}
-            {Object.entries(resourceFacilities).map(
-                ([resource, facilities]) => {
-                    if (facilities.includes(facility.name)) {
-                        const stock =
-                            playerResources[
-                                resource as keyof typeof playerResources
-                            ];
-                        return (
-                            <div
-                                key={resource}
-                                className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1"
-                            >
-                                <Info className="w-4 h-4 flex-shrink-0" />
-                                <span>
-                                    Current stock of {resource}:{" "}
-                                    <strong>{formatMass(stock)}</strong>
-                                </span>
-                            </div>
-                        );
-                    }
-                    return null;
-                },
-            )}
-        </>
-    );
-}
-
-// ============================================================================
-// Requirements Display Component (Reusable)
-// ============================================================================
-
-interface RequirementsDisplayProps {
-    requirements: PowerFacility["requirements"];
-}
-
-function RequirementsDisplay({ requirements }: RequirementsDisplayProps) {
-    return (
-        <div className="bg-tan-green/30 dark:bg-dark-bg-tertiary/50 p-3 rounded">
-            <div className="font-bold mb-2">Unlock with:</div>
-            <ul className="space-y-1 ml-4">
-                {requirements.map((req, idx) => {
-                    // Format display name
-                    const techName =
-                        req.name === "mechanical_engineering"
-                            ? "Mech. engineering"
-                            : req.name.replace(/_/g, " ");
-                    return (
-                        <li
-                            key={idx}
-                            className={
-                                req.status === "satisfied"
-                                    ? "text-green-600 dark:text-green-400"
-                                    : req.status === "queued"
-                                      ? "text-yellow-600 dark:text-yellow-400"
-                                      : "text-red-600 dark:text-red-400"
-                            }
-                        >
-                            - {techName} lvl {req.level}
-                        </li>
-                    );
-                })}
-            </ul>
-        </div>
-    );
-}
-
-// ============================================================================
-// Construction Info Component (Reusable)
-// ============================================================================
-
-interface ConstructionInfoProps {
+interface PowerFacilityStatsTableProps {
     facility: PowerFacility;
 }
 
-function ConstructionInfo({ facility }: ConstructionInfoProps) {
-    // TODO: Format duration properly when we have game constants
-    const formatDuration = (ticks: number) => {
-        return `${ticks} ticks`;
-    };
-
-    return (
-        <div className="flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                <strong>{formatDuration(facility.construction_time)}</strong>
-                <span className="text-xs text-gray-500">(Duration)</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4" />
-                <strong>{formatPower(facility.construction_power)}</strong>
-                <span className="text-xs text-gray-500">(Power)</span>
-            </div>
-            {facility.construction_pollution !== undefined &&
-                facility.construction_pollution !== null && (
-                    <div className="flex items-center gap-2">
-                        <Cloud className="w-4 h-4" />
-                        <strong>
-                            {formatMass(facility.construction_pollution)} CO₂
-                        </strong>
-                        <span className="text-xs text-gray-500">
-                            (Emissions)
-                        </span>
-                    </div>
-                )}
-        </div>
-    );
-}
-
-// ============================================================================
-// Facility Stats Table Component (Reusable)
-// ============================================================================
-
-interface FacilityStatsTableProps {
-    facility: PowerFacility;
-}
-
-function FacilityStatsTable({ facility }: FacilityStatsTableProps) {
+function PowerFacilityStatsTable({ facility }: PowerFacilityStatsTableProps) {
     // TODO: Format days properly when we have game constants
     const formatDays = (ticks: number) => {
         return Math.round(ticks / 100); // Placeholder

@@ -1,13 +1,460 @@
-/**
- * Functional facilities page - Stub redirecting to legacy page.
- * TODO: Migrate to React implementation.
- */
-
 import { createFileRoute } from "@tanstack/react-router";
-import { RedirectToLegacy } from "@/components/RedirectToLegacy";
+import { useState } from "react";
+import { HelpCircle } from "lucide-react";
+
+import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Modal, Card, Money, FacilityName } from "@/components/ui";
+import {
+    useFunctionalFacilitiesCatalog,
+    useQueueProject,
+} from "@/hooks/useProjects";
+import type { ApiSchema } from "@/types/api-helpers";
+import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
+import {
+    formatPower,
+    formatMass,
+    formatUpgradePower,
+    formatUpgradeMass,
+    formatUpgradeMassRate,
+} from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/facilities/functional")({
-    component: () => <RedirectToLegacy to="/functional_facilities" />,
-
-    staticData: { title: "Redirecting..." },
+    component: FunctionalFacilitiesPage,
+    staticData: {
+        title: "Functional Facilities",
+    },
 });
+
+function FunctionalFacilitiesPage() {
+    return (
+        <RequireSettledPlayer>
+            <GameLayout>
+                <FunctionalFacilitiesContent />
+            </GameLayout>
+        </RequireSettledPlayer>
+    );
+}
+
+// ============================================================================
+// Types
+// ============================================================================
+
+type FunctionalFacility = ApiSchema<"FunctionalFacilityCatalogOut">;
+
+// ============================================================================
+// Main Content Component
+// ============================================================================
+
+function FunctionalFacilitiesContent() {
+    const [showInfoPopup, setShowInfoPopup] = useState(false);
+
+    const {
+        data: catalogData,
+        isLoading: isCatalogLoading,
+        isError: isCatalogError,
+    } = useFunctionalFacilitiesCatalog();
+
+    const facilities = catalogData?.functional_facilities ?? [];
+
+    return (
+        <div className="p-4 md:p-8">
+            {/* Title with info icon */}
+            <div className="flex items-center justify-center gap-3 mb-6">
+                <h1 className="text-4xl md:text-5xl font-bold text-center">
+                    Functional Facilities
+                </h1>
+                <button
+                    onClick={() => setShowInfoPopup(true)}
+                    className="text-primary hover:opacity-80 transition-opacity"
+                    aria-label="Show help"
+                >
+                    <HelpCircle className="w-8 h-8" />
+                </button>
+            </div>
+
+            {/* Info modal */}
+            <Modal
+                isOpen={showInfoPopup}
+                onClose={() => setShowInfoPopup(false)}
+                title="Help : Functional Facilities"
+            >
+                <div className="space-y-3">
+                    <p>
+                        On this page you will find facilities with unique
+                        abilities and their specific information.
+                    </p>
+                    <p>
+                        For more information about Functional Facilities, refer
+                        to{" "}
+                        <a
+                            href="/wiki/functional_facilities"
+                            className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
+                        >
+                            this section in the wiki
+                        </a>
+                        .
+                    </p>
+                </div>
+            </Modal>
+
+            {/* TODO: Under construction facilities will show here */}
+            <div id="under_construction" className="mb-6"></div>
+
+            {/* Loading state */}
+            {isCatalogLoading && (
+                <div className="text-center py-8 text-gray-500">
+                    Loading facilities...
+                </div>
+            )}
+
+            {/* Error state */}
+            {isCatalogError && (
+                <div className="text-center py-8 text-alert-red">
+                    Failed to load functional facilities. Please try again.
+                </div>
+            )}
+
+            {/* Facilities list */}
+            {!isCatalogLoading && facilities.length > 0 && (
+                <div className="space-y-4">
+                    {facilities.map((facility) => (
+                        <FacilityCard key={facility.name} facility={facility} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ============================================================================
+// Facility Card Component
+// ============================================================================
+
+interface FacilityCardProps {
+    facility: FunctionalFacility;
+}
+
+function FacilityCard({ facility }: FacilityCardProps) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const queueProjectMutation = useQueueProject();
+
+    const handleConstruction = () => {
+        queueProjectMutation.mutate({ type: facility.name });
+    };
+
+    // All functional facility images are JPG
+    const imageUrl = `/static/images/functional_facilities/${facility.name}.jpg`;
+
+    // Custom descriptions for laboratory and warehouse
+    const getDescription = () => {
+        if (facility.name === "laboratory") {
+            return (
+                <>
+                    The laboratory is needed to research{" "}
+                    <strong>
+                        <a
+                            className="text-blue-600 dark:text-blue-400"
+                            href="/technology"
+                        >
+                            Technologies
+                        </a>
+                    </strong>
+                    .<br />
+                    +1 lab worker every 3rd level.
+                </>
+            );
+        } else if (facility.name === "warehouse") {
+            return (
+                <>
+                    The warehouse stores physical{" "}
+                    <strong>
+                        <a
+                            className="text-blue-600 dark:text-blue-400"
+                            href="/facilities/extraction"
+                        >
+                            resources
+                        </a>
+                    </strong>
+                    .
+                </>
+            );
+        } else {
+            return (
+                <div
+                    dangerouslySetInnerHTML={{
+                        __html: facility.description,
+                    }}
+                />
+            );
+        }
+    };
+
+    return (
+        <Card
+            className="cursor-pointer hover:border-brand-green transition-colors"
+            onClick={() => setIsExpanded(!isExpanded)}
+        >
+            <div className="flex flex-col lg:flex-row gap-4">
+                {/* Image */}
+                <div className="flex-shrink-0">
+                    <img
+                        src={imageUrl}
+                        alt={`${facility.name} functional facility`}
+                        className="w-full lg:w-64 h-auto rounded"
+                    />
+                </div>
+
+                {/* Main Info */}
+                <div className="flex-grow space-y-3">
+                    {/* Header */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <h2 className="text-xl font-bold">
+                            <FacilityName
+                                facility={facility.name}
+                                mode="long"
+                            />
+                        </h2>
+                        <span className="text-lg">
+                            lvl. <em className="text-xl">{facility.level}</em>
+                        </span>
+                        <div className="text-lg font-semibold">
+                            <Money amount={facility.price} iconSize="md" long />
+                        </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="text-sm">{getDescription()}</div>
+
+                    {/* Requirements */}
+                    {facility.requirements_status !== "satisfied" && (
+                        <RequirementsDisplay
+                            requirements={facility.requirements}
+                        />
+                    )}
+                </div>
+
+                {/* Stats Table (visible on desktop when not expanded) */}
+                {!isExpanded && (
+                    <div className="hidden xl:block flex-shrink-0">
+                        <FunctionalFacilityStatsTable facility={facility} />
+                    </div>
+                )}
+            </div>
+
+            {/* Expanded Content */}
+            {isExpanded && (
+                <div className="mt-6 pt-6 border-t border-pine/20 dark:border-dark-border/50">
+                    {/* Construction Info & Button */}
+                    <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleConstruction();
+                            }}
+                            disabled={
+                                facility.requirements_status === "unsatisfied"
+                            }
+                            className={`px-6 py-3 rounded font-bold text-white transition-colors ${
+                                facility.requirements_status === "unsatisfied"
+                                    ? "bg-alert-red cursor-not-allowed"
+                                    : "bg-brand-green hover:bg-brand-green/80"
+                            }`}
+                        >
+                            {facility.requirements_status === "unsatisfied"
+                                ? "Locked"
+                                : "Start Construction"}
+                        </button>
+
+                        <ConstructionInfo
+                            constructionTime={facility.construction_time}
+                            constructionPower={facility.construction_power}
+                            constructionPollution={
+                                facility.construction_pollution
+                            }
+                        />
+                    </div>
+
+                    {/* Full Stats Table */}
+                    <FunctionalFacilityStatsTable facility={facility} />
+                </div>
+            )}
+        </Card>
+    );
+}
+
+// ============================================================================
+// Functional Facility Stats Table Component
+// ============================================================================
+
+interface FunctionalFacilityStatsTableProps {
+    facility: FunctionalFacility;
+}
+
+function FunctionalFacilityStatsTable({
+    facility,
+}: FunctionalFacilityStatsTableProps) {
+    const isWarehouse = facility.name === "warehouse";
+
+    return (
+        <div className="overflow-x-auto">
+            <table
+                className={`min-w-full text-sm border-collapse ${
+                    ["industry", "carbon_capture"].includes(facility.name)
+                        ? "max-w-md"
+                        : ""
+                }`}
+            >
+                <thead>
+                    <tr className="bg-tan-green/20 dark:bg-dark-bg-tertiary/30">
+                        <th className="py-2 px-4 text-left font-semibold">
+                            Effects:
+                        </th>
+                        <th className="py-2 px-4 text-center font-semibold">
+                            lvl {facility.level - 1} → lvl {facility.level}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody className="bg-tan-green/20 dark:bg-dark-bg-tertiary/30">
+                    {/* Average Consumption (Industry) */}
+                    {facility.average_consumption && (
+                        <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                            <td className="py-2 px-4 font-semibold">
+                                Average consumption
+                            </td>
+                            <td className="py-2 px-4 text-center font-mono">
+                                {formatUpgradePower(
+                                    facility.average_consumption.current,
+                                    facility.average_consumption.upgraded ?? 0,
+                                )}
+                            </td>
+                        </tr>
+                    )}
+
+                    {/* Revenue Generation (Industry) */}
+                    {facility.revenue_generation && (
+                        <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                            <td className="py-2 px-4 font-semibold">
+                                Revenue generation
+                            </td>
+                            <td className="py-2 px-4 text-center">
+                                {/* TODO: Create formatUpgradeMoney when Money component supports upgrade display */}
+                                <Money
+                                    amount={
+                                        facility.revenue_generation.upgraded ??
+                                        0
+                                    }
+                                />
+                                /h
+                            </td>
+                        </tr>
+                    )}
+
+                    {/* Research Speed Bonus (Laboratory) */}
+                    {facility.research_speed_bonus !== undefined &&
+                        facility.research_speed_bonus !== null && (
+                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                                <td className="py-2 px-4 font-semibold">
+                                    Research speed
+                                </td>
+                                <td className="py-2 px-4 text-center font-mono">
+                                    +{Math.round(facility.research_speed_bonus)}
+                                    %
+                                </td>
+                            </tr>
+                        )}
+
+                    {/* Lab Workers (Laboratory) */}
+                    {facility.lab_workers &&
+                        (facility.lab_workers.current !== null ||
+                            facility.lab_workers.upgraded !== null) && (
+                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                                <td className="py-2 px-4 font-semibold">
+                                    Lab workers
+                                </td>
+                                <td className="py-2 px-4 text-center font-mono">
+                                    {facility.lab_workers.current ?? 0} →{" "}
+                                    {facility.lab_workers.upgraded ?? 0}
+                                </td>
+                            </tr>
+                        )}
+
+                    {/* Warehouse Capacities */}
+                    {facility.warehouse_capacities && (
+                        <>
+                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                                <td className="py-2 px-4 font-semibold">
+                                    Coal capacity
+                                </td>
+                                <td className="py-2 px-4 text-center font-mono">
+                                    {formatUpgradeMass(
+                                        facility.warehouse_capacities.coal
+                                            ?.current ?? null,
+                                        facility.warehouse_capacities.coal
+                                            ?.upgraded ?? 0,
+                                    )}
+                                </td>
+                            </tr>
+                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                                <td className="py-2 px-4 font-semibold">
+                                    Gas capacity
+                                </td>
+                                <td className="py-2 px-4 text-center font-mono">
+                                    {formatUpgradeMass(
+                                        facility.warehouse_capacities.gas
+                                            ?.current ?? null,
+                                        facility.warehouse_capacities.gas
+                                            ?.upgraded ?? 0,
+                                    )}
+                                </td>
+                            </tr>
+                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                                <td className="py-2 px-4 font-semibold">
+                                    Uranium cap.
+                                </td>
+                                <td className="py-2 px-4 text-center font-mono">
+                                    {formatUpgradeMass(
+                                        facility.warehouse_capacities.uranium
+                                            ?.current ?? null,
+                                        facility.warehouse_capacities.uranium
+                                            ?.upgraded ?? 0,
+                                    )}
+                                </td>
+                            </tr>
+                        </>
+                    )}
+
+                    {/* Power Consumption (Carbon Capture) */}
+                    {facility.power_consumption && (
+                        <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                            <td className="py-2 px-4 font-semibold">
+                                Power consumption
+                            </td>
+                            <td className="py-2 px-4 text-center font-mono">
+                                {formatUpgradePower(
+                                    facility.power_consumption.current,
+                                    facility.power_consumption.upgraded ?? 0,
+                                )}
+                            </td>
+                        </tr>
+                    )}
+
+                    {/* CO2 Absorption (Carbon Capture) */}
+                    {facility.co2_absorption && (
+                        <tr>
+                            <td className="py-2 px-4 font-semibold">
+                                CO₂ absorbed
+                            </td>
+                            <td className="py-2 px-4 text-center font-mono">
+                                {formatUpgradeMassRate(
+                                    facility.co2_absorption.current,
+                                    facility.co2_absorption.upgraded ?? 0,
+                                )}
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    );
+}

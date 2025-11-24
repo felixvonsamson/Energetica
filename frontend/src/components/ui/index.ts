@@ -5,6 +5,7 @@ export { EmptyState } from "./EmptyState";
 export { ProgressBar } from "./ProgressBar";
 export { ThemeToggle } from "./ThemeToggle";
 export { Money } from "./Money";
+export { Duration } from "./Duration";
 export { ConfirmDialog } from "./ConfirmDialog";
 export {
     AssetName,
