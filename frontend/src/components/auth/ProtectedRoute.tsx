@@ -3,7 +3,7 @@
  */
 
 import { useLocation } from "@tanstack/react-router";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import type { ReactNode } from "react";
 
 interface ProtectedRouteProps {

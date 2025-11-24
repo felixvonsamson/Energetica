@@ -20,7 +20,7 @@ import {
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useSocketEvent } from "@/contexts/SocketContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/app/community/messages")({
     component: MessagesPage,

@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { usePlayerMoney } from "@/hooks/usePlayerMoney";
 import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
 import { usePlayerResources } from "@/hooks/usePlayerResources";

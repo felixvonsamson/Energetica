@@ -14,7 +14,6 @@ import {
     HelpCircle,
 } from "lucide-react";
 
-import { useAuth } from "@/contexts/AuthContext";
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, InfoBanner, Card, CardTitle } from "@/components/ui";

@@ -9,7 +9,7 @@ import { HelpCircle } from "lucide-react";
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Card, CardTitle, Money } from "@/components/ui";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useFacilities } from "@/hooks/useFacilities";
 import { usePlayerProfile } from "@/hooks/usePlayerProfile";
 import { useHasCapability } from "@/hooks/useCapabilities";

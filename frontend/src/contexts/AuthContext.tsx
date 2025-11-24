@@ -5,7 +5,6 @@
 
 import React, {
     createContext,
-    useContext,
     useState,
     useEffect,
     useCallback,
@@ -26,7 +25,9 @@ interface AuthContextValue {
     logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(
+    undefined,
+);
 
 export interface AuthProviderProps {
     children: ReactNode;
@@ -81,16 +82,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return (
         <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
     );
-}
-
-/**
- * Hook to access auth context.
- * Must be used within an AuthProvider.
- */
-export function useAuth() {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
 }
