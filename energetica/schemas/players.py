@@ -17,6 +17,12 @@ class PlayerOut(BaseModel):
     username: str = Field(description="Username of the player")
 
 
+class SettingsOut(BaseModel):
+    """Response model for user configuration."""
+
+    show_disclaimer: bool = Field(description="Whether to show the chat disclaimer or not")
+
+
 class SettingsPatch(BaseModel):
     """Request model for user configuration."""
 

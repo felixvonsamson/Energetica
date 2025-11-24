@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 
 from energetica.database.player import Player
 from energetica.routers.chats import router
-from energetica.schemas.players import MoneyOut, PlayerOut, ProfileOut, ResourcesOut, SettingsPatch, UIStatePatch, WorkersOut
+from energetica.schemas.players import MoneyOut, PlayerOut, ProfileOut, ResourcesOut, SettingsOut, SettingsPatch, UIStatePatch, WorkersOut
 from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/players", tags=["Players"])
@@ -32,6 +32,14 @@ def get_all_users() -> list[PlayerOut]:
         )
         for u in all_users
     ]
+
+
+@router.get("/me/settings")
+def get_user_settings(
+    player: Annotated[Player, Depends(get_settled_player)],
+) -> SettingsOut:
+    """Get the current user's settings."""
+    return SettingsOut(show_disclaimer=player.show_chat_disclaimer)
 
 
 @router.patch("/me/settings", status_code=204)
