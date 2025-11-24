@@ -541,7 +541,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Get User Settings
+         * @description Get the current user's settings.
+         */
+        get: operations["get_user_settings_api_v1_players_me_settings_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2764,6 +2768,17 @@ export interface components {
             co2_emissions: number | null;
         };
         /**
+         * SettingsOut
+         * @description Response model for user configuration.
+         */
+        SettingsOut: {
+            /**
+             * Show Disclaimer
+             * @description Whether to show the chat disclaimer or not
+             */
+            show_disclaimer: boolean;
+        };
+        /**
          * SettingsPatch
          * @description Request model for user configuration.
          */
@@ -4047,6 +4062,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlayerOut"][];
+                };
+            };
+        };
+    };
+    get_user_settings_api_v1_players_me_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsOut"];
                 };
             };
         };

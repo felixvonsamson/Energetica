@@ -59,6 +59,7 @@ export const queryKeys = {
         workers: ["players", "me", "workers"] as const,
         resources: ["players", "me", "resources"] as const,
         profile: ["players", "me", "profile"] as const,
+        settings: ["players", "me", "settings"] as const,
     },
     facilities: {
         all: ["facilities"] as const,
