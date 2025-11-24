@@ -1,23 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { HelpCircle, ExternalLink, Info } from "lucide-react";
+import { HelpCircle, Info } from "lucide-react";
 
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
-import {
-    Modal,
-    Card,
-    Money,
-    FacilityName,
-    ResourceName,
-} from "@/components/ui";
-import {
-    useExtractionFacilitiesCatalog,
-    useQueueProject,
-} from "@/hooks/useProjects";
+import { Modal, ResourceName, Money } from "@/components/ui";
+import { useExtractionFacilitiesCatalog } from "@/hooks/useProjects";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import type { ApiSchema } from "@/types/api-helpers";
-import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
+import { FacilityCard } from "@/components/facilities";
 import { formatPower, formatMass, formatMassRate } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/facilities/extraction")({
@@ -37,15 +28,7 @@ function ExtractionFacilitiesPage() {
     );
 }
 
-// ============================================================================
-// Types
-// ============================================================================
-
 type ExtractionFacility = ApiSchema<"ExtractionFacilityCatalogOut">;
-
-// ============================================================================
-// Main Content Component
-// ============================================================================
 
 function ExtractionFacilitiesContent() {
     const [showInfoPopup, setShowInfoPopup] = useState(false);
@@ -138,7 +121,53 @@ function ExtractionFacilitiesContent() {
                         <FacilityCard
                             key={facility.name}
                             facility={facility}
-                            reserves={resourcesData}
+                            facilityType="extraction"
+                            renderDescription={(facility) => (
+                                <div>
+                                    <div
+                                        className="mb-2"
+                                        dangerouslySetInnerHTML={{
+                                            __html: facility.description,
+                                        }}
+                                    />
+
+                                    {/* Underground reserves indicator */}
+                                    {resourcesData &&
+                                        resourcesData[
+                                            facility.resource_production
+                                                .name as keyof typeof resourcesData
+                                        ] && (
+                                            <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1 mt-2">
+                                                <Info className="w-4 h-4 flex-shrink-0" />
+                                                <span>
+                                                    Underground reserves of{" "}
+                                                    <ResourceName
+                                                        resource={
+                                                            facility
+                                                                .resource_production
+                                                                .name
+                                                        }
+                                                    />
+                                                    :{" "}
+                                                    <strong>
+                                                        {formatMass(
+                                                            resourcesData[
+                                                                facility
+                                                                    .resource_production
+                                                                    .name as keyof typeof resourcesData
+                                                            ]?.reserves ?? 0,
+                                                        )}
+                                                    </strong>
+                                                </span>
+                                            </div>
+                                        )}
+                                </div>
+                            )}
+                            renderStatsTable={(facility) => (
+                                <ExtractionFacilityStatsTable
+                                    facility={facility}
+                                />
+                            )}
                         />
                     ))}
                 </div>
@@ -146,169 +175,6 @@ function ExtractionFacilitiesContent() {
         </div>
     );
 }
-
-// ============================================================================
-// Facility Card Component
-// ============================================================================
-
-interface FacilityCardProps {
-    facility: ExtractionFacility;
-    reserves?: {
-        coal?: { reserves: number };
-        gas?: { reserves: number };
-        uranium?: { reserves: number };
-    };
-}
-
-function FacilityCard({ facility, reserves }: FacilityCardProps) {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const queueProjectMutation = useQueueProject();
-
-    const handleConstruction = () => {
-        queueProjectMutation.mutate({ type: facility.name });
-    };
-
-    // All extraction facility images are JPG
-    const imageUrl = `/static/images/extraction_facilities/${facility.name}.jpg`;
-
-    return (
-        <Card
-            className="cursor-pointer hover:border-brand-green transition-colors"
-            onClick={() => setIsExpanded(!isExpanded)}
-        >
-            <div className="flex flex-col lg:flex-row gap-4">
-                {/* Image */}
-                <div className="flex-shrink-0">
-                    <img
-                        src={imageUrl}
-                        alt={`${facility.name} extraction facility`}
-                        className="w-full lg:w-64 h-auto rounded"
-                    />
-                </div>
-
-                {/* Main Info */}
-                <div className="flex-grow space-y-3">
-                    {/* Header */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-xl font-bold">
-                            <FacilityName
-                                facility={facility.name}
-                                mode="long"
-                            />
-                        </h2>
-                        <a
-                            href={facility.wikipedia_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-white hover:opacity-80"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <ExternalLink className="w-5 h-5" />
-                        </a>
-                        <div className="text-lg font-semibold">
-                            <Money amount={facility.price} iconSize="md" long />
-                        </div>
-                    </div>
-
-                    {/* Description */}
-                    <div className="text-sm">
-                        <div
-                            className="mb-2"
-                            dangerouslySetInnerHTML={{
-                                __html: facility.description,
-                            }}
-                        />
-
-                        {/* Underground reserves indicator */}
-                        {reserves &&
-                            reserves[
-                                facility.resource_production
-                                    .name as keyof typeof reserves
-                            ] && (
-                                <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1 mt-2">
-                                    <Info className="w-4 h-4 flex-shrink-0" />
-                                    <span>
-                                        Underground reserves of{" "}
-                                        <ResourceName
-                                            resource={
-                                                facility.resource_production
-                                                    .name
-                                            }
-                                        />
-                                        :{" "}
-                                        <strong>
-                                            {formatMass(
-                                                reserves[
-                                                    facility.resource_production
-                                                        .name as keyof typeof reserves
-                                                ]?.reserves ?? 0,
-                                            )}
-                                        </strong>
-                                    </span>
-                                </div>
-                            )}
-                    </div>
-
-                    {/* Requirements */}
-                    {facility.requirements_status !== "satisfied" && (
-                        <RequirementsDisplay
-                            requirements={facility.requirements}
-                        />
-                    )}
-                </div>
-
-                {/* Stats Table (visible on desktop when not expanded) */}
-                {!isExpanded && (
-                    <div className="hidden xl:block flex-shrink-0">
-                        <ExtractionFacilityStatsTable facility={facility} />
-                    </div>
-                )}
-            </div>
-
-            {/* Expanded Content */}
-            {isExpanded && (
-                <div className="mt-6 pt-6 border-t border-pine/20 dark:border-dark-border/50">
-                    {/* Construction Info & Button */}
-                    <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleConstruction();
-                            }}
-                            disabled={
-                                facility.requirements_status === "unsatisfied"
-                            }
-                            className={`px-6 py-3 rounded font-bold text-white transition-colors ${
-                                facility.requirements_status === "unsatisfied"
-                                    ? "bg-alert-red cursor-not-allowed"
-                                    : "bg-brand-green hover:bg-brand-green/80"
-                            }`}
-                        >
-                            {facility.requirements_status === "unsatisfied"
-                                ? "Locked"
-                                : "Start Construction"}
-                        </button>
-
-                        <ConstructionInfo
-                            constructionTime={facility.construction_time}
-                            constructionPower={facility.construction_power}
-                            constructionPollution={
-                                facility.construction_pollution
-                            }
-                        />
-                    </div>
-
-                    {/* Full Stats Table */}
-                    <ExtractionFacilityStatsTable facility={facility} />
-                </div>
-            )}
-        </Card>
-    );
-}
-
-// ============================================================================
-// Extraction Facility Stats Table Component
-// ============================================================================
 
 interface ExtractionFacilityStatsTableProps {
     facility: ExtractionFacility;

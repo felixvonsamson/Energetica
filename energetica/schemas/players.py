@@ -73,6 +73,7 @@ class ResourceStock(BaseModel):
 
     stock: float = Field(description="Current stock in kg")
     capacity: float = Field(description="Maximum capacity in kg")
+    reserves: float = Field(description="Fuel reserves on the player's tile in kg")
 
 
 class ResourcesOut(BaseModel):
@@ -92,14 +93,17 @@ class ResourcesOut(BaseModel):
             coal=ResourceStock(
                 stock=player.resources[Fuel.COAL],
                 capacity=warehouse_capacities[Fuel.COAL],
+                reserves=player.tile.fuel_reserves[Fuel.COAL],
             ),
             gas=ResourceStock(
                 stock=player.resources[Fuel.GAS],
                 capacity=warehouse_capacities[Fuel.GAS],
+                reserves=player.tile.fuel_reserves[Fuel.GAS],
             ),
             uranium=ResourceStock(
                 stock=player.resources[Fuel.URANIUM],
                 capacity=warehouse_capacities[Fuel.URANIUM],
+                reserves=player.tile.fuel_reserves[Fuel.URANIUM],
             ),
         )
 

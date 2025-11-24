@@ -1,16 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { HelpCircle, ExternalLink } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Modal, Card, Money, FacilityName } from "@/components/ui";
-import {
-    useStorageFacilitiesCatalog,
-    useQueueProject,
-} from "@/hooks/useProjects";
+import { Modal, Money } from "@/components/ui";
+import { useStorageFacilitiesCatalog } from "@/hooks/useProjects";
 import type { ApiSchema } from "@/types/api-helpers";
-import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
+import { FacilityCard } from "@/components/facilities";
 import { formatPower, formatEnergy } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/facilities/storage")({
@@ -30,15 +27,7 @@ function StorageFacilitiesPage() {
     );
 }
 
-// ============================================================================
-// Types
-// ============================================================================
-
 type StorageFacility = ApiSchema<"StorageFacilityCatalogOut">;
-
-// ============================================================================
-// Main Content Component
-// ============================================================================
 
 function StorageFacilitiesContent() {
     const [showInfoPopup, setShowInfoPopup] = useState(false);
@@ -123,146 +112,25 @@ function StorageFacilitiesContent() {
             {!isCatalogLoading && facilities.length > 0 && (
                 <div className="space-y-4">
                     {facilities.map((facility) => (
-                        <FacilityCard key={facility.name} facility={facility} />
+                        <FacilityCard
+                            key={facility.name}
+                            facility={facility}
+                            facilityType="storage"
+                            renderStatsTable={(facility) => (
+                                <StorageFacilityStatsTable
+                                    facility={facility}
+                                />
+                            )}
+                            imageExtensionMap={{
+                                small_pumped_hydro: "png",
+                            }}
+                        />
                     ))}
                 </div>
             )}
         </div>
     );
 }
-
-// ============================================================================
-// Facility Card Component (Reusable)
-// ============================================================================
-
-interface FacilityCardProps {
-    facility: StorageFacility;
-}
-
-function FacilityCard({ facility }: FacilityCardProps) {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const queueProjectMutation = useQueueProject();
-
-    const handleConstruction = () => {
-        queueProjectMutation.mutate({ type: facility.name });
-    };
-
-    // Determine image extension
-    const pngExtensions = ["small_pumped_hydro"];
-    const imageExtension = pngExtensions.includes(facility.name)
-        ? "png"
-        : "jpg";
-    const imageUrl = `/static/images/storage_facilities/${facility.name}.${imageExtension}`;
-
-    return (
-        <Card
-            className="cursor-pointer hover:border-brand-green transition-colors"
-            onClick={() => setIsExpanded(!isExpanded)}
-        >
-            <div className="flex flex-col lg:flex-row gap-4">
-                {/* Image */}
-                <div className="flex-shrink-0">
-                    <img
-                        src={imageUrl}
-                        alt={`${facility.name} storage facility`}
-                        className="w-full lg:w-64 h-auto rounded"
-                    />
-                </div>
-
-                {/* Main Info */}
-                <div className="flex-grow space-y-3">
-                    {/* Header */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-xl font-bold">
-                            <FacilityName
-                                facility={facility.name}
-                                mode="long"
-                            />
-                        </h2>
-                        <a
-                            href={facility.wikipedia_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-white hover:opacity-80"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <ExternalLink className="w-5 h-5" />
-                        </a>
-                        <div className="text-lg font-semibold">
-                            <Money amount={facility.price} iconSize="md" long />
-                        </div>
-                    </div>
-
-                    {/* Description */}
-                    <div className="text-sm">
-                        <div
-                            className="mb-2"
-                            dangerouslySetInnerHTML={{
-                                __html: facility.description,
-                            }}
-                        />
-                    </div>
-
-                    {/* Requirements */}
-                    {facility.requirements_status !== "satisfied" && (
-                        <RequirementsDisplay
-                            requirements={facility.requirements}
-                        />
-                    )}
-                </div>
-
-                {/* Stats Table (visible on desktop when not expanded) */}
-                {!isExpanded && (
-                    <div className="hidden xl:block flex-shrink-0">
-                        <StorageFacilityStatsTable facility={facility} />
-                    </div>
-                )}
-            </div>
-
-            {/* Expanded Content */}
-            {isExpanded && (
-                <div className="mt-6 pt-6 border-t border-pine/20 dark:border-dark-border/50">
-                    {/* Construction Info & Button */}
-                    <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleConstruction();
-                            }}
-                            disabled={
-                                facility.requirements_status === "unsatisfied"
-                            }
-                            className={`px-6 py-3 rounded font-bold text-white transition-colors ${
-                                facility.requirements_status === "unsatisfied"
-                                    ? "bg-alert-red cursor-not-allowed"
-                                    : "bg-brand-green hover:bg-brand-green/80"
-                            }`}
-                        >
-                            {facility.requirements_status === "unsatisfied"
-                                ? "Locked"
-                                : "Start Construction"}
-                        </button>
-
-                        <ConstructionInfo
-                            constructionTime={facility.construction_time}
-                            constructionPower={facility.construction_power}
-                            constructionPollution={
-                                facility.construction_pollution
-                            }
-                        />
-                    </div>
-
-                    {/* Full Stats Table */}
-                    <StorageFacilityStatsTable facility={facility} />
-                </div>
-            )}
-        </Card>
-    );
-}
-
-// ============================================================================
-// Storage Facility Stats Table Component
-// ============================================================================
 
 interface StorageFacilityStatsTableProps {
     facility: StorageFacility;

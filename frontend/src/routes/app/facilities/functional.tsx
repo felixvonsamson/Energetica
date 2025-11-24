@@ -4,13 +4,10 @@ import { HelpCircle } from "lucide-react";
 
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Modal, Card, Money, FacilityName } from "@/components/ui";
-import {
-    useFunctionalFacilitiesCatalog,
-    useQueueProject,
-} from "@/hooks/useProjects";
+import { Modal, Money } from "@/components/ui";
+import { useFunctionalFacilitiesCatalog } from "@/hooks/useProjects";
 import type { ApiSchema } from "@/types/api-helpers";
-import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
+import { FacilityCard } from "@/components/facilities";
 import {
     formatPower,
     formatMass,
@@ -36,15 +33,7 @@ function FunctionalFacilitiesPage() {
     );
 }
 
-// ============================================================================
-// Types
-// ============================================================================
-
 type FunctionalFacility = ApiSchema<"FunctionalFacilityCatalogOut">;
-
-// ============================================================================
-// Main Content Component
-// ============================================================================
 
 function FunctionalFacilitiesContent() {
     const [showInfoPopup, setShowInfoPopup] = useState(false);
@@ -119,173 +108,73 @@ function FunctionalFacilitiesContent() {
             {!isCatalogLoading && facilities.length > 0 && (
                 <div className="space-y-4">
                     {facilities.map((facility) => (
-                        <FacilityCard key={facility.name} facility={facility} />
+                        <FacilityCard
+                            key={facility.name}
+                            facility={facility}
+                            facilityType="functional"
+                            renderDescription={(facility) => {
+                                // Custom descriptions for laboratory and warehouse
+                                if (facility.name === "laboratory") {
+                                    return (
+                                        <>
+                                            The laboratory is needed to research{" "}
+                                            <strong>
+                                                <a
+                                                    className="text-blue-600 dark:text-blue-400"
+                                                    href="/technology"
+                                                >
+                                                    Technologies
+                                                </a>
+                                            </strong>
+                                            .<br />
+                                            +1 lab worker every 3rd level.
+                                        </>
+                                    );
+                                } else if (facility.name === "warehouse") {
+                                    return (
+                                        <>
+                                            The warehouse stores physical{" "}
+                                            <strong>
+                                                <a
+                                                    className="text-blue-600 dark:text-blue-400"
+                                                    href="/facilities/extraction"
+                                                >
+                                                    resources
+                                                </a>
+                                            </strong>
+                                            .
+                                        </>
+                                    );
+                                } else {
+                                    return (
+                                        <div
+                                            dangerouslySetInnerHTML={{
+                                                __html: facility.description,
+                                            }}
+                                        />
+                                    );
+                                }
+                            }}
+                            renderStatsTable={(facility) => (
+                                <FunctionalFacilityStatsTable
+                                    facility={facility}
+                                />
+                            )}
+                            extraHeaderContent={(facility) => (
+                                <span className="text-lg">
+                                    lvl.{" "}
+                                    <em className="text-xl">
+                                        {facility.level}
+                                    </em>
+                                </span>
+                            )}
+                        />
                     ))}
                 </div>
             )}
         </div>
     );
 }
-
-// ============================================================================
-// Facility Card Component
-// ============================================================================
-
-interface FacilityCardProps {
-    facility: FunctionalFacility;
-}
-
-function FacilityCard({ facility }: FacilityCardProps) {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const queueProjectMutation = useQueueProject();
-
-    const handleConstruction = () => {
-        queueProjectMutation.mutate({ type: facility.name });
-    };
-
-    // All functional facility images are JPG
-    const imageUrl = `/static/images/functional_facilities/${facility.name}.jpg`;
-
-    // Custom descriptions for laboratory and warehouse
-    const getDescription = () => {
-        if (facility.name === "laboratory") {
-            return (
-                <>
-                    The laboratory is needed to research{" "}
-                    <strong>
-                        <a
-                            className="text-blue-600 dark:text-blue-400"
-                            href="/technology"
-                        >
-                            Technologies
-                        </a>
-                    </strong>
-                    .<br />
-                    +1 lab worker every 3rd level.
-                </>
-            );
-        } else if (facility.name === "warehouse") {
-            return (
-                <>
-                    The warehouse stores physical{" "}
-                    <strong>
-                        <a
-                            className="text-blue-600 dark:text-blue-400"
-                            href="/facilities/extraction"
-                        >
-                            resources
-                        </a>
-                    </strong>
-                    .
-                </>
-            );
-        } else {
-            return (
-                <div
-                    dangerouslySetInnerHTML={{
-                        __html: facility.description,
-                    }}
-                />
-            );
-        }
-    };
-
-    return (
-        <Card
-            className="cursor-pointer hover:border-brand-green transition-colors"
-            onClick={() => setIsExpanded(!isExpanded)}
-        >
-            <div className="flex flex-col lg:flex-row gap-4">
-                {/* Image */}
-                <div className="flex-shrink-0">
-                    <img
-                        src={imageUrl}
-                        alt={`${facility.name} functional facility`}
-                        className="w-full lg:w-64 h-auto rounded"
-                    />
-                </div>
-
-                {/* Main Info */}
-                <div className="flex-grow space-y-3">
-                    {/* Header */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-xl font-bold">
-                            <FacilityName
-                                facility={facility.name}
-                                mode="long"
-                            />
-                        </h2>
-                        <span className="text-lg">
-                            lvl. <em className="text-xl">{facility.level}</em>
-                        </span>
-                        <div className="text-lg font-semibold">
-                            <Money amount={facility.price} iconSize="md" long />
-                        </div>
-                    </div>
-
-                    {/* Description */}
-                    <div className="text-sm">{getDescription()}</div>
-
-                    {/* Requirements */}
-                    {facility.requirements_status !== "satisfied" && (
-                        <RequirementsDisplay
-                            requirements={facility.requirements}
-                        />
-                    )}
-                </div>
-
-                {/* Stats Table (visible on desktop when not expanded) */}
-                {!isExpanded && (
-                    <div className="hidden xl:block flex-shrink-0">
-                        <FunctionalFacilityStatsTable facility={facility} />
-                    </div>
-                )}
-            </div>
-
-            {/* Expanded Content */}
-            {isExpanded && (
-                <div className="mt-6 pt-6 border-t border-pine/20 dark:border-dark-border/50">
-                    {/* Construction Info & Button */}
-                    <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleConstruction();
-                            }}
-                            disabled={
-                                facility.requirements_status === "unsatisfied"
-                            }
-                            className={`px-6 py-3 rounded font-bold text-white transition-colors ${
-                                facility.requirements_status === "unsatisfied"
-                                    ? "bg-alert-red cursor-not-allowed"
-                                    : "bg-brand-green hover:bg-brand-green/80"
-                            }`}
-                        >
-                            {facility.requirements_status === "unsatisfied"
-                                ? "Locked"
-                                : "Start Construction"}
-                        </button>
-
-                        <ConstructionInfo
-                            constructionTime={facility.construction_time}
-                            constructionPower={facility.construction_power}
-                            constructionPollution={
-                                facility.construction_pollution
-                            }
-                        />
-                    </div>
-
-                    {/* Full Stats Table */}
-                    <FunctionalFacilityStatsTable facility={facility} />
-                </div>
-            )}
-        </Card>
-    );
-}
-
-// ============================================================================
-// Functional Facility Stats Table Component
-// ============================================================================
 
 interface FunctionalFacilityStatsTableProps {
     facility: FunctionalFacility;

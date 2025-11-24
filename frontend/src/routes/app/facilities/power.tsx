@@ -1,21 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { HelpCircle, ExternalLink } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Modal, Card, Money, FacilityName } from "@/components/ui";
-import {
-    usePowerFacilitiesCatalog,
-    useQueueProject,
-} from "@/hooks/useProjects";
+import { Modal, Money } from "@/components/ui";
+import { usePowerFacilitiesCatalog } from "@/hooks/useProjects";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import type { ApiSchema } from "@/types/api-helpers";
-import {
-    RequirementsDisplay,
-    ConstructionInfo,
-    ResourceStockIndicators,
-} from "@/components/facilities";
+import { FacilityCard, ResourceStockIndicators } from "@/components/facilities";
 import { formatPower, formatMass } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/facilities/power")({
@@ -35,15 +28,7 @@ function PowerFacilitiesPage() {
     );
 }
 
-// ============================================================================
-// Types
-// ============================================================================
-
 type PowerFacility = ApiSchema<"PowerFacilityCatalogOut">;
-
-// ============================================================================
-// Main Content Component
-// ============================================================================
 
 function PowerFacilitiesContent() {
     const [showInfoPopup, setShowInfoPopup] = useState(false);
@@ -145,7 +130,46 @@ function PowerFacilitiesContent() {
                             <FacilityCard
                                 key={facility.name}
                                 facility={facility}
-                                playerResources={playerResources}
+                                facilityType="power"
+                                renderDescription={(facility) => (
+                                    <div>
+                                        <div
+                                            className="mb-2"
+                                            dangerouslySetInnerHTML={{
+                                                __html: facility.description,
+                                            }}
+                                        />
+                                        <ResourceStockIndicators
+                                            facilityName={facility.name}
+                                            windPotential={
+                                                facility.wind_potential
+                                            }
+                                            solarPotential={
+                                                facility.solar_potential
+                                            }
+                                            hydroPotential={
+                                                facility.hydro_potential
+                                            }
+                                            highHydroCost={
+                                                facility.high_hydro_cost
+                                            }
+                                            lowWindSpeed={
+                                                facility.low_wind_speed
+                                            }
+                                            playerResources={playerResources}
+                                        />
+                                    </div>
+                                )}
+                                renderStatsTable={(facility) => (
+                                    <PowerFacilityStatsTable
+                                        facility={facility}
+                                    />
+                                )}
+                                imageExtensionMap={{
+                                    combined_cycle: "png",
+                                    nuclear_reactor_gen4: "png",
+                                    steam_engine: "png",
+                                }}
                             />
                         ))}
                     </div>
@@ -153,155 +177,6 @@ function PowerFacilitiesContent() {
         </div>
     );
 }
-
-// ============================================================================
-// Facility Card Component (Reusable)
-// ============================================================================
-
-interface FacilityCardProps {
-    facility: PowerFacility;
-    playerResources: { coal: number; gas: number; uranium: number };
-}
-
-function FacilityCard({ facility, playerResources }: FacilityCardProps) {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const queueProjectMutation = useQueueProject();
-
-    const handleConstruction = () => {
-        queueProjectMutation.mutate({ type: facility.name });
-    };
-
-    // Determine image extension
-    const pngExtensions = [
-        "combined_cycle",
-        "nuclear_reactor_gen4",
-        "steam_engine",
-    ];
-    const imageExtension = pngExtensions.includes(facility.name)
-        ? "png"
-        : "jpg";
-    const imageUrl = `/static/images/power_facilities/${facility.name}.${imageExtension}`;
-
-    return (
-        <Card
-            className="cursor-pointer hover:border-brand-green transition-colors"
-            onClick={() => setIsExpanded(!isExpanded)}
-        >
-            <div className="flex flex-col lg:flex-row gap-4">
-                {/* Image */}
-                <div className="flex-shrink-0">
-                    <img
-                        src={imageUrl}
-                        alt={`${facility.name} power plant`}
-                        className="w-full lg:w-64 h-auto rounded"
-                    />
-                </div>
-
-                {/* Main Info */}
-                <div className="flex-grow space-y-3">
-                    {/* Header */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-xl font-bold">
-                            <FacilityName
-                                facility={facility.name}
-                                mode="long"
-                            />
-                        </h2>
-                        <a
-                            href={facility.wikipedia_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-white hover:opacity-80"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <ExternalLink className="w-5 h-5" />
-                        </a>
-                        <div className="text-lg font-semibold">
-                            <Money amount={facility.price} iconSize="md" long />
-                        </div>
-                    </div>
-
-                    {/* Description */}
-                    <div className="text-sm">
-                        <div
-                            className="mb-2"
-                            dangerouslySetInnerHTML={{
-                                __html: facility.description,
-                            }}
-                        />
-
-                        {/* Resource Stock Indicators */}
-                        <ResourceStockIndicators
-                            facilityName={facility.name}
-                            windPotential={facility.wind_potential}
-                            solarPotential={facility.solar_potential}
-                            hydroPotential={facility.hydro_potential}
-                            highHydroCost={facility.high_hydro_cost}
-                            lowWindSpeed={facility.low_wind_speed}
-                            playerResources={playerResources}
-                        />
-                    </div>
-
-                    {/* Requirements */}
-                    {facility.requirements_status !== "satisfied" && (
-                        <RequirementsDisplay
-                            requirements={facility.requirements}
-                        />
-                    )}
-                </div>
-
-                {/* Stats Table (visible on desktop when not expanded) */}
-                {!isExpanded && (
-                    <div className="hidden xl:block flex-shrink-0">
-                        <PowerFacilityStatsTable facility={facility} />
-                    </div>
-                )}
-            </div>
-
-            {/* Expanded Content */}
-            {isExpanded && (
-                <div className="mt-6 pt-6 border-t border-pine/20 dark:border-dark-border/50">
-                    {/* Construction Info & Button */}
-                    <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleConstruction();
-                            }}
-                            disabled={
-                                facility.requirements_status === "unsatisfied"
-                            }
-                            className={`px-6 py-3 rounded font-bold text-white transition-colors ${
-                                facility.requirements_status === "unsatisfied"
-                                    ? "bg-alert-red cursor-not-allowed"
-                                    : "bg-brand-green hover:bg-brand-green/80"
-                            }`}
-                        >
-                            {facility.requirements_status === "unsatisfied"
-                                ? "Locked"
-                                : "Start Construction"}
-                        </button>
-
-                        <ConstructionInfo
-                            constructionTime={facility.construction_time}
-                            constructionPower={facility.construction_power}
-                            constructionPollution={
-                                facility.construction_pollution
-                            }
-                        />
-                    </div>
-
-                    {/* Full Stats Table */}
-                    <PowerFacilityStatsTable facility={facility} />
-                </div>
-            )}
-        </Card>
-    );
-}
-
-// ============================================================================
-// Power Facility Stats Table Component
-// ============================================================================
 
 interface PowerFacilityStatsTableProps {
     facility: PowerFacility;
