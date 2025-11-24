@@ -242,6 +242,21 @@ export function formatTemperature(
     return `${temperature.toFixed(decimals)}°C`;
 }
 
+// === Timestamp Formatting ===
+
+/**
+ * Format a timestamp string to a readable date and time string.
+ *
+ * @param timestamp - ISO 8601 timestamp string
+ * @returns Formatted date and time string using locale defaults
+ *
+ * @example
+ * formatTimestamp("2024-11-24T15:30:00Z") // "11/24/2024, 3:30:00 PM"
+ */
+export function formatTimestamp(timestamp: string): string {
+    return new Date(timestamp).toLocaleString();
+}
+
 // === Duration Formatting ===
 
 /*

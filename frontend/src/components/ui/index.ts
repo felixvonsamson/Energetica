@@ -1,4 +1,5 @@
 export { Card, CardHeader, CardTitle, CardContent } from "./Card";
+export { Button } from "./Button";
 export { Modal } from "./Modal";
 export { InfoBanner } from "./InfoBanner";
 export { EmptyState } from "./EmptyState";

@@ -6,9 +6,40 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { MessageSquare, Plus, X } from "lucide-react";
 
+/**
+ * Custom hook for filtering players based on search input.
+ * Excludes the current user and optionally excludes already selected members.
+ */
+function useFilteredPlayers(
+    playersData: Player[] | undefined,
+    searchInput: string,
+    currentUserId: number | null | undefined,
+    excludePlayerIds?: number[],
+) {
+    return useMemo(() => {
+        if (!searchInput.trim()) {
+            return [];
+        }
+
+        const excluded = new Set<number>();
+        if (currentUserId) {
+            excluded.add(currentUserId);
+        }
+        (excludePlayerIds || []).forEach((id) => excluded.add(id));
+
+        return (playersData || []).filter(
+            (player) =>
+                player.username
+                    .toLowerCase()
+                    .includes(searchInput.toLowerCase()) &&
+                !excluded.has(player.id),
+        );
+    }, [playersData, searchInput, currentUserId, excludePlayerIds]);
+}
+
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Card, CardTitle } from "@/components/ui";
+import { Card, CardTitle, Button } from "@/components/ui";
 import { Modal } from "@/components/ui/Modal";
 import {
     useChatList,
@@ -18,9 +49,11 @@ import {
     useOpenChat,
 } from "@/hooks/useChats";
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
-import { usePlayers } from "@/hooks/usePlayers";
+import { usePlayers, usePlayerMap } from "@/hooks/usePlayers";
 import { useSocketEvent } from "@/contexts/SocketContext";
 import { useAuth } from "@/hooks/useAuth";
+import { formatTimestamp } from "@/lib/format-utils";
+import type { Chat, Message, Player } from "@/types/chats";
 
 export const Route = createFileRoute("/app/community/messages")({
     component: MessagesPage,
@@ -43,12 +76,19 @@ function MessagesContent() {
     const [showNewChatModal, setShowNewChatModal] = useState(false);
     const [showGroupChatModal, setShowGroupChatModal] = useState(false);
 
+    const selectedChatIdRef = useRef<number | null>(null);
+
     const { data: chatListData, isLoading: isChatListLoading } = useChatList();
     const { data: chatMessagesData, isLoading: isChatMessagesLoading } =
         useChatMessages(selectedChatId);
     const { data: settingsData } = useSettings();
     const { mutate: updateSettings } = useUpdateSettings();
     const { mutate: openChat } = useOpenChat();
+
+    // Keep ref in sync with selected chat ID
+    useEffect(() => {
+        selectedChatIdRef.current = selectedChatId;
+    }, [selectedChatId]);
 
     // When a message is received, mark the chat as opened if it's the selected chat
     const handleNewMessage = useCallback(
@@ -58,22 +98,18 @@ function MessagesContent() {
             text: string;
             chat_id: number;
         }) => {
-            if (data.chat_id === selectedChatId) {
+            if (data.chat_id === selectedChatIdRef.current) {
                 openChat(data.chat_id);
             }
         },
-        [selectedChatId, openChat],
+        [openChat],
     );
 
     useSocketEvent("display_new_message", handleNewMessage);
 
     // Initialize disclaimer visibility based on settings
     useEffect(() => {
-        if (settingsData?.show_disclaimer) {
-            setShowDisclaimer(true);
-        } else {
-            setShowDisclaimer(false);
-        }
+        setShowDisclaimer(settingsData?.show_disclaimer ?? true);
     }, [settingsData]);
 
     // Auto-select first chat if available and mark it as opened
@@ -87,7 +123,7 @@ function MessagesContent() {
             setSelectedChatId(firstChatId);
             openChat(firstChatId);
         }
-    }, [chatListData, selectedChatId, openChat]);
+    }, [chatListData, openChat]);
 
     const selectedChat = chatListData?.chats?.find(
         (chat) => chat.id === selectedChatId,
@@ -99,7 +135,7 @@ function MessagesContent() {
     };
 
     return (
-        <div className="p-4 md:p-8">
+        <div className="p-4 md:p-8 flex flex-col h-full">
             {/* Disclaimer Modal */}
             {showDisclaimer && (
                 <Modal
@@ -113,12 +149,12 @@ function MessagesContent() {
                             not censored and that any message can be read by the
                             administrators.
                         </p>
-                        <button
+                        <Button
                             onClick={handleDismissDisclaimer}
-                            className="w-full bg-pine hover:bg-pine-dark dark:bg-brand-green dark:hover:bg-brand-green-dark text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                            className="w-full"
                         >
                             OK
-                        </button>
+                        </Button>
                     </div>
                 </Modal>
             )}
@@ -126,7 +162,9 @@ function MessagesContent() {
             {/* New Chat Modal */}
             <NewChatModal
                 isOpen={showNewChatModal}
-                onClose={() => setShowNewChatModal(false)}
+                onClose={() => {
+                    setShowNewChatModal(false);
+                }}
                 onChatSelected={(chatId) => {
                     setSelectedChatId(chatId);
                     openChat(chatId);
@@ -146,7 +184,7 @@ function MessagesContent() {
             />
 
             {/* Main Chat Layout */}
-            <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-120px)]">
+            <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
                 {/* Chat Sidebar */}
                 <div className="w-full lg:w-72 flex flex-col gap-4">
                     <Card className="flex-1 flex flex-col overflow-hidden">
@@ -183,20 +221,22 @@ function MessagesContent() {
 
                         {/* Action Buttons */}
                         <div className="space-y-2">
-                            <button
+                            <Button
                                 onClick={() => setShowNewChatModal(true)}
-                                className="w-full flex items-center justify-center gap-2 bg-pine hover:bg-pine-dark dark:bg-brand-green dark:hover:bg-brand-green-dark text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                                aria-label="Write to player"
+                                className="w-full flex items-center justify-center gap-2"
                             >
                                 <Plus className="w-4 h-4" />
                                 Write to player
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={() => setShowGroupChatModal(true)}
-                                className="w-full flex items-center justify-center gap-2 bg-pine hover:bg-pine-dark dark:bg-brand-green dark:hover:bg-brand-green-dark text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                                aria-label="Create group chat"
+                                className="w-full flex items-center justify-center gap-2"
                             >
                                 <Plus className="w-4 h-4" />
                                 Create group chat
-                            </button>
+                            </Button>
                         </div>
                     </Card>
                 </div>
@@ -238,11 +278,7 @@ function MessagesContent() {
 }
 
 interface ChatListItemProps {
-    chat: {
-        id: number;
-        display_name: string;
-        unread_messages_count: number;
-    };
+    chat: Chat;
     isSelected: boolean;
     onClick: () => void;
 }
@@ -273,12 +309,7 @@ function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
 
 interface MessageContainerProps {
     isLoading: boolean;
-    messages: Array<{
-        id: number;
-        text: string;
-        player_id: number;
-        timestamp: string;
-    }>;
+    messages: Message[];
     selectedChatId: number | null;
 }
 
@@ -288,19 +319,8 @@ function MessageContainer({
     selectedChatId,
 }: MessageContainerProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const { data: playersData } = usePlayers();
+    const playerMap = usePlayerMap();
     const { user } = useAuth();
-
-    // Create a map of player IDs to usernames for quick lookup
-    const playerMap = useMemo(() => {
-        const map: Record<number, string> = {};
-        if (playersData) {
-            playersData.forEach((player) => {
-                map[player.id] = player.username;
-            });
-        }
-        return map;
-    }, [playersData]);
 
     // Auto-scroll to bottom when messages change
     useEffect(() => {
@@ -347,10 +367,7 @@ function MessageContainer({
                                 <div className="text-sm text-gray-600 dark:text-gray-400">
                                     {playerMap[message.player_id] ||
                                         `Player ${message.player_id}`}{" "}
-                                    •{" "}
-                                    {new Date(
-                                        message.timestamp,
-                                    ).toLocaleString()}
+                                    • {formatTimestamp(message.timestamp)}
                                 </div>
                             )}
                             <div
@@ -364,9 +381,7 @@ function MessageContainer({
                             </div>
                             {isOwnMessage && (
                                 <div className="text-sm text-gray-600 dark:text-gray-400 text-right">
-                                    {new Date(
-                                        message.timestamp,
-                                    ).toLocaleString()}
+                                    {formatTimestamp(message.timestamp)}
                                 </div>
                             )}
                         </div>
@@ -414,14 +429,9 @@ function MessageInput({ chatId, isDisabled, isModalOpen }: MessageInputProps) {
     };
 
     useEffect(() => {
-        const handleWindowFocus = () => {
-            if (!isModalOpen) {
-                inputRef.current?.focus();
-            }
-        };
-
-        window.addEventListener("focus", handleWindowFocus);
-        return () => window.removeEventListener("focus", handleWindowFocus);
+        if (!isModalOpen) {
+            inputRef.current?.focus();
+        }
     }, [isModalOpen]);
 
     return (
@@ -436,13 +446,13 @@ function MessageInput({ chatId, isDisabled, isModalOpen }: MessageInputProps) {
                 disabled={isDisabled || isPending}
                 className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green disabled:opacity-50"
             />
-            <button
+            <Button
                 onClick={handleSend}
                 disabled={isDisabled || isPending || !message.trim()}
-                className="px-4 py-2 bg-pine hover:bg-pine-dark dark:bg-brand-green dark:hover:bg-brand-green-dark text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Send message"
             >
                 Send
-            </button>
+            </Button>
         </div>
     );
 }
@@ -455,40 +465,36 @@ interface NewChatModalProps {
 
 function NewChatModal({ isOpen, onClose, onChatSelected }: NewChatModalProps) {
     const [playerName, setPlayerName] = useState("");
-    const [filteredPlayers, setFilteredPlayers] = useState<
-        Array<{ id: number; username: string }>
-    >([]);
-    const [selectedPlayer, setSelectedPlayer] = useState<{
-        id: number;
-        username: string;
-    } | null>(null);
+    const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { data: playersData } = usePlayers();
     const { data: chatListData } = useChatList();
     const { user } = useAuth();
     const { mutate: createGroupChat, isPending } = useCreateGroupChat();
 
+    const filteredPlayers = useFilteredPlayers(
+        playersData,
+        playerName,
+        user?.player_id,
+    );
+
+    // Reset state when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setPlayerName("");
+            setSelectedPlayer(null);
+            setError(null);
+        }
+    }, [isOpen]);
+
     const handlePlayerInputChange = (value: string) => {
         setPlayerName(value);
         setError(null);
-        if (value.trim()) {
-            const filtered = (playersData || []).filter(
-                (player) =>
-                    player.username
-                        .toLowerCase()
-                        .includes(value.toLowerCase()) &&
-                    player.id !== user?.player_id,
-            );
-            setFilteredPlayers(filtered);
-        } else {
-            setFilteredPlayers([]);
-        }
     };
 
-    const handleSelectPlayer = (player: { id: number; username: string }) => {
+    const handleSelectPlayer = (player: Player) => {
         setSelectedPlayer(player);
         setPlayerName(player.username);
-        setFilteredPlayers([]);
         setError(null);
     };
 
@@ -564,7 +570,7 @@ function NewChatModal({ isOpen, onClose, onChatSelected }: NewChatModalProps) {
                     </div>
                 )}
                 <div className="relative">
-                    <label htmlFor="player-name" className="block mb-2">
+                    <label htmlFor="search-player" className="block mb-2">
                         Player name
                     </label>
                     <input
@@ -580,7 +586,7 @@ function NewChatModal({ isOpen, onClose, onChatSelected }: NewChatModalProps) {
                     />
                     {filteredPlayers.length > 0 && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg shadow-lg z-10">
-                            {filteredPlayers.map((player) => (
+                            {filteredPlayers.map((player: Player) => (
                                 <button
                                     key={player.id}
                                     onClick={() => handleSelectPlayer(player)}
@@ -592,10 +598,10 @@ function NewChatModal({ isOpen, onClose, onChatSelected }: NewChatModalProps) {
                         </div>
                     )}
                 </div>
-                <button
+                <Button
                     onClick={handleCreateChat}
                     disabled={!selectedPlayer || isPending}
-                    className="w-full bg-pine hover:bg-pine-dark dark:bg-brand-green dark:hover:bg-brand-green-dark text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full"
                 >
                     {isPending
                         ? existingChat
@@ -604,7 +610,7 @@ function NewChatModal({ isOpen, onClose, onChatSelected }: NewChatModalProps) {
                         : existingChat
                           ? "Go to existing chat"
                           : "Create new chat"}
-                </button>
+                </Button>
             </div>
         </Modal>
     );
@@ -622,40 +628,38 @@ function NewGroupChatModal({
     onChatSelected,
 }: NewGroupChatModalProps) {
     const [chatTitle, setChatTitle] = useState("");
-    const [groupMembers, setGroupMembers] = useState<
-        Array<{ id: number; username: string }>
-    >([]);
+    const [groupMembers, setGroupMembers] = useState<Player[]>([]);
     const [playerInput, setPlayerInput] = useState("");
-    const [filteredPlayers, setFilteredPlayers] = useState<
-        Array<{ id: number; username: string }>
-    >([]);
     const [error, setError] = useState<string | null>(null);
     const { mutate: createGroupChat, isPending } = useCreateGroupChat();
     const { data: playersData } = usePlayers();
     const { data: chatListData } = useChatList();
     const { user } = useAuth();
 
+    const filteredPlayers = useFilteredPlayers(
+        playersData,
+        playerInput,
+        user?.player_id,
+        groupMembers.map((m) => m.id),
+    );
+
+    // Reset state when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setChatTitle("");
+            setGroupMembers([]);
+            setPlayerInput("");
+            setError(null);
+        }
+    }, [isOpen]);
+
     const handlePlayerInputChange = (value: string) => {
         setPlayerInput(value);
-        if (value.trim()) {
-            const filtered = (playersData || []).filter(
-                (player) =>
-                    player.username
-                        .toLowerCase()
-                        .includes(value.toLowerCase()) &&
-                    !groupMembers.some((m) => m.id === player.id) &&
-                    player.id !== user?.player_id,
-            );
-            setFilteredPlayers(filtered);
-        } else {
-            setFilteredPlayers([]);
-        }
     };
 
-    const handleSelectPlayer = (player: { id: number; username: string }) => {
+    const handleSelectPlayer = (player: Player) => {
         setGroupMembers([...groupMembers, player]);
         setPlayerInput("");
-        setFilteredPlayers([]);
     };
 
     const handleRemovePlayer = (id: number) => {
@@ -770,6 +774,7 @@ function NewGroupChatModal({
                                     onClick={() =>
                                         handleRemovePlayer(member.id)
                                     }
+                                    aria-label={`Remove ${member.username} from group`}
                                     className="flex items-center gap-2 bg-pine dark:bg-brand-green text-white px-3 py-1 rounded-full text-sm hover:opacity-80 transition-opacity"
                                 >
                                     {member.username}
@@ -796,21 +801,22 @@ function NewGroupChatModal({
                             placeholder="Enter player name"
                             className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green"
                         />
-                        <button
+                        <Button
                             onClick={() => {
                                 if (filteredPlayers.length === 1) {
                                     handleSelectPlayer(filteredPlayers[0]);
                                 }
                             }}
                             disabled={filteredPlayers.length !== 1}
-                            className="px-4 py-2 bg-pine hover:bg-pine-dark dark:bg-brand-green dark:hover:bg-brand-green-dark text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            size="md"
+                            aria-label="Add player to group"
                         >
                             <Plus className="w-4 h-4" />
-                        </button>
+                        </Button>
                     </div>
                     {filteredPlayers.length > 0 && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg shadow-lg z-10">
-                            {filteredPlayers.map((player) => (
+                            {filteredPlayers.map((player: Player) => (
                                 <button
                                     key={player.id}
                                     onClick={() => handleSelectPlayer(player)}
@@ -823,14 +829,14 @@ function NewGroupChatModal({
                     )}
                 </div>
 
-                <button
+                <Button
                     onClick={handleCreateGroupChat}
                     disabled={
                         isPending ||
                         !chatTitle.trim() ||
                         groupMembers.length === 0
                     }
-                    className="w-full bg-pine hover:bg-pine-dark dark:bg-brand-green dark:hover:bg-brand-green-dark text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full"
                 >
                     {isPending
                         ? existingGroupChat
@@ -839,7 +845,7 @@ function NewGroupChatModal({
                         : existingGroupChat
                           ? "Go to existing chat"
                           : "Create group chat"}
-                </button>
+                </Button>
             </div>
         </Modal>
     );
