@@ -225,6 +225,9 @@ function MessagesContent() {
                             <MessageInput
                                 chatId={selectedChatId}
                                 isDisabled={!selectedChat}
+                                isModalOpen={
+                                    showNewChatModal || showGroupChatModal
+                                }
                             />
                         )}
                     </Card>
@@ -286,6 +289,7 @@ function MessageContainer({
 }: MessageContainerProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { data: playersData } = usePlayers();
+    const { user } = useAuth();
 
     // Create a map of player IDs to usernames for quick lookup
     const playerMap = useMemo(() => {
@@ -329,18 +333,46 @@ function MessageContainer({
 
     return (
         <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-            {messages.map((message) => (
-                <div key={message.id} className="space-y-1">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {playerMap[message.player_id] ||
-                            `Player ${message.player_id}`}{" "}
-                        • {new Date(message.timestamp).toLocaleString()}
+            {messages.map((message) => {
+                const isOwnMessage = message.player_id === user?.player_id;
+                return (
+                    <div
+                        key={message.id}
+                        className={`flex ${
+                            isOwnMessage ? "justify-end" : "justify-start"
+                        }`}
+                    >
+                        <div className="max-w-xs space-y-1">
+                            {!isOwnMessage && (
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                    {playerMap[message.player_id] ||
+                                        `Player ${message.player_id}`}{" "}
+                                    •{" "}
+                                    {new Date(
+                                        message.timestamp,
+                                    ).toLocaleString()}
+                                </div>
+                            )}
+                            <div
+                                className={`p-3 rounded-lg break-words ${
+                                    isOwnMessage
+                                        ? "bg-pine dark:bg-brand-green text-white rounded-br-none"
+                                        : "bg-gray-50 dark:bg-dark-bg-tertiary rounded-bl-none"
+                                }`}
+                            >
+                                {message.text}
+                            </div>
+                            {isOwnMessage && (
+                                <div className="text-sm text-gray-600 dark:text-gray-400 text-right">
+                                    {new Date(
+                                        message.timestamp,
+                                    ).toLocaleString()}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <div className="bg-gray-50 dark:bg-dark-bg-tertiary p-3 rounded-lg break-words">
-                        {message.text}
-                    </div>
-                </div>
-            ))}
+                );
+            })}
             <div ref={messagesEndRef} />
         </div>
     );
@@ -349,10 +381,12 @@ function MessageContainer({
 interface MessageInputProps {
     chatId: number;
     isDisabled: boolean;
+    isModalOpen: boolean;
 }
 
-function MessageInput({ chatId, isDisabled }: MessageInputProps) {
+function MessageInput({ chatId, isDisabled, isModalOpen }: MessageInputProps) {
     const [message, setMessage] = useState("");
+    const inputRef = useRef<HTMLInputElement>(null);
     const { mutate: sendMessage, isPending } = useSendMessage();
 
     const handleSend = () => {
@@ -366,25 +400,38 @@ function MessageInput({ chatId, isDisabled }: MessageInputProps) {
             {
                 onSuccess: () => {
                     setMessage("");
+                    inputRef.current?.focus();
                 },
             },
         );
     };
 
-    const handleKeyPress = (e: React.KeyboardEvent) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSend();
         }
     };
 
+    useEffect(() => {
+        const handleWindowFocus = () => {
+            if (!isModalOpen) {
+                inputRef.current?.focus();
+            }
+        };
+
+        window.addEventListener("focus", handleWindowFocus);
+        return () => window.removeEventListener("focus", handleWindowFocus);
+    }, [isModalOpen]);
+
     return (
         <div className="flex gap-2 pt-4 border-t border-gray-300 dark:border-dark-border">
             <input
+                ref={inputRef}
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 placeholder="Type your message..."
                 disabled={isDisabled || isPending}
                 className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green disabled:opacity-50"
