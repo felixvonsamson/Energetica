@@ -28,50 +28,48 @@ export default defineConfig(({ mode }) => ({
     base: mode === "development" ? "/" : "/static/react/",
     server: {
         proxy: {
-            "^/landing$": {
+            // Backend API endpoints
+            "^/api": {
                 target: "http://localhost:5001",
                 changeOrigin: true,
             },
-            "/home": {
+            // Static assets
+            "^/static": {
                 target: "http://localhost:5001",
                 changeOrigin: true,
             },
-            "/sign-up": {
-                target: "http://localhost:5001",
-                changeOrigin: true,
-            },
-            "/location_choice": {
-                target: "http://localhost:5001",
-                changeOrigin: true,
-            },
-            "/changelog": {
-                target: "http://localhost:5001",
-                changeOrigin: true,
-            },
-            "/wiki": {
-                target: "http://localhost:5001",
-                changeOrigin: true,
-            },
-            "/login": {
-                target: "http://localhost:5001",
-                changeOrigin: true,
-            },
-            "/logout": {
-                target: "http://localhost:5001",
-                changeOrigin: true,
-            },
-            "/static": {
-                target: "http://localhost:5001",
-                changeOrigin: true,
-            },
-            "/api": {
-                target: "http://localhost:5001",
-                changeOrigin: true,
-            },
-            "/socket.io": {
+            // WebSocket connection
+            "^/socket.io": {
                 target: "http://localhost:5001",
                 changeOrigin: true,
                 ws: true,
+            },
+            // Auth routes
+            "^/(login|logout|sign-up|location_choice)$": {
+                target: "http://localhost:5001",
+                changeOrigin: true,
+            },
+            // Page routes (Jinja templates being migrated)
+            "^/(landing|home|settings|profile|messages|network|map_view|scoreboard|technology|resource_market|changelog)($|/)":
+                {
+                    target: "http://localhost:5001",
+                    changeOrigin: true,
+                },
+            // Facility pages
+            "^/(power_facilities|storage_facilities|extraction_facilities|functional_facilities)($|/)":
+                {
+                    target: "http://localhost:5001",
+                    changeOrigin: true,
+                },
+            // Overview pages
+            "^/production_overview": {
+                target: "http://localhost:5001",
+                changeOrigin: true,
+            },
+            // Wiki pages
+            "^/wiki": {
+                target: "http://localhost:5001",
+                changeOrigin: true,
             },
         },
     },
