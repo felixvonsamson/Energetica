@@ -86,6 +86,20 @@ export function useFunctionalFacilitiesCatalog() {
 }
 
 /**
+ * Get the catalog of all technologies available for research.
+ * This data changes when technologies are researched.
+ */
+export function useTechnologiesCatalog() {
+    return useQuery({
+        queryKey: queryKeys.projects.catalog.technologies,
+        queryFn: projectsApi.getTechnologiesCatalog,
+        staleTime: 10 * 60 * 1000, // 10 minutes
+        gcTime: 15 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+}
+
+/**
  * Queue a new construction or research project.
  */
 export function useQueueProject() {

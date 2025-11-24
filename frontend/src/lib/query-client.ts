@@ -109,6 +109,7 @@ export const queryKeys = {
                 "catalog",
                 "functional-facilities",
             ] as const,
+            technologies: ["projects", "catalog", "technologies"] as const,
         },
     },
     scoreboard: {

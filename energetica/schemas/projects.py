@@ -13,9 +13,11 @@ from energetica.enums import (
     ProjectStatus,
     ProjectType,
     StorageFacilityType,
+    TechnologyType,
 )
 from energetica.globals import engine
 from energetica.technology_effects import (
+    package_available_technologies,
     package_extraction_facilities,
     package_functional_facilities,
     package_power_facilities,
@@ -402,3 +404,117 @@ class FunctionalFacilityCatalogListOut(BaseModel):
             )
 
         return FunctionalFacilityCatalogListOut(functional_facilities=facilities)
+
+
+class TechnologyCatalogOut(BaseModel):
+    """Represents a technology available for research."""
+
+    name: TechnologyType
+    description: str
+    wikipedia_link: str
+    price: float
+    construction_power: float
+    construction_time: float
+    requirements: list[RequirementOut]
+    requirements_status: Literal["satisfied", "queued", "unsatisfied"]
+    level: int
+    affected_facilities: list[str]
+    discount: float | None = None
+    prevalence: int | None = None
+    # Mechanical Engineering specific
+    power_generation_bonus: float | None = None
+    price_penalty: float | None = None
+    # Thermodynamics specific
+    fuel_use_reduction_bonus: float | None = None
+    co2_emissions_reduction_bonus: float | None = None
+    molten_salt_efficiency_bonus: float | None = None
+    # Physics specific
+    # (same as mechanical engineering, already has power_generation_bonus and price_penalty)
+    # Building Technology specific
+    construction_time_reduction_bonus: float | None = None
+    construction_workers: ValueChange | None = None
+    # Mineral Extraction specific
+    extraction_speed_bonus: float | None = None
+    power_consumption_penalty: float | None = None
+    co2_emissions_penalty: float | None = None
+    # Transport Technology specific
+    shipment_time_reduction_bonus: float | None = None
+    power_consumption_reduction_bonus: float | None = None
+    # Materials specific
+    price_reduction_bonus: float | None = None
+    construction_power_reduction_bonus: float | None = None
+    # Civil Engineering specific
+    storage_capacity_bonus: float | None = None
+    # Aerodynamics specific
+    # (same as mechanical engineering, already has power_generation_bonus and price_penalty)
+    # Chemistry specific
+    hydrogen_efficiency_bonus: float | None = None
+    lithium_ion_efficiency_bonus: float | None = None
+    solid_state_efficiency_bonus: float | None = None
+    # Nuclear Engineering specific
+    # (same as mechanical engineering, already has power_generation_bonus and price_penalty)
+
+
+class TechnologyCatalogListOut(BaseModel):
+    """List of all technologies available for research."""
+
+    technologies: list[TechnologyCatalogOut]
+
+    @classmethod
+    def from_player(cls, player: Player) -> TechnologyCatalogListOut:
+        """Create a catalog from the player's current state."""
+        raw_data = package_available_technologies(player)
+        technologies = []
+        for technology_data in raw_data:
+            # Convert requirements
+            requirements = [
+                RequirementOut(
+                    name=req["name"],
+                    level=req["level"],
+                    status=req["status"],
+                )
+                for req in technology_data["requirements"]
+            ]
+
+            # Helper to convert package_change dicts to ValueChange or None
+            def to_value_change(data: dict | None) -> ValueChange | None:
+                if data is None:
+                    return None
+                return ValueChange(current=data.get("current"), upgraded=data.get("upgraded"))
+
+            # Create the technology catalog entry
+            tech_entry = TechnologyCatalogOut(
+                name=technology_data["name"],
+                description=technology_data["description"],
+                wikipedia_link=technology_data["wikipedia_link"],
+                price=technology_data["price"],
+                construction_power=technology_data["construction_power"],
+                construction_time=technology_data["construction_time"],
+                requirements=requirements,
+                requirements_status=technology_data["requirements_status"],
+                level=technology_data["level"],
+                affected_facilities=technology_data["affected_facilities"],
+                discount=technology_data.get("discount"),
+                prevalence=technology_data.get("prevalence"),
+                power_generation_bonus=technology_data.get("power_generation_bonus"),
+                price_penalty=technology_data.get("price_penalty"),
+                fuel_use_reduction_bonus=technology_data.get("fuel_use_reduction_bonus"),
+                co2_emissions_reduction_bonus=technology_data.get("co2_emissions_reduction_bonus"),
+                molten_salt_efficiency_bonus=technology_data.get("molten_salt_efficiency_bonus"),
+                construction_time_reduction_bonus=technology_data.get("construction_time_reduction_bonus"),
+                construction_workers=to_value_change(technology_data.get("construction_workers")),
+                extraction_speed_bonus=technology_data.get("extraction_speed_bonus"),
+                power_consumption_penalty=technology_data.get("power_consumption_penalty"),
+                co2_emissions_penalty=technology_data.get("co2_emissions_penalty"),
+                shipment_time_reduction_bonus=technology_data.get("shipment_time_reduction_bonus"),
+                power_consumption_reduction_bonus=technology_data.get("power_consumption_reduction_bonus"),
+                price_reduction_bonus=technology_data.get("price_reduction_bonus"),
+                construction_power_reduction_bonus=technology_data.get("construction_power_reduction_bonus"),
+                storage_capacity_bonus=technology_data.get("storage_capacity_bonus"),
+                hydrogen_efficiency_bonus=technology_data.get("hydrogen_efficiency_bonus"),
+                lithium_ion_efficiency_bonus=technology_data.get("lithium_ion_efficiency_bonus"),
+                solid_state_efficiency_bonus=technology_data.get("solid_state_efficiency_bonus"),
+            )
+            technologies.append(tech_entry)
+
+        return TechnologyCatalogListOut(technologies=technologies)

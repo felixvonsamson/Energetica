@@ -861,6 +861,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/catalog/technologies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Technologies Catalog
+         * @description Get the catalog of all technologies available for research for this player.
+         */
+        get: operations["get_technologies_catalog_api_v1_projects_catalog_technologies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/resource-market/asks": {
         parameters: {
             query?: never;
@@ -2897,6 +2917,81 @@ export interface components {
             auth: string;
         };
         /**
+         * TechnologyCatalogListOut
+         * @description List of all technologies available for research.
+         */
+        TechnologyCatalogListOut: {
+            /** Technologies */
+            technologies: components["schemas"]["TechnologyCatalogOut"][];
+        };
+        /**
+         * TechnologyCatalogOut
+         * @description Represents a technology available for research.
+         */
+        TechnologyCatalogOut: {
+            name: components["schemas"]["TechnologyType"];
+            /** Description */
+            description: string;
+            /** Wikipedia Link */
+            wikipedia_link: string;
+            /** Price */
+            price: number;
+            /** Construction Power */
+            construction_power: number;
+            /** Construction Time */
+            construction_time: number;
+            /** Requirements */
+            requirements: components["schemas"]["RequirementOut"][];
+            /**
+             * Requirements Status
+             * @enum {string}
+             */
+            requirements_status: "satisfied" | "queued" | "unsatisfied";
+            /** Level */
+            level: number;
+            /** Affected Facilities */
+            affected_facilities: string[];
+            /** Discount */
+            discount?: number | null;
+            /** Prevalence */
+            prevalence?: number | null;
+            /** Power Generation Bonus */
+            power_generation_bonus?: number | null;
+            /** Price Penalty */
+            price_penalty?: number | null;
+            /** Fuel Use Reduction Bonus */
+            fuel_use_reduction_bonus?: number | null;
+            /** Co2 Emissions Reduction Bonus */
+            co2_emissions_reduction_bonus?: number | null;
+            /** Molten Salt Efficiency Bonus */
+            molten_salt_efficiency_bonus?: number | null;
+            /** Construction Time Reduction Bonus */
+            construction_time_reduction_bonus?: number | null;
+            construction_workers?: components["schemas"]["ValueChange"] | null;
+            /** Extraction Speed Bonus */
+            extraction_speed_bonus?: number | null;
+            /** Power Consumption Penalty */
+            power_consumption_penalty?: number | null;
+            /** Co2 Emissions Penalty */
+            co2_emissions_penalty?: number | null;
+            /** Shipment Time Reduction Bonus */
+            shipment_time_reduction_bonus?: number | null;
+            /** Power Consumption Reduction Bonus */
+            power_consumption_reduction_bonus?: number | null;
+            /** Price Reduction Bonus */
+            price_reduction_bonus?: number | null;
+            /** Construction Power Reduction Bonus */
+            construction_power_reduction_bonus?: number | null;
+            /** Storage Capacity Bonus */
+            storage_capacity_bonus?: number | null;
+            /** Hydrogen Efficiency Bonus */
+            hydrogen_efficiency_bonus?: number | null;
+            /** Lithium Ion Efficiency Bonus */
+            lithium_ion_efficiency_bonus?: number | null;
+            /** Solid State Efficiency Bonus */
+            solid_state_efficiency_bonus?: number | null;
+        };
+        /**
          * TechnologyLevels
          * @description Levels of technologies.
          */
@@ -4435,6 +4530,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FunctionalFacilityCatalogListOut"];
+                };
+            };
+        };
+    };
+    get_technologies_catalog_api_v1_projects_catalog_technologies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnologyCatalogListOut"];
                 };
             };
         };

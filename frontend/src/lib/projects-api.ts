@@ -96,4 +96,12 @@ export const projectsApi = {
         apiClient.get<
             ApiResponse<"/api/v1/projects/catalog/functional-facilities", "get">
         >("/projects/catalog/functional-facilities"),
+
+    /**
+     * Get the catalog of all technologies available for research.
+     */
+    getTechnologiesCatalog: () =>
+        apiClient.get<
+            ApiResponse<"/api/v1/projects/catalog/technologies", "get">
+        >("/projects/catalog/technologies"),
 };

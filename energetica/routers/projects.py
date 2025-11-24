@@ -13,6 +13,7 @@ from energetica.schemas.projects import (
     ProjectIn,
     ProjectListOut,
     StorageFacilityCatalogListOut,
+    TechnologyCatalogListOut,
 )
 from energetica.utils import assets
 from energetica.utils.auth import get_settled_player
@@ -134,3 +135,11 @@ def get_functional_facilities_catalog(
 ) -> FunctionalFacilityCatalogListOut:
     """Get the catalog of all functional facilities available for construction for this player."""
     return FunctionalFacilityCatalogListOut.from_player(player)
+
+
+@router.get("/catalog/technologies")
+def get_technologies_catalog(
+    player: Annotated[Player, Depends(get_settled_player)],
+) -> TechnologyCatalogListOut:
+    """Get the catalog of all technologies available for research for this player."""
+    return TechnologyCatalogListOut.from_player(player)
