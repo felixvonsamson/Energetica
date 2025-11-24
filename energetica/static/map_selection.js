@@ -568,6 +568,7 @@ function settleLocation(locationId) {
                 response.json().then((body) => {
                     if (catchGameErrors(response, body)) {
                         setTimeout(function () {
+                            retrieve_all()
                             location.reload();
                         }, 1000);
                         return;

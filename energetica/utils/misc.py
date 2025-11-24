@@ -199,9 +199,11 @@ def save_past_data() -> None:
             pickle.dump(past_data, file)
 
     # remove old notifications
-    for notification in Notification.filter(
-        lambda notification: notification.title != "Tutorial"
-        and notification.time < datetime.now() - timedelta(weeks=2),
+    for notification in list(
+        Notification.filter(
+            lambda notification: notification.title != "Tutorial"
+            and notification.time < datetime.now() - timedelta(weeks=2),
+        ),
     ):
         notification.delete()
 

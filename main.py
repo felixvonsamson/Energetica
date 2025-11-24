@@ -61,6 +61,11 @@ if __name__ == "__main__":
         metavar="{0..65535}",
     )
     parser.add_argument(
+        "--load_checkpoint",
+        action="store_true",
+        help="Load from the last checkpoint",
+    )
+    parser.add_argument(
         "--simulate_file",
         type=str,
         default=None,
@@ -128,7 +133,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--no-reload",
         action="store_true",
-        default=True,
+        default=False,
         help="Disable hot reloading",
     )
     parser.add_argument(

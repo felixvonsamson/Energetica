@@ -30,7 +30,6 @@ const_config: dict = {
             "lifespan": timedelta(days=70).total_seconds(),  # [in-game seconds]
             "wikipedia_link": "https://en.wikipedia.org/wiki/Steam_engine",
             "description": "The O&M costs of the steam engine are composed of 20% fixed costs and 80% variable costs.",
-            "danger_description": "Risk of steam explosion",
             "requirements": {},
         },
         "windmill": {
@@ -50,7 +49,6 @@ const_config: dict = {
             "the wind at the facilities location. The capacity factor will decrease with each "
             "additional windmill. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Windmill",
-            "danger_description": "Risk of structural failure in high winds",
             "requirements": {},
         },
         "watermill": {
@@ -70,7 +68,6 @@ const_config: dict = {
             "discharge rate. Each new watermill will have higher building and operational costs. "
             "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Watermill",
-            "danger_description": "Risk of structural failure due to floods",
             "requirements": {},
         },
         "coal_burner": {
@@ -105,16 +102,15 @@ const_config: dict = {
             "lifespan": timedelta(days=140).total_seconds(),
             "description": "The O&M costs of the gas burner are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Gas-fired_power_facility",
-            "danger_description": "Risk of gas leaks",
             "requirements": {"mechanical_engineering": 1, "thermodynamics": 1, "warehouse": 1},
         },
         "small_water_dam": {
             "name": "Small Water Dam",
             "type": "Renewable",
-            "base_price": 45_000,
-            "base_power_generation": 27_500_000,
+            "base_price": 65_000,
+            "base_power_generation": 14_000_000,
             "base_construction_time": timedelta(days=12, hours=12).total_seconds(),
-            "construction_power_factor": 0.3,
+            "construction_power_factor": 0.37,
             "base_construction_pollution": 876_000,
             "O&M_factor_per_day": 0.032,
             "consumed_resource": {"hydropower": 0},
@@ -125,7 +121,6 @@ const_config: dict = {
             "discharge rate. Each new small water dam will have higher building and operational costs. "
             "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
-            "danger_description": "Risk of structural failure due to floods",
             "requirements": {"civil_engineering": 1},
         },
         "onshore_wind_turbine": {
@@ -145,7 +140,6 @@ const_config: dict = {
             "the wind at the facilities location. The capacity factor will decrease with each "
             "additional onshore wind turbine. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
-            "danger_description": "Risk of structural failure in high winds",
             "requirements": {"aerodynamics": 1, "materials": 2, "mechanical_engineering": 3},
         },
         "combined_cycle": {
@@ -163,7 +157,6 @@ const_config: dict = {
             "lifespan": timedelta(days=245).total_seconds(),
             "description": "The O&M costs of the combined cycle are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Combined_cycle_power_facility",
-            "danger_description": "Risk of gas leaks",
             "requirements": {"thermodynamics": 3, "mechanical_engineering": 3, "warehouse": 2},
         },
         "nuclear_reactor": {
@@ -181,16 +174,15 @@ const_config: dict = {
             "lifespan": timedelta(days=350).total_seconds(),
             "description": "The O&M costs of the nuclear reactor are composed of 50% fixed costs and 50% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Nuclear_power_facility",
-            "danger_description": "Risk of reactor meltdown",
             "requirements": {"chemistry": 3, "nuclear_engineering": 1, "warehouse": 3},
         },
         "large_water_dam": {
             "name": "Large Water Dam",
             "type": "Renewable",
-            "base_price": 320_000,
-            "base_power_generation": 410_000_000,
+            "base_price": 520_000,
+            "base_power_generation": 210_000_000,
             "base_construction_time": timedelta(days=17, hours=12).total_seconds(),
-            "construction_power_factor": 0.15,
+            "construction_power_factor": 0.21,
             "base_construction_pollution": 8_760_000,
             "O&M_factor_per_day": 0.024,
             "consumed_resource": {"hydropower": 0},
@@ -201,7 +193,6 @@ const_config: dict = {
             "discharge rate. Each new large water dam will have higher building and operational costs. "
             "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
-            "danger_description": "Risk of structural failure due to floods",
             "requirements": {"civil_engineering": 4},
         },
         "CSP_solar": {
@@ -257,7 +248,6 @@ const_config: dict = {
             "the wind at the facilities location. The capacity factor will decrease with each "
             "additional offshore wind turbine. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
-            "danger_description": "Risk of structural failure due to storms",
             "requirements": {"aerodynamics": 3, "materials": 4, "mechanical_engineering": 6},
         },
         "nuclear_reactor_gen4": {
@@ -275,7 +265,6 @@ const_config: dict = {
             "lifespan": timedelta(days=490).total_seconds(),
             "description": "The O&M costs of the 4th generation nuclear reactor are composed of 50% fixed costs and 50% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Generation_IV_reactor",
-            "danger_description": "Risk of reactor meltdown",
             "requirements": {"chemistry": 5, "nuclear_engineering": 5, "warehouse": 3},
         },
         "small_pumped_hydro": {
@@ -292,7 +281,6 @@ const_config: dict = {
             "ramping_time": timedelta(minutes=9).total_seconds(),  # [in-game seconds]
             "lifespan": timedelta(days=525).total_seconds(),  # [in-game seconds]
             "image_extension": "png",
-            "initial_efficiency": 0.75,
             "description": "The small pumped hydro storage pumps water to a higher reservoir to store energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
             "requirements": {},
@@ -311,7 +299,6 @@ const_config: dict = {
             "ramping_time": timedelta(hours=1).total_seconds(),
             "lifespan": timedelta(days=105).total_seconds(),
             "image_extension": "jpg",
-            "initial_efficiency": 0.63,
             "description": "The molten salt storage stores energy in the form of high temperature molten salt.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Thermal_energy_storage",
             "requirements": {"mechanical_engineering": 2, "thermodynamics": 3},
@@ -330,7 +317,6 @@ const_config: dict = {
             "ramping_time": timedelta(minutes=16).total_seconds(),
             "lifespan": timedelta(days=630).total_seconds(),
             "image_extension": "jpg",
-            "initial_efficiency": 0.8,
             "description": "The large pumped hydro storage pumps water to a higher reservoir to store large amounts of energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
             "requirements": {"civil_engineering": 3},
@@ -349,7 +335,6 @@ const_config: dict = {
             "ramping_time": timedelta(minutes=8).total_seconds(),
             "lifespan": timedelta(days=315).total_seconds(),
             "image_extension": "jpg",
-            "initial_efficiency": 0.33,
             "description": "The hydrogen storage facility uses electricity to produce hydrogen by electrolysis of water. "
             "This hydrogen can be used to generate electricity in a fuel cell.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydrogen_storage",
@@ -369,7 +354,6 @@ const_config: dict = {
             "ramping_time": timedelta(minutes=3).total_seconds(),
             "lifespan": timedelta(days=112).total_seconds(),
             "image_extension": "jpg",
-            "initial_efficiency": 0.69,
             "description": "The lithium-ion batteries store energy with a high efficiency in the form of chemical energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Lithium-ion_battery",
             "requirements": {"chemistry": 4, "materials": 4},
@@ -388,7 +372,6 @@ const_config: dict = {
             "ramping_time": timedelta(minutes=3).total_seconds(),
             "lifespan": timedelta(days=210).total_seconds(),
             "image_extension": "jpg",
-            "initial_efficiency": 0.79,
             "description": "The solid state batteries store energy with a high efficiency in the form of chemical energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Solid-state_battery",
             "requirements": {"chemistry": 6, "materials": 5, "physics": 6},
@@ -658,10 +641,10 @@ const_config: dict = {
             "base_price": 28_000,
             "base_construction_time": timedelta(hours=20).total_seconds(),
             "base_construction_energy": 16_000_000,
-            "price_multiplier": 1.2,
-            "price_factor": 1.2,
-            "prod_factor": 1.2,
-            "capacity_factor": 1.15,
+            "price_multiplier": 1.25,
+            "price_factor": 1.15,
+            "prod_factor": 1.15,
+            "capacity_factor": 1.10,
             "affected_facilities": [
                 "small_water_dam",
                 "large_water_dam",
