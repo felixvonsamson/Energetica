@@ -115,4 +115,8 @@ export const queryKeys = {
     scoreboard: {
         all: ["scoreboard"] as const,
     },
+    chats: {
+        list: ["chats"] as const,
+        messages: (chatId: number) => ["chats", chatId, "messages"] as const,
+    },
 } as const;
