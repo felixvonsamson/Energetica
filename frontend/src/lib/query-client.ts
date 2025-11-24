@@ -111,4 +111,7 @@ export const queryKeys = {
             ] as const,
         },
     },
+    scoreboard: {
+        all: ["scoreboard"] as const,
+    },
 } as const;

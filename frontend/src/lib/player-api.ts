@@ -49,4 +49,10 @@ export const playerApi = {
         apiClient.get<ApiResponse<"/api/v1/players/me/profile", "get">>(
             "/players/me/profile",
         ),
+
+    /**
+     * Get the scoreboard data.
+     */
+    getScoreboard: () =>
+        apiClient.get<ApiResponse<"/api/v1/scoreboard", "get">>("/scoreboard"),
 };
