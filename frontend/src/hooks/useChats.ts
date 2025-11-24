@@ -23,13 +23,14 @@ export function useChatList() {
 /**
  * Get all messages in a specific chat.
  */
-export function useChatMessages(chatId: number) {
+export function useChatMessages(chatId: number | null) {
     return useQuery({
-        queryKey: queryKeys.chats.messages(chatId),
-        queryFn: () => chatsApi.getChatMessages(chatId),
+        queryKey: queryKeys.chats.messages(chatId || 0),
+        queryFn: () => chatsApi.getChatMessages(chatId!),
         staleTime: 10 * 1000, // 10 seconds - messages update frequently
         gcTime: 5 * 60 * 1000, // 5 minutes
         refetchOnWindowFocus: true,
+        enabled: chatId !== null,
     });
 }
 
@@ -62,9 +63,9 @@ export function useSendMessage() {
  * Create a new group chat.
  */
 export function useCreateGroupChat() {
-    return useMutation({
+    return useMutation<any, any, any>({
         mutationFn: chatsApi.createGroupChat,
-        onSuccess: () => {
+        onSuccess: (data) => {
             // Invalidate chat list to show the new chat
             queryClient.invalidateQueries({
                 queryKey: queryKeys.chats.list,

@@ -6,7 +6,15 @@ from fastapi import APIRouter, Depends
 
 from energetica.database.player import Player
 from energetica.routers.chats import router
-from energetica.schemas.players import MoneyOut, PlayerOut, ProfileOut, ResourcesOut, SettingsOut, SettingsPatch, WorkersOut
+from energetica.schemas.players import (
+    MoneyOut,
+    PlayerOut,
+    ProfileOut,
+    ResourcesOut,
+    SettingsOut,
+    SettingsPatch,
+    WorkersOut,
+)
 from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/players", tags=["Players"])
@@ -22,15 +30,15 @@ def get_me(user: Player = Depends(get_settled_player)) -> PlayerOut:
 
 
 @router.get("")
-def get_all_users() -> list[PlayerOut]:
+def get_all_players() -> list[PlayerOut]:
     """Get all user ids and usernames, excluding admins."""
-    all_users = Player.all()
+    all_players = Player.all()
     return [
         PlayerOut(
-            id=u.id,
-            username=u.username,
+            id=player.id,
+            username=player.username,
         )
-        for u in all_users
+        for player in all_players
     ]
 
 

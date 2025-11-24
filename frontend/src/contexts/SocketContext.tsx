@@ -12,7 +12,7 @@ import React, {
     useRef,
     type ReactNode,
 } from "react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import io from "socket.io-client";
 
 // Socket type is the return type of io()

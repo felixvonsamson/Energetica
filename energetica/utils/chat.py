@@ -84,8 +84,4 @@ def add_message(player: Player, message_text: str, chat: Chat) -> Message:
             },
         )
 
-        print(
-            f"participant {participant.username} has {chat.unread_messages_count_for_player(participant)} unread messages",
-        )
-
     return new_message

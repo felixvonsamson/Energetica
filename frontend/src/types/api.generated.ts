@@ -542,10 +542,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get All Users
+         * Get All Players
          * @description Get all user ids and usernames, excluding admins.
          */
-        get: operations["get_all_users_api_v1_players_get"];
+        get: operations["get_all_players_api_v1_players_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2035,6 +2035,8 @@ export interface components {
             is_group: boolean;
             /** Unread Messages Count */
             unread_messages_count: number;
+            /** Participant Ids */
+            participant_ids: number[];
         };
         /**
          * ControllableFacilityType
@@ -4067,7 +4069,7 @@ export interface operations {
             };
         };
     };
-    get_all_users_api_v1_players_get: {
+    get_all_players_api_v1_players_get: {
         parameters: {
             query?: never;
             header?: never;

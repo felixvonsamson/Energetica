@@ -77,10 +77,4 @@ def create_group_chat(
         for member_id in request_data.group_member_ids
     } | {player}
     new_chat = energetica.utils.chat.create_chat(player, request_data.group_chat_name, group_members)
-    return ChatOut(
-        id=new_chat.id,
-        display_name=new_chat.display_name(player),
-        initials=new_chat.initials(player),
-        is_group=new_chat.is_group(),
-        unread_messages_count=new_chat.unread_messages_count_for_player(player),
-    )
+    return ChatOut.from_chat(player=player, chat=new_chat)

@@ -10,7 +10,7 @@
  * - Feature gating: if (!hasStorage) return <UpgradePrompt />
  */
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import type { ApiSchema } from "@/types/api-helpers";
 
 /**
