@@ -209,6 +209,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/chats/{chat_id}:open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Open Chat
+         * @description Mark a chat as opened by setting it as the last opened chat.
+         */
+        post: operations["open_chat_api_v1_chats__chat_id__open_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/daily-quiz": {
         parameters: {
             query?: never;
@@ -553,23 +573,6 @@ export interface paths {
         head?: never;
         /** Update User Settings */
         patch: operations["update_user_settings_api_v1_players_me_settings_patch"];
-        trace?: never;
-    };
-    "/api/v1/players/me/ui-state": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update Ui State */
-        patch: operations["update_ui_state_api_v1_players_me_ui_state_patch"];
         trace?: never;
     };
     "/api/v1/players/me/money": {
@@ -3091,17 +3094,6 @@ export interface components {
             | "chemistry"
             | "nuclear_engineering";
         /**
-         * UIStatePatch
-         * @description Model for updating the state of the UI.
-         */
-        UIStatePatch: {
-            /**
-             * Last Opened Chat Id
-             * @description ID of the last opened chat
-             */
-            last_opened_chat_id?: number | null;
-        };
-        /**
          * UserOut
          * @description Response model for authenticated user information.
          */
@@ -3557,6 +3549,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MessageOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_chat_api_v1_chats__chat_id__open_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chat_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -4096,37 +4117,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SettingsPatch"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_ui_state_api_v1_players_me_ui_state_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UIStatePatch"];
             };
         };
         responses: {

@@ -255,11 +255,6 @@ class Player(DBModel):
         ]
         return messages_list
 
-    def mark_chat_as_read(self, chat: Chat) -> None:
-        """Mark a chat as read."""
-        self.last_opened_chat_id = chat.id
-        chat.player_last_read_index[self.id] = len(chat.messages) - 1
-
     def unread_chat_count(self) -> int:
         """Return the number of unread chats."""
         return Chat.count(

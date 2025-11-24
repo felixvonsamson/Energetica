@@ -38,4 +38,12 @@ export const chatsApi = {
      */
     createGroupChat: (data: ApiRequestBody<"/api/v1/chats", "post">) =>
         apiClient.post<ApiResponse<"/api/v1/chats", "post">>("/chats", data),
+
+    /**
+     * Mark a chat as opened by the current user.
+     */
+    openChat: (chatId: number) =>
+        apiClient.post<ApiResponse<"/api/v1/chats/{chat_id}:open", "post">>(
+            `/chats/${chatId}:open`,
+        ),
 };

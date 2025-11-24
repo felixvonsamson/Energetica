@@ -342,12 +342,11 @@ function openChat(chatID) {
                 console.error("Error:", error);
             });
     });
-    fetch("/api/v1/players/me/ui-state", {
-        method: "PATCH",
+    fetch(`/api/v1/chats/${chatID}:open`, {
+        method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ last_opened_chat_id: chatID }),
     })
         .then((response) => {
             if (response.status !== 204) {

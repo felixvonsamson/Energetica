@@ -77,6 +77,11 @@ class Chat(DBModel):
                 break
         return initials
 
+    def open_for_player(self, player: Player) -> None:
+        """Mark the chat as opened by a player, setting it as their last opened chat and marking it as read."""
+        player.last_opened_chat_id = self.id
+        self.player_last_read_index[player.id] = len(self.messages) - 1
+
 
 @dataclass
 class Notification(DBModel):

@@ -29,12 +29,6 @@ class SettingsPatch(BaseModel):
     show_disclaimer: bool | None = Field(None, description="Whether to show the chat disclaimer or not")
 
 
-class UIStatePatch(BaseModel):
-    """Model for updating the state of the UI."""
-
-    last_opened_chat_id: int | None = Field(None, description="ID of the last opened chat")
-
-
 class MoneyOut(BaseModel):
     """Model for the player's money."""
 

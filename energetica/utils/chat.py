@@ -70,11 +70,22 @@ def add_message(player: Player, message_text: str, chat: Chat) -> Message:
     send_new_message_sio(new_message, chat)
 
     for participant in chat.participants:
-        participant.emit("invalidate", {
-            "queries": [
-                ["chats"],
-                ["chats", chat.id, "messages"],
-            ],
-        })
+        # Ensure the "unread chats" is updated
+        if participant != player:
+            participant.emit("invalidate", {"queries": [["chats"]]})
+
+        participant.emit(
+            "invalidate",
+            {
+                "queries": [
+                    ["chats"],
+                    ["chats", chat.id, "messages"],
+                ],
+            },
+        )
+
+        print(
+            f"participant {participant.username} has {chat.unread_messages_count_for_player(participant)} unread messages",
+        )
 
     return new_message

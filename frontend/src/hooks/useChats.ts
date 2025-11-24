@@ -72,3 +72,18 @@ export function useCreateGroupChat() {
         },
     });
 }
+
+/**
+ * Mark a chat as opened by the current user.
+ */
+export function useOpenChat() {
+    return useMutation({
+        mutationFn: (chatId: number) => chatsApi.openChat(chatId),
+        onSuccess: (_, chatId) => {
+            // Invalidate the chat list to update last opened chat ID
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.chats.list,
+            });
+        },
+    });
+}
