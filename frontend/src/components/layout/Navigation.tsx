@@ -80,7 +80,7 @@ export function Navigation() {
                             Revenues
                         </NavItem>
                         <NavItem
-                            to="/app/overviews/electricity"
+                            to="/app/overviews/power"
                             icon="power_facilities.png"
                         >
                             Electricity

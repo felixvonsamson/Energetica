@@ -161,6 +161,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/charts/power-sources/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Power Sources
+         * @description Get power sources data for all facility types and imports.
+         *
+         *     Returns time series power generation and import data for the specified time range and resolution.
+         */
+        get: operations["get_power_sources_api_v1_charts_power_sources__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/power-sinks/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Power Sinks
+         * @description Get power sinks data for demand by category.
+         *
+         *     Returns time series power demand data for the specified time range and resolution.
+         */
+        get: operations["get_power_sinks_api_v1_charts_power_sinks__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/chats": {
         parameters: {
             query?: never;
@@ -2530,6 +2574,70 @@ export interface components {
             )[];
         };
         /**
+         * PowerSinksResponse
+         * @description Response model for power sinks chart data.
+         *
+         *     Contains time series power demand data by category over a specified time range.
+         *     Categories include standard demands (industry, construction, research, transport, exports, dumping)
+         *     plus dynamically added facility-type categories (storage, extraction, functional).
+         */
+        PowerSinksResponse: {
+            /**
+             * Start Tick
+             * @description The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             * @description Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             * @description Time resolution between data points in ticks
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             * @description Time series power demand data by category, with power values in MW
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
+         * PowerSourcesResponse
+         * @description Response model for power sources chart data.
+         *
+         *     Contains time series power generation and import data for different facility types over a specified time range.
+         */
+        PowerSourcesResponse: {
+            /**
+             * Start Tick
+             * @description The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             * @description Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             * @description Time resolution between data points in ticks
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             * @description Time series data for each facility type and imports, with power values in MW
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
          * ProfileOut
          * @description Complete player profile information.
          */
@@ -3432,6 +3540,74 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_power_sources_api_v1_charts_power_sources__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PowerSourcesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_power_sinks_api_v1_charts_power_sinks__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PowerSinksResponse"];
+                };
             };
             /** @description Validation Error */
             422: {
