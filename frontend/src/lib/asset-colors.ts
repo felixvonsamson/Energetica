@@ -12,12 +12,14 @@ const colorCache = new Map<string, string>();
 /**
  * Convert asset name to CSS variable format
  * Examples: "pv_solar" → "--asset-color-pv-solar"
+ *           "PV_solar" → "--asset-color-pv-solar"
  *           "PvSolar" → "--asset-color-pv-solar"
  */
 function normalizeToCssVariable(assetName: string): string {
     return `--asset-color-${assetName
         .toLowerCase()
         .replace(/([a-z])([A-Z])/g, "$1-$2") // camelCase → kebab-case
+        .replace(/_/g, "-") // underscores → hyphens
         .toLowerCase()}`;
 }
 

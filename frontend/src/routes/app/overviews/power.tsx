@@ -172,6 +172,7 @@ function PowerSourcesChart({ dataPoints, resolution }: PowerSourcesChartProps) {
                     isAnimationActive={false}
                     // animationDuration={300}
                     fill={getColorForSource(source)}
+                    fillOpacity={1}
                 />
             ));
     }, [powerSourcesData]);
