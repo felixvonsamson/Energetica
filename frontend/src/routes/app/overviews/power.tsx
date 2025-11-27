@@ -19,7 +19,7 @@ import {
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
-import { useGameTick } from "@/contexts/GameTickContext";
+import { useGameTick } from "@/hooks/useGameTick";
 import {
     useAggregatedPowerSourcesChart,
     _getCachedTickRanges,

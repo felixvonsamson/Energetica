@@ -97,7 +97,6 @@ export function useAggregatedPowerSourcesChart(
                 continue;
             }
 
-            const data = cachedQuery.state.data as any;
             const rangeEndTick =
                 range.start_tick + range.count * params.resolution;
 
@@ -115,6 +114,8 @@ export function useAggregatedPowerSourcesChart(
             const overlapStart =
                 Math.ceil(rawOverlapStart / params.resolution) *
                 params.resolution;
+
+            const data = cachedQuery.state.data as any;
 
             // Iterate through ticks in the overlap, stepping by resolution
             // Each tick represents the start of an interval [tick, tick + resolution)
@@ -170,7 +171,7 @@ export function useAggregatedPowerSourcesChart(
 /**
  * Intelligently fetches power sources data, only requesting uncached ranges.
  *
- * Analyzes the query cache to determine which tick ranges are missing and
+ * Analyses the query cache to determine which tick ranges are missing and
  * issues minimal fetch requests to fill gaps.
  */
 function useSmartPowerSourcesChart(params: ChartParams) {
@@ -274,7 +275,7 @@ export function _getCachedTickRanges(
 /**
  * Calculates which tick ranges need to be fetched to satisfy a request.
  *
- * Analyzes cached data coverage and returns minimal fetch requests to fill gaps.
+ * Analyses cached data coverage and returns minimal fetch requests to fill gaps.
  * Ensures all returned ranges have aligned start_tick values.
  *
  * Algorithm:

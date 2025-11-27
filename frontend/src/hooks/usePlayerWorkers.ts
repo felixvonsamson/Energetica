@@ -10,13 +10,22 @@
  * This is more efficient than refetching every tick (workers change ~10% of ticks).
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSocketEvent } from "@/contexts/SocketContext";
 import { playerApi } from "@/lib/player-api";
 import { queryKeys } from "@/lib/query-client";
 
 export function usePlayerWorkers() {
+    const queryClient = useQueryClient();
+
     // NOTE: We DON'T use useTickQuery here!
-    // Workers are updated via SocketIO "worker_info" events (see GameTickContext)
+    // Workers are updated via SocketIO "worker_info" events
+
+    // Listen for worker info updates (sent when workers change)
+    useSocketEvent("worker_info", (data) => {
+        console.log("[Workers] Worker info updated:", data);
+        queryClient.setQueryData(queryKeys.players.workers, data);
+    });
 
     return useQuery({
         queryKey: queryKeys.players.workers,

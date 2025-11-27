@@ -20,6 +20,7 @@ import {
     useEffect,
     useState,
     useCallback,
+    useMemo,
     type ReactNode,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,13 +32,11 @@ interface GameTickContextValue {
     currentTick: number;
     /** Whether the initial tick is still loading */
     isLoadingTick: boolean;
-    /** Manually invalidate specific query keys (prefer server events instead) */
-    invalidateQueries: (
-        queryKeys: readonly (readonly unknown[])[],
-    ) => Promise<void>;
 }
 
-const GameTickContext = createContext<GameTickContextValue | null>(null);
+export const GameTickContext = createContext<GameTickContextValue | undefined>(
+    undefined,
+);
 
 interface GameTickProviderProps {
     children: ReactNode;
@@ -146,23 +145,9 @@ export function GameTickProvider({ children }: GameTickProviderProps) {
         invalidateQueries(data.queries);
     });
 
-    // Example: Listen for direct money updates (more efficient than invalidation)
-    useSocketEvent<DataUpdateEvent>("money_updated", (event) => {
-        console.log("[GameTick] Money updated:", event.data);
-        queryClient.setQueryData(["players", "me", "money"], event.data);
-    });
-
-    // Listen for worker info updates (sent when workers change)
-    // Data is sent directly (not wrapped), using WorkersOut schema from backend
-    useSocketEvent("worker_info", (data) => {
-        console.log("[GameTick] Worker info updated:", data);
-        queryClient.setQueryData(["players", "me", "workers"], data);
-    });
-
     const value: GameTickContextValue = {
         currentTick,
         isLoadingTick,
-        invalidateQueries,
     };
 
     // Expose registration functions via context (internal use only)
@@ -184,18 +169,6 @@ const TickQueryRegistration = createContext<{
 } | null>(null);
 
 /**
- * Hook to access game tick context.
- * Provides current tick number and utilities for manual invalidation.
- */
-export function useGameTick() {
-    const context = useContext(GameTickContext);
-    if (!context) {
-        throw new Error("useGameTick must be used within GameTickProvider");
-    }
-    return context;
-}
-
-/**
  * Hook to automatically register a query for tick-based refetching.
  * The query will be invalidated on each game tick.
  *
@@ -203,28 +176,18 @@ export function useGameTick() {
  * For data that only changes on user actions, rely on server "invalidate" events instead.
  *
  * @param queryKey - The query key to register
- * @param enabled - Whether the query is enabled (default: true)
  */
-export function useTickQuery(
-    queryKey: readonly unknown[],
-    enabled: boolean = true,
-) {
+export function useTickQuery(queryKey: readonly unknown[]) {
     const context = useContext(TickQueryRegistration);
     if (!context) {
         throw new Error("useTickQuery must be used within GameTickProvider");
     }
 
     const { registerTickQuery, unregisterTickQuery } = context;
+    const queryKeyStr = useMemo(() => JSON.stringify(queryKey), [queryKey]);
 
     useEffect(() => {
-        if (enabled) {
-            registerTickQuery(queryKey);
-            return () => unregisterTickQuery(queryKey);
-        }
-    }, [
-        JSON.stringify(queryKey),
-        enabled,
-        registerTickQuery,
-        unregisterTickQuery,
-    ]);
+        registerTickQuery(queryKey);
+        return () => unregisterTickQuery(queryKey);
+    }, [queryKeyStr, registerTickQuery, unregisterTickQuery]);
 }

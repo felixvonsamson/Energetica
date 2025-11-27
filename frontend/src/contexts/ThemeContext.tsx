@@ -14,7 +14,7 @@ interface ThemeContextValue {
     setTheme: (theme: Theme) => void;
 }
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 interface ThemeProviderProps {
     children: ReactNode;
