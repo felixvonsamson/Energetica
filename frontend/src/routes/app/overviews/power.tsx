@@ -1,30 +1,37 @@
 /**
- * Power overview page - Tests new chart hooks and tick management.
+ * Power overview page - Electricity generation visualization.
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Zap, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Zap, RefreshCw } from "lucide-react";
+import {
+    BarChart,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
+    Bar,
+    AreaChart,
+    Area,
+} from "recharts";
 
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
 import { useGameTick } from "@/contexts/GameTickContext";
 import {
-    usePowerSourcesChart,
-    usePowerSinksChart,
-    useMostRecentPowerSourcesTick,
-    useMostRecentPowerSinksTick,
-    useSmartPowerSourcesChart,
-    useSmartPowerSinksChart,
+    useAggregatedPowerSourcesChart,
+    _getCachedTickRanges,
 } from "@/hooks/useCharts";
+import { Resolution, toStringResolution } from "@/types/charts";
+import { queryClient } from "@/lib/query-client";
 
 export const Route = createFileRoute("/app/overviews/power")({
     component: PowerOverviewPage,
     staticData: { title: "Power Overview" },
 });
-
-type Resolution = "1" | "6" | "36" | "216" | "1296";
 
 function PowerOverviewPage() {
     return (
@@ -36,338 +43,298 @@ function PowerOverviewPage() {
     );
 }
 
+const RESOLUTIONS: Array<{
+    id: number;
+    label: string;
+    resolution: Resolution;
+}> = [
+    { id: 0, label: "4h", resolution: 1 },
+    { id: 1, label: "24h", resolution: 1 },
+    { id: 2, label: "6 days", resolution: 6 },
+    { id: 3, label: "6 months", resolution: 36 },
+    { id: 4, label: "3 years", resolution: 216 },
+    { id: 5, label: "18 years", resolution: 1296 },
+];
+
 function PowerOverviewContent() {
-    const [resolution, setResolution] = useState<Resolution>("6");
-    const [dataPoints, setDataPoints] = useState(100);
-    const { currentTick } = useGameTick();
+    // const [dataPoints, setDataPoints] = useState(60);
+    const [selectedResolutionIndex, setSelectedResolutionIndex] = useState(2);
+    const dataPoints = selectedResolutionIndex === 0 ? 60 : 360;
 
-    const mostRecentSourcesTick = useMostRecentPowerSourcesTick(resolution);
-    const mostRecentSinksTick = useMostRecentPowerSinksTick(resolution);
-
-    // Convert resolution to number
-    const resolutionNum = parseInt(resolution, 10);
-
-    // Determine start tick - use most recent cached or go back from current
-    let startTick = Math.max(
-        currentTick - dataPoints,
-        mostRecentSourcesTick
-            ? mostRecentSourcesTick - dataPoints
-            : currentTick - dataPoints,
-    );
-
-    // Align start_tick to resolution (must be a multiple of resolution)
-    startTick = Math.floor(startTick / resolutionNum) * resolutionNum;
-
-    // Fetch power sources data
-    const {
-        data: powerSourcesData,
-        isLoading: isSourcesLoading,
-        isError: isSourcesError,
-        status: sourcesStatus,
-    } = usePowerSourcesChart({
-        resolution,
-        start_tick: startTick,
-        count: dataPoints,
-    });
-
-    // Fetch power sinks data
-    const {
-        data: powerSinksData,
-        isLoading: isSinksLoading,
-        isError: isSinksError,
-        status: sinksStatus,
-    } = usePowerSinksChart({
-        resolution,
-        start_tick: startTick,
-        count: dataPoints,
-    });
+    const selectedResolution = RESOLUTIONS[selectedResolutionIndex];
 
     return (
         <div className="p-4 md:p-8">
             <h1 className="text-4xl md:text-5xl font-bold mb-8">
-                Power Overview
+                Power Generation
             </h1>
 
-            {/* Control Panel */}
+            <Card className="mb-6 p-4 bg-slate-50">
+                <h2 className="text-sm font-semibold mb-3 text-slate-700">
+                    Cache Coverage (Resolution {selectedResolution.resolution})
+                </h2>
+                <CacheRangesVisualization
+                    resolution={selectedResolution.resolution}
+                />
+            </Card>
+
             <Card className="mb-6">
-                <CardTitle>Chart Controls</CardTitle>
                 <div className="space-y-4">
-                    {/* Current Tick Display */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-bone dark:bg-dark-bg-secondary p-4 rounded-lg">
-                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                Current Server Tick
-                            </div>
-                            <div className="text-2xl font-bold text-primary">
-                                {currentTick}
-                            </div>
-                        </div>
-
-                        <div className="bg-bone dark:bg-dark-bg-secondary p-4 rounded-lg">
-                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                Most Recent Cached (Sources)
-                            </div>
-                            <div className="text-2xl font-bold text-brand-green">
-                                {mostRecentSourcesTick ?? "—"}
-                            </div>
-                        </div>
-
-                        <div className="bg-bone dark:bg-dark-bg-secondary p-4 rounded-lg">
-                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                Most Recent Cached (Sinks)
-                            </div>
-                            <div className="text-2xl font-bold text-brand-green">
-                                {mostRecentSinksTick ?? "—"}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Resolution Selector */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Resolution
-                        </label>
-                        <div className="flex gap-2 flex-wrap">
-                            {(
-                                ["1", "6", "36", "216", "1296"] as Resolution[]
-                            ).map((res) => (
-                                <button
-                                    key={res}
-                                    onClick={() => setResolution(res)}
-                                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                                        resolution === res
-                                            ? "bg-brand-green text-white"
-                                            : "bg-bone dark:bg-dark-bg-secondary text-primary hover:bg-gray-300 dark:hover:bg-gray-700"
-                                    }`}
-                                >
-                                    {res}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Data Points Slider */}
-                    <div>
+                    {/* <div>
                         <label className="block text-sm font-medium mb-2">
                             Data Points: {dataPoints}
                         </label>
                         <input
                             type="range"
-                            min="10"
-                            max="500"
-                            step="10"
+                            min="60"
+                            max="360"
+                            step="60"
                             value={dataPoints}
                             onChange={(e) =>
                                 setDataPoints(Number(e.target.value))
                             }
                             className="w-full"
                         />
-                    </div>
-
-                    {/* Query Info */}
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Querying from tick <b>{startTick}</b> for{" "}
-                        <b>{dataPoints} points</b>
-                    </div>
-
-                    {/* Debug Info */}
-                    <div className="bg-bone dark:bg-dark-bg-secondary p-3 rounded text-xs font-mono">
-                        <div>
-                            Sources Status:{" "}
-                            <span className="font-bold">{sourcesStatus}</span>
-                        </div>
-                        <div>
-                            Sinks Status:{" "}
-                            <span className="font-bold">{sinksStatus}</span>
+                    </div> */}
+                    <div>
+                        <label className="block text-sm font-medium mb-2">
+                            Resolution
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {RESOLUTIONS.map((res) => (
+                                <button
+                                    key={res.id}
+                                    onClick={() =>
+                                        setSelectedResolutionIndex(res.id)
+                                    }
+                                    className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
+                                        selectedResolutionIndex === res.id
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                    {res.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
             </Card>
 
-            {/* Power Sources Chart */}
             <Card className="mb-6">
                 <div className="flex items-center gap-2 mb-4">
                     <Zap className="w-6 h-6 text-yellow-500" />
                     <CardTitle>Power Sources</CardTitle>
                 </div>
 
-                {isSourcesLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                        <RefreshCw className="w-5 h-5 animate-spin mr-2" />
-                        Loading power sources data...
-                    </div>
-                ) : isSourcesError ? (
-                    <div className="text-center py-8 text-alert-red">
-                        Failed to load power sources data
-                    </div>
-                ) : powerSourcesData ? (
-                    <div className="space-y-4">
-                        {/* Metadata */}
-                        <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div className="bg-bone dark:bg-dark-bg-secondary p-3 rounded">
-                                <div className="text-gray-600 dark:text-gray-400">
-                                    Start Tick
-                                </div>
-                                <div className="font-bold">
-                                    {powerSourcesData.start_tick}
-                                </div>
-                            </div>
-                            <div className="bg-bone dark:bg-dark-bg-secondary p-3 rounded">
-                                <div className="text-gray-600 dark:text-gray-400">
-                                    Data Points
-                                </div>
-                                <div className="font-bold">
-                                    {powerSourcesData.count}
-                                </div>
-                            </div>
-                            <div className="bg-bone dark:bg-dark-bg-secondary p-3 rounded">
-                                <div className="text-gray-600 dark:text-gray-400">
-                                    Resolution
-                                </div>
-                                <div className="font-bold">
-                                    {powerSourcesData.resolution}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Series Data */}
-                        <div className="max-h-64 overflow-y-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-300 dark:border-gray-600">
-                                        <th className="text-left py-2 px-2">
-                                            Source
-                                        </th>
-                                        <th className="text-right py-2 px-2">
-                                            Data Points
-                                        </th>
-                                        <th className="text-right py-2 px-2">
-                                            Latest Value
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {Object.entries(
-                                        powerSourcesData.series,
-                                    ).map(([source, values]) => (
-                                        <tr
-                                            key={source}
-                                            className="border-b border-gray-200 dark:border-gray-700 hover:bg-bone dark:hover:bg-dark-bg-secondary"
-                                        >
-                                            <td className="py-2 px-2">
-                                                {source}
-                                            </td>
-                                            <td className="text-right py-2 px-2">
-                                                {values.length}
-                                            </td>
-                                            <td className="text-right py-2 px-2 font-medium">
-                                                {(
-                                                    values[values.length - 1] ??
-                                                    0
-                                                ).toFixed(2)}{" "}
-                                                MW
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                ) : null}
+                <PowerSourcesChart
+                    dataPoints={dataPoints}
+                    resolution={selectedResolution.resolution}
+                />
             </Card>
+        </div>
+    );
+}
 
-            {/* Power Sinks Chart */}
-            <Card>
-                <div className="flex items-center gap-2 mb-4">
-                    <TrendingDown className="w-6 h-6 text-red-500" />
-                    <CardTitle>Power Sinks</CardTitle>
-                </div>
+interface PowerSourcesChartProps {
+    dataPoints: number;
+    resolution: Resolution;
+}
 
-                {isSinksLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                        <RefreshCw className="w-5 h-5 animate-spin mr-2" />
-                        Loading power sinks data...
-                    </div>
-                ) : isSinksError ? (
-                    <div className="text-center py-8 text-alert-red">
-                        Failed to load power sinks data
-                    </div>
-                ) : powerSinksData ? (
-                    <div className="space-y-4">
-                        {/* Metadata */}
-                        <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div className="bg-bone dark:bg-dark-bg-secondary p-3 rounded">
-                                <div className="text-gray-600 dark:text-gray-400">
-                                    Start Tick
-                                </div>
-                                <div className="font-bold">
-                                    {powerSinksData.start_tick}
-                                </div>
-                            </div>
-                            <div className="bg-bone dark:bg-dark-bg-secondary p-3 rounded">
-                                <div className="text-gray-600 dark:text-gray-400">
-                                    Data Points
-                                </div>
-                                <div className="font-bold">
-                                    {powerSinksData.count}
-                                </div>
-                            </div>
-                            <div className="bg-bone dark:bg-dark-bg-secondary p-3 rounded">
-                                <div className="text-gray-600 dark:text-gray-400">
-                                    Resolution
-                                </div>
-                                <div className="font-bold">
-                                    {powerSinksData.resolution}
-                                </div>
+function PowerSourcesChart({ dataPoints, resolution }: PowerSourcesChartProps) {
+    const { currentTick, isLoadingTick } = useGameTick();
+
+    // Determine start tick
+    // dataPoints is the number of datapoints, not ticks
+    // Convert to ticks: dataPoints * resolution
+    const res = Number(resolution);
+    let leftmostTick = currentTick - dataPoints * res;
+    let firstBarTick = Math.max(0, Math.floor(leftmostTick / res) * res);
+
+    // Fetch and aggregate power sources data
+    const params = isLoadingTick
+        ? undefined
+        : {
+              resolution: resolution,
+              start_tick: firstBarTick,
+              count: Math.floor((currentTick - firstBarTick) / res),
+          };
+    const {
+        data: powerSourcesData,
+        isLoading: isChartLoading,
+        isError,
+    } = useAggregatedPowerSourcesChart(params);
+
+    // Data is already in the right format for recharts
+    const chartData = useMemo(() => {
+        if (!powerSourcesData) return [];
+        return powerSourcesData;
+    }, [powerSourcesData]);
+
+    // Memoize bar components
+    const barComponents = useMemo(() => {
+        if (!powerSourcesData || powerSourcesData.length === 0) return [];
+
+        // Extract power source keys from first data point (excluding 'tick')
+        const powerSources = Object.keys(powerSourcesData[0]).filter(
+            (key) => key !== "tick",
+        );
+
+        // Filter to only sources that have non-zero values
+        return powerSources
+            .filter((source) => {
+                return powerSourcesData.some(
+                    (dataPoint) =>
+                        ((dataPoint as Record<string, any>)[source] ?? 0) > 0,
+                );
+            })
+            .map((source) => (
+                <Area
+                    key={source}
+                    dataKey={source}
+                    stackId="power"
+                    isAnimationActive={false}
+                    fill={
+                        "#" +
+                        ((Math.random() * 0xffffff) << 0)
+                            .toString(16)
+                            .padStart(6, "0")
+                    }
+                />
+            ));
+    }, [powerSourcesData]);
+
+    // Early returns after all hooks are called
+    if (isLoadingTick) {
+        return <ChartLoadingState />;
+    }
+
+    if (isError) {
+        return (
+            <div className="text-center py-12 text-alert-red">
+                Failed to load data
+            </div>
+        );
+    }
+
+    if (chartData.length === 0) {
+        return null;
+    }
+
+    return (
+        <ResponsiveContainer width="100%" height={400}>
+            <AreaChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="tick" tick={{ fontSize: 12 }} />
+                <YAxis />
+                {barComponents}
+                <Tooltip />
+            </AreaChart>
+        </ResponsiveContainer>
+    );
+}
+
+interface CacheRangesVisualizationProps {
+    resolution: Resolution;
+}
+
+function CacheRangesVisualization({
+    resolution,
+}: CacheRangesVisualizationProps) {
+    const [cacheVersion, setCacheVersion] = useState(0);
+
+    useEffect(() => {
+        const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+            setCacheVersion((v) => v + 1);
+        });
+        return unsubscribe;
+    }, []);
+
+    const ranges = useMemo(
+        () => _getCachedTickRanges(queryClient, "power-sources", resolution),
+        [resolution, cacheVersion],
+    );
+
+    if (ranges.length === 0) {
+        return (
+            <div className="text-sm text-slate-500 italic">
+                No data cached yet
+            </div>
+        );
+    }
+
+    // Calculate the overall range to visualize
+    const minTick = Math.min(...ranges.map((r) => r.start_tick));
+    const maxTick = Math.max(
+        ...ranges.map((r) => r.start_tick + r.count * resolution),
+    );
+    const totalSpan = maxTick - minTick;
+
+    return (
+        <div className="space-y-2">
+            {/* Timeline visualization */}
+            <div className="space-y-1">
+                {ranges.map((range, idx) => {
+                    const start =
+                        ((range.start_tick - minTick) / totalSpan) * 100;
+                    const width =
+                        ((range.count * resolution) / totalSpan) * 100;
+                    const endTick = range.start_tick + range.count * resolution;
+                    return (
+                        <div
+                            key={idx}
+                            className="relative h-6 bg-slate-200 rounded border border-slate-300 overflow-hidden"
+                        >
+                            <div
+                                className="absolute h-full bg-emerald-500 hover:bg-emerald-600 transition-colors group"
+                                style={{
+                                    left: `${start}%`,
+                                    width: `${width}%`,
+                                }}
+                                title={`Ticks ${range.start_tick}-${endTick} (${range.count} points)`}
+                            >
+                                {width > 12 && (
+                                    <span className="text-xs text-white font-semibold px-1 leading-6 opacity-75 group-hover:opacity-100">
+                                        {range.start_tick}
+                                    </span>
+                                )}
                             </div>
                         </div>
+                    );
+                })}
+            </div>
 
-                        {/* Series Data */}
-                        <div className="max-h-64 overflow-y-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-300 dark:border-gray-600">
-                                        <th className="text-left py-2 px-2">
-                                            Sink
-                                        </th>
-                                        <th className="text-right py-2 px-2">
-                                            Data Points
-                                        </th>
-                                        <th className="text-right py-2 px-2">
-                                            Latest Value
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {Object.entries(powerSinksData.series).map(
-                                        ([sink, values]) => (
-                                            <tr
-                                                key={sink}
-                                                className="border-b border-gray-200 dark:border-gray-700 hover:bg-bone dark:hover:bg-dark-bg-secondary"
-                                            >
-                                                <td className="py-2 px-2">
-                                                    {sink}
-                                                </td>
-                                                <td className="text-right py-2 px-2">
-                                                    {values.length}
-                                                </td>
-                                                <td className="text-right py-2 px-2 font-medium">
-                                                    {(
-                                                        values[
-                                                            values.length - 1
-                                                        ] ?? 0
-                                                    ).toFixed(2)}{" "}
-                                                    MW
-                                                </td>
-                                            </tr>
-                                        ),
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                ) : null}
-            </Card>
+            {/* Details */}
+            <div className="text-xs text-slate-600 space-y-1">
+                <p>
+                    <span className="font-semibold">Total span:</span> {minTick}{" "}
+                    → {maxTick} ({totalSpan} ticks)
+                </p>
+                <p>
+                    <span className="font-semibold">Ranges:</span>{" "}
+                    {ranges.length}
+                </p>
+                {ranges.length <= 5 && (
+                    <ul className="list-disc list-inside space-y-0.5 ml-2">
+                        {ranges.map((range, idx) => (
+                            <li key={idx}>
+                                {range.start_tick}-
+                                {range.start_tick + range.count * resolution} (
+                                {range.count} pts)
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function ChartLoadingState() {
+    return (
+        <div className="flex items-center justify-center py-12">
+            <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+            Loading data...
         </div>
     );
 }

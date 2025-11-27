@@ -1,35 +1,41 @@
-"""Routes for chart data APIs."""
+"""
+Routes for chart data APIs.
+
+This module provides endpoints for retrieving historical time-series data at multiple
+resolution levels. Data is stored in a multi-resolution structure combining:
+  - Rolling history buffers: Recent data in circular buffers (216 ticks at finest granularity)
+  - Pickle files: Persisted historical data aggregated into 5 resolution levels (360 datapoints for each)
+  - Resolution levels are 1, 6, 36, 216, and 1296 ticks - a geometric series scaling by 6
+
+Key Constraints:
+  - Rolling history is updated every tick with latest data, operates on 216-tick circular buffers
+  - Rolling history is persisted to pickle files every 216 ticks
+  - Recall: ticks are zero indexed
+  - When referring to a datapoint a 1-1 resolution, the tick number is sufficient
+  - When referring to non 1-1 resolutions, use multiples of 6 / 36 / 216 / 1296
+"""
 
 from collections import defaultdict
 from pathlib import Path
 import pickle
 from typing import Annotated, Literal
 
-import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, status
+import numpy as np
 
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.schemas.charts import PowerSinksResponse, PowerSourcesResponse
 from energetica.utils.auth import get_settled_player
-from energetica.utils.misc import reduce_resolution
 
 router = APIRouter(prefix="/charts", tags=["Charts"])
 
 Resolution = Literal["1", "6", "36", "216", "1296"]
-
-# Resolution values mapped to their averaging window sizes
-RESOLUTION_WINDOWS = {
-    "1": 1,
-    "6": 6,
-    "36": 36,
-    "216": 216,
-    "1296": 1296,
-}
+PickleChartKey = Literal["revenues", "op_costs", "generation", "demand", "storage", "resources", "emissions"]
 
 
-def _load_pickle_data(file_path: str) -> dict:
-    """Load pickle data from file, returning empty structure if file doesn't exist."""
+def _load_pickle_data(file_path: str) -> dict[PickleChartKey, dict[str, list[list[float]]]]:
+    """Load persisted historical data from pickle file."""
     if not Path(file_path).is_file():
         return defaultdict(lambda: defaultdict(list))
     try:
@@ -40,57 +46,6 @@ def _load_pickle_data(file_path: str) -> dict:
         return defaultdict(lambda: defaultdict(list))
 
 
-def _merge_pickle_with_rolling_history(
-    pickle_data: dict,
-    rolling_data: dict,
-) -> dict:
-    """Merge pickle file data with current rolling history data using reduce_resolution."""
-    merged_data = pickle_data
-
-    for category in rolling_data:
-        if category not in merged_data:
-            merged_data[category] = {}
-
-        for element in rolling_data[category]:
-            new_el_data = rolling_data[category][element]
-
-            if element not in merged_data[category]:
-                # Initialize new element with default structure
-                merged_data[category][element] = [[0.0] * 360 for _ in range(5)]
-
-            merged_el_data = merged_data[category][element]
-            reduce_resolution(merged_el_data, np.array(new_el_data))
-
-    return merged_data
-
-
-def _extract_series_by_resolution(
-    merged_data: dict,
-    category: str,
-    resolution: Resolution,
-) -> dict[str, list[float]]:
-    """Extract time series from merged data at the specified resolution level."""
-    resolution_index = {
-        "1": 0,
-        "6": 1,
-        "36": 2,
-        "216": 3,
-        "1296": 4,
-    }[resolution]
-
-    category_data = merged_data.get(category, {})
-    series = {}
-
-    for element, resolution_arrays in category_data.items():
-        if isinstance(resolution_arrays, list) and len(resolution_arrays) > resolution_index:
-            series[element] = [float(v) for v in resolution_arrays[resolution_index]]
-        else:
-            # Handle case where data structure is unexpected
-            series[element] = []
-
-    return series
-
-
 def _get_chart_data(
     player: Player,
     start_tick: int,
@@ -99,11 +54,36 @@ def _get_chart_data(
     resolution: Resolution,
 ) -> dict:
     """
-    Extract chart data from combined pickle and rolling history sources.
+    Extract chart data for a specific time range at the requested resolution.
 
-    Supports arbitrary historical ranges by loading pickle files and merging with current rolling history.
+    Algorithm:
+      1. Validate start_tick alignment and bounds (not future, not beyond 360-datapoint limit)
+      2. Load pickle data and merge with rolling history buffer (fetching valid circular buffer data)
+      3. Extract the resolution-specific array (contains up to 360 datapoints)
+      4. Map start_tick to array index (arrays end at current_tick, grow backward)
+      5. Slice the array to return exactly the requested time range
+
+    Args:
+        player: Player whose data to retrieve
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve (will be clamped to available data)
+        data_category: Category to extract (e.g., "generation", "demand")
+        resolution: Aggregation level ("1", "6", "36", "216", "1296")
+
+    Returns:
+        Dict containing start_tick, actual count returned (in datapoints), and series data
+
+    Raises:
+        HTTPException 400: If start_tick is misaligned, in future, or beyond 360-datapoint limit
+        HTTPException 500: If data structure inconsistency detected
     """
-    window_size = RESOLUTION_WINDOWS[resolution]
+    window_size = {
+        "1": 1,
+        "6": 6,
+        "36": 36,
+        "216": 216,
+        "1296": 1296,
+    }[resolution]
 
     # Validate start_tick is aligned to resolution
     if start_tick % window_size != 0:
@@ -121,37 +101,69 @@ def _get_chart_data(
             detail=f"start_tick ({start_tick}) must be less than current tick ({current_tick})",
         )
 
-    # Ensure count doesn't exceed available data and is a multiple of resolution
-    available_ticks = current_tick - start_tick
-    # Round down to nearest multiple of window_size to ensure complete data points
-    available_ticks = (available_ticks // window_size) * window_size
-    actual_count = min(count, available_ticks)
+    # Validate start_tick is not too old for this resolution
+    # Data structure stores 360 datapoints per resolution level (in pickle + rolling history)
+    # Maximum lookback = 360 datapoints × window_size
+
+    max_datapoints = 360
+    max_ticks_at_resolution = max_datapoints * window_size
+    oldest_valid_tick = max(0, current_tick - max_ticks_at_resolution)
+
+    if start_tick < oldest_valid_tick:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Requested start_tick ({start_tick}) is too old for resolution {resolution}. Maximum lookback: {max_ticks_at_resolution} ticks (360 datapoints). Oldest valid tick: {oldest_valid_tick}",
+        )
+
+    # Validate that not too many datapoints are being requested. Note that for a datapoint to be considered valid and
+    # returned by the API, it must be an total average, not a partial average, i.e. averaging 4 datapoints is not ok
+    # when requesting a resolution of 6. This ensures the whatever data this API returns can be safely cached and will
+    # not change.
+    available_datapoints = (current_tick - start_tick) // window_size
+
+    if count > available_datapoints:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Requested number of datapoint ({count}) after tick {start_tick} is more than {available_datapoints}, the number of available datapoints.",
+        )
 
     # Load pickle data and merge with rolling history
     pickle_path = f"instance/data/players/player_{player.id}.pck"
     pickle_data = _load_pickle_data(pickle_path)
 
-    # Get current rolling history data
-    rolling_history = player.rolling_history.get_data()
+    # Get current rolling history data, 216-tick.
+    # Pass t parameter to get only the relevant portion of the buffer.
+    fresh_rolling_history_tick_count = current_tick % 216
+    rolling_history = player.rolling_history.get_data(t=fresh_rolling_history_tick_count)["generation"]
+    relevant_rolling_tick_count = fresh_rolling_history_tick_count - (fresh_rolling_history_tick_count % window_size)
+    relevant_pickle_datapoint_count = (count * window_size - relevant_rolling_tick_count) // window_size
 
-    # Merge pickle with rolling history
-    merged_data = _merge_pickle_with_rolling_history(pickle_data, rolling_history)
+    resolution_index = {
+        "1": 0,
+        "6": 1,
+        "36": 2,
+        "216": 3,
+        "1296": 4,
+    }[resolution]
 
-    # Extract series at the requested resolution
-    series = _extract_series_by_resolution(merged_data, data_category, resolution)
+    def pickle_datapoints(series_key: str) -> list[float]:
+        if series_key in pickle_data["generation"]:
+            return pickle_data["generation"][series_key][resolution_index][-relevant_pickle_datapoint_count:]
+        else:
+            return [0] * relevant_pickle_datapoint_count
 
-    # Slice the data to the requested range
-    # The merged data contains the most recent data, so we need to slice from the end
-    sliced_series = {}
-    for element, values in series.items():
-        # Get the last actual_count values
-        sliced_values = values[-actual_count:] if actual_count > 0 else []
-        sliced_series[element] = sliced_values
+    def rolling_datapoints(rolling_series: list) -> list[float]:
+        return np.array(rolling_series[:relevant_rolling_tick_count]).reshape(-1, window_size).mean(axis=1)
+
+    datapoints = {
+        series_key: [*pickle_datapoints(series_key), *rolling_datapoints(rolling_series)]
+        for series_key, rolling_series in rolling_history.items()
+    }
 
     return {
         "start_tick": start_tick,
-        "count": len(sliced_series.get(list(sliced_series.keys())[0], [])) if sliced_series else 0,
-        "series": sliced_series,
+        "count": count,
+        "series": datapoints,
     }
 
 
@@ -163,9 +175,22 @@ def get_power_sources(
     count: int,
 ) -> PowerSourcesResponse:
     """
-    Get power sources data for all facility types and imports.
+    Get power generation time series by facility type and imports.
 
-    Returns time series power generation and import data for the specified time range and resolution.
+    Returns historical power generation data aggregated at the specified resolution.
+    Each facility type (e.g., coal_burner, PV_solar) and imports are returned as
+    separate series with aligned timestamps.
+
+    Query Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve (ticks covered = count × window_size)
+
+    Constraints:
+        - start_tick must be a multiple of resolution window size
+        - Maximum lookback: 360 datapoints (360 × window_size ticks)
+        - count is clamped to available datapoints
+        - start_tick must be < current_tick
     """
     data = _get_chart_data(player, start_tick, count, "generation", resolution)
     return PowerSourcesResponse(resolution=resolution, **data)
@@ -179,9 +204,21 @@ def get_power_sinks(
     count: int,
 ) -> PowerSinksResponse:
     """
-    Get power sinks data for demand by category.
+    Get power demand time series by category.
 
-    Returns time series power demand data for the specified time range and resolution.
+    Returns historical power consumption data aggregated at the specified resolution.
+    Demand is broken down by category with aligned timestamps.
+
+    Query Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve (ticks covered = count × window_size)
+
+    Constraints:
+        - start_tick must be a multiple of resolution window size
+        - Maximum lookback: 360 datapoints (360 × window_size ticks)
+        - count is clamped to available datapoints
+        - start_tick must be < current_tick
     """
     data = _get_chart_data(player, start_tick, count, "demand", resolution)
     return PowerSinksResponse(resolution=resolution, **data)

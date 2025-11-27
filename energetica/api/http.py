@@ -77,6 +77,7 @@ def get_chart_data(player: Annotated[Player, Depends(get_settled_player)]):  # n
                 dict1[key][sub_key][3].extend(new_6month)
 
     total_t = engine.total_t
+    # BUG(mglst): In the next line, the +1 is an error
     rolling_history = player.rolling_history.get_data(t=total_t % 216 + 1)
     filename = f"instance/data/players/player_{player.id}.pck"
     if not Path(filename).is_file():

@@ -14,7 +14,7 @@ interface GameLayoutProps {
 
 export function GameLayout({ children }: GameLayoutProps) {
     return (
-        <div className="h-screen bg-game-bg text-primary flex flex-col overflow-hidden">
+        <div className="bg-game-bg text-primary flex flex-col min-h-screen">
             {/* Theme toggle moved into TopBar to avoid overlapping other controls */}
 
             {/* Version info - bottom left corner */}
@@ -40,7 +40,7 @@ export function GameLayout({ children }: GameLayoutProps) {
             <Navigation />
 
             {/* Main content area */}
-            <main className="bg-content-bg text-primary flex-1 overflow-y-auto">
+            <main className="bg-content-bg text-primary flex-1">
                 {children}
             </main>
 

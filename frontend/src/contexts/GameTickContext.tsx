@@ -24,10 +24,13 @@ import {
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSocketEvent } from "./SocketContext";
+import { playerApi } from "@/lib/player-api";
 
 interface GameTickContextValue {
     /** Current tick number from the server */
     currentTick: number;
+    /** Whether the initial tick is still loading */
+    isLoadingTick: boolean;
     /** Manually invalidate specific query keys (prefer server events instead) */
     invalidateQueries: (
         queryKeys: readonly (readonly unknown[])[],
@@ -56,9 +59,31 @@ interface DataUpdateEvent<T = unknown> {
 export function GameTickProvider({ children }: GameTickProviderProps) {
     const queryClient = useQueryClient();
     const [currentTick, setCurrentTick] = useState(0);
+    const [isLoadingTick, setIsLoadingTick] = useState(true);
     const [registeredTickQueries, setRegisteredTickQueries] = useState<
         Set<string>
     >(new Set());
+
+    // Fetch initial current tick on mount
+    useEffect(() => {
+        playerApi
+            .getGameState()
+            .then((gameState) => {
+                console.log(
+                    `[GameTick] Initial tick loaded: ${gameState.current_tick}`,
+                );
+                setCurrentTick(gameState.current_tick);
+                setIsLoadingTick(false);
+            })
+            .catch((error) => {
+                console.error(
+                    "[GameTick] Failed to fetch initial tick:",
+                    error,
+                );
+                // Still mark as loaded to avoid blocking forever
+                setIsLoadingTick(false);
+            });
+    }, []);
 
     // Invalidate all tick-registered queries
     const invalidateTickQueries = useCallback(async () => {
@@ -136,6 +161,7 @@ export function GameTickProvider({ children }: GameTickProviderProps) {
 
     const value: GameTickContextValue = {
         currentTick,
+        isLoadingTick,
         invalidateQueries,
     };
 

@@ -4,8 +4,7 @@
 
 import { apiClient } from "./api-client";
 import type { ApiResponse } from "@/types/api-helpers";
-
-type Resolution = "1" | "6" | "36" | "216" | "1296";
+import { Resolution } from "../types/charts";
 
 interface ChartParams {
     resolution: Resolution;
@@ -17,20 +16,32 @@ export const chartsApi = {
     /**
      * Get power sources chart data (generation and imports over time).
      */
-    getPowerSources: ({ resolution, start_tick, count }: ChartParams) =>
-        apiClient.get<
+    getPowerSources: async ({ resolution, start_tick, count }: ChartParams) => {
+        const response = await apiClient.get<
             ApiResponse<"/api/v1/charts/power-sources/{resolution}", "get">
         >(`/charts/power-sources/${resolution}`, {
             params: { start_tick, count },
-        }),
+        });
 
-    /**
-     * Get power sinks chart data (demand by category over time).
-     */
-    getPowerSinks: ({ resolution, start_tick, count }: ChartParams) =>
-        apiClient.get<
-            ApiResponse<"/api/v1/charts/power-sinks/{resolution}", "get">
-        >(`/charts/power-sinks/${resolution}`, {
-            params: { start_tick, count },
-        }),
+        // Debug: Log what we actually received
+        const seriesLengths = Object.entries(response.series || {}).map(
+            ([name, values]) => `${name}: ${(values as any[]).length}`,
+        );
+        console.log("[API Response] Power sources returned:", {
+            requested: { start_tick, count },
+            received: {
+                seriesCount: Object.keys(response.series || {}).length,
+                seriesLengths: seriesLengths.slice(0, 3),
+                firstSeriesLength: seriesLengths[0]
+                    ? (
+                          response.series[
+                              Object.keys(response.series)[0]
+                          ] as any[]
+                      ).length
+                    : 0,
+            },
+        });
+
+        return response;
+    },
 };

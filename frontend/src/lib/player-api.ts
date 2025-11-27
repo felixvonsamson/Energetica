@@ -7,6 +7,14 @@ import type { ApiResponse } from "@/types/api-helpers";
 
 export const playerApi = {
     /**
+     * Get current game state (including current tick).
+     */
+    getGameState: () =>
+        apiClient.get<ApiResponse<"/api/v1/players/game-state", "get">>(
+            "/players/game-state",
+        ),
+
+    /**
      * Get all players.
      */
     getAll: () =>

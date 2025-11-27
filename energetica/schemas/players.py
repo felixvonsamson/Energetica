@@ -29,6 +29,12 @@ class SettingsPatch(BaseModel):
     show_disclaimer: bool | None = Field(None, description="Whether to show the chat disclaimer or not")
 
 
+class GameStateOut(BaseModel):
+    """Model for game state information."""
+
+    current_tick: int = Field(description="Current game tick")
+
+
 class MoneyOut(BaseModel):
     """Model for the player's money."""
 

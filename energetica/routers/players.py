@@ -5,8 +5,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from energetica.database.player import Player
+from energetica.globals import engine
 from energetica.routers.chats import router
 from energetica.schemas.players import (
+    GameStateOut,
     MoneyOut,
     PlayerOut,
     ProfileOut,
@@ -18,6 +20,12 @@ from energetica.schemas.players import (
 from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/players", tags=["Players"])
+
+
+@router.get("/game-state")
+def get_game_state() -> GameStateOut:
+    """Get current game state information including the current tick."""
+    return GameStateOut(current_tick=engine.total_t)
 
 
 @router.get("/me")

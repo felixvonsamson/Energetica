@@ -558,6 +558,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/players/game-state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Game State
+         * @description Get current game state information including the current tick.
+         */
+        get: operations["get_game_state_api_v1_players_game_state_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/players/me": {
         parameters: {
             query?: never;
@@ -2297,6 +2317,17 @@ export interface components {
             | "laboratory"
             | "warehouse"
             | "carbon_capture";
+        /**
+         * GameStateOut
+         * @description Model for game state information.
+         */
+        GameStateOut: {
+            /**
+             * Current Tick
+             * @description Current game tick
+             */
+            current_tick: number;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -4222,6 +4253,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    get_game_state_api_v1_players_game_state_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameStateOut"];
+                };
             };
         };
     };
