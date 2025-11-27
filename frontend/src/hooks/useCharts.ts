@@ -48,19 +48,18 @@ export function useAggregatedPowerSourcesChart(
 ) {
     const queryClient = useQueryClient();
 
-    const { isLoading, isError } = useSmartPowerSourcesChart(
-        params || {
-            resolution: 1,
-            start_tick: 0,
-            count: 0,
-        },
-    );
+    // Early return if params not ready (e.g., tick still loading)
+    if (!params) {
+        return {
+            data: null,
+            isLoading: false,
+            isError: false,
+        };
+    }
+
+    const { isLoading, isError } = useSmartPowerSourcesChart(params);
 
     const aggregatedData = useMemo(() => {
-        if (!params) {
-            return null;
-        }
-
         // Calculate the exclusive end tick of the desired range
         const desiredEndTick =
             params.start_tick + params.count * params.resolution;
@@ -153,7 +152,13 @@ export function useAggregatedPowerSourcesChart(
             }));
 
         return result.length > 0 ? result : null;
-    }, [queryClient, params?.resolution, params?.start_tick, params?.count]);
+    }, [
+        queryClient,
+        params?.resolution,
+        params?.start_tick,
+        params?.count,
+        isLoading,
+    ]);
 
     return {
         data: aggregatedData,

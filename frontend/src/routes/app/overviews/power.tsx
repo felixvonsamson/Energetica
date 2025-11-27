@@ -3,18 +3,17 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Zap, RefreshCw } from "lucide-react";
 import {
-    BarChart,
     XAxis,
     YAxis,
     CartesianGrid,
     ResponsiveContainer,
     Tooltip,
-    Bar,
     AreaChart,
     Area,
+    Brush,
 } from "recharts";
 
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
@@ -25,8 +24,7 @@ import {
     useAggregatedPowerSourcesChart,
     _getCachedTickRanges,
 } from "@/hooks/useCharts";
-import { Resolution, toStringResolution } from "@/types/charts";
-import { queryClient } from "@/lib/query-client";
+import { Resolution } from "@/types/charts";
 
 export const Route = createFileRoute("/app/overviews/power")({
     component: PowerOverviewPage,
@@ -57,7 +55,6 @@ const RESOLUTIONS: Array<{
 ];
 
 function PowerOverviewContent() {
-    // const [dataPoints, setDataPoints] = useState(60);
     const [selectedResolutionIndex, setSelectedResolutionIndex] = useState(2);
     const dataPoints = selectedResolutionIndex === 0 ? 60 : 360;
 
@@ -69,33 +66,8 @@ function PowerOverviewContent() {
                 Power Generation
             </h1>
 
-            <Card className="mb-6 p-4 bg-slate-50">
-                <h2 className="text-sm font-semibold mb-3 text-slate-700">
-                    Cache Coverage (Resolution {selectedResolution.resolution})
-                </h2>
-                <CacheRangesVisualization
-                    resolution={selectedResolution.resolution}
-                />
-            </Card>
-
             <Card className="mb-6">
                 <div className="space-y-4">
-                    {/* <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Data Points: {dataPoints}
-                        </label>
-                        <input
-                            type="range"
-                            min="60"
-                            max="360"
-                            step="60"
-                            value={dataPoints}
-                            onChange={(e) =>
-                                setDataPoints(Number(e.target.value))
-                            }
-                            className="w-full"
-                        />
-                    </div> */}
                     <div>
                         <label className="block text-sm font-medium mb-2">
                             Resolution
@@ -140,6 +112,17 @@ interface PowerSourcesChartProps {
     dataPoints: number;
     resolution: Resolution;
 }
+
+// Deterministic color mapping for power sources
+const getColorForSource = (source: string): string => {
+    let hash = 0;
+    for (let i = 0; i < source.length; i++) {
+        hash = (hash << 5) - hash + source.charCodeAt(i);
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    const color = Math.abs(hash).toString(16).padStart(6, "0");
+    return "#" + color;
+};
 
 function PowerSourcesChart({ dataPoints, resolution }: PowerSourcesChartProps) {
     const { currentTick, isLoadingTick } = useGameTick();
@@ -194,18 +177,14 @@ function PowerSourcesChart({ dataPoints, resolution }: PowerSourcesChartProps) {
                     dataKey={source}
                     stackId="power"
                     isAnimationActive={false}
-                    fill={
-                        "#" +
-                        ((Math.random() * 0xffffff) << 0)
-                            .toString(16)
-                            .padStart(6, "0")
-                    }
+                    // animationDuration={300}
+                    fill={getColorForSource(source)}
                 />
             ));
     }, [powerSourcesData]);
 
     // Early returns after all hooks are called
-    if (isLoadingTick) {
+    if (isLoadingTick || isChartLoading) {
         return <ChartLoadingState />;
     }
 
@@ -223,110 +202,15 @@ function PowerSourcesChart({ dataPoints, resolution }: PowerSourcesChartProps) {
 
     return (
         <ResponsiveContainer width="100%" height={400}>
-            <AreaChart data={chartData}>
+            <AreaChart key={resolution} data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="tick" tick={{ fontSize: 12 }} />
                 <YAxis />
+                <Brush dataKey="tick" height={30} stroke="#8884d8" />
                 {barComponents}
                 <Tooltip />
             </AreaChart>
         </ResponsiveContainer>
-    );
-}
-
-interface CacheRangesVisualizationProps {
-    resolution: Resolution;
-}
-
-function CacheRangesVisualization({
-    resolution,
-}: CacheRangesVisualizationProps) {
-    const [cacheVersion, setCacheVersion] = useState(0);
-
-    useEffect(() => {
-        const unsubscribe = queryClient.getQueryCache().subscribe(() => {
-            setCacheVersion((v) => v + 1);
-        });
-        return unsubscribe;
-    }, []);
-
-    const ranges = useMemo(
-        () => _getCachedTickRanges(queryClient, "power-sources", resolution),
-        [resolution, cacheVersion],
-    );
-
-    if (ranges.length === 0) {
-        return (
-            <div className="text-sm text-slate-500 italic">
-                No data cached yet
-            </div>
-        );
-    }
-
-    // Calculate the overall range to visualize
-    const minTick = Math.min(...ranges.map((r) => r.start_tick));
-    const maxTick = Math.max(
-        ...ranges.map((r) => r.start_tick + r.count * resolution),
-    );
-    const totalSpan = maxTick - minTick;
-
-    return (
-        <div className="space-y-2">
-            {/* Timeline visualization */}
-            <div className="space-y-1">
-                {ranges.map((range, idx) => {
-                    const start =
-                        ((range.start_tick - minTick) / totalSpan) * 100;
-                    const width =
-                        ((range.count * resolution) / totalSpan) * 100;
-                    const endTick = range.start_tick + range.count * resolution;
-                    return (
-                        <div
-                            key={idx}
-                            className="relative h-6 bg-slate-200 rounded border border-slate-300 overflow-hidden"
-                        >
-                            <div
-                                className="absolute h-full bg-emerald-500 hover:bg-emerald-600 transition-colors group"
-                                style={{
-                                    left: `${start}%`,
-                                    width: `${width}%`,
-                                }}
-                                title={`Ticks ${range.start_tick}-${endTick} (${range.count} points)`}
-                            >
-                                {width > 12 && (
-                                    <span className="text-xs text-white font-semibold px-1 leading-6 opacity-75 group-hover:opacity-100">
-                                        {range.start_tick}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Details */}
-            <div className="text-xs text-slate-600 space-y-1">
-                <p>
-                    <span className="font-semibold">Total span:</span> {minTick}{" "}
-                    → {maxTick} ({totalSpan} ticks)
-                </p>
-                <p>
-                    <span className="font-semibold">Ranges:</span>{" "}
-                    {ranges.length}
-                </p>
-                {ranges.length <= 5 && (
-                    <ul className="list-disc list-inside space-y-0.5 ml-2">
-                        {ranges.map((range, idx) => (
-                            <li key={idx}>
-                                {range.start_tick}-
-                                {range.start_tick + range.count * resolution} (
-                                {range.count} pts)
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
-        </div>
     );
 }
 
