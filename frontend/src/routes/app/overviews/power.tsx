@@ -25,6 +25,7 @@ import {
     _getCachedTickRanges,
 } from "@/hooks/useCharts";
 import { Resolution } from "@/types/charts";
+import { getAssetColor } from "@/lib/asset-colors";
 
 export const Route = createFileRoute("/app/overviews/power")({
     component: PowerOverviewPage,
@@ -113,16 +114,8 @@ interface PowerSourcesChartProps {
     resolution: Resolution;
 }
 
-// Deterministic color mapping for power sources
-const getColorForSource = (source: string): string => {
-    let hash = 0;
-    for (let i = 0; i < source.length; i++) {
-        hash = (hash << 5) - hash + source.charCodeAt(i);
-        hash = hash & hash; // Convert to 32bit integer
-    }
-    const color = Math.abs(hash).toString(16).padStart(6, "0");
-    return "#" + color;
-};
+// Get color for power source using asset color system
+const getColorForSource = (source: string): string => getAssetColor(source);
 
 function PowerSourcesChart({ dataPoints, resolution }: PowerSourcesChartProps) {
     const { currentTick, isLoadingTick } = useGameTick();
