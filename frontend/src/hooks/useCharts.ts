@@ -34,6 +34,8 @@ import {
     POWER_GENERATION_KEYS,
     POWER_CONSUMPTION_KEYS,
     STORAGE_LEVEL_KEYS,
+    REVENUES_KEYS,
+    OP_COSTS_KEYS,
     reorderObjectKeys,
 } from "@/lib/chart-key-order";
 
@@ -42,6 +44,8 @@ const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {
     "power-sources": POWER_GENERATION_KEYS,
     "power-sinks": POWER_CONSUMPTION_KEYS,
     "storage-level": STORAGE_LEVEL_KEYS,
+    revenues: REVENUES_KEYS,
+    "op-costs": OP_COSTS_KEYS,
 };
 
 /** Main exported hook. Returns all chart datapoints relevant to the request. */
@@ -175,6 +179,8 @@ const QUERY_KEY_FN_BY_CHART_TYPE = {
     "power-sources": queryKeys.charts.powerSources,
     "power-sinks": queryKeys.charts.powerSinks,
     "storage-level": queryKeys.charts.storageLevel,
+    revenues: queryKeys.charts.revenues,
+    "op-costs": queryKeys.charts.opCosts,
 } as const;
 
 /** Fetches ranges concurrently. */

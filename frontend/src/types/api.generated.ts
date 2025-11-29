@@ -178,22 +178,13 @@ export interface paths {
         /**
          * Get Power Sources
          *
-         * Get power generation time series by facility type and imports.
+         * Get power generation time series by facility type and imports at the
+         * specified resolution.
          *
-         *     Returns historical power generation data aggregated at the specified resolution.
-         *     Each facility type (e.g., coal_burner, PV_solar) and imports are returned as
-         *     separate series with aligned timestamps.
-         *
-         *     Query Parameters:
-         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
-         *         start_tick: First tick to include (must be aligned to resolution)
-         *         count: Number of datapoints to retrieve (ticks covered = count × window_size)
-         *
-         *     Constraints:
-         *         - start_tick must be a multiple of resolution window size
-         *         - Maximum lookback: 360 datapoints (360 × window_size ticks)
-         *         - count is clamped to available datapoints
-         *         - start_tick must be < current_tick
+         *     Parameters:
+         *     resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *     start_tick: First tick to include (must be aligned to resolution)
+         *     count: Number of datapoints to retrieve
          */
         get: operations["get_power_sources_api_v1_charts_power_sources__resolution__get"];
         put?: never;
@@ -214,23 +205,94 @@ export interface paths {
         /**
          * Get Power Sinks
          *
-         * Get power demand time series by category.
+         * Get power demand time series by category at the specified resolution.
          *
-         *     Returns historical power consumption data aggregated at the specified resolution.
-         *     Demand is broken down by category with aligned timestamps.
-         *
-         *     Query Parameters:
-         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
-         *         start_tick: First tick to include (must be aligned to resolution)
-         *         count: Number of datapoints to retrieve (ticks covered = count × window_size)
-         *
-         *     Constraints:
-         *         - start_tick must be a multiple of resolution window size
-         *         - Maximum lookback: 360 datapoints (360 × window_size ticks)
-         *         - count is clamped to available datapoints
-         *         - start_tick must be < current_tick
+         *     Parameters:
+         *     resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *     start_tick: First tick to include (must be aligned to resolution)
+         *     count: Number of datapoints to retrieve
          */
         get: operations["get_power_sinks_api_v1_charts_power_sinks__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/storage-level/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Storage Level
+         *
+         * Get storage level time series by facility type at the specified
+         * resolution.
+         *
+         *     Parameters:
+         *     resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *     start_tick: First tick to include (must be aligned to resolution)
+         *     count: Number of datapoints to retrieve
+         */
+        get: operations["get_storage_level_api_v1_charts_storage_level__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/revenues/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Revenues
+         *
+         * Get revenues time series by revenue type at the specified resolution.
+         *
+         *     Parameters:
+         *     resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *     start_tick: First tick to include (must be aligned to resolution)
+         *     count: Number of datapoints to retrieve
+         */
+        get: operations["get_revenues_api_v1_charts_revenues__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/op-costs/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Op Costs
+         *
+         * Get operating costs time series by facility type at the specified
+         * resolution.
+         *
+         *     Parameters:
+         *     resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *     start_tick: First tick to include (must be aligned to resolution)
+         *     count: Number of datapoints to retrieve
+         */
+        get: operations["get_op_costs_api_v1_charts_op_costs__resolution__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2640,6 +2702,42 @@ export interface components {
          */
         NonFacilityBidType: "construction" | "research" | "transport";
         /**
+         * OpCostsResponse
+         *
+         * Response model for operating costs time series.
+         */
+        OpCostsResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for each facility type's operating and
+             * maintenance costs, with currency values
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
          * PlayerCapabilities
          *
          * Feature capability flags for a player.
@@ -2801,11 +2899,7 @@ export interface components {
         /**
          * PowerSinksResponse
          *
-         * Response model for power sinks chart data.
-         *
-         *     Contains time series power demand data by category over a specified time range.
-         *     Categories include standard demands (industry, construction, research, transport, exports, dumping)
-         *     plus dynamically added facility-type categories (storage, extraction, functional).
+         * Response model for power demand time series.
          */
         PowerSinksResponse: {
             /**
@@ -2841,9 +2935,7 @@ export interface components {
         /**
          * PowerSourcesResponse
          *
-         * Response model for power sources chart data.
-         *
-         *     Contains time series power generation and import data for different facility types over a specified time range.
+         * Response model for power generation and import time series.
          */
         PowerSourcesResponse: {
             /**
@@ -3126,6 +3218,41 @@ export interface components {
             /** Uranium stock */
             uranium: components["schemas"]["ResourceStock"];
         };
+        /**
+         * RevenuesResponse
+         *
+         * Response model for revenue time series.
+         */
+        RevenuesResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for each revenue type, with currency values
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
         /** ScoreboardOut */
         ScoreboardOut: {
             /** Rows */
@@ -3314,6 +3441,42 @@ export interface components {
             | "hydrogen_storage"
             | "lithium_ion_batteries"
             | "solid_state_batteries";
+        /**
+         * StorageLevelResponse
+         *
+         * Response model for storage level time series.
+         */
+        StorageLevelResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for each storage facility type, with energy
+             * values in MWh
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
         /** Subscription */
         Subscription: {
             /** Endpoint */
@@ -3931,6 +4094,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PowerSinksResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_storage_level_api_v1_charts_storage_level__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageLevelResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_revenues_api_v1_charts_revenues__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevenuesResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_op_costs_api_v1_charts_op_costs__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpCostsResponse"];
                 };
             };
             /** Validation Error */

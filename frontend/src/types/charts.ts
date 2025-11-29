@@ -1,6 +1,11 @@
 export type Resolution = 1 | 6 | 36 | 216 | 1296;
 export type StringResolution = "1" | "6" | "36" | "216" | "1296";
-export type ChartType = "power-sources" | "power-sinks" | "storage-level";
+export type ChartType =
+    | "power-sources"
+    | "power-sinks"
+    | "storage-level"
+    | "revenues"
+    | "op-costs";
 
 /**
  * Convert numeric resolution to string resolution. Useful for API calls or

@@ -72,6 +72,10 @@ export const queryKeys = {
             ["charts", "power-sinks", resolution, startTick, count] as const,
         storageLevel: (resolution: string, startTick: number, count: number) =>
             ["charts", "storage-level", resolution, startTick, count] as const,
+        revenues: (resolution: string, startTick: number, count: number) =>
+            ["charts", "revenues", resolution, startTick, count] as const,
+        opCosts: (resolution: string, startTick: number, count: number) =>
+            ["charts", "op-costs", resolution, startTick, count] as const,
     },
     network: {
         all: ["networks"] as const,

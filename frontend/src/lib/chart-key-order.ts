@@ -55,6 +55,46 @@ export const STORAGE_LEVEL_KEYS = [
     "hydrogen_storage",
 ] as const;
 
+export const REVENUES_KEYS = [
+    "industry",
+    "exports",
+    "imports",
+    "dumping",
+    "climate_events",
+] as const;
+
+export const OP_COSTS_KEYS = [
+    // Hydro facilities
+    "watermill",
+    "small_water_dam",
+    "large_water_dam",
+    // Controllable facilities
+    "nuclear_reactor",
+    "nuclear_reactor_gen4",
+    "steam_engine",
+    "coal_burner",
+    "gas_burner",
+    "combined_cycle",
+    // Wind facilities
+    "windmill",
+    "onshore_wind_turbine",
+    "offshore_wind_turbine",
+    // Solar facilities
+    "CSP_solar",
+    "PV_solar",
+    // Storage facilities
+    "small_pumped_hydro",
+    "large_pumped_hydro",
+    "lithium_ion_batteries",
+    "solid_state_batteries",
+    "molten_salt",
+    "hydrogen_storage",
+    // Extraction facilities
+    "coal_mine",
+    "gas_drilling_site",
+    "uranium_mine",
+] as const;
+
 /**
  * Reorders object properties according to a specified key order. Keys not in
  * the order array are placed at the end in their original order.

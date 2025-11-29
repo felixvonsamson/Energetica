@@ -5,6 +5,7 @@ export { ChartLoadingState } from "./ChartLoadingState";
 export { ResolutionPicker } from "./ResolutionPicker";
 export { PowerOverviewTable } from "./PowerOverviewTable";
 export { StorageOverviewTable } from "./StorageOverviewTable";
+export { RevenuesOverviewTable } from "./RevenuesOverviewTable";
 export type { ResolutionOption } from "./ResolutionPicker";
 export type { TimeSeriesChartConfig } from "./types";
 export {

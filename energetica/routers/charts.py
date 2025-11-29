@@ -25,7 +25,7 @@ import numpy as np
 
 from energetica.database.player import Player
 from energetica.globals import engine
-from energetica.schemas.charts import PowerSinksResponse, PowerSourcesResponse, StorageLevelResponse
+from energetica.schemas.charts import OpCostsResponse, PowerSinksResponse, PowerSourcesResponse, RevenuesResponse, StorageLevelResponse
 from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/charts", tags=["Charts"])
@@ -213,3 +213,41 @@ def get_storage_level(
     """
     data = _get_chart_data(player, start_tick, count, "storage", resolution)
     return StorageLevelResponse(resolution=resolution, **data)
+
+
+@router.get("/revenues/{resolution}")
+def get_revenues(
+    player: Annotated[Player, Depends(get_settled_player)],
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> RevenuesResponse:
+    """
+    Get revenues time series by revenue type at the specified resolution.
+
+    Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_chart_data(player, start_tick, count, "revenues", resolution)
+    return RevenuesResponse(resolution=resolution, **data)
+
+
+@router.get("/op-costs/{resolution}")
+def get_op_costs(
+    player: Annotated[Player, Depends(get_settled_player)],
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> OpCostsResponse:
+    """
+    Get operating costs time series by facility type at the specified resolution.
+
+    Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_chart_data(player, start_tick, count, "op_costs", resolution)
+    return OpCostsResponse(resolution=resolution, **data)
