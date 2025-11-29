@@ -1,7 +1,7 @@
 /** Power overview page - Electricity generation visualization. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Zap } from "lucide-react";
 
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
@@ -14,7 +14,9 @@ import { getAssetColor } from "@/lib/asset-colors";
 import {
     TimeSeriesChart,
     ResolutionPicker,
+    PowerOverviewTable,
     filterNonZeroSeries,
+    createExcludeKeysFilter,
     type ResolutionOption,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
@@ -38,9 +40,45 @@ function PowerOverviewContent() {
     const { currentTick } = useGameTick();
     const [selectedResolutionIndex, setSelectedResolutionIndex] = useState(1);
     const [chartType, setChartType] = useState<ChartType>("power-sources");
+    const [hiddenSources, setHiddenSources] = useState<Set<string>>(new Set());
+    const [hiddenSinks, setHiddenSinks] = useState<Set<string>>(new Set());
     const dataPoints = selectedResolutionIndex === 0 ? 60 : 360;
 
     const selectedResolution = RESOLUTIONS[selectedResolutionIndex];
+
+    // Fetch chart data to share between chart and table
+    const {
+        chartData,
+        isLoading: isChartLoading,
+        isError,
+    } = useCurrentChartData({
+        chartType,
+        currentTick,
+        resolution: selectedResolution.resolution,
+        maxDatapoints: dataPoints,
+    });
+
+    // Get the appropriate hidden set based on chart type
+    const hiddenFacilities =
+        chartType === "power-sources" ? hiddenSources : hiddenSinks;
+    const setHiddenFacilities =
+        chartType === "power-sources" ? setHiddenSources : setHiddenSinks;
+
+    // Toggle facility visibility
+    const handleToggleFacility = useCallback(
+        (facilityType: string) => {
+            setHiddenFacilities((prev) => {
+                const next = new Set(prev);
+                if (next.has(facilityType)) {
+                    next.delete(facilityType);
+                } else {
+                    next.add(facilityType);
+                }
+                return next;
+            });
+        },
+        [setHiddenFacilities],
+    );
 
     return (
         <div className="p-4 md:p-8">
@@ -74,39 +112,54 @@ function PowerOverviewContent() {
                 </div>
 
                 <PowerChart
-                    currentTick={currentTick}
-                    dataPoints={dataPoints}
-                    resolution={selectedResolution.resolution}
-                    chartType={chartType}
+                    chartData={chartData}
+                    isLoading={isChartLoading}
+                    isError={isError}
+                    hiddenFacilities={hiddenFacilities}
                 />
+
+                <div className="mt-6">
+                    <PowerOverviewTable
+                        chartType={chartType}
+                        chartData={chartData}
+                        resolution={selectedResolution.resolution}
+                        hiddenFacilities={hiddenFacilities}
+                        onToggleFacility={handleToggleFacility}
+                    />
+                </div>
             </Card>
         </div>
     );
 }
 
 interface PowerChartProps {
-    currentTick: number | undefined;
-    dataPoints: number;
-    resolution: Resolution;
-    chartType: ChartType;
+    chartData: any[];
+    isLoading: boolean;
+    isError: boolean;
+    hiddenFacilities: Set<string>;
 }
 
 function PowerChart({
-    currentTick,
-    dataPoints,
-    resolution,
-    chartType,
+    chartData,
+    isLoading,
+    isError,
+    hiddenFacilities,
 }: PowerChartProps) {
-    const {
-        chartData,
-        isLoading: isChartLoading,
-        isError,
-    } = useCurrentChartData({
-        chartType,
-        currentTick,
-        resolution,
-        maxDatapoints: dataPoints,
-    });
+    // Create a composite filter that combines non-zero filtering with visibility filtering
+    const filterDataKeys = useMemo(() => {
+        if (hiddenFacilities.size === 0) {
+            return filterNonZeroSeries;
+        }
+
+        const excludeFilter = createExcludeKeysFilter(
+            Array.from(hiddenFacilities),
+        );
+
+        // Combine both filters: must pass non-zero AND not be hidden
+        return (key: string, data: any[]) => {
+            return filterNonZeroSeries(key, data) && excludeFilter(key, data);
+        };
+    }, [hiddenFacilities]);
 
     const chartConfig: TimeSeriesChartConfig = {
         chartVariant: "area",
@@ -114,14 +167,14 @@ function PowerChart({
         height: 400,
         showBrush: true,
         getColor: getAssetColor,
-        filterDataKeys: filterNonZeroSeries,
+        filterDataKeys,
     };
 
     return (
         <TimeSeriesChart
             data={chartData}
             config={chartConfig}
-            isLoading={isChartLoading}
+            isLoading={isLoading}
             isError={isError}
         />
     );

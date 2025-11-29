@@ -33,7 +33,7 @@ interface TimeSeriesChartProps {
 
 /**
  * Generic time series chart component that can render area, line, or bar
- * charts. Handles data filtering, coloring, and common chart configuration.
+ * charts. Handles data filtering, colouring, and common chart configuration.
  */
 export function TimeSeriesChart({
     data,

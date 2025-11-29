@@ -7,6 +7,7 @@ import { HelpCircle } from "lucide-react";
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Card, CardTitle, Money } from "@/components/ui";
+import { FacilityGauge } from "@/components/ui/FacilityGauge";
 import { useAuth } from "@/hooks/useAuth";
 import { useFacilities } from "@/hooks/useFacilities";
 import { usePlayerProfile } from "@/hooks/usePlayerProfile";
@@ -174,23 +175,12 @@ function ProfileContent() {
                                 {
                                     header: "Output",
                                     className: "text-center min-w-[150px]",
-                                    render: (f) => {
-                                        const colorVar = `--asset-color-${f.facility.toLowerCase().replace(/_/g, "-")}`;
-                                        return (
-                                            <div className="relative w-full min-w-[120px] h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full transition-all"
-                                                    style={{
-                                                        width: `${f.usage * 100}%`,
-                                                        backgroundColor: `var(${colorVar})`,
-                                                    }}
-                                                />
-                                                <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800 dark:text-white">
-                                                    {Math.round(f.usage * 100)}%
-                                                </span>
-                                            </div>
-                                        );
-                                    },
+                                    render: (f) => (
+                                        <FacilityGauge
+                                            facilityType={f.facility}
+                                            value={f.usage * 100}
+                                        />
+                                    ),
                                     renderSummary: (facilities) => {
                                         const avgUsage =
                                             facilities.reduce(
@@ -198,26 +188,14 @@ function ProfileContent() {
                                                 0,
                                             ) / facilities.length;
                                         const firstFacility = facilities[0];
-                                        const colorVar = firstFacility
-                                            ? `--asset-color-${firstFacility.facility.toLowerCase().replace(/_/g, "-")}`
-                                            : null;
-                                        return (
-                                            <div className="relative w-full min-w-[120px] h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-green-500 dark:bg-green-400 transition-all"
-                                                    style={{
-                                                        width: `${avgUsage * 100}%`,
-                                                        ...(colorVar && {
-                                                            backgroundColor: `var(${colorVar})`,
-                                                        }),
-                                                    }}
-                                                />
-                                                <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800 dark:text-white">
-                                                    {Math.round(avgUsage * 100)}
-                                                    %
-                                                </span>
-                                            </div>
-                                        );
+                                        return firstFacility ? (
+                                            <FacilityGauge
+                                                facilityType={
+                                                    firstFacility.facility
+                                                }
+                                                value={avgUsage * 100}
+                                            />
+                                        ) : null;
                                     },
                                 },
                             ]}
@@ -261,26 +239,12 @@ function ProfileContent() {
                                 {
                                     header: "State of Charge",
                                     className: "text-center min-w-[150px]",
-                                    render: (f) => {
-                                        const colorVar = `--asset-color-${f.facility.toLowerCase().replace(/_/g, "-")}`;
-                                        return (
-                                            <div className="relative w-full min-w-[120px] h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full transition-all"
-                                                    style={{
-                                                        width: `${f.state_of_charge * 100}%`,
-                                                        backgroundColor: `var(${colorVar})`,
-                                                    }}
-                                                />
-                                                <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800 dark:text-white">
-                                                    {Math.round(
-                                                        f.state_of_charge * 100,
-                                                    )}
-                                                    %
-                                                </span>
-                                            </div>
-                                        );
-                                    },
+                                    render: (f) => (
+                                        <FacilityGauge
+                                            facilityType={f.facility}
+                                            value={f.state_of_charge * 100}
+                                        />
+                                    ),
                                     renderSummary: (facilities) => {
                                         const avgSOC =
                                             facilities.reduce(
@@ -289,25 +253,14 @@ function ProfileContent() {
                                                 0,
                                             ) / facilities.length;
                                         const firstFacility = facilities[0];
-                                        const colorVar = firstFacility
-                                            ? `--asset-color-${firstFacility.facility.toLowerCase().replace(/_/g, "-")}`
-                                            : null;
-                                        return (
-                                            <div className="relative w-full min-w-[120px] h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-blue-500 dark:bg-blue-400 transition-all"
-                                                    style={{
-                                                        width: `${avgSOC * 100}%`,
-                                                        ...(colorVar && {
-                                                            backgroundColor: `var(${colorVar})`,
-                                                        }),
-                                                    }}
-                                                />
-                                                <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800 dark:text-white">
-                                                    {Math.round(avgSOC * 100)}%
-                                                </span>
-                                            </div>
-                                        );
+                                        return firstFacility ? (
+                                            <FacilityGauge
+                                                facilityType={
+                                                    firstFacility.facility
+                                                }
+                                                value={avgSOC * 100}
+                                            />
+                                        ) : null;
                                     },
                                 },
                             ]}
@@ -352,23 +305,12 @@ function ProfileContent() {
                                 {
                                     header: "Usage",
                                     className: "text-center min-w-[150px]",
-                                    render: (f) => {
-                                        const colorVar = `--asset-color-${f.facility.toLowerCase().replace(/_/g, "-")}`;
-                                        return (
-                                            <div className="relative w-full min-w-[120px] h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full transition-all"
-                                                    style={{
-                                                        width: `${f.usage * 100}%`,
-                                                        backgroundColor: `var(${colorVar})`,
-                                                    }}
-                                                />
-                                                <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800 dark:text-white">
-                                                    {Math.round(f.usage * 100)}%
-                                                </span>
-                                            </div>
-                                        );
-                                    },
+                                    render: (f) => (
+                                        <FacilityGauge
+                                            facilityType={f.facility}
+                                            value={f.usage * 100}
+                                        />
+                                    ),
                                     renderSummary: (facilities) => {
                                         const avgUsage =
                                             facilities.reduce(
@@ -376,26 +318,14 @@ function ProfileContent() {
                                                 0,
                                             ) / facilities.length;
                                         const firstFacility = facilities[0];
-                                        const colorVar = firstFacility
-                                            ? `--asset-color-${firstFacility.facility.toLowerCase().replace(/_/g, "-")}`
-                                            : null;
-                                        return (
-                                            <div className="relative w-full min-w-[120px] h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-orange-500 dark:bg-orange-400 transition-all"
-                                                    style={{
-                                                        width: `${avgUsage * 100}%`,
-                                                        ...(colorVar && {
-                                                            backgroundColor: `var(${colorVar})`,
-                                                        }),
-                                                    }}
-                                                />
-                                                <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800 dark:text-white">
-                                                    {Math.round(avgUsage * 100)}
-                                                    %
-                                                </span>
-                                            </div>
-                                        );
+                                        return firstFacility ? (
+                                            <FacilityGauge
+                                                facilityType={
+                                                    firstFacility.facility
+                                                }
+                                                value={avgUsage * 100}
+                                            />
+                                        ) : null;
                                     },
                                 },
                             ]}

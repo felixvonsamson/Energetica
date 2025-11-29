@@ -4,6 +4,7 @@ export { Modal } from "./Modal";
 export { InfoBanner } from "./InfoBanner";
 export { EmptyState } from "./EmptyState";
 export { ProgressBar } from "./ProgressBar";
+export { FacilityGauge } from "./FacilityGauge";
 export { ThemeToggle } from "./ThemeToggle";
 export { Money } from "./Money";
 export { Duration } from "./Duration";

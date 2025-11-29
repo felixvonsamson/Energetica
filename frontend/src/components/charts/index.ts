@@ -3,6 +3,7 @@
 export { TimeSeriesChart } from "./TimeSeriesChart";
 export { ChartLoadingState } from "./ChartLoadingState";
 export { ResolutionPicker } from "./ResolutionPicker";
+export { PowerOverviewTable } from "./PowerOverviewTable";
 export type { ResolutionOption } from "./ResolutionPicker";
 export type { TimeSeriesChartConfig } from "./types";
 export {

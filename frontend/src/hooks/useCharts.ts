@@ -30,6 +30,11 @@ import {
     TickRange,
     toStringResolution,
 } from "../types/charts";
+import {
+    POWER_GENERATION_KEYS,
+    POWER_CONSUMPTION_KEYS,
+    reorderObjectKeys,
+} from "@/lib/chart-key-order";
 
 /** Main exported hook. Returns all chart datapoints relevant to the request. */
 export function useCurrentChartData({
@@ -134,16 +139,24 @@ export function useChartData({
             }
         }
         // Convert from Map (tick->{data}) to list of entries [{tick+data}]
+        const keyOrder =
+            chartType === "power-sinks"
+                ? POWER_CONSUMPTION_KEYS
+                : POWER_GENERATION_KEYS;
+
         const result = Array.from(tickMap.entries())
             .sort(([a], [b]) => a - b)
-            .map(([tick, sources]) => ({
-                tick,
-                ...sources,
-            }));
+            .map(([tick, sources]) => {
+                const reorderedSources = reorderObjectKeys(sources, keyOrder);
+                return {
+                    tick,
+                    ...reorderedSources,
+                };
+            });
 
         // console.log("result:", result);
         return result;
-    }, [allCachedRanges]);
+    }, [allCachedRanges, chartType]);
 
     return {
         data: isLoading ? [] : aggregatedData,
