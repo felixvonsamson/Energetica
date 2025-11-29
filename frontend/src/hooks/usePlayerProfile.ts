@@ -1,7 +1,7 @@
 /**
- * Hook for fetching player profile data.
- * Includes functional facility levels, technology levels, and progression metrics.
- * This data is relatively static and only changes when player levels up facilities/technologies.
+ * Hook for fetching player profile data. Includes functional facility levels,
+ * technology levels, and progression metrics. This data is relatively static
+ * and only changes when player levels up facilities/technologies.
  */
 
 import { useQuery } from "@tanstack/react-query";

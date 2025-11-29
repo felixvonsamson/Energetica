@@ -1,6 +1,4 @@
-/**
- * Hooks for fetching and managing construction/research projects.
- */
+/** Hooks for fetching and managing construction/research projects. */
 
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { projectsApi } from "@/lib/projects-api";
@@ -8,8 +6,8 @@ import { queryKeys, queryClient } from "@/lib/query-client";
 import { useTickQuery } from "@/contexts/GameTickContext";
 
 /**
- * Get all ongoing construction and research projects.
- * Updates every tick since projects progress over time.
+ * Get all ongoing construction and research projects. Updates every tick since
+ * projects progress over time.
  */
 export function useProjects() {
     // Register for tick-based refetching (projects progress each tick)
@@ -28,8 +26,8 @@ export function useProjects() {
 }
 
 /**
- * Get the catalog of all power facilities available for construction.
- * This data changes when technologies are researched.
+ * Get the catalog of all power facilities available for construction. This data
+ * changes when technologies are researched.
  */
 export function usePowerFacilitiesCatalog() {
     return useQuery({
@@ -44,8 +42,8 @@ export function usePowerFacilitiesCatalog() {
 }
 
 /**
- * Get the catalog of all storage facilities available for construction.
- * This data changes when technologies are researched.
+ * Get the catalog of all storage facilities available for construction. This
+ * data changes when technologies are researched.
  */
 export function useStorageFacilitiesCatalog() {
     return useQuery({
@@ -58,8 +56,8 @@ export function useStorageFacilitiesCatalog() {
 }
 
 /**
- * Get the catalog of all extraction facilities available for construction.
- * This data changes when technologies are researched.
+ * Get the catalog of all extraction facilities available for construction. This
+ * data changes when technologies are researched.
  */
 export function useExtractionFacilitiesCatalog() {
     return useQuery({
@@ -72,8 +70,9 @@ export function useExtractionFacilitiesCatalog() {
 }
 
 /**
- * Get the catalog of all functional facilities available for construction/upgrade.
- * This data changes when technologies are researched or facilities are upgraded.
+ * Get the catalog of all functional facilities available for
+ * construction/upgrade. This data changes when technologies are researched or
+ * facilities are upgraded.
  */
 export function useFunctionalFacilitiesCatalog() {
     return useQuery({
@@ -86,8 +85,8 @@ export function useFunctionalFacilitiesCatalog() {
 }
 
 /**
- * Get the catalog of all technologies available for research.
- * This data changes when technologies are researched.
+ * Get the catalog of all technologies available for research. This data changes
+ * when technologies are researched.
  */
 export function useTechnologiesCatalog() {
     return useQuery({
@@ -99,9 +98,7 @@ export function useTechnologiesCatalog() {
     });
 }
 
-/**
- * Queue a new construction or research project.
- */
+/** Queue a new construction or research project. */
 export function useQueueProject() {
     return useMutation({
         mutationFn: projectsApi.queueProject,
@@ -118,9 +115,7 @@ export function useQueueProject() {
     });
 }
 
-/**
- * Cancel an ongoing project.
- */
+/** Cancel an ongoing project. */
 export function useCancelProject() {
     return useMutation({
         mutationFn: projectsApi.cancelProject,
@@ -135,9 +130,7 @@ export function useCancelProject() {
     });
 }
 
-/**
- * Pause an ongoing project.
- */
+/** Pause an ongoing project. */
 export function usePauseProject() {
     return useMutation({
         mutationFn: projectsApi.pauseProject,
@@ -149,9 +142,7 @@ export function usePauseProject() {
     });
 }
 
-/**
- * Resume a paused project.
- */
+/** Resume a paused project. */
 export function useResumeProject() {
     return useMutation({
         mutationFn: projectsApi.resumeProject,
@@ -163,9 +154,7 @@ export function useResumeProject() {
     });
 }
 
-/**
- * Decrease project priority in the queue.
- */
+/** Decrease project priority in the queue. */
 export function useDecreaseProjectPriority() {
     return useMutation({
         mutationFn: projectsApi.decreasePriority,
@@ -177,9 +166,7 @@ export function useDecreaseProjectPriority() {
     });
 }
 
-/**
- * Increase project priority in the queue.
- */
+/** Increase project priority in the queue. */
 export function useIncreaseProjectPriority() {
     return useMutation({
         mutationFn: projectsApi.increasePriority,

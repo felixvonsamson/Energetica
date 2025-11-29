@@ -1,6 +1,4 @@
-/**
- * Wiki introduction page - Redirects to legacy wiki.
- */
+/** Wiki introduction page - Redirects to legacy wiki. */
 
 import { createFileRoute } from "@tanstack/react-router";
 import { RedirectToLegacy } from "@/components/RedirectToLegacy";

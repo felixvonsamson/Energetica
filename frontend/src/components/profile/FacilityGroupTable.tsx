@@ -1,6 +1,6 @@
 /**
- * Generic facility table component with grouping, expand/collapse, and bulk actions.
- * Used for displaying power, storage, and extraction facilities.
+ * Generic facility table component with grouping, expand/collapse, and bulk
+ * actions. Used for displaying power, storage, and extraction facilities.
  */
 
 import { useState, ReactNode } from "react";
@@ -42,9 +42,7 @@ type SortConfig<T> = {
     direction: "asc" | "desc";
 } | null;
 
-/**
- * Renders the confirmation dialog content with count and cost info
- */
+/** Renders the confirmation dialog content with count and cost info */
 function ConfirmationContent({
     facilityName,
     count,
@@ -83,9 +81,7 @@ function ConfirmationContent({
     );
 }
 
-/**
- * Renders action buttons for a single facility row
- */
+/** Renders action buttons for a single facility row */
 function FacilityActions({
     facility,
     upgradeMutation,
@@ -127,9 +123,7 @@ function FacilityActions({
     );
 }
 
-/**
- * Renders bulk action buttons for a facility group
- */
+/** Renders bulk action buttons for a facility group */
 function GroupActions({
     facilityName,
     count,
@@ -214,7 +208,8 @@ function GroupActions({
 }
 
 /**
- * Generic grouped facility table with expand/collapse, sorting, and bulk operations.
+ * Generic grouped facility table with expand/collapse, sorting, and bulk
+ * operations.
  */
 export function FacilityGroupTable<T extends FacilityBase>({
     facilities,

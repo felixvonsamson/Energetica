@@ -1,8 +1,9 @@
 /**
  * React components for displaying asset names with flexible formatting.
  *
- * These components provide a consistent way to render asset names throughout the app,
- * with support for:
+ * These components provide a consistent way to render asset names throughout
+ * the app, with support for:
+ *
  * - Long vs short display forms
  * - Tooltips showing full names when abbreviated
  * - Type-safe asset IDs
@@ -18,6 +19,7 @@ import {
 
 /**
  * Display mode for asset names.
+ *
  * - "long": Full name (e.g., "Photovoltaics")
  * - "short": Abbreviated name (e.g., "PV Solar")
  * - "auto": Short name with tooltip showing long name
@@ -39,28 +41,28 @@ export interface AssetNameProps {
  * Renders an asset name with flexible display options.
  *
  * @example
- * // Full name
- * <AssetName assetId="PV_solar" mode="long" />
- * // Output: "Photovoltaics"
+ *     // Full name
+ *     <AssetName assetId="PV_solar" mode="long" />;
+ *     // Output: "Photovoltaics"
  *
  * @example
- * // Short name
- * <AssetName assetId="PV_solar" mode="short" />
- * // Output: "PV Solar"
+ *     // Short name
+ *     <AssetName assetId="PV_solar" mode="short" />;
+ *     // Output: "PV Solar"
  *
  * @example
- * // Auto mode: short name with tooltip
- * <AssetName assetId="PV_solar" mode="auto" />
- * // Output: "PV Solar" with tooltip showing "Photovoltaics"
+ *     // Auto mode: short name with tooltip
+ *     <AssetName assetId="PV_solar" mode="auto" />;
+ *     // Output: "PV Solar" with tooltip showing "Photovoltaics"
  *
  * @example
- * // Custom element and styling
- * <AssetName
- *   assetId="nuclear_reactor_gen4"
- *   mode="short"
- *   as="strong"
- *   className="text-brand-green"
- * />
+ *     // Custom element and styling
+ *     <AssetName
+ *         assetId="nuclear_reactor_gen4"
+ *         mode="short"
+ *         as="strong"
+ *         className="text-brand-green"
+ *     />;
  */
 export function AssetName({
     assetId,
@@ -90,74 +92,68 @@ export function AssetName({
     return <Component className={className}>{displayText}</Component>;
 }
 
-/**
- * Props for FacilityName component.
- */
+/** Props for FacilityName component. */
 export interface FacilityNameProps extends Omit<AssetNameProps, "assetId"> {
     /** The facility type from the API */
     facility: string;
 }
 
 /**
- * Specialized component for facility names.
- * Alias for AssetName with clearer semantic meaning.
+ * Specialized component for facility names. Alias for AssetName with clearer
+ * semantic meaning.
  *
  * @example
- * <FacilityName facility="PV_solar" mode="short" />
+ *     <FacilityName facility="PV_solar" mode="short" />;
  */
 export function FacilityName({ facility, ...props }: FacilityNameProps) {
     return <AssetName assetId={facility} {...props} />;
 }
 
-/**
- * Props for TechnologyName component.
- */
+/** Props for TechnologyName component. */
 export interface TechnologyNameProps extends Omit<AssetNameProps, "assetId"> {
     /** The technology type from the API */
     technology: string;
 }
 
 /**
- * Specialized component for technology names.
- * Alias for AssetName with clearer semantic meaning.
+ * Specialized component for technology names. Alias for AssetName with clearer
+ * semantic meaning.
  *
  * @example
- * <TechnologyName technology="nuclear_engineering" mode="auto" />
+ *     <TechnologyName technology="nuclear_engineering" mode="auto" />;
  */
 export function TechnologyName({ technology, ...props }: TechnologyNameProps) {
     return <AssetName assetId={technology} {...props} />;
 }
 
-/**
- * Props for ResourceName component.
- */
+/** Props for ResourceName component. */
 export interface ResourceNameProps extends Omit<AssetNameProps, "assetId"> {
     /** The resource type from the API */
     resource: string;
 }
 
 /**
- * Specialized component for resource names.
- * Alias for AssetName with clearer semantic meaning.
+ * Specialized component for resource names. Alias for AssetName with clearer
+ * semantic meaning.
  *
  * @example
- * <ResourceName resource="uranium" mode="short" />
+ *     <ResourceName resource="uranium" mode="short" />;
  */
 export function ResourceName({ resource, ...props }: ResourceNameProps) {
     return <AssetName assetId={resource} {...props} />;
 }
 
 /**
- * Utility hook to get asset display names programmatically.
- * Useful when you need the name as a string rather than a component.
+ * Utility hook to get asset display names programmatically. Useful when you
+ * need the name as a string rather than a component.
+ *
+ * @example
+ *     const name = useAssetName("PV_solar");
+ *     console.log(name.long()); // "Photovoltaics"
+ *     console.log(name.short()); // "PV Solar"
  *
  * @param assetId - The asset identifier
  * @returns Object with long and short name getters
- *
- * @example
- * const name = useAssetName("PV_solar");
- * console.log(name.long()); // "Photovoltaics"
- * console.log(name.short()); // "PV Solar"
  */
 export function useAssetName(assetId: string) {
     return {

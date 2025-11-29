@@ -1,6 +1,4 @@
-/**
- * Layout components export.
- */
+/** Layout components export. */
 
 export { GameLayout } from "./GameLayout";
 export { TopBar } from "./TopBar";

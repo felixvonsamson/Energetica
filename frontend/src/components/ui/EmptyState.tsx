@@ -10,9 +10,7 @@ interface EmptyStateProps {
     className?: string;
 }
 
-/**
- * Empty state component for when there's no data to display.
- */
+/** Empty state component for when there's no data to display. */
 export function EmptyState({
     icon: Icon,
     title,

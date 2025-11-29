@@ -2,6 +2,7 @@
  * Hook for fetching and managing player resources.
  *
  * Uses tick-based refetching since resources change every tick based on:
+ *
  * - Power generation (consuming coal/gas/uranium)
  * - Extraction facilities (producing resources)
  * - User actions (buying/selling resources)

@@ -7,9 +7,7 @@ interface CardProps {
     onClick?: () => void;
 }
 
-/**
- * Base card component for consistent styling across the app.
- */
+/** Base card component for consistent styling across the app. */
 export function Card({ children, className, onClick }: CardProps) {
     return (
         <div

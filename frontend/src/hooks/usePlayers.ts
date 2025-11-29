@@ -1,6 +1,6 @@
 /**
- * Hook for fetching all players.
- * Used for community features like chat participant lists and leaderboards.
+ * Hook for fetching all players. Used for community features like chat
+ * participant lists and leaderboards.
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -23,8 +23,8 @@ export function usePlayers() {
 }
 
 /**
- * Hook for creating a map of player IDs to usernames.
- * Useful for quickly looking up player names by ID.
+ * Hook for creating a map of player IDs to usernames. Useful for quickly
+ * looking up player names by ID.
  */
 export function usePlayerMap() {
     const { data: playersData } = usePlayers();

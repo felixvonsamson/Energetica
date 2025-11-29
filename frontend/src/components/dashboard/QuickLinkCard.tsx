@@ -9,9 +9,7 @@ interface QuickLinkCardProps {
     className?: string;
 }
 
-/**
- * Quick link card for dashboard navigation.
- */
+/** Quick link card for dashboard navigation. */
 export function QuickLinkCard({
     href,
     icon: Icon,

@@ -1,6 +1,6 @@
 /**
- * Connection status indicator
- * Shows a banner when the socket disconnects or queries are failing
+ * Connection status indicator Shows a banner when the socket disconnects or
+ * queries are failing
  */
 
 import { useSocket } from "@/contexts/SocketContext";

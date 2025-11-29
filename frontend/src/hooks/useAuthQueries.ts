@@ -1,6 +1,4 @@
-/**
- * React Query hooks for authentication-related data.
- */
+/** React Query hooks for authentication-related data. */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth-api";
@@ -14,9 +12,7 @@ type ChangePasswordRequest = ApiRequestBody<
     "post"
 >;
 
-/**
- * Mutation hook for login.
- */
+/** Mutation hook for login. */
 export function useLogin() {
     const queryClient = useQueryClient();
 
@@ -29,9 +25,7 @@ export function useLogin() {
     });
 }
 
-/**
- * Mutation hook for signup.
- */
+/** Mutation hook for signup. */
 export function useSignup() {
     const queryClient = useQueryClient();
 
@@ -44,9 +38,7 @@ export function useSignup() {
     });
 }
 
-/**
- * Mutation hook for changing password.
- */
+/** Mutation hook for changing password. */
 export function useChangePassword() {
     return useMutation({
         mutationFn: (data: ChangePasswordRequest) =>
@@ -54,9 +46,7 @@ export function useChangePassword() {
     });
 }
 
-/**
- * Mutation hook for logout.
- */
+/** Mutation hook for logout. */
 export function useLogout() {
     const queryClient = useQueryClient();
 

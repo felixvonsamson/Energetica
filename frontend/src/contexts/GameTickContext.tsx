@@ -4,14 +4,17 @@
  * Manages tick-based synchronization and server-driven invalidations.
  *
  * Two invalidation strategies:
+ *
  * 1. Tick-based: Queries registered with useTickQuery auto-invalidate on ticks
  * 2. Event-based: Server sends "invalidate" events for specific queries
  *
  * TanStack Query's lazy refetching ensures queries only refetch if:
+ *
  * - They have active observers (component is mounted and using the data)
  * - They are marked as stale
  *
- * This means invalidated data won't cause network requests unless it's actually being displayed.
+ * This means invalidated data won't cause network requests unless it's actually
+ * being displayed.
  */
 
 import {
@@ -29,7 +32,7 @@ import { playerApi } from "@/lib/player-api";
 
 interface GameTickContextValue {
     /** Current tick number from the server */
-    currentTick: number;
+    currentTick: number | undefined;
     /** Whether the initial tick is still loading */
     isLoadingTick: boolean;
 }
@@ -57,7 +60,9 @@ interface DataUpdateEvent<T = unknown> {
 
 export function GameTickProvider({ children }: GameTickProviderProps) {
     const queryClient = useQueryClient();
-    const [currentTick, setCurrentTick] = useState(0);
+    const [currentTick, setCurrentTick] = useState<number | undefined>(
+        undefined,
+    );
     const [isLoadingTick, setIsLoadingTick] = useState(true);
     const [registeredTickQueries, setRegisteredTickQueries] = useState<
         Set<string>
@@ -169,11 +174,12 @@ const TickQueryRegistration = createContext<{
 } | null>(null);
 
 /**
- * Hook to automatically register a query for tick-based refetching.
- * The query will be invalidated on each game tick.
+ * Hook to automatically register a query for tick-based refetching. The query
+ * will be invalidated on each game tick.
  *
- * Use this for data that ALWAYS changes on ticks (e.g., production values, time-based state).
- * For data that only changes on user actions, rely on server "invalidate" events instead.
+ * Use this for data that ALWAYS changes on ticks (e.g., production values,
+ * time-based state). For data that only changes on user actions, rely on server
+ * "invalidate" events instead.
  *
  * @param queryKey - The query key to register
  */

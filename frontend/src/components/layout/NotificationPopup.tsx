@@ -1,6 +1,6 @@
 /**
- * Notification popup modal.
- * Shows all notifications with ability to mark as read and delete.
+ * Notification popup modal. Shows all notifications with ability to mark as
+ * read and delete.
  */
 
 import { X } from "lucide-react";

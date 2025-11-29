@@ -1,6 +1,6 @@
 /**
- * Typed API client for making requests to the backend.
- * Handles authentication, error handling, and type safety.
+ * Typed API client for making requests to the backend. Handles authentication,
+ * error handling, and type safety.
  */
 
 const API_BASE_URL = import.meta.env.DEV ? "/api/v1" : "/api/v1";
@@ -24,9 +24,7 @@ interface RequestOptions extends RequestInit {
     params?: Record<string, string | number | boolean>;
 }
 
-/**
- * Base fetch wrapper with error handling and type safety.
- */
+/** Base fetch wrapper with error handling and type safety. */
 async function fetchApi<T>(
     endpoint: string,
     options: RequestOptions = {},
@@ -82,19 +80,13 @@ async function fetchApi<T>(
     return response.json();
 }
 
-/**
- * API client with typed methods.
- */
+/** API client with typed methods. */
 export const apiClient = {
-    /**
-     * GET request
-     */
+    /** GET request */
     get: <T>(endpoint: string, options?: RequestOptions) =>
         fetchApi<T>(endpoint, { ...options, method: "GET" }),
 
-    /**
-     * POST request
-     */
+    /** POST request */
     post: <T>(endpoint: string, data?: unknown, options?: RequestOptions) =>
         fetchApi<T>(endpoint, {
             ...options,
@@ -102,9 +94,7 @@ export const apiClient = {
             body: data ? JSON.stringify(data) : undefined,
         }),
 
-    /**
-     * PUT request
-     */
+    /** PUT request */
     put: <T>(endpoint: string, data?: unknown, options?: RequestOptions) =>
         fetchApi<T>(endpoint, {
             ...options,
@@ -112,9 +102,7 @@ export const apiClient = {
             body: data ? JSON.stringify(data) : undefined,
         }),
 
-    /**
-     * PATCH request
-     */
+    /** PATCH request */
     patch: <T>(endpoint: string, data?: unknown, options?: RequestOptions) =>
         fetchApi<T>(endpoint, {
             ...options,
@@ -122,9 +110,7 @@ export const apiClient = {
             body: data ? JSON.stringify(data) : undefined,
         }),
 
-    /**
-     * DELETE request
-     */
+    /** DELETE request */
     delete: <T>(endpoint: string, options?: RequestOptions) =>
         fetchApi<T>(endpoint, { ...options, method: "DELETE" }),
 };

@@ -2,8 +2,9 @@
  * Formatting utilities for displaying game values with appropriate units.
  * Migrated from energetica/static/display_functions.js
  *
- * These functions format numbers displayed on the website in a more readable format.
- * Maintains exact parity with the legacy Jinja frontend for consistent display.
+ * These functions format numbers displayed on the website in a more readable
+ * format. Maintains exact parity with the legacy Jinja frontend for consistent
+ * display.
  */
 
 // Unit definitions
@@ -72,8 +73,8 @@ function generalUpgradeFormat(
  * Format power values (W, kW, MW, GW, TW).
  *
  * @example
- * formatPower(1500) // "1'500 W"
- * formatPower(15000) // "15 kW"
+ *     formatPower(1500); // "1'500 W"
+ *     formatPower(15000); // "15 kW"
  */
 export function formatPower(power: number, threshold: number = 10_000): string {
     return generalFormat(power, POWER_UNITS, threshold);
@@ -83,8 +84,8 @@ export function formatPower(power: number, threshold: number = 10_000): string {
  * Format power upgrade display.
  *
  * @example
- * formatUpgradePower(100, 200) // "100 W → 200 W"
- * formatUpgradePower(null, 50000) // "0 → 50 kW"
+ *     formatUpgradePower(100, 200); // "100 W → 200 W"
+ *     formatUpgradePower(null, 50000); // "0 → 50 kW"
  */
 export function formatUpgradePower(
     value1: number | null,
@@ -99,8 +100,8 @@ export function formatUpgradePower(
  * Format energy values (Wh, kWh, MWh, GWh, TWh).
  *
  * @example
- * formatEnergy(5000) // "5'000 Wh"
- * formatEnergy(50000) // "50 kWh"
+ *     formatEnergy(5000); // "5'000 Wh"
+ *     formatEnergy(50000); // "50 kWh"
  */
 export function formatEnergy(
     energy: number,
@@ -115,8 +116,8 @@ export function formatEnergy(
  * Format mass values (kg, t, kt, Mt).
  *
  * @example
- * formatMass(500) // "500 kg"
- * formatMass(15000) // "15 t"
+ *     formatMass(500); // "500 kg"
+ *     formatMass(15000); // "15 t"
  */
 export function formatMass(mass: number, threshold: number = 10_000): string {
     return generalFormat(mass, MASS_UNITS, threshold);
@@ -126,7 +127,7 @@ export function formatMass(mass: number, threshold: number = 10_000): string {
  * Format mass upgrade display.
  *
  * @example
- * formatUpgradeMass(1000, 2000) // "1'000 kg → 2'000 kg"
+ *     formatUpgradeMass(1000, 2000); // "1'000 kg → 2'000 kg"
  */
 export function formatUpgradeMass(
     value1: number | null,
@@ -138,12 +139,12 @@ export function formatUpgradeMass(
 // === Mass Rate Formatting ===
 
 /**
- * Format mass rate values (g/h, kg/h, t/h, kt/h).
- * NOTE: Converts from kg to g by multiplying by 1000.
+ * Format mass rate values (g/h, kg/h, t/h, kt/h). NOTE: Converts from kg to g
+ * by multiplying by 1000.
  *
  * @example
- * formatMassRate(0.5) // "500 g/h" (0.5 kg = 500 g)
- * formatMassRate(15) // "15 kg/h"
+ *     formatMassRate(0.5); // "500 g/h" (0.5 kg = 500 g)
+ *     formatMassRate(15); // "15 kg/h"
  */
 export function formatMassRate(
     massRate: number,
@@ -153,8 +154,8 @@ export function formatMassRate(
 }
 
 /**
- * Format mass rate upgrade display.
- * NOTE: Input values are in kg, converted to g for display.
+ * Format mass rate upgrade display. NOTE: Input values are in kg, converted to
+ * g for display.
  */
 export function formatUpgradeMassRate(
     value1: number | null,
@@ -171,8 +172,8 @@ export function formatUpgradeMassRate(
  * Format concentration values (ppb, ppm, ‰).
  *
  * @example
- * formatConcentration(500) // "500 ppb"
- * formatConcentration(15000) // "15 ppm"
+ *     formatConcentration(500); // "500 ppb"
+ *     formatConcentration(15000); // "15 ppm"
  */
 export function formatConcentration(
     concentration: number,
@@ -228,12 +229,12 @@ export function formatConcentration(
 /**
  * Format temperature in Celsius.
  *
+ * @example
+ *     formatTemperature(15.5); // "15.50°C"
+ *     formatTemperature(20.123, 1); // "20.1°C"
+ *
  * @param temperature - Temperature value
  * @param decimals - Number of decimal places (default: 2)
- *
- * @example
- * formatTemperature(15.5) // "15.50°C"
- * formatTemperature(20.123, 1) // "20.1°C"
  */
 export function formatTemperature(
     temperature: number,
@@ -247,11 +248,11 @@ export function formatTemperature(
 /**
  * Format a timestamp string to a readable date and time string.
  *
+ * @example
+ *     formatTimestamp("2024-11-24T15:30:00Z"); // "11/24/2024, 3:30:00 PM"
+ *
  * @param timestamp - ISO 8601 timestamp string
  * @returns Formatted date and time string using locale defaults
- *
- * @example
- * formatTimestamp("2024-11-24T15:30:00Z") // "11/24/2024, 3:30:00 PM"
  */
 export function formatTimestamp(timestamp: string): string {
     return new Date(timestamp).toLocaleString();
@@ -390,9 +391,7 @@ export function formatTimestamp(timestamp: string): string {
 
 // === Achievement-Specific Formatting ===
 
-/**
- * Type for achievement IDs that require specific formatting.
- */
+/** Type for achievement IDs that require specific formatting. */
 type AchievementId =
     | "power_consumption"
     | "energy_storage"
@@ -403,8 +402,8 @@ type AchievementId =
     | "network";
 
 /**
- * Format achievement values based on their type.
- * Maps achievement IDs to their appropriate formatting function.
+ * Format achievement values based on their type. Maps achievement IDs to their
+ * appropriate formatting function.
  *
  * @param value - The numeric value
  * @param achievementId - The achievement identifier

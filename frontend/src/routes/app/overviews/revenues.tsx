@@ -1,6 +1,6 @@
 /**
- * Revenues overview page - Stub redirecting to legacy page.
- * TODO: Migrate to React implementation.
+ * Revenues overview page - Stub redirecting to legacy page. TODO: Migrate to
+ * React implementation.
  */
 
 import { createFileRoute } from "@tanstack/react-router";

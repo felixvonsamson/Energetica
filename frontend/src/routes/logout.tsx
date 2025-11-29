@@ -1,6 +1,4 @@
-/**
- * Logout page - Redirects to legacy logout endpoint.
- */
+/** Logout page - Redirects to legacy logout endpoint. */
 
 import { createFileRoute } from "@tanstack/react-router";
 import { RedirectToLegacy } from "@/components/RedirectToLegacy";

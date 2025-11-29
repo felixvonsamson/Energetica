@@ -1,6 +1,6 @@
 /**
- * Component that redirects to a legacy Jinja template page.
- * Used as a stub for pages not yet migrated to React.
+ * Component that redirects to a legacy Jinja template page. Used as a stub for
+ * pages not yet migrated to React.
  */
 
 import { useEffect } from "react";

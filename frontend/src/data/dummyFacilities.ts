@@ -1,7 +1,7 @@
 /**
- * Dummy facility data for showcasing all asset colors.
- * Used to visualize all facility types and their colors in the profile page.
- * Set to 50% usage/state of charge to show color overlap with text.
+ * Dummy facility data for showcasing all asset colors. Used to visualize all
+ * facility types and their colors in the profile page. Set to 50% usage/state
+ * of charge to show color overlap with text.
  */
 
 import type { ApiResponse } from "@/types/api-helpers";

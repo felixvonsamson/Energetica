@@ -18,8 +18,8 @@ interface MoneyProps {
 }
 
 /**
- * Formats money with thousands separator and appropriate unit scaling.
- * Scales: $ → k$ → M$ → Md$ (millions → billions)
+ * Formats money with thousands separator and appropriate unit scaling. Scales:
+ * $ → k$ → M$ → Md$ (millions → billions)
  */
 function formatMoneyValue(amount: number, long: boolean = false): string {
     if (long) {
@@ -45,10 +45,10 @@ function formatMoneyValue(amount: number, long: boolean = false): string {
  * Money display component with currency icon and formatted value.
  *
  * @example
- * <Money amount={1500} /> // "1'500$"
- * <Money amount={15000} /> // "15k$"
- * <Money amount={1500000} /> // "1'500k$"
- * <Money amount={1500} long /> // "1'500$" (no scaling)
+ *     <Money amount={1500} /> // "1'500$"
+ *     <Money amount={15000} /> // "15k$"
+ *     <Money amount={1500000} /> // "1'500k$"
+ *     <Money amount={1500} long /> // "1'500$" (no scaling)
  */
 export function Money({
     amount,

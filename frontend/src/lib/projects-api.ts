@@ -1,51 +1,39 @@
 /**
- * Projects-related API calls.
- * Handles construction and research project management.
+ * Projects-related API calls. Handles construction and research project
+ * management.
  */
 
 import { apiClient } from "./api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 
 export const projectsApi = {
-    /**
-     * Get list of ongoing construction and research projects.
-     */
+    /** Get list of ongoing construction and research projects. */
     getProjects: () =>
         apiClient.get<ApiResponse<"/api/v1/projects", "get">>("/projects"),
 
-    /**
-     * Queue a new construction or research project.
-     */
+    /** Queue a new construction or research project. */
     queueProject: (data: ApiRequestBody<"/api/v1/projects", "post">) =>
         apiClient.post<void>("/projects", data),
 
-    /**
-     * Cancel an ongoing project.
-     */
+    /** Cancel an ongoing project. */
     cancelProject: (projectId: number) =>
         apiClient.post<
             ApiResponse<"/api/v1/projects/{project_id}:cancel", "post">
         >(`/projects/${projectId}:cancel`),
 
-    /**
-     * Pause an ongoing project.
-     */
+    /** Pause an ongoing project. */
     pauseProject: (projectId: number) =>
         apiClient.post<
             ApiResponse<"/api/v1/projects/{project_id}:pause", "post">
         >(`/projects/${projectId}:pause`),
 
-    /**
-     * Resume a paused project.
-     */
+    /** Resume a paused project. */
     resumeProject: (projectId: number) =>
         apiClient.post<
             ApiResponse<"/api/v1/projects/{project_id}:resume", "post">
         >(`/projects/${projectId}:resume`),
 
-    /**
-     * Decrease project priority in the queue.
-     */
+    /** Decrease project priority in the queue. */
     decreasePriority: (projectId: number) =>
         apiClient.post<
             ApiResponse<
@@ -54,9 +42,7 @@ export const projectsApi = {
             >
         >(`/projects/${projectId}:decrease-priority`),
 
-    /**
-     * Increase project priority in the queue.
-     */
+    /** Increase project priority in the queue. */
     increasePriority: (projectId: number) =>
         apiClient.post<
             ApiResponse<
@@ -65,41 +51,31 @@ export const projectsApi = {
             >
         >(`/projects/${projectId}:increase-priority`),
 
-    /**
-     * Get the catalog of all power facilities available for construction.
-     */
+    /** Get the catalog of all power facilities available for construction. */
     getPowerFacilitiesCatalog: () =>
         apiClient.get<
             ApiResponse<"/api/v1/projects/catalog/power-facilities", "get">
         >("/projects/catalog/power-facilities"),
 
-    /**
-     * Get the catalog of all storage facilities available for construction.
-     */
+    /** Get the catalog of all storage facilities available for construction. */
     getStorageFacilitiesCatalog: () =>
         apiClient.get<
             ApiResponse<"/api/v1/projects/catalog/storage-facilities", "get">
         >("/projects/catalog/storage-facilities"),
 
-    /**
-     * Get the catalog of all extraction facilities available for construction.
-     */
+    /** Get the catalog of all extraction facilities available for construction. */
     getExtractionFacilitiesCatalog: () =>
         apiClient.get<
             ApiResponse<"/api/v1/projects/catalog/extraction-facilities", "get">
         >("/projects/catalog/extraction-facilities"),
 
-    /**
-     * Get the catalog of all functional facilities available for construction.
-     */
+    /** Get the catalog of all functional facilities available for construction. */
     getFunctionalFacilitiesCatalog: () =>
         apiClient.get<
             ApiResponse<"/api/v1/projects/catalog/functional-facilities", "get">
         >("/projects/catalog/functional-facilities"),
 
-    /**
-     * Get the catalog of all technologies available for research.
-     */
+    /** Get the catalog of all technologies available for research. */
     getTechnologiesCatalog: () =>
         apiClient.get<
             ApiResponse<"/api/v1/projects/catalog/technologies", "get">

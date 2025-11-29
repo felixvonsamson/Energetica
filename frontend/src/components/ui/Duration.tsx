@@ -1,7 +1,9 @@
 /**
  * Duration component for formatting tick-based durations.
  *
- * Similar to Money.tsx, this is a component rather than a pure function because:
+ * Similar to Money.tsx, this is a component rather than a pure function
+ * because:
+ *
  * - It needs to fetch game constants from the API (ticks per second, clock time)
  * - Uses React Query to cache the game constants
  * - May need to render both in-game time and real-world time

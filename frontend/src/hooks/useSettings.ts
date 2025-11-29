@@ -1,15 +1,11 @@
-/**
- * Hooks for fetching and managing user settings.
- */
+/** Hooks for fetching and managing user settings. */
 
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { queryKeys, queryClient } from "@/lib/query-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 
-/**
- * Get the current user's settings.
- */
+/** Get the current user's settings. */
 export function useSettings() {
     return useQuery({
         queryKey: queryKeys.players.settings,
@@ -23,9 +19,7 @@ export function useSettings() {
     });
 }
 
-/**
- * Update the current user's settings.
- */
+/** Update the current user's settings. */
 export function useUpdateSettings() {
     return useMutation({
         mutationFn: (

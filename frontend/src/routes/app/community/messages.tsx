@@ -1,6 +1,4 @@
-/**
- * Messages page - Chat and messaging interface.
- */
+/** Messages page - Chat and messaging interface. */
 
 import { createFileRoute } from "@tanstack/react-router";
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";

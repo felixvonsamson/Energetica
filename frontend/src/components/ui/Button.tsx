@@ -12,8 +12,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
  * Button component with consistent styling and variants.
  *
  * @example
- * <Button variant="primary" onClick={handleClick}>Click me</Button>
- * <Button variant="secondary" size="sm" disabled>Disabled</Button>
+ *     <Button variant="primary" onClick={handleClick}>Click me</Button>
+ *     <Button variant="secondary" size="sm" disabled>Disabled</Button>
  */
 export function Button({
     children,

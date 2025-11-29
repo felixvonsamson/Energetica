@@ -1,6 +1,6 @@
 /**
- * Confirmation dialog component for destructive or important actions.
- * Follows the composition pattern from Radix UI / shadcn.
+ * Confirmation dialog component for destructive or important actions. Follows
+ * the composition pattern from Radix UI / shadcn.
  */
 
 import { useState, ReactNode } from "react";
@@ -31,14 +31,14 @@ interface ConfirmDialogProps {
  * A declarative confirmation dialog that manages its own open/close state.
  *
  * @example
- * <ConfirmDialog
- *   trigger={<button>Delete All</button>}
- *   title="Confirm Deletion"
- *   description={<p>Delete {count} items?</p>}
- *   variant="danger"
- *   onConfirm={() => deleteMutation.mutate()}
- *   isPending={deleteMutation.isPending}
- * />
+ *     <ConfirmDialog
+ *         trigger={<button>Delete All</button>}
+ *         title="Confirm Deletion"
+ *         description={<p>Delete {count} items?</p>}
+ *         variant="danger"
+ *         onConfirm={() => deleteMutation.mutate()}
+ *         isPending={deleteMutation.isPending}
+ *     />;
  */
 export function ConfirmDialog({
     trigger,

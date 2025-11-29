@@ -1,6 +1,4 @@
-/**
- * Changelog page - Redirects to legacy changelog.
- */
+/** Changelog page - Redirects to legacy changelog. */
 
 import { createFileRoute } from "@tanstack/react-router";
 import { RedirectToLegacy } from "@/components/RedirectToLegacy";

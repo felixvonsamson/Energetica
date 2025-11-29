@@ -1,14 +1,12 @@
-/**
- * Hooks for fetching and managing chats and messages.
- */
+/** Hooks for fetching and managing chats and messages. */
 
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { chatsApi } from "@/lib/chats-api";
 import { queryKeys, queryClient } from "@/lib/query-client";
 
 /**
- * Get the list of all chats for the current user.
- * Includes unread message counts and last opened chat ID.
+ * Get the list of all chats for the current user. Includes unread message
+ * counts and last opened chat ID.
  */
 export function useChatList() {
     return useQuery({
@@ -20,9 +18,7 @@ export function useChatList() {
     });
 }
 
-/**
- * Get all messages in a specific chat.
- */
+/** Get all messages in a specific chat. */
 export function useChatMessages(chatId: number | null) {
     return useQuery({
         queryKey: queryKeys.chats.messages(chatId || 0),
@@ -34,9 +30,7 @@ export function useChatMessages(chatId: number | null) {
     });
 }
 
-/**
- * Send a new message to a chat.
- */
+/** Send a new message to a chat. */
 export function useSendMessage() {
     return useMutation({
         mutationFn: ({
@@ -59,9 +53,7 @@ export function useSendMessage() {
     });
 }
 
-/**
- * Create a new group chat.
- */
+/** Create a new group chat. */
 export function useCreateGroupChat() {
     return useMutation<any, any, any>({
         mutationFn: chatsApi.createGroupChat,
@@ -74,9 +66,7 @@ export function useCreateGroupChat() {
     });
 }
 
-/**
- * Mark a chat as opened by the current user.
- */
+/** Mark a chat as opened by the current user. */
 export function useOpenChat() {
     return useMutation({
         mutationFn: (chatId: number) => chatsApi.openChat(chatId),

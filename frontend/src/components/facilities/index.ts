@@ -1,6 +1,6 @@
 /**
- * Shared components for facility catalog pages.
- * Used across power, storage, extraction, and functional facility pages.
+ * Shared components for facility catalog pages. Used across power, storage,
+ * extraction, and functional facility pages.
  */
 
 export { FacilityCard } from "./FacilityCard";

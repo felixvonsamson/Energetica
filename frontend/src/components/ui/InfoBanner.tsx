@@ -8,9 +8,7 @@ interface InfoBannerProps {
     className?: string;
 }
 
-/**
- * Coloured banner for displaying informational messages.
- */
+/** Coloured banner for displaying informational messages. */
 export function InfoBanner({
     children,
     variant = "info",

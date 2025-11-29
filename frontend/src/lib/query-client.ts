@@ -1,6 +1,6 @@
 /**
- * TanStack Query client configuration.
- * Provides sensible defaults for caching and error handling.
+ * TanStack Query client configuration. Provides sensible defaults for caching
+ * and error handling.
  */
 
 import { QueryClient } from "@tanstack/react-query";
@@ -43,10 +43,7 @@ export const queryClient = new QueryClient({
     },
 });
 
-/**
- * Query keys for consistent cache management.
- * Organized by domain/feature.
- */
+/** Query keys for consistent cache management. Organized by domain/feature. */
 export const queryKeys = {
     auth: {
         me: ["auth", "me"] as const,

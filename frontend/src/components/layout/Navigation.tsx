@@ -1,6 +1,6 @@
 /**
- * Main navigation bar component.
- * Displays primary navigation links with dropdown menus.
+ * Main navigation bar component. Displays primary navigation links with
+ * dropdown menus.
  */
 
 import { useState } from "react";

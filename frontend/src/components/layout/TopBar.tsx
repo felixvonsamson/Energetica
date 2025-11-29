@@ -1,6 +1,4 @@
-/**
- * Top bar component showing logo, money, resources, workers, and user actions.
- */
+/** Top bar component showing logo, money, resources, workers, and user actions. */
 
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";

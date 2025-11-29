@@ -3,11 +3,13 @@
  *
  * Uses server-driven updates via SocketIO "worker_info" events instead of
  * tick-based refetching, since workers only change on specific actions:
+ *
  * - Starting/pausing/resuming projects
  * - Projects finishing
  * - Gaining new workers
  *
- * This is more efficient than refetching every tick (workers change ~10% of ticks).
+ * This is more efficient than refetching every tick (workers change ~10% of
+ * ticks).
  */
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";

@@ -10,9 +10,7 @@ interface ModalProps {
     className?: string;
 }
 
-/**
- * Modal component with backdrop and close button.
- */
+/** Modal component with backdrop and close button. */
 export function Modal({
     isOpen,
     onClose,

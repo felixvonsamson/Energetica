@@ -1,6 +1,6 @@
 /**
- * Socket.IO context for real-time game updates.
- * Manages connection lifecycle and provides socket instance to components.
+ * Socket.IO context for real-time game updates. Manages connection lifecycle
+ * and provides socket instance to components.
  */
 
 import React, {
@@ -153,10 +153,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
     );
 }
 
-/**
- * Hook to access socket context.
- * Must be used within a SocketProvider.
- */
+/** Hook to access socket context. Must be used within a SocketProvider. */
 export function useSocket() {
     const context = useContext(SocketContext);
     if (context === undefined) {
@@ -165,10 +162,7 @@ export function useSocket() {
     return context;
 }
 
-/**
- * Hook to listen to specific socket events.
- * Automatically handles cleanup.
- */
+/** Hook to listen to specific socket events. Automatically handles cleanup. */
 export function useSocketEvent<T = unknown>(
     eventName: string,
     handler: (data: T) => void,
@@ -196,10 +190,7 @@ export function useSocketEvent<T = unknown>(
     }, [socket, isConnected, eventName]);
 }
 
-/**
- * Hook to emit socket events.
- * Returns a stable emit function.
- */
+/** Hook to emit socket events. Returns a stable emit function. */
 export function useSocketEmit() {
     const { socket } = useSocket();
 

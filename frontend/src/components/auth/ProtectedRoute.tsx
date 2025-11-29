@@ -1,6 +1,4 @@
-/**
- * Protected route components for enforcing authentication and authorization.
- */
+/** Protected route components for enforcing authentication and authorization. */
 
 import { useLocation } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,10 +12,7 @@ interface ProtectedRouteProps {
     fallback?: ReactNode;
 }
 
-/**
- * Require user to be authenticated.
- * Redirects to login if not authenticated.
- */
+/** Require user to be authenticated. Redirects to login if not authenticated. */
 export function ProtectedRoute({
     children,
     redirectTo = "/login",
@@ -40,8 +35,8 @@ export function ProtectedRoute({
 }
 
 /**
- * Require user to be a settled player (has chosen location).
- * Redirects to location choice if not settled.
+ * Require user to be a settled player (has chosen location). Redirects to
+ * location choice if not settled.
  */
 export function RequireSettledPlayer({
     children,
@@ -71,10 +66,7 @@ export function RequireSettledPlayer({
     return <>{children}</>;
 }
 
-/**
- * Require user to be an admin.
- * Redirects to home if not admin.
- */
+/** Require user to be an admin. Redirects to home if not admin. */
 export function RequireAdmin({
     children,
     fallback = <div>Loading...</div>,
@@ -99,8 +91,8 @@ export function RequireAdmin({
 }
 
 /**
- * Redirect authenticated users away from public pages.
- * Useful for login/signup pages.
+ * Redirect authenticated users away from public pages. Useful for login/signup
+ * pages.
  */
 export function PublicOnlyRoute({
     children,

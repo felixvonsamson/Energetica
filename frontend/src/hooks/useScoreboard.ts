@@ -1,6 +1,6 @@
 /**
- * Hook for fetching scoreboard data.
- * Displays all players ranked by various metrics.
+ * Hook for fetching scoreboard data. Displays all players ranked by various
+ * metrics.
  */
 
 import { useQuery } from "@tanstack/react-query";

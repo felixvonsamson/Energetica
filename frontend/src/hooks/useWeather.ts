@@ -1,6 +1,6 @@
 /**
- * Hook for fetching current weather data.
- * Weather data changes every game tick and includes season, temperature, wind, etc.
+ * Hook for fetching current weather data. Weather data changes every game tick
+ * and includes season, temperature, wind, etc.
  */
 
 import { useQuery } from "@tanstack/react-query";

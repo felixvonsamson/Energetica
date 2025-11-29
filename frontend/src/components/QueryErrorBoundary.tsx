@@ -1,6 +1,6 @@
 /**
- * Error boundary for handling query errors gracefully
- * Shows stale data with error indicator instead of blank screen
+ * Error boundary for handling query errors gracefully Shows stale data with
+ * error indicator instead of blank screen
  */
 
 import { type ReactNode } from "react";
@@ -67,9 +67,7 @@ export function QueryErrorFallback({
     );
 }
 
-/**
- * Helper component to wrap query results with error handling
- */
+/** Helper component to wrap query results with error handling */
 interface QueryResultWrapperProps<T> {
     data: T | undefined;
     error: Error | null;

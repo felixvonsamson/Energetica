@@ -1,6 +1,6 @@
 /**
- * Hooks for achievement functionality.
- * Achievements track player progress towards various milestones.
+ * Hooks for achievement functionality. Achievements track player progress
+ * towards various milestones.
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -9,9 +9,9 @@ import { queryKeys } from "@/lib/query-client";
 import { useTickQuery } from "@/contexts/GameTickContext";
 
 /**
- * Hook to fetch the player's upcoming achievements.
- * Returns achievements that are in progress or nearly complete.
- * Automatically refreshes on tick events for real-time progress updates.
+ * Hook to fetch the player's upcoming achievements. Returns achievements that
+ * are in progress or nearly complete. Automatically refreshes on tick events
+ * for real-time progress updates.
  */
 export function useAchievements() {
     // Register for tick-based invalidation to keep progress up-to-date

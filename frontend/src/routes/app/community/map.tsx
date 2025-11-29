@@ -1,6 +1,6 @@
 /**
- * Map page - Stub redirecting to legacy page.
- * TODO: Migrate to React implementation.
+ * Map page - Stub redirecting to legacy page. TODO: Migrate to React
+ * implementation.
  */
 
 import { createFileRoute } from "@tanstack/react-router";

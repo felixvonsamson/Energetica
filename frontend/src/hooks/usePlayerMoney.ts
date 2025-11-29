@@ -1,6 +1,6 @@
 /**
- * Hook for fetching and managing player money.
- * Automatically syncs with game ticks and can be manually invalidated.
+ * Hook for fetching and managing player money. Automatically syncs with game
+ * ticks and can be manually invalidated.
  */
 
 import { useQuery } from "@tanstack/react-query";

@@ -1,6 +1,6 @@
 /**
- * Achievement progress card component.
- * Displays a single achievement with its name, progress bar, and XP reward.
+ * Achievement progress card component. Displays a single achievement with its
+ * name, progress bar, and XP reward.
  */
 
 import { formatAchievementValue } from "@/lib/format-utils";
@@ -14,8 +14,8 @@ interface AchievementCardProps {
 }
 
 /**
- * Achievement progress card.
- * Shows visual progress towards completing an achievement milestone.
+ * Achievement progress card. Shows visual progress towards completing an
+ * achievement milestone.
  */
 export function AchievementCard({
     id,

@@ -8,9 +8,7 @@ interface ProgressBarProps {
     className?: string;
 }
 
-/**
- * Progress bar component for achievements, construction, etc.
- */
+/** Progress bar component for achievements, construction, etc. */
 export function ProgressBar({
     value,
     max = 100,

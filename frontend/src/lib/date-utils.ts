@@ -1,11 +1,11 @@
 /**
- * Date and time utilities for Energetica.
- * Provides month name conversion and other date-related helpers.
+ * Date and time utilities for Energetica. Provides month name conversion and
+ * other date-related helpers.
  */
 
 /**
- * Month names in order (January = 1, December = 12)
- * Used across the app for consistent date display.
+ * Month names in order (January = 1, December = 12) Used across the app for
+ * consistent date display.
  */
 export const MONTH_NAMES = [
     "January",
@@ -24,6 +24,7 @@ export const MONTH_NAMES = [
 
 /**
  * Get the month name from a month number (1-12).
+ *
  * @param monthNumber - Month number from 1 (January) to 12 (December)
  * @returns The month name, or "Unknown" if out of range
  */
@@ -36,6 +37,7 @@ export function getMonthName(monthNumber: number): string {
 
 /**
  * Get the season name based on the month number.
+ *
  * @param monthNumber - Month number from 1 (January) to 12 (December)
  * @returns The season name (Winter, Spring, Summer, Fall)
  */

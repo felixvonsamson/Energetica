@@ -1,16 +1,17 @@
 /**
- * Central registry for all asset display names.
- * This provides a single source of truth for translating asset IDs to human-readable names.
+ * Central registry for all asset display names. This provides a single source
+ * of truth for translating asset IDs to human-readable names.
  *
  * In the future, this can be extended to support multiple languages by:
+ *
  * - Adding language-specific mappings (e.g., assetNames_fr, assetNames_es)
  * - Using i18n libraries like react-i18next
  * - Loading translations from external JSON files
  */
 
 /**
- * Display name configuration for an asset.
- * Supports both short and long display forms for flexible UI rendering.
+ * Display name configuration for an asset. Supports both short and long display
+ * forms for flexible UI rendering.
  */
 export interface AssetDisplayName {
     /** Full display name (e.g., "Photovoltaics", "4th Generation Nuclear") */
@@ -20,8 +21,8 @@ export interface AssetDisplayName {
 }
 
 /**
- * Power facility display names.
- * Covers renewable (wind, solar, hydro) and controllable (fossil fuel, nuclear) facilities.
+ * Power facility display names. Covers renewable (wind, solar, hydro) and
+ * controllable (fossil fuel, nuclear) facilities.
  */
 export const powerFacilityNames: Record<string, AssetDisplayName> = {
     // Early game - simple technologies
@@ -89,9 +90,7 @@ export const powerFacilityNames: Record<string, AssetDisplayName> = {
     },
 };
 
-/**
- * Storage facility display names.
- */
+/** Storage facility display names. */
 export const storageFacilityNames: Record<string, AssetDisplayName> = {
     small_pumped_hydro: {
         long: "Small Pumped Hydro",
@@ -119,9 +118,7 @@ export const storageFacilityNames: Record<string, AssetDisplayName> = {
     },
 };
 
-/**
- * Extraction facility display names.
- */
+/** Extraction facility display names. */
 export const extractionFacilityNames: Record<string, AssetDisplayName> = {
     coal_mine: {
         long: "Coal Mine",
@@ -137,9 +134,7 @@ export const extractionFacilityNames: Record<string, AssetDisplayName> = {
     },
 };
 
-/**
- * Functional facility display names.
- */
+/** Functional facility display names. */
 export const functionalFacilityNames: Record<string, AssetDisplayName> = {
     laboratory: {
         long: "Laboratory",
@@ -159,9 +154,7 @@ export const functionalFacilityNames: Record<string, AssetDisplayName> = {
     },
 };
 
-/**
- * Technology display names.
- */
+/** Technology display names. */
 export const technologyNames: Record<string, AssetDisplayName> = {
     mathematics: {
         long: "Mathematics",
@@ -213,9 +206,7 @@ export const technologyNames: Record<string, AssetDisplayName> = {
     },
 };
 
-/**
- * Resource display names.
- */
+/** Resource display names. */
 export const resourceNames: Record<string, AssetDisplayName> = {
     coal: {
         long: "Coal",
@@ -231,9 +222,7 @@ export const resourceNames: Record<string, AssetDisplayName> = {
     },
 };
 
-/**
- * Combined registry of all asset names.
- */
+/** Combined registry of all asset names. */
 export const allAssetNames: Record<string, AssetDisplayName> = {
     ...powerFacilityNames,
     ...storageFacilityNames,
@@ -244,16 +233,16 @@ export const allAssetNames: Record<string, AssetDisplayName> = {
 };
 
 /**
- * Get the display name for an asset ID.
- * Returns both long and short forms, or undefined if not found.
+ * Get the display name for an asset ID. Returns both long and short forms, or
+ * undefined if not found.
+ *
+ * @example
+ *     const name = getAssetName("PV_solar");
+ *     console.log(name?.long); // "Photovoltaics"
+ *     console.log(name?.short); // "PV Solar"
  *
  * @param assetId - The asset identifier (e.g., "PV_solar", "coal_burner")
  * @returns AssetDisplayName or undefined
- *
- * @example
- * const name = getAssetName("PV_solar");
- * console.log(name?.long); // "Photovoltaics"
- * console.log(name?.short); // "PV Solar"
  */
 export function getAssetName(assetId: string): AssetDisplayName | undefined {
     return allAssetNames[assetId];
@@ -262,12 +251,12 @@ export function getAssetName(assetId: string): AssetDisplayName | undefined {
 /**
  * Get the long display name for an asset, with fallback to the ID.
  *
+ * @example
+ *     getAssetLongName("PV_solar"); // "Photovoltaics"
+ *     getAssetLongName("unknown"); // "unknown"
+ *
  * @param assetId - The asset identifier
  * @returns The long display name, or the asset ID if not found
- *
- * @example
- * getAssetLongName("PV_solar"); // "Photovoltaics"
- * getAssetLongName("unknown"); // "unknown"
  */
 export function getAssetLongName(assetId: string): string {
     return allAssetNames[assetId]?.long ?? assetId;
@@ -276,12 +265,12 @@ export function getAssetLongName(assetId: string): string {
 /**
  * Get the short display name for an asset, with fallback to the ID.
  *
+ * @example
+ *     getAssetShortName("PV_solar"); // "PV Solar"
+ *     getAssetShortName("unknown"); // "unknown"
+ *
  * @param assetId - The asset identifier
  * @returns The short display name, or the asset ID if not found
- *
- * @example
- * getAssetShortName("PV_solar"); // "PV Solar"
- * getAssetShortName("unknown"); // "unknown"
  */
 export function getAssetShortName(assetId: string): string {
     return allAssetNames[assetId]?.short ?? assetId;

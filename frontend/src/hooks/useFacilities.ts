@@ -1,6 +1,4 @@
-/**
- * React Query hooks for facilities data.
- */
+/** React Query hooks for facilities data. */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { facilitiesApi } from "@/lib/facilities-api";
@@ -8,8 +6,8 @@ import { queryKeys } from "@/lib/query-client";
 import { useTickQuery } from "@/contexts/GameTickContext";
 
 /**
- * Hook to fetch all facilities for the current player.
- * Facilities change every tick (power output, state of charge, etc.)
+ * Hook to fetch all facilities for the current player. Facilities change every
+ * tick (power output, state of charge, etc.)
  */
 export function useFacilities() {
     // Register for tick-based invalidation since facilities show real-time data
@@ -22,9 +20,7 @@ export function useFacilities() {
     });
 }
 
-/**
- * Hook to upgrade a single facility.
- */
+/** Hook to upgrade a single facility. */
 export function useUpgradeFacility() {
     const queryClient = useQueryClient();
 
@@ -42,9 +38,7 @@ export function useUpgradeFacility() {
     });
 }
 
-/**
- * Hook to upgrade all facilities of a type.
- */
+/** Hook to upgrade all facilities of a type. */
 export function useUpgradeAllOfType() {
     const queryClient = useQueryClient();
 
@@ -62,9 +56,7 @@ export function useUpgradeAllOfType() {
     });
 }
 
-/**
- * Hook to dismantle a single facility.
- */
+/** Hook to dismantle a single facility. */
 export function useDismantleFacility() {
     const queryClient = useQueryClient();
 
@@ -82,9 +74,7 @@ export function useDismantleFacility() {
     });
 }
 
-/**
- * Hook to dismantle all facilities of a type.
- */
+/** Hook to dismantle all facilities of a type. */
 export function useDismantleAllOfType() {
     const queryClient = useQueryClient();
 

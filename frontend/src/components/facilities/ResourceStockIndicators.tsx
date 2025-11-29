@@ -1,6 +1,6 @@
 /**
- * Component for displaying resource stock and potential indicators for power facilities.
- * Shows wind/solar/hydro potential and resource stock information.
+ * Component for displaying resource stock and potential indicators for power
+ * facilities. Shows wind/solar/hydro potential and resource stock information.
  */
 
 import { Info, AlertTriangle } from "lucide-react";

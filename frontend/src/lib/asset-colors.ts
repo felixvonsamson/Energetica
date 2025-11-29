@@ -1,8 +1,9 @@
 /**
  * Asset color system - Maps asset names to colors defined in global.css
  *
- * All asset colors are defined as CSS variables in frontend/src/styles/global.css
- * with automatic support for light and dark modes.
+ * All asset colors are defined as CSS variables in
+ * frontend/src/styles/global.css with automatic support for light and dark
+ * modes.
  *
  * This module extracts color values at runtime with caching for performance.
  */
@@ -10,10 +11,9 @@
 const colorCache = new Map<string, string>();
 
 /**
- * Convert asset name to CSS variable format
- * Examples: "pv_solar" → "--asset-color-pv-solar"
- *           "PV_solar" → "--asset-color-pv-solar"
- *           "PvSolar" → "--asset-color-pv-solar"
+ * Convert asset name to CSS variable format Examples: "pv_solar" →
+ * "--asset-color-pv-solar" "PV_solar" → "--asset-color-pv-solar" "PvSolar" →
+ * "--asset-color-pv-solar"
  */
 function normalizeToCssVariable(assetName: string): string {
     return `--asset-color-${assetName
@@ -26,10 +26,11 @@ function normalizeToCssVariable(assetName: string): string {
 /**
  * Get the color for an asset, extracting from CSS variables
  *
- * Colors are cached after first extraction to avoid repeated getComputedStyle calls.
- * Automatically respects light/dark mode from CSS variables.
+ * Colors are cached after first extraction to avoid repeated getComputedStyle
+ * calls. Automatically respects light/dark mode from CSS variables.
  *
- * @param assetName - The asset name (e.g., "pv_solar", "windmill", "nuclear_reactor")
+ * @param assetName - The asset name (e.g., "pv_solar", "windmill",
+ *   "nuclear_reactor")
  * @returns RGB color string (e.g., "rgb(255, 234, 0)") or fallback if not found
  */
 export function getAssetColor(assetName: string): string {
@@ -54,9 +55,7 @@ export function getAssetColor(assetName: string): string {
     return finalColor;
 }
 
-/**
- * Clear the color cache (useful for theme switching or testing)
- */
+/** Clear the color cache (useful for theme switching or testing) */
 export function clearAssetColorCache(): void {
     colorCache.clear();
 }

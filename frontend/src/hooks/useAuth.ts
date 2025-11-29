@@ -1,14 +1,13 @@
 /**
- * Hook to access authentication context.
- * Must be used within an AuthProvider.
+ * Hook to access authentication context. Must be used within an AuthProvider.
  *
  * Returns the current user and authentication state.
  *
  * @example
- * const { user, isAuthenticated } = useAuth();
- * if (user?.player_id) {
- *   // Use current player ID
- * }
+ *     const { user, isAuthenticated } = useAuth();
+ *     if (user?.player_id) {
+ *         // Use current player ID
+ *     }
  *
  * @throws {Error} If used outside of AuthProvider
  */

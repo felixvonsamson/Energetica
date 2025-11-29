@@ -1,6 +1,4 @@
-/**
- * Profile page - Overview of player assets and statistics.
- */
+/** Profile page - Overview of player assets and statistics. */
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";

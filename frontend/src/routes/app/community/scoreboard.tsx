@@ -1,6 +1,4 @@
-/**
- * Scoreboard page - Overview of all players ranked by various metrics.
- */
+/** Scoreboard page - Overview of all players ranked by various metrics. */
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";

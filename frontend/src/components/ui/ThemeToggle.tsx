@@ -6,9 +6,7 @@ interface ThemeToggleProps {
     className?: string;
 }
 
-/**
- * Toggle button for switching between light and dark mode.
- */
+/** Toggle button for switching between light and dark mode. */
 export function ThemeToggle({ className }: ThemeToggleProps) {
     const { theme, toggleTheme } = useTheme();
 

@@ -1,6 +1,6 @@
 /**
- * Shared component for displaying facility/technology requirements.
- * Shows unlock requirements with color-coded status.
+ * Shared component for displaying facility/technology requirements. Shows
+ * unlock requirements with color-coded status.
  */
 
 import { TechnologyName } from "@/components/ui/AssetName";

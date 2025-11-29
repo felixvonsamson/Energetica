@@ -1,6 +1,6 @@
 /**
- * Helper types and utilities for working with generated API types.
- * This file provides convenient type extractors for the OpenAPI-generated types.
+ * Helper types and utilities for working with generated API types. This file
+ * provides convenient type extractors for the OpenAPI-generated types.
  */
 
 import type { paths, components } from "./api.generated";
@@ -9,8 +9,8 @@ import type { paths, components } from "./api.generated";
  * Extract the response type for a specific API endpoint and method.
  *
  * @example
- * type UserData = ApiResponse<"/auth/me", "get">;
- * // Returns the 200 response type for GET /auth/me
+ *     type UserData = ApiResponse<"/auth/me", "get">;
+ *     // Returns the 200 response type for GET /auth/me
  */
 export type ApiResponse<
     Path extends keyof paths,
@@ -25,7 +25,7 @@ export type ApiResponse<
  * Extract the request body type for a specific API endpoint and method.
  *
  * @example
- * type LoginBody = ApiRequestBody<"/auth/login", "post">;
+ *     type LoginBody = ApiRequestBody<"/auth/login", "post">;
  */
 export type ApiRequestBody<
     Path extends keyof paths,
@@ -40,7 +40,7 @@ export type ApiRequestBody<
  * Extract path parameters for a specific endpoint.
  *
  * @example
- * type FacilityParams = ApiPathParams<"/api/v1/facilities/{facilityId}">;
+ *     type FacilityParams = ApiPathParams<"/api/v1/facilities/{facilityId}">;
  */
 export type ApiPathParams<Path extends keyof paths> = paths[Path] extends {
     parameters: { path: infer P };
@@ -52,7 +52,7 @@ export type ApiPathParams<Path extends keyof paths> = paths[Path] extends {
  * Extract query parameters for a specific endpoint and method.
  *
  * @example
- * type SearchParams = ApiQueryParams<"/api/v1/search", "get">;
+ *     type SearchParams = ApiQueryParams<"/api/v1/search", "get">;
  */
 export type ApiQueryParams<
     Path extends keyof paths,
@@ -60,18 +60,18 @@ export type ApiQueryParams<
 > = paths[Path][Method] extends { parameters: { query: infer Q } } ? Q : never;
 
 /**
- * Direct access to schema components (models).
- * Use this for shared types that aren't tied to specific endpoints.
+ * Direct access to schema components (models). Use this for shared types that
+ * aren't tied to specific endpoints.
  *
  * @example
- * type User = ApiSchema<"User">;
+ *     type User = ApiSchema<"User">;
  */
 export type ApiSchema<T extends keyof components["schemas"]> =
     components["schemas"][T];
 
 /**
- * Type-safe API client method builder.
- * Ensures the path, method, and parameters match the OpenAPI spec.
+ * Type-safe API client method builder. Ensures the path, method, and parameters
+ * match the OpenAPI spec.
  */
 export type TypedEndpoint<
     Path extends keyof paths,

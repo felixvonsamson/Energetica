@@ -1,6 +1,6 @@
 /**
- * Authentication context providing auth state throughout the app.
- * Reads session cookies and fetches user data from the backend.
+ * Authentication context providing auth state throughout the app. Reads session
+ * cookies and fetches user data from the backend.
  */
 
 import React, {

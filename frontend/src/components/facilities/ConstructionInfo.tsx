@@ -1,6 +1,6 @@
 /**
- * Shared component for displaying construction information.
- * Shows duration, power consumption, and emissions.
+ * Shared component for displaying construction information. Shows duration,
+ * power consumption, and emissions.
  */
 
 import { Clock, Zap, Cloud } from "lucide-react";

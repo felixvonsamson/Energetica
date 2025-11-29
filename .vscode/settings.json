@@ -71,6 +71,7 @@
     // cSpell
     "cSpell.language": "en-GB",
     "cSpell.words": [
+        ".venv",
         "APPROXIMATIVE",
         "apscheduler",
         "arccos",
@@ -89,6 +90,7 @@
         "cumsum",
         "cumul",
         "datapoint",
+        "datapoints",
         "Deepwater",
         "DGRAM",
         "docstrings",
@@ -131,6 +133,7 @@
         "LCOE",
         "levelised",
         "linalg",
+        "lookback",
         "lvls",
         "mapsize",
         "Météo",
@@ -178,12 +181,12 @@
         "uselist",
         "vectorize",
         "visualisation",
+        "Vite",
         "webcredentials",
         "webpush",
         "wght",
         "windspeed",
-        "Zürich",
-        "Vite"
+        "Zürich"
     ],
     "python.testing.pytestArgs": ["tests"],
     "python.testing.unittestEnabled": false,

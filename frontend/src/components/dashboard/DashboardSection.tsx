@@ -9,9 +9,7 @@ interface DashboardSectionProps {
     emptyMessage?: string;
 }
 
-/**
- * Reusable dashboard section with empty state handling.
- */
+/** Reusable dashboard section with empty state handling. */
 export function DashboardSection({
     title,
     children,

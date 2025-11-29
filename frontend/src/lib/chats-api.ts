@@ -1,29 +1,20 @@
-/**
- * Chats-related API calls.
- * Handles chat and messaging functionality.
- */
+/** Chats-related API calls. Handles chat and messaging functionality. */
 
 import { apiClient } from "./api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 
 export const chatsApi = {
-    /**
-     * Get the list of chats for the current user.
-     */
+    /** Get the list of chats for the current user. */
     getChatList: () =>
         apiClient.get<ApiResponse<"/api/v1/chats", "get">>("/chats"),
 
-    /**
-     * Get all messages in a specific chat.
-     */
+    /** Get all messages in a specific chat. */
     getChatMessages: (chatId: number) =>
         apiClient.get<ApiResponse<"/api/v1/chats/{chat_id}/messages", "get">>(
             `/chats/${chatId}/messages`,
         ),
 
-    /**
-     * Send a new message to a chat.
-     */
+    /** Send a new message to a chat. */
     sendMessage: (
         chatId: number,
         data: ApiRequestBody<"/api/v1/chats/{chat_id}/messages", "post">,
@@ -33,15 +24,11 @@ export const chatsApi = {
             data,
         ),
 
-    /**
-     * Create a new group chat.
-     */
+    /** Create a new group chat. */
     createGroupChat: (data: ApiRequestBody<"/api/v1/chats", "post">) =>
         apiClient.post<ApiResponse<"/api/v1/chats", "post">>("/chats", data),
 
-    /**
-     * Mark a chat as opened by the current user.
-     */
+    /** Mark a chat as opened by the current user. */
     openChat: (chatId: number) =>
         apiClient.post<ApiResponse<"/api/v1/chats/{chat_id}:open", "post">>(
             `/chats/${chatId}:open`,
