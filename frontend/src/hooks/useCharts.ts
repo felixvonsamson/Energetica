@@ -6,10 +6,13 @@
  * ensuring complete coverage of the requested time range.
  *
  * Key Concepts:
- * - count: Number of datapoints (not ticks). Ticks covered = count × resolution.
- * - Tick ranges are [start_tick, start_tick + count × resolution) - exclusive end.
- * - Each datapoint at resolution N represents aggregated data over N ticks.
+ *
+ * - QueryClient: dynamically read all previously run chart queries.
  * - Smart fetching fills gaps in cache coverage with minimal requests.
+ * - Each resolution has its own API and its own cached queries.
+ * - Each datapoint at resolution N represents an average over N ticks.
+ * - The `count` variable is a number of datapoints.
+ * - Tick ranges are [) i.e. inclusive on left and exclusive on right.
  */
 
 import { useMemo } from "react";
@@ -21,130 +24,116 @@ import {
 } from "@tanstack/react-query";
 import { chartsApi } from "@/lib/charts-api";
 import { queryKeys } from "@/lib/query-client";
-import { Resolution, toStringResolution } from "../types/charts";
+import {
+    ChartType,
+    Resolution,
+    TickRange,
+    toStringResolution,
+} from "../types/charts";
 
-interface ChartParams {
+/** Main exported hook. Returns all chart datapoints relevant to the request. */
+export function useCurrentChartData({
+    chartType,
+    currentTick,
+    resolution,
+    maxDatapoints,
+}: {
+    chartType: ChartType;
+    currentTick: number | undefined;
     resolution: Resolution;
-    start_tick: number;
-    count: number; // Number of datapoints (ticks covered = count × resolution)
+    maxDatapoints: number;
+}) {
+    if (!currentTick) {
+        return { chartData: [], isLoading: true, isError: false };
+    }
+
+    // Determine the corresponding tick range
+    const startTick =
+        resolution *
+        Math.max(0, Math.floor(currentTick / resolution - maxDatapoints));
+    const count = Math.floor((currentTick - startTick) / resolution);
+    const range = { startTick, count };
+
+    // Call helper hook
+    const {
+        data: chartData,
+        isLoading,
+        isError,
+    } = useChartData({ chartType, range, resolution });
+
+    return { chartData, isLoading, isError };
 }
 
 /**
- * Aggregates power sources data from multiple cached query ranges.
+ * Aggregates chart data from multiple cached query ranges.
  *
- * Combines data from overlapping cache entries to construct a complete time series
- * for the requested range. Automatically triggers fetches for missing data ranges.
- *
- * Process:
- * 1. Calculate desired tick range [start_tick, end_tick)
- * 2. Find all cached ranges that overlap with desired range
- * 3. For each overlapping region, extract data and map to tick values
- * 4. Return combined data sorted by tick
- *
- * @returns Aggregated data with loading/error states, or null if params undefined
+ * Combines data from multiple cache entries to construct a complete time series
+ * for the requested range. Triggers fetches for missing data ranges and waits.
  */
-export function useAggregatedPowerSourcesChart(
-    params: ChartParams | undefined,
-) {
+export function useChartData({
+    chartType,
+    resolution,
+    range,
+}: {
+    chartType: ChartType;
+    resolution: Resolution;
+    range: TickRange;
+}) {
     const queryClient = useQueryClient();
 
-    // Early return if params not ready (e.g., tick still loading)
-    if (!params) {
-        return {
-            data: null,
-            isLoading: false,
-            isError: false,
-        };
-    }
+    const rangesToFetch = getCacheGaps({
+        queryClient,
+        chartType,
+        resolution,
+        range,
+    });
 
-    const { isLoading, isError } = useSmartPowerSourcesChart(params);
+    const allCachedRanges = getCachedChartRanges({
+        queryClient,
+        chartType,
+        resolution,
+        range,
+    });
+
+    const { isLoading, isError } = useFetchChartGaps({
+        chartType,
+        resolution,
+        rangesToFetch,
+    });
 
     const aggregatedData = useMemo(() => {
         // Calculate the exclusive end tick of the desired range
-        const desiredEndTick =
-            params.start_tick + params.count * params.resolution;
+        const endTick = range.startTick + range.count * resolution;
 
         // Map of tick -> {source1: value, source2: value, ...}
         const tickMap = new Map<number, Record<string, number>>();
 
-        // Find cached ranges that overlap with [params.start_tick, desiredEndTick)
-        const cachedRanges = _getCachedTickRanges(
-            queryClient,
-            "power-sources",
-            params.resolution,
-        ).filter((range) => {
-            const rangeEndTick =
-                range.start_tick + range.count * params.resolution;
-            // Range overlaps if: range.end > desired.start AND range.start < desired.end
-            return (
-                rangeEndTick > params.start_tick &&
-                range.start_tick < desiredEndTick
-            );
-        });
-
         // Aggregate data from all overlapping cached ranges
-        for (const range of cachedRanges) {
-            const queryKey = queryKeys.charts.powerSources(
-                String(params.resolution),
-                range.start_tick,
-                range.count,
-            );
-            const cachedQuery = queryClient
-                .getQueryCache()
-                .find({ queryKey, exact: true });
-
-            if (!cachedQuery || cachedQuery.state.status !== "success") {
-                continue;
-            }
-
+        for (const cached of allCachedRanges) {
             const rangeEndTick =
-                range.start_tick + range.count * params.resolution;
+                cached.range.startTick + cached.range.count * resolution;
 
-            // Calculate the overlapping tick range [overlapStart, overlapEnd)
-            const rawOverlapStart = Math.max(
-                range.start_tick,
-                params.start_tick,
-            );
-            const overlapEnd = Math.min(rangeEndTick, desiredEndTick);
-
-            // CRITICAL: Ensure overlapStart is aligned to resolution
-            // If misaligned, we'd access wrong indices in the data array
-            // Example: if range starts at 100 with resolution 6, valid ticks are: 100, 106, 112, ...
-            // If rawOverlapStart=103, we must round to 106 to stay aligned
-            const overlapStart =
-                Math.ceil(rawOverlapStart / params.resolution) *
-                params.resolution;
-
-            const data = cachedQuery.state.data as any;
-
-            // Iterate through ticks in the overlap, stepping by resolution
-            // Each tick represents the start of an interval [tick, tick + resolution)
-            for (
-                let tick = overlapStart;
-                tick < overlapEnd;
-                tick += params.resolution
-            ) {
-                // Calculate index into this range's data array
-                // Example: if range starts at tick 100, resolution 6, and current tick is 112:
-                //   localIndex = (112 - 100) / 6 = 2 (accesses datapoint[2])
-                const localIndex =
-                    (tick - range.start_tick) / params.resolution;
-
-                if (!tickMap.has(tick)) {
-                    tickMap.set(tick, {});
-                }
-
+            // Iterate through ticks in the overlap, stepping by index
+            const startIndex =
+                (Math.max(cached.range.startTick, range.startTick) -
+                    cached.range.startTick) /
+                resolution;
+            const endIndex =
+                (Math.min(rangeEndTick, endTick) - cached.range.startTick) /
+                resolution;
+            for (let i = startIndex; i < endIndex; i += 1) {
+                const tick = i * resolution + cached.range.startTick;
+                if (!tickMap.has(tick)) tickMap.set(tick, {});
                 const tickData = tickMap.get(tick)!;
-
                 // Copy all power source values for this tick
-                Object.entries(data.series).forEach(
+                Object.entries(cached.data.series).forEach(
                     ([source, values]: [string, any]) => {
-                        tickData[source] = values[localIndex] ?? 0;
+                        tickData[source] = values[i] ?? 0;
                     },
                 );
             }
         }
-
+        // Convert from Map (tick->{data}) to list of entries [{tick+data}]
         const result = Array.from(tickMap.entries())
             .sort(([a], [b]) => a - b)
             .map(([tick, sources]) => ({
@@ -152,51 +141,40 @@ export function useAggregatedPowerSourcesChart(
                 ...sources,
             }));
 
-        return result.length > 0 ? result : null;
-    }, [
-        queryClient,
-        params?.resolution,
-        params?.start_tick,
-        params?.count,
-        isLoading,
-    ]);
+        // console.log("result:", result);
+        return result;
+    }, [allCachedRanges]);
 
     return {
-        data: aggregatedData,
+        data: isLoading ? [] : aggregatedData,
         isLoading,
         isError,
     };
 }
 
-/**
- * Intelligently fetches power sources data, only requesting uncached ranges.
- *
- * Analyses the query cache to determine which tick ranges are missing and
- * issues minimal fetch requests to fill gaps.
- */
-function useSmartPowerSourcesChart(params: ChartParams) {
-    const queryClient = useQueryClient();
-
-    const fetchResult = _getSmartFetchRange(
-        queryClient,
-        "power-sources",
-        params.resolution,
-        params.start_tick,
-        params.count,
-    );
-
+/** Fetches ranges concurrently. */
+function useFetchChartGaps({
+    chartType,
+    resolution,
+    rangesToFetch,
+}: {
+    chartType: ChartType;
+    resolution: Resolution;
+    rangesToFetch: TickRange[];
+}) {
+    const resolutionKey = toStringResolution(resolution);
     const queries = useQueries({
-        queries: fetchResult.rangesToFetch.map((range) => ({
+        queries: rangesToFetch.map((range) => ({
             queryKey: queryKeys.charts.powerSources(
-                String(params.resolution),
-                range.start_tick,
+                resolutionKey,
+                range.startTick,
                 range.count,
             ),
             queryFn: () =>
-                chartsApi.getPowerSources({
-                    resolution: params.resolution,
-                    start_tick: range.start_tick,
-                    count: range.count,
+                chartsApi.getChartData({
+                    chartType,
+                    resolution,
+                    range,
                 }),
             staleTime: 60 * 1000,
         })),
@@ -208,141 +186,125 @@ function useSmartPowerSourcesChart(params: ChartParams) {
     return { isLoading, isError };
 }
 
-interface TickRange {
-    start_tick: number; // Aligned to resolution
-    count: number; // Number of datapoints (not ticks)
-}
-
-interface SmartFetchResult {
-    rangesToFetch: TickRange[]; // Gaps that need to be fetched
-    cachedRanges: TickRange[]; // Already cached ranges that overlap with request
-}
-
-function _getSuccessfulCachedQueries(
-    queryClient: QueryClient,
-    chartType: "power-sources",
-    resolution: Resolution,
-): Query[] {
-    const cache = queryClient.getQueryCache();
-
-    const filters = {
-        queryKey: ["charts", "power-sources", toStringResolution(resolution)],
-        predicate: (query: Query) =>
-            query.state.status === "success" && !!query.state.data,
-    };
-    return cache.findAll(filters);
+interface CachedTickRange {
+    range: TickRange;
+    data: any;
 }
 
 /**
- * Extracts tick ranges from all successfully cached queries for a chart type.
- *
- * Scans the query cache for matching chart queries and returns their tick ranges,
- * sorted by start_tick.
- *
- * @returns Array of cached ranges, sorted by start_tick ascending
+ * Calculates which tick ranges need to be fetched, analysing cached data
+ * coverage. Returns minimal fetch requests to fill gaps.
  */
-export function _getCachedTickRanges(
-    queryClient: QueryClient,
-    chartType: "power-sources",
-    resolution: Resolution,
-): TickRange[] {
-    const relevantQueries = _getSuccessfulCachedQueries(
+
+interface GetCacheGapsParams {
+    queryClient: QueryClient;
+    chartType: ChartType;
+    resolution: Resolution;
+    range: TickRange;
+}
+
+function getCacheGaps({
+    queryClient,
+    chartType,
+    resolution,
+    range,
+}: GetCacheGapsParams): TickRange[] {
+    // Find all cached ranges overlapping with desired range [start, end)
+    const cachedRanges = getCachedChartRanges({
         queryClient,
         chartType,
         resolution,
-    );
+        range,
+    });
 
-    const ranges: TickRange[] = relevantQueries
+    // If no cache, fetch entire desired range
+    if (cachedRanges.length === 0) {
+        return [range];
+    }
+
+    // Otherwise, identify gaps between cached ranges
+    const rangesToFetch: TickRange[] = [];
+    let currentTick = range.startTick;
+
+    for (const cached of cachedRanges) {
+        // Accumulate if there is a gap with previous cached range
+        if (currentTick < cached.range.startTick) {
+            rangesToFetch.push({
+                startTick: currentTick,
+                count: (cached.range.startTick - currentTick) / resolution,
+            });
+        }
+        // Advance past this cached range
+        currentTick = cached.range.startTick + cached.range.count * resolution;
+    }
+
+    // Add a final requested range if the last cached range is strictly inside the requested range
+    const desiredEndTick = range.startTick + range.count * resolution;
+    if (currentTick < desiredEndTick) {
+        rangesToFetch.push({
+            startTick: currentTick,
+            count: (desiredEndTick - currentTick) / resolution,
+        });
+    }
+
+    // Return array of gap ranges to fetch
+    return rangesToFetch;
+}
+
+/**
+ * Extracts tick ranges from all successfully cached queries for a chart type
+ * and resolution. Returns ranges sorted by startTick.
+ *
+ * @returns Array of cached ranges, sorted by startTick ascending
+ */
+export function getCachedChartRanges({
+    queryClient,
+    chartType,
+    resolution,
+    range,
+}: {
+    queryClient: QueryClient;
+    chartType: ChartType;
+    resolution: Resolution;
+    range: TickRange;
+}): CachedTickRange[] {
+    const cache = queryClient.getQueryCache();
+    const filters = {
+        queryKey: ["charts", chartType, toStringResolution(resolution)],
+        predicate: (query: Query) =>
+            query.state.status === "success" && !!query.state.data,
+    };
+    const queries = cache.findAll(filters);
+
+    const endTick = range.startTick + range.count * resolution;
+    const ranges: CachedTickRange[] = queries
         .map((query) => {
-            const key = query.queryKey as [
+            const queryKey = query.queryKey as [
                 string,
                 string,
                 string,
                 number,
                 number,
             ];
-            const [, , , startTick, count] = key;
+            const [, , , startTick, count] = queryKey;
             return {
-                start_tick: startTick,
-                count: count,
-            };
+                range: {
+                    startTick: startTick,
+                    count: count,
+                },
+                data: query.state.data,
+            } as CachedTickRange;
         })
-        .sort((a, b) => a.start_tick - b.start_tick);
+        .filter((cache) => {
+            const cachedRangeEndTick =
+                cache.range.startTick + cache.range.count * resolution;
+            // Range overlaps if: range.end > desired.start AND range.start < desired.end
+            return (
+                cachedRangeEndTick > range.startTick &&
+                cache.range.startTick < endTick
+            );
+        })
+        .sort((a, b) => a.range.startTick - b.range.startTick);
 
     return ranges;
-}
-
-/**
- * Calculates which tick ranges need to be fetched to satisfy a request.
- *
- * Analyses cached data coverage and returns minimal fetch requests to fill gaps.
- * Ensures all returned ranges have aligned start_tick values.
- *
- * Algorithm:
- * 1. Find all cached ranges overlapping with desired range [start, end)
- * 2. If no cache, fetch entire desired range
- * 3. Otherwise, identify gaps between cached ranges
- * 4. Return array of gap ranges to fetch
- *
- * @param desiredCount Number of datapoints (ticks covered = count × resolution)
- * @returns Ranges to fetch and ranges already cached
- */
-function _getSmartFetchRange(
-    queryClient: QueryClient,
-    chartType: "power-sources",
-    resolution: Resolution,
-    desiredStartTick: number,
-    desiredCount: number,
-): SmartFetchResult {
-    const allCachedRanges = _getCachedTickRanges(
-        queryClient,
-        chartType,
-        resolution,
-    );
-    const desiredEndTick = desiredStartTick + desiredCount * resolution;
-
-    const cachedRanges = allCachedRanges.filter((range) => {
-        const rangeEndTick = range.start_tick + range.count * resolution;
-        return (
-            rangeEndTick > desiredStartTick && range.start_tick < desiredEndTick
-        );
-    });
-
-    if (cachedRanges.length === 0) {
-        return {
-            rangesToFetch: [
-                { start_tick: desiredStartTick, count: desiredCount },
-            ],
-            cachedRanges: [],
-        };
-    }
-
-    // Identify gaps between cached ranges
-    const rangesToFetch: TickRange[] = [];
-    let currentTick = desiredStartTick;
-
-    for (const cachedRange of cachedRanges) {
-        // Gap before this cached range?
-        if (currentTick < cachedRange.start_tick) {
-            rangesToFetch.push({
-                start_tick: currentTick,
-                count: (cachedRange.start_tick - currentTick) / resolution,
-            });
-        }
-        // Advance past this cached range
-        currentTick = cachedRange.start_tick + cachedRange.count * resolution;
-    }
-
-    // Gap after all cached ranges?
-    if (currentTick < desiredEndTick) {
-        rangesToFetch.push({
-            start_tick: currentTick,
-            count: (desiredEndTick - currentTick) / resolution,
-        });
-    }
-
-    return {
-        rangesToFetch,
-        cachedRanges,
-    };
 }

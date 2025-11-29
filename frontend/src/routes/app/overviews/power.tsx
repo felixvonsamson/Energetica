@@ -1,6 +1,4 @@
-/**
- * Power overview page - Electricity generation visualization.
- */
+/** Power overview page - Electricity generation visualization. */
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
@@ -20,10 +18,7 @@ import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
 import { useGameTick } from "@/hooks/useGameTick";
-import {
-    useAggregatedPowerSourcesChart,
-    _getCachedTickRanges,
-} from "@/hooks/useCharts";
+import { useCurrentChartData } from "@/hooks/useCharts";
 import { Resolution } from "@/types/charts";
 import { getAssetColor } from "@/lib/asset-colors";
 
@@ -42,20 +37,8 @@ function PowerOverviewPage() {
     );
 }
 
-const RESOLUTIONS: Array<{
-    id: number;
-    label: string;
-    resolution: Resolution;
-}> = [
-    { id: 0, label: "4h", resolution: 1 },
-    { id: 1, label: "24h", resolution: 1 },
-    { id: 2, label: "6 days", resolution: 6 },
-    { id: 3, label: "6 months", resolution: 36 },
-    { id: 4, label: "3 years", resolution: 216 },
-    { id: 5, label: "18 years", resolution: 1296 },
-];
-
 function PowerOverviewContent() {
+    const { currentTick } = useGameTick();
     const [selectedResolutionIndex, setSelectedResolutionIndex] = useState(2);
     const dataPoints = selectedResolutionIndex === 0 ? 60 : 360;
 
@@ -69,28 +52,11 @@ function PowerOverviewContent() {
 
             <Card className="mb-6">
                 <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Resolution
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                            {RESOLUTIONS.map((res) => (
-                                <button
-                                    key={res.id}
-                                    onClick={() =>
-                                        setSelectedResolutionIndex(res.id)
-                                    }
-                                    className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
-                                        selectedResolutionIndex === res.id
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                    }`}
-                                >
-                                    {res.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    <ResolutionPicker
+                        selectedResolutionIndex={selectedResolutionIndex}
+                        onResolutionChange={setSelectedResolutionIndex}
+                        currentTick={currentTick}
+                    />
                 </div>
             </Card>
 
@@ -101,6 +67,7 @@ function PowerOverviewContent() {
                 </div>
 
                 <PowerSourcesChart
+                    currentTick={currentTick}
                     dataPoints={dataPoints}
                     resolution={selectedResolution.resolution}
                 />
@@ -110,6 +77,7 @@ function PowerOverviewContent() {
 }
 
 interface PowerSourcesChartProps {
+    currentTick: number | undefined;
     dataPoints: number;
     resolution: Resolution;
 }
@@ -117,49 +85,35 @@ interface PowerSourcesChartProps {
 // Get color for power source using asset color system
 const getColorForSource = (source: string): string => getAssetColor(source);
 
-function PowerSourcesChart({ dataPoints, resolution }: PowerSourcesChartProps) {
-    const { currentTick, isLoadingTick } = useGameTick();
-
-    // Determine start tick
-    // dataPoints is the number of datapoints, not ticks
-    // Convert to ticks: dataPoints * resolution
-    const res = Number(resolution);
-    let leftmostTick = currentTick - dataPoints * res;
-    let firstBarTick = Math.max(0, Math.floor(leftmostTick / res) * res);
-
-    // Fetch and aggregate power sources data
-    const params = isLoadingTick
-        ? undefined
-        : {
-              resolution: resolution,
-              start_tick: firstBarTick,
-              count: Math.floor((currentTick - firstBarTick) / res),
-          };
+function PowerSourcesChart({
+    currentTick,
+    dataPoints,
+    resolution,
+}: PowerSourcesChartProps) {
     const {
-        data: powerSourcesData,
+        chartData,
         isLoading: isChartLoading,
         isError,
-    } = useAggregatedPowerSourcesChart(params);
-
-    // Data is already in the right format for recharts
-    const chartData = useMemo(() => {
-        if (!powerSourcesData) return [];
-        return powerSourcesData;
-    }, [powerSourcesData]);
+    } = useCurrentChartData({
+        chartType: "power-sources",
+        currentTick,
+        resolution,
+        maxDatapoints: dataPoints,
+    });
 
     // Memoize bar components
     const barComponents = useMemo(() => {
-        if (!powerSourcesData || powerSourcesData.length === 0) return [];
+        if (!chartData || chartData.length === 0) return [];
 
         // Extract power source keys from first data point (excluding 'tick')
-        const powerSources = Object.keys(powerSourcesData[0]).filter(
+        const powerSources = Object.keys(chartData[0]).filter(
             (key) => key !== "tick",
         );
 
         // Filter to only sources that have non-zero values
         return powerSources
             .filter((source) => {
-                return powerSourcesData.some(
+                return chartData.some(
                     (dataPoint) =>
                         ((dataPoint as Record<string, any>)[source] ?? 0) > 0,
                 );
@@ -175,10 +129,9 @@ function PowerSourcesChart({ dataPoints, resolution }: PowerSourcesChartProps) {
                     fillOpacity={1}
                 />
             ));
-    }, [powerSourcesData]);
+    }, [chartData]);
 
-    // Early returns after all hooks are called
-    if (isLoadingTick || isChartLoading) {
+    if (isChartLoading) {
         return <ChartLoadingState />;
     }
 
@@ -188,10 +141,6 @@ function PowerSourcesChart({ dataPoints, resolution }: PowerSourcesChartProps) {
                 Failed to load data
             </div>
         );
-    }
-
-    if (chartData.length === 0) {
-        return null;
     }
 
     return (
@@ -213,6 +162,58 @@ function ChartLoadingState() {
         <div className="flex items-center justify-center py-12">
             <RefreshCw className="w-5 h-5 animate-spin mr-2" />
             Loading data...
+        </div>
+    );
+}
+
+interface ResolutionOption {
+    id: number;
+    label: string;
+    resolution: Resolution;
+}
+
+const RESOLUTIONS: ResolutionOption[] = [
+    { id: 0, label: "4h", resolution: 1 },
+    { id: 1, label: "24h", resolution: 1 },
+    { id: 2, label: "6 days", resolution: 6 },
+    { id: 3, label: "6 months", resolution: 36 },
+    { id: 4, label: "3 years", resolution: 216 },
+    { id: 5, label: "18 years", resolution: 1296 },
+];
+
+interface ResolutionPickerProps {
+    selectedResolutionIndex: number;
+    onResolutionChange: (index: number) => void;
+    currentTick: number | undefined;
+}
+
+export function ResolutionPicker({
+    selectedResolutionIndex,
+    onResolutionChange,
+    currentTick,
+}: ResolutionPickerProps) {
+    return (
+        <div>
+            <label className="block text-sm font-medium mb-2">Resolution</label>
+            <div className="flex flex-wrap gap-2">
+                {currentTick &&
+                    RESOLUTIONS.filter(
+                        // Only give the option of choosing a resolution if there is enough data for that graph view to make sense
+                        (res) => currentTick > res.resolution * 360,
+                    ).map((res) => (
+                        <button
+                            key={res.id}
+                            onClick={() => onResolutionChange(res.id)}
+                            className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
+                                selectedResolutionIndex === res.id
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                            }`}
+                        >
+                            {res.label}
+                        </button>
+                    ))}
+            </div>
         </div>
     );
 }
