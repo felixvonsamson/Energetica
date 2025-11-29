@@ -1,7 +1,7 @@
 import {
     createContext,
     useContext,
-    useEffect,
+    useLayoutEffect,
     useState,
     type ReactNode,
 } from "react";
@@ -34,7 +34,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         return "light";
     });
 
-    useEffect(() => {
+    // Use useLayoutEffect to apply theme SYNCHRONOUSLY before other effects
+    // This ensures the DOM class is updated before useAssetColorGetter tries to read CSS variables
+    useLayoutEffect(() => {
         // Apply theme to document
         const root = document.documentElement;
         root.classList.remove("light", "dark");

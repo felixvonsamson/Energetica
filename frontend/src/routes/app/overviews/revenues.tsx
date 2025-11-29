@@ -9,7 +9,7 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
 import { useGameTick } from "@/hooks/useGameTick";
 import { useCurrentChartData } from "@/hooks/useCharts";
-import { getAssetColor } from "@/lib/asset-colors";
+import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import {
     TimeSeriesChart,
     ResolutionPicker,
@@ -232,6 +232,8 @@ function RevenuesChart({
     viewMode,
     revenueType,
 }: RevenuesChartProps) {
+    const getColor = useAssetColorGetter();
+
     // Create a composite filter that combines non-zero filtering with visibility filtering
     const filterDataKeys = useMemo(() => {
         // For "all" view, use includeAllSeries since we have a single aggregated "net" value
@@ -286,15 +288,17 @@ function RevenuesChart({
         });
     }, [chartData, viewMode]);
 
-
-    const chartConfig: TimeSeriesChartConfig = {
-        chartVariant: "area",
-        stacked: true,
-        height: 400,
-        showBrush: true,
-        getColor: getAssetColor,
-        filterDataKeys,
-    };
+    const chartConfig: TimeSeriesChartConfig = useMemo(
+        () => ({
+            chartVariant: "area",
+            stacked: true,
+            height: 400,
+            showBrush: true,
+            getColor,
+            filterDataKeys,
+        }),
+        [getColor, filterDataKeys],
+    );
 
     return (
         <TimeSeriesChart

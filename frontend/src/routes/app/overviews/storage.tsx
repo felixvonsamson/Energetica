@@ -9,8 +9,8 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
 import { useGameTick } from "@/hooks/useGameTick";
 import { useCurrentChartData } from "@/hooks/useCharts";
+import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { Resolution, ChartType } from "@/types/charts";
-import { getAssetColor } from "@/lib/asset-colors";
 import {
     TimeSeriesChart,
     ResolutionPicker,
@@ -134,6 +134,8 @@ function StorageChart({
     hiddenFacilities,
     viewMode,
 }: StorageChartProps) {
+    const getColor = useAssetColorGetter();
+
     // Create a composite filter that combines non-zero filtering with visibility filtering
     const filterDataKeys = useMemo(() => {
         if (hiddenFacilities.size === 0) {
@@ -179,14 +181,17 @@ function StorageChart({
         });
     }, [chartData, viewMode]);
 
-    const chartConfig: TimeSeriesChartConfig = {
-        chartVariant: "area",
-        stacked: true,
-        height: 400,
-        showBrush: true,
-        getColor: getAssetColor,
-        filterDataKeys,
-    };
+    const chartConfig: TimeSeriesChartConfig = useMemo(
+        () => ({
+            chartVariant: "area",
+            stacked: true,
+            height: 400,
+            showBrush: true,
+            getColor,
+            filterDataKeys,
+        }),
+        [getColor, filterDataKeys],
+    );
 
     return (
         <TimeSeriesChart
