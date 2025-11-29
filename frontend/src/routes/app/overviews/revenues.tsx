@@ -125,7 +125,11 @@ function RevenuesOverviewContent() {
         });
 
         // Process op-costs data (only for expenses and all views)
-        if ((revenueType === "expenses" || revenueType === "all") && opCostsData && opCostsData.length > 0) {
+        if (
+            (revenueType === "expenses" || revenueType === "all") &&
+            opCostsData &&
+            opCostsData.length > 0
+        ) {
             opCostsData.forEach((dataPoint: Record<string, number>) => {
                 if (!tickMap.has(dataPoint.tick)) {
                     tickMap.set(dataPoint.tick, { tick: dataPoint.tick });
@@ -238,7 +242,8 @@ function RevenuesChart({
     const filterDataKeys = useMemo(() => {
         // For "all" view, use includeAllSeries since we have a single aggregated "net" value
         // filterNonZeroSeries only keeps values > 0, which filters out negative values
-        const baseFilter = revenueType === "all" ? includeAllSeries : filterNonZeroSeries;
+        const baseFilter =
+            revenueType === "all" ? includeAllSeries : filterNonZeroSeries;
 
         if (hiddenFacilities.size === 0) {
             return baseFilter;

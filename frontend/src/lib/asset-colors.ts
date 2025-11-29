@@ -65,10 +65,11 @@ export function getAssetColor(assetName: string, theme: string): string {
 }
 
 /**
- * Clear the color cache (useful for testing and HMR)
- * Note: With theme-aware caching, this is no longer needed for theme switching
+ * Clear the color cache (useful for testing and HMR) Note: With theme-aware
+ * caching, this is no longer needed for theme switching
  *
- * Dispatches a custom event to notify components that they should re-fetch colors
+ * Dispatches a custom event to notify components that they should re-fetch
+ * colors
  */
 export function clearAssetColorCache(): void {
     colorCache.clear();

@@ -15,7 +15,7 @@ interface FacilityGaugeProps {
 }
 
 /**
- * Displays a colored gauge bar with percentage overlay.
+ * Displays a coloured gauge bar with percentage overlay.
  *
  * The gauge uses CSS variables for facility-specific colors:
  * `--asset-color-{facility-type}` where underscores are replaced with hyphens.

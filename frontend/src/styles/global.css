@@ -53,7 +53,7 @@
         --content-bg: #c9d4b5;
         --card-bg: #e5d9b6;
 
-        --text-primary: #285430;
+        --text-primary: var(--color-pine);
         --text-secondary: #1b3820;
         --text-muted: #5f8d4e;
         --text-on-card: #000000;
@@ -111,6 +111,12 @@
         --asset-color-construction: rgb(255, 123, 0);
         --asset-color-transport: rgb(106, 0, 244);
         --asset-color-carbon-capture: rgb(173, 181, 189);
+
+        /* Map tile colours */
+        --map-selected-tile-hover: var(--color-pine-darker);
+        --map-tile-current-player: hsl(0, 64%, 47%);
+        --map-tile-other-player: var(--color-pine-light);
+        --map-tile-vacant: var(--color-bone)
     }
 
     /* Dark mode */
@@ -178,6 +184,12 @@
         --asset-color-construction: rgb(255, 163, 60);
         --asset-color-transport: rgb(156, 80, 255);
         --asset-color-carbon-capture: rgb(153, 161, 169);
+
+        /* Map tile colours - same as light mode */
+        --map-selected-tile-hover: hsl(0, 0%, 89%);
+        --map-tile-current-player: hsl(0, 97%, 23%);
+        --map-tile-other-player: var(--color-pine-darker);
+        --map-tile-vacant: rgb(121, 121, 121);
     }
 
     html,

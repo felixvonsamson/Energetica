@@ -129,4 +129,7 @@ export const queryKeys = {
     game: {
         engine: ["game", "engine"] as const,
     },
+    map: {
+        all: ["map"] as const,
+    },
 } as const;
