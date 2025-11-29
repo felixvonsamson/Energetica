@@ -11,6 +11,7 @@ import { FacilityName } from "@/components/ui/AssetName";
 import { FacilityGauge } from "@/components/ui/FacilityGauge";
 import { formatEnergy, formatPower } from "@/lib/format-utils";
 import { useFacilities } from "@/hooks/useFacilities";
+import { useGameEngine } from "@/hooks/useGame";
 import type { ChartType } from "@/types/charts";
 
 interface PowerOverviewTableProps {
@@ -62,6 +63,7 @@ export function PowerOverviewTable({
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
     const { data: facilitiesData } = useFacilities();
+    const { data: gameEngine } = useGameEngine();
     const isGeneration = chartType === "power-sources";
 
     // Check if all facilities are hidden
@@ -115,6 +117,7 @@ export function PowerOverviewTable({
     // Calculate aggregated data for each facility type
     const facilityRows = useMemo(() => {
         if (!chartData || chartData.length === 0) return [];
+        if (!gameEngine) return [];
 
         // Get all facility types from the chart data
         const facilityTypes = new Set<string>();
@@ -132,8 +135,12 @@ export function PowerOverviewTable({
                 // Sum all power values and multiply by resolution to get total energy
                 const totalEnergy = chartData.reduce((sum, dataPoint) => {
                     const power = dataPoint[facilityType] || 0;
-                    // Energy = Power × Time (resolution in ticks, 1 tick = 1 hour)
-                    return sum + power * resolution;
+                    // Energy = Power × Time
+                    // resolution is ticks per datapoint, game_seconds_per_tick is game seconds per tick
+                    // Energy (Wh) = Power (W) × Time (hours)
+                    const timeInHours =
+                        (resolution * gameEngine.game_seconds_per_tick) / 3600;
+                    return sum + power * timeInHours;
                 }, 0);
 
                 const row: FacilityRow = {
@@ -156,8 +163,11 @@ export function PowerOverviewTable({
 
                         // Calculate used capacity as percentage
                         // Average power over the period / installed capacity
+                        const timeInHours =
+                            (resolution * gameEngine.game_seconds_per_tick) /
+                            3600;
                         const avgPower =
-                            totalEnergy / (chartData.length * resolution);
+                            totalEnergy / (chartData.length * timeInHours);
                         row.usedCapacity =
                             installedCapacity > 0
                                 ? (avgPower / installedCapacity) * 100
@@ -171,7 +181,7 @@ export function PowerOverviewTable({
 
         // Filter out rows with zero energy
         return rows.filter((row) => row.totalEnergy > 0);
-    }, [chartData, resolution, isGeneration, facilitiesData]);
+    }, [chartData, resolution, isGeneration, facilitiesData, gameEngine]);
 
     // Sort facility rows
     const sortedRows = useMemo(() => {

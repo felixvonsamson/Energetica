@@ -178,9 +178,22 @@ export interface paths {
         /**
          * Get Power Sources
          *
-         * Get power sources data for all facility types and imports.
+         * Get power generation time series by facility type and imports.
          *
-         *     Returns time series power generation and import data for the specified time range and resolution.
+         *     Returns historical power generation data aggregated at the specified resolution.
+         *     Each facility type (e.g., coal_burner, PV_solar) and imports are returned as
+         *     separate series with aligned timestamps.
+         *
+         *     Query Parameters:
+         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *         start_tick: First tick to include (must be aligned to resolution)
+         *         count: Number of datapoints to retrieve (ticks covered = count × window_size)
+         *
+         *     Constraints:
+         *         - start_tick must be a multiple of resolution window size
+         *         - Maximum lookback: 360 datapoints (360 × window_size ticks)
+         *         - count is clamped to available datapoints
+         *         - start_tick must be < current_tick
          */
         get: operations["get_power_sources_api_v1_charts_power_sources__resolution__get"];
         put?: never;
@@ -201,9 +214,21 @@ export interface paths {
         /**
          * Get Power Sinks
          *
-         * Get power sinks data for demand by category.
+         * Get power demand time series by category.
          *
-         *     Returns time series power demand data for the specified time range and resolution.
+         *     Returns historical power consumption data aggregated at the specified resolution.
+         *     Demand is broken down by category with aligned timestamps.
+         *
+         *     Query Parameters:
+         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *         start_tick: First tick to include (must be aligned to resolution)
+         *         count: Number of datapoints to retrieve (ticks covered = count × window_size)
+         *
+         *     Constraints:
+         *         - start_tick must be a multiple of resolution window size
+         *         - Maximum lookback: 360 datapoints (360 × window_size ticks)
+         *         - count is clamped to available datapoints
+         *         - start_tick must be < current_tick
          */
         get: operations["get_power_sinks_api_v1_charts_power_sinks__resolution__get"];
         put?: never;
@@ -412,6 +437,28 @@ export interface paths {
          * Dismantle all facilities of a certain type.
          */
         post: operations["dismantle_all_of_type_api_v1_facilities_dismantle_all_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/game/engine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Engine Config
+         *
+         * Get game engine configuration including clock time and simulation
+         * speed.
+         */
+        get: operations["get_engine_config_api_v1_game_engine_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2434,6 +2481,17 @@ export interface components {
             | "warehouse"
             | "carbon_capture";
         /**
+         * GameEngineOut
+         *
+         * Game engine configuration and timing data.
+         */
+        GameEngineOut: {
+            /** Wall Clock Seconds Per Tick */
+            wall_clock_seconds_per_tick: number;
+            /** Game Seconds Per Tick */
+            game_seconds_per_tick: number;
+        };
+        /**
          * GameStateOut
          *
          * Model for game state information.
@@ -4239,6 +4297,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_engine_config_api_v1_game_engine_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameEngineOut"];
                 };
             };
         };

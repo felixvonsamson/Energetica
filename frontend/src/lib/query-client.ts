@@ -120,4 +120,7 @@ export const queryKeys = {
         list: ["chats"] as const,
         messages: (chatId: number) => ["chats", chatId, "messages"] as const,
     },
+    game: {
+        engine: ["game", "engine"] as const,
+    },
 } as const;

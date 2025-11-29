@@ -25,4 +25,7 @@ else
     exit 1
 fi
 
+echo "🎨 Formatting generated types..."
+npx prettier --write "$OUTPUT_FILE"
+
 echo "✨ Done!"
