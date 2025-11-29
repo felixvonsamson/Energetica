@@ -12,10 +12,10 @@ interface ChartParams {
 
 export const chartsApi = {
     /** Get chart data */
-    getChartData: async ({ resolution, range }: ChartParams) => {
+    getChartData: async ({ chartType, resolution, range }: ChartParams) => {
         const response = await apiClient.get<
             ApiResponse<"/api/v1/charts/power-sources/{resolution}", "get">
-        >(`/charts/power-sources/${resolution}`, {
+        >(`/charts/${chartType}/${resolution}`, {
             params: { start_tick: range.startTick, count: range.count },
         });
         return response;

@@ -50,7 +50,7 @@ def _get_chart_data(
     player: Player,
     start_tick: int,
     count: int,
-    data_category: str,
+    data_category: PickleChartKey,
     resolution: Resolution,
 ) -> dict:
     """
@@ -134,7 +134,7 @@ def _get_chart_data(
     # Get current rolling history data, 216-tick.
     # Pass t parameter to get only the relevant portion of the buffer.
     fresh_rolling_history_tick_count = current_tick % 216
-    rolling_history = player.rolling_history.get_data(t=fresh_rolling_history_tick_count)["generation"]
+    rolling_history = player.rolling_history.get_data(t=fresh_rolling_history_tick_count)[data_category]
     relevant_rolling_tick_count = fresh_rolling_history_tick_count - (fresh_rolling_history_tick_count % window_size)
     relevant_pickle_datapoint_count = (count * window_size - relevant_rolling_tick_count) // window_size
 
@@ -147,8 +147,8 @@ def _get_chart_data(
     }[resolution]
 
     def pickle_datapoints(series_key: str) -> list[float]:
-        if series_key in pickle_data["generation"]:
-            return pickle_data["generation"][series_key][resolution_index][-relevant_pickle_datapoint_count:]
+        if series_key in pickle_data[data_category]:
+            return pickle_data[data_category][series_key][resolution_index][-relevant_pickle_datapoint_count:]
         else:
             return [0] * relevant_pickle_datapoint_count
 

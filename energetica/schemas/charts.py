@@ -4,11 +4,26 @@ from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, Field
 
-from energetica.enums import ExtractionFacilityType, FunctionalFacilityType, PowerFacilityType, StorageFacilityType
+from energetica.enums import (
+    ControllableFacilityType,
+    ExtractionFacilityType,
+    FunctionalFacilityType,
+    HydroFacilityType,
+    SolarFacilityType,
+    StorageFacilityType,
+    WindFacilityType,
+)
 
 SeriesKeyType = TypeVar("SeriesKeyType")
 
-PowerSourcesKey = PowerFacilityType | StorageFacilityType | Literal["imports"]
+PowerSourcesKey = (
+    WindFacilityType
+    | HydroFacilityType
+    | SolarFacilityType
+    | ControllableFacilityType
+    | StorageFacilityType
+    | Literal["imports"]
+)
 PowerSinksKey = (
     Literal["industry", "construction", "research", "transport", "exports", "dumping"]
     | StorageFacilityType

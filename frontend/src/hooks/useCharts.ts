@@ -164,20 +164,28 @@ function useFetchChartGaps({
 }) {
     const resolutionKey = toStringResolution(resolution);
     const queries = useQueries({
-        queries: rangesToFetch.map((range) => ({
-            queryKey: queryKeys.charts.powerSources(
-                resolutionKey,
-                range.startTick,
-                range.count,
-            ),
-            queryFn: () =>
-                chartsApi.getChartData({
-                    chartType,
-                    resolution,
-                    range,
-                }),
-            staleTime: 60 * 1000,
-        })),
+        queries: rangesToFetch.map((range) => {
+            // Select the appropriate query key based on chart type
+            const queryKeyFn =
+                chartType === "power-sources"
+                    ? queryKeys.charts.powerSources
+                    : queryKeys.charts.powerSinks;
+
+            return {
+                queryKey: queryKeyFn(
+                    resolutionKey,
+                    range.startTick,
+                    range.count,
+                ),
+                queryFn: () =>
+                    chartsApi.getChartData({
+                        chartType,
+                        resolution,
+                        range,
+                    }),
+                staleTime: 60 * 1000,
+            };
+        }),
     });
 
     const isLoading = queries.some((q) => q.isLoading);
