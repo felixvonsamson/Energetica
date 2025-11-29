@@ -46,6 +46,15 @@ export const POWER_CONSUMPTION_KEYS = [
     "dumping",
 ] as const;
 
+export const STORAGE_LEVEL_KEYS = [
+    "small_pumped_hydro",
+    "large_pumped_hydro",
+    "lithium_ion_batteries",
+    "solid_state_batteries",
+    "molten_salt",
+    "hydrogen_storage",
+] as const;
+
 /**
  * Reorders object properties according to a specified key order. Keys not in
  * the order array are placed at the end in their original order.

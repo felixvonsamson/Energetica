@@ -25,7 +25,7 @@ import numpy as np
 
 from energetica.database.player import Player
 from energetica.globals import engine
-from energetica.schemas.charts import PowerSinksResponse, PowerSourcesResponse
+from energetica.schemas.charts import PowerSinksResponse, PowerSourcesResponse, StorageLevelResponse
 from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/charts", tags=["Charts"])
@@ -54,28 +54,19 @@ def _get_chart_data(
     resolution: Resolution,
 ) -> dict:
     """
-    Extract chart data for a specific time range at the requested resolution.
+    Extract chart data for a time range at the requested resolution.
 
-    Algorithm:
-      1. Validate start_tick alignment and bounds (not future, not beyond 360-datapoint limit)
-      2. Load pickle data and merge with rolling history buffer (fetching valid circular buffer data)
-      3. Extract the resolution-specific array (contains up to 360 datapoints)
-      4. Map start_tick to array index (arrays end at current_tick, grow backward)
-      5. Slice the array to return exactly the requested time range
+    Validates alignment and bounds, then merges persisted pickle data with rolling history.
 
     Args:
         player: Player whose data to retrieve
         start_tick: First tick to include (must be aligned to resolution)
-        count: Number of datapoints to retrieve (will be clamped to available data)
+        count: Number of datapoints to retrieve
         data_category: Category to extract (e.g., "generation", "demand")
         resolution: Aggregation level ("1", "6", "36", "216", "1296")
 
-    Returns:
-        Dict containing start_tick, actual count returned (in datapoints), and series data
-
     Raises:
-        HTTPException 400: If start_tick is misaligned, in future, or beyond 360-datapoint limit
-        HTTPException 500: If data structure inconsistency detected
+        HTTPException 400: If start_tick is misaligned, in future, or beyond available data
     """
     window_size = {
         "1": 1,
@@ -175,22 +166,12 @@ def get_power_sources(
     count: int,
 ) -> PowerSourcesResponse:
     """
-    Get power generation time series by facility type and imports.
+    Get power generation time series by facility type and imports at the specified resolution.
 
-    Returns historical power generation data aggregated at the specified resolution.
-    Each facility type (e.g., coal_burner, PV_solar) and imports are returned as
-    separate series with aligned timestamps.
-
-    Query Parameters:
+    Parameters:
         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
         start_tick: First tick to include (must be aligned to resolution)
-        count: Number of datapoints to retrieve (ticks covered = count × window_size)
-
-    Constraints:
-        - start_tick must be a multiple of resolution window size
-        - Maximum lookback: 360 datapoints (360 × window_size ticks)
-        - count is clamped to available datapoints
-        - start_tick must be < current_tick
+        count: Number of datapoints to retrieve
     """
     data = _get_chart_data(player, start_tick, count, "generation", resolution)
     return PowerSourcesResponse(resolution=resolution, **data)
@@ -204,21 +185,31 @@ def get_power_sinks(
     count: int,
 ) -> PowerSinksResponse:
     """
-    Get power demand time series by category.
+    Get power demand time series by category at the specified resolution.
 
-    Returns historical power consumption data aggregated at the specified resolution.
-    Demand is broken down by category with aligned timestamps.
-
-    Query Parameters:
+    Parameters:
         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
         start_tick: First tick to include (must be aligned to resolution)
-        count: Number of datapoints to retrieve (ticks covered = count × window_size)
-
-    Constraints:
-        - start_tick must be a multiple of resolution window size
-        - Maximum lookback: 360 datapoints (360 × window_size ticks)
-        - count is clamped to available datapoints
-        - start_tick must be < current_tick
+        count: Number of datapoints to retrieve
     """
     data = _get_chart_data(player, start_tick, count, "demand", resolution)
     return PowerSinksResponse(resolution=resolution, **data)
+
+
+@router.get("/storage-level/{resolution}")
+def get_storage_level(
+    player: Annotated[Player, Depends(get_settled_player)],
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> StorageLevelResponse:
+    """
+    Get storage level time series by facility type at the specified resolution.
+
+    Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_chart_data(player, start_tick, count, "storage", resolution)
+    return StorageLevelResponse(resolution=resolution, **data)

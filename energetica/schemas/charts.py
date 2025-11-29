@@ -33,11 +33,7 @@ PowerSinksKey = (
 
 
 class ChartDataResponse(BaseModel, Generic[SeriesKeyType]):
-    """
-    Generic response model for time series chart data.
-
-    Contains time series data for various categories over a specified time range.
-    """
+    """Generic response model for time series chart data."""
 
     start_tick: int = Field(description="The starting tick (timestamp) of the data series")
     count: int = Field(description="Number of data points in the series")
@@ -50,11 +46,7 @@ class ChartDataResponse(BaseModel, Generic[SeriesKeyType]):
 
 
 class PowerSourcesResponse(ChartDataResponse[PowerSourcesKey]):
-    """
-    Response model for power sources chart data.
-
-    Contains time series power generation and import data for different facility types over a specified time range.
-    """
+    """Response model for power generation and import time series."""
 
     series: dict[PowerSourcesKey, list[float]] = Field(
         description="Time series data for each facility type and imports, with power values in MW",
@@ -62,14 +54,16 @@ class PowerSourcesResponse(ChartDataResponse[PowerSourcesKey]):
 
 
 class PowerSinksResponse(ChartDataResponse[PowerSinksKey]):
-    """
-    Response model for power sinks chart data.
-
-    Contains time series power demand data by category over a specified time range.
-    Categories include standard demands (industry, construction, research, transport, exports, dumping)
-    plus dynamically added facility-type categories (storage, extraction, functional).
-    """
+    """Response model for power demand time series."""
 
     series: dict[PowerSinksKey, list[float]] = Field(
         description="Time series power demand data by category, with power values in MW",
+    )
+
+
+class StorageLevelResponse(ChartDataResponse[StorageFacilityType]):
+    """Response model for storage level time series."""
+
+    series: dict[StorageFacilityType, list[float]] = Field(
+        description="Time series data for each storage facility type, with energy values in MWh",
     )

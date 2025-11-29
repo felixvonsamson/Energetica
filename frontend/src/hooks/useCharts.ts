@@ -33,8 +33,16 @@ import {
 import {
     POWER_GENERATION_KEYS,
     POWER_CONSUMPTION_KEYS,
+    STORAGE_LEVEL_KEYS,
     reorderObjectKeys,
 } from "@/lib/chart-key-order";
+
+/** Map chart types to their corresponding key ordering */
+const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {
+    "power-sources": POWER_GENERATION_KEYS,
+    "power-sinks": POWER_CONSUMPTION_KEYS,
+    "storage-level": STORAGE_LEVEL_KEYS,
+};
 
 /** Main exported hook. Returns all chart datapoints relevant to the request. */
 export function useCurrentChartData({
@@ -139,10 +147,7 @@ export function useChartData({
             }
         }
         // Convert from Map (tick->{data}) to list of entries [{tick+data}]
-        const keyOrder =
-            chartType === "power-sinks"
-                ? POWER_CONSUMPTION_KEYS
-                : POWER_GENERATION_KEYS;
+        const keyOrder = KEY_ORDER_BY_CHART_TYPE[chartType];
 
         const result = Array.from(tickMap.entries())
             .sort(([a], [b]) => a - b)
@@ -165,6 +170,13 @@ export function useChartData({
     };
 }
 
+/** Map chart types to their corresponding query key functions */
+const QUERY_KEY_FN_BY_CHART_TYPE = {
+    "power-sources": queryKeys.charts.powerSources,
+    "power-sinks": queryKeys.charts.powerSinks,
+    "storage-level": queryKeys.charts.storageLevel,
+} as const;
+
 /** Fetches ranges concurrently. */
 function useFetchChartGaps({
     chartType,
@@ -178,11 +190,7 @@ function useFetchChartGaps({
     const resolutionKey = toStringResolution(resolution);
     const queries = useQueries({
         queries: rangesToFetch.map((range) => {
-            // Select the appropriate query key based on chart type
-            const queryKeyFn =
-                chartType === "power-sources"
-                    ? queryKeys.charts.powerSources
-                    : queryKeys.charts.powerSinks;
+            const queryKeyFn = QUERY_KEY_FN_BY_CHART_TYPE[chartType];
 
             return {
                 queryKey: queryKeyFn(
