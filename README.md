@@ -48,6 +48,11 @@ Ready to hack? Read the full guidelines in [CONTRIBUTING.md](CONTRIBUTING.md) an
 -   [frontend/QUICKSTART.md](frontend/QUICKSTART.md) - Fast setup guide
 -   [frontend/FRONTEND.md](frontend/FRONTEND.md) - React foundation overview
 -   [frontend/API.md](frontend/API.md) - API integration & types
+-   [frontend/BEST_PRACTICES.md](frontend/BEST_PRACTICES.md) - React patterns & component standards
+-   [frontend/STYLING.md](frontend/STYLING.md) - Tailwind patterns & theme colors
+-   [frontend/ANIMATIONS.md](frontend/ANIMATIONS.md) - Animation & transition guidelines
+-   [frontend/CAPABILITIES.md](frontend/CAPABILITIES.md) - Feature flag system
+-   [frontend/ASSET_COLORS.md](frontend/ASSET_COLORS.md) - Asset color system
 -   [frontend/OFFLINE.md](frontend/OFFLINE.md) - Offline handling
 
 ## License

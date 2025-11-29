@@ -61,7 +61,7 @@ Backend logs show:
 Imports work without errors:
 
 ```typescript
-import { useAuth } from "@/contexts/AuthContext"; // works
+import { useAuth } from "@/hooks/useAuth"; // works
 import { apiClient } from "@/lib/api-client"; // works
 ```
 
@@ -100,7 +100,7 @@ Login through legacy Jinja form at http://localhost:5001/login
 // frontend/src/routes/app/my-page.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/app/my-page")({
     component: MyPage,
@@ -155,10 +155,20 @@ const { data } = useQuery({
 
 ## Next Steps
 
-See [FRONTEND.md](FRONTEND.md) for:
+**Essential Reading:**
 
-- Complete foundation documentation
-- Authentication patterns
-- Socket.IO event handling
-- API integration
-- Migration strategy
+- [BEST_PRACTICES.md](BEST_PRACTICES.md) - **Start here** for component patterns and standards
+- [STYLING.md](STYLING.md) - Tailwind patterns and theme colors
+- [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
+- [FRONTEND.md](FRONTEND.md) - Foundation documentation
+- [API.md](API.md) - API integration & types
+
+**Learn by Example:**
+
+- See `src/routes/app/dashboard.tsx` for best practices in action
+- Check `src/components/ui/` for reusable components
+
+**Reference:**
+
+- [CAPABILITIES.md](CAPABILITIES.md) - Feature flag system
+- [ASSET_COLORS.md](ASSET_COLORS.md) - Asset color system

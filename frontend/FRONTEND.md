@@ -55,7 +55,7 @@ frontend/src/
 Cookie-based auth that reads existing session cookies.
 
 ```typescript
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 function MyComponent() {
     const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -197,7 +197,7 @@ import {
 Clean imports using `@` prefix.
 
 ```typescript
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { apiClient } from "@/lib/api-client";
 ```
 
@@ -252,7 +252,7 @@ def old_dashboard(...):
 
 ```typescript
 import { createFileRoute } from "@tanstack/react-router";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useSocketEvent } from "@/contexts/SocketContext";
 import { useQuery } from "@tanstack/react-query";
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
@@ -296,23 +296,133 @@ function MyPageContent() {
 
 ## Troubleshooting
 
-**Auth not working?**
+### "ECONNREFUSED" Errors in Console
 
-- Check cookies in DevTools
-- Verify `/auth/me` endpoint returns user
-- Check CORS/credentials settings
+**Symptom:** Multiple ECONNREFUSED errors when dev server starts or when not logged in:
 
-**Socket.IO not connecting?**
+```
+[vite] http proxy error: /api/v1/auth/me
+AggregateError [ECONNREFUSED]
+```
+
+**Root Cause:** This is **NORMAL and EXPECTED behavior**. Here's what's happening:
+
+1. Most game API endpoints require authentication
+2. When not logged in, backend returns `303 See Other` → `/login` redirect
+3. Vite proxy sees the redirect and tries to follow it
+4. These requests fail because you're not authenticated yet
+5. TanStack Query retries failed requests (up to 3 times with exponential backoff)
+
+**Solution:** ✅ **This is not a bug - no action needed!**
+
+- Backend **IS** running correctly (returning proper redirects)
+- Errors are a security feature (protecting authenticated endpoints)
+- They **disappear automatically** once you log in to the app
+- Session cookie persists, so you only need to log in once per session
+
+**To verify backend is working:**
+
+```bash
+# Check backend process
+$ ps aux | grep uvicorn
+Python ... uvicorn main:app --host 0.0.0.0 --port 5001  # ✅ Running
+
+# Check port listener
+$ lsof -i :5001
+Python ... TCP *:commplex-link (LISTEN)  # ✅ Listening
+
+# Test endpoint (expects 303 redirect when not authenticated)
+$ curl -v http://localhost:5001/api/v1/weather
+< HTTP/1.1 303 See Other  # ✅ Correct response
+< location: /login
+```
+
+**Why so many errors?**
+
+- Multiple queries fire on app load (auth, money, workers, resources)
+- Socket.io connection attempts without auth
+- Automatic retries for each failed request
+- All these stop once authenticated
+
+### Auth Not Working
+
+- Check cookies in DevTools (Application → Cookies)
+- Verify `/auth/me` endpoint returns user data when logged in
+- Check CORS/credentials settings in `api-client.ts`
+- Clear cookies and try logging in again
+- Ensure backend session is not expired
+
+### Socket.IO Not Connecting
 
 - Check console for connection errors
-- Verify user is authenticated
-- Check backend Socket.IO logs
+- Verify user is authenticated (Socket.io requires auth)
+- Check backend Socket.IO logs for connection attempts
+- Verify WebSocket proxy in `vite.config.ts` has `ws: true`
+- Check if `socket.io` path is correctly proxied
 
-**Path aliases not resolving?**
+### API Types Out of Sync
 
-- Restart TypeScript server
-- Check `tsconfig.json` and `vite.config.ts`
+**Symptom:** TypeScript errors about missing or incorrect API types
+
+**Solution:**
+
+```bash
+# Backend must be running on port 5001
+npm run generate-types
+
+# Restart TypeScript server in your IDE
+# VS Code: Cmd/Ctrl + Shift + P → "TypeScript: Restart TS Server"
+```
+
+### Path Aliases Not Resolving
+
+- Restart TypeScript server in your IDE
+- Check `tsconfig.json` has `paths` configured correctly
+- Check `vite.config.ts` has `resolve.alias` configured
 - Clear build cache: `rm -rf node_modules/.vite`
+- Restart dev server
+
+### Dev Server Won't Start
+
+**Port already in use:**
+
+```bash
+# Find what's using the port
+lsof -i :5173
+
+# Kill the process
+kill -9 <PID>
+
+# Or let Vite find another port (it does this automatically)
+```
+
+**Module not found errors:**
+
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### Hot Module Replacement (HMR) Not Working
+
+- Check browser console for HMR errors
+- Try hard refresh (Cmd/Ctrl + Shift + R)
+- Restart dev server
+- Check if file is being watched: `console.log()` in file should trigger HMR
+
+### Production Build Issues
+
+```bash
+# Check build output
+npm run build
+
+# Check for type errors
+npx tsc --noEmit
+
+# Verify output directory
+ls -la ../energetica/static/react/
+```
 
 ## See Also
 
