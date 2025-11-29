@@ -31,10 +31,13 @@
     "[typescript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
-    // Python
     "files.exclude": {
-        "**/__pycache__": true
+        "**/__pycache__": true,
+        "**/.ruff_cache": true,
+        "instance": true,
+        "admin_accounts.txt": true
     },
+    // Python
     "[python]": {
         "editor.rulers": [120],
         "editor.codeActionsOnSave": {
