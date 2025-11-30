@@ -122,8 +122,17 @@ function calculateTileLabel(
     tile: HexTileData,
     activeResourceId: ResourceId | undefined,
     s: number,
+    playerMap: Record<number, string>,
 ): { label: string | null; size: number; fill: string } {
-    if (!tile.player_id && activeResourceId !== undefined) {
+    if (tile.player_id) {
+        const username = playerMap[tile.player_id];
+        return {
+            label: username ? username.slice(0, 3) : null,
+            size: 20,
+            fill: "black",
+        };
+    }
+    if (activeResourceId !== undefined) {
         return {
             label: formatResourceValue(tile, activeResourceId),
             size: Math.max(10, s / 4),
@@ -139,6 +148,7 @@ interface SettleTilesProps {
     activeResourceId: ResourceId | undefined;
     selectedTileId: number | null;
     onTileClick: (tile: HexTileData) => void;
+    playerMap: Record<number, string>;
 }
 
 function SettleTiles({
@@ -146,6 +156,7 @@ function SettleTiles({
     activeResourceId,
     selectedTileId,
     onTileClick,
+    playerMap,
 }: SettleTilesProps) {
     const { s } = useMapContext();
 
@@ -157,7 +168,7 @@ function SettleTiles({
                     label,
                     size,
                     fill: labelFill,
-                } = calculateTileLabel(tile, activeResourceId, s);
+                } = calculateTileLabel(tile, activeResourceId, s, playerMap);
 
                 return (
                     <HexTile
@@ -338,12 +349,9 @@ function SettleContent() {
                             activeResourceId={activeResourceId}
                             selectedTileId={selectedTileId}
                             onTileClick={handleTileClick}
+                            playerMap={playerMap}
                         />
-                        <MapHoverBorder
-                            tile={selectedTile}
-                            strokeWidth={4}
-                            show={!!selectedTile}
-                        />
+                        <MapHoverBorder tile={selectedTile} strokeWidth={4} />
                     </MapCanvas>
                 </div>
 

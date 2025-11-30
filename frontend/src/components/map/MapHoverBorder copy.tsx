@@ -13,14 +13,9 @@ interface MapHoverBorderProps {
     tile: { q: number; r: number } | null;
     strokeWidth?: number;
     show?: boolean;
-    enableAnimations?: boolean;
 }
 
-export function MapHoverBorder({
-    tile,
-    strokeWidth = 2,
-    enableAnimations = true,
-}: MapHoverBorderProps) {
+export function MapHoverBorder({ tile, strokeWidth = 2 }: MapHoverBorderProps) {
     const { s, w } = useMapContext();
     // Keep track of the last valid tile position for smooth animations
     const [lastPosition, setLastPosition] = useState<{
@@ -64,11 +59,7 @@ export function MapHoverBorder({
     return (
         <g
             transform={`translate(${tx}, ${ty})`}
-            className={
-                enableAnimations
-                    ? "transition-[transform] duration-200 ease-in-out"
-                    : ""
-            }
+            className="transition-[transform] duration-200 ease-in-out"
         >
             <g
                 // className="transition-transform duration-200 ease-in-out origin-center"

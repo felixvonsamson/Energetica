@@ -71,7 +71,10 @@ export function MapCanvas({ children, className, mapData }: MapCanvasProps) {
                             {children}
                             {/* Render hover border on top of all tiles */}
                             {hoveredTile && (
-                                <MapHoverBorder tile={hoveredTile} />
+                                <MapHoverBorder
+                                    tile={hoveredTile}
+                                    enableAnimations={false}
+                                />
                             )}
                         </g>
                     </svg>

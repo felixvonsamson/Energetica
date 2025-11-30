@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import csv
 import logging
 import math
@@ -288,6 +289,12 @@ class GameEngine(object):
         from energetica.database.messages import Chat
 
         return Chat.getitem(self.general_chat_id)
+
+    def emit(self, event: str, *args: Any) -> None:
+        """Emit a socketio event to the player's clients."""
+        from energetica.globals import MAIN_EVENT_LOOP
+
+        asyncio.run_coroutine_threadsafe(self.socketio.emit(event, *args), MAIN_EVENT_LOOP)
 
 
 # TODO(mglst): Convert this class to an instance of GameError
