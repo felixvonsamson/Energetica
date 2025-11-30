@@ -118,9 +118,15 @@ export function formatEnergy(
  * @example
  *     formatMass(500); // "500 kg"
  *     formatMass(15000); // "15 t"
+ *     formatMass(1500, 10_000, "of coal in the ground"); // "1'500 kg of coal in the ground"
  */
-export function formatMass(mass: number, threshold: number = 10_000): string {
-    return generalFormat(mass, MASS_UNITS, threshold);
+export function formatMass(
+    mass: number,
+    threshold: number = 10_000,
+    label?: string,
+): string {
+    const formatted = generalFormat(mass, MASS_UNITS, threshold);
+    return label ? `${formatted} ${label}` : formatted;
 }
 
 /**

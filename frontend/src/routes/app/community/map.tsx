@@ -1,7 +1,7 @@
 /** Map page - displays hexagonal map with player territories and resources. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { HelpCircle } from "lucide-react";
 
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
@@ -9,6 +9,9 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal } from "@/components/ui";
 import { HexTile } from "@/components/map/HexTile";
 import { MapTooltip } from "@/components/map/MapTooltip";
+import { MapCanvas } from "@/components/map/MapCanvas";
+import { useMapContext } from "@/contexts/MapContext";
+import { getHexPosition } from "@/lib/hex-utils";
 import { useMap } from "@/hooks/useMap";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,38 +23,91 @@ export const Route = createFileRoute("/app/community/map")({
     },
 });
 
-/** Hover border component - renders a stroke overlay for hovered tiles */
-interface HoverBorderProps {
-    tile: { q: number; r: number };
-    s: number;
-    w: number;
+/** Map tiles component - renders all tiles and tooltips using MapContext */
+interface MapTilesProps {
+    mapData: any[];
+    playerMap: Record<number, string>;
+    user: any;
+    calculateDistance: (tileId: number) => number;
 }
 
-function HoverBorder({ tile, s, w }: HoverBorderProps) {
-    const tx = w * tile.q + 0.5 * w * tile.r;
-    const ty = 1.5 * s * tile.r;
+function calculatePlayerTileFill(
+    tile: any,
+    currentPlayerId: number | undefined,
+): string {
+    if (tile.player_id === currentPlayerId) {
+        return "var(--map-tile-current-player)";
+    } else if (tile.player_id) {
+        return "var(--map-tile-other-player)";
+    } else {
+        return "var(--map-tile-vacant)";
+    }
+}
 
-    const points = [
-        [0, s],
-        [0.5 * w, 0.5 * s],
-        [0.5 * w, -0.5 * s],
-        [0, -s],
-        [-0.5 * w, -0.5 * s],
-        [-0.5 * w, 0.5 * s],
-    ]
-        .map(([x, y]) => `${x},${y}`)
-        .join(" ");
+function MapTiles({
+    mapData,
+    playerMap,
+    user,
+    calculateDistance,
+}: MapTilesProps) {
+    const { width, height, s, w, hoveredTile } = useMapContext();
+
+    const hoveredTilePosition = hoveredTile
+        ? getHexPosition(hoveredTile.q, hoveredTile.r, s, w)
+        : null;
 
     return (
-        <g transform={`translate(${tx}, ${ty})`}>
-            <polygon
-                points={points}
-                fill="none"
-                stroke="var(--map-selected-tile-hover)"
-                strokeWidth="2"
-                pointerEvents="none"
-            />
-        </g>
+        <>
+            {mapData.map((tile) => {
+                const fill = calculatePlayerTileFill(tile, user?.player_id);
+                const username = tile.player_id
+                    ? playerMap[tile.player_id]
+                    : undefined;
+                const label = username ? username.slice(0, 3) : null;
+
+                return (
+                    <HexTile
+                        key={tile.id}
+                        tile={tile}
+                        fill={fill}
+                        label={label}
+                        labelFill="white"
+                        onClick={() => {
+                            if (tile.player_id === user?.player_id) {
+                                window.location.href = "/profile";
+                            } else if (tile.player_id) {
+                                window.location.href = `/profile?player_id=${tile.player_id}`;
+                            }
+                        }}
+                    />
+                );
+            })}
+
+            {/* Tooltip - rendered within SVG context */}
+            {hoveredTile && hoveredTilePosition && (
+                <foreignObject
+                    x={hoveredTilePosition.x + 40}
+                    y={hoveredTilePosition.y - 40}
+                    width="1"
+                    height="1"
+                    overflow="visible"
+                >
+                    <MapTooltip
+                        tile={hoveredTile}
+                        username={
+                            hoveredTile.player_id
+                                ? playerMap[hoveredTile.player_id]
+                                : null
+                        }
+                        distance={calculateDistance(hoveredTile.id)}
+                        x={hoveredTilePosition.x}
+                        y={hoveredTilePosition.y}
+                        viewportWidth={width}
+                        viewportHeight={height}
+                    />
+                </foreignObject>
+            )}
+        </>
     );
 }
 
@@ -67,28 +123,10 @@ function MapPage() {
 
 function MapContent() {
     const [showInfoPopup, setShowInfoPopup] = useState(false);
-    const [hoveredTileId, setHoveredTileId] = useState<number | null>(null);
-    const [viewportWidth, setViewportWidth] = useState(
-        typeof window !== "undefined" ? window.innerWidth : 1200,
-    );
-    const [viewportHeight, setViewportHeight] = useState(
-        typeof window !== "undefined" ? window.innerHeight : 800,
-    );
 
     const { data: mapData, isLoading: isMapLoading } = useMap();
     const { data: playersData, isLoading: isPlayersLoading } = usePlayers();
     const { user } = useAuth();
-
-    // Listen for window resize events
-    useEffect(() => {
-        const handleResize = () => {
-            setViewportWidth(window.innerWidth);
-            setViewportHeight(window.innerHeight);
-        };
-
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
 
     // Create a map of player IDs to usernames
     const playerMap = useMemo(() => {
@@ -117,35 +155,6 @@ function MapContent() {
         const dr = tile.r - currentPlayerTile.r;
         return Math.sqrt(dq * dq + dr * dr + dq * dr);
     };
-
-    // Calculate responsive sizing
-    // Use viewport width but cap at reasonable sizes
-    const canvasWidth = Math.min(
-        viewportWidth < 1200 ? viewportWidth : 0.7 * viewportWidth,
-        1200,
-    );
-    const canvasHeight = Math.min(
-        viewportWidth < 1200 ? 0.86 * viewportWidth : 0.6 * viewportWidth,
-        950,
-    );
-
-    const sizeParam = 10; // map size parameter from original
-    const s = Math.min(280, 0.26 * canvasWidth) / sizeParam; // hexagon size
-    const w = Math.sqrt(3) * s; // width parameter
-
-    // Get hovered tile data
-    const hoveredTile =
-        hoveredTileId !== null && mapData
-            ? mapData.find((t) => t.id === hoveredTileId)
-            : null;
-
-    // Calculate hovered tile position for tooltip
-    const hoveredTilePosition = hoveredTile
-        ? {
-              x: w * hoveredTile.q + 0.5 * w * hoveredTile.r,
-              y: 1.5 * s * hoveredTile.r,
-          }
-        : null;
 
     if (isMapLoading || isPlayersLoading) {
         return (
@@ -204,65 +213,16 @@ function MapContent() {
 
             {/* Map visualization */}
             <div className="flex justify-center">
-                <div className="relative">
-                    <svg width={canvasWidth} height={canvasHeight}>
-                        <g
-                            transform={`translate(${canvasWidth / 2}, ${canvasHeight / 2})`}
-                        >
-                            {mapData.map((tile) => (
-                                <HexTile
-                                    key={tile.id}
-                                    tile={tile}
-                                    s={s}
-                                    w={w}
-                                    isHovered={tile.id === hoveredTileId}
-                                    isCurrentPlayer={
-                                        tile.player_id === user?.player_id
-                                    }
-                                    username={
-                                        tile.player_id
-                                            ? playerMap[tile.player_id]
-                                            : undefined
-                                    }
-                                    onMouseEnter={() =>
-                                        setHoveredTileId(tile.id)
-                                    }
-                                    onMouseLeave={() => setHoveredTileId(null)}
-                                    onClick={() => {
-                                        if (
-                                            tile.player_id === user?.player_id
-                                        ) {
-                                            window.location.href = "/profile";
-                                        } else if (tile.player_id) {
-                                            window.location.href = `/profile?player_id=${tile.player_id}`;
-                                        }
-                                    }}
-                                />
-                            ))}
-
-                            {/* Render hovered tile stroke on top */}
-                            {hoveredTile && (
-                                <HoverBorder tile={hoveredTile} s={s} w={w} />
-                            )}
-                        </g>
-                    </svg>
-
-                    {/* Tooltip */}
-                    {hoveredTile && hoveredTilePosition && (
-                        <MapTooltip
-                            tile={hoveredTile}
-                            username={
-                                hoveredTile.player_id
-                                    ? playerMap[hoveredTile.player_id]
-                                    : null
-                            }
-                            distance={calculateDistance(hoveredTile.id)}
-                            x={hoveredTilePosition.x}
-                            y={hoveredTilePosition.y}
-                            viewportWidth={canvasWidth}
-                            viewportHeight={canvasHeight}
+                {/* <div className="relative w-full max-w-5xl"> */}
+                <div className="w-full relative pt-[86.60%]">
+                    <MapCanvas className="absolute inset-0" mapData={mapData}>
+                        <MapTiles
+                            mapData={mapData}
+                            playerMap={playerMap}
+                            user={user}
+                            calculateDistance={calculateDistance}
                         />
-                    )}
+                    </MapCanvas>
                 </div>
             </div>
         </div>

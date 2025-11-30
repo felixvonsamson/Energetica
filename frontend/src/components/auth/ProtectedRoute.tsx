@@ -59,7 +59,7 @@ export function RequireSettledPlayer({
     }
 
     if (!user?.is_settled) {
-        window.location.href = "/location-choice";
+        window.location.href = "/location-choice"; // TODO: update link
         return <div>Redirecting to location choice...</div>;
     }
 
@@ -109,7 +109,7 @@ export function PublicOnlyRoute({
         if (user.role === "admin") {
             window.location.href = "/admin-dashboard";
         } else if (!user.is_settled) {
-            window.location.href = "/location-choice";
+            window.location.href = "/location-choice"; // TODO: update link
         } else {
             window.location.href = "/home";
         }

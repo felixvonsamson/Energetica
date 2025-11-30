@@ -20,6 +20,9 @@ import "./styles/global.css";
 if (import.meta.hot) {
     import.meta.hot.on("vite:afterUpdate", () => {
         clearAssetColorCache();
+        // Trigger MapCanvas dimension recalculation on HMR updates
+        window.dispatchEvent(new Event("map-canvas-invalidated"));
+        console.log("Sending map-canvas-invalidated");
     });
 }
 
