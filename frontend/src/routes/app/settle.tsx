@@ -1,7 +1,7 @@
 /** Settlement page - allows player to choose their starting location on the map. */
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { HelpCircle } from "lucide-react";
 
 import { Modal, ThemeToggle } from "@/components/ui";
@@ -9,6 +9,7 @@ import { HexTile } from "@/components/map/HexTile";
 import { MapCanvas } from "@/components/map/MapCanvas";
 import { useMap } from "@/hooks/useMap";
 import { usePlayers } from "@/hooks/usePlayers";
+import { useAuth } from "@/hooks/useAuth";
 import { mapApi } from "@/lib/map-api";
 import { formatMass } from "@/lib/format-utils";
 import type { ApiResponse } from "@/types/api-helpers";
@@ -180,6 +181,7 @@ function SettlePage() {
 
 function SettleContent() {
     const navigate = useNavigate();
+    const { user, isLoading: isAuthLoading, refetch: refetchAuth } = useAuth();
     const [showInfoPopup, setShowInfoPopup] = useState(false);
     const [activeResourceId, setActiveResourceId] = useState<
         ResourceId | undefined
@@ -189,6 +191,13 @@ function SettleContent() {
 
     const { data: mapData, isLoading: isMapLoading } = useMap();
     const { data: playersData, isLoading: isPlayersLoading } = usePlayers();
+
+    // Redirect if player is already settled
+    useEffect(() => {
+        if (!isAuthLoading && user?.is_settled) {
+            navigate({ to: "/app/dashboard" });
+        }
+    }, [user?.is_settled, isAuthLoading, navigate]);
 
     // Create a map of player IDs to usernames
     const playerMap = useMemo(() => {
@@ -233,6 +242,8 @@ function SettleContent() {
         setIsSettling(true);
         try {
             await mapApi.settleRegion(selectedTile.id);
+            // Refresh auth cache to get updated settled status
+            await refetchAuth();
             // Redirect to home page after successful settlement
             navigate({ to: "/app/dashboard" });
         } catch (error) {
@@ -242,7 +253,7 @@ function SettleContent() {
         }
     };
 
-    if (isMapLoading || isPlayersLoading) {
+    if (isAuthLoading || isMapLoading || isPlayersLoading) {
         return (
             <div className="flex items-center justify-center h-96">
                 <p className="text-lg">Loading map...</p>
