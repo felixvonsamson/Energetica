@@ -19,25 +19,34 @@ interface MapHoverBorderProps {
 export function MapHoverBorder({
     tile,
     strokeWidth = 2,
-    enableAnimations = true,
+    enableAnimations: enableTransformAnimations = true,
 }: MapHoverBorderProps) {
     const { s, w } = useMapContext();
     // Keep track of the last valid tile position for smooth animations
     const [lastPosition, setLastPosition] = useState<{
         q: number;
         r: number;
-        show: boolean;
     } | null>(null);
 
     useEffect(() => {
         if (tile) {
-            setLastPosition({ q: tile.q, r: tile.r, show: true });
+            setLastPosition({ q: tile.q, r: tile.r });
         } else if (lastPosition) {
             setLastPosition({
                 q: lastPosition.q,
                 r: lastPosition.r,
-                show: false,
             });
+            (async () => {
+                const sleep = async (milliseconds: number) => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve("");
+                        }, milliseconds);
+                    });
+                };
+                await sleep(200);
+                setLastPosition(null);
+            })();
         }
     }, [tile]);
 
@@ -63,29 +72,21 @@ export function MapHoverBorder({
 
     return (
         <g
-            transform={`translate(${tx}, ${ty})`}
+            style={{ transform: `translate(${tx}px, ${ty}px)` }}
             className={
-                enableAnimations
-                    ? "transition-[transform] duration-200 ease-in-out"
+                enableTransformAnimations
+                    ? "transition-transform duration-200 ease-in-out"
                     : ""
             }
         >
-            <g
-                // className="transition-transform duration-200 ease-in-out origin-center"
-                style={{
-                    transform: lastPosition.show ? "scale(1)" : "scale(0)",
-                    transformOrigin: "center",
-                }}
-            >
-                <polygon
-                    points={points}
-                    className="transition-all duration-150"
-                    fill="none"
-                    stroke="var(--map-selected-tile-hover)"
-                    strokeWidth={lastPosition.show ? strokeWidth : 0}
-                    pointerEvents="none"
-                />
-            </g>
+            <polygon
+                points={points}
+                className="transition-all duration-150"
+                fill="none"
+                stroke="var(--map-selected-tile-hover)"
+                strokeWidth={tile !== null ? strokeWidth : 0}
+                pointerEvents="none"
+            />
         </g>
     );
 }
