@@ -69,7 +69,6 @@ export function TimeSeriesChart({
         return filteredKeys.map((key) => {
             const color = getColor ? getColor(key) : undefined;
             const commonProps = {
-                key,
                 dataKey: key,
                 isAnimationActive: false,
             };
@@ -78,6 +77,7 @@ export function TimeSeriesChart({
                 case "area":
                     return (
                         <Area
+                            key={key}
                             {...commonProps}
                             stackId={stacked ? "stack" : undefined}
                             fill={color}
@@ -87,6 +87,7 @@ export function TimeSeriesChart({
                 case "line":
                     return (
                         <Line
+                            key={key}
                             {...commonProps}
                             stroke={color}
                             strokeWidth={2}
@@ -96,6 +97,7 @@ export function TimeSeriesChart({
                 case "bar":
                     return (
                         <Bar
+                            key={key}
                             {...commonProps}
                             stackId={stacked ? "stack" : undefined}
                             fill={color}
