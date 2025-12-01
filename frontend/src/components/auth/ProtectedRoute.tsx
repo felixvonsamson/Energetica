@@ -1,6 +1,6 @@
 /** Protected route components for enforcing authentication and authorization. */
 
-import { useLocation } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import type { ReactNode } from "react";
 
@@ -19,15 +19,14 @@ export function ProtectedRoute({
     fallback = <div>Loading...</div>,
 }: ProtectedRouteProps) {
     const { isAuthenticated, isLoading } = useAuth();
-    const location = useLocation();
+    const navigate = useNavigate();
 
     if (isLoading) {
         return <>{fallback}</>;
     }
 
     if (!isAuthenticated) {
-        // Redirect to legacy login page (not a React route)
-        window.location.href = `${redirectTo}?redirect=${encodeURIComponent(location.pathname)}`;
+        navigate({ to: redirectTo });
         return <div>Redirecting to login...</div>;
     }
 
@@ -43,13 +42,14 @@ export function RequireSettledPlayer({
     fallback = <div>Loading...</div>,
 }: ProtectedRouteProps) {
     const { user, isAuthenticated, isLoading } = useAuth();
+    const navigate = useNavigate();
 
     if (isLoading) {
         return <>{fallback}</>;
     }
 
     if (!isAuthenticated) {
-        window.location.href = "/login";
+        navigate({ to: "/login" });
         return <div>Redirecting to login...</div>;
     }
 
@@ -59,7 +59,7 @@ export function RequireSettledPlayer({
     }
 
     if (!user?.is_settled) {
-        window.location.href = "/location-choice"; // TODO: update link
+        navigate({ to: "/app/settle" });
         return <div>Redirecting to location choice...</div>;
     }
 
@@ -72,13 +72,14 @@ export function RequireAdmin({
     fallback = <div>Loading...</div>,
 }: ProtectedRouteProps) {
     const { user, isAuthenticated, isLoading } = useAuth();
+    const navigate = useNavigate();
 
     if (isLoading) {
         return <>{fallback}</>;
     }
 
     if (!isAuthenticated) {
-        window.location.href = "/login";
+        navigate({ to: "/login" });
         return <div>Redirecting to login...</div>;
     }
 
@@ -99,6 +100,7 @@ export function PublicOnlyRoute({
     fallback = <div>Loading...</div>,
 }: ProtectedRouteProps) {
     const { user, isAuthenticated, isLoading } = useAuth();
+    const navigate = useNavigate();
 
     if (isLoading) {
         return <>{fallback}</>;
@@ -107,9 +109,9 @@ export function PublicOnlyRoute({
     if (isAuthenticated && user) {
         // Redirect based on user role and state
         if (user.role === "admin") {
-            window.location.href = "/admin-dashboard";
+            navigate({ to: "/admin-dashboard" });
         } else if (!user.is_settled) {
-            window.location.href = "/location-choice"; // TODO: update link
+            navigate({ to: "/app/settle" });
         } else {
             window.location.href = "/home";
         }

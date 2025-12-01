@@ -5,18 +5,82 @@
 
 const API_BASE_URL = import.meta.env.DEV ? "/api/v1" : "/api/v1";
 
-interface ApiError {
+// Error response types from backend
+export interface HttpErrorResponse {
     detail: string;
+}
+
+export interface GameErrorResponse {
+    game_exception_type: string;
+    kwargs?: Record<string, unknown>;
+}
+
+export interface ValidationErrorResponse {
+    detail: Array<{ loc: string[]; msg: string; type: string }>;
+    meta: { error_type: string };
+}
+
+export type ApiErrorResponse =
+    | HttpErrorResponse
+    | GameErrorResponse
+    | ValidationErrorResponse;
+
+// Type guards for narrowing error types
+export function isHttpError(detail: unknown): detail is HttpErrorResponse {
+    return (
+        typeof detail === "object" &&
+        detail !== null &&
+        "detail" in detail &&
+        typeof (detail as HttpErrorResponse).detail === "string"
+    );
+}
+
+export function isGameError(detail: unknown): detail is GameErrorResponse {
+    return (
+        typeof detail === "object" &&
+        detail !== null &&
+        "game_exception_type" in detail &&
+        typeof (detail as GameErrorResponse).game_exception_type === "string"
+    );
+}
+
+export function isValidationError(
+    detail: unknown,
+): detail is ValidationErrorResponse {
+    return (
+        typeof detail === "object" &&
+        detail !== null &&
+        "detail" in detail &&
+        Array.isArray((detail as ValidationErrorResponse).detail)
+    );
 }
 
 export class ApiClientError extends Error {
     constructor(
         message: string,
         public status: number,
-        public details?: unknown,
+        public detail?: ApiErrorResponse,
     ) {
         super(message);
         this.name = "ApiClientError";
+        this.detail = detail;
+    }
+
+    /**
+     * Get a user-friendly error message from the error response. Handles
+     * different backend error formats.
+     */
+    getErrorMessage(): string {
+        if (isHttpError(this.detail)) {
+            return this.detail.detail;
+        }
+        if (isGameError(this.detail)) {
+            return this.detail.game_exception_type;
+        }
+        if (isValidationError(this.detail)) {
+            return this.detail.detail.map((e) => e.msg).join(", ");
+        }
+        return this.message;
     }
 }
 
@@ -57,12 +121,20 @@ async function fetchApi<T>(
     // Handle errors
     if (!response.ok) {
         let errorMessage = `Request failed with status ${response.status}`;
-        let errorDetails: unknown;
+        let errorDetails: ApiErrorResponse | undefined;
 
         try {
-            const errorData: ApiError = await response.json();
-            errorMessage = errorData.detail || errorMessage;
-            errorDetails = errorData;
+            const errorData = await response.json();
+            errorDetails = errorData as ApiErrorResponse;
+
+            // Extract message from the error response
+            if (isHttpError(errorData)) {
+                errorMessage = errorData.detail;
+            } else if (isGameError(errorData)) {
+                errorMessage = errorData.game_exception_type;
+            } else if (isValidationError(errorData)) {
+                errorMessage = errorData.detail.map((e) => e.msg).join(", ");
+            }
         } catch {
             // If response is not JSON, use status text
             errorMessage = response.statusText || errorMessage;

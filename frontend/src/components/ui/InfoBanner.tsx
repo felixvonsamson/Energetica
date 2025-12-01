@@ -1,10 +1,10 @@
 import { type ReactNode } from "react";
-import { Info, AlertTriangle, CheckCircle } from "lucide-react";
+import { Info, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface InfoBannerProps {
     children: ReactNode;
-    variant?: "info" | "warning" | "success";
+    variant?: "info" | "warning" | "success" | "error";
     className?: string;
 }
 
@@ -36,6 +36,13 @@ export function InfoBanner({
             text: "text-green-900 dark:text-green-100",
             IconComponent: CheckCircle,
         },
+        error: {
+            container:
+                "bg-red-100 dark:bg-red-900/30 border-alert-red dark:border-red-400",
+            icon: "text-alert-red dark:text-red-400",
+            text: "text-red-900 dark:text-red-100",
+            IconComponent: XCircle,
+        },
     };
 
     const config = variants[variant];
@@ -51,7 +58,7 @@ export function InfoBanner({
             )}
         >
             <div className="flex items-start gap-3">
-                <Icon className={cn("w-5 h-5 mt-0.5", config.icon)} />
+                <Icon className={cn("w-10 h-10 mt-0.5", config.icon)} />
                 <div className="text-sm md:text-base">{children}</div>
             </div>
         </div>

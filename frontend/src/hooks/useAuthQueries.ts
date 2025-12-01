@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth-api";
 import { queryKeys } from "@/lib/query-client";
+import { handleApiError } from "@/lib/error-utils";
 import type { ApiRequestBody } from "@/types/api-helpers";
 
 type LoginRequest = ApiRequestBody<"/api/v1/auth/login", "post">;
@@ -22,6 +23,10 @@ export function useLogin() {
             // Invalidate user query to refetch user data
             queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
         },
+        onError: (error) => {
+            // Log error for debugging - consuming components handle UI display
+            handleApiError(error, "Login failed");
+        },
     });
 }
 
@@ -35,6 +40,10 @@ export function useSignup() {
             // Invalidate user query to refetch user data
             queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
         },
+        onError: (error) => {
+            // Log error for debugging - consuming components handle UI display
+            handleApiError(error, "Sign-up failed");
+        },
     });
 }
 
@@ -43,6 +52,10 @@ export function useChangePassword() {
     return useMutation({
         mutationFn: (data: ChangePasswordRequest) =>
             authApi.changePassword(data),
+        onError: (error) => {
+            // Log error for debugging - consuming components handle UI display
+            handleApiError(error, "Failed to change password");
+        },
     });
 }
 
@@ -58,6 +71,10 @@ export function useLogout() {
         onSuccess: () => {
             // Clear all queries on logout
             queryClient.clear();
+        },
+        onError: (error) => {
+            // Log error for debugging - consuming components handle UI display
+            handleApiError(error, "Failed to logout");
         },
     });
 }
