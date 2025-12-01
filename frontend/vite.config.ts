@@ -45,7 +45,7 @@ export default defineConfig(({ mode }) => ({
                 ws: true,
             },
             // Auth routes
-            "^/(login|logout|sign-up|location_choice)$": {
+            "^/(logout|location_choice)$": {
                 target: "http://localhost:5001",
                 changeOrigin: true,
             },
