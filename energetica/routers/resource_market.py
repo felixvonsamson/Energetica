@@ -6,9 +6,22 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
-from energetica.schemas.resource_market import AskCreate, AskListOut, AskOut, AskPatch, PurchaseOrderCreate
+from energetica.schemas.resource_market import (
+    AskCreate,
+    AskListOut,
+    AskOut,
+    AskPatch,
+    DeliveryCalculationResponse,
+    PurchaseOrderCreate,
+)
 from energetica.utils.auth import get_settled_player
-from energetica.utils.resource_market import create_ask, purchase_resource
+from energetica.utils.resource_market import (
+    calculate_shipment_duration,
+    create_ask,
+    delete_ask,
+    patch_ask,
+    purchase_resource,
+)
 
 router = APIRouter(prefix="/resource-market", tags=["Resource Market"])
 
@@ -48,9 +61,10 @@ def post_resource_market_purchase(
     # TODO(mglst): Add the following check in the future
     # if sale.player == user:
     #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot buy your own ask")
+    quantity = request_data.quantity if request_data.quantity is not None else sale.quantity
     new_sale = purchase_resource(
         buyer=player,
-        quantity=request_data.quantity,
+        quantity=quantity,
         sale=sale,
     )
     # TODO(mglst) rethink the return structure of this route.
@@ -71,11 +85,9 @@ def patch_resource_market_ask(
     sale = ResourceOnSale.getitem(ask_id, error=HTTPException(status_code=404, detail="Ask not found"))
     if sale.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the owner of this ask")
-    if request_data.unit_price is not None:
-        sale.unit_price = request_data.unit_price
-    if request_data.quantity is not None:
-        sale.quantity = request_data.quantity
-    return AskOut.from_resource_on_sale(sale)
+    return AskOut.from_resource_on_sale(
+        patch_ask(sale, unit_price=request_data.unit_price, quantity=request_data.quantity),
+    )
 
 
 @router.delete("/asks/{ask_id}", status_code=204)
@@ -90,3 +102,19 @@ def delete_resource_market_ask(
     )
     if sale.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the owner of this ask")
+    delete_ask(sale)
+
+
+@router.post("/asks/{ask_id}:calculate-delivery")
+def calculate_delivery_time(
+    player: Annotated[Player, Depends(get_settled_player)],
+    ask_id: int,
+) -> DeliveryCalculationResponse:
+    """Calculate shipment time for a specific ask for the current player."""
+    ask = ResourceOnSale.getitem(
+        ask_id,
+        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ask not found"),
+    )
+
+    shipment_time = calculate_shipment_duration(player, ask.player)
+    return DeliveryCalculationResponse(shipment_time=shipment_time)

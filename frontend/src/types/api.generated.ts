@@ -1187,6 +1187,27 @@ export interface paths {
         patch: operations["patch_resource_market_ask_api_v1_resource_market_asks__ask_id__patch"];
         trace?: never;
     };
+    "/api/v1/resource-market/asks/{ask_id}:calculate-delivery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Delivery Time
+         *
+         * Calculate shipment time for a specific ask for the current player.
+         */
+        post: operations["calculate_delivery_time_api_v1_resource_market_asks__ask_id__calculate_delivery_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/shipments": {
         parameters: {
             query?: never;
@@ -2204,6 +2225,12 @@ export interface components {
              * ID of the ask in the resource market.
              */
             id: number;
+            /**
+             * Seller Id
+             *
+             * ID of the player selling the resource.
+             */
+            seller_id: number;
         };
         /**
          * AskPatch
@@ -2352,6 +2379,19 @@ export interface components {
              * @enum {string}
              */
             player_answer: "answer1" | "answer2" | "answer3";
+        };
+        /**
+         * DeliveryCalculationResponse
+         *
+         * Response with calculated delivery time for a resource shipment.
+         */
+        DeliveryCalculationResponse: {
+            /**
+             * Shipment Time
+             *
+             * Estimated shipment time in game ticks.
+             */
+            shipment_time: number;
         };
         /**
          * ExtractionFacilityCatalogListOut
@@ -3147,9 +3187,10 @@ export interface components {
             /**
              * Quantity
              *
-             * Quantity of the resource in kg.
+             * Quantity of the resource in kg. If not provided, purchases all
+             * available quantity.
              */
-            quantity: number;
+            quantity?: number | null;
         };
         /**
          * RequirementOut
@@ -5525,6 +5566,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AskOut"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calculate_delivery_time_api_v1_resource_market_asks__ask_id__calculate_delivery_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ask_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryCalculationResponse"];
                 };
             };
             /** Validation Error */

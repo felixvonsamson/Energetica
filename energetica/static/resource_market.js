@@ -37,11 +37,15 @@ function updateToPay(saleId, basePrice) {
 
 function buy_resource(saleId) {
     let quantity = document.getElementById("buying_quantity_" + saleId).value;
-    if (isNaN(quantity) || quantity == "") {
-        addError("Please enter a valid quantity");
-        return;
+    let requestBody = {};
+    if (quantity !== "") {
+        if (isNaN(quantity)) {
+            addError("Please enter a valid quantity");
+            return;
+        }
+        requestBody.quantity = quantity * 1000;
     }
-    send_json(`/api/v1/resource-market/asks/${saleId}:purchase`, { "quantity": quantity * 1000 })
+    send_json(`/api/v1/resource-market/asks/${saleId}:purchase`, requestBody)
         .then((response) => {
             response.json().then((raw_data) => {
                 if (response.status == 200) {

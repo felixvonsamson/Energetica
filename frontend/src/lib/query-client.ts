@@ -132,4 +132,9 @@ export const queryKeys = {
     map: {
         all: ["map"] as const,
     },
+    resourceMarket: {
+        asks: ["resource-market", "asks"] as const,
+        deliveryTime: (askId: number) =>
+            ["resource-market", "delivery-time", askId] as const,
+    },
 } as const;
