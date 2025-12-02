@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { Card, CardTitle, CardContent, EmptyState } from "@/components/ui";
+import { Card, CardTitle, CardContent, EmptyState } from "@components/ui";
 import { type LucideIcon } from "lucide-react";
 
 interface DashboardSectionProps {

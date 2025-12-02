@@ -1,4 +1,4 @@
-import type { Chat } from "@/types/chats";
+import type { Chat } from "@app-types/chats";
 
 interface ChatListItemProps {
     chat: Chat;

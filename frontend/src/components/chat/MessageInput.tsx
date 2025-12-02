@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui";
-import { useSendMessage } from "@/hooks/useChats";
+import { Button } from "@components/ui";
+import { useSendMessage } from "@hooks/useChats";
 
 interface MessageInputProps {
     chatId: number;

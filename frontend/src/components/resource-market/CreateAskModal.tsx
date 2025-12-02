@@ -1,9 +1,9 @@
-import { Modal, Money } from "@/components/ui";
-import { useCreateAsk } from "@/hooks/useResourceMarket";
-import { formatMass } from "@/lib/format-utils";
-import { ResourceType, RESOURCE_TYPES } from "@/types/resource-market";
+import { Modal, Money } from "@components/ui";
+import { useCreateAsk } from "@hooks/useResourceMarket";
+import { formatMass } from "@lib/format-utils";
+import { RESOURCE_LABELS } from "@app-types/resource-market";
+import { ResourceType, RESOURCE_TYPES } from "@app-types/resource-market";
 import { useState } from "react";
-import { RESOURCE_LABELS } from "../../routes/app/resource-market";
 
 interface CreateAskModalProps {
     isOpen: boolean;

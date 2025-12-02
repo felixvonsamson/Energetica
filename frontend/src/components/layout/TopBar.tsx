@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useAuth } from "@/hooks/useAuth";
-import { usePlayerMoney } from "@/hooks/usePlayerMoney";
-import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
-import { usePlayerResources } from "@/hooks/usePlayerResources";
-import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { useCapabilities } from "@/hooks/useCapabilities";
+import { useAuth } from "@hooks/useAuth";
+import { usePlayerMoney } from "@hooks/usePlayerMoney";
+import { usePlayerWorkers } from "@hooks/usePlayerWorkers";
+import { usePlayerResources } from "@hooks/usePlayerResources";
+import { useOnlineStatus } from "@hooks/useOnlineStatus";
+import { useCapabilities } from "@hooks/useCapabilities";
 import { NotificationPopup } from "./NotificationPopup";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { ThemeToggle } from "@components/ui/ThemeToggle";
 
 export function TopBar() {
     const { user } = useAuth();

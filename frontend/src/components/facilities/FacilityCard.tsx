@@ -1,9 +1,9 @@
 import { useState, ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
 
-import { Card, FacilityName, Money } from "@/components/ui";
-import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
-import { useQueueProject } from "@/hooks/useProjects";
+import { Card, FacilityName, Money } from "@components/ui";
+import { RequirementsDisplay, ConstructionInfo } from "@components/facilities";
+import { useQueueProject } from "@hooks/useProjects";
 
 interface FacilityCardProps<T> {
     facility: T & {

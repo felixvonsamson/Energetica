@@ -5,12 +5,12 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 
 import { routeTree } from "./routeTree.gen";
-import { queryClient } from "@/lib/query-client";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { SocketProvider } from "@/contexts/SocketContext";
-import { GameTickProvider } from "@/contexts/GameTickContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { clearAssetColorCache } from "@/lib/asset-colors";
+import { queryClient } from "@lib/query-client";
+import { AuthProvider } from "@contexts/AuthContext";
+import { SocketProvider } from "@contexts/SocketContext";
+import { GameTickProvider } from "@contexts/GameTickContext";
+import { ThemeProvider } from "@contexts/ThemeContext";
+import { clearAssetColorCache } from "@lib/asset-colors";
 
 import "./styles/global.css";
 

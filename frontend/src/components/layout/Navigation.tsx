@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
 import { Menu, ChevronDown } from "lucide-react";
-import { useCapabilities } from "@/hooks/useCapabilities";
+import { useCapabilities } from "@hooks/useCapabilities";
 
 export function Navigation() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);

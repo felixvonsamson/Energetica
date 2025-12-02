@@ -3,7 +3,7 @@
  * queries are failing
  */
 
-import { useSocket } from "@/contexts/SocketContext";
+import { useSocket } from "@contexts/SocketContext";
 import { useIsFetching, useIsMutating } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 

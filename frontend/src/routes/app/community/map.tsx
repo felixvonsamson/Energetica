@@ -4,17 +4,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
-import { GameLayout } from "@/components/layout/GameLayout";
-import { Modal } from "@/components/ui";
-import { HexTile } from "@/components/map/HexTile";
-import { MapTooltip } from "@/components/map/MapTooltip";
-import { MapCanvas } from "@/components/map/MapCanvas";
-import { useMapContext } from "@/contexts/MapContext";
-import { getHexPosition } from "@/lib/hex-utils";
-import { useMap } from "@/hooks/useMap";
-import { usePlayers } from "@/hooks/usePlayers";
-import { useAuth } from "@/hooks/useAuth";
+import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
+import { GameLayout } from "@components/layout/GameLayout";
+import { Modal } from "@components/ui";
+import { HexTile } from "@components/map/HexTile";
+import { MapTooltip } from "@components/map/MapTooltip";
+import { MapCanvas } from "@components/map/MapCanvas";
+import { useMapContext } from "@contexts/MapContext";
+import { getHexPosition } from "@lib/hex-utils";
+import { useMap } from "@hooks/useMap";
+import { usePlayers } from "@hooks/usePlayers";
+import { useAuth } from "@hooks/useAuth";
 
 export const Route = createFileRoute("/app/community/map")({
     component: MapPage,

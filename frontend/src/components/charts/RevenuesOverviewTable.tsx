@@ -6,8 +6,8 @@
  */
 
 import { useMemo, useState } from "react";
-import { FacilityName } from "@/components/ui/AssetName";
-import { Money } from "@/components/ui/Money";
+import { FacilityName } from "@components/ui/AssetName";
+import { Money } from "@components/ui/Money";
 
 type RevenueType = "revenues" | "expenses" | "all";
 

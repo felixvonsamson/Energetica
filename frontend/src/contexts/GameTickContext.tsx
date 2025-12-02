@@ -28,7 +28,7 @@ import {
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSocketEvent } from "./SocketContext";
-import { playerApi } from "@/lib/player-api";
+import { playerApi } from "@lib/player-api";
 
 interface GameTickContextValue {
     /** Current tick number from the server */

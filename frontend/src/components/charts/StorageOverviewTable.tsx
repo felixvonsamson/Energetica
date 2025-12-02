@@ -7,10 +7,10 @@
  */
 
 import { useMemo, useState } from "react";
-import { FacilityName } from "@/components/ui/AssetName";
-import { FacilityGauge } from "@/components/ui/FacilityGauge";
-import { formatEnergy } from "@/lib/format-utils";
-import { useFacilities } from "@/hooks/useFacilities";
+import { FacilityName } from "@components/ui/AssetName";
+import { FacilityGauge } from "@components/ui/FacilityGauge";
+import { formatEnergy } from "@lib/format-utils";
+import { useFacilities } from "@hooks/useFacilities";
 
 interface StorageOverviewTableProps {
     /** Chart data with time series for each facility type */

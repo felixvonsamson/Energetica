@@ -1,9 +1,8 @@
-import { Modal, Money } from "@/components/ui";
-import { usePurchaseAsk } from "@/hooks/useResourceMarket";
-import { formatMass } from "@/lib/format-utils";
+import { Modal, Money } from "@components/ui";
+import { usePurchaseAsk } from "@hooks/useResourceMarket";
+import { formatMass } from "@lib/format-utils";
 import { useState } from "react";
-import { RESOURCE_LABELS } from "../../routes/app/resource-market";
-import { ResourceType } from "@/types/resource-market";
+import { RESOURCE_LABELS, ResourceType } from "@app-types/resource-market";
 
 export interface PurchaseModalProps {
     isOpen: boolean;

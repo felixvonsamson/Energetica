@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui";
-import { useChatList, useCreateGroupChat } from "@/hooks/useChats";
-import { usePlayers } from "@/hooks/usePlayers";
-import { useAuth } from "@/hooks/useAuth";
-import type { Player } from "@/types/chats";
+import { Modal } from "@components/ui/Modal";
+import { Button } from "@components/ui";
+import { useChatList, useCreateGroupChat } from "@hooks/useChats";
+import { usePlayers } from "@hooks/usePlayers";
+import { useAuth } from "@hooks/useAuth";
+import type { Player } from "@app-types/chats";
 
 interface NewChatModalProps {
     isOpen: boolean;

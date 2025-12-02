@@ -4,22 +4,22 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
-import { GameLayout } from "@/components/layout/GameLayout";
-import { Modal, Card, CardTitle, Money } from "@/components/ui";
-import { FacilityGauge } from "@/components/ui/FacilityGauge";
-import { useAuth } from "@/hooks/useAuth";
-import { useFacilities } from "@/hooks/useFacilities";
-import { usePlayerProfile } from "@/hooks/usePlayerProfile";
-import { useHasCapability } from "@/hooks/useCapabilities";
-import { FacilityGroupTable } from "@/components/profile/FacilityGroupTable";
-import type { ApiResponse } from "@/types/api-helpers";
+import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
+import { GameLayout } from "@components/layout/GameLayout";
+import { Modal, Card, CardTitle, Money } from "@components/ui";
+import { FacilityGauge } from "@components/ui/FacilityGauge";
+import { useAuth } from "@hooks/useAuth";
+import { useFacilities } from "@hooks/useFacilities";
+import { usePlayerProfile } from "@hooks/usePlayerProfile";
+import { useHasCapability } from "@hooks/useCapabilities";
+import { FacilityGroupTable } from "@components/profile/FacilityGroupTable";
+import type { ApiResponse } from "@app-types/api-helpers";
 import {
     formatPower,
     formatEnergy,
     formatMassRate,
     formatMass,
-} from "@/lib/format-utils";
+} from "@lib/format-utils";
 import { dummyFacilities } from "@/data/dummyFacilities";
 
 // Type aliases from generated API types

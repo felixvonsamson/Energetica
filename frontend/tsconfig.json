@@ -2,8 +2,8 @@
     "compilerOptions": {
         "target": "ESNext",
         "useDefineForClassFields": true,
-        "lib": [ "DOM", "DOM.Iterable", "ESNext" ],
-        "types": [ "vite/client" ],
+        "lib": ["DOM", "DOM.Iterable", "ESNext"],
+        "types": ["vite/client"],
         "allowJs": false,
         "skipLibCheck": true,
         "esModuleInterop": false,
@@ -18,14 +18,14 @@
         "jsx": "react-jsx",
         "baseUrl": ".",
         "paths": {
-            "@/*": [ "./src/*" ],
-            "@components/*": [ "./src/components/*" ],
-            "@hooks/*": [ "./src/hooks/*" ],
-            "@lib/*": [ "./src/lib/*" ],
-            "@contexts/*": [ "./src/contexts/*" ],
-            "@types/*": [ "./src/types/*" ],
-            "@styles/*": [ "./src/styles/*" ]
+            "@/*": ["./src/*"],
+            "@components/*": ["./src/components/*"],
+            "@hooks/*": ["./src/hooks/*"],
+            "@lib/*": ["./src/lib/*"],
+            "@contexts/*": ["./src/contexts/*"],
+            "@app-types/*": ["./src/types/*"],
+            "@styles/*": ["./src/styles/*"]
         }
     },
-    "include": [ "src" ],
+    "include": ["src"]
 }

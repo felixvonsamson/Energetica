@@ -2,19 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
-import { GameLayout } from "@/components/layout/GameLayout";
-import { Modal, Money } from "@/components/ui";
-import { useFunctionalFacilitiesCatalog } from "@/hooks/useProjects";
-import type { ApiSchema } from "@/types/api-helpers";
-import { FacilityCard } from "@/components/facilities";
+import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
+import { GameLayout } from "@components/layout/GameLayout";
+import { Modal, Money } from "@components/ui";
+import { useFunctionalFacilitiesCatalog } from "@hooks/useProjects";
+import type { ApiSchema } from "@app-types/api-helpers";
+import { FacilityCard } from "@components/facilities";
 import {
     formatPower,
     formatMass,
     formatUpgradePower,
     formatUpgradeMass,
     formatUpgradeMassRate,
-} from "@/lib/format-utils";
+} from "@lib/format-utils";
 
 export const Route = createFileRoute("/app/facilities/functional")({
     component: FunctionalFacilitiesPage,

@@ -4,7 +4,7 @@
  */
 
 import { Clock, Zap, Cloud } from "lucide-react";
-import { formatPower, formatMass } from "@/lib/format-utils";
+import { formatPower, formatMass } from "@lib/format-utils";
 
 interface ConstructionInfoProps {
     constructionTime: number;

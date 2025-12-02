@@ -6,9 +6,9 @@
  * responsible for calculating colors and labels based on their specific needs.
  */
 
-import { useMapContext } from "../../contexts/MapContext";
-import { getHexagonPoints, getHexPosition } from "../../lib/hex-utils";
-import type { ApiResponse } from "@/types/api-helpers";
+import { useMapContext } from "@contexts/MapContext";
+import { getHexagonPoints, getHexPosition } from "@lib/hex-utils";
+import type { ApiResponse } from "@app-types/api-helpers";
 
 type HexTileData = ApiResponse<"/api/v1/map", "get">[number];
 

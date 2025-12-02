@@ -3,7 +3,7 @@
  * tile.
  */
 
-import type { ApiResponse } from "@/types/api-helpers";
+import type { ApiResponse } from "@app-types/api-helpers";
 
 type HexTileData = ApiResponse<"/api/v1/map", "get">[number];
 

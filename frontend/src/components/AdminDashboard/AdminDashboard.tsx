@@ -4,9 +4,8 @@ import {
     useRouteContext,
     useRouter,
 } from "@tanstack/react-router";
-import { useMatchRoute } from "@tanstack/react-router";
 
-import NavBar from "../NavBar/NavBar";
+import NavBar from "@components/NavBar/NavBar";
 import styles from "./AdminDashboard.module.css";
 
 export function AdminDashboardLayout() {

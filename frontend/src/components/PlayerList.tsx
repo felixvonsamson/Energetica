@@ -1,4 +1,4 @@
-import { usePlayers } from "../hooks/usePlayers";
+import { usePlayers } from "@hooks/usePlayers";
 
 export default function PlayerList() {
     const { data: players, isPending, error } = usePlayers();

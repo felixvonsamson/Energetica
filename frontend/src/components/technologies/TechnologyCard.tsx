@@ -1,9 +1,9 @@
 import { useState, ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
 
-import { Card, Money, TechnologyName } from "@/components/ui";
-import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
-import { useQueueProject } from "@/hooks/useProjects";
+import { Card, Money, TechnologyName } from "@components/ui";
+import { RequirementsDisplay, ConstructionInfo } from "@components/facilities";
+import { useQueueProject } from "@hooks/useProjects";
 
 interface TechnologyCardProps<T> {
     technology: T & {

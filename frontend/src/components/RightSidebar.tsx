@@ -1,4 +1,4 @@
-import { usePlayers } from "../hooks/usePlayers";
+import { usePlayers } from "@hooks/usePlayers";
 
 function RightSidebar() {
     return (
