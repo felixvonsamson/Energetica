@@ -26,7 +26,7 @@ export function ResolutionPicker({
     selectedResolutionIndex,
     onResolutionChange,
     currentTick,
-    minDatapoints = 360,
+    minDatapoints = 60,
 }: ResolutionPickerProps) {
     return (
         <div>

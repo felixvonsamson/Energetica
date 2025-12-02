@@ -41,6 +41,12 @@ class Chat(DBModel):
     messages: list[Message] = field(default_factory=list)
     player_last_read_index: dict[int, int] = field(default_factory=dict)
 
+    def add_player(self, player: Player) -> None:
+        """Add a player to the list of participants."""
+        self.participants.add(player)
+        for player in self.participants:
+            player.emit("invalidate", {"queries": [["chats"]]})
+
     def is_group(self) -> bool:
         """Check if the chat is a group chat."""
         return len(self.participants) > 2

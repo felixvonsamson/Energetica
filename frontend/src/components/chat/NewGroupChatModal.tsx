@@ -1,43 +1,17 @@
-import { useState, useEffect, useMemo } from "react";
-import { X, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Check } from "lucide-react";
 import { Modal } from "@components/ui/Modal";
 import { Button } from "@components/ui";
 import { useChatList, useCreateGroupChat } from "@hooks/useChats";
 import { usePlayers } from "@hooks/usePlayers";
 import { useAuth } from "@hooks/useAuth";
+import { useFilteredPlayers } from "@hooks/useFilteredPlayers";
 import type { Player } from "@app-types/chats";
 
 interface NewGroupChatModalProps {
     isOpen: boolean;
     onClose: () => void;
     onChatSelected?: (chatId: number) => void;
-}
-
-function useFilteredPlayers(
-    playersData: Player[] | undefined,
-    searchInput: string,
-    currentUserId: number | null | undefined,
-    excludePlayerIds?: number[],
-) {
-    return useMemo(() => {
-        if (!searchInput.trim()) {
-            return [];
-        }
-
-        const excluded = new Set<number>();
-        if (currentUserId) {
-            excluded.add(currentUserId);
-        }
-        (excludePlayerIds || []).forEach((id) => excluded.add(id));
-
-        return (playersData || []).filter(
-            (player) =>
-                player.username
-                    .toLowerCase()
-                    .includes(searchInput.toLowerCase()) &&
-                !excluded.has(player.id),
-        );
-    }, [playersData, searchInput, currentUserId, excludePlayerIds]);
 }
 
 export function NewGroupChatModal({
@@ -58,7 +32,6 @@ export function NewGroupChatModal({
         playersData,
         playerInput,
         user?.player_id,
-        groupMembers.map((m) => m.id),
     );
 
     // Reset state when modal closes
@@ -75,9 +48,13 @@ export function NewGroupChatModal({
         setPlayerInput(value);
     };
 
-    const handleSelectPlayer = (player: Player) => {
-        setGroupMembers([...groupMembers, player]);
-        setPlayerInput("");
+    const handleTogglePlayer = (player: Player) => {
+        const isSelected = groupMembers.some((m) => m.id === player.id);
+        if (isSelected) {
+            setGroupMembers(groupMembers.filter((m) => m.id !== player.id));
+        } else {
+            setGroupMembers([...groupMembers, player]);
+        }
     };
 
     const handleRemovePlayer = (id: number) => {
@@ -106,8 +83,12 @@ export function NewGroupChatModal({
               })
             : undefined;
 
+    const isTitleRequired = groupMembers.length >= 2 && !existingGroupChat;
+    const isTitleMissing = isTitleRequired && !chatTitle.trim();
+
     const handleCreateGroupChat = () => {
-        if (!chatTitle.trim() || groupMembers.length === 0) return;
+        if (groupMembers.length === 0) return;
+        if (isTitleRequired && !chatTitle.trim()) return;
 
         if (existingGroupChat) {
             // Chat with these participants already exists, just select it
@@ -120,7 +101,7 @@ export function NewGroupChatModal({
 
         createGroupChat(
             {
-                group_chat_name: chatTitle,
+                group_chat_name: groupMembers.length === 1 ? null : chatTitle,
                 group_member_ids: groupMembers.map((m) => m.id),
             },
             {
@@ -156,15 +137,21 @@ export function NewGroupChatModal({
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Create group chat">
-            <div className="space-y-4">
+            <div className="space-y-0 flex flex-col">
                 {error && (
-                    <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-lg text-sm">
+                    <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-lg text-sm mb-4 animate-in fade-in duration-200">
                         {error}
                     </div>
                 )}
-                <div>
+                <div className="pb-4">
                     <label htmlFor="chat-title" className="block mb-2">
                         Chat title
+                        {isTitleRequired && (
+                            <span className="text-red-600 dark:text-red-400">
+                                {" "}
+                                *
+                            </span>
+                        )}
                     </label>
                     <input
                         id="chat-title"
@@ -175,95 +162,127 @@ export function NewGroupChatModal({
                             setError(null);
                         }}
                         placeholder="Enter chat title"
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green"
+                        className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition ${
+                            isTitleMissing
+                                ? "border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/20 focus:ring-red-500 dark:focus:ring-red-500"
+                                : "border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:ring-pine dark:focus:ring-brand-green"
+                        }`}
                     />
+                    <div className="h-6 mt-1">
+                        {isTitleMissing && (
+                            <p className="text-sm text-red-600 dark:text-red-400 animate-in fade-in duration-200">
+                                Group chat name is required
+                            </p>
+                        )}
+                    </div>
                 </div>
 
                 {/* Group Members Display */}
-                {groupMembers.length > 0 && (
-                    <div>
-                        <p className="text-sm font-medium mb-2">
-                            Group Members (click to remove):
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                            {groupMembers.map((member) => (
-                                <button
-                                    key={member.id}
-                                    onClick={() =>
-                                        handleRemovePlayer(member.id)
-                                    }
-                                    aria-label={`Remove ${member.username} from group`}
-                                    className="flex items-center gap-2 bg-pine dark:bg-brand-green text-white px-3 py-1 rounded-full text-sm hover:opacity-80 transition-opacity"
-                                >
-                                    {member.username}
-                                    <X className="w-3 h-3" />
-                                </button>
-                            ))}
-                        </div>
+                <div className="border-t border-gray-200 dark:border-dark-border py-4">
+                    <p className="text-sm font-medium mb-3">
+                        Selected Players{" "}
+                        {groupMembers.length > 0 && `(${groupMembers.length})`}
+                    </p>
+                    <div className="min-h-8">
+                        {groupMembers.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                                {groupMembers.map((member) => (
+                                    <button
+                                        key={member.id}
+                                        onClick={() =>
+                                            handleRemovePlayer(member.id)
+                                        }
+                                        aria-label={`Remove ${member.username} from group`}
+                                        className="flex items-center gap-2 bg-pine dark:bg-brand-green text-white px-3 py-1 rounded-full text-sm hover:opacity-80 transition-opacity animate-in zoom-in duration-200"
+                                    >
+                                        {member.username}
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                No players selected yet
+                            </p>
+                        )}
                     </div>
-                )}
-
-                <div className="relative">
-                    <label htmlFor="player-input" className="block mb-2">
-                        Add player
-                    </label>
-                    <div className="flex gap-2">
-                        <input
-                            id="search-group-player"
-                            type="search"
-                            autoComplete="off"
-                            value={playerInput}
-                            onChange={(e) =>
-                                handlePlayerInputChange(e.target.value)
-                            }
-                            placeholder="Enter player name"
-                            className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green"
-                        />
-                        <Button
-                            onClick={() => {
-                                if (filteredPlayers.length === 1) {
-                                    handleSelectPlayer(filteredPlayers[0]);
-                                }
-                            }}
-                            disabled={filteredPlayers.length !== 1}
-                            size="md"
-                            aria-label="Add player to group"
-                        >
-                            <Plus className="w-4 h-4" />
-                        </Button>
-                    </div>
-                    {filteredPlayers.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg shadow-lg z-10">
-                            {filteredPlayers.map((player: Player) => (
-                                <button
-                                    key={player.id}
-                                    onClick={() => handleSelectPlayer(player)}
-                                    className="w-full text-left px-4 py-2 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary transition-colors"
-                                >
-                                    {player.username}
-                                </button>
-                            ))}
-                        </div>
-                    )}
                 </div>
 
-                <Button
-                    onClick={handleCreateGroupChat}
-                    disabled={
-                        isPending ||
-                        !chatTitle.trim() ||
-                        groupMembers.length === 0
-                    }
-                    className="w-full"
-                >
-                    {isPending
-                        ? existingGroupChat
-                            ? "Opening..."
-                            : "Creating..."
-                        : existingGroupChat
-                          ? "Go to existing chat"
-                          : "Create group chat"}
-                </Button>
+                <div className="border-t border-gray-200 dark:border-dark-border py-4">
+                    <label htmlFor="player-search" className="block mb-3">
+                        Add players
+                    </label>
+                    <input
+                        id="player-search"
+                        type="search"
+                        autoComplete="off"
+                        value={playerInput}
+                        onChange={(e) =>
+                            handlePlayerInputChange(e.target.value)
+                        }
+                        placeholder="Search players..."
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green mb-3"
+                    />
+                    <div className="max-h-60 overflow-y-auto border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-secondary">
+                        {filteredPlayers.length > 0 ? (
+                            <div className="divide-y divide-gray-200 dark:divide-dark-border">
+                                {filteredPlayers.map((player: Player) => {
+                                    const isSelected = groupMembers.some(
+                                        (m) => m.id === player.id,
+                                    );
+                                    return (
+                                        <button
+                                            key={player.id}
+                                            onClick={() =>
+                                                handleTogglePlayer(player)
+                                            }
+                                            className="w-full text-left px-4 py-3 flex items-center gap-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary transition-colors"
+                                        >
+                                            <div
+                                                className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                                                    isSelected
+                                                        ? "bg-pine dark:bg-brand-green border-pine dark:border-brand-green"
+                                                        : "border-gray-300 dark:border-gray-500"
+                                                }`}
+                                            >
+                                                {isSelected && (
+                                                    <Check className="w-4 h-4 text-white" />
+                                                )}
+                                            </div>
+                                            <span>{player.username}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                No players available
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-dark-border pt-4">
+                    <Button
+                        onClick={handleCreateGroupChat}
+                        disabled={
+                            isPending ||
+                            groupMembers.length === 0 ||
+                            isTitleMissing
+                        }
+                        className="w-full transition-opacity"
+                    >
+                        {isPending
+                            ? existingGroupChat
+                                ? "Opening..."
+                                : "Creating..."
+                            : existingGroupChat
+                              ? "Go to existing chat"
+                              : groupMembers.length === 1
+                                ? "Create 1-on-1 chat"
+                                : "Create group chat"}
+                    </Button>
+                </div>
             </div>
         </Modal>
     );

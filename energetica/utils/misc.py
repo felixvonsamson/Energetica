@@ -254,7 +254,7 @@ def initialize_player(user: User, tile: HexTile) -> Player:
     )
     player.capacities.update(player, ControllableFacilityType.STEAM_ENGINE)
 
-    engine.general_chat.participants.add(player)
+    engine.general_chat.add_player(player)
 
     add_player_to_data(player)
 

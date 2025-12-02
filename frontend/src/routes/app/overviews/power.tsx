@@ -10,7 +10,7 @@ import { Card, CardTitle } from "@components/ui";
 import { useGameTick } from "@hooks/useGameTick";
 import { useCurrentChartData } from "@hooks/useCharts";
 import { useAssetColorGetter } from "@hooks/useAssetColorGetter";
-import { Resolution, ChartType } from "@app-types/charts";
+import { ChartType } from "@app-types/charts";
 import {
     TimeSeriesChart,
     ResolutionPicker,
