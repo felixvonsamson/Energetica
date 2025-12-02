@@ -55,7 +55,11 @@ class AskListOut(BaseModel):
 class PurchaseOrderCreate(BaseModel):
     """Schema for a purchase order in the resource market."""
 
-    quantity: float | None = Field(default=None, gt=0, description="Quantity of the resource in kg. If not provided, purchases all available quantity.")
+    quantity: float | None = Field(
+        default=None,
+        gt=0,
+        description="Quantity of the resource in kg. If not provided, purchases all available quantity.",
+    )
 
 
 class DeliveryCalculationResponse(BaseModel):

@@ -32,37 +32,35 @@ PowerSinksKey = (
 )
 RevenuesKey = Literal["industry", "exports", "imports", "dumping", "climate_events"]
 
-OpCostsKey = (
-    Literal[
-        # Storage facilities
-        "small_pumped_hydro",
-        "large_pumped_hydro",
-        "lithium_ion_batteries",
-        "solid_state_batteries",
-        "molten_salt",
-        "hydrogen_storage",
-        # Renewable facilities
-        "watermill",
-        "small_water_dam",
-        "large_water_dam",
-        "windmill",
-        "onshore_wind_turbine",
-        "offshore_wind_turbine",
-        "CSP_solar",
-        "PV_solar",
-        # Controllable facilities
-        "nuclear_reactor",
-        "nuclear_reactor_gen4",
-        "steam_engine",
-        "coal_burner",
-        "gas_burner",
-        "combined_cycle",
-        # Extraction facilities
-        "coal_mine",
-        "gas_drilling_site",
-        "uranium_mine",
-    ]
-)
+OpCostsKey = Literal[
+    # Storage facilities
+    "small_pumped_hydro",
+    "large_pumped_hydro",
+    "lithium_ion_batteries",
+    "solid_state_batteries",
+    "molten_salt",
+    "hydrogen_storage",
+    # Renewable facilities
+    "watermill",
+    "small_water_dam",
+    "large_water_dam",
+    "windmill",
+    "onshore_wind_turbine",
+    "offshore_wind_turbine",
+    "CSP_solar",
+    "PV_solar",
+    # Controllable facilities
+    "nuclear_reactor",
+    "nuclear_reactor_gen4",
+    "steam_engine",
+    "coal_burner",
+    "gas_burner",
+    "combined_cycle",
+    # Extraction facilities
+    "coal_mine",
+    "gas_drilling_site",
+    "uranium_mine",
+]
 
 
 class ChartDataResponse(BaseModel, Generic[SeriesKeyType]):

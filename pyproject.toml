@@ -8,22 +8,22 @@ lint.select = [
     "D202",
     "D209",
     "D213",
-    "D400", 
-    "D415", 
-    "COM812", 
-    "F401", 
+    "D400",
+    "D415",
+    "F401",
     # "TD004", TODOs
-    "PIE794", 
-    "ANN001", 
-    "ANN201", 
+    "PIE794",
+    "ANN001",
+    "ANN201",
     "F404"
 ]
 # select = ["ALL"]
 lint.ignore = [
-    "D212", 
+    "D212",
     "ANN401",
     "RET503",
     "DTZ005",
+    "COM812",
 ]
 
 [tool.pytest.ini_options]

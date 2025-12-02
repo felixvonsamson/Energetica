@@ -25,7 +25,13 @@ import numpy as np
 
 from energetica.database.player import Player
 from energetica.globals import engine
-from energetica.schemas.charts import OpCostsResponse, PowerSinksResponse, PowerSourcesResponse, RevenuesResponse, StorageLevelResponse
+from energetica.schemas.charts import (
+    OpCostsResponse,
+    PowerSinksResponse,
+    PowerSourcesResponse,
+    RevenuesResponse,
+    StorageLevelResponse,
+)
 from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/charts", tags=["Charts"])
