@@ -90,6 +90,9 @@ export const queryKeys = {
     dailyQuiz: {
         today: ["daily-quiz", "today"] as const,
     },
+    electricityMarkets: {
+        all: ["electricity-markets"] as const,
+    },
     achievements: {
         upcoming: ["achievements", "upcoming"] as const,
     },
