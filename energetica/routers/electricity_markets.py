@@ -1,4 +1,4 @@
-"""Routes relating to networks."""
+"""Routes relating to electricity markets."""
 
 from typing import Annotated
 
@@ -7,38 +7,45 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.globals import engine
-from energetica.schemas.networks import ChangeNetworkPrices, NetworkCreate, NetworkListOut, NetworkOut
+from energetica.schemas.electricity_markets import (
+    ChangeElectricityMarketPrices,
+    ElectricityMarketCreate,
+    ElectricityMarketListOut,
+    ElectricityMarketOut,
+)
 from energetica.utils import network_helpers
 from energetica.utils.auth import get_settled_player
 
-router = APIRouter(prefix="/networks", tags=["Networks"])
+router = APIRouter(prefix="/electricity-markets", tags=["Electricity Markets"])
 
 
 @router.get("")
-def get_networks_list() -> NetworkListOut:
-    """Get the list of existing networks."""
-    return NetworkListOut(networks=[NetworkOut.from_network(network) for network in Network.all()])
+def get_electricity_market_list() -> ElectricityMarketListOut:
+    """Get the list of existing electricity markets."""
+    return ElectricityMarketListOut(
+        electricity_markets=[ElectricityMarketOut.from_network(network) for network in Network.all()]
+    )
 
 
 @router.post("/{network_id}:join")
-def join_network(
+def join_electricity_market(
     player: Annotated[Player, Depends(get_settled_player)],
     network_id: int,
-) -> NetworkOut:
-    """Join a network."""
+) -> ElectricityMarketOut:
+    """Join the electricity markets."""
     network = Network.getitem(
         network_id,
         error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Network not found"),
     )
-    return NetworkOut.from_network(network_helpers.join_network(player, network))
+    return ElectricityMarketOut.from_network(network_helpers.join_network(player, network))
 
 
 @router.post("/{network_id}:leave")
-def leave_network(
+def leave_electricity_market(
     player: Annotated[Player, Depends(get_settled_player)],
     network_id: int,
-) -> NetworkOut | None:
-    """Leave the network."""
+) -> ElectricityMarketOut | None:
+    """Leave the electricity markets."""
     network = Network.getitem(
         network_id,
         error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Network not found"),
@@ -48,20 +55,22 @@ def leave_network(
     new_network = network_helpers.leave_network(player)
     if new_network is None:
         return None
-    return NetworkOut.from_network(new_network)
+    return ElectricityMarketOut.from_network(new_network)
 
 
 @router.post("")
-def create_network(player: Annotated[Player, Depends(get_settled_player)], request_data: NetworkCreate) -> NetworkOut:
-    """Create a network."""
+def create_electricity_market(
+    player: Annotated[Player, Depends(get_settled_player)], request_data: ElectricityMarketCreate
+) -> ElectricityMarketOut:
+    """Create a new electricity market."""
     new_network = network_helpers.create_network(player, request_data.name)
-    return NetworkOut.from_network(new_network)
+    return ElectricityMarketOut.from_network(new_network)
 
 
 @router.patch("/prices", status_code=status.HTTP_204_NO_CONTENT)
-async def change_network_prices(
+async def change_electricity_market_prices(
     player: Annotated[Player, Depends(get_settled_player)],
-    prices_change_request: ChangeNetworkPrices,
+    prices_change_request: ChangeElectricityMarketPrices,
 ) -> None:
     """Update the asking prices and bid prices for a player on their electricity market."""
     if player.network is None:

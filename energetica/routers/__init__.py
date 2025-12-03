@@ -25,10 +25,10 @@ from .browser_notifications import router as browser_notifications_router
 from .charts import router as charts_router
 from .chats import router as chat_router
 from .daily_quiz import router as daily_quiz_router
+from .electricity_markets import router as electricity_markets_router
 from .facilities import router as facilities_router
 from .game import router as game_router
 from .map import router as map_router
-from .networks import router as network_router
 from .notifications import router as notifications_router
 from .players import router as player_router
 from .power_priorities import router as power_priorities
@@ -48,10 +48,10 @@ api_routers = [
     charts_router,
     chat_router,
     daily_quiz_router,
+    electricity_markets_router,
     facilities_router,
     game_router,
     map_router,
-    network_router,
     notifications_router,
     player_router,
     power_priorities,

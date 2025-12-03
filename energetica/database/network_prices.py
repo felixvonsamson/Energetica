@@ -20,7 +20,7 @@ from energetica.enums import (
 )
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
-from energetica.schemas.networks import AskItem, AskType, BidItem, BidType, PowerPriorityItem
+from energetica.schemas.electricity_markets import AskItem, AskType, BidItem, BidType, PowerPriorityItem
 from energetica.utils.hashing import stable_hash
 
 

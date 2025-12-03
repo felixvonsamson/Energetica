@@ -1,7 +1,5 @@
 """Schemas for API routes for electricity markets."""
 
-# TODO(mglst): rename all appearances of 'network' with 'electricity market'
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, Literal
@@ -20,25 +18,27 @@ if TYPE_CHECKING:
     from energetica.database.network import Network
 
 
-class NetworkBase(BaseModel):
-    name: str = Field(min_length=3, max_length=40, description="Name of the network")
+class ElectricityMarketBase(BaseModel):
+    name: str = Field(min_length=3, max_length=40, description="Name of the electricity market")
 
 
-class NetworkOut(NetworkBase):
-    id: int = Field(description="ID of the network")
-    member_ids: list[int] = Field(description="List of player IDs in the network")
+class ElectricityMarketOut(ElectricityMarketBase):
+    id: int = Field(description="ID of the electricity market")
+    member_ids: list[int] = Field(description="List of player IDs in the electricity market")
 
     @classmethod
-    def from_network(cls, network: Network) -> NetworkOut:
-        return NetworkOut(id=network.id, name=network.name, member_ids=[member.id for member in network.members])
+    def from_network(cls, network: Network) -> ElectricityMarketOut:
+        return ElectricityMarketOut(
+            id=network.id, name=network.name, member_ids=[member.id for member in network.members]
+        )
 
 
-class NetworkCreate(NetworkBase):
+class ElectricityMarketCreate(ElectricityMarketBase):
     pass
 
 
-class NetworkListOut(BaseModel):
-    networks: list[NetworkOut] = Field(description="List of networks")
+class ElectricityMarketListOut(BaseModel):
+    electricity_markets: list[ElectricityMarketOut] = Field(description="List of electricity markets")
 
 
 AskType = ControllableFacilityType | StorageFacilityType
@@ -50,7 +50,7 @@ BidType = (
 )
 
 
-class ChangeNetworkPrices(BaseModel):
+class ChangeElectricityMarketPrices(BaseModel):
     asks: list[Ask]
     bids: list[Bid]
 

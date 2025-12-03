@@ -400,6 +400,96 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/electricity-markets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Electricity Market List
+         *
+         * Get the list of existing electricity markets.
+         */
+        get: operations["get_electricity_market_list_api_v1_electricity_markets_get"];
+        put?: never;
+        /**
+         * Create Electricity Market
+         *
+         * Create a new electricity market.
+         */
+        post: operations["create_electricity_market_api_v1_electricity_markets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/electricity-markets/{network_id}:join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Join Electricity Market
+         *
+         * Join the electricity markets.
+         */
+        post: operations["join_electricity_market_api_v1_electricity_markets__network_id__join_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/electricity-markets/{network_id}:leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Leave Electricity Market
+         *
+         * Leave the electricity markets.
+         */
+        post: operations["leave_electricity_market_api_v1_electricity_markets__network_id__leave_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/electricity-markets/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change Electricity Market Prices
+         *
+         * Update the asking prices and bid prices for a player on their
+         * electricity market.
+         */
+        patch: operations["change_electricity_market_prices_api_v1_electricity_markets_prices_patch"];
+        trace?: never;
+    };
     "/api/v1/facilities": {
         parameters: {
             query?: never;
@@ -563,96 +653,6 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/api/v1/networks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Networks List
-         *
-         * Get the list of existing networks.
-         */
-        get: operations["get_networks_list_api_v1_networks_get"];
-        put?: never;
-        /**
-         * Create Network
-         *
-         * Create a network.
-         */
-        post: operations["create_network_api_v1_networks_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/networks/{network_id}:join": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Join Network
-         *
-         * Join a network.
-         */
-        post: operations["join_network_api_v1_networks__network_id__join_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/networks/{network_id}:leave": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Leave Network
-         *
-         * Leave the network.
-         */
-        post: operations["leave_network_api_v1_networks__network_id__leave_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/networks/prices": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Change Network Prices
-         *
-         * Update the asking prices and bid prices for a player on their
-         * electricity market.
-         */
-        patch: operations["change_network_prices_api_v1_networks_prices_patch"];
         trace?: never;
     };
     "/api/v1/notifications/{notification_id}": {
@@ -2277,8 +2277,8 @@ export interface components {
                 | ("industry" | "carbon_capture")
                 | components["schemas"]["StorageFacilityType"];
         };
-        /** ChangeNetworkPrices */
-        ChangeNetworkPrices: {
+        /** ChangeElectricityMarketPrices */
+        ChangeElectricityMarketPrices: {
             /** Asks */
             asks: components["schemas"]["Ask"][];
             /** Bids */
@@ -2392,6 +2392,45 @@ export interface components {
              * Estimated shipment time in game ticks.
              */
             shipment_time: number;
+        };
+        /** ElectricityMarketCreate */
+        ElectricityMarketCreate: {
+            /**
+             * Name
+             *
+             * Name of the electricity market
+             */
+            name: string;
+        };
+        /** ElectricityMarketListOut */
+        ElectricityMarketListOut: {
+            /**
+             * Electricity Markets
+             *
+             * List of electricity markets
+             */
+            electricity_markets: components["schemas"]["ElectricityMarketOut"][];
+        };
+        /** ElectricityMarketOut */
+        ElectricityMarketOut: {
+            /**
+             * Name
+             *
+             * Name of the electricity market
+             */
+            name: string;
+            /**
+             * Id
+             *
+             * ID of the electricity market
+             */
+            id: number;
+            /**
+             * Member Ids
+             *
+             * List of player IDs in the electricity market
+             */
+            member_ids: number[];
         };
         /**
          * ExtractionFacilityCatalogListOut
@@ -2692,45 +2731,6 @@ export interface components {
         MoneyOut: {
             /** Money */
             money: number;
-        };
-        /** NetworkCreate */
-        NetworkCreate: {
-            /**
-             * Name
-             *
-             * Name of the network
-             */
-            name: string;
-        };
-        /** NetworkListOut */
-        NetworkListOut: {
-            /**
-             * Networks
-             *
-             * List of networks
-             */
-            networks: components["schemas"]["NetworkOut"][];
-        };
-        /** NetworkOut */
-        NetworkOut: {
-            /**
-             * Name
-             *
-             * Name of the network
-             */
-            name: string;
-            /**
-             * Id
-             *
-             * ID of the network
-             */
-            id: number;
-            /**
-             * Member Ids
-             *
-             * List of player IDs in the network
-             */
-            member_ids: number[];
         };
         /**
          * NonFacilityBidType
@@ -4451,6 +4451,154 @@ export interface operations {
             };
         };
     };
+    get_electricity_market_list_api_v1_electricity_markets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ElectricityMarketListOut"];
+                };
+            };
+        };
+    };
+    create_electricity_market_api_v1_electricity_markets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ElectricityMarketCreate"];
+            };
+        };
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ElectricityMarketOut"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    join_electricity_market_api_v1_electricity_markets__network_id__join_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                network_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ElectricityMarketOut"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leave_electricity_market_api_v1_electricity_markets__network_id__leave_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                network_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json":
+                        | components["schemas"]["ElectricityMarketOut"]
+                        | null;
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_electricity_market_prices_api_v1_electricity_markets_prices_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeElectricityMarketPrices"];
+            };
+        };
+        responses: {
+            /** Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_active_facilities_api_v1_facilities_get: {
         parameters: {
             query?: never;
@@ -4668,154 +4816,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SettleResponse"];
                 };
-            };
-            /** Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_networks_list_api_v1_networks_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NetworkListOut"];
-                };
-            };
-        };
-    };
-    create_network_api_v1_networks_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NetworkCreate"];
-            };
-        };
-        responses: {
-            /** Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NetworkOut"];
-                };
-            };
-            /** Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    join_network_api_v1_networks__network_id__join_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                network_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NetworkOut"];
-                };
-            };
-            /** Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    leave_network_api_v1_networks__network_id__leave_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                network_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json":
-                        | components["schemas"]["NetworkOut"]
-                        | null;
-                };
-            };
-            /** Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    change_network_prices_api_v1_networks_prices_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangeNetworkPrices"];
-            };
-        };
-        responses: {
-            /** Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** Validation Error */
             422: {
