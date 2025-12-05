@@ -13,6 +13,7 @@ import { usePlayerResources } from "@hooks/usePlayerResources";
 import { useOnlineStatus } from "@hooks/useOnlineStatus";
 import { useCapabilities } from "@hooks/useCapabilities";
 import { NotificationPopup } from "./NotificationPopup";
+import { SideNav } from "./SideNav";
 import { ThemeToggle } from "@components/ui/ThemeToggle";
 import { Money } from "@app-types/money";
 import { Workers } from "@/types/workers";
@@ -96,7 +97,7 @@ export function TopBar() {
                             </div>
                         </div>
 
-                        {/* Settings, Notifications and Theme Toggle */}
+                        {/* Settings, Notifications, Theme Toggle, and Mobile Menu */}
                         <div className="flex gap-2">
                             <a
                                 href="/settings"
@@ -126,36 +127,25 @@ export function TopBar() {
 
                             {/* Theme toggle */}
                             <ThemeToggle className="px-2 py-2 bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors h-9" />
+
+                            {/* Mobile menu button */}
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="md:hidden bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-2 py-2 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors flex items-center justify-center aspect-square h-9"
+                                aria-label="Toggle navigation menu"
+                            >
+                                <Menu size={20} />
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Navigation Bar */}
-            <nav className="bg-tan-green dark:bg-dark-bg-secondary border-b-2 border-pine-darker dark:border-dark-border">
+            {/* Navigation Bar - Desktop only */}
+            <nav className="hidden md:block bg-tan-green dark:bg-dark-bg-secondary border-b-2 border-pine-darker dark:border-dark-border">
                 <div className="px-4">
-                    {/* Mobile menu button */}
-                    <div className="flex items-center justify-between md:hidden py-3">
-                        <div className="flex items-center gap-2">
-                            <span className="text-pine dark:text-dark-text-primary font-bold">
-                                Menu
-                            </span>
-                        </div>
-                        <button
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="text-pine dark:text-dark-text-primary p-2 hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary rounded transition-colors"
-                            aria-label="Toggle navigation menu"
-                        >
-                            <Menu size={24} />
-                        </button>
-                    </div>
-
                     {/* Navigation menu */}
-                    <ul
-                        className={`${
-                            isMenuOpen ? "block" : "hidden"
-                        } md:flex md:items-center md:gap-0`}
-                    >
+                    <ul className="flex items-center gap-0">
                         {/* Dashboard */}
                         <NavItem to="/app/dashboard" icon="dashboard.png">
                             Dashboard
@@ -244,7 +234,6 @@ export function TopBar() {
                             >
                                 Functional Facilities
                             </NavItem>
-                            {/* Technology (conditional) */}
                             {hasLaboratory && (
                                 <NavItem
                                     to="/app/technology"
@@ -296,16 +285,6 @@ export function TopBar() {
                             </NavItem>
                         </NavDropdown>
 
-                        {/* Mobile-only links */}
-                        <div className="md:hidden">
-                            <NavItem to="/wiki/introduction" icon="wiki.png">
-                                Game Wiki
-                            </NavItem>
-                            <NavItem to="/changelog" icon="changelog.png">
-                                Changelog
-                            </NavItem>
-                        </div>
-
                         {/* Logout */}
                         <NavItem to="/logout" icon="logout.png">
                             Logout
@@ -313,6 +292,15 @@ export function TopBar() {
                     </ul>
                 </div>
             </nav>
+
+            {/* Mobile Side Navigation */}
+            <SideNav
+                isOpen={isMenuOpen}
+                onClose={() => setIsMenuOpen(false)}
+                capabilities={capabilities}
+                openDropdown={openDropdown}
+                onToggleDropdown={toggleDropdown}
+            />
 
             {/* Notification Popup Modal */}
             <NotificationPopup
