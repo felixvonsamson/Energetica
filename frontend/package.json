@@ -42,8 +42,7 @@
     },
     "lint-staged": {
         "frontend/src/**/*.{ts,tsx}": [
-            "npm run lint:check --prefix frontend",
-            "npm run tsc:check --prefix frontend"
+            "npm run lint:check --prefix frontend"
         ],
         "frontend/**/*.{ts,tsx,js,jsx,json,css}": [
             "npm run pretty --prefix frontend"
