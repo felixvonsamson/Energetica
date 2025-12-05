@@ -218,7 +218,6 @@ def calculate_net_import(new_values: dict) -> None:
 
 def extraction_facility_demand(new_values: dict, player: Player, demand: dict) -> None:
     """Calculate power consumption of extraction facilities."""
-    assert player.tile is not None
     player_resources = new_values["resources"]
     warehouse_caps = player.config["warehouse_capacities"]
     for fuel in Fuel:
@@ -776,7 +775,6 @@ def place_ask(market: dict, player_id: int, demand: float, price: float, facilit
 def resources_and_pollution(new_values: dict, player: Player) -> None:
     """Calculate resource use and production, O&M costs and emissions."""
     assert player is not None
-    assert player.tile is not None
     generation = new_values["generation"]
     op_costs = new_values["op_costs"]
     demand = new_values["demand"]

@@ -21,7 +21,6 @@
 #         # tile = max(HexTile.all(), key=lambda t: t.potentials[Renewable.WIND])
 #         tile = max(HexTile.all(), key=lambda t: t.potentials[Renewable.WIND] * t.potentials[Renewable.HYDRO])
 #         map_helpers.confirm_location(player, tile)
-#         assert player.tile is not None
 #         print(f"Player {player.id} is at {player.tile}")
 #         for renewable in Renewable:
 #             print(f"{renewable}: {player.tile.potentials[renewable]}")

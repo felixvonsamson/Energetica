@@ -76,7 +76,6 @@ class ActiveFacility(DBModel):
     @property
     def extraction_rate(self) -> float:
         """Rate at which the facility extracts resources from the ground. Defined only for extraction facilities."""
-        assert self.player.tile is not None
         assert isinstance(self.facility_type, ExtractionFacilityType)
         return (
             self.const_config["base_extraction_rate_per_day"]

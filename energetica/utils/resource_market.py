@@ -13,9 +13,6 @@ from energetica.utils.formatting import display_money, format_mass
 
 def calculate_shipment_duration(buyer: Player, seller: Player) -> float:
     """Calculate shipment duration in game ticks between buyer and seller tiles."""
-    assert buyer.tile is not None
-    assert seller.tile is not None
-
     dq = buyer.tile.coordinates[0] - seller.tile.coordinates[0]
     dr = buyer.tile.coordinates[1] - seller.tile.coordinates[1]
     distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
@@ -45,8 +42,6 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
 
     Return the resulting ResourceOnSale if this is a partial purchase, return None otherwise.
     """
-    assert buyer.tile is not None
-    assert sale.player.tile is not None
     if quantity > sale.quantity:
         raise GameError(GameExceptionType.INVALID_QUANTITY)
     total_price = sale.unit_price * quantity
@@ -130,7 +125,6 @@ def store_import(player: Player, fuel: Fuel, quantity: float) -> None:
 
     This function is executed when a resource shipment arrives.
     """
-    assert player.tile is not None
     max_cap: float = player.config["warehouse_capacities"][fuel]
     if player.resources[fuel] + quantity > max_cap:
         # excess resources are stored in the ground
