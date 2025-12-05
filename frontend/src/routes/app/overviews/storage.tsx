@@ -179,7 +179,8 @@ function StorageChart({
 
                 const currentVal = typeof dp[key] === "number" ? dp[key] : 0;
                 if (maxValue > 0) {
-                    result[key] = (((currentVal as number) || 0) / maxValue) * 100;
+                    result[key] =
+                        (((currentVal as number) || 0) / maxValue) * 100;
                 } else {
                     result[key] = 0;
                 }

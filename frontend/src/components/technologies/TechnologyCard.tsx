@@ -4,15 +4,16 @@ import { ExternalLink } from "lucide-react";
 import { Card, Money, TechnologyName } from "@components/ui";
 import { RequirementsDisplay, ConstructionInfo } from "@components/facilities";
 import { useQueueProject } from "@hooks/useProjects";
+import { ProjectType, Requirement } from "@app-types/projects";
 
 interface TechnologyCardProps<T> {
     technology: T & {
-        name: string;
+        name: ProjectType;
         price: number;
         description: string;
         wikipedia_link: string;
         requirements_status: string;
-        requirements: unknown;
+        requirements: Requirement[];
         construction_time: number;
         construction_power: number;
         level: number;
@@ -33,7 +34,9 @@ export function TechnologyCard<T>({
     const queueProjectMutation = useQueueProject();
 
     const handleResearch = () => {
-        queueProjectMutation.mutate({ type: technology.name as any });
+        queueProjectMutation.mutate({
+            type: technology.name,
+        });
     };
 
     const imageUrl = `/static/images/technologies/${technology.name}.jpg`;
@@ -127,7 +130,7 @@ export function TechnologyCard<T>({
                     {/* Requirements */}
                     {technology.requirements_status !== "satisfied" && (
                         <RequirementsDisplay
-                            requirements={technology.requirements as any}
+                            requirements={technology.requirements}
                         />
                     )}
                 </div>

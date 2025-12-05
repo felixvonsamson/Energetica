@@ -4,15 +4,16 @@ import { ExternalLink } from "lucide-react";
 import { Card, FacilityName, Money } from "@components/ui";
 import { RequirementsDisplay, ConstructionInfo } from "@components/facilities";
 import { useQueueProject } from "@hooks/useProjects";
+import { ProjectType, Requirement } from "@app-types/projects";
 
 interface FacilityCardProps<T> {
     facility: T & {
-        name: string;
+        name: ProjectType;
         price: number;
         description: string;
         wikipedia_link: string;
         requirements_status: string;
-        requirements: unknown;
+        requirements: Requirement[];
         construction_time: number;
         construction_power: number;
         construction_pollution?: number | null;
@@ -36,7 +37,7 @@ export function FacilityCard<T>({
     const queueProjectMutation = useQueueProject();
 
     const handleConstruction = () => {
-        queueProjectMutation.mutate({ type: facility.name as any });
+        queueProjectMutation.mutate({ type: facility.name });
     };
 
     // Determine image extension
@@ -99,11 +100,12 @@ export function FacilityCard<T>({
                     </div>
 
                     {/* Requirements */}
-                    {facility.requirements_status !== "satisfied" && (
-                        <RequirementsDisplay
-                            requirements={facility.requirements as any}
-                        />
-                    )}
+                    {facility.requirements_status !== "satisfied" &&
+                        facility.requirements && (
+                            <RequirementsDisplay
+                                requirements={facility.requirements}
+                            />
+                        )}
                 </div>
 
                 {/* Stats Table (visible on desktop when not expanded) */}

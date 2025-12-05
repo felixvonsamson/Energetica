@@ -59,5 +59,6 @@ export function useAssetColorGetter() {
             const color = getAssetColor(assetName, appliedTheme);
             return color;
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [appliedTheme, cacheVersion]);
 }

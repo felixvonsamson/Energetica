@@ -274,8 +274,8 @@ export function FacilityGroupTable<T extends FacilityBase>({
         .sort(([nameA, facilitiesA], [nameB, facilitiesB]) => {
             if (!sortConfig) return 0;
 
-            let aVal: any;
-            let bVal: any;
+            let aVal: string | number;
+            let bVal: string | number;
 
             if (sortConfig.key === "facility") {
                 // Sort by facility name
@@ -309,12 +309,12 @@ export function FacilityGroupTable<T extends FacilityBase>({
                 // Sort by sum of column values
                 aVal = facilitiesA.reduce(
                     (sum, f) =>
-                        sum + ((f[sortConfig.key as keyof T] as any) || 0),
+                        sum + ((f[sortConfig.key] as number | undefined) || 0),
                     0,
                 );
                 bVal = facilitiesB.reduce(
                     (sum, f) =>
-                        sum + ((f[sortConfig.key as keyof T] as any) || 0),
+                        sum + ((f[sortConfig.key] as number | undefined) || 0),
                     0,
                 );
             }

@@ -12,7 +12,6 @@ import { getHexPosition } from "@lib/hex-utils";
 interface MapHoverBorderProps {
     tile: { q: number; r: number } | null;
     strokeWidth?: number;
-    show?: boolean;
     enableAnimations?: boolean;
 }
 
@@ -30,6 +29,7 @@ export function MapHoverBorder({
 
     useEffect(() => {
         if (tile) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLastPosition({ q: tile.q, r: tile.r });
         } else if (lastPosition) {
             setLastPosition({
@@ -48,7 +48,7 @@ export function MapHoverBorder({
                 setLastPosition(null);
             })();
         }
-    }, [tile]);
+    }, [tile, lastPosition]);
 
     if (!lastPosition) return null;
 

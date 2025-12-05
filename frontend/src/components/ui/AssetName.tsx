@@ -1,6 +1,8 @@
 /**
  * React components for displaying asset names with flexible formatting.
  *
+ * TODO: add 'import' name and colours
+ *
  * These components provide a consistent way to render asset names throughout
  * the app, with support for:
  *

@@ -80,7 +80,7 @@ function ResourceMarketContent() {
         [asksData?.asks, askId],
     );
 
-    const asks = asksData?.asks || [];
+    const asks = useMemo(() => asksData?.asks || [], [asksData]);
 
     // Filter and sort asks
     const filteredAndSortedAsks = useMemo(() => {

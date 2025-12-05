@@ -29,6 +29,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
         onClose();
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleDeleteNotification = (id: number) => {
         // TODO: Implement delete notification
     };

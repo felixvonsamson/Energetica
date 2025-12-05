@@ -59,8 +59,6 @@ export function SocketProvider({ children }: SocketProviderProps) {
                 console.log("[Socket.IO] Disconnecting existing socket");
                 socketRef.current.disconnect();
                 socketRef.current = null;
-                setSocket(null);
-                setIsConnected(false);
             }
             return;
         }
@@ -88,22 +86,23 @@ export function SocketProvider({ children }: SocketProviderProps) {
         const newSocket = io();
 
         socketRef.current = newSocket;
-        setSocket(newSocket);
 
         // Connection event handlers
         newSocket.on("connect", () => {
             console.log("[Socket.IO] ✓ Connected successfully");
+            setSocket(newSocket);
             setIsConnected(true);
             setError(null);
         });
 
         newSocket.on("disconnect", (reason: string) => {
             console.log("[Socket.IO] ✗ Disconnected:", reason);
+            setSocket(null);
             setIsConnected(false);
         });
 
         newSocket.on("connect_error", (err: Error) => {
-            const errorData = (err as any).data;
+            const errorData = (err as unknown as Record<string, unknown>).data;
             console.error("[Socket.IO] ✗ Connection error:");
             console.error("  Message:", err.message || "(empty)");
             console.error("  Data:", errorData);

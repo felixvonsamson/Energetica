@@ -1,26 +1,34 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useChatList, useChatMessages, useOpenChat } from "@/hooks/useChats";
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import { useSocketEvent } from "@/contexts/SocketContext";
 
 export function useMessagesPage() {
-    const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
-    const [showDisclaimer, setShowDisclaimer] = useState(true);
+    // Get URL search parameters
+    const { selectedChatId, showDisclaimer } = useSearch({
+        from: "/app/community/messages",
+    });
+    const navigate = useNavigate({
+        from: "/app/community/messages",
+    });
+
+    // Local state for modals
     const [showNewChatModal, setShowNewChatModal] = useState(false);
     const [showGroupChatModal, setShowGroupChatModal] = useState(false);
 
-    const selectedChatIdRef = useRef<number | null>(null);
+    const selectedChatIdRef = useRef<number | null>(selectedChatId ?? null);
 
     const { data: chatListData, isLoading: isChatListLoading } = useChatList();
     const { data: chatMessagesData, isLoading: isChatMessagesLoading } =
-        useChatMessages(selectedChatId);
+        useChatMessages(selectedChatId ?? null);
     const { data: settingsData } = useSettings();
     const { mutate: updateSettings } = useUpdateSettings();
     const { mutate: openChat } = useOpenChat();
 
     // Keep ref in sync with selected chat ID
     useEffect(() => {
-        selectedChatIdRef.current = selectedChatId;
+        selectedChatIdRef.current = selectedChatId ?? null;
     }, [selectedChatId]);
 
     // When a message is received, mark the chat as opened if it's the selected chat
@@ -40,11 +48,6 @@ export function useMessagesPage() {
 
     useSocketEvent("display_new_message", handleNewMessage);
 
-    // Initialize disclaimer visibility based on settings
-    useEffect(() => {
-        setShowDisclaimer(settingsData?.show_disclaimer ?? true);
-    }, [settingsData]);
-
     // Auto-select first chat if available and mark it as opened
     useEffect(() => {
         if (
@@ -53,24 +56,39 @@ export function useMessagesPage() {
             chatListData.chats.length > 0
         ) {
             const firstChatId = chatListData.chats[0].id;
-            setSelectedChatId(firstChatId);
+            navigate({
+                search: { selectedChatId: firstChatId, showDisclaimer },
+            });
             openChat(firstChatId);
         }
-    }, [chatListData, openChat]);
+    }, [chatListData, selectedChatId, showDisclaimer, navigate, openChat]);
 
     const selectedChat = chatListData?.chats?.find(
         (chat) => chat.id === selectedChatId,
     );
 
-    const handleDismissDisclaimer = () => {
-        setShowDisclaimer(false);
+    // Determine if disclaimer should be shown
+    const shouldShowDisclaimer =
+        showDisclaimer === false
+            ? false
+            : (settingsData?.show_disclaimer ?? true);
+
+    const handleDismissDisclaimer = useCallback(() => {
         updateSettings({ show_disclaimer: false });
-    };
+        navigate({ search: { selectedChatId, showDisclaimer: false } });
+    }, [selectedChatId, navigate, updateSettings]);
 
     return {
-        selectedChatId,
-        setSelectedChatId,
-        showDisclaimer,
+        selectedChatId: selectedChatId ?? null,
+        setSelectedChatId: (chatId: number | null) => {
+            navigate({
+                search: {
+                    selectedChatId: chatId ?? undefined,
+                    showDisclaimer,
+                },
+            });
+        },
+        showDisclaimer: shouldShowDisclaimer,
         handleDismissDisclaimer,
         showNewChatModal,
         setShowNewChatModal,

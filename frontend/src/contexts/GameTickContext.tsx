@@ -23,7 +23,6 @@ import {
     useEffect,
     useState,
     useCallback,
-    useMemo,
     type ReactNode,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -186,10 +185,9 @@ export function useTickQuery(queryKey: readonly unknown[]) {
     }
 
     const { registerTickQuery, unregisterTickQuery } = context;
-    const queryKeyStr = useMemo(() => JSON.stringify(queryKey), [queryKey]);
 
     useEffect(() => {
         registerTickQuery(queryKey);
         return () => unregisterTickQuery(queryKey);
-    }, [queryKeyStr, registerTickQuery, unregisterTickQuery]);
+    }, [queryKey, registerTickQuery, unregisterTickQuery]);
 }

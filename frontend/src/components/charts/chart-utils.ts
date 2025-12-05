@@ -5,12 +5,10 @@
  * removing series that have no data.
  */
 export function filterNonZeroSeries(key: string, data: unknown[]): boolean {
-    return data.some(
-        (dataPoint) => {
-            const value = (dataPoint as Record<string, unknown>)[key] ?? 0;
-            return typeof value === "number" && value > 0;
-        },
-    );
+    return data.some((dataPoint) => {
+        const value = (dataPoint as Record<string, unknown>)[key] ?? 0;
+        return typeof value === "number" && value > 0;
+    });
 }
 
 /** Filter that includes all data keys (no filtering). */

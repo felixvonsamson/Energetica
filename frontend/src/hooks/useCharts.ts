@@ -60,23 +60,29 @@ export function useCurrentChartData({
     resolution: Resolution;
     maxDatapoints: number;
 }) {
-    if (!currentTick) {
-        return { chartData: [], isLoading: true, isError: false };
-    }
-
     // Determine the corresponding tick range
-    const startTick =
-        resolution *
-        Math.max(0, Math.floor(currentTick / resolution - maxDatapoints));
-    const count = Math.floor((currentTick - startTick) / resolution);
-    const range = { startTick, count };
+    const range = useMemo(() => {
+        if (!currentTick) {
+            return { startTick: 0, count: 0 };
+        }
+        const startTick =
+            resolution *
+            Math.max(0, Math.floor(currentTick / resolution - maxDatapoints));
+        const count = Math.floor((currentTick - startTick) / resolution);
+        return { startTick, count };
+    }, [currentTick, resolution, maxDatapoints]);
 
-    // Call helper hook
+    // Call helper hook (always called, handles empty range gracefully)
     const {
         data: chartData,
         isLoading,
         isError,
     } = useChartData({ chartType, range, resolution });
+
+    // Return empty state if currentTick is not loaded
+    if (!currentTick) {
+        return { chartData: [], isLoading: true, isError: false };
+    }
 
     return { chartData, isLoading, isError };
 }
@@ -144,7 +150,7 @@ export function useChartData({
                 const tickData = tickMap.get(tick)!;
                 // Copy all power source values for this tick
                 Object.entries(cached.data.series).forEach(
-                    ([source, values]: [string, any]) => {
+                    ([source, values]: [string, number[]]) => {
                         tickData[source] = values[i] ?? 0;
                     },
                 );
@@ -165,7 +171,7 @@ export function useChartData({
 
         // console.log("result:", result);
         return result;
-    }, [allCachedRanges, chartType]);
+    }, [allCachedRanges, chartType, range.startTick, range.count, resolution]);
 
     return {
         data: isLoading ? [] : aggregatedData,
@@ -223,7 +229,11 @@ function useFetchChartGaps({
 
 interface CachedTickRange {
     range: TickRange;
-    data: any;
+    data: ChartDataResponse;
+}
+
+interface ChartDataResponse {
+    series: Record<string, number[]>;
 }
 
 /**

@@ -6,7 +6,7 @@ import { useChatList, useCreateGroupChat } from "@hooks/useChats";
 import { usePlayers } from "@hooks/usePlayers";
 import { useAuth } from "@hooks/useAuth";
 import { useFilteredPlayers } from "@hooks/useFilteredPlayers";
-import type { Player } from "@app-types/chats";
+import type { Player, Chat } from "@app-types/chats";
 
 interface NewGroupChatModalProps {
     isOpen: boolean;
@@ -67,7 +67,7 @@ export function NewGroupChatModal({
         ...(user?.player_id ? [user.player_id] : []),
         ...groupMembers.map((m) => m.id),
     ]);
-    const existingGroupChat =
+    const existingGroupChat: Chat | undefined =
         groupMembers.length > 0 && chatListData?.chats
             ? chatListData.chats.find((chat) => {
                   if (!chat.is_group) return false;
@@ -125,7 +125,7 @@ export function NewGroupChatModal({
                         if (existingGroupChat) {
                             setChatTitle("");
                             setGroupMembers([]);
-                            onChatSelected?.((existingGroupChat as any).id);
+                            onChatSelected?.((existingGroupChat as Chat).id);
                             onClose();
                         } else {
                             setError(
