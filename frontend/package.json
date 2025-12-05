@@ -39,5 +39,14 @@
         "typescript-eslint": "^8.48.1",
         "vite": "^7.0.5",
         "vite-plugin-dts": "^4.5.4"
+    },
+    "lint-staged": {
+        "frontend/src/**/*.{ts,tsx}": [
+            "npm run lint:check --prefix frontend",
+            "npm run tsc:check --prefix frontend"
+        ],
+        "frontend/**/*.{ts,tsx,js,jsx,json,css}": [
+            "npm run pretty --prefix frontend"
+        ]
     }
 }

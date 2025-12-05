@@ -13,29 +13,10 @@ repos:
 
   - repo: local
     hooks:
-      # Run ESLint for TypeScript/JavaScript files
-      - id: eslint
-        name: ESLint
-        entry: npm run lint:check --prefix frontend
+      # Run lint-staged for incremental linting, formatting, and type checking
+      - id: lint-staged
+        name: lint-staged
+        entry: npx lint-staged
         language: system
-        files: frontend/src/.*\.(ts|tsx|js|jsx)$
+        always_run: true
         pass_filenames: false
-        stages: [commit]
-
-      # Run Prettier formatting for TypeScript/JavaScript files
-      - id: prettier
-        name: Prettier
-        entry: npm run pretty --prefix frontend
-        language: system
-        files: frontend/.*\.(ts|tsx|js|jsx|json|css)$
-        pass_filenames: false
-        stages: [commit]
-
-      # Run TypeScript type checking
-      - id: tsc
-        name: TypeScript
-        entry: npm run tsc:check --prefix frontend
-        language: system
-        files: frontend/src/.*\.tsx?$
-        pass_filenames: false
-        stages: [commit]
