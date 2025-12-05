@@ -1,7 +1,6 @@
 /** Top bar component showing logo, money, resources, workers, and user actions. */
 
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { useAuth } from "@hooks/useAuth";
 import { usePlayerMoney } from "@hooks/usePlayerMoney";
 import { usePlayerWorkers } from "@hooks/usePlayerWorkers";

@@ -129,7 +129,7 @@ export function MapTooltip({
 
                 {/* Resources */}
                 <div className="space-y-2">
-                    {resources.map((resource, index) => {
+                    {resources.map((resource) => {
                         const barWidth =
                             (resource.value / resource.maxValue) * 180;
                         return (

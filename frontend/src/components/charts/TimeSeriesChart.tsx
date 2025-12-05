@@ -20,7 +20,7 @@ import { ChartLoadingState } from "./ChartLoadingState";
 
 interface TimeSeriesChartProps {
     /** Chart data with tick and series values */
-    data: Array<Record<string, any>>;
+    data: Array<Record<string, unknown>>;
     /** Chart configuration */
     config: TimeSeriesChartConfig;
     /** Loading state */

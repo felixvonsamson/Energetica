@@ -5,6 +5,14 @@
 
 import { X } from "lucide-react";
 
+interface Notification {
+    id: number;
+    title: string;
+    content: string;
+    read: boolean;
+    time: string;
+}
+
 interface NotificationPopupProps {
     isOpen: boolean;
     onClose: () => void;
@@ -14,7 +22,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
     if (!isOpen) return null;
 
     // TODO: Fetch actual notifications
-    const notifications: any[] = [];
+    const notifications: Notification[] = [];
 
     const handleMarkAllRead = () => {
         // TODO: Implement mark all as read

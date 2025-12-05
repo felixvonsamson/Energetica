@@ -1,63 +1,75 @@
 /**
- * Type definitions for chat and messaging features. These types correspond to
- * the backend schemas in energetica/schemas/chats.py
+ * Type definitions for chat and messaging features.
+ *
+ * This module provides two categories of types:
+ *
+ * 1. **OpenAPI Schema Types** - Extracted from backend API schemas using ApiSchema
+ * 2. **Derived Types** - Custom interfaces derived from OpenAPI responses
+ *
+ * All types correspond to backend schemas in energetica/schemas/chats.py
  */
+
+import type { ApiSchema } from "@/types/api-helpers";
+
+// ============================================================================
+// OpenAPI Schema Types
+// ============================================================================
+// These are extracted directly from the OpenAPI spec and always stay in sync
+// with the backend. Use these for API responses and requests.
 
 /**
- * Represents a chat room (one-on-one or group). Based on ChatOut from the
- * backend.
+ * Response from GET /api/v1/chats - List of all chats for the current user.
+ * Includes unread counts and last opened chat metadata.
  */
-export interface Chat {
-    id: number;
-    display_name: string;
-    initials: string[];
-    is_group: boolean;
-    unread_messages_count: number;
-    participant_ids: number[];
-}
+export type ChatListResponse = ApiSchema<"ChatListOut">;
 
 /**
- * Response containing a list of chats for the current user. Based on
- * ChatListOut from the backend.
+ * Response from POST /api/v1/chats - Created chat object after creating a group
+ * chat. Contains the new chat's ID and metadata.
  */
-export interface ChatListResponse {
-    chats: Chat[];
-    last_opened_chat_id: number;
-    unread_chat_count: number;
-}
-
-/** Represents a single message in a chat. Based on MessageOut from the backend. */
-export interface Message {
-    id: number;
-    text: string;
-    player_id: number;
-    timestamp: string;
-}
+export type CreateChatResponse = ApiSchema<"ChatOut">;
 
 /**
- * Response containing a list of messages from a chat. Based on MessageListOut
- * from the backend.
+ * Request body for POST /api/v1/chats - Create a new group chat. The
+ * `group_chat_name` can be null for one-on-one chats.
  */
-export interface MessageListResponse {
-    messages: Message[];
-}
+export type CreateChatRequest = ApiSchema<"ChatCreate">;
 
 /**
- * Request body for sending a new message. Based on MessageCreate from the
- * backend.
+ * Response from GET /api/v1/chats/{chat_id}/messages - List of all messages in
+ * a chat.
  */
-export interface SendMessageRequest {
-    new_message: string;
-}
+export type ChatMessagesResponse = ApiSchema<"MessageListOut">;
 
 /**
- * Request body for creating a new group chat. Based on ChatCreate from the
- * backend.
+ * Request body for POST /api/v1/chats/{chat_id}/messages - Send a new message
+ * to a chat.
  */
-export interface CreateGroupChatRequest {
-    group_chat_name: string | null;
-    group_member_ids: number[];
-}
+export type SendMessageRequest = ApiSchema<"MessageCreate">;
+
+/**
+ * Response from POST /api/v1/chats/{chat_id}:open - Mark a chat as opened by
+ * current user. Returns the updated chat metadata.
+ */
+export type OpenChatResponse = ApiSchema<"ChatOut">;
+
+// ============================================================================
+// Derived Types
+// ============================================================================
+// These are extracted from OpenAPI responses for convenience and clarity.
+// Keep these when they provide meaningful groupings or when manual docs are needed.
+
+/**
+ * Represents a single chat room (one-on-one or group). Extracted from ChatOut
+ * for convenient access to individual chat properties.
+ */
+export type Chat = ApiSchema<"ChatOut">;
+
+/**
+ * Represents a single message in a chat. Extracted from MessageOut for
+ * convenient access to individual message properties.
+ */
+export type Message = ApiSchema<"MessageOut">;
 
 /** Represents a player in the game (for search/selection in chat creation). */
 export interface Player {

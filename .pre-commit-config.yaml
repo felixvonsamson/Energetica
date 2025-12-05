@@ -1,12 +1,41 @@
 repos:
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  # Ruff version.
-  rev: v0.12.10
-  hooks:
-    # Run the linter.
-    - id: ruff-check
-      types_or: [ python, pyi ]
-      args: [ --fix ]
-    # Run the formatter.
-    - id: ruff-format
-      types_or: [ python, pyi ]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.12.10
+    hooks:
+      # Run the linter for python.
+      - id: ruff-check
+        types_or: [python, pyi]
+        args: [--fix]
+      # Run the formatter for python.
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  - repo: local
+    hooks:
+      # Run ESLint for TypeScript/JavaScript files
+      - id: eslint
+        name: ESLint
+        entry: npm run lint:check --prefix frontend
+        language: system
+        files: frontend/src/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+        stages: [commit]
+
+      # Run Prettier formatting for TypeScript/JavaScript files
+      - id: prettier
+        name: Prettier
+        entry: npm run pretty --prefix frontend
+        language: system
+        files: frontend/.*\.(ts|tsx|js|jsx|json|css)$
+        pass_filenames: false
+        stages: [commit]
+
+      # Run TypeScript type checking
+      - id: tsc
+        name: TypeScript
+        entry: npm run tsc:check --prefix frontend
+        language: system
+        files: frontend/src/.*\.tsx?$
+        pass_filenames: false
+        stages: [commit]

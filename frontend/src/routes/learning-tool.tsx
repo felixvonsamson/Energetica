@@ -4,7 +4,6 @@ import {
     TrendingUp,
     Package,
     BarChart3,
-    CloudLightning,
     Sun,
     Handshake,
     BookOpen,

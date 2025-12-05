@@ -9,8 +9,6 @@ import { useFunctionalFacilitiesCatalog } from "@hooks/useProjects";
 import type { ApiSchema } from "@app-types/api-helpers";
 import { FacilityCard } from "@components/facilities";
 import {
-    formatPower,
-    formatMass,
     formatUpgradePower,
     formatUpgradeMass,
     formatUpgradeMassRate,
@@ -183,8 +181,6 @@ interface FunctionalFacilityStatsTableProps {
 function FunctionalFacilityStatsTable({
     facility,
 }: FunctionalFacilityStatsTableProps) {
-    const isWarehouse = facility.name === "warehouse";
-
     return (
         <div className="overflow-x-auto">
             <table

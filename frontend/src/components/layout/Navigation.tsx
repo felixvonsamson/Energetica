@@ -161,10 +161,10 @@ export function Navigation() {
                         </NavItem>
                         {hasNetwork && (
                             <NavItem
-                                to="/app/community/network"
+                                to="/app/community/electricity-markets"
                                 icon="network.png"
                             >
-                                Network
+                                Electricity Markets
                             </NavItem>
                         )}
                         <NavItem to="/app/community/map" icon="map.png">

@@ -6,7 +6,6 @@
 import { type ReactNode } from "react";
 import { TopBar } from "./TopBar";
 import { Navigation } from "./Navigation";
-import { ThemeToggle } from "@components/ui/ThemeToggle";
 
 interface GameLayoutProps {
     children: ReactNode;

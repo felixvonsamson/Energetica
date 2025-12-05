@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { Menu } from "lucide-react";
 import { ThemeToggle } from "./ui/ThemeToggle";
 
 export function Header() {

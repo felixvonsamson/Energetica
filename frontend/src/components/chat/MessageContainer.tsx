@@ -32,7 +32,7 @@ export function MessageContainer({
         );
     }
 
-    if (isLoading) {
+    if (isLoading || !playerMap) {
         return (
             <div className="flex-1 flex items-center justify-center text-gray-500">
                 Loading messages...
@@ -62,9 +62,8 @@ export function MessageContainer({
                         <div className="max-w-xs space-y-1">
                             {!isOwnMessage && (
                                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                                    {playerMap[message.player_id] ||
-                                        `Player ${message.player_id}`}{" "}
-                                    • {formatTimestamp(message.timestamp)}
+                                    {playerMap[message.player_id].username} •{" "}
+                                    {formatTimestamp(message.timestamp)}
                                 </div>
                             )}
                             <div

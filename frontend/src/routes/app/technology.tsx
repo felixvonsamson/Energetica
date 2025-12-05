@@ -6,7 +6,6 @@ import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
 import { GameLayout } from "@components/layout/GameLayout";
 import { Modal } from "@components/ui";
 import { useTechnologiesCatalog } from "@hooks/useProjects";
-import type { ApiSchema } from "@app-types/api-helpers";
 import {
     TechnologyCard,
     TechnologyEffectsTable,
@@ -28,8 +27,6 @@ function TechnologyPage() {
         </RequireSettledPlayer>
     );
 }
-
-type Technology = ApiSchema<"TechnologyCatalogOut">;
 
 function TechnologyContent() {
     const [showInfoPopup, setShowInfoPopup] = useState(false);

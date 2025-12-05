@@ -8,12 +8,10 @@
 
 import { useMapContext } from "@contexts/MapContext";
 import { getHexagonPoints, getHexPosition } from "@lib/hex-utils";
-import type { ApiResponse } from "@app-types/api-helpers";
-
-type HexTileData = ApiResponse<"/api/v1/map", "get">[number];
+import { HexTileResources } from "@/types/map";
 
 export interface HexTileProps {
-    tile: HexTileData;
+    tile: HexTileResources;
     fill?: string;
     stroke?: string;
     strokeWidth?: number;

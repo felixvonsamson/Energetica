@@ -54,10 +54,6 @@ interface InvalidateEventData {
     queries: (readonly unknown[])[];
 }
 
-interface DataUpdateEvent<T = unknown> {
-    data: T;
-}
-
 export function GameTickProvider({ children }: GameTickProviderProps) {
     const queryClient = useQueryClient();
     const [currentTick, setCurrentTick] = useState<number | undefined>(

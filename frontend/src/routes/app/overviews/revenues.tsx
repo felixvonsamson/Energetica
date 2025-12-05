@@ -20,7 +20,6 @@ import {
     type ResolutionOption,
     type TimeSeriesChartConfig,
 } from "@components/charts";
-import { ChartType } from "@app-types/charts";
 
 type RevenueType = "revenues" | "expenses" | "all";
 
@@ -220,7 +219,7 @@ function RevenuesOverviewContent() {
 }
 
 interface RevenuesChartProps {
-    chartData: any[];
+    chartData: Array<Record<string, unknown>>;
     isLoading: boolean;
     isError: boolean;
     hiddenFacilities: Set<string>;
@@ -254,33 +253,38 @@ function RevenuesChart({
         );
 
         // Combine both filters: must pass base filter AND not be hidden
-        return (key: string, data: any[]) => {
-            return baseFilter(key, data) && excludeFilter(key, data);
+        return (key: string, data: unknown[]) => {
+            return baseFilter(key, data) && excludeFilter(key);
         };
     }, [hiddenFacilities, revenueType]);
 
     // Transform data for percent view if needed
-    const transformedData = useMemo(() => {
+    const transformedData: Array<Record<string, unknown>> = useMemo(() => {
         if (viewMode === "normal" || !chartData || chartData.length === 0) {
             return chartData;
         }
 
         // For percent view, calculate percentage based on total
         return chartData.map((dataPoint) => {
-            const result: Record<string, number> = { tick: dataPoint.tick };
+            const dp = dataPoint as Record<string, unknown>;
+            const result: Record<string, unknown> = {
+                tick: typeof dp.tick === "number" ? dp.tick : 0,
+            };
 
             // Calculate total for this datapoint
             let total = 0;
-            Object.keys(dataPoint).forEach((key) => {
+            Object.keys(dp).forEach((key) => {
                 if (key !== "tick") {
-                    total += Math.abs(dataPoint[key] || 0);
+                    const val = typeof dp[key] === "number" ? dp[key] : 0;
+                    total += Math.abs((val as number) || 0);
                 }
             });
 
-            Object.keys(dataPoint).forEach((key) => {
+            Object.keys(dp).forEach((key) => {
                 if (key === "tick") return;
 
-                const value = dataPoint[key] || 0;
+                const val = typeof dp[key] === "number" ? dp[key] : 0;
+                const value = (val as number) || 0;
                 if (total > 0) {
                     // Preserve sign in percent view
                     result[key] = (value / total) * 100;

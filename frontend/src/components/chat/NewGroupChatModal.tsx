@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { X, Check } from "lucide-react";
 import { Modal } from "@components/ui/Modal";
 import { Button } from "@components/ui";
@@ -35,14 +35,13 @@ export function NewGroupChatModal({
     );
 
     // Reset state when modal closes
-    useEffect(() => {
-        if (!isOpen) {
-            setChatTitle("");
-            setGroupMembers([]);
-            setPlayerInput("");
-            setError(null);
-        }
-    }, [isOpen]);
+    const handleClose = () => {
+        setChatTitle("");
+        setGroupMembers([]);
+        setPlayerInput("");
+        setError(null);
+        onClose();
+    };
 
     const handlePlayerInputChange = (value: string) => {
         setPlayerInput(value);
@@ -111,9 +110,15 @@ export function NewGroupChatModal({
                     onChatSelected?.(data.id);
                     onClose();
                 },
-                onError: (error: any) => {
+                onError: (error: unknown) => {
                     if (
-                        error?.response?.data?.game_exception_type ===
+                        (
+                            error as unknown as {
+                                response?: {
+                                    data?: { game_exception_type?: string };
+                                };
+                            }
+                        )?.response?.data?.game_exception_type ===
                         "chatAlreadyExist"
                     ) {
                         // Chat was created concurrently, find it and select it
@@ -136,7 +141,7 @@ export function NewGroupChatModal({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Create group chat">
+        <Modal isOpen={isOpen} onClose={handleClose} title="Create group chat">
             <div className="space-y-0 flex flex-col">
                 {error && (
                     <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-lg text-sm mb-4 animate-in fade-in duration-200">

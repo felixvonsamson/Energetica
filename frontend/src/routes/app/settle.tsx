@@ -154,7 +154,6 @@ interface SettleTilesProps {
 function SettleTiles({
     mapData,
     activeResourceId,
-    selectedTileId,
     onTileClick,
     playerMap,
 }: SettleTilesProps) {

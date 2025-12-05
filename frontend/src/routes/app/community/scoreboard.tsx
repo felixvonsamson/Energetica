@@ -69,8 +69,8 @@ function ScoreboardContent() {
         if (!sortConfig) return rows;
 
         return [...rows].sort((a, b) => {
-            let aVal = a[sortConfig.key];
-            let bVal = b[sortConfig.key];
+            const aVal = a[sortConfig.key];
+            const bVal = b[sortConfig.key];
 
             // Handle null values
             if (aVal == null && bVal == null) return 0;
@@ -223,7 +223,7 @@ function ScoreboardContent() {
                             </tr>
                         </thead>
                         <tbody>
-                            {sortedRows.map((row, idx) => (
+                            {sortedRows.map((row) => (
                                 <tr
                                     key={row.player_id}
                                     className="border-b border-gray-200 dark:border-gray-700 hover:bg-tan-green/20 dark:hover:bg-dark-bg-tertiary/30 transition-colors"

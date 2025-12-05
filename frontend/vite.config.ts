@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
             "@hooks": path.resolve(__dirname, "./src/hooks"),
             "@lib": path.resolve(__dirname, "./src/lib"),
             "@contexts": path.resolve(__dirname, "./src/contexts"),
-            "@types": path.resolve(__dirname, "./src/types"),
+            "@app-types": path.resolve(__dirname, "./src/types"),
             "@styles": path.resolve(__dirname, "./src/styles"),
         },
     },

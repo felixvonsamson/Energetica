@@ -9,7 +9,7 @@ import { useExtractionFacilitiesCatalog } from "@hooks/useProjects";
 import { usePlayerResources } from "@hooks/usePlayerResources";
 import type { ApiSchema } from "@app-types/api-helpers";
 import { FacilityCard } from "@components/facilities";
-import { formatPower, formatMass, formatMassRate } from "@lib/format-utils";
+import { formatPower, formatMass } from "@lib/format-utils";
 
 export const Route = createFileRoute("/app/facilities/extraction")({
     component: ExtractionFacilitiesPage,
@@ -39,8 +39,7 @@ function ExtractionFacilitiesContent() {
         isError: isCatalogError,
     } = useExtractionFacilitiesCatalog();
 
-    const { data: resourcesData, isLoading: isResourcesLoading } =
-        usePlayerResources();
+    const { data: resourcesData } = usePlayerResources();
 
     const facilities = catalogData?.extraction_facilities ?? [];
 

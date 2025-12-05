@@ -100,10 +100,10 @@ export const OP_COSTS_KEYS = [
  * the order array are placed at the end in their original order.
  */
 export function reorderObjectKeys(
-    obj: Record<string, any>,
+    obj: Record<string, unknown>,
     keyOrder: readonly string[],
-): Record<string, any> {
-    const result: Record<string, any> = {};
+): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
 
     // First, add keys in the specified order
     for (const key of keyOrder) {

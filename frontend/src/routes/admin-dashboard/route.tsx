@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AdminDashboardLayout } from "@components/AdminDashboard/AdminDashboard";
 
 export const Route = createFileRoute("/admin-dashboard")({

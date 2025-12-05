@@ -8,12 +8,10 @@ import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
 import { GameLayout } from "@components/layout/GameLayout";
 import { Modal, Card, CardTitle, Money } from "@components/ui";
 import { FacilityGauge } from "@components/ui/FacilityGauge";
-import { useAuth } from "@hooks/useAuth";
 import { useFacilities } from "@hooks/useFacilities";
 import { usePlayerProfile } from "@hooks/usePlayerProfile";
 import { useHasCapability } from "@hooks/useCapabilities";
 import { FacilityGroupTable } from "@components/profile/FacilityGroupTable";
-import type { ApiResponse } from "@app-types/api-helpers";
 import {
     formatPower,
     formatEnergy,
@@ -21,12 +19,6 @@ import {
     formatMass,
 } from "@lib/format-utils";
 import { dummyFacilities } from "@/data/dummyFacilities";
-
-// Type aliases from generated API types
-type FacilitiesData = ApiResponse<"/api/v1/facilities", "get">;
-type PowerFacilityOut = FacilitiesData["power_facilities"][number];
-type StorageFacilityOut = FacilitiesData["storage_facilities"][number];
-type ExtractionFacilityOut = FacilitiesData["extraction_facilities"][number];
 
 export const Route = createFileRoute("/app/profile")({
     component: ProfilePage,
@@ -47,7 +39,6 @@ function ProfilePage() {
 
 function ProfileContent() {
     const [showInfoPopup, setShowInfoPopup] = useState(false);
-    const { user } = useAuth();
     const {
         data: facilities,
         isLoading: facilitiesLoading,

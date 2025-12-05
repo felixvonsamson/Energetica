@@ -133,7 +133,7 @@ function PowerOverviewContent() {
 }
 
 interface PowerChartProps {
-    chartData: any[];
+    chartData: Array<Record<string, unknown>>;
     isLoading: boolean;
     isError: boolean;
     hiddenFacilities: Set<string>;
@@ -158,8 +158,8 @@ function PowerChart({
         );
 
         // Combine both filters: must pass non-zero AND not be hidden
-        return (key: string, data: any[]) => {
-            return filterNonZeroSeries(key, data) && excludeFilter(key, data);
+        return (key: string, data: unknown[]) => {
+            return filterNonZeroSeries(key, data) && excludeFilter(key);
         };
     }, [hiddenFacilities]);
 
@@ -177,7 +177,7 @@ function PowerChart({
 
     return (
         <TimeSeriesChart
-            data={chartData}
+            data={chartData as Array<Record<string, unknown>>}
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}

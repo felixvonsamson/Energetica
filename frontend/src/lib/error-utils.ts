@@ -21,7 +21,7 @@
  *     ```;
  */
 
-import { ApiClientError, isGameError, isHttpError } from "./api-client";
+import { ApiClientError } from "./api-client";
 
 /**
  * Maps backend error messages to user-friendly messages.

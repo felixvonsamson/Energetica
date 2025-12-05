@@ -10,7 +10,7 @@
  * - Future i18n support
  */
 
-import { ReactNode, ElementType } from "react";
+import { ElementType } from "react";
 import {
     getAssetName,
     getAssetLongName,

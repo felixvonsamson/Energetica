@@ -12,9 +12,9 @@ import React, {
 } from "react";
 import { authApi } from "@lib/auth-api";
 import { ApiClientError } from "@lib/api-client";
-import type { ApiResponse } from "@app-types/api-helpers";
+import type { ApiSchema } from "@app-types/api-helpers";
 
-type User = ApiResponse<"/api/v1/auth/me", "get">;
+type User = ApiSchema<"UserOut">;
 
 interface AuthContextValue {
     user: User | null;

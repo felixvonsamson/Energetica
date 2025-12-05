@@ -12,13 +12,10 @@
  */
 
 import { useAuth } from "@/hooks/useAuth";
-import type { ApiSchema } from "@/types/api-helpers";
+import type { PlayerCapabilities } from "@/types/capabilities";
 
-/**
- * Player capability flags that control feature access. Null if user is not a
- * settled player.
- */
-export type PlayerCapabilities = ApiSchema<"PlayerCapabilities">;
+// Re-export for convenience (types should come from @/types/capabilities)
+export type { PlayerCapabilities };
 
 /**
  * Hook to access player's capability flags.

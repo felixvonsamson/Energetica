@@ -23,19 +23,41 @@ export const Route = createFileRoute("/app/community/map")({
     },
 });
 
+interface MapTile {
+    id: number;
+    q: number;
+    r: number;
+    solar: number;
+    wind: number;
+    hydro: number;
+    coal: number;
+    gas: number;
+    uranium: number;
+    climate_risk: number;
+    player_id: number | null;
+}
+
+interface User {
+    player_id?: number | null;
+}
+
 /** Map tiles component - renders all tiles and tooltips using MapContext */
 interface MapTilesProps {
-    mapData: any[];
+    mapData: MapTile[];
     playerMap: Record<number, string>;
-    user: any;
+    user: User | null | undefined;
     calculateDistance: (tileId: number) => number;
 }
 
 function calculatePlayerTileFill(
-    tile: any,
-    currentPlayerId: number | undefined,
+    tile: MapTile,
+    currentPlayerId: number | null | undefined,
 ): string {
-    if (tile.player_id === currentPlayerId) {
+    if (
+        currentPlayerId !== null &&
+        currentPlayerId !== undefined &&
+        tile.player_id === currentPlayerId
+    ) {
         return "var(--map-tile-current-player)";
     } else if (tile.player_id) {
         return "var(--map-tile-other-player)";

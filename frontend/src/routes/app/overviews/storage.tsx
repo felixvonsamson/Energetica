@@ -10,7 +10,6 @@ import { Card, CardTitle } from "@components/ui";
 import { useGameTick } from "@hooks/useGameTick";
 import { useCurrentChartData } from "@hooks/useCharts";
 import { useAssetColorGetter } from "@hooks/useAssetColorGetter";
-import { Resolution, ChartType } from "@app-types/charts";
 import {
     TimeSeriesChart,
     ResolutionPicker,
@@ -120,7 +119,7 @@ function StorageOverviewContent() {
 }
 
 interface StorageChartProps {
-    chartData: any[];
+    chartData: Array<Record<string, unknown>>;
     isLoading: boolean;
     isError: boolean;
     hiddenFacilities: Set<string>;
@@ -147,13 +146,13 @@ function StorageChart({
         );
 
         // Combine both filters: must pass non-zero AND not be hidden
-        return (key: string, data: any[]) => {
-            return filterNonZeroSeries(key, data) && excludeFilter(key, data);
+        return (key: string, data: unknown[]) => {
+            return filterNonZeroSeries(key, data) && excludeFilter(key);
         };
     }, [hiddenFacilities]);
 
     // Transform data for percent view if needed
-    const transformedData = useMemo(() => {
+    const transformedData: Array<Record<string, unknown>> = useMemo(() => {
         if (viewMode === "normal" || !chartData || chartData.length === 0) {
             return chartData;
         }
@@ -162,16 +161,25 @@ function StorageChart({
         // This requires knowing the max capacity for each facility
         // For now, we'll calculate percentage based on the max value in the series
         return chartData.map((dataPoint) => {
-            const result: Record<string, number> = { tick: dataPoint.tick };
+            const dp = dataPoint as Record<string, unknown>;
+            const result: Record<string, unknown> = {
+                tick: typeof dp.tick === "number" ? dp.tick : 0,
+            };
 
-            Object.keys(dataPoint).forEach((key) => {
+            Object.keys(dp).forEach((key) => {
                 if (key === "tick") return;
 
                 // Find max value for this facility across all datapoints
-                const maxValue = Math.max(...chartData.map((d) => d[key] || 0));
+                const maxValue = Math.max(
+                    ...chartData.map((d) => {
+                        const val = (d as Record<string, unknown>)[key];
+                        return typeof val === "number" ? val : 0;
+                    }),
+                );
 
+                const currentVal = typeof dp[key] === "number" ? dp[key] : 0;
                 if (maxValue > 0) {
-                    result[key] = ((dataPoint[key] || 0) / maxValue) * 100;
+                    result[key] = (((currentVal as number) || 0) / maxValue) * 100;
                 } else {
                     result[key] = 0;
                 }

@@ -1,7 +1,5 @@
 /** Type definitions for chart components. */
 
-import { ComponentType } from "react";
-
 /** Configuration for how to render a time series chart. */
 export interface TimeSeriesChartConfig {
     /** Type of chart to render */
@@ -15,7 +13,7 @@ export interface TimeSeriesChartConfig {
     /** Function to get color for a data key */
     getColor?: (key: string) => string;
     /** Function to filter which data keys to display */
-    filterDataKeys?: (key: string, data: any[]) => boolean;
+    filterDataKeys?: (key: string, data: unknown[]) => boolean;
     /** Custom formatter for the Y axis */
     formatYAxis?: (value: number) => string;
     /** Custom formatter for tooltips */
@@ -31,5 +29,5 @@ export interface SeriesComponentProps {
     stroke?: string;
     fillOpacity?: number;
     isAnimationActive?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
 }

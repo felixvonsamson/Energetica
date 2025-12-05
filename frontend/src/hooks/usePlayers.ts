@@ -7,6 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { playerApi } from "@/lib/player-api";
 import { queryKeys } from "@/lib/query-client";
+import { useAuth } from "@hooks/useAuth";
+import { Player } from "@/types/players";
 
 export function usePlayers() {
     return useQuery({
@@ -30,12 +32,55 @@ export function usePlayerMap() {
     const { data: playersData } = usePlayers();
 
     return useMemo(() => {
-        const map: Record<number, string> = {};
+        if (!playersData) return undefined;
+        const map: Record<number, Player> = {};
         if (playersData) {
             playersData.forEach((player) => {
-                map[player.id] = player.username;
+                map[player.id] = player;
             });
         }
         return map;
     }, [playersData]);
+}
+
+/**
+ * Hook for getting the current player's ID. Useful as a shorthand for
+ * useAuth().user?.player_id when you just need the ID.
+ */
+export function useMyId() {
+    const { user } = useAuth();
+    if (user === null) {
+        throw new Error("useMyId must be ...");
+    }
+    if (user.player_id === null) {
+        throw new Error("useMyId must be ... ...");
+    }
+    return user.player_id;
+}
+
+/**
+ * Hook for getting the current player's username. Returns null if player data
+ * is not yet loaded or the player is not found.
+ */
+export function useMe() {
+    const myId = useMyId();
+    const playerMap = usePlayerMap();
+
+    if (!myId || !playerMap) {
+        return undefined;
+    }
+
+    return playerMap[myId];
+}
+
+/**
+ * Hook for getting a specific player by ID. Returns null if player data is not
+ * yet loaded or the player is not found.
+ */
+export function usePlayer(playerId: number) {
+    const { data: playersData } = usePlayers();
+
+    return useMemo(() => {
+        return playersData?.find((p) => p.id === playerId) ?? null;
+    }, [playersData, playerId]);
 }

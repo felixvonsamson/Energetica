@@ -1,8 +1,10 @@
 /** Hooks for fetching and managing electricity markets. */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { electricityMarketsApi } from "@/lib/electricity-markets-api";
 import { queryKeys } from "@/lib/query-client";
+import { ElectricityMarket } from "@/types/electricity-markets";
 
 /**
  * Get the list of existing electricity markets. This data changes when players
@@ -89,4 +91,56 @@ export function useChangeElectricityMarketPrices() {
             });
         },
     });
+}
+
+/** Create a map of electricity market IDs to market names for quick lookup. */
+export function useElectricityMarketMap() {
+    const { data: marketsData } = useElectricityMarkets();
+
+    return useMemo(() => {
+        const map: Record<number, string> = {};
+        if (marketsData) {
+            marketsData.electricity_markets.forEach((market) => {
+                map[market.id] = market.name;
+            });
+        }
+        return map;
+    }, [marketsData]);
+}
+
+/** Get a specific electricity market by ID. Returns null if not found. */
+export function useElectricityMarket(marketId: number) {
+    const { data: marketsData } = useElectricityMarkets();
+
+    return useMemo(() => {
+        return (
+            marketsData?.electricity_markets.find((m) => m.id === marketId) ??
+            null
+        );
+    }, [marketsData, marketId]);
+}
+
+function usePlayerToElectricityMarketMap() {
+    const { data: marketsData } = useElectricityMarkets();
+
+    return useMemo(() => {
+        if (!marketsData) return undefined;
+        const map: Record<number, ElectricityMarket> = {};
+        marketsData.electricity_markets.forEach((market) => {
+            market.member_ids.forEach((player_id) => {
+                map[player_id] = market;
+            });
+        });
+        return map;
+    }, [marketsData]);
+}
+
+/** Given a player ID, returns the market they belong to, possibly null */
+export function useElectricityMarketForPlayer(playerId: number | undefined) {
+    const playerToElectricityMarketMap = usePlayerToElectricityMarketMap();
+
+    if (playerId === undefined) return undefined;
+    if (!playerToElectricityMarketMap) return undefined;
+    if (!(playerId in playerToElectricityMarketMap)) return null;
+    return playerToElectricityMarketMap[playerId];
 }
