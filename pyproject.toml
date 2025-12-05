@@ -30,3 +30,6 @@ lint.ignore = [
 testpaths = [ "tests" ]
 filterwarnings = ["ignore::DeprecationWarning"]
 python_files = "tests/**/*.py"
+markers = [
+    "external_links: tests that make external HTTP requests (slow, should run before releases)",
+]
