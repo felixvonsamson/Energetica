@@ -53,7 +53,7 @@ export function RequireSettledPlayer({
         return <div>Redirecting to login...</div>;
     }
 
-    if (user.is_settled) {
+    if (!user.is_settled) {
         navigate({ to: "/app/settle" });
         return <div>Redirecting to location choice...</div>;
     }
