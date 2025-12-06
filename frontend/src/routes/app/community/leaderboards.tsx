@@ -125,6 +125,11 @@ function LeaderboardsContent() {
         return sortConfig.direction === "asc" ? " ▲" : " ▼";
     };
 
+    const getSortIndicatorVertical = (key: string) => {
+        if (sortConfig?.key !== key) return "";
+        return sortConfig.direction === "asc" ? "▶︎ " : "◀︎";
+    };
+
     const getCategoryLabel = (category: Category): string => {
         const labels: Record<Category, string> = {
             general: "General",
@@ -308,13 +313,13 @@ function LeaderboardsContent() {
                             }
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Mathematics
-                                {getSortIndicator("technologies.mathematics")}
+                                {`${getSortIndicatorVertical("technologies.mathematics")}Mathematics`}
                             </span>
                         </th>
                         <th
@@ -326,15 +331,13 @@ function LeaderboardsContent() {
                             }
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Mechanical Eng.
-                                {getSortIndicator(
-                                    "technologies.mechanical_engineering",
-                                )}
+                                {`${getSortIndicatorVertical("technologies.mechanical_engineering")}Mechanical Eng.`}
                             </span>
                         </th>
                         <th
@@ -344,15 +347,13 @@ function LeaderboardsContent() {
                             }
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Thermodynamics
-                                {getSortIndicator(
-                                    "technologies.thermodynamics",
-                                )}
+                                {`${getSortIndicatorVertical("technologies.thermodynamics")}Thermodynamics`}
                             </span>
                         </th>
                         <th
@@ -360,13 +361,13 @@ function LeaderboardsContent() {
                             onClick={() => handleSort("technologies.physics")}
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Physics
-                                {getSortIndicator("technologies.physics")}
+                                {`${getSortIndicatorVertical("technologies.physics")}Physics`}
                             </span>
                         </th>
                         <th
@@ -376,15 +377,13 @@ function LeaderboardsContent() {
                             }
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Building Tech.
-                                {getSortIndicator(
-                                    "technologies.building_technology",
-                                )}
+                                {`${getSortIndicatorVertical("technologies.building_technology")}Building Tech.`}
                             </span>
                         </th>
                         <th
@@ -394,15 +393,13 @@ function LeaderboardsContent() {
                             }
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Mineral Extraction
-                                {getSortIndicator(
-                                    "technologies.mineral_extraction",
-                                )}
+                                {`${getSortIndicatorVertical("technologies.mineral_extraction")}Mineral Extraction`}
                             </span>
                         </th>
                         <th
@@ -412,15 +409,13 @@ function LeaderboardsContent() {
                             }
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Transport Tech.
-                                {getSortIndicator(
-                                    "technologies.transport_technology",
-                                )}
+                                {`${getSortIndicatorVertical("technologies.transport_technology")}Transport Tech.`}
                             </span>
                         </th>
                         <th
@@ -428,13 +423,13 @@ function LeaderboardsContent() {
                             onClick={() => handleSort("technologies.materials")}
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Materials
-                                {getSortIndicator("technologies.materials")}
+                                {`${getSortIndicatorVertical("technologies.materials")}Materials`}
                             </span>
                         </th>
                         <th
@@ -444,15 +439,13 @@ function LeaderboardsContent() {
                             }
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Civil Eng.
-                                {getSortIndicator(
-                                    "technologies.civil_engineering",
-                                )}
+                                {`${getSortIndicatorVertical("technologies.civil_engineering")}Civil Eng.`}
                             </span>
                         </th>
                         <th
@@ -462,13 +455,13 @@ function LeaderboardsContent() {
                             }
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Aerodynamics
-                                {getSortIndicator("technologies.aerodynamics")}
+                                {`${getSortIndicatorVertical("technologies.aerodynamics")}Aerodynamics`}
                             </span>
                         </th>
                         <th
@@ -476,13 +469,13 @@ function LeaderboardsContent() {
                             onClick={() => handleSort("technologies.chemistry")}
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Chemistry
-                                {getSortIndicator("technologies.chemistry")}
+                                {`${getSortIndicatorVertical("technologies.chemistry")}Chemistry`}
                             </span>
                         </th>
                         <th
@@ -492,15 +485,13 @@ function LeaderboardsContent() {
                             }
                         >
                             <span
+                                className="text-nowrap"
                                 style={{
                                     writingMode: "sideways-lr",
                                     textOrientation: "mixed",
                                 }}
                             >
-                                Nuclear Eng.
-                                {getSortIndicator(
-                                    "technologies.nuclear_engineering",
-                                )}
+                                {`${getSortIndicatorVertical("technologies.nuclear_engineering")}Nuclear Eng.`}
                             </span>
                         </th>
                     </>
