@@ -3,8 +3,8 @@
  * navigation.
  */
 
-import { useState } from "react";
-import { Link, type LinkProps } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import { Link, type LinkProps, useLocation } from "@tanstack/react-router";
 import {
     Menu,
     ChevronDown,
@@ -32,6 +32,7 @@ import { navigationConfig } from "@/lib/nav-config";
 export function TopBar() {
     const { user } = useAuth();
     const capabilities = useCapabilities();
+    const location = useLocation();
     const {
         data: moneyData,
         isLoading: isMoneyLoading,
@@ -52,6 +53,23 @@ export function TopBar() {
     const [showNotifications, setShowNotifications] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+    // Update dropdown state based on current route when mobile menu opens
+    useEffect(() => {
+        if (isMenuOpen) {
+            const pathname = location.pathname;
+            if (pathname.includes("/overviews")) {
+                setOpenDropdown("Overviews");
+            } else if (pathname.includes("/facilities")) {
+                setOpenDropdown("Facilities");
+            } else if (
+                pathname.includes("/community") ||
+                pathname.includes("/resource-market")
+            ) {
+                setOpenDropdown("Community");
+            }
+        }
+    }, [isMenuOpen, location.pathname]);
 
     const toggleDropdown = (dropdown: string) => {
         setOpenDropdown(openDropdown === dropdown ? null : dropdown);

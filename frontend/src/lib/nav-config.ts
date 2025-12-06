@@ -134,7 +134,7 @@ export const navigationConfig: NavigationItem[] = [
             {
                 type: "link",
                 label: "Technology",
-                to: "/app/technology",
+                to: "/app/facilities/technology",
                 icon: FlaskConical,
                 visibility: (cap) => cap.has_laboratory,
             },

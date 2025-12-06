@@ -11,7 +11,7 @@ import {
     TechnologyEffectsTable,
 } from "@/components/technologies";
 
-export const Route = createFileRoute("/app/technology")({
+export const Route = createFileRoute("/app/facilities/technology")({
     component: TechnologyPage,
     staticData: {
         title: "Technologies",
