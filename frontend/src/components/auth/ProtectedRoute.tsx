@@ -48,74 +48,14 @@ export function RequireSettledPlayer({
         return <>{fallback}</>;
     }
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user || user.role !== "player") {
         navigate({ to: "/login" });
         return <div>Redirecting to login...</div>;
     }
 
-    if (user?.role === "admin") {
-        window.location.href = "/admin-dashboard";
-        return <div>Redirecting...</div>;
-    }
-
-    if (!user?.is_settled) {
+    if (user.is_settled) {
         navigate({ to: "/app/settle" });
         return <div>Redirecting to location choice...</div>;
-    }
-
-    return <>{children}</>;
-}
-
-/** Require user to be an admin. Redirects to home if not admin. */
-export function RequireAdmin({
-    children,
-    fallback = <div>Loading...</div>,
-}: ProtectedRouteProps) {
-    const { user, isAuthenticated, isLoading } = useAuth();
-    const navigate = useNavigate();
-
-    if (isLoading) {
-        return <>{fallback}</>;
-    }
-
-    if (!isAuthenticated) {
-        navigate({ to: "/login" });
-        return <div>Redirecting to login...</div>;
-    }
-
-    if (user?.role !== "admin") {
-        window.location.href = "/home";
-        return <div>Redirecting...</div>;
-    }
-
-    return <>{children}</>;
-}
-
-/**
- * Redirect authenticated users away from public pages. Useful for login/signup
- * pages.
- */
-export function PublicOnlyRoute({
-    children,
-    fallback = <div>Loading...</div>,
-}: ProtectedRouteProps) {
-    const { user, isAuthenticated, isLoading } = useAuth();
-    const navigate = useNavigate();
-
-    if (isLoading) {
-        return <>{fallback}</>;
-    }
-
-    if (isAuthenticated && user) {
-        // Redirect based on user role and state
-        if (user.role === "admin") {
-            navigate({ to: "/admin-dashboard" });
-        } else if (!user.is_settled) {
-            navigate({ to: "/app/settle" });
-        } else {
-            window.location.href = "/home";
-        }
-        return <div>Redirecting...</div>;
     }
 
     return <>{children}</>;
