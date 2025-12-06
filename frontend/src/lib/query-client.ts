@@ -123,8 +123,8 @@ export const queryKeys = {
             technologies: ["projects", "catalog", "technologies"] as const,
         },
     },
-    scoreboard: {
-        all: ["scoreboard"] as const,
+    leaderboards: {
+        all: ["leaderboards"] as const,
     },
     chats: {
         list: ["chats"] as const,

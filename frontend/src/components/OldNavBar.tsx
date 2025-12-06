@@ -62,7 +62,7 @@ function OldNavBar() {
                         <NavBarItem name="Messages" icon="messages.png" />
                         <NavBarItem name="Network" icon="network.png" />
                         <NavBarItem name="Map" icon="map.png" />
-                        <NavBarItem name="Scoreboard" icon="scoreboard.png" />
+                        <NavBarItem name="Leaderboards" icon="scoreboard.png" />
                     </NavBarSection>
                     <NavBarItem name="Technology" icon="technology.png" />
                     <NavBarItem

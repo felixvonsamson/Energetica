@@ -278,10 +278,10 @@ export function TopBar() {
                                 Map
                             </NavItem>
                             <NavItem
-                                to="/app/community/scoreboard"
+                                to="/app/community/leaderboards"
                                 icon="scoreboard.png"
                             >
-                                Scoreboard
+                                Leaderboards
                             </NavItem>
                         </NavDropdown>
 

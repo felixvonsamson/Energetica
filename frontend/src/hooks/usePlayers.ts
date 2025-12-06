@@ -34,11 +34,9 @@ export function usePlayerMap() {
     return useMemo(() => {
         if (!playersData) return undefined;
         const map: Record<number, Player> = {};
-        if (playersData) {
-            playersData.forEach((player) => {
-                map[player.id] = player;
-            });
-        }
+        playersData.forEach((player) => {
+            map[player.id] = player;
+        });
         return map;
     }, [playersData]);
 }
@@ -81,6 +79,7 @@ export function usePlayer(playerId: number) {
     const { data: playersData } = usePlayers();
 
     return useMemo(() => {
-        return playersData?.find((p) => p.id === playerId) ?? null;
+        if (!playersData) return undefined;
+        return playersData.find((p) => p.id === playerId) ?? null;
     }, [playersData, playerId]);
 }

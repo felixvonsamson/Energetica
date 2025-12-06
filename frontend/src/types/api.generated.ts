@@ -1225,7 +1225,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/scoreboard": {
+    "/api/v1/leaderboards": {
         parameters: {
             query?: never;
             header?: never;
@@ -1233,11 +1233,11 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Scoreboard
+         * Get Leaderboards
          *
-         * Get the scoreboard data.
+         * Get the leaderboards data.
          */
-        get: operations["get_scoreboard_api_v1_scoreboard_get"];
+        get: operations["get_leaderboards_api_v1_leaderboards_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2432,6 +2432,13 @@ export interface components {
              */
             member_ids: number[];
         };
+        /** EmissionsStats */
+        EmissionsStats: {
+            /** Net Emissions */
+            net_emissions: number;
+            /** Captured Co2 */
+            captured_co2: number;
+        };
         /**
          * ExtractionFacilityCatalogListOut
          *
@@ -2528,6 +2535,17 @@ export interface components {
          * @enum {string}
          */
         Fuel: "coal" | "gas" | "uranium";
+        /** FunctionalFacilitiesStats */
+        FunctionalFacilitiesStats: {
+            /** Industry */
+            industry: number;
+            /** Laboratory */
+            laboratory: number;
+            /** Warehouse */
+            warehouse: number;
+            /** Carbon Capture */
+            carbon_capture: number;
+        };
         /**
          * FunctionalFacilityCatalogListOut
          *
@@ -2645,6 +2663,19 @@ export interface components {
              */
             current_tick: number;
         };
+        /** GeneralStats */
+        GeneralStats: {
+            /** Network Name */
+            network_name: string | null;
+            /** Max Power Consumption */
+            max_power_consumption: number;
+            /** Average Revenues */
+            average_revenues: number;
+            /** Xp */
+            xp: number;
+            /** Total Technologies */
+            total_technologies: number;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -2683,6 +2714,11 @@ export interface components {
          * @enum {string}
          */
         HydroFacilityType: "watermill" | "small_water_dam" | "large_water_dam";
+        /** LeaderboardsOut */
+        LeaderboardsOut: {
+            /** Rows */
+            rows: components["schemas"]["PlayerDetailStats"][];
+        };
         /** LoginRequest */
         LoginRequest: {
             /** Username */
@@ -2800,6 +2836,19 @@ export interface components {
             /** Has Greenhouse Gas Effect */
             has_greenhouse_gas_effect: boolean;
         };
+        /** PlayerDetailStats */
+        PlayerDetailStats: {
+            /** Player Id */
+            player_id: number;
+            /** Username */
+            username: string;
+            general: components["schemas"]["GeneralStats"];
+            power_and_energy: components["schemas"]["PowerAndEnergyStats"];
+            resources: components["schemas"]["ResourceStats"];
+            technologies: components["schemas"]["TechnologiesStats"];
+            functional_facilities: components["schemas"]["FunctionalFacilitiesStats"];
+            emissions?: components["schemas"]["EmissionsStats"] | null;
+        };
         /**
          * PlayerOut
          *
@@ -2818,6 +2867,17 @@ export interface components {
              * Username of the player
              */
             username: string;
+        };
+        /** PowerAndEnergyStats */
+        PowerAndEnergyStats: {
+            /** Max Power Consumption */
+            max_power_consumption: number;
+            /** Max Energy Stored */
+            max_energy_stored: number;
+            /** Imported Energy */
+            imported_energy: number;
+            /** Exported Energy */
+            exported_energy: number;
         };
         /**
          * PowerFacilityCatalogListOut
@@ -3221,6 +3281,15 @@ export interface components {
             /** Rate */
             rate: number;
         };
+        /** ResourceStats */
+        ResourceStats: {
+            /** Extracted Resources */
+            extracted_resources: number;
+            /** Bought Resources */
+            bought_resources: number;
+            /** Sold Resources */
+            sold_resources: number;
+        };
         /**
          * ResourceStock
          *
@@ -3293,30 +3362,6 @@ export interface components {
             series: {
                 [key: string]: number[];
             };
-        };
-        /** ScoreboardOut */
-        ScoreboardOut: {
-            /** Rows */
-            rows: components["schemas"]["ScoreboardRowOut"][];
-        };
-        /** ScoreboardRowOut */
-        ScoreboardRowOut: {
-            /** Player Id */
-            player_id: number;
-            /** Username */
-            username: string;
-            /** Network Name */
-            network_name: string | null;
-            /** Average Hourly Revenues */
-            average_hourly_revenues: number;
-            /** Max Power Consumption */
-            max_power_consumption: number;
-            /** Total Technology Levels */
-            total_technology_levels: number;
-            /** Xp */
-            xp: number;
-            /** Co2 Emissions */
-            co2_emissions: number | null;
         };
         /**
          * SettingsOut
@@ -3530,6 +3575,35 @@ export interface components {
             p256dh: string;
             /** Auth */
             auth: string;
+        };
+        /** TechnologiesStats */
+        TechnologiesStats: {
+            /** Total Technologies */
+            total_technologies: number;
+            /** Mathematics */
+            mathematics: number;
+            /** Mechanical Engineering */
+            mechanical_engineering: number;
+            /** Thermodynamics */
+            thermodynamics: number;
+            /** Physics */
+            physics: number;
+            /** Building Technology */
+            building_technology: number;
+            /** Mineral Extraction */
+            mineral_extraction: number;
+            /** Transport Technology */
+            transport_technology: number;
+            /** Materials */
+            materials: number;
+            /** Civil Engineering */
+            civil_engineering: number;
+            /** Aerodynamics */
+            aerodynamics: number;
+            /** Chemistry */
+            chemistry: number;
+            /** Nuclear Engineering */
+            nuclear_engineering: number;
         };
         /**
          * TechnologyCatalogListOut
@@ -5630,7 +5704,7 @@ export interface operations {
             };
         };
     };
-    get_scoreboard_api_v1_scoreboard_get: {
+    get_leaderboards_api_v1_leaderboards_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -5645,7 +5719,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ScoreboardOut"];
+                    "application/json": components["schemas"]["LeaderboardsOut"];
                 };
             };
         };

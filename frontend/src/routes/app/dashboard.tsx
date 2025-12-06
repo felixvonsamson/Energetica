@@ -205,7 +205,7 @@ function DashboardContent() {
                         />
                     )}
                     <QuickLinkCard
-                        href="/app/community/scoreboard"
+                        href="/app/community/leaderboards"
                         icon={Trophy}
                         title="Ranking"
                     />

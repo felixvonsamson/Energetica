@@ -231,11 +231,11 @@ export function SideNav({
                             Map
                         </NavItem>
                         <NavItem
-                            to="/app/community/scoreboard"
+                            to="/app/community/leaderboards"
                             icon="scoreboard.png"
                             onClose={onClose}
                         >
-                            Scoreboard
+                            Leaderboards
                         </NavItem>
                     </NavDropdown>
 

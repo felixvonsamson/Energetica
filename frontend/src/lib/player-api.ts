@@ -42,7 +42,9 @@ export const playerApi = {
             "/players/me/profile",
         ),
 
-    /** Get the scoreboard data. */
-    getScoreboard: () =>
-        apiClient.get<ApiResponse<"/api/v1/scoreboard", "get">>("/scoreboard"),
+    /** Get the leaderboards data. */
+    getLeaderboards: () =>
+        apiClient.get<ApiResponse<"/api/v1/leaderboards", "get">>(
+            "/leaderboards",
+        ),
 };
