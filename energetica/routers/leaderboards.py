@@ -1,25 +1,25 @@
-"""Routes for the scoreboard."""
+"""Routes for the leaderboards."""
 
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
 from energetica.database.player import Player
-from energetica.schemas.scoreboard import ScoreboardOut, ScoreboardRowOut
+from energetica.schemas.leaderboards import LeaderboardsOut, LeaderboardRowOut
 from energetica.utils.auth import get_settled_player
 
-router = APIRouter(prefix="/scoreboard", tags=["Scoreboard"])
+router = APIRouter(prefix="/leaderboards", tags=["Leaderboards"])
 
 
 @router.get("")
-def get_scoreboard(
+def get_leaderboards(
     player: Annotated[Player, Depends(get_settled_player)],
-) -> ScoreboardOut:
-    """Get the scoreboard data."""
+) -> LeaderboardsOut:
+    """Get the leaderboards data."""
     players = Player.all()
     include_co2_emissions = player.discovered_greenhouse_gas_effect()
     rows = [
-        ScoreboardRowOut(
+        LeaderboardRowOut(
             player_id=player.id,
             username=player.username,
             network_name=player.network.name if player.network is not None else None,
@@ -31,4 +31,4 @@ def get_scoreboard(
         )
         for player in players
     ]
-    return ScoreboardOut(rows=rows)
+    return LeaderboardsOut(rows=rows)

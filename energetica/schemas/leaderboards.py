@@ -1,16 +1,16 @@
-"""Schemas for API for the scoreboard."""
+"""Schemas for API for the leaderboards."""
 
 from __future__ import annotations
 
 from pydantic import BaseModel
 
 
-class ScoreboardOut(BaseModel):
-    rows: list[ScoreboardRowOut]
+class LeaderboardsOut(BaseModel):
+    rows: list[LeaderboardRowOut]
     pass
 
 
-class ScoreboardRowOut(BaseModel):
+class LeaderboardRowOut(BaseModel):
     player_id: int
     username: str
     network_name: str | None
