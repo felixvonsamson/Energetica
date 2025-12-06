@@ -7,7 +7,7 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Money } from "@/components/ui";
 import { useStorageFacilitiesCatalog } from "@/hooks/useProjects";
 import type { ApiSchema } from "@/types/api-helpers";
-import { FacilityCard } from "@/components/facilities";
+import { FacilityCard } from "@/components/facilities/FacilityCard";
 import { formatPower, formatEnergy } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/facilities/storage")({

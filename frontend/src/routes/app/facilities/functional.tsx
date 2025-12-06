@@ -7,7 +7,7 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Money } from "@/components/ui";
 import { useFunctionalFacilitiesCatalog } from "@/hooks/useProjects";
 import type { ApiSchema } from "@/types/api-helpers";
-import { FacilityCard } from "@/components/facilities";
+import { FacilityCard } from "@/components/facilities/FacilityCard";
 import {
     formatUpgradePower,
     formatUpgradeMass,

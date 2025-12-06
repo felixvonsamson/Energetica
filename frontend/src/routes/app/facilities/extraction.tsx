@@ -8,7 +8,7 @@ import { Modal, ResourceName, Money } from "@/components/ui";
 import { useExtractionFacilitiesCatalog } from "@/hooks/useProjects";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import type { ApiSchema } from "@/types/api-helpers";
-import { FacilityCard } from "@/components/facilities";
+import { FacilityCard } from "@/components/facilities/FacilityCard";
 import { formatPower, formatMass } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/facilities/extraction")({

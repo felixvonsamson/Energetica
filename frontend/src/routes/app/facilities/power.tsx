@@ -8,7 +8,8 @@ import { Modal, Money } from "@/components/ui";
 import { usePowerFacilitiesCatalog } from "@/hooks/useProjects";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import type { ApiSchema } from "@/types/api-helpers";
-import { FacilityCard, ResourceStockIndicators } from "@/components/facilities";
+import { FacilityCard } from "@/components/facilities/FacilityCard";
+import { ResourceStockIndicators } from "@/components/facilities";
 import { formatPower, formatMass } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/facilities/power")({
