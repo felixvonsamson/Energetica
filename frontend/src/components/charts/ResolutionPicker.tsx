@@ -1,6 +1,6 @@
 /** Resolution picker component for time series charts. */
 
-import { Resolution } from "@app-types/charts";
+import { Resolution } from "@/types/charts";
 
 export interface ResolutionOption {
     id: number;

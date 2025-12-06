@@ -14,17 +14,17 @@ import {
     HelpCircle,
 } from "lucide-react";
 
-import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
-import { GameLayout } from "@components/layout/GameLayout";
-import { Modal, InfoBanner, Card, CardTitle } from "@components/ui";
-import { DashboardSection } from "@components/dashboard/DashboardSection";
-import { QuickLinkCard } from "@components/dashboard/QuickLinkCard";
-import { AchievementCard } from "@components/dashboard/AchievementCard";
-import { useWeather } from "@hooks/useWeather";
-import { useDailyQuiz, useSubmitQuizAnswer } from "@hooks/useDailyQuiz";
-import { useAchievements } from "@hooks/useAchievements";
-import { useCapabilities } from "@hooks/useCapabilities";
-import { getMonthName } from "@lib/date-utils";
+import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Modal, InfoBanner, Card, CardTitle } from "@/components/ui";
+import { DashboardSection } from "@/components/dashboard/DashboardSection";
+import { QuickLinkCard } from "@/components/dashboard/QuickLinkCard";
+import { AchievementCard } from "@/components/dashboard/AchievementCard";
+import { useWeather } from "@/hooks/useWeather";
+import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
+import { useAchievements } from "@/hooks/useAchievements";
+import { useCapabilities } from "@/hooks/useCapabilities";
+import { getMonthName } from "@/lib/date-utils";
 
 export const Route = createFileRoute("/app/dashboard")({
     component: DashboardPage,

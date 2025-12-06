@@ -1,8 +1,8 @@
 /** API client for chart data endpoints. */
 
-import { apiClient } from "./api-client";
+import { apiClient } from "@/lib/api-client";
 import type { ApiResponse } from "@/types/api-helpers";
-import { ChartType, Resolution, TickRange } from "../types/charts";
+import { ChartType, Resolution, TickRange } from "@/types/charts";
 
 interface ChartParams {
     chartType: ChartType;

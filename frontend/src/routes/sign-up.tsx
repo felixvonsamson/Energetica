@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { HomeLayout } from "@components/HomeLayout";
-import { Card, Button, InfoBanner } from "@components/ui";
-import { authApi } from "@lib/auth-api";
-import { handleApiError } from "@lib/error-utils";
-import { useAuth } from "@hooks/useAuth";
+import { HomeLayout } from "@/components/HomeLayout";
+import { Card, Button, InfoBanner } from "@/components/ui";
+import { authApi } from "@/lib/api/auth";
+import { handleApiError } from "@/lib/error-utils";
+import { useAuth } from "@/hooks/useAuth";
 import { UserPlus } from "lucide-react";
 
 export const Route = createFileRoute("/sign-up")({

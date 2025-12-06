@@ -6,8 +6,8 @@
  * responsible for calculating colors and labels based on their specific needs.
  */
 
-import { useMapContext } from "@contexts/MapContext";
-import { getHexagonPoints, getHexPosition } from "@lib/hex-utils";
+import { useMapContext } from "@/contexts/MapContext";
+import { getHexagonPoints, getHexPosition } from "@/lib/hex-utils";
 import { HexTileResources } from "@/types/map";
 
 export interface HexTileProps {

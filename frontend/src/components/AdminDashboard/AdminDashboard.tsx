@@ -1,6 +1,6 @@
 import { Outlet, useMatches } from "@tanstack/react-router";
 
-import NavBar from "@components/NavBar/NavBar";
+import NavBar from "@/components/NavBar/NavBar";
 import styles from "./AdminDashboard.module.css";
 
 export function AdminDashboardLayout() {

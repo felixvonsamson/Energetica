@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 import { Info, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
-import { cn } from "@lib/utils";
+import { cn } from "@/lib/utils";
 
 interface InfoBannerProps {
     children: ReactNode;

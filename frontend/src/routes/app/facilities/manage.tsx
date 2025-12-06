@@ -4,13 +4,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
-import { GameLayout } from "@components/layout/GameLayout";
-import { Modal, Card, CardTitle } from "@components/ui";
-import { FacilityGauge } from "@components/ui/FacilityGauge";
-import { useFacilities } from "@hooks/useFacilities";
+import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Modal, Card, CardTitle } from "@/components/ui";
+import { FacilityGauge } from "@/components/ui/FacilityGauge";
+import { useFacilities } from "@/hooks/useFacilities";
 import { FacilityGroupTable } from "@/components/facilities/FacilityGroupTable";
-import { formatPower, formatEnergy, formatMassRate } from "@lib/format-utils";
+import { formatPower, formatEnergy, formatMassRate } from "@/lib/format-utils";
 import { dummyFacilities } from "@/data/dummyFacilities";
 import { useHasCapability } from "@/hooks/useCapabilities";
 

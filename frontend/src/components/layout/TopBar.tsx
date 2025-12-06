@@ -14,20 +14,20 @@ import {
     Hammer,
     FlaskConical,
 } from "lucide-react";
-import { useAuth } from "@hooks/useAuth";
-import { usePlayerMoney } from "@hooks/usePlayerMoney";
-import { usePlayerWorkers } from "@hooks/usePlayerWorkers";
-import { usePlayerResources } from "@hooks/usePlayerResources";
-import { useOnlineStatus } from "@hooks/useOnlineStatus";
-import { useCapabilities } from "@hooks/useCapabilities";
+import { useAuth } from "@/hooks/useAuth";
+import { usePlayerMoney } from "@/hooks/usePlayerMoney";
+import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
+import { usePlayerResources } from "@/hooks/usePlayerResources";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { NotificationPopup } from "./NotificationPopup";
 import { SideNav } from "./SideNav";
-import { ThemeToggle } from "@components/ui/ThemeToggle";
-import { Money } from "@app-types/money";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { Money } from "@/types/money";
 import { Workers } from "@/types/workers";
 import { Resources } from "@/types/resources";
 import type { LucideIcon } from "lucide-react";
-import { navigationConfig } from "@lib/nav-config";
+import { navigationConfig } from "@/lib/nav-config";
 
 export function TopBar() {
     const { user } = useAuth();

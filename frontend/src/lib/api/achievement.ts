@@ -3,7 +3,7 @@
  * their progress.
  */
 
-import { apiClient } from "./api-client";
+import { apiClient } from "@/lib/api-client";
 import type { ApiResponse } from "@/types/api-helpers";
 
 export const achievementApi = {

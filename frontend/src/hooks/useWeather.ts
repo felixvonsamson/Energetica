@@ -4,7 +4,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { weatherApi } from "@/lib/weather-api";
+import { weatherApi } from "@/lib/api/weather";
 import { queryKeys } from "@/lib/query-client";
 import { useTickQuery } from "@/contexts/GameTickContext";
 

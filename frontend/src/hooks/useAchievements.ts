@@ -4,7 +4,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { achievementApi } from "@/lib/achievement-api";
+import { achievementApi } from "@/lib/api/achievement";
 import { queryKeys } from "@/lib/query-client";
 import { useTickQuery } from "@/contexts/GameTickContext";
 

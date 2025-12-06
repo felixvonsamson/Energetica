@@ -4,17 +4,17 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { Modal, ThemeToggle } from "@components/ui";
-import { HexTile } from "@components/map/HexTile";
-import { MapCanvas } from "@components/map/MapCanvas";
-import { useMap } from "@hooks/useMap";
-import { usePlayers } from "@hooks/usePlayers";
-import { useAuth } from "@hooks/useAuth";
-import { mapApi } from "@lib/map-api";
-import { formatMass } from "@lib/format-utils";
-import type { ApiResponse } from "@app-types/api-helpers";
-import { MapHoverBorder } from "@components/map/MapHoverBorder";
-import { useMapContext } from "@contexts/MapContext";
+import { Modal, ThemeToggle } from "@/components/ui";
+import { HexTile } from "@/components/map/HexTile";
+import { MapCanvas } from "@/components/map/MapCanvas";
+import { useMap } from "@/hooks/useMap";
+import { usePlayers } from "@/hooks/usePlayers";
+import { useAuth } from "@/hooks/useAuth";
+import { mapApi } from "@/lib/api/map";
+import { formatMass } from "@/lib/format-utils";
+import type { ApiResponse } from "@/types/api-helpers";
+import { MapHoverBorder } from "@/components/map/MapHoverBorder";
+import { useMapContext } from "@/contexts/MapContext";
 
 type HexTileData = ApiResponse<"/api/v1/map", "get">[number];
 type ResourceId = 0 | 1 | 2 | 3 | 4 | 5 | 6;

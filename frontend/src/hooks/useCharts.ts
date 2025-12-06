@@ -22,7 +22,7 @@ import {
     useQueries,
     useQueryClient,
 } from "@tanstack/react-query";
-import { chartsApi } from "@/lib/charts-api";
+import { chartsApi } from "@/lib/api/charts";
 import { queryKeys } from "@/lib/query-client";
 import {
     ChartType,

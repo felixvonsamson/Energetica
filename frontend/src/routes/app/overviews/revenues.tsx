@@ -4,12 +4,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useCallback } from "react";
 import { DollarSign } from "lucide-react";
 
-import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
-import { GameLayout } from "@components/layout/GameLayout";
-import { Card, CardTitle } from "@components/ui";
-import { useGameTick } from "@hooks/useGameTick";
-import { useCurrentChartData } from "@hooks/useCharts";
-import { useAssetColorGetter } from "@hooks/useAssetColorGetter";
+import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Card, CardTitle } from "@/components/ui";
+import { useGameTick } from "@/hooks/useGameTick";
+import { useCurrentChartData } from "@/hooks/useCharts";
+import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import {
     TimeSeriesChart,
     ResolutionPicker,
@@ -19,7 +19,7 @@ import {
     includeAllSeries,
     type ResolutionOption,
     type TimeSeriesChartConfig,
-} from "@components/charts";
+} from "@/components/charts";
 
 type RevenueType = "revenues" | "expenses" | "all";
 

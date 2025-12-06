@@ -1,4 +1,4 @@
-import { ApiSchema } from "@app-types/api-helpers";
+import { ApiSchema } from "@/types/api-helpers";
 
 type Technology = ApiSchema<"TechnologyCatalogOut">;
 

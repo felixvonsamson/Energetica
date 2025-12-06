@@ -4,7 +4,7 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { RedirectToLegacy } from "@components/RedirectToLegacy";
+import { RedirectToLegacy } from "@/components/RedirectToLegacy";
 
 export const Route = createFileRoute("/app/community/network")({
     component: () => <RedirectToLegacy to="/network" />,

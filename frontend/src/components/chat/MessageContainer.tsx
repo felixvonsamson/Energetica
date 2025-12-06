@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
-import { usePlayerMap } from "@hooks/usePlayers";
-import { useAuth } from "@hooks/useAuth";
-import { formatTimestamp } from "@lib/format-utils";
-import type { Message } from "@app-types/chats";
+import { usePlayerMap } from "@/hooks/usePlayers";
+import { useAuth } from "@/hooks/useAuth";
+import { formatTimestamp } from "@/lib/format-utils";
+import type { Message } from "@/types/chats";
 
 interface MessageContainerProps {
     isLoading: boolean;

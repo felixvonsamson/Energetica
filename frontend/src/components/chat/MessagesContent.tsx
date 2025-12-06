@@ -4,8 +4,8 @@ import { NewChatModal } from "./NewChatModal";
 import { NewGroupChatModal } from "./NewGroupChatModal";
 import { ChatSidebar } from "./ChatSidebar";
 import { ChatWindow } from "./ChatWindow";
-import { useMessagesPage } from "@hooks/useMessagesPage";
-import { useIsMobile } from "@hooks/useIsMobile";
+import { useMessagesPage } from "@/hooks/useMessagesPage";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export function MessagesContent() {
     const [showMobileChatView, setShowMobileChatView] = useState(false);

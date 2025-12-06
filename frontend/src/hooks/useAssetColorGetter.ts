@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { getAssetColor } from "@/lib/asset-colors";
+import { getAssetColor } from "@/lib/assets/asset-colors";
 
 /**
  * Hook that returns a color getter function that's theme-aware.

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HomeLayout } from "@components/HomeLayout";
+import { HomeLayout } from "@/components/HomeLayout";
 import {
     TrendingUp,
     Package,

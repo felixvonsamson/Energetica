@@ -2,14 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
-import { GameLayout } from "@components/layout/GameLayout";
-import { Modal } from "@components/ui";
-import { useTechnologiesCatalog } from "@hooks/useProjects";
+import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Modal } from "@/components/ui";
+import { useTechnologiesCatalog } from "@/hooks/useProjects";
 import {
     TechnologyCard,
     TechnologyEffectsTable,
-} from "@components/technologies";
+} from "@/components/technologies";
 
 export const Route = createFileRoute("/app/technology")({
     component: TechnologyPage,

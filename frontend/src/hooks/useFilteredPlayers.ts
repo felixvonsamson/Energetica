@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Player } from "@app-types/chats";
+import type { Player } from "@/types/chats";
 
 /**
  * Hook to filter players by search input, excluding current user and specified

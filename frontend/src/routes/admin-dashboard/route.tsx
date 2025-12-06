@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { AdminDashboardLayout } from "@components/AdminDashboard/AdminDashboard";
+import { AdminDashboardLayout } from "@/components/AdminDashboard/AdminDashboard";
 
 export const Route = createFileRoute("/admin-dashboard")({
     loader: ({ location }) => {

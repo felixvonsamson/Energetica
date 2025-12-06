@@ -1,5 +1,5 @@
 // Resource types available in the market
-import { ApiSchema } from "@app-types/api-helpers";
+import { ApiSchema } from "@/types/api-helpers";
 
 export type ResourceType = ApiSchema<"Fuel">;
 export const RESOURCE_TYPES: ResourceType[] = ["coal", "gas", "uranium"];

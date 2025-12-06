@@ -1,7 +1,7 @@
 /** React Query hooks for facilities data. */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { facilitiesApi } from "@/lib/facilities-api";
+import { facilitiesApi } from "@/lib/api/facilities";
 import { queryKeys } from "@/lib/query-client";
 import { useTickQuery } from "@/contexts/GameTickContext";
 

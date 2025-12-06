@@ -3,7 +3,7 @@
  * name, progress bar, and XP reward.
  */
 
-import { formatAchievementValue } from "@lib/format-utils";
+import { formatAchievementValue } from "@/lib/format-utils";
 
 interface AchievementCardProps {
     id: string;

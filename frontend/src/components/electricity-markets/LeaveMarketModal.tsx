@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import { Modal } from "@components/ui/Modal";
+import { Modal } from "@/components/ui/Modal";
 import {
     useLeaveElectricityMarket,
     useElectricityMarketForPlayer,
-} from "@hooks/useElectricityMarkets";
+} from "@/hooks/useElectricityMarkets";
 import { useMe } from "@/hooks/usePlayers";
 
 interface LeaveMarketModalProps {

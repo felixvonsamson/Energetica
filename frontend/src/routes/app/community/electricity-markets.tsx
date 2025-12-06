@@ -6,18 +6,18 @@ import {
 import { useCallback, useState } from "react";
 import { Plus, ChevronDown, ChevronUp } from "lucide-react";
 
-import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
-import { GameLayout } from "@components/layout/GameLayout";
-import { Card, CardTitle } from "@components/ui";
+import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Card, CardTitle } from "@/components/ui";
 import {
     useElectricityMarketForPlayer,
     useElectricityMarkets,
-} from "@hooks/useElectricityMarkets";
-import { useMe, usePlayerMap } from "@hooks/usePlayers";
-import { Money } from "@components/ui/Money";
-import { LeaveMarketModal } from "@components/electricity-markets/LeaveMarketModal";
-import { JoinMarketModal } from "@components/electricity-markets/JoinMarketModal";
-import { CreateMarketModal } from "@components/electricity-markets/CreateMarketModal";
+} from "@/hooks/useElectricityMarkets";
+import { useMe, usePlayerMap } from "@/hooks/usePlayers";
+import { Money } from "@/components/ui/Money";
+import { LeaveMarketModal } from "@/components/electricity-markets/LeaveMarketModal";
+import { JoinMarketModal } from "@/components/electricity-markets/JoinMarketModal";
+import { CreateMarketModal } from "@/components/electricity-markets/CreateMarketModal";
 
 export const Route = createFileRoute("/app/community/electricity-markets")({
     component: ElectricityMarketsPage,

@@ -8,24 +8,24 @@ import {
 import { useState, useMemo } from "react";
 import { HelpCircle, Plus, Trash2, Eye, EyeOff } from "lucide-react";
 
-import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
-import { GameLayout } from "@components/layout/GameLayout";
-import { Modal, Card, Money } from "@components/ui";
+import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Modal, Card, Money } from "@/components/ui";
 import {
     useResourceMarketAsks,
     useDeleteAsk,
     useCalculateDeliveryTime,
-} from "@hooks/useResourceMarket";
-import { usePlayerResources } from "@hooks/usePlayerResources";
-import { useCurrentPlayer } from "@hooks/useCurrentPlayer";
-import { formatMass } from "@lib/format-utils";
-import { PurchaseModal } from "@components/resource-market/PurchaseModal";
+} from "@/hooks/useResourceMarket";
+import { usePlayerResources } from "@/hooks/usePlayerResources";
+import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
+import { formatMass } from "@/lib/format-utils";
+import { PurchaseModal } from "@/components/resource-market/PurchaseModal";
 import {
     ResourceType,
     RESOURCE_TYPES,
     RESOURCE_LABELS,
-} from "@app-types/resource-market";
-import { CreateAskModal } from "@components/resource-market/CreateAskModal";
+} from "@/types/resource-market";
+import { CreateAskModal } from "@/components/resource-market/CreateAskModal";
 
 export const Route = createFileRoute("/app/resource-market")({
     component: ResourceMarketPage,

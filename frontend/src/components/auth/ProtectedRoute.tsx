@@ -1,7 +1,7 @@
 /** Protected route components for enforcing authentication and authorization. */
 
 import { useNavigate } from "@tanstack/react-router";
-import { useAuth } from "@hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import type { ReactNode } from "react";
 
 interface ProtectedRouteProps {

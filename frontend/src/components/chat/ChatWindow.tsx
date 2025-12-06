@@ -1,7 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { MessageContainer } from "./MessageContainer";
 import { MessageInput } from "./MessageInput";
-import type { Message, Chat } from "@app-types/chats";
+import type { Message, Chat } from "@/types/chats";
 
 interface ChatWindowProps {
     selectedChat: Chat | undefined;

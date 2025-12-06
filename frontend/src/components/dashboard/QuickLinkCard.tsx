@@ -1,6 +1,6 @@
 import { type LucideIcon } from "lucide-react";
 import { Link, LinkProps } from "@tanstack/react-router";
-import { cn } from "@lib/utils";
+import { cn } from "@/lib/utils";
 
 // TODO: make href be type safe
 

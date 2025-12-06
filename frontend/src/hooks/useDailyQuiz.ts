@@ -4,7 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { dailyQuizApi } from "@/lib/daily-quiz-api";
+import { dailyQuizApi } from "@/lib/api/daily-quiz";
 import { queryKeys } from "@/lib/query-client";
 
 /**

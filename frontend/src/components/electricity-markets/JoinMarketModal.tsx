@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { AlertTriangle, Info } from "lucide-react";
-import { Modal } from "@components/ui/Modal";
+import { Modal } from "@/components/ui/Modal";
 import {
     useJoinElectricityMarket,
     useElectricityMarkets,
     useElectricityMarket,
-} from "@hooks/useElectricityMarkets";
-import { useMyId } from "@hooks/usePlayers";
+} from "@/hooks/useElectricityMarkets";
+import { useMyId } from "@/hooks/usePlayers";
 
 interface JoinMarketModalProps {
     isOpen: boolean;

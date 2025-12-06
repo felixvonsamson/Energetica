@@ -1,6 +1,6 @@
 /** Game engine configuration API calls. */
 
-import { apiClient } from "./api-client";
+import { apiClient } from "@/lib/api-client";
 import type { GameEngineConfig } from "@/types/game";
 
 export const gameApi = {

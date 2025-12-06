@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { X, Check } from "lucide-react";
-import { Modal } from "@components/ui/Modal";
-import { Button } from "@components/ui";
-import { useChatList, useCreateGroupChat } from "@hooks/useChats";
-import { usePlayers } from "@hooks/usePlayers";
-import { useAuth } from "@hooks/useAuth";
-import { useFilteredPlayers } from "@hooks/useFilteredPlayers";
-import type { Player, Chat } from "@app-types/chats";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui";
+import { useChatList, useCreateGroupChat } from "@/hooks/useChats";
+import { usePlayers } from "@/hooks/usePlayers";
+import { useAuth } from "@/hooks/useAuth";
+import { useFilteredPlayers } from "@/hooks/useFilteredPlayers";
+import type { Player, Chat } from "@/types/chats";
 
 interface NewGroupChatModalProps {
     isOpen: boolean;

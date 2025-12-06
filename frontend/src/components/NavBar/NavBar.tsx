@@ -5,7 +5,7 @@ import { ArrowUpDown, Leaf, Map, Settings, Users } from "lucide-react";
 
 import styles from "./NavBar.module.css";
 
-import energeticaLogo from "@assets/icon_green.svg";
+import energeticaLogo from "@/assets/icon_green.svg";
 
 export default function NavBar() {
     return (

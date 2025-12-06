@@ -4,12 +4,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
-import { GameLayout } from "@components/layout/GameLayout";
-import { Modal, Card, Money } from "@components/ui";
+import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Modal, Card, Money } from "@/components/ui";
 import { useLeaderboards } from "@/hooks/useLeaderboards";
-import { useHasCapability } from "@hooks/useCapabilities";
-import { formatPower, formatEnergy, formatMass } from "@lib/format-utils";
+import { useHasCapability } from "@/hooks/useCapabilities";
+import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
 import type { PlayerDetailStats } from "@/types/leaderboards";
 
 export const Route = createFileRoute("/app/community/leaderboards")({

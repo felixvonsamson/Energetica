@@ -17,7 +17,7 @@ import {
     getAssetName,
     getAssetLongName,
     getAssetShortName,
-} from "@lib/asset-names";
+} from "@/lib/assets/asset-names";
 
 /**
  * Display mode for asset names.

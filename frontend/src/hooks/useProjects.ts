@@ -1,7 +1,7 @@
 /** Hooks for fetching and managing construction/research projects. */
 
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { projectsApi } from "@/lib/projects-api";
+import { projectsApi } from "@/lib/api/projects";
 import { queryKeys, queryClient } from "@/lib/query-client";
 import { useTickQuery } from "@/contexts/GameTickContext";
 

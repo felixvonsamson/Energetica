@@ -6,8 +6,8 @@
  */
 
 import { useState, useEffect } from "react";
-import { useMapContext } from "@contexts/MapContext";
-import { getHexPosition } from "@lib/hex-utils";
+import { useMapContext } from "@/contexts/MapContext";
+import { getHexPosition } from "@/lib/hex-utils";
 
 interface MapHoverBorderProps {
     tile: { q: number; r: number } | null;

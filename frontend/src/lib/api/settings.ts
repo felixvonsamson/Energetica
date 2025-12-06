@@ -1,6 +1,6 @@
 /** User settings API calls. */
 
-import { apiClient } from "./api-client";
+import { apiClient } from "@/lib/api-client";
 import type { UserSettings, UpdateSettingsRequest } from "@/types/settings";
 
 export const settingsApi = {

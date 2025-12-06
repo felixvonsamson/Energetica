@@ -1,6 +1,6 @@
 /** API client for electricity markets endpoints. */
 
-import { apiClient } from "./api-client";
+import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 
 export const electricityMarketsApi = {

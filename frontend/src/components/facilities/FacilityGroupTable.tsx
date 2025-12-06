@@ -4,14 +4,14 @@
  */
 
 import { useState, ReactNode } from "react";
-import { Money, FacilityName } from "@components/ui";
-import { ConfirmDialog } from "@components/ui/ConfirmDialog";
+import { Money, FacilityName } from "@/components/ui";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
     useUpgradeFacility,
     useUpgradeAllOfType,
     useDismantleFacility,
     useDismantleAllOfType,
-} from "@hooks/useFacilities";
+} from "@/hooks/useFacilities";
 
 interface FacilityBase {
     id: number;

@@ -2,6 +2,6 @@
 
 // TODO: rename from HexTileOut to HexTile
 
-import { ApiSchema } from "@app-types/api-helpers";
+import { ApiSchema } from "@/types/api-helpers";
 
 export type HexTileResources = ApiSchema<"HexTileOut">;

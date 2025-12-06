@@ -19,7 +19,7 @@ import type {
     SendMessageRequest,
     OpenChatResponse,
 } from "@/types/chats";
-import { chatsApi } from "@/lib/chats-api";
+import { chatsApi } from "@/lib/api/chats";
 import { queryKeys, queryClient } from "@/lib/query-client";
 
 /**

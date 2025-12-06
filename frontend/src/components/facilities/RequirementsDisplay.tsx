@@ -3,7 +3,7 @@
  * unlock requirements with color-coded status.
  */
 
-import { TechnologyName } from "@components/ui/AssetName";
+import { TechnologyName } from "@/components/ui/AssetName";
 
 interface Requirement {
     name: string;

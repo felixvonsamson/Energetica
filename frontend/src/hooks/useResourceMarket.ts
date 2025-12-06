@@ -1,7 +1,7 @@
 /** Hooks for fetching and managing resource market asks. */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { resourceMarketApi } from "@/lib/resource-market-api";
+import { resourceMarketApi } from "@/lib/api/resource-market";
 import { queryKeys } from "@/lib/query-client";
 
 /**

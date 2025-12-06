@@ -15,15 +15,7 @@ export default defineConfig(({ mode }) => ({
         react(),
     ],
     resolve: {
-        alias: {
-            "@": path.resolve(__dirname, "./src"),
-            "@components": path.resolve(__dirname, "./src/components"),
-            "@hooks": path.resolve(__dirname, "./src/hooks"),
-            "@lib": path.resolve(__dirname, "./src/lib"),
-            "@contexts": path.resolve(__dirname, "./src/contexts"),
-            "@app-types": path.resolve(__dirname, "./src/types"),
-            "@styles": path.resolve(__dirname, "./src/styles"),
-        },
+        alias: { "@": path.resolve(__dirname, "./src") },
     },
     base: mode === "development" ? "/" : "/static/react/",
     server: {

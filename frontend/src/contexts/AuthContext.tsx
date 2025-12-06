@@ -10,9 +10,9 @@ import React, {
     useCallback,
     type ReactNode,
 } from "react";
-import { authApi } from "@lib/auth-api";
-import { ApiClientError } from "@lib/api-client";
-import type { ApiSchema } from "@app-types/api-helpers";
+import { authApi } from "@/lib/api/auth";
+import { ApiClientError } from "@/lib/api-client";
+import type { ApiSchema } from "@/types/api-helpers";
 
 type User = ApiSchema<"UserOut">;
 

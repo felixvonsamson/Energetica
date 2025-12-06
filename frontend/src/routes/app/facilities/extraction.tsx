@@ -2,14 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle, Info } from "lucide-react";
 
-import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
-import { GameLayout } from "@components/layout/GameLayout";
-import { Modal, ResourceName, Money } from "@components/ui";
-import { useExtractionFacilitiesCatalog } from "@hooks/useProjects";
-import { usePlayerResources } from "@hooks/usePlayerResources";
-import type { ApiSchema } from "@app-types/api-helpers";
-import { FacilityCard } from "@components/facilities";
-import { formatPower, formatMass } from "@lib/format-utils";
+import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Modal, ResourceName, Money } from "@/components/ui";
+import { useExtractionFacilitiesCatalog } from "@/hooks/useProjects";
+import { usePlayerResources } from "@/hooks/usePlayerResources";
+import type { ApiSchema } from "@/types/api-helpers";
+import { FacilityCard } from "@/components/facilities";
+import { formatPower, formatMass } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/facilities/extraction")({
     component: ExtractionFacilitiesPage,

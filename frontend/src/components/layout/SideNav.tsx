@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
 import { X, ChevronDown } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { navigationConfig, mobileOnlyNavigation } from "@lib/nav-config";
+import { navigationConfig, mobileOnlyNavigation } from "@/lib/nav-config";
 import { Capabilities } from "@/types/players";
 
 interface SideNavProps {

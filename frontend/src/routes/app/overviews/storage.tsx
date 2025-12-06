@@ -4,12 +4,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useCallback } from "react";
 import { Battery } from "lucide-react";
 
-import { RequireSettledPlayer } from "@components/auth/ProtectedRoute";
-import { GameLayout } from "@components/layout/GameLayout";
-import { Card, CardTitle } from "@components/ui";
-import { useGameTick } from "@hooks/useGameTick";
-import { useCurrentChartData } from "@hooks/useCharts";
-import { useAssetColorGetter } from "@hooks/useAssetColorGetter";
+import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Card, CardTitle } from "@/components/ui";
+import { useGameTick } from "@/hooks/useGameTick";
+import { useCurrentChartData } from "@/hooks/useCharts";
+import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import {
     TimeSeriesChart,
     ResolutionPicker,
@@ -18,7 +18,7 @@ import {
     createExcludeKeysFilter,
     type ResolutionOption,
     type TimeSeriesChartConfig,
-} from "@components/charts";
+} from "@/components/charts";
 
 export const Route = createFileRoute("/app/overviews/storage")({
     component: StorageOverviewPage,

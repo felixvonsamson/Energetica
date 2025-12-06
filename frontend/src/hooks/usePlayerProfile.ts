@@ -5,7 +5,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { playerApi } from "@/lib/player-api";
+import { playerApi } from "@/lib/api/player";
 import { queryKeys } from "@/lib/query-client";
 
 export function usePlayerProfile() {

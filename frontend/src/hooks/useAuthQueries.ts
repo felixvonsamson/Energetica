@@ -6,7 +6,7 @@ import type {
     SignupRequest,
     ChangePasswordRequest,
 } from "@/types/auth";
-import { authApi } from "@/lib/auth-api";
+import { authApi } from "@/lib/api/auth";
 import { queryKeys } from "@/lib/query-client";
 import { handleApiError } from "@/lib/error-utils";
 

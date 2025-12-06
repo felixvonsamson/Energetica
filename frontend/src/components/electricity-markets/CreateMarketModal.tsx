@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import { Modal } from "@components/ui/Modal";
-import { Button } from "@components/ui";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui";
 import {
     useCreateElectricityMarket,
     useElectricityMarketForPlayer,
-} from "@hooks/useElectricityMarkets";
-import { useMe } from "@hooks/usePlayers";
+} from "@/hooks/useElectricityMarkets";
+import { useMe } from "@/hooks/usePlayers";
 
 interface CreateMarketModalProps {
     isOpen: boolean;

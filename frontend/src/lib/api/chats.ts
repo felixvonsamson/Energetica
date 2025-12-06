@@ -1,6 +1,6 @@
 /** Chats-related API calls. Handles chat and messaging functionality. */
 
-import { apiClient } from "./api-client";
+import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 
 export const chatsApi = {
