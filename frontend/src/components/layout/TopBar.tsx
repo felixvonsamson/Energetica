@@ -311,12 +311,6 @@ export function TopBar() {
     );
 }
 
-interface NavItemProps {
-    to: LinkProps["to"];
-    icon: string;
-    children: React.ReactNode;
-}
-
 function WorkersDisplay(
     isWorkersError: boolean,
     isWorkersLoading: boolean,
@@ -509,6 +503,12 @@ function Logo() {
             <span className="text-xl font-bold text-primary">Energetica</span>
         </div>
     );
+}
+
+interface NavItemProps {
+    to: LinkProps["to"];
+    icon: string;
+    children: React.ReactNode;
 }
 
 function NavItem({ to, icon, children }: NavItemProps) {

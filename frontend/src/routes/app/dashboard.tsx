@@ -6,7 +6,7 @@ import {
     Truck,
     DollarSign,
     Zap,
-    Battery,
+    BatteryFull,
     Leaf,
     TrendingUp,
     Package,
@@ -167,47 +167,47 @@ function DashboardContent() {
             <section className="mb-6">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <QuickLinkCard
-                        href="/app/overviews/revenues"
+                        to="/app/overviews/revenues"
                         icon={DollarSign}
                         title="Revenues"
                     />
                     <QuickLinkCard
-                        href="/app/overviews/electricity"
+                        to="/app/overviews/power"
                         icon={Zap}
                         title="Power Production"
                     />
                     {capabilities?.has_storage && (
                         <QuickLinkCard
-                            href="/app/overviews/storage"
-                            icon={Battery}
+                            to="/app/overviews/storage"
+                            icon={BatteryFull}
                             title="Stored Energy"
                         />
                     )}
                     {hasDiscoveredGreenhouse && (
                         <QuickLinkCard
-                            href="/app/overviews/emissions"
+                            to="/app/overviews/emissions"
                             icon={Leaf}
                             title="Emissions"
                         />
                     )}
                     {hasNetwork && (
                         <QuickLinkCard
-                            href="/app/community/network"
+                            to="/app/community/network"
                             icon={TrendingUp}
                             title="Market Prices"
                         />
                     )}
                     {capabilities?.has_warehouse && (
                         <QuickLinkCard
-                            href="/app/resource-market"
+                            to="/app/resource-market"
                             icon={Package}
                             title="Resource Market"
                         />
                     )}
                     <QuickLinkCard
-                        href="/app/community/leaderboards"
+                        to="/app/community/leaderboards"
                         icon={Trophy}
-                        title="Ranking"
+                        title="Leaderboards"
                     />
                 </div>
             </section>

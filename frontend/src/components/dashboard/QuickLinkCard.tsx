@@ -1,9 +1,11 @@
 import { type LucideIcon } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, LinkProps } from "@tanstack/react-router";
 import { cn } from "@lib/utils";
 
+// TODO: make href be type safe
+
 interface QuickLinkCardProps {
-    href: string;
+    to: LinkProps["to"];
     icon?: LucideIcon;
     title: string;
     className?: string;
@@ -11,14 +13,14 @@ interface QuickLinkCardProps {
 
 /** Quick link card for dashboard navigation. */
 export function QuickLinkCard({
-    href,
+    to,
     icon: Icon,
     title,
     className,
 }: QuickLinkCardProps) {
     return (
         <Link
-            to={href}
+            to={to}
             className={cn(
                 "bg-bone dark:bg-dark-bg-secondary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary",
                 "p-6 rounded-lg text-center transition-colors block",
