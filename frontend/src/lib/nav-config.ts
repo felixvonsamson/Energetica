@@ -155,7 +155,7 @@ export const navigationConfig: NavigationItem[] = [
             {
                 type: "link",
                 label: "Resources Market",
-                to: "/app/resource-market",
+                to: "/app/community/resource-market",
                 icon: Package,
                 visibility: (cap) => cap.has_warehouse,
             },

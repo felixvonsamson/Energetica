@@ -27,7 +27,7 @@ import {
 } from "@/types/resource-market";
 import { CreateAskModal } from "@/components/resource-market/CreateAskModal";
 
-export const Route = createFileRoute("/app/resource-market")({
+export const Route = createFileRoute("/app/community/resource-market")({
     component: ResourceMarketPage,
     staticData: {
         title: "Resource Market",
