@@ -5,7 +5,15 @@
 
 import { useState } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
-import { Menu, ChevronDown } from "lucide-react";
+import {
+    Menu,
+    ChevronDown,
+    Settings,
+    Bell,
+    AlertCircle,
+    Hammer,
+    FlaskConical,
+} from "lucide-react";
 import { useAuth } from "@hooks/useAuth";
 import { usePlayerMoney } from "@hooks/usePlayerMoney";
 import { usePlayerWorkers } from "@hooks/usePlayerWorkers";
@@ -18,6 +26,8 @@ import { ThemeToggle } from "@components/ui/ThemeToggle";
 import { Money } from "@app-types/money";
 import { Workers } from "@/types/workers";
 import { Resources } from "@/types/resources";
+import type { LucideIcon } from "lucide-react";
+import { navigationConfig } from "@lib/nav-config";
 
 export function TopBar() {
     const { user } = useAuth();
@@ -43,20 +53,12 @@ export function TopBar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-    // Get capability flags
-    const hasWarehouse = capabilities?.has_warehouse ?? false;
-    const hasNetwork = capabilities?.has_network ?? false;
-    const hasLaboratory = capabilities?.has_laboratory ?? false;
-    const hasStorageFacilities = capabilities?.has_storage ?? false;
-
-    // TODO: Get from capabilities when available
-    const discoveredGreenhouse = false;
-
     const toggleDropdown = (dropdown: string) => {
         setOpenDropdown(openDropdown === dropdown ? null : dropdown);
     };
 
     if (!user) return null;
+    if (!capabilities) return null;
 
     return (
         <>
@@ -103,7 +105,7 @@ export function TopBar() {
                                 href="/settings"
                                 className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-2 py-2 lg:px-4 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors flex items-center justify-center aspect-square h-9"
                             >
-                                <i className="fa fa-cog"></i>
+                                <Settings size={20} />
                                 <span className="ml-2 hidden lg:inline">
                                     Settings
                                 </span>
@@ -113,7 +115,7 @@ export function TopBar() {
                                 onClick={() => setShowNotifications(true)}
                                 className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-2 py-2 lg:px-4 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors relative flex items-center justify-center aspect-square h-9"
                             >
-                                <i className="fa fa-bell"></i>
+                                <Bell size={20} />
                                 <span className="ml-2 hidden lg:inline">
                                     Notifications
                                 </span>
@@ -142,153 +144,73 @@ export function TopBar() {
             </div>
 
             {/* Navigation Bar - Desktop only */}
-            <nav className="hidden md:block bg-tan-green dark:bg-dark-bg-secondary border-b-2 border-pine-darker dark:border-dark-border">
+            <nav className="hidden md:block bg-tan-green dark:bg-dark-bg-secondary border-b border-pine-darker dark:border-dark-border">
                 <div className="px-4">
                     {/* Navigation menu */}
-                    <ul className="flex items-center gap-0">
-                        {/* Dashboard */}
-                        <NavItem to="/app/dashboard" icon="dashboard.png">
-                            Dashboard
-                        </NavItem>
+                    <ul className="flex items-center gap-0 justify-center">
+                        {navigationConfig.map((item) => {
+                            const isVisible =
+                                !item.visibility ||
+                                item.visibility(
+                                    capabilities || {
+                                        has_laboratory: false,
+                                        has_warehouse: false,
+                                        has_storage: false,
+                                        has_network: false,
+                                        has_greenhouse_gas_effect: false,
+                                    },
+                                );
 
-                        {/* Profile */}
-                        <NavItem to="/app/profile" icon="profile.png">
-                            Profile
-                        </NavItem>
+                            if (!isVisible) return null;
 
-                        {/* Production Overview Dropdown */}
-                        <NavDropdown
-                            label="Production Overview"
-                            icon="dropdown.png"
-                            isOpen={openDropdown === "overview"}
-                            onToggle={() => toggleDropdown("overview")}
-                        >
-                            <NavItem
-                                to="/app/overviews/revenues"
-                                icon="revenues.png"
-                            >
-                                Revenues
-                            </NavItem>
-                            <NavItem
-                                to="/app/overviews/power"
-                                icon="power_facilities.png"
-                            >
-                                Electricity
-                            </NavItem>
-                            {hasStorageFacilities && (
-                                <NavItem
-                                    to="/app/overviews/storage"
-                                    icon="storage_facilities.png"
-                                >
-                                    Storage
-                                </NavItem>
-                            )}
-                            {hasWarehouse && (
-                                <NavItem
-                                    to="/app/overviews/resources"
-                                    icon="resources.png"
-                                >
-                                    Resources
-                                </NavItem>
-                            )}
-                            {discoveredGreenhouse && (
-                                <NavItem
-                                    to="/app/overviews/emissions"
-                                    icon="emissions.png"
-                                >
-                                    Emissions
-                                </NavItem>
-                            )}
-                        </NavDropdown>
+                            if (item.type === "link") {
+                                return (
+                                    <NavItem
+                                        key={`${item.to}`}
+                                        to={item.to}
+                                        icon={item.icon}
+                                    >
+                                        {item.label}
+                                    </NavItem>
+                                );
+                            }
 
-                        {/* Facilities Dropdown */}
-                        <NavDropdown
-                            label="Facilities"
-                            icon="dropdown.png"
-                            isOpen={openDropdown === "facilities"}
-                            onToggle={() => toggleDropdown("facilities")}
-                        >
-                            <NavItem
-                                to="/app/facilities/power"
-                                icon="power_facilities.png"
-                            >
-                                Power Facilities
-                            </NavItem>
-                            <NavItem
-                                to="/app/facilities/storage"
-                                icon="storage_facilities.png"
-                            >
-                                Storage Facilities
-                            </NavItem>
-                            {hasWarehouse && (
-                                <NavItem
-                                    to="/app/facilities/extraction"
-                                    icon="extraction_facilities.png"
+                            return (
+                                <NavDropdown
+                                    key={`dropdown-${item.label}`}
+                                    label={item.label}
+                                    icon={item.icon}
+                                    isOpen={openDropdown === item.label}
+                                    onToggle={() => toggleDropdown(item.label)}
                                 >
-                                    Extraction Facilities
-                                </NavItem>
-                            )}
-                            <NavItem
-                                to="/app/facilities/functional"
-                                icon="functional_facilities.png"
-                            >
-                                Functional Facilities
-                            </NavItem>
-                            {hasLaboratory && (
-                                <NavItem
-                                    to="/app/technology"
-                                    icon="technology.png"
-                                >
-                                    Technology
-                                </NavItem>
-                            )}
-                        </NavDropdown>
+                                    {item.children.map((child) => {
+                                        const childIsVisible =
+                                            !child.visibility ||
+                                            child.visibility(
+                                                capabilities || {
+                                                    has_laboratory: false,
+                                                    has_warehouse: false,
+                                                    has_storage: false,
+                                                    has_network: false,
+                                                    has_greenhouse_gas_effect: false,
+                                                },
+                                            );
 
-                        {/* Community Dropdown */}
-                        <NavDropdown
-                            label="Community"
-                            icon="dropdown.png"
-                            isOpen={openDropdown === "community"}
-                            onToggle={() => toggleDropdown("community")}
-                        >
-                            {hasNetwork && (
-                                <NavItem
-                                    to="/app/community/electricity-markets"
-                                    icon="network.png"
-                                >
-                                    Electricity Markets
-                                </NavItem>
-                            )}
-                            {/* Resources Market (conditional) */}
-                            {hasWarehouse && (
-                                <NavItem
-                                    to="/app/resource-market"
-                                    icon="resource_market.png"
-                                >
-                                    Resources Market
-                                </NavItem>
-                            )}
-                            <NavItem
-                                to="/app/community/messages"
-                                icon="messages.png"
-                            >
-                                Messages
-                            </NavItem>
-                            <NavItem to="/app/community/map" icon="map.png">
-                                Map
-                            </NavItem>
-                            <NavItem
-                                to="/app/community/leaderboards"
-                                icon="scoreboard.png"
-                            >
-                                Leaderboards
-                            </NavItem>
-                        </NavDropdown>
+                                        if (!childIsVisible) return null;
 
-                        {/* Logout */}
-                        <NavItem to="/logout" icon="logout.png">
-                            Logout
-                        </NavItem>
+                                        return (
+                                            <NavItem
+                                                key={`${child.to}`}
+                                                to={child.to}
+                                                icon={child.icon}
+                                            >
+                                                {child.label}
+                                            </NavItem>
+                                        );
+                                    })}
+                                </NavDropdown>
+                            );
+                        })}
                     </ul>
                 </div>
             </nav>
@@ -332,11 +254,7 @@ function WorkersDisplay(
                         ? "..."
                         : `${workersData?.construction.available ?? 0}/${workersData?.construction.total ?? 0}`}
                 </span>
-                <img
-                    src="/static/images/icons/construction.png"
-                    alt="Construction"
-                    className="w-4 h-4 dark:"
-                />
+                <Hammer size={16} />
                 <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                     Construction workers
                 </div>
@@ -350,11 +268,7 @@ function WorkersDisplay(
                             ? "..."
                             : `${workersData?.laboratory.available ?? 0}/${workersData?.laboratory.total ?? 0}`}
                     </span>
-                    <img
-                        src="/static/images/icons/technology.png"
-                        alt="Technology"
-                        className="w-4 h-4"
-                    />
+                    <FlaskConical size={16} />
                     <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                         Lab workers
                     </div>
@@ -472,7 +386,7 @@ function MoneyDisplay(
                             className="absolute -top-1 -right-1 text-xs text-red-600"
                             title={moneyError?.message || "Connection lost"}
                         >
-                            <i className="fa fa-exclamation-circle"></i>
+                            <AlertCircle size={16} />
                         </span>
                     )}
                     {/* Show stale data even if error */}
@@ -507,11 +421,11 @@ function Logo() {
 
 interface NavItemProps {
     to: LinkProps["to"];
-    icon: string;
+    icon: LucideIcon;
     children: React.ReactNode;
 }
 
-function NavItem({ to, icon, children }: NavItemProps) {
+function NavItem({ to, icon: Icon, children }: NavItemProps) {
     return (
         <li className="w-full md:w-auto border-b border-pine/10 dark:border-dark-border/30 md:border-none">
             <Link
@@ -522,11 +436,7 @@ function NavItem({ to, icon, children }: NavItemProps) {
                         "bg-tan-hover dark:bg-dark-bg-tertiary font-semibold",
                 }}
             >
-                <img
-                    src={`/static/images/icons/${icon}`}
-                    alt=""
-                    className="w-5 h-5"
-                />
+                <Icon size={20} />
                 <span>{children}</span>
             </Link>
         </li>
@@ -535,7 +445,7 @@ function NavItem({ to, icon, children }: NavItemProps) {
 
 interface NavDropdownProps {
     label: string;
-    icon: string;
+    icon: LucideIcon;
     isOpen: boolean;
     onToggle: () => void;
     children: React.ReactNode;
@@ -543,24 +453,20 @@ interface NavDropdownProps {
 
 function NavDropdown({
     label,
-    icon,
+    icon: Icon,
     isOpen,
     onToggle,
     children,
 }: NavDropdownProps) {
     return (
-        <li className="w-full md:w-auto md:relative border-b-2 border-pine/20 dark:border-dark-border/50 md:border-none">
+        <li className="w-full md:w-auto md:relative border-b border-pine/20 dark:border-dark-border/50 md:border-none">
             <button
                 onClick={onToggle}
                 className={`flex items-center gap-2 px-4 py-3 text-pine dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors w-full ${
                     isOpen ? "bg-tan-hover dark:bg-dark-bg-tertiary" : ""
                 }`}
             >
-                <img
-                    src={`/static/images/icons/${icon}`}
-                    alt=""
-                    className="w-5 h-5"
-                />
+                <Icon size={20} />
                 <span className="font-medium">{label}</span>
                 <ChevronDown
                     size={16}
@@ -572,7 +478,7 @@ function NavDropdown({
 
             {/* Dropdown menu */}
             {isOpen && (
-                <ul className="bg-bone/50 dark:bg-dark-bg-tertiary md:absolute md:left-0 md:top-full md:bg-bone dark:md:bg-dark-bg-secondary md:shadow-lg md:min-w-[200px] md:border-2 md:border-pine-darker dark:md:border-dark-border">
+                <ul className="bg-bone/50 dark:bg-dark-bg-tertiary md:absolute md:left-0 md:top-full md:bg-bone dark:md:bg-dark-bg-secondary md:shadow-lg md:min-w-[220px] md:border-2 md:border-pine-darker dark:md:border-dark-border">
                     {children}
                 </ul>
             )}

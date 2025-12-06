@@ -3,17 +3,14 @@
 import { useEffect } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
 import { X, ChevronDown } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { navigationConfig, mobileOnlyNavigation } from "@lib/nav-config";
+import { Capabilities } from "@/types/players";
 
 interface SideNavProps {
     isOpen: boolean;
     onClose: () => void;
-    capabilities: {
-        has_laboratory: boolean;
-        has_warehouse: boolean;
-        has_storage: boolean;
-        has_network: boolean;
-        has_greenhouse_gas_effect: boolean;
-    } | null;
+    capabilities: Capabilities;
     openDropdown: string | null;
     onToggleDropdown: (dropdown: string) => void;
 }
@@ -36,12 +33,6 @@ export function SideNav({
             document.body.style.overflow = "unset";
         };
     }, [isOpen]);
-
-    const hasWarehouse = capabilities?.has_warehouse ?? false;
-    const hasNetwork = capabilities?.has_network ?? false;
-    const hasLaboratory = capabilities?.has_laboratory ?? false;
-    const hasStorageFacilities = capabilities?.has_storage ?? false;
-    const discoveredGreenhouse = false;
 
     return (
         <>
@@ -75,192 +66,103 @@ export function SideNav({
 
                 {/* Navigation menu */}
                 <ul className="py-2">
-                    {/* Dashboard */}
-                    <NavItem
-                        to="/app/dashboard"
-                        icon="dashboard.png"
-                        onClose={onClose}
-                    >
-                        Dashboard
-                    </NavItem>
+                    {navigationConfig.map((item) => {
+                        const isVisible =
+                            !item.visibility ||
+                            item.visibility(
+                                capabilities || {
+                                    has_laboratory: false,
+                                    has_warehouse: false,
+                                    has_storage: false,
+                                    has_network: false,
+                                    has_greenhouse_gas_effect: false,
+                                },
+                            );
 
-                    {/* Profile */}
-                    <NavItem
-                        to="/app/profile"
-                        icon="profile.png"
-                        onClose={onClose}
-                    >
-                        Profile
-                    </NavItem>
+                        if (!isVisible) return null;
 
-                    {/* Production Overview Dropdown */}
-                    <NavDropdown
-                        label="Production Overview"
-                        icon="dropdown.png"
-                        isOpen={openDropdown === "overview"}
-                        onToggle={() => onToggleDropdown("overview")}
-                    >
-                        <NavItem
-                            to="/app/overviews/revenues"
-                            icon="revenues.png"
-                            onClose={onClose}
-                        >
-                            Revenues
-                        </NavItem>
-                        <NavItem
-                            to="/app/overviews/power"
-                            icon="power_facilities.png"
-                            onClose={onClose}
-                        >
-                            Electricity
-                        </NavItem>
-                        {hasStorageFacilities && (
-                            <NavItem
-                                to="/app/overviews/storage"
-                                icon="storage_facilities.png"
-                                onClose={onClose}
-                            >
-                                Storage
-                            </NavItem>
-                        )}
-                        {hasWarehouse && (
-                            <NavItem
-                                to="/app/overviews/resources"
-                                icon="resources.png"
-                                onClose={onClose}
-                            >
-                                Resources
-                            </NavItem>
-                        )}
-                        {discoveredGreenhouse && (
-                            <NavItem
-                                to="/app/overviews/emissions"
-                                icon="emissions.png"
-                                onClose={onClose}
-                            >
-                                Emissions
-                            </NavItem>
-                        )}
-                    </NavDropdown>
+                        if (item.type === "link") {
+                            return (
+                                <NavItem
+                                    key={`${item.to}`}
+                                    to={item.to}
+                                    icon={item.icon}
+                                    onClose={onClose}
+                                >
+                                    {item.label}
+                                </NavItem>
+                            );
+                        }
 
-                    {/* Facilities Dropdown */}
-                    <NavDropdown
-                        label="Facilities"
-                        icon="dropdown.png"
-                        isOpen={openDropdown === "facilities"}
-                        onToggle={() => onToggleDropdown("facilities")}
-                    >
-                        <NavItem
-                            to="/app/facilities/power"
-                            icon="power_facilities.png"
-                            onClose={onClose}
-                        >
-                            Power Facilities
-                        </NavItem>
-                        <NavItem
-                            to="/app/facilities/storage"
-                            icon="storage_facilities.png"
-                            onClose={onClose}
-                        >
-                            Storage Facilities
-                        </NavItem>
-                        {hasWarehouse && (
-                            <NavItem
-                                to="/app/facilities/extraction"
-                                icon="extraction_facilities.png"
-                                onClose={onClose}
+                        return (
+                            <NavDropdown
+                                key={`dropdown-${item.label}`}
+                                label={item.label}
+                                icon={item.icon}
+                                isOpen={openDropdown === item.label}
+                                onToggle={() => onToggleDropdown(item.label)}
                             >
-                                Extraction Facilities
-                            </NavItem>
-                        )}
-                        <NavItem
-                            to="/app/facilities/functional"
-                            icon="functional_facilities.png"
-                            onClose={onClose}
-                        >
-                            Functional Facilities
-                        </NavItem>
-                        {hasLaboratory && (
-                            <NavItem
-                                to="/app/technology"
-                                icon="technology.png"
-                                onClose={onClose}
-                            >
-                                Technology
-                            </NavItem>
-                        )}
-                    </NavDropdown>
+                                {item.children.map((child) => {
+                                    const childIsVisible =
+                                        !child.visibility ||
+                                        child.visibility(
+                                            capabilities || {
+                                                has_laboratory: false,
+                                                has_warehouse: false,
+                                                has_storage: false,
+                                                has_network: false,
+                                                has_greenhouse_gas_effect: false,
+                                            },
+                                        );
 
-                    {/* Community Dropdown */}
-                    <NavDropdown
-                        label="Community"
-                        icon="dropdown.png"
-                        isOpen={openDropdown === "community"}
-                        onToggle={() => onToggleDropdown("community")}
-                    >
-                        {hasNetwork && (
-                            <NavItem
-                                to="/app/community/electricity-markets"
-                                icon="network.png"
-                                onClose={onClose}
-                            >
-                                Electricity Markets
-                            </NavItem>
-                        )}
-                        {hasWarehouse && (
-                            <NavItem
-                                to="/app/resource-market"
-                                icon="resource_market.png"
-                                onClose={onClose}
-                            >
-                                Resources Market
-                            </NavItem>
-                        )}
-                        <NavItem
-                            to="/app/community/messages"
-                            icon="messages.png"
-                            onClose={onClose}
-                        >
-                            Messages
-                        </NavItem>
-                        <NavItem
-                            to="/app/community/map"
-                            icon="map.png"
-                            onClose={onClose}
-                        >
-                            Map
-                        </NavItem>
-                        <NavItem
-                            to="/app/community/leaderboards"
-                            icon="scoreboard.png"
-                            onClose={onClose}
-                        >
-                            Leaderboards
-                        </NavItem>
-                    </NavDropdown>
+                                    if (!childIsVisible) return null;
 
-                    {/* Wiki */}
-                    <NavItem
-                        to="/wiki/introduction"
-                        icon="wiki.png"
-                        onClose={onClose}
-                    >
-                        Game Wiki
-                    </NavItem>
+                                    return (
+                                        <NavItem
+                                            key={`${child.to}`}
+                                            to={child.to}
+                                            icon={child.icon}
+                                            onClose={onClose}
+                                        >
+                                            {child.label}
+                                        </NavItem>
+                                    );
+                                })}
+                            </NavDropdown>
+                        );
+                    })}
 
-                    {/* Changelog */}
-                    <NavItem
-                        to="/changelog"
-                        icon="changelog.png"
-                        onClose={onClose}
-                    >
-                        Changelog
-                    </NavItem>
+                    {/* Mobile-only navigation items */}
+                    {mobileOnlyNavigation.map((item) => {
+                        const isVisible =
+                            !item.visibility ||
+                            item.visibility(
+                                capabilities || {
+                                    has_laboratory: false,
+                                    has_warehouse: false,
+                                    has_storage: false,
+                                    has_network: false,
+                                    has_greenhouse_gas_effect: false,
+                                },
+                            );
 
-                    {/* Logout */}
-                    <NavItem to="/logout" icon="logout.png" onClose={onClose}>
-                        Logout
-                    </NavItem>
+                        if (!isVisible) return null;
+
+                        if (item.type === "link") {
+                            return (
+                                <NavItem
+                                    key={`${item.to}`}
+                                    to={item.to}
+                                    icon={item.icon}
+                                    onClose={onClose}
+                                >
+                                    {item.label}
+                                </NavItem>
+                            );
+                        }
+
+                        return null;
+                    })}
                 </ul>
             </div>
         </>
@@ -269,12 +171,12 @@ export function SideNav({
 
 interface NavItemProps {
     to: LinkProps["to"];
-    icon: string;
+    icon: LucideIcon;
     children: React.ReactNode;
     onClose: () => void;
 }
 
-function NavItem({ to, icon, children, onClose }: NavItemProps) {
+function NavItem({ to, icon: Icon, children, onClose }: NavItemProps) {
     return (
         <li className="border-b border-pine/10 dark:border-dark-border/30">
             <Link
@@ -286,11 +188,7 @@ function NavItem({ to, icon, children, onClose }: NavItemProps) {
                         "bg-tan-hover dark:bg-dark-bg-tertiary font-semibold",
                 }}
             >
-                <img
-                    src={`/static/images/icons/${icon}`}
-                    alt=""
-                    className="w-5 h-5"
-                />
+                <Icon size={20} />
                 <span>{children}</span>
             </Link>
         </li>
@@ -299,7 +197,7 @@ function NavItem({ to, icon, children, onClose }: NavItemProps) {
 
 interface NavDropdownProps {
     label: string;
-    icon: string;
+    icon: LucideIcon;
     isOpen: boolean;
     onToggle: () => void;
     children: React.ReactNode;
@@ -307,7 +205,7 @@ interface NavDropdownProps {
 
 function NavDropdown({
     label,
-    icon,
+    icon: Icon,
     isOpen,
     onToggle,
     children,
@@ -320,11 +218,7 @@ function NavDropdown({
                     "flex items-center gap-2 px-4 py-3 text-pine dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors w-full"
                 }
             >
-                <img
-                    src={`/static/images/icons/${icon}`}
-                    alt=""
-                    className="w-5 h-5"
-                />
+                <Icon size={20} />
                 <span className="font-medium">{label}</span>
                 <ChevronDown
                     size={16}
