@@ -34,7 +34,7 @@ from .players import router as player_router
 from .power_priorities import router as power_priorities
 from .projects import router as projects_router
 from .resource_market import router as resource_market_router
-from .scoreboard import router as scoreboard_router
+from .leaderboards import router as leaderboards_router
 from .shipments import router as shipments_router
 from .templates import router as templates_router
 from .weather import router as weather_router
@@ -58,7 +58,7 @@ api_routers = [
     projects_router,
     resource_market_router,
     shipments_router,
-    scoreboard_router,
+    leaderboards_router,
     weather_router,
 ]
 

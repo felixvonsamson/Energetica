@@ -459,6 +459,7 @@ class Player(DBModel):
                         reward=achievement_data["rewards"][current_lvl],
                     )
                 self.notify("Achievement", message)
+                self.emit("invalidate", {"queries": [["auth", "me"]]})
 
     def check_construction_achievements(self, construction_name: str) -> None:
         """Check for player achievements that may be unlocked by a construction."""
@@ -468,6 +469,7 @@ class Player(DBModel):
                 self.progression_metrics["xp"] += achievements[achievement]["reward"]
                 message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
                 self.notify("Achievement", message)
+                self.emit("invalidate", {"queries": [["auth", "me"]]})
 
     def check_technology_achievement(self) -> None:
         """Check for technology achievement."""
@@ -485,6 +487,7 @@ class Player(DBModel):
                 reward=achievements["technology"]["rewards"][current_lvl],
             )
             self.notify("Achievement", message)
+            self.emit("invalidate", {"queries": [["auth", "me"]]})
 
     def check_trading_achievement(self) -> None:
         """Check for trading achievement."""
