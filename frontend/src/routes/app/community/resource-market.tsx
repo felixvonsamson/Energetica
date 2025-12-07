@@ -60,8 +60,12 @@ function ResourceMarketPage() {
 }
 
 function ResourceMarketContent() {
-    const navigate = useNavigate({ from: "/app/resource-market" });
-    const { askId, createAsk } = useSearch({ from: "/app/resource-market" });
+    const navigate = useNavigate({
+        from: "/app/community/resource-market",
+    });
+    const { askId, createAsk } = useSearch({
+        from: "/app/community/resource-market",
+    });
     const [showInfoPopup, setShowInfoPopup] = useState(false);
     const [hideOwnAsks, setHideOwnAsks] = useState(false);
     const [filterResource, setFilterResource] = useState<ResourceType | "all">(

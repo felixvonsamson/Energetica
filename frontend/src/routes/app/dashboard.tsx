@@ -192,14 +192,14 @@ function DashboardContent() {
                     )}
                     {hasNetwork && (
                         <QuickLinkCard
-                            to="/app/community/network"
+                            to="/app/community/electricity-markets"
                             icon={TrendingUp}
                             title="Market Prices"
                         />
                     )}
                     {capabilities?.has_warehouse && (
                         <QuickLinkCard
-                            to="/app/resource-market"
+                            to="/app/community/resource-market"
                             icon={Package}
                             title="Resource Market"
                         />
