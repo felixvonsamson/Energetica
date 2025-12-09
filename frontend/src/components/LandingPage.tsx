@@ -13,7 +13,7 @@ export function LandingPage() {
         {
             title: "Trade on Dynamic Markets",
             description:
-                "Set prices, buy and sell electricity, and compete with other players in a market driven by supply and demand. Experience the challenges of volatility and storage firsthand.",
+                "Set prices, buy and sell electricity, and compete with other players in a market driven by supply and demand. Experience the challenges of volatility and storage first-hand.",
             icon: <Cable />,
         },
         {
@@ -62,13 +62,13 @@ export function LandingPage() {
                             <p className="text-xl">Learn more</p>
                             <ChevronRight />
                         </Link>
-                        <a
-                            href="/login"
+                        <Link
+                            to="/app/login"
                             className="text-bone dark:text-dark-text-primary bg-pine dark:bg-dark-bg-secondary p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
                         >
                             <p className="text-xl">Play now</p>
                             <ChevronRight />
-                        </a>
+                        </Link>
                     </div>
                 </section>
                 <section className="px-6 max-w-5xl mx-auto text-center">

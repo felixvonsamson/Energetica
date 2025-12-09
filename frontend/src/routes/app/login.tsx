@@ -7,7 +7,7 @@ import { handleApiError, isErrorType } from "@/lib/error-utils";
 import { useAuth } from "@/hooks/useAuth";
 import { LogIn } from "lucide-react";
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/app/login")({
     component: LoginPage,
     staticData: {
         title: "Login",

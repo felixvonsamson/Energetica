@@ -11,7 +11,6 @@ from itsdangerous import URLSafeTimedSerializer
 
 from energetica.database.player import Player
 from energetica.database.user import User
-from energetica.globals import engine
 
 
 def get_or_create_secret_key() -> str:
@@ -77,13 +76,15 @@ def get_settled_player(request: Request) -> Player:
     return user.player
 
 
-def add_session_cookie_to_response(response: Response, user: User) -> Response:
+def add_session_cookie_to_response(response: Response, user: User, request: Request) -> Response:
     token = serializer.dumps(user.username)
+    # Check if behind reverse proxy with HTTPS
+    is_https = request.headers.get("X-Forwarded-Proto") == "https"
     response.set_cookie(
         key="session",
         value=token,
         httponly=True,
-        secure=engine.env != "dev",
+        secure=is_https,
         samesite="lax",
         max_age=COOKIE_MAX_AGE,
     )

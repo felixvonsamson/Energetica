@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { authApi } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api-client";
+import { queryClient } from "@/lib/query-client";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type User = ApiSchema<"UserOut">;
@@ -67,7 +68,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, [fetchUser]);
 
     const logout = useCallback(() => {
-        authApi.logout();
+        // Just clear the frontend state. The API logout is handled by the logout route.
+        setUser(null);
+        setError(null);
+        // Clear all cached queries
+        queryClient.clear();
     }, []);
 
     const value: AuthContextValue = {

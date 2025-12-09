@@ -124,7 +124,7 @@ def setup_routes(app: FastAPI):
                 print(f"content-type: {request.headers.get('content-type')}")
                 raise e
             if get_request and response.status_code == status.HTTP_401_UNAUTHORIZED:
-                return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+                return RedirectResponse(url="/app/login", status_code=status.HTTP_303_SEE_OTHER)
             return response
 
         start = datetime.now()

@@ -182,7 +182,7 @@ export const navigationConfig: NavigationItem[] = [
     {
         type: "link",
         label: "Logout",
-        to: "/logout",
+        to: "/app/logout",
         icon: LogOut,
     },
 ];

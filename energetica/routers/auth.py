@@ -58,7 +58,7 @@ def get_current_user(user: Annotated[User | None, Depends(get_user)]) -> UserOut
 
 
 @router.post("/login", tags=["Authentication"], status_code=status.HTTP_200_OK)
-def login(request_data: LoginRequest) -> Response:
+def login(request: Request, request_data: LoginRequest) -> Response:
     username = request_data.username
     password = request_data.password
 
@@ -77,7 +77,7 @@ def login(request_data: LoginRequest) -> Response:
     engine.log(f"{username} logged in")
 
     response = JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK)
-    return add_session_cookie_to_response(response, user)
+    return add_session_cookie_to_response(response, user, request)
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
@@ -93,8 +93,7 @@ def signup(request: Request, request_data: SignupRequest) -> Response:
     pwhash = generate_password_hash(password)
     user = misc.signup_playing_user(request, username, pwhash)
     return add_session_cookie_to_response(
-        JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED),
-        user,
+        JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED), user, request
     )
 
 
@@ -112,3 +111,15 @@ def change_password(  # noqa: ANN201
         raise GameError(GameExceptionType.OLD_PASSWORD_INCORRECT)
     user.pwhash = generate_password_hash(new_password)
     engine.log(f"{user.username} changed their password")
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(user: Annotated[User | None, Depends(get_user)]) -> Response:
+    """Logout the current user."""
+    if user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User not authenticated")
+
+    engine.log(f"{user.username} logged out")
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    response.delete_cookie("session", path="/")
+    return response

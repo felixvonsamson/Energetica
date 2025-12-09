@@ -31,8 +31,8 @@ export const authApi = {
         ),
 
     /** Logout (clears session cookie). */
-    logout: () => {
-        // Redirect to logout endpoint which clears the cookie
-        window.location.href = "/logout";
-    },
+    logout: () =>
+        apiClient.post<ApiResponse<"/api/v1/auth/logout", "post">>(
+            "/auth/logout",
+        ),
 };
