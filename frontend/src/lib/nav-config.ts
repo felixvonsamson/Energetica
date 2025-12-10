@@ -91,7 +91,7 @@ export const navigationConfig: NavigationItem[] = [
                 label: "Emissions",
                 to: "/app/overviews/emissions",
                 icon: Leaf,
-                visibility: () => false, // TODO: Get from capabilities when available
+                visibility: (cap) => cap.has_greenhouse_gas_effect,
             },
         ],
     },

@@ -9,5 +9,12 @@ import { RedirectToLegacy } from "@/components/RedirectToLegacy";
 export const Route = createFileRoute("/app/overviews/resources")({
     component: () => <RedirectToLegacy to="/production_overview/resources" />,
 
-    staticData: { title: "Redirecting..." },
+    staticData: {
+        title: "Resources Overview",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: (cap) => cap.has_warehouse,
+        },
+    },
 });

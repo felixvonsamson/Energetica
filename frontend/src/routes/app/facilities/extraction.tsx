@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle, Info } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, ResourceName, Money } from "@/components/ui";
 import { useExtractionFacilitiesCatalog } from "@/hooks/useProjects";
@@ -15,16 +14,19 @@ export const Route = createFileRoute("/app/facilities/extraction")({
     component: ExtractionFacilitiesPage,
     staticData: {
         title: "Extraction Facilities",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: (cap) => cap.has_warehouse,
+        },
     },
 });
 
 function ExtractionFacilitiesPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <ExtractionFacilitiesContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <ExtractionFacilitiesContent />
+        </GameLayout>
     );
 }
 

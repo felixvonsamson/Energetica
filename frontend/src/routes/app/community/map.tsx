@@ -4,7 +4,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal } from "@/components/ui";
 import { HexTile } from "@/components/map/HexTile";
@@ -20,6 +19,11 @@ export const Route = createFileRoute("/app/community/map")({
     component: MapPage,
     staticData: {
         title: "Map",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: () => true,
+        },
     },
 });
 
@@ -135,11 +139,9 @@ function MapTiles({
 
 function MapPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <MapContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <MapContent />
+        </GameLayout>
     );
 }
 

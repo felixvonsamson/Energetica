@@ -4,7 +4,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useCallback } from "react";
 import { Battery } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
 import { useGameTick } from "@/hooks/useGameTick";
@@ -22,16 +21,21 @@ import {
 
 export const Route = createFileRoute("/app/overviews/storage")({
     component: StorageOverviewPage,
-    staticData: { title: "Storage Overview" },
+    staticData: {
+        title: "Storage Overview",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: (cap) => cap.has_storage,
+        },
+    },
 });
 
 function StorageOverviewPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <StorageOverviewContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <StorageOverviewContent />
+        </GameLayout>
     );
 }
 

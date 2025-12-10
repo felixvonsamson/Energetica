@@ -4,7 +4,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useCallback } from "react";
 import { Zap } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
 import { useGameTick } from "@/hooks/useGameTick";
@@ -23,16 +22,21 @@ import {
 
 export const Route = createFileRoute("/app/overviews/power")({
     component: PowerOverviewPage,
-    staticData: { title: "Power Overview" },
+    staticData: {
+        title: "Power Overview",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: () => true,
+        },
+    },
 });
 
 function PowerOverviewPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <PowerOverviewContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <PowerOverviewContent />
+        </GameLayout>
     );
 }
 

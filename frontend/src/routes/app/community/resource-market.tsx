@@ -8,7 +8,6 @@ import {
 import { useState, useMemo } from "react";
 import { HelpCircle, Plus, Trash2, Eye, EyeOff } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Card, Money } from "@/components/ui";
 import {
@@ -31,6 +30,11 @@ export const Route = createFileRoute("/app/community/resource-market")({
     component: ResourceMarketPage,
     staticData: {
         title: "Resource Market",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: (cap) => cap.has_warehouse,
+        },
     },
     validateSearch: (
         search: Record<string, unknown>,
@@ -51,11 +55,9 @@ type SortDirection = "asc" | "desc";
 
 function ResourceMarketPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <ResourceMarketContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <ResourceMarketContent />
+        </GameLayout>
     );
 }
 

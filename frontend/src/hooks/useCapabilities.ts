@@ -35,9 +35,10 @@ export type { PlayerCapabilities };
  *
  * @returns Capability flags or null if not a settled player
  */
-export function useCapabilities(): PlayerCapabilities | undefined {
+export function useCapabilities(): PlayerCapabilities | undefined | null {
     const { user } = useAuth();
-    return user?.capabilities ?? undefined;
+    if (user === null) return null;
+    return user.capabilities;
 }
 
 /**

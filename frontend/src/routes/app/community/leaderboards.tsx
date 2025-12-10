@@ -4,7 +4,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Card, Money } from "@/components/ui";
 import { useLeaderboards } from "@/hooks/useLeaderboards";
@@ -16,16 +15,19 @@ export const Route = createFileRoute("/app/community/leaderboards")({
     component: LeaderboardsPage,
     staticData: {
         title: "Leaderboards",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: () => true,
+        },
     },
 });
 
 function LeaderboardsPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <LeaderboardsContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <LeaderboardsContent />
+        </GameLayout>
     );
 }
 

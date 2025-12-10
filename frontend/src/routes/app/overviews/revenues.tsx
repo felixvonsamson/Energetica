@@ -4,7 +4,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useCallback } from "react";
 import { DollarSign } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
 import { useGameTick } from "@/hooks/useGameTick";
@@ -25,16 +24,21 @@ type RevenueType = "revenues" | "expenses" | "all";
 
 export const Route = createFileRoute("/app/overviews/revenues")({
     component: RevenuesOverviewPage,
-    staticData: { title: "Revenues Overview" },
+    staticData: {
+        title: "Revenues Overview",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: () => true,
+        },
+    },
 });
 
 function RevenuesOverviewPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <RevenuesOverviewContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <RevenuesOverviewContent />
+        </GameLayout>
     );
 }
 

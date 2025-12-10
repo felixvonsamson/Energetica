@@ -1,7 +1,6 @@
 /** Messages page - Chat and messaging interface. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { useState } from "react";
 import { useMessagesPage } from "@/hooks/useMessagesPage";
@@ -16,7 +15,14 @@ import {
 
 export const Route = createFileRoute("/app/community/messages")({
     component: MessagesPage,
-    staticData: { title: "Messages" },
+    staticData: {
+        title: "Messages",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: () => true,
+        },
+    },
     validateSearch: (
         search: Record<string, unknown>,
     ): {
@@ -35,11 +41,9 @@ export const Route = createFileRoute("/app/community/messages")({
 
 function MessagesPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <MessagesContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <MessagesContent />
+        </GameLayout>
     );
 }
 

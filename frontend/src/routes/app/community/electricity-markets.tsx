@@ -6,7 +6,6 @@ import {
 import { useCallback, useState } from "react";
 import { Plus, ChevronDown, ChevronUp } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
 import {
@@ -23,6 +22,11 @@ export const Route = createFileRoute("/app/community/electricity-markets")({
     component: ElectricityMarketsPage,
     staticData: {
         title: "Electricity Markets",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: (cap) => cap.has_network,
+        },
     },
     validateSearch: (
         search: Record<string, unknown>,
@@ -47,11 +51,9 @@ export const Route = createFileRoute("/app/community/electricity-markets")({
 
 function ElectricityMarketsPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <ElectricityMarketsContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <ElectricityMarketsContent />
+        </GameLayout>
     );
 }
 

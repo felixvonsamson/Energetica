@@ -4,7 +4,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Card, CardTitle } from "@/components/ui";
 import { FacilityGauge } from "@/components/ui/FacilityGauge";
@@ -20,16 +19,19 @@ export const Route = createFileRoute("/app/facilities/manage")({
     component: FacilityManagementPage,
     staticData: {
         title: "Facility Management",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: () => true,
+        },
     },
 });
 
 function FacilityManagementPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <FacilityManagementContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <FacilityManagementContent />
+        </GameLayout>
     );
 }
 

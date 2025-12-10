@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Money } from "@/components/ui";
 import { useFunctionalFacilitiesCatalog } from "@/hooks/useProjects";
@@ -18,16 +17,19 @@ export const Route = createFileRoute("/app/facilities/functional")({
     component: FunctionalFacilitiesPage,
     staticData: {
         title: "Functional Facilities",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: () => true,
+        },
     },
 });
 
 function FunctionalFacilitiesPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <FunctionalFacilitiesContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <FunctionalFacilitiesContent />
+        </GameLayout>
     );
 }
 

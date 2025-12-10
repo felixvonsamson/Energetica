@@ -14,7 +14,6 @@ import {
     HelpCircle,
 } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, InfoBanner, Card, CardTitle } from "@/components/ui";
 import { DashboardSection } from "@/components/dashboard/DashboardSection";
@@ -29,17 +28,19 @@ import { getMonthName } from "@/lib/date-utils";
 export const Route = createFileRoute("/app/dashboard")({
     component: DashboardPage,
     staticData: {
-        title: "Dashboard",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: () => true,
+        },
     },
 });
 
 function DashboardPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <DashboardContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <DashboardContent />
+        </GameLayout>
     );
 }
 

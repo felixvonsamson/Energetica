@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Money } from "@/components/ui";
 import { usePowerFacilitiesCatalog } from "@/hooks/useProjects";
@@ -16,16 +15,19 @@ export const Route = createFileRoute("/app/facilities/power")({
     component: PowerFacilitiesPage,
     staticData: {
         title: "Power Facilities",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: () => true,
+        },
     },
 });
 
 function PowerFacilitiesPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <PowerFacilitiesContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <PowerFacilitiesContent />
+        </GameLayout>
     );
 }
 

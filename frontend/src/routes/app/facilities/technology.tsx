@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal } from "@/components/ui";
 import { useTechnologiesCatalog } from "@/hooks/useProjects";
@@ -15,16 +14,19 @@ export const Route = createFileRoute("/app/facilities/technology")({
     component: TechnologyPage,
     staticData: {
         title: "Technologies",
+        routeConfig: {
+            requiredRole: "player",
+            requiresSettledTile: true,
+            isUnlocked: (cap) => cap.has_laboratory,
+        },
     },
 });
 
 function TechnologyPage() {
     return (
-        <RequireSettledPlayer>
-            <GameLayout>
-                <TechnologyContent />
-            </GameLayout>
-        </RequireSettledPlayer>
+        <GameLayout>
+            <TechnologyContent />
+        </GameLayout>
     );
 }
 
