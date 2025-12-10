@@ -8,14 +8,14 @@ Guide for integrating backend API calls with automatic type generation.
 
 1. **Generate types**: `npm run generate-types` (backend must be running on port 5001)
 2. **Add API method** in `src/lib/*-api.ts`:
-    ```typescript
+    ```ts
     export const myApi = {
         getData: () =>
             apiClient.get<ApiResponse<"/api/v1/path", "get">>("/path"),
     };
     ```
 3. **Add query key** in `src/lib/query-client.ts`:
-    ```typescript
+    ```ts
     queryKeys: {
         myFeature: {
             data: ["my-feature", "data"] as const;
@@ -23,7 +23,7 @@ Guide for integrating backend API calls with automatic type generation.
     }
     ```
 4. **Create hook** in `src/hooks/useMyData.ts`:
-    ```typescript
+    ```ts
     export function useMyData() {
         useTickQuery(queryKeys.myFeature.data); // If data changes every tick
         return useQuery({
@@ -34,7 +34,7 @@ Guide for integrating backend API calls with automatic type generation.
     }
     ```
 5. **Use in component**:
-    ```typescript
+    ```ts
     const { data, isLoading, error } = useMyData();
     ```
 
@@ -141,7 +141,7 @@ Once the API exists, follow the [Quick Reference](#quick-reference---adding-a-ne
 
 If the feature requires POST/PUT/DELETE (like submitting a quiz answer):
 
-```typescript
+```ts
 // src/lib/daily-quiz-api.ts
 export const dailyQuizApi = {
     getToday: () =>
@@ -217,7 +217,7 @@ return templates.TemplateResponse("dashboard.jinja", {
 </script>
 ```
 
-```typescript
+```ts
 // React component
 const initialData = (window as any).__INITIAL_DATA__;
 ```
@@ -309,7 +309,7 @@ const month_name = ["January", "February", ...][weather_data.month_number - 1];
 weather_conditions.innerHTML = `<div>Month: <b>${month_name}</b></div>`;
 ```
 
-```typescript
+```ts
 // React (dashboard.tsx)
 import { getMonthName } from "@/lib/date-utils"; // Extracted to utility
 <div>Month: <b>{getMonthName(weatherData.month_number)}</b></div>
@@ -319,7 +319,7 @@ import { getMonthName } from "@/lib/date-utils"; // Extracted to utility
 
 When you encounter duplicated logic (like month names), **extract to utilities:**
 
-```typescript
+```ts
 // src/lib/date-utils.ts
 export function getMonthName(monthNumber: number): string {
     return MONTH_NAMES[monthNumber - 1] || "Unknown";
@@ -405,7 +405,7 @@ This creates `src/types/api.generated.ts` with all API types.
 
 ### Using Generated Types
 
-```typescript
+```ts
 import { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 
 // Response type for an endpoint
@@ -441,9 +441,9 @@ Run `npm run generate-types` when:
 
 Organize API calls into modules in `src/lib/`:
 
-```typescript
+```ts
 // src/lib/player-api.ts
-import { apiClient } from "./api-client";
+import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 
 export const playerApi = {
@@ -465,7 +465,7 @@ export const playerApi = {
 
 Define in `src/lib/query-client.ts`:
 
-```typescript
+```ts
 export const queryKeys = {
     players: {
         money: ["players", "me", "money"] as const,
@@ -481,7 +481,7 @@ export const queryKeys = {
 
 Create hooks in `src/hooks/`:
 
-```typescript
+```ts
 // src/hooks/usePlayerMoney.ts
 import { useQuery } from "@tanstack/react-query";
 import { playerApi } from "@/lib/player-api";
@@ -508,7 +508,7 @@ Two strategies for keeping data fresh:
 
 For data that changes every tick (production, storage levels):
 
-```typescript
+```ts
 export function useElectricityProduction() {
     // Register for tick-based invalidation
     useTickQuery(queryKeys.production.electricity);
@@ -540,7 +540,7 @@ player.emit("invalidate", {
 
 **Frontend automatically handles it** - no code needed in your hook:
 
-```typescript
+```ts
 export function useFacilities() {
     // No useTickQuery - relies on server events
     return useQuery({
@@ -581,7 +581,7 @@ npm run generate-types
 
 ### 2. Add API Method
 
-```typescript
+```ts
 // src/lib/player-api.ts
 export const playerApi = {
     // ... existing methods
@@ -595,7 +595,7 @@ export const playerApi = {
 
 ### 3. Add Query Key
 
-```typescript
+```ts
 // src/lib/query-client.ts
 export const queryKeys = {
     players: {
@@ -607,7 +607,7 @@ export const queryKeys = {
 
 ### 4. Create Hook
 
-```typescript
+```ts
 // src/hooks/usePlayerResources.ts
 import { useQuery } from "@tanstack/react-query";
 import { playerApi } from "@/lib/player-api";
@@ -627,7 +627,7 @@ export function usePlayerResources() {
 
 ### 5. Use in Component
 
-```typescript
+```ts
 // src/components/ResourceDisplay.tsx
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 
@@ -649,7 +649,7 @@ export function ResourceDisplay() {
 
 For endpoints that modify data (POST, PUT, PATCH, DELETE):
 
-```typescript
+```ts
 // src/lib/player-api.ts
 export const playerApi = {
     updateSettings: (
@@ -686,18 +686,18 @@ export function useUpdateSettings() {
 1. **Always use `useQueryClient()`** - Import and use the query client to invalidate queries after successful mutations
 2. **Invalidate specific queries** - Call `queryClient.invalidateQueries({ queryKey: ... })` with the specific keys that need to be refetched
 3. **Invalidate multiple queries if needed** - A single mutation might affect multiple parts of the UI:
-   ```typescript
-   onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: queryKeys.facilities.all });
-       queryClient.invalidateQueries({ queryKey: queryKeys.players.money });
-   }
-   ```
+    ```ts
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.facilities.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.players.money });
+    };
+    ```
 4. **Use `setQueryData` for direct updates** - When the mutation response contains the updated data, you can update the cache directly instead of invalidating:
-   ```typescript
-   onSuccess: (data) => {
-       queryClient.setQueryData(queryKeys.dailyQuiz.today, data);
-   }
-   ```
+    ```ts
+    onSuccess: (data) => {
+        queryClient.setQueryData(queryKeys.dailyQuiz.today, data);
+    };
+    ```
 5. **Rely on server-driven invalidation when possible** - For complex state changes, the backend can emit `invalidate` events that automatically handle cache invalidation
 
 ## Best Practices
@@ -706,28 +706,28 @@ export function useUpdateSettings() {
 
 **Tick-synced game state:**
 
-```typescript
+```ts
 staleTime: 60 * 1000,      // 1 minute
 gcTime: 5 * 60 * 1000,     // 5 minutes
 ```
 
 **Static data:**
 
-```typescript
+```ts
 staleTime: Infinity,
 gcTime: Infinity,
 ```
 
 **Real-time data:**
 
-```typescript
+```ts
 staleTime: 0,
 refetchInterval: 30 * 1000, // 30 seconds
 ```
 
 ### Error Handling
 
-```typescript
+```ts
 const { data, isLoading, error } = usePlayerMoney();
 
 if (error) {
@@ -737,7 +737,7 @@ if (error) {
 
 ### Loading States
 
-```typescript
+```ts
 if (isLoading) {
     return <Skeleton />;
 }
@@ -750,7 +750,7 @@ if (isLoading) {
 
 ### Dependent Queries
 
-```typescript
+```ts
 const { data: facilities } = useFacilities();
 const { data: details } = useFacilityDetails(facilities?.[0]?.id, {
     enabled: !!facilities?.[0]?.id,
@@ -759,7 +759,7 @@ const { data: details } = useFacilityDetails(facilities?.[0]?.id, {
 
 ### Parallel Queries
 
-```typescript
+```ts
 const queries = useQueries({
     queries: [
         { queryKey: queryKeys.players.money, queryFn: playerApi.getMoney },

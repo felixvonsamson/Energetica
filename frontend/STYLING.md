@@ -6,7 +6,7 @@ Guidelines for styling components with Tailwind CSS and the project's theme syst
 
 **Always use theme colors:**
 
-```typescript
+```ts
 // Good
 <div className="bg-bone text-pine">
 
@@ -29,7 +29,7 @@ Guidelines for styling components with Tailwind CSS and the project's theme syst
 
 The `<main>` element in `GameLayout.tsx` is the source of truth for content text colors:
 
-```typescript
+```ts
 // GameLayout.tsx - Sets text-primary for all content
 <main className="bg-content-bg text-primary min-h-[calc(100vh-120px)]">
     {children}
@@ -38,7 +38,7 @@ The `<main>` element in `GameLayout.tsx` is the source of truth for content text
 
 **Individual pages should NOT set text colors unless deviating:**
 
-```typescript
+```ts
 // Good - inherits text-primary from GameLayout
 function Dashboard() {
     return <div className="p-4 md:p-8">{/* content */}</div>;
@@ -54,7 +54,7 @@ function Dashboard() {
 
 Always include dark mode variants for colors:
 
-```typescript
+```ts
 // Good - supports both modes
 <Card className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary">
 
@@ -66,7 +66,7 @@ Always include dark mode variants for colors:
 
 Use CSS variables for colors that change based on theme:
 
-```typescript
+```ts
 // Use these for theme-aware colors
 className = "bg-content-bg text-primary"; // Uses var(--content-bg) and var(--text-primary)
 
@@ -76,7 +76,7 @@ className = "bg-bone text-bone-text"; // Always #e5d9b6 with black text
 
 ## Conditional Classes with clsx
 
-```typescript
+```ts
 import { cn } from "@/lib/utils";
 
 <button
@@ -92,7 +92,7 @@ import { cn } from "@/lib/utils";
 
 Use mobile-first approach:
 
-```typescript
+```ts
 <div className="
     grid grid-cols-1           // Mobile
     md:grid-cols-2             // Tablet
@@ -104,7 +104,7 @@ Use mobile-first approach:
 
 ### Use lucide-react
 
-```typescript
+```ts
 import { Home, Settings, User } from "lucide-react";
 
 <Home className="w-5 h-5" />
@@ -127,7 +127,7 @@ import { Home, Settings, User } from "lucide-react";
 
 For facility and resource colors, use the CSS variable system defined in `global.css`:
 
-```typescript
+```ts
 const colorVar = `--asset-color-${facility.toLowerCase().replace(/_/g, "-")}`;
 
 <div
@@ -145,40 +145,46 @@ See [ASSET_COLORS.md](ASSET_COLORS.md) for complete documentation.
 
 ### Cards and Containers
 
-```typescript
+```ts
 // Standard card
 className = "bg-bone dark:bg-dark-bg-secondary p-6 rounded-lg";
 
 // Card with hover effect
-className = "bg-bone dark:bg-dark-bg-secondary p-6 rounded-lg transition-shadow duration-150 hover:shadow-md";
+className =
+    "bg-bone dark:bg-dark-bg-secondary p-6 rounded-lg transition-shadow duration-150 hover:shadow-md";
 ```
 
 ### Buttons
 
-```typescript
+```ts
 // Primary button
-className = "bg-brand-green hover:bg-pine text-white px-4 py-2 rounded transition-colors duration-150";
+className =
+    "bg-brand-green hover:bg-pine text-white px-4 py-2 rounded transition-colors duration-150";
 
 // Secondary button
-className = "bg-tan-green hover:bg-brand-green text-white px-4 py-2 rounded transition-colors duration-150";
+className =
+    "bg-tan-green hover:bg-brand-green text-white px-4 py-2 rounded transition-colors duration-150";
 
 // Disabled state
-className = "bg-brand-green text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed";
+className =
+    "bg-brand-green text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed";
 ```
 
 ### Input Fields
 
-```typescript
+```ts
 // Standard input
-className = "border-2 border-pine rounded px-3 py-2 focus:border-brand-green focus:outline-none";
+className =
+    "border-2 border-pine rounded px-3 py-2 focus:border-brand-green focus:outline-none";
 
 // With dark mode
-className = "border-2 border-pine dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 text-pine dark:text-white";
+className =
+    "border-2 border-pine dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 text-pine dark:text-white";
 ```
 
 ### Text Styles
 
-```typescript
+```ts
 // Headings
 className = "text-2xl font-bold text-pine dark:text-white";
 
@@ -196,7 +202,7 @@ className = "text-alert-red dark:text-red-400";
 
 ### Spacing
 
-```typescript
+```ts
 // Consistent spacing scale
 "p-4"; // 1rem padding
 "p-6"; // 1.5rem padding
@@ -208,7 +214,7 @@ className = "text-alert-red dark:text-red-400";
 
 ### Flexbox
 
-```typescript
+```ts
 // Common flex patterns
 "flex items-center justify-between"; // Navbar
 "flex flex-col gap-4"; // Vertical stack
@@ -217,7 +223,7 @@ className = "text-alert-red dark:text-red-400";
 
 ### Grid
 
-```typescript
+```ts
 // Responsive grid
 "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4";
 
@@ -229,7 +235,7 @@ className = "text-alert-red dark:text-red-400";
 
 ### Avoid Dynamic Classes
 
-```typescript
+```ts
 // ❌ BAD - Tailwind can't detect dynamic classes
 <div className={`bg-${color}-500`}>
 
@@ -251,7 +257,7 @@ Tailwind automatically purges unused styles in production. Keep class names stat
 
 ### 1. Hardcoding Colors
 
-```typescript
+```ts
 // ❌ BAD
 className = "text-black bg-white";
 
@@ -261,17 +267,18 @@ className = "text-pine dark:text-white bg-bone dark:bg-dark-bg-secondary";
 
 ### 2. Forgetting Dark Mode
 
-```typescript
+```ts
 // ❌ BAD
 className = "bg-white text-black border-gray-300";
 
 // ✅ GOOD
-className = "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600";
+className =
+    "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600";
 ```
 
 ### 3. Overusing `transition-all`
 
-```typescript
+```ts
 // ❌ BAD - Animates everything
 className = "transition-all";
 

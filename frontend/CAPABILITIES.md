@@ -39,7 +39,7 @@ UserOut(
 
 ### Hook: `useCapabilities()`
 
-```typescript
+```ts
 import { useCapabilities, useHasCapability } from "@/hooks/useCapabilities";
 
 // Get all capabilities
@@ -59,22 +59,29 @@ if (!hasWarehouse) {
 
 ```tsx
 // Dashboard sections
-{capabilities?.has_laboratory && (
-    <DashboardSection title="🔬 Under Research" />
-)}
+{
+    capabilities?.has_laboratory && (
+        <DashboardSection title="🔬 Under Research" />
+    );
+}
 
 // Navigation links
-{capabilities?.has_warehouse && (
-    <QuickLinkCard title="Resource Market" to="/resource-market" />
-)}
+{
+    capabilities?.has_warehouse && (
+        <QuickLinkCard title="Resource Market" to="/resource-market" />
+    );
+}
 
 // Beginners guide (show until network unlocked)
-{!capabilities?.has_network && <BeginnersGuide />}
+{
+    !capabilities?.has_network && <BeginnersGuide />;
+}
 ```
 
 ## Invalidation Strategy
 
 Capabilities are **sent with data** (not invalidation-only) because:
+
 - Very small (~50 bytes)
 - Critical for UX (affects entire UI layout)
 - Changes infrequently (only when building facilities)
@@ -90,84 +97,39 @@ player.emit("invalidate", {"queries": [["auth", "me"]]})
 
 The auth query will refetch, getting updated capabilities.
 
-## Migration from Legacy
-
-### Before (Jinja Templates)
-
-```jinja
-{% if user.achievements.laboratory %}
-    <a href="/technology">Research</a>
-{% endif %}
-
-{% if user.achievements.warehouse %}
-    <div class="shipments">...</div>
-{% endif %}
-```
-
-### After (React)
-
-```tsx
-const capabilities = useCapabilities();
-
-{capabilities?.has_laboratory && (
-    <Link to="/technology">Research</Link>
-)}
-
-{capabilities?.has_warehouse && (
-    <div className="shipments">...</div>
-)}
-```
-
 ## Current Status
 
 **Implemented:**
+
 - ✅ Backend schema (`PlayerCapabilities`)
 - ✅ Auth endpoint includes capabilities
 - ✅ Frontend hook (`useCapabilities`)
 - ✅ Dashboard conditional rendering (laboratory, warehouse examples)
 
 **TODO:**
+
 - [ ] Add invalidation when building functional facilities
 - [ ] Migrate all template `{% if user.achievements.X %}` checks
 - [ ] Add route protection based on capabilities (e.g., `/technology` requires `has_laboratory`)
 - [ ] Consider adding more capability flags as features are added
 
-## Example: Adding New Capability
-
-1. **Add to schema** (`capabilities.py`):
-   ```python
-   has_climate_monitoring: bool
-   ```
-
-2. **Extract from player** (`from_player` method):
-   ```python
-   has_climate_monitoring=bool(player.achievements.get("climate_monitoring", 0))
-   ```
-
-3. **Use in frontend**:
-   ```tsx
-   {capabilities?.has_climate_monitoring && <ClimateChart />}
-   ```
-
-4. **Invalidate when unlocked**:
-   ```python
-   player.emit("invalidate", {"queries": [["auth", "me"]]})
-   ```
-
 ## Design Rationale
 
 **Why separate from achievements?**
+
 - Achievements mix two concepts: progress counters (0-N) and flags (0/1)
 - Capabilities make intent clear: "can user access this feature?"
 - Easier to reason about in frontend conditional rendering
 
 **Why bundle with auth response?**
+
 - Capabilities needed immediately on app load
 - Very small data size (~50 bytes)
 - No additional HTTP request needed
 - Always available via `useAuth()` context
 
 **Why not individual API endpoints?**
+
 - Would require multiple requests
 - Capabilities rarely change
 - Bundling is more efficient

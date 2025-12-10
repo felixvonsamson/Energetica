@@ -50,28 +50,6 @@ frontend/src/
         └── *.tsx                    # Route files
 ```
 
-## Authentication
-
-Cookie-based auth that reads existing session cookies.
-
-```typescript
-import { useAuth } from "@/hooks/useAuth";
-
-function MyComponent() {
-    const { user, isAuthenticated, isLoading, logout } = useAuth();
-
-    if (isLoading) return <div>Loading...</div>;
-    if (!isAuthenticated) return <div>Not logged in</div>;
-
-    return (
-        <div>
-            <h1>Welcome, {user.username}!</h1>
-            <button onClick={logout}>Logout</button>
-        </div>
-    );
-}
-```
-
 **API Endpoints:**
 
 - `GET /auth/me` - Get current user
@@ -83,7 +61,7 @@ function MyComponent() {
 
 Real-time connection for game ticks and live updates.
 
-```typescript
+```ts
 import { useSocket, useSocketEvent } from "@/contexts/SocketContext";
 
 function GameComponent() {
@@ -106,7 +84,7 @@ function GameComponent() {
 
 Type-safe HTTP requests with automatic error handling.
 
-```typescript
+```ts
 import { apiClient } from "@/lib/api-client";
 
 // GET request
@@ -132,7 +110,7 @@ const data = await apiClient.get("/endpoint", {
 
 Pre-configured query client for data fetching and caching.
 
-```typescript
+```ts
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-client";
 import { apiClient } from "@/lib/api-client";
@@ -163,7 +141,7 @@ function useUpdateSettings() {
 
 Route protection for different access levels.
 
-```typescript
+```ts
 import {
     ProtectedRoute,
     RequireSettledPlayer,
@@ -196,169 +174,12 @@ import {
 
 Clean imports using `@` prefix.
 
-```typescript
+```ts
 import { useAuth } from "@/hooks/useAuth";
 import { apiClient } from "@/lib/api-client";
-```
-
-**Available aliases:**
-
-- `@/*` - src root
-- `@components/*` - components
-- `@hooks/*` - hooks
-- `@lib/*` - lib
-- `@contexts/*` - contexts
-- `@types/*` - types
-
-## Migration Strategy: `/app/*` Routes
-
-New React pages are served under `/app/*` for gradual migration.
-
-### Backend Setup
-
-Backend serves React SPA for all `/app/*` paths:
-
-```python
-# energetica/routers/templates.py
-@router.get("/app/{full_path:path}")
-def render_react_app(...):
-    return FileResponse("energetica/static/react/index.html")
-```
-
-### Migration Process
-
-1. Build new page at `/app/dashboard`
-
-```typescript
-// frontend/src/routes/app/dashboard.tsx
-export const Route = createFileRoute("/app/dashboard")({
-    component: DashboardPage,
-});
-```
-
-2. Test thoroughly at `http://localhost:5173/app/dashboard`
-
-3. Deploy side-by-side (old Jinja at `/dashboard`, new React at `/app/dashboard`)
-
-4. Redirect when ready
-
-```python
-@router.get("/dashboard")
-def old_dashboard(...):
-    return RedirectResponse("/app/dashboard")
-```
-
-## Complete Example
-
-```typescript
-import { createFileRoute } from "@tanstack/react-router";
-import { useAuth } from "@/hooks/useAuth";
-import { useSocketEvent } from "@/contexts/SocketContext";
-import { useQuery } from "@tanstack/react-query";
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
-import { apiClient } from "@/lib/api-client";
-import { queryKeys } from "@/lib/query-client";
-
-export const Route = createFileRoute("/app/my-page")({
-    component: MyPage,
-});
-
-function MyPage() {
-    return (
-        <RequireSettledPlayer>
-            <MyPageContent />
-        </RequireSettledPlayer>
-    );
-}
-
-function MyPageContent() {
-    const { user } = useAuth();
-
-    const { data, isLoading } = useQuery({
-        queryKey: queryKeys.players.money,
-        queryFn: () => apiClient.get("/players/me/money"),
-    });
-
-    useSocketEvent("money_update", (newMoney) => {
-        console.log("Money updated:", newMoney);
-    });
-
-    if (isLoading) return <div>Loading...</div>;
-
-    return (
-        <div>
-            <h1>Hello, {user?.username}!</h1>
-            <p>Money: {data.money}</p>
-        </div>
-    );
-}
 ```
 
 ## Troubleshooting
-
-### "ECONNREFUSED" Errors in Console
-
-**Symptom:** Multiple ECONNREFUSED errors when dev server starts or when not logged in:
-
-```
-[vite] http proxy error: /api/v1/auth/me
-AggregateError [ECONNREFUSED]
-```
-
-**Root Cause:** This is **NORMAL and EXPECTED behavior**. Here's what's happening:
-
-1. Most game API endpoints require authentication
-2. When not logged in, backend returns `303 See Other` → `/login` redirect
-3. Vite proxy sees the redirect and tries to follow it
-4. These requests fail because you're not authenticated yet
-5. TanStack Query retries failed requests (up to 3 times with exponential backoff)
-
-**Solution:** ✅ **This is not a bug - no action needed!**
-
-- Backend **IS** running correctly (returning proper redirects)
-- Errors are a security feature (protecting authenticated endpoints)
-- They **disappear automatically** once you log in to the app
-- Session cookie persists, so you only need to log in once per session
-
-**To verify backend is working:**
-
-```bash
-# Check backend process
-$ ps aux | grep uvicorn
-Python ... uvicorn main:app --host 0.0.0.0 --port 5001  # ✅ Running
-
-# Check port listener
-$ lsof -i :5001
-Python ... TCP *:commplex-link (LISTEN)  # ✅ Listening
-
-# Test endpoint (expects 303 redirect when not authenticated)
-$ curl -v http://localhost:5001/api/v1/weather
-< HTTP/1.1 303 See Other  # ✅ Correct response
-< location: /login
-```
-
-**Why so many errors?**
-
-- Multiple queries fire on app load (auth, money, workers, resources)
-- Socket.io connection attempts without auth
-- Automatic retries for each failed request
-- All these stop once authenticated
-
-### Auth Not Working
-
-- Check cookies in DevTools (Application → Cookies)
-- Verify `/auth/me` endpoint returns user data when logged in
-- Check CORS/credentials settings in `api-client.ts`
-- Clear cookies and try logging in again
-- Ensure backend session is not expired
-
-### Socket.IO Not Connecting
-
-- Check console for connection errors
-- Verify user is authenticated (Socket.io requires auth)
-- Check backend Socket.IO logs for connection attempts
-- Verify WebSocket proxy in `vite.config.ts` has `ws: true`
-- Check if `socket.io` path is correctly proxied
 
 ### API Types Out of Sync
 

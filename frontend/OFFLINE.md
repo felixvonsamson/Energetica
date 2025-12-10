@@ -23,7 +23,7 @@ When connection is lost:
 
 ### Key Insight: Data Doesn't Disappear
 
-```typescript
+```ts
 const { data, error, isError } = usePlayerMoney();
 
 // Connection failed
@@ -36,7 +36,7 @@ const { data, error, isError } = usePlayerMoney();
 
 ### Query Client
 
-```typescript
+```ts
 queries: {
     // Retry with exponential backoff: 1s, 2s, 4s
     retry: (failureCount, error) => {
@@ -69,7 +69,7 @@ SocketIO has built-in reconnection:
 
 Shows at top of app when disconnected.
 
-```typescript
+```ts
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 
 export function RootLayout() {
@@ -93,7 +93,7 @@ export function RootLayout() {
 
 Show subtle indicators on specific data that failed to update.
 
-```typescript
+```ts
 const { data, isError, error } = usePlayerMoney();
 
 <div className="relative">
@@ -112,7 +112,7 @@ const { data, isError, error } = usePlayerMoney();
 
 Prevent desyncs by blocking mutations while disconnected.
 
-```typescript
+```ts
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 function BuildFacilityButton() {

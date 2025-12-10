@@ -18,7 +18,7 @@ Standard loading indicator for charts.
 
 ## Usage Example
 
-```typescript
+```ts
 import { TimeSeriesChart, ResolutionPicker, filterNonZeroSeries } from "@/components/charts";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { getAssetColor } from "@/lib/asset-colors";
@@ -53,29 +53,33 @@ function MyChart({ currentTick, dataPoints, resolution }) {
 
 ## Chart Configuration Options
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `chartVariant` | `"area" \| "line" \| "bar"` | Type of chart to render |
-| `stacked` | `boolean` | Whether to stack multiple series (default: false) |
-| `height` | `number` | Chart height in pixels (default: 400) |
-| `showBrush` | `boolean` | Show zoom/pan brush control (default: true) |
-| `getColor` | `(key: string) => string` | Function to get color for each data series |
-| `filterDataKeys` | `(key: string, data: any[]) => boolean` | Function to filter which series to display |
-| `formatYAxis` | `(value: number) => string` | Custom Y-axis formatter |
-| `formatTooltip` | `(value: number, name: string) => [string, string]` | Custom tooltip formatter |
+| Option           | Type                                                | Description                                       |
+| ---------------- | --------------------------------------------------- | ------------------------------------------------- |
+| `chartVariant`   | `"area" \| "line" \| "bar"`                         | Type of chart to render                           |
+| `stacked`        | `boolean`                                           | Whether to stack multiple series (default: false) |
+| `height`         | `number`                                            | Chart height in pixels (default: 400)             |
+| `showBrush`      | `boolean`                                           | Show zoom/pan brush control (default: true)       |
+| `getColor`       | `(key: string) => string`                           | Function to get color for each data series        |
+| `filterDataKeys` | `(key: string, data: any[]) => boolean`             | Function to filter which series to display        |
+| `formatYAxis`    | `(value: number) => string`                         | Custom Y-axis formatter                           |
+| `formatTooltip`  | `(value: number, name: string) => [string, string]` | Custom tooltip formatter                          |
 
 ## Data Filtering Utilities
 
 ### filterNonZeroSeries
+
 Excludes series where all values are zero.
 
 ### includeAllSeries
+
 Includes all series (no filtering).
 
 ### createExcludeKeysFilter(keys)
+
 Creates a filter that excludes specific keys.
 
 ### createIncludeKeysFilter(keys)
+
 Creates a filter that only includes specific keys.
 
 ## Creating New Chart Types

@@ -129,7 +129,7 @@ def update_money(self, amount: float):
 
 **Frontend:**
 
-```typescript
+```ts
 // In GameTickContext.tsx (centralized listener)
 useSocketEvent("money_updated", (data) => {
     queryClient.setQueryData(queryKeys.players.money, data);
@@ -211,7 +211,7 @@ def build_facility(player: Player, facility_type: str):
 
 Already set up in `GameTickContext`. Query keys must match those defined in `frontend/src/lib/query-client.ts`:
 
-```typescript
+```ts
 export const queryKeys = {
     players: {
         money: ["players", "me", "money"] as const,
@@ -349,7 +349,7 @@ player.emit("invalidate", {"queries": [["facilities", "all"]]})
 
 All SocketIO listeners in one place:
 
-```typescript
+```ts
 // src/contexts/GameTickContext.tsx
 export function GameTickProvider({ children }) {
     const queryClient = useQueryClient();
@@ -374,7 +374,7 @@ export function GameTickProvider({ children }) {
 
 ### Avoid: Per-Component Listeners
 
-```typescript
+```ts
 // BAD - listener only works when component mounted
 function MoneyDisplay() {
     const queryClient = useQueryClient();

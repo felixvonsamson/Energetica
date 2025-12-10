@@ -60,7 +60,7 @@ Backend logs show:
 
 Imports work without errors:
 
-```typescript
+```ts
 import { useAuth } from "@/hooks/useAuth"; // works
 import { apiClient } from "@/lib/api-client"; // works
 ```
@@ -96,7 +96,7 @@ Login through legacy Jinja form at http://localhost:5001/login
 
 1. Create route file:
 
-```typescript
+```ts
 // frontend/src/routes/app/my-page.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
@@ -131,7 +131,7 @@ Both old and new can coexist:
 
 ## Quick Reference
 
-```typescript
+```ts
 // Auth
 const { user, isAuthenticated, logout } = useAuth();
 

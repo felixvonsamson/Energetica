@@ -27,7 +27,7 @@ Use subtle, purposeful animations that enhance UX without being distracting.
 
 Use consistent timing across the app:
 
-```typescript
+```ts
 // Tailwind duration classes
 "duration-75"; // 75ms  - Instant feedback (hover, active)
 "duration-150"; // 150ms - Quick transitions (tooltips, dropdowns)
@@ -40,7 +40,7 @@ Use consistent timing across the app:
 
 ## Easing Functions
 
-```typescript
+```ts
 // Tailwind easing classes
 "ease-linear"; // Constant speed - for progress bars, spinners
 "ease-in"; // Start slow - for exits, hiding
@@ -54,7 +54,7 @@ Use consistent timing across the app:
 
 ### Hover States
 
-```typescript
+```ts
 // Buttons, cards, interactive elements
 className = "transition-colors duration-150 hover:bg-brand-green";
 
@@ -64,7 +64,7 @@ className = "transition-all duration-150 hover:shadow-md hover:scale-[1.02]";
 
 ### State Feedback (Success/Error)
 
-```typescript
+```ts
 // Borders, backgrounds
 className = "transition-all duration-300 ease-out border-2 border-green-600";
 
@@ -75,7 +75,7 @@ className = "transition-all duration-300 ease-out border-2 border-green-600";
 
 ### Progress Bars
 
-```typescript
+```ts
 // Smooth width changes
 className="h-full transition-all duration-300 ease-out"
 style={{ width: `${progress}%` }}
@@ -83,14 +83,14 @@ style={{ width: `${progress}%` }}
 
 ### Loading Spinners
 
-```typescript
+```ts
 // Continuous rotation
 className = "animate-spin"; // Tailwind built-in
 ```
 
 ### Modals/Dialogs
 
-```typescript
+```ts
 // Fade in background
 <div className="transition-opacity duration-300 ease-out opacity-0 data-[state=open]:opacity-100">
 
@@ -104,7 +104,7 @@ className = "animate-spin"; // Tailwind built-in
 
 **Solution:** Use tints (lighter) for backgrounds, full colors for borders/text.
 
-```typescript
+```ts
 // ❌ BAD - Too strong
 className = "bg-green-600 text-white"; // Harsh on eyes
 
@@ -115,7 +115,7 @@ className =
 
 **Pattern for feedback states:**
 
-```typescript
+```ts
 // Light mode: 50-shade background, 600-shade border, 800-shade text
 className = "bg-green-50 border-green-600 text-green-800";
 
@@ -127,7 +127,7 @@ className = "dark:bg-green-900/20 dark:border-green-500 dark:text-green-300";
 
 ### Weather Progress Bars
 
-```typescript
+```ts
 // Smooth width changes as weather data updates
 <div className="h-full bg-yellow-500 transition-all duration-300"
      style={{ width: `${(irradiance / 1000) * 100}%` }} />
@@ -135,7 +135,7 @@ className = "dark:bg-green-900/20 dark:border-green-500 dark:text-green-300";
 
 ### Quiz Answer Feedback
 
-```typescript
+```ts
 // Before answering - subtle hover
 className="border-2 border-pine hover:border-brand-green hover:shadow-md
            transition-all duration-300 ease-out"
@@ -147,7 +147,7 @@ className="bg-green-50 dark:bg-green-900/20 border-2 border-green-600
 
 ### Button States
 
-```typescript
+```ts
 // Standard button pattern
 className="bg-tan-green hover:bg-brand-green text-white
            transition-colors duration-150
@@ -158,7 +158,7 @@ className="bg-tan-green hover:bg-brand-green text-white
 
 **Respect user preferences:**
 
-```typescript
+```ts
 // Check for reduced motion preference
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -184,7 +184,7 @@ className="bg-tan-green hover:bg-brand-green text-white
 - Use `transition-all` on elements with many properties
 - Animate during initial page load
 
-```typescript
+```ts
 // ❌ BAD - Animates everything, causes reflow
 className = "transition-all duration-300";
 
