@@ -4,7 +4,7 @@
  */
 
 import { useState, ReactNode } from "react";
-import { Money, FacilityName } from "@/components/ui";
+import { Money, FacilityName, InfoBanner } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
     useUpgradeFacility,
@@ -73,9 +73,9 @@ function ConfirmationContent({
                 </div>
             </div>
             {isDismantling && (
-                <p className="text-alert-red font-semibold">
+                <InfoBanner variant="warning">
                     This action cannot be undone!
-                </p>
+                </InfoBanner>
             )}
         </div>
     );

@@ -42,9 +42,13 @@ function RootComponent() {
 
         switch (requiredRole) {
             case "player":
-                // Check user is settled if required
+                // Redirect according to settled status
                 if (routeConfig.requiresSettledTile && !user.is_settled) {
                     navigate({ to: "/app/settle" });
+                    return;
+                }
+                if (!routeConfig.requiresSettledTile && user.is_settled) {
+                    navigate({ to: "/app/dashboard" });
                     return;
                 }
                 // Check page is unlocked

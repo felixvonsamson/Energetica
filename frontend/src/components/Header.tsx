@@ -41,9 +41,7 @@ export function Header() {
                     </div>
                 </header>
                 <div className="flex flex-1 justify-end gap-3 items-center">
-                    <div className="bg-bone dark:bg-dark-bg-secondary px-3 py-2 rounded-4xl shadow-md hover:shadow-lg transition-shadow">
-                        <ThemeToggle />
-                    </div>
+                    <ThemeToggle />
                     <Link
                         to="/app/login"
                         className="bg-pine dark:bg-dark-bg-secondary text-bone dark:text-dark-text-primary px-6 py-2 rounded-4xl text-sm font-semibold hover:bg-pine-darker dark:hover:bg-dark-bg-tertiary shadow-md hover:shadow-lg transition-shadow"
