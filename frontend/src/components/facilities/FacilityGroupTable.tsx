@@ -3,7 +3,7 @@
  * actions. Used for displaying power, storage, and extraction facilities.
  */
 
-import { useState, ReactNode } from "react";
+import { useState, ReactNode, Fragment } from "react";
 import { Money, FacilityName, InfoBanner, Duration } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
@@ -445,7 +445,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
                     );
 
                     return (
-                        <>
+                        <Fragment key={facilityName}>
                             {/* Summary Row */}
                             <tr
                                 key={facilityName}
@@ -537,7 +537,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                         />
                                     </tr>
                                 ))}
-                        </>
+                        </Fragment>
                     );
                 })}
             </tbody>
