@@ -1,72 +1,115 @@
 /**
- * Duration component for formatting tick-based durations.
+ * Duration component for displaying time durations with wall-clock and
+ * game-time toggle.
  *
- * Similar to Money.tsx, this is a component rather than a pure function
- * because:
+ * Accepts duration in ticks and converts to the appropriate time representation
+ * based on the current TimeMode. Uses the game engine configuration to compute
+ * the actual durations in seconds.
  *
- * - It needs to fetch game constants from the API (ticks per second, clock time)
- * - Uses React Query to cache the game constants
- * - May need to render both in-game time and real-world time
+ * This component is necessary (rather than a pure function) because:
  *
- * TODO: Implement actual game constants API hook when available
+ * - It fetches game engine configuration from the API via useGameEngine hook
+ * - Uses React Query to cache the game configuration
+ * - Accesses TimeMode context to determine which format to display
+ * - Handles loading and error states
  */
 
+import { Clock, CalendarClock } from "lucide-react";
+import { useGameEngine } from "@/hooks/useGame";
+import { useTimeMode } from "@/contexts/TimeModeContext";
+import {
+    formatGameTimeDuration,
+    formatWallClockDuration,
+    ticksToGameSeconds,
+    ticksToWallClockSeconds,
+} from "@/lib/format-utils";
+import { cn } from "@/lib/cn";
+
 interface DurationProps {
-    /** Duration in ticks */
+    /** Duration in ticks (source of truth) */
     ticks: number;
-    /** Whether to show both in-game and real-world time */
-    showRealTime?: boolean;
+    /** Show compact format (e.g., "69d 8h" instead of "69d 8h 56m") */
+    compact?: boolean;
+    /** Show icon indicating current time mode */
+    showIcon?: boolean;
+    /** Additional CSS classes */
+    className?: string;
 }
 
-export function Duration({ ticks, showRealTime = false }: DurationProps) {
-    // TODO: Replace with actual game constants hook when API is ready
-    // const { data: gameConstants } = useGameConstants();
-    // const inGameSecondsPerTick = gameConstants?.in_game_seconds_per_tick ?? 100;
-    // const clockTime = gameConstants?.clock_time ?? 1;
+/**
+ * Format a duration string to be more compact by showing fewer units. For
+ * example: "69d 8h 56m 23s" becomes "69d 8h"
+ *
+ * @param formatted - The formatted duration string (e.g., "69d 8h 56m 23s")
+ * @returns Compact version (e.g., "69d 8h")
+ */
+function makeCompact(formatted: string): string {
+    const parts = formatted.split(" ");
+    return parts.slice(0, 2).join(" ");
+}
 
-    // Placeholder values until API is available
-    const inGameSecondsPerTick = 100;
-    const clockTime = 1;
+/**
+ * Displays a duration with the ability to toggle between game-time and
+ * wall-clock formats. Accepts ticks as input and handles all conversions using
+ * the game engine configuration. Click the duration to toggle between display
+ * modes.
+ *
+ * @example
+ *     <Duration ticks={1000} /> // Shows togglable duration based on ticks
+ *     <Duration ticks={1000} compact showIcon /> // With compact format and icon on the right
+ */
+export function Duration({
+    ticks,
+    compact = false,
+    showIcon = true,
+    className,
+}: DurationProps) {
+    const { mode, toggleMode } = useTimeMode();
+    const { data: gameEngine, isLoading } = useGameEngine();
 
-    const formatMinutes = (totalMinutes: number): string => {
-        if (totalMinutes < 1) {
-            return `${Math.floor(totalMinutes * 60)}s`;
-        }
-        const days = Math.floor(totalMinutes / 1440);
-        totalMinutes -= days * 1440;
-        const hours = Math.floor(totalMinutes / 60);
-        totalMinutes -= hours * 60;
-        const minutes = Math.floor(totalMinutes);
-
-        let duration = "";
-        if (days > 0) {
-            duration += `${days}d `;
-        }
-        if (hours > 0) {
-            duration += `${hours}h `;
-        }
-        if (minutes > 0) {
-            duration += `${minutes}m `;
-        }
-        return duration.trim() || "0s";
-    };
-
-    const inGameMinutes = (ticks * inGameSecondsPerTick) / 60;
-    const realMinutes = (ticks * clockTime) / 60;
-
-    const inGameTime = formatMinutes(inGameMinutes);
-    const realTime = formatMinutes(realMinutes);
-
-    if (showRealTime) {
+    // Show placeholder while loading
+    if (isLoading || !gameEngine) {
         return (
-            <span>
-                {inGameTime}{" "}
-                <span className="text-gray-500 dark:text-gray-400 text-xs">
-                    ({realTime})
-                </span>
-            </span>
+            <span className={cn("text-muted-foreground", className)}>--</span>
         );
     }
 
-    return <span>{inGameTime}</span>;
+    // Determine which duration to display based on mode
+    const durationSeconds =
+        mode === "game-time"
+            ? ticksToGameSeconds(ticks, gameEngine)
+            : ticksToWallClockSeconds(ticks, gameEngine);
+
+    let formatted =
+        mode === "game-time"
+            ? formatGameTimeDuration(durationSeconds)
+            : formatWallClockDuration(durationSeconds);
+
+    if (compact) {
+        formatted = makeCompact(formatted);
+    }
+
+    const otherMode = mode === "game-time" ? "wall-clock" : "game-time";
+    const tooltipText = `Click to switch to ${otherMode}`;
+    const Icon = mode === "game-time" ? Clock : CalendarClock;
+
+    return (
+        <span
+            onClick={(e) => {
+                e.stopPropagation();
+                toggleMode();
+            }}
+            className={cn(
+                "inline-flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer transition-colors",
+                "hover:bg-pine/10 dark:hover:bg-white/10",
+                className,
+            )}
+            title={tooltipText}
+        >
+            {formatted}
+            {showIcon && (
+                <Icon className="w-4 h-4" strokeWidth={2} aria-label={mode} />
+            )}
+        </span>
+    );
 }

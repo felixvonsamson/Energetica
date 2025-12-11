@@ -10,6 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SocketProvider } from "@/contexts/SocketContext";
 import { GameTickProvider } from "@/contexts/GameTickContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { TimeModeProvider } from "@/contexts/TimeModeContext";
 import { clearAssetColorCache } from "@/lib/assets/asset-colors";
 
 import "./styles/global.css";
@@ -43,13 +44,15 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
             <ThemeProvider>
-                <AuthProvider>
-                    <SocketProvider>
-                        <GameTickProvider>
-                            <RouterProvider router={router} />
-                        </GameTickProvider>
-                    </SocketProvider>
-                </AuthProvider>
+                <TimeModeProvider>
+                    <AuthProvider>
+                        <SocketProvider>
+                            <GameTickProvider>
+                                <RouterProvider router={router} />
+                            </GameTickProvider>
+                        </SocketProvider>
+                    </AuthProvider>
+                </TimeModeProvider>
             </ThemeProvider>
         </QueryClientProvider>
     </StrictMode>,

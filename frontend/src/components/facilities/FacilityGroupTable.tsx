@@ -4,7 +4,7 @@
  */
 
 import { useState, ReactNode } from "react";
-import { Money, FacilityName, InfoBanner } from "@/components/ui";
+import { Money, FacilityName, InfoBanner, Duration } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
     useUpgradeFacility,
@@ -473,9 +473,11 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                     /h
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono">
-                                    {hasInfiniteLifespan
-                                        ? "∞"
-                                        : `${Math.round(avgLifespan)} d`}
+                                    {hasInfiniteLifespan ? (
+                                        "∞"
+                                    ) : (
+                                        <Duration ticks={avgLifespan} compact />
+                                    )}
                                 </td>
                                 <GroupActions
                                     facilityName={facilityName}
@@ -513,9 +515,16 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                             /h
                                         </td>
                                         <td className="py-3 px-4 text-right font-mono">
-                                            {facility.remaining_lifespan
-                                                ? `${Math.round(facility.remaining_lifespan)} d`
-                                                : "∞"}
+                                            {facility.remaining_lifespan ? (
+                                                <Duration
+                                                    ticks={
+                                                        facility.remaining_lifespan
+                                                    }
+                                                    compact
+                                                />
+                                            ) : (
+                                                "∞"
+                                            )}
                                         </td>
                                         <FacilityActions
                                             facility={facility}

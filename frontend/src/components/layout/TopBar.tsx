@@ -146,7 +146,7 @@ export function TopBar() {
                             </button>
 
                             {/* Theme toggle */}
-                            <ThemeToggle className="px-2 py-2 lg:px-4 bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors h-9 aspect-square lg:aspect-auto" />
+                            <ThemeToggle className="px-2 py-2 bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors h-9 aspect-square" />
 
                             {/* Mobile menu button */}
                             <button

@@ -266,134 +266,105 @@ export function formatTimestamp(timestamp: string): string {
 
 // === Duration Formatting ===
 
-/*
- * COMMENTED OUT: Duration and time formatting functions
- *
- * These functions either:
- * 1. Return HTML strings with <span> tags (formatDuration, calculateDelivery)
- * 2. Require global game constants that aren't available yet (formatDays, formatDuration)
- * 3. Use hardcoded timezone (formatDateString)
- *
- * Uncomment and adapt when implementing construction/delivery timers.
- * Consider:
- * - Using React Context for game constants (inGameSecondsPerTick, clockTime)
- * - Creating components like <Duration ticks={100} /> instead of HTML strings
- * - Using user's timezone or making it configurable
+/**
+ * Game engine configuration for duration calculations. Comes from
+ * GameEngineConfig type.
  */
+interface GameEngineConfig {
+    wall_clock_seconds_per_tick: number;
+    game_seconds_per_tick: number;
+}
 
-// function formatMinutes(totalMinutes: number): string {
-//     if (totalMinutes < 1) {
-//         return `${Math.floor(totalMinutes * 60)}s`;
-//     }
-//     const days = Math.floor(totalMinutes / 1440);
-//     totalMinutes -= days * 1440;
-//     const hours = Math.floor(totalMinutes / 60);
-//     totalMinutes -= hours * 60;
-//     const minutes = Math.floor(totalMinutes);
-//     let duration = "";
-//     if (days > 0) {
-//         duration += `${days}d `;
-//     }
-//     if (hours > 0) {
-//         duration += `${hours}h `;
-//     }
-//     if (minutes > 0) {
-//         duration += `${minutes}m `;
-//     }
-//     return duration.trim();
-// }
+/**
+ * Format seconds into a human-readable duration string (e.g., "2d 3h 45m").
+ * Works for both wall-clock and game time.
+ *
+ * @example
+ *     formatDuration(125); // "2m 5s"
+ *     formatDuration(3661); // "1h 1m 1s"
+ *     formatDuration(90061); // "1d 1h 1m 1s"
+ *
+ * @param totalSeconds - Total seconds to format
+ * @returns Formatted duration string
+ */
+export function formatDuration(totalSeconds: number): string {
+    if (totalSeconds < 1) {
+        return "0s";
+    }
 
-// export function formatDuration(
-//     ticks: number,
-//     inGameSecondsPerTick: number,
-//     clockTime: number,
-// ): string {
-//     const inGameMinutes = (ticks * inGameSecondsPerTick) / 60;
-//     const realMinutes = (ticks * clockTime) / 60;
-//     const inGameTime = formatMinutes(inGameMinutes);
-//     const realTime = formatMinutes(realMinutes);
-//     return `${inGameTime} &ensp; <span class="transparency_txt dark">(${realTime})</span>`;
-// }
+    const days = Math.floor(totalSeconds / 86400);
+    let remaining = totalSeconds % 86400;
 
-// export function formatDays(
-//     ticks: number,
-//     inGameSecondsPerTick: number,
-// ): number {
-//     return Math.round((ticks * inGameSecondsPerTick) / 86_400);
-// }
+    const hours = Math.floor(remaining / 3600);
+    remaining = remaining % 3600;
 
-// export function calculateDelivery(
-//     deltaQ: number,
-//     deltaR: number,
-//     transportSpeed: number,
-//     inGameSecondsPerTick: number,
-//     clockTime: number,
-// ): string {
-//     const dist = Math.sqrt(
-//         2 * (Math.pow(deltaQ, 2) + Math.pow(deltaR, 2) + deltaQ * deltaR),
-//     );
-//     return formatDuration(
-//         (dist * transportSpeed) / inGameSecondsPerTick,
-//         inGameSecondsPerTick,
-//         clockTime,
-//     );
-// }
+    const minutes = Math.floor(remaining / 60);
+    const seconds = Math.floor(remaining % 60);
 
-// export function formatDateTime(dateTimeString: string): string {
-//     const dateTime = new Date(dateTimeString);
-//     const now = new Date();
-//     const date = dateTime.getDate();
-//     const monthIndex = dateTime.getMonth();
-//     const hours = dateTime.getHours().toString().padStart(2, "0");
-//     const minutes = dateTime.getMinutes().toString().padStart(2, "0");
-//     const seconds = dateTime.getSeconds().toString().padStart(2, "0");
-//     const months = [
-//         "Jan",
-//         "Feb",
-//         "Mar",
-//         "Apr",
-//         "May",
-//         "Jun",
-//         "Jul",
-//         "Aug",
-//         "Sep",
-//         "Oct",
-//         "Nov",
-//         "Dec",
-//     ];
-//
-//     if (dateTime.toDateString() === now.toDateString()) {
-//         return `${hours}:${minutes}:${seconds}`;
-//     } else {
-//         return `${date} ${months[monthIndex]} ${hours}:${minutes}:${seconds}`;
-//     }
-// }
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    if (seconds > 0) parts.push(`${seconds}s`);
 
-// export function formatDateString(dateString: string): string {
-//     const date = new Date(dateString);
-//     const currentDate = new Date();
-//     if (date.toDateString() === currentDate.toDateString()) {
-//         return date.toLocaleTimeString(undefined, {
-//             hour: "2-digit",
-//             minute: "2-digit",
-//             hour12: false,
-//             timeZone: "Europe/Paris",
-//         });
-//     } else {
-//         const formattedDate =
-//             date.getDate() +
-//             " " +
-//             date.toLocaleString("default", { month: "short" }) +
-//             ". " +
-//             date.toLocaleTimeString(undefined, {
-//                 hour: "2-digit",
-//                 minute: "2-digit",
-//                 hour12: false,
-//                 timeZone: "Europe/Paris",
-//             });
-//         return formattedDate;
-//     }
-// }
+    return parts.join(" ");
+}
+
+/**
+ * Format game time duration in seconds.
+ *
+ * @example
+ *     formatGameTimeDuration(3600);
+ *     // Returns "1h"
+ *
+ * @param seconds - Duration in game-time seconds
+ * @returns Formatted duration string
+ */
+export function formatGameTimeDuration(seconds: number): string {
+    return formatDuration(seconds);
+}
+
+/**
+ * Format wall-clock time duration in seconds.
+ *
+ * @example
+ *     formatWallClockDuration(3600);
+ *     // Returns "1h"
+ *
+ * @param seconds - Duration in wall-clock seconds
+ * @returns Formatted duration string
+ */
+export function formatWallClockDuration(seconds: number): string {
+    return formatDuration(seconds);
+}
+
+/**
+ * Calculate game time seconds from ticks.
+ *
+ * @param ticks - Number of game ticks
+ * @param config - GameEngineConfig containing timing information
+ * @returns Duration in game-time seconds
+ */
+export function ticksToGameSeconds(
+    ticks: number,
+    config: GameEngineConfig,
+): number {
+    return ticks * config.game_seconds_per_tick;
+}
+
+/**
+ * Calculate wall-clock seconds from ticks.
+ *
+ * @param ticks - Number of game ticks
+ * @param config - GameEngineConfig containing timing information
+ * @returns Duration in wall-clock seconds
+ */
+export function ticksToWallClockSeconds(
+    ticks: number,
+    config: GameEngineConfig,
+): number {
+    return ticks * config.wall_clock_seconds_per_tick;
+}
 
 // === Achievement-Specific Formatting ===
 
