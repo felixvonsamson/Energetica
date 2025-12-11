@@ -147,7 +147,7 @@ function GroupActions({
                 className="py-3 px-4 text-center"
                 onClick={(e) => e.stopPropagation()}
             >
-                {hasUpgrades && (
+                {hasUpgrades ? (
                     <ConfirmDialog
                         trigger={
                             <button
@@ -173,6 +173,8 @@ function GroupActions({
                         }
                         isPending={upgradeAllMutation.isPending}
                     />
+                ) : (
+                    <span className="text-gray-400">-</span>
                 )}
             </td>
             <td
