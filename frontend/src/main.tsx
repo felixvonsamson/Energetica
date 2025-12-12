@@ -27,11 +27,32 @@ if (import.meta.hot) {
     });
 }
 
+/* This allows for cleaner query flag parameters */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const stringifySearchWithFlags = (search: Record<string, any>) => {
+    const params = new URLSearchParams();
+
+    for (const key in search) {
+        const value = search[key];
+        if (value !== undefined) {
+            params.set(key, String(value));
+        }
+    }
+
+    let result = params.toString();
+
+    // Remove trailing `=` for empty string values (converts `key=` to `key`)
+    result = result.replace(/=(?=&|$)/g, "");
+
+    return result ? `?${result}` : "";
+};
+
 const router = createRouter({
     routeTree,
     context: {
         queryClient,
     },
+    stringifySearch: stringifySearchWithFlags,
 });
 
 declare module "@tanstack/react-router" {

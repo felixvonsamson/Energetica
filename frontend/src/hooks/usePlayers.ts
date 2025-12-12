@@ -47,13 +47,10 @@ export function usePlayerMap() {
  */
 export function useMyId() {
     const { user } = useAuth();
-    if (user === null) {
-        throw new Error("useMyId must be ...");
-    }
-    if (user.player_id === null) {
-        throw new Error("useMyId must be ... ...");
-    }
-    return user.player_id;
+    if (user === null) return null;
+    const player_id = user.player_id;
+    if (player_id === null || player_id === undefined) return null;
+    return player_id;
 }
 
 /**

@@ -32,20 +32,14 @@ export const Route = createFileRoute("/app/community/electricity-markets")({
         search: Record<string, unknown>,
     ): {
         joinMarketId?: number;
-        leaveMarket?: boolean;
-        createMarket?: boolean;
+        leaveMarket?: "";
+        createMarket?: "";
     } => ({
         joinMarketId: search.joinMarketId
             ? Number(search.joinMarketId)
             : undefined,
-        leaveMarket:
-            search.leaveMarket === "true" || search.leaveMarket === true
-                ? true
-                : undefined,
-        createMarket:
-            search.createMarket === "true" || search.createMarket === true
-                ? true
-                : undefined,
+        leaveMarket: search.leaveMarket === "" ? "" : undefined,
+        createMarket: search.createMarket === "" ? "" : undefined,
     }),
 });
 
@@ -61,9 +55,15 @@ function ElectricityMarketsContent() {
     const navigate = useNavigate({
         from: "/app/community/electricity-markets",
     });
-    const { joinMarketId, leaveMarket, createMarket } = useSearch({
+    const {
+        joinMarketId,
+        leaveMarket: leaveMarketSearch,
+        createMarket: createMarketSearch,
+    } = useSearch({
         from: "/app/community/electricity-markets",
     });
+    const isShowingLeaveMarket = leaveMarketSearch === "";
+    const isShowingCreateMarket = createMarketSearch === "";
 
     const { data, isLoading, isError } = useElectricityMarkets();
     const player = useMe();
@@ -81,7 +81,7 @@ function ElectricityMarketsContent() {
     };
 
     const handleCloseModal = useCallback(() => {
-        navigate({ search: {} });
+        navigate({ search: {}, replace: true });
     }, [navigate]);
 
     return (
@@ -95,7 +95,10 @@ function ElectricityMarketsContent() {
                     <button
                         className="flex items-center gap-2 px-4 py-2 bg-pine dark:bg-brand-green text-white rounded-lg hover:opacity-80 transition-opacity"
                         onClick={() => {
-                            navigate({ search: { createMarket: true } });
+                            navigate({
+                                search: { createMarket: "" },
+                                replace: true,
+                            });
                         }}
                     >
                         <Plus className="w-5 h-5" />
@@ -191,8 +194,9 @@ function ElectricityMarketsContent() {
                                                     onClick={() => {
                                                         navigate({
                                                             search: {
-                                                                leaveMarket: true,
+                                                                leaveMarket: "",
                                                             },
+                                                            replace: true,
                                                         });
                                                     }}
                                                 >
@@ -207,6 +211,7 @@ function ElectricityMarketsContent() {
                                                                 joinMarketId:
                                                                     market.id,
                                                             },
+                                                            replace: true,
                                                         });
                                                     }}
                                                 >
@@ -257,17 +262,17 @@ function ElectricityMarketsContent() {
             )}
 
             {/* Create Market Modal */}
-            {createMarket && (
+            {isShowingCreateMarket && (
                 <CreateMarketModal
-                    isOpen={createMarket !== null}
+                    isOpen={isShowingCreateMarket}
                     onClose={handleCloseModal}
                 />
             )}
 
             {/* Leave Market Modal */}
-            {leaveMarket && (
+            {isShowingLeaveMarket && (
                 <LeaveMarketModal
-                    isOpen={leaveMarket !== null}
+                    isOpen={isShowingLeaveMarket}
                     onClose={handleCloseModal}
                 />
             )}
@@ -299,7 +304,7 @@ function EmptyState() {
             <button
                 className="inline-flex items-center gap-2 px-6 py-2 bg-pine dark:bg-brand-green text-white rounded-lg hover:opacity-80 transition-opacity"
                 onClick={() => {
-                    navigate({ search: { createMarket: true } });
+                    navigate({ search: { createMarket: "" } });
                 }}
             >
                 <Plus className="w-5 h-5" />
