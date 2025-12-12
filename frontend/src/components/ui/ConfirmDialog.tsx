@@ -4,6 +4,7 @@
  */
 
 import { useState, ReactNode } from "react";
+
 import { Modal } from "./Modal";
 
 interface ConfirmDialogProps {

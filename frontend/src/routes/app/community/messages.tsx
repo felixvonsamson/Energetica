@@ -1,10 +1,8 @@
 /** Messages page - Chat and messaging interface. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { GameLayout } from "@/components/layout/GameLayout";
 import { useState } from "react";
-import { useMessagesPage } from "@/hooks/useMessagesPage";
-import { useIsMobile } from "@/hooks/useIsMobile";
+
 import {
     ChatDisclaimerModal,
     ChatSidebar,
@@ -12,6 +10,9 @@ import {
     NewChatModal,
     NewGroupChatModal,
 } from "@/components/chat";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { useMessagesPage } from "@/hooks/useMessagesPage";
 
 export const Route = createFileRoute("/app/community/messages")({
     component: MessagesPage,

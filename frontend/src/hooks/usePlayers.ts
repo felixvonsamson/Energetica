@@ -5,9 +5,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+
+import { useAuth } from "@/hooks/useAuth";
 import { playerApi } from "@/lib/api/player";
 import { queryKeys } from "@/lib/query-client";
-import { useAuth } from "@/hooks/useAuth";
 import { Player } from "@/types/players";
 
 export function usePlayers() {

@@ -1,5 +1,5 @@
-import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui";
+import { Modal } from "@/components/ui/Modal";
 
 interface ChatDisclaimerModalProps {
     isOpen: boolean;

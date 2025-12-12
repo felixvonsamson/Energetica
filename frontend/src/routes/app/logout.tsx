@@ -1,10 +1,11 @@
 /** Logout page - Clears session and redirects to login. */
 
-import { useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+
+import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/lib/api/auth";
 import { queryClient } from "@/lib/query-client";
-import { useAuth } from "@/hooks/useAuth";
 
 function LogoutComponent() {
     const navigate = useNavigate();

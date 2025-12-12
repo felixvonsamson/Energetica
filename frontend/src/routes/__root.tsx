@@ -1,5 +1,3 @@
-import { useAuth } from "@/hooks/useAuth";
-import { useCapabilities } from "@/hooks/useCapabilities";
 import {
     createRootRoute,
     Outlet,
@@ -7,6 +5,9 @@ import {
     useNavigate,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
+
+import { useAuth } from "@/hooks/useAuth";
+import { useCapabilities } from "@/hooks/useCapabilities";
 
 export const Route = createRootRoute({
     staticData: { routeConfig: { requiredRole: null } },

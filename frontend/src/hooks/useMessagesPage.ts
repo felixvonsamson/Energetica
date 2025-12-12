@@ -1,8 +1,9 @@
-import { useRef, useEffect, useCallback, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useRef, useEffect, useCallback, useState } from "react";
+
+import { useSocketEvent } from "@/contexts/SocketContext";
 import { useChatList, useChatMessages, useOpenChat } from "@/hooks/useChats";
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
-import { useSocketEvent } from "@/contexts/SocketContext";
 
 export function useMessagesPage() {
     // Get URL search parameters

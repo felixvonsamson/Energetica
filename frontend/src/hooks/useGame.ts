@@ -6,6 +6,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
+
 import { gameApi } from "@/lib/api/game";
 import { queryKeys } from "@/lib/query-client";
 

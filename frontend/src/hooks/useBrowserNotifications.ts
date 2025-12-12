@@ -1,9 +1,10 @@
 /** React Query hooks for browser notifications. */
 
 import { useMutation, useQuery } from "@tanstack/react-query";
+
 import { browserNotificationsApi } from "@/lib/api/browser-notifications";
-import { queryKeys } from "@/lib/query-client";
 import { handleApiError } from "@/lib/error-utils";
+import { queryKeys } from "@/lib/query-client";
 import type { ApiRequestBody } from "@/types/api-helpers";
 
 /** Query hook to get the VAPID public key. */

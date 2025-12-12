@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { HomeLayout } from "./HomeLayout";
 import { Cable, ChevronRight, Lightbulb, Unlink, Zap } from "lucide-react";
+
+import { HomeLayout } from "./HomeLayout";
 
 export function LandingPage() {
     const features = [

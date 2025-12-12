@@ -1,3 +1,9 @@
+import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
+import type { LucideIcon } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
+import { useEffect, type ReactNode } from "react";
+
+import { useNavigation } from "@/contexts/NavigationContext";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useRouteUnlocked } from "@/hooks/useRouteStaticData";
 import {
@@ -5,11 +11,6 @@ import {
     navigationConfig,
     SHOW_LOCKED_ROUTES_AS_DISABLED,
 } from "@/lib/nav-config";
-import { useNavigation } from "@/contexts/NavigationContext";
-import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
-import type { LucideIcon } from "lucide-react";
-import { ChevronDown, X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
 
 export function Navigation() {
     const location = useLocation();

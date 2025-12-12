@@ -4,9 +4,10 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
+
+import { useTickQuery } from "@/contexts/GameTickContext";
 import { achievementApi } from "@/lib/api/achievement";
 import { queryKeys } from "@/lib/query-client";
-import { useTickQuery } from "@/contexts/GameTickContext";
 
 /**
  * Hook to fetch the player's upcoming achievements. Returns achievements that

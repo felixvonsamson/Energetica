@@ -1,15 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { HelpCircle } from "lucide-react";
+import { useState } from "react";
 
+import { ResourceStockIndicators } from "@/components/facilities";
+import { FacilityCard } from "@/components/facilities/FacilityCard";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Money } from "@/components/ui";
-import { usePowerFacilitiesCatalog } from "@/hooks/useProjects";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
-import type { ApiSchema } from "@/types/api-helpers";
-import { FacilityCard } from "@/components/facilities/FacilityCard";
-import { ResourceStockIndicators } from "@/components/facilities";
+import { usePowerFacilitiesCatalog } from "@/hooks/useProjects";
 import { formatPower, formatMass } from "@/lib/format-utils";
+import type { ApiSchema } from "@/types/api-helpers";
 
 export const Route = createFileRoute("/app/facilities/power")({
     component: PowerFacilitiesPage,

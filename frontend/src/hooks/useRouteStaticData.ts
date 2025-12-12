@@ -3,6 +3,7 @@ import {
     StaticDataRouteOption,
     useRouter,
 } from "@tanstack/react-router";
+
 import type { Capabilities } from "@/types/players";
 
 /**

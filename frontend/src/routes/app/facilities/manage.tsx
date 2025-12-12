@@ -1,17 +1,17 @@
 /** Facility management page - Overview of player assets. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { HelpCircle } from "lucide-react";
+import { useState } from "react";
 
+import { FacilityGroupTable } from "@/components/facilities/FacilityGroupTable";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Card, CardTitle } from "@/components/ui";
 import { FacilityGauge } from "@/components/ui/FacilityGauge";
-import { useFacilities } from "@/hooks/useFacilities";
-import { FacilityGroupTable } from "@/components/facilities/FacilityGroupTable";
-import { formatPower, formatEnergy, formatMassRate } from "@/lib/format-utils";
 import { dummyFacilities } from "@/data/dummyFacilities";
 import { useHasCapability } from "@/hooks/useCapabilities";
+import { useFacilities } from "@/hooks/useFacilities";
+import { formatPower, formatEnergy, formatMassRate } from "@/lib/format-utils";
 
 type FacilityCategory = "power" | "storage" | "extraction";
 

@@ -17,6 +17,7 @@
  * being displayed.
  */
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
     createContext,
     useContext,
@@ -25,8 +26,9 @@ import {
     useCallback,
     type ReactNode,
 } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+
 import { useSocketEvent } from "./SocketContext";
+
 import { playerApi } from "@/lib/api/player";
 
 interface GameTickContextValue {

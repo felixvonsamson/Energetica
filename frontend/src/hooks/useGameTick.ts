@@ -1,7 +1,8 @@
 /** Hook to access game tick context. Provides current tick number. */
 
-import { GameTickContext } from "@/contexts/GameTickContext";
 import { useContext } from "react";
+
+import { GameTickContext } from "@/contexts/GameTickContext";
 
 export function useGameTick() {
     const context = useContext(GameTickContext);

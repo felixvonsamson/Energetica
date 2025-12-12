@@ -9,9 +9,10 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
+
+import { useTickQuery } from "@/contexts/GameTickContext";
 import { playerApi } from "@/lib/api/player";
 import { queryKeys } from "@/lib/query-client";
-import { useTickQuery } from "@/contexts/GameTickContext";
 
 export function usePlayerResources() {
     // Register for tick-based refetching (resources change with consumption/production)

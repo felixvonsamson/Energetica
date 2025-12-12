@@ -15,21 +15,22 @@
  * - Tick ranges are [) i.e. inclusive on left and exclusive on right.
  */
 
-import { useMemo } from "react";
 import {
     Query,
     QueryClient,
     useQueries,
     useQueryClient,
 } from "@tanstack/react-query";
-import { chartsApi } from "@/lib/api/charts";
-import { queryKeys } from "@/lib/query-client";
+import { useMemo } from "react";
+
 import {
     ChartType,
     Resolution,
     TickRange,
     toStringResolution,
 } from "../types/charts";
+
+import { chartsApi } from "@/lib/api/charts";
 import {
     POWER_GENERATION_KEYS,
     POWER_CONSUMPTION_KEYS,
@@ -38,6 +39,7 @@ import {
     OP_COSTS_KEYS,
     reorderObjectKeys,
 } from "@/lib/chart-key-order";
+import { queryKeys } from "@/lib/query-client";
 
 /** Map chart types to their corresponding key ordering */
 const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {

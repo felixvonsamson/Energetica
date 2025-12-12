@@ -1,6 +1,8 @@
 import { MessageSquare, Plus } from "lucide-react";
-import { Card, CardTitle, Button } from "@/components/ui";
+
 import { ChatListItem } from "./ChatListItem";
+
+import { Card, CardTitle, Button } from "@/components/ui";
 import type { Chat } from "@/types/chats";
 
 interface ChatSidebarProps {

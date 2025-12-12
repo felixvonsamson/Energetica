@@ -1,9 +1,10 @@
 /** Hooks for fetching and managing construction/research projects. */
 
 import { useQuery, useMutation } from "@tanstack/react-query";
+
+import { useTickQuery } from "@/contexts/GameTickContext";
 import { projectsApi } from "@/lib/api/projects";
 import { queryKeys, queryClient } from "@/lib/query-client";
-import { useTickQuery } from "@/contexts/GameTickContext";
 
 /**
  * Get all ongoing construction and research projects. Updates every tick since

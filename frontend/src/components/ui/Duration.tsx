@@ -15,15 +15,16 @@
  */
 
 import { Clock, CalendarClock } from "lucide-react";
-import { useGameEngine } from "@/hooks/useGame";
+
 import { useTimeMode } from "@/contexts/TimeModeContext";
+import { useGameEngine } from "@/hooks/useGame";
+import { cn } from "@/lib/cn";
 import {
     formatGameTimeDuration,
     formatWallClockDuration,
     ticksToGameSeconds,
     ticksToWallClockSeconds,
 } from "@/lib/format-utils";
-import { cn } from "@/lib/cn";
 
 interface DurationProps {
     /** Duration in ticks (source of truth) */

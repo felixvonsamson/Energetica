@@ -1,15 +1,9 @@
 /** Power overview page - Electricity generation visualization. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo, useCallback } from "react";
 import { Zap } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
 
-import { GameLayout } from "@/components/layout/GameLayout";
-import { Card, CardTitle } from "@/components/ui";
-import { useGameTick } from "@/hooks/useGameTick";
-import { useCurrentChartData } from "@/hooks/useCharts";
-import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
-import { ChartType } from "@/types/charts";
 import {
     TimeSeriesChart,
     ResolutionPicker,
@@ -19,6 +13,12 @@ import {
     type ResolutionOption,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Card, CardTitle } from "@/components/ui";
+import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
+import { useCurrentChartData } from "@/hooks/useCharts";
+import { useGameTick } from "@/hooks/useGameTick";
+import { ChartType } from "@/types/charts";
 
 export const Route = createFileRoute("/app/overviews/power")({
     component: PowerOverviewPage,

@@ -1,13 +1,13 @@
 /** Leaderboards page - Overview of all players ranked by various metrics. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { HelpCircle } from "lucide-react";
+import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Card, Money } from "@/components/ui";
-import { useLeaderboards } from "@/hooks/useLeaderboards";
 import { useHasCapability } from "@/hooks/useCapabilities";
+import { useLeaderboards } from "@/hooks/useLeaderboards";
 import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
 import type { PlayerDetailStats } from "@/types/leaderboards";
 

@@ -3,7 +3,7 @@
  * navigation.
  */
 
-import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
     Menu,
     Settings,
@@ -12,20 +12,22 @@ import {
     Hammer,
     FlaskConical,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { usePlayerMoney } from "@/hooks/usePlayerMoney";
-import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
-import { usePlayerResources } from "@/hooks/usePlayerResources";
-import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { useCapabilities } from "@/hooks/useCapabilities";
-import { useNavigation } from "@/contexts/NavigationContext";
-import { NotificationPopup } from "./NotificationPopup";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { Money } from "@/types/money";
-import { Workers } from "@/types/workers";
-import { Resources } from "@/types/resources";
+import { useState } from "react";
+
 import { Navigation } from "./Navigation";
-import { Link } from "@tanstack/react-router";
+import { NotificationPopup } from "./NotificationPopup";
+
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useNavigation } from "@/contexts/NavigationContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useCapabilities } from "@/hooks/useCapabilities";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { usePlayerMoney } from "@/hooks/usePlayerMoney";
+import { usePlayerResources } from "@/hooks/usePlayerResources";
+import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
+import { Money } from "@/types/money";
+import { Resources } from "@/types/resources";
+import { Workers } from "@/types/workers";
 
 export function TopBar() {
     const { user } = useAuth();

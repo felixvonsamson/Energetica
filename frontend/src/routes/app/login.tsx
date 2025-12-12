@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { LogIn } from "lucide-react";
 import { useState, useEffect } from "react";
+
 import { HomeLayout } from "@/components/HomeLayout";
 import { Card, Button, InfoBanner } from "@/components/ui";
+import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/lib/api/auth";
 import { handleApiError, isErrorType } from "@/lib/error-utils";
-import { useAuth } from "@/hooks/useAuth";
-import { LogIn } from "lucide-react";
 
 export const Route = createFileRoute("/app/login")({
     component: LoginPage,

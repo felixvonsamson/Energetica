@@ -1,7 +1,8 @@
-import { useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import { Modal } from "@/components/ui/Modal";
+import { useState } from "react";
+
 import { Button } from "@/components/ui";
+import { Modal } from "@/components/ui/Modal";
 import {
     useCreateElectricityMarket,
     useElectricityMarketForPlayer,

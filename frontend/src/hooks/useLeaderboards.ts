@@ -3,12 +3,13 @@
  * metrics.
  */
 
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+
 import { useTickQuery } from "@/contexts/GameTickContext";
 import { playerApi } from "@/lib/api/player";
 import { queryKeys } from "@/lib/query-client";
 import { PlayerDetailStats } from "@/types/leaderboards";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 
 export function useLeaderboards() {
     useTickQuery(queryKeys.leaderboards.all);

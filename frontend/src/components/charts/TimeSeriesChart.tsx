@@ -15,8 +15,9 @@ import {
     Bar,
     Brush,
 } from "recharts";
-import { TimeSeriesChartConfig } from "./types";
+
 import { ChartLoadingState } from "./ChartLoadingState";
+import { TimeSeriesChartConfig } from "./types";
 
 interface TimeSeriesChartProps {
     /** Chart data with tick and series values */

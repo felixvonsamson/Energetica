@@ -46,7 +46,7 @@ Avoid abbreviations unless ubiquitous (e.g. `cfg` discouraged, use `config`).
 
 ## Dependency Policy
 
--   Favor standard library first.
+-   Favour standard library first.
 -   Add third-party libs only with clear benefit (performance, security, maintenance reduction).
 -   Periodically review for unused dependencies.
 

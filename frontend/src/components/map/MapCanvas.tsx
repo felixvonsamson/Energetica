@@ -8,14 +8,16 @@
  */
 
 import { useRef, useState, useCallback, useMemo } from "react";
-import { calculateHexSizeWithConstraints } from "@/lib/hex-utils";
-import { useContainerDimensions } from "@/hooks/useContainerDimensions";
+
 import { MapHoverBorder } from "./MapHoverBorder";
+
 import {
     MapCanvasProps,
     MapContextValue,
     MapContext,
 } from "@/contexts/MapContext";
+import { useContainerDimensions } from "@/hooks/useContainerDimensions";
+import { calculateHexSizeWithConstraints } from "@/lib/hex-utils";
 
 /**
  * MapCanvas component that automatically sizes to its container and provides

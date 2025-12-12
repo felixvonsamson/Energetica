@@ -1,6 +1,7 @@
 /** Hook for fetching the map data including all tiles and their resources. */
 
 import { useQuery } from "@tanstack/react-query";
+
 import { mapApi } from "@/lib/api/map";
 import { queryKeys } from "@/lib/query-client";
 

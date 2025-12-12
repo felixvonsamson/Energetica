@@ -1,5 +1,6 @@
-import { HexTileResources } from "@/types/map";
 import { createContext, useContext, type ReactNode } from "react";
+
+import { HexTileResources } from "@/types/map";
 
 /**
  * Map context providing dimensions, hex sizing, and hover state to all

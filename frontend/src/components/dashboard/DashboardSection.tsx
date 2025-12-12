@@ -1,6 +1,7 @@
-import { type ReactNode } from "react";
-import { Card, CardTitle, CardContent, EmptyState } from "@/components/ui";
 import { type LucideIcon } from "lucide-react";
+import { type ReactNode } from "react";
+
+import { Card, CardTitle, CardContent, EmptyState } from "@/components/ui";
 
 interface DashboardSectionProps {
     title: string;

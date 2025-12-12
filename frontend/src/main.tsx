@@ -1,17 +1,17 @@
+import { QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider, createRouter } from "@tanstack/react-router";
 import React, { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
-import { QueryClientProvider } from "@tanstack/react-query";
-import { RouterProvider, createRouter } from "@tanstack/react-router";
-
 import { routeTree } from "./routeTree.gen";
-import { queryClient } from "@/lib/query-client";
+
 import { AuthProvider } from "@/contexts/AuthContext";
-import { SocketProvider } from "@/contexts/SocketContext";
 import { GameTickProvider } from "@/contexts/GameTickContext";
+import { SocketProvider } from "@/contexts/SocketContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { TimeModeProvider } from "@/contexts/TimeModeContext";
 import { clearAssetColorCache } from "@/lib/assets/asset-colors";
+import { queryClient } from "@/lib/query-client";
 
 import "./styles/global.css";
 

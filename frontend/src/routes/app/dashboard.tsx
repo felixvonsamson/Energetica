@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import {
     Construction,
     FlaskConical,
@@ -13,16 +12,17 @@ import {
     Trophy,
     HelpCircle,
 } from "lucide-react";
+import { useState } from "react";
 
-import { GameLayout } from "@/components/layout/GameLayout";
-import { Modal, InfoBanner, Card, CardTitle } from "@/components/ui";
+import { AchievementCard } from "@/components/dashboard/AchievementCard";
 import { DashboardSection } from "@/components/dashboard/DashboardSection";
 import { QuickLinkCard } from "@/components/dashboard/QuickLinkCard";
-import { AchievementCard } from "@/components/dashboard/AchievementCard";
-import { useWeather } from "@/hooks/useWeather";
-import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Modal, InfoBanner, Card, CardTitle } from "@/components/ui";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
+import { useWeather } from "@/hooks/useWeather";
 import { getMonthName } from "@/lib/date-utils";
 
 export const Route = createFileRoute("/app/dashboard")({

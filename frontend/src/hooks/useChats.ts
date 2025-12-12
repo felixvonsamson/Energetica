@@ -13,14 +13,15 @@
  */
 
 import { useQuery, useMutation } from "@tanstack/react-query";
+
+import { chatsApi } from "@/lib/api/chats";
+import { queryKeys, queryClient } from "@/lib/query-client";
 import type {
     CreateChatRequest,
     CreateChatResponse,
     SendMessageRequest,
     OpenChatResponse,
 } from "@/types/chats";
-import { chatsApi } from "@/lib/api/chats";
-import { queryKeys, queryClient } from "@/lib/query-client";
 
 /**
  * Get the list of all chats for the current user.

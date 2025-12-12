@@ -7,11 +7,12 @@
  */
 
 import { useMemo, useState } from "react";
+
 import { FacilityName } from "@/components/ui/AssetName";
 import { FacilityGauge } from "@/components/ui/FacilityGauge";
-import { formatEnergy, formatPower } from "@/lib/format-utils";
 import { useFacilities } from "@/hooks/useFacilities";
 import { useGameEngine } from "@/hooks/useGame";
+import { formatEnergy, formatPower } from "@/lib/format-utils";
 import type { ChartType } from "@/types/charts";
 
 interface PowerOverviewTableProps {

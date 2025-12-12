@@ -4,7 +4,9 @@
  */
 
 import { type ReactNode } from "react";
+
 import { TopBar } from "./TopBar";
+
 import { NavigationProvider } from "@/contexts/NavigationContext";
 
 interface GameLayoutProps {

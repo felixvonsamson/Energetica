@@ -4,9 +4,10 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
+
+import { useTickQuery } from "@/contexts/GameTickContext";
 import { weatherApi } from "@/lib/api/weather";
 import { queryKeys } from "@/lib/query-client";
-import { useTickQuery } from "@/contexts/GameTickContext";
 
 export function useWeather() {
     // Register this query to be refetched on each game tick

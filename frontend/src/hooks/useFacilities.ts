@@ -1,9 +1,10 @@
 /** React Query hooks for facilities data. */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { useTickQuery } from "@/contexts/GameTickContext";
 import { facilitiesApi } from "@/lib/api/facilities";
 import { queryKeys } from "@/lib/query-client";
-import { useTickQuery } from "@/contexts/GameTickContext";
 
 /**
  * Hook to fetch all facilities for the current player. Facilities change every

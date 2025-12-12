@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { HelpCircle } from "lucide-react";
+import { useState } from "react";
+
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Modal, Card, Button, InfoBanner } from "@/components/ui";
 import { useChangePassword } from "@/hooks/useAuthQueries";

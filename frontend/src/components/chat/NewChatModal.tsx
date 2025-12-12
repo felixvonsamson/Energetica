@@ -1,11 +1,12 @@
-import { useState } from "react";
 import { X } from "lucide-react";
-import { Modal } from "@/components/ui/Modal";
+import { useState } from "react";
+
 import { Button } from "@/components/ui";
-import { useChatList, useCreateGroupChat } from "@/hooks/useChats";
-import { usePlayers } from "@/hooks/usePlayers";
+import { Modal } from "@/components/ui/Modal";
 import { useAuth } from "@/hooks/useAuth";
+import { useChatList, useCreateGroupChat } from "@/hooks/useChats";
 import { useFilteredPlayers } from "@/hooks/useFilteredPlayers";
+import { usePlayers } from "@/hooks/usePlayers";
 import type { Player } from "@/types/chats";
 
 interface NewChatModalProps {

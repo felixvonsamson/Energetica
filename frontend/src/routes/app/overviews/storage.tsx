@@ -1,14 +1,9 @@
 /** Storage overview page - Energy storage visualization. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo, useCallback } from "react";
 import { Battery } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
 
-import { GameLayout } from "@/components/layout/GameLayout";
-import { Card, CardTitle } from "@/components/ui";
-import { useGameTick } from "@/hooks/useGameTick";
-import { useCurrentChartData } from "@/hooks/useCharts";
-import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import {
     TimeSeriesChart,
     ResolutionPicker,
@@ -18,6 +13,11 @@ import {
     type ResolutionOption,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
+import { GameLayout } from "@/components/layout/GameLayout";
+import { Card, CardTitle } from "@/components/ui";
+import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
+import { useCurrentChartData } from "@/hooks/useCharts";
+import { useGameTick } from "@/hooks/useGameTick";
 
 export const Route = createFileRoute("/app/overviews/storage")({
     component: StorageOverviewPage,

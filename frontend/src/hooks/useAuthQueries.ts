@@ -1,14 +1,15 @@
 /** React Query hooks for authentication-related data. */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { authApi } from "@/lib/api/auth";
+import { handleApiError } from "@/lib/error-utils";
+import { queryKeys } from "@/lib/query-client";
 import type {
     LoginRequest,
     SignupRequest,
     ChangePasswordRequest,
 } from "@/types/auth";
-import { authApi } from "@/lib/api/auth";
-import { queryKeys } from "@/lib/query-client";
-import { handleApiError } from "@/lib/error-utils";
 
 /** Mutation hook for login. */
 export function useLogin() {

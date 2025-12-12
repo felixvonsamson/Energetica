@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HomeLayout } from "@/components/HomeLayout";
 import {
     TrendingUp,
     Package,
@@ -8,6 +7,8 @@ import {
     Handshake,
     BookOpen,
 } from "lucide-react";
+
+import { HomeLayout } from "@/components/HomeLayout";
 
 export const Route = createFileRoute("/learning-tool")({
     component: RouteComponent,
