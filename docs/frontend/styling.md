@@ -1,5 +1,7 @@
 # Styling with Tailwind
 
+TODO possibly merge into [component-library.md](/docs/frontend/component-library.md)
+
 Guidelines for styling components with Tailwind CSS and the project's theme system.
 
 ## Use Tailwind Config Colors
@@ -16,12 +18,12 @@ Guidelines for styling components with Tailwind CSS and the project's theme syst
 
 **Available colors:**
 
-- `bone` - #e5d9b6 (background, cards)
-- `tan-green` - #a4be7b (buttons, accents)
-- `brand-green` - #5f8d4e (primary actions)
-- `pine` - #285430 (text, dark backgrounds)
-- `alert-red` - #f44336 (errors, warnings)
-- `alert-orange` - #f59f00 (warnings)
+-   `bone` - #e5d9b6 (background, cards)
+-   `tan-green` - #a4be7b (buttons, accents)
+-   `brand-green` - #5f8d4e (primary actions)
+-   `pine` - #285430 (text, dark backgrounds)
+-   `alert-red` - #f44336 (errors, warnings)
+-   `alert-orange` - #f59f00 (warnings)
 
 ## Color and Text Management
 
@@ -113,15 +115,15 @@ import { Home, Settings, User } from "lucide-react";
 
 **Advantages:**
 
-- Tree-shakeable (only bundle icons you use)
-- Consistent sizing
-- Themeable with Tailwind classes
-- TypeScript support
+-   Tree-shakeable (only bundle icons you use)
+-   Consistent sizing
+-   Themeable with Tailwind classes
+-   TypeScript support
 
 **Avoid:**
 
-- Emojis (inconsistent across platforms)
-- Font Awesome (requires loading entire font)
+-   Emojis (inconsistent across platforms)
+-   Font Awesome (requires loading entire font)
 
 ## Asset Colors
 
@@ -136,7 +138,7 @@ const colorVar = `--asset-color-${facility.toLowerCase().replace(/_/g, "-")}`;
         width: `${usage * 100}%`,
         backgroundColor: `var(${colorVar})`,
     }}
-/>
+/>;
 ```
 
 See [ASSET_COLORS.md](ASSET_COLORS.md) for complete documentation.
@@ -292,16 +294,16 @@ See [ANIMATIONS.md](ANIMATIONS.md) for animation best practices.
 
 Before committing styled components:
 
-- [ ] Uses theme colors from tailwind.config
-- [ ] Includes dark mode variants
-- [ ] Uses semantic color variables where appropriate
-- [ ] Follows mobile-first responsive design
-- [ ] Uses lucide-react for icons
-- [ ] No hardcoded hex colors
-- [ ] Proper contrast ratios for accessibility
+-   [ ] Uses theme colors from tailwind.config
+-   [ ] Includes dark mode variants
+-   [ ] Uses semantic color variables where appropriate
+-   [ ] Follows mobile-first responsive design
+-   [ ] Uses lucide-react for icons
+-   [ ] No hardcoded hex colors
+-   [ ] Proper contrast ratios for accessibility
 
 ## See Also
 
-- [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
-- [ASSET_COLORS.md](ASSET_COLORS.md) - Asset-specific color system
-- [BEST_PRACTICES.md](BEST_PRACTICES.md) - General React patterns
+-   [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
+-   [ASSET_COLORS.md](ASSET_COLORS.md) - Asset-specific color system
+-   [BEST_PRACTICES.md](BEST_PRACTICES.md) - General React patterns

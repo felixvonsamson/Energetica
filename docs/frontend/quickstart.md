@@ -29,9 +29,9 @@ Visit http://localhost:5173/app/dashboard
 
 You should see:
 
-- User information
-- Socket.IO connection status
-- Tick counter incrementing every minute
+-   User information
+-   Socket.IO connection status
+-   Tick counter incrementing every minute
 
 ## Verification
 
@@ -39,8 +39,8 @@ You should see:
 
 Check Network tab in DevTools:
 
-- `GET /api/v1/auth/me` returns 200 with user data (when logged in)
-- Returns 401 when not logged in
+-   `GET /api/v1/auth/me` returns 200 with user data (when logged in)
+-   Returns 401 when not logged in
 
 ### Socket.IO
 
@@ -65,33 +65,6 @@ import { useAuth } from "@/hooks/useAuth"; // works
 import { apiClient } from "@/lib/api-client"; // works
 ```
 
-## Common Issues
-
-**Module not found: @/contexts/AuthContext**
-
-Restart dev server:
-
-```bash
-npm run dev
-```
-
-**Socket.IO connection refused**
-
-Check backend is running and user is logged in.
-
-**TypeScript errors**
-
-Clear cache and restart:
-
-```bash
-rm -rf node_modules/.vite
-npm run dev
-```
-
-**401 errors on /api/auth/me**
-
-Login through legacy Jinja form at http://localhost:5001/login
-
 ## Creating a New Page
 
 1. Create route file:
@@ -99,19 +72,15 @@ Login through legacy Jinja form at http://localhost:5001/login
 ```ts
 // frontend/src/routes/app/my-page.tsx
 import { createFileRoute } from "@tanstack/react-router";
-import { RequireSettledPlayer } from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/app/my-page")({
     component: MyPage,
+    staticData: {...}
 });
 
 function MyPage() {
-    return (
-        <RequireSettledPlayer>
-            <MyPageContent />
-        </RequireSettledPlayer>
-    );
+    return <MyPageContent />;
 }
 
 function MyPageContent() {
@@ -126,8 +95,8 @@ function MyPageContent() {
 
 Both old and new can coexist:
 
-- Legacy: http://localhost:5001/dashboard (Jinja)
-- New: http://localhost:5173/app/dashboard (React)
+-   Legacy: http://localhost:5001/dashboard (Jinja)
+-   New: http://localhost:5173/app/dashboard (React)
 
 ## Quick Reference
 
@@ -150,25 +119,25 @@ const { data } = useQuery({
 // Protected route
 <RequireSettledPlayer>
     <YourComponent />
-</RequireSettledPlayer>
+</RequireSettledPlayer>;
 ```
 
 ## Next Steps
 
 **Essential Reading:**
 
-- [BEST_PRACTICES.md](BEST_PRACTICES.md) - **Start here** for component patterns and standards
-- [STYLING.md](STYLING.md) - Tailwind patterns and theme colors
-- [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
-- [FRONTEND.md](FRONTEND.md) - Foundation documentation
-- [API.md](API.md) - API integration & types
+-   [BEST_PRACTICES.md](BEST_PRACTICES.md) - **Start here** for component patterns and standards
+-   [STYLING.md](STYLING.md) - Tailwind patterns and theme colors
+-   [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
+-   [FRONTEND.md](FRONTEND.md) - Foundation documentation
+-   [API_INTEGRATION.md](API_INTEGRATION.md) - API integration & types
 
 **Learn by Example:**
 
-- See `src/routes/app/dashboard.tsx` for best practices in action
-- Check `src/components/ui/` for reusable components
+-   See `src/routes/app/dashboard.tsx` for best practices in action
+-   Check `src/components/ui/` for reusable components
 
 **Reference:**
 
-- [CAPABILITIES.md](CAPABILITIES.md) - Feature flag system
-- [ASSET_COLORS.md](ASSET_COLORS.md) - Asset color system
+-   [CAPABILITIES.md](CAPABILITIES.md) - Feature flag system
+-   [ASSET_COLORS.md](ASSET_COLORS.md) - Asset color system

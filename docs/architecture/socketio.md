@@ -2,6 +2,8 @@
 
 Backend patterns for SocketIO data emission and query invalidation.
 
+See also data-fetching.md
+
 ## Core Principle: Single Source of Truth
 
 **Never duplicate data serialization logic.** Always use Pydantic schemas.
