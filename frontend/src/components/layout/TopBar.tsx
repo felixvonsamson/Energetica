@@ -25,6 +25,7 @@ import { Money } from "@/types/money";
 import { Workers } from "@/types/workers";
 import { Resources } from "@/types/resources";
 import { Navigation } from "./Navigation";
+import { Link } from "@tanstack/react-router";
 
 export function TopBar() {
     const { user } = useAuth();
@@ -93,15 +94,15 @@ export function TopBar() {
 
                         {/* Settings, Notifications, Theme Toggle, and Mobile Menu */}
                         <div className="flex gap-2 flex-shrink-0">
-                            <a
-                                href="/settings"
+                            <Link
+                                to="/app/settings"
                                 className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-2 py-2 lg:px-4 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors flex items-center justify-center aspect-square lg:aspect-auto h-9"
                             >
                                 <Settings size={20} />
                                 <span className="ml-2 hidden lg:inline">
                                     Settings
                                 </span>
-                            </a>
+                            </Link>
 
                             <button
                                 onClick={() => setShowNotifications(true)}

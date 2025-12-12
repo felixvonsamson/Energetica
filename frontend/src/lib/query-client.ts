@@ -141,4 +141,7 @@ export const queryKeys = {
         deliveryTime: (askId: number) =>
             ["resource-market", "delivery-time", askId] as const,
     },
+    browserNotifications: {
+        vapidKey: ["browser-notifications", "vapid-key"] as const,
+    },
 } as const;
