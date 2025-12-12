@@ -42,15 +42,6 @@ function GameComponent() {
 
 Route protection for different access levels: done with staticData, see tanstack router.
 
-## Path Aliases
-
-Clean imports using `@` prefix.
-
-```ts
-import { useAuth } from "@/hooks/useAuth";
-import { apiClient } from "@/lib/api-client";
-```
-
 ## Troubleshooting
 
 ### API Types Out of Sync
@@ -66,14 +57,6 @@ npm run generate-types
 # Restart TypeScript server in your IDE
 # VS Code: Cmd/Ctrl + Shift + P → "TypeScript: Restart TS Server"
 ```
-
-### Path Aliases Not Resolving
-
--   Restart TypeScript server in your IDE
--   Check `tsconfig.json` has `paths` configured correctly
--   Check `vite.config.ts` has `resolve.alias` configured
--   Clear build cache: `rm -rf node_modules/.vite`
--   Restart dev server
 
 ### Dev Server Won't Start
 

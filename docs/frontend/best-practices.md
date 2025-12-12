@@ -4,40 +4,15 @@ Standards and patterns for the React migration.
 
 **Quick Links:**
 
-- [STYLING.md](STYLING.md) - Tailwind patterns and theme colors
-- [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
-- [ASSET_COLORS.md](ASSET_COLORS.md) - Asset-specific color system
-
-## Project Structure
-
-**Path Alias:** `@/` is a path alias configured in `tsconfig.json` and `vite.config.ts` that points to `src/`. Use it for all internal imports instead of relative paths, it makes refactoring easier and imports more readable.
-
-```
-src/
-├── components/
-│   ├── ui/              # Reusable UI primitives (Card, Button, Modal)
-│   ├── layout/          # Layout components (TopBar, Navigation, GameLayout)
-│   ├── <features>/      # Feature-specific components (Dashboard, Facilities)
-│   └── auth/            # Auth-related components for protected routes
-├── hooks/               # Custom React hooks
-│   └── use*.ts          # One hook per file, prefixed with 'use'
-├── lib/                 # Utilities and configs
-│   ├── api/             # API client modules (*-api.ts files)
-│   ├── query-client.ts  # TanStack Query config
-│   ├── cn.ts            # Tailwind class name merging utility
-│   ├── format-utils.ts  # Number and value formatting utilities
-│   └── other utilities  # date-utils, hex-utils, etc.
-├── contexts/            # React contexts
-├── types/               # TypeScript types
-└── routes/              # TanStack Router routes
-    └── app/             # Game routes under /app/*
-```
+-   [STYLING.md](STYLING.md) - Tailwind patterns and theme colors
+-   [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
+-   [ASSET_COLORS.md](ASSET_COLORS.md) - Asset-specific color system
 
 ### File Naming
 
-- Components: `PascalCase.tsx` (e.g., `DashboardCard.tsx`)
-- Hooks: `use*.ts` (e.g., `usePlayerMoney.ts`)
-- Typescript utils: `camelCase.ts` (e.g., `formatCurrency.ts`)
+-   Components: `PascalCase.tsx` (e.g., `DashboardCard.tsx`)
+-   Hooks: `use*.ts` (e.g., `usePlayerMoney.ts`)
+-   Typescript utils: `camelCase.ts` (e.g., `formatCurrency.ts`)
 
 ## Component Guidelines
 
@@ -49,9 +24,9 @@ For components for routes, these can be directly defined in the route. If that c
 
 For comprehensive styling guidelines, see:
 
-- **[STYLING.md](STYLING.md)** - Tailwind patterns, theme colors, responsive design
-- **[ANIMATIONS.md](ANIMATIONS.md)** - Animation and transition best practices
-- **[ASSET_COLORS.md](ASSET_COLORS.md)** - Asset-specific color system
+-   **[STYLING.md](STYLING.md)** - Tailwind patterns, theme colors, responsive design
+-   **[ANIMATIONS.md](ANIMATIONS.md)** - Animation and transition best practices
+-   **[ASSET_COLORS.md](ASSET_COLORS.md)** - Asset-specific color system
 
 ### Quick Reference
 
@@ -168,10 +143,7 @@ import type { Requirement } from "@/types/projects";
 ### ARIA Labels
 
 ```ts
-<button
-    onClick={onClose}
-    aria-label="Close modal"
->
+<button onClick={onClose} aria-label="Close modal">
     <X className="w-5 h-5" />
 </button>
 ```
@@ -191,17 +163,17 @@ import type { Requirement } from "@/types/projects";
 
 Before submitting a PR:
 
-- [ ] Using lucide-react icons, not emojis
-- [ ] Animations follow guidelines (see [ANIMATIONS.md](ANIMATIONS.md))
-- [ ] Responsive design tested
+-   [ ] Using lucide-react icons, not emojis
+-   [ ] Animations follow guidelines (see [ANIMATIONS.md](ANIMATIONS.md))
+-   [ ] Responsive design tested
 
 ## See Also
 
-- [STYLING.md](STYLING.md) - Tailwind patterns and theme colors
-- [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
-- [ASSET_COLORS.md](ASSET_COLORS.md) - Asset-specific color system
-- [API.md](API.md) - API integration and query patterns
-- [FRONTEND.md](FRONTEND.md) - Foundation and architecture overview
+-   [STYLING.md](STYLING.md) - Tailwind patterns and theme colors
+-   [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
+-   [ASSET_COLORS.md](ASSET_COLORS.md) - Asset-specific color system
+-   [API.md](API.md) - API integration and query patterns
+-   [FRONTEND.md](FRONTEND.md) - Foundation and architecture overview
 
 ## TODO
 

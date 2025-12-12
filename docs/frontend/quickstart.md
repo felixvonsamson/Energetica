@@ -56,15 +56,6 @@ Backend logs show:
 [socket.io] New connection from <username>
 ```
 
-### Path Aliases
-
-Imports work without errors:
-
-```ts
-import { useAuth } from "@/hooks/useAuth"; // works
-import { apiClient } from "@/lib/api-client"; // works
-```
-
 ## Creating a New Page
 
 1. Create route file:
@@ -117,9 +108,8 @@ const { data } = useQuery({
 });
 
 // Protected route
-<RequireSettledPlayer>
-    <YourComponent />
-</RequireSettledPlayer>;
+// TODO
+// See docs/frontend/routing.md
 ```
 
 ## Next Steps

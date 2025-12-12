@@ -1,3 +1,7 @@
+# Getting Started
+
+Commands to run to get started and to run the project code
+
 # Installation
 
 ```bash
