@@ -3,11 +3,9 @@
  * navigation.
  */
 
-import { useState, useEffect } from "react";
-import { Link, type LinkProps, useLocation } from "@tanstack/react-router";
+import { useState } from "react";
 import {
     Menu,
-    ChevronDown,
     Settings,
     Bell,
     AlertCircle,
@@ -20,19 +18,18 @@ import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useNavigation } from "@/contexts/NavigationContext";
 import { NotificationPopup } from "./NotificationPopup";
-import { SideNav } from "./SideNav";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Money } from "@/types/money";
 import { Workers } from "@/types/workers";
 import { Resources } from "@/types/resources";
-import type { LucideIcon } from "lucide-react";
-import { navigationConfig } from "@/lib/nav-config";
+import { Navigation } from "./Navigation";
 
 export function TopBar() {
     const { user } = useAuth();
     const capabilities = useCapabilities();
-    const location = useLocation();
+    const { isMenuOpen, setIsMenuOpen } = useNavigation();
     const {
         data: moneyData,
         isLoading: isMoneyLoading,
@@ -51,29 +48,6 @@ export function TopBar() {
     } = usePlayerResources();
     const { isConnected } = useOnlineStatus();
     const [showNotifications, setShowNotifications] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-
-    // Update dropdown state based on current route when mobile menu opens
-    useEffect(() => {
-        if (isMenuOpen) {
-            const pathname = location.pathname;
-            if (pathname.includes("/overviews")) {
-                setOpenDropdown("Overviews");
-            } else if (pathname.includes("/facilities")) {
-                setOpenDropdown("Facilities");
-            } else if (
-                pathname.includes("/community") ||
-                pathname.includes("/resource-market")
-            ) {
-                setOpenDropdown("Community");
-            }
-        }
-    }, [isMenuOpen, location.pathname]);
-
-    const toggleDropdown = (dropdown: string) => {
-        setOpenDropdown(openDropdown === dropdown ? null : dropdown);
-    };
 
     if (!user) return null;
     if (!capabilities) return null;
@@ -161,86 +135,8 @@ export function TopBar() {
                 </div>
             </div>
 
-            {/* Navigation Bar - Desktop only */}
-            <nav className="hidden md:block bg-tan-green dark:bg-dark-bg-secondary border-b border-pine-darker dark:border-dark-border">
-                <div className="px-4">
-                    {/* Navigation menu */}
-                    <ul className="flex items-center gap-0 justify-center">
-                        {navigationConfig.map((item) => {
-                            const isVisible =
-                                !item.visibility ||
-                                item.visibility(
-                                    capabilities || {
-                                        has_laboratory: false,
-                                        has_warehouse: false,
-                                        has_storage: false,
-                                        has_network: false,
-                                        has_greenhouse_gas_effect: false,
-                                    },
-                                );
-
-                            if (!isVisible) return null;
-
-                            if (item.type === "link") {
-                                return (
-                                    <NavItem
-                                        key={`${item.to}`}
-                                        to={item.to}
-                                        icon={item.icon}
-                                    >
-                                        {item.label}
-                                    </NavItem>
-                                );
-                            }
-
-                            return (
-                                <NavDropdown
-                                    key={`dropdown-${item.label}`}
-                                    label={item.label}
-                                    icon={item.icon}
-                                    isOpen={openDropdown === item.label}
-                                    onToggle={() => toggleDropdown(item.label)}
-                                >
-                                    {item.children.map((child) => {
-                                        const childIsVisible =
-                                            !child.visibility ||
-                                            child.visibility(
-                                                capabilities || {
-                                                    has_laboratory: false,
-                                                    has_warehouse: false,
-                                                    has_storage: false,
-                                                    has_network: false,
-                                                    has_greenhouse_gas_effect: false,
-                                                },
-                                            );
-
-                                        if (!childIsVisible) return null;
-
-                                        return (
-                                            <NavItem
-                                                key={`${child.to}`}
-                                                to={child.to}
-                                                icon={child.icon}
-                                            >
-                                                {child.label}
-                                            </NavItem>
-                                        );
-                                    })}
-                                </NavDropdown>
-                            );
-                        })}
-                    </ul>
-                </div>
-            </nav>
-
-            {/* Mobile Side Navigation */}
-            <SideNav
-                isOpen={isMenuOpen}
-                onClose={() => setIsMenuOpen(false)}
-                capabilities={capabilities}
-                openDropdown={openDropdown}
-                onToggleDropdown={toggleDropdown}
-            />
+            {/* Navigation - both bar for desktop and side window for mobile */}
+            <Navigation />
 
             {/* Notification Popup Modal */}
             <NotificationPopup
@@ -434,72 +330,5 @@ function Logo() {
             />
             <span className="text-xl font-bold text-primary">Energetica</span>
         </div>
-    );
-}
-
-interface NavItemProps {
-    to: LinkProps["to"];
-    icon: LucideIcon;
-    children: React.ReactNode;
-}
-
-function NavItem({ to, icon: Icon, children }: NavItemProps) {
-    return (
-        <li className="w-full md:w-auto border-b border-pine/10 dark:border-dark-border/30 md:border-none">
-            <Link
-                to={to}
-                className="flex items-center gap-2 px-4 py-3 text-pine dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors"
-                activeProps={{
-                    className:
-                        "bg-tan-hover dark:bg-dark-bg-tertiary font-semibold",
-                }}
-            >
-                <Icon size={20} />
-                <span>{children}</span>
-            </Link>
-        </li>
-    );
-}
-
-interface NavDropdownProps {
-    label: string;
-    icon: LucideIcon;
-    isOpen: boolean;
-    onToggle: () => void;
-    children: React.ReactNode;
-}
-
-function NavDropdown({
-    label,
-    icon: Icon,
-    isOpen,
-    onToggle,
-    children,
-}: NavDropdownProps) {
-    return (
-        <li className="w-full md:w-auto md:relative border-b border-pine/20 dark:border-dark-border/50 md:border-none">
-            <button
-                onClick={onToggle}
-                className={`flex items-center gap-2 px-4 py-3 text-pine dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors w-full ${
-                    isOpen ? "bg-tan-hover dark:bg-dark-bg-tertiary" : ""
-                }`}
-            >
-                <Icon size={20} />
-                <span className="font-medium">{label}</span>
-                <ChevronDown
-                    size={16}
-                    className={`ml-auto transition-transform ${
-                        isOpen ? "rotate-180" : ""
-                    }`}
-                />
-            </button>
-
-            {/* Dropdown menu */}
-            {isOpen && (
-                <ul className="bg-bone/50 dark:bg-dark-bg-tertiary md:absolute md:left-0 md:top-full md:bg-bone dark:md:bg-dark-bg-secondary md:shadow-lg md:min-w-[220px] md:border-2 md:border-pine-darker dark:md:border-dark-border">
-                    {children}
-                </ul>
-            )}
-        </li>
     );
 }

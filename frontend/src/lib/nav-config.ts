@@ -30,25 +30,26 @@ export interface Capabilities {
     has_greenhouse_gas_effect: boolean;
 }
 
-export interface NavItemConfig {
+export interface NavLinkConfig {
     type: "link";
     label: string;
     to: LinkProps["to"];
     icon: LucideIcon;
-    visibility?: (capabilities: Capabilities) => boolean;
 }
 
-export interface NavDropdownConfig {
+export interface NavGroupConfig {
     type: "dropdown";
     label: string;
     icon: LucideIcon;
-    children: NavItemConfig[];
-    visibility?: (capabilities: Capabilities) => boolean;
+    children: NavLinkConfig[];
 }
 
-export type NavigationItem = NavItemConfig | NavDropdownConfig;
+/** Control whether locked routes are hidden or shown as disabled */
+export const SHOW_LOCKED_ROUTES_AS_DISABLED = true;
 
-export const navigationConfig: NavigationItem[] = [
+export type NavigationItemConfig = NavLinkConfig | NavGroupConfig;
+
+export const navigationConfig: NavigationItemConfig[] = [
     {
         type: "link",
         label: "Dashboard",
@@ -77,21 +78,18 @@ export const navigationConfig: NavigationItem[] = [
                 label: "Storage",
                 to: "/app/overviews/storage",
                 icon: BatteryFull,
-                visibility: (cap) => cap.has_storage,
             },
             {
                 type: "link",
                 label: "Resources",
                 to: "/app/overviews/resources",
                 icon: Package,
-                visibility: (cap) => cap.has_warehouse,
             },
             {
                 type: "link",
                 label: "Emissions",
                 to: "/app/overviews/emissions",
                 icon: Leaf,
-                visibility: (cap) => cap.has_greenhouse_gas_effect,
             },
         ],
     },
@@ -123,7 +121,6 @@ export const navigationConfig: NavigationItem[] = [
                 label: "Extraction Facilities",
                 to: "/app/facilities/extraction",
                 icon: Pickaxe,
-                visibility: (cap) => cap.has_warehouse,
             },
             {
                 type: "link",
@@ -136,7 +133,6 @@ export const navigationConfig: NavigationItem[] = [
                 label: "Technology",
                 to: "/app/facilities/technology",
                 icon: FlaskConical,
-                visibility: (cap) => cap.has_laboratory,
             },
         ],
     },
@@ -150,14 +146,12 @@ export const navigationConfig: NavigationItem[] = [
                 label: "Electricity Markets",
                 to: "/app/community/electricity-markets",
                 icon: Zap,
-                visibility: (cap) => cap.has_network,
             },
             {
                 type: "link",
                 label: "Resources Market",
                 to: "/app/community/resource-market",
                 icon: Package,
-                visibility: (cap) => cap.has_warehouse,
             },
             {
                 type: "link",
@@ -188,7 +182,7 @@ export const navigationConfig: NavigationItem[] = [
 ];
 
 /** Additional navigation items for mobile sidebar only */
-export const mobileOnlyNavigation: NavigationItem[] = [
+export const mobileOnlyNavigation: NavigationItemConfig[] = [
     {
         type: "link",
         label: "Game Wiki",
