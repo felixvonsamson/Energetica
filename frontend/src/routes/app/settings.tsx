@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HelpCircle } from "lucide-react";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/GameLayout";
@@ -7,13 +6,25 @@ import { Modal, Card, Button, InfoBanner } from "@/components/ui";
 import { useChangePassword } from "@/hooks/useAuthQueries";
 import { handleApiError } from "@/lib/error-utils";
 
+function SettingsHelp() {
+    return (
+        <div className="space-y-3">
+            <p>On this page you can change the settings of your account.</p>
+        </div>
+    );
+}
+
 export const Route = createFileRoute("/app/settings")({
     component: SettingsPage,
     staticData: {
+        title: "Settings",
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
             isUnlocked: () => true,
+        },
+        infoModal: {
+            contents: <SettingsHelp />,
         },
     },
 });
@@ -27,7 +38,6 @@ function SettingsPage() {
 }
 
 function SettingsContent() {
-    const [showInfoPopup, setShowInfoPopup] = useState(false);
     const [showChangePasswordModal, setShowChangePasswordModal] =
         useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -66,33 +76,12 @@ function SettingsContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title with info icon */}
-            <div className="flex items-center justify-center gap-3 mb-8">
+            {/* Title */}
+            <div className="flex items-center justify-center mb-8">
                 <h1 className="text-4xl md:text-5xl font-bold text-center">
                     Settings
                 </h1>
-                <button
-                    onClick={() => setShowInfoPopup(true)}
-                    className="text-primary hover:opacity-80 transition-opacity"
-                    aria-label="Show help"
-                >
-                    <HelpCircle className="w-8 h-8" />
-                </button>
             </div>
-
-            {/* Info modal */}
-            <Modal
-                isOpen={showInfoPopup}
-                onClose={() => setShowInfoPopup(false)}
-                title="Help : Settings"
-            >
-                <div className="space-y-3">
-                    <p>
-                        On this page you can change the settings of your
-                        account.
-                    </p>
-                </div>
-            </Modal>
 
             {/* Settings cards */}
             <div className="max-w-2xl mx-auto space-y-6">

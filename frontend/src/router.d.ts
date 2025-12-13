@@ -16,8 +16,12 @@ type RouteConfig =
 
 declare module "@tanstack/react-router" {
     interface StaticDataRouteOption {
-        title?: string;
+        title: string;
         routeConfig?: RouteConfig;
+        infoModal?: {
+            title?: string; // If empty, the modal title is inferred from route title
+            contents: React.ReactNode;
+        };
     }
 }
 export {};

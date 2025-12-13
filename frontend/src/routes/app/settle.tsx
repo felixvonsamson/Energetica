@@ -1,13 +1,12 @@
 /** Settlement page - allows player to choose their starting location on the map. */
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { HelpCircle } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
 
 import { HexTile } from "@/components/map/HexTile";
 import { MapCanvas } from "@/components/map/MapCanvas";
 import { MapHoverBorder } from "@/components/map/MapHoverBorder";
-import { Modal, ThemeToggle } from "@/components/ui";
+import { ThemeToggle } from "@/components/ui";
 import { useMapContext } from "@/contexts/MapContext";
 import { Theme, useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,10 +20,34 @@ import { HexTileResources } from "@/types/map";
 type HexTileData = ApiResponse<"/api/v1/map", "get">[number];
 type ResourceId = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
+function SettleHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                The first decisions you have to make in the game is to choose an
+                available location on the map. The menu on the left allows you
+                to see where different natural resources are located.
+            </p>
+            <p>
+                The location choice is <strong>definitive</strong>, you will not
+                be able to change it during the game so choose wisely.
+            </p>
+            <p>
+                For more detailed information about the map, the resources you
+                can find on it and the climate risks, refer to the Map section
+                in the wiki.
+            </p>
+        </div>
+    );
+}
+
 export const Route = createFileRoute("/app/settle")({
     component: SettlePage,
     staticData: {
         title: "Location choice",
+        infoModal: {
+            contents: <SettleHelp />,
+        },
     },
 });
 
@@ -283,7 +306,6 @@ function SettlePage() {
 }
 
 function SettleContent() {
-    const [showInfoPopup, setShowInfoPopup] = useState(false);
     const [activeResourceId, setActiveResourceId] = useState<
         ResourceId | undefined
     >(undefined);
@@ -347,48 +369,13 @@ function SettleContent() {
 
     return (
         <div className="p-4 flex flex-col lg:h-screen">
-            {/* Title with info icon and theme toggle */}
+            {/* Title with theme toggle */}
             <div className="flex items-center justify-between gap-3 mb-6 lg:shrink-0">
                 <h1 className="text-3xl md:text-4xl font-bold text-center flex-1">
                     Location choice
                 </h1>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setShowInfoPopup(true)}
-                        className="text-primary hover:opacity-80 transition-opacity"
-                        aria-label="Show help"
-                    >
-                        <HelpCircle className="w-8 h-8" />
-                    </button>
-                    <ThemeToggle />
-                </div>
+                <ThemeToggle />
             </div>
-
-            {/* Info modal */}
-            <Modal
-                isOpen={showInfoPopup}
-                onClose={() => setShowInfoPopup(false)}
-                title="Help : Location choice"
-            >
-                <div className="space-y-3">
-                    <p>
-                        The first decisions you have to make in the game is to
-                        choose an available location on the map. The menu on the
-                        left allows you to see where different natural resources
-                        are located.
-                    </p>
-                    <p>
-                        The location choice is <strong>definitive</strong>, you
-                        will not be able to change it during the game so choose
-                        wisely.
-                    </p>
-                    <p>
-                        For more detailed information about the map, the
-                        resources you can find on it and the climate risks,
-                        refer to the Map section in the wiki.
-                    </p>
-                </div>
-            </Modal>
 
             <div className="flex flex-col lg:flex-row gap-4 lg:flex-1 lg:min-h-0">
                 {/* Left sidebar - Resource filters */}

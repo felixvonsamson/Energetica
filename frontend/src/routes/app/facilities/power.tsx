@@ -1,15 +1,43 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HelpCircle } from "lucide-react";
-import { useState } from "react";
 
 import { ResourceStockIndicators } from "@/components/facilities";
 import { FacilityCard } from "@/components/facilities/FacilityCard";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Modal, Money } from "@/components/ui";
+import { Money } from "@/components/ui";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { usePowerFacilitiesCatalog } from "@/hooks/useProjects";
 import { formatPower, formatMass } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
+
+function PowerFacilitiesHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                On this page you will find all the facilities that generate
+                electricity and their respective information.
+            </p>
+            <p>
+                When clicking on a specific tile, it will extend the tile and
+                show you more information about the facility as well as a button
+                to start the construction of the facility.
+            </p>
+            <p>
+                Some facilities might be locked and require certain technologies
+                to be unlocked. To research technologies, you need a laboratory.
+            </p>
+            <p>
+                For more information about power facilities, refer to{" "}
+                <a
+                    href="/wiki/power_facilities"
+                    className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
+                >
+                    this section in the wiki
+                </a>
+                .
+            </p>
+        </div>
+    );
+}
 
 export const Route = createFileRoute("/app/facilities/power")({
     component: PowerFacilitiesPage,
@@ -19,6 +47,9 @@ export const Route = createFileRoute("/app/facilities/power")({
             requiredRole: "player",
             requiresSettledTile: true,
             isUnlocked: () => true,
+        },
+        infoModal: {
+            contents: <PowerFacilitiesHelp />,
         },
     },
 });
@@ -34,8 +65,6 @@ function PowerFacilitiesPage() {
 type PowerFacility = ApiSchema<"PowerFacilityCatalogOut">;
 
 function PowerFacilitiesContent() {
-    const [showInfoPopup, setShowInfoPopup] = useState(false);
-
     const {
         data: catalogData,
         isLoading: isCatalogLoading,
@@ -58,54 +87,12 @@ function PowerFacilitiesContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title with info icon */}
+            {/* Title */}
             <div className="flex items-center justify-center gap-3 mb-6">
                 <h1 className="text-4xl md:text-5xl font-bold text-center">
                     Power Facilities
                 </h1>
-                <button
-                    onClick={() => setShowInfoPopup(true)}
-                    className="text-primary hover:opacity-80 transition-opacity"
-                    aria-label="Show help"
-                >
-                    <HelpCircle className="w-8 h-8" />
-                </button>
             </div>
-
-            {/* Info modal */}
-            <Modal
-                isOpen={showInfoPopup}
-                onClose={() => setShowInfoPopup(false)}
-                title="Help : Power Facilities"
-            >
-                <div className="space-y-3">
-                    <p>
-                        On this page you will find all the facilities that
-                        generate electricity and their respective information.
-                    </p>
-                    <p>
-                        When clicking on a specific tile, it will extend the
-                        tile and show you more information about the facility as
-                        well as a button to start the construction of the
-                        facility.
-                    </p>
-                    <p>
-                        Some facilities might be locked and require certain
-                        technologies to be unlocked. To research technologies,
-                        you need a laboratory.
-                    </p>
-                    <p>
-                        For more information about power facilities, refer to{" "}
-                        <a
-                            href="/wiki/power_facilities"
-                            className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
-                        >
-                            this section in the wiki
-                        </a>
-                        .
-                    </p>
-                </div>
-            </Modal>
 
             {/* TODO: Under construction facilities will show here */}
             <div id="under_construction" className="mb-6"></div>

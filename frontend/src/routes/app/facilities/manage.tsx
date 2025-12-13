@@ -1,12 +1,11 @@
 /** Facility management page - Overview of player assets. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { HelpCircle } from "lucide-react";
 import { useState } from "react";
 
 import { FacilityGroupTable } from "@/components/facilities/FacilityGroupTable";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Modal, Card, CardTitle } from "@/components/ui";
+import { Card, CardTitle } from "@/components/ui";
 import { FacilityGauge } from "@/components/ui/FacilityGauge";
 import { dummyFacilities } from "@/data/dummyFacilities";
 import { useHasCapability } from "@/hooks/useCapabilities";
@@ -14,6 +13,24 @@ import { useFacilities } from "@/hooks/useFacilities";
 import { formatPower, formatEnergy, formatMassRate } from "@/lib/format-utils";
 
 type FacilityCategory = "power" | "storage" | "extraction";
+
+function FacilityManagementHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                This is your facility management page with an overview of all
+                your assets.
+            </p>
+            <p>
+                You will find tables with all the instances of power, storage
+                and extraction facilities you own with their respective
+                information. You also have the possibility to upgrade (after you
+                researched a technology that affects this facility) or dismantle
+                each instance.
+            </p>
+        </div>
+    );
+}
 
 export const Route = createFileRoute("/app/facilities/manage")({
     component: FacilityManagementPage,
@@ -23,6 +40,9 @@ export const Route = createFileRoute("/app/facilities/manage")({
             requiredRole: "player",
             requiresSettledTile: true,
             isUnlocked: () => true,
+        },
+        infoModal: {
+            contents: <FacilityManagementHelp />,
         },
     },
 });
@@ -36,7 +56,6 @@ function FacilityManagementPage() {
 }
 
 function FacilityManagementContent() {
-    const [showInfoPopup, setShowInfoPopup] = useState(false);
     const [selectedCategory, setSelectedCategory] =
         useState<FacilityCategory>("power");
     const {
@@ -318,40 +337,12 @@ function FacilityManagementContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title with info icon */}
+            {/* Title */}
             <div className="flex items-center justify-center gap-3 mb-6">
                 <h1 className="text-4xl md:text-5xl font-bold text-center">
                     Facility Management
                 </h1>
-                <button
-                    onClick={() => setShowInfoPopup(true)}
-                    className="text-primary hover:opacity-80 transition-opacity"
-                    aria-label="Show help"
-                >
-                    <HelpCircle className="w-8 h-8" />
-                </button>
             </div>
-
-            {/* Info modal */}
-            <Modal
-                isOpen={showInfoPopup}
-                onClose={() => setShowInfoPopup(false)}
-                title="Help : Facility Management"
-            >
-                <div className="space-y-3">
-                    <p>
-                        This is your facility management page with an overview
-                        of all your assets.
-                    </p>
-                    <p>
-                        You will find tables with all the instances of power,
-                        storage and extraction facilities you own with their
-                        respective information. You also have the possibility to
-                        upgrade (after you researched a technology that affects
-                        this facility) or dismantle each instance.
-                    </p>
-                </div>
-            </Modal>
 
             {/* Category Filter */}
             {showCategoryUI && (

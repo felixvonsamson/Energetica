@@ -3,20 +3,27 @@
  * navigation.
  */
 
-import { Link } from "@tanstack/react-router";
 import {
+    Link,
+    useLocation,
+    useNavigate,
+    useSearch,
+} from "@tanstack/react-router";
+import {
+    AlertCircle,
+    Bell,
+    FlaskConical,
+    Hammer,
+    HelpCircle,
     Menu,
     Settings,
-    Bell,
-    AlertCircle,
-    Hammer,
-    FlaskConical,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Navigation } from "./Navigation";
 import { NotificationPopup } from "./NotificationPopup";
 
+import { Modal } from "@/components/ui";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +32,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { usePlayerMoney } from "@/hooks/usePlayerMoney";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
+import { useRouteStaticData } from "@/hooks/useRouteStaticData";
 import { Money } from "@/types/money";
 import { Resources } from "@/types/resources";
 import { Workers } from "@/types/workers";
@@ -51,6 +59,27 @@ export function TopBar() {
     } = usePlayerResources();
     const { isConnected } = useOnlineStatus();
     const [showNotifications, setShowNotifications] = useState(false);
+
+    const location = useLocation();
+    const staticData = useRouteStaticData(location as never);
+    const { help } = useSearch({
+        from: location.pathname as never,
+    });
+    const isShowingHelp = help === "";
+    // const navigate = useNavigate({ from: location.pathname as never });
+    const navigate = useNavigate({ from: location.pathname as never });
+    const handleCloseHelp = useCallback(() => {
+        navigate({ replace: true });
+    }, [navigate]);
+    const handleShowHelp = useCallback(() => {
+        // @ts-expect-error Tanstack router does not know that the 'help' query is available, because we erased the type of the location
+        navigate({ search: { help: "" }, replace: true });
+    }, [navigate]);
+    // If
+    useEffect(() => {
+        if (!staticData) return;
+        if (!staticData.infoModal) handleCloseHelp();
+    }, [staticData, handleCloseHelp]);
 
     if (!user) return null;
     if (!capabilities) return null;
@@ -94,8 +123,18 @@ export function TopBar() {
                             </div>
                         </div>
 
-                        {/* Settings, Notifications, Theme Toggle, and Mobile Menu */}
+                        {/* Help Button, Settings, Notifications, Theme Toggle, and Mobile Menu */}
                         <div className="flex gap-2 flex-shrink-0">
+                            {staticData?.infoModal && (
+                                <button
+                                    onClick={() => handleShowHelp()}
+                                    className="px-2 py-2 text-bone-text dark:text-dark-text-primary rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors h-9 aspect-square"
+                                    aria-label="Show help"
+                                >
+                                    <HelpCircle size={20} />
+                                </button>
+                            )}
+
                             <Link
                                 to="/app/settings"
                                 className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-2 py-2 lg:px-4 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors flex items-center justify-center aspect-square lg:aspect-auto h-9"
@@ -146,6 +185,20 @@ export function TopBar() {
                 isOpen={showNotifications}
                 onClose={() => setShowNotifications(false)}
             />
+
+            {/* Help / info modal */}
+            {staticData?.infoModal && (
+                <Modal
+                    isOpen={isShowingHelp}
+                    onClose={handleCloseHelp}
+                    title={
+                        staticData.infoModal.title ??
+                        "Help: " + staticData.title
+                    }
+                >
+                    {staticData.infoModal.contents}
+                </Modal>
+            )}
         </>
     );
 }

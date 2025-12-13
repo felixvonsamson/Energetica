@@ -1,14 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HelpCircle } from "lucide-react";
-import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/GameLayout";
 import {
     TechnologyCard,
     TechnologyEffectsTable,
 } from "@/components/technologies";
-import { Modal } from "@/components/ui";
 import { useTechnologiesCatalog } from "@/hooks/useProjects";
+
+function TechnologiesHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                Here you can find all the technologies that can be researched
+                thanks to the laboratory and their specific information.
+            </p>
+            <p>
+                Each technology has a unique effect on a given set of
+                facilities. When clicking on a specific tile, it will extend the
+                tile and show you more information about the technology as well
+                as a button to start the research.
+            </p>
+            <p>
+                Technologies usually require specific levels of other
+                technologies or laboratory to be researched.
+            </p>
+            <p>
+                For more information about Technologies, refer to{" "}
+                <a
+                    href="/wiki/technologies"
+                    className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
+                >
+                    this section in the wiki
+                </a>
+                .
+            </p>
+        </div>
+    );
+}
 
 export const Route = createFileRoute("/app/facilities/technology")({
     component: TechnologyPage,
@@ -18,6 +46,9 @@ export const Route = createFileRoute("/app/facilities/technology")({
             requiredRole: "player",
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_laboratory,
+        },
+        infoModal: {
+            contents: <TechnologiesHelp />,
         },
     },
 });
@@ -31,8 +62,6 @@ function TechnologyPage() {
 }
 
 function TechnologyContent() {
-    const [showInfoPopup, setShowInfoPopup] = useState(false);
-
     const {
         data: catalogData,
         isLoading: isCatalogLoading,
@@ -43,54 +72,12 @@ function TechnologyContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title with info icon */}
+            {/* Title */}
             <div className="flex items-center justify-center gap-3 mb-6">
                 <h1 className="text-4xl md:text-5xl font-bold text-center">
                     Technologies
                 </h1>
-                <button
-                    onClick={() => setShowInfoPopup(true)}
-                    className="text-primary hover:opacity-80 transition-opacity"
-                    aria-label="Show help"
-                >
-                    <HelpCircle className="w-8 h-8" />
-                </button>
             </div>
-
-            {/* Info modal */}
-            <Modal
-                isOpen={showInfoPopup}
-                onClose={() => setShowInfoPopup(false)}
-                title="Help : Technologies"
-            >
-                <div className="space-y-3">
-                    <p>
-                        Here you can find all the technologies that can be
-                        researched thanks to the laboratory and their specific
-                        information.
-                    </p>
-                    <p>
-                        Each technology has a unique effect on a given set of
-                        facilities. When clicking on a specific tile, it will
-                        extend the tile and show you more information about the
-                        technology as well as a button to start the research.
-                    </p>
-                    <p>
-                        Technologies usually require specific levels of other
-                        technologies or laboratory to be researched.
-                    </p>
-                    <p>
-                        For more information about Technologies, refer to{" "}
-                        <a
-                            href="/wiki/technologies"
-                            className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
-                        >
-                            this section in the wiki
-                        </a>
-                        .
-                    </p>
-                </div>
-            </Modal>
 
             {/* TODO: Under construction technologies will show here */}
             <div id="under_construction" className="mb-6"></div>

@@ -1,19 +1,35 @@
 /** Map page - displays hexagonal map with player territories and resources. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { HelpCircle } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 
 import { GameLayout } from "@/components/layout/GameLayout";
 import { HexTile } from "@/components/map/HexTile";
 import { MapCanvas } from "@/components/map/MapCanvas";
 import { MapTooltip } from "@/components/map/MapTooltip";
-import { Modal } from "@/components/ui";
 import { useMapContext } from "@/contexts/MapContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useMap } from "@/hooks/useMap";
 import { usePlayers } from "@/hooks/usePlayers";
 import { getHexPosition } from "@/lib/hex-utils";
+
+function MapHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                On this page you can see the map and the other players on the
+                server.
+            </p>
+            <p>
+                If you click on the tile of a player you will see their profile.
+            </p>
+            <p>
+                For more detailed information about the map and the resources
+                you can find on it refer to the Map section in the wiki.
+            </p>
+        </div>
+    );
+}
 
 export const Route = createFileRoute("/app/community/map")({
     component: MapPage,
@@ -23,6 +39,9 @@ export const Route = createFileRoute("/app/community/map")({
             requiredRole: "player",
             requiresSettledTile: true,
             isUnlocked: () => true,
+        },
+        infoModal: {
+            contents: <MapHelp />,
         },
     },
 });
@@ -146,8 +165,6 @@ function MapPage() {
 }
 
 function MapContent() {
-    const [showInfoPopup, setShowInfoPopup] = useState(false);
-
     const { data: mapData, isLoading: isMapLoading } = useMap();
     const { data: playersData, isLoading: isPlayersLoading } = usePlayers();
     const { user } = useAuth();
@@ -198,42 +215,12 @@ function MapContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title with info icon */}
-            <div className="flex items-center justify-center gap-3 mb-6">
+            {/* Title */}
+            <div className="flex items-center justify-center mb-6">
                 <h1 className="text-4xl md:text-5xl font-bold text-center">
                     Map
                 </h1>
-                <button
-                    onClick={() => setShowInfoPopup(true)}
-                    className="text-primary hover:opacity-80 transition-opacity"
-                    aria-label="Show help"
-                >
-                    <HelpCircle className="w-8 h-8" />
-                </button>
             </div>
-
-            {/* Info modal */}
-            <Modal
-                isOpen={showInfoPopup}
-                onClose={() => setShowInfoPopup(false)}
-                title="Help : Map"
-            >
-                <div className="space-y-3">
-                    <p>
-                        On this page you can see the map and the other players
-                        on the server.
-                    </p>
-                    <p>
-                        If you click on the tile of a player you will see their
-                        profile.
-                    </p>
-                    <p>
-                        For more detailed information about the map and the
-                        resources you can find on it refer to the Map section in
-                        the wiki.
-                    </p>
-                </div>
-            </Modal>
 
             {/* Map visualization */}
             <div className="flex justify-center">

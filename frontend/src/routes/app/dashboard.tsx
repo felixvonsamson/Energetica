@@ -12,13 +12,12 @@ import {
     Trophy,
     HelpCircle,
 } from "lucide-react";
-import { useState } from "react";
 
 import { AchievementCard } from "@/components/dashboard/AchievementCard";
 import { DashboardSection } from "@/components/dashboard/DashboardSection";
 import { QuickLinkCard } from "@/components/dashboard/QuickLinkCard";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Modal, InfoBanner, Card, CardTitle } from "@/components/ui";
+import { InfoBanner, Card, CardTitle } from "@/components/ui";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
@@ -28,13 +27,44 @@ import { getMonthName } from "@/lib/date-utils";
 export const Route = createFileRoute("/app/dashboard")({
     component: DashboardPage,
     staticData: {
+        title: "Dashboard",
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
+        infoModal: {
+            contents: <DashboardHelp />,
+        },
     },
 });
+
+function DashboardHelp() {
+    return (
+        <div className="space-y-3">
+            <p>This is the dashboard of your account. Here you will find:</p>
+            <ul className="list-none space-y-1 ml-4">
+                <li>🌡️ Current weather conditions and the in-game season</li>
+                <li>🏗️ Ongoing or planned construction projects</li>
+                <li>🔬 Ongoing or planned research projects</li>
+                <li>🚚 Ongoing shipments</li>
+                <li>🔗 Quick links to the most important pages</li>
+                <li>🏆 Progression information about achievements</li>
+                <li>📅 Daily quiz to win xp</li>
+            </ul>
+            <p>
+                For more info about in-game time and weather, see the{" "}
+                <a
+                    href="/wiki/time_and_weather"
+                    className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
+                >
+                    wiki
+                </a>
+                .
+            </p>
+        </div>
+    );
+}
 
 function DashboardPage() {
     return (
@@ -45,7 +75,6 @@ function DashboardPage() {
 }
 
 function DashboardContent() {
-    const [showInfoPopup, setShowInfoPopup] = useState(false);
     const capabilities = useCapabilities();
 
     // TODO: Fetch real data from API for these non-capability flags
@@ -59,49 +88,7 @@ function DashboardContent() {
                 <h1 className="text-4xl md:text-5xl font-bold text-center">
                     Dashboard
                 </h1>
-                <button
-                    onClick={() => setShowInfoPopup(true)}
-                    className="text-primary hover:opacity-80 transition-opacity"
-                    aria-label="Show help"
-                >
-                    <HelpCircle className="w-8 h-8" />
-                </button>
             </div>
-
-            {/* Info modal */}
-            <Modal
-                isOpen={showInfoPopup}
-                onClose={() => setShowInfoPopup(false)}
-                title="Help : Dashboard"
-            >
-                <div className="space-y-3">
-                    <p>
-                        This is the dashboard of your account. Here you will
-                        find:
-                    </p>
-                    <ul className="list-none space-y-1 ml-4">
-                        <li>
-                            🌡️ Current weather conditions and the in-game season
-                        </li>
-                        <li>🏗️ Ongoing or planned construction projects</li>
-                        <li>🔬 Ongoing or planned research projects</li>
-                        <li>🚚 Ongoing shipments</li>
-                        <li>🔗 Quick links to the most important pages</li>
-                        <li>🏆 Progression information about achievements</li>
-                        <li>📅 Daily quiz to win xp</li>
-                    </ul>
-                    <p>
-                        For more info about in-game time and weather, see the{" "}
-                        <a
-                            href="/wiki/time_and_weather"
-                            className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
-                        >
-                            wiki
-                        </a>
-                        .
-                    </p>
-                </div>
-            </Modal>
 
             {/* Development info banner */}
             <InfoBanner variant="info" className="mb-6">

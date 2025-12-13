@@ -5,13 +5,13 @@ import {
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
-import { HelpCircle, Plus, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff } from "lucide-react";
 import { useState, useMemo } from "react";
 
 import { GameLayout } from "@/components/layout/GameLayout";
 import { CreateAskModal } from "@/components/resource-market/CreateAskModal";
 import { PurchaseModal } from "@/components/resource-market/PurchaseModal";
-import { Modal, Card, Money } from "@/components/ui";
+import { Card, Money } from "@/components/ui";
 import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import {
@@ -26,6 +26,21 @@ import {
     RESOURCE_LABELS,
 } from "@/types/resource-market";
 
+function ResourceMarketHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                Here you can sell and buy natural resources to/from other
+                players.
+            </p>
+            <p>
+                For more information about the resource market, refer to the
+                wiki.
+            </p>
+        </div>
+    );
+}
+
 export const Route = createFileRoute("/app/community/resource-market")({
     component: ResourceMarketPage,
     staticData: {
@@ -34,6 +49,9 @@ export const Route = createFileRoute("/app/community/resource-market")({
             requiredRole: "player",
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_warehouse,
+        },
+        infoModal: {
+            contents: <ResourceMarketHelp />,
         },
     },
     validateSearch: (
@@ -68,7 +86,6 @@ function ResourceMarketContent() {
     const { askId, createAsk } = useSearch({
         from: "/app/community/resource-market",
     });
-    const [showInfoPopup, setShowInfoPopup] = useState(false);
     const [hideOwnAsks, setHideOwnAsks] = useState(false);
     const [filterResource, setFilterResource] = useState<ResourceType | "all">(
         "all",
@@ -173,37 +190,12 @@ function ResourceMarketContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title with info icon */}
+            {/* Title */}
             <div className="flex items-center justify-center gap-3 mb-6">
                 <h1 className="text-4xl md:text-5xl font-bold text-center">
                     Resource Market
                 </h1>
-                <button
-                    onClick={() => setShowInfoPopup(true)}
-                    className="text-primary hover:opacity-80 transition-opacity"
-                    aria-label="Show help"
-                >
-                    <HelpCircle className="w-8 h-8" />
-                </button>
             </div>
-
-            {/* Info modal */}
-            <Modal
-                isOpen={showInfoPopup}
-                onClose={() => setShowInfoPopup(false)}
-                title="Help : Resource Market"
-            >
-                <div className="space-y-3">
-                    <p>
-                        Here you can sell and buy natural resources to/from
-                        other players.
-                    </p>
-                    <p>
-                        For more information about the resource market, refer to
-                        the wiki.
-                    </p>
-                </div>
-            </Modal>
 
             {/* Put on sale modal */}
             <CreateAskModal

@@ -1,15 +1,27 @@
 /** Leaderboards page - Overview of all players ranked by various metrics. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { HelpCircle } from "lucide-react";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Modal, Card, Money } from "@/components/ui";
+import { Card, Money } from "@/components/ui";
 import { useHasCapability } from "@/hooks/useCapabilities";
 import { useLeaderboards } from "@/hooks/useLeaderboards";
 import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
 import type { PlayerDetailStats } from "@/types/leaderboards";
+
+function LeaderboardsHelp() {
+    return (
+        <div className="space-y-3">
+            <p>These are leaderboards of all players on the server.</p>
+            <p>You can sort the table by clicking on the column headers.</p>
+            <p>
+                Use the category buttons below to view different sets of
+                statistics.
+            </p>
+        </div>
+    );
+}
 
 export const Route = createFileRoute("/app/community/leaderboards")({
     component: LeaderboardsPage,
@@ -19,6 +31,9 @@ export const Route = createFileRoute("/app/community/leaderboards")({
             requiredRole: "player",
             requiresSettledTile: true,
             isUnlocked: () => true,
+        },
+        infoModal: {
+            contents: <LeaderboardsHelp />,
         },
     },
 });
@@ -45,7 +60,6 @@ type SortConfig = {
 } | null;
 
 function LeaderboardsContent() {
-    const [showInfoPopup, setShowInfoPopup] = useState(false);
     const [selectedCategory, setSelectedCategory] =
         useState<Category>("general");
     const [sortConfig, setSortConfig] = useState<SortConfig>(null);
@@ -722,38 +736,12 @@ function LeaderboardsContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title with info icon */}
-            <div className="flex items-center justify-center gap-3 mb-6">
+            {/* Title */}
+            <div className="flex items-center justify-center mb-6">
                 <h1 className="text-4xl md:text-5xl font-bold text-center">
                     Leaderboards
                 </h1>
-                <button
-                    onClick={() => setShowInfoPopup(true)}
-                    className="text-primary hover:opacity-80 transition-opacity"
-                    aria-label="Show help"
-                >
-                    <HelpCircle className="w-8 h-8" />
-                </button>
             </div>
-
-            {/* Info modal */}
-            <Modal
-                isOpen={showInfoPopup}
-                onClose={() => setShowInfoPopup(false)}
-                title="Help : Leaderboards"
-            >
-                <div className="space-y-3">
-                    <p>These are leaderboards of all players on the server.</p>
-                    <p>
-                        You can sort the table by clicking on the column
-                        headers.
-                    </p>
-                    <p>
-                        Use the category buttons below to view different sets of
-                        statistics.
-                    </p>
-                </div>
-            </Modal>
 
             {/* Category Filter */}
             <div className="mb-6 flex flex-wrap gap-2 justify-center">

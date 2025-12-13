@@ -10,8 +10,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCapabilities } from "@/hooks/useCapabilities";
 
 export const Route = createRootRoute({
-    staticData: { routeConfig: { requiredRole: null } },
+    staticData: { title: "", routeConfig: { requiredRole: null } },
     component: RootComponent,
+    validateSearch: (
+        search: Record<string, unknown>,
+    ): {
+        help?: "";
+    } => ({
+        help: search.help === "" ? "" : undefined,
+    }),
 });
 
 function RootComponent() {
