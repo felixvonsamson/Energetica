@@ -132,8 +132,6 @@ def _get_chart_data(
     # Pass t parameter to get only the relevant portion of the buffer.
     fresh_rolling_history_tick_count = current_tick % 216
     rolling_history = player.rolling_history.get_data(t=fresh_rolling_history_tick_count)[data_category]
-    relevant_rolling_tick_count = fresh_rolling_history_tick_count - (fresh_rolling_history_tick_count % window_size)
-    relevant_pickle_datapoint_count = (count * window_size - relevant_rolling_tick_count) // window_size
 
     resolution_index = {
         "1": 0,
@@ -143,17 +141,81 @@ def _get_chart_data(
         "1296": 4,
     }[resolution]
 
-    def pickle_datapoints(series_key: str) -> list[float]:
+    # Calculate the boundary between pickle and rolling history
+    # Rolling history contains the most recent fresh_rolling_history_tick_count ticks
+    rolling_start_tick = current_tick - fresh_rolling_history_tick_count
+
+    # Pickle contains up to 360 datapoints ending just before rolling history starts
+    # Note: pickle_start_tick can be negative if game hasn't run long enough
+    pickle_start_tick = rolling_start_tick - max_datapoints * window_size
+
+    # Calculate which ticks are requested
+    request_end_tick = start_tick + count * window_size
+
+    def get_pickle_datapoints(series_key: str) -> list[float]:
+        """Extract requested datapoints from pickle data."""
+        if start_tick >= rolling_start_tick:
+            # All requested data is in rolling history, none from pickle
+            return []
+
+        # Calculate which part of the request falls within pickle range
+        pickle_data_end_tick = min(request_end_tick, rolling_start_tick)
+
+        # Calculate the indices within the pickle array
+        # pickle[0] represents ticks [pickle_start_tick, pickle_start_tick + window_size)
+        # pickle[i] represents ticks [pickle_start_tick + i*window_size, pickle_start_tick + (i+1)*window_size)
+        pickle_start_offset = (start_tick - pickle_start_tick) // window_size
+        pickle_end_offset = (pickle_data_end_tick - pickle_start_tick) // window_size
+
+        # Extract from pickle or return zeros
         if series_key in pickle_data[data_category]:
-            return pickle_data[data_category][series_key][resolution_index][-relevant_pickle_datapoint_count:]
+            series_data = pickle_data[data_category][series_key][resolution_index]
+            # Handle case where pickle might have fewer datapoints than expected
+            actual_start = min(pickle_start_offset, len(series_data))
+            actual_end = min(pickle_end_offset, len(series_data))
+            result = series_data[actual_start:actual_end]
+            # Pad with zeros if we don't have enough data
+            if len(result) < (pickle_end_offset - pickle_start_offset):
+                result = [0.0] * (pickle_end_offset - pickle_start_offset - len(result)) + result
+            return result
         else:
-            return [0] * relevant_pickle_datapoint_count
+            return [0.0] * (pickle_end_offset - pickle_start_offset)
 
-    def rolling_datapoints(rolling_series: list) -> list[float]:
-        return np.array(rolling_series[:relevant_rolling_tick_count]).reshape(-1, window_size).mean(axis=1)
+    def get_rolling_datapoints(rolling_series: list) -> list[float]:
+        """Extract and aggregate requested datapoints from rolling history."""
+        if request_end_tick <= rolling_start_tick:
+            # All requested data is in pickle, none from rolling history
+            return []
 
+        # Calculate which part of the request falls within rolling history range
+        rolling_data_start_tick = max(start_tick, rolling_start_tick)
+        rolling_data_end_tick = min(request_end_tick, current_tick)
+
+        # Calculate the tick indices within rolling history buffer
+        # rolling_series[0] represents tick rolling_start_tick
+        # rolling_series[i] represents tick rolling_start_tick + i
+        rolling_start_offset = rolling_data_start_tick - rolling_start_tick
+        rolling_end_offset = rolling_data_end_tick - rolling_start_tick
+
+        # Extract the ticks
+        ticks = rolling_series[rolling_start_offset:rolling_end_offset]
+
+        if len(ticks) == 0:
+            return []
+
+        # Aggregate ticks into datapoints of window_size
+        # We only want complete windows
+        num_complete_windows = len(ticks) // window_size
+        if num_complete_windows == 0:
+            return []
+
+        complete_ticks = ticks[: num_complete_windows * window_size]
+        aggregated = np.array(complete_ticks).reshape(-1, window_size).mean(axis=1)
+        return aggregated.tolist()
+
+    # Build the response by combining pickle and rolling history data
     datapoints = {
-        series_key: [*pickle_datapoints(series_key), *rolling_datapoints(rolling_series)]
+        series_key: [*get_pickle_datapoints(series_key), *get_rolling_datapoints(rolling_series)]
         for series_key, rolling_series in rolling_history.items()
     }
 
