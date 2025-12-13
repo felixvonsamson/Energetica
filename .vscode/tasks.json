@@ -119,6 +119,47 @@
                 "showReuseMessage": false,
                 "clear": true
             }
+        },
+        {
+            "label": "Deploy",
+            "type": "shell",
+            "command": "bash",
+            "args": ["./scripts/deploy.sh", "--force", "--yes"],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "focus": true
+            }
+        },
+        {
+            "label": "Deploy frontend only",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "./scripts/deploy.sh",
+                "--force",
+                "--yes",
+                "--skip-backend"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "focus": true
+            }
+        },
+        {
+            "label": "Sync instance from deployment",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "rm -rf instance/ checkpoints/ && rsync -avz --delete \"${DEPLOY_HOST:-energetica-game-deploy}:/var/www/energetica/instance/\" instance/"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "focus": true
+            }
         }
     ]
 }

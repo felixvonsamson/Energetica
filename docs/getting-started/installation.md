@@ -30,8 +30,17 @@ npm run build            # Build for production
 npm run lint:check       # Check ESLint errors
 npm run tsc:check        # TypeScript type checking
 npm run pretty           # Format code
-npm run generate-types   # Generate API types from backend
+npm run generate-types   # Generate API types from OpenAPI schema
 ```
+
+#### Type Generation
+
+`npm run generate-types` automatically generates TypeScript types from the backend's OpenAPI schema. The script:
+1. Runs `scripts/generate_openapi_schema.py` to generate OpenAPI spec from the FastAPI app (no server required)
+2. Uses `openapi-typescript` to generate types in `frontend/src/types/api.generated.ts`
+3. Formats the output with Prettier
+
+The backend server does not need to be running.
 
 ### Backend Commands
 

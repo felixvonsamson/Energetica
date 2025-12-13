@@ -3,7 +3,7 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "generate-types": "bash scripts/generate-types.sh",
+        "generate-types": "bash ../scripts/generate-types.sh",
         "lint:check": "eslint . --max-warnings 0",
         "pretty": "prettier --write \"./**/*.{ts,tsx}\"",
         "tsc:check": "tsc --noEmit"
