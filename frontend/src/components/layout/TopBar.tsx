@@ -62,19 +62,22 @@ export function TopBar() {
 
     const location = useLocation();
     const staticData = useRouteStaticData(location as never);
-    const { help } = useSearch({
-        from: location.pathname as never,
+    const search = useSearch({
+        strict: false,
     });
-    const isShowingHelp = help === "";
-    // const navigate = useNavigate({ from: location.pathname as never });
-    const navigate = useNavigate({ from: location.pathname as never });
+    const isShowingHelp = search.help === "";
+    const navigate = useNavigate();
     const handleCloseHelp = useCallback(() => {
-        navigate({ replace: true });
-    }, [navigate]);
+        navigate({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            search: { ...search, help: undefined } as any,
+            replace: true,
+        });
+    }, [navigate, search]);
     const handleShowHelp = useCallback(() => {
-        // @ts-expect-error Tanstack router does not know that the 'help' query is available, because we erased the type of the location
-        navigate({ search: { help: "" }, replace: true });
-    }, [navigate]);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        navigate({ search: { ...search, help: "" } as any, replace: true });
+    }, [navigate, search]);
     // If
     useEffect(() => {
         if (!staticData) return;
