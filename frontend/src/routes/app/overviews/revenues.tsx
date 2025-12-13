@@ -11,11 +11,11 @@ import {
     filterNonZeroSeries,
     createExcludeKeysFilter,
     includeAllSeries,
-    type ResolutionOption,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
+import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
@@ -44,15 +44,12 @@ function RevenuesOverviewPage() {
 
 function RevenuesOverviewContent() {
     const { currentTick } = useGameTick();
-    const [selectedResolutionIndex, setSelectedResolutionIndex] = useState(0);
     const [viewMode, setViewMode] = useState<"normal" | "percent">("normal");
     const [revenueType, setRevenueType] = useState<RevenueType>("revenues");
     const [hiddenFacilities, setHiddenFacilities] = useState<Set<string>>(
         new Set(),
     );
-    const dataPoints = selectedResolutionIndex === 0 ? 60 : 360;
-
-    const selectedResolution = RESOLUTIONS[selectedResolutionIndex];
+    const { selectedResolution } = useTimeMode();
 
     // Fetch both revenue and op-costs chart data
     const {
@@ -63,7 +60,7 @@ function RevenuesOverviewContent() {
         chartType: "revenues",
         currentTick,
         resolution: selectedResolution.resolution,
-        maxDatapoints: dataPoints,
+        maxDatapoints: selectedResolution.datapoints,
     });
 
     const {
@@ -74,7 +71,7 @@ function RevenuesOverviewContent() {
         chartType: "op-costs",
         currentTick,
         resolution: selectedResolution.resolution,
-        maxDatapoints: dataPoints,
+        maxDatapoints: selectedResolution.datapoints,
     });
 
     const isChartLoading = isRevenuesLoading || isOpCostsLoading;
@@ -179,12 +176,7 @@ function RevenuesOverviewContent() {
                         viewMode={viewMode}
                         onViewModeChange={setViewMode}
                     />
-                    <ResolutionPicker
-                        resolutions={RESOLUTIONS}
-                        selectedResolutionIndex={selectedResolutionIndex}
-                        onResolutionChange={setSelectedResolutionIndex}
-                        currentTick={currentTick}
-                    />
+                    <ResolutionPicker currentTick={currentTick} />
                 </div>
             </Card>
 
@@ -407,12 +399,3 @@ function ViewModePicker({ viewMode, onViewModeChange }: ViewModePickerProps) {
         </div>
     );
 }
-
-const RESOLUTIONS: ResolutionOption[] = [
-    { id: 0, label: "4h", resolution: 1 },
-    { id: 1, label: "24h", resolution: 1 },
-    { id: 2, label: "6 days", resolution: 6 },
-    { id: 3, label: "6 months", resolution: 36 },
-    { id: 4, label: "3 years", resolution: 216 },
-    { id: 5, label: "18 years", resolution: 1296 },
-];

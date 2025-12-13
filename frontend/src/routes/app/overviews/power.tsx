@@ -10,11 +10,11 @@ import {
     PowerOverviewTable,
     filterNonZeroSeries,
     createExcludeKeysFilter,
-    type ResolutionOption,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
+import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
@@ -42,14 +42,11 @@ function PowerOverviewPage() {
 
 function PowerOverviewContent() {
     const { currentTick } = useGameTick();
-    const [selectedResolutionIndex, setSelectedResolutionIndex] = useState(1);
     const [chartType, setChartType] = useState<ChartType>("power-sources");
     const [hiddenSources, setHiddenSources] = useState<Set<string>>(new Set());
     const [hiddenSinks, setHiddenSinks] = useState<Set<string>>(new Set());
-    const dataPoints = selectedResolutionIndex === 0 ? 60 : 360;
 
-    const selectedResolution = RESOLUTIONS[selectedResolutionIndex];
-
+    const { selectedResolution } = useTimeMode();
     // Fetch chart data to share between chart and table
     const {
         chartData,
@@ -59,7 +56,7 @@ function PowerOverviewContent() {
         chartType,
         currentTick,
         resolution: selectedResolution.resolution,
-        maxDatapoints: dataPoints,
+        maxDatapoints: selectedResolution.datapoints,
     });
 
     // Get the appropriate hidden set based on chart type
@@ -96,12 +93,7 @@ function PowerOverviewContent() {
                         chartType={chartType}
                         onChartTypeChange={setChartType}
                     />
-                    <ResolutionPicker
-                        resolutions={RESOLUTIONS}
-                        selectedResolutionIndex={selectedResolutionIndex}
-                        onResolutionChange={setSelectedResolutionIndex}
-                        currentTick={currentTick}
-                    />
+                    <ResolutionPicker currentTick={currentTick} />
                 </div>
             </Card>
 
@@ -226,12 +218,3 @@ function ChartTypePicker({
         </div>
     );
 }
-
-const RESOLUTIONS: ResolutionOption[] = [
-    { id: 0, label: "4h", resolution: 1 },
-    { id: 1, label: "24h", resolution: 1 },
-    { id: 2, label: "6 days", resolution: 6 },
-    { id: 3, label: "6 months", resolution: 36 },
-    { id: 4, label: "3 years", resolution: 216 },
-    { id: 5, label: "18 years", resolution: 1296 },
-];

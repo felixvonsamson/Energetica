@@ -7,6 +7,22 @@ export type ChartType =
     | "revenues"
     | "op-costs";
 
+export interface ResolutionOption {
+    id: number;
+    label: string;
+    resolution: Resolution;
+    datapoints: number;
+}
+
+export const resolutions: ResolutionOption[] = [
+    { id: 0, label: "4h", resolution: 1, datapoints: 60 },
+    { id: 1, label: "24h", resolution: 1, datapoints: 360 },
+    { id: 2, label: "6 days", resolution: 6, datapoints: 360 },
+    { id: 3, label: "6 months", resolution: 36, datapoints: 360 },
+    { id: 4, label: "3 years", resolution: 216, datapoints: 360 },
+    { id: 5, label: "18 years", resolution: 1296, datapoints: 360 },
+];
+
 /**
  * Convert numeric resolution to string resolution. Useful for API calls or
  * query keys that expect string values.

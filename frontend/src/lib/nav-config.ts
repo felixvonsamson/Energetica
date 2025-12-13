@@ -69,7 +69,7 @@ export const navigationConfig: NavigationItemConfig[] = [
             },
             {
                 type: "link",
-                label: "Electricity",
+                label: "Power",
                 to: "/app/overviews/power",
                 icon: Zap,
             },

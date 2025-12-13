@@ -1,18 +1,10 @@
 /** Resolution picker component for time series charts. */
 
 import { Duration, TimeModeToggle } from "@/components/ui";
-import { Resolution } from "@/types/charts";
-
-export interface ResolutionOption {
-    id: number;
-    label: string;
-    resolution: Resolution;
-}
+import { useTimeMode } from "@/contexts/TimeModeContext";
+import { resolutions } from "@/types/charts";
 
 interface ResolutionPickerProps {
-    resolutions: ResolutionOption[];
-    selectedResolutionIndex: number;
-    onResolutionChange: (index: number) => void;
     currentTick: number | undefined;
     /** Minimum number of datapoints required to show a resolution option */
     minDatapoints?: number;
@@ -23,12 +15,10 @@ interface ResolutionPickerProps {
  * resolution options that have enough data available.
  */
 export function ResolutionPicker({
-    resolutions,
-    selectedResolutionIndex,
-    onResolutionChange,
     currentTick,
     minDatapoints = 60,
 }: ResolutionPickerProps) {
+    const { selectedResolution, setResolution } = useTimeMode();
     return (
         <div>
             <label className="block text-sm font-medium mb-2">Resolution</label>
@@ -43,9 +33,9 @@ export function ResolutionPicker({
                         .map((res) => (
                             <button
                                 key={res.id}
-                                onClick={() => onResolutionChange(res.id)}
+                                onClick={() => setResolution(res.id)}
                                 className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
-                                    selectedResolutionIndex === res.id
+                                    selectedResolution.id === res.id
                                         ? "bg-blue-600 text-white"
                                         : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                                 }`}

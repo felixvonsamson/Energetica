@@ -1,11 +1,16 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 
+import { ResolutionOption, resolutions } from "@/types/charts";
+
 export type TimeMode = "wall-clock" | "game-time";
 
 interface TimeModeContextValue {
     mode: TimeMode;
     toggleMode: () => void;
     setMode: (mode: TimeMode) => void;
+
+    selectedResolution: ResolutionOption;
+    setResolution: (index: number) => void;
 }
 
 const TimeModeContext = createContext<TimeModeContextValue | undefined>(
@@ -38,8 +43,19 @@ export function TimeModeProvider({ children }: TimeModeProviderProps) {
         localStorage.setItem("timeMode", newMode);
     };
 
+    const [selectedResolutionIndex, setResolution] = useState(0);
+    const selectedResolution = resolutions[selectedResolutionIndex];
+
+    const value = {
+        mode,
+        toggleMode,
+        setMode,
+        selectedResolution,
+        setResolution,
+    };
+
     return (
-        <TimeModeContext.Provider value={{ mode, toggleMode, setMode }}>
+        <TimeModeContext.Provider value={value}>
             {children}
         </TimeModeContext.Provider>
     );

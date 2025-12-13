@@ -38,7 +38,7 @@ import {
     REVENUES_KEYS,
     OP_COSTS_KEYS,
     reorderObjectKeys,
-} from "@/lib/chart-key-order";
+} from "@/lib/charts/chart-key-order";
 import { queryKeys } from "@/lib/query-client";
 
 /** Map chart types to their corresponding key ordering */
