@@ -104,7 +104,7 @@ def _get_chart_data(
 
     max_datapoints = 360
     max_ticks_at_resolution = max_datapoints * window_size
-    oldest_valid_tick = max(0, current_tick - max_ticks_at_resolution)
+    oldest_valid_tick = max(0, (current_tick // window_size - max_datapoints) * window_size)
 
     if start_tick < oldest_valid_tick:
         raise HTTPException(
