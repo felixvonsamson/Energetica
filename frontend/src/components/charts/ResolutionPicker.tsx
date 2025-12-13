@@ -1,5 +1,6 @@
 /** Resolution picker component for time series charts. */
 
+import { Duration, TimeModeToggle } from "@/components/ui";
 import { Resolution } from "@/types/charts";
 
 export interface ResolutionOption {
@@ -49,9 +50,15 @@ export function ResolutionPicker({
                                         : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                                 }`}
                             >
-                                {res.label}
+                                <Duration
+                                    ticks={
+                                        res.resolution *
+                                        (res.id === 0 ? 60 : 360)
+                                    }
+                                />
                             </button>
                         ))}
+                <TimeModeToggle />
             </div>
         </div>
     );

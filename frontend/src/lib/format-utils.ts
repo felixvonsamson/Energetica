@@ -276,18 +276,53 @@ interface GameEngineConfig {
 }
 
 /**
- * Format seconds into a human-readable duration string (e.g., "2d 3h 45m").
- * Works for both wall-clock and game time.
+ * Format game time duration in seconds.
  *
  * @example
- *     formatDuration(125); // "2m 5s"
- *     formatDuration(3661); // "1h 1m 1s"
- *     formatDuration(90061); // "1d 1h 1m 1s"
+ *     formatGameTimeDuration(3600);
+ *     // Returns "1h"
  *
- * @param totalSeconds - Total seconds to format
+ * @param seconds - Duration in game-time seconds
  * @returns Formatted duration string
  */
-export function formatDuration(totalSeconds: number): string {
+export function formatGameTimeDuration(totalSeconds: number): string {
+    if (totalSeconds < 1) {
+        return "0s";
+    }
+
+    const years = Math.floor(totalSeconds / 6220800);
+    let remaining = totalSeconds % 6220800;
+
+    const days = Math.floor(remaining / 86400);
+    remaining = remaining % 86400;
+
+    const hours = Math.floor(remaining / 3600);
+    remaining = remaining % 3600;
+
+    const minutes = Math.floor(remaining / 60);
+    const seconds = Math.floor(remaining % 60);
+
+    const parts: string[] = [];
+    if (years > 0) parts.push(`${years}y`);
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    if (seconds > 0) parts.push(`${seconds}s`);
+
+    return parts.join(" ");
+}
+
+/**
+ * Format wall-clock time duration in seconds.
+ *
+ * @example
+ *     formatWallClockDuration(3600);
+ *     // Returns "1h"
+ *
+ * @param totalSeconds - Duration in wall-clock seconds
+ * @returns Formatted duration string
+ */
+export function formatWallClockDuration(totalSeconds: number): string {
     if (totalSeconds < 1) {
         return "0s";
     }
@@ -308,34 +343,6 @@ export function formatDuration(totalSeconds: number): string {
     if (seconds > 0) parts.push(`${seconds}s`);
 
     return parts.join(" ");
-}
-
-/**
- * Format game time duration in seconds.
- *
- * @example
- *     formatGameTimeDuration(3600);
- *     // Returns "1h"
- *
- * @param seconds - Duration in game-time seconds
- * @returns Formatted duration string
- */
-export function formatGameTimeDuration(seconds: number): string {
-    return formatDuration(seconds);
-}
-
-/**
- * Format wall-clock time duration in seconds.
- *
- * @example
- *     formatWallClockDuration(3600);
- *     // Returns "1h"
- *
- * @param seconds - Duration in wall-clock seconds
- * @returns Formatted duration string
- */
-export function formatWallClockDuration(seconds: number): string {
-    return formatDuration(seconds);
 }
 
 /**
