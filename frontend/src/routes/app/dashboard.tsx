@@ -11,6 +11,9 @@ import {
     Package,
     Trophy,
     HelpCircle,
+    Thermometer,
+    Link2,
+    Calendar,
 } from "lucide-react";
 
 import { AchievementCard } from "@/components/dashboard/AchievementCard";
@@ -44,13 +47,36 @@ function DashboardHelp() {
         <div className="space-y-3">
             <p>This is the dashboard of your account. Here you will find:</p>
             <ul className="list-none space-y-1 ml-4">
-                <li>🌡️ Current weather conditions and the in-game season</li>
-                <li>🏗️ Ongoing or planned construction projects</li>
-                <li>🔬 Ongoing or planned research projects</li>
-                <li>🚚 Ongoing shipments</li>
-                <li>🔗 Quick links to the most important pages</li>
-                <li>🏆 Progression information about achievements</li>
-                <li>📅 Daily quiz to win xp</li>
+                <li className="flex items-center gap-2">
+                    <Thermometer className="w-4 h-4 flex-shrink-0" />
+                    <span>
+                        Current weather conditions and the in-game season
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Construction className="w-4 h-4 flex-shrink-0" />
+                    <span>Ongoing or planned construction projects</span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <FlaskConical className="w-4 h-4 flex-shrink-0" />
+                    <span>Ongoing or planned research projects</span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 flex-shrink-0" />
+                    <span>Ongoing shipments</span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Link2 className="w-4 h-4 flex-shrink-0" />
+                    <span>Quick links to the most important pages</span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Trophy className="w-4 h-4 flex-shrink-0" />
+                    <span>Progression information about achievements</span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 flex-shrink-0" />
+                    <span>Daily quiz to win xp</span>
+                </li>
             </ul>
             <p>
                 For more info about in-game time and weather, see the{" "}
@@ -155,7 +181,7 @@ function DashboardContent() {
             <section className="mb-6">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <QuickLinkCard
-                        to="/app/overviews/revenues"
+                        to="/app/overviews/cash-flow"
                         icon={Coins}
                         title="Revenues"
                     />
