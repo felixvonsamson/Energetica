@@ -10,7 +10,7 @@ import { useMemo, useState } from "react";
 import { FacilityName } from "@/components/ui/AssetName";
 import { Money } from "@/components/ui/Money";
 
-type RevenueType = "revenues" | "expenses" | "all";
+type RevenueType = "revenues" | "expenses" | "net-profit";
 
 interface RevenuesOverviewTableProps {
     /** Chart data with time series for each facility type */

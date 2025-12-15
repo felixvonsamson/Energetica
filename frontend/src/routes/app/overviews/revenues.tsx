@@ -20,7 +20,8 @@ import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
 
-type RevenueType = "revenues" | "expenses" | "all";
+type RevenueType = "revenues" | "expenses" | "net-profit";
+type NetProfitViewMode = "net" | "breakdown";
 
 export const Route = createFileRoute("/app/overviews/revenues")({
     component: RevenuesOverviewPage,
@@ -45,6 +46,8 @@ function RevenuesOverviewPage() {
 function RevenuesOverviewContent() {
     const { currentTick } = useGameTick();
     const [viewMode, setViewMode] = useState<"normal" | "percent">("normal");
+    const [netProfitViewMode, setNetProfitViewMode] =
+        useState<NetProfitViewMode>("net");
     const [revenueType, setRevenueType] = useState<RevenueType>("revenues");
     const [hiddenFacilities, setHiddenFacilities] = useState<Set<string>>(
         new Set(),
@@ -117,16 +120,29 @@ function RevenuesOverviewContent() {
                 } else if (revenueType === "expenses") {
                     // Only include negative values from revenues, displayed as positive
                     result[key] = value < 0 ? Math.abs(value) : 0;
-                } else if (revenueType === "all") {
-                    // For "all": aggregate into single "net" value
-                    result["net"] = (result["net"] || 0) + value;
+                } else if (revenueType === "net-profit") {
+                    if (netProfitViewMode === "net") {
+                        // For "net": aggregate into single "net-profit" value
+                        result["net-profit"] =
+                            (result["net-profit"] || 0) + value;
+                    } else {
+                        // For "breakdown": track gross revenues and expenses separately
+                        if (value > 0) {
+                            result["gross-revenues"] =
+                                (result["gross-revenues"] || 0) + value;
+                        } else if (value < 0) {
+                            result["total-expenses"] =
+                                (result["total-expenses"] || 0) +
+                                Math.abs(value);
+                        }
+                    }
                 }
             });
         });
 
         // Process op-costs data (only for expenses and all views)
         if (
-            (revenueType === "expenses" || revenueType === "all") &&
+            (revenueType === "expenses" || revenueType === "net-profit") &&
             opCostsData &&
             opCostsData.length > 0
         ) {
@@ -148,17 +164,44 @@ function RevenuesOverviewContent() {
                             result[key] = 0;
                         }
                         result[key] += Math.abs(value);
-                    } else if (revenueType === "all") {
-                        // For "all": aggregate op-costs into single "net" value
-                        result["net"] = (result["net"] || 0) + value;
+                    } else if (revenueType === "net-profit") {
+                        if (netProfitViewMode === "net") {
+                            // For "net": aggregate op-costs into single "net-profit" value
+                            result["net-profit"] =
+                                (result["net-profit"] || 0) + value;
+                        } else {
+                            // For "breakdown": add op-costs to total expenses
+                            result["total-expenses"] =
+                                (result["total-expenses"] || 0) +
+                                Math.abs(value);
+                        }
                     }
                 });
             });
         }
 
         // Convert map to sorted array
-        return Array.from(tickMap.values()).sort((a, b) => a.tick - b.tick);
-    }, [revenuesData, opCostsData, revenueType]);
+        let result = Array.from(tickMap.values()).sort(
+            (a, b) => a.tick - b.tick,
+        );
+
+        // For breakdown mode, transform gross-revenues and total-expenses into stacked series
+        if (revenueType === "net-profit" && netProfitViewMode === "breakdown") {
+            result = result.map((dataPoint) => {
+                const grossRevenues = dataPoint["gross-revenues"] || 0;
+                const totalExpenses = dataPoint["total-expenses"] || 0;
+
+                return {
+                    tick: dataPoint.tick,
+                    baseline: Math.min(grossRevenues, totalExpenses),
+                    profit: Math.max(0, grossRevenues - totalExpenses),
+                    loss: Math.max(0, totalExpenses - grossRevenues),
+                };
+            });
+        }
+
+        return result;
+    }, [revenuesData, opCostsData, revenueType, netProfitViewMode]);
 
     return (
         <div className="p-4 md:p-8">
@@ -172,10 +215,17 @@ function RevenuesOverviewContent() {
                         revenueType={revenueType}
                         onRevenueTypeChange={setRevenueType}
                     />
-                    <ViewModePicker
-                        viewMode={viewMode}
-                        onViewModeChange={setViewMode}
-                    />
+                    {revenueType === "net-profit" ? (
+                        <NetProfitViewModePicker
+                            viewMode={netProfitViewMode}
+                            onViewModeChange={setNetProfitViewMode}
+                        />
+                    ) : (
+                        <ViewModePicker
+                            viewMode={viewMode}
+                            onViewModeChange={setViewMode}
+                        />
+                    )}
                     <ResolutionPicker currentTick={currentTick} />
                 </div>
             </Card>
@@ -199,6 +249,7 @@ function RevenuesOverviewContent() {
                     hiddenFacilities={hiddenFacilities}
                     viewMode={viewMode}
                     revenueType={revenueType}
+                    netProfitViewMode={netProfitViewMode}
                 />
 
                 <div className="mt-6">
@@ -221,6 +272,7 @@ interface RevenuesChartProps {
     hiddenFacilities: Set<string>;
     viewMode: "normal" | "percent";
     revenueType: RevenueType;
+    netProfitViewMode: NetProfitViewMode;
 }
 
 function RevenuesChart({
@@ -230,15 +282,27 @@ function RevenuesChart({
     hiddenFacilities,
     viewMode,
     revenueType,
+    netProfitViewMode,
 }: RevenuesChartProps) {
     const getColor = useAssetColorGetter();
 
+    // Custom color getter for breakdown mode
+    const getBreakdownColor = useCallback((key: string) => {
+        if (key === "baseline") return "#9ca3af"; // gray-400
+        if (key === "profit") return "#22c55e"; // green-500
+        if (key === "loss") return "#ef4444"; // red-500
+        return "#000000";
+    }, []);
+
     // Create a composite filter that combines non-zero filtering with visibility filtering
     const filterDataKeys = useMemo(() => {
-        // For "all" view, use includeAllSeries since we have a single aggregated "net" value
+        // For net-profit view, use includeAllSeries since we have aggregated values
+        // For breakdown mode, also use includeAllSeries to show all three series
         // filterNonZeroSeries only keeps values > 0, which filters out negative values
         const baseFilter =
-            revenueType === "all" ? includeAllSeries : filterNonZeroSeries;
+            revenueType === "net-profit"
+                ? includeAllSeries
+                : filterNonZeroSeries;
 
         if (hiddenFacilities.size === 0) {
             return baseFilter;
@@ -293,18 +357,30 @@ function RevenuesChart({
         });
     }, [chartData, viewMode]);
 
-    const chartConfig: TimeSeriesChartConfig = useMemo(
-        () => ({
+    const chartConfig: TimeSeriesChartConfig = useMemo(() => {
+        const isBreakdownMode =
+            revenueType === "net-profit" && netProfitViewMode === "breakdown";
+        const isNetMode =
+            revenueType === "net-profit" && netProfitViewMode === "net";
+
+        return {
             chartVariant: "area",
             stacked: true,
             height: 400,
             showBrush: true,
-            getColor,
+            getColor: isBreakdownMode ? getBreakdownColor : getColor,
             filterDataKeys,
             formatValue: (value: number) => <CashFlow amountPerTick={value} />,
-        }),
-        [getColor, filterDataKeys],
-    );
+            // Use gradient fill for the "net-profit" series only in net mode
+            gradientKeys: isNetMode ? ["net-profit"] : [],
+        };
+    }, [
+        getColor,
+        getBreakdownColor,
+        filterDataKeys,
+        revenueType,
+        netProfitViewMode,
+    ]);
 
     return (
         <TimeSeriesChart
@@ -352,14 +428,14 @@ function RevenueTypePicker({
                     Expenses
                 </button>
                 <button
-                    onClick={() => onRevenueTypeChange("all")}
+                    onClick={() => onRevenueTypeChange("net-profit")}
                     className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        revenueType === "all"
+                        revenueType === "net-profit"
                             ? "bg-blue-600 text-white"
                             : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                     }`}
                 >
-                    All
+                    Net Profit
                 </button>
             </div>
         </div>
@@ -395,6 +471,44 @@ function ViewModePicker({ viewMode, onViewModeChange }: ViewModePickerProps) {
                     }`}
                 >
                     Percent
+                </button>
+            </div>
+        </div>
+    );
+}
+
+interface NetProfitViewModePickerProps {
+    viewMode: NetProfitViewMode;
+    onViewModeChange: (mode: NetProfitViewMode) => void;
+}
+
+function NetProfitViewModePicker({
+    viewMode,
+    onViewModeChange,
+}: NetProfitViewModePickerProps) {
+    return (
+        <div>
+            <label className="block text-sm font-medium mb-2">View Mode</label>
+            <div className="flex gap-2">
+                <button
+                    onClick={() => onViewModeChange("net")}
+                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                        viewMode === "net"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    }`}
+                >
+                    Net
+                </button>
+                <button
+                    onClick={() => onViewModeChange("breakdown")}
+                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                        viewMode === "breakdown"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    }`}
+                >
+                    Breakdown
                 </button>
             </div>
         </div>

@@ -49,6 +49,8 @@ export interface TimeSeriesChartConfig {
     formatYAxis?: (value: number) => string;
     /** Custom formatter for tooltips */
     formatValue: (value: number) => ReactNode;
+    /** Keys that should use gradient fill based on positive/negative values */
+    gradientKeys?: string[];
 }
 
 /** Props for a data series component (Area, Line, Bar). */
@@ -96,7 +98,42 @@ export function TimeSeriesChart({
         filterDataKeys,
         formatYAxis,
         formatValue,
+        gradientKeys = [],
     } = config;
+
+    // Calculate gradient offsets for keys that need value-based gradients
+    const gradientOffsets = useMemo(() => {
+        const offsets: Record<string, number> = {};
+
+        if (!data || data.length === 0 || gradientKeys.length === 0) {
+            return offsets;
+        }
+
+        gradientKeys.forEach((key) => {
+            const values = data
+                .map((d) => (typeof d[key] === "number" ? d[key] : 0) as number)
+                .filter((v) => !isNaN(v));
+
+            if (values.length === 0) return;
+
+            const dataMax = Math.max(...values);
+            const dataMin = Math.min(...values);
+            const range = dataMax - dataMin;
+
+            // Calculate offset for gradient transition point
+            // Use a small tolerance to prefer green in edge cases
+            if (dataMax <= 0) {
+                offsets[key] = 0;
+            } else if (dataMin >= 0 || Math.abs(dataMin) < range * 0.01) {
+                // If all positive, or negative portion is negligible (< 0.1% of range)
+                offsets[key] = 1;
+            } else {
+                offsets[key] = dataMax / (dataMax - dataMin);
+            }
+        });
+
+        return offsets;
+    }, [data, gradientKeys]);
 
     // Extract and filter data keys
     const seriesComponents = useMemo(() => {
@@ -113,6 +150,7 @@ export function TimeSeriesChart({
         // Create components based on chart variant
         return filteredKeys.map((key) => {
             const color = getColor ? getColor(key) : undefined;
+            const useGradient = gradientKeys.includes(key);
             const commonProps = {
                 dataKey: key,
                 isAnimationActive: false,
@@ -125,8 +163,10 @@ export function TimeSeriesChart({
                             key={key}
                             {...commonProps}
                             stackId={stacked ? "stack" : undefined}
-                            fill={color}
+                            fill={useGradient ? `url(#gradient-${key})` : color}
                             fillOpacity={1}
+                            strokeOpacity={0}
+                            type={"step"}
                         />
                     );
                 case "line":
@@ -152,7 +192,7 @@ export function TimeSeriesChart({
                     return null;
             }
         });
-    }, [data, chartVariant, stacked, getColor, filterDataKeys]);
+    }, [data, chartVariant, stacked, getColor, filterDataKeys, gradientKeys]);
 
     const { currentTick } = useGameTick();
     const { mode } = useTimeMode();
@@ -205,6 +245,45 @@ export function TimeSeriesChart({
     return (
         <ResponsiveContainer width="100%" height={height}>
             <ChartComponent data={data}>
+                {/* Define gradients for keys that need value-based fills */}
+                {gradientKeys.length > 0 && (
+                    <defs>
+                        {gradientKeys.map((key) => {
+                            const offset = gradientOffsets[key] ?? 0.5;
+                            return (
+                                <linearGradient
+                                    key={`gradient-${key}`}
+                                    id={`gradient-${key}`}
+                                    x1="0"
+                                    y1="0"
+                                    x2="0"
+                                    y2="1"
+                                >
+                                    <stop
+                                        offset="0"
+                                        stopColor="green"
+                                        stopOpacity={1}
+                                    />
+                                    <stop
+                                        offset={offset}
+                                        stopColor="green"
+                                        stopOpacity={1}
+                                    />
+                                    <stop
+                                        offset={offset}
+                                        stopColor="red"
+                                        stopOpacity={1}
+                                    />
+                                    <stop
+                                        offset="1"
+                                        stopColor="red"
+                                        stopOpacity={1}
+                                    />
+                                </linearGradient>
+                            );
+                        })}
+                    </defs>
+                )}
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                     dataKey="tick"
