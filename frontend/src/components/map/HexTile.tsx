@@ -6,6 +6,8 @@
  * responsible for calculating colors and labels based on their specific needs.
  */
 
+//TODO: HexTile should not change the mouse icon, as if it were a link, if there is no link
+
 import { useMapContext } from "@/contexts/MapContext";
 import { getHexagonPoints, getHexPosition } from "@/lib/hex-utils";
 import { HexTileResources } from "@/types/map";

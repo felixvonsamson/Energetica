@@ -37,6 +37,10 @@ import {
     STORAGE_LEVEL_KEYS,
     REVENUES_KEYS,
     OP_COSTS_KEYS,
+    EMISSIONS_KEYS,
+    CLIMATE_KEYS,
+    TEMPERATURE_KEYS,
+    RESOURCES_KEYS,
     reorderObjectKeys,
 } from "@/lib/charts/chart-key-order";
 import { queryKeys } from "@/lib/query-client";
@@ -48,6 +52,10 @@ const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {
     "storage-level": STORAGE_LEVEL_KEYS,
     revenues: REVENUES_KEYS,
     "op-costs": OP_COSTS_KEYS,
+    emissions: EMISSIONS_KEYS,
+    climate: CLIMATE_KEYS,
+    temperature: TEMPERATURE_KEYS,
+    resources: RESOURCES_KEYS,
 };
 
 /** Main exported hook. Returns all chart datapoints relevant to the request. */
@@ -189,6 +197,10 @@ const QUERY_KEY_FN_BY_CHART_TYPE = {
     "storage-level": queryKeys.charts.storageLevel,
     revenues: queryKeys.charts.revenues,
     "op-costs": queryKeys.charts.opCosts,
+    emissions: queryKeys.charts.emissions,
+    climate: queryKeys.charts.climate,
+    temperature: queryKeys.charts.temperature,
+    resources: queryKeys.charts.resources,
 } as const;
 
 /** Fetches ranges concurrently. */

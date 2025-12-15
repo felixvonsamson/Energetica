@@ -95,6 +95,26 @@ export const OP_COSTS_KEYS = [
     "uranium_mine",
 ] as const;
 
+export const EMISSIONS_KEYS = [
+    "carbon_capture",
+    "steam_engine",
+    "coal_burner",
+    "gas_burner",
+    "combined_cycle",
+    "nuclear_reactor",
+    "nuclear_reactor_gen4",
+    "construction",
+    "coal_mine",
+    "gas_drilling_site",
+    "uranium_mine",
+] as const;
+
+export const CLIMATE_KEYS = ["CO2"] as const;
+
+export const TEMPERATURE_KEYS = ["deviation", "reference"] as const;
+
+export const RESOURCES_KEYS = ["coal", "gas", "uranium"] as const;
+
 /**
  * Reorders object properties according to a specified key order. Keys not in
  * the order array are placed at the end in their original order.

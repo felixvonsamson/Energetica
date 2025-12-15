@@ -117,13 +117,6 @@ function MapTiles({
                         fill={fill}
                         label={label}
                         labelFill="white"
-                        onClick={() => {
-                            if (tile.player_id === user?.player_id) {
-                                window.location.href = "/profile";
-                            } else if (tile.player_id) {
-                                window.location.href = `/profile?player_id=${tile.player_id}`;
-                            }
-                        }}
                     />
                 );
             })}

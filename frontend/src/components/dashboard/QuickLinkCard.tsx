@@ -3,8 +3,6 @@ import { type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 
-// TODO: make href be type safe
-
 interface QuickLinkCardProps {
     to: LinkProps["to"];
     icon?: LucideIcon;

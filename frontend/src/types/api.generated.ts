@@ -322,6 +322,115 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/charts/emissions/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Emissions
+         *
+         * Get CO2 emissions time series by source at the specified resolution.
+         *
+         *     Parameters:
+         *     resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *     start_tick: First tick to include (must be aligned to resolution)
+         *     count: Number of datapoints to retrieve
+         */
+        get: operations["get_emissions_api_v1_charts_emissions__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/climate/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Climate Data
+         *
+         * Get global atmospheric CO2 levels time series at the specified
+         * resolution.
+         *
+         *     This is server-wide data affected by all players, not player-specific.
+         *
+         *     Parameters:
+         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *         start_tick: First tick to include (must be aligned to resolution)
+         *         count: Number of datapoints to retrieve
+         */
+        get: operations["get_climate_data_api_v1_charts_climate__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/temperature/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Temperature Data
+         *
+         * Get global temperature time series at the specified resolution.
+         *
+         *     This is server-wide data affected by all players, not player-specific.
+         *
+         *     Parameters:
+         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *         start_tick: First tick to include (must be aligned to resolution)
+         *         count: Number of datapoints to retrieve
+         */
+        get: operations["get_temperature_data_api_v1_charts_temperature__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/resources/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Resources
+         *
+         * Get resource stocks time series at the specified resolution.
+         *
+         *     Parameters:
+         *     resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *     start_tick: First tick to include (must be aligned to resolution)
+         *     count: Number of datapoints to retrieve
+         */
+        get: operations["get_resources_api_v1_charts_resources__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/chats": {
         parameters: {
             query?: never;
@@ -2356,6 +2465,42 @@ export interface components {
             participant_ids: number[];
         };
         /**
+         * ClimateDataResponse
+         *
+         * Response model for global climate data time series.
+         */
+        ClimateDataResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for global CO2 levels in the atmosphere, with
+             * mass values in kg
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
          * ControllableFacilityType
          *
          * Enum for controllable facilities.
@@ -2452,6 +2597,42 @@ export interface components {
              * List of player IDs in the electricity market
              */
             member_ids: number[];
+        };
+        /**
+         * EmissionsResponse
+         *
+         * Response model for CO2 emissions time series.
+         */
+        EmissionsResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for CO2 emissions by source, with mass values in
+             * kg
+             */
+            series: {
+                [key: string]: number[];
+            };
         };
         /** EmissionsStats */
         EmissionsStats: {
@@ -3350,6 +3531,41 @@ export interface components {
             uranium: components["schemas"]["ResourceStock"];
         };
         /**
+         * ResourcesResponse
+         *
+         * Response model for resource stocks time series.
+         */
+        ResourcesResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for resource stocks, with quantities in tons
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
          * RevenuesResponse
          *
          * Response model for revenue time series.
@@ -3803,6 +4019,42 @@ export interface components {
             | "aerodynamics"
             | "chemistry"
             | "nuclear_engineering";
+        /**
+         * TemperatureDataResponse
+         *
+         * Response model for global temperature time series.
+         */
+        TemperatureDataResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for global temperature, with deviation from
+             * reference in degrees C
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
         /**
          * UserOut
          *
@@ -4350,6 +4602,142 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpCostsResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_emissions_api_v1_charts_emissions__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmissionsResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_climate_data_api_v1_charts_climate__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClimateDataResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_temperature_data_api_v1_charts_temperature__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemperatureDataResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_resources_api_v1_charts_resources__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResourcesResponse"];
                 };
             };
             /** Validation Error */

@@ -77,6 +77,14 @@ export const queryKeys = {
             ["charts", "revenues", resolution, startTick, count] as const,
         opCosts: (resolution: string, startTick: number, count: number) =>
             ["charts", "op-costs", resolution, startTick, count] as const,
+        emissions: (resolution: string, startTick: number, count: number) =>
+            ["charts", "emissions", resolution, startTick, count] as const,
+        climate: (resolution: string, startTick: number, count: number) =>
+            ["charts", "climate", resolution, startTick, count] as const,
+        temperature: (resolution: string, startTick: number, count: number) =>
+            ["charts", "temperature", resolution, startTick, count] as const,
+        resources: (resolution: string, startTick: number, count: number) =>
+            ["charts", "resources", resolution, startTick, count] as const,
     },
     network: {
         all: ["networks"] as const,

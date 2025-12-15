@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { FacilityCard } from "@/components/facilities/FacilityCard";
 import { GameLayout } from "@/components/layout/GameLayout";
@@ -107,12 +107,13 @@ function FunctionalFacilitiesContent() {
                                         <>
                                             The laboratory is needed to research{" "}
                                             <strong>
-                                                <a
+                                                {/* TODO: disable link when locked */}
+                                                <Link
                                                     className="text-blue-600 dark:text-blue-400"
-                                                    href="/technology"
+                                                    to="/app/facilities/technology"
                                                 >
                                                     Technologies
-                                                </a>
+                                                </Link>
                                             </strong>
                                             .<br />
                                             +1 lab worker every 3rd level.
@@ -123,12 +124,13 @@ function FunctionalFacilitiesContent() {
                                         <>
                                             The warehouse stores physical{" "}
                                             <strong>
-                                                <a
+                                                {/* TODO: disable link when locked */}
+                                                <Link
                                                     className="text-blue-600 dark:text-blue-400"
-                                                    href="/facilities/extraction"
+                                                    to="/app/facilities/extraction"
                                                 >
                                                     resources
-                                                </a>
+                                                </Link>
                                             </strong>
                                             .
                                         </>

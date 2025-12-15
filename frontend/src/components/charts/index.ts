@@ -6,6 +6,7 @@ export { ResolutionPicker } from "./ResolutionPicker";
 export { PowerOverviewTable } from "./PowerOverviewTable";
 export { StorageOverviewTable } from "./StorageOverviewTable";
 export { CashFlowOverviewTable } from "./CashFlowOverviewTable";
+export { EmissionsOverviewTable } from "./EmissionsOverviewTable";
 export {
     filterNonZeroSeries,
     includeAllSeries,

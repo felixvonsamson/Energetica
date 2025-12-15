@@ -5,7 +5,11 @@ export type ChartType =
     | "power-sinks"
     | "storage-level"
     | "revenues"
-    | "op-costs";
+    | "op-costs"
+    | "emissions"
+    | "climate"
+    | "temperature"
+    | "resources";
 
 export interface ResolutionOption {
     id: number;

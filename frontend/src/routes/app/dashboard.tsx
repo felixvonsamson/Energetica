@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
     Construction,
     FlaskConical,
@@ -357,45 +357,45 @@ function BeginnersGuide() {
                         You begin your journey with <b>1 steam engine</b> and a
                         small <b>industry</b>, generating revenues. You can
                         monitor their{" "}
-                        <a
-                            href="/app/overviews/electricity"
+                        <Link
+                            to="/app/overviews/power"
                             className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
                         >
                             power generation and consumption
-                        </a>{" "}
+                        </Link>{" "}
                         as well as your{" "}
-                        <a
-                            href="/app/overviews/revenues"
+                        <Link
+                            to="/app/overviews/cash-flow"
                             className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
                         >
                             revenues
-                        </a>{" "}
+                        </Link>{" "}
                         under the <i>Production Overview</i> tab in the top
                         menu.
                     </p>
                     <p>
                         The first thing you will probably want to do is to{" "}
                         <b>expand your production</b> by investing in{" "}
-                        <a
-                            href="/app/facilities/power"
+                        <Link
+                            to="/app/facilities/power"
                             className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
                         >
                             Power Facilities
-                        </a>{" "}
+                        </Link>{" "}
                         and upgrading your industry on the{" "}
-                        <a
-                            href="/app/facilities/functional"
+                        <Link
+                            to="/app/facilities/functional"
                             className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
                         >
                             Functional Facilities
-                        </a>{" "}
+                        </Link>{" "}
                         page. You also have access to{" "}
-                        <a
-                            href="/app/facilities/storage"
+                        <Link
+                            to="/app/facilities/storage"
                             className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
                         >
                             Storage Facilities
-                        </a>{" "}
+                        </Link>{" "}
                         to store energy. You will unlock new technologies and
                         more game mechanics as you progress.
                     </p>

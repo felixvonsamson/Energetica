@@ -26,11 +26,15 @@ import numpy as np
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.schemas.charts import (
+    ClimateDataResponse,
+    EmissionsResponse,
     OpCostsResponse,
     PowerSinksResponse,
     PowerSourcesResponse,
+    ResourcesResponse,
     RevenuesResponse,
     StorageLevelResponse,
+    TemperatureDataResponse,
 )
 from energetica.utils.auth import get_settled_player
 
@@ -38,9 +42,10 @@ router = APIRouter(prefix="/charts", tags=["Charts"])
 
 Resolution = Literal["1", "6", "36", "216", "1296"]
 PickleChartKey = Literal["revenues", "op_costs", "generation", "demand", "storage", "resources", "emissions"]
+ClimatePickleKey = Literal["emissions", "temperature"]
 
 
-def _load_pickle_data(file_path: str) -> dict[PickleChartKey, dict[str, list[list[float]]]]:
+def _load_pickle_data(file_path: str) -> dict[PickleChartKey | ClimatePickleKey, dict[str, list[list[float]]]]:
     """Load persisted historical data from pickle file."""
     if not Path(file_path).is_file():
         return defaultdict(lambda: defaultdict(list))
@@ -52,24 +57,29 @@ def _load_pickle_data(file_path: str) -> dict[PickleChartKey, dict[str, list[lis
         return defaultdict(lambda: defaultdict(list))
 
 
-def _get_chart_data(
-    player: Player,
+def _get_time_series_data(
     start_tick: int,
     count: int,
-    data_category: PickleChartKey,
     resolution: Resolution,
+    pickle_path: str,
+    rolling_history_data: dict[str, list],
+    data_category: PickleChartKey | ClimatePickleKey,
 ) -> dict:
     """
-    Extract chart data for a time range at the requested resolution.
+    Generic function to extract time series data from pickle files and rolling history.
 
-    Validates alignment and bounds, then merges persisted pickle data with rolling history.
+    This is the core implementation used by both player-specific and server-wide data endpoints.
 
     Args:
-        player: Player whose data to retrieve
         start_tick: First tick to include (must be aligned to resolution)
         count: Number of datapoints to retrieve
-        data_category: Category to extract (e.g., "generation", "demand")
         resolution: Aggregation level ("1", "6", "36", "216", "1296")
+        pickle_path: Path to the pickle file containing historical data
+        rolling_history_data: Dictionary of rolling history data by series key
+        data_category: Category key to extract from pickle data
+
+    Returns:
+        Dictionary with start_tick, count, and series data
 
     Raises:
         HTTPException 400: If start_tick is misaligned, in future, or beyond available data
@@ -99,9 +109,6 @@ def _get_chart_data(
         )
 
     # Validate start_tick is not too old for this resolution
-    # Data structure stores 360 datapoints per resolution level (in pickle + rolling history)
-    # Maximum lookback = 360 datapoints × window_size
-
     max_datapoints = 360
     max_ticks_at_resolution = max_datapoints * window_size
     oldest_valid_tick = max(0, (current_tick // window_size - max_datapoints) * window_size)
@@ -112,10 +119,7 @@ def _get_chart_data(
             detail=f"Requested start_tick ({start_tick}) is too old for resolution {resolution}. Maximum lookback: {max_ticks_at_resolution} ticks (360 datapoints). Oldest valid tick: {oldest_valid_tick}",
         )
 
-    # Validate that not too many datapoints are being requested. Note that for a datapoint to be considered valid and
-    # returned by the API, it must be an total average, not a partial average, i.e. averaging 4 datapoints is not ok
-    # when requesting a resolution of 6. This ensures the whatever data this API returns can be safely cached and will
-    # not change.
+    # Validate that not too many datapoints are being requested
     available_datapoints = (current_tick - start_tick) // window_size
 
     if count > available_datapoints:
@@ -124,14 +128,8 @@ def _get_chart_data(
             detail=f"Requested number of datapoint ({count}) after tick {start_tick} is more than {available_datapoints}, the number of available datapoints.",
         )
 
-    # Load pickle data and merge with rolling history
-    pickle_path = f"instance/data/players/player_{player.id}.pck"
+    # Load pickle data
     pickle_data = _load_pickle_data(pickle_path)
-
-    # Get current rolling history data, 216-tick.
-    # Pass t parameter to get only the relevant portion of the buffer.
-    fresh_rolling_history_tick_count = current_tick % 216
-    rolling_history = player.rolling_history.get_data(t=fresh_rolling_history_tick_count)[data_category]
 
     resolution_index = {
         "1": 0,
@@ -142,39 +140,25 @@ def _get_chart_data(
     }[resolution]
 
     # Calculate the boundary between pickle and rolling history
-    # Rolling history contains the most recent fresh_rolling_history_tick_count ticks
+    fresh_rolling_history_tick_count = current_tick % 216
     rolling_start_tick = current_tick - fresh_rolling_history_tick_count
-
-    # Pickle contains up to 360 datapoints ending just before rolling history starts
-    # Note: pickle_start_tick can be negative if game hasn't run long enough
     pickle_start_tick = rolling_start_tick - max_datapoints * window_size
-
-    # Calculate which ticks are requested
     request_end_tick = start_tick + count * window_size
 
     def get_pickle_datapoints(series_key: str) -> list[float]:
         """Extract requested datapoints from pickle data."""
         if start_tick >= rolling_start_tick:
-            # All requested data is in rolling history, none from pickle
             return []
 
-        # Calculate which part of the request falls within pickle range
         pickle_data_end_tick = min(request_end_tick, rolling_start_tick)
-
-        # Calculate the indices within the pickle array
-        # pickle[0] represents ticks [pickle_start_tick, pickle_start_tick + window_size)
-        # pickle[i] represents ticks [pickle_start_tick + i*window_size, pickle_start_tick + (i+1)*window_size)
         pickle_start_offset = (start_tick - pickle_start_tick) // window_size
         pickle_end_offset = (pickle_data_end_tick - pickle_start_tick) // window_size
 
-        # Extract from pickle or return zeros
         if series_key in pickle_data[data_category]:
             series_data = pickle_data[data_category][series_key][resolution_index]
-            # Handle case where pickle might have fewer datapoints than expected
             actual_start = min(pickle_start_offset, len(series_data))
             actual_end = min(pickle_end_offset, len(series_data))
             result = series_data[actual_start:actual_end]
-            # Pad with zeros if we don't have enough data
             if len(result) < (pickle_end_offset - pickle_start_offset):
                 result = [0.0] * (pickle_end_offset - pickle_start_offset - len(result)) + result
             return result
@@ -184,27 +168,19 @@ def _get_chart_data(
     def get_rolling_datapoints(rolling_series: list) -> list[float]:
         """Extract and aggregate requested datapoints from rolling history."""
         if request_end_tick <= rolling_start_tick:
-            # All requested data is in pickle, none from rolling history
             return []
 
-        # Calculate which part of the request falls within rolling history range
         rolling_data_start_tick = max(start_tick, rolling_start_tick)
         rolling_data_end_tick = min(request_end_tick, current_tick)
 
-        # Calculate the tick indices within rolling history buffer
-        # rolling_series[0] represents tick rolling_start_tick
-        # rolling_series[i] represents tick rolling_start_tick + i
         rolling_start_offset = rolling_data_start_tick - rolling_start_tick
         rolling_end_offset = rolling_data_end_tick - rolling_start_tick
 
-        # Extract the ticks
         ticks = rolling_series[rolling_start_offset:rolling_end_offset]
 
         if len(ticks) == 0:
             return []
 
-        # Aggregate ticks into datapoints of window_size
-        # We only want complete windows
         num_complete_windows = len(ticks) // window_size
         if num_complete_windows == 0:
             return []
@@ -216,7 +192,7 @@ def _get_chart_data(
     # Build the response by combining pickle and rolling history data
     datapoints = {
         series_key: [*get_pickle_datapoints(series_key), *get_rolling_datapoints(rolling_series)]
-        for series_key, rolling_series in rolling_history.items()
+        for series_key, rolling_series in rolling_history_data.items()
     }
 
     return {
@@ -224,6 +200,83 @@ def _get_chart_data(
         "count": count,
         "series": datapoints,
     }
+
+
+def _get_chart_data(
+    player: Player,
+    start_tick: int,
+    count: int,
+    data_category: PickleChartKey,
+    resolution: Resolution,
+) -> dict:
+    """
+    Extract player-specific chart data for a time range at the requested resolution.
+
+    Args:
+        player: Player whose data to retrieve
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+        data_category: Category to extract (e.g., "generation", "demand")
+        resolution: Aggregation level ("1", "6", "36", "216", "1296")
+
+    Raises:
+        HTTPException 400: If start_tick is misaligned, in future, or beyond available data
+    """
+    current_tick = engine.total_t
+    fresh_rolling_history_tick_count = current_tick % 216
+    pickle_path = f"instance/data/players/player_{player.id}.pck"
+    rolling_history_data = player.rolling_history.get_data(t=fresh_rolling_history_tick_count)[data_category]
+
+    return _get_time_series_data(
+        start_tick=start_tick,
+        count=count,
+        resolution=resolution,
+        pickle_path=pickle_path,
+        rolling_history_data=rolling_history_data,
+        data_category=data_category,
+    )
+
+
+def _get_climate_data(
+    start_tick: int,
+    count: int,
+    data_category: ClimatePickleKey,
+    resolution: Resolution,
+) -> dict:
+    """
+    Extract server-wide climate data for a time range at the requested resolution.
+
+    Args:
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+        data_category: Category to extract ("emissions" for CO2, "temperature" for temp data)
+        resolution: Aggregation level ("1", "6", "36", "216", "1296")
+
+    Raises:
+        HTTPException 400: If start_tick is misaligned, in future, or beyond available data
+    """
+    current_tick = engine.total_t
+    fresh_rolling_history_tick_count = current_tick % 216
+    pickle_path = "instance/data/servers/climate_data.pck"
+
+    # Check if climate data file exists
+    if not Path(pickle_path).is_file():
+        return {
+            "start_tick": start_tick,
+            "count": count,
+            "series": {},
+        }
+
+    rolling_history_data = engine.current_climate_data.get_data(t=fresh_rolling_history_tick_count)[data_category]
+
+    return _get_time_series_data(
+        start_tick=start_tick,
+        count=count,
+        resolution=resolution,
+        pickle_path=pickle_path,
+        rolling_history_data=rolling_history_data,
+        data_category=data_category,
+    )
 
 
 @router.get("/power-sources/{resolution}")
@@ -319,3 +372,83 @@ def get_op_costs(
     """
     data = _get_chart_data(player, start_tick, count, "op_costs", resolution)
     return OpCostsResponse(resolution=resolution, **data)
+
+
+@router.get("/emissions/{resolution}")
+def get_emissions(
+    player: Annotated[Player, Depends(get_settled_player)],
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> EmissionsResponse:
+    """
+    Get CO2 emissions time series by source at the specified resolution.
+
+    Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_chart_data(player, start_tick, count, "emissions", resolution)
+    return EmissionsResponse(resolution=resolution, **data)
+
+
+@router.get("/climate/{resolution}")
+def get_climate_data(
+    _player: Annotated[Player, Depends(get_settled_player)],
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> ClimateDataResponse:
+    """
+    Get global atmospheric CO2 levels time series at the specified resolution.
+
+    This is server-wide data affected by all players, not player-specific.
+
+    Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_climate_data(start_tick, count, "emissions", resolution)
+    return ClimateDataResponse(resolution=resolution, **data)
+
+
+@router.get("/temperature/{resolution}")
+def get_temperature_data(
+    _player: Annotated[Player, Depends(get_settled_player)],
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> TemperatureDataResponse:
+    """
+    Get global temperature time series at the specified resolution.
+
+    This is server-wide data affected by all players, not player-specific.
+
+    Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_climate_data(start_tick, count, "temperature", resolution)
+    return TemperatureDataResponse(resolution=resolution, **data)
+
+
+@router.get("/resources/{resolution}")
+def get_resources(
+    player: Annotated[Player, Depends(get_settled_player)],
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> ResourcesResponse:
+    """
+    Get resource stocks time series at the specified resolution.
+
+    Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_chart_data(player, start_tick, count, "resources", resolution)
+    return ResourcesResponse(resolution=resolution, **data)

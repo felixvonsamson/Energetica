@@ -62,6 +62,20 @@ OpCostsKey = Literal[
     "uranium_mine",
 ]
 
+EmissionsKey = Literal[
+    "carbon_capture",
+    "steam_engine",
+    "coal_burner",
+    "gas_burner",
+    "combined_cycle",
+    "nuclear_reactor",
+    "nuclear_reactor_gen4",
+    "construction",
+    "coal_mine",
+    "gas_drilling_site",
+    "uranium_mine",
+]
+
 
 class ChartDataResponse(BaseModel, Generic[SeriesKeyType]):
     """Generic response model for time series chart data."""
@@ -113,4 +127,46 @@ class OpCostsResponse(ChartDataResponse[OpCostsKey]):
 
     series: dict[OpCostsKey, list[float]] = Field(
         description="Time series data for each facility type's operating and maintenance costs, with currency values",
+    )
+
+
+class EmissionsResponse(ChartDataResponse[EmissionsKey]):
+    """Response model for CO2 emissions time series."""
+
+    series: dict[EmissionsKey, list[float]] = Field(
+        description="Time series data for CO2 emissions by source, with mass values in kg",
+    )
+
+
+# Climate data responses (server-wide, not player-specific)
+ClimateDataKey = Literal["CO2"]
+
+
+class ClimateDataResponse(ChartDataResponse[ClimateDataKey]):
+    """Response model for global climate data time series."""
+
+    series: dict[ClimateDataKey, list[float]] = Field(
+        description="Time series data for global CO2 levels in the atmosphere, with mass values in kg",
+    )
+
+
+TemperatureDataKey = Literal["deviation", "reference"]
+
+
+class TemperatureDataResponse(ChartDataResponse[TemperatureDataKey]):
+    """Response model for global temperature time series."""
+
+    series: dict[TemperatureDataKey, list[float]] = Field(
+        description="Time series data for global temperature, with deviation from reference in degrees C",
+    )
+
+
+ResourcesKey = Literal["coal", "gas", "uranium"]
+
+
+class ResourcesResponse(ChartDataResponse[ResourcesKey]):
+    """Response model for resource stocks time series."""
+
+    series: dict[ResourcesKey, list[float]] = Field(
+        description="Time series data for resource stocks, with quantities in tons",
     )
