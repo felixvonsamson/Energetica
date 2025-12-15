@@ -14,7 +14,7 @@ import {
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Card, CardTitle } from "@/components/ui";
+import { Card, CardTitle, CashFlow } from "@/components/ui";
 import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
@@ -301,6 +301,7 @@ function RevenuesChart({
             showBrush: true,
             getColor,
             filterDataKeys,
+            formatValue: (value: number) => <CashFlow amountPerTick={value} />,
         }),
         [getColor, filterDataKeys],
     );

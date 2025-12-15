@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { FacilityCard } from "@/components/facilities/FacilityCard";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Money } from "@/components/ui";
+import { CashFlow } from "@/components/ui";
 import { useStorageFacilitiesCatalog } from "@/hooks/useProjects";
 import { formatPower, formatEnergy } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -184,8 +184,9 @@ function StorageFacilityStatsTable({
                             Operation cost
                         </td>
                         <td className="py-2 px-4 text-center">
-                            <Money amount={facility.operating_costs} />
-                            /h
+                            <CashFlow
+                                amountPerTick={facility.operating_costs}
+                            />
                         </td>
                     </tr>
 

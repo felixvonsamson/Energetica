@@ -10,6 +10,10 @@
 
 const colorCache = new Map<string, string>();
 
+export function assetCSSColourVariable(assetName: string): string {
+    return `var(${normalizeToCssVariable(assetName)})`;
+}
+
 /**
  * Convert asset name to CSS variable format Examples: "pv_solar" →
  * "--asset-color-pv-solar" "PV_solar" → "--asset-color-pv-solar" "PvSolar" →

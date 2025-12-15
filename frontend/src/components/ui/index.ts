@@ -7,6 +7,7 @@ export { ProgressBar } from "./ProgressBar";
 export { FacilityGauge } from "./FacilityGauge";
 export { ThemeToggle } from "./ThemeToggle";
 export { Money } from "./Money";
+export { CashFlow } from "./CashFlow";
 export { TogglingDuration, Duration, TimeModeToggle } from "./Duration";
 export { ConfirmDialog } from "./ConfirmDialog";
 export {

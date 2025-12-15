@@ -7,6 +7,7 @@ import { useState, ReactNode, Fragment } from "react";
 
 import {
     Money,
+    CashFlow,
     FacilityName,
     InfoBanner,
     TogglingDuration,
@@ -477,8 +478,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                     </td>
                                 ))}
                                 <td className="py-3 px-4 text-right">
-                                    <Money amount={totalOpCost} />
-                                    /h
+                                    <CashFlow amountPerTick={totalOpCost} />
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono">
                                     {hasInfiniteLifespan ? (

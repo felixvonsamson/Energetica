@@ -18,6 +18,7 @@ import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
+import { formatPower } from "@/lib/format-utils";
 import { ChartType } from "@/types/charts";
 
 export const Route = createFileRoute("/app/overviews/power")({
@@ -167,6 +168,11 @@ function PowerChart({
             showBrush: true,
             getColor,
             filterDataKeys,
+            formatTooltip: (value: number, name: string) => [
+                formatPower(value),
+                name,
+            ],
+            formatValue: formatPower,
         }),
         [getColor, filterDataKeys],
     );

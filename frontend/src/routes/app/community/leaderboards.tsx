@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Card, Money } from "@/components/ui";
+import { Card, CashFlow } from "@/components/ui";
 import { useHasCapability } from "@/hooks/useCapabilities";
 import { useLeaderboards } from "@/hooks/useLeaderboards";
 import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
@@ -601,8 +601,9 @@ function LeaderboardsContent() {
                     <>
                         {commonCells}
                         <td className="py-3 px-4 text-right">
-                            <Money amount={row.general.average_revenues} />
-                            /h
+                            <CashFlow
+                                amountPerTick={row.general.average_revenues}
+                            />
                         </td>
                         <td className="py-3 px-4 text-right font-mono">
                             {formatPower(row.general.max_power_consumption)}

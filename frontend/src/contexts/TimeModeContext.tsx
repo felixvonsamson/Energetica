@@ -2,7 +2,7 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 
 import { ResolutionOption, resolutions } from "@/types/charts";
 
-export type TimeMode = "wall-clock" | "game-time";
+export type TimeMode = "wall-clock" | "game-time"; // TODO move to @/types
 
 interface TimeModeContextValue {
     mode: TimeMode;

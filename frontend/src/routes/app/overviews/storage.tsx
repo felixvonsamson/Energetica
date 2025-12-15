@@ -18,6 +18,7 @@ import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
+import { formatEnergy } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/overviews/storage")({
     component: StorageOverviewPage,
@@ -195,6 +196,7 @@ function StorageChart({
             showBrush: true,
             getColor,
             filterDataKeys,
+            formatValue: formatEnergy,
         }),
         [getColor, filterDataKeys],
     );

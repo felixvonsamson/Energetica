@@ -6,6 +6,7 @@
 import { DollarSign } from "lucide-react";
 
 import { cn } from "@/lib/cn";
+import { formatMoney } from "@/lib/format-utils";
 
 interface MoneyProps {
     /** The monetary value to display */
@@ -16,30 +17,6 @@ interface MoneyProps {
     className?: string;
     /** Size of the coin icon */
     iconSize?: "sm" | "md" | "lg";
-}
-
-/**
- * Formats money with thousands separator and appropriate unit scaling. Scales:
- * $ → k$ → M$ → Md$ (millions → billions)
- */
-function formatMoneyValue(amount: number, long: boolean = false): string {
-    if (long) {
-        // Long format: just add thousands separator, no scaling
-        return amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'");
-    }
-
-    // Short format: scale to appropriate unit
-    const units = ["", "k", "M", "Md"]; // billions (Md = milliard in French)
-    let value = amount;
-    let unitIndex = 0;
-
-    while (Math.abs(value) >= 10_000 && unitIndex < units.length - 1) {
-        value /= 1_000;
-        unitIndex += 1;
-    }
-
-    const formatted = value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'");
-    return unitIndex > 0 ? `${formatted}${units[unitIndex]}` : formatted;
 }
 
 /**
@@ -65,7 +42,7 @@ export function Money({
 
     return (
         <span className={cn("inline-flex items-center gap-0.5", className)}>
-            {formatMoneyValue(amount, long)}
+            {formatMoney(amount, long)}
             <DollarSign
                 className={cn(
                     sizeClasses[iconSize],

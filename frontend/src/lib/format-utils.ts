@@ -7,6 +7,8 @@
  * display.
  */
 
+import type { TimeMode } from "@/contexts/TimeModeContext";
+
 // Unit definitions
 const POWER_UNITS = [" W", " kW", " MW", " GW", " TW"];
 const ENERGY_UNITS = [" Wh", " kWh", " MWh", " GWh", " TWh"];
@@ -190,31 +192,29 @@ export function formatConcentration(
 
 // === Money/Currency Formatting ===
 
-/*
- * COMMENTED OUT: Money formatting with HTML coin icons
- *
- * These functions return HTML strings with <img> tags for coin icons.
- * This approach works for the legacy Jinja templates but should be revisited
- * for React - likely better as components that can handle the icon properly.
- *
- * Uncomment and adapt when implementing money display in the React frontend.
- * Consider creating a <Money amount={value} /> component instead.
+/**
+ * Formats money with thousands separator and appropriate unit scaling. Scales:
+ * $ → k$ → M$ → Md$ (millions → billions)
  */
+export function formatMoney(amount: number, long: boolean = false): string {
+    if (long) {
+        // Long format: just add thousands separator, no scaling
+        return amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    }
 
-// export function formatMoney(
-//     price: number,
-//     coinIcon: string = "<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>",
-// ): string {
-//     const units = [coinIcon, "k" + coinIcon, "M" + coinIcon, "Md" + coinIcon];
-//     return generalFormat(price, units);
-// }
+    // Short format: scale to appropriate unit
+    const units = ["", "k", "M", "Md"]; // billions (Md = milliard in French)
+    let value = amount;
+    let unitIndex = 0;
 
-// export function formatMoneyLong(price: number): string {
-//     return (
-//         price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'") +
-//         "<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>"
-//     );
-// }
+    while (Math.abs(value) >= 10000 && unitIndex < units.length - 1) {
+        value /= 1000;
+        unitIndex += 1;
+    }
+
+    const formatted = value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    return unitIndex > 0 ? `${formatted}${units[unitIndex]}` : formatted;
+}
 
 // export function formatUpgradeMoney(
 //     value1: number | null,
@@ -371,6 +371,117 @@ export function ticksToWallClockSeconds(
     config: GameEngineConfig,
 ): number {
     return ticks * config.wall_clock_seconds_per_tick;
+}
+
+// === Cash Flow Formatting ===
+
+/** Time unit constants for cash flow calculations. */
+const SECONDS_PER_HOUR = 3600;
+const SECONDS_PER_DAY = 86400;
+const SECONDS_PER_WALL_CLOCK_YEAR = 31_536_000; // 365 days
+const SECONDS_PER_GAME_YEAR = 6_220_800; // 72 days
+
+/**
+ * Get the number of seconds in a time unit, accounting for the difference
+ * between game-time and wall-clock years.
+ *
+ * @param unit - The time unit ("h", "day", or "year")
+ * @param mode - The time mode (game-time or wall-clock)
+ * @returns Number of seconds in the specified unit
+ */
+export function getSecondsPerUnit(
+    unit: "h" | "day" | "year",
+    mode: TimeMode,
+): number {
+    switch (unit) {
+        case "h":
+            return SECONDS_PER_HOUR;
+        case "day":
+            return SECONDS_PER_DAY;
+        case "year":
+            return mode === "game-time"
+                ? SECONDS_PER_GAME_YEAR
+                : SECONDS_PER_WALL_CLOCK_YEAR;
+    }
+}
+
+/**
+ * Get display suffix for a time unit.
+ *
+ * @param unit - The time unit ("h", "day", or "year")
+ * @returns Formatted suffix string (e.g., "/h", "/day", "/year")
+ */
+export function getUnitSuffix(unit: "h" | "day" | "year"): string {
+    switch (unit) {
+        case "h":
+            return "/h";
+        case "day":
+            return "/day";
+        case "year":
+            return "/year";
+    }
+}
+
+/**
+ * Convert cash flow from money per tick to money per time unit.
+ *
+ * @example
+ *     const rate = amountPerTickToCashFlowRate(
+ *         100,
+ *         "h",
+ *         gameEngine,
+ *         "game-time",
+ *     );
+ *     // Returns hourly cash flow rate in game time
+ *
+ * @param amountPerTick - Cash flow in money per tick
+ * @param unit - Target time unit ("h", "day", or "year")
+ * @param config - GameEngineConfig containing timing information
+ * @param mode - Time mode (game-time or wall-clock)
+ * @returns Cash flow rate in money per specified time unit
+ */
+export function amountPerTickToCashFlowRate(
+    amountPerTick: number,
+    unit: "h" | "day" | "year",
+    config: GameEngineConfig,
+    mode: TimeMode,
+): number {
+    // Determine seconds per tick based on mode
+    const secondsPerTick =
+        mode === "game-time"
+            ? config.game_seconds_per_tick
+            : config.wall_clock_seconds_per_tick;
+
+    // Convert from money per tick to money per second
+    const amountPerSecond = amountPerTick / secondsPerTick;
+
+    // Convert to the desired time unit
+    const secondsPerUnit = getSecondsPerUnit(unit, mode);
+    return amountPerSecond * secondsPerUnit;
+}
+
+/**
+ * Format cash flow as a string with appropriate units.
+ *
+ * @example
+ *     formatCashFlow(100, "h", gameEngine, "game-time");
+ *     // Returns "15k$/h" (formatted with Money scaling)
+ *
+ * @param amountPerTick - Cash flow in money per tick
+ * @param unit - Target time unit ("h", "day", or "year")
+ * @param config - GameEngineConfig containing timing information
+ * @param mode - Time mode (game-time or wall-clock)
+ * @returns Formatted cash flow string with units
+ */
+export function formatCashFlow(
+    amountPerTick: number,
+    unit: "h" | "day" | "year",
+    config: GameEngineConfig,
+    mode: TimeMode,
+): string {
+    const rate = amountPerTickToCashFlowRate(amountPerTick, unit, config, mode);
+    const suffix = getUnitSuffix(unit);
+    return `${formatMoney(rate)}${suffix}`;
 }
 
 // === Achievement-Specific Formatting ===

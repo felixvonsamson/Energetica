@@ -33,7 +33,7 @@ import {
  * @param formatted - The formatted duration string (e.g., "69d 8h 56m 23s")
  * @returns Compact version (e.g., "69d 8h")
  */
-function makeCompact(formatted: string): string {
+export function makeCompact(formatted: string): string {
     const parts = formatted.split(" ");
     return parts.slice(0, 2).join(" ");
 }

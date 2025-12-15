@@ -1,6 +1,6 @@
 /** Generic time series chart component supporting multiple chart types. */
 
-import { useMemo } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
 import {
     XAxis,
     YAxis,
@@ -17,6 +17,19 @@ import {
 } from "recharts";
 
 import { ChartLoadingState } from "./ChartLoadingState";
+
+import { AssetName, Duration } from "@/components/ui";
+import { makeCompact } from "@/components/ui/Duration";
+import { useTimeMode } from "@/contexts/TimeModeContext";
+import { useGameEngine } from "@/hooks/useGame";
+import { useGameTick } from "@/hooks/useGameTick";
+import { assetCSSColourVariable } from "@/lib/assets/asset-colors";
+import {
+    formatGameTimeDuration,
+    formatWallClockDuration,
+    ticksToGameSeconds,
+    ticksToWallClockSeconds,
+} from "@/lib/format-utils";
 
 /** Configuration for how to render a time series chart. */
 export interface TimeSeriesChartConfig {
@@ -35,7 +48,7 @@ export interface TimeSeriesChartConfig {
     /** Custom formatter for the Y axis */
     formatYAxis?: (value: number) => string;
     /** Custom formatter for tooltips */
-    formatTooltip?: (value: number, name: string) => [string, string];
+    formatValue: (value: number) => ReactNode;
 }
 
 /** Props for a data series component (Area, Line, Bar). */
@@ -82,7 +95,7 @@ export function TimeSeriesChart({
         getColor,
         filterDataKeys,
         formatYAxis,
-        formatTooltip,
+        formatValue,
     } = config;
 
     // Extract and filter data keys
@@ -141,6 +154,34 @@ export function TimeSeriesChart({
         });
     }, [data, chartVariant, stacked, getColor, filterDataKeys]);
 
+    const { currentTick } = useGameTick();
+    const { mode } = useTimeMode();
+    const { data: gameEngine } = useGameEngine();
+
+    const xAxisTickFormatter = useCallback(
+        (tick: number) =>
+            !gameEngine || currentTick === undefined
+                ? "--"
+                : mode === "game-time"
+                  ? makeCompact(
+                        formatGameTimeDuration(
+                            ticksToGameSeconds(
+                                currentTick - tick - 1,
+                                gameEngine,
+                            ),
+                        ),
+                    )
+                  : makeCompact(
+                        formatWallClockDuration(
+                            ticksToWallClockSeconds(
+                                currentTick - tick - 1,
+                                gameEngine,
+                            ),
+                        ),
+                    ),
+        [mode, gameEngine, currentTick],
+    );
+
     if (isLoading) {
         return <ChartLoadingState />;
     }
@@ -165,14 +206,102 @@ export function TimeSeriesChart({
         <ResponsiveContainer width="100%" height={height}>
             <ChartComponent data={data}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="tick" tick={{ fontSize: 12 }} />
+                <XAxis
+                    dataKey="tick"
+                    type="number"
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={xAxisTickFormatter}
+                    tickCount={7}
+                    domain={["dataMin-1", "dataMax"]}
+                />
                 <YAxis tickFormatter={formatYAxis} />
                 {showBrush && (
-                    <Brush dataKey="tick" height={30} stroke="#8884d8" />
+                    <Brush dataKey="tick" height={30} stroke="#7a7a7aff" />
                 )}
                 {seriesComponents}
-                <Tooltip formatter={formatTooltip} />
+                <Tooltip
+                    content={(props) => (
+                        <CustomTooltipContent
+                            active={props.active}
+                            payload={props.payload}
+                            label={props.label}
+                            formatValue={formatValue}
+                        />
+                    )}
+                    isAnimationActive={false}
+                />
             </ChartComponent>
         </ResponsiveContainer>
+    );
+}
+
+interface CustomTooltipContentProps {
+    active?: boolean;
+    payload?: ReadonlyArray<{
+        value: number;
+        name: string;
+        [key: string]: unknown;
+    }>;
+    label?: string | number;
+    formatValue: (value: number) => ReactNode;
+}
+
+function CustomTooltipContent({
+    active,
+    payload,
+    label,
+    formatValue,
+}: CustomTooltipContentProps) {
+    const { currentTick } = useGameTick();
+    const { mode } = useTimeMode();
+
+    const isVisible = active && payload && payload.length;
+    if (!isVisible) return null;
+    return (
+        <div className="bg-neutral-100 dark:bg-neutral-600 p-2">
+            <table>
+                {currentTick !== undefined &&
+                    label !== undefined &&
+                    typeof label === "number" && (
+                        <caption className="caption-bottom">
+                            <Duration ticks={currentTick - label} compact />
+                            <>{" ago "}</>
+                            {mode}
+                        </caption>
+                    )}
+                <thead hidden>
+                    <tr>
+                        <th></th>
+                        <th>{"label"}</th>
+                        <th>{"value"}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {payload
+                        .filter((p) => p.value !== 0)
+                        .sort(
+                            (a, b) => (b.value as number) - (a.value as number),
+                        )
+                        .map((p) => (
+                            <tr>
+                                <td>
+                                    <div
+                                        className="h-6 aspect-square"
+                                        style={{
+                                            backgroundColor:
+                                                assetCSSColourVariable(p.name),
+                                        }}
+                                    />
+                                </td>
+                                <td className="px-2 min-w-30">
+                                    {/* {p.name} */}
+                                    <AssetName assetId={p.name} />
+                                </td>
+                                <td className="px-2">{formatValue(p.value)}</td>
+                            </tr>
+                        ))}
+                </tbody>
+            </table>
+        </div>
     );
 }

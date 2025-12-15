@@ -3,7 +3,7 @@ import { Info } from "lucide-react";
 
 import { FacilityCard } from "@/components/facilities/FacilityCard";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { ResourceName, Money } from "@/components/ui";
+import { ResourceName, CashFlow } from "@/components/ui";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { useExtractionFacilitiesCatalog } from "@/hooks/useProjects";
 import { formatPower, formatMass } from "@/lib/format-utils";
@@ -210,8 +210,9 @@ function ExtractionFacilityStatsTable({
                             Operation cost
                         </td>
                         <td className="py-2 px-4 text-center">
-                            <Money amount={facility.operating_costs} />
-                            /h
+                            <CashFlow
+                                amountPerTick={facility.operating_costs}
+                            />
                         </td>
                     </tr>
 
