@@ -1,22 +1,17 @@
-/**
- * Revenues overview table component that displays aggregated revenue data by
- * facility type.
- *
- * Shows total revenues over the selected period for each facility type.
- */
+/** Cash flow overview table component that displays aggregated cash flow data. */
 
 import { useMemo, useState } from "react";
 
 import { FacilityName } from "@/components/ui/AssetName";
 import { Money } from "@/components/ui/Money";
 
-type RevenueType = "revenues" | "expenses" | "net-profit";
+type CashFlowType = "revenues" | "expenses" | "net-profit";
 
-interface RevenuesOverviewTableProps {
+interface CashFlowOverviewTableProps {
     /** Chart data with time series for each facility type */
     chartData: Array<Record<string, number>>;
     /** Type of revenue to display */
-    revenueType: RevenueType;
+    revenueType: CashFlowType;
     /** Set of hidden facility types */
     hiddenFacilities: Set<string>;
     /** Callback when a facility visibility is toggled */
@@ -31,18 +26,13 @@ interface FacilityRow {
 type SortKey = "facility" | "revenues";
 type SortDirection = "asc" | "desc";
 
-/**
- * Revenues overview table showing aggregated revenue data by facility type.
- *
- * - Facility name
- * - Total revenues over the period
- */
-export function RevenuesOverviewTable({
+/** Cash flow overview table */
+export function CashFlowOverviewTable({
     chartData,
     revenueType,
     hiddenFacilities,
     onToggleFacility,
-}: RevenuesOverviewTableProps) {
+}: CashFlowOverviewTableProps) {
     const [sortKey, setSortKey] = useState<SortKey>("revenues");
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 

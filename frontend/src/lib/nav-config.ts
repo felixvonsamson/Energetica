@@ -63,8 +63,8 @@ export const navigationConfig: NavigationItemConfig[] = [
         children: [
             {
                 type: "link",
-                label: "Revenues",
-                to: "/app/overviews/revenues",
+                label: "Cash Flow",
+                to: "/app/overviews/cash-flow",
                 icon: Coins,
             },
             {

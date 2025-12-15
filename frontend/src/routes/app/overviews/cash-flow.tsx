@@ -7,7 +7,7 @@ import { useState, useMemo, useCallback } from "react";
 import {
     TimeSeriesChart,
     ResolutionPicker,
-    RevenuesOverviewTable,
+    CashFlowOverviewTable,
     filterNonZeroSeries,
     createExcludeKeysFilter,
     includeAllSeries,
@@ -23,10 +23,10 @@ import { useGameTick } from "@/hooks/useGameTick";
 type RevenueType = "revenues" | "expenses" | "net-profit";
 type NetProfitViewMode = "net" | "breakdown";
 
-export const Route = createFileRoute("/app/overviews/revenues")({
+export const Route = createFileRoute("/app/overviews/cash-flow")({
     component: RevenuesOverviewPage,
     staticData: {
-        title: "Revenues Overview",
+        title: "Cash Flow Overview",
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
@@ -206,7 +206,7 @@ function RevenuesOverviewContent() {
     return (
         <div className="p-4 md:p-8">
             <h1 className="text-4xl md:text-5xl font-bold mb-8">
-                Revenues Overview
+                Cash Flow Overview
             </h1>
 
             <Card className="mb-6">
@@ -253,7 +253,7 @@ function RevenuesOverviewContent() {
                 />
 
                 <div className="mt-6">
-                    <RevenuesOverviewTable
+                    <CashFlowOverviewTable
                         chartData={filteredChartData}
                         revenueType={revenueType}
                         hiddenFacilities={hiddenFacilities}
