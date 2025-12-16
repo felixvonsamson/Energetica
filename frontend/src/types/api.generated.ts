@@ -2320,6 +2320,8 @@ export interface components {
             type:
                 | components["schemas"]["ControllableFacilityType"]
                 | components["schemas"]["StorageFacilityType"];
+            /** Price */
+            price: number;
         };
         /**
          * AskListOut
@@ -2406,6 +2408,8 @@ export interface components {
                 | components["schemas"]["ExtractionFacilityType"]
                 | ("industry" | "carbon_capture")
                 | components["schemas"]["StorageFacilityType"];
+            /** Price */
+            price: number;
         };
         /** ChangeElectricityMarketPrices */
         ChangeElectricityMarketPrices: {

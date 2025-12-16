@@ -28,3 +28,14 @@ def put_power_priorities(
     if not player.achievements["network"]:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="You must unlock the Network achievement first")
     player.network_prices.change_facility_priority(player, data.power_priorities)
+
+    # Invalidate React Query cache
+    player.emit(
+        "invalidate",
+        {
+            "queries": [
+                ["power-priorities"],
+                ["facilities"],  # Priorities affect facility production
+            ]
+        },
+    )

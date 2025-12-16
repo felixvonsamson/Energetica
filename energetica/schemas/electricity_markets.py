@@ -72,6 +72,7 @@ class Bid(BaseModel):
 class BidItem(BaseModel):
     side: Literal["bid"]
     type: BidType
+    price: float  # Price per MWh
 
     class Config:
         frozen = True
@@ -80,6 +81,7 @@ class BidItem(BaseModel):
 class AskItem(BaseModel):
     side: Literal["ask"]
     type: AskType
+    price: float  # Price per MWh
 
     class Config:
         frozen = True
