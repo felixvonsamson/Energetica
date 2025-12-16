@@ -19,24 +19,7 @@ import { Clock, CalendarClock } from "lucide-react";
 import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useGameEngine } from "@/hooks/useGame";
 import { cn } from "@/lib/cn";
-import {
-    formatGameTimeDuration,
-    formatWallClockDuration,
-    ticksToGameSeconds,
-    ticksToWallClockSeconds,
-} from "@/lib/format-utils";
-
-/**
- * Format a duration string to be more compact by showing fewer units. For
- * example: "69d 8h 56m 23s" becomes "69d 8h"
- *
- * @param formatted - The formatted duration string (e.g., "69d 8h 56m 23s")
- * @returns Compact version (e.g., "69d 8h")
- */
-export function makeCompact(formatted: string): string {
-    const parts = formatted.split(" ");
-    return parts.slice(0, 2).join(" ");
-}
+import { formatDuration } from "@/lib/format-utils";
 
 interface DurationProps {
     /** Duration in ticks (source of truth) */
@@ -54,22 +37,7 @@ export function Duration({ ticks, compact = false }: DurationProps) {
         return <span className={"text-muted-foreground"}>--</span>;
     }
 
-    // Determine which duration to display based on mode
-    const durationSeconds =
-        mode === "game-time"
-            ? ticksToGameSeconds(ticks, gameEngine)
-            : ticksToWallClockSeconds(ticks, gameEngine);
-
-    let formatted =
-        mode === "game-time"
-            ? formatGameTimeDuration(durationSeconds)
-            : formatWallClockDuration(durationSeconds);
-
-    if (compact) {
-        formatted = makeCompact(formatted);
-    }
-
-    return <>{formatted}</>;
+    return <>{formatDuration(ticks, mode, gameEngine, compact)}</>;
 }
 
 interface TogglingDurationProps {

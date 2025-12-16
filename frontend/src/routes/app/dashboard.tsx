@@ -17,8 +17,11 @@ import {
 } from "lucide-react";
 
 import { AchievementCard } from "@/components/dashboard/AchievementCard";
+import { ConstructionProjects } from "@/components/dashboard/ConstructionProjects";
 import { DashboardSection } from "@/components/dashboard/DashboardSection";
+import { IncomingShipments } from "@/components/dashboard/IncomingShipments";
 import { QuickLinkCard } from "@/components/dashboard/QuickLinkCard";
+import { ResearchProjects } from "@/components/dashboard/ResearchProjects";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { InfoBanner, Card, CardTitle } from "@/components/ui";
 import { useAchievements } from "@/hooks/useAchievements";
@@ -148,7 +151,7 @@ function DashboardContent() {
                     emptyIcon={Construction}
                     emptyMessage="No facilities under construction"
                 >
-                    {/* TODO: Fetch from API */}
+                    <ConstructionProjects showActions={true} />
                 </DashboardSection>
 
                 {/* Under research - only show if player has laboratory */}
@@ -158,7 +161,7 @@ function DashboardContent() {
                         emptyIcon={FlaskConical}
                         emptyMessage="No technologies under research"
                     >
-                        {/* TODO: Fetch from API */}
+                        <ResearchProjects showActions={true} />
                     </DashboardSection>
                 )}
 
@@ -169,7 +172,7 @@ function DashboardContent() {
                         emptyIcon={Truck}
                         emptyMessage="No shipments on the way"
                     >
-                        {/* TODO: Fetch from API */}
+                        <IncomingShipments />
                     </DashboardSection>
                 )}
             </div>

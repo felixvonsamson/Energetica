@@ -19,17 +19,11 @@ import {
 import { ChartLoadingState } from "./ChartLoadingState";
 
 import { AssetName, Duration } from "@/components/ui";
-import { makeCompact } from "@/components/ui/Duration";
 import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useGameEngine } from "@/hooks/useGame";
 import { useGameTick } from "@/hooks/useGameTick";
 import { assetCSSColourVariable } from "@/lib/assets/asset-colors";
-import {
-    formatGameTimeDuration,
-    formatWallClockDuration,
-    ticksToGameSeconds,
-    ticksToWallClockSeconds,
-} from "@/lib/format-utils";
+import { formatDuration } from "@/lib/format-utils";
 
 /** Configuration for how to render a time series chart. */
 export interface TimeSeriesChartConfig {
@@ -202,23 +196,7 @@ export function TimeSeriesChart({
         (tick: number) =>
             !gameEngine || currentTick === undefined
                 ? "--"
-                : mode === "game-time"
-                  ? makeCompact(
-                        formatGameTimeDuration(
-                            ticksToGameSeconds(
-                                currentTick - tick - 1,
-                                gameEngine,
-                            ),
-                        ),
-                    )
-                  : makeCompact(
-                        formatWallClockDuration(
-                            ticksToWallClockSeconds(
-                                currentTick - tick - 1,
-                                gameEngine,
-                            ),
-                        ),
-                    ),
+                : formatDuration(currentTick - tick - 1, mode, gameEngine),
         [mode, gameEngine, currentTick],
     );
 

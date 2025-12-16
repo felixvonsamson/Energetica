@@ -131,6 +131,9 @@ export const queryKeys = {
             technologies: ["projects", "catalog", "technologies"] as const,
         },
     },
+    shipments: {
+        all: ["shipments"] as const,
+    },
     leaderboards: {
         all: ["leaderboards"] as const,
     },

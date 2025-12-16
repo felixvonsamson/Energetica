@@ -285,7 +285,7 @@ interface GameEngineConfig {
  * @param seconds - Duration in game-time seconds
  * @returns Formatted duration string
  */
-export function formatGameTimeDuration(totalSeconds: number): string {
+function formatGameTimeDuration(totalSeconds: number): string {
     if (totalSeconds < 1) {
         return "0s";
     }
@@ -322,7 +322,7 @@ export function formatGameTimeDuration(totalSeconds: number): string {
  * @param totalSeconds - Duration in wall-clock seconds
  * @returns Formatted duration string
  */
-export function formatWallClockDuration(totalSeconds: number): string {
+function formatWallClockDuration(totalSeconds: number): string {
     if (totalSeconds < 1) {
         return "0s";
     }
@@ -352,10 +352,7 @@ export function formatWallClockDuration(totalSeconds: number): string {
  * @param config - GameEngineConfig containing timing information
  * @returns Duration in game-time seconds
  */
-export function ticksToGameSeconds(
-    ticks: number,
-    config: GameEngineConfig,
-): number {
+function ticksToGameSeconds(ticks: number, config: GameEngineConfig): number {
     return ticks * config.game_seconds_per_tick;
 }
 
@@ -366,11 +363,71 @@ export function ticksToGameSeconds(
  * @param config - GameEngineConfig containing timing information
  * @returns Duration in wall-clock seconds
  */
-export function ticksToWallClockSeconds(
+function ticksToWallClockSeconds(
     ticks: number,
     config: GameEngineConfig,
 ): number {
     return ticks * config.wall_clock_seconds_per_tick;
+}
+
+export function formatDuration(
+    ticks: number,
+    mode: TimeMode,
+    config: GameEngineConfig,
+    compact: boolean = false,
+): string {
+    let formatted;
+    switch (mode) {
+        case "game-time":
+            formatted = formatGameTimeDuration(
+                ticksToGameSeconds(ticks, config),
+            );
+            break;
+        case "wall-clock":
+            formatted = formatWallClockDuration(
+                ticksToWallClockSeconds(ticks, config),
+            );
+            break;
+        default:
+            mode satisfies never;
+            throw new Error(`Invalid time mode: ${mode}`);
+    }
+    if (!compact) return formatted;
+    const parts = formatted.split(" ");
+    return parts.slice(0, 2).join(" ");
+}
+
+/**
+ * Calculate ticks remaining from end tick and current tick.
+ *
+ * @param endTick - The tick when something completes
+ * @param currentTick - The current game tick
+ * @returns Number of ticks remaining
+ */
+export function getTicksRemaining(
+    endTick: number,
+    currentTick: number,
+): number {
+    return Math.max(0, endTick - currentTick);
+}
+
+/**
+ * Format ticks remaining as human-readable time duration.
+ *
+ * @example
+ *     formatTicksRemaining(120, config); // "2h" (if each tick is 1 minute)
+ *     formatTicksRemaining(45, config); // "45m"
+ *
+ * @param ticksRemaining - Number of ticks remaining
+ * @param config - GameEngineConfig containing timing information
+ * @returns Formatted duration string
+ */
+export function formatTicksRemaining(
+    ticksRemaining: number,
+    config: GameEngineConfig,
+): string {
+    const seconds = ticksToWallClockSeconds(ticksRemaining, config);
+    return formatWallClockDuration(seconds);
 }
 
 // === Cash Flow Formatting ===
