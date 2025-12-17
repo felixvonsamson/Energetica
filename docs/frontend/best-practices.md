@@ -172,7 +172,7 @@ Before submitting a PR:
 -   [styling.md](styling.md) - Tailwind patterns and theme colors
 -   [animations.md](animations.md) - Animation and transition guidelines
 -   [asset-colours.md](asset-colours.md) - Asset-specific color system
--   [api.md](api.md) - API integration and query patterns
+-   [api.md](../architecture/api.md) - API integration and query patterns
 -   [architecture/overview.md](../architecture/overview.md) - Foundation and architecture overview
 
 ## TODO

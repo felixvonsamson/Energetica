@@ -1,10 +1,16 @@
 {
     // General
-    "editor.formatOnSave": true,
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.ruff_cache": true,
+        "instance": true,
+        "admin_accounts.txt": true
+    },
     "files.associations": {
         "*.jinja": "jinja-html",
         "*.js": "javascript"
     },
+    "editor.formatOnSave": true,
     "editor.rulers": [80],
     // CSS
     "css.customData": [".vscode/css-custom-data.json"],
@@ -28,14 +34,11 @@
         "editor.rulers": [120]
     },
     // Typescript
-    "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "files.exclude": {
-        "**/__pycache__": true,
-        "**/.ruff_cache": true,
-        "instance": true,
-        "admin_accounts.txt": true
+    "[typescript][typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": "explicit"
+        }
     },
     // Python
     "[python]": {
@@ -211,5 +214,6 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "js/ts.implicitProjectConfig.checkJs": true,
-    "editor.detectIndentation": false
+    "editor.detectIndentation": false,
+    "markdown.validate.enabled": true
 }

@@ -4,7 +4,8 @@ Thanks for your interest in improving Energetica!
 
 You can contribute to the codebase, but there are plenty of other ways to contribute that we really value. Your ideas and suggestions are most welcome.
 
-See installation.md for how to get set up on your machine to run and develop the code.
+If you want to experiment with making changes to the yourself, see [./docs/getting-started/installation.md](/docs/getting-started/installation.md) to get started.
+n your machine to run and develop the code.
 
 This guide explains how to propose changes, report issues, and submit code in a way that keeps the project healthy and maintainable.
 
@@ -16,23 +17,12 @@ Energetica welcomes contributors of all backgrounds. Please use inclusive, respe
 
 All contributions are made under the existing project license (AGPL-3.0+). By submitting a PR you agree your work will be licensed accordingly. Ensure you only contribute code you are allowed to license under AGPL.
 
-## Project Architecture (High-Level)
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for diagrams, module interactions, and engine data flow.
-
--   `main.py`: Entry point launching the API + game tick loop.
--   `energetica/`: Core engine logic & API.
--   `frontend/`: Vite/JS frontend (migration in progress).
--   `tests/`: Unit vs integration suites.
--   `map_generation/`: Map layout tooling.
--   `instance/`: Runtime state (never commit).
-
 ## Issues & Feature Requests
 
 -   Search existing issues first to avoid duplicates.
 -   When opening a new issue:
     -   Clear, action-oriented title
-    -   Describe current behavior vs expected behavior
+    -   Describe current behaviour vs expected behaviour
     -   Include reproduction steps (commands, flags, test accounts, etc.)
     -   Environment details (OS, Python version, branch)
     -   Attach logs or minimal test code if helpful
@@ -229,10 +219,7 @@ Small fixes (typos, clarity) are welcome. For conceptual docs (architecture, gam
 
 ## Style Summary
 
-Condensed overview—see full guidelines in [STYLEGUIDE.md](STYLEGUIDE.md):
-
--   Python: explicit, typed where practical (ruff enforces selected ANN rules)
--   Keep functions focused; consider splitting if > ~80 lines or many concerns
+See [Backend Style Guide](./docs/backend/style-guide.md) and [Frontend Style Guide](./docs/frontend/style-guide.md).
 
 ## Adding Dependencies
 

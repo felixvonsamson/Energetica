@@ -10,7 +10,7 @@ Ready to hack? Read the full guidelines in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Documentation
 
-Read the [**project documentation**](/docs/README.md).
+Read the [**project documentation**](./docs/README.md).
 
 ## License
 

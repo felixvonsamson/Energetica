@@ -56,3 +56,16 @@ const data = await apiClient.get("/endpoint", {
 -   Cookie credentials included
 -   Typed responses
 -   Error handling with `ApiClientError`
+
+## TODO
+
+**Missing sections:**
+
+-   Detailed Query pattern examples (beyond basic code snippet)
+-   Mutation patterns with error handling
+-   Query invalidation strategies
+-   useTickQuery pattern explanation
+-   Common patterns table
+-   Troubleshooting section
+
+**Note:** This was likely truncated from the original `API.md` (which was ~750 lines). Consider adding the missing content back.

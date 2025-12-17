@@ -47,7 +47,7 @@ stateDiagram-v2
 
 ## Error Handling
 
--   Domain errors: custom [`GameError`](energetica/game_error.py) exception (e.g. `NOT_ENOUGH_MONEY`, `FACILITY_NOT_UPGRADABLE`).
+-   Domain errors: custom [`GameError`](/energetica/game_error.py) exception (e.g. `NOT_ENOUGH_MONEY`, `FACILITY_NOT_UPGRADABLE`).
 -   When raised in an API call, these are automatically converted to HTTP responses with `400` status codes.
 -   Validate player actions early (API layer) with Pydantic schemas.
 

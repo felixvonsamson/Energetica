@@ -795,5 +795,5 @@ Check `staleTime` is set appropriately (60s for tick-synced data).
 
 ## See Also
 
--   [Real-time Synchronisation](architecture/real-time-sync.md) - SocketIO invalidation patterns (backend)
+-   [Real-time Synchronisation](../architecture/real-time-sync.md) - SocketIO invalidation patterns (backend)
 -   [overview.md](overview.md) - Foundation overview
