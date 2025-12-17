@@ -235,6 +235,12 @@ def upgrade_facility(facility: ActiveFacility) -> None:
     facility.player.capacities.update(facility.player, facility.facility_type)
     engine.log(f"{facility.player.username} upgraded the facility {facility.facility_type}.")
 
+    # Invalidate queries so frontend updates
+    facility.player.invalidate_queries(
+        ["facilities"],
+        ["players", "me", "money"],
+    )
+
 
 def upgrade_all_of_type(
     player: Player,
@@ -254,6 +260,13 @@ def upgrade_all_of_type(
     for facility in facilities:
         upgrade_facility(facility)
     engine.log(f"All facilities of type {facility_type} upgraded for {player.username}.")
+
+    # Note: upgrade_facility already invalidates per facility, but we invalidate again
+    # here to ensure a single invalidation after all upgrades are complete
+    player.invalidate_queries(
+        ["facilities"],
+        ["players", "me", "money"],
+    )
 
 
 def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: bool = True) -> None:
@@ -522,6 +535,9 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
 
     priority_list[index + 1], priority_list[index] = (priority_list[index], priority_list[index + 1])
 
+    # Invalidate queries so frontend updates
+    player.invalidate_queries(["projects"])
+
 
 def increase_project_priority(player: Player, project: OngoingProject) -> None:
     """
@@ -587,6 +603,9 @@ def pause_project(player: Player, project: OngoingProject) -> None:
 
     engine.log(f"{player.username} paused the project {project.id} {project.project_type}")
 
+    # Invalidate queries so frontend updates
+    player.invalidate_queries(["projects"])
+
 
 def resume_project(player: Player, project: OngoingProject) -> None:
     """Resume an ongoing project, changing its position in the priority list."""
@@ -622,6 +641,9 @@ def resume_project(player: Player, project: OngoingProject) -> None:
 
     player.send_worker_info()
     engine.log(f"{player.username} unpaused the project {project.id} {project.project_type}")
+
+    # Invalidate queries so frontend updates
+    player.invalidate_queries(["projects"])
 
 
 def toggle_pause_project(player: Player, project: OngoingProject) -> None:

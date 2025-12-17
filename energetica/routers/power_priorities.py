@@ -30,12 +30,7 @@ def put_power_priorities(
     player.network_prices.change_facility_priority(player, data.power_priorities)
 
     # Invalidate React Query cache
-    player.emit(
-        "invalidate",
-        {
-            "queries": [
-                ["power-priorities"],
-                ["facilities"],  # Priorities affect facility production
-            ]
-        },
+    player.invalidate_queries(
+        ["power-priorities"],
+        ["facilities"],  # Priorities affect facility production
     )

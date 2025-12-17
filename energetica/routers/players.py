@@ -66,6 +66,9 @@ def update_user_settings(
     if request_data.show_disclaimer is not None:
         player.show_chat_disclaimer = request_data.show_disclaimer
 
+    # Invalidate queries so frontend updates
+    player.invalidate_queries(["players", "me", "settings"])
+
 
 @router.get("/me/money")
 def get_money(
