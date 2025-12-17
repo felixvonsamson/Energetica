@@ -791,5 +791,5 @@ Check `staleTime` is set appropriately (60s for tick-synced data).
 
 ## See Also
 
-- [../SOCKETIO.md](../SOCKETIO.md) - SocketIO invalidation patterns (backend)
-- [FRONTEND.md](FRONTEND.md) - Foundation overview
+- [../architecture/socketio.md](../architecture/socketio.md) - SocketIO invalidation patterns (backend)
+- [overview.md](overview.md) - Foundation overview

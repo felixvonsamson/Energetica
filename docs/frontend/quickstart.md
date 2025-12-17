@@ -116,11 +116,11 @@ const { data } = useQuery({
 
 **Essential Reading:**
 
--   [BEST_PRACTICES.md](BEST_PRACTICES.md) - **Start here** for component patterns and standards
--   [STYLING.md](STYLING.md) - Tailwind patterns and theme colors
--   [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
--   [FRONTEND.md](FRONTEND.md) - Foundation documentation
--   [API_INTEGRATION.md](API_INTEGRATION.md) - API integration & types
+-   [best-practices.md](best-practices.md) - **Start here** for component patterns and standards
+-   [styling.md](styling.md) - Tailwind patterns and theme colors
+-   [animations.md](animations.md) - Animation and transition guidelines
+-   [overview.md](overview.md) - Foundation documentation
+-   [data-fetching.md](data-fetching.md) - API integration & types
 
 **Learn by Example:**
 
@@ -129,5 +129,5 @@ const { data } = useQuery({
 
 **Reference:**
 
--   [CAPABILITIES.md](CAPABILITIES.md) - Feature flag system
--   [ASSET_COLORS.md](ASSET_COLORS.md) - Asset color system
+-   [capabilities.md](capabilities.md) - Feature flag system
+-   [asset-colours.md](asset-colours.md) - Asset color system

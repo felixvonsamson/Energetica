@@ -1,6 +1,6 @@
 # Frontend Foundation
 
-See [architecture.md](/docs/architecture.md)
+See [architecture/overview.md](/docs/architecture/overview.md)
 
 React foundation for the Jinja → React migration.
 
@@ -102,7 +102,7 @@ ls -la ../energetica/static/react/
 
 ## See Also
 
--   [QUICKSTART.md](QUICKSTART.md) - Fast setup guide
--   [API.md](API.md) - API integration & types
--   [OFFLINE.md](OFFLINE.md) - Offline handling
--   [../SOCKETIO.md](../SOCKETIO.md) - SocketIO patterns (backend)
+-   [quickstart.md](quickstart.md) - Fast setup guide
+-   [data-fetching.md](data-fetching.md) - API integration & types
+-   [offline.md](offline.md) - Offline handling
+-   [../architecture/socketio.md](../architecture/socketio.md) - SocketIO patterns (backend)

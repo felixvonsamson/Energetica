@@ -141,7 +141,7 @@ const colorVar = `--asset-color-${facility.toLowerCase().replace(/_/g, "-")}`;
 />;
 ```
 
-See [ASSET_COLORS.md](ASSET_COLORS.md) for complete documentation.
+See [asset-colours.md](asset-colours.md) for complete documentation.
 
 ## Common Patterns
 
@@ -288,7 +288,7 @@ className = "transition-all";
 className = "transition-colors duration-150";
 ```
 
-See [ANIMATIONS.md](ANIMATIONS.md) for animation best practices.
+See [animations.md](animations.md) for animation best practices.
 
 ## Checklist
 
@@ -304,6 +304,6 @@ Before committing styled components:
 
 ## See Also
 
--   [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
--   [ASSET_COLORS.md](ASSET_COLORS.md) - Asset-specific color system
--   [BEST_PRACTICES.md](BEST_PRACTICES.md) - General React patterns
+-   [animations.md](animations.md) - Animation and transition guidelines
+-   [asset-colours.md](asset-colours.md) - Asset-specific color system
+-   [best-practices.md](best-practices.md) - General React patterns

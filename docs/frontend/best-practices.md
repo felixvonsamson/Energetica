@@ -4,9 +4,9 @@ Standards and patterns for the React migration.
 
 **Quick Links:**
 
--   [STYLING.md](STYLING.md) - Tailwind patterns and theme colors
--   [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
--   [ASSET_COLORS.md](ASSET_COLORS.md) - Asset-specific color system
+-   [styling.md](styling.md) - Tailwind patterns and theme colors
+-   [animations.md](animations.md) - Animation and transition guidelines
+-   [asset-colours.md](asset-colours.md) - Asset-specific color system
 
 ### File Naming
 
@@ -24,9 +24,9 @@ For components for routes, these can be directly defined in the route. If that c
 
 For comprehensive styling guidelines, see:
 
--   **[STYLING.md](STYLING.md)** - Tailwind patterns, theme colors, responsive design
--   **[ANIMATIONS.md](ANIMATIONS.md)** - Animation and transition best practices
--   **[ASSET_COLORS.md](ASSET_COLORS.md)** - Asset-specific color system
+-   **[styling.md](styling.md)** - Tailwind patterns, theme colors, responsive design
+-   **[animations.md](animations.md)** - Animation and transition best practices
+-   **[asset-colours.md](asset-colours.md)** - Asset-specific color system
 
 ### Quick Reference
 
@@ -34,7 +34,7 @@ For comprehensive styling guidelines, see:
 **Icons:** Use `lucide-react` for all icons
 **Responsive:** Mobile-first with `md:` and `lg:` breakpoints
 **Dark mode:** Always include `dark:` variants
-**Animations:** Use `transition-colors duration-150` for hovers, see [ANIMATIONS.md](ANIMATIONS.md)
+**Animations:** Use `transition-colors duration-150` for hovers, see [animations.md](animations.md)
 
 ## State Management
 
@@ -164,16 +164,16 @@ import type { Requirement } from "@/types/projects";
 Before submitting a PR:
 
 -   [ ] Using lucide-react icons, not emojis
--   [ ] Animations follow guidelines (see [ANIMATIONS.md](ANIMATIONS.md))
+-   [ ] Animations follow guidelines (see [animations.md](animations.md))
 -   [ ] Responsive design tested
 
 ## See Also
 
--   [STYLING.md](STYLING.md) - Tailwind patterns and theme colors
--   [ANIMATIONS.md](ANIMATIONS.md) - Animation and transition guidelines
--   [ASSET_COLORS.md](ASSET_COLORS.md) - Asset-specific color system
--   [API.md](API.md) - API integration and query patterns
--   [FRONTEND.md](FRONTEND.md) - Foundation and architecture overview
+-   [styling.md](styling.md) - Tailwind patterns and theme colors
+-   [animations.md](animations.md) - Animation and transition guidelines
+-   [asset-colours.md](asset-colours.md) - Asset-specific color system
+-   [api.md](api.md) - API integration and query patterns
+-   [architecture/overview.md](/docs/architecture/overview.md) - Foundation and architecture overview
 
 ## TODO
 

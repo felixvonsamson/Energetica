@@ -10,18 +10,18 @@ Use subtle, purposeful animations that enhance UX without being distracting.
 
 ### ✅ DO Animate
 
-- State transitions (hover, active, focus)
-- Content loading (skeletons, spinners)
-- Feedback (success, error, progress)
-- Layout changes (expand/collapse, show/hide)
-- Data updates (number changes, bar fills)
+-   State transitions (hover, active, focus)
+-   Content loading (skeletons, spinners)
+-   Feedback (success, error, progress)
+-   Layout changes (expand/collapse, show/hide)
+-   Data updates (number changes, bar fills)
 
 ### ❌ DON'T Animate
 
-- Static content on page load (no "fade in on mount")
-- Every single element (creates visual noise)
-- Critical actions (makes UI feel slow)
-- Large data lists (performance impact)
+-   Static content on page load (no "fade in on mount")
+-   Every single element (creates visual noise)
+-   Critical actions (makes UI feel slow)
+-   Large data lists (performance impact)
 
 ## Standard Durations
 
@@ -129,8 +129,10 @@ className = "dark:bg-green-900/20 dark:border-green-500 dark:text-green-300";
 
 ```ts
 // Smooth width changes as weather data updates
-<div className="h-full bg-yellow-500 transition-all duration-300"
-     style={{ width: `${(irradiance / 1000) * 100}%` }} />
+<div
+    className="h-full bg-yellow-500 transition-all duration-300"
+    style={{ width: `${(irradiance / 1000) * 100}%` }}
+/>
 ```
 
 ### Quiz Answer Feedback
@@ -174,15 +176,15 @@ className="bg-tan-green hover:bg-brand-green text-white
 
 ### ✅ DO
 
-- Animate `transform` and `opacity` (GPU accelerated)
-- Use `transition-colors` for color changes only
-- Use `will-change` sparingly for complex animations
+-   Animate `transform` and `opacity` (GPU accelerated)
+-   Use `transition-colors` for color changes only
+-   Use `will-change` sparingly for complex animations
 
 ### ❌ DON'T
 
-- Animate `width`, `height`, `top`, `left` directly (causes reflow)
-- Use `transition-all` on elements with many properties
-- Animate during initial page load
+-   Animate `width`, `height`, `top`, `left` directly (causes reflow)
+-   Use `transition-all` on elements with many properties
+-   Animate during initial page load
 
 ```ts
 // ❌ BAD - Animates everything, causes reflow
@@ -200,14 +202,14 @@ className =
 
 Before adding an animation, ask:
 
-- [ ] Does this improve UX or just look cool? (Only add if improves UX)
-- [ ] Is the duration appropriate? (150-300ms for most cases)
-- [ ] Are the colors muted enough? (Use tints for backgrounds)
-- [ ] Is it accessible? (Respects prefers-reduced-motion)
-- [ ] Is it performant? (Uses transform/opacity when possible)
-- [ ] Is it consistent? (Matches other animations in the app)
+-   [ ] Does this improve UX or just look cool? (Only add if improves UX)
+-   [ ] Is the duration appropriate? (150-300ms for most cases)
+-   [ ] Are the colors muted enough? (Use tints for backgrounds)
+-   [ ] Is it accessible? (Respects prefers-reduced-motion)
+-   [ ] Is it performant? (Uses transform/opacity when possible)
+-   [ ] Is it consistent? (Matches other animations in the app)
 
 ## See Also
 
-- [STYLING.md](STYLING.md) - Tailwind patterns and theme colors
-- [BEST_PRACTICES.md](BEST_PRACTICES.md) - General React patterns
+-   [styling.md](styling.md) - Tailwind patterns and theme colors
+-   [best-practices.md](best-practices.md) - General React patterns

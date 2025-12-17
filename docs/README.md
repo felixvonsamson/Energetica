@@ -22,7 +22,7 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 
 -   [**Game Engine Startup**](backend/game-engine-startup.md) - Bootstrap process, scheduler setup, initialization
 -   [**Game Loop**](backend/game-loop.md) - Tick execution, state updates, climate events
--   [**Style Guide**](backend/styleguide.md) - Python conventions, naming, type hints, docstrings
+-   [**Style Guide**](backend/style-guide.md) - Python conventions, naming, type hints, docstrings
 
 ### Frontend
 
@@ -36,7 +36,7 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 -   [**Frontend Quick Start**](frontend/quickstart.md) - Local setup, first page creation, verification steps
 -   [**Best Practices**](frontend/best-practices.md) - Component structure, state management, file organization
 -   [**Animations**](frontend/animations.md) - Transitions, animations, performance best practices
--   [**Code Quality**](frontend/code-quality.md) - ESLint, Prettier, TypeScript settings, what must pass before merge
+-   [**Style Guide**](frontend/style-guide.md) - TODO
 -   [**Capabilities System**](frontend/capabilities.md) - Feature flags, unlocking content
 -   [**Asset Colors**](frontend/asset-colours.md) - Facility and resource color system
 -   [**Offline Handling**](frontend/offline.md) - Progressive enhancement, offline mode
@@ -46,8 +46,7 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 
 -   **GitHub:** https://github.com/felixvonsamson/Energetica
 -   **Play online:** http://energetica.ethz.ch
--   **Contributing:** [CONTRIBUTING.md](../CONTRIBUTING.md)
--   **Code Style:** [STYLEGUIDE.md](../backend/styleguide.md) (backend) + [Code Quality](frontend/code-quality.md) (frontend)
+-   **Contributing:** [CONTRIBUTING.md](/CONTRIBUTING.md)
 
 ## Documentation Maintenance
 

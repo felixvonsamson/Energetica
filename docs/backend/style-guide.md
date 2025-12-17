@@ -64,7 +64,3 @@ Avoid abbreviations unless ubiquitous (e.g. `cfg` discouraged, use `config`).
 
 -   Sanitize / validate all player-provided inputs.
 -   Avoid leaking internal state in error traces over the network.
-
----
-
-See: [CONTRIBUTING.md](CONTRIBUTING.md) for workflow & tooling specifics.

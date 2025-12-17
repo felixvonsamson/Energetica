@@ -82,9 +82,9 @@ if (!hasWarehouse) {
 
 Capabilities are **sent with data** (not invalidation-only) because:
 
-- Very small (~50 bytes)
-- Critical for UX (affects entire UI layout)
-- Changes infrequently (only when building facilities)
+-   Very small (~50 bytes)
+-   Critical for UX (affects entire UI layout)
+-   Changes infrequently (only when building facilities)
 
 ### When to Invalidate
 
@@ -101,42 +101,42 @@ The auth query will refetch, getting updated capabilities.
 
 **Implemented:**
 
-- ✅ Backend schema (`PlayerCapabilities`)
-- ✅ Auth endpoint includes capabilities
-- ✅ Frontend hook (`useCapabilities`)
-- ✅ Dashboard conditional rendering (laboratory, warehouse examples)
+-   ✅ Backend schema (`PlayerCapabilities`)
+-   ✅ Auth endpoint includes capabilities
+-   ✅ Frontend hook (`useCapabilities`)
+-   ✅ Dashboard conditional rendering (laboratory, warehouse examples)
 
 **TODO:**
 
-- [ ] Add invalidation when building functional facilities
-- [ ] Migrate all template `{% if user.achievements.X %}` checks
-- [ ] Add route protection based on capabilities (e.g., `/technology` requires `has_laboratory`)
-- [ ] Consider adding more capability flags as features are added
+-   [ ] Add invalidation when building functional facilities
+-   [ ] Migrate all template `{% if user.achievements.X %}` checks
+-   [ ] Add route protection based on capabilities (e.g., `/technology` requires `has_laboratory`)
+-   [ ] Consider adding more capability flags as features are added
 
 ## Design Rationale
 
 **Why separate from achievements?**
 
-- Achievements mix two concepts: progress counters (0-N) and flags (0/1)
-- Capabilities make intent clear: "can user access this feature?"
-- Easier to reason about in frontend conditional rendering
+-   Achievements mix two concepts: progress counters (0-N) and flags (0/1)
+-   Capabilities make intent clear: "can user access this feature?"
+-   Easier to reason about in frontend conditional rendering
 
 **Why bundle with auth response?**
 
-- Capabilities needed immediately on app load
-- Very small data size (~50 bytes)
-- No additional HTTP request needed
-- Always available via `useAuth()` context
+-   Capabilities needed immediately on app load
+-   Very small data size (~50 bytes)
+-   No additional HTTP request needed
+-   Always available via `useAuth()` context
 
 **Why not individual API endpoints?**
 
-- Would require multiple requests
-- Capabilities rarely change
-- Bundling is more efficient
+-   Would require multiple requests
+-   Capabilities rarely change
+-   Bundling is more efficient
 
 ## See Also
 
-- [API.md](./API.md) - Query invalidation patterns
-- [SOCKETIO.md](../SOCKETIO.md) - Backend invalidation patterns
-- `energetica/database/player.py` - Player achievements dict (lines 100-114)
-- `energetica/templates/base.jinja` - Legacy capability checks
+-   [data-fetching.md](data-fetching.md) - Query invalidation patterns
+-   [architecture/api.md](/docs/architecture/api.md) - Backend invalidation patterns
+-   `energetica/database/player.py` - Player achievements dict (lines 100-114)
+-   `energetica/templates/base.jinja` - Legacy capability checks
