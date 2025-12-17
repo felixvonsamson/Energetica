@@ -105,4 +105,4 @@ ls -la ../energetica/static/react/
 -   [quickstart.md](quickstart.md) - Fast setup guide
 -   [data-fetching.md](data-fetching.md) - API integration & types
 -   [offline.md](offline.md) - Offline handling
--   [../architecture/socketio.md](../architecture/socketio.md) - SocketIO patterns (backend)
+-   [Real-time Synchronisation](architecture/real-time-sync.md) - SocketIO patterns (backend)

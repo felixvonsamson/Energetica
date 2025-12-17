@@ -16,7 +16,7 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 -   [**API**](architecture/api.md) - Route definitions and standards, Swagger & OpenAPI
 -   [**Authentication**](architecture/authentication.md) - Login flow, session management, user state
 -   [**Error Handling**](architecture/error-handling.md) - Error patterns, user-friendly messages, exception types
--   [**Socket.IO & Real-time Updates**](architecture/socketio.md) - WebSocket patterns, game tick synchronization, cache invalidation
+-   [**Real-time Synchronisation**](architecture/real-time-sync.md) - WebSocket patterns, game tick synchronization, cache invalidation
 
 ### Backend Documentation
 

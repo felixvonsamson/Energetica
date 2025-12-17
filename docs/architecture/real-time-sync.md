@@ -1,4 +1,4 @@
-# SocketIO Patterns
+# Real-time Data Synchronization
 
 Backend patterns for SocketIO data emission and query invalidation.
 

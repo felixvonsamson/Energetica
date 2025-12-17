@@ -224,10 +224,10 @@ const initialData = (window as any).__INITIAL_DATA__;
 
 ⚠️ **This approach is discouraged** because:
 
-- Loses benefits of React SPA (no data refresh)
-- Harder to maintain
-- Mixing rendering paradigms
-- Defeats purpose of migration
+-   Loses benefits of React SPA (no data refresh)
+-   Harder to maintain
+-   Mixing rendering paradigms
+-   Defeats purpose of migration
 
 **Always prefer creating proper APIs (Option A).**
 
@@ -257,25 +257,25 @@ energetica/schemas/[feature].py
 
 **Example - Dashboard weather section:**
 
-- Template: `energetica/templates/dashboard.jinja` (lines 45-50)
-- JavaScript: `energetica/static/dashboard.js` (complete implementation)
-- Router: `energetica/routers/weather.py`
-- Schema: `energetica/schemas/weather.py`
+-   Template: `energetica/templates/dashboard.jinja` (lines 45-50)
+-   JavaScript: `energetica/static/dashboard.js` (complete implementation)
+-   Router: `energetica/routers/weather.py`
+-   Schema: `energetica/schemas/weather.py`
 
 ### Step 2: Analyze the Legacy Behaviour
 
 **Check the JavaScript for:**
 
-- API endpoint it calls (e.g., `fetch("/api/v1/weather")`)
-- Data transformation logic (e.g., `Math.round(data.value)`)
-- Visual behaviour (e.g., progress bars, calculations)
-- Update frequency (e.g., Socket.io listeners, interval polling)
+-   API endpoint it calls (e.g., `fetch("/api/v1/weather")`)
+-   Data transformation logic (e.g., `Math.round(data.value)`)
+-   Visual behaviour (e.g., progress bars, calculations)
+-   Update frequency (e.g., Socket.io listeners, interval polling)
 
 **Check the Jinja template for:**
 
-- DOM structure and styling
-- Conditional rendering (e.g., `{% if user.achievements.network %}`)
-- Server-side data passed in (e.g., `{{ user.username }}`)
+-   DOM structure and styling
+-   Conditional rendering (e.g., `{% if user.achievements.network %}`)
+-   Server-side data passed in (e.g., `{{ user.username }}`)
 
 **Example from `dashboard.js`:**
 
@@ -312,7 +312,9 @@ weather_conditions.innerHTML = `<div>Month: <b>${month_name}</b></div>`;
 ```ts
 // React (dashboard.tsx)
 import { getMonthName } from "@/lib/date-utils"; // Extracted to utility
-<div>Month: <b>{getMonthName(weatherData.month_number)}</b></div>
+<div>
+    Month: <b>{getMonthName(weatherData.month_number)}</b>
+</div>;
 ```
 
 ### Step 4: Extract Reusable Logic
@@ -332,25 +334,25 @@ This solves TODOs from legacy code (e.g., the "move month list to separate file"
 
 **Visual parity checklist:**
 
-- [ ] Same data displayed
-- [ ] Same layout and spacing
-- [ ] Same colors and styling
-- [ ] Same responsive behaviour
-- [ ] Same calculations and rounding
-- [ ] Proper loading and error states (legacy often lacks these!)
+-   [ ] Same data displayed
+-   [ ] Same layout and spacing
+-   [ ] Same colors and styling
+-   [ ] Same responsive behaviour
+-   [ ] Same calculations and rounding
+-   [ ] Proper loading and error states (legacy often lacks these!)
 
 **Improvements you can add:**
 
-- ✨ Dark mode support
-- ✨ Smooth transitions
-- ✨ Better responsive design
-- ✨ Proper error boundaries
-- ✨ Loading skeletons
+-   ✨ Dark mode support
+-   ✨ Smooth transitions
+-   ✨ Better responsive design
+-   ✨ Proper error boundaries
+-   ✨ Loading skeletons
 
 **Example - Weather section improvements:**
 
-- Legacy: No loading state, no dark mode
-- React: Loading spinner, dark mode bars, smooth transitions, responsive grid
+-   Legacy: No loading state, no dark mode
+-   React: Loading spinner, dark mode bars, smooth transitions, responsive grid
 
 ### Common Migration Patterns
 
@@ -376,10 +378,10 @@ $ curl http://localhost:5001/api/v1/weather
 
 **What this means:**
 
-- ✅ **Backend is working correctly** - it redirects to login
-- ✅ **ECONNREFUSED errors in console are normal** when not logged in
-- ✅ **Errors disappear after authentication** - this is expected behaviour
-- ❌ **Don't try to "fix" these errors** - they're a security feature
+-   ✅ **Backend is working correctly** - it redirects to login
+-   ✅ **ECONNREFUSED errors in console are normal** when not logged in
+-   ✅ **Errors disappear after authentication** - this is expected behaviour
+-   ❌ **Don't try to "fix" these errors** - they're a security feature
 
 **During development:**
 
@@ -432,10 +434,10 @@ const user: User = await apiClient.get("/auth/me");
 
 Run `npm run generate-types` when:
 
-- Backend API endpoints change
-- Request/response schemas change
-- After pulling backend changes
-- Before committing frontend changes
+-   Backend API endpoints change
+-   Request/response schemas change
+-   After pulling backend changes
+-   Before committing frontend changes
 
 ## API Client Structure
 
@@ -449,12 +451,12 @@ import type { ApiResponse, ApiRequestBody } from "@/types/api-helpers";
 export const playerApi = {
     getMoney: () =>
         apiClient.get<ApiResponse<"/api/v1/players/me/money", "get">>(
-            "/players/me/money",
+            "/players/me/money"
         ),
 
     getResources: () =>
         apiClient.get<ApiResponse<"/api/v1/players/me/resources", "get">>(
-            "/players/me/resources",
+            "/players/me/resources"
         ),
 };
 ```
@@ -563,9 +565,9 @@ export function useFacilities() {
 
 Invalidated queries only refetch if actively being used:
 
-- User on facilities page → refetch immediately
-- User on dashboard → mark stale, no refetch
-- User navigates to facilities → then refetch
+-   User on facilities page → refetch immediately
+-   User on dashboard → mark stale, no refetch
+-   User navigates to facilities → then refetch
 
 This prevents wasteful network requests for data not being displayed.
 
@@ -588,7 +590,7 @@ export const playerApi = {
 
     getResources: () =>
         apiClient.get<ApiResponse<"/api/v1/players/me/resources", "get">>(
-            "/players/me/resources",
+            "/players/me/resources"
         ),
 };
 ```
@@ -653,11 +655,11 @@ For endpoints that modify data (POST, PUT, PATCH, DELETE):
 // src/lib/player-api.ts
 export const playerApi = {
     updateSettings: (
-        data: ApiRequestBody<"/api/v1/players/me/settings", "patch">,
+        data: ApiRequestBody<"/api/v1/players/me/settings", "patch">
     ) =>
         apiClient.patch<ApiResponse<"/api/v1/players/me/settings", "patch">>(
             "/players/me/settings",
-            data,
+            data
         ),
 };
 
@@ -743,7 +745,9 @@ if (isLoading) {
 }
 
 // Or inline
-{isLoading ? <Skeleton /> : <DataDisplay data={data} />}
+{
+    isLoading ? <Skeleton /> : <DataDisplay data={data} />;
+}
 ```
 
 ## Common Patterns
@@ -791,5 +795,5 @@ Check `staleTime` is set appropriately (60s for tick-synced data).
 
 ## See Also
 
-- [../architecture/socketio.md](../architecture/socketio.md) - SocketIO invalidation patterns (backend)
-- [overview.md](overview.md) - Foundation overview
+-   [Real-time Synchronisation](architecture/real-time-sync.md) - SocketIO invalidation patterns (backend)
+-   [overview.md](overview.md) - Foundation overview
