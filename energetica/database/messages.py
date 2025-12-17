@@ -45,7 +45,7 @@ class Chat(DBModel):
         """Add a player to the list of participants."""
         self.participants.add(player)
         for player in self.participants:
-            player.emit("invalidate", {"queries": [["chats"]]})
+            player.invalidate_queries(["chats"])
 
     def is_group(self) -> bool:
         """Check if the chat is a group chat."""

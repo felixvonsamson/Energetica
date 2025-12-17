@@ -296,6 +296,23 @@ class GameEngine(object):
 
         asyncio.run_coroutine_threadsafe(self.socketio.emit(event, *args), MAIN_EVENT_LOOP)
 
+    def invalidate_queries(self, *query_keys: list[str | int]) -> None:
+        """
+        Invalidate React Query caches on the frontend.
+
+        Tells the frontend that specific query caches are stale and should be refetched.
+        Query keys must match those defined in frontend/src/lib/query-client.ts
+
+        Args:
+            query_keys: One or more query keys to invalidate.
+                       Each key is a list of strings and/or integers.
+
+        Examples:
+            engine.invalidate_queries(["resource-market", "asks"])
+            engine.invalidate_queries(["chats"], ["auth", "me"])  # Multiple queries
+        """
+        self.emit("invalidate", {"queries": list(query_keys)})
+
 
 # TODO(mglst): Convert this class to an instance of GameError
 

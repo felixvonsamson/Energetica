@@ -298,6 +298,25 @@ class Player(DBModel):
         for sid in self.socketio_clients:
             asyncio.run_coroutine_threadsafe(engine.socketio.emit(event, *args, to=sid), MAIN_EVENT_LOOP)
 
+    def invalidate_queries(self, *query_keys: list[str | int]) -> None:
+        """
+        Invalidate React Query caches on the frontend.
+
+        Tells the frontend that specific query caches are stale and should be refetched.
+        Query keys must match those defined in frontend/src/lib/query-client.ts
+
+        Args:
+            query_keys: One or more query keys to invalidate.
+                       Each key is a list of strings and/or integers.
+
+        Examples:
+            player.invalidate_queries(["chats"])
+            player.invalidate_queries(["resource-market", "asks"])
+            player.invalidate_queries(["chats"], ["chats", chat_id, "messages"])  # With integer ID
+            player.invalidate_queries(["chats"], ["auth", "me"])  # Multiple queries
+        """
+        self.emit("invalidate", {"queries": list(query_keys)})
+
     def send_new_data(self, new_values: Any) -> None:
         """Send the new data to the player's clients."""
         construction_updates = self.get_construction_updates()
@@ -459,7 +478,7 @@ class Player(DBModel):
                         reward=achievement_data["rewards"][current_lvl],
                     )
                 self.notify("Achievement", message)
-                self.emit("invalidate", {"queries": [["auth", "me"]]})
+                self.invalidate_queries(["auth", "me"])
 
     def check_construction_achievements(self, construction_name: str) -> None:
         """Check for player achievements that may be unlocked by a construction."""
@@ -469,7 +488,7 @@ class Player(DBModel):
                 self.progression_metrics["xp"] += achievements[achievement]["reward"]
                 message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
                 self.notify("Achievement", message)
-                self.emit("invalidate", {"queries": [["auth", "me"]]})
+                self.invalidate_queries(["auth", "me"])
 
     def check_technology_achievement(self) -> None:
         """Check for technology achievement."""
@@ -487,7 +506,7 @@ class Player(DBModel):
                 reward=achievements["technology"]["rewards"][current_lvl],
             )
             self.notify("Achievement", message)
-            self.emit("invalidate", {"queries": [["auth", "me"]]})
+            self.invalidate_queries(["auth", "me"])
 
     def check_trading_achievement(self) -> None:
         """Check for trading achievement."""

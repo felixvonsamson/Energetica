@@ -32,7 +32,7 @@ def create_ask(player: Player, fuel: Fuel, quantity: float, unit_price: float) -
         player=player,
     )
     # Invalidate resource market asks for everyone since the market list changed
-    engine.emit("invalidate", {"queries": [["resource-market", "asks"]]})
+    engine.invalidate_queries(["resource-market", "asks"])
     return ask
 
 
@@ -53,7 +53,7 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
         if sale.quantity == 0:
             sale.delete()
         # Invalidate resource market asks for everyone since the market list changed
-        engine.emit("invalidate", {"queries": [["resource-market", "asks"]]})
+        engine.invalidate_queries(["resource-market", "asks"])
         return None if sale.quantity == 0 else sale
     else:
         if total_price > buyer.money:
@@ -96,7 +96,7 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
             sale.delete()
 
         # Invalidate resource market asks for everyone since the market list changed
-        engine.emit("invalidate", {"queries": [["resource-market", "asks"]]})
+        engine.invalidate_queries(["resource-market", "asks"])
         return None if sale.quantity == 0 else sale
 
 
@@ -107,7 +107,7 @@ def patch_ask(sale: ResourceOnSale, unit_price: float | None = None, quantity: f
     if quantity is not None:
         sale.quantity = quantity
     # Invalidate resource market asks for everyone since an ask was modified
-    engine.emit("invalidate", {"queries": [["resource-market", "asks"]]})
+    engine.invalidate_queries(["resource-market", "asks"])
     return sale
 
 
@@ -116,7 +116,7 @@ def delete_ask(sale: ResourceOnSale) -> None:
     sale.player.resources_on_sale[sale.resource] -= sale.quantity
     sale.delete()
     # Invalidate resource market asks for everyone since the market list changed
-    engine.emit("invalidate", {"queries": [["resource-market", "asks"]]})
+    engine.invalidate_queries(["resource-market", "asks"])
 
 
 def store_import(player: Player, fuel: Fuel, quantity: float) -> None:

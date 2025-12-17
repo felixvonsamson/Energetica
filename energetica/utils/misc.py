@@ -282,7 +282,7 @@ def submit_quiz_answer(player: Player, player_answer: str) -> bool:
         is_answer_correct = False
 
     # Invalidate quiz query on all devices for this player
-    player.emit("invalidate", {"queries": [["daily-quiz", "today"]]})
+    player.invalidate_queries(["daily-quiz", "today"])
 
     return is_answer_correct
 

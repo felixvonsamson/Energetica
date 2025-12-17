@@ -1,8 +1,8 @@
 # Real-time Data Synchronization
 
-Backend patterns for SocketIO data emission and query invalidation.
+Given that much of the game data changes frequently (on every tick, when players take actions) it is not sufficient for clients to just poll data from the server. The solution is for the server to maintain two-way communication with clients. The protocol used for this is Socket.IO.
 
-See also data-fetching.md
+See also: [**Data Fetching**](frontend/data-fetching.md) - TanStack Query, API client, mutation patterns
 
 ## Core Principle: Single Source of Truth
 
@@ -149,17 +149,18 @@ useSocketEvent("money_updated", (data) => {
 def build_facility(player: Player, facility_type: str):
     # ... build facility
 
-    player.emit("invalidate", {
-        "queries": [
-            ["facilities", "all"],
-            ["players", "me", "money"],
-        ]
-    })
+    # Use the helper method for cleaner syntax
+    player.invalidate_queries(
+        ["facilities", "all"],
+        ["players", "me", "money"],
+    )
 ```
 
 **Frontend:** Already set up in GameTickContext - no extra code needed.
 
 **Advantages:** Flexible (invalidates multiple queries), good for large/complex data, automatic refetch management.
+
+**Note:** Use `player.invalidate_queries()` or `engine.invalidate_queries()` instead of raw `emit()` calls. The helper method provides better readability and documentation.
 
 ### Pattern 3: Hybrid (Recommended)
 
@@ -176,13 +177,11 @@ def build_facility(player: Player, facility_type: str):
     player.emit("money_updated", MoneyOut.from_player(player).model_dump())
     player.emit("worker_info", WorkersOut.from_player(player).model_dump())
 
-    # Invalidate complex data
-    player.emit("invalidate", {
-        "queries": [
-            ["facilities", "all"],
-            ["networks", "capacities"],
-        ]
-    })
+    # Invalidate complex data using the helper method
+    player.invalidate_queries(
+        ["facilities", "all"],
+        ["networks", "capacities"],
+    )
 ```
 
 **Why:** Money/workers update instantly (better UX), facility list only refetches if user is viewing it.
@@ -200,14 +199,38 @@ def build_facility(player: Player, facility_type: str):
     # ... perform the build
 
     # Invalidate affected queries on ALL connected devices
-    player.emit("invalidate", {
-        "queries": [
-            ["players", "me", "money"],
-            ["facilities", "all"],
-            ["players", "me", "resources"],
-        ]
-    })
+    # Use the helper method for clean, readable invalidation
+    player.invalidate_queries(
+        ["players", "me", "money"],
+        ["facilities", "all"],
+        ["players", "me", "resources"],
+    )
 ```
+
+### Helper Methods
+
+Both `Player` and `GameEngine` classes provide an `invalidate_queries()` helper method:
+
+```python
+# Single query
+player.invalidate_queries(["chats"])
+
+# Multiple queries
+player.invalidate_queries(
+    ["facilities", "all"],
+    ["players", "me", "money"],
+)
+
+# Engine-wide invalidation (for all players)
+engine.invalidate_queries(["resource-market", "asks"])
+```
+
+**Benefits:**
+
+-   Cleaner, more readable than raw `emit()` calls
+-   Self-documenting - clear intent
+-   Docstring references the frontend query keys for easy lookup
+-   Accepts multiple query keys as variadic arguments
 
 ### Frontend
 
@@ -274,7 +297,7 @@ Size: ~200 bytes
 **Facility list:**
 
 ```python
-player.emit("invalidate", {"queries": [["facilities", "all"]]})
+player.invalidate_queries(["facilities", "all"])
 ```
 
 Reason: Could be 100+ facilities
@@ -282,7 +305,7 @@ Reason: Could be 100+ facilities
 **Network graph:**
 
 ```python
-player.emit("invalidate", {"queries": [["networks", "graph"]]})
+player.invalidate_queries(["networks", "graph"])
 ```
 
 Reason: Complex topology
@@ -290,7 +313,7 @@ Reason: Complex topology
 **Historical data:**
 
 ```python
-player.emit("invalidate", {"queries": [["charts", "production"]]})
+player.invalidate_queries(["charts", "production"])
 ```
 
 Reason: Large time series
@@ -339,10 +362,10 @@ player.emit("update", data)  # Automatically handles all connections
 
 ```python
 # BAD - invalidates everything
-player.emit("invalidate", {"queries": [["players"], ["facilities"], ["networks"]]})
+player.invalidate_queries(["players"], ["facilities"], ["networks"])
 
 # GOOD - specific invalidation
-player.emit("invalidate", {"queries": [["facilities", "all"]]})
+player.invalidate_queries(["facilities", "all"])
 ```
 
 ## Frontend Listening Patterns
@@ -407,13 +430,11 @@ def build_power_plant(player: Player, facility_type: str, location: tuple):
     # Send money directly + invalidate the rest
     from energetica.schemas.players import MoneyOut
     player.emit("money_updated", MoneyOut.from_player(player).model_dump())
-    player.emit("invalidate", {
-        "queries": [
-            ["facilities", "all"],
-            ["facilities", "power"],
-            ["networks", "capacities"],
-        ]
-    })
+    player.invalidate_queries(
+        ["facilities", "all"],
+        ["facilities", "power"],
+        ["networks", "capacities"],
+    )
 ```
 
 ### Tick Updates
@@ -438,12 +459,10 @@ def trade_resources(seller: Player, buyer: Player, resource: str, amount: int):
 
     # Invalidate for both players
     for player in [seller, buyer]:
-        player.emit("invalidate", {
-            "queries": [
-                ["players", "me", "money"],
-                ["players", "me", "resources"],
-            ]
-        })
+        player.invalidate_queries(
+            ["players", "me", "money"],
+            ["players", "me", "resources"],
+        )
 ```
 
 ## Migration Guide

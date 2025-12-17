@@ -41,7 +41,7 @@ def create_chat(player: Player, chat_name: str | None, participants: set[Player]
         engine.log(f"{player.username} created a group chat called {chat_name} with {participant_list}")
 
     for participant in participants:
-        participant.emit("invalidate", {"queries": [["chats"]]})
+        participant.invalidate_queries(["chats"])
 
     return new_chat
 
@@ -72,16 +72,11 @@ def add_message(player: Player, message_text: str, chat: Chat) -> Message:
     for participant in chat.participants:
         # Ensure the "unread chats" is updated
         if participant != player:
-            participant.emit("invalidate", {"queries": [["chats"]]})
+            participant.invalidate_queries(["chats"])
 
-        participant.emit(
-            "invalidate",
-            {
-                "queries": [
-                    ["chats"],
-                    ["chats", chat.id, "messages"],
-                ],
-            },
+        participant.invalidate_queries(
+            ["chats"],
+            ["chats", chat.id, "messages"],
         )
 
     return new_message
