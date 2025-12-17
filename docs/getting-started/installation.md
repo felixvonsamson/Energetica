@@ -77,4 +77,4 @@ npm run dev
 
 ## Next Steps After Setup
 
-[**Architecture Overview**](/docs/architecture/overview.md)
+[**Architecture Overview**](../architecture/overview.md)

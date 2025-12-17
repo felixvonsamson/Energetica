@@ -1,6 +1,6 @@
 # Frontend Foundation
 
-See [architecture/overview.md](/docs/architecture/overview.md)
+See [architecture/overview.md](../architecture/overview.md)
 
 React foundation for the Jinja → React migration.
 

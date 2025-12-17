@@ -81,7 +81,7 @@ get_settled_player()    - Requires authenticated player who has chosen location
 
 **Protected routes:** `frontend/src/components/auth/ProtectedRoute.tsx`
 
--   TODO: explain and fill in details in [routing.md](/docs/frontend/routing.md)
+-   TODO: explain and fill in details in [routing.md](../frontend/routing.md)
 
 **API client:** `frontend/src/lib/api-client.ts`
 

@@ -46,7 +46,7 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 
 -   **GitHub:** https://github.com/felixvonsamson/Energetica
 -   **Play online:** http://energetica.ethz.ch
--   **Contributing:** [CONTRIBUTING.md](/CONTRIBUTING.md)
+-   **Contributing:** [CONTRIBUTING.md](../CONTRIBUTING.md)
 
 ## Documentation Maintenance
 

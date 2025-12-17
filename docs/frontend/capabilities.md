@@ -137,6 +137,6 @@ The auth query will refetch, getting updated capabilities.
 ## See Also
 
 -   [data-fetching.md](data-fetching.md) - Query invalidation patterns
--   [architecture/api.md](/docs/architecture/api.md) - Backend invalidation patterns
+-   [architecture/api.md](../architecture/api.md) - Backend invalidation patterns
 -   `energetica/database/player.py` - Player achievements dict (lines 100-114)
 -   `energetica/templates/base.jinja` - Legacy capability checks

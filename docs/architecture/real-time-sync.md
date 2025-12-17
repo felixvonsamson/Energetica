@@ -506,5 +506,5 @@ Now API and SocketIO use identical schema.
 
 ## See Also
 
--   [architecture/api.md](/docs/architecture/api.md) - Frontend API integration & query invalidation
--   [frontend/data-fetching.md](/docs/frontend/data-fetching.md) - TODO
+-   [architecture/api.md](./api.md) - Frontend API integration & query invalidation
+-   [frontend/data-fetching.md](../frontend/data-fetching.md) - TODO

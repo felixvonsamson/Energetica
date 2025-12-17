@@ -1,6 +1,6 @@
 # Styling with Tailwind
 
-TODO possibly merge into [component-library.md](/docs/frontend/component-library.md)
+TODO possibly merge into [component-library.md](./component-library.md)
 
 Guidelines for styling components with Tailwind CSS and the project's theme system.
 
