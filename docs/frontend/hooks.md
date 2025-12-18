@@ -6,7 +6,7 @@ Guide for integrating backend API calls with automatic type generation.
 
 **TL;DR - Complete workflow in 5 steps:**
 
-1. **Generate types**: `npm run generate-types` (backend must be running on port 5001)
+1. **Generate types**: `npm run generate-types`
 2. **Add API method** in `src/lib/*-api.ts`:
     ```ts
     export const myApi = {
@@ -371,17 +371,10 @@ Most game endpoints require authentication:
 
 ```bash
 # Unauthenticated request
-$ curl http://localhost:5001/api/v1/weather
+$ curl http://localhost:8000/api/v1/weather
 < HTTP/1.1 303 See Other
 < location: /login
 ```
-
-**What this means:**
-
--   ✅ **Backend is working correctly** - it redirects to login
--   ✅ **ECONNREFUSED errors in console are normal** when not logged in
--   ✅ **Errors disappear after authentication** - this is expected behaviour
--   ❌ **Don't try to "fix" these errors** - they're a security feature
 
 **During development:**
 
@@ -399,7 +392,6 @@ Types are automatically generated from the FastAPI OpenAPI schema.
 ### Generate Types
 
 ```bash
-# Backend must be running at http://localhost:5001
 npm run generate-types
 ```
 

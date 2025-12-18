@@ -5,7 +5,7 @@ from energetica import create_app
 from energetica.schemas.auth import ChangePasswordRequest, LoginRequest, SignupRequest
 from energetica.globals import engine
 
-port = 5001
+port = 8000
 base_url = f"http://localhost:{port}"
 
 login_url = f"{base_url}/api/v1/auth/login"

@@ -86,7 +86,7 @@ function MyPageContent() {
 
 Both old and new can coexist:
 
--   Legacy: http://localhost:5001/dashboard (Jinja)
+-   Legacy: http://localhost:8000/dashboard (Jinja)
 -   New: http://localhost:5173/app/dashboard (React)
 
 ## Quick Reference

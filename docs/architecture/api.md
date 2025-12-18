@@ -17,6 +17,23 @@ See the package json script for generating types. It's the .generated file. See 
 
 See api_integration for more details.
 
+#### Type Generation
+
+After modifying backend API schemas or routes, regenerate TypeScript types:
+
+```bash
+cd frontend
+npm run generate-types
+```
+
+This script:
+
+1. Generates OpenAPI spec from FastAPI app (backend doesn't need to be running)
+2. Creates TypeScript types in `frontend/src/types/api.generated.ts`
+3. Formats output with Prettier
+
+**Note:** Don't edit `api.generated.ts` manually - it's auto-generated.
+
 ## Error handling
 
 see the dedicated file about this

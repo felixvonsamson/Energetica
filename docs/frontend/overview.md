@@ -51,7 +51,6 @@ Route protection for different access levels: done with staticData, see tanstack
 **Solution:**
 
 ```bash
-# Backend must be running on port 5001
 npm run generate-types
 
 # Restart TypeScript server in your IDE
