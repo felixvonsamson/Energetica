@@ -5,7 +5,7 @@
 
 import { DollarSign } from "lucide-react";
 
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/classname-utils";
 import { formatMoney } from "@/lib/format-utils";
 
 interface MoneyProps {

@@ -18,7 +18,7 @@ import { Clock, CalendarClock } from "lucide-react";
 
 import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useGameEngine } from "@/hooks/useGame";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/classname-utils";
 import { formatDuration } from "@/lib/format-utils";
 
 interface DurationProps {

@@ -89,6 +89,9 @@ export function TopBar() {
 
     return (
         <>
+            {/* Navigation - both bar for desktop and side window for mobile */}
+            <Navigation />
+
             <div className="bg-game-bg border-b border-pine-darker px-4 py-1">
                 <div className="flex items-center justify-between gap-4">
                     {/* Logo */}
@@ -180,9 +183,6 @@ export function TopBar() {
                 </div>
             </div>
 
-            {/* Navigation - both bar for desktop and side window for mobile */}
-            <Navigation />
-
             {/* Notification Popup Modal */}
             <NotificationPopup
                 isOpen={showNotifications}
@@ -228,7 +228,7 @@ function WorkersDisplay(
                         : `${workersData?.construction.available ?? 0}/${workersData?.construction.total ?? 0}`}
                 </span>
                 <Hammer size={16} />
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                     Construction workers
                 </div>
             </div>
