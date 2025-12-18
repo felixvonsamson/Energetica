@@ -28,7 +28,7 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 
 -   [**Routing**](frontend/routing.md) - TanStack Router setup, route protection, navigation patterns
 -   [**State Management**](frontend/state-management.md) - useState, Context, TanStack Query, provider hierarchy
--   [**Data Fetching**](frontend/data-fetching.md) - TanStack Query, API client, mutation patterns
+-   [**Data Fetching**](frontend/data-fetching.md) - data fetching, caching, and synchronization
 -   [**Hooks**](frontend/hooks.md) - Custom hooks for data fetching, API calls, game state
 -   [**Component Library**](frontend/component-library.md) - Available UI components, usage examples, props
 -   [**Styling**](frontend/styling.md) - Tailwind CSS, theme colors, responsive design, dark mode
