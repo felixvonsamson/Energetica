@@ -1,0 +1,13 @@
+{
+  "name": "energetica",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "lint:check": "cd frontend && npm run lint:check",
+    "tsc:check": "cd frontend && npm run tsc:check",
+    "pretty": "cd frontend && npm run pretty",
+    "generate-types": "cd frontend && npm run generate-types"
+  }
+}

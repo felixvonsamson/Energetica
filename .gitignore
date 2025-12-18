@@ -12,3 +12,4 @@ admin_accounts.txt
 *actions_history.log
 .env
 frontend/.env
+.claude
