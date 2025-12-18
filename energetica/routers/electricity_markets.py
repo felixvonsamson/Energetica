@@ -18,10 +18,16 @@ from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/electricity-markets", tags=["Electricity Markets"])
 
+UNLOCK_NETWORK_MESSAGE = "You must unlock the Network achievement first"
+
 
 @router.get("")
-def get_electricity_market_list() -> ElectricityMarketListOut:
+def get_electricity_market_list(
+    player: Annotated[Player, Depends(get_settled_player)],
+) -> ElectricityMarketListOut:
     """Get the list of existing electricity markets."""
+    if not player.achievements["network"]:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=UNLOCK_NETWORK_MESSAGE)
     return ElectricityMarketListOut(
         electricity_markets=[ElectricityMarketOut.from_network(network) for network in Network.all()]
     )
@@ -33,9 +39,11 @@ def join_electricity_market(
     network_id: int,
 ) -> ElectricityMarketOut:
     """Join the electricity markets."""
+    if not player.achievements["network"]:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=UNLOCK_NETWORK_MESSAGE)
     network = Network.getitem(
         network_id,
-        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Network not found"),
+        error=HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Network not found"),
     )
     return ElectricityMarketOut.from_network(network_helpers.join_network(player, network))
 
@@ -46,9 +54,11 @@ def leave_electricity_market(
     network_id: int,
 ) -> ElectricityMarketOut | None:
     """Leave the electricity markets."""
+    if not player.achievements["network"]:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=UNLOCK_NETWORK_MESSAGE)
     network = Network.getitem(
         network_id,
-        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Network not found"),
+        error=HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Network not found"),
     )
     if player not in network.members:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not in this network")
@@ -63,6 +73,8 @@ def create_electricity_market(
     player: Annotated[Player, Depends(get_settled_player)], request_data: ElectricityMarketCreate
 ) -> ElectricityMarketOut:
     """Create a new electricity market."""
+    if not player.achievements["network"]:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=UNLOCK_NETWORK_MESSAGE)
     new_network = network_helpers.create_network(player, request_data.name)
     return ElectricityMarketOut.from_network(new_network)
 
@@ -73,6 +85,8 @@ async def change_electricity_market_prices(
     prices_change_request: ChangeElectricityMarketPrices,
 ) -> None:
     """Update the asking prices and bid prices for a player on their electricity market."""
+    if not player.achievements["network"]:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=UNLOCK_NETWORK_MESSAGE)
     if player.network is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     player.network_prices.update(
