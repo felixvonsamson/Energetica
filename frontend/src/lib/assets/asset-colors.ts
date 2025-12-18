@@ -27,34 +27,25 @@ function normalizeToCssVariable(assetName: string): string {
         .toLowerCase()}`;
 }
 
-/** Create a cache key that includes both CSS variable and theme */
-function getCacheKey(cssVar: string, theme: string): string {
-    return `${cssVar}__${theme}`;
-}
-
 /**
  * Get the color for an asset, extracting from CSS variables
  *
  * Colors are cached after first extraction to avoid repeated getComputedStyle
- * calls. Cache is theme-aware, storing separate entries for light and dark
- * modes.
+ * calls. Cache is cleared on theme changes and HMR to ensure fresh values.
  *
  * @param assetName - The asset name (e.g., "pv_solar", "windmill",
  *   "nuclear_reactor")
- * @param theme - The current theme ("light" or "dark")
  * @returns RGB color string (e.g., "rgb(255, 234, 0)") or fallback if not found
  */
-export function getAssetColor(assetName: string, theme: string): string {
+export function getAssetColor(assetName: string): string {
     const cssVar = normalizeToCssVariable(assetName);
-    const cacheKey = getCacheKey(cssVar, theme);
 
     // Return cached color if available
-    if (colorCache.has(cacheKey)) {
-        const cached = colorCache.get(cacheKey)!;
-        return cached;
+    if (colorCache.has(cssVar)) {
+        return colorCache.get(cssVar)!;
     }
 
-    // Extract color from CSS variable
+    // Extract color from CSS variable (reads from current DOM state)
     const color = getComputedStyle(document.documentElement)
         .getPropertyValue(cssVar)
         .trim();
@@ -62,15 +53,14 @@ export function getAssetColor(assetName: string, theme: string): string {
     // Use fallback if CSS variable not found
     const finalColor = color || "rgb(128, 128, 128)"; // Gray fallback
 
-    // Cache with theme-specific key
-    colorCache.set(cacheKey, finalColor);
+    // Cache the color
+    colorCache.set(cssVar, finalColor);
 
     return finalColor;
 }
 
 /**
- * Clear the color cache (useful for testing and HMR) Note: With theme-aware
- * caching, this is no longer needed for theme switching
+ * Clear the color cache (used for theme switching and HMR)
  *
  * Dispatches a custom event to notify components that they should re-fetch
  * colors
