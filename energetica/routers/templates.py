@@ -53,13 +53,12 @@ templates = Jinja2Templates(directory="energetica/templates", context_processors
 
 
 @router.get("/")
-def default_redirect(
+def render_root(
     request: Request,
     user: Annotated[User | None, Depends(get_user)],
-) -> RedirectResponse:
-    if user:
-        return RedirectResponse("/home")
-    return RedirectResponse("/landing")
+) -> FileResponse:
+    """Serve React SPA on the root route."""
+    return FileResponse("energetica/static/react/index.html")
 
 
 @router.get("/landing", response_class=HTMLResponse, name="landing.landing_page")
