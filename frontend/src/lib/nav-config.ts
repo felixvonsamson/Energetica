@@ -14,7 +14,6 @@ import {
     Mail,
     Map,
     Trophy,
-    LogOut,
     Pickaxe,
     Warehouse,
     BookMarked,
@@ -172,12 +171,6 @@ export const navigationConfig: NavigationItemConfig[] = [
                 icon: Trophy,
             },
         ],
-    },
-    {
-        type: "link",
-        label: "Logout",
-        to: "/app/logout",
-        icon: LogOut,
     },
 ];
 

@@ -12,13 +12,15 @@ import {
 import {
     AlertCircle,
     Bell,
+    CircleUser,
     FlaskConical,
     Hammer,
     HelpCircle,
+    LogOut,
     Menu,
     Settings,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Navigation } from "./Navigation";
 import { NotificationPopup } from "./NotificationPopup";
@@ -59,6 +61,8 @@ export function TopBar() {
     } = usePlayerResources();
     const { isConnected } = useOnlineStatus();
     const [showNotifications, setShowNotifications] = useState(false);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const userDropdownRef = useRef<HTMLDivElement>(null);
 
     const location = useLocation();
     const staticData = useRouteStaticData(location as never);
@@ -83,6 +87,25 @@ export function TopBar() {
         if (!staticData) return;
         if (!staticData.infoModal) handleCloseHelp();
     }, [staticData, handleCloseHelp]);
+
+    // Close user dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (
+                userDropdownRef.current &&
+                !userDropdownRef.current.contains(event.target as Node)
+            ) {
+                setShowUserDropdown(false);
+            }
+        }
+
+        if (showUserDropdown) {
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => {
+                document.removeEventListener("mousedown", handleClickOutside);
+            };
+        }
+    }, [showUserDropdown]);
 
     if (!user) return null;
     if (!capabilities) return null;
@@ -141,16 +164,6 @@ export function TopBar() {
                                 </button>
                             )}
 
-                            <Link
-                                to="/app/settings"
-                                className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-2 py-2 lg:px-4 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors flex items-center justify-center aspect-square lg:aspect-auto h-9"
-                            >
-                                <Settings size={20} />
-                                <span className="ml-2 hidden lg:inline">
-                                    Settings
-                                </span>
-                            </Link>
-
                             <button
                                 onClick={() => setShowNotifications(true)}
                                 className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-2 py-2 lg:px-4 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors relative flex items-center justify-center aspect-square lg:aspect-auto h-9"
@@ -169,6 +182,45 @@ export function TopBar() {
 
                             {/* Theme toggle */}
                             <ThemeToggle className="px-2 py-2 bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors h-9 aspect-square" />
+
+                            {/* User dropdown */}
+                            <div className="relative" ref={userDropdownRef}>
+                                <button
+                                    onClick={() =>
+                                        setShowUserDropdown(!showUserDropdown)
+                                    }
+                                    className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-2 py-2 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors flex items-center justify-center aspect-square h-9"
+                                    aria-label="User menu"
+                                >
+                                    <CircleUser size={20} />
+                                </button>
+
+                                {/* Dropdown menu */}
+                                {showUserDropdown && (
+                                    <div className="absolute right-0 mt-2 w-48 bg-bone dark:bg-dark-bg-secondary border border-pine-darker dark:border-dark-border rounded shadow-lg z-50">
+                                        <Link
+                                            to="/app/settings"
+                                            onClick={() =>
+                                                setShowUserDropdown(false)
+                                            }
+                                            className="flex items-center gap-2 px-4 py-3 text-bone-text dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors border-b border-pine/20 dark:border-dark-border/50"
+                                        >
+                                            <Settings size={20} />
+                                            <span>Settings</span>
+                                        </Link>
+                                        <Link
+                                            to="/app/logout"
+                                            onClick={() =>
+                                                setShowUserDropdown(false)
+                                            }
+                                            className="flex items-center gap-2 px-4 py-3 text-bone-text dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors"
+                                        >
+                                            <LogOut size={20} />
+                                            <span>Logout</span>
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Mobile menu button */}
                             <button
