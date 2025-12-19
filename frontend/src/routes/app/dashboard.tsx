@@ -14,6 +14,8 @@ import {
     Thermometer,
     Link2,
     Calendar,
+    Microscope,
+    HardHat,
 } from "lucide-react";
 
 import { AchievementCard } from "@/components/dashboard/AchievementCard";
@@ -121,7 +123,9 @@ function DashboardContent() {
 
             {/* Development info banner */}
             <InfoBanner variant="info" className="mb-6">
-                🚧 This game is still under development! 🚧 Join the{" "}
+                <Construction className="inline w-4 h-4" /> This game is still
+                under development! <Construction className="inline w-4 h-4" />{" "}
+                Join the{" "}
                 <img
                     src="/static/images/icons/WhatsApp.svg"
                     className="inline w-4 h-4"
@@ -147,7 +151,12 @@ function DashboardContent() {
             {/* Construction, Research, Shipments */}
             <div className="space-y-6 mb-6">
                 <DashboardSection
-                    title="🏗️ Under Construction"
+                    title={
+                        <>
+                            <HardHat className="inline w-4 h-4" /> Under
+                            Construction
+                        </>
+                    }
                     emptyIcon={Construction}
                     emptyMessage="No facilities under construction"
                 >
@@ -157,7 +166,12 @@ function DashboardContent() {
                 {/* Under research - only show if player has laboratory */}
                 {capabilities?.has_laboratory && (
                     <DashboardSection
-                        title="🔬 Under Research"
+                        title={
+                            <>
+                                <Microscope className="inline w-4 h-4" /> Under
+                                Research
+                            </>
+                        }
                         emptyIcon={FlaskConical}
                         emptyMessage="No technologies under research"
                     >
@@ -168,7 +182,11 @@ function DashboardContent() {
                 {/* Shipments - only show if player has warehouse */}
                 {capabilities?.has_warehouse && (
                     <DashboardSection
-                        title="🚚 Shipments"
+                        title={
+                            <>
+                                <Truck className="inline w-4 h-4" /> Shipments
+                            </>
+                        }
                         emptyIcon={Truck}
                         emptyMessage="No shipments on the way"
                     >

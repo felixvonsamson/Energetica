@@ -4,7 +4,7 @@ import { type ReactNode } from "react";
 import { Card, CardTitle, CardContent, EmptyState } from "@/components/ui";
 
 interface DashboardSectionProps {
-    title: string;
+    title: ReactNode;
     children?: ReactNode;
     emptyIcon?: LucideIcon;
     emptyMessage?: string;
