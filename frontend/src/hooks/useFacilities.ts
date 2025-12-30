@@ -21,6 +21,21 @@ export function useFacilities() {
     });
 }
 
+/**
+ * Hook to fetch facility statuses (renewables, production, consumption).
+ * Statuses change every tick as market conditions evolve.
+ */
+export function useFacilityStatuses() {
+    // Register for tick-based invalidation since statuses reflect real-time market conditions
+    useTickQuery(queryKeys.facilities.statuses);
+
+    return useQuery({
+        queryKey: queryKeys.facilities.statuses,
+        queryFn: facilitiesApi.getStatuses,
+        staleTime: 60 * 1000, // 1 minute
+    });
+}
+
 /** Hook to upgrade a single facility. */
 export function useUpgradeFacility() {
     const queryClient = useQueryClient();

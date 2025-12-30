@@ -725,6 +725,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/facilities/statuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Facility Statuses
+         *
+         * Statuses for the players facilities: renewables, producing and
+         * consuming facilities.
+         */
+        get: operations["facility_statuses_api_v1_facilities_statuses_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/game/engine": {
         parameters: {
             query?: never;
@@ -1405,8 +1427,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Default Redirect */
-        get: operations["default_redirect__get"];
+        /**
+         * Render Root
+         *
+         * Serve React SPA on the root route.
+         */
+        get: operations["render_root__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2733,6 +2759,33 @@ export interface components {
             /** Extraction Facilities */
             extraction_facilities: components["schemas"]["ExtractionFacilityOut"][];
         };
+        /** FacilityStatuses */
+        FacilityStatuses: {
+            /** Renewables */
+            renewables: {
+                [key: string]: "high_wind_cutoff";
+            };
+            /** Production */
+            production: {
+                [key: string]:
+                    | "not_producing"
+                    | "out_of_fuel"
+                    | "no_charge"
+                    | "fuel_constrained"
+                    | "ramping_down"
+                    | "producing_steady"
+                    | "ramping_up"
+                    | "at_capacity";
+            };
+            /** Consumption */
+            consumption: {
+                [key: string]:
+                    | "not_satisfied"
+                    | "partially_satisfied"
+                    | "fully_satisfied"
+                    | "no_demand";
+            };
+        };
         /**
          * Fuel
          *
@@ -3743,6 +3796,10 @@ export interface components {
             storage_capacity: number;
             /** State Of Charge */
             state_of_charge: number;
+            /** Max Power Generation */
+            max_power_generation: number;
+            /** Max Power Use */
+            max_power_use: number;
             /** Hourly Op Cost */
             hourly_op_cost: number;
             /** Efficiency */
@@ -5260,6 +5317,26 @@ export interface operations {
             };
         };
     };
+    facility_statuses_api_v1_facilities_statuses_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityStatuses"];
+                };
+            };
+        };
+    };
     get_engine_config_api_v1_game_engine_get: {
         parameters: {
             query?: never;
@@ -6175,7 +6252,7 @@ export interface operations {
             };
         };
     };
-    default_redirect__get: {
+    render_root__get: {
         parameters: {
             query?: never;
             header?: never;

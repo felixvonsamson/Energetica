@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.player import Player
 from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType
-from energetica.schemas.facilities import FacilitiesListOut
+from energetica.schemas.facilities import FacilitiesListOut, FacilityStatuses
 from energetica.schemas.players import MoneyOut
 from energetica.utils import assets
 from energetica.utils.auth import get_settled_player
@@ -67,3 +67,9 @@ async def dismantle_all_of_type(
     """Dismantle all facilities of a certain type."""
     assets.dismantle_all_of_type(player=player, facility_type=facility_type)
     return MoneyOut.from_player(player)
+
+
+@router.get("/statuses")
+async def facility_statuses(player: Annotated[Player, Depends(get_settled_player)]) -> FacilityStatuses:
+    """Statuses for the players facilities: renewables, producing and consuming facilities."""
+    return FacilityStatuses.from_player(player)

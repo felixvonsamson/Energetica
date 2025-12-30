@@ -65,6 +65,7 @@ export const queryKeys = {
         storage: ["facilities", "storage"] as const,
         extraction: ["facilities", "extraction"] as const,
         functional: ["facilities", "functional"] as const,
+        statuses: ["facilities", "statuses"] as const,
     },
     charts: {
         powerSources: (resolution: string, startTick: number, count: number) =>
@@ -89,6 +90,9 @@ export const queryKeys = {
     network: {
         all: ["networks"] as const,
         capacities: ["networks", "capacities"] as const,
+    },
+    powerPriorities: {
+        all: ["power-priorities"] as const,
     },
     config: {
         const: ["config", "const"] as const,

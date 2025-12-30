@@ -19,6 +19,7 @@ import {
     BookMarked,
     List,
     SlidersVertical,
+    ListOrdered,
 } from "lucide-react";
 
 export interface Capabilities {
@@ -102,6 +103,12 @@ export const navigationConfig: NavigationItemConfig[] = [
                 label: "Management",
                 to: "/app/facilities/manage",
                 icon: SlidersVertical,
+            },
+            {
+                type: "link",
+                label: "Power Priorities",
+                to: "/app/facilities/power-priorities",
+                icon: ListOrdered,
             },
             {
                 type: "link",

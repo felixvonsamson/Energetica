@@ -30,6 +30,7 @@ import {
     toStringResolution,
 } from "../types/charts";
 
+import { useGameTick } from "@/hooks/useGameTick";
 import { chartsApi } from "@/lib/api/charts";
 import {
     POWER_GENERATION_KEYS,
@@ -98,6 +99,177 @@ export function useCurrentChartData({
 }
 
 /**
+ * Hook that provides the latest snapshot of chart data without UI jitter.
+ *
+ * Always fetches data at resolution 1 for the current tick. While that data is
+ * loading, returns the previous tick's cached data (if available) instead of
+ * showing empty states, preventing UI flicker during tick transitions.
+ *
+ * @returns Object with power levels by source/sink (e.g., {coal: 100, wind:
+ *   50})
+ */
+export function useLatestChartData({ chartType }: { chartType: ChartType }): {
+    data: Record<string, number>;
+    isLoading: boolean;
+    isError: boolean;
+} {
+    const { currentTick } = useGameTick();
+    const queryClient = useQueryClient();
+
+    const resolution = 1;
+    const maxDatapoints = 1;
+
+    // Attempt to fetch data for the current tick
+    const {
+        chartData: currentData,
+        isLoading: currentIsLoading,
+        isError,
+    } = useCurrentChartData({
+        chartType,
+        currentTick,
+        resolution,
+        maxDatapoints,
+    });
+
+    // If current data is loading, try to get cached data from previous tick
+    const cachedFallbackData = useMemo(() => {
+        // Only attempt fallback if:
+        // 1. Current data is still loading
+        // 2. We have a valid current tick
+        if (!currentIsLoading || !currentTick) {
+            return null;
+        }
+
+        // Calculate range for the previous tick
+        const previousTick = currentTick - 1;
+        if (previousTick < 0) {
+            return null; // No previous tick exists
+        }
+
+        const startTick =
+            resolution *
+            Math.max(0, Math.floor(previousTick / resolution - maxDatapoints));
+        const count = Math.floor((previousTick - startTick) / resolution);
+
+        if (count === 0) {
+            return null; // No data points in range
+        }
+
+        const previousRange = { startTick, count };
+
+        // Check if we have cached data for the previous tick
+        const cachedRanges = getCachedChartRanges({
+            queryClient,
+            chartType,
+            resolution,
+            range: previousRange,
+        });
+
+        if (cachedRanges.length === 0) {
+            return null; // No cached data available
+        }
+
+        // Aggregate cached data (same logic as useChartData)
+        return aggregateChartData({
+            cachedRanges,
+            range: previousRange,
+            resolution,
+            chartType,
+        });
+    }, [currentIsLoading, currentTick, queryClient, chartType]);
+
+    // Determine what data to return
+    let chartData = currentData;
+    let isLoading = currentIsLoading;
+
+    if (
+        currentIsLoading &&
+        cachedFallbackData &&
+        cachedFallbackData.length > 0
+    ) {
+        // We're loading new data but have cached fallback - use it
+        chartData = cachedFallbackData;
+        isLoading = false; // Don't show loading state since we have data
+    }
+
+    // Extract the last datapoint (or return empty object)
+    if (chartData.length === 0) {
+        return { data: {}, isLoading, isError };
+    }
+
+    const lastDatapoint = chartData[chartData.length - 1];
+
+    // Remove the 'tick' property to return just the data values
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { tick, ...data } = lastDatapoint;
+
+    return { data, isLoading, isError };
+}
+
+/**
+ * Helper function to aggregate chart data from cached ranges. Extracted for
+ * reuse in both useChartData and useLatestChartData.
+ */
+function aggregateChartData({
+    cachedRanges,
+    range,
+    resolution,
+    chartType,
+}: {
+    cachedRanges: CachedTickRange[];
+    range: TickRange;
+    resolution: Resolution;
+    chartType: ChartType;
+}) {
+    // Calculate the exclusive end tick of the desired range
+    const endTick = range.startTick + range.count * resolution;
+
+    // Map of tick -> {source1: value, source2: value, ...}
+    const tickMap = new Map<number, Record<string, number>>();
+
+    // Aggregate data from all overlapping cached ranges
+    for (const cached of cachedRanges) {
+        const rangeEndTick =
+            cached.range.startTick + cached.range.count * resolution;
+
+        // Iterate through ticks in the overlap, stepping by index
+        const startIndex =
+            (Math.max(cached.range.startTick, range.startTick) -
+                cached.range.startTick) /
+            resolution;
+        const endIndex =
+            (Math.min(rangeEndTick, endTick) - cached.range.startTick) /
+            resolution;
+        for (let i = startIndex; i < endIndex; i += 1) {
+            const tick = i * resolution + cached.range.startTick;
+            if (!tickMap.has(tick)) tickMap.set(tick, {});
+            const tickData = tickMap.get(tick)!;
+            // Copy all power source values for this tick
+            Object.entries(cached.data.series).forEach(
+                ([source, values]: [string, number[]]) => {
+                    tickData[source] = values[i] ?? 0;
+                },
+            );
+        }
+    }
+
+    // Convert from Map (tick->{data}) to list of entries [{tick+data}]
+    const keyOrder = KEY_ORDER_BY_CHART_TYPE[chartType];
+
+    const result = Array.from(tickMap.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([tick, sources]) => {
+            const reorderedSources = reorderObjectKeys(sources, keyOrder);
+            return {
+                tick,
+                ...reorderedSources,
+            };
+        });
+
+    return result;
+}
+
+/**
  * Aggregates chart data from multiple cached query ranges.
  *
  * Combines data from multiple cache entries to construct a complete time series
@@ -135,53 +307,13 @@ export function useChartData({
     });
 
     const aggregatedData = useMemo(() => {
-        // Calculate the exclusive end tick of the desired range
-        const endTick = range.startTick + range.count * resolution;
-
-        // Map of tick -> {source1: value, source2: value, ...}
-        const tickMap = new Map<number, Record<string, number>>();
-
-        // Aggregate data from all overlapping cached ranges
-        for (const cached of allCachedRanges) {
-            const rangeEndTick =
-                cached.range.startTick + cached.range.count * resolution;
-
-            // Iterate through ticks in the overlap, stepping by index
-            const startIndex =
-                (Math.max(cached.range.startTick, range.startTick) -
-                    cached.range.startTick) /
-                resolution;
-            const endIndex =
-                (Math.min(rangeEndTick, endTick) - cached.range.startTick) /
-                resolution;
-            for (let i = startIndex; i < endIndex; i += 1) {
-                const tick = i * resolution + cached.range.startTick;
-                if (!tickMap.has(tick)) tickMap.set(tick, {});
-                const tickData = tickMap.get(tick)!;
-                // Copy all power source values for this tick
-                Object.entries(cached.data.series).forEach(
-                    ([source, values]: [string, number[]]) => {
-                        tickData[source] = values[i] ?? 0;
-                    },
-                );
-            }
-        }
-        // Convert from Map (tick->{data}) to list of entries [{tick+data}]
-        const keyOrder = KEY_ORDER_BY_CHART_TYPE[chartType];
-
-        const result = Array.from(tickMap.entries())
-            .sort(([a], [b]) => a - b)
-            .map(([tick, sources]) => {
-                const reorderedSources = reorderObjectKeys(sources, keyOrder);
-                return {
-                    tick,
-                    ...reorderedSources,
-                };
-            });
-
-        // console.log("result:", result);
-        return result;
-    }, [allCachedRanges, chartType, range.startTick, range.count, resolution]);
+        return aggregateChartData({
+            cachedRanges: allCachedRanges,
+            range,
+            resolution,
+            chartType,
+        });
+    }, [allCachedRanges, chartType, range, resolution]);
 
     return {
         data: isLoading ? [] : aggregatedData,

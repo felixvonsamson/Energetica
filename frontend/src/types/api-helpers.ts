@@ -5,6 +5,9 @@
 
 import type { paths, components } from "./api.generated";
 
+// Re-export for use in other files
+export type { paths, components };
+
 /**
  * Extract the response type for a specific API endpoint and method.
  *

@@ -32,6 +32,8 @@ from energetica.enums import (
     power_facility_types,
 )
 from energetica.globals import engine
+from energetica.schemas.electricity_markets import AskType
+from energetica.types.facility_statuses import ProductionStatus
 from energetica.utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
 
 
@@ -59,7 +61,19 @@ def update_electricity() -> None:
         for player in network.members:
             calculate_demand(new_values[player.id], player)
             market = calculate_generation_with_market(new_values, market, player)
+
+        # Initialize consumption statuses before market resolution
+        # (market_logic will call reduce_demand which updates consumption statuses)
+        for player in network.members:
+            initialize_consumption_statuses(player, new_values[player.id])
+
         market_logic(new_values, market)
+
+        # Calculate production/renewable statuses after market resolution
+        market_price: float = market["market_price"]  # type: ignore[assignment]
+        for player in network.members:
+            update_production_and_renewable_statuses(player, new_values[player.id], market_price)
+
         # Save market data
         new_network_values = {
             "network_data": {
@@ -87,7 +101,11 @@ def update_electricity() -> None:
         # Power generation calculation for players that are not in a network
         if player.network is None:
             calculate_demand(new_values[player.id], player)
-            calculate_generation_without_market(new_values, player)
+            # Initialize consumption statuses before market resolution
+            initialize_consumption_statuses(player, new_values[player.id])
+            market_price = calculate_generation_without_market(new_values, player)
+            # Calculate production/renewable statuses after market resolution
+            update_production_and_renewable_statuses(player, new_values[player.id], market_price)
         set_facilities_usage(new_values[player.id], player)
         calculate_net_import(new_values[player.id])
         update_storage_lvls(new_values[player.id], player)
@@ -325,8 +343,13 @@ def reset_resource_reservations() -> dict[Fuel, float]:
     return {fuel: 0.0 for fuel in Fuel}
 
 
-def calculate_generation_without_market(new_values: dict, player: Player) -> None:
-    """Calculate the generation of a player that is not part of a network."""
+def calculate_generation_without_market(new_values: dict, player: Player) -> float:
+    """
+    Calculate the generation of a player that is not part of a network.
+
+    Returns:
+        The market clearing price from the internal market
+    """
     internal_market = init_market()
     generation = new_values[player.id]["generation"]
     demand = new_values[player.id]["demand"]
@@ -373,6 +396,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> Non
             internal_market = place_bid(internal_market, player.id, capacity, price, facility)
 
     market_logic(new_values, internal_market)
+    return internal_market["market_price"]  # type: ignore[return-value]
 
 
 def calculate_generation_with_market(new_values: dict, market: dict, player: Player) -> dict:
@@ -399,7 +423,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
         )
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
-    # are used and replace it with a cashed property or something similar that generates a list of all demands and offer types
+    # are used and replace it with a cached property or something similar that generates a list of all demands and offer types
     for demand_type in player.network_prices.bid_prices.keys():
         if demand_type in demand:
             if player.money < max_overdraft and player.network is not None:
@@ -880,6 +904,19 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
     player = Player.get(player_id)
     assert player is not None
     demand = new_values[player.id]["demand"]
+
+    # Calculate consumption status before modifying demand
+    original_demand = demand.get(demand_type, 0.0)
+    epsilon = 0.1  # MW tolerance
+    if original_demand > epsilon:
+        # Only track status for facilities in the player's bid prices (market participants)
+        if demand_type in player.network_prices.bid_prices:
+            if satisfaction < epsilon:
+                player.consumption_statuses[demand_type] = "not_satisfied"  # type: ignore[index]
+            elif satisfaction < original_demand - epsilon:
+                player.consumption_statuses[demand_type] = "partially_satisfied"  # type: ignore[index]
+            # else: leave as "fully_satisfied" (initialized in update_facility_statuses)
+
     if demand_type == "industry":
         # revenues of industry are reduced
         new_values[player.id]["revenues"]["industry"] *= satisfaction / demand["industry"]
@@ -938,3 +975,144 @@ def add_emissions(new_values: dict, player: Player, type: str, amount: float) ->
     new_values["emissions"][type] += amount
     player.cumul_emissions.add(type, amount)
     engine.current_climate_data.add("CO2", amount)
+
+
+def calculate_production_status(
+    player: Player,
+    facility: AskType,
+    actual_generation: float,
+    market_price: float,
+) -> ProductionStatus:
+    """
+    Calculate production status for a controllable facility or storage discharge.
+
+    Uses ramping constraints and market price to determine operational state.
+    Recalculates min/max from ramping constraints - no intermediate storage needed.
+
+    Args:
+        player: The player owning the facility
+        facility: The facility type (from ControllableFacilityType or StorageFacilityType)
+        actual_generation: The actual power generated this tick (MW)
+        market_price: The market clearing price ($/MWh)
+
+    Returns:
+        ProductionStatus indicating the facility's operational state
+    """
+    max_capacity = player.capacities[facility]["power"]
+    epsilon = 0.1  # MW tolerance for floating point comparison
+
+    # Simple cases
+    if actual_generation < epsilon:
+        # Check if this is a controllable facility that ran out of fuel
+        if "fuel_use" in player.capacities[facility]:
+            # Check if player has insufficient fuel for any required fuel type
+            for fuel, _ in player.capacities[facility]["fuel_use"].items():
+                fuel = Fuel(fuel)
+                available_fuel = player.resources[fuel] - player.resources_on_sale[fuel]
+                if available_fuel < epsilon:
+                    return "out_of_fuel"
+        # Check if this is a storage facility with no charge
+        elif isinstance(facility, StorageFacilityType):
+            stored_energy = player.rolling_history.get_last_data("storage", facility)
+            if stored_energy < epsilon:
+                return "no_charge"
+        return "not_producing"
+
+    if actual_generation >= max_capacity - epsilon:
+        return "at_capacity"
+
+    # Check if facility is fuel-constrained (producing at max fuel allows, but below rated capacity)
+    if "fuel_use" in player.capacities[facility]:
+        # Calculate maximum possible generation based on available fuel
+        max_fuel_limited = np.inf
+        for fuel, amount in player.capacities[facility]["fuel_use"].items():
+            fuel = Fuel(fuel)
+            available_fuel = player.resources[fuel] - player.resources_on_sale[fuel]
+            max_from_this_fuel = available_fuel / amount * max_capacity
+            max_fuel_limited = min(max_fuel_limited, max_from_this_fuel)
+
+        # If producing near the fuel limit AND fuel limit is significantly below capacity
+        if actual_generation >= max_fuel_limited - epsilon and max_fuel_limited < max_capacity - epsilon:
+            return "fuel_constrained"
+
+    # Recalculate ramping constraints from first principles
+    ramping_time = engine.const_config["assets"][facility]["ramping_time"]
+    if ramping_time == 0:
+        msg = f"Facility {facility} has ramping_time=0, which is invalid for controllable facilities"
+        raise ValueError(msg)
+
+    ramping_speed = max_capacity / ramping_time * engine.in_game_seconds_per_tick
+    prev_generation = player.rolling_history.get_last_data("generation", facility)
+    min_generation = max(0.0, prev_generation - ramping_speed)
+
+    # Ramping status logic based on market dynamics
+    if actual_generation <= min_generation + epsilon:
+        return "ramping_down"  # Only forced minimum sold (market price < player price)
+
+    player_price = player.network_prices.ask_prices[facility]
+    if market_price > player_price + epsilon:
+        return "ramping_up"  # All delta sold (market price > player price)
+
+    return "producing_steady"  # Marginal facility setting market price
+
+
+def initialize_consumption_statuses(player: Player, new_values: dict) -> None:
+    """
+    Initialize consumption statuses to fully_satisfied before market resolution.
+
+    This must be called BEFORE market_logic(), which will call reduce_demand()
+    to update statuses for facilities that don't get their full demand.
+
+    Args:
+        player: The player whose consumption statuses to initialize
+        new_values: The new tick data containing demand information
+    """
+    player.consumption_statuses.clear()
+    demand = new_values["demand"]
+    epsilon = 0.1  # MW tolerance
+
+    for facility_type in player.network_prices.bid_prices.keys():
+        # Check if demand is zero for this facility
+        if demand.get(facility_type, 0.0) < epsilon:
+            player.consumption_statuses[facility_type] = "no_demand"
+        else:
+            player.consumption_statuses[facility_type] = "fully_satisfied"
+
+
+def update_production_and_renewable_statuses(
+    player: Player,
+    new_values: dict,
+    market_price: float,
+) -> None:
+    """
+    Update production and renewable facility statuses after market resolution.
+
+    This must be called AFTER market_logic() so we have the market clearing price.
+
+    Args:
+        player: The player whose facilities to update
+        new_values: The new tick data containing generation and demand
+        market_price: The market clearing price from market_logic
+    """
+    generation = new_values["generation"]
+
+    # Production facilities (controllable + storage discharge)
+    player.production_statuses.clear()
+    for facility in player.network_prices.ask_prices.keys():
+        # Only process facilities that the player actually owns (has capacity for)
+        if player.capacities.get(facility) is None:
+            continue
+        status = calculate_production_status(
+            player,
+            facility,
+            generation[facility],
+            market_price,
+        )
+        player.production_statuses[facility] = status
+
+    # Wind cutoff override - check individual facilities for high wind conditions
+    player.renewable_statuses.clear()
+    for af in ActiveFacility.filter_by(player=player):
+        if isinstance(af.facility_type, WindFacilityType):
+            if af.cut_out_speed_exceeded:
+                player.renewable_statuses[af.facility_type] = "high_wind_cutoff"

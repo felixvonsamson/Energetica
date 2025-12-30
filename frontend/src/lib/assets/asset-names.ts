@@ -222,6 +222,22 @@ export const resourceNames: Record<string, AssetDisplayName> = {
     },
 };
 
+/** Special facility display names */
+export const specialNames: Record<string, AssetDisplayName> = {
+    transport: {
+        long: "Shipments",
+        short: "Shipments",
+    },
+    construction: {
+        long: "Construction",
+        short: "Construction",
+    },
+    research: {
+        long: "Research",
+        short: "Research",
+    },
+};
+
 /** Combined registry of all asset names. */
 export const allAssetNames: Record<string, AssetDisplayName> = {
     ...powerFacilityNames,
@@ -230,6 +246,7 @@ export const allAssetNames: Record<string, AssetDisplayName> = {
     ...functionalFacilityNames,
     ...technologyNames,
     ...resourceNames,
+    ...specialNames,
 };
 
 /**

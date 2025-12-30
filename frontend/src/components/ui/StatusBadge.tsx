@@ -1,9 +1,9 @@
-import { Clock, Pause, PlayCircle, Truck } from "lucide-react";
+import { Clock, Gauge, Pause, PlayCircle, Truck } from "lucide-react";
 
 import { cn } from "@/lib/classname-utils";
 
 interface StatusBadgeProps {
-    status: "paused" | "waiting" | "ongoing" | "in-transit";
+    status: "paused" | "waiting" | "ongoing" | "in-transit" | "slowed";
     size?: "sm" | "md";
     className?: string;
 }
@@ -51,6 +51,11 @@ export function StatusBadge({
             icon: <Truck size={iconSize} />,
             label: "In Transit",
             styles: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+        },
+        slowed: {
+            icon: <Gauge size={iconSize} />,
+            label: "Slowed",
+            styles: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
         },
     };
 

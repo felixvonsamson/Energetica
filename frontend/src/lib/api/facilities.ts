@@ -8,6 +8,12 @@ export const facilitiesApi = {
     getAll: () =>
         apiClient.get<ApiResponse<"/api/v1/facilities", "get">>("/facilities"),
 
+    /** Get facility statuses (renewables, production, consumption). */
+    getStatuses: () =>
+        apiClient.get<ApiResponse<"/api/v1/facilities/statuses", "get">>(
+            "/facilities/statuses",
+        ),
+
     /** Upgrade a single facility by ID. */
     upgrade: (facilityId: number) =>
         apiClient.post<

@@ -29,6 +29,7 @@ from energetica.enums import (
     PowerFacilityType,
     ProjectStatus,
     ProjectType,
+    RenewableFacilityType,
     StorageFacilityType,
     TechnologyType,
     WindFacilityType,
@@ -37,6 +38,7 @@ from energetica.enums import (
 from energetica.globals import MAIN_EVENT_LOOP, engine
 from energetica.schemas.achievements import AchievementOut
 from energetica.schemas.browser_notifications import Subscription
+from energetica.schemas.electricity_markets import AskType, BidType
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -44,6 +46,7 @@ from energetica.technology_effects import (
     package_power_facilities,
     package_storage_facilities,
 )
+from energetica.types.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -96,6 +99,11 @@ class Player(DBModel):
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
     capacities: CapacityData = field(default_factory=CapacityData)
     cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
+
+    # Facility statuses (updated each tick after market resolution)
+    renewable_statuses: dict[RenewableFacilityType, RenewableStatus] = field(default_factory=dict)
+    production_statuses: dict[AskType, ProductionStatus] = field(default_factory=dict)
+    consumption_statuses: dict[BidType, ConsumptionStatus] = field(default_factory=dict)
 
     achievements: dict[str, int] = field(
         default_factory=lambda: {
@@ -151,6 +159,19 @@ class Player(DBModel):
         """Post initialization method for Player."""
         super().__post_init__()
         self.network_prices.init_prices_with_randomness(self)
+
+    def __setstate__(self, state: dict) -> None:
+        """Called when unpickling - handle backward compatibility for new fields."""
+        # Restore the object's state
+        self.__dict__.update(state)
+
+        # Backward compatibility: Initialize new fields for old Player objects loaded from pickle
+        if not hasattr(self, "renewable_statuses"):
+            self.renewable_statuses = {}
+        if not hasattr(self, "production_statuses"):
+            self.production_statuses = {}
+        if not hasattr(self, "consumption_statuses"):
+            self.consumption_statuses = {}
 
     def __hash__(self) -> int:
         """Return the hash of the player's id."""

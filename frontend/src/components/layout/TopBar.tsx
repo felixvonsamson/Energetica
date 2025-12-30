@@ -153,7 +153,7 @@ export function TopBar() {
                         </div>
 
                         {/* Help Button, Settings, Notifications, Theme Toggle, and Mobile Menu */}
-                        <div className="flex gap-2 flex-shrink-0">
+                        <div className="flex gap-2 shrink-0">
                             {staticData?.infoModal && (
                                 <button
                                     onClick={() => handleShowHelp()}

@@ -7,7 +7,15 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 from energetica.database.active_facility import ActiveFacility
-from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType, WindFacilityType
+from energetica.enums import (
+    ExtractionFacilityType,
+    PowerFacilityType,
+    RenewableFacilityType,
+    StorageFacilityType,
+    WindFacilityType,
+)
+from energetica.schemas.electricity_markets import AskType, BidType
+from energetica.types.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -50,6 +58,8 @@ class StorageFacilityOut(BaseModel):
     facility: StorageFacilityType
     storage_capacity: float
     state_of_charge: float
+    max_power_generation: float
+    max_power_use: float
     hourly_op_cost: float
     efficiency: float
     remaining_lifespan: float | None
@@ -65,6 +75,8 @@ class StorageFacilityOut(BaseModel):
             facility=storage_facility.facility_type,
             storage_capacity=storage_facility.storage_capacity,
             state_of_charge=storage_facility.state_of_charge,
+            max_power_generation=storage_facility.max_power_generation,
+            max_power_use=storage_facility.max_power_use,
             hourly_op_cost=storage_facility.hourly_op_cost,
             efficiency=storage_facility.efficiency,
             remaining_lifespan=storage_facility.remaining_lifespan,
@@ -120,4 +132,18 @@ class FacilitiesListOut(BaseModel):
                 ExtractionFacilityOut.from_active_facility(extraction_facility)
                 for extraction_facility in player.extraction_facilities
             ],
+        )
+
+
+class FacilityStatuses(BaseModel):
+    renewables: dict[RenewableFacilityType, RenewableStatus]
+    production: dict[AskType, ProductionStatus]
+    consumption: dict[BidType, ConsumptionStatus]
+
+    @classmethod
+    def from_player(cls, player: Player) -> FacilityStatuses:
+        return FacilityStatuses(
+            renewables=player.renewable_statuses,
+            production=player.production_statuses,
+            consumption=player.consumption_statuses,
         )
