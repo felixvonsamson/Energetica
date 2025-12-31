@@ -53,33 +53,33 @@ function DashboardHelp() {
             <p>This is the dashboard of your account. Here you will find:</p>
             <ul className="list-none space-y-1 ml-4">
                 <li className="flex items-center gap-2">
-                    <Thermometer className="w-4 h-4 flex-shrink-0" />
+                    <Thermometer className="w-4 h-4 shrink-0" />
                     <span>
                         Current weather conditions and the in-game season
                     </span>
                 </li>
                 <li className="flex items-center gap-2">
-                    <Construction className="w-4 h-4 flex-shrink-0" />
+                    <Construction className="w-4 h-4 shrink-0" />
                     <span>Ongoing or planned construction projects</span>
                 </li>
                 <li className="flex items-center gap-2">
-                    <FlaskConical className="w-4 h-4 flex-shrink-0" />
+                    <FlaskConical className="w-4 h-4 shrink-0" />
                     <span>Ongoing or planned research projects</span>
                 </li>
                 <li className="flex items-center gap-2">
-                    <Truck className="w-4 h-4 flex-shrink-0" />
+                    <Truck className="w-4 h-4 shrink-0" />
                     <span>Ongoing shipments</span>
                 </li>
                 <li className="flex items-center gap-2">
-                    <Link2 className="w-4 h-4 flex-shrink-0" />
+                    <Link2 className="w-4 h-4 shrink-0" />
                     <span>Quick links to the most important pages</span>
                 </li>
                 <li className="flex items-center gap-2">
-                    <Trophy className="w-4 h-4 flex-shrink-0" />
+                    <Trophy className="w-4 h-4 shrink-0" />
                     <span>Progression information about achievements</span>
                 </li>
                 <li className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 flex-shrink-0" />
+                    <Calendar className="w-4 h-4 shrink-0" />
                     <span>Daily quiz to win xp</span>
                 </li>
             </ul>

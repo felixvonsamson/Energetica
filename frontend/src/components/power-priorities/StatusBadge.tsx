@@ -6,10 +6,13 @@
 import {
     Activity,
     AlertCircle,
+    BatteryWarning,
     CheckCircle,
     Circle,
-    TrendingDown,
-    TrendingUp,
+    CircleArrowDown,
+    CircleArrowUp,
+    CircleDashed,
+    Fuel,
     Wind,
     XCircle,
     Zap,
@@ -28,7 +31,7 @@ interface StatusBadgeProps {
     status: FacilityStatus | null | undefined;
 }
 
-/** Displays a colored badge with icon indicating the facility's current status. */
+/** Displays a coloured badge with icon indicating the facility's current status. */
 export function StatusBadge({ status }: StatusBadgeProps) {
     // Handle null/undefined status
     if (!status) {
@@ -50,31 +53,31 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     > = {
         // Production statuses
         not_producing: {
-            icon: <Circle className="w-3 h-3" />,
+            icon: <CircleDashed className="w-3 h-3" />,
             label: "Idle",
             className:
                 "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
         },
         out_of_fuel: {
-            icon: <AlertCircle className="w-3 h-3" />,
+            icon: <Fuel className="w-3 h-3" />,
             label: "Out of Fuel",
             className:
                 "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
         },
         no_charge: {
-            icon: <AlertCircle className="w-3 h-3" />,
+            icon: <BatteryWarning className="w-3 h-3" />,
             label: "No Charge",
             className:
                 "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
         },
         fuel_constrained: {
-            icon: <AlertCircle className="w-3 h-3" />,
+            icon: <Fuel className="w-3 h-3" />,
             label: "Fuel Constrained",
             className:
                 "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
         },
         ramping_down: {
-            icon: <TrendingDown className="w-3 h-3" />,
+            icon: <CircleArrowDown className="w-3 h-3" />,
             label: "Ramping Down",
             className:
                 "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -86,14 +89,14 @@ export function StatusBadge({ status }: StatusBadgeProps) {
                 "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
         },
         ramping_up: {
-            icon: <TrendingUp className="w-3 h-3" />,
+            icon: <CircleArrowUp className="w-3 h-3" />,
             label: "Ramping Up",
             className:
                 "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
         },
         at_capacity: {
             icon: <Zap className="w-3 h-3" />,
-            label: "At Capacity",
+            label: "At Max Capacity",
             className:
                 "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
         },
@@ -118,7 +121,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
                 "bg-brand-green/20 text-brand-green dark:bg-brand-green/10 dark:text-brand-green",
         },
         no_demand: {
-            icon: <Circle className="w-3 h-3" />,
+            icon: <CircleDashed className="w-3 h-3" />,
             label: "No Demand",
             className:
                 "bg-gray-200/20 text-gray-600 dark:bg-gray-800/20 dark:text-gray-400",

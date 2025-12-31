@@ -1,7 +1,7 @@
 /** Storage overview page - Energy storage visualization. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { Battery } from "lucide-react";
+import { Battery, TrendingUp, BarChart3, Funnel } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
 
 import {
@@ -29,8 +29,52 @@ export const Route = createFileRoute("/app/overviews/storage")({
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_storage,
         },
+        infoModal: {
+            contents: <StorageOverviewHelp />,
+        },
     },
 });
+
+function StorageOverviewHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                This page shows the energy stored in your storage facilities
+                over time.
+            </p>
+            <ul className="list-none space-y-1 ml-4">
+                <li className="flex items-center gap-2">
+                    <Battery className="w-4 h-4 shrink-0" />
+                    <span>
+                        View stored energy levels for batteries, pumped hydro,
+                        and other storage facilities
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 shrink-0" />
+                    <span>
+                        Track charging and discharging patterns to optimize
+                        energy management
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 shrink-0" />
+                    <span>
+                        Toggle between normal view (absolute energy) and percent
+                        view (% of capacity)
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Funnel className="w-4 h-4 shrink-0" />
+                    <span>
+                        Use the table to toggle individual storage facilities
+                        on/off in the chart to focus on specific facilities.
+                    </span>
+                </li>
+            </ul>
+        </div>
+    );
+}
 
 function StorageOverviewPage() {
     return (

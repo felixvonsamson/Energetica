@@ -26,11 +26,10 @@ function RootComponent() {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading } = useAuth();
     const capabilities = useCapabilities();
+    const routeConfig = matches[matches.length - 1].staticData?.routeConfig;
 
     useEffect(() => {
         if (isLoading) return;
-
-        const routeConfig = matches[matches.length - 1].staticData?.routeConfig;
 
         if (!routeConfig || routeConfig.requiredRole === null) return;
 
@@ -70,9 +69,32 @@ function RootComponent() {
             default:
                 throw requiredRole satisfies never;
         }
-    }, [matches, isLoading, isAuthenticated, user, capabilities, navigate]);
+    }, [
+        matches,
+        isLoading,
+        isAuthenticated,
+        user,
+        capabilities,
+        navigate,
+        routeConfig,
+    ]);
 
     if (isLoading || capabilities === undefined) return "Loading...";
+
+    // Prevent rendering protected routes before redirect logic runs
+    if (routeConfig && routeConfig.requiredRole !== null) {
+        if (!isAuthenticated || !user) return "Loading...";
+        if (routeConfig.requiredRole !== user?.role) return "Loading...";
+        if (routeConfig.requiredRole === "player") {
+            if (routeConfig.requiresSettledTile && !user.is_settled)
+                return "Loading...";
+            if (!routeConfig.requiresSettledTile && user.is_settled)
+                return "Loading...";
+            if (capabilities === null) return "Loading...";
+            const routeIsUnlocked = routeConfig.isUnlocked(capabilities);
+            if (!routeIsUnlocked) return "Loading...";
+        }
+    }
 
     return <Outlet />;
 }

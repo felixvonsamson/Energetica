@@ -1,7 +1,7 @@
 /** Emissions overview page - CO2 emissions and climate data visualization. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { Cloud } from "lucide-react";
+import { Cloud, Thermometer, Globe, Leaf } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
 
 import {
@@ -29,8 +29,56 @@ export const Route = createFileRoute("/app/overviews/emissions")({
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_greenhouse_gas_effect,
         },
+        infoModal: {
+            contents: <EmissionsOverviewHelp />,
+        },
     },
 });
+
+function EmissionsOverviewHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                This page shows climate data and your contribution to greenhouse
+                gas emissions.
+            </p>
+            <ul className="list-none space-y-1 ml-4">
+                <li className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>CO₂ in the Atmosphere:</b> Global CO₂ levels affected
+                        by all players (concentration or total quantity)
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Thermometer className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Global Average Temperature:</b> Temperature changes
+                        caused by greenhouse gas emissions
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Cloud className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Your Emissions:</b> CO₂ emissions from your
+                        facilities (view as rates or cumulative)
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Leaf className="w-4 h-4 shrink-0" />
+                    <span>
+                        Reduce emissions by transitioning to renewable energy
+                        sources
+                    </span>
+                </li>
+            </ul>
+            <p>
+                Use the toggles to switch between absolute/relative views and
+                different visualization modes for each chart.
+            </p>
+        </div>
+    );
+}
 
 function EmissionsOverviewPage() {
     return (

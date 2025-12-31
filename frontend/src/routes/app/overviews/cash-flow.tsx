@@ -1,7 +1,13 @@
 /** Revenues overview page - Revenue and expenses visualization. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { DollarSign } from "lucide-react";
+import {
+    DollarSign,
+    TrendingUp,
+    TrendingDown,
+    PieChart,
+    Funnel,
+} from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
 
 import {
@@ -32,8 +38,55 @@ export const Route = createFileRoute("/app/overviews/cash-flow")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
+        infoModal: {
+            contents: <CashFlowOverviewHelp />,
+        },
     },
 });
+
+function CashFlowOverviewHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                This page shows your revenues, expenses, and net profit over
+                time from all your facilities.
+            </p>
+            <ul className="list-none space-y-1 ml-4">
+                <li className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Revenues:</b> Money earned from industry, selling
+                        electricity
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <TrendingDown className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Expenses:</b> Operating costs, electricity imports
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <PieChart className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Net Profit:</b> View overall profitability or see
+                        breakdown of revenues vs expenses
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Funnel className="w-4 h-4 shrink-0" />
+                    <span>
+                        Use the table to toggle individual facilities on/off in
+                        the charts.
+                    </span>
+                </li>
+            </ul>
+            <p>
+                Toggle between normal and percent view to analyze your cash flow
+                composition. Use different time resolutions to spot trends.
+            </p>
+        </div>
+    );
+}
 
 function RevenuesOverviewPage() {
     return (

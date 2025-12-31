@@ -280,7 +280,7 @@ function WorkersDisplay(
                         : `${workersData?.construction.available ?? 0}/${workersData?.construction.total ?? 0}`}
                 </span>
                 <Hammer size={16} />
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5">
                     Construction workers
                 </div>
             </div>
@@ -294,7 +294,7 @@ function WorkersDisplay(
                             : `${workersData?.laboratory.available ?? 0}/${workersData?.laboratory.total ?? 0}`}
                     </span>
                     <FlaskConical size={16} />
-                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5">
                         Lab workers
                     </div>
                 </div>
@@ -328,7 +328,7 @@ function ResourceGauges(
                         }}
                     ></div>
                 </div>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5">
                     Coal stock:{" "}
                     {isResourcesLoading
                         ? "..."
@@ -354,7 +354,7 @@ function ResourceGauges(
                         }}
                     ></div>
                 </div>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5">
                     Gas stock:{" "}
                     {isResourcesLoading
                         ? "..."
@@ -381,7 +381,7 @@ function ResourceGauges(
                         }}
                     ></div>
                 </div>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5">
                     Uranium stock:{" "}
                     {isResourcesLoading
                         ? "..."

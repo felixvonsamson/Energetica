@@ -216,7 +216,7 @@ main() {
 
         # Step 9: Health check
         log_step "Performing health check..."
-        HEALTH=$(ssh "${REMOTE_USER}@${REMOTE_HOST}" "curl -s http://localhost:8000/api/ || echo 'FAILED'" 2>/dev/null || echo "FAILED")
+        HEALTH=$(ssh "${REMOTE_USER}@${REMOTE_HOST}" "sleep 3 && curl -s http://localhost:8000/api/ || echo 'FAILED'" 2>/dev/null || echo "FAILED")
         if [[ $HEALTH == *"FAILED"* ]]; then
             log_error "Health check failed"
             echo "Check logs: ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo journalctl -u energetica -f'"

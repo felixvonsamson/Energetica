@@ -1,7 +1,7 @@
 /** Power overview page - Electricity generation visualization. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { Zap } from "lucide-react";
+import { Zap, TrendingUp, TrendingDown, Funnel } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
 
 import {
@@ -30,8 +30,48 @@ export const Route = createFileRoute("/app/overviews/power")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
+        infoModal: {
+            contents: <PowerOverviewHelp />,
+        },
     },
 });
+
+function PowerOverviewHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                This page shows the electricity generation and consumption of
+                your facilities over time.
+            </p>
+            <ul className="list-none space-y-1 ml-4">
+                <li className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Power Generation (Sources):</b> View electricity
+                        produced by your power facilities and electricity market
+                        imports
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <TrendingDown className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Power Consumption (Sinks):</b> View electricity
+                        consumed by your facilities and electricity market
+                        exports
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Funnel className="w-4 h-4 shrink-0" />
+                    <span>
+                        Use the table to toggle individual facilities on/off in
+                        the chart
+                    </span>
+                </li>
+            </ul>
+            <p>Use different time resolutions to spot trends.</p>
+        </div>
+    );
+}
 
 function PowerOverviewPage() {
     return (

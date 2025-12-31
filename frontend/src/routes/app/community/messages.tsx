@@ -1,6 +1,7 @@
 /** Messages page - Chat and messaging interface. */
 
 import { createFileRoute } from "@tanstack/react-router";
+import { MessageCircle, Users, Shield } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -23,6 +24,9 @@ export const Route = createFileRoute("/app/community/messages")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
+        infoModal: {
+            contents: <MessagesHelp />,
+        },
     },
     validateSearch: (
         search: Record<string, unknown>,
@@ -39,6 +43,37 @@ export const Route = createFileRoute("/app/community/messages")({
                 : undefined,
     }),
 });
+
+function MessagesHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                Send direct messages to other players or create group chats to
+                communicate with multiple players at once.
+            </p>
+            <ul className="list-none space-y-1 ml-4">
+                <li className="flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Direct Messages:</b> Start a private conversation
+                        with another player
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Users className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Group Chats:</b> Create a conversation with multiple
+                        players
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 shrink-0" />
+                    <span>Be respectful when chatting with other players</span>
+                </li>
+            </ul>
+        </div>
+    );
+}
 
 function MessagesPage() {
     return (

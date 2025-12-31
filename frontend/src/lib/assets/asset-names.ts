@@ -93,16 +93,16 @@ export const powerFacilityNames: Record<string, AssetDisplayName> = {
 /** Storage facility display names. */
 export const storageFacilityNames: Record<string, AssetDisplayName> = {
     small_pumped_hydro: {
-        long: "Small Pumped Hydro",
-        short: "Small Hydro",
+        long: "Small Pumped Hydro Storage",
+        short: "Hydro Storage (S)",
     },
     molten_salt: {
         long: "Molten Salt",
         short: "Molten Salt",
     },
     large_pumped_hydro: {
-        long: "Large Pumped Hydro",
-        short: "Large Hydro",
+        long: "Large Pumped Hydro Storage",
+        short: "Hydro Storage (L)",
     },
     hydrogen_storage: {
         long: "Hydrogen Hydrolysis",
@@ -138,7 +138,7 @@ export const extractionFacilityNames: Record<string, AssetDisplayName> = {
 export const functionalFacilityNames: Record<string, AssetDisplayName> = {
     laboratory: {
         long: "Laboratory",
-        short: "Lab",
+        short: "Laboratory",
     },
     warehouse: {
         long: "Warehouse",

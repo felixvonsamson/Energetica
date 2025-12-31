@@ -3,7 +3,7 @@ import {
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
-import { Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, Users } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { CreateMarketModal } from "@/components/electricity-markets/CreateMarketModal";
@@ -27,6 +27,9 @@ export const Route = createFileRoute("/app/community/electricity-markets")({
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_network,
         },
+        infoModal: {
+            contents: <ElectricityMarketsHelp />,
+        },
     },
     validateSearch: (
         search: Record<string, unknown>,
@@ -42,6 +45,37 @@ export const Route = createFileRoute("/app/community/electricity-markets")({
         createMarket: search.createMarket === "" ? "" : undefined,
     }),
 });
+
+function ElectricityMarketsHelp() {
+    return (
+        <div className="space-y-3">
+            <p>
+                Electricity markets allow players to trade electricity with each
+                other, creating a competitive marketplace for electric power.
+            </p>
+            <ul className="list-none space-y-1 ml-4">
+                <li className="flex items-center gap-2">
+                    <Users className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Join a Market:</b> Click "Join" to participate in an
+                        existing market and trade with its members
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Plus className="w-4 h-4 shrink-0" />
+                    <span>
+                        <b>Create a Market:</b> Start your own market
+                        {/* and invite other players to join */}
+                    </span>
+                </li>
+            </ul>
+            <p>
+                You can only be a member of one market at a time. Click on a
+                market to expand and see its members.
+            </p>
+        </div>
+    );
+}
 
 function ElectricityMarketsPage() {
     return (
