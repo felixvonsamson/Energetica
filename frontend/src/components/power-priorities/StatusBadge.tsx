@@ -24,132 +24,148 @@ import type {
     RenewableStatus,
 } from "./types";
 
+import { cn } from "@/lib/classname-utils";
+
 type FacilityStatus = ProductionStatus | ConsumptionStatus | RenewableStatus;
+
+type StatusVariant = "critical" | "warning" | "neutral" | "normal";
+
+const variantStyles: Record<StatusVariant, string> = {
+    critical: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    warning:
+        "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    neutral:
+        "bg-gray-100/50 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400",
+    normal: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+};
 
 interface StatusBadgeProps {
     /** The facility status */
     status: FacilityStatus | null | undefined;
+    variant: "iconOnly" | "iconWithLabel";
 }
 
 /** Displays a coloured badge with icon indicating the facility's current status. */
-export function StatusBadge({ status }: StatusBadgeProps) {
-    // Handle null/undefined status
-    if (!status) {
-        return (
-            <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                <Circle className="w-3 h-3" />
-                <span>—</span>
-            </div>
-        );
-    }
-
+export function StatusBadge({ status, variant }: StatusBadgeProps) {
     const statusConfig: Record<
-        FacilityStatus,
+        FacilityStatus | "",
         {
             icon: React.ReactNode;
-            label: string;
-            className: string;
+            label: string | null;
+            variant: StatusVariant;
         }
     > = {
+        // Handle null/undefined status
+        "": {
+            icon: <Circle />,
+            label: null,
+            variant: "neutral",
+        },
+
         // Production statuses
         not_producing: {
-            icon: <CircleDashed className="w-3 h-3" />,
+            icon: <CircleDashed />,
             label: "Idle",
-            className:
-                "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+            variant: "neutral",
         },
         out_of_fuel: {
-            icon: <Fuel className="w-3 h-3" />,
+            icon: <Fuel />,
             label: "Out of Fuel",
-            className:
-                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+            variant: "critical",
         },
         no_charge: {
-            icon: <BatteryWarning className="w-3 h-3" />,
-            label: "No Charge",
-            className:
-                "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+            icon: <BatteryWarning />,
+            label: "No Stored Energy",
+            variant: "warning",
         },
         fuel_constrained: {
-            icon: <Fuel className="w-3 h-3" />,
+            icon: <Fuel />,
             label: "Fuel Constrained",
-            className:
-                "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+            variant: "warning",
         },
         ramping_down: {
-            icon: <CircleArrowDown className="w-3 h-3" />,
+            icon: <CircleArrowDown />,
             label: "Ramping Down",
-            className:
-                "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+            variant: "normal",
         },
         producing_steady: {
-            icon: <Activity className="w-3 h-3" />,
+            icon: <Activity />,
             label: "Marginal",
-            className:
-                "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+            variant: "normal",
         },
         ramping_up: {
-            icon: <CircleArrowUp className="w-3 h-3" />,
+            icon: <CircleArrowUp />,
             label: "Ramping Up",
-            className:
-                "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+            variant: "normal",
         },
         at_capacity: {
-            icon: <Zap className="w-3 h-3" />,
-            label: "At Max Capacity",
-            className:
-                "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+            icon: <Zap />,
+            label: "Producing at Max Capacity",
+            variant: "normal",
         },
 
         // Consumption statuses
         not_satisfied: {
-            icon: <XCircle className="w-3 h-3" />,
+            icon: <XCircle />,
             label: "Not Satisfied",
-            className:
-                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+            variant: "critical",
         },
         partially_satisfied: {
-            icon: <AlertCircle className="w-3 h-3" />,
-            label: "Partial",
-            className:
-                "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+            icon: <AlertCircle />,
+            label: "Partially Satisfied",
+            variant: "warning",
         },
         fully_satisfied: {
-            icon: <CheckCircle className="w-3 h-3" />,
-            label: "Satisfied",
-            className:
-                "bg-brand-green/20 text-brand-green dark:bg-brand-green/10 dark:text-brand-green",
+            icon: <CheckCircle />,
+            label: "Fully Satisfied",
+            variant: "normal",
         },
         no_demand: {
-            icon: <CircleDashed className="w-3 h-3" />,
+            icon: <CircleDashed />,
             label: "No Demand",
-            className:
-                "bg-gray-200/20 text-gray-600 dark:bg-gray-800/20 dark:text-gray-400",
+            variant: "neutral",
         },
 
         // Renewable statuses
         high_wind_cutoff: {
-            icon: <Wind className="w-3 h-3" />,
+            icon: <Wind />,
             label: "High Wind Cutoff",
-            className:
-                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+            variant: "critical",
         },
         available: {
-            icon: <CheckCircle className="w-3 h-3" />,
-            label: "Available",
-            className:
-                "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+            icon: <CheckCircle />,
+            label: "Producing",
+            variant: "normal",
         },
     };
 
-    const config = statusConfig[status];
+    const config = statusConfig[status ?? ""];
 
     return (
         <div
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${config.className}`}
+            className={cn(
+                "group relative inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium [&>svg]:w-5 [&>svg]:h-5",
+                variant === "iconWithLabel" && "xl:w-50",
+                variantStyles[config.variant],
+            )}
         >
             {config.icon}
-            <span>{config.label}</span>
+            {config.label && (
+                <>
+                    {variant === "iconWithLabel" && (
+                        <span className="inline w-full text-center">
+                            {config.label}
+                        </span>
+                    )}
+                    {variant === "iconOnly" && (
+                        <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded whitespace-nowrap pointer-events-none z-10">
+                            {config.label}
+                            {/* Tooltip arrow */}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-gray-900 dark:border-t-gray-100" />
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 }

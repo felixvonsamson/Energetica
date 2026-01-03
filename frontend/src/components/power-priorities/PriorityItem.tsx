@@ -5,19 +5,22 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { motion } from "framer-motion";
 import { GripVertical } from "lucide-react";
+
+import { Money } from "../ui";
 
 import { PriceInput } from "./PriceInput";
 import { StatusBadge } from "./StatusBadge";
 import type {
     PowerPriorityItem,
-    InteractionMode,
     ProductionStatus,
     ConsumptionStatus,
 } from "./types";
 
 import { AssetName } from "@/components/ui/AssetName";
 import { FacilityGauge } from "@/components/ui/FacilityGauge";
+import { cn } from "@/lib/classname-utils";
 import { formatPower } from "@/lib/format-utils";
 import {
     getPriorityItemDisplayName,
@@ -32,10 +35,6 @@ interface PriorityItemProps {
     consumptionPriority: number | null;
     /** Production priority (1-based, null if not a production item) */
     productionPriority: number | null;
-    /** Whether this is a ghost item from the opposite table */
-    isGhost: boolean;
-    /** Interaction mode (drag or price) */
-    mode: InteractionMode;
     /** Callback when price changes (price mode only) */
     onPriceChange: (newPrice: number) => void;
     /** Whether the item is in edit mode */
@@ -49,8 +48,9 @@ interface PriorityItemProps {
 }
 
 /**
- * Displays a single facility in the priority list with its status and priority
- * number. Supports drag-and-drop reordering when in edit mode.
+ * Displays a single facility as a table row in the priority list with its
+ * status and priority number. Supports drag-and-drop reordering when in edit
+ * mode.
  *
  * Ghost items are valid drop targets but cannot be dragged (no drag handle).
  */
@@ -58,8 +58,6 @@ export function PriorityItem({
     item,
     consumptionPriority,
     productionPriority,
-    isGhost,
-    mode,
     onPriceChange,
     isEditMode = false,
     statuses,
@@ -68,7 +66,7 @@ export function PriorityItem({
 }: PriorityItemProps) {
     const suffix = getPriorityItemDisplayName(item);
     const itemId = getPriorityItemKey(item);
-    const isDraggable = mode === "drag" && isEditMode && !isGhost;
+    const isDraggable = isEditMode;
 
     // Look up the status for this facility
     const status: ProductionStatus | ConsumptionStatus | null | undefined =
@@ -96,103 +94,74 @@ export function PriorityItem({
         transition,
     };
 
-    // Determine grid template based on mode, edit state, and item side
-    // Consumption items don't include production priority column
-    // Production items don't include consumption priority column
     const isConsumption = item.side === "bid";
     const isProduction = item.side === "ask";
 
-    let gridTemplate: string;
-    if (isConsumption) {
-        // Consumption items: [cons#/drag] [facility] [power] [gauge] [price?] [status]
-        gridTemplate =
-            mode === "price" && isEditMode
-                ? "grid-cols-[60px_1fr_80px_160px_140px_130px]"
-                : "grid-cols-[60px_1fr_80px_160px_130px]";
-    } else {
-        // Production items: [facility] [power] [gauge] [price?] [status] [prod#/drag]
-        gridTemplate =
-            mode === "price" && isEditMode
-                ? "grid-cols-[1fr_80px_160px_140px_130px_60px]"
-                : "grid-cols-[1fr_80px_160px_130px_60px]";
-    }
-
-    // Ghost items use simplified layout
-    const itemClassName = [
-        "p-3 bg-tan-green dark:bg-dark-bg-secondary rounded-lg",
-        isGhost
-            ? "flex items-center opacity-50 ml-10 h-6"
-            : `grid ${gridTemplate} gap-3 items-center`,
-        isDragging && "opacity-50",
-        isDraggable && "cursor-grab active:cursor-grabbing",
-        // Production items get left margin to shift over (skip consumption priority column)
-        isProduction && !isGhost && "ml-[72px]", // 60px column + 3px gap
-        // Consumption items get right margin to stop short (skip production priority column)
-        isConsumption && !isGhost && "mr-[72px]", // 60px column + 3px gap
-    ]
-        .filter(Boolean)
-        .join(" ");
-
-    // Ghost items render simplified
-    if (isGhost) {
-        return (
-            <div ref={setNodeRef} style={style} className={itemClassName}>
-                <div className="text-sm">
-                    <AssetName assetId={item.type} mode="auto" />
-                    {suffix && (
-                        <span className="text-gray-600 dark:text-gray-400">
-                            {suffix}
-                        </span>
-                    )}
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div ref={setNodeRef} style={style} className={itemClassName}>
-            {/* Consumption priority number or drag handle (only for consumption items) */}
-            {isConsumption && (
-                <div className="text-center flex items-center justify-center">
-                    {isDraggable ? (
-                        <div
-                            {...listeners}
-                            {...attributes}
-                            className="cursor-grab active:cursor-grabbing touch-none"
-                        >
+        <motion.tr
+            ref={setNodeRef}
+            style={style}
+            // Motion props
+            layout={!isDragging}
+            layoutId={isDragging ? undefined : itemId}
+            //
+            className={cn("h-13", isDragging && "opacity-50")}
+        >
+            {/* Consumption priority number or drag handle */}
+            <td
+                {...(isConsumption && isDraggable ? listeners : {})}
+                {...(isConsumption && isDraggable ? attributes : {})}
+                className={cn(
+                    "py-3 px-3 text-center",
+                    isConsumption
+                        ? "bg-tan-green dark:bg-dark-bg-secondary rounded-l-lg"
+                        : "bg-transparent",
+                    isConsumption &&
+                        isDraggable &&
+                        "cursor-grab active:cursor-grabbing touch-none",
+                )}
+            >
+                {isConsumption ? (
+                    isDraggable ? (
+                        <div className="inline-flex">
                             <GripVertical className="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
                         </div>
                     ) : (
                         <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
                             #{consumptionPriority}
                         </span>
-                    )}
-                </div>
-            )}
+                    )
+                ) : null}
+            </td>
 
             {/* Facility name */}
-            <div className="min-w-0 font-medium">
-                <AssetName assetId={item.type} mode="auto" />
+            <td
+                className={cn(
+                    "py-3 px-3 font-medium bg-tan-green dark:bg-dark-bg-secondary",
+                    isProduction && "rounded-l-lg",
+                )}
+            >
+                <AssetName assetId={item.type} mode="short" />
                 {suffix && (
                     <span className="text-gray-600 dark:text-gray-400">
                         {suffix}
                     </span>
                 )}
-            </div>
+            </td>
 
             {/* Current power */}
-            <div className="text-xs text-gray-600 dark:text-gray-400 text-right">
+            <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400 bg-tan-green dark:bg-dark-bg-secondary">
                 {currentPowerMW !== undefined ? (
                     <span className="font-mono">
                         {formatPower(currentPowerMW)}
                     </span>
                 ) : (
-                    <span className="text-center">—</span>
+                    <span>—</span>
                 )}
-            </div>
+            </td>
 
-            {/* Power gauge */}
-            <div>
+            {/* Power gauge (hidden on mobile) */}
+            <td className="py-3 px-3 hidden lg:table-cell bg-tan-green dark:bg-dark-bg-secondary">
                 {capacityMW > 0 ? (
                     <FacilityGauge
                         facilityType={item.type}
@@ -207,44 +176,64 @@ export function PriorityItem({
                         —
                     </div>
                 )}
-            </div>
+            </td>
+
+            {/* Price display */}
+            {!isEditMode && (
+                <td className="text-right py-3 px-3 bg-tan-green dark:bg-dark-bg-secondary">
+                    <Money amount={item.price} />
+                </td>
+            )}
 
             {/* Price input (only in price mode) */}
-            {mode === "price" &&
-                item.price !== null &&
-                item.price !== undefined && (
-                    <div>
-                        <PriceInput
-                            value={item.price}
-                            onChange={(newPrice) => onPriceChange(newPrice)}
-                            disabled={!isEditMode}
-                        />
-                    </div>
-                )}
+            {isEditMode && item.price !== null && item.price !== undefined && (
+                <td className="py-0 px-3 bg-tan-green dark:bg-dark-bg-secondary">
+                    <PriceInput
+                        value={item.price}
+                        onChange={(newPrice) => onPriceChange(newPrice)}
+                        disabled={!isEditMode}
+                    />
+                </td>
+            )}
 
             {/* Status badge */}
-            <div className="flex justify-end">
-                <StatusBadge status={status} />
-            </div>
+            <td
+                className={cn(
+                    "py-2 px-3 text-right bg-tan-green dark:bg-dark-bg-secondary",
+                    isConsumption && "rounded-r-lg",
+                )}
+            >
+                <div className="inline-flex justify-end">
+                    <StatusBadge status={status} variant={"iconOnly"} />
+                </div>
+            </td>
 
-            {/* Production priority number or drag handle (only for production items) */}
-            {isProduction && (
-                <div className="text-center flex items-center justify-center">
-                    {isDraggable ? (
-                        <div
-                            {...listeners}
-                            {...attributes}
-                            className="cursor-grab active:cursor-grabbing touch-none"
-                        >
+            {/* Production priority number or drag handle */}
+            <td
+                {...(isProduction && isDraggable ? listeners : {})}
+                {...(isProduction && isDraggable ? attributes : {})}
+                className={cn(
+                    "py-3 px-3 text-center",
+                    isProduction
+                        ? "bg-tan-green dark:bg-dark-bg-secondary rounded-r-lg"
+                        : "bg-transparent",
+                    isProduction &&
+                        isDraggable &&
+                        "cursor-grab active:cursor-grabbing touch-none",
+                )}
+            >
+                {isProduction ? (
+                    isDraggable ? (
+                        <div className="inline-flex">
                             <GripVertical className="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
                         </div>
                     ) : (
                         <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
                             #{productionPriority}
                         </span>
-                    )}
-                </div>
-            )}
-        </div>
+                    )
+                ) : null}
+            </td>
+        </motion.tr>
     );
 }

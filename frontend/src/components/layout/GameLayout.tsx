@@ -21,7 +21,7 @@ export function GameLayout({ children }: GameLayoutProps) {
                 <TopBar />
 
                 {/* Main content area */}
-                <main className="bg-content-bg text-primary flex-1">
+                <main className="bg-content-bg text-primary flex-1 2xl:px-50">
                     {children}
                 </main>
 

@@ -5,6 +5,8 @@
 
 import { Minus, Plus } from "lucide-react";
 
+import { cn } from "@/lib/classname-utils";
+
 interface PriceInputProps {
     /** Current price value */
     value: number;
@@ -40,6 +42,26 @@ export function PriceInput({
 
     return (
         <div className="flex items-center gap-2">
+            {/* -5% button */}
+            <button
+                onClick={() => adjustPrice(-5)}
+                disabled={disabled}
+                className={cn(
+                    "px-1 py-2 text-xs font-medium rounded-md",
+                    "border border-gray-300 dark:border-gray-600",
+                    "bg-white dark:bg-dark-bg-secondary",
+                    "text-gray-700 dark:text-gray-300",
+                    "hover:bg-gray-50 dark:hover:bg-gray-700",
+                    "focus:outline-none focus:ring-2 focus:ring-brand-green",
+                    "transition-colors",
+                    disabled && "opacity-50 cursor-not-allowed",
+                )}
+                title="Decrease price by 5%"
+            >
+                <Minus className="w-3 h-3 inline-block mr-0.5" />
+                5%
+            </button>
+
             {/* Price input with $ prefix */}
             <div className="relative">
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">
@@ -52,47 +74,23 @@ export function PriceInput({
                     disabled={disabled}
                     step="0.01"
                     min="-4.99"
-                    className={[
-                        "w-28 pl-6 pr-2 py-1.5 text-sm rounded-md",
+                    className={cn(
+                        "font-mono w-30 pl-6 pr-2 py-1.5 text-sm rounded-md",
                         "border border-gray-300 dark:border-gray-600",
                         "bg-white dark:bg-dark-bg-secondary",
                         "text-gray-900 dark:text-gray-100",
                         "focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-transparent",
                         disabled && "opacity-50 cursor-not-allowed",
-                    ]
-                        .filter(Boolean)
-                        .join(" ")}
+                    )}
                 />
             </div>
-
-            {/* -5% button */}
-            <button
-                onClick={() => adjustPrice(-5)}
-                disabled={disabled}
-                className={[
-                    "px-2 py-1.5 text-xs font-medium rounded-md",
-                    "border border-gray-300 dark:border-gray-600",
-                    "bg-white dark:bg-dark-bg-secondary",
-                    "text-gray-700 dark:text-gray-300",
-                    "hover:bg-gray-50 dark:hover:bg-gray-700",
-                    "focus:outline-none focus:ring-2 focus:ring-brand-green",
-                    "transition-colors",
-                    disabled && "opacity-50 cursor-not-allowed",
-                ]
-                    .filter(Boolean)
-                    .join(" ")}
-                title="Decrease price by 5%"
-            >
-                <Minus className="w-3 h-3 inline-block mr-0.5" />
-                5%
-            </button>
 
             {/* +5% button */}
             <button
                 onClick={() => adjustPrice(5)}
                 disabled={disabled}
-                className={[
-                    "px-2 py-1.5 text-xs font-medium rounded-md",
+                className={cn(
+                    "px-1 py-2 text-xs font-medium rounded-md",
                     "border border-gray-300 dark:border-gray-600",
                     "bg-white dark:bg-dark-bg-secondary",
                     "text-gray-700 dark:text-gray-300",
@@ -100,9 +98,7 @@ export function PriceInput({
                     "focus:outline-none focus:ring-2 focus:ring-brand-green",
                     "transition-colors",
                     disabled && "opacity-50 cursor-not-allowed",
-                ]
-                    .filter(Boolean)
-                    .join(" ")}
+                )}
                 title="Increase price by 5%"
             >
                 <Plus className="w-3 h-3 inline-block mr-0.5" />

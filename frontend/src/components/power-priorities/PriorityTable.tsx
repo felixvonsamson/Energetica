@@ -22,25 +22,18 @@ import {
 
 import { PriorityItem } from "./PriorityItem";
 import { RenewablesSection } from "./RenewablesSection";
-import type {
-    PowerPriorityItem,
-    RenewableFacilityType,
-    InteractionMode,
-} from "./types";
+import type { PowerPriorityItem, RenewableFacilityType } from "./types";
 
 import { Card } from "@/components/ui";
+import { cn } from "@/lib/classname-utils";
 import { getPriorityItemKey } from "@/lib/power-priorities-utils";
 import type { ApiResponse } from "@/types/api-helpers";
 
 interface PriorityTableProps {
-    /** Which side this table represents */
-    side: "production" | "consumption";
     /** Renewable facilities (production only) */
     renewables?: RenewableFacilityType[];
     /** Whether the table is in edit mode */
     isEditMode?: boolean;
-    /** Interaction mode (drag or price) */
-    mode?: InteractionMode;
     /** Callback when priorities are reordered */
     onReorder?: (newPriorities: PowerPriorityItem[]) => void;
     /** Callback when a price changes (price mode only) */
@@ -65,10 +58,8 @@ interface PriorityTableProps {
  * edit mode, enables drag-and-drop reordering using dnd-kit.
  */
 export function PriorityTable({
-    side,
     renewables = [],
     isEditMode = false,
-    mode = "drag",
     onReorder,
     onPriceChange,
     allPriorities = [],
@@ -78,23 +69,13 @@ export function PriorityTable({
     productionCapacityByType = {},
     consumptionCapacityByType = {},
 }: PriorityTableProps) {
-    const emptyMessage =
-        side === "production"
-            ? "No production facilities available"
-            : "No consumption facilities available";
+    const emptyMessage = "No consumption facilities available";
 
-    // Determine which side to show
-    const currentSide = side === "production" ? "ask" : "bid";
-
-    // Always show all items (both consumption and production) without ghost mode
-    // For consumption table, reverse the order to maintain display convention
-    const displayItems = allPriorities.map((p) => ({
-        ...p,
-        isGhost: false,
-    }));
-    if (currentSide === "bid") {
-        displayItems.reverse();
-    }
+    const displayItems = allPriorities
+        .map((p) => ({
+            ...p,
+        }))
+        .reverse();
 
     // Set up sensors for drag and drop
     const sensors = useSensors(
@@ -104,7 +85,7 @@ export function PriorityTable({
         }),
     );
 
-    // Generate sortable IDs for ALL items (including ghosts as drop targets)
+    // Generate sortable IDs for ALL items
     const itemIds = displayItems.map((item) => getPriorityItemKey(item));
 
     // Handle drag end
@@ -141,116 +122,118 @@ export function PriorityTable({
         onReorder(newPriorities);
     };
 
-    const priorityItems = (
-        <>
+    // Render priority items (shared between edit and view modes)
+    const renderPriorityItems = () =>
+        displayItems.map((item) => {
+            const originalIndex = allPriorities.findIndex(
+                (p) => getPriorityItemKey(p) === getPriorityItemKey(item),
+            );
+
+            const consumptionItemsAfter = allPriorities
+                .slice(originalIndex + 1)
+                .filter((i) => i.side === "bid").length;
+            const consumptionPriority =
+                item.side === "bid" ? consumptionItemsAfter + 1 : null;
+
+            const productionItemsBefore = allPriorities
+                .slice(0, originalIndex)
+                .filter((i) => i.side === "ask").length;
+            const productionPriority =
+                item.side === "ask" ? productionItemsBefore + 1 : null;
+
+            const currentPowerMW =
+                item.side === "ask"
+                    ? productionPowerLevels[item.type]
+                    : consumptionPowerLevels[item.type];
+            const capacityMW =
+                item.side === "ask"
+                    ? productionCapacityByType[item.type]
+                    : consumptionCapacityByType[item.type];
+
+            return (
+                <PriorityItem
+                    key={getPriorityItemKey(item)}
+                    item={item}
+                    consumptionPriority={consumptionPriority}
+                    productionPriority={productionPriority}
+                    isEditMode={isEditMode}
+                    onPriceChange={(newPrice) =>
+                        onPriceChange?.(item, newPrice)
+                    }
+                    statuses={statuses}
+                    currentPowerMW={currentPowerMW}
+                    capacityMW={capacityMW}
+                />
+            );
+        });
+
+    return (
+        <Card>
             {displayItems.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400 text-center py-8">
                     {emptyMessage}
                 </p>
             ) : (
-                displayItems.map((item) => {
-                    // Find the original index in the unified priority array
-                    const originalIndex = allPriorities.findIndex(
-                        (p) =>
-                            getPriorityItemKey(p) === getPriorityItemKey(item),
-                    );
-
-                    // Calculate priorities based on ORIGINAL position in unified array
-                    // (not display position, since display is reversed for consumption)
-                    const consumptionItemsAfter = allPriorities
-                        .slice(originalIndex + 1)
-                        .filter((i) => i.side === "bid").length;
-                    const consumptionPriority =
-                        item.side === "bid" ? consumptionItemsAfter + 1 : null;
-
-                    const productionItemsBefore = allPriorities
-                        .slice(0, originalIndex)
-                        .filter((i) => i.side === "ask").length;
-                    const productionPriority =
-                        item.side === "ask" ? productionItemsBefore + 1 : null;
-
-                    // Use the appropriate power level and capacity based on item side
-                    const currentPowerMW =
-                        item.side === "ask"
-                            ? productionPowerLevels[item.type]
-                            : consumptionPowerLevels[item.type];
-                    const capacityMW =
-                        item.side === "ask"
-                            ? productionCapacityByType[item.type]
-                            : consumptionCapacityByType[item.type];
-
-                    return (
-                        <PriorityItem
-                            key={getPriorityItemKey(item)}
-                            item={item}
-                            consumptionPriority={consumptionPriority}
-                            productionPriority={productionPriority}
-                            isGhost={item.isGhost}
-                            mode={mode}
-                            isEditMode={isEditMode}
-                            onPriceChange={(newPrice) =>
-                                onPriceChange?.(item, newPrice)
-                            }
-                            statuses={statuses}
-                            currentPowerMW={currentPowerMW}
-                            capacityMW={capacityMW}
-                        />
-                    );
-                })
-            )}
-        </>
-    );
-
-    return (
-        <Card>
-            <div className="space-y-2">
-                {/* Column headers */}
-                {displayItems.length > 0 && (
-                    <div
-                        className={`grid gap-3 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 ${
-                            mode === "price" && isEditMode
-                                ? "grid-cols-[60px_1fr_80px_160px_140px_120px_60px]"
-                                : "grid-cols-[60px_1fr_80px_160px_120px_60px]"
-                        }`}
-                    >
-                        <div className="text-center">Cons #</div>
-                        <div>Facility</div>
-                        <div className="text-right">Power</div>
-                        <div>Usage</div>
-                        {mode === "price" && isEditMode && <div>Price</div>}
-                        <div className="text-right">Status</div>
-                        <div className="text-center">Prod #</div>
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                >
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-170 border-separate border-spacing-y-2">
+                            <thead>
+                                <tr
+                                    className={cn(
+                                        "text-xs font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700",
+                                    )}
+                                >
+                                    <th className="text-center py-2 px-3 w-15">
+                                        Cons #
+                                    </th>
+                                    <th className="text-left py-2 px-3">
+                                        Facility
+                                    </th>
+                                    <th className="text-right py-2 px-3 w-30">
+                                        Power
+                                    </th>
+                                    <th className="py-2 px-3 w-40 hidden lg:table-cell">
+                                        Usage
+                                    </th>
+                                    <th className="py-2 px-3 w-60">Price</th>
+                                    <th className="text-right py-2 px-3 w-10">
+                                        Status
+                                    </th>
+                                    <th className="text-center py-2 px-3 w-15">
+                                        Prod #
+                                    </th>
+                                </tr>
+                            </thead>
+                            {isEditMode ? (
+                                <SortableContext
+                                    items={itemIds}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    <tbody>{renderPriorityItems()}</tbody>
+                                </SortableContext>
+                            ) : (
+                                <tbody>{renderPriorityItems()}</tbody>
+                            )}
+                            {renewables.length > 0 && (
+                                <RenewablesSection
+                                    renewables={renewables}
+                                    statuses={statuses}
+                                    productionPowerLevels={
+                                        productionPowerLevels
+                                    }
+                                    productionCapacityByType={
+                                        productionCapacityByType
+                                    }
+                                />
+                            )}
+                        </table>
                     </div>
-                )}
-
-                {/* Priority items with drag and drop */}
-                {isEditMode && displayItems.length > 0 ? (
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <SortableContext
-                            items={itemIds}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            {priorityItems}
-                        </SortableContext>
-                    </DndContext>
-                ) : (
-                    priorityItems
-                )}
-
-                {/* Renewables section (at bottom for consumption table) */}
-                {renewables.length > 0 && (
-                    <RenewablesSection
-                        renewables={renewables}
-                        statuses={statuses}
-                        productionPowerLevels={productionPowerLevels}
-                        productionCapacityByType={productionCapacityByType}
-                    />
-                )}
-            </div>
+                </DndContext>
+            )}
         </Card>
     );
 }

@@ -6,6 +6,8 @@
 
 import { Lock } from "lucide-react";
 
+import { Money } from "../ui";
+
 import { StatusBadge } from "./StatusBadge";
 import type { RenewableFacilityType } from "./types";
 
@@ -26,9 +28,9 @@ interface RenewablesSectionProps {
 }
 
 /**
- * Displays renewable facilities with a lock icon to indicate they're always
- * active and cannot be reordered. Renewables have priority over all other
- * facilities. Styled to match production items.
+ * Displays renewable facilities as table rows with a lock icon to indicate
+ * they're always active and cannot be reordered. Renewables have priority over
+ * all other facilities. Styled to match production items.
  */
 export function RenewablesSection({
     renewables,
@@ -41,72 +43,85 @@ export function RenewablesSection({
     }
 
     return (
-        <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 ml-18">
-                Renewables (always active)
-            </h3>
-            <div className="space-y-2">
-                {renewables.map((renewable, idx) => {
-                    // Look up status for this renewable, default to "available"
-                    const status =
-                        statuses.renewables[renewable] || "available";
-                    const currentPowerMW = productionPowerLevels[renewable];
-                    const capacityMW = productionCapacityByType[renewable] || 0;
+        <tbody>
+            <tr>
+                <td
+                    colSpan={7}
+                    className="pt-4 pb-2 px-3 border-t-2 border-gray-300 dark:border-gray-600"
+                >
+                    <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                        Renewables (always active)
+                    </h3>
+                </td>
+            </tr>
+            {renewables.map((renewable, idx) => {
+                // Look up status for this renewable, default to "available"
+                const status = statuses.renewables[renewable] || "available";
+                const currentPowerMW = productionPowerLevels[renewable];
+                const capacityMW = productionCapacityByType[renewable] || 0;
 
-                    return (
-                        <div
-                            key={`renewable-${idx}`}
-                            className="grid grid-cols-[1fr_80px_160px_130px_60px] gap-3 items-center p-3 bg-tan-green dark:bg-dark-bg-secondary rounded-lg ml-18"
-                        >
-                            {/* Facility name */}
-                            <div className="min-w-0 font-medium flex items-center gap-2">
-                                <AssetName assetId={renewable} mode="auto" />
-                            </div>
+                return (
+                    <tr key={`renewable-${idx}`}>
+                        {/* Empty consumption priority column */}
+                        <td className="bg-transparent"></td>
 
-                            {/* Current power */}
-                            <div className="text-xs text-gray-600 dark:text-gray-400 text-right">
-                                {currentPowerMW !== undefined ? (
-                                    <span className="font-mono">
-                                        {formatPower(currentPowerMW)}
-                                    </span>
-                                ) : (
-                                    <span>—</span>
-                                )}
-                            </div>
+                        {/* Facility name */}
+                        <td className="py-3 px-3 font-medium bg-tan-green dark:bg-dark-bg-secondary rounded-l-lg">
+                            <AssetName assetId={renewable} mode="auto" />
+                        </td>
 
-                            {/* Power gauge */}
-                            <div>
-                                {capacityMW > 0 ? (
-                                    <FacilityGauge
-                                        facilityType={renewable}
-                                        value={
-                                            capacityMW > 0
-                                                ? (currentPowerMW! /
-                                                      capacityMW) *
-                                                  100
-                                                : 0
-                                        }
-                                    />
-                                ) : (
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                                        —
-                                    </div>
-                                )}
-                            </div>
+                        {/* Current power */}
+                        <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400 bg-tan-green dark:bg-dark-bg-secondary">
+                            {currentPowerMW !== undefined ? (
+                                <span className="font-mono">
+                                    {formatPower(currentPowerMW)}
+                                </span>
+                            ) : (
+                                <span>—</span>
+                            )}
+                        </td>
 
-                            {/* Status badge */}
-                            <div className="flex justify-end">
-                                <StatusBadge status={status} />
-                            </div>
+                        {/* Power gauge (hidden on mobile) */}
+                        <td className="py-3 px-3 hidden lg:table-cell bg-tan-green dark:bg-dark-bg-secondary">
+                            {capacityMW > 0 ? (
+                                <FacilityGauge
+                                    facilityType={renewable}
+                                    value={
+                                        capacityMW > 0
+                                            ? (currentPowerMW! / capacityMW) *
+                                              100
+                                            : 0
+                                    }
+                                />
+                            ) : (
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    —
+                                </div>
+                            )}
+                        </td>
 
-                            {/* Lock icon instead of priority number */}
-                            <div className="flex justify-center">
-                                <Lock className="w-4 h-4 shrink-0" />
+                        {/* Price */}
+                        <td className="py-3 px-3 text-right bg-tan-green dark:bg-dark-bg-secondary">
+                            <Money amount={null} />
+                        </td>
+
+                        {/* Status badge */}
+                        <td className="py-3 px-3 text-right bg-tan-green dark:bg-dark-bg-secondary">
+                            <div className="inline-flex justify-end">
+                                <StatusBadge
+                                    status={status}
+                                    variant="iconOnly"
+                                />
                             </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
+                        </td>
+
+                        {/* Lock icon instead of priority number */}
+                        <td className="py-3 px-3 text-center bg-tan-green dark:bg-dark-bg-secondary rounded-r-lg">
+                            <Lock className="w-4 h-4 shrink-0 inline-block" />
+                        </td>
+                    </tr>
+                );
+            })}
+        </tbody>
     );
 }

@@ -1,18 +1,12 @@
 /** Power Priorities page - Manage production and consumption priorities. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 
 import { GameLayout } from "@/components/layout/GameLayout";
-import { ModeToggle } from "@/components/power-priorities/ModeToggle";
 import { PriorityTable } from "@/components/power-priorities/PriorityTable";
-import type {
-    PowerPriorityItem,
-    InteractionMode,
-} from "@/components/power-priorities/types";
+import type { PowerPriorityItem } from "@/components/power-priorities/types";
 import { useLatestChartData } from "@/hooks/useCharts";
-import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
-import { useElectricityMarketForPlayer } from "@/hooks/useElectricityMarkets";
 import { useFacilityStatuses, useFacilities } from "@/hooks/useFacilities";
 import {
     usePowerPriorities,
@@ -132,20 +126,6 @@ function PowerPrioritiesContent() {
         return capacities;
     }, [facilitiesData]);
 
-    // Player and network detection
-    const { playerId } = useCurrentPlayer();
-    const playerMarket = useElectricityMarketForPlayer(playerId);
-    const isInNetwork = playerMarket !== null && playerMarket !== undefined;
-
-    // Interaction mode state (drag or price)
-    const [mode, setMode] = useState<InteractionMode>("drag");
-
-    // Set default mode based on network status
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMode(isInNetwork ? "price" : "drag");
-    }, [isInNetwork]);
-
     // Edit mode state
     const [isEditMode, setIsEditMode] = useState(false);
     const [pendingPriorities, setPendingPriorities] = useState<
@@ -215,7 +195,12 @@ function PowerPrioritiesContent() {
                     ? { ...p, price: newPrice }
                     : p,
             );
-            setPendingPriorities(updatedPriorities);
+
+            // Re-sort by price to update order (ascending price = higher priority)
+            const sorted = [...updatedPriorities].sort(
+                (a, b) => a.price - b.price,
+            );
+            setPendingPriorities(sorted);
         }
     };
 
@@ -223,22 +208,22 @@ function PowerPrioritiesContent() {
         if (!pendingPriorities) return;
 
         try {
-            if (mode === "drag") {
-                // Drag mode: update priorities directly
-                await updatePriorities.mutateAsync({
-                    power_priorities: pendingPriorities,
-                });
-            } else {
-                // Price mode: update prices which will reorder automatically
-                const asks = pendingPriorities
-                    .filter((p) => p.side === "ask")
-                    .map((p) => ({ type: p.type, price: p.price || 0 }));
-                const bids = pendingPriorities
-                    .filter((p) => p.side === "bid")
-                    .map((p) => ({ type: p.type, price: p.price || 0 }));
+            // if (mode === "drag") {
+            //     // Drag mode: update priorities directly
+            //     await updatePriorities.mutateAsync({
+            //         power_priorities: pendingPriorities,
+            //     });
+            // } else {
+            // Price mode: update prices which will reorder automatically
+            const asks = pendingPriorities
+                .filter((p) => p.side === "ask")
+                .map((p) => ({ type: p.type, price: p.price || 0 }));
+            const bids = pendingPriorities
+                .filter((p) => p.side === "bid")
+                .map((p) => ({ type: p.type, price: p.price || 0 }));
 
-                await updateElectricityPrices.mutateAsync({ asks, bids });
-            }
+            await updateElectricityPrices.mutateAsync({ asks, bids });
+            // }
 
             setIsEditMode(false);
             setPendingPriorities(null);
@@ -250,7 +235,18 @@ function PowerPrioritiesContent() {
     };
 
     const handleReorder = (newPriorities: PowerPriorityItem[]) => {
-        setPendingPriorities(newPriorities);
+        // When reordering, update prices to match the new order
+        // Extract all current prices and sort them
+        const currentPrices = newPriorities.map((item) => item.price);
+        const sortedPrices = [...currentPrices].sort((a, b) => a - b);
+
+        // Assign sorted prices to items in the new order
+        const updatedPriorities = newPriorities.map((item, index) => ({
+            ...item,
+            price: sortedPrices[index],
+        }));
+
+        setPendingPriorities(updatedPriorities);
     };
 
     return (
@@ -284,21 +280,10 @@ function PowerPrioritiesContent() {
                 )}
             </div>
 
-            {/* Mode Toggle */}
-            <div className="flex justify-center">
-                <ModeToggle
-                    mode={mode}
-                    onChange={setMode}
-                    disabled={isEditMode}
-                />
-            </div>
-
             {/* Single table showing all items */}
             <PriorityTable
-                side="consumption"
                 renewables={renewables}
                 isEditMode={isEditMode}
-                mode={mode}
                 onReorder={handleReorder}
                 onPriceChange={handlePriceChange}
                 allPriorities={currentPriorities}

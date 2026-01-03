@@ -10,7 +10,7 @@ import { formatMoney } from "@/lib/format-utils";
 
 interface MoneyProps {
     /** The monetary value to display */
-    amount: number;
+    amount: number | null;
     /** Whether to always show the full value without scaling (default: false) */
     long?: boolean;
     /** Additional CSS classes */
@@ -40,8 +40,15 @@ export function Money({
         lg: "w-5 h-5",
     };
 
+    if (amount === null) return "-";
+
     return (
-        <span className={cn("inline-flex items-center gap-0.5", className)}>
+        <span
+            className={cn(
+                "font-mono inline-flex items-center gap-0.5",
+                className,
+            )}
+        >
             {formatMoney(amount, long)}
             <DollarSign
                 className={cn(
