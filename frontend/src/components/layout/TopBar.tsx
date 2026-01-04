@@ -180,9 +180,6 @@ export function TopBar() {
                                 )}
                             </button>
 
-                            {/* Theme toggle */}
-                            <ThemeToggle className="px-2 py-2 bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors h-9 aspect-square" />
-
                             {/* User dropdown */}
                             <div className="relative" ref={userDropdownRef}>
                                 <button
@@ -198,6 +195,8 @@ export function TopBar() {
                                 {/* Dropdown menu */}
                                 {showUserDropdown && (
                                     <div className="absolute right-0 mt-2 w-48 bg-bone dark:bg-dark-bg-secondary border border-pine-darker dark:border-dark-border rounded shadow-lg z-50">
+                                        <ThemeToggle variant="menu-item" />
+
                                         <Link
                                             to="/app/settings"
                                             onClick={() =>
