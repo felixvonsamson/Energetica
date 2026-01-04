@@ -538,7 +538,7 @@ export function formatCashFlow(
 ): string {
     const rate = amountPerTickToCashFlowRate(amountPerTick, unit, config, mode);
     const suffix = getUnitSuffix(unit);
-    return `${formatMoney(rate)}${suffix}`;
+    return `${formatMoney(rate)}$${suffix}`;
 }
 
 // === Achievement-Specific Formatting ===

@@ -16,7 +16,6 @@ import {
     CashFlowOverviewTable,
     filterNonZeroSeries,
     createExcludeKeysFilter,
-    includeAllSeries,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/GameLayout";
@@ -24,7 +23,9 @@ import { Card, CardTitle, CashFlow } from "@/components/ui";
 import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
+import { useGameEngine } from "@/hooks/useGame";
 import { useGameTick } from "@/hooks/useGameTick";
+import { formatCashFlow } from "@/lib/format-utils";
 
 type RevenueType = "revenues" | "expenses" | "net-profit";
 type NetProfitViewMode = "net" | "breakdown";
@@ -337,6 +338,8 @@ function RevenuesChart({
     revenueType,
     netProfitViewMode,
 }: RevenuesChartProps) {
+    const { data: gameEngineConfig } = useGameEngine();
+    const { mode: timeMode } = useTimeMode();
     const getColor = useAssetColorGetter();
 
     // Custom color getter for breakdown mode
@@ -352,23 +355,10 @@ function RevenuesChart({
         // For net-profit view, use includeAllSeries since we have aggregated values
         // For breakdown mode, also use includeAllSeries to show all three series
         // filterNonZeroSeries only keeps values > 0, which filters out negative values
-        const baseFilter =
-            revenueType === "net-profit"
-                ? includeAllSeries
-                : filterNonZeroSeries;
-
-        if (hiddenFacilities.size === 0) {
-            return baseFilter;
-        }
-
-        const excludeFilter = createExcludeKeysFilter(
-            Array.from(hiddenFacilities),
-        );
-
-        // Combine both filters: must pass base filter AND not be hidden
-        return (key: string, data: unknown[]) => {
-            return baseFilter(key, data) && excludeFilter(key);
-        };
+        return [
+            createExcludeKeysFilter(Array.from(hiddenFacilities)),
+            ...(revenueType === "net-profit" ? [] : [filterNonZeroSeries]),
+        ];
     }, [hiddenFacilities, revenueType]);
 
     // Transform data for percent view if needed
@@ -410,7 +400,12 @@ function RevenuesChart({
         });
     }, [chartData, viewMode]);
 
-    const chartConfig: TimeSeriesChartConfig = useMemo(() => {
+    const isShowingPercent =
+        viewMode === "percent" && revenueType !== "net-profit";
+
+    const chartConfig: TimeSeriesChartConfig | undefined = useMemo(() => {
+        if (!gameEngineConfig) return undefined;
+
         const isBreakdownMode =
             revenueType === "net-profit" && netProfitViewMode === "breakdown";
         const isNetMode =
@@ -419,21 +414,34 @@ function RevenuesChart({
         return {
             chartVariant: "area",
             stacked: true,
-            height: 400,
             showBrush: true,
             getColor: isBreakdownMode ? getBreakdownColor : getColor,
             filterDataKeys,
-            formatValue: (value: number) => <CashFlow amountPerTick={value} />,
+            formatValue: (value: number) =>
+                isShowingPercent ? (
+                    `${value.toFixed(1)}%`
+                ) : (
+                    <CashFlow amountPerTick={value} />
+                ),
+            formatYAxis: (value: number) =>
+                isShowingPercent
+                    ? `${value}%`
+                    : formatCashFlow(value, "h", gameEngineConfig, timeMode),
             // Use gradient fill for the "net-profit" series only in net mode
             gradientKeys: isNetMode ? ["net-profit"] : [],
         };
     }, [
-        getColor,
-        getBreakdownColor,
-        filterDataKeys,
+        gameEngineConfig,
         revenueType,
         netProfitViewMode,
+        getBreakdownColor,
+        getColor,
+        filterDataKeys,
+        isShowingPercent,
+        timeMode,
     ]);
+
+    if (!chartConfig) return <></>;
 
     return (
         <TimeSeriesChart

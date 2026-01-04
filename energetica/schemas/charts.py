@@ -86,7 +86,7 @@ class ChartDataResponse(BaseModel, Generic[SeriesKeyType]):
         description="Time resolution between data points in ticks",
     )
     series: dict[SeriesKeyType, list[float]] = Field(
-        description="Time series data indexed by category, with power values in MW",
+        description="Time series data indexed by category",
     )
 
 
@@ -94,7 +94,7 @@ class PowerSourcesResponse(ChartDataResponse[PowerSourcesKey]):
     """Response model for power generation and import time series."""
 
     series: dict[PowerSourcesKey, list[float]] = Field(
-        description="Time series data for each facility type and imports, with power values in MW",
+        description="Time series data for each facility type and imports, with power values in W",
     )
 
 
@@ -102,7 +102,7 @@ class PowerSinksResponse(ChartDataResponse[PowerSinksKey]):
     """Response model for power demand time series."""
 
     series: dict[PowerSinksKey, list[float]] = Field(
-        description="Time series power demand data by category, with power values in MW",
+        description="Time series power demand data by category, with power values in W",
     )
 
 
@@ -110,7 +110,7 @@ class StorageLevelResponse(ChartDataResponse[StorageFacilityType]):
     """Response model for storage level time series."""
 
     series: dict[StorageFacilityType, list[float]] = Field(
-        description="Time series data for each storage facility type, with energy values in MWh",
+        description="Time series data for each storage facility type, with energy values in Wh",
     )
 
 
@@ -169,4 +169,54 @@ class ResourcesResponse(ChartDataResponse[ResourcesKey]):
 
     series: dict[ResourcesKey, list[float]] = Field(
         description="Time series data for resource stocks, with quantities in tons",
+    )
+
+
+# Network data responses (network-specific, not player-specific)
+NetworkDataKey = Literal["price", "quantity"]
+
+
+class NetworkDataResponse(ChartDataResponse[NetworkDataKey]):
+    """Response model for network price and quantity time series."""
+
+    series: dict[NetworkDataKey, list[float]] = Field(
+        description="Time series data for network price ($/Wh) and quantity (W)",
+    )
+
+
+class NetworkExportsResponse(ChartDataResponse[str]):
+    """Response model for network exports by player time series."""
+
+    series: dict[str, list[float]] = Field(
+        description="Time series data for exports by each player, with power values in W",
+    )
+
+
+class NetworkImportsResponse(ChartDataResponse[str]):
+    """Response model for network imports by player time series."""
+
+    series: dict[str, list[float]] = Field(
+        description="Time series data for imports by each player, with power values in W",
+    )
+
+
+NetworkGenerationKey = PowerSourcesKey
+
+
+class NetworkGenerationResponse(ChartDataResponse[NetworkGenerationKey]):
+    """Response model for network generation by type time series."""
+
+    series: dict[NetworkGenerationKey, list[float]] = Field(
+        description="Time series data for generation by each facility type in the network, with power values in W",
+    )
+
+
+NetworkConsumptionKey = PowerSinksKey
+
+
+class NetworkConsumptionResponse(ChartDataResponse[NetworkConsumptionKey]):
+    """Response model for network consumption by type time series."""
+
+    series: dict[NetworkConsumptionKey, list[float]] = Field(
+        description="Time series data for consumption by each type in the network, with power values in W",
     )

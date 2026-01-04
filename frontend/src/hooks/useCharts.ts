@@ -42,6 +42,11 @@ import {
     CLIMATE_KEYS,
     TEMPERATURE_KEYS,
     RESOURCES_KEYS,
+    NETWORK_DATA_KEYS,
+    NETWORK_EXPORTS_KEYS,
+    NETWORK_IMPORTS_KEYS,
+    NETWORK_GENERATION_KEYS,
+    NETWORK_CONSUMPTION_KEYS,
     reorderObjectKeys,
 } from "@/lib/charts/chart-key-order";
 import { queryKeys } from "@/lib/query-client";
@@ -57,6 +62,11 @@ const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {
     climate: CLIMATE_KEYS,
     temperature: TEMPERATURE_KEYS,
     resources: RESOURCES_KEYS,
+    "network-data": NETWORK_DATA_KEYS,
+    "network-exports": NETWORK_EXPORTS_KEYS,
+    "network-imports": NETWORK_IMPORTS_KEYS,
+    "network-generation": NETWORK_GENERATION_KEYS,
+    "network-consumption": NETWORK_CONSUMPTION_KEYS,
 };
 
 /** Main exported hook. Returns all chart datapoints relevant to the request. */
@@ -65,11 +75,13 @@ export function useCurrentChartData({
     currentTick,
     resolution,
     maxDatapoints,
+    networkId,
 }: {
     chartType: ChartType;
     currentTick: number | undefined;
     resolution: Resolution;
     maxDatapoints: number;
+    networkId?: number;
 }) {
     // Determine the corresponding tick range
     const range = useMemo(() => {
@@ -88,7 +100,7 @@ export function useCurrentChartData({
         data: chartData,
         isLoading,
         isError,
-    } = useChartData({ chartType, range, resolution });
+    } = useChartData({ chartType, range, resolution, networkId });
 
     // Return empty state if currentTick is not loaded
     if (!currentTick) {
@@ -108,7 +120,13 @@ export function useCurrentChartData({
  * @returns Object with power levels by source/sink (e.g., {coal: 100, wind:
  *   50})
  */
-export function useLatestChartData({ chartType }: { chartType: ChartType }): {
+export function useLatestChartData({
+    chartType,
+    networkId,
+}: {
+    chartType: ChartType;
+    networkId?: number;
+}): {
     data: Record<string, number>;
     isLoading: boolean;
     isError: boolean;
@@ -129,6 +147,7 @@ export function useLatestChartData({ chartType }: { chartType: ChartType }): {
         currentTick,
         resolution,
         maxDatapoints,
+        networkId,
     });
 
     // If current data is loading, try to get cached data from previous tick
@@ -163,6 +182,7 @@ export function useLatestChartData({ chartType }: { chartType: ChartType }): {
             chartType,
             resolution,
             range: previousRange,
+            networkId,
         });
 
         if (cachedRanges.length === 0) {
@@ -176,7 +196,7 @@ export function useLatestChartData({ chartType }: { chartType: ChartType }): {
             resolution,
             chartType,
         });
-    }, [currentIsLoading, currentTick, queryClient, chartType]);
+    }, [currentIsLoading, currentTick, queryClient, chartType, networkId]);
 
     // Determine what data to return
     let chartData = currentData;
@@ -279,10 +299,12 @@ export function useChartData({
     chartType,
     resolution,
     range,
+    networkId,
 }: {
     chartType: ChartType;
     resolution: Resolution;
     range: TickRange;
+    networkId?: number;
 }) {
     const queryClient = useQueryClient();
 
@@ -291,6 +313,7 @@ export function useChartData({
         chartType,
         resolution,
         range,
+        networkId,
     });
 
     const allCachedRanges = getCachedChartRanges({
@@ -298,12 +321,14 @@ export function useChartData({
         chartType,
         resolution,
         range,
+        networkId,
     });
 
     const { isLoading, isError } = useFetchChartGaps({
         chartType,
         resolution,
         rangesToFetch,
+        networkId,
     });
 
     const aggregatedData = useMemo(() => {
@@ -322,6 +347,21 @@ export function useChartData({
     };
 }
 
+/** Query key function type for regular charts */
+type RegularChartQueryKeyFn = (
+    resolution: string,
+    startTick: number,
+    count: number,
+) => readonly unknown[];
+
+/** Query key function type for network charts */
+type NetworkChartQueryKeyFn = (
+    networkId: number,
+    resolution: string,
+    startTick: number,
+    count: number,
+) => readonly unknown[];
+
 /** Map chart types to their corresponding query key functions */
 const QUERY_KEY_FN_BY_CHART_TYPE = {
     "power-sources": queryKeys.charts.powerSources,
@@ -333,37 +373,80 @@ const QUERY_KEY_FN_BY_CHART_TYPE = {
     climate: queryKeys.charts.climate,
     temperature: queryKeys.charts.temperature,
     resources: queryKeys.charts.resources,
+    "network-data": queryKeys.charts.networkData,
+    "network-exports": queryKeys.charts.networkExports,
+    "network-imports": queryKeys.charts.networkImports,
+    "network-generation": queryKeys.charts.networkGeneration,
+    "network-consumption": queryKeys.charts.networkConsumption,
 } as const;
+
+const NETWORK_CHART_TYPES: ChartType[] = [
+    "network-data",
+    "network-exports",
+    "network-imports",
+    "network-generation",
+    "network-consumption",
+];
 
 /** Fetches ranges concurrently. */
 function useFetchChartGaps({
     chartType,
     resolution,
     rangesToFetch,
+    networkId,
 }: {
     chartType: ChartType;
     resolution: Resolution;
     rangesToFetch: TickRange[];
+    networkId?: number;
 }) {
     const resolutionKey = toStringResolution(resolution);
+    const isNetworkChart = NETWORK_CHART_TYPES.includes(chartType);
+
     const queries = useQueries({
         queries: rangesToFetch.map((range) => {
             const queryKeyFn = QUERY_KEY_FN_BY_CHART_TYPE[chartType];
 
-            return {
-                queryKey: queryKeyFn(
-                    resolutionKey,
-                    range.startTick,
-                    range.count,
-                ),
-                queryFn: () =>
-                    chartsApi.getChartData({
-                        chartType,
-                        resolution,
-                        range,
-                    }),
-                staleTime: 60 * 1000,
-            };
+            if (isNetworkChart && networkId !== undefined) {
+                // Network chart - pass networkId as first parameter
+                return {
+                    queryKey: (queryKeyFn as NetworkChartQueryKeyFn)(
+                        networkId,
+                        resolutionKey,
+                        range.startTick,
+                        range.count,
+                    ),
+                    queryFn: () =>
+                        chartsApi.getNetworkChartData({
+                            networkId,
+                            chartType: chartType as
+                                | "network-data"
+                                | "network-exports"
+                                | "network-imports"
+                                | "network-generation"
+                                | "network-consumption",
+                            resolution,
+                            range,
+                        }),
+                    staleTime: 60 * 1000,
+                };
+            } else {
+                // Regular chart
+                return {
+                    queryKey: (queryKeyFn as RegularChartQueryKeyFn)(
+                        resolutionKey,
+                        range.startTick,
+                        range.count,
+                    ),
+                    queryFn: () =>
+                        chartsApi.getChartData({
+                            chartType,
+                            resolution,
+                            range,
+                        }),
+                    staleTime: 60 * 1000,
+                };
+            }
         }),
     });
 
@@ -392,6 +475,7 @@ interface GetCacheGapsParams {
     chartType: ChartType;
     resolution: Resolution;
     range: TickRange;
+    networkId?: number;
 }
 
 function getCacheGaps({
@@ -399,6 +483,7 @@ function getCacheGaps({
     chartType,
     resolution,
     range,
+    networkId,
 }: GetCacheGapsParams): TickRange[] {
     // Find all cached ranges overlapping with desired range [start, end)
     const cachedRanges = getCachedChartRanges({
@@ -406,6 +491,7 @@ function getCacheGaps({
         chartType,
         resolution,
         range,
+        networkId,
     });
 
     // If no cache, fetch entire desired range
@@ -453,15 +539,25 @@ export function getCachedChartRanges({
     chartType,
     resolution,
     range,
+    networkId,
 }: {
     queryClient: QueryClient;
     chartType: ChartType;
     resolution: Resolution;
     range: TickRange;
+    networkId?: number;
 }): CachedTickRange[] {
     const cache = queryClient.getQueryCache();
+    const isNetworkChart = NETWORK_CHART_TYPES.includes(chartType);
+
+    // Build query key filter based on chart type
+    const queryKeyPrefix =
+        isNetworkChart && networkId !== undefined
+            ? ["charts", chartType, networkId, toStringResolution(resolution)]
+            : ["charts", chartType, toStringResolution(resolution)];
+
     const filters = {
-        queryKey: ["charts", chartType, toStringResolution(resolution)],
+        queryKey: queryKeyPrefix,
         predicate: (query: Query) =>
             query.state.status === "success" && !!query.state.data,
     };
@@ -470,21 +566,42 @@ export function getCachedChartRanges({
     const endTick = range.startTick + range.count * resolution;
     const ranges: CachedTickRange[] = queries
         .map((query) => {
-            const queryKey = query.queryKey as [
-                string,
-                string,
-                string,
-                number,
-                number,
-            ];
-            const [, , , startTick, count] = queryKey;
-            return {
-                range: {
-                    startTick: startTick,
-                    count: count,
-                },
-                data: query.state.data,
-            } as CachedTickRange;
+            if (isNetworkChart && networkId !== undefined) {
+                // Network chart query key: ["charts", chartType, networkId, resolution, startTick, count]
+                const queryKey = query.queryKey as [
+                    string,
+                    string,
+                    number,
+                    string,
+                    number,
+                    number,
+                ];
+                const [, , , , startTick, count] = queryKey;
+                return {
+                    range: {
+                        startTick: startTick,
+                        count: count,
+                    },
+                    data: query.state.data,
+                } as CachedTickRange;
+            } else {
+                // Regular chart query key: ["charts", chartType, resolution, startTick, count]
+                const queryKey = query.queryKey as [
+                    string,
+                    string,
+                    string,
+                    number,
+                    number,
+                ];
+                const [, , , startTick, count] = queryKey;
+                return {
+                    range: {
+                        startTick: startTick,
+                        count: count,
+                    },
+                    data: query.state.data,
+                } as CachedTickRange;
+            }
         })
         .filter((cache) => {
             const cachedRangeEndTick =

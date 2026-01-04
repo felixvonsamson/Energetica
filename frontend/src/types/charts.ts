@@ -9,7 +9,12 @@ export type ChartType =
     | "emissions"
     | "climate"
     | "temperature"
-    | "resources";
+    | "resources"
+    | "network-data"
+    | "network-exports"
+    | "network-imports"
+    | "network-generation"
+    | "network-consumption";
 
 export interface ResolutionOption {
     id: number;

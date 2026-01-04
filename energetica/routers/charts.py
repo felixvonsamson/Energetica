@@ -23,11 +23,17 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, HTTPException, status
 import numpy as np
 
+from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.schemas.charts import (
     ClimateDataResponse,
     EmissionsResponse,
+    NetworkConsumptionResponse,
+    NetworkDataResponse,
+    NetworkExportsResponse,
+    NetworkGenerationResponse,
+    NetworkImportsResponse,
     OpCostsResponse,
     PowerSinksResponse,
     PowerSourcesResponse,
@@ -43,9 +49,12 @@ router = APIRouter(prefix="/charts", tags=["Charts"])
 Resolution = Literal["1", "6", "36", "216", "1296"]
 PickleChartKey = Literal["revenues", "op_costs", "generation", "demand", "storage", "resources", "emissions"]
 ClimatePickleKey = Literal["emissions", "temperature"]
+PickleNetworkKey = Literal["network_data", "exports", "imports", "generation", "consumption"]
 
 
-def _load_pickle_data(file_path: str) -> dict[PickleChartKey | ClimatePickleKey, dict[str, list[list[float]]]]:
+def _load_pickle_data(
+    file_path: str,
+) -> dict[PickleChartKey | ClimatePickleKey | PickleNetworkKey, dict[str, list[list[float]]]]:
     """Load persisted historical data from pickle file."""
     if not Path(file_path).is_file():
         return defaultdict(lambda: defaultdict(list))
@@ -63,7 +72,7 @@ def _get_time_series_data(
     resolution: Resolution,
     pickle_path: str,
     rolling_history_data: dict[str, list],
-    data_category: PickleChartKey | ClimatePickleKey,
+    data_category: PickleChartKey | ClimatePickleKey | PickleNetworkKey,
 ) -> dict:
     """
     Generic function to extract time series data from pickle files and rolling history.
@@ -279,6 +288,47 @@ def _get_climate_data(
     )
 
 
+def _get_network_data(
+    network_id: int,
+    start_tick: int,
+    count: int,
+    data_category: PickleNetworkKey,
+    resolution: Resolution,
+) -> dict:
+    """
+    Extract network-specific chart data for a time range at the requested resolution.
+
+    Args:
+        network_id: ID of the network whose data to retrieve
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+        data_category: Category to extract (e.g., "network_data", "exports", "imports")
+        resolution: Aggregation level ("1", "6", "36", "216", "1296")
+
+    Raises:
+        HTTPException 403: If network not found
+        HTTPException 400: If start_tick is misaligned, in future, or beyond available data
+    """
+    network = Network.getitem(
+        network_id,
+        error=HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Network not found"),
+    )
+
+    current_tick = engine.total_t
+    fresh_rolling_history_tick_count = current_tick % 216
+    pickle_path = f"instance/data/networks/{network.id}/network_data.pck"
+    rolling_history_data = network.rolling_history.get_data(t=fresh_rolling_history_tick_count)[data_category]
+
+    return _get_time_series_data(
+        start_tick=start_tick,
+        count=count,
+        resolution=resolution,
+        pickle_path=pickle_path,
+        rolling_history_data=rolling_history_data,
+        data_category=data_category,
+    )
+
+
 @router.get("/power-sources/{resolution}")
 def get_power_sources(
     player: Annotated[Player, Depends(get_settled_player)],
@@ -452,3 +502,118 @@ def get_resources(
     """
     data = _get_chart_data(player, start_tick, count, "resources", resolution)
     return ResourcesResponse(resolution=resolution, **data)
+
+
+@router.get("/networks/{network_id}/network_data/{resolution}")
+def get_network_data(
+    _player: Annotated[Player, Depends(get_settled_player)],
+    network_id: int,
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> NetworkDataResponse:
+    """
+    Get network price and quantity time series at the specified resolution.
+
+    This is network-specific data showing market clearing price and quantity.
+
+    Parameters:
+        network_id: ID of the network
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_network_data(network_id, start_tick, count, "network_data", resolution)
+    return NetworkDataResponse(resolution=resolution, **data)
+
+
+@router.get("/networks/{network_id}/exports/{resolution}")
+def get_network_exports(
+    _player: Annotated[Player, Depends(get_settled_player)],
+    network_id: int,
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> NetworkExportsResponse:
+    """
+    Get network exports by player time series at the specified resolution.
+
+    This is network-specific data showing power exported by each player.
+
+    Parameters:
+        network_id: ID of the network
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_network_data(network_id, start_tick, count, "exports", resolution)
+    return NetworkExportsResponse(resolution=resolution, **data)
+
+
+@router.get("/networks/{network_id}/imports/{resolution}")
+def get_network_imports(
+    _player: Annotated[Player, Depends(get_settled_player)],
+    network_id: int,
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> NetworkImportsResponse:
+    """
+    Get network imports by player time series at the specified resolution.
+
+    This is network-specific data showing power imported by each player.
+
+    Parameters:
+        network_id: ID of the network
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_network_data(network_id, start_tick, count, "imports", resolution)
+    return NetworkImportsResponse(resolution=resolution, **data)
+
+
+@router.get("/networks/{network_id}/generation/{resolution}")
+def get_network_generation(
+    _player: Annotated[Player, Depends(get_settled_player)],
+    network_id: int,
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> NetworkGenerationResponse:
+    """
+    Get network generation by facility type time series at the specified resolution.
+
+    This is network-specific data showing total generation by facility type across all network members.
+
+    Parameters:
+        network_id: ID of the network
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_network_data(network_id, start_tick, count, "generation", resolution)
+    return NetworkGenerationResponse(resolution=resolution, **data)
+
+
+@router.get("/networks/{network_id}/consumption/{resolution}")
+def get_network_consumption(
+    _player: Annotated[Player, Depends(get_settled_player)],
+    network_id: int,
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> NetworkConsumptionResponse:
+    """
+    Get network consumption by type time series at the specified resolution.
+
+    This is network-specific data showing total consumption by type across all network members.
+
+    Parameters:
+        network_id: ID of the network
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_network_data(network_id, start_tick, count, "consumption", resolution)
+    return NetworkConsumptionResponse(resolution=resolution, **data)

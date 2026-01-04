@@ -10,7 +10,6 @@ import {
     EmissionsOverviewTable,
     filterNonZeroSeries,
     createExcludeKeysFilter,
-    includeAllSeries,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/GameLayout";
@@ -406,6 +405,7 @@ function CO2Chart({
         });
     }, [chartData, viewMode, unitMode]);
 
+    // TODO: ensure these are from format utilities
     const formatValue = useCallback(
         (value: number): string => {
             if (unitMode === "concentration") {
@@ -439,10 +439,9 @@ function CO2Chart({
         () => ({
             chartVariant: "line",
             stacked: false,
-            height: 400,
             showBrush: true,
             getColor: (key: string) => (key === "CO2" ? "#ef4444" : "#9ca3af"),
-            filterDataKeys: includeAllSeries,
+            filterDataKeys: [],
             formatValue,
         }),
         [formatValue],
@@ -511,7 +510,7 @@ function TemperatureChart({
             showBrush: true,
             getColor: (key: string) =>
                 key === "temperature" ? "#f59e0b" : "#9ca3af",
-            filterDataKeys: includeAllSeries,
+            filterDataKeys: [],
             formatValue,
         }),
         [],
@@ -549,18 +548,10 @@ function EmissionsChart({
 
     // Create a composite filter that combines non-zero filtering with visibility filtering
     const filterDataKeys = useMemo(() => {
-        if (hiddenSources.size === 0) {
-            return filterNonZeroSeries;
-        }
-
-        const excludeFilter = createExcludeKeysFilter(
-            Array.from(hiddenSources),
-        );
-
-        // Combine both filters: must pass non-zero AND not be hidden
-        return (key: string, data: unknown[]) => {
-            return filterNonZeroSeries(key, data) && excludeFilter(key);
-        };
+        return [
+            filterNonZeroSeries,
+            createExcludeKeysFilter(Array.from(hiddenSources)),
+        ];
     }, [hiddenSources]);
 
     // Transform data for cumulative and percent view

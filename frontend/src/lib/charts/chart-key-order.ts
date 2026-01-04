@@ -115,6 +115,16 @@ export const TEMPERATURE_KEYS = ["deviation", "reference"] as const;
 
 export const RESOURCES_KEYS = ["coal", "gas", "uranium"] as const;
 
+export const NETWORK_DATA_KEYS = ["price", "quantity"] as const;
+
+// Network exports/imports have dynamic player IDs, so no fixed order
+export const NETWORK_EXPORTS_KEYS = [] as const;
+export const NETWORK_IMPORTS_KEYS = [] as const;
+
+// Network generation and consumption use the same keys as power generation/consumption
+export const NETWORK_GENERATION_KEYS = POWER_GENERATION_KEYS;
+export const NETWORK_CONSUMPTION_KEYS = POWER_CONSUMPTION_KEYS;
+
 /**
  * Reorders object properties according to a specified key order. Keys not in
  * the order array are placed at the end in their original order.

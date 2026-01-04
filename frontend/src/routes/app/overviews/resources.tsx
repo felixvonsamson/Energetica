@@ -16,6 +16,7 @@ import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
+import { formatMass } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/overviews/resources")({
     component: ResourcesOverviewPage,
@@ -132,29 +133,15 @@ function ResourcesChart({
 }: ResourcesChartProps) {
     const getColor = useAssetColorGetter();
 
-    const formatValue = (value: number): string => {
-        // Format as tons
-        const abs = Math.abs(value);
-        if (abs >= 1e9) {
-            return `${(value / 1e9).toFixed(2)} Gt`;
-        } else if (abs >= 1e6) {
-            return `${(value / 1e6).toFixed(2)} Mt`;
-        } else if (abs >= 1e3) {
-            return `${(value / 1e3).toFixed(2)} kt`;
-        } else {
-            return `${value.toFixed(2)} t`;
-        }
-    };
-
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
             chartVariant: "area",
             stacked: false,
-            height: 400,
             showBrush: true,
             getColor,
-            filterDataKeys: filterNonZeroSeries,
-            formatValue,
+            filterDataKeys: [filterNonZeroSeries],
+            formatValue: formatMass,
+            formatYAxis: (value: number) => formatMass(value),
         }),
         [getColor],
     );

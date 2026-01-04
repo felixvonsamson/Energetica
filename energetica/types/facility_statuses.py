@@ -35,6 +35,7 @@ Status for power production facilities (controllable facilities and storage disc
 - at_capacity: Producing at maximum capacity
 """
 
+# TODO: could add "full" for (charge) side of storage facilities - currently "just" shows "no demand"
 ConsumptionStatus = Literal[
     "not_satisfied",
     "partially_satisfied",

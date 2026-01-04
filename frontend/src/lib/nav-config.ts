@@ -20,6 +20,7 @@ import {
     List,
     SlidersVertical,
     ListOrdered,
+    ChevronsLeftRightEllipsis,
 } from "lucide-react";
 
 export interface Capabilities {
@@ -151,7 +152,7 @@ export const navigationConfig: NavigationItemConfig[] = [
                 type: "link",
                 label: "Electricity Markets",
                 to: "/app/community/electricity-markets",
-                icon: Zap,
+                icon: ChevronsLeftRightEllipsis,
             },
             {
                 type: "link",

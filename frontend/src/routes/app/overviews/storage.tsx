@@ -17,6 +17,7 @@ import { Card, CardTitle } from "@/components/ui";
 import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
+import { useFacilities } from "@/hooks/useFacilities";
 import { useGameTick } from "@/hooks/useGameTick";
 import { formatEnergy } from "@/lib/format-utils";
 
@@ -177,20 +178,14 @@ function StorageChart({
 }: StorageChartProps) {
     const getColor = useAssetColorGetter();
 
+    const { data: facilities } = useFacilities();
+
     // Create a composite filter that combines non-zero filtering with visibility filtering
     const filterDataKeys = useMemo(() => {
-        if (hiddenFacilities.size === 0) {
-            return filterNonZeroSeries;
-        }
-
-        const excludeFilter = createExcludeKeysFilter(
-            Array.from(hiddenFacilities),
-        );
-
-        // Combine both filters: must pass non-zero AND not be hidden
-        return (key: string, data: unknown[]) => {
-            return filterNonZeroSeries(key, data) && excludeFilter(key);
-        };
+        return [
+            filterNonZeroSeries,
+            createExcludeKeysFilter(Array.from(hiddenFacilities)),
+        ];
     }, [hiddenFacilities]);
 
     // Transform data for percent view if needed
@@ -208,19 +203,21 @@ function StorageChart({
                 tick: typeof dp.tick === "number" ? dp.tick : 0,
             };
 
+            if (!facilities) return result;
+
             Object.keys(dp).forEach((key) => {
                 if (key === "tick") return;
 
-                // Find max value for this facility across all datapoints
-                const maxValue = Math.max(
-                    ...chartData.map((d) => {
-                        const val = (d as Record<string, unknown>)[key];
-                        return typeof val === "number" ? val : 0;
-                    }),
+                const maxValue = facilities.storage_facilities.reduce(
+                    (runningMax, facility) =>
+                        facility.facility === key
+                            ? runningMax + facility.storage_capacity
+                            : runningMax,
+                    0,
                 );
 
                 const currentVal = typeof dp[key] === "number" ? dp[key] : 0;
-                if (maxValue > 0) {
+                if (maxValue !== undefined && maxValue > 0) {
                     result[key] =
                         (((currentVal as number) || 0) / maxValue) * 100;
                 } else {
@@ -230,19 +227,23 @@ function StorageChart({
 
             return result;
         });
-    }, [chartData, viewMode]);
+    }, [chartData, facilities, viewMode]);
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
-            chartVariant: "area",
-            stacked: true,
-            height: 400,
+            chartVariant: viewMode === "normal" ? "area" : "line",
+            stacked: viewMode === "normal" ? true : false,
             showBrush: true,
             getColor,
             filterDataKeys,
-            formatValue: formatEnergy,
+            formatValue:
+                viewMode === "normal"
+                    ? formatEnergy
+                    : (value: number) => `${value.toFixed(1)}%`,
+            formatYAxis: (value: number) =>
+                viewMode === "normal" ? formatEnergy(value) : `${value}%`,
         }),
-        [getColor, filterDataKeys],
+        [viewMode, getColor, filterDataKeys],
     );
 
     return (
@@ -273,7 +274,7 @@ function ViewModePicker({ viewMode, onViewModeChange }: ViewModePickerProps) {
                             : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                     }`}
                 >
-                    Normal
+                    Stored Capacity
                 </button>
                 <button
                     onClick={() => onViewModeChange("percent")}
@@ -283,7 +284,7 @@ function ViewModePicker({ viewMode, onViewModeChange }: ViewModePickerProps) {
                             : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                     }`}
                 >
-                    Percent
+                    State of Charge
                 </button>
             </div>
         </div>

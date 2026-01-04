@@ -11,11 +11,6 @@ export function filterNonZeroSeries(key: string, data: unknown[]): boolean {
     });
 }
 
-/** Filter that includes all data keys (no filtering). */
-export function includeAllSeries(): boolean {
-    return true;
-}
-
 /** Creates a filter that excludes specific keys. */
 export function createExcludeKeysFilter(excludeKeys: string[]) {
     return (key: string): boolean => {

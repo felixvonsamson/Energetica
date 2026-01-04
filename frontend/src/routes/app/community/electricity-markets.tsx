@@ -12,11 +12,13 @@ import { LeaveMarketModal } from "@/components/electricity-markets/LeaveMarketMo
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Card, CardTitle } from "@/components/ui";
 import { Money } from "@/components/ui/Money";
+import { useLatestChartData } from "@/hooks/useCharts";
 import {
     useElectricityMarketForPlayer,
     useElectricityMarkets,
 } from "@/hooks/useElectricityMarkets";
 import { useMe, usePlayerMap } from "@/hooks/usePlayers";
+import { formatPower } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/community/electricity-markets")({
     component: ElectricityMarketsPage,
@@ -82,6 +84,129 @@ function ElectricityMarketsPage() {
         <GameLayout>
             <ElectricityMarketsContent />
         </GameLayout>
+    );
+}
+
+interface MarketRowProps {
+    market: { id: number; name: string; member_ids: number[] };
+    isCurrentMarket: boolean;
+    isExpanded: boolean;
+    onToggleExpanded: () => void;
+    onJoin: () => void;
+    onLeave: () => void;
+    playerMap: Record<number, { username: string }>;
+}
+
+function MarketRow({
+    market,
+    isCurrentMarket,
+    isExpanded,
+    onToggleExpanded,
+    onJoin,
+    onLeave,
+    playerMap,
+}: MarketRowProps) {
+    // Fetch latest market data (price and quantity)
+    const { data: marketData } = useLatestChartData({
+        chartType: "network-data",
+        networkId: market.id,
+    });
+
+    const price = marketData?.price;
+    const quantity = marketData?.quantity;
+
+    const marketRow = (
+        <tr
+            key={market.id}
+            onClick={onToggleExpanded}
+            className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+        >
+            <td className="py-3 px-4 font-medium text-primary">
+                {market.name}
+            </td>
+            <td className="py-3 px-4 text-center">
+                <div className="flex items-center justify-center gap-2">
+                    <span className="text-gray-600 dark:text-gray-400">
+                        {market.member_ids.length}
+                    </span>
+                    {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    )}
+                </div>
+            </td>
+            <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
+                {price !== undefined && price > 0 ? (
+                    <Money amount={price} />
+                ) : (
+                    <span className="text-gray-400 dark:text-gray-600">
+                        N/A
+                    </span>
+                )}
+            </td>
+            <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
+                {quantity !== undefined && quantity > 0 ? (
+                    formatPower(quantity)
+                ) : (
+                    <span className="text-gray-400 dark:text-gray-600">
+                        N/A
+                    </span>
+                )}
+            </td>
+            <td
+                className="py-3 px-4 text-center"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {isCurrentMarket ? (
+                    <button
+                        className="px-4 py-1 bg-alert-red text-white rounded hover:opacity-80 transition-opacity"
+                        onClick={onLeave}
+                    >
+                        Leave
+                    </button>
+                ) : (
+                    <button
+                        className="px-4 py-1 bg-pine dark:bg-brand-green text-white rounded hover:opacity-80 transition-opacity"
+                        onClick={onJoin}
+                    >
+                        Join
+                    </button>
+                )}
+            </td>
+        </tr>
+    );
+
+    const expandedRow = isExpanded ? (
+        <tr
+            key={`expanded-${market.id}`}
+            className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30"
+        >
+            <td colSpan={5} className="py-4 px-4">
+                <div className="ml-4">
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                        Members ({market.member_ids.length})
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                        {market.member_ids.map((memberId) => (
+                            <div
+                                key={memberId}
+                                className="text-sm text-gray-600 dark:text-gray-400"
+                            >
+                                {playerMap[memberId].username}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </td>
+        </tr>
+    ) : null;
+
+    return (
+        <>
+            {marketRow}
+            {expandedRow}
+        </>
     );
 }
 
@@ -178,117 +303,40 @@ function ElectricityMarketsContent() {
                             </tr>
                         </thead>
                         <tbody>
-                            {markets.flatMap((market) => {
+                            {markets.map((market) => {
                                 const isCurrentMarket =
-                                    currentMarket &&
-                                    market.id === currentMarket.id;
+                                    currentMarket?.id === market.id;
                                 const isExpanded =
                                     expandedMarketId === market.id;
 
-                                const marketRow = (
-                                    <tr
+                                return (
+                                    <MarketRow
                                         key={market.id}
-                                        onClick={() =>
+                                        market={market}
+                                        isCurrentMarket={isCurrentMarket}
+                                        isExpanded={isExpanded}
+                                        onToggleExpanded={() =>
                                             toggleExpanded(market.id)
                                         }
-                                        className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
-                                    >
-                                        <td className="py-3 px-4 font-medium text-primary">
-                                            {market.name}
-                                        </td>
-                                        <td className="py-3 px-4 text-center">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <span className="text-gray-600 dark:text-gray-400">
-                                                    {market.member_ids.length}
-                                                </span>
-                                                {isExpanded ? (
-                                                    <ChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                                                ) : (
-                                                    <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
-                                            <Money amount={45.67} />
-                                        </td>
-                                        <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
-                                            {(
-                                                1200 +
-                                                market.id * 100
-                                            ).toLocaleString()}{" "}
-                                            MWh
-                                        </td>
-                                        <td
-                                            className="py-3 px-4 text-center"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            {isCurrentMarket ? (
-                                                <button
-                                                    className="px-4 py-1 bg-alert-red text-white rounded hover:opacity-80 transition-opacity"
-                                                    onClick={() => {
-                                                        navigate({
-                                                            search: {
-                                                                leaveMarket: "",
-                                                            },
-                                                            replace: true,
-                                                        });
-                                                    }}
-                                                >
-                                                    Leave
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    className="px-4 py-1 bg-pine dark:bg-brand-green text-white rounded hover:opacity-80 transition-opacity"
-                                                    onClick={() => {
-                                                        navigate({
-                                                            search: {
-                                                                joinMarketId:
-                                                                    market.id,
-                                                            },
-                                                            replace: true,
-                                                        });
-                                                    }}
-                                                >
-                                                    Join
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
+                                        onJoin={() => {
+                                            navigate({
+                                                search: {
+                                                    joinMarketId: market.id,
+                                                },
+                                                replace: true,
+                                            });
+                                        }}
+                                        onLeave={() => {
+                                            navigate({
+                                                search: {
+                                                    leaveMarket: "",
+                                                },
+                                                replace: true,
+                                            });
+                                        }}
+                                        playerMap={playerMap}
+                                    />
                                 );
-
-                                const expandedRow = isExpanded ? (
-                                    <tr
-                                        key={`expanded-${market.id}`}
-                                        className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30"
-                                    >
-                                        <td colSpan={5} className="py-4 px-4">
-                                            <div className="ml-4">
-                                                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                                                    Members (
-                                                    {market.member_ids.length})
-                                                </p>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                                                    {market.member_ids.map(
-                                                        (memberId) => (
-                                                            <div
-                                                                key={memberId}
-                                                                className="text-sm text-gray-600 dark:text-gray-400"
-                                                            >
-                                                                {
-                                                                    playerMap[
-                                                                        memberId
-                                                                    ].username
-                                                                }
-                                                            </div>
-                                                        ),
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : null;
-
-                                return [marketRow, expandedRow].filter(Boolean);
                             })}
                         </tbody>
                     </table>

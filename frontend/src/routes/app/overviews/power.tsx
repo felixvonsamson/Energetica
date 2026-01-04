@@ -186,25 +186,16 @@ function PowerChart({
 
     // Create a composite filter that combines non-zero filtering with visibility filtering
     const filterDataKeys = useMemo(() => {
-        if (hiddenFacilities.size === 0) {
-            return filterNonZeroSeries;
-        }
-
-        const excludeFilter = createExcludeKeysFilter(
-            Array.from(hiddenFacilities),
-        );
-
-        // Combine both filters: must pass non-zero AND not be hidden
-        return (key: string, data: unknown[]) => {
-            return filterNonZeroSeries(key, data) && excludeFilter(key);
-        };
+        return [
+            filterNonZeroSeries,
+            createExcludeKeysFilter(Array.from(hiddenFacilities)),
+        ];
     }, [hiddenFacilities]);
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
             chartVariant: "area",
             stacked: true,
-            height: 400,
             showBrush: true,
             getColor,
             filterDataKeys,
@@ -213,6 +204,7 @@ function PowerChart({
                 name,
             ],
             formatValue: formatPower,
+            formatYAxis: (value: number) => formatPower(value),
         }),
         [getColor, filterDataKeys],
     );

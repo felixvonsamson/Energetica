@@ -48,7 +48,7 @@ export function TechnologyCard<T>({
         >
             <div className="flex flex-col lg:flex-row gap-4">
                 {/* Image */}
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                     <img
                         src={imageUrl}
                         alt={`${technology.name} technology`}
@@ -61,7 +61,7 @@ export function TechnologyCard<T>({
                 </div>
 
                 {/* Main Info */}
-                <div className="flex-grow space-y-3">
+                <div className="grow space-y-3">
                     {/* Header */}
                     <div className="flex flex-wrap items-center gap-3">
                         <h2 className="text-xl font-bold">
@@ -137,7 +137,7 @@ export function TechnologyCard<T>({
 
                 {/* Stats Table (visible on desktop when not expanded) */}
                 {!isExpanded && (
-                    <div className="hidden xl:block flex-shrink-0">
+                    <div className="hidden xl:block shrink-0">
                         {renderEffectsTable(technology)}
                     </div>
                 )}

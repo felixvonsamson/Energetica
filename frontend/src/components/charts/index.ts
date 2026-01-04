@@ -9,7 +9,6 @@ export { CashFlowOverviewTable } from "./CashFlowOverviewTable";
 export { EmissionsOverviewTable } from "./EmissionsOverviewTable";
 export {
     filterNonZeroSeries,
-    includeAllSeries,
     createExcludeKeysFilter,
     createIncludeKeysFilter,
 } from "../../lib/charts/chart-utils";

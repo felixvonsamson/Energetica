@@ -38,7 +38,7 @@ export interface TimeSeriesChartConfig {
     /** Function to get color for a data key */
     getColor?: (key: string) => string;
     /** Function to filter which data keys to display */
-    filterDataKeys?: (key: string, data: unknown[]) => boolean;
+    filterDataKeys?: Array<(key: string, data: unknown[]) => boolean>;
     /** Custom formatter for the Y axis */
     formatYAxis?: (value: number) => string;
     /** Custom formatter for tooltips */
@@ -86,7 +86,7 @@ export function TimeSeriesChart({
     const {
         chartVariant = "area",
         stacked = false,
-        height = 400,
+        height = 500,
         showBrush = true,
         getColor,
         filterDataKeys,
@@ -138,7 +138,9 @@ export function TimeSeriesChart({
 
         // Apply filtering if provided
         const filteredKeys = filterDataKeys
-            ? dataKeys.filter((key) => filterDataKeys(key, data))
+            ? dataKeys.filter((key) =>
+                  filterDataKeys.every((cond) => cond(key, data)),
+              )
             : dataKeys;
 
         // Create components based on chart variant

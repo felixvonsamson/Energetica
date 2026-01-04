@@ -431,6 +431,156 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/charts/networks/{network_id}/network_data/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Network Data
+         *
+         * Get network price and quantity time series at the specified
+         * resolution.
+         *
+         *     This is network-specific data showing market clearing price and quantity.
+         *
+         *     Parameters:
+         *         network_id: ID of the network
+         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *         start_tick: First tick to include (must be aligned to resolution)
+         *         count: Number of datapoints to retrieve
+         */
+        get: operations["get_network_data_api_v1_charts_networks__network_id__network_data__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/networks/{network_id}/exports/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Network Exports
+         *
+         * Get network exports by player time series at the specified
+         * resolution.
+         *
+         *     This is network-specific data showing power exported by each player.
+         *
+         *     Parameters:
+         *         network_id: ID of the network
+         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *         start_tick: First tick to include (must be aligned to resolution)
+         *         count: Number of datapoints to retrieve
+         */
+        get: operations["get_network_exports_api_v1_charts_networks__network_id__exports__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/networks/{network_id}/imports/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Network Imports
+         *
+         * Get network imports by player time series at the specified
+         * resolution.
+         *
+         *     This is network-specific data showing power imported by each player.
+         *
+         *     Parameters:
+         *         network_id: ID of the network
+         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *         start_tick: First tick to include (must be aligned to resolution)
+         *         count: Number of datapoints to retrieve
+         */
+        get: operations["get_network_imports_api_v1_charts_networks__network_id__imports__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/networks/{network_id}/generation/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Network Generation
+         *
+         * Get network generation by facility type time series at the specified
+         * resolution.
+         *
+         *     This is network-specific data showing total generation by facility type across all network members.
+         *
+         *     Parameters:
+         *         network_id: ID of the network
+         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *         start_tick: First tick to include (must be aligned to resolution)
+         *         count: Number of datapoints to retrieve
+         */
+        get: operations["get_network_generation_api_v1_charts_networks__network_id__generation__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/networks/{network_id}/consumption/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Network Consumption
+         *
+         * Get network consumption by type time series at the specified
+         * resolution.
+         *
+         *     This is network-specific data showing total consumption by type across all network members.
+         *
+         *     Parameters:
+         *         network_id: ID of the network
+         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *         start_tick: First tick to include (must be aligned to resolution)
+         *         count: Number of datapoints to retrieve
+         */
+        get: operations["get_network_consumption_api_v1_charts_networks__network_id__consumption__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/chats": {
         parameters: {
             query?: never;
@@ -3028,6 +3178,185 @@ export interface components {
             money: number;
         };
         /**
+         * NetworkConsumptionResponse
+         *
+         * Response model for network consumption by type time series.
+         */
+        NetworkConsumptionResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for consumption by each type in the network,
+             * with power values in W
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
+         * NetworkDataResponse
+         *
+         * Response model for network price and quantity time series.
+         */
+        NetworkDataResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for network price ($/Wh) and quantity (W)
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
+         * NetworkExportsResponse
+         *
+         * Response model for network exports by player time series.
+         */
+        NetworkExportsResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for exports by each player, with power values in
+             * W
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
+         * NetworkGenerationResponse
+         *
+         * Response model for network generation by type time series.
+         */
+        NetworkGenerationResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for generation by each facility type in the
+             * network, with power values in W
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
+         * NetworkImportsResponse
+         *
+         * Response model for network imports by player time series.
+         */
+        NetworkImportsResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for imports by each player, with power values in
+             * W
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
          * NonFacilityBidType
          *
          * Enum for special asks on the market that are not storage, extraction,
@@ -3284,8 +3613,7 @@ export interface components {
             /**
              * Series
              *
-             * Time series power demand data by category, with power values in
-             * MW
+             * Time series power demand data by category, with power values in W
              */
             series: {
                 [key: string]: number[];
@@ -3321,7 +3649,7 @@ export interface components {
              * Series
              *
              * Time series data for each facility type and imports, with power
-             * values in MW
+             * values in W
              */
             series: {
                 [key: string]: number[];
@@ -3855,7 +4183,7 @@ export interface components {
              * Series
              *
              * Time series data for each storage facility type, with energy
-             * values in MWh
+             * values in Wh
              */
             series: {
                 [key: string]: number[];
@@ -4799,6 +5127,181 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResourcesResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_network_data_api_v1_charts_networks__network_id__network_data__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                network_id: number;
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkDataResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_network_exports_api_v1_charts_networks__network_id__exports__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                network_id: number;
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkExportsResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_network_imports_api_v1_charts_networks__network_id__imports__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                network_id: number;
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkImportsResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_network_generation_api_v1_charts_networks__network_id__generation__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                network_id: number;
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkGenerationResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_network_consumption_api_v1_charts_networks__network_id__consumption__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                network_id: number;
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkConsumptionResponse"];
                 };
             };
             /** Validation Error */

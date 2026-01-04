@@ -86,6 +86,76 @@ export const queryKeys = {
             ["charts", "temperature", resolution, startTick, count] as const,
         resources: (resolution: string, startTick: number, count: number) =>
             ["charts", "resources", resolution, startTick, count] as const,
+        networkData: (
+            networkId: number,
+            resolution: string,
+            startTick: number,
+            count: number,
+        ) =>
+            [
+                "charts",
+                "network-data",
+                networkId,
+                resolution,
+                startTick,
+                count,
+            ] as const,
+        networkExports: (
+            networkId: number,
+            resolution: string,
+            startTick: number,
+            count: number,
+        ) =>
+            [
+                "charts",
+                "network-exports",
+                networkId,
+                resolution,
+                startTick,
+                count,
+            ] as const,
+        networkImports: (
+            networkId: number,
+            resolution: string,
+            startTick: number,
+            count: number,
+        ) =>
+            [
+                "charts",
+                "network-imports",
+                networkId,
+                resolution,
+                startTick,
+                count,
+            ] as const,
+        networkGeneration: (
+            networkId: number,
+            resolution: string,
+            startTick: number,
+            count: number,
+        ) =>
+            [
+                "charts",
+                "network-generation",
+                networkId,
+                resolution,
+                startTick,
+                count,
+            ] as const,
+        networkConsumption: (
+            networkId: number,
+            resolution: string,
+            startTick: number,
+            count: number,
+        ) =>
+            [
+                "charts",
+                "network-consumption",
+                networkId,
+                resolution,
+                startTick,
+                count,
+            ] as const,
     },
     network: {
         all: ["networks"] as const,
