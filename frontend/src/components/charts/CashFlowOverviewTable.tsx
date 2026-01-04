@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+import { FacilityIcon } from "../ui";
+
 import { FacilityName } from "@/components/ui/AssetName";
 import { Money } from "@/components/ui/Money";
 
@@ -213,10 +215,16 @@ export function CashFlowOverviewTable({
                                 className="border-b border-pine/10 dark:border-dark-border/30 hover:bg-tan-green/20 dark:hover:bg-dark-bg-tertiary/30 transition-colors"
                             >
                                 <td className="py-3 px-4">
-                                    <FacilityName
-                                        facility={row.facilityType}
-                                        mode="long"
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <FacilityIcon
+                                            facility={row.facilityType}
+                                            size={20}
+                                        />
+                                        <FacilityName
+                                            facility={row.facilityType}
+                                            mode="long"
+                                        />
+                                    </div>
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono">
                                     <Money amount={row.totalRevenues} />

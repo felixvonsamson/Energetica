@@ -18,3 +18,15 @@ export {
     useAssetName,
 } from "./AssetName";
 export type { AssetNameMode, AssetNameProps } from "./AssetName";
+export {
+    AssetIcon,
+    FacilityIcon,
+    TechnologyIcon,
+    ResourceIcon,
+} from "./AssetIcon";
+export type {
+    AssetIconProps,
+    FacilityIconProps,
+    TechnologyIconProps,
+    ResourceIconProps,
+} from "./AssetIcon";

@@ -174,7 +174,7 @@ function StorageFacilityStatsTable({
                     <tr className="border-b border-pine/10 dark:border-dark-border/30">
                         <td className="py-2 px-4 font-semibold">Efficiency</td>
                         <td className="py-2 px-4 text-center font-mono">
-                            {Math.round(facility.efficiency * 100)}%
+                            {Math.round(facility.efficiency)}%
                         </td>
                     </tr>
 

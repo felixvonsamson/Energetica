@@ -5,6 +5,8 @@
 
 import { useMemo, useState } from "react";
 
+import { AssetIcon } from "../ui";
+
 import { AssetName } from "@/components/ui/AssetName";
 
 interface EmissionsOverviewTableProps {
@@ -196,7 +198,13 @@ export function EmissionsOverviewTable({
                             className="border-b border-gray-200 hover:bg-gray-50"
                         >
                             <td className="py-2 px-4">
-                                <AssetName assetId={row.sourceType} />
+                                <div className="flex items-center gap-2">
+                                    <AssetIcon
+                                        size={20}
+                                        assetId={row.sourceType}
+                                    />
+                                    <AssetName assetId={row.sourceType} />
+                                </div>
                             </td>
                             <td className="py-2 px-4 text-right font-mono">
                                 {formatMass(row.totalEmissions)}

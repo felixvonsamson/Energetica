@@ -2,7 +2,7 @@ import { ExternalLink } from "lucide-react";
 import { useState, ReactNode } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
-import { Card, Money, TechnologyName } from "@/components/ui";
+import { Card, Money, TechnologyName, TechnologyIcon } from "@/components/ui";
 import { useQueueProject } from "@/hooks/useProjects";
 import { ProjectType, Requirement } from "@/types/projects";
 
@@ -64,7 +64,11 @@ export function TechnologyCard<T>({
                 <div className="grow space-y-3">
                     {/* Header */}
                     <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-xl font-bold">
+                        <h2 className="text-xl font-bold flex items-center gap-2">
+                            <TechnologyIcon
+                                technology={technology.name}
+                                size={24}
+                            />
                             <TechnologyName
                                 technology={technology.name}
                                 mode="long"

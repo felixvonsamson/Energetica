@@ -236,6 +236,43 @@ export const specialNames: Record<string, AssetDisplayName> = {
         long: "Research",
         short: "Research",
     },
+    // Chart and overview special keys
+    reference: {
+        long: "Reference",
+        short: "Ref",
+    },
+    CO2: {
+        long: "CO₂ Emissions",
+        short: "CO₂",
+    },
+    exports: {
+        long: "Exports",
+        short: "Exports",
+    },
+    imports: {
+        long: "Imports",
+        short: "Imports",
+    },
+    dumping: {
+        long: "Dumping",
+        short: "Dumping",
+    },
+    "net-profit": {
+        long: "Net Profit",
+        short: "Net Profit",
+    },
+    price: {
+        long: "Price",
+        short: "Price",
+    },
+    quantity: {
+        long: "Quantity",
+        short: "Qty",
+    },
+    temperature: {
+        long: "Temperature",
+        short: "Temp",
+    },
 };
 
 /** Combined registry of all asset names. */

@@ -8,6 +8,8 @@
 
 import { useMemo, useState } from "react";
 
+import { FacilityIcon } from "../ui";
+
 import { FacilityName } from "@/components/ui/AssetName";
 import { FacilityGauge } from "@/components/ui/FacilityGauge";
 import { useFacilities } from "@/hooks/useFacilities";
@@ -273,7 +275,7 @@ export function StorageOverviewTable({
                             Max Storage{getSortIndicator("capacity")}
                         </th>
                         <th
-                            className="py-3 px-4 text-center font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors min-w-[150px]"
+                            className="py-3 px-4 text-center font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors min-w-37.5"
                             onClick={() => handleSort("soc")}
                         >
                             State of Charge{getSortIndicator("soc")}
@@ -299,10 +301,16 @@ export function StorageOverviewTable({
                                 className="border-b border-pine/10 dark:border-dark-border/30 hover:bg-tan-green/20 dark:hover:bg-dark-bg-tertiary/30 transition-colors"
                             >
                                 <td className="py-3 px-4">
-                                    <FacilityName
-                                        facility={row.facilityType}
-                                        mode="long"
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <FacilityIcon
+                                            facility={row.facilityType}
+                                            size={20}
+                                        />
+                                        <FacilityName
+                                            facility={row.facilityType}
+                                            mode="long"
+                                        />
+                                    </div>
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono">
                                     {formatEnergy(row.cumulCharging)}
@@ -313,7 +321,7 @@ export function StorageOverviewTable({
                                 <td className="py-3 px-4 text-right font-mono">
                                     {formatEnergy(row.maxCapacity)}
                                 </td>
-                                <td className="py-3 px-4 text-center min-w-[150px]">
+                                <td className="py-3 px-4 text-center min-w-37.5">
                                     <FacilityGauge
                                         facilityType={row.facilityType}
                                         value={row.stateOfCharge}

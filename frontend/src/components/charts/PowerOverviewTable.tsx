@@ -8,7 +8,7 @@
 
 import { useMemo, useState } from "react";
 
-import { FacilityName } from "@/components/ui/AssetName";
+import { FacilityName, FacilityIcon } from "@/components/ui";
 import { FacilityGauge } from "@/components/ui/FacilityGauge";
 import { useFacilities } from "@/hooks/useFacilities";
 import { useGameEngine } from "@/hooks/useGame";
@@ -300,10 +300,16 @@ export function PowerOverviewTable({
                                 className="border-b border-pine/10 dark:border-dark-border/30 hover:bg-tan-green/20 dark:hover:bg-dark-bg-tertiary/30 transition-colors"
                             >
                                 <td className="py-3 px-4">
-                                    <FacilityName
-                                        facility={row.facilityType}
-                                        mode="long"
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <FacilityIcon
+                                            facility={row.facilityType}
+                                            size={20}
+                                        />
+                                        <FacilityName
+                                            facility={row.facilityType}
+                                            mode="long"
+                                        />
+                                    </div>
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono">
                                     {formatEnergy(row.totalEnergy)}

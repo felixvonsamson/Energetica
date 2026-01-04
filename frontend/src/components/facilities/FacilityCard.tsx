@@ -2,7 +2,7 @@ import { ExternalLink } from "lucide-react";
 import { useState, ReactNode } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
-import { Card, FacilityName, Money } from "@/components/ui";
+import { Card, FacilityName, FacilityIcon, Money } from "@/components/ui";
 import { useQueueProject } from "@/hooks/useProjects";
 import { ProjectType, Requirement } from "@/types/projects";
 
@@ -53,7 +53,7 @@ export function FacilityCard<T>({
         >
             <div className="flex flex-col lg:flex-row gap-4">
                 {/* Image */}
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                     <img
                         src={imageUrl}
                         alt={`${facility.name} ${facilityType} facility`}
@@ -62,10 +62,11 @@ export function FacilityCard<T>({
                 </div>
 
                 {/* Main Info */}
-                <div className="flex-grow space-y-3">
+                <div className="grow space-y-3">
                     {/* Header */}
                     <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-xl font-bold">
+                        <h2 className="text-xl font-bold flex items-center gap-2">
+                            <FacilityIcon facility={facility.name} size={24} />
                             <FacilityName
                                 facility={facility.name}
                                 mode="long"
@@ -110,7 +111,7 @@ export function FacilityCard<T>({
 
                 {/* Stats Table (visible on desktop when not expanded) */}
                 {!isExpanded && (
-                    <div className="hidden xl:block flex-shrink-0">
+                    <div className="hidden xl:block shrink-0">
                         {renderStatsTable(facility)}
                     </div>
                 )}

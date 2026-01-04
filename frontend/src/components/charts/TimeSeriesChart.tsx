@@ -18,7 +18,7 @@ import {
 
 import { ChartLoadingState } from "./ChartLoadingState";
 
-import { AssetName, Duration } from "@/components/ui";
+import { AssetName, Duration, FacilityIcon } from "@/components/ui";
 import { useTimeMode } from "@/contexts/TimeModeContext";
 import { useGameEngine } from "@/hooks/useGame";
 import { useGameTick } from "@/hooks/useGameTick";
@@ -362,7 +362,13 @@ function CustomTooltipContent({
                                     {formatLabel ? (
                                         formatLabel(p.name)
                                     ) : (
-                                        <AssetName assetId={p.name} />
+                                        <div className="flex items-center gap-2">
+                                            <FacilityIcon
+                                                facility={p.name}
+                                                size={18}
+                                            />
+                                            <AssetName assetId={p.name} />
+                                        </div>
                                     )}
                                 </td>
                                 <td className="px-2">{formatValue(p.value)}</td>
