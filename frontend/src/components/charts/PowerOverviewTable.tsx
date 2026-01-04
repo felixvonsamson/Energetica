@@ -271,7 +271,7 @@ export function PowerOverviewTable({
                                     {getSortIndicator("capacity")}
                                 </th>
                                 <th
-                                    className="py-3 px-4 text-center font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors min-w-[150px]"
+                                    className="py-3 px-4 text-center font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors min-w-37.5"
                                     onClick={() => handleSort("used")}
                                 >
                                     Used Capacity
@@ -317,7 +317,7 @@ export function PowerOverviewTable({
                                                   )
                                                 : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-center min-w-[150px]">
+                                        <td className="py-3 px-4 text-center min-w-37.5">
                                             {row.usedCapacity !== undefined ? (
                                                 <FacilityGauge
                                                     facilityType={

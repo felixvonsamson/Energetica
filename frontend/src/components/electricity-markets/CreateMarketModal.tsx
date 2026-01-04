@@ -140,7 +140,7 @@ export function CreateMarketModal({ isOpen, onClose }: CreateMarketModalProps) {
                 {/* Warning: Already in market */}
                 {currentMarket && !willDeleteCurrentMarket && (
                     <div className="p-4 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 rounded-lg flex gap-3 mb-4 animate-in fade-in duration-200">
-                        <AlertTriangle className="w-5 h-5 text-yellow-700 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="w-5 h-5 text-yellow-700 dark:text-yellow-400 shrink-0 mt-0.5" />
                         <div>
                             <p className="font-semibold text-yellow-700 dark:text-yellow-400 mb-1">
                                 You'll leave your current market
@@ -160,7 +160,7 @@ export function CreateMarketModal({ isOpen, onClose }: CreateMarketModalProps) {
                 {/* Warning: Will delete current market */}
                 {willDeleteCurrentMarket && (
                     <div className="p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 rounded-lg flex gap-3 mb-4 animate-in fade-in duration-200">
-                        <AlertTriangle className="w-5 h-5 text-red-700 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="w-5 h-5 text-red-700 dark:text-red-400 shrink-0 mt-0.5" />
                         <div>
                             <p className="font-semibold text-red-700 dark:text-red-400 mb-1">
                                 Market will be permanently deleted

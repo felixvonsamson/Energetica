@@ -199,8 +199,9 @@ def _get_time_series_data(
         return aggregated.tolist()
 
     # Build the response by combining pickle and rolling history data
+    # Convert keys to strings to ensure compatibility with all response schemas
     datapoints = {
-        series_key: [*get_pickle_datapoints(series_key), *get_rolling_datapoints(rolling_series)]
+        str(series_key): [*get_pickle_datapoints(str(series_key)), *get_rolling_datapoints(rolling_series)]
         for series_key, rolling_series in rolling_history_data.items()
     }
 

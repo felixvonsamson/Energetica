@@ -20,7 +20,7 @@ import {
     List,
     SlidersVertical,
     ListOrdered,
-    ChevronsLeftRightEllipsis,
+    Network,
 } from "lucide-react";
 
 export interface Capabilities {
@@ -92,6 +92,12 @@ export const navigationConfig: NavigationItemConfig[] = [
                 to: "/app/overviews/emissions",
                 icon: Leaf,
             },
+            {
+                type: "link",
+                label: "Networks",
+                to: "/app/overviews/networks",
+                icon: Network,
+            },
         ],
     },
     {
@@ -152,7 +158,7 @@ export const navigationConfig: NavigationItemConfig[] = [
                 type: "link",
                 label: "Electricity Markets",
                 to: "/app/community/electricity-markets",
-                icon: ChevronsLeftRightEllipsis,
+                icon: Network,
             },
             {
                 type: "link",

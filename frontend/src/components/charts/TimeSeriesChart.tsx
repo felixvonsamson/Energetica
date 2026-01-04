@@ -43,6 +43,8 @@ export interface TimeSeriesChartConfig {
     formatYAxis?: (value: number) => string;
     /** Custom formatter for tooltips */
     formatValue: (value: number) => ReactNode;
+    /** Custom formatter for data key labels in tooltip */
+    formatLabel?: (key: string) => ReactNode;
     /** Keys that should use gradient fill based on positive/negative values */
     gradientKeys?: string[];
 }
@@ -92,6 +94,7 @@ export function TimeSeriesChart({
         filterDataKeys,
         formatYAxis,
         formatValue,
+        formatLabel,
         gradientKeys = [],
     } = config;
 
@@ -285,6 +288,7 @@ export function TimeSeriesChart({
                             payload={props.payload}
                             label={props.label}
                             formatValue={formatValue}
+                            formatLabel={formatLabel}
                         />
                     )}
                     isAnimationActive={false}
@@ -303,6 +307,7 @@ interface CustomTooltipContentProps {
     }>;
     label?: string | number;
     formatValue: (value: number) => ReactNode;
+    formatLabel?: (key: string) => ReactNode;
 }
 
 function CustomTooltipContent({
@@ -310,6 +315,7 @@ function CustomTooltipContent({
     payload,
     label,
     formatValue,
+    formatLabel,
 }: CustomTooltipContentProps) {
     const { currentTick } = useGameTick();
     const { mode } = useTimeMode();
@@ -353,8 +359,11 @@ function CustomTooltipContent({
                                     />
                                 </td>
                                 <td className="px-2 min-w-30">
-                                    {/* {p.name} */}
-                                    <AssetName assetId={p.name} />
+                                    {formatLabel ? (
+                                        formatLabel(p.name)
+                                    ) : (
+                                        <AssetName assetId={p.name} />
+                                    )}
                                 </td>
                                 <td className="px-2">{formatValue(p.value)}</td>
                             </tr>

@@ -34,7 +34,7 @@ export function FacilityGauge({
 
     return (
         <div
-            className={`relative w-full min-w-[120px] h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden ${className}`}
+            className={`relative w-full min-w-30 h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden ${className}`}
         >
             <div
                 className="h-full transition-all"
