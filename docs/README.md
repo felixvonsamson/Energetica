@@ -32,6 +32,7 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 -   [**Hooks**](frontend/hooks.md) - Custom hooks for data fetching, API calls, game state
 -   [**Component Library**](frontend/component-library.md) - Available UI components, usage examples, props
 -   [**Styling**](frontend/styling.md) - Tailwind CSS, theme colors, responsive design, dark mode
+-   [**MDX Content**](frontend/mdx-content.md) - Wiki pages with markdown and React components
 -   [**Frontend Overview**](frontend/overview.md) - React foundation, provider hierarchy, tools setup
 -   [**Frontend Quick Start**](frontend/quickstart.md) - Local setup, first page creation, verification steps
 -   [**Best Practices**](frontend/best-practices.md) - Component structure, state management, file organization

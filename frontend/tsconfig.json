@@ -17,7 +17,12 @@
         "noEmit": true,
         "jsx": "react-jsx",
         "baseUrl": ".",
-        "paths": { "@/*": ["./src/*"] }
+        "paths": { "@/*": ["./src/*"] },
+        "plugins": [
+            {
+                "name": "@mdx-js/typescript-plugin"
+            }
+        ]
     },
     "include": ["src"]
 }

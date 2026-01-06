@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
     TrendingUp,
     Package,
@@ -6,6 +6,7 @@ import {
     Sun,
     Handshake,
     BookOpen,
+    ChevronRight,
 } from "lucide-react";
 
 import { HomeLayout } from "@/components/HomeLayout";
@@ -147,6 +148,27 @@ function RouteComponent() {
                                 </>
                             ))}
                         </div>
+                    </div>
+                </section>
+
+                {/* Call to Action */}
+                <section className="max-w-6xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Link
+                            to="/app/wiki/$slug"
+                            params={{ slug: "introduction" }}
+                            className="text-bone dark:text-dark-text-primary bg-pine dark:bg-dark-bg-secondary p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
+                        >
+                            <p className="text-xl">Explore the Wiki</p>
+                            <ChevronRight />
+                        </Link>
+                        <Link
+                            to="/app/login"
+                            className="text-bone dark:text-dark-text-primary bg-pine dark:bg-dark-bg-secondary p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
+                        >
+                            <p className="text-xl">Play now</p>
+                            <ChevronRight />
+                        </Link>
                     </div>
                 </section>
             </div>

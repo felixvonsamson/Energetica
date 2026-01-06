@@ -1,0 +1,203 @@
+import { PropertiesTable } from "@/components/wiki/PropertiesTable";
+
+# Wiki - Projects
+
+Projects is the general term for ongoing constructions, research projects and shipments. Managing projects and understanding their behavior is key since they are a necessary step to build up power generation.
+
+## Starting a Project
+
+There are different types of projects that can be started on their corresponding pages:
+
+<div className="flex justify-center my-8">
+    <div className="overflow-x-auto">
+        <table className="w-auto">
+            <thead>
+                <tr>
+                    <th className="text-center px-4 py-2">Project Type</th>
+                    <th className="text-center px-4 py-2">Sub-type</th>
+                    <th className="text-center px-4 py-2">Where to find</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td className="px-4 py-2">Constructions</td>
+                    <td className="px-4 py-2">
+                        <a href="/app/wiki/power-facilities">
+                            Power Facilities
+                        </a>
+                        <br />
+                        <a href="/app/wiki/storage-facilities">
+                            Storage Facilities
+                        </a>
+                        <br />
+                        <a href="/app/wiki/resources#extraction-facilities">
+                            Extraction Facilities
+                        </a>
+                        <br />
+                        <a href="/app/wiki/functional-facilities">
+                            Functional Facilities
+                        </a>
+                    </td>
+                    <td className="px-4 py-2">
+                        <a href="/app/power-facilities">
+                            Power Facilities page
+                        </a>
+                        <br />
+                        <a href="/app/storage-facilities">
+                            Storage Facilities page
+                        </a>
+                        <br />
+                        <a href="/app/extraction-facilities">
+                            Extraction Facilities page
+                        </a>
+                        <br />
+                        <a href="/app/functional-facilities">
+                            Functional Facilities page
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td className="px-4 py-2">Researches</td>
+                    <td className="px-4 py-2">
+                        <a href="/app/wiki/technologies">Technologies</a>
+                    </td>
+                    <td className="px-4 py-2">
+                        <a href="/app/technology">Technology page</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td className="px-4 py-2">Shipments</td>
+                    <td className="px-4 py-2">
+                        <a href="/app/wiki/resources#resource-market">
+                            Resource Market
+                        </a>
+                    </td>
+                    <td className="px-4 py-2">
+                        <a href="/app/resource-market">Resource Market page</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+### Project Properties
+
+Projects have the following properties:
+
+<PropertiesTable
+    properties={[
+        {
+            label: "Price",
+            value: "The initial investment cost, paid at the start of the project",
+        },
+        {
+            label: "Duration",
+            value: "The time required to complete the project",
+        },
+        {
+            label: "Power consumption",
+            value: "The power consumed throughout the duration of the project",
+        },
+        {
+            label: (
+                <>
+                    CO<sub>2</sub> emissions (only for constructions)
+                </>
+            ),
+            value: (
+                <>
+                    The CO<sub>2</sub> emissions produced throughout the
+                    duration of the project
+                </>
+            ),
+        },
+    ]}
+/>
+
+<div className="flex justify-center my-8">
+    <img
+        src="/static/images/wiki/example_project.png"
+        className="max-w-2xl w-full"
+        alt="Example of a project"
+    />
+</div>
+
+## Managing Projects
+
+### Workers
+
+<div className="flex justify-center my-8">
+    <img
+        src="/static/images/wiki/worker_count_example.png"
+        className="max-w-sm w-full"
+        alt="Example of the worker section"
+    />
+</div>
+
+There are two types of workers:
+
+- **Construction Workers:** work on construction projects
+- **Research Workers:** work on research projects
+
+Players can queue arbitrarily many projects at any time, but only projects with assigned workers will progress. Each worker focuses on a single project at a time, and each project can be worked on by at most one worker. When a worker finishes their assigned project, it will automatically start working on the next project it finds one that can be started.
+
+Note: shipments do not require workers - all resources start shipment immediately after the order is placed and it cannot be interrupted.
+
+Every player starts with one construction worker and, after building a [Laboratory](/app/functional-facilities#laboratory), one research worker.
+
+Researching [Building Technology](/app/technology#building-technology) will unlock additional construction workers, and increase the speed of construction projects.
+
+Upgrading the [Laboratory](/app/functional-facilities#laboratory) will unlock additional research workers (every third upgrade), and increase the speed of research projects.
+
+### Tracking Project Progression
+
+Players can keep track of project progress through the [Dashboard](/app/home).
+
+<div className="flex justify-center my-8">
+    <img
+        src="/static/images/wiki/dashboard_project_progress_example.png"
+        className="max-w-2xl w-full"
+        alt="Example of the dashboard"
+    />
+</div>
+
+If the energy demand for a project is not met, progress will be slow down or stall. The progress bar turns orange or red, and a snail icon appears next to the project. Projects resume and return to normal speed once their energy demand is met.
+
+#### Setting Priorities
+
+Players can set the priority of their construction and research projects using the up and down triangle buttons to the left of each project. Workers will always try to work on the project with highest priority.
+
+#### Pausing Projects
+
+Constructions and research projects can be paused and resumed at any time using the pause and play buttons to the right of each project. When paused, a project does not consume power nor produce emissions, and the assigned worker is freed up to work on other projects. Pausing a project which consumes a lot of power can be a good way to manage power consumption. Shipments cannot be paused.
+
+#### Cancelling Projects
+
+Constructions and research projects can be cancelled at any time using the cross to the right of each project. If cancelled immediately after starting it, 80% of the projects's price will be refunded, with a proportionally decreasing refund as the project progresses. Shipments cannot be cancelled.
+
+## Managing Active Facilities
+
+Once a construction project is completed, it becomes an active facility. They are listed on the [Profile](/app/profile) page.
+
+<div className="flex justify-center my-8">
+    <img
+        src="/static/images/wiki/active_facilities_example.png"
+        className="max-w-2xl w-full"
+        alt="Example of the dashboard"
+    />
+</div>
+
+### Operation and Maintenance Cost
+
+Each power, storage, and extraction facility incurs operational and maintenance costs. For renewable power facilities and storage facilities, these costs are fixed, while for controllable power facilities and extraction facilities, there is both a fixed and a variable component. The fixed costs represent 20% of the total O&M costs, while the variable costs, dependent on the power production / consumption of the facility, constitute the remaining 80%. As an exception, nuclear facilities, such as the Nuclear Reactor and Gen4 Nuclear, differ in that they have a fixed cost fraction of 50%. The O&M costs provided for each facility in the power facilities page are based on 100% power production / consumption.
+
+Players can keep track of their O&M costs over time through the [Revenues](/app/overviews/revenues) graphs.
+
+### Upgrades
+
+When a new research project is completed that affects the properties of certain facilities, the effect do not automatically apply to active facilities or facilities under construction. Players must individually upgrade these facilities using the Upgrade button. Many upgrades also increase the O&M costs and price of the facility and this is why the upgrades cost money.
+
+### Lifespan of a Facility
+
+Power, storage and extraction facilities have an operational lifespan. At the end of its lifespan, a facility is decommissioned at a cost of 20% of its original price. Facilities can be decommissioned at any time before the end of their lifespan by pressing the Dismantle button. Storage Facilities will empty their content before being decommissioned.

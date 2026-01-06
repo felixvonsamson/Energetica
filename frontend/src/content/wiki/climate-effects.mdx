@@ -1,0 +1,228 @@
+import { PropertiesTable } from "@/components/wiki/PropertiesTable";
+import { HeatwaveOccurrenceTable } from "@/components/wiki/HeatwaveOccurrenceTable";
+import { ColdwaveOccurrenceTable } from "@/components/wiki/ColdwaveOccurrenceTable";
+import { WildfireOccurrenceTable } from "@/components/wiki/WildfireOccurrenceTable";
+
+# Wiki - Climate Change
+
+Once a player unlocks the climate change achievement (Research chemistry lvl 1), they will have access to the page [Emissions](/app/production/emissions) in the production overviews. There they will see the server's CO<sub>2</sub> concentration, the server's climate and their personal emissions.
+
+**Quick links:**
+
+- [Heatwave](#heatwave)
+- [Coldwave](#coldwave)
+- [Wildfire](#wildfire)
+- [Flood](#flood)
+- [Hurricane](#hurricane)
+
+## CO<sub>2</sub> Emissions
+
+Sources of CO<sub>2</sub> emissions are constructions and all facilities that consume fuel plus the steam engine (controllable facilities). Additionally, the functional facility [Carbon Capture](/app/wiki/functional-facilities#carbon-capture) can absorb CO<sub>2</sub> from the atmosphere and store it.
+
+The atmosphere is shared between all players and the CO<sub>2</sub> emitted by all players will increase the server's CO<sub>2</sub> concentration. The reference value for the server's "natural" CO<sub>2</sub> concentration is 300 ppm (parts per million) which corresponds to a base value of 40 Mt of CO<sub>2</sub> in the atmosphere.
+
+## Climate
+
+The server's climate is represented by the global average temperature (GAT). The GAT has a natural seasonal variation due to the asymmetric distribution of land and water on the planet. Due to the important role of CO<sub>2</sub> in the greenhouse effect, the server's climate will be affected by the server's CO<sub>2</sub> concentration.
+
+The so called _global temperature anomaly_ is the difference between the server's GAT and the reference GAT. This temperature anomaly has a random component due to natural climate variability and a deterministic component proportional to the server's CO<sub>2</sub> concentration. The atmosphere will warm up by one degree for every 100 ppm (parts per million) of additional CO<sub>2</sub> concentration with some delay.
+
+## Climate Events
+
+Climate events have a low chance of occurring naturally every game tick however, the probability of their occurrence increases with climate change. Climate events are always negative and can have a wide range of consequences.
+
+All tiles do not have the same risk of being affected by a climate event. A climate risk score is visible in the [Map](/app/map) that indicates the probability and the severity of the climate events in each tile.
+
+### Heatwave
+
+Heatwaves have a higher chance of occurring with higher global temperatures. They have a big impact on the population, especially the elderly and the sick. Heatwaves can also have a negative impact on battery storage technologies and can cause overheating and in some cases permanent damage.
+
+<PropertiesTable
+    properties={[
+        { label: "Recovery time", value: "3 days" },
+        {
+            label: "Recovery cost",
+            value: "25% of current industry revenues",
+        },
+        { label: "Affected tiles", value: "7 (1 and its 6 neighbors)" },
+        {
+            label: "Destruction chances",
+            value: (
+                <>
+                    Lithium-Ion Batteries: 5%
+                    <br />
+                    Solid State Batteries: 2%
+                </>
+            ),
+        },
+    ]}
+/>
+
+The probability of the occurrence of a heatwave is affected by both the global temperature anomaly (the bigger the deviation the higher the risk) and the server's current GAT (the higher the temperature the higher the risk). The following table shows the expected occurrence of heatwaves per [in-game day](/app/wiki/time-and-weather#game-time) depending on the Reference GAT and the temperature anomaly.
+
+<HeatwaveOccurrenceTable />
+
+When a heatwave occurs, the tile it will affect (with its neighbors) is chosen randomly following a normal distribution around the equator. This means that the risk is higher in southern tiles and almost zero in northern tiles. The following figure shows the probability distribution overlaid on the map.
+
+![Probability distribution of heatwaves](/static/images/wiki/heatwave_probability_distribution.png)
+
+Note that the risks on the edges of the map are lower. This is due to these tiles having less neighbors and therefore reducing the risk of being affected by a nearby heatwave. Considering that the map is an island, we can also explain the lower risks on the edges by the fact that the ocean has a moderating effect on the temperature.
+
+### Coldwave
+
+Coldwaves have a higher chance of occurring with lower global temperatures. They have a big impact on the population, especially the elderly.
+
+<PropertiesTable
+    properties={[
+        { label: "Recovery time", value: "3 days" },
+        {
+            label: "Recovery cost",
+            value: "25% of current industry revenues",
+        },
+        { label: "Affected tiles", value: "7 (1 and its 6 neighbors)" },
+        { label: "Destruction chances", value: "none" },
+    ]}
+/>
+
+The probability of the occurrence of a coldwave is affected by both the global temperature anomaly (the bigger the deviation the higher the risk) and the server's current GAT (the lower the temperature the higher the risk). The following table shows the expected occurrence of coldwaves per [in-game day](/app/wiki/time-and-weather#game-time) depending on the Reference GAT and the temperature anomaly.
+
+<ColdwaveOccurrenceTable />
+
+When a coldwave occurs, the tile it will affect (with its neighbors) is chosen randomly following a normal distribution around the north pole. This means that the risk is higher in northern tiles and almost zero in southern tiles. Again the border tiles have lower risks due to their lower neighbour count. The following figure shows the probability distribution overlaid on the map.
+
+![Probability distribution of coldwaves](/static/images/wiki/coldwave_probability_distribution.png)
+
+### Wildfire
+
+Wildfires have a higher chance of occurring with higher global temperatures. They can damage facilities near forests and have a chance of causing an important reduction of the industry's productivity. In addition to that, wildfires will release important amounts of CO<sub>2</sub> in the atmosphere (10 kt).
+
+<PropertiesTable
+    properties={[
+        { label: "Recovery time", value: "2 days" },
+        {
+            label: "Recovery cost",
+            value: "60% of current industry revenues",
+        },
+        { label: "Affected tiles", value: "7 (1 and its 6 neighbors)" },
+        {
+            label: "Destruction chances",
+            value: (
+                <>
+                    Industry downgrade: 30%
+                    <br />
+                    Steam Engine: 2%
+                    <br />
+                    Watermill: 5%
+                    <br />
+                    Windmill: 10%
+                    <br />
+                    Onshore Wind Turbine: 5%
+                    <br />
+                    Coal Burner: 2%
+                    <br />
+                    Gas Burner: 2%
+                    <br />
+                    Combined Cycle: 2%
+                    <br />
+                    Concentrated Solar Power: 2%
+                    <br />
+                    Photovoltaics: 5%
+                </>
+            ),
+        },
+    ]}
+/>
+
+The probability of the occurrence of a wildfire is affected by the server's current GAT, the higher the temperature the higher the risk. The following table shows the expected occurrence of wildfires per [in-game day](/app/wiki/time-and-weather#game-time) depending on the Reference GAT and the temperature anomaly.
+
+<WildfireOccurrenceTable />
+
+When a wildfire occurs, the tile it will affect (with its neighbors) is chosen randomly following a normal distribution around the 30° latitude line. This means that the risk is higher in tiles in the south but in the far south we consider less vegetation and therefore less wildfire risks. Again the border tiles have lower risks due to their lower neighbour count. The following figure shows the probability distribution overlaid on the map.
+
+![Probability distribution of wildfires](/static/images/wiki/wildfire_probability_distribution.png)
+
+### Flood
+
+Floods can only occur in tiles with a hydro potential higher than 20% and have a higher chance of occurring with higher global temperature anomaly. They can damage facilities near rivers and have a chance of causing an important reduction of the industry's productivity. Floods might destroy water dams and if this happens, the flood will be propagated to the downstream tiles.
+
+<PropertiesTable
+    properties={[
+        { label: "Recovery time", value: "6 days" },
+        {
+            label: "Recovery cost",
+            value: "50% of current industry revenues",
+        },
+        { label: "Affected tiles", value: "1" },
+        {
+            label: "Destruction chances",
+            value: (
+                <>
+                    Industry downgrade: 50%
+                    <br />
+                    Watermill: 60%
+                    <br />
+                    Small Water Dam: 5%
+                    <br />
+                    Large Water Dam: 2%
+                    <br />
+                    Steam Engine: 5%
+                    <br />
+                    Coal Burner: 3%
+                    <br />
+                    Gas Burner: 3%
+                    <br />
+                    Combined Cycle: 2%
+                    <br />
+                    Nuclear Reactor: 1%
+                    <br />
+                    4th Generation Nuclear: 0.5%
+                </>
+            ),
+        },
+    ]}
+/>
+
+The probability of the occurrence of a flood is affected by the server's current temperature anomaly, the higher the deviation the higher the risk. The following graph shows the expected occurrence of floods per [in-game day](/app/wiki/time-and-weather#game-time) depending on the temperature anomaly.
+
+![Expected occurrence graph for floods](/static/images/wiki/expected_occurrence_flood.jpg)
+
+When a flood occurs, the tile it will affect is chosen randomly among the tiles with a hydro potential higher than 20%.
+
+### Hurricane
+
+The hurricane is the most destructive climate event. It can occur anywhere on the map and will affect a large area. Hurricanes can destroy facilities and have a high chance of causing an important reduction of the industry's productivity.
+
+<PropertiesTable
+    properties={[
+        { label: "Recovery time", value: "7 days" },
+        {
+            label: "Recovery cost",
+            value: "80% of current industry revenues",
+        },
+        { label: "Affected tiles", value: "19 (a radius of 3 tiles)" },
+        {
+            label: "Destruction chances",
+            value: (
+                <>
+                    Industry downgrade: 90%
+                    <br />
+                    Windmill: 50%
+                    <br />
+                    Onshore Wind Turbine: 30%
+                    <br />
+                    Offshore Wind Turbine: 20%
+                    <br />
+                    Photovoltaics: 10%
+                    <br />
+                    Concentrated Solar Power: 15%
+                </>
+            ),
+        },
+    ]}
+/>
+
+The probability of the occurrence of a hurricane is affected by the server's current temperature anomaly, the higher the deviation the higher the risk. The following graph shows the expected occurrence of hurricanes per [in-game day](/app/wiki/time-and-weather#game-time) depending on the temperature anomaly.
+
+![Expected occurrence graph for hurricanes](/static/images/wiki/expected_occurrence_hurricane.jpg)
+
+When a hurricane occurs, the tile it will affect is chosen randomly among all tiles.

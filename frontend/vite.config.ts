@@ -2,6 +2,11 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
+import mdx from "@mdx-js/rollup";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import rehypeSlug from "rehype-slug";
 import path from "path";
 
 export default defineConfig(({ mode }) => {
@@ -14,6 +19,10 @@ export default defineConfig(({ mode }) => {
             tanstackRouter({
                 target: "react",
                 autoCodeSplitting: true,
+            }),
+            mdx({
+                remarkPlugins: [remarkGfm, remarkMath],
+                rehypePlugins: [rehypeSlug, rehypeKatex],
             }),
             tailwindcss(),
             react(),

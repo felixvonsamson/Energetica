@@ -35,6 +35,7 @@ export interface NavLinkConfig {
     type: "link";
     label: string;
     to: LinkProps["to"];
+    params?: LinkProps["params"];
     icon: LucideIcon;
 }
 
@@ -193,7 +194,8 @@ export const mobileOnlyNavigation: NavigationItemConfig[] = [
     {
         type: "link",
         label: "Game Wiki",
-        to: "/wiki/introduction",
+        to: "/app/wiki/$slug",
+        params: { slug: "introduction" },
         icon: BookMarked,
     },
     {

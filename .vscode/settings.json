@@ -8,12 +8,18 @@
     },
     "files.associations": {
         "*.jinja": "jinja-html",
-        "*.js": "javascript"
+        "*.js": "javascript",
+        "*.css": "tailwindcss",
+        "*.mdx": "mdx"
     },
     "editor.formatOnSave": true,
     "editor.rulers": [80],
     // CSS
     "css.customData": [".vscode/css-custom-data.json"],
+    // MDX
+    "[mdx]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
     // Jinja
     "[jinja-html]": {
         "editor.defaultFormatter": "monosans.djlint",
@@ -143,6 +149,7 @@
         "journalctl",
         "jsonable",
         "jsonify",
+        "Katex",
         "kwargs",
         "lacunarity",
         "LCOE",
@@ -183,6 +190,7 @@
         "refetches",
         "regen",
         "renewables",
+        "Roundtrip",
         "SAMEORIGIN",
         "scipy",
         "sessionmaker",
@@ -190,6 +198,7 @@
         "socketio",
         "solars",
         "sqlalchemy",
+        "strikethrough",
         "STYLEGUIDE",
         "stylesheet",
         "subarrays",

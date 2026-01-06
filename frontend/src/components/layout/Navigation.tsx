@@ -56,6 +56,7 @@ export function Navigation() {
                                     <NavLink
                                         key={`${item.to}`}
                                         to={item.to}
+                                        params={item.params}
                                         icon={item.icon}
                                         variant="desktop"
                                     >
@@ -79,6 +80,7 @@ export function Navigation() {
                                                 <NavLink
                                                     key={`${child.to}`}
                                                     to={child.to}
+                                                    params={child.params}
                                                     icon={child.icon}
                                                     variant="desktop"
                                                 >
@@ -166,6 +168,7 @@ export function SideNav() {
                                 <NavLink
                                     key={`${item.to}`}
                                     to={item.to}
+                                    params={item.params}
                                     icon={item.icon}
                                     onNavigate={() => setIsMenuOpen(false)}
                                     variant="mobile"
@@ -189,6 +192,7 @@ export function SideNav() {
                                         <NavLink
                                             key={`${child.to}`}
                                             to={child.to}
+                                            params={child.params}
                                             icon={child.icon}
                                             onNavigate={() =>
                                                 setIsMenuOpen(false)
@@ -213,6 +217,7 @@ export function SideNav() {
                             <NavLink
                                 key={`${item.to}`}
                                 to={item.to}
+                                params={item.params}
                                 icon={item.icon}
                                 onNavigate={() => setIsMenuOpen(false)}
                                 variant="mobile"
@@ -285,7 +290,7 @@ function NavDropdown({
                     className={cn(
                         "bg-bone/50 dark:bg-dark-bg-tertiary",
                         isDesktop &&
-                            "md:absolute md:left-0 md:top-full md:bg-bone dark:md:bg-dark-bg-secondary md:shadow-lg md:min-w-[220px] md:border-2 md:border-pine-darker dark:md:border-dark-border",
+                            "md:absolute md:left-0 md:top-full md:bg-bone dark:md:bg-dark-bg-secondary md:shadow-lg md:min-w-55 md:border-2 md:border-pine-darker dark:md:border-dark-border",
                         !isDesktop && "dark:bg-dark-bg-secondary",
                     )}
                 >
@@ -298,6 +303,7 @@ function NavDropdown({
 
 interface NavLinkProps {
     to: LinkProps["to"];
+    params?: LinkProps["params"];
     icon: LucideIcon;
     children: ReactNode;
     onNavigate?: () => void;
@@ -323,6 +329,7 @@ interface NavLinkProps {
  */
 function NavLink({
     to,
+    params,
     icon: Icon,
     children,
     onNavigate,
@@ -362,6 +369,7 @@ function NavLink({
             ) : (
                 <Link
                     to={to}
+                    params={params}
                     onClick={onNavigate}
                     className={cn(
                         "flex items-center gap-2 px-4 py-3 text-pine dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors",

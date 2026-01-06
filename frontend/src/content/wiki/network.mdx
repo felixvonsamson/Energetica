@@ -1,0 +1,48 @@
+# Wiki - Network
+
+In Energetica, players initially operate independently, generating precisely what they need. However, after they unlock the network achievement (generating more than 3MW), they have the option to join or create a network with other players, facilitating electricity trading and potentially enhancing supply security.
+
+If a player is part of a network, three tables enable them to set buying and selling prices within the [network page](/app/network):
+
+### Demand Prices
+
+The first table is to set maximum buying prices for electricity components within your demand:
+
+- Industry
+- Constructions
+- Research
+- Shipments
+- Extraction Facilities
+
+If the max buying price for one of these demand components is below market price, their demand will not be satisfied. This can lead to slowed or halted constructions, researches, and shipments, reduced industry activity and decreased extraction rates.
+
+### Production Capacity Prices
+
+In the second table, you can set the minimum selling prices for your controllable power facilities. When the market price exceeds this set price, any producible capacity with the facility will be sold at market price.
+
+### Storage Capacity Prices
+
+In the third table, you can specify both the maximum buying price and the minimum selling price for your storage facilities:
+
+- **Buying Price:** Determines the maximum price you're willing to pay for purchasing electricity to charge your storage facilities. If the market price is below the set price, electricity will be bought to charge the storage facility.
+- **Selling Price:** Sets the minimum price at which you will sell any capacity producible by your storage facility. If the market price exceeds the set price, the storage facility will be discharged and the generated power sold on the market.
+
+## Obligatory Electricity Generation
+
+Obligatory electricity generation includes:
+
+- **Non-controllable Renewable Power Facilities:** Generation from these facilities cannot be controlled and contributes to the overall electricity output.
+- **Minimal generation of Controllable Facilities:** Due to ramping down constraints, a minimal generation from controllable facilities is obligatory.
+
+If surplus electricity from these obligatory sources is not needed domestically, it is put on the market at a fixed price of -5/MWh, corresponding to the cost to dump excess electricity. If it cannot be sold, it will be dumped.
+
+## Market Logic
+
+The electricity market operates automatically and follows specific steps:
+
+1. **Calculate Capacities:** Calculate available generation capacities and demand from all players in the market.
+2. **Order Capacities:** Organize available capacities and demand in ascending and descending price order, respectively.
+3. **Find Market Equilibrium:** Determine the point where the supply and demand curves intersect to find the market quantity and price.
+4. **Transaction:** Capacities below the market price are sold at market price, while demands above the market price are bought at market price.
+
+This automatic process ensures fair transactions based on market supply and demand dynamics.
