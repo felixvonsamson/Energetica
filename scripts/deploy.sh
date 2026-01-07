@@ -201,7 +201,7 @@ main() {
     if [ "$SKIP_BACKEND" = false ]; then
         log_step "Restarting game server..."
         ssh "${REMOTE_USER}@${REMOTE_HOST}" "sudo systemctl restart energetica"
-        sleep 3
+        sleep 1
         echo ""
 
         # Step 8: Verify service is running
@@ -216,9 +216,21 @@ main() {
 
         # Step 9: Health check
         log_step "Performing health check..."
-        HEALTH=$(ssh "${REMOTE_USER}@${REMOTE_HOST}" "sleep 3 && curl -s http://localhost:8000/api/ || echo 'FAILED'" 2>/dev/null || echo "FAILED")
-        if [[ $HEALTH == *"FAILED"* ]]; then
-            log_error "Health check failed"
+        HEALTH_CHECK_RETRIES=10
+        HEALTH_CHECK_DELAY=2
+        HEALTH_SUCCESS=false
+        for i in $(seq 1 $HEALTH_CHECK_RETRIES); do
+            if ssh "${REMOTE_USER}@${REMOTE_HOST}" "curl -sf http://localhost:8000/api/ > /dev/null" 2>/dev/null; then
+                HEALTH_SUCCESS=true
+                break
+            fi
+            if [ $i -lt $HEALTH_CHECK_RETRIES ]; then
+                sleep $HEALTH_CHECK_DELAY
+            fi
+        done
+
+        if [ "$HEALTH_SUCCESS" = false ]; then
+            log_error "Health check failed after ${HEALTH_CHECK_RETRIES} attempts"
             echo "Check logs: ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo journalctl -u energetica -f'"
             exit 1
         fi
