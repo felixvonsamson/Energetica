@@ -957,6 +957,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Notifications
+         *
+         * Get all notifications for the current player.
+         */
+        get: operations["get_notifications_api_v1_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/notifications/{notification_id}": {
         parameters: {
             query?: never;
@@ -3365,6 +3386,32 @@ export interface components {
          * @enum {string}
          */
         NonFacilityBidType: "construction" | "research" | "transport";
+        /**
+         * NotificationListOut
+         *
+         * Response model for the notification list.
+         */
+        NotificationListOut: {
+            /** Notifications */
+            notifications: components["schemas"]["NotificationOut"][];
+        };
+        /**
+         * NotificationOut
+         *
+         * Response model for a notification.
+         */
+        NotificationOut: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /** Content */
+            content: string;
+            /** Time Format: date-time */
+            time: string;
+            /** Read */
+            read: boolean;
+        };
         /**
          * OpCostsResponse
          *
@@ -5909,6 +5956,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_notifications_api_v1_notifications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationListOut"];
                 };
             };
         };

@@ -215,6 +215,9 @@ export const queryKeys = {
         list: ["chats"] as const,
         messages: (chatId: number) => ["chats", chatId, "messages"] as const,
     },
+    notifications: {
+        all: ["notifications"] as const,
+    },
     game: {
         engine: ["game", "engine"] as const,
     },

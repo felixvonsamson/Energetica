@@ -3,15 +3,17 @@
  * read and delete.
  */
 
-import { X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Circle, X } from "lucide-react";
+import { useMemo } from "react";
 
-interface Notification {
-    id: number;
-    title: string;
-    content: string;
-    read: boolean;
-    time: string;
-}
+import { Modal } from "@/components/ui/Modal";
+import {
+    useNotifications,
+    useDeleteNotification,
+    useMarkAllNotificationsRead,
+} from "@/hooks/useNotifications";
+import { cn } from "@/lib/classname-utils";
 
 interface NotificationPopupProps {
     isOpen: boolean;
@@ -19,48 +21,60 @@ interface NotificationPopupProps {
 }
 
 export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
-    if (!isOpen) return null;
+    const { data, isLoading, error } = useNotifications();
+    const { mutate: deleteNotification } = useDeleteNotification();
+    const { mutate: markAllRead, isPending: isMarkingAllRead } =
+        useMarkAllNotificationsRead();
 
-    // TODO: Fetch actual notifications
-    const notifications: Notification[] = [];
+    const notifications = useMemo(() => {
+        return data?.notifications || [];
+    }, [data]);
+
+    const unreadCount = useMemo(() => {
+        return notifications.filter((n) => !n.read).length;
+    }, [notifications]);
 
     const handleMarkAllRead = () => {
-        // TODO: Implement mark all as read
-        onClose();
+        markAllRead();
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleDeleteNotification = (id: number) => {
-        // TODO: Implement delete notification
+        deleteNotification(id);
     };
 
     return (
-        <>
-            {/* Backdrop */}
-            <div
-                className="fixed inset-0 bg-black bg-opacity-50 z-40"
-                onClick={onClose}
-            ></div>
-
-            {/* Modal */}
-            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[80vh] bg-[#2d5016] rounded-lg shadow-2xl z-50 flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-[#1a2f0d]">
-                    <h2 className="text-xl font-bold text-white">
-                        Notifications
-                    </h2>
-                    <button
-                        onClick={handleMarkAllRead}
-                        className="text-white hover:text-gray-300 transition-colors"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
+        <Modal isOpen={isOpen} onClose={onClose} title="Notifications">
+            <div className="flex flex-col max-h-[60vh]">
+                {/* Mark all as read button */}
+                {unreadCount > 0 && (
+                    <div className="mb-4 flex justify-end">
+                        <button
+                            onClick={handleMarkAllRead}
+                            disabled={isMarkingAllRead}
+                            className={cn(
+                                "px-4 py-2 bg-white/10 hover:bg-white/20 rounded transition-colors",
+                                "disabled:opacity-50 disabled:cursor-not-allowed",
+                            )}
+                        >
+                            {isMarkingAllRead
+                                ? "Marking all read..."
+                                : "Mark all as read"}
+                        </button>
+                    </div>
+                )}
 
                 {/* Notifications List */}
-                <div className="flex-1 overflow-y-auto p-4">
-                    {notifications.length === 0 ? (
-                        <div className="text-center text-gray-300 py-8">
+                <div className="flex-1 overflow-y-auto -mx-6 px-6">
+                    {isLoading ? (
+                        <div className="text-center text-white/70 py-8">
+                            Loading notifications...
+                        </div>
+                    ) : error ? (
+                        <div className="text-center text-red-400 py-8">
+                            Failed to load notifications
+                        </div>
+                    ) : notifications.length === 0 ? (
+                        <div className="text-center text-white/70 py-8">
                             No notifications
                         </div>
                     ) : (
@@ -68,11 +82,12 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                             {notifications.map((notification) => (
                                 <div
                                     key={notification.id}
-                                    className={`p-4 rounded ${
+                                    className={cn(
+                                        "p-4 rounded",
                                         notification.read
-                                            ? "bg-[#3d6020] opacity-70"
-                                            : "bg-[#3d6020]"
-                                    }`}
+                                            ? "bg-white/5 opacity-70"
+                                            : "bg-white/10",
+                                    )}
                                 >
                                     <div className="flex items-start justify-between mb-2">
                                         <div className="flex items-center gap-2">
@@ -80,7 +95,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                                 {notification.title}
                                             </h3>
                                             {!notification.read && (
-                                                <i className="fa fa-circle text-xs text-white"></i>
+                                                <Circle className="w-2 h-2 fill-current text-white" />
                                             )}
                                         </div>
                                         <button
@@ -89,18 +104,19 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                                     notification.id,
                                                 )
                                             }
-                                            className="text-white hover:text-red-300 text-xl leading-none"
+                                            className="text-white/70 hover:text-red-400 transition-colors"
+                                            aria-label="Delete notification"
                                         >
-                                            ×
+                                            <X className="w-5 h-5" />
                                         </button>
                                     </div>
-                                    <div className="text-xs text-gray-300 mb-2">
+                                    <div className="text-xs text-white/60 mb-2">
                                         {new Date(
                                             notification.time,
                                         ).toLocaleString()}
                                     </div>
                                     <div
-                                        className="text-white"
+                                        className="text-white text-sm"
                                         dangerouslySetInnerHTML={{
                                             __html: notification.content,
                                         }}
@@ -112,15 +128,15 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-[#1a2f0d]">
-                    <a
-                        href="/settings"
-                        className="text-white hover:text-gray-300 transition-colors"
+                <div className="mt-4 pt-4 border-t border-white/10">
+                    <Link
+                        to="/app/settings"
+                        className="text-white/80 hover:text-white transition-colors text-sm"
                     >
                         Browser notifications settings
-                    </a>
+                    </Link>
                 </div>
             </div>
-        </>
+        </Modal>
     );
 }

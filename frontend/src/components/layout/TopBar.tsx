@@ -30,6 +30,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useUnreadNotificationsCount } from "@/hooks/useNotifications";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { usePlayerMoney } from "@/hooks/usePlayerMoney";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
@@ -60,6 +61,7 @@ export function TopBar() {
         isError: isResourcesError,
     } = usePlayerResources();
     const { isConnected } = useOnlineStatus();
+    const unreadCount = useUnreadNotificationsCount();
     const [showNotifications, setShowNotifications] = useState(false);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
     const userDropdownRef = useRef<HTMLDivElement>(null);
@@ -172,10 +174,10 @@ export function TopBar() {
                                 <span className="ml-2 hidden lg:inline">
                                     Notifications
                                 </span>
-                                {/* Unread badge - TODO: Show actual count */}
-                                {0 > 0 && (
+                                {/* Unread badge */}
+                                {unreadCount > 0 && (
                                     <span className="absolute -top-1 -right-1 bg-pine dark:bg-brand-green text-pine-text text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                        {0}
+                                        {unreadCount}
                                     </span>
                                 )}
                             </button>

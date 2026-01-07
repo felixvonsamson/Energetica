@@ -13,7 +13,7 @@ cd Energetica
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cd frontend && npm install && cd ..
+npm install && cd ..
 ```
 
 ### Run the Backend
@@ -27,13 +27,13 @@ source .venv/bin/activate && python main.py --env dev
 Use existing backend:
 
 ```bash
-cd frontend && VITE_BACKEND_URL=https://energetica-game.org npm run dev
+VITE_BACKEND_URL=https://energetica-game.org npm run dev
 ```
 
 Use http://localhost:8000 as backend:
 
 ```bash
-cd frontend && npm run dev
+npm run dev
 ```
 
 Or configure `/frontend/.env.example`.
