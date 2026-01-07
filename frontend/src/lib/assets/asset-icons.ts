@@ -5,7 +5,9 @@
  * Follows the same pattern as asset-names.ts for consistency.
  */
 
+import { windmill } from "@lucide/lab";
 import {
+    createLucideIcon,
     Factory,
     Wind,
     Sun,
@@ -13,23 +15,17 @@ import {
     Flame,
     Zap,
     Atom,
-    Battery,
     BatteryCharging,
-    Mountain,
     Pickaxe,
     FlaskConical,
     Warehouse,
     Filter,
-    Calculator,
-    Cog,
-    Gauge,
+    CirclePile,
     Hammer,
     Truck,
     Box,
-    Building2,
     Plane,
     Trash2,
-    Send,
     TrendingUp,
     Target,
     Cloud,
@@ -38,7 +34,22 @@ import {
     ArrowDownRight,
     Thermometer,
     type LucideIcon,
+    Radical,
+    Omega,
+    DraftingCompass,
+    Wrench,
+    Microscope,
+    Heading2,
+    BatteryPlus,
+    Dam,
+    SolarPanel,
+    Stone,
+    CloudRain,
+    ArrowUpRight,
 } from "lucide-react";
+
+// Create React components from @lucide/lab icon data
+const Windmill = createLucideIcon("Windmill", windmill);
 
 /**
  * Power facility icons. Covers renewable (wind, solar, hydro) and controllable
@@ -46,23 +57,23 @@ import {
  */
 export const powerFacilityIcons: Record<string, LucideIcon> = {
     // Early game - simple technologies
-    steam_engine: Factory,
-    windmill: Wind,
+    steam_engine: CloudRain,
+    windmill: Windmill,
     watermill: Droplets,
 
     // Mid game - fossil fuels
-    coal_burner: Flame,
+    coal_burner: Stone,
     gas_burner: Flame,
     combined_cycle: Zap,
 
     // Mid game - renewables
-    small_water_dam: Droplets,
+    small_water_dam: Dam,
     onshore_wind_turbine: Wind,
     CSP_solar: Sun,
-    PV_solar: Sun,
+    PV_solar: SolarPanel,
 
     // Late game
-    large_water_dam: Droplets,
+    large_water_dam: Dam,
     offshore_wind_turbine: Wind,
     nuclear_reactor: Atom,
     nuclear_reactor_gen4: Atom,
@@ -70,24 +81,24 @@ export const powerFacilityIcons: Record<string, LucideIcon> = {
 
 /** Storage facility icons. */
 export const storageFacilityIcons: Record<string, LucideIcon> = {
-    small_pumped_hydro: Battery,
-    molten_salt: FlaskConical,
-    large_pumped_hydro: Battery,
-    hydrogen_storage: FlaskConical,
+    small_pumped_hydro: Dam,
+    molten_salt: CirclePile,
+    large_pumped_hydro: Dam,
+    hydrogen_storage: Heading2,
     lithium_ion_batteries: BatteryCharging,
-    solid_state_batteries: Battery,
+    solid_state_batteries: BatteryPlus,
 };
 
 /** Extraction facility icons. */
 export const extractionFacilityIcons: Record<string, LucideIcon> = {
-    coal_mine: Mountain,
-    gas_drilling_site: Pickaxe,
-    uranium_mine: Mountain,
+    coal_mine: Stone,
+    gas_drilling_site: Flame,
+    uranium_mine: Atom,
 };
 
 /** Functional facility icons. */
 export const functionalFacilityIcons: Record<string, LucideIcon> = {
-    laboratory: FlaskConical,
+    laboratory: Microscope,
     warehouse: Warehouse,
     industry: Factory,
     carbon_capture: Filter,
@@ -95,15 +106,15 @@ export const functionalFacilityIcons: Record<string, LucideIcon> = {
 
 /** Technology icons. */
 export const technologyIcons: Record<string, LucideIcon> = {
-    mathematics: Calculator,
-    mechanical_engineering: Cog,
-    thermodynamics: Gauge,
-    physics: Atom,
+    mathematics: Radical,
+    mechanical_engineering: DraftingCompass,
+    thermodynamics: Thermometer,
+    physics: Omega,
     building_technology: Hammer,
     mineral_extraction: Pickaxe,
     transport_technology: Truck,
     materials: Box,
-    civil_engineering: Building2,
+    civil_engineering: Wrench,
     aerodynamics: Plane,
     chemistry: FlaskConical,
     nuclear_engineering: Atom,
@@ -111,7 +122,7 @@ export const technologyIcons: Record<string, LucideIcon> = {
 
 /** Resource icons. */
 export const resourceIcons: Record<string, LucideIcon> = {
-    coal: Mountain,
+    coal: Stone,
     gas: Flame,
     uranium: Atom,
 };
@@ -120,10 +131,10 @@ export const resourceIcons: Record<string, LucideIcon> = {
 export const specialIcons: Record<string, LucideIcon> = {
     transport: Truck,
     construction: Hammer,
-    research: FlaskConical,
+    research: Microscope,
     // Chart and overview special keys
     dumping: Trash2,
-    exports: Send,
+    exports: ArrowUpRight,
     imports: ArrowDownRight,
     "net-profit": TrendingUp,
     reference: Target,

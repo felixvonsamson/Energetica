@@ -55,9 +55,11 @@ function IconCategory({
 }: IconCategoryProps) {
     return (
         <section className="flex flex-col gap-4">
-            <div className="border-b border-gray-300 pb-2">
+            <div className="border-b border-gray-300 pb-2 dark:border-gray-700">
                 <h2 className="text-2xl font-bold">{title}</h2>
-                <p className="text-sm text-gray-600">{description}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {description}
+                </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {Object.entries(icons).map(([assetId, IconComponent]) => {
@@ -72,41 +74,42 @@ function IconCategory({
                             className={cn(
                                 "flex flex-col gap-3 rounded-lg border p-4",
                                 isReused
-                                    ? "border-orange-400 bg-orange-50"
-                                    : "border-gray-200 bg-white",
+                                    ? "border-orange-400 bg-orange-50 dark:border-orange-600 dark:bg-orange-950"
+                                    : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800",
                             )}
                         >
                             {/* Header with asset ID and reuse badge */}
                             <div className="flex items-start justify-between gap-2">
-                                <code className="text-sm font-semibold text-gray-900">
+                                <code className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                                     {assetId}
                                 </code>
                                 {isReused && (
-                                    <span className="rounded bg-orange-200 px-2 py-0.5 text-xs font-medium text-orange-900">
+                                    <span className="rounded bg-orange-200 px-2 py-0.5 text-xs font-medium text-orange-900 dark:bg-orange-900 dark:text-orange-100">
                                         Reused ×{usageCount}
                                     </span>
                                 )}
                             </div>
 
                             {/* Icon name */}
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
                                 Lucide: <code>{iconName}</code>
                             </div>
 
                             {/* Icon size examples */}
-                            <div className="flex items-center gap-4 border-t border-gray-200 pt-3">
+                            <div className="flex items-center gap-4 border-t border-gray-200 pt-3 dark:border-gray-700">
                                 {[16, 20, 24, 32].map((size) => (
                                     <div
                                         key={size}
                                         className="flex flex-col items-center gap-1"
                                     >
-                                        <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100 dark:bg-gray-700">
                                             {createElement(IconComponent, {
                                                 size,
-                                                className: "text-gray-700",
+                                                className:
+                                                    "text-gray-700 dark:text-gray-300",
                                             })}
                                         </div>
-                                        <span className="text-xs text-gray-500">
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
                                             {size}px
                                         </span>
                                     </div>
@@ -139,53 +142,53 @@ function RouteComponent() {
                     <h1 className="text-4xl font-bold">
                         Icon Showcase & Design Reference
                     </h1>
-                    <p className="text-lg text-gray-600">
+                    <p className="text-lg text-gray-600 dark:text-gray-400">
                         Comprehensive overview of all icons used in Energetica
                     </p>
                 </section>
 
                 {/* Statistics */}
                 <section className="grid gap-4 md:grid-cols-4">
-                    <div className="rounded-lg border border-gray-200 bg-white p-4">
-                        <div className="text-3xl font-bold text-blue-600">
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                        <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                             {totalAssets}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
                             Total Assets
                         </div>
                     </div>
-                    <div className="rounded-lg border border-gray-200 bg-white p-4">
-                        <div className="text-3xl font-bold text-green-600">
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                        <div className="text-3xl font-bold text-green-600 dark:text-green-400">
                             {uniqueIcons}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
                             Unique Icons
                         </div>
                     </div>
-                    <div className="rounded-lg border border-gray-200 bg-white p-4">
-                        <div className="text-3xl font-bold text-orange-600">
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                        <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
                             {reusedIcons.length}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
                             Reused Icons
                         </div>
                     </div>
-                    <div className="rounded-lg border border-gray-200 bg-white p-4">
-                        <div className="text-3xl font-bold text-purple-600">
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                        <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
                             {customIconsNeeded}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
                             Custom Icons Needed
                         </div>
                     </div>
                 </section>
 
                 {/* Priority List */}
-                <section className="rounded-lg border-2 border-orange-300 bg-orange-50 p-6">
-                    <h2 className="mb-3 text-xl font-bold text-orange-900">
+                <section className="rounded-lg border-2 border-orange-300 bg-orange-50 p-6 dark:border-orange-700 dark:bg-orange-950">
+                    <h2 className="mb-3 text-xl font-bold text-orange-900 dark:text-orange-100">
                         🎯 Priority: Icons That Need Custom Replacements
                     </h2>
-                    <p className="mb-4 text-sm text-orange-800">
+                    <p className="mb-4 text-sm text-orange-800 dark:text-orange-200">
                         These Lucide icons are currently reused for multiple
                         different assets. Creating unique icons for these will
                         improve visual clarity.
@@ -198,21 +201,22 @@ function RouteComponent() {
                                 return (
                                     <div
                                         key={iconName}
-                                        className="rounded-lg border border-orange-200 bg-white p-3"
+                                        className="rounded-lg border border-orange-200 bg-white p-3 dark:border-orange-800 dark:bg-gray-800"
                                     >
                                         <div className="mb-2 flex items-center gap-2">
                                             {createElement(IconComponent, {
                                                 size: 20,
-                                                className: "text-orange-600",
+                                                className:
+                                                    "text-orange-600 dark:text-orange-400",
                                             })}
-                                            <code className="font-semibold text-orange-900">
+                                            <code className="font-semibold text-orange-900 dark:text-orange-100">
                                                 {iconName}
                                             </code>
-                                            <span className="ml-auto rounded bg-orange-200 px-2 py-0.5 text-xs font-medium text-orange-900">
+                                            <span className="ml-auto rounded bg-orange-200 px-2 py-0.5 text-xs font-medium text-orange-900 dark:bg-orange-900 dark:text-orange-100">
                                                 ×{assets.length}
                                             </span>
                                         </div>
-                                        <div className="text-xs text-gray-600">
+                                        <div className="text-xs text-gray-600 dark:text-gray-400">
                                             Used for:{" "}
                                             {assets
                                                 .map((id) => (
@@ -237,16 +241,16 @@ function RouteComponent() {
                 </section>
 
                 {/* Design Guidelines */}
-                <section className="rounded-lg border border-blue-200 bg-blue-50 p-6">
-                    <h2 className="mb-3 text-xl font-bold text-blue-900">
+                <section className="rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-950">
+                    <h2 className="mb-3 text-xl font-bold text-blue-900 dark:text-blue-100">
                         📐 Design Guidelines
                     </h2>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div>
-                            <h3 className="mb-2 font-semibold text-blue-900">
+                            <h3 className="mb-2 font-semibold text-blue-900 dark:text-blue-100">
                                 Technical Specs
                             </h3>
-                            <ul className="space-y-1 text-sm text-blue-800">
+                            <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
                                 <li>• Format: SVG</li>
                                 <li>• ViewBox: 24×24</li>
                                 <li>• Stroke width: 2px</li>
@@ -257,10 +261,10 @@ function RouteComponent() {
                             </ul>
                         </div>
                         <div>
-                            <h3 className="mb-2 font-semibold text-blue-900">
+                            <h3 className="mb-2 font-semibold text-blue-900 dark:text-blue-100">
                                 Style Reference
                             </h3>
-                            <ul className="space-y-1 text-sm text-blue-800">
+                            <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
                                 <li>
                                     • Base style:{" "}
                                     <a
@@ -335,10 +339,10 @@ function RouteComponent() {
                 />
 
                 {/* Footer */}
-                <section className="border-t border-gray-300 pt-4 text-sm text-gray-600">
+                <section className="border-t border-gray-300 pt-4 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400">
                     <p>
                         This page is automatically generated from{" "}
-                        <code className="rounded bg-gray-100 px-1 py-0.5">
+                        <code className="rounded bg-gray-100 px-1 py-0.5 dark:bg-gray-800">
                             frontend/src/lib/assets/asset-icons.ts
                         </code>
                     </p>
