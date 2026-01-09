@@ -124,8 +124,8 @@ function MapTiles({
             {/* Tooltip - rendered within SVG context */}
             {hoveredTile && hoveredTilePosition && (
                 <foreignObject
-                    x={hoveredTilePosition.x + 40}
-                    y={hoveredTilePosition.y - 40}
+                    x={0}
+                    y={0}
                     width="1"
                     height="1"
                     overflow="visible"
