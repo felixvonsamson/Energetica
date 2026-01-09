@@ -5,24 +5,30 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* 3. Tailwind v4 Theme Configuration */
+/* 3. Tailwind v4 Theme Configuration - Option A: Two-Layer Architecture
+   ========================================================================
+   LAYER 1: Base palette (raw color values)
+   LAYER 2: Semantic tokens (reference :root variables for theming)
+
+   See docs/frontend/tailwind-v4-theming.md for details.
+   ======================================================================== */
 /* stylelint-disable-next-line at-rule-no-unknown */
 @theme inline {
-    /* Base color palette - light mode */
+    /* ============================================
+       Base Color Palette (Source of Truth)
+       ============================================ */
     --color-bone: #e5d9b6;
-    --color-bone-text: #000000;
     --color-tan-green: #a4be7b;
     --color-tan-hover: #b5ca95;
-    --color-tan-green-text: #000000;
     --color-brand-green: #5f8d4e;
     --color-pine: #285430;
     --color-pine-darker: #1b3820;
     --color-pine-lighter: #5f8d4e;
-    --color-pine-text: #ffffff;
     --color-alert-red: #f44336;
     --color-alert-orange: #f59f00;
+    --color-white: #ffffff;
 
-    /* Dark mode specific colours */
+    /* Dark mode base colors */
     --color-dark-bg-primary: #1a1a1a;
     --color-dark-bg-secondary: #2d2d2d;
     --color-dark-bg-tertiary: #3a3a3a;
@@ -30,22 +36,30 @@
     --color-dark-text-secondary: #e5e5e5;
     --color-dark-text-muted: #a0a0a0;
     --color-dark-border: #404040;
+
+    /* ============================================
+       Semantic Tokens (Auto-generate Utilities)
+       These reference :root variables defined below.
+       Tailwind generates: bg-game-bg, text-text-primary, etc.
+       ============================================ */
+    --color-game-bg: var(--game-bg);
+    --color-content-bg: var(--content-bg);
+    --color-card-bg: var(--card-bg);
+    --color-text-primary: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+    --color-text-muted: var(--text-muted);
+    --color-text-on-card: var(--text-on-card);
+    --color-border-default: var(--border-default);
 }
 
-/* 4. Base layer with theme variables */
+/* 4. Base layer with runtime theme values */
 @layer base {
-    /* Light mode (default) */
+    /* ============================================
+       Light Mode (Default)
+       These values are swapped at runtime for theming
+       ============================================ */
     :root {
-        /* Base colours */
-        --color-white: #ffffff;
-        --color-bone: #e5d9b6;
-        --color-tan-green: #a4be7b;
-        --color-tan-hover: #b5ca95;
-        --color-pine-light: #5f8d4e;
-        --color-pine: #285430;
-        --color-pine-darker: #1b3820;
-
-        /* Semantic colours for light mode */
+        /* Semantic colors for light mode */
         --game-bg: #a4be7b;
         --content-bg: #c9d4b5;
         --card-bg: #e5d9b6;
@@ -112,13 +126,16 @@
         /* Map tile colours */
         --map-selected-tile-hover: var(--color-pine-darker);
         --map-tile-current-player: hsl(0, 64%, 47%);
-        --map-tile-other-player: var(--color-pine-light);
+        --map-tile-other-player: var(--color-pine-lighter);
         --map-tile-vacant: var(--color-bone);
     }
 
-    /* Dark mode */
+    /* ============================================
+       Dark Mode
+       Swaps semantic token values for dark theme
+       ============================================ */
     :root.dark {
-        /* Semantic colours for dark mode */
+        /* Semantic colors for dark mode */
         --game-bg: #0a0a0a;
         --content-bg: #1a1a1a;
         --card-bg: #2d2d2d;
