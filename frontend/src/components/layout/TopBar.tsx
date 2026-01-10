@@ -36,6 +36,7 @@ import { usePlayerMoney } from "@/hooks/usePlayerMoney";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
 import { useRouteStaticData } from "@/hooks/useRouteStaticData";
+import { cn } from "@/lib/classname-utils";
 import { Money } from "@/types/money";
 import { Resources } from "@/types/resources";
 import { Workers } from "@/types/workers";
@@ -117,7 +118,7 @@ export function TopBar() {
             {/* Navigation - both bar for desktop and side window for mobile */}
             <Navigation />
 
-            <div className="bg-game-bg border-b border-pine-darker px-4 py-1">
+            <div className="bg-background border-b border-pine-darker px-4 py-1">
                 <div className="flex items-center justify-between gap-4">
                     {/* Logo */}
                     {Logo()}
@@ -125,7 +126,7 @@ export function TopBar() {
                     {/* Resources and Actions */}
                     <div className="flex items-center gap-4">
                         {/* Money and Resources */}
-                        <div className="bg-content-bg text-primary rounded px-3 py-0 md:px-4">
+                        <div className="bg-background text-foreground rounded px-3 py-0 md:px-4">
                             <div className="flex gap-3 md:gap-3 items-center">
                                 {/* Money */}
                                 {MoneyDisplay(
@@ -176,7 +177,7 @@ export function TopBar() {
                                 </span>
                                 {/* Unread badge */}
                                 {unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-pine dark:bg-brand-green text-pine-text text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                    <span className="absolute -top-1 -right-1 bg-pine dark:bg-brand-green text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                         {unreadCount}
                                     </span>
                                 )}
@@ -416,7 +417,7 @@ function MoneyDisplay(
                         </span>
                     )}
                     {/* Show stale data even if error */}
-                    <span className={isMoneyError ? "opacity-75" : ""}>
+                    <span className={cn(isMoneyError && "opacity-75")}>
                         $
                         {(moneyData?.money ?? 0).toLocaleString(undefined, {
                             minimumFractionDigits: 0,

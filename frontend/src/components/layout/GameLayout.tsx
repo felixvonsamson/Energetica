@@ -16,12 +16,12 @@ interface GameLayoutProps {
 export function GameLayout({ children }: GameLayoutProps) {
     return (
         <NavigationProvider>
-            <div className="bg-game-bg text-primary flex flex-col min-h-screen">
+            <div className="bg-background text-primary flex flex-col min-h-screen">
                 {/* Top bar with resources, notifications, and navigation */}
                 <TopBar />
 
                 {/* Main content area */}
-                <main className="bg-content-bg text-primary flex-1 2xl:px-50">
+                <main className="bg-background text-primary flex-1 2xl:px-50">
                     {children}
                 </main>
 

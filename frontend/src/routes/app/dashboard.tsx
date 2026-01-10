@@ -525,7 +525,7 @@ function DailyQuizSection() {
 
         if (!hasAnswered) {
             // Before answering - normal clickable button
-            return `${baseClass} bg-bone dark:bg-dark-bg-secondary border-2 border-pine dark:border-dark-border hover:border-brand-green dark:hover:border-brand-green hover:shadow-md text-primary disabled:opacity-50 disabled:cursor-not-allowed`;
+            return `${baseClass} bg-bone dark:bg-dark-bg-secondary border-2 border-pine dark:border-dark-border hover:border-brand-green dark:hover:border-brand-green hover:shadow-md text-foreground disabled:opacity-50 disabled:cursor-not-allowed`;
         }
 
         // After answering - show feedback

@@ -34,7 +34,7 @@ export function AchievementCard({
     return (
         <div className="flex items-center gap-3">
             {/* Achievement name */}
-            <div className="font-medium text-sm text-primary min-w-[140px]">
+            <div className="font-medium text-sm text-foreground min-w-35">
                 {name}
             </div>
 
@@ -44,13 +44,13 @@ export function AchievementCard({
                     className="absolute inset-0 bg-brand-green dark:bg-brand-green transition-all duration-300 ease-out"
                     style={{ width: `${progressPercent}%` }}
                 />
-                <div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-primary z-10 px-2">
+                <div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-foreground z-10 px-2">
                     {formattedStatus} / {formattedObjective}
                 </div>
             </div>
 
             {/* XP reward */}
-            <div className="font-medium text-sm text-primary text-center min-w-[60px]">
+            <div className="font-medium text-sm text-foreground text-center min-w-15">
                 +{reward} XP
             </div>
         </div>

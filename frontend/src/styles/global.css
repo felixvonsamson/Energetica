@@ -40,9 +40,10 @@
     /* ============================================
        Semantic Tokens (Auto-generate Utilities)
        These reference :root variables defined below.
-       Tailwind generates: bg-game-bg, text-text-primary, etc.
+       Tailwind generates utilities like: bg-background, text-primary, etc.
        ============================================ */
-    --color-game-bg: var(--game-bg);
+
+    /* Energetica-specific tokens (keep for backward compatibility) */
     --color-content-bg: var(--content-bg);
     --color-card-bg: var(--card-bg);
     --color-text-primary: var(--text-primary);
@@ -50,6 +51,27 @@
     --color-text-muted: var(--text-muted);
     --color-text-on-card: var(--text-on-card);
     --color-border-default: var(--border-default);
+
+    /* shadcn/ui semantic tokens (for future compatibility) */
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
 }
 
 /* 4. Base layer with runtime theme values */
@@ -59,9 +81,7 @@
        These values are swapped at runtime for theming
        ============================================ */
     :root {
-        /* Semantic colors for light mode */
-        --game-bg: #a4be7b;
-        --content-bg: #c9d4b5;
+        /* Energetica semantic colors (light mode) */
         --card-bg: #e5d9b6;
 
         --text-primary: var(--color-pine);
@@ -70,6 +90,37 @@
         --text-on-card: #000000;
 
         --border-default: #a4be7b;
+
+        /* shadcn/ui semantic colors (light mode) */
+        --background: #a4be7b;
+        --foreground: var(--text-primary);
+
+        --card: var(--card-bg);
+        --card-foreground: var(--text-on-card);
+
+        --popover: var(--card-bg);
+        --popover-foreground: var(--text-on-card);
+
+        --primary: var(--color-pine);
+        --primary-foreground: #ffffff;
+
+        --secondary: var(--color-tan-green);
+        --secondary-foreground: #000000;
+
+        --muted: var(--content-bg);
+        --muted-foreground: var(--text-muted);
+
+        --accent: var(--color-brand-green);
+        --accent-foreground: #ffffff;
+
+        --destructive: var(--color-alert-red);
+        --destructive-foreground: #ffffff;
+
+        --border: var(--border-default);
+        --input: var(--border-default);
+        --ring: var(--color-pine);
+
+        --radius: 0.5rem;
 
         /* Asset colours - Power facilities (water) */
         --asset-color-watermill: rgb(0, 180, 216);
@@ -135,9 +186,7 @@
        Swaps semantic token values for dark theme
        ============================================ */
     :root.dark {
-        /* Semantic colors for dark mode */
-        --game-bg: #0a0a0a;
-        --content-bg: #1a1a1a;
+        /* Energetica semantic colors (dark mode) */
         --card-bg: #2d2d2d;
 
         --text-primary: #ffffff;
@@ -146,6 +195,37 @@
         --text-on-card: #ffffff;
 
         --border-default: #404040;
+
+        /* shadcn/ui semantic colors (dark mode) */
+        --background: #0a0a0a;
+        --foreground: var(--text-primary);
+
+        --card: var(--card-bg);
+        --card-foreground: var(--text-on-card);
+
+        --popover: var(--card-bg);
+        --popover-foreground: var(--text-on-card);
+
+        --primary: var(--color-pine-lighter);
+        --primary-foreground: #000000;
+
+        --secondary: var(--color-tan-green);
+        --secondary-foreground: #000000;
+
+        --muted: var(--content-bg);
+        --muted-foreground: var(--text-muted);
+
+        --accent: var(--color-brand-green);
+        --accent-foreground: #000000;
+
+        --destructive: var(--color-alert-red);
+        --destructive-foreground: #ffffff;
+
+        --border: var(--border-default);
+        --input: var(--border-default);
+        --ring: var(--color-pine-lighter);
+
+        --radius: 0.5rem;
 
         /* Asset colours - Power facilities (water) - adjusted for dark mode */
         --asset-color-watermill: rgb(100, 210, 236);
@@ -216,7 +296,7 @@
     body {
         font-family: "Baloo 2", system-ui, sans-serif;
         color: var(--text-primary);
-        background-color: var(--game-bg);
+        background-color: var(--background);
     }
 
     main {
