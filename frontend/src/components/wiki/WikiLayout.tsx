@@ -35,7 +35,7 @@ export function WikiLayout({ children }: WikiLayoutProps) {
     const { slug: currentSlug } = useParams({ from: "/app/wiki/$slug" });
 
     const content = (
-        <div className="px-6 lg:px-8 pb-24">
+        <div className="bg-background text-foreground px-6 lg:px-8 pb-24">
             {/* MDX content with prose styling */}
             <article className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
                 {children}

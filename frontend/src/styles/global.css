@@ -266,25 +266,21 @@
 
 /* Prose (Typography) customization for wiki pages */
 .prose {
-    --tw-prose-body: var(--primary);
-    --tw-prose-headings: var(--primary) !important;
+    --tw-prose-body: var(--foreground);
+    --tw-prose-headings: var(--foreground) !important;
     --tw-prose-links: rgb(37, 99, 235);
-    --tw-prose-bold: var(--primary);
-    --tw-prose-code: var(--primary);
+    --tw-prose-bold: var(--foreground);
+    --tw-prose-code: var(--foreground);
     --tw-prose-pre-bg: var(--color-bone);
     /* --tw-prose-th-borders: #d1d5db; */
     /* --tw-prose-td-borders: #d1d5db; */
-    --tw-prose-th-borders: #00000000;
-    --tw-prose-td-borders: #00000000;
+    /* --tw-prose-th-borders: #00000000;
+    --tw-prose-td-borders: #00000000; */
     /* max-width: none; */
 }
 
 .dark .prose {
-    --tw-prose-body: var(--primary);
-    --tw-prose-headings: var(--primary);
     --tw-prose-links: rgb(96, 165, 250);
-    --tw-prose-bold: var(--primary);
-    --tw-prose-code: var(--primary);
     --tw-prose-pre-bg: #3a3a3a;
     /* --tw-prose-th-borders: #4b5563; */
     /* --tw-prose-td-borders: #4b5563; */

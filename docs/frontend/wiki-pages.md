@@ -1,6 +1,137 @@
-# MDX Content (Wiki Pages)
+# Wiki Pages
+
+Wiki pages are hosted under:
+
+-   New wiki: `/app/wiki/introduction`
+-   Legacy wiki: `/wiki/introduction`
 
 Wiki pages use MDX to combine markdown content with React components.
+
+## File Structure
+
+```
+frontend/src/
+├── content/wiki/           # MDX source files
+│   ├── introduction.mdx
+│   └── map.mdx
+├── components/wiki/        # Reusable wiki components
+│   ├── WikiLayout.tsx      # Layout wrapper with navigation
+│   └── WindTable.tsx       # Example: complex table component
+└── routes/wiki/
+    └── $slug.tsx           # Dynamic route handler
+```
+
+## Writing MDX Pages
+
+**Basic example (`introduction.mdx`):**
+
+```mdx
+# Page Title
+
+Regular markdown content with **bold** and _italic_.
+
+## Sections work normally
+
+-   Lists work
+-   As expected
+
+You can use React components inline:
+
+<div className="p-4 bg-blue-100 rounded-lg">Custom styled content</div>
+```
+
+**Math equations:**
+
+```mdx
+Inline: $E = mc^2$
+
+Block:
+
+$$
+p_{i,n} = p_{i,base} \times pm(hp, n_i)
+$$
+```
+
+**Importing components:**
+
+```mdx
+import { WindTable } from "@/components/wiki/WindTable";
+
+### Wind Capacity Factors
+
+<WindTable />
+```
+
+**Anchor links:**
+
+Headings automatically get IDs in kebab-case format based on the heading text. Link to them with hash fragments:
+
+```mdx
+## Wind Capacity Factors
+
+See [Wind Capacity Factors](#wind-capacity-factors) for details.
+```
+
+## Reusable Components
+
+Complex elements (tables, charts) should be React components:
+
+```tsx
+// components/wiki/WindTable.tsx
+export function WindTable() {
+    const data = {
+        /* ... */
+    };
+    return <table>{/* ... */}</table>;
+}
+```
+
+Use in MDX:
+
+```mdx
+import { WindTable } from "@/components/wiki/WindTable";
+
+<WindTable />
+```
+
+## Styling
+
+**Automatic styling with prose:**
+
+The `prose` classes from `@tailwindcss/typography` automatically style all markdown elements. See `frontend/src/styles/global.css`.
+
+**What prose handles:**
+
+-   Headings (`h1`-`h6`) - Bold, proper spacing, sizing
+-   Links (`a`) - Blue color, hover underline
+-   Code - Gray background, proper padding, no backticks
+-   Tables - Borders, header background, centred text
+-   Lists - Proper bullets/numbers, spacing
+-   Blockquotes - Left border, background
+
+**Dark mode:**
+
+Use `dark:prose-invert` to automatically adapt colors for dark mode.
+
+**Overriding prose styles:**
+
+Use `not-prose` for custom components that shouldn't inherit prose styles:
+
+```mdx
+<div className="not-prose">
+    <CustomComponent />
+</div>
+```
+
+**Custom prose modifications:**
+
+Override specific prose styles with utility classes:
+
+```tsx
+<article className="prose prose-lg dark:prose-invert prose-headings:text-pine">
+```
+
+Or customize globally in `src/styles/global.css` in the prose CSS custom properties and element styles.
 
 ## Setup
 
@@ -37,8 +168,8 @@ The typography plugin is imported and configured with custom prose styles:
 
 /* Custom prose styles in @layer base */
 .prose {
-    --tw-prose-body: var(--text-primary);
-    --tw-prose-headings: var(--text-primary);
+    --tw-prose-body: var(--text-foreground);
+    --tw-prose-headings: var(--text-foreground);
     /* ... etc */
 }
 ```
@@ -47,76 +178,9 @@ See `src/styles/global.css` for full configuration.
 
 **Additional resources:**
 
--   KaTeX CSS is loaded in `index.html` for math rendering
+-   KaTeX CSS is loaded in `index.html` for math rendering`
 
-## File Structure
-
-```
-frontend/src/
-├── content/wiki/           # MDX source files
-│   ├── introduction.mdx
-│   └── map.mdx
-├── components/wiki/        # Reusable wiki components
-│   ├── WikiLayout.tsx      # Layout wrapper with navigation
-│   └── WindTable.tsx       # Example: complex table component
-└── routes/wiki/
-    └── $slug.tsx           # Dynamic route handler
-```
-
-## Writing MDX Pages
-
-**Basic example (`introduction.mdx`):**
-
-```mdx
-import { cn } from "@/lib/classname-utils";
-
-# Page Title
-
-Regular markdown content with **bold** and _italic_.
-
-## Sections work normally
-
--   Lists work
--   As expected
-
-You can use React components inline:
-
-<div className={cn("p-4 bg-blue-100 rounded-lg")}>Custom styled content</div>
-```
-
-**Math equations:**
-
-```mdx
-Inline: $E = mc^2$
-
-Block:
-
-$$
-p_{i,n} = p_{i,base} \times pm(hp, n_i)
-$$
-```
-
-**Importing components:**
-
-```mdx
-import { WindTable } from "@/components/wiki/WindTable";
-
-### Wind Capacity Factors
-
-<WindTable />
-```
-
-**Anchor links:**
-
-Headings automatically get IDs in kebab-case format. Link to them with hash fragments:
-
-```mdx
-## Wind Capacity Factors
-
-See [Wind Capacity Factors](#wind-capacity-factors) for details.
-```
-
-## Dynamic Route
+### Dynamic Route
 
 `routes/wiki/$slug.tsx` maps URL slugs to MDX files:
 
@@ -127,81 +191,6 @@ Add new pages by:
 
 1. Creating `.mdx` file in `content/wiki/`
 2. Adding navigation link to `WikiLayout.tsx`
-
-## Reusable Components
-
-Complex elements (tables, charts) should be React components:
-
-```tsx
-// components/wiki/WindTable.tsx
-export function WindTable() {
-    const data = {
-        /* ... */
-    };
-    return <table>{/* ... */}</table>;
-}
-```
-
-Use in MDX:
-
-```mdx
-import { WindTable } from "@/components/wiki/WindTable";
-
-<WindTable />
-```
-
-## Images
-
-Place in `public/wiki/` and reference:
-
-```mdx
-![Solar panel UI](/wiki/solar-ui.png)
-```
-
-## Styling
-
-**Automatic styling with prose:**
-
-The `prose` classes from `@tailwindcss/typography` automatically style all markdown elements:
-
-```tsx
-<article className="prose prose-lg dark:prose-invert">
-    {/* All markdown styled automatically */}
-</article>
-```
-
-**What prose handles:**
-
--   Headings (`h1`-`h6`) - Bold, proper spacing, sizing
--   Links (`a`) - Blue color, hover underline
--   Code - Gray background, proper padding, no backticks
--   Tables - Borders, header background, centered text
--   Lists - Proper bullets/numbers, spacing
--   Blockquotes - Left border, background
-
-**Dark mode:**
-
-Use `dark:prose-invert` to automatically adapt colors for dark mode.
-
-**Overriding prose styles:**
-
-Use `not-prose` for custom components that shouldn't inherit prose styles:
-
-```mdx
-<div className="not-prose">
-    <CustomComponent />
-</div>
-```
-
-**Custom prose modifications:**
-
-Override specific prose styles with utility classes:
-
-```tsx
-<article className="prose prose-lg dark:prose-invert prose-headings:text-pine">
-```
-
-Or customize globally in `src/styles/global.css` in the prose CSS custom properties and element styles.
 
 ## Best Practices
 

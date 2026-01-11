@@ -116,11 +116,10 @@ function DashboardContent() {
         <div className="p-4 md:p-8">
             {/* Title with info icon */}
             <div className="flex items-center justify-center gap-3 mb-6">
-                <h1 className="text-4xl text-foreground md:text-5xl font-bold text-center">
+                <h1 className="text-4xl md:text-5xl font-bold text-center">
                     Dashboard
                 </h1>
             </div>
-
             {/* Development info banner */}
             <InfoBanner variant="info" className="mb-6">
                 <Construction className="inline w-4 h-4" /> This game is still
@@ -144,10 +143,8 @@ function DashboardContent() {
                 with the community. You can also contact me directly
                 (felixvonsamson@gmail.com)
             </InfoBanner>
-
             {/* Weather section */}
             <WeatherSection />
-
             {/* Construction, Research, Shipments */}
             <div className="space-y-6 mb-6">
                 <DashboardSection
@@ -194,10 +191,8 @@ function DashboardContent() {
                     </DashboardSection>
                 )}
             </div>
-
             {/* Beginners guide */}
             {!capabilities?.has_network && <BeginnersGuide />}
-
             {/* Quick links grid */}
             <section className="mb-6">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -246,10 +241,8 @@ function DashboardContent() {
                     />
                 </div>
             </section>
-
             {/* Achievement progression */}
             <AchievementSection />
-
             {/* Daily quiz */}
             <DailyQuizSection />
         </div>
