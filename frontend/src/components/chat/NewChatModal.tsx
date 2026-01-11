@@ -179,7 +179,7 @@ export function NewChatModal({
                     <div className="border-t border-border">
                         <div className="max-h-60 overflow-y-auto bg-card rounded-lg">
                             {filteredPlayers.length > 0 ? (
-                                <div className="divide-y divide-gray-200 dark:divide-dark-border">
+                                <div className="divide-y divide-border">
                                     {filteredPlayers.map((player: Player) => (
                                         <button
                                             key={player.id}

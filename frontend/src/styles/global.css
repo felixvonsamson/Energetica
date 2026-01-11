@@ -18,6 +18,7 @@
        Base Color Palette (Source of Truth)
        ============================================ */
     --color-bone: #e5d9b6;
+    --color-bone-dark: #83640e;
     --color-tan-green: #a4be7b;
     --color-tan-hover: #b5ca95;
     --color-brand-green: #5f8d4e;
@@ -26,23 +27,6 @@
     --color-alert-red: #f44336;
     --color-alert-orange: #f59f00;
     --color-white: #ffffff;
-
-    /* Dark mode base colors */
-    --color-dark-text-muted: #a0a0a0;
-    --color-dark-border: #404040;
-
-    /* ============================================
-       Semantic Tokens (Auto-generate Utilities)
-       These reference :root variables defined below.
-       Tailwind generates utilities like: bg-background, text-card-bg, etc.
-       ============================================ */
-
-    /* Energetica-specific tokens (keep for backward compatibility) */
-    --color-card-bg: var(--card-bg);
-    --color-text-secondary: var(--text-secondary);
-    --color-text-muted: var(--text-muted);
-    --color-text-on-card: var(--text-on-card);
-    --color-border-default: var(--border-default);
 
     /* shadcn/ui semantic tokens (for future compatibility) */
     --color-background: var(--background);
@@ -73,24 +57,15 @@
        These values are swapped at runtime for theming
        ============================================ */
     :root {
-        /* Energetica semantic colors (light mode) */
-        --card-bg: #e5d9b6;
-
-        --text-secondary: #1b3820;
-        --text-muted: var(--color-brand-green);
-        --text-on-card: #000000;
-
-        --border-default: var(--color-tan-green);
-
         /* shadcn/ui semantic colors (light mode) */
         --background: var(--color-tan-green);
         --foreground: var(--color-pine);
 
-        --card: var(--card-bg);
-        --card-foreground: var(--text-on-card);
+        --card: var(--color-bone);
+        --card-foreground: var(--color-pine);
 
-        --popover: var(--card-bg);
-        --popover-foreground: var(--text-on-card);
+        --popover: var(--color-bone);
+        --popover-foreground: var(--color-pine);
 
         --primary: var(--color-pine);
         --primary-foreground: #ffffff;
@@ -107,8 +82,8 @@
         --destructive: var(--color-alert-red);
         --destructive-foreground: #ffffff;
 
-        --border: var(--border-default);
-        --input: var(--border-default);
+        --border: var(--color-tan-green);
+        --input: var(--color-tan-green);
         --ring: var(--color-pine);
 
         --radius: 0.5rem;
@@ -177,24 +152,15 @@
        Swaps semantic token values for dark theme
        ============================================ */
     :root.dark {
-        /* Energetica semantic colors (dark mode) */
-        --card-bg: #2d2d2d;
-
-        --text-secondary: #e5e5e5;
-        --text-muted: #a0a0a0;
-        --text-on-card: #ffffff;
-
-        --border-default: #404040;
-
         /* shadcn/ui semantic colors (dark mode) */
         --background: #0a0a0a;
         --foreground: oklch(100% 0 0);
 
-        --card: var(--card-bg);
-        --card-foreground: var(--text-on-card);
+        --card: #2d2d2d;
+        --card-foreground: #ffffff;
 
-        --popover: var(--card-bg);
-        --popover-foreground: var(--text-on-card);
+        --popover: #2d2d2d;
+        --popover-foreground: #ffffff;
 
         --primary: var(--color-brand-green);
         --primary-foreground: var(--color-white);
@@ -211,8 +177,8 @@
         --destructive: var(--color-alert-red);
         --destructive-foreground: #ffffff;
 
-        --border: var(--border-default);
-        --input: var(--border-default);
+        --border: #404040;
+        --input: #404040;
         --ring: var(--color-brand-green);
 
         --radius: 0.5rem;
@@ -295,15 +261,6 @@
 
     h1 {
         font-weight: 500;
-        color: var(--primary);
-    }
-
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-        color: var(--primary);
     }
 }
 

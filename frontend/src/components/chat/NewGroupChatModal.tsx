@@ -231,7 +231,7 @@ export function NewGroupChatModal({
                     />
                     <div className="max-h-60 overflow-y-auto border border-border rounded-lg bg-card">
                         {filteredPlayers.length > 0 ? (
-                            <div className="divide-y divide-gray-200 dark:divide-dark-border">
+                            <div className="divide-y divide-border">
                                 {filteredPlayers.map((player: Player) => {
                                     const isSelected = groupMembers.some(
                                         (m) => m.id === player.id,

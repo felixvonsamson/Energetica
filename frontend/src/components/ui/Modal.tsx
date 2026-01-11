@@ -67,13 +67,12 @@ export function Modal({
 
     return (
         <div
-            className="fixed inset-0 bg-black/50 dark:bg-neutral-800/50 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
             onClick={handleBackdropClick}
         >
             <div
                 className={cn(
-                    "bg-background rounded-lg max-w-2xl w-full p-6",
-                    "text-foreground",
+                    "bg-card text-card-foreground rounded-lg max-w-2xl w-full p-6",
                     className,
                 )}
             >
@@ -89,7 +88,7 @@ export function Modal({
                         <X className="w-6 h-6" />
                     </button>
                 </div>
-                <div className="text-base text-foreground">{children}</div>
+                <div className="text-base">{children}</div>
             </div>
         </div>
     );

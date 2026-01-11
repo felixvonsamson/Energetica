@@ -1,6 +1,6 @@
-import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
+import { InfoBanner } from "@/components/ui/InfoBanner";
 import { Modal } from "@/components/ui/Modal";
 import {
     useLeaveElectricityMarket,
@@ -76,58 +76,54 @@ export function LeaveMarketModal({ isOpen, onClose }: LeaveMarketModalProps) {
                 <div className="space-y-4">
                     {/* Error message */}
                     {error && (
-                        <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-lg text-sm animate-in fade-in duration-200">
+                        <InfoBanner variant="error" className="text-sm">
                             {error}
-                        </div>
+                        </InfoBanner>
                     )}
 
                     {/* Confirmation text */}
-                    <div className="text-white">
-                        <p>
-                            Are you sure you want to leave{" "}
-                            <span className="font-semibold">{market.name}</span>
-                            ?
-                        </p>
-                    </div>
+                    <p>
+                        Are you sure you want to leave{" "}
+                        <span className="font-semibold">{market.name}</span>?
+                    </p>
 
-                    {/* Last member warning - two separate divs */}
+                    {/* Last member warning */}
                     {isLastMember && (
-                        <div className="p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 rounded-lg flex gap-3 animate-in fade-in duration-200">
-                            <AlertTriangle className="w-5 h-5 text-red-700 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                        <InfoBanner variant="warning">
                             <div>
-                                <p className="font-semibold text-red-700 dark:text-red-400 mb-1">
+                                <p className="font-semibold mb-1">
                                     Market will be permanently deleted
                                 </p>
-                                <p className="text-sm text-red-700 dark:text-red-400">
+                                <p className="text-sm">
                                     You are the last member of{" "}
                                     <span className="font-semibold">
                                         {market.name}
                                     </span>
                                     .
                                 </p>
-                                <p className="text-sm text-red-700 dark:text-red-400">
+                                <p className="text-sm">
                                     <span className="font-semibold">
                                         {market.name}
                                     </span>{" "}
                                     will be permanently deleted when you leave.
                                 </p>
                             </div>
-                        </div>
+                        </InfoBanner>
                     )}
 
                     {/* Action buttons */}
-                    <div className="flex gap-3 justify-end pt-4 border-t border-white/20">
+                    <div className="flex gap-3 justify-end pt-4 border-t border-border">
                         <button
                             onClick={onClose}
                             disabled={isPending}
-                            className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-gray-300 dark:hover:bg-card transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/70 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleConfirm}
                             disabled={isPending}
-                            className="px-4 py-2 rounded-lg bg-destructive hover:bg-destructive/80 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors"
+                            className="px-4 py-2 rounded-lg bg-destructive hover:bg-destructive/70 disabled:opacity-50 disabled:cursor-not-allowed text-destructive-foreground font-semibold transition-colors"
                         >
                             {isPending ? "Leaving..." : "Leave Market"}
                         </button>
