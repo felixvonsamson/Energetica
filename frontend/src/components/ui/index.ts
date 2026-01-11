@@ -1,6 +1,7 @@
 export { Card, CardHeader, CardTitle, CardContent } from "./Card";
 export { Button } from "./Button";
 export { Modal } from "./Modal";
+export { CatalogGrid } from "./CatalogGrid";
 export { InfoBanner } from "./InfoBanner";
 export { EmptyState } from "./EmptyState";
 export { ProgressBar } from "./ProgressBar";

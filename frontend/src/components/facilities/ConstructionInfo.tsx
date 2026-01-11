@@ -20,7 +20,7 @@ export function ConstructionInfo({
     constructionPollution,
 }: ConstructionInfoProps) {
     return (
-        <div className="flex flex-wrap gap-4 text-sm">
+        <div className="flex flex-wrap gap-4 w-full justify-around">
             <div className="flex items-center gap-2">
                 <span className="text-foreground">Duration:</span>
                 <strong>
@@ -28,9 +28,9 @@ export function ConstructionInfo({
                 </strong>
             </div>
             <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4" />
+                <span className="text-foreground">Power:</span>
                 <strong>{formatPower(constructionPower)}</strong>
-                <span className="text-xs text-gray-500">(Power)</span>
+                <Zap className="w-4 h-4" />
             </div>
             {constructionPollution !== undefined &&
                 constructionPollution !== null && (

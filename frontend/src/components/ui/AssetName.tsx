@@ -116,6 +116,8 @@ export function FacilityName({ facility, ...props }: FacilityNameProps) {
 export interface TechnologyNameProps extends Omit<AssetNameProps, "assetId"> {
     /** The technology type from the API */
     technology: string;
+    /** Optional technology level to display */
+    level?: number;
 }
 
 /**
@@ -124,8 +126,29 @@ export interface TechnologyNameProps extends Omit<AssetNameProps, "assetId"> {
  *
  * @example
  *     <TechnologyName technology="nuclear_engineering" mode="auto" />;
+ *
+ * @example
+ *     // With level display
+ *     <TechnologyName
+ *         technology="nuclear_engineering"
+ *         level={3}
+ *         mode="auto"
+ *     />;
  */
-export function TechnologyName({ technology, ...props }: TechnologyNameProps) {
+export function TechnologyName({
+    technology,
+    level,
+    ...props
+}: TechnologyNameProps) {
+    if (level !== undefined) {
+        return (
+            <>
+                <AssetName assetId={technology} {...props} />
+                <span> lvl. {level}</span>
+            </>
+        );
+    }
+
     return <AssetName assetId={technology} {...props} />;
 }
 

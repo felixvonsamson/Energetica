@@ -3,7 +3,8 @@
  * extraction, and functional facility pages.
  */
 
-export { FacilityCard } from "./FacilityCard";
+export { FacilityItem } from "./FacilityItem";
+export { FacilityDetailModal } from "./FacilityDetailModal";
 export { RequirementsDisplay } from "./RequirementsDisplay";
 export { ConstructionInfo } from "./ConstructionInfo";
 export { ResourceStockIndicators } from "./ResourceStockIndicators";

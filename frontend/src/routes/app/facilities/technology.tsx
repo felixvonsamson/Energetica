@@ -1,11 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/GameLayout";
 import {
-    TechnologyCard,
+    TechnologyItem,
+    TechnologyDetailModal,
     TechnologyEffectsTable,
 } from "@/components/technologies";
+import { CatalogGrid } from "@/components/ui";
 import { useTechnologiesCatalog } from "@/hooks/useProjects";
+import type { ApiSchema } from "@/types/api-helpers";
 
 function TechnologiesHelp() {
     return (
@@ -15,10 +19,8 @@ function TechnologiesHelp() {
                 thanks to the laboratory and their specific information.
             </p>
             <p>
-                Each technology has a unique effect on a given set of
-                facilities. When clicking on a specific tile, it will extend the
-                tile and show you more information about the technology as well
-                as a button to start the research.
+                Click on any technology to open a detailed view with full
+                specifications and a button to start research.
             </p>
             <p>
                 Technologies usually require specific levels of other
@@ -61,6 +63,8 @@ function TechnologyPage() {
     );
 }
 
+type Technology = ApiSchema<"TechnologyCatalogOut">;
+
 function TechnologyContent() {
     const {
         data: catalogData,
@@ -69,6 +73,8 @@ function TechnologyContent() {
     } = useTechnologiesCatalog();
 
     const technologies = catalogData?.technologies ?? [];
+    const [selectedTechnology, setSelectedTechnology] =
+        useState<Technology | null>(null);
 
     return (
         <div className="p-4 md:p-8">
@@ -96,29 +102,42 @@ function TechnologyContent() {
                 </div>
             )}
 
-            {/* Technologies list */}
+            {/* Technologies grid */}
             {!isCatalogLoading && technologies.length > 0 && (
-                <div className="space-y-4">
-                    {technologies.map((technology) => (
-                        <TechnologyCard
-                            key={technology.name}
-                            technology={technology}
+                <>
+                    <CatalogGrid>
+                        {technologies.map((technology) => (
+                            <TechnologyItem
+                                key={technology.name}
+                                technologyName={technology.name}
+                                price={technology.price}
+                                isLocked={
+                                    technology.requirements_status ===
+                                    "unsatisfied"
+                                }
+                                discount={technology.discount}
+                                level={technology.level}
+                                onClick={() =>
+                                    setSelectedTechnology(technology)
+                                }
+                            />
+                        ))}
+                    </CatalogGrid>
+
+                    {/* Detail Modal */}
+                    {selectedTechnology && (
+                        <TechnologyDetailModal
+                            isOpen={selectedTechnology !== null}
+                            onClose={() => setSelectedTechnology(null)}
+                            technology={selectedTechnology}
                             renderEffectsTable={(technology) => (
                                 <TechnologyEffectsTable
                                     technology={technology}
                                 />
                             )}
-                            extraHeaderContent={(technology) => (
-                                <span className="text-lg">
-                                    lvl.{" "}
-                                    <em className="text-xl">
-                                        {technology.level}
-                                    </em>
-                                </span>
-                            )}
                         />
-                    ))}
-                </div>
+                    )}
+                </>
             )}
         </div>
     );

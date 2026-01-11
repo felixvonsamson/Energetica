@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 
-import { FacilityCard } from "@/components/facilities/FacilityCard";
+import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { CashFlow, Duration } from "@/components/ui";
+import { CashFlow, Duration, CatalogGrid } from "@/components/ui";
 import { useStorageFacilitiesCatalog } from "@/hooks/useProjects";
 import { formatPower, formatEnergy } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -15,9 +16,8 @@ function StorageFacilitiesHelp() {
                 energy and their respective information.
             </p>
             <p>
-                When clicking on a specific tile, it will extend the tile and
-                show you more information about the facility as well as a button
-                to start the construction of the facility.
+                Click on any facility to open a detailed view with full
+                specifications and a button to start construction.
             </p>
             <p>
                 Some facilities might be locked and require certain technologies
@@ -70,6 +70,13 @@ function StorageFacilitiesContent() {
     } = useStorageFacilitiesCatalog();
 
     const facilities = catalogData?.storage_facilities ?? [];
+    const [selectedFacility, setSelectedFacility] =
+        useState<StorageFacility | null>(null);
+
+    // Image extension map for facilities that use PNG instead of JPG
+    const imageExtensionMap = {
+        small_pumped_hydro: "png" as const,
+    };
 
     return (
         <div className="p-4 md:p-8">
@@ -97,25 +104,50 @@ function StorageFacilitiesContent() {
                 </div>
             )}
 
-            {/* Facilities list */}
+            {/* Facilities grid */}
             {!isCatalogLoading && facilities.length > 0 && (
-                <div className="space-y-4">
-                    {facilities.map((facility) => (
-                        <FacilityCard
-                            key={facility.name}
-                            facility={facility}
+                <>
+                    <CatalogGrid>
+                        {facilities.map((facility) => (
+                            <FacilityItem
+                                key={facility.name}
+                                facilityName={facility.name}
+                                facilityType="storage"
+                                price={facility.price}
+                                isLocked={
+                                    facility.requirements_status ===
+                                    "unsatisfied"
+                                }
+                                imageExtension={
+                                    imageExtensionMap[
+                                        facility.name as keyof typeof imageExtensionMap
+                                    ]
+                                }
+                                onClick={() => setSelectedFacility(facility)}
+                            />
+                        ))}
+                    </CatalogGrid>
+
+                    {/* Detail Modal */}
+                    {selectedFacility && (
+                        <FacilityDetailModal
+                            isOpen={selectedFacility !== null}
+                            onClose={() => setSelectedFacility(null)}
+                            facility={selectedFacility}
                             facilityType="storage"
                             renderStatsTable={(facility) => (
                                 <StorageFacilityStatsTable
                                     facility={facility}
                                 />
                             )}
-                            imageExtensionMap={{
-                                small_pumped_hydro: "png",
-                            }}
+                            imageExtension={
+                                imageExtensionMap[
+                                    selectedFacility.name as keyof typeof imageExtensionMap
+                                ]
+                            }
                         />
-                    ))}
-                </div>
+                    )}
+                </>
             )}
         </div>
     );

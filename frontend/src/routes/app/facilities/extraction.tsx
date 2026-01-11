@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Info } from "lucide-react";
+import { useState } from "react";
 
-import { FacilityCard } from "@/components/facilities/FacilityCard";
+import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { ResourceName, CashFlow, Duration } from "@/components/ui";
+import { ResourceName, CashFlow, Duration, CatalogGrid } from "@/components/ui";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { useExtractionFacilitiesCatalog } from "@/hooks/useProjects";
 import { formatPower, formatMass } from "@/lib/format-utils";
@@ -18,9 +19,8 @@ function ExtractionFacilitiesHelp() {
                 information.
             </p>
             <p>
-                When clicking on a specific tile, it will extend the tile and
-                show you more information about the facility as well as a button
-                to start the construction of the facility.
+                Click on any facility to open a detailed view with full
+                specifications and a button to start construction.
             </p>
             <p>
                 Some facilities might be locked and require certain technologies
@@ -75,6 +75,8 @@ function ExtractionFacilitiesContent() {
     const { data: resourcesData } = usePlayerResources();
 
     const facilities = catalogData?.extraction_facilities ?? [];
+    const [selectedFacility, setSelectedFacility] =
+        useState<ExtractionFacility | null>(null);
 
     return (
         <div className="p-4 md:p-8">
@@ -102,13 +104,31 @@ function ExtractionFacilitiesContent() {
                 </div>
             )}
 
-            {/* Facilities list */}
+            {/* Facilities grid */}
             {!isCatalogLoading && facilities.length > 0 && (
-                <div className="space-y-4">
-                    {facilities.map((facility) => (
-                        <FacilityCard
-                            key={facility.name}
-                            facility={facility}
+                <>
+                    <CatalogGrid>
+                        {facilities.map((facility) => (
+                            <FacilityItem
+                                key={facility.name}
+                                facilityName={facility.name}
+                                facilityType="extraction"
+                                price={facility.price}
+                                isLocked={
+                                    facility.requirements_status ===
+                                    "unsatisfied"
+                                }
+                                onClick={() => setSelectedFacility(facility)}
+                            />
+                        ))}
+                    </CatalogGrid>
+
+                    {/* Detail Modal */}
+                    {selectedFacility && (
+                        <FacilityDetailModal
+                            isOpen={selectedFacility !== null}
+                            onClose={() => setSelectedFacility(null)}
+                            facility={selectedFacility}
                             facilityType="extraction"
                             renderDescription={(facility) => (
                                 <div>
@@ -157,8 +177,8 @@ function ExtractionFacilitiesContent() {
                                 />
                             )}
                         />
-                    ))}
-                </div>
+                    )}
+                </>
             )}
         </div>
     );

@@ -1,12 +1,20 @@
 import { ExternalLink } from "lucide-react";
-import { useState, ReactNode } from "react";
+import { ReactNode } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
-import { Card, Money, TechnologyName, TechnologyIcon } from "@/components/ui";
+import {
+    Modal,
+    TechnologyName,
+    TechnologyIcon,
+    Money,
+    CardContent,
+} from "@/components/ui";
 import { useQueueProject } from "@/hooks/useProjects";
 import { ProjectType, Requirement } from "@/types/projects";
 
-interface TechnologyCardProps<T> {
+interface TechnologyDetailModalProps<T> {
+    isOpen: boolean;
+    onClose: () => void;
     technology: T & {
         name: ProjectType;
         price: number;
@@ -22,78 +30,75 @@ interface TechnologyCardProps<T> {
         prevalence?: number | null;
     };
     renderEffectsTable: (technology: T) => ReactNode;
-    extraHeaderContent?: (technology: T) => ReactNode;
 }
 
-export function TechnologyCard<T>({
+/**
+ * Modal displaying detailed technology information. Shows full specs,
+ * requirements, research info, and action buttons.
+ */
+export function TechnologyDetailModal<T>({
+    isOpen,
+    onClose,
     technology,
     renderEffectsTable,
-    extraHeaderContent,
-}: TechnologyCardProps<T>) {
-    const [isExpanded, setIsExpanded] = useState(false);
+}: TechnologyDetailModalProps<T>) {
     const queueProjectMutation = useQueueProject();
 
     const handleResearch = () => {
         queueProjectMutation.mutate({
             type: technology.name,
         });
+        onClose();
     };
 
     const imageUrl = `/static/images/technologies/${technology.name}.jpg`;
 
     return (
-        <Card
-            className="cursor-pointer hover:border-brand-green transition-colors"
-            onClick={() => setIsExpanded(!isExpanded)}
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title=""
+            className="max-w-4xl max-h-[90vh] overflow-y-auto"
         >
-            <div className="flex flex-col lg:flex-row gap-4">
+            <div className="space-y-6">
                 {/* Image */}
-                <div className="shrink-0">
+                <div className="w-full">
                     <img
                         src={imageUrl}
                         alt={`${technology.name} technology`}
-                        className="w-full lg:w-64 h-auto rounded"
+                        className="w-full h-64 object-cover rounded-lg"
                         onError={(e) => {
-                            // Fallback if image doesn't exist
                             e.currentTarget.style.display = "none";
                         }}
                     />
                 </div>
 
-                {/* Main Info */}
-                <div className="grow space-y-3">
-                    {/* Header */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
+                {/* Header */}
+                <div className="flex flex-wrap items-center gap-3 justify-between">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-bold flex items-center gap-2">
                             <TechnologyIcon
                                 technology={technology.name}
-                                size={24}
+                                size={28}
                             />
                             <TechnologyName
                                 technology={technology.name}
+                                level={technology.level}
                                 mode="long"
                             />
                         </h2>
-                        {extraHeaderContent && extraHeaderContent(technology)}
-                        <a
-                            href={technology.wikipedia_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-white hover:opacity-80"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <ExternalLink className="w-5 h-5" />
-                        </a>
-                        <div className="text-lg font-semibold">
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="text-xl font-semibold">
                             <Money
                                 amount={technology.price}
-                                iconSize="md"
+                                iconSize="lg"
                                 long
                             />
                         </div>
                         {/* Knowledge spillover discount */}
                         {technology.discount && (
-                            <div className="text-green-500 text-sm">
+                            <div className="text-green-500 text-base">
                                 <em>
                                     (-
                                     {Math.round(
@@ -109,10 +114,21 @@ export function TechnologyCard<T>({
                                 )}
                             </div>
                         )}
+                        <a
+                            href={technology.wikipedia_link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="hover:opacity-80"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <ExternalLink className="w-5 h-5" />
+                        </a>
                     </div>
+                </div>
 
-                    {/* Description & Affected Facilities */}
-                    <div className="text-sm space-y-2">
+                {/* Description & Affected Facilities */}
+                <CardContent>
+                    <div className="space-y-2">
                         <div
                             dangerouslySetInnerHTML={{
                                 __html: technology.description,
@@ -130,59 +146,53 @@ export function TechnologyCard<T>({
                                 </div>
                             )}
                     </div>
+                </CardContent>
 
-                    {/* Requirements */}
-                    {technology.requirements_status !== "satisfied" && (
+                {/* Requirements */}
+                {technology.requirements_status !== "satisfied" && (
+                    <CardContent>
                         <RequirementsDisplay
                             requirements={technology.requirements}
                         />
-                    )}
-                </div>
-
-                {/* Stats Table (visible on desktop when not expanded) */}
-                {!isExpanded && (
-                    <div className="hidden xl:block shrink-0">
-                        {renderEffectsTable(technology)}
-                    </div>
+                    </CardContent>
                 )}
-            </div>
 
-            {/* Expanded Content */}
-            {isExpanded && (
-                <div className="mt-6 pt-6 border-t border-border/50">
-                    {/* Research Info & Button */}
-                    <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleResearch();
-                            }}
-                            disabled={
-                                technology.requirements_status === "unsatisfied"
-                            }
-                            className={`px-6 py-3 rounded font-bold text-white transition-colors ${
-                                technology.requirements_status === "unsatisfied"
-                                    ? "bg-destructive cursor-not-allowed"
-                                    : "bg-brand-green hover:bg-brand-green/80"
-                            }`}
-                        >
-                            {technology.requirements_status === "unsatisfied"
-                                ? "Locked"
-                                : technology.requirements_status === "queued"
-                                  ? "Queue Research"
-                                  : "Start Research"}
-                        </button>
+                {/* Effects Table */}
+                <CardContent className="flex justify-around">
+                    <div className="w-xl">{renderEffectsTable(technology)}</div>
+                </CardContent>
 
+                {/* Research Info */}
+                <CardContent className="flex justify-around">
+                    <div className="w-xl">
                         <ConstructionInfo
                             constructionTime={technology.construction_time}
                             constructionPower={technology.construction_power}
                         />
                     </div>
+                </CardContent>
 
-                    {/* Full Effects Table */}
-                    {renderEffectsTable(technology)}
+                {/* Action Button */}
+                <div className="flex justify-center pt-4 border-t border-border/50">
+                    <button
+                        onClick={handleResearch}
+                        disabled={
+                            technology.requirements_status === "unsatisfied"
+                        }
+                        className={`px-8 py-3 rounded-lg font-bold text-white transition-colors text-lg ${
+                            technology.requirements_status === "unsatisfied"
+                                ? "bg-destructive cursor-not-allowed"
+                                : "bg-brand-green hover:bg-brand-green/80"
+                        }`}
+                    >
+                        {technology.requirements_status === "unsatisfied"
+                            ? "Locked"
+                            : technology.requirements_status === "queued"
+                              ? "Queue Research"
+                              : "Start Research"}
+                    </button>
                 </div>
-            )}
-        </Card>
+            </div>
+        </Modal>
     );
 }

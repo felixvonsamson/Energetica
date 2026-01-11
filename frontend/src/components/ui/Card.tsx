@@ -30,7 +30,7 @@ interface CardHeaderProps {
 }
 
 export function CardHeader({ children, className }: CardHeaderProps) {
-    return <div className={cn("mb-4", className)}>{children}</div>;
+    return <div className={cn("mb-4 text-xl", className)}>{children}</div>;
 }
 
 interface CardTitleProps {

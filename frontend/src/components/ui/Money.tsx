@@ -51,10 +51,7 @@ export function Money({
         >
             {formatMoney(amount, long)}
             <DollarSign
-                className={cn(
-                    sizeClasses[iconSize],
-                    "text-amber-500 dark:text-amber-400",
-                )}
+                className={cn(sizeClasses[iconSize])}
                 strokeWidth={2.5}
             />
         </span>

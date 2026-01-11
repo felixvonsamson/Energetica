@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 
-import { FacilityCard } from "@/components/facilities/FacilityCard";
+import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Money } from "@/components/ui";
+import { Money, CatalogGrid } from "@/components/ui";
 import { useFunctionalFacilitiesCatalog } from "@/hooks/useProjects";
 import {
     formatUpgradePower,
@@ -65,6 +66,8 @@ function FunctionalFacilitiesContent() {
     } = useFunctionalFacilitiesCatalog();
 
     const facilities = catalogData?.functional_facilities ?? [];
+    const [selectedFacility, setSelectedFacility] =
+        useState<FunctionalFacility | null>(null);
 
     return (
         <div className="p-4 md:p-8">
@@ -92,13 +95,31 @@ function FunctionalFacilitiesContent() {
                 </div>
             )}
 
-            {/* Facilities list */}
+            {/* Facilities grid */}
             {!isCatalogLoading && facilities.length > 0 && (
-                <div className="space-y-4">
-                    {facilities.map((facility) => (
-                        <FacilityCard
-                            key={facility.name}
-                            facility={facility}
+                <>
+                    <CatalogGrid>
+                        {facilities.map((facility) => (
+                            <FacilityItem
+                                key={facility.name}
+                                facilityName={facility.name}
+                                facilityType="functional"
+                                price={facility.price}
+                                isLocked={
+                                    facility.requirements_status ===
+                                    "unsatisfied"
+                                }
+                                onClick={() => setSelectedFacility(facility)}
+                            />
+                        ))}
+                    </CatalogGrid>
+
+                    {/* Detail Modal */}
+                    {selectedFacility && (
+                        <FacilityDetailModal
+                            isOpen={selectedFacility !== null}
+                            onClose={() => setSelectedFacility(null)}
+                            facility={selectedFacility}
                             facilityType="functional"
                             renderDescription={(facility) => {
                                 // Custom descriptions for laboratory and warehouse
@@ -159,8 +180,8 @@ function FunctionalFacilitiesContent() {
                                 </span>
                             )}
                         />
-                    ))}
-                </div>
+                    )}
+                </>
             )}
         </div>
     );
