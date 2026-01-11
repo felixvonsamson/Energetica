@@ -5,6 +5,7 @@
 
 export { FacilityItem } from "./FacilityItem";
 export { FacilityDetailModal } from "./FacilityDetailModal";
+export { FacilityComparisonModal } from "./FacilityComparisonModal";
 export { RequirementsDisplay } from "./RequirementsDisplay";
 export { ConstructionInfo } from "./ConstructionInfo";
 export { ResourceStockIndicators } from "./ResourceStockIndicators";

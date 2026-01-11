@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, GitCompareArrows } from "lucide-react";
 import { ReactNode } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
@@ -31,6 +31,7 @@ interface FacilityDetailModalProps<T> {
     renderStatsTable: (facility: T) => ReactNode;
     imageExtension?: "png" | "jpg";
     extraHeaderContent?: (facility: T) => ReactNode;
+    onCompare?: () => void;
 }
 
 /**
@@ -46,6 +47,7 @@ export function FacilityDetailModal<T>({
     renderStatsTable,
     imageExtension = "jpg",
     extraHeaderContent,
+    onCompare,
 }: FacilityDetailModalProps<T>) {
     const queueProjectMutation = useQueueProject();
 
@@ -142,8 +144,17 @@ export function FacilityDetailModal<T>({
                     </div>
                 </CardContent>
 
-                {/* Action Button */}
-                <div className="flex justify-center pt-4 border-t border-border/50">
+                {/* Action Buttons */}
+                <div className="flex justify-center gap-3 pt-4 border-t border-border/50">
+                    {onCompare && (
+                        <button
+                            onClick={onCompare}
+                            className="px-6 py-3 rounded-lg font-semibold bg-muted hover:bg-muted/80 transition-colors text-lg flex items-center gap-2"
+                        >
+                            <GitCompareArrows className="w-5 h-5" />
+                            Compare
+                        </button>
+                    )}
                     <button
                         onClick={handleConstruction}
                         disabled={

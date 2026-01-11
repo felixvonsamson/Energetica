@@ -4,7 +4,7 @@ import { cn } from "@/lib/classname-utils";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children: ReactNode;
-    variant?: "primary" | "secondary" | "destructive" | "outline";
+    variant?: "primary" | "secondary" | "destructive" | "outline" | "link";
     size?: "sm" | "md" | "lg";
     isLoading?: boolean;
 }
@@ -38,6 +38,7 @@ export function Button({
             "bg-destructive hover:bg-destructive/90 text-destructive-foreground disabled:pointer-events-none disabled:opacity-50",
         outline:
             "border border-border bg-transparent hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50",
+        link: "text-foreground underline-offset-4 hover:underline disabled:pointer-events-none disabled:opacity-50",
     };
 
     const sizeStyles = {
@@ -52,7 +53,7 @@ export function Button({
             className={cn(
                 baseStyles,
                 variantStyles[variant],
-                sizeStyles[size],
+                variant !== "link" && sizeStyles[size],
                 className,
             )}
             {...props}

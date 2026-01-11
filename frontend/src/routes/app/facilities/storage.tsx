@@ -3,11 +3,16 @@ import {
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
+import { GitCompareArrows } from "lucide-react";
 import { useMemo } from "react";
 
-import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
+import {
+    FacilityItem,
+    FacilityDetailModal,
+    FacilityComparisonModal,
+} from "@/components/facilities";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { CashFlow, Duration, CatalogGrid } from "@/components/ui";
+import { CashFlow, Duration, CatalogGrid, Money } from "@/components/ui";
 import { useStorageFacilitiesCatalog } from "@/hooks/useProjects";
 import { formatPower, formatEnergy } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -56,8 +61,10 @@ export const Route = createFileRoute("/app/facilities/storage")({
     },
     validateSearch: (
         search: Record<string, unknown>,
-    ): { facility?: string } => ({
+    ): { facility?: string; compare?: string } => ({
         facility: search.facility ? String(search.facility) : undefined,
+        compare:
+            search.compare !== undefined ? String(search.compare) : undefined,
     }),
 });
 
@@ -73,7 +80,9 @@ type StorageFacility = ApiSchema<"StorageFacilityCatalogOut">;
 
 function StorageFacilitiesContent() {
     const navigate = useNavigate({ from: "/app/facilities/storage" });
-    const { facility } = useSearch({ from: "/app/facilities/storage" });
+    const { facility, compare } = useSearch({
+        from: "/app/facilities/storage",
+    });
 
     const {
         data: catalogData,
@@ -92,6 +101,23 @@ function StorageFacilitiesContent() {
         [facilities, facility],
     );
 
+    // Parse comparison facility names from URL param
+    const compareNames = useMemo(
+        () => (compare ? compare.split(",").filter(Boolean) : []),
+        [compare],
+    );
+
+    const handleComparisonChange = (facilityNames: string[]) => {
+        navigate({
+            search: {
+                compare:
+                    facilityNames.length > 0
+                        ? facilityNames.join(",")
+                        : undefined,
+            },
+        });
+    };
+
     // Image extension map for facilities that use PNG instead of JPG
     const imageExtensionMap = {
         small_pumped_hydro: "png" as const,
@@ -104,6 +130,17 @@ function StorageFacilitiesContent() {
                 <h1 className="text-4xl md:text-5xl font-bold text-center">
                     Storage Facilities
                 </h1>
+                <button
+                    onClick={() =>
+                        navigate({
+                            search: { compare: "" },
+                        })
+                    }
+                    className="px-4 py-2 rounded-lg bg-brand-green text-white font-semibold hover:bg-brand-green/80 transition-colors flex items-center gap-2"
+                >
+                    <GitCompareArrows className="w-5 h-5" />
+                    Compare
+                </button>
             </div>
 
             {/* TODO: Under construction facilities will show here */}
@@ -158,6 +195,13 @@ function StorageFacilitiesContent() {
                             onClose={() => navigate({ search: {} })}
                             facility={selectedFacility}
                             facilityType="storage"
+                            onCompare={() =>
+                                navigate({
+                                    search: {
+                                        compare: selectedFacility.name,
+                                    },
+                                })
+                            }
                             renderStatsTable={(facility) => (
                                 <StorageFacilityStatsTable
                                     facility={facility}
@@ -170,6 +214,25 @@ function StorageFacilitiesContent() {
                             }
                         />
                     )}
+
+                    {/* Comparison Modal */}
+                    <FacilityComparisonModal
+                        isOpen={compare !== undefined}
+                        onClose={() => navigate({ search: {} })}
+                        facilities={facilities}
+                        facilityType="storage"
+                        selectedFacilityNames={compareNames}
+                        onSelectionChange={handleComparisonChange}
+                        onFacilityClick={(facilityName) =>
+                            navigate({ search: { facility: facilityName } })
+                        }
+                        getFacilityName={(facility) => facility.name}
+                        renderComparisonRows={(selectedFacilities) => (
+                            <StorageFacilityComparisonRows
+                                facilities={selectedFacilities}
+                            />
+                        )}
+                    />
                 </>
             )}
         </div>
@@ -250,5 +313,155 @@ function StorageFacilityStatsTable({
                 </tbody>
             </table>
         </div>
+    );
+}
+
+interface StorageFacilityComparisonRowsProps {
+    facilities: StorageFacility[];
+}
+
+function StorageFacilityComparisonRows({
+    facilities,
+}: StorageFacilityComparisonRowsProps) {
+    return (
+        <>
+            {/* Price */}
+            <tr className="border-b border-border/30">
+                <td className="py-2 px-4 font-semibold bg-muted/30 sticky left-0">
+                    Price
+                </td>
+                {facilities.map((facility) => (
+                    <td
+                        key={facility.name}
+                        className="py-2 px-4 text-center bg-muted/30"
+                    >
+                        <Money amount={facility.price} long />
+                    </td>
+                ))}
+            </tr>
+
+            {/* Storage Capacity */}
+            <tr className="border-b border-border/30">
+                <td className="py-2 px-4 font-semibold bg-muted/30 sticky left-0">
+                    Storage capacity
+                </td>
+                {facilities.map((facility) => (
+                    <td
+                        key={facility.name}
+                        className="py-2 px-4 text-center font-mono bg-muted/30"
+                    >
+                        {formatEnergy(facility.storage_capacity)}
+                    </td>
+                ))}
+            </tr>
+
+            {/* Max Generation */}
+            <tr className="border-b border-border/30">
+                <td className="py-2 px-4 font-semibold bg-muted/30 sticky left-0">
+                    Max generation
+                </td>
+                {facilities.map((facility) => (
+                    <td
+                        key={facility.name}
+                        className="py-2 px-4 text-center font-mono bg-muted/30"
+                    >
+                        {formatPower(facility.power_generation)}
+                    </td>
+                ))}
+            </tr>
+
+            {/* Ramping Speed */}
+            <tr className="border-b border-border/30">
+                <td className="py-2 px-4 font-semibold bg-muted/30 sticky left-0">
+                    Ramping speed
+                </td>
+                {facilities.map((facility) => (
+                    <td
+                        key={facility.name}
+                        className="py-2 px-4 text-center font-mono bg-muted/30"
+                    >
+                        {facility.ramping_speed !== undefined &&
+                        facility.ramping_speed !== null
+                            ? `${formatPower(facility.ramping_speed)}/min`
+                            : "N/A"}
+                    </td>
+                ))}
+            </tr>
+
+            {/* Efficiency */}
+            <tr className="border-b border-border/30">
+                <td className="py-2 px-4 font-semibold bg-muted/30 sticky left-0">
+                    Efficiency
+                </td>
+                {facilities.map((facility) => (
+                    <td
+                        key={facility.name}
+                        className="py-2 px-4 text-center font-mono bg-muted/30"
+                    >
+                        {Math.round(facility.efficiency)}%
+                    </td>
+                ))}
+            </tr>
+
+            {/* Operation Cost */}
+            <tr className="border-b border-border/30">
+                <td className="py-2 px-4 font-semibold bg-muted/30 sticky left-0">
+                    Operation cost
+                </td>
+                {facilities.map((facility) => (
+                    <td
+                        key={facility.name}
+                        className="py-2 px-4 text-center bg-muted/30"
+                    >
+                        <CashFlow amountPerTick={facility.operating_costs} />
+                    </td>
+                ))}
+            </tr>
+
+            {/* Construction Time */}
+            <tr className="border-b border-border/30">
+                <td className="py-2 px-4 font-semibold bg-muted/30 sticky left-0">
+                    Construction time
+                </td>
+                {facilities.map((facility) => (
+                    <td
+                        key={facility.name}
+                        className="py-2 px-4 text-center font-mono bg-muted/30"
+                    >
+                        <Duration ticks={facility.construction_time} />
+                    </td>
+                ))}
+            </tr>
+
+            {/* Construction Power */}
+            <tr className="border-b border-border/30">
+                <td className="py-2 px-4 font-semibold bg-muted/30 sticky left-0">
+                    Construction power
+                </td>
+                {facilities.map((facility) => (
+                    <td
+                        key={facility.name}
+                        className="py-2 px-4 text-center font-mono bg-muted/30"
+                    >
+                        {formatPower(facility.construction_power)}
+                    </td>
+                ))}
+            </tr>
+
+            {/* Lifespan */}
+            <tr>
+                <td className="py-2 px-4 font-semibold bg-muted/30 sticky left-0">
+                    Lifespan
+                </td>
+                {facilities.map((facility) => (
+                    <td
+                        key={facility.name}
+                        className="py-2 px-4 text-center font-mono bg-muted/30"
+                    >
+                        <Duration ticks={facility.lifespan} />
+                    </td>
+                ))}
+            </tr>
+        </>
     );
 }
