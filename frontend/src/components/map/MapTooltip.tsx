@@ -113,7 +113,7 @@ export function MapTooltip({
                 width: `${TOOLTIP_WIDTH}px`,
             }}
         >
-            <div className="bg-card border border-border p-4 rounded shadow-lg">
+            <div className="bg-card border border-border px-6 py-3 rounded shadow-lg">
                 {/* Title */}
                 <div className="text-center text-xl mb-3">
                     {username ? (
@@ -128,8 +128,8 @@ export function MapTooltip({
                 {/* Resources */}
                 <div className="space-y-2">
                     {resources.map((resource) => {
-                        const barWidth =
-                            (resource.value / resource.maxValue) * 180;
+                        const barWidthPercent =
+                            (resource.value / resource.maxValue) * 100;
                         return (
                             <div key={resource.name}>
                                 <div className="flex justify-between text-foreground text-sm mb-1">
@@ -140,7 +140,7 @@ export function MapTooltip({
                                     <div
                                         className="absolute h-full rounded"
                                         style={{
-                                            width: `${barWidth}px`,
+                                            width: `${barWidthPercent}%`,
                                             backgroundColor: resource.color,
                                         }}
                                     />
