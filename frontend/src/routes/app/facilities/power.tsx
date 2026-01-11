@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ResourceStockIndicators } from "@/components/facilities";
 import { FacilityCard } from "@/components/facilities/FacilityCard";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { CashFlow } from "@/components/ui";
+import { CashFlow, TogglingDuration } from "@/components/ui";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { usePowerFacilitiesCatalog } from "@/hooks/useProjects";
 import { formatPower, formatMass } from "@/lib/format-utils";
@@ -173,11 +173,6 @@ interface PowerFacilityStatsTableProps {
 }
 
 function PowerFacilityStatsTable({ facility }: PowerFacilityStatsTableProps) {
-    // TODO: Format days properly when we have game constants
-    const formatDays = (ticks: number) => {
-        return Math.round(ticks / 100); // Placeholder
-    };
-
     return (
         <div className="overflow-x-auto">
             <table className="min-w-full text-sm border-collapse">
@@ -283,7 +278,7 @@ function PowerFacilityStatsTable({ facility }: PowerFacilityStatsTableProps) {
                     <tr>
                         <td className="py-2 px-4 font-semibold">Lifespan</td>
                         <td className="py-2 px-4 text-center font-mono">
-                            {formatDays(facility.lifespan)} days
+                            <TogglingDuration ticks={facility.lifespan} />
                         </td>
                     </tr>
                 </tbody>

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { FacilityCard } from "@/components/facilities/FacilityCard";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { CashFlow } from "@/components/ui";
+import { CashFlow, Duration } from "@/components/ui";
 import { useStorageFacilitiesCatalog } from "@/hooks/useProjects";
 import { formatPower, formatEnergy } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -128,11 +128,6 @@ interface StorageFacilityStatsTableProps {
 function StorageFacilityStatsTable({
     facility,
 }: StorageFacilityStatsTableProps) {
-    // TODO: Format days properly when we have game constants
-    const formatDays = (ticks: number) => {
-        return Math.round(ticks / 100); // Placeholder
-    };
-
     return (
         <div className="overflow-x-auto">
             <table className="min-w-full text-sm border-collapse">
@@ -194,7 +189,7 @@ function StorageFacilityStatsTable({
                     <tr>
                         <td className="py-2 px-4 font-semibold">Lifespan</td>
                         <td className="py-2 px-4 text-center font-mono">
-                            {formatDays(facility.lifespan)} days
+                            <Duration ticks={facility.lifespan} />
                         </td>
                     </tr>
                 </tbody>

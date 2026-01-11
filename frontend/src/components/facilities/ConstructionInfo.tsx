@@ -3,8 +3,9 @@
  * power consumption, and emissions.
  */
 
-import { Clock, Zap, Cloud } from "lucide-react";
+import { Zap, Cloud } from "lucide-react";
 
+import { TogglingDuration } from "@/components/ui";
 import { formatPower, formatMass } from "@/lib/format-utils";
 
 interface ConstructionInfoProps {
@@ -18,17 +19,13 @@ export function ConstructionInfo({
     constructionPower,
     constructionPollution,
 }: ConstructionInfoProps) {
-    // TODO: Format duration properly when we have game constants
-    const formatDuration = (ticks: number) => {
-        return `${ticks} ticks`;
-    };
-
     return (
         <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                <strong>{formatDuration(constructionTime)}</strong>
-                <span className="text-xs text-gray-500">(Duration)</span>
+                <span className="text-foreground">Duration:</span>
+                <strong>
+                    <TogglingDuration ticks={constructionTime} />
+                </strong>
             </div>
             <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4" />

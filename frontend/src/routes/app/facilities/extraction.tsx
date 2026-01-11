@@ -3,7 +3,7 @@ import { Info } from "lucide-react";
 
 import { FacilityCard } from "@/components/facilities/FacilityCard";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { ResourceName, CashFlow } from "@/components/ui";
+import { ResourceName, CashFlow, Duration } from "@/components/ui";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { useExtractionFacilitiesCatalog } from "@/hooks/useProjects";
 import { formatPower, formatMass } from "@/lib/format-utils";
@@ -171,11 +171,6 @@ interface ExtractionFacilityStatsTableProps {
 function ExtractionFacilityStatsTable({
     facility,
 }: ExtractionFacilityStatsTableProps) {
-    // TODO: Format days properly when we have game constants
-    const formatDays = (ticks: number) => {
-        return Math.round(ticks / 100); // Placeholder
-    };
-
     const resourceName =
         facility.resource_production.name.charAt(0).toUpperCase() +
         facility.resource_production.name.slice(1);
@@ -230,7 +225,7 @@ function ExtractionFacilityStatsTable({
                     <tr>
                         <td className="py-2 px-4 font-semibold">Lifespan</td>
                         <td className="py-2 px-4 text-center font-mono">
-                            {formatDays(facility.lifespan)} days
+                            <Duration ticks={facility.lifespan} />
                         </td>
                     </tr>
                 </tbody>
