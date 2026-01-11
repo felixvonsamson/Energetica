@@ -1,6 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import {
+    createFileRoute,
+    useNavigate,
+    useSearch,
+} from "@tanstack/react-router";
 import { Info } from "lucide-react";
-import { useState } from "react";
+import { useMemo } from "react";
 
 import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/GameLayout";
@@ -53,6 +57,11 @@ export const Route = createFileRoute("/app/facilities/extraction")({
             contents: <ExtractionFacilitiesHelp />,
         },
     },
+    validateSearch: (
+        search: Record<string, unknown>,
+    ): { facility?: string } => ({
+        facility: search.facility ? String(search.facility) : undefined,
+    }),
 });
 
 function ExtractionFacilitiesPage() {
@@ -66,6 +75,9 @@ function ExtractionFacilitiesPage() {
 type ExtractionFacility = ApiSchema<"ExtractionFacilityCatalogOut">;
 
 function ExtractionFacilitiesContent() {
+    const navigate = useNavigate({ from: "/app/facilities/extraction" });
+    const { facility } = useSearch({ from: "/app/facilities/extraction" });
+
     const {
         data: catalogData,
         isLoading: isCatalogLoading,
@@ -74,9 +86,16 @@ function ExtractionFacilitiesContent() {
 
     const { data: resourcesData } = usePlayerResources();
 
-    const facilities = catalogData?.extraction_facilities ?? [];
-    const [selectedFacility, setSelectedFacility] =
-        useState<ExtractionFacility | null>(null);
+    const facilities = useMemo(
+        () => catalogData?.extraction_facilities ?? [],
+        [catalogData?.extraction_facilities],
+    );
+
+    // Find selected facility from URL param
+    const selectedFacility = useMemo(
+        () => facilities.find((f) => f.name === facility) || null,
+        [facilities, facility],
+    );
 
     return (
         <div className="p-4 md:p-8">
@@ -118,7 +137,11 @@ function ExtractionFacilitiesContent() {
                                     facility.requirements_status ===
                                     "unsatisfied"
                                 }
-                                onClick={() => setSelectedFacility(facility)}
+                                onClick={() =>
+                                    navigate({
+                                        search: { facility: facility.name },
+                                    })
+                                }
                             />
                         ))}
                     </CatalogGrid>
@@ -127,7 +150,7 @@ function ExtractionFacilitiesContent() {
                     {selectedFacility && (
                         <FacilityDetailModal
                             isOpen={selectedFacility !== null}
-                            onClose={() => setSelectedFacility(null)}
+                            onClose={() => navigate({ search: {} })}
                             facility={selectedFacility}
                             facilityType="extraction"
                             renderDescription={(facility) => (

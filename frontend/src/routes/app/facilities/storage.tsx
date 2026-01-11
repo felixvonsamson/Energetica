@@ -1,5 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import {
+    createFileRoute,
+    useNavigate,
+    useSearch,
+} from "@tanstack/react-router";
+import { useMemo } from "react";
 
 import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/GameLayout";
@@ -50,6 +54,11 @@ export const Route = createFileRoute("/app/facilities/storage")({
             contents: <StorageFacilitiesHelp />,
         },
     },
+    validateSearch: (
+        search: Record<string, unknown>,
+    ): { facility?: string } => ({
+        facility: search.facility ? String(search.facility) : undefined,
+    }),
 });
 
 function StorageFacilitiesPage() {
@@ -63,15 +72,25 @@ function StorageFacilitiesPage() {
 type StorageFacility = ApiSchema<"StorageFacilityCatalogOut">;
 
 function StorageFacilitiesContent() {
+    const navigate = useNavigate({ from: "/app/facilities/storage" });
+    const { facility } = useSearch({ from: "/app/facilities/storage" });
+
     const {
         data: catalogData,
         isLoading: isCatalogLoading,
         isError: isCatalogError,
     } = useStorageFacilitiesCatalog();
 
-    const facilities = catalogData?.storage_facilities ?? [];
-    const [selectedFacility, setSelectedFacility] =
-        useState<StorageFacility | null>(null);
+    const facilities = useMemo(
+        () => catalogData?.storage_facilities ?? [],
+        [catalogData?.storage_facilities],
+    );
+
+    // Find selected facility from URL param
+    const selectedFacility = useMemo(
+        () => facilities.find((f) => f.name === facility) || null,
+        [facilities, facility],
+    );
 
     // Image extension map for facilities that use PNG instead of JPG
     const imageExtensionMap = {
@@ -123,7 +142,11 @@ function StorageFacilitiesContent() {
                                         facility.name as keyof typeof imageExtensionMap
                                     ]
                                 }
-                                onClick={() => setSelectedFacility(facility)}
+                                onClick={() =>
+                                    navigate({
+                                        search: { facility: facility.name },
+                                    })
+                                }
                             />
                         ))}
                     </CatalogGrid>
@@ -132,7 +155,7 @@ function StorageFacilitiesContent() {
                     {selectedFacility && (
                         <FacilityDetailModal
                             isOpen={selectedFacility !== null}
-                            onClose={() => setSelectedFacility(null)}
+                            onClose={() => navigate({ search: {} })}
                             facility={selectedFacility}
                             facilityType="storage"
                             renderStatsTable={(facility) => (

@@ -112,9 +112,9 @@
                   {% endif %}
                   Affected facilities :
                   {% for affected in technology_data.affected_facilities[:-1] %}
-                    <em class="txt-blue">{{ affected }}</em> ,
+                    <em class="txt-blue">{{ engine.const_config["assets"][affected]["name"] }}</em> ,
                   {% endfor %}
-                  <em class="txt-blue">{{ technology_data.affected_facilities[-1] }}</em>
+                  <em class="txt-blue">{{ engine.const_config["assets"][technology_data.affected_facilities[-1]]["name"] }}</em>
                 {% endif %}
                 {% if technology == "building_technology" %}
                   <br>

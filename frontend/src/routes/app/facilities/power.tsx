@@ -1,5 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import {
+    createFileRoute,
+    useNavigate,
+    useSearch,
+} from "@tanstack/react-router";
+import { useMemo } from "react";
 
 import {
     ResourceStockIndicators,
@@ -55,6 +59,11 @@ export const Route = createFileRoute("/app/facilities/power")({
             contents: <PowerFacilitiesHelp />,
         },
     },
+    validateSearch: (
+        search: Record<string, unknown>,
+    ): { facility?: string } => ({
+        facility: search.facility ? String(search.facility) : undefined,
+    }),
 });
 
 function PowerFacilitiesPage() {
@@ -68,6 +77,9 @@ function PowerFacilitiesPage() {
 type PowerFacility = ApiSchema<"PowerFacilityCatalogOut">;
 
 function PowerFacilitiesContent() {
+    const navigate = useNavigate({ from: "/app/facilities/power" });
+    const { facility } = useSearch({ from: "/app/facilities/power" });
+
     const {
         data: catalogData,
         isLoading: isCatalogLoading,
@@ -77,9 +89,16 @@ function PowerFacilitiesContent() {
     const { data: resourcesData, isLoading: isResourcesLoading } =
         usePlayerResources();
 
-    const facilities = catalogData?.power_facilities ?? [];
-    const [selectedFacility, setSelectedFacility] =
-        useState<PowerFacility | null>(null);
+    const facilities = useMemo(
+        () => catalogData?.power_facilities ?? [],
+        [catalogData?.power_facilities],
+    );
+
+    // Find selected facility from URL param
+    const selectedFacility = useMemo(
+        () => facilities.find((f) => f.name === facility) || null,
+        [facilities, facility],
+    );
 
     // Extract stock values from resource data
     const playerResources = resourcesData
@@ -145,7 +164,9 @@ function PowerFacilitiesContent() {
                                         ]
                                     }
                                     onClick={() =>
-                                        setSelectedFacility(facility)
+                                        navigate({
+                                            search: { facility: facility.name },
+                                        })
                                     }
                                 />
                             ))}
@@ -155,7 +176,7 @@ function PowerFacilitiesContent() {
                         {selectedFacility && (
                             <FacilityDetailModal
                                 isOpen={selectedFacility !== null}
-                                onClose={() => setSelectedFacility(null)}
+                                onClose={() => navigate({ search: {} })}
                                 facility={selectedFacility}
                                 facilityType="power"
                                 renderDescription={(facility) => (

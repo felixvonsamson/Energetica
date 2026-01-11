@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -8,8 +9,10 @@ import {
     TechnologyIcon,
     Money,
     CardContent,
+    AssetName,
 } from "@/components/ui";
 import { useQueueProject } from "@/hooks/useProjects";
+import { getFacilityRoute } from "@/lib/facility-routes";
 import { ProjectType, Requirement } from "@/types/projects";
 
 interface TechnologyDetailModalProps<T> {
@@ -138,11 +141,45 @@ export function TechnologyDetailModal<T>({
                             technology.affected_facilities.length > 0 && (
                                 <div>
                                     <strong>Affected facilities:</strong>{" "}
-                                    <em className="text-blue-400">
-                                        {technology.affected_facilities.join(
-                                            ", ",
+                                    <span className="text-blue-400">
+                                        {technology.affected_facilities.map(
+                                            (facilityName, idx) => {
+                                                const route =
+                                                    getFacilityRoute(
+                                                        facilityName,
+                                                    );
+                                                return (
+                                                    <span key={facilityName}>
+                                                        {route ? (
+                                                            <Link
+                                                                to={route}
+                                                                className="underline hover:opacity-80"
+                                                            >
+                                                                <AssetName
+                                                                    assetId={
+                                                                        facilityName
+                                                                    }
+                                                                    mode="long"
+                                                                />
+                                                            </Link>
+                                                        ) : (
+                                                            <AssetName
+                                                                assetId={
+                                                                    facilityName
+                                                                }
+                                                                mode="long"
+                                                            />
+                                                        )}
+                                                        {idx <
+                                                            technology
+                                                                .affected_facilities
+                                                                .length -
+                                                                1 && ", "}
+                                                    </span>
+                                                );
+                                            },
                                         )}
-                                    </em>
+                                    </span>
                                 </div>
                             )}
                     </div>

@@ -1,5 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import {
+    createFileRoute,
+    useNavigate,
+    useSearch,
+} from "@tanstack/react-router";
+import { useMemo } from "react";
 
 import { GameLayout } from "@/components/layout/GameLayout";
 import {
@@ -9,7 +13,6 @@ import {
 } from "@/components/technologies";
 import { CatalogGrid } from "@/components/ui";
 import { useTechnologiesCatalog } from "@/hooks/useProjects";
-import type { ApiSchema } from "@/types/api-helpers";
 
 function TechnologiesHelp() {
     return (
@@ -53,6 +56,11 @@ export const Route = createFileRoute("/app/facilities/technology")({
             contents: <TechnologiesHelp />,
         },
     },
+    validateSearch: (
+        search: Record<string, unknown>,
+    ): { technology?: string } => ({
+        technology: search.technology ? String(search.technology) : undefined,
+    }),
 });
 
 function TechnologyPage() {
@@ -63,18 +71,26 @@ function TechnologyPage() {
     );
 }
 
-type Technology = ApiSchema<"TechnologyCatalogOut">;
-
 function TechnologyContent() {
+    const navigate = useNavigate({ from: "/app/facilities/technology" });
+    const { technology } = useSearch({ from: "/app/facilities/technology" });
+
     const {
         data: catalogData,
         isLoading: isCatalogLoading,
         isError: isCatalogError,
     } = useTechnologiesCatalog();
 
-    const technologies = catalogData?.technologies ?? [];
-    const [selectedTechnology, setSelectedTechnology] =
-        useState<Technology | null>(null);
+    const technologies = useMemo(
+        () => catalogData?.technologies ?? [],
+        [catalogData?.technologies],
+    );
+
+    // Find selected technology from URL param
+    const selectedTechnology = useMemo(
+        () => technologies.find((t) => t.name === technology) || null,
+        [technologies, technology],
+    );
 
     return (
         <div className="p-4 md:p-8">
@@ -118,7 +134,9 @@ function TechnologyContent() {
                                 discount={technology.discount}
                                 level={technology.level}
                                 onClick={() =>
-                                    setSelectedTechnology(technology)
+                                    navigate({
+                                        search: { technology: technology.name },
+                                    })
                                 }
                             />
                         ))}
@@ -128,7 +146,7 @@ function TechnologyContent() {
                     {selectedTechnology && (
                         <TechnologyDetailModal
                             isOpen={selectedTechnology !== null}
-                            onClose={() => setSelectedTechnology(null)}
+                            onClose={() => navigate({ search: {} })}
                             technology={selectedTechnology}
                             renderEffectsTable={(technology) => (
                                 <TechnologyEffectsTable

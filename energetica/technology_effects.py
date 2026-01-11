@@ -940,10 +940,7 @@ def package_available_technologies(player: Player) -> list[dict]:
         _package_project_base(player, technology)
         | {
             "level": levels[technology],
-            "affected_facilities": [
-                const_config_assets[facility]["name"]
-                for facility in const_config_assets[technology]["affected_facilities"]
-            ],
+            "affected_facilities": const_config_assets[technology]["affected_facilities"],
         }
         | (
             {
