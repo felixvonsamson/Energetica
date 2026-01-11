@@ -54,6 +54,7 @@ export function ChatWindow({
                         isLoading={isMessagesLoading}
                         messages={messages}
                         selectedChatId={selectedChatId}
+                        isGroupChat={selectedChat?.is_group ?? false}
                     />
 
                     {/* Message Input - stays at bottom */}

@@ -5,6 +5,7 @@ import { useEffect, type ReactNode } from "react";
 
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useChatList } from "@/hooks/useChats";
 import { useRouteUnlocked } from "@/hooks/useRouteStaticData";
 import { cn } from "@/lib/classname-utils";
 import {
@@ -12,6 +13,16 @@ import {
     navigationConfig,
     SHOW_LOCKED_ROUTES_AS_DISABLED,
 } from "@/lib/nav-config";
+
+/** Notification badge component for displaying unread message count. */
+function NotificationBadge({ count }: { count: number }) {
+    if (count === 0) return null;
+    return (
+        <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+            {count > 99 ? "99+" : count}
+        </span>
+    );
+}
 
 /**
  * Main navigation component that renders both desktop and mobile navigation.
@@ -22,8 +33,11 @@ import {
 export function Navigation() {
     const location = useLocation();
     const capabilities = useCapabilities();
+    const { data: chatListData } = useChatList();
     const { isMenuOpen, openDropdown, setOpenDropdown, toggleDropdown } =
         useNavigation();
+
+    const unreadChatCount = chatListData?.unread_chat_count || 0;
 
     // Update dropdown state based on current route when mobile menu opens
     useEffect(() => {
@@ -74,6 +88,11 @@ export function Navigation() {
                                             toggleDropdown(item.label)
                                         }
                                         variant="desktop"
+                                        badgeCount={
+                                            item.label === "Community"
+                                                ? unreadChatCount
+                                                : undefined
+                                        }
                                     >
                                         {item.children.map((child) => {
                                             return (
@@ -83,6 +102,12 @@ export function Navigation() {
                                                     params={child.params}
                                                     icon={child.icon}
                                                     variant="desktop"
+                                                    badgeCount={
+                                                        child.label ===
+                                                        "Messages"
+                                                            ? unreadChatCount
+                                                            : undefined
+                                                    }
                                                 >
                                                     {child.label}
                                                 </NavLink>
@@ -115,6 +140,9 @@ export function Navigation() {
 export function SideNav() {
     const { isMenuOpen, setIsMenuOpen, openDropdown, toggleDropdown } =
         useNavigation();
+    const { data: chatListData } = useChatList();
+
+    const unreadChatCount = chatListData?.unread_chat_count || 0;
 
     // Handle body scroll lock when menu is open
     useEffect(() => {
@@ -186,6 +214,11 @@ export function SideNav() {
                                 isOpen={openDropdown === item.label}
                                 onToggle={() => toggleDropdown(item.label)}
                                 variant="mobile"
+                                badgeCount={
+                                    item.label === "Community"
+                                        ? unreadChatCount
+                                        : undefined
+                                }
                             >
                                 {item.children.map((child) => {
                                     return (
@@ -199,6 +232,11 @@ export function SideNav() {
                                             }
                                             isInsideDropdown
                                             variant="mobile"
+                                            badgeCount={
+                                                child.label === "Messages"
+                                                    ? unreadChatCount
+                                                    : undefined
+                                            }
                                         >
                                             {child.label}
                                         </NavLink>
@@ -239,6 +277,7 @@ interface NavDropdownProps {
     onToggle: () => void;
     children: ReactNode;
     variant?: "desktop" | "mobile";
+    badgeCount?: number;
 }
 
 /**
@@ -259,6 +298,7 @@ function NavDropdown({
     onToggle,
     children,
     variant = "desktop",
+    badgeCount,
 }: NavDropdownProps) {
     const isDesktop = variant === "desktop";
 
@@ -275,6 +315,9 @@ function NavDropdown({
             >
                 <Icon size={20} />
                 <span className="font-medium">{label}</span>
+                {badgeCount !== undefined && badgeCount > 0 && (
+                    <NotificationBadge count={badgeCount} />
+                )}
                 <ChevronDown
                     size={16}
                     className={cn(
@@ -309,6 +352,7 @@ interface NavLinkProps {
     onNavigate?: () => void;
     variant?: "desktop" | "mobile";
     isInsideDropdown?: boolean;
+    badgeCount?: number;
 }
 
 /**
@@ -335,6 +379,7 @@ function NavLink({
     onNavigate,
     variant = "desktop",
     isInsideDropdown = false,
+    badgeCount,
 }: NavLinkProps) {
     const capabilities = useCapabilities();
     const isDesktop = variant === "desktop";
@@ -365,6 +410,9 @@ function NavLink({
                 >
                     <Icon size={20} />
                     <span>{children}</span>
+                    {badgeCount !== undefined && badgeCount > 0 && (
+                        <NotificationBadge count={badgeCount} />
+                    )}
                 </div>
             ) : (
                 <Link
@@ -381,6 +429,9 @@ function NavLink({
                 >
                     <Icon size={20} />
                     <span>{children}</span>
+                    {badgeCount !== undefined && badgeCount > 0 && (
+                        <NotificationBadge count={badgeCount} />
+                    )}
                 </Link>
             )}
         </li>
