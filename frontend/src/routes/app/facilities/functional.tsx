@@ -22,7 +22,7 @@ function FunctionalFacilitiesHelp() {
                 For more information about Functional Facilities, refer to{" "}
                 <a
                     href="/wiki/functional_facilities"
-                    className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
+                    className="underline hover:opacity-80 text-foreground"
                 >
                     this section in the wiki
                 </a>
@@ -183,7 +183,7 @@ function FunctionalFacilityStatsTable({
                 }`}
             >
                 <thead>
-                    <tr className="bg-tan-green/20 dark:bg-dark-bg-tertiary/30">
+                    <tr className="bg-muted/30">
                         <th className="py-2 px-4 text-left font-semibold">
                             Effects:
                         </th>
@@ -192,10 +192,10 @@ function FunctionalFacilityStatsTable({
                         </th>
                     </tr>
                 </thead>
-                <tbody className="bg-tan-green/20 dark:bg-dark-bg-tertiary/30">
+                <tbody className="bg-muted/30">
                     {/* Average Consumption (Industry) */}
                     {facility.average_consumption && (
-                        <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                        <tr className="border-b border-border/30">
                             <td className="py-2 px-4 font-semibold">
                                 Average consumption
                             </td>
@@ -210,7 +210,7 @@ function FunctionalFacilityStatsTable({
 
                     {/* Revenue Generation (Industry) */}
                     {facility.revenue_generation && (
-                        <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                        <tr className="border-b border-border/30">
                             <td className="py-2 px-4 font-semibold">
                                 Revenue generation
                             </td>
@@ -230,7 +230,7 @@ function FunctionalFacilityStatsTable({
                     {/* Research Speed Bonus (Laboratory) */}
                     {facility.research_speed_bonus !== undefined &&
                         facility.research_speed_bonus !== null && (
-                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                            <tr className="border-b border-border/30">
                                 <td className="py-2 px-4 font-semibold">
                                     Research speed
                                 </td>
@@ -245,7 +245,7 @@ function FunctionalFacilityStatsTable({
                     {facility.lab_workers &&
                         (facility.lab_workers.current !== null ||
                             facility.lab_workers.upgraded !== null) && (
-                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                            <tr className="border-b border-border/30">
                                 <td className="py-2 px-4 font-semibold">
                                     Lab workers
                                 </td>
@@ -259,7 +259,7 @@ function FunctionalFacilityStatsTable({
                     {/* Warehouse Capacities */}
                     {facility.warehouse_capacities && (
                         <>
-                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                            <tr className="border-b border-border/30">
                                 <td className="py-2 px-4 font-semibold">
                                     Coal capacity
                                 </td>
@@ -272,7 +272,7 @@ function FunctionalFacilityStatsTable({
                                     )}
                                 </td>
                             </tr>
-                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                            <tr className="border-b border-border/30">
                                 <td className="py-2 px-4 font-semibold">
                                     Gas capacity
                                 </td>
@@ -285,7 +285,7 @@ function FunctionalFacilityStatsTable({
                                     )}
                                 </td>
                             </tr>
-                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                            <tr className="border-b border-border/30">
                                 <td className="py-2 px-4 font-semibold">
                                     Uranium cap.
                                 </td>
@@ -303,7 +303,7 @@ function FunctionalFacilityStatsTable({
 
                     {/* Power Consumption (Carbon Capture) */}
                     {facility.power_consumption && (
-                        <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                        <tr className="border-b border-border/30">
                             <td className="py-2 px-4 font-semibold">
                                 Power consumption
                             </td>

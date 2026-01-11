@@ -71,7 +71,7 @@ export function MessageInput({
     }, [message, adjustHeight]);
 
     return (
-        <div className="flex gap-2 pt-4 border-t border-gray-300 dark:border-dark-border items-end">
+        <div className="flex gap-2 pt-4 border-t border-border items-end">
             <textarea
                 ref={inputRef}
                 value={message}
@@ -83,7 +83,7 @@ export function MessageInput({
                 placeholder="Type your message..."
                 disabled={isDisabled}
                 rows={1}
-                className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pine dark:focus:ring-brand-green disabled:opacity-50 min-w-0 resize-none max-h-32 overflow-y-auto"
+                className="flex-1 px-3 py-2 rounded-lg border border-input bg-card focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pine dark:focus:ring-brand-green disabled:opacity-50 min-w-0 resize-none max-h-32 overflow-y-auto"
             />
             <Button
                 onClick={handleSend}

@@ -138,7 +138,7 @@ function LoginForm() {
                             onChange={(e) => setUsername(e.target.value)}
                             placeholder="Enter username"
                             disabled={isLoading}
-                            className="w-full px-4 py-3 rounded-lg border-2 border-pine dark:border-dark-border bg-bone dark:bg-dark-bg-secondary text-primary placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-border bg-card text-primary placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             autoComplete="username"
                             autoFocus
                         />
@@ -159,7 +159,7 @@ function LoginForm() {
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Enter password"
                             disabled={isLoading}
-                            className="w-full px-4 py-3 rounded-lg border-2 border-pine dark:border-dark-border bg-bone dark:bg-dark-bg-secondary text-primary placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-border bg-card text-primary placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             autoComplete="current-password"
                         />
                     </div>

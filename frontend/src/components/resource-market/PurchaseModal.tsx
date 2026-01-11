@@ -46,7 +46,7 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
         <Modal isOpen={isOpen} onClose={onClose} title="Purchase Resources">
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Ask details */}
-                <div className="bg-tan-green/20 dark:bg-dark-bg-tertiary/50 p-4 rounded-lg space-y-2">
+                <div className="bg-muted/50 p-4 rounded-lg space-y-2">
                     <div className="flex justify-between">
                         <span className="font-semibold">Resource:</span>
                         <span className="capitalize">
@@ -77,7 +77,7 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
                             className={`flex-1 py-2 px-3 rounded-lg font-medium transition-colors ${
                                 buyAll
                                     ? "bg-brand-green text-white"
-                                    : "bg-gray-200 dark:bg-dark-bg-tertiary text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-dark-bg-secondary"
+                                    : "bg-muted text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-card"
                             }`}
                         >
                             Buy All
@@ -88,7 +88,7 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
                             className={`flex-1 py-2 px-3 rounded-lg font-medium transition-colors ${
                                 !buyAll
                                     ? "bg-brand-green text-white"
-                                    : "bg-gray-200 dark:bg-dark-bg-tertiary text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-dark-bg-secondary"
+                                    : "bg-muted text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-card"
                             }`}
                         >
                             Custom Amount
@@ -106,7 +106,7 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
                                 max={maxQuantityTons}
                                 step="0.01"
                                 placeholder="Enter quantity in tons"
-                                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-bg-secondary focus:ring-2 focus:ring-brand-green focus:border-transparent"
+                                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-card focus:ring-2 focus:ring-brand-green focus:border-transparent"
                             />
                             <p className="text-xs text-gray-500">
                                 Max: {maxQuantityTons.toFixed(2)} tons
@@ -116,7 +116,7 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
                 </div>
 
                 {/* Purchase summary */}
-                <div className="bg-tan-green/20 dark:bg-dark-bg-tertiary/50 p-4 rounded-lg space-y-2">
+                <div className="bg-muted/50 p-4 rounded-lg space-y-2">
                     <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
                             Purchasing:
@@ -140,7 +140,7 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-dark-bg-tertiary hover:bg-gray-300 dark:hover:bg-dark-bg-secondary transition-colors"
+                        className="px-4 py-2 rounded-lg bg-muted hover:bg-gray-300 dark:hover:bg-card transition-colors"
                     >
                         Cancel
                     </button>

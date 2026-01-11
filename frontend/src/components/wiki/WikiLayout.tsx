@@ -59,7 +59,7 @@ export function WikiLayout({ children }: WikiLayoutProps) {
                                     "transition-colors duration-200",
                                     "text-sm",
                                     isActive
-                                        ? "bg-tan-hover dark:bg-dark-bg-tertiary font-semibold"
+                                        ? "bg-accent font-semibold"
                                         : "bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 font-medium",
                                 )}
                             >

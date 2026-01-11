@@ -28,7 +28,7 @@ function TechnologiesHelp() {
                 For more information about Technologies, refer to{" "}
                 <a
                     href="/wiki/technologies"
-                    className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
+                    className="underline hover:opacity-80 text-foreground"
                 >
                     this section in the wiki
                 </a>

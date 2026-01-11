@@ -120,7 +120,7 @@ export function CreateMarketModal({ isOpen, onClose }: CreateMarketModalProps) {
                         className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition ${
                             hasNameError
                                 ? "border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/20 focus:ring-red-500 dark:focus:ring-red-500"
-                                : "border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:ring-pine dark:focus:ring-brand-green"
+                                : "border-border bg-card focus:ring-pine dark:focus:ring-brand-green"
                         }`}
                     />
                     <div className="h-6 mt-1">
@@ -178,7 +178,7 @@ export function CreateMarketModal({ isOpen, onClose }: CreateMarketModalProps) {
                 )}
 
                 {/* Action buttons */}
-                <div className="border-t border-gray-200 dark:border-dark-border pt-4">
+                <div className="border-t border-border pt-4">
                     <Button
                         onClick={handleCreateMarket}
                         disabled={isPending || isNameMissing || hasNameError}

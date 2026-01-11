@@ -87,7 +87,7 @@ function DashboardHelp() {
                 For more info about in-game time and weather, see the{" "}
                 <a
                     href="/wiki/time_and_weather"
-                    className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
+                    className="underline hover:opacity-80 text-foreground"
                 >
                     wiki
                 </a>
@@ -116,7 +116,7 @@ function DashboardContent() {
         <div className="p-4 md:p-8">
             {/* Title with info icon */}
             <div className="flex items-center justify-center gap-3 mb-6">
-                <h1 className="text-4xl md:text-5xl font-bold text-center">
+                <h1 className="text-4xl text-foreground md:text-5xl font-bold text-center">
                     Dashboard
                 </h1>
             </div>
@@ -370,7 +370,7 @@ function WeatherSection() {
 function BeginnersGuide() {
     return (
         <section className="mb-6">
-            <Card className="border-2 border-pine dark:border-dark-border">
+            <Card className="border-2 border-border">
                 <CardTitle className="mb-4">Beginners guide</CardTitle>
                 <div className="space-y-4 text-base">
                     <p>Welcome to Energetica!</p>
@@ -525,7 +525,7 @@ function DailyQuizSection() {
 
         if (!hasAnswered) {
             // Before answering - normal clickable button
-            return `${baseClass} bg-bone dark:bg-dark-bg-secondary border-2 border-pine dark:border-dark-border hover:border-brand-green dark:hover:border-brand-green hover:shadow-md text-foreground disabled:opacity-50 disabled:cursor-not-allowed`;
+            return `${baseClass} bg-card border-2 border-border hover:border-brand-green dark:hover:border-brand-green hover:shadow-md text-foreground disabled:opacity-50 disabled:cursor-not-allowed`;
         }
 
         // After answering - show feedback
@@ -543,7 +543,7 @@ function DailyQuizSection() {
             return `${baseClass} bg-green-50 dark:bg-green-900/20 border-2 border-green-500 dark:border-green-400 text-green-800 dark:text-green-300 cursor-default`;
         } else {
             // Incorrect answer (not selected)
-            return `${baseClass} bg-bone dark:bg-dark-bg-secondary border-2 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 cursor-default opacity-60`;
+            return `${baseClass} bg-card border-2 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 cursor-default opacity-60`;
         }
     };
 
@@ -579,7 +579,7 @@ function DailyQuizSection() {
     return (
         <section className="mb-6">
             <div className="flex justify-center">
-                <Card className="border-2 border-pine dark:border-dark-border max-w-2xl w-full">
+                <Card className="border-2 border-border max-w-2xl w-full">
                     <CardTitle className="text-center mb-4">
                         <img
                             src="/static/images/icons/quiz.png"

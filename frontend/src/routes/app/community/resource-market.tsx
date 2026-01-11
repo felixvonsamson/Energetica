@@ -224,7 +224,7 @@ function ResourceMarketContent() {
                     className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
                         hideOwnAsks
                             ? "bg-brand-green text-white"
-                            : "bg-tan-green dark:bg-dark-bg-tertiary hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary"
+                            : "bg-secondary hover:bg-tan-green/80 dark:hover:bg-card"
                     }`}
                     title={
                         hideOwnAsks
@@ -247,7 +247,7 @@ function ResourceMarketContent() {
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                             filterResource === "all"
                                 ? "bg-brand-green text-white"
-                                : "bg-tan-green dark:bg-dark-bg-tertiary hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary"
+                                : "bg-secondary hover:bg-tan-green/80 dark:hover:bg-card"
                         }`}
                     >
                         All Resources
@@ -259,7 +259,7 @@ function ResourceMarketContent() {
                             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                                 filterResource === resource
                                     ? "bg-brand-green text-white"
-                                    : "bg-tan-green dark:bg-dark-bg-tertiary hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary"
+                                    : "bg-secondary hover:bg-tan-green/80 dark:hover:bg-card"
                             }`}
                         >
                             {RESOURCE_LABELS[resource]}
@@ -280,9 +280,9 @@ function ResourceMarketContent() {
                     ) : (
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="bg-tan-green dark:bg-dark-bg-tertiary">
+                                <tr className="bg-secondary">
                                     <th
-                                        className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                                        className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                                         onClick={() =>
                                             handleSort("resource_type")
                                         }
@@ -291,20 +291,20 @@ function ResourceMarketContent() {
                                         {getSortIndicator("resource_type")}
                                     </th>
                                     <th
-                                        className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                                        className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                                         onClick={() => handleSort("quantity")}
                                     >
                                         Quantity{getSortIndicator("quantity")}
                                     </th>
                                     <th
-                                        className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                                        className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                                         onClick={() => handleSort("unit_price")}
                                     >
                                         Price per kg
                                         {getSortIndicator("unit_price")}
                                     </th>
                                     <th
-                                        className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                                        className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                                         onClick={() =>
                                             handleSort("total_price")
                                         }
@@ -380,7 +380,7 @@ function AskRow({ ask, currentPlayerId, onPurchaseClick }: AskRowProps) {
     const shippingTime = deliveryData?.shipment_time;
 
     return (
-        <tr className="border-b border-pine/10 dark:border-dark-border/30 hover:bg-tan-green/20 dark:hover:bg-dark-bg-tertiary/30 transition-colors">
+        <tr className="border-b border-border/30 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors">
             <td className="py-3 px-4 font-medium capitalize">
                 {RESOURCE_LABELS[ask.resource_type as ResourceType] ||
                     ask.resource_type}
@@ -426,7 +426,7 @@ function AskRow({ ask, currentPlayerId, onPurchaseClick }: AskRowProps) {
                         <button
                             onClick={() => deleteMutation.mutate(ask.id)}
                             disabled={deleteMutation.isPending}
-                            className="bg-alert-red hover:bg-alert-red/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                            className="bg-destructive hover:bg-destructive/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                             title="Remove your listing"
                         >
                             <Trash2 className="w-4 h-4" />

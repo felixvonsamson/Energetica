@@ -171,7 +171,7 @@ export function NewGroupChatModal({
                         className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition ${
                             isTitleMissing
                                 ? "border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/20 focus:ring-red-500 dark:focus:ring-red-500"
-                                : "border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:ring-pine dark:focus:ring-brand-green"
+                                : "border-border bg-card focus:ring-pine dark:focus:ring-brand-green"
                         }`}
                     />
                     <div className="h-6 mt-1">
@@ -184,7 +184,7 @@ export function NewGroupChatModal({
                 </div>
 
                 {/* Group Members Display */}
-                <div className="border-t border-gray-200 dark:border-dark-border py-4">
+                <div className="border-t border-border py-4">
                     <p className="text-sm font-medium mb-3">
                         Selected Players{" "}
                         {groupMembers.length > 0 && `(${groupMembers.length})`}
@@ -214,7 +214,7 @@ export function NewGroupChatModal({
                     </div>
                 </div>
 
-                <div className="border-t border-gray-200 dark:border-dark-border py-4">
+                <div className="border-t border-border py-4">
                     <label htmlFor="player-search" className="block mb-3">
                         Add players
                     </label>
@@ -227,9 +227,9 @@ export function NewGroupChatModal({
                             handlePlayerInputChange(e.target.value)
                         }
                         placeholder="Search players..."
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green mb-3"
+                        className="w-full px-4 py-2 rounded-lg border border-input bg-card focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green mb-3"
                     />
-                    <div className="max-h-60 overflow-y-auto border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-secondary">
+                    <div className="max-h-60 overflow-y-auto border border-border rounded-lg bg-card">
                         {filteredPlayers.length > 0 ? (
                             <div className="divide-y divide-gray-200 dark:divide-dark-border">
                                 {filteredPlayers.map((player: Player) => {
@@ -242,7 +242,7 @@ export function NewGroupChatModal({
                                             onClick={() =>
                                                 handleTogglePlayer(player)
                                             }
-                                            className="w-full text-left px-4 py-3 flex items-center gap-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary transition-colors"
+                                            className="w-full text-left px-4 py-3 flex items-center gap-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-muted transition-colors"
                                         >
                                             <div
                                                 className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
@@ -268,7 +268,7 @@ export function NewGroupChatModal({
                     </div>
                 </div>
 
-                <div className="border-t border-gray-200 dark:border-dark-border pt-4">
+                <div className="border-t border-border pt-4">
                     <Button
                         onClick={handleCreateGroupChat}
                         disabled={

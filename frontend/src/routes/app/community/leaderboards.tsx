@@ -164,13 +164,13 @@ function LeaderboardsContent() {
         const commonHeaders = (
             <>
                 <th
-                    className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                    className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                     onClick={() => handleSort("username")}
                 >
                     Username{getSortIndicator("username")}
                 </th>
                 <th
-                    className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                    className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                     onClick={() => handleSort("general.network_name")}
                 >
                     Network{getSortIndicator("general.network_name")}
@@ -184,7 +184,7 @@ function LeaderboardsContent() {
                     <>
                         {commonHeaders}
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("general.average_revenues")
                             }
@@ -193,7 +193,7 @@ function LeaderboardsContent() {
                             {getSortIndicator("general.average_revenues")}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("general.max_power_consumption")
                             }
@@ -202,7 +202,7 @@ function LeaderboardsContent() {
                             {getSortIndicator("general.max_power_consumption")}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("general.total_technologies")
                             }
@@ -211,7 +211,7 @@ function LeaderboardsContent() {
                             {getSortIndicator("general.total_technologies")}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() => handleSort("general.xp")}
                         >
                             XP{getSortIndicator("general.xp")}
@@ -223,7 +223,7 @@ function LeaderboardsContent() {
                     <>
                         {commonHeaders}
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort(
                                     "power_and_energy.max_power_consumption",
@@ -236,7 +236,7 @@ function LeaderboardsContent() {
                             )}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("power_and_energy.max_energy_stored")
                             }
@@ -247,7 +247,7 @@ function LeaderboardsContent() {
                             )}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("power_and_energy.imported_energy")
                             }
@@ -258,7 +258,7 @@ function LeaderboardsContent() {
                             )}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("power_and_energy.exported_energy")
                             }
@@ -275,7 +275,7 @@ function LeaderboardsContent() {
                     <>
                         {commonHeaders}
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("resources.extracted_resources")
                             }
@@ -284,7 +284,7 @@ function LeaderboardsContent() {
                             {getSortIndicator("resources.extracted_resources")}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("resources.bought_resources")
                             }
@@ -293,7 +293,7 @@ function LeaderboardsContent() {
                             {getSortIndicator("resources.bought_resources")}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("resources.sold_resources")
                             }
@@ -306,13 +306,13 @@ function LeaderboardsContent() {
                 return (
                     <>
                         <th
-                            className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() => handleSort("username")}
                         >
                             Username{getSortIndicator("username")}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("technologies.total_technologies")
                             }
@@ -323,7 +323,7 @@ function LeaderboardsContent() {
                             )}
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("technologies.mathematics")
                             }
@@ -339,7 +339,7 @@ function LeaderboardsContent() {
                             </span>
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort(
                                     "technologies.mechanical_engineering",
@@ -357,7 +357,7 @@ function LeaderboardsContent() {
                             </span>
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("technologies.thermodynamics")
                             }
@@ -373,7 +373,7 @@ function LeaderboardsContent() {
                             </span>
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() => handleSort("technologies.physics")}
                         >
                             <span
@@ -387,7 +387,7 @@ function LeaderboardsContent() {
                             </span>
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("technologies.building_technology")
                             }
@@ -403,7 +403,7 @@ function LeaderboardsContent() {
                             </span>
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("technologies.mineral_extraction")
                             }
@@ -419,7 +419,7 @@ function LeaderboardsContent() {
                             </span>
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("technologies.transport_technology")
                             }
@@ -435,7 +435,7 @@ function LeaderboardsContent() {
                             </span>
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() => handleSort("technologies.materials")}
                         >
                             <span
@@ -449,7 +449,7 @@ function LeaderboardsContent() {
                             </span>
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("technologies.civil_engineering")
                             }
@@ -465,7 +465,7 @@ function LeaderboardsContent() {
                             </span>
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("technologies.aerodynamics")
                             }
@@ -481,7 +481,7 @@ function LeaderboardsContent() {
                             </span>
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() => handleSort("technologies.chemistry")}
                         >
                             <span
@@ -495,7 +495,7 @@ function LeaderboardsContent() {
                             </span>
                         </th>
                         <th
-                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-2 font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("technologies.nuclear_engineering")
                             }
@@ -517,7 +517,7 @@ function LeaderboardsContent() {
                     <>
                         {commonHeaders}
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("functional_facilities.industry")
                             }
@@ -526,7 +526,7 @@ function LeaderboardsContent() {
                             {getSortIndicator("functional_facilities.industry")}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("functional_facilities.laboratory")
                             }
@@ -537,7 +537,7 @@ function LeaderboardsContent() {
                             )}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("functional_facilities.warehouse")
                             }
@@ -548,7 +548,7 @@ function LeaderboardsContent() {
                             )}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort(
                                     "functional_facilities.carbon_capture",
@@ -567,7 +567,7 @@ function LeaderboardsContent() {
                     <>
                         {commonHeaders}
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
                                 handleSort("emissions.net_emissions")
                             }
@@ -576,7 +576,7 @@ function LeaderboardsContent() {
                             {getSortIndicator("emissions.net_emissions")}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() => handleSort("emissions.captured_co2")}
                         >
                             Captured CO₂
@@ -770,7 +770,7 @@ function LeaderboardsContent() {
                             className={`px-4 py-2 rounded font-medium transition-colors ${
                                 selectedCategory === category
                                     ? "bg-primary text-white"
-                                    : "bg-tan-green/20 dark:bg-dark-bg-tertiary hover:bg-tan-green/40 dark:hover:bg-dark-bg-secondary"
+                                    : "bg-muted hover:bg-tan-green/40 dark:hover:bg-card"
                             }`}
                         >
                             {getCategoryLabel(category)}
@@ -784,7 +784,7 @@ function LeaderboardsContent() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="bg-tan-green dark:bg-dark-bg-tertiary">
+                            <tr className="bg-secondary">
                                 {renderTableHeaders()}
                             </tr>
                         </thead>
@@ -792,7 +792,7 @@ function LeaderboardsContent() {
                             {sortedRows.map((row) => (
                                 <tr
                                     key={row.player_id}
-                                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-tan-green/20 dark:hover:bg-dark-bg-tertiary/30 transition-colors"
+                                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors"
                                 >
                                     {renderTableRow(row)}
                                 </tr>

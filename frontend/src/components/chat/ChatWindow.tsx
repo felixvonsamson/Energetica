@@ -26,15 +26,15 @@ export function ChatWindow({
 }: ChatWindowProps) {
     return (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div className="flex-1 flex flex-col overflow-hidden bg-bone dark:bg-dark-bg-secondary rounded-lg text-bone-text dark:text-dark-text-primary">
+            <div className="flex-1 flex flex-col overflow-hidden bg-card rounded-lg text-foreground">
                 {/* Chat Header - sticky to stay visible when scrolling */}
-                <div className="shrink-0 border-b border-gray-300 dark:border-dark-border pb-4 mb-4 px-6 pt-6">
+                <div className="shrink-0 border-b border-border pb-4 mb-4 px-6 pt-6">
                     <div className="flex items-center gap-3">
                         {showBackButton && (
                             <button
                                 onClick={onBackClick}
                                 aria-label="Back to chat list"
-                                className="shrink-0 p-2 hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary rounded-lg transition-colors"
+                                className="shrink-0 p-2 hover:bg-gray-100 dark:hover:bg-muted rounded-lg transition-colors"
                             >
                                 <ArrowLeft className="w-5 h-5" />
                             </button>

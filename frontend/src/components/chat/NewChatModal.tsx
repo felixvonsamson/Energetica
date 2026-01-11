@@ -168,7 +168,7 @@ export function NewChatModal({
                                     handlePlayerInputChange(e.target.value)
                                 }
                                 placeholder="Search players..."
-                                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-dark-border dark:bg-dark-bg-tertiary focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green"
+                                className="w-full px-4 py-2 rounded-lg border border-input bg-card focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green"
                             />
                         </div>
                     )}
@@ -176,8 +176,8 @@ export function NewChatModal({
 
                 {/* Player List */}
                 {!selectedPlayer && (
-                    <div className="border-t border-gray-200 dark:border-dark-border">
-                        <div className="max-h-60 overflow-y-auto bg-white dark:bg-dark-bg-secondary rounded-lg">
+                    <div className="border-t border-border">
+                        <div className="max-h-60 overflow-y-auto bg-card rounded-lg">
                             {filteredPlayers.length > 0 ? (
                                 <div className="divide-y divide-gray-200 dark:divide-dark-border">
                                     {filteredPlayers.map((player: Player) => (
@@ -186,7 +186,7 @@ export function NewChatModal({
                                             onClick={() =>
                                                 handleSelectPlayer(player)
                                             }
-                                            className="w-full text-left px-4 py-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary transition-colors"
+                                            className="w-full text-left px-4 py-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-muted transition-colors"
                                         >
                                             {player.username}
                                         </button>
@@ -203,7 +203,7 @@ export function NewChatModal({
                     </div>
                 )}
 
-                <div className="border-t border-gray-200 dark:border-dark-border pt-4">
+                <div className="border-t border-border pt-4">
                     <Button
                         onClick={handleCreateChat}
                         disabled={!selectedPlayer || isPending}

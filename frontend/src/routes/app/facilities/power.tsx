@@ -29,7 +29,7 @@ function PowerFacilitiesHelp() {
                 For more information about power facilities, refer to{" "}
                 <a
                     href="/wiki/power_facilities"
-                    className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
+                    className="underline hover:opacity-80 text-foreground"
                 >
                     this section in the wiki
                 </a>
@@ -181,9 +181,9 @@ function PowerFacilityStatsTable({ facility }: PowerFacilityStatsTableProps) {
     return (
         <div className="overflow-x-auto">
             <table className="min-w-full text-sm border-collapse">
-                <tbody className="bg-tan-green/20 dark:bg-dark-bg-tertiary/30">
+                <tbody className="bg-muted/30">
                     {/* Max Generation */}
-                    <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                    <tr className="border-b border-border/30">
                         <td className="py-2 px-4 font-semibold">
                             Max generation
                         </td>
@@ -195,7 +195,7 @@ function PowerFacilityStatsTable({ facility }: PowerFacilityStatsTableProps) {
                     {/* Ramping Speed */}
                     {facility.ramping_speed !== undefined &&
                         facility.ramping_speed !== null && (
-                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                            <tr className="border-b border-border/30">
                                 <td className="py-2 px-4 font-semibold">
                                     Ramping speed
                                 </td>
@@ -206,7 +206,7 @@ function PowerFacilityStatsTable({ facility }: PowerFacilityStatsTableProps) {
                         )}
 
                     {/* Operation Cost */}
-                    <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                    <tr className="border-b border-border/30">
                         <td className="py-2 px-4 font-semibold">
                             Operation cost
                         </td>
@@ -219,7 +219,7 @@ function PowerFacilityStatsTable({ facility }: PowerFacilityStatsTableProps) {
 
                     {/* Capacity Factor */}
                     {facility.capacity_factor && (
-                        <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                        <tr className="border-b border-border/30">
                             <td className="py-2 px-4 font-semibold">
                                 Capacity factor
                             </td>
@@ -253,7 +253,7 @@ function PowerFacilityStatsTable({ facility }: PowerFacilityStatsTableProps) {
                             return (
                                 <tr
                                     key={resource}
-                                    className="border-b border-pine/10 dark:border-dark-border/30"
+                                    className="border-b border-border/30"
                                 >
                                     <td className="py-2 px-4 font-semibold">
                                         {displayName}
@@ -269,7 +269,7 @@ function PowerFacilityStatsTable({ facility }: PowerFacilityStatsTableProps) {
                     {/* CO2 Emissions */}
                     {facility.pollution !== undefined &&
                         facility.pollution !== null && (
-                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                            <tr className="border-b border-border/30">
                                 <td className="py-2 px-4 font-semibold">
                                     CO₂ emissions
                                 </td>

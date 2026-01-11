@@ -23,30 +23,22 @@
     --color-brand-green: #5f8d4e;
     --color-pine: #285430;
     --color-pine-darker: #1b3820;
-    --color-pine-lighter: #5f8d4e;
     --color-alert-red: #f44336;
     --color-alert-orange: #f59f00;
     --color-white: #ffffff;
 
     /* Dark mode base colors */
-    --color-dark-bg-primary: #1a1a1a;
-    --color-dark-bg-secondary: #2d2d2d;
-    --color-dark-bg-tertiary: #3a3a3a;
-    --color-dark-text-primary: #ffffff;
-    --color-dark-text-secondary: #e5e5e5;
     --color-dark-text-muted: #a0a0a0;
     --color-dark-border: #404040;
 
     /* ============================================
        Semantic Tokens (Auto-generate Utilities)
        These reference :root variables defined below.
-       Tailwind generates utilities like: bg-background, text-primary, etc.
+       Tailwind generates utilities like: bg-background, text-card-bg, etc.
        ============================================ */
 
     /* Energetica-specific tokens (keep for backward compatibility) */
-    --color-content-bg: var(--content-bg);
     --color-card-bg: var(--card-bg);
-    --color-text-primary: var(--text-primary);
     --color-text-secondary: var(--text-secondary);
     --color-text-muted: var(--text-muted);
     --color-text-on-card: var(--text-on-card);
@@ -84,16 +76,15 @@
         /* Energetica semantic colors (light mode) */
         --card-bg: #e5d9b6;
 
-        --text-primary: var(--color-pine);
         --text-secondary: #1b3820;
-        --text-muted: #5f8d4e;
+        --text-muted: var(--color-brand-green);
         --text-on-card: #000000;
 
-        --border-default: #a4be7b;
+        --border-default: var(--color-tan-green);
 
         /* shadcn/ui semantic colors (light mode) */
-        --background: #a4be7b;
-        --foreground: var(--text-primary);
+        --background: var(--color-tan-green);
+        --foreground: var(--color-pine);
 
         --card: var(--card-bg);
         --card-foreground: var(--text-on-card);
@@ -107,8 +98,8 @@
         --secondary: var(--color-tan-green);
         --secondary-foreground: #000000;
 
-        --muted: var(--content-bg);
-        --muted-foreground: var(--text-muted);
+        /* --muted: var(--content-bg); */
+        --muted-foreground: var(--color-brand-green);
 
         --accent: var(--color-brand-green);
         --accent-foreground: #ffffff;
@@ -177,7 +168,7 @@
         /* Map tile colours */
         --map-selected-tile-hover: var(--color-pine-darker);
         --map-tile-current-player: hsl(0, 64%, 47%);
-        --map-tile-other-player: var(--color-pine-lighter);
+        --map-tile-other-player: var(--color-brand-green);
         --map-tile-vacant: var(--color-bone);
     }
 
@@ -189,7 +180,6 @@
         /* Energetica semantic colors (dark mode) */
         --card-bg: #2d2d2d;
 
-        --text-primary: #ffffff;
         --text-secondary: #e5e5e5;
         --text-muted: #a0a0a0;
         --text-on-card: #ffffff;
@@ -198,7 +188,7 @@
 
         /* shadcn/ui semantic colors (dark mode) */
         --background: #0a0a0a;
-        --foreground: var(--text-primary);
+        --foreground: oklch(100% 0 0);
 
         --card: var(--card-bg);
         --card-foreground: var(--text-on-card);
@@ -206,14 +196,14 @@
         --popover: var(--card-bg);
         --popover-foreground: var(--text-on-card);
 
-        --primary: var(--color-pine-lighter);
-        --primary-foreground: #000000;
+        --primary: var(--color-brand-green);
+        --primary-foreground: var(--color-white);
 
         --secondary: var(--color-tan-green);
-        --secondary-foreground: #000000;
+        --secondary-foreground: #e5e5e5;
 
-        --muted: var(--content-bg);
-        --muted-foreground: var(--text-muted);
+        /* --muted: var(--content-bg); */
+        --muted-foreground: #a0a0a0;
 
         --accent: var(--color-brand-green);
         --accent-foreground: #000000;
@@ -223,7 +213,7 @@
 
         --border: var(--border-default);
         --input: var(--border-default);
-        --ring: var(--color-pine-lighter);
+        --ring: var(--color-brand-green);
 
         --radius: 0.5rem;
 
@@ -295,7 +285,7 @@
 
     body {
         font-family: "Baloo 2", system-ui, sans-serif;
-        color: var(--text-primary);
+        color: var(--primary);
         background-color: var(--background);
     }
 
@@ -305,7 +295,7 @@
 
     h1 {
         font-weight: 500;
-        color: var(--text-primary);
+        color: var(--primary);
     }
 
     h2,
@@ -313,17 +303,17 @@
     h4,
     h5,
     h6 {
-        color: var(--text-primary);
+        color: var(--primary);
     }
 }
 
 /* Prose (Typography) customization for wiki pages */
 .prose {
-    --tw-prose-body: var(--text-primary);
-    --tw-prose-headings: var(--text-primary) !important;
+    --tw-prose-body: var(--primary);
+    --tw-prose-headings: var(--primary) !important;
     --tw-prose-links: rgb(37, 99, 235);
-    --tw-prose-bold: var(--text-primary);
-    --tw-prose-code: var(--text-primary);
+    --tw-prose-bold: var(--primary);
+    --tw-prose-code: var(--primary);
     --tw-prose-pre-bg: var(--color-bone);
     /* --tw-prose-th-borders: #d1d5db; */
     /* --tw-prose-td-borders: #d1d5db; */
@@ -333,11 +323,11 @@
 }
 
 .dark .prose {
-    --tw-prose-body: var(--text-primary);
-    --tw-prose-headings: var(--text-primary);
+    --tw-prose-body: var(--primary);
+    --tw-prose-headings: var(--primary);
     --tw-prose-links: rgb(96, 165, 250);
-    --tw-prose-bold: var(--text-primary);
-    --tw-prose-code: var(--text-primary);
+    --tw-prose-bold: var(--primary);
+    --tw-prose-code: var(--primary);
     --tw-prose-pre-bg: #3a3a3a;
     /* --tw-prose-th-borders: #4b5563; */
     /* --tw-prose-td-borders: #4b5563; */

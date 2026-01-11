@@ -741,16 +741,16 @@ function NetworkBreakdownTable({
         <div className="overflow-x-auto">
             <table className="w-full text-sm">
                 <thead>
-                    <tr className="bg-tan-green dark:bg-dark-bg-tertiary">
+                    <tr className="bg-secondary">
                         <th
-                            className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() => handleSort("name")}
                         >
                             {breakdownMode === "player" ? "Player" : "Type"}
                             {getSortIndicator("name")}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() => handleSort("energy")}
                         >
                             {breakdownType === "production"
@@ -774,7 +774,7 @@ function NetworkBreakdownTable({
                         return (
                             <tr
                                 key={row.name}
-                                className="border-b border-pine/10 dark:border-dark-border/30 hover:bg-tan-green/20 dark:hover:bg-dark-bg-tertiary/30 transition-colors"
+                                className="border-b border-border/30 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors"
                             >
                                 <td className="py-3 px-4">
                                     {breakdownMode === "type" ? (

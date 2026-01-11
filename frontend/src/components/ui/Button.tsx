@@ -31,7 +31,7 @@ export function Button({
         primary:
             "bg-pine hover:bg-pine-dark dark:bg-brand-green dark:hover:bg-brand-green-dark text-white disabled:opacity-50",
         secondary:
-            "bg-gray-200 hover:bg-gray-300 dark:bg-dark-bg-tertiary dark:hover:bg-dark-bg-secondary text-gray-900 dark:text-white disabled:opacity-50",
+            "bg-secondary hover:bg-secondary/90 text-gray-900 dark:text-white disabled:opacity-50",
     };
 
     const sizeStyles = {

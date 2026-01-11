@@ -119,17 +119,15 @@ function RouteComponent() {
                                     {/* Text tiles */}
                                     <div
                                         key={f.title}
-                                        className="flex flex-col gap-4 p-6 bg-bone dark:bg-dark-bg-secondary rounded-4xl shadow-md"
+                                        className="flex flex-col gap-4 p-6 bg-card rounded-4xl shadow-md"
                                     >
-                                        <div className="flex flex-row items-center justify-center gap-4 text-bone-text dark:text-dark-text-primary">
+                                        <div className="flex flex-row items-center justify-center gap-4 text-foreground">
                                             {f.icon}
                                             <h3 className="text-xl font-semibold">
                                                 {f.title}
                                             </h3>
                                         </div>
-                                        <p className="text-bone-text dark:text-dark-text-secondary">
-                                            {f.description}
-                                        </p>
+                                        <p>{f.description}</p>
                                     </div>
 
                                     {/* Add image tile after 2nd and 4th position */}
@@ -157,14 +155,14 @@ function RouteComponent() {
                         <Link
                             to="/app/wiki/$slug"
                             params={{ slug: "introduction" }}
-                            className="text-bone dark:text-dark-text-primary bg-pine dark:bg-dark-bg-secondary p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
+                            className="text-primary-foreground bg-primary p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
                         >
                             <p className="text-xl">Explore the Wiki</p>
                             <ChevronRight />
                         </Link>
                         <Link
                             to="/app/login"
-                            className="text-bone dark:text-dark-text-primary bg-pine dark:bg-dark-bg-secondary p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
+                            className="text-primary-foreground bg-primary p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
                         >
                             <p className="text-xl">Play now</p>
                             <ChevronRight />

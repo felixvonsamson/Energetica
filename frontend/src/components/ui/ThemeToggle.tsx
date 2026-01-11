@@ -35,9 +35,9 @@ export function ThemeToggle({
                 onClick={handleClick}
                 className={cn(
                     "flex items-center gap-2 px-4 py-3 w-full",
-                    "text-bone-text dark:text-dark-text-primary",
-                    "hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary",
-                    "transition-colors border-b border-pine/20 dark:border-dark-border/50",
+                    "text-foreground",
+                    "hover:bg-tan-hover dark:hover:bg-muted",
+                    "transition-colors border-b border-border/50",
                     className,
                 )}
                 aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}

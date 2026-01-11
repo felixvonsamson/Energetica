@@ -247,15 +247,15 @@ export function PowerOverviewTable({
         <div className="overflow-x-auto">
             <table className="w-full text-sm">
                 <thead>
-                    <tr className="bg-tan-green dark:bg-dark-bg-tertiary">
+                    <tr className="bg-secondary">
                         <th
-                            className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() => handleSort("facility")}
                         >
                             Facility{getSortIndicator("facility")}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() => handleSort("energy")}
                         >
                             {isGeneration ? "Generated" : "Consumed"}
@@ -264,14 +264,14 @@ export function PowerOverviewTable({
                         {isGeneration && (
                             <>
                                 <th
-                                    className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                                    className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                                     onClick={() => handleSort("capacity")}
                                 >
                                     Installed Cap.
                                     {getSortIndicator("capacity")}
                                 </th>
                                 <th
-                                    className="py-3 px-4 text-center font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors min-w-37.5"
+                                    className="py-3 px-4 text-center font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors min-w-37.5"
                                     onClick={() => handleSort("used")}
                                 >
                                     Used Capacity
@@ -297,7 +297,7 @@ export function PowerOverviewTable({
                         return (
                             <tr
                                 key={row.facilityType}
-                                className="border-b border-pine/10 dark:border-dark-border/30 hover:bg-tan-green/20 dark:hover:bg-dark-bg-tertiary/30 transition-colors"
+                                className="border-b border-border/30 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors"
                             >
                                 <td className="py-3 px-4">
                                     <div className="flex items-center gap-2">

@@ -37,17 +37,17 @@ export function LandingPage() {
                 {/* Background illustration */}
                 <section className="flex flex-col gap-8">
                     <div className="relative">
-                        <div className="absolute inset-0 overflow-hidden rounded-4xl bg-pine dark:bg-dark-bg-secondary shadow-md">
+                        <div className="absolute inset-0 overflow-hidden rounded-4xl bg-primary shadow-md">
                             {/* Rounded mask overlay */}
                         </div>
                         {/* Content overlay */}
 
                         <div className="relative mx-8  py-24 sm:py-32 lg:py-32 ">
                             <div className="text-center">
-                                <h1 className="text-4xl font-bold tracking-tight text-bone dark:text-dark-text-primary sm:text-6xl lg:text-7xl leading-tight">
+                                <h1 className="text-4xl font-bold tracking-tight text-primary-foreground sm:text-6xl lg:text-7xl leading-tight">
                                     Learn Energy Systems by Playing
                                 </h1>
-                                <p className="mt-8 text-lg text-bone dark:text-dark-text-secondary sm:text-xl max-w-3xl mx-auto leading-relaxed">
+                                <p className="mt-8 text-lg text-primary-foreground sm:text-xl max-w-3xl mx-auto leading-relaxed">
                                     Energetica is multiplayer real-time
                                     simulation game about building sustainable
                                     futures.
@@ -58,16 +58,16 @@ export function LandingPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Link
                             to="/learning-tool"
-                            className="text-bone dark:text-dark-text-primary bg-pine dark:bg-dark-bg-secondary p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-xl"
+                            className="bg-primary text-primary-foreground p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-xl"
                         >
                             <p className="text-xl">Learn more</p>
                             <ChevronRight />
                         </Link>
                         <Link
                             to="/app/login"
-                            className="text-bone dark:text-dark-text-primary bg-pine dark:bg-dark-bg-secondary p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
+                            className="bg-primary text-primary-foreground p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:shadow-lg"
                         >
-                            <p className="text-xl">Play now</p>
+                            <p className="text-xl text">Play now</p>
                             <ChevronRight />
                         </Link>
                     </div>
@@ -88,16 +88,16 @@ export function LandingPage() {
                         {features.map((f) => (
                             <div
                                 key={f.title}
-                                className="flex flex-col gap-4 p-6 text-center bg-bone dark:bg-dark-bg-secondary rounded-4xl shadow-md"
+                                className="flex flex-col gap-4 p-6 text-center bg-card rounded-4xl shadow-md"
                             >
                                 <div className="flex flex-row items-center justify-center gap-4">
                                     {/* <f.icon className="mx-auto h-10 w-10 text-indigo-600 mb-4" /> */}
                                     {f.icon}
-                                    <h3 className="text-xl font-semibold text-bone-text dark:text-dark-text-primary">
+                                    <h3 className="text-xl font-semibold text-foreground">
                                         {f.title}
                                     </h3>
                                 </div>
-                                <p className="text-bone-text dark:text-dark-text-secondary">
+                                <p className="text-muted-foreground">
                                     {f.description}
                                 </p>
                             </div>

@@ -49,7 +49,7 @@ export function PriceInput({
                 className={cn(
                     "px-1 py-2 text-xs font-medium rounded-md",
                     "border border-gray-300 dark:border-gray-600",
-                    "bg-white dark:bg-dark-bg-secondary",
+                    "bg-card",
                     "text-gray-700 dark:text-gray-300",
                     "hover:bg-gray-50 dark:hover:bg-gray-700",
                     "focus:outline-none focus:ring-2 focus:ring-brand-green",
@@ -77,7 +77,7 @@ export function PriceInput({
                     className={cn(
                         "font-mono w-30 pl-6 pr-2 py-1.5 text-sm rounded-md",
                         "border border-gray-300 dark:border-gray-600",
-                        "bg-white dark:bg-dark-bg-secondary",
+                        "bg-card",
                         "text-gray-900 dark:text-gray-100",
                         "focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-transparent",
                         disabled && "opacity-50 cursor-not-allowed",
@@ -92,7 +92,7 @@ export function PriceInput({
                 className={cn(
                     "px-1 py-2 text-xs font-medium rounded-md",
                     "border border-gray-300 dark:border-gray-600",
-                    "bg-white dark:bg-dark-bg-secondary",
+                    "bg-card",
                     "text-gray-700 dark:text-gray-300",
                     "hover:bg-gray-50 dark:hover:bg-gray-700",
                     "focus:outline-none focus:ring-2 focus:ring-brand-green",

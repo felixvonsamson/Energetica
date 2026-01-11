@@ -119,7 +119,7 @@ export function FacilityCard<T>({
 
             {/* Expanded Content */}
             {isExpanded && (
-                <div className="mt-6 pt-6 border-t border-pine/20 dark:border-dark-border/50">
+                <div className="mt-6 pt-6 border-t border-border/50">
                     {/* Construction Info & Button */}
                     <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
                         <button
@@ -132,7 +132,7 @@ export function FacilityCard<T>({
                             }
                             className={`px-6 py-3 rounded font-bold text-white transition-colors ${
                                 facility.requirements_status === "unsatisfied"
-                                    ? "bg-alert-red cursor-not-allowed"
+                                    ? "bg-destructive cursor-not-allowed"
                                     : "bg-brand-green hover:bg-brand-green/80"
                             }`}
                         >

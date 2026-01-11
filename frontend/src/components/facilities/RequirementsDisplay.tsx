@@ -19,7 +19,7 @@ export function RequirementsDisplay({
     requirements,
 }: RequirementsDisplayProps) {
     return (
-        <div className="bg-tan-green/30 dark:bg-dark-bg-tertiary/50 p-3 rounded">
+        <div className="bg-muted/50 p-3 rounded">
             <div className="font-bold mb-2">Unlock with:</div>
             <ul className="space-y-1 ml-4">
                 {requirements.map((req, idx) => (

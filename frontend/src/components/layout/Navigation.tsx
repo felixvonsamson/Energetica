@@ -46,7 +46,7 @@ export function Navigation() {
     return (
         <>
             {/* Navigation Bar - Desktop only */}
-            <nav className="hidden md:block bg-tan-green dark:bg-dark-bg-secondary border-b border-pine-darker dark:border-dark-border">
+            <nav className="hidden md:block bg-background border-b border-border">
                 <div className="px-4">
                     {/* Navigation menu */}
                     <ul className="flex items-center gap-0 justify-center">
@@ -145,15 +145,15 @@ export function SideNav() {
             {/* Side drawer */}
             <div
                 className={cn(
-                    "fixed right-0 top-0 h-screen w-64 bg-tan-green dark:bg-dark-bg-secondary border-l border-pine-darker dark:border-dark-border z-50 overflow-y-auto transition-transform duration-300 ease-out",
+                    "fixed right-0 top-0 h-screen w-64 bg-secondary border-l border-border z-50 overflow-y-auto transition-transform duration-300 ease-out",
                     isMenuOpen ? "translate-x-0" : "translate-x-full",
                 )}
             >
                 {/* Close button */}
-                <div className="flex justify-end p-2 border-b border-pine-darker dark:border-dark-border">
+                <div className="flex justify-end p-2 border-b border-border">
                     <button
                         onClick={() => setIsMenuOpen(false)}
-                        className="text-pine dark:text-dark-text-primary p-2 hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary rounded transition-colors"
+                        className="text-foreground p-2 hover:bg-primary/30 rounded transition-colors"
                         aria-label="Close navigation menu"
                     >
                         <X size={24} />
@@ -265,13 +265,13 @@ function NavDropdown({
     return (
         <li
             className={cn(
-                "border-b border-pine/20 dark:border-dark-border/50",
+                "border-b border-border/50",
                 isDesktop && "w-full md:w-auto md:relative md:border-none z-10",
             )}
         >
             <button
                 onClick={onToggle}
-                className="flex items-center gap-2 px-4 py-3 w-full transition-colors text-pine dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary"
+                className="flex items-center gap-2 px-4 py-3 w-full transition-colors text-foreground hover:bg-primary/30"
             >
                 <Icon size={20} />
                 <span className="font-medium">{label}</span>
@@ -288,10 +288,10 @@ function NavDropdown({
             {isOpen && (
                 <ul
                     className={cn(
-                        "bg-bone/50 dark:bg-dark-bg-tertiary",
+                        "bg-muted",
                         isDesktop &&
-                            "md:absolute md:left-0 md:top-full md:bg-bone dark:md:bg-dark-bg-secondary md:shadow-lg md:min-w-55 md:border-2 md:border-pine-darker dark:md:border-dark-border",
-                        !isDesktop && "dark:bg-dark-bg-secondary",
+                            "md:absolute md:left-0 md:top-full md:bg-card md:shadow-lg md:min-w-55 md:border-2 md:border-border",
+                        !isDesktop && "bg-card",
                     )}
                 >
                     {children}
@@ -352,14 +352,14 @@ function NavLink({
     return (
         <li
             className={cn(
-                "border-b border-pine/10 dark:border-dark-border/30",
+                "border-b border-border/30",
                 isDesktop && "w-full md:w-auto md:border-none",
             )}
         >
             {disabled ? (
                 <div
                     className={cn(
-                        "flex items-center gap-2 px-4 py-3 text-pine/50 dark:text-dark-text-primary/50 opacity-50",
+                        "flex items-center gap-2 px-4 py-3 text-foreground/50 opacity-50",
                         isInsideDropdown ? "pl-8" : "",
                     )}
                 >
@@ -372,12 +372,11 @@ function NavLink({
                     params={params}
                     onClick={onNavigate}
                     className={cn(
-                        "flex items-center gap-2 px-4 py-3 text-pine dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors",
+                        "flex items-center gap-2 px-4 py-3 text-foreground hover:bg-primary/30 transition-colors",
                         isInsideDropdown ? "pl-8" : "",
                     )}
                     activeProps={{
-                        className:
-                            "bg-tan-hover dark:bg-dark-bg-tertiary font-semibold",
+                        className: "bg-primary/30 font-semibold",
                     }}
                 >
                     <Icon size={20} />

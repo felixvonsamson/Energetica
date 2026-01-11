@@ -408,7 +408,7 @@ function SettleContent() {
                 </div>
 
                 {/* Right sidebar - Info/Resources panel */}
-                <div className="bg-bone dark:bg-dark-bg-secondary p-4 rounded-lg lg:flex-1 lg:min-w-64 lg:max-w-96 lg:flex lg:flex-col">
+                <div className="bg-card p-4 rounded-lg lg:flex-1 lg:min-w-64 lg:max-w-96 lg:flex lg:flex-col">
                     {!selectedTile ? (
                         <div>
                             <h2 className="text-xl font-bold mb-3 text-center">
@@ -491,7 +491,7 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
                                     )}
                                 </div>
                             )}
-                            <div className="relative h-4 bg-white dark:bg-dark-bg-tertiary rounded overflow-hidden">
+                            <div className="relative h-4 bg-muted rounded overflow-hidden">
                                 <div
                                     className="absolute h-full rounded transition-all duration-500 ease-out"
                                     style={{

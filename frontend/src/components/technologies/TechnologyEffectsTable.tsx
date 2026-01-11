@@ -26,7 +26,7 @@ function EffectRow({
     }
 
     return (
-        <tr className="border-b border-pine/10 dark:border-dark-border/30">
+        <tr className="border-b border-border/30">
             <td className="py-2 px-4 font-semibold">{label}</td>
             <td
                 className={`py-2 px-4 text-center font-mono ${
@@ -60,7 +60,7 @@ export function TechnologyEffectsTable({
         <div className="overflow-x-auto">
             <table className="min-w-full text-sm border-collapse">
                 <thead>
-                    <tr className="bg-tan-green/20 dark:bg-dark-bg-tertiary/30">
+                    <tr className="bg-muted/30">
                         <th className="py-2 px-4 text-left font-semibold">
                             Effects:
                         </th>
@@ -69,7 +69,7 @@ export function TechnologyEffectsTable({
                         </th>
                     </tr>
                 </thead>
-                <tbody className="bg-tan-green/20 dark:bg-dark-bg-tertiary/30">
+                <tbody className="bg-muted/30">
                     {/* Mechanical Engineering & Physics & Aerodynamics & Nuclear Engineering */}
                     <EffectRow
                         label="Power generation"
@@ -105,7 +105,7 @@ export function TechnologyEffectsTable({
                         sign="-"
                     />
                     {technology.construction_workers && (
-                        <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                        <tr className="border-b border-border/30">
                             <td className="py-2 px-4 font-semibold">
                                 Construction workers
                             </td>

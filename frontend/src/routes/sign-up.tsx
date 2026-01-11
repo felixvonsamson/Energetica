@@ -147,7 +147,7 @@ function SignUpForm() {
                             disabled={isLoading}
                             minLength={3}
                             maxLength={18}
-                            className="w-full px-4 py-3 rounded-lg border-2 border-pine dark:border-dark-border bg-bone dark:bg-dark-bg-secondary text-primary placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-input bg-card text-foreground placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             autoComplete="username"
                             autoFocus
                         />
@@ -169,7 +169,7 @@ function SignUpForm() {
                             placeholder="Choose a password"
                             disabled={isLoading}
                             minLength={7}
-                            className="w-full px-4 py-3 rounded-lg border-2 border-pine dark:border-dark-border bg-bone dark:bg-dark-bg-secondary text-primary placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-input bg-card text-foreground placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             autoComplete="new-password"
                         />
                     </div>
@@ -190,7 +190,7 @@ function SignUpForm() {
                             placeholder="Confirm your password"
                             disabled={isLoading}
                             minLength={7}
-                            className="w-full px-4 py-3 rounded-lg border-2 border-pine dark:border-dark-border bg-bone dark:bg-dark-bg-secondary text-primary placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-input bg-card text-foreground placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             autoComplete="new-password"
                         />
                     </div>

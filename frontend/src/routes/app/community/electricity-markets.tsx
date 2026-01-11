@@ -160,7 +160,7 @@ function MarketRow({
             >
                 {isCurrentMarket ? (
                     <button
-                        className="px-4 py-1 bg-alert-red text-white rounded hover:opacity-80 transition-opacity"
+                        className="px-4 py-1 bg-destructive text-white rounded hover:opacity-80 transition-opacity"
                         onClick={onLeave}
                     >
                         Leave
@@ -252,7 +252,7 @@ function ElectricityMarketsContent() {
                 </h1>
                 {markets && markets?.length !== 0 && (
                     <button
-                        className="flex items-center gap-2 px-4 py-2 bg-pine dark:bg-brand-green text-white rounded-lg hover:opacity-80 transition-opacity"
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-80 transition-opacity"
                         onClick={() => {
                             navigate({
                                 search: { createMarket: "" },

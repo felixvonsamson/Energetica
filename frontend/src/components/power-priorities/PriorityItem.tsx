@@ -114,7 +114,7 @@ export function PriorityItem({
                 className={cn(
                     "py-3 px-3 text-center",
                     isConsumption
-                        ? "bg-tan-green dark:bg-dark-bg-secondary rounded-l-lg"
+                        ? "bg-secondary rounded-l-lg"
                         : "bg-transparent",
                     isConsumption &&
                         isDraggable &&
@@ -137,7 +137,7 @@ export function PriorityItem({
             {/* Facility name */}
             <td
                 className={cn(
-                    "py-3 px-3 font-medium bg-tan-green dark:bg-dark-bg-secondary",
+                    "py-3 px-3 font-medium bg-secondary",
                     isProduction && "rounded-l-lg",
                 )}
             >
@@ -150,7 +150,7 @@ export function PriorityItem({
             </td>
 
             {/* Current power */}
-            <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400 bg-tan-green dark:bg-dark-bg-secondary">
+            <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400 bg-secondary">
                 {currentPowerMW !== undefined ? (
                     <span className="font-mono">
                         {formatPower(currentPowerMW)}
@@ -161,7 +161,7 @@ export function PriorityItem({
             </td>
 
             {/* Power gauge (hidden on mobile) */}
-            <td className="py-3 px-3 hidden lg:table-cell bg-tan-green dark:bg-dark-bg-secondary">
+            <td className="py-3 px-3 hidden lg:table-cell bg-secondary">
                 {capacityMW > 0 ? (
                     <FacilityGauge
                         facilityType={item.type}
@@ -180,14 +180,14 @@ export function PriorityItem({
 
             {/* Price display */}
             {!isEditMode && (
-                <td className="text-right py-3 px-3 bg-tan-green dark:bg-dark-bg-secondary">
+                <td className="text-right py-3 px-3 bg-secondary">
                     <Money amount={item.price} />
                 </td>
             )}
 
             {/* Price input (only in price mode) */}
             {isEditMode && item.price !== null && item.price !== undefined && (
-                <td className="py-0 px-3 bg-tan-green dark:bg-dark-bg-secondary">
+                <td className="py-0 px-3 bg-secondary">
                     <PriceInput
                         value={item.price}
                         onChange={(newPrice) => onPriceChange(newPrice)}
@@ -199,7 +199,7 @@ export function PriorityItem({
             {/* Status badge */}
             <td
                 className={cn(
-                    "py-2 px-3 text-right bg-tan-green dark:bg-dark-bg-secondary",
+                    "py-2 px-3 text-right bg-secondary",
                     isConsumption && "rounded-r-lg",
                 )}
             >
@@ -215,7 +215,7 @@ export function PriorityItem({
                 className={cn(
                     "py-3 px-3 text-center",
                     isProduction
-                        ? "bg-tan-green dark:bg-dark-bg-secondary rounded-r-lg"
+                        ? "bg-secondary rounded-r-lg"
                         : "bg-transparent",
                     isProduction &&
                         isDraggable &&

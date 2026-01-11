@@ -68,10 +68,10 @@ export function MessageContainer({
                                 </div>
                             )}
                             <div
-                                className={`p-3 rounded-lg break-words ${
+                                className={`p-3 rounded-lg wrap-break-word ${
                                     isOwnMessage
                                         ? "bg-pine dark:bg-brand-green text-white rounded-br-none"
-                                        : "bg-gray-50 dark:bg-dark-bg-tertiary rounded-bl-none"
+                                        : "bg-muted rounded-bl-none"
                                 }`}
                             >
                                 {message.text}

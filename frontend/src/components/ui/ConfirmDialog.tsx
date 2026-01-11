@@ -88,7 +88,7 @@ export function ConfirmDialog({
                             disabled={isPending}
                             className={`px-4 py-2 rounded font-medium transition-colors disabled:opacity-50 ${
                                 variant === "danger"
-                                    ? "bg-alert-red hover:bg-alert-red/80 text-white"
+                                    ? "bg-destructive hover:bg-destructive/80 text-white"
                                     : "bg-brand-green hover:bg-brand-green/80 text-white"
                             }`}
                         >

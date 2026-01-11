@@ -113,13 +113,11 @@ export function MapTooltip({
                 width: `${TOOLTIP_WIDTH}px`,
             }}
         >
-            <div className="bg-bone dark:bg-dark-bg-secondary border border-pine dark:border-dark-border p-4 rounded shadow-lg">
+            <div className="bg-card border border-border p-4 rounded shadow-lg">
                 {/* Title */}
                 <div className="text-center text-xl mb-3">
                     {username ? (
-                        <span className="text-bone-text dark:text-dark-text-primary">
-                            {username}
-                        </span>
+                        <span className="text-foreground">{username}</span>
                     ) : (
                         <span className="text-brand-green dark:text-gray-100">
                             Vacant tile
@@ -134,11 +132,11 @@ export function MapTooltip({
                             (resource.value / resource.maxValue) * 180;
                         return (
                             <div key={resource.name}>
-                                <div className="flex justify-between text-bone-text dark:text-dark-text-primary text-sm mb-1">
+                                <div className="flex justify-between text-foreground text-sm mb-1">
                                     <span>{resource.name}</span>
                                     <span>{resource.displayValue}</span>
                                 </div>
-                                <div className="relative h-1 bg-gray-200 dark:bg-dark-bg-tertiary rounded">
+                                <div className="relative h-1 bg-muted rounded">
                                     <div
                                         className="absolute h-full rounded"
                                         style={{
@@ -153,7 +151,7 @@ export function MapTooltip({
                 </div>
 
                 {/* Distance */}
-                <div className="text-center text-bone-text dark:text-dark-text-primary text-base mt-4">
+                <div className="text-center text-foreground text-base mt-4">
                     Distance:{" "}
                     {Number.isInteger(distance)
                         ? distance

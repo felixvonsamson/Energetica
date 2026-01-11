@@ -68,7 +68,7 @@ export function CreateAskModal({
                                 className={`px-4 py-3 rounded-lg font-medium transition-colors ${
                                     selectedResource === resource
                                         ? "bg-brand-green text-white"
-                                        : "bg-tan-green text-gray-900 dark:bg-dark-bg-tertiary dark:text-gray-100 hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary"
+                                        : "bg-secondary text-secondary-foreground hover:bg-secondary/90"
                                 }`}
                             >
                                 <div className="text-sm text-gray-900 dark:text-gray-100">
@@ -86,7 +86,7 @@ export function CreateAskModal({
 
                 {/* Current stock info */}
                 {resources && (
-                    <div className="bg-tan-green/20 dark:bg-dark-bg-tertiary/50 p-3 rounded-lg">
+                    <div className="bg-muted/50 p-3 rounded-lg">
                         <div className="text-sm text-gray-900 dark:text-gray-100">
                             <span className="font-semibold">
                                 Your {RESOURCE_LABELS[selectedResource]} stock:
@@ -115,7 +115,7 @@ export function CreateAskModal({
                         max={maxQuantity}
                         step="0.01"
                         required
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white text-gray-900 dark:bg-dark-bg-secondary dark:text-gray-100 focus:ring-2 focus:ring-brand-green focus:border-transparent"
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-card text-card-foreground focus:ring-2 focus:ring-brand-green focus:border-transparent"
                         placeholder="Enter quantity in tons"
                     />
                     {maxQuantity !== undefined && (
@@ -141,14 +141,14 @@ export function CreateAskModal({
                         min="0.01"
                         step="0.01"
                         required
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white text-gray-900 dark:bg-dark-bg-secondary dark:text-gray-100 focus:ring-2 focus:ring-brand-green focus:border-transparent"
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-card text-card-foreground focus:ring-2 focus:ring-brand-green focus:border-transparent"
                         placeholder="Enter price per ton"
                     />
                 </div>
 
                 {/* Total preview */}
                 {quantity && price && (
-                    <div className="bg-tan-green/20 dark:bg-dark-bg-tertiary/50 p-3 rounded-lg">
+                    <div className="bg-muted/50 p-3 rounded-lg">
                         <div className="text-sm text-gray-900 dark:text-gray-100">
                             <span className="font-semibold">
                                 Total listing value:
@@ -167,7 +167,7 @@ export function CreateAskModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 rounded-lg bg-gray-200 text-gray-900 dark:bg-dark-bg-tertiary dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-dark-bg-secondary transition-colors"
+                        className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-gray-300 dark:hover:bg-card transition-colors"
                     >
                         Cancel
                     </button>

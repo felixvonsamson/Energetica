@@ -3,7 +3,7 @@ import { Header } from "./Header";
 
 export function HomeLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="min-h-screen bg-tan-green dark:bg-dark-bg-primary">
+        <div className="min-h-screen bg-background">
             <div className="overflow-y-scroll h-screen">
                 <div className="min-h-screen flex flex-col">
                     <div className="lg:px-[15%] flex-1">

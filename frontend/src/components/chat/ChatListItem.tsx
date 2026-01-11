@@ -13,7 +13,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
             className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                 isSelected
                     ? "bg-pine dark:bg-brand-green text-white"
-                    : "hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary"
+                    : "hover:bg-gray-100 dark:hover:bg-muted"
             }`}
         >
             <div className="flex justify-between items-start gap-2">

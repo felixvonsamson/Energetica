@@ -160,7 +160,7 @@ export function TopBar() {
                             {staticData?.infoModal && (
                                 <button
                                     onClick={() => handleShowHelp()}
-                                    className="px-2 py-2 text-bone-text dark:text-dark-text-primary rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors h-9 aspect-square"
+                                    className="px-2 py-2 text-foreground rounded hover:bg-tan-hover dark:hover:bg-muted transition-colors h-9 aspect-square"
                                     aria-label="Show help"
                                 >
                                     <HelpCircle size={20} />
@@ -169,7 +169,7 @@ export function TopBar() {
 
                             <button
                                 onClick={() => setShowNotifications(true)}
-                                className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-2 py-2 lg:px-4 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors relative flex items-center justify-center aspect-square lg:aspect-auto h-9"
+                                className="bg-card text-foreground px-2 py-2 lg:px-4 rounded hover:bg-tan-hover dark:hover:bg-muted transition-colors relative flex items-center justify-center aspect-square lg:aspect-auto h-9"
                             >
                                 <Bell size={20} />
                                 <span className="ml-2 hidden lg:inline">
@@ -189,7 +189,7 @@ export function TopBar() {
                                     onClick={() =>
                                         setShowUserDropdown(!showUserDropdown)
                                     }
-                                    className="bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-2 py-2 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors flex items-center justify-center aspect-square h-9"
+                                    className="bg-card text-foreground px-2 py-2 rounded hover:bg-tan-hover dark:hover:bg-muted transition-colors flex items-center justify-center aspect-square h-9"
                                     aria-label="User menu"
                                 >
                                     <CircleUser size={20} />
@@ -197,7 +197,7 @@ export function TopBar() {
 
                                 {/* Dropdown menu */}
                                 {showUserDropdown && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-bone dark:bg-dark-bg-secondary border border-pine-darker dark:border-dark-border rounded shadow-lg z-50">
+                                    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded shadow-lg z-50">
                                         <ThemeToggle variant="menu-item" />
 
                                         <Link
@@ -205,7 +205,7 @@ export function TopBar() {
                                             onClick={() =>
                                                 setShowUserDropdown(false)
                                             }
-                                            className="flex items-center gap-2 px-4 py-3 text-bone-text dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors border-b border-pine/20 dark:border-dark-border/50"
+                                            className="flex items-center gap-2 px-4 py-3 text-foreground hover:bg-tan-hover dark:hover:bg-muted transition-colors border-b border-border/50"
                                         >
                                             <Settings size={20} />
                                             <span>Settings</span>
@@ -215,7 +215,7 @@ export function TopBar() {
                                             onClick={() =>
                                                 setShowUserDropdown(false)
                                             }
-                                            className="flex items-center gap-2 px-4 py-3 text-bone-text dark:text-dark-text-primary hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors"
+                                            className="flex items-center gap-2 px-4 py-3 text-foreground hover:bg-tan-hover dark:hover:bg-muted transition-colors"
                                         >
                                             <LogOut size={20} />
                                             <span>Logout</span>
@@ -227,7 +227,7 @@ export function TopBar() {
                             {/* Mobile menu button */}
                             <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="md:hidden bg-bone dark:bg-dark-bg-secondary text-bone-text dark:text-dark-text-primary px-2 py-2 rounded hover:bg-tan-hover dark:hover:bg-dark-bg-tertiary transition-colors flex items-center justify-center aspect-square h-9"
+                                className="md:hidden bg-card text-foreground px-2 py-2 rounded hover:bg-tan-hover dark:hover:bg-muted transition-colors flex items-center justify-center aspect-square h-9"
                                 aria-label="Toggle navigation menu"
                             >
                                 <Menu size={20} />

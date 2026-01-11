@@ -30,7 +30,7 @@ function ExtractionFacilitiesHelp() {
                 For more information about Extraction Facilities, refer to{" "}
                 <a
                     href="/wiki/resources#Extraction_Facilities"
-                    className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
+                    className="underline hover:opacity-80 text-foreground"
                 >
                     this section in the wiki
                 </a>
@@ -126,7 +126,7 @@ function ExtractionFacilitiesContent() {
                                                 .name as keyof typeof resourcesData
                                         ] && (
                                             <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1 mt-2">
-                                                <Info className="w-4 h-4 flex-shrink-0" />
+                                                <Info className="w-4 h-4 shrink-0" />
                                                 <span>
                                                     Underground reserves of{" "}
                                                     <ResourceName
@@ -183,9 +183,9 @@ function ExtractionFacilityStatsTable({
     return (
         <div className="overflow-x-auto">
             <table className="min-w-full text-sm border-collapse">
-                <tbody className="bg-tan-green/20 dark:bg-dark-bg-tertiary/30">
+                <tbody className="bg-muted/30">
                     {/* Power Consumption */}
-                    <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                    <tr className="border-b border-border/30">
                         <td className="py-2 px-4 font-semibold">
                             Power consumption
                         </td>
@@ -195,7 +195,7 @@ function ExtractionFacilityStatsTable({
                     </tr>
 
                     {/* Resource Production */}
-                    <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                    <tr className="border-b border-border/30">
                         <td className="py-2 px-4 font-semibold">
                             {resourceName} production
                         </td>
@@ -205,7 +205,7 @@ function ExtractionFacilityStatsTable({
                     </tr>
 
                     {/* Operation Cost */}
-                    <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                    <tr className="border-b border-border/30">
                         <td className="py-2 px-4 font-semibold">
                             Operation cost
                         </td>
@@ -217,7 +217,7 @@ function ExtractionFacilityStatsTable({
                     </tr>
 
                     {/* CO2 Emissions */}
-                    <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                    <tr className="border-b border-border/30">
                         <td className="py-2 px-4 font-semibold">
                             CO₂ emissions
                         </td>

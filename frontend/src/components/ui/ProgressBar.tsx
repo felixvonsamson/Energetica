@@ -23,7 +23,7 @@ export function ProgressBar({
             {(label || showPercentage) && (
                 <div className="flex justify-between items-center">
                     {label && (
-                        <span className="font-semibold text-sm text-bone-text dark:text-dark-text-primary">
+                        <span className="font-semibold text-sm text-foreground">
                             {label}
                         </span>
                     )}

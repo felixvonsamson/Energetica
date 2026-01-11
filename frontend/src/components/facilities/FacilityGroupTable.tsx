@@ -69,7 +69,7 @@ function ConfirmationContent({
                 <FacilityName facility={facilityName} as="strong" mode="long" />{" "}
                 facilities?
             </p>
-            <div className="bg-tan-green/20 dark:bg-dark-bg-tertiary/50 p-4 rounded-lg space-y-2">
+            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
                 <div className="flex justify-between">
                     <span className="font-semibold">Number of facilities:</span>
                     <span>{count}</span>
@@ -118,7 +118,7 @@ function FacilityActions({
                     <button
                         onClick={() => dismantleMutation.mutate(facility.id)}
                         disabled={dismantleMutation.isPending}
-                        className="bg-alert-red hover:bg-alert-red/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                        className="bg-destructive hover:bg-destructive/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                     >
                         <Money amount={facility.dismantle_cost} />
                     </button>
@@ -192,7 +192,7 @@ function GroupActions({
                     trigger={
                         <button
                             disabled={dismantleAllMutation.isPending}
-                            className="bg-alert-red hover:bg-alert-red/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                            className="bg-destructive hover:bg-destructive/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                         >
                             Dismantle All
                         </button>
@@ -374,9 +374,9 @@ export function FacilityGroupTable<T extends FacilityBase>({
     return (
         <table className="w-full text-sm">
             <thead>
-                <tr className="bg-tan-green dark:bg-dark-bg-tertiary">
+                <tr className="bg-secondary">
                     <th
-                        className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                        className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                         onClick={() => handleSort("facility")}
                     >
                         Name{getSortIndicator("facility")}
@@ -386,7 +386,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
                             key={idx}
                             className={`py-3 px-4 font-semibold ${col.className || ""} ${
                                 col.sortable
-                                    ? "cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                                    ? "cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                                     : ""
                             }`}
                             onClick={
@@ -402,13 +402,13 @@ export function FacilityGroupTable<T extends FacilityBase>({
                         </th>
                     ))}
                     <th
-                        className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                        className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                         onClick={() => handleSort("hourly_op_cost")}
                     >
                         O&M Cost{getSortIndicator("hourly_op_cost")}
                     </th>
                     <th
-                        className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-dark-bg-secondary transition-colors"
+                        className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                         onClick={() => handleSort("remaining_lifespan")}
                     >
                         Lifespan{getSortIndicator("remaining_lifespan")}
@@ -456,7 +456,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
                             {/* Summary Row */}
                             <tr
                                 key={facilityName}
-                                className="border-b-2 border-pine/20 dark:border-dark-border/50 bg-tan-green/20 dark:bg-dark-bg-tertiary/50 font-semibold cursor-pointer hover:bg-tan-green/30 dark:hover:bg-dark-bg-tertiary/70 transition-colors"
+                                className="border-b-2 border-border/50 bg-muted/50 font-semibold cursor-pointer hover:bg-tan-green/30 dark:hover:bg-muted/70 transition-colors"
                                 onClick={() => toggleGroup(facilityName)}
                             >
                                 <td className="py-3 px-4">
@@ -506,7 +506,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                 facilityGroup.map((facility) => (
                                     <tr
                                         key={facility.id}
-                                        className="border-b border-pine/10 dark:border-dark-border/30 hover:bg-tan-green/20 dark:hover:bg-dark-bg-tertiary/30 transition-colors"
+                                        className="border-b border-border/30 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors"
                                     >
                                         <td className="py-3 px-4 pl-12 opacity-0">
                                             {facility.facility}

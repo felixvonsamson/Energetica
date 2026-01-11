@@ -362,7 +362,7 @@ function FacilityManagementContent() {
                                     className={`px-4 py-2 rounded font-medium transition-colors ${
                                         selectedCategory === category
                                             ? "bg-primary text-white"
-                                            : "bg-tan-green/20 dark:bg-dark-bg-tertiary hover:bg-tan-green/40 dark:hover:bg-dark-bg-secondary"
+                                            : "bg-muted hover:bg-tan-green/40 dark:hover:bg-card"
                                     }`}
                                 >
                                     {getCategoryLabel(category)}

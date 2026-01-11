@@ -76,7 +76,7 @@ export function ProgressItem({
         isPausing || isResuming || isCancelling || isChangingPriority;
 
     return (
-        <div className="p-3 rounded-lg bg-bone dark:bg-dark-bg-secondary border border-gray-200 dark:border-dark-border">
+        <div className="p-3 rounded-lg bg-card border border-border">
             {/* Header row: Badge, Title, Actions */}
             <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 flex-1 min-w-0">

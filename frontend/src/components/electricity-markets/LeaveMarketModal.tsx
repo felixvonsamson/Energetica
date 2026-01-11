@@ -120,14 +120,14 @@ export function LeaveMarketModal({ isOpen, onClose }: LeaveMarketModalProps) {
                         <button
                             onClick={onClose}
                             disabled={isPending}
-                            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-900 dark:bg-dark-bg-tertiary dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-dark-bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-gray-300 dark:hover:bg-card transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleConfirm}
                             disabled={isPending}
-                            className="px-4 py-2 rounded-lg bg-alert-red hover:bg-alert-red/80 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors"
+                            className="px-4 py-2 rounded-lg bg-destructive hover:bg-destructive/80 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors"
                         >
                             {isPending ? "Leaving..." : "Leave Market"}
                         </button>

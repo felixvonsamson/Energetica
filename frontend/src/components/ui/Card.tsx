@@ -13,8 +13,8 @@ export function Card({ children, className, onClick }: CardProps) {
     return (
         <div
             className={cn(
-                "bg-bone dark:bg-dark-bg-secondary p-6 rounded-lg",
-                "text-bone-text dark:text-dark-text-primary",
+                "bg-card p-6 rounded-lg",
+                "text-foreground",
                 className,
             )}
             onClick={onClick}
@@ -40,13 +40,7 @@ interface CardTitleProps {
 
 export function CardTitle({ children, className }: CardTitleProps) {
     return (
-        <h2
-            className={cn(
-                "text-2xl font-bold",
-                "text-bone-text dark:text-dark-text-primary",
-                className,
-            )}
-        >
+        <h2 className={cn("text-2xl font-bold", "text-foreground", className)}>
             {children}
         </h2>
     );

@@ -27,7 +27,7 @@ function StorageFacilitiesHelp() {
                 For more information about storage facilities, refer to{" "}
                 <a
                     href="/wiki/storage_facilities"
-                    className="underline hover:opacity-80 text-white dark:text-dark-text-primary"
+                    className="underline hover:opacity-80 text-foreground"
                 >
                     this section in the wiki
                 </a>
@@ -136,9 +136,9 @@ function StorageFacilityStatsTable({
     return (
         <div className="overflow-x-auto">
             <table className="min-w-full text-sm border-collapse">
-                <tbody className="bg-tan-green/20 dark:bg-dark-bg-tertiary/30">
+                <tbody className="bg-muted/30">
                     {/* Storage Capacity */}
-                    <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                    <tr className="border-b border-border/30">
                         <td className="py-2 px-4 font-semibold">
                             Storage capacity
                         </td>
@@ -148,7 +148,7 @@ function StorageFacilityStatsTable({
                     </tr>
 
                     {/* Max Generation */}
-                    <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                    <tr className="border-b border-border/30">
                         <td className="py-2 px-4 font-semibold">
                             Max generation
                         </td>
@@ -160,7 +160,7 @@ function StorageFacilityStatsTable({
                     {/* Ramping Speed */}
                     {facility.ramping_speed !== undefined &&
                         facility.ramping_speed !== null && (
-                            <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                            <tr className="border-b border-border/30">
                                 <td className="py-2 px-4 font-semibold">
                                     Ramping speed
                                 </td>
@@ -171,7 +171,7 @@ function StorageFacilityStatsTable({
                         )}
 
                     {/* Efficiency */}
-                    <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                    <tr className="border-b border-border/30">
                         <td className="py-2 px-4 font-semibold">Efficiency</td>
                         <td className="py-2 px-4 text-center font-mono">
                             {Math.round(facility.efficiency)}%
@@ -179,7 +179,7 @@ function StorageFacilityStatsTable({
                     </tr>
 
                     {/* Operation Cost */}
-                    <tr className="border-b border-pine/10 dark:border-dark-border/30">
+                    <tr className="border-b border-border/30">
                         <td className="py-2 px-4 font-semibold">
                             Operation cost
                         </td>

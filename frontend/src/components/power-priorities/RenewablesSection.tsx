@@ -66,12 +66,12 @@ export function RenewablesSection({
                         <td className="bg-transparent"></td>
 
                         {/* Facility name */}
-                        <td className="py-3 px-3 font-medium bg-tan-green dark:bg-dark-bg-secondary rounded-l-lg">
+                        <td className="py-3 px-3 font-medium bg-secondary rounded-l-lg">
                             <AssetName assetId={renewable} mode="auto" />
                         </td>
 
                         {/* Current power */}
-                        <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400 bg-tan-green dark:bg-dark-bg-secondary">
+                        <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400 bg-secondary">
                             {currentPowerMW !== undefined ? (
                                 <span className="font-mono">
                                     {formatPower(currentPowerMW)}
@@ -82,7 +82,7 @@ export function RenewablesSection({
                         </td>
 
                         {/* Power gauge (hidden on mobile) */}
-                        <td className="py-3 px-3 hidden lg:table-cell bg-tan-green dark:bg-dark-bg-secondary">
+                        <td className="py-3 px-3 hidden lg:table-cell bg-secondary">
                             {capacityMW > 0 ? (
                                 <FacilityGauge
                                     facilityType={renewable}
@@ -101,12 +101,12 @@ export function RenewablesSection({
                         </td>
 
                         {/* Price */}
-                        <td className="py-3 px-3 text-right bg-tan-green dark:bg-dark-bg-secondary">
+                        <td className="py-3 px-3 text-right bg-secondary">
                             <Money amount={null} />
                         </td>
 
                         {/* Status badge */}
-                        <td className="py-3 px-3 text-right bg-tan-green dark:bg-dark-bg-secondary">
+                        <td className="py-3 px-3 text-right bg-secondary">
                             <div className="inline-flex justify-end">
                                 <StatusBadge
                                     status={status}
@@ -116,7 +116,7 @@ export function RenewablesSection({
                         </td>
 
                         {/* Lock icon instead of priority number */}
-                        <td className="py-3 px-3 text-center bg-tan-green dark:bg-dark-bg-secondary rounded-r-lg">
+                        <td className="py-3 px-3 text-center bg-secondary rounded-r-lg">
                             <Lock className="w-4 h-4 shrink-0 inline-block" />
                         </td>
                     </tr>

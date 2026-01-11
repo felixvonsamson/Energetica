@@ -86,7 +86,7 @@ function SettingsContent() {
             {/* Settings cards */}
             <div className="max-w-2xl mx-auto space-y-6">
                 {/* Browser Notifications Card */}
-                <Card className="border-2 border-pine dark:border-dark-border">
+                <Card className="border-2 border-border">
                     <div className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
@@ -106,14 +106,14 @@ function SettingsContent() {
                                     disabled={notificationsLoading}
                                     className="sr-only peer"
                                 />
-                                <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-green rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-green dark:peer-checked:bg-brand-green"></div>
+                                <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-green rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-green dark:peer-checked:bg-brand-green"></div>
                             </label>
                         </div>
                     </div>
                 </Card>
 
                 {/* Password Settings Card */}
-                <Card className="border-2 border-pine dark:border-dark-border">
+                <Card className="border-2 border-border">
                     <div className="p-6">
                         <h2 className="text-lg font-semibold mb-4">
                             Password Settings
@@ -241,7 +241,7 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
                         value={oldPassword}
                         onChange={(e) => setOldPassword(e.target.value)}
                         placeholder="Enter old password"
-                        className="w-full px-4 py-2 rounded-lg bg-white dark:bg-dark-bg-secondary text-black dark:text-dark-text-primary border-2 border-gray-300 dark:border-dark-border focus:border-brand-green dark:focus:border-brand-green focus:outline-none transition-colors"
+                        className="w-full px-4 py-2 rounded-lg bg-card text-foreground border-2 border-border focus:border-brand-green dark:focus:border-brand-green focus:outline-none transition-colors"
                         disabled={isPending}
                     />
                 </div>
@@ -259,7 +259,7 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="Enter new password"
-                        className="w-full px-4 py-2 rounded-lg bg-white dark:bg-dark-bg-secondary text-black dark:text-dark-text-primary border-2 border-gray-300 dark:border-dark-border focus:border-brand-green dark:focus:border-brand-green focus:outline-none transition-colors"
+                        className="w-full px-4 py-2 rounded-lg bg-card text-foreground border-2 border-border focus:border-brand-green dark:focus:border-brand-green focus:outline-none transition-colors"
                         disabled={isPending}
                     />
                 </div>
@@ -277,7 +277,7 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Confirm new password"
-                        className="w-full px-4 py-2 rounded-lg bg-white dark:bg-dark-bg-secondary text-black dark:text-dark-text-primary border-2 border-gray-300 dark:border-dark-border focus:border-brand-green dark:focus:border-brand-green focus:outline-none transition-colors"
+                        className="w-full px-4 py-2 rounded-lg bg-card text-foreground border-2 border-border focus:border-brand-green dark:focus:border-brand-green focus:outline-none transition-colors"
                         disabled={isPending}
                     />
                 </div>
