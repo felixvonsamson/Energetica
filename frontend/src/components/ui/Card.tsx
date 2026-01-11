@@ -14,7 +14,7 @@ export function Card({ children, className, onClick }: CardProps) {
         <div
             className={cn(
                 "bg-card p-6 rounded-lg",
-                "text-foreground",
+                "text-card-foreground",
                 className,
             )}
             onClick={onClick}

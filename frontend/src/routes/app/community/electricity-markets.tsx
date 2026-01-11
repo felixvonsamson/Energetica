@@ -10,7 +10,7 @@ import { CreateMarketModal } from "@/components/electricity-markets/CreateMarket
 import { JoinMarketModal } from "@/components/electricity-markets/JoinMarketModal";
 import { LeaveMarketModal } from "@/components/electricity-markets/LeaveMarketModal";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Card, CardTitle } from "@/components/ui";
+import { Button, Card, CardTitle } from "@/components/ui";
 import { Money } from "@/components/ui/Money";
 import { useLatestChartData } from "@/hooks/useCharts";
 import {
@@ -159,19 +159,13 @@ function MarketRow({
                 onClick={(e) => e.stopPropagation()}
             >
                 {isCurrentMarket ? (
-                    <button
-                        className="px-4 py-1 bg-destructive text-white rounded hover:opacity-80 transition-opacity"
-                        onClick={onLeave}
-                    >
+                    <Button variant="destructive" size="sm" onClick={onLeave}>
                         Leave
-                    </button>
+                    </Button>
                 ) : (
-                    <button
-                        className="px-4 py-1 bg-pine dark:bg-brand-green text-white rounded hover:opacity-80 transition-opacity"
-                        onClick={onJoin}
-                    >
+                    <Button variant="primary" size="sm" onClick={onJoin}>
                         Join
-                    </button>
+                    </Button>
                 )}
             </td>
         </tr>
@@ -251,18 +245,19 @@ function ElectricityMarketsContent() {
                     Electricity Markets
                 </h1>
                 {markets && markets?.length !== 0 && (
-                    <button
-                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-80 transition-opacity"
+                    <Button
+                        variant="primary"
                         onClick={() => {
                             navigate({
                                 search: { createMarket: "" },
                                 replace: true,
                             });
                         }}
+                        className="flex items-center gap-2"
                     >
                         <Plus className="w-5 h-5" />
                         Create Market
-                    </button>
+                    </Button>
                 )}
             </div>
 

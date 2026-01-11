@@ -4,7 +4,7 @@ import { cn } from "@/lib/classname-utils";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children: ReactNode;
-    variant?: "primary" | "secondary";
+    variant?: "primary" | "secondary" | "destructive" | "outline";
     size?: "sm" | "md" | "lg";
     isLoading?: boolean;
 }
@@ -15,6 +15,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
  * @example
  *     <Button variant="primary" onClick={handleClick}>Click me</Button>
  *     <Button variant="secondary" size="sm" disabled>Disabled</Button>
+ *     <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+ *     <Button variant="outline">Cancel</Button>
  */
 export function Button({
     children,
@@ -29,9 +31,13 @@ export function Button({
 
     const variantStyles = {
         primary:
-            "bg-pine hover:bg-pine-dark dark:bg-brand-green dark:hover:bg-brand-green-dark text-white disabled:opacity-50",
+            "bg-primary hover:bg-primary/90 text-primary-foreground disabled:pointer-events-none disabled:opacity-50",
         secondary:
-            "bg-secondary hover:bg-secondary/90 text-gray-900 dark:text-white disabled:opacity-50",
+            "bg-secondary hover:bg-secondary/90 text-secondary-foreground disabled:pointer-events-none disabled:opacity-50",
+        destructive:
+            "bg-destructive hover:bg-destructive/90 text-destructive-foreground disabled:pointer-events-none disabled:opacity-50",
+        outline:
+            "border border-border bg-transparent hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50",
     };
 
     const sizeStyles = {
@@ -47,7 +53,6 @@ export function Button({
                 baseStyles,
                 variantStyles[variant],
                 sizeStyles[size],
-                "disabled:cursor-not-allowed",
                 className,
             )}
             {...props}

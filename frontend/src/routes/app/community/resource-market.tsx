@@ -11,7 +11,7 @@ import { useState, useMemo } from "react";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { CreateAskModal } from "@/components/resource-market/CreateAskModal";
 import { PurchaseModal } from "@/components/resource-market/PurchaseModal";
-import { Card, Money } from "@/components/ui";
+import { Button, Card, Money } from "@/components/ui";
 import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import {
@@ -206,26 +206,24 @@ function ResourceMarketContent() {
 
             {/* Action bar */}
             <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                <button
+                <Button
+                    variant="primary"
                     onClick={() =>
                         navigate({
                             search: { createAsk: true },
                         })
                     }
-                    className="bg-brand-green hover:bg-brand-green/80 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+                    className="flex items-center gap-2"
                 >
                     <Plus className="w-5 h-5" />
                     Put on Sale
-                </button>
+                </Button>
 
                 {/* Toggle hide own asks */}
-                <button
+                <Button
+                    variant={hideOwnAsks ? "primary" : "outline"}
                     onClick={() => setHideOwnAsks(!hideOwnAsks)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                        hideOwnAsks
-                            ? "bg-brand-green text-white"
-                            : "bg-secondary hover:bg-tan-green/80 dark:hover:bg-card"
-                    }`}
+                    className="flex items-center gap-2"
                     title={
                         hideOwnAsks
                             ? "Showing others' asks"
@@ -238,32 +236,30 @@ function ResourceMarketContent() {
                         <Eye className="w-4 h-4" />
                     )}
                     {hideOwnAsks ? "Hide Own" : "Show All"}
-                </button>
+                </Button>
 
                 {/* Resource filter */}
                 <div className="flex gap-2 flex-wrap justify-center">
-                    <button
+                    <Button
+                        variant={
+                            filterResource === "all" ? "primary" : "outline"
+                        }
                         onClick={() => setFilterResource("all")}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                            filterResource === "all"
-                                ? "bg-brand-green text-white"
-                                : "bg-secondary hover:bg-tan-green/80 dark:hover:bg-card"
-                        }`}
                     >
                         All Resources
-                    </button>
+                    </Button>
                     {RESOURCE_TYPES.map((resource) => (
-                        <button
+                        <Button
                             key={resource}
-                            onClick={() => setFilterResource(resource)}
-                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                            variant={
                                 filterResource === resource
-                                    ? "bg-brand-green text-white"
-                                    : "bg-secondary hover:bg-tan-green/80 dark:hover:bg-card"
-                            }`}
+                                    ? "primary"
+                                    : "outline"
+                            }
+                            onClick={() => setFilterResource(resource)}
                         >
                             {RESOURCE_LABELS[resource]}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             </div>
@@ -407,7 +403,9 @@ function AskRow({ ask, currentPlayerId, onPurchaseClick }: AskRowProps) {
             <td className="py-3 px-4 text-center">
                 <div className="flex gap-2 justify-center">
                     {!isOwnAsk && (
-                        <button
+                        <Button
+                            variant="primary"
+                            size="sm"
                             onClick={() =>
                                 onPurchaseClick({
                                     id: ask.id,
@@ -416,21 +414,23 @@ function AskRow({ ask, currentPlayerId, onPurchaseClick }: AskRowProps) {
                                     unit_price: ask.unit_price,
                                 })
                             }
-                            className="bg-brand-green hover:bg-brand-green/80 text-white px-4 py-1 rounded text-xs font-medium transition-colors"
+                            className="text-xs"
                             title="Purchase this resource"
                         >
                             Buy
-                        </button>
+                        </Button>
                     )}
                     {isOwnAsk && (
-                        <button
+                        <Button
+                            variant="destructive"
+                            size="sm"
                             onClick={() => deleteMutation.mutate(ask.id)}
                             disabled={deleteMutation.isPending}
-                            className="bg-destructive hover:bg-destructive/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                            className="text-xs px-3"
                             title="Remove your listing"
                         >
                             <Trash2 className="w-4 h-4" />
-                        </button>
+                        </Button>
                     )}
                 </div>
             </td>

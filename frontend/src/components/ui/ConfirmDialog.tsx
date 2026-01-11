@@ -5,6 +5,7 @@
 
 import { useState, ReactNode } from "react";
 
+import { Button } from "./Button";
 import { Modal } from "./Modal";
 
 interface ConfirmDialogProps {
@@ -76,24 +77,22 @@ export function ConfirmDialog({
 
                     {/* Action buttons */}
                     <div className="flex gap-3 justify-end">
-                        <button
+                        <Button
+                            variant="secondary"
                             onClick={handleCancel}
                             disabled={isPending}
-                            className="bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-800 dark:text-white px-4 py-2 rounded font-medium transition-colors disabled:opacity-50"
                         >
                             {cancelLabel}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant={
+                                variant === "danger" ? "destructive" : "primary"
+                            }
                             onClick={handleConfirm}
                             disabled={isPending}
-                            className={`px-4 py-2 rounded font-medium transition-colors disabled:opacity-50 ${
-                                variant === "danger"
-                                    ? "bg-destructive hover:bg-destructive/80 text-white"
-                                    : "bg-brand-green hover:bg-brand-green/80 text-white"
-                            }`}
                         >
                             {confirmLabel}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </Modal>

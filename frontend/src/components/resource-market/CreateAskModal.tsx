@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Modal, Money } from "@/components/ui";
+import { Button, Modal, Money } from "@/components/ui";
 import { useCreateAsk } from "@/hooks/useResourceMarket";
 import { formatMass } from "@/lib/format-utils";
 import { RESOURCE_LABELS } from "@/types/resource-market";
@@ -61,25 +61,26 @@ export function CreateAskModal({
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                         {RESOURCE_TYPES.map((resource) => (
-                            <button
+                            <Button
                                 key={resource}
                                 type="button"
-                                onClick={() => setSelectedResource(resource)}
-                                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                                variant={
                                     selectedResource === resource
-                                        ? "bg-brand-green text-white"
-                                        : "bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                                }`}
+                                        ? "primary"
+                                        : "outline"
+                                }
+                                onClick={() => setSelectedResource(resource)}
+                                className="px-4 py-3"
                             >
-                                <div className="text-sm text-gray-900 dark:text-gray-100">
+                                <div className="text-sm">
                                     {RESOURCE_LABELS[resource]}
                                 </div>
                                 {resources && (
-                                    <div className="text-xs mt-1 opacity-80 text-gray-900 dark:text-gray-100">
+                                    <div className="text-xs mt-1 opacity-80">
                                         {formatMass(resources[resource].stock)}
                                     </div>
                                 )}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </div>
@@ -164,22 +165,18 @@ export function CreateAskModal({
 
                 {/* Submit button */}
                 <div className="flex gap-3 justify-end">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-gray-300 dark:hover:bg-card transition-colors"
-                    >
+                    <Button type="button" variant="secondary" onClick={onClose}>
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="submit"
+                        variant="primary"
                         disabled={createMutation.isPending}
-                        className="px-4 py-2 rounded-lg bg-brand-green hover:bg-brand-green/80 disabled:opacity-50 text-white font-semibold transition-colors"
                     >
                         {createMutation.isPending
                             ? "Listing..."
                             : "Put on Sale"}
-                    </button>
+                    </Button>
                 </div>
             </form>
         </Modal>

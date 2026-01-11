@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Modal, Money } from "@/components/ui";
+import { Button, Modal, Money } from "@/components/ui";
 import { usePurchaseAsk } from "@/hooks/useResourceMarket";
 import { formatMass } from "@/lib/format-utils";
 import { RESOURCE_LABELS, ResourceType } from "@/types/resource-market";
@@ -71,28 +71,22 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
                         Purchase Amount
                     </label>
                     <div className="flex gap-2">
-                        <button
+                        <Button
                             type="button"
+                            variant={buyAll ? "primary" : "outline"}
                             onClick={() => setBuyAll(true)}
-                            className={`flex-1 py-2 px-3 rounded-lg font-medium transition-colors ${
-                                buyAll
-                                    ? "bg-brand-green text-white"
-                                    : "bg-muted text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-card"
-                            }`}
+                            className="flex-1"
                         >
                             Buy All
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="button"
+                            variant={!buyAll ? "primary" : "outline"}
                             onClick={() => setBuyAll(false)}
-                            className={`flex-1 py-2 px-3 rounded-lg font-medium transition-colors ${
-                                !buyAll
-                                    ? "bg-brand-green text-white"
-                                    : "bg-muted text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-card"
-                            }`}
+                            className="flex-1"
                         >
                             Custom Amount
-                        </button>
+                        </Button>
                     </div>
 
                     {/* Custom amount input */}
@@ -137,24 +131,20 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
 
                 {/* Submit button */}
                 <div className="flex gap-3 justify-end">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="px-4 py-2 rounded-lg bg-muted hover:bg-gray-300 dark:hover:bg-card transition-colors"
-                    >
+                    <Button type="button" variant="secondary" onClick={onClose}>
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="submit"
+                        variant="primary"
                         disabled={
                             purchaseMutation.isPending || (!buyAll && !quantity)
                         }
-                        className="px-4 py-2 rounded-lg bg-brand-green hover:bg-brand-green/80 disabled:opacity-50 text-white font-semibold transition-colors"
                     >
                         {purchaseMutation.isPending
                             ? "Purchasing..."
                             : "Purchase"}
-                    </button>
+                    </Button>
                 </div>
             </form>
         </Modal>

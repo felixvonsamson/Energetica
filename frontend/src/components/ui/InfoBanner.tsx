@@ -1,11 +1,11 @@
-import { Info, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { Info, AlertTriangle, XCircle } from "lucide-react";
 import { type ReactNode } from "react";
 
 import { cn } from "@/lib/classname-utils";
 
 interface InfoBannerProps {
     children: ReactNode;
-    variant?: "info" | "warning" | "success" | "error";
+    variant?: "info" | "warning" | "error";
     className?: string;
 }
 
@@ -17,31 +17,21 @@ export function InfoBanner({
 }: InfoBannerProps) {
     const variants = {
         info: {
-            container:
-                "bg-blue-100 dark:bg-blue-900/30 border-blue-500 dark:border-blue-400",
-            icon: "text-blue-500 dark:text-blue-400",
-            text: "text-blue-900 dark:text-blue-100",
+            container: "bg-info/10 border-info",
+            icon: "text-info",
+            text: "text-info",
             IconComponent: Info,
         },
         warning: {
-            container:
-                "bg-orange-100 dark:bg-orange-900/30 border-alert-orange dark:border-orange-400",
-            icon: "text-alert-orange dark:text-orange-400",
-            text: "text-orange-900 dark:text-orange-100",
+            container: "bg-warning/10 border-warning",
+            icon: "text-warning",
+            text: "text-warning",
             IconComponent: AlertTriangle,
         },
-        success: {
-            container:
-                "bg-green-100 dark:bg-green-900/30 border-brand-green dark:border-green-400",
-            icon: "text-brand-green dark:text-green-400",
-            text: "text-green-900 dark:text-green-100",
-            IconComponent: CheckCircle,
-        },
         error: {
-            container:
-                "bg-red-100 dark:bg-red-900/30 border-alert-red dark:border-red-400",
-            icon: "text-alert-red dark:text-red-400",
-            text: "text-red-900 dark:text-red-100",
+            container: "bg-destructive/10 border-destructive",
+            icon: "text-destructive",
+            text: "text-destructive",
             IconComponent: XCircle,
         },
     };

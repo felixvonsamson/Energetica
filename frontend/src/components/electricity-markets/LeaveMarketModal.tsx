@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { Button } from "@/components/ui/Button";
 import { InfoBanner } from "@/components/ui/InfoBanner";
 import { Modal } from "@/components/ui/Modal";
 import {
@@ -113,20 +114,20 @@ export function LeaveMarketModal({ isOpen, onClose }: LeaveMarketModalProps) {
 
                     {/* Action buttons */}
                     <div className="flex gap-3 justify-end pt-4 border-t border-border">
-                        <button
+                        <Button
+                            variant="secondary"
                             onClick={onClose}
                             disabled={isPending}
-                            className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/70 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="destructive"
                             onClick={handleConfirm}
                             disabled={isPending}
-                            className="px-4 py-2 rounded-lg bg-destructive hover:bg-destructive/70 disabled:opacity-50 disabled:cursor-not-allowed text-destructive-foreground font-semibold transition-colors"
                         >
                             {isPending ? "Leaving..." : "Leave Market"}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </Modal>

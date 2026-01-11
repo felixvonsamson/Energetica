@@ -1,6 +1,7 @@
-import { AlertTriangle, Info } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/Button";
+import { InfoBanner } from "@/components/ui/InfoBanner";
 import { Modal } from "@/components/ui/Modal";
 import {
     useJoinElectricityMarket,
@@ -92,37 +93,35 @@ export function JoinMarketModal({
             <div className="space-y-4">
                 {/* Error message */}
                 {error && (
-                    <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-lg text-sm animate-in fade-in duration-200">
+                    <InfoBanner variant="error" className="text-sm">
                         {error}
-                    </div>
+                    </InfoBanner>
                 )}
 
                 {/* Info about what joining entails - for new players */}
                 {!isAlreadyInMarket && (
-                    <div className="p-4 bg-blue-100 dark:bg-blue-900/30 border border-blue-400 dark:border-blue-700 rounded-lg flex gap-3 animate-in fade-in duration-200">
-                        <Info className="w-5 h-5 text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                    <InfoBanner variant="info">
                         <div>
-                            <p className="font-semibold text-blue-700 dark:text-blue-400 mb-1">
+                            <p className="font-semibold mb-1">
                                 Joining a market
                             </p>
-                            <p className="text-sm text-blue-700 dark:text-blue-400">
+                            <p className="text-sm">
                                 By joining an electricity market, you'll be able
                                 to trade electricity with other market members
                                 at negotiated prices.
                             </p>
                         </div>
-                    </div>
+                    </InfoBanner>
                 )}
 
                 {/* Warning about leaving current market */}
                 {isAlreadyInMarket && (
-                    <div className="p-4 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 rounded-lg flex gap-3 animate-in fade-in duration-200">
-                        <AlertTriangle className="w-5 h-5 text-yellow-700 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <InfoBanner variant="warning">
                         <div>
-                            <p className="font-semibold text-yellow-700 dark:text-yellow-400 mb-1">
+                            <p className="font-semibold mb-1">
                                 You'll leave your current market
                             </p>
-                            <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                            <p className="text-sm">
                                 Joining{" "}
                                 <span className="font-semibold">
                                     {marketName}
@@ -134,18 +133,17 @@ export function JoinMarketModal({
                                 .
                             </p>
                         </div>
-                    </div>
+                    </InfoBanner>
                 )}
 
                 {/* Warning about deleting current market */}
                 {willDeleteCurrentNetwork && (
-                    <div className="p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 rounded-lg flex gap-3 animate-in fade-in duration-200">
-                        <AlertTriangle className="w-5 h-5 text-red-700 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                    <InfoBanner variant="error">
                         <div>
-                            <p className="font-semibold text-red-700 dark:text-red-400 mb-1">
+                            <p className="font-semibold mb-1">
                                 Market will be permanently deleted
                             </p>
-                            <p className="text-sm text-red-700 dark:text-red-400">
+                            <p className="text-sm">
                                 As you are its last member,{" "}
                                 <span className="font-semibold">
                                     {currentMarketName}
@@ -157,7 +155,7 @@ export function JoinMarketModal({
                                 .
                             </p>
                         </div>
-                    </div>
+                    </InfoBanner>
                 )}
 
                 {/* Confirmation text */}
@@ -169,21 +167,21 @@ export function JoinMarketModal({
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex gap-3 justify-end pt-4 border-t border-white/20">
-                    <button
+                <div className="flex gap-3 justify-end pt-4 border-t border-border">
+                    <Button
+                        variant="secondary"
                         onClick={onClose}
                         disabled={isPending}
-                        className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-gray-300 dark:hover:bg-card transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="primary"
                         onClick={handleConfirm}
                         disabled={isPending}
-                        className="px-4 py-2 rounded-lg bg-pine dark:bg-brand-green hover:bg-pine/80 dark:hover:bg-brand-green/80 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors"
                     >
                         {isPending ? "Joining..." : "Join Market"}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </Modal>
