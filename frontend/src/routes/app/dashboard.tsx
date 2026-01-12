@@ -299,13 +299,19 @@ function WeatherSection() {
                                     </b>
                                 </div>
                                 <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                    {/* Current date dot indicator */}
-                                    <div
-                                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-pine dark:bg-brand-green rounded-full"
-                                        style={{
-                                            left: `calc(${weatherData.year_progress * 100}%)`,
-                                        }}
-                                    />
+                                    {/* Full-width padded container defines the travel range */}
+                                    <div className="absolute inset-0 mx-3 flex items-center">
+                                        {/* Positioned wrapper moves within the padded space */}
+                                        <div
+                                            className="absolute"
+                                            style={{
+                                                left: `${weatherData.year_progress * 100}%`,
+                                            }}
+                                        >
+                                            {/* Dot centred on position */}
+                                            <div className="w-3 h-3 bg-pine dark:bg-brand-green rounded-full -translate-x-1/2" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
