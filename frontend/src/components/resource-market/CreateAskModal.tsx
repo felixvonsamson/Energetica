@@ -120,9 +120,22 @@ export function CreateAskModal({
                         placeholder="Enter quantity in tons"
                     />
                     {maxQuantity !== undefined && (
-                        <p className="text-xs text-gray-800 dark:text-gray-400 mt-1">
-                            Maximum: {maxQuantity.toFixed(2)} tons
-                        </p>
+                        <div className="flex items-center justify-between mt-1">
+                            <p className="text-xs text-gray-800 dark:text-gray-400">
+                                Maximum: {formatMass(maxQuantity * 1000)}
+                            </p>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                    setQuantity(maxQuantity.toFixed(2))
+                                }
+                                className="text-xs h-6 px-2"
+                            >
+                                Sell All
+                            </Button>
+                        </div>
                     )}
                 </div>
 
