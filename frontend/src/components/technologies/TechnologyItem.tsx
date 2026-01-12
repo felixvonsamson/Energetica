@@ -38,11 +38,11 @@ export function TechnologyItem({
             onClick={onClick}
         >
             {/* Image with lock overlay */}
-            <div className="relative mb-3">
+            <div className="relative mb-3 aspect-[3/2]">
                 <img
                     src={imageUrl}
                     alt={`${technologyName} technology`}
-                    className="w-full h-40 object-cover rounded"
+                    className="w-full h-full object-cover rounded"
                     onError={(e) => {
                         e.currentTarget.style.display = "none";
                     }}
@@ -56,25 +56,27 @@ export function TechnologyItem({
 
             {/* Technology info */}
             <div className="flex-1 flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                    <TechnologyIcon technology={technologyName} size={20} />
-                    <h3 className="font-semibold text-sm leading-tight">
-                        <TechnologyName
-                            technology={technologyName}
-                            level={level}
-                            mode="long"
-                        />
-                    </h3>
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <TechnologyIcon technology={technologyName} size={20} />
+                        <h3 className="font-semibold text-sm leading-tight truncate">
+                            <TechnologyName
+                                technology={technologyName}
+                                level={level}
+                                mode="long"
+                            />
+                        </h3>
+                    </div>
+                    <div className="flex-shrink-0">
+                        <Money amount={price} iconSize="sm" long />
+                    </div>
                 </div>
 
-                <div className="mt-auto space-y-1">
-                    <Money amount={price} iconSize="sm" long />
-                    {discount && (
-                        <div className="text-green-500 text-xs">
-                            <em>(-{Math.round((1 - discount) * 100)}%)</em>
-                        </div>
-                    )}
-                </div>
+                {discount && (
+                    <div className="text-green-500 text-xs">
+                        <em>(-{Math.round((1 - discount) * 100)}%)</em>
+                    </div>
+                )}
             </div>
         </Card>
     );
