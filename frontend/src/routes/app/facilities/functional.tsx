@@ -4,12 +4,17 @@ import {
     useSearch,
     Link,
 } from "@tanstack/react-router";
+import { HardHat } from "lucide-react";
 import { useMemo } from "react";
 
+import { ConstructionProjectsModal } from "@/components/dashboard/ConstructionProjectsModal";
 import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Money, CatalogGrid } from "@/components/ui";
-import { useFunctionalFacilitiesCatalog } from "@/hooks/useProjects";
+import { Money, CatalogGrid, Button } from "@/components/ui";
+import {
+    useFunctionalFacilitiesCatalog,
+    useProjects,
+} from "@/hooks/useProjects";
 import {
     formatUpgradePower,
     formatUpgradeMass,
@@ -53,8 +58,12 @@ export const Route = createFileRoute("/app/facilities/functional")({
     },
     validateSearch: (
         search: Record<string, unknown>,
-    ): { facility?: string } => ({
+    ): { facility?: string; projects?: boolean } => ({
         facility: search.facility ? String(search.facility) : undefined,
+        projects:
+            search.projects === "true" || search.projects === true
+                ? true
+                : undefined,
     }),
 });
 
@@ -70,7 +79,10 @@ type FunctionalFacility = ApiSchema<"FunctionalFacilityCatalogOut">;
 
 function FunctionalFacilitiesContent() {
     const navigate = useNavigate({ from: "/app/facilities/functional" });
-    const { facility } = useSearch({ from: "/app/facilities/functional" });
+    const { facility, projects } = useSearch({
+        from: "/app/facilities/functional",
+    });
+    const { data: projectsData } = useProjects();
 
     const {
         data: catalogData,
@@ -89,6 +101,10 @@ function FunctionalFacilitiesContent() {
         [facilities, facility],
     );
 
+    // Check if there are any construction projects
+    const hasConstructionProjects =
+        (projectsData?.construction_queue?.length ?? 0) > 0;
+
     return (
         <div className="p-4 md:p-8">
             {/* Title */}
@@ -98,8 +114,23 @@ function FunctionalFacilitiesContent() {
                 </h1>
             </div>
 
-            {/* TODO: Under construction facilities will show here */}
-            <div id="under_construction" className="mb-6"></div>
+            {/* Construction projects button - only shown if there are ongoing projects */}
+            {hasConstructionProjects && (
+                <div className="mb-6 flex justify-center">
+                    <Button
+                        variant="outline"
+                        onClick={() =>
+                            navigate({
+                                search: (prev) => ({ ...prev, projects: true }),
+                            })
+                        }
+                        className="flex items-center gap-2"
+                    >
+                        <HardHat className="w-5 h-5" />
+                        View Construction Projects
+                    </Button>
+                </div>
+            )}
 
             {/* Loading state */}
             {isCatalogLoading && (
@@ -207,6 +238,16 @@ function FunctionalFacilitiesContent() {
                     )}
                 </>
             )}
+
+            {/* Construction Projects Modal */}
+            <ConstructionProjectsModal
+                isOpen={projects === true}
+                onClose={() =>
+                    navigate({
+                        search: (prev) => ({ ...prev, projects: undefined }),
+                    })
+                }
+            />
         </div>
     );
 }

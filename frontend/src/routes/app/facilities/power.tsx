@@ -3,9 +3,10 @@ import {
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
-import { GitCompareArrows } from "lucide-react";
+import { GitCompareArrows, HardHat } from "lucide-react";
 import { useMemo } from "react";
 
+import { ConstructionProjectsModal } from "@/components/dashboard/ConstructionProjectsModal";
 import {
     ResourceStockIndicators,
     FacilityItem,
@@ -18,9 +19,10 @@ import {
     TogglingDuration,
     CatalogGrid,
     Money,
+    Button,
 } from "@/components/ui";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
-import { usePowerFacilitiesCatalog } from "@/hooks/useProjects";
+import { usePowerFacilitiesCatalog, useProjects } from "@/hooks/useProjects";
 import { formatPower, formatMass } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
 
@@ -68,10 +70,14 @@ export const Route = createFileRoute("/app/facilities/power")({
     },
     validateSearch: (
         search: Record<string, unknown>,
-    ): { facility?: string; compare?: string } => ({
+    ): { facility?: string; compare?: string; projects?: boolean } => ({
         facility: search.facility ? String(search.facility) : undefined,
         compare:
             search.compare !== undefined ? String(search.compare) : undefined,
+        projects:
+            search.projects === "true" || search.projects === true
+                ? true
+                : undefined,
     }),
 });
 
@@ -87,7 +93,10 @@ type PowerFacility = ApiSchema<"PowerFacilityCatalogOut">;
 
 function PowerFacilitiesContent() {
     const navigate = useNavigate({ from: "/app/facilities/power" });
-    const { facility, compare } = useSearch({ from: "/app/facilities/power" });
+    const { facility, compare, projects } = useSearch({
+        from: "/app/facilities/power",
+    });
+    const { data: projectsData } = useProjects();
 
     const {
         data: catalogData,
@@ -135,6 +144,10 @@ function PowerFacilitiesContent() {
           }
         : { coal: 0, gas: 0, uranium: 0 };
 
+    // Check if there are any construction projects
+    const hasConstructionProjects =
+        (projectsData?.construction_queue?.length ?? 0) > 0;
+
     // Image extension map for facilities that use PNG instead of JPG
     const imageExtensionMap = {
         combined_cycle: "png" as const,
@@ -162,8 +175,23 @@ function PowerFacilitiesContent() {
                 </button>
             </div>
 
-            {/* TODO: Under construction facilities will show here */}
-            <div id="under_construction" className="mb-6"></div>
+            {/* Construction projects button - only shown if there are ongoing projects */}
+            {hasConstructionProjects && (
+                <div className="mb-6 flex justify-center">
+                    <Button
+                        variant="outline"
+                        onClick={() =>
+                            navigate({
+                                search: (prev) => ({ ...prev, projects: true }),
+                            })
+                        }
+                        className="flex items-center gap-2"
+                    >
+                        <HardHat className="w-5 h-5" />
+                        View Construction Projects
+                    </Button>
+                </div>
+            )}
 
             {/* Loading state */}
             {(isCatalogLoading || isResourcesLoading) && (
@@ -285,6 +313,16 @@ function PowerFacilitiesContent() {
                         />
                     </>
                 )}
+
+            {/* Construction Projects Modal */}
+            <ConstructionProjectsModal
+                isOpen={projects === true}
+                onClose={() =>
+                    navigate({
+                        search: (prev) => ({ ...prev, projects: undefined }),
+                    })
+                }
+            />
         </div>
     );
 }

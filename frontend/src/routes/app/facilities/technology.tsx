@@ -3,16 +3,18 @@ import {
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
+import { Microscope } from "lucide-react";
 import { useMemo } from "react";
 
+import { ResearchProjectsModal } from "@/components/dashboard/ResearchProjectsModal";
 import { GameLayout } from "@/components/layout/GameLayout";
 import {
     TechnologyItem,
     TechnologyDetailModal,
     TechnologyEffectsTable,
 } from "@/components/technologies";
-import { CatalogGrid } from "@/components/ui";
-import { useTechnologiesCatalog } from "@/hooks/useProjects";
+import { CatalogGrid, Button } from "@/components/ui";
+import { useTechnologiesCatalog, useProjects } from "@/hooks/useProjects";
 
 function TechnologiesHelp() {
     return (
@@ -58,8 +60,12 @@ export const Route = createFileRoute("/app/facilities/technology")({
     },
     validateSearch: (
         search: Record<string, unknown>,
-    ): { technology?: string } => ({
+    ): { technology?: string; projects?: boolean } => ({
         technology: search.technology ? String(search.technology) : undefined,
+        projects:
+            search.projects === "true" || search.projects === true
+                ? true
+                : undefined,
     }),
 });
 
@@ -73,7 +79,10 @@ function TechnologyPage() {
 
 function TechnologyContent() {
     const navigate = useNavigate({ from: "/app/facilities/technology" });
-    const { technology } = useSearch({ from: "/app/facilities/technology" });
+    const { technology, projects } = useSearch({
+        from: "/app/facilities/technology",
+    });
+    const { data: projectsData } = useProjects();
 
     const {
         data: catalogData,
@@ -92,6 +101,9 @@ function TechnologyContent() {
         [technologies, technology],
     );
 
+    // Check if there are any research projects
+    const hasResearchProjects = (projectsData?.research_queue?.length ?? 0) > 0;
+
     return (
         <div className="p-4 md:p-8">
             {/* Title */}
@@ -101,8 +113,23 @@ function TechnologyContent() {
                 </h1>
             </div>
 
-            {/* TODO: Under construction technologies will show here */}
-            <div id="under_construction" className="mb-6"></div>
+            {/* Research projects button - only shown if there are ongoing projects */}
+            {hasResearchProjects && (
+                <div className="mb-6 flex justify-center">
+                    <Button
+                        variant="outline"
+                        onClick={() =>
+                            navigate({
+                                search: (prev) => ({ ...prev, projects: true }),
+                            })
+                        }
+                        className="flex items-center gap-2"
+                    >
+                        <Microscope className="w-5 h-5" />
+                        View Research Projects
+                    </Button>
+                </div>
+            )}
 
             {/* Loading state */}
             {isCatalogLoading && (
@@ -157,6 +184,16 @@ function TechnologyContent() {
                     )}
                 </>
             )}
+
+            {/* Research Projects Modal */}
+            <ResearchProjectsModal
+                isOpen={projects === true}
+                onClose={() =>
+                    navigate({
+                        search: (prev) => ({ ...prev, projects: undefined }),
+                    })
+                }
+            />
         </div>
     );
 }

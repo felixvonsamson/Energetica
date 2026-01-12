@@ -5,9 +5,10 @@ import {
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
-import { Plus, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, Truck } from "lucide-react";
 import { useState, useMemo } from "react";
 
+import { IncomingShipmentsModal } from "@/components/dashboard/IncomingShipmentsModal";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { CreateAskModal } from "@/components/resource-market/CreateAskModal";
 import { PurchaseModal } from "@/components/resource-market/PurchaseModal";
@@ -19,6 +20,7 @@ import {
     useDeleteAsk,
     useCalculateDeliveryTime,
 } from "@/hooks/useResourceMarket";
+import { useShipments } from "@/hooks/useShipments";
 import { formatMass } from "@/lib/format-utils";
 import {
     ResourceType,
@@ -59,10 +61,15 @@ export const Route = createFileRoute("/app/community/resource-market")({
     ): {
         askId?: number;
         createAsk?: boolean;
+        shipments?: boolean;
     } => ({
         askId: search.askId ? Number(search.askId) : undefined,
         createAsk:
             search.createAsk === "true" || search.createAsk === true
+                ? true
+                : undefined,
+        shipments:
+            search.shipments === "true" || search.shipments === true
                 ? true
                 : undefined,
     }),
@@ -83,7 +90,7 @@ function ResourceMarketContent() {
     const navigate = useNavigate({
         from: "/app/community/resource-market",
     });
-    const { askId, createAsk } = useSearch({
+    const { askId, createAsk, shipments } = useSearch({
         from: "/app/community/resource-market",
     });
     const [hideOwnAsks, setHideOwnAsks] = useState(false);
@@ -96,6 +103,7 @@ function ResourceMarketContent() {
     const { data: asksData, isLoading: asksLoading } = useResourceMarketAsks();
     const { data: resources } = usePlayerResources();
     const { playerId: currentPlayerId } = useCurrentPlayer();
+    const { data: shipmentsData } = useShipments();
 
     // Find the selected ask from the current asks
     const selectedAskForPurchase = useMemo(
@@ -104,6 +112,9 @@ function ResourceMarketContent() {
     );
 
     const asks = useMemo(() => asksData?.asks || [], [asksData]);
+
+    // Check if there are any shipments
+    const hasShipments = (shipmentsData?.shipments?.length ?? 0) > 0;
 
     // Filter and sort asks
     const filteredAndSortedAsks = useMemo(() => {
@@ -203,6 +214,27 @@ function ResourceMarketContent() {
                 onClose={() => navigate({ search: {} })}
                 resources={resources}
             />
+
+            {/* Incoming shipments button - only shown if there are ongoing shipments */}
+            {hasShipments && (
+                <div className="mb-6 flex justify-center">
+                    <Button
+                        variant="outline"
+                        onClick={() =>
+                            navigate({
+                                search: (prev) => ({
+                                    ...prev,
+                                    shipments: true,
+                                }),
+                            })
+                        }
+                        className="flex items-center gap-2"
+                    >
+                        <Truck className="w-5 h-5" />
+                        View Incoming Shipments
+                    </Button>
+                </div>
+            )}
 
             {/* Action bar */}
             <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
@@ -346,6 +378,16 @@ function ResourceMarketContent() {
                     ask={selectedAskForPurchase}
                 />
             )}
+
+            {/* Incoming Shipments Modal */}
+            <IncomingShipmentsModal
+                isOpen={shipments === true}
+                onClose={() =>
+                    navigate({
+                        search: (prev) => ({ ...prev, shipments: undefined }),
+                    })
+                }
+            />
         </div>
     );
 }

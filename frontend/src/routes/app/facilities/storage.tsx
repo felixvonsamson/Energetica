@@ -3,17 +3,24 @@ import {
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
-import { GitCompareArrows } from "lucide-react";
+import { GitCompareArrows, HardHat } from "lucide-react";
 import { useMemo } from "react";
 
+import { ConstructionProjectsModal } from "@/components/dashboard/ConstructionProjectsModal";
 import {
     FacilityItem,
     FacilityDetailModal,
     FacilityComparisonModal,
 } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { CashFlow, Duration, CatalogGrid, Money } from "@/components/ui";
-import { useStorageFacilitiesCatalog } from "@/hooks/useProjects";
+import {
+    CashFlow,
+    Duration,
+    CatalogGrid,
+    Money,
+    Button,
+} from "@/components/ui";
+import { useStorageFacilitiesCatalog, useProjects } from "@/hooks/useProjects";
 import { formatPower, formatEnergy } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
 
@@ -61,10 +68,14 @@ export const Route = createFileRoute("/app/facilities/storage")({
     },
     validateSearch: (
         search: Record<string, unknown>,
-    ): { facility?: string; compare?: string } => ({
+    ): { facility?: string; compare?: string; projects?: boolean } => ({
         facility: search.facility ? String(search.facility) : undefined,
         compare:
             search.compare !== undefined ? String(search.compare) : undefined,
+        projects:
+            search.projects === "true" || search.projects === true
+                ? true
+                : undefined,
     }),
 });
 
@@ -80,9 +91,10 @@ type StorageFacility = ApiSchema<"StorageFacilityCatalogOut">;
 
 function StorageFacilitiesContent() {
     const navigate = useNavigate({ from: "/app/facilities/storage" });
-    const { facility, compare } = useSearch({
+    const { facility, compare, projects } = useSearch({
         from: "/app/facilities/storage",
     });
+    const { data: projectsData } = useProjects();
 
     const {
         data: catalogData,
@@ -118,6 +130,10 @@ function StorageFacilitiesContent() {
         });
     };
 
+    // Check if there are any construction projects
+    const hasConstructionProjects =
+        (projectsData?.construction_queue?.length ?? 0) > 0;
+
     // Image extension map for facilities that use PNG instead of JPG
     const imageExtensionMap = {
         small_pumped_hydro: "png" as const,
@@ -143,8 +159,23 @@ function StorageFacilitiesContent() {
                 </button>
             </div>
 
-            {/* TODO: Under construction facilities will show here */}
-            <div id="under_construction" className="mb-6"></div>
+            {/* Construction projects button - only shown if there are ongoing projects */}
+            {hasConstructionProjects && (
+                <div className="mb-6 flex justify-center">
+                    <Button
+                        variant="outline"
+                        onClick={() =>
+                            navigate({
+                                search: (prev) => ({ ...prev, projects: true }),
+                            })
+                        }
+                        className="flex items-center gap-2"
+                    >
+                        <HardHat className="w-5 h-5" />
+                        View Construction Projects
+                    </Button>
+                </div>
+            )}
 
             {/* Loading state */}
             {isCatalogLoading && (
@@ -235,6 +266,16 @@ function StorageFacilitiesContent() {
                     />
                 </>
             )}
+
+            {/* Construction Projects Modal */}
+            <ConstructionProjectsModal
+                isOpen={projects === true}
+                onClose={() =>
+                    navigate({
+                        search: (prev) => ({ ...prev, projects: undefined }),
+                    })
+                }
+            />
         </div>
     );
 }

@@ -3,14 +3,24 @@ import {
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
-import { Info } from "lucide-react";
+import { Info, HardHat } from "lucide-react";
 import { useMemo } from "react";
 
+import { ConstructionProjectsModal } from "@/components/dashboard/ConstructionProjectsModal";
 import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { ResourceName, CashFlow, Duration, CatalogGrid } from "@/components/ui";
+import {
+    ResourceName,
+    CashFlow,
+    Duration,
+    CatalogGrid,
+    Button,
+} from "@/components/ui";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
-import { useExtractionFacilitiesCatalog } from "@/hooks/useProjects";
+import {
+    useExtractionFacilitiesCatalog,
+    useProjects,
+} from "@/hooks/useProjects";
 import { formatPower, formatMass } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
 
@@ -59,8 +69,12 @@ export const Route = createFileRoute("/app/facilities/extraction")({
     },
     validateSearch: (
         search: Record<string, unknown>,
-    ): { facility?: string } => ({
+    ): { facility?: string; projects?: boolean } => ({
         facility: search.facility ? String(search.facility) : undefined,
+        projects:
+            search.projects === "true" || search.projects === true
+                ? true
+                : undefined,
     }),
 });
 
@@ -76,7 +90,10 @@ type ExtractionFacility = ApiSchema<"ExtractionFacilityCatalogOut">;
 
 function ExtractionFacilitiesContent() {
     const navigate = useNavigate({ from: "/app/facilities/extraction" });
-    const { facility } = useSearch({ from: "/app/facilities/extraction" });
+    const { facility, projects } = useSearch({
+        from: "/app/facilities/extraction",
+    });
+    const { data: projectsData } = useProjects();
 
     const {
         data: catalogData,
@@ -97,6 +114,10 @@ function ExtractionFacilitiesContent() {
         [facilities, facility],
     );
 
+    // Check if there are any construction projects
+    const hasConstructionProjects =
+        (projectsData?.construction_queue?.length ?? 0) > 0;
+
     return (
         <div className="p-4 md:p-8">
             {/* Title */}
@@ -106,8 +127,23 @@ function ExtractionFacilitiesContent() {
                 </h1>
             </div>
 
-            {/* TODO: Under construction facilities will show here */}
-            <div id="under_construction" className="mb-6"></div>
+            {/* Construction projects button - only shown if there are ongoing projects */}
+            {hasConstructionProjects && (
+                <div className="mb-6 flex justify-center">
+                    <Button
+                        variant="outline"
+                        onClick={() =>
+                            navigate({
+                                search: (prev) => ({ ...prev, projects: true }),
+                            })
+                        }
+                        className="flex items-center gap-2"
+                    >
+                        <HardHat className="w-5 h-5" />
+                        View Construction Projects
+                    </Button>
+                </div>
+            )}
 
             {/* Loading state */}
             {isCatalogLoading && (
@@ -203,6 +239,16 @@ function ExtractionFacilitiesContent() {
                     )}
                 </>
             )}
+
+            {/* Construction Projects Modal */}
+            <ConstructionProjectsModal
+                isOpen={projects === true}
+                onClose={() =>
+                    navigate({
+                        search: (prev) => ({ ...prev, projects: undefined }),
+                    })
+                }
+            />
         </div>
     );
 }
