@@ -13,7 +13,6 @@ import {
     Sun,
     Droplets,
     Flame,
-    Zap,
     Atom,
     BatteryCharging,
     Pickaxe,
@@ -46,6 +45,7 @@ import {
     Stone,
     CloudRain,
     ArrowUpRight,
+    Repeat,
 } from "lucide-react";
 
 // Create React components from @lucide/lab icon data
@@ -64,7 +64,7 @@ export const powerFacilityIcons: Record<string, LucideIcon> = {
     // Mid game - fossil fuels
     coal_burner: Stone,
     gas_burner: Flame,
-    combined_cycle: Zap,
+    combined_cycle: Repeat,
 
     // Mid game - renewables
     small_water_dam: Dam,
