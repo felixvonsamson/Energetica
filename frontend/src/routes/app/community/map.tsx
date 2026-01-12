@@ -1,17 +1,25 @@
 /** Map page - displays hexagonal map with player territories and resources. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { GameLayout } from "@/components/layout/GameLayout";
 import { HexTile } from "@/components/map/HexTile";
 import { MapCanvas } from "@/components/map/MapCanvas";
 import { MapTooltip } from "@/components/map/MapTooltip";
+import { ResourceButton } from "@/components/map/ResourceButton";
 import { useMapContext } from "@/contexts/MapContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useMap } from "@/hooks/useMap";
 import { usePlayers } from "@/hooks/usePlayers";
 import { getHexPosition } from "@/lib/hex-utils";
+import {
+    RESOURCES,
+    ResourceId,
+    calculateTileFillWithResource,
+    formatResourceValue,
+} from "@/lib/map-resources";
 
 function MapHelp() {
     return (
@@ -70,23 +78,7 @@ interface MapTilesProps {
     playerMap: Record<number, string>;
     user: User | null | undefined;
     calculateDistance: (tileId: number) => number;
-}
-
-function calculatePlayerTileFill(
-    tile: MapTile,
-    currentPlayerId: number | null | undefined,
-): string {
-    if (
-        currentPlayerId !== null &&
-        currentPlayerId !== undefined &&
-        tile.player_id === currentPlayerId
-    ) {
-        return "var(--map-tile-current-player)";
-    } else if (tile.player_id) {
-        return "var(--map-tile-other-player)";
-    } else {
-        return "var(--map-tile-vacant)";
-    }
+    activeResourceId: ResourceId | undefined;
 }
 
 function MapTiles({
@@ -94,8 +86,10 @@ function MapTiles({
     playerMap,
     user,
     calculateDistance,
+    activeResourceId,
 }: MapTilesProps) {
     const { width, height, s, w, hoveredTile } = useMapContext();
+    const { theme } = useTheme();
 
     const hoveredTilePosition = hoveredTile
         ? getHexPosition(hoveredTile.q, hoveredTile.r, s, w)
@@ -104,11 +98,43 @@ function MapTiles({
     return (
         <>
             {mapData.map((tile) => {
-                const fill = calculatePlayerTileFill(tile, user?.player_id);
-                const username = tile.player_id
-                    ? playerMap[tile.player_id]
-                    : undefined;
-                const label = username ? username.slice(0, 3) : null;
+                // Determine default fill based on player territories
+                let defaultFill: string;
+                if (
+                    user?.player_id !== null &&
+                    user?.player_id !== undefined &&
+                    tile.player_id === user.player_id
+                ) {
+                    defaultFill = "var(--map-tile-current-player)";
+                } else if (tile.player_id) {
+                    defaultFill = "var(--map-tile-other-player)";
+                } else {
+                    defaultFill = "var(--map-tile-vacant)";
+                }
+
+                const fill = calculateTileFillWithResource(
+                    tile,
+                    activeResourceId,
+                    theme,
+                    defaultFill,
+                );
+
+                // Determine label based on mode
+                let label: string | null = null;
+                let labelSize = 20;
+                let labelFill = "white";
+
+                if (activeResourceId !== undefined) {
+                    // Show resource values when a resource is selected
+                    label = formatResourceValue(tile, activeResourceId);
+                    labelSize = Math.max(10, s / 4);
+                    labelFill = "black";
+                } else if (tile.player_id) {
+                    // Show player initials in normal mode
+                    const username = playerMap[tile.player_id];
+                    label = username ? username.slice(0, 3) : null;
+                    labelFill = "white";
+                }
 
                 return (
                     <HexTile
@@ -116,7 +142,8 @@ function MapTiles({
                         tile={tile}
                         fill={fill}
                         label={label}
-                        labelFill="white"
+                        labelSize={labelSize}
+                        labelFill={labelFill}
                     />
                 );
             })}
@@ -158,6 +185,10 @@ function MapPage() {
 }
 
 function MapContent() {
+    const [activeResourceId, setActiveResourceId] = useState<
+        ResourceId | undefined
+    >(undefined);
+
     const { data: mapData, isLoading: isMapLoading } = useMap();
     const { data: playersData, isLoading: isPlayersLoading } = usePlayers();
     const { user } = useAuth();
@@ -190,6 +221,14 @@ function MapContent() {
         return Math.sqrt(dq * dq + dr * dr + dq * dr);
     };
 
+    const handleResourceButtonClick = (resourceId: ResourceId) => {
+        if (activeResourceId === resourceId) {
+            setActiveResourceId(undefined);
+        } else {
+            setActiveResourceId(resourceId);
+        }
+    };
+
     if (isMapLoading || isPlayersLoading) {
         return (
             <div className="flex items-center justify-center h-96">
@@ -207,24 +246,39 @@ function MapContent() {
     }
 
     return (
-        <div className="p-4 md:p-8">
+        <div className="p-4 flex flex-col lg:h-screen">
             {/* Title */}
-            <div className="flex items-center justify-center mb-6">
-                <h1 className="text-4xl md:text-5xl font-bold text-center">
+            <div className="flex items-center justify-center mb-6 lg:shrink-0">
+                <h1 className="text-3xl md:text-4xl font-bold text-center">
                     Map
                 </h1>
             </div>
 
-            {/* Map visualization */}
-            <div className="flex justify-center">
-                {/* <div className="relative w-full max-w-5xl"> */}
-                <div className="w-full relative pt-[86.60%]">
+            <div className="flex flex-col lg:flex-row gap-4 lg:flex-1 lg:min-h-0">
+                {/* Left sidebar - Resource filters */}
+                <div className="grid grid-cols-3 md:grid-cols-7 lg:grid-cols-1 gap-2 lg:w-32 lg:shrink-0 lg:self-center">
+                    {RESOURCES.map((resource) => (
+                        <ResourceButton
+                            key={resource.id}
+                            resource={resource}
+                            isActive={activeResourceId === resource.id}
+                            onClick={() =>
+                                handleResourceButtonClick(resource.id)
+                            }
+                        />
+                    ))}
+                </div>
+
+                {/* Map */}
+                {/* Using padding-based aspect ratio for Safari compatibility on mobile */}
+                <div className="w-full relative pt-[86.60%] lg:pt-0 lg:flex-1 lg:h-full">
                     <MapCanvas className="absolute inset-0" mapData={mapData}>
                         <MapTiles
                             mapData={mapData}
                             playerMap={playerMap}
                             user={user}
                             calculateDistance={calculateDistance}
+                            activeResourceId={activeResourceId}
                         />
                     </MapCanvas>
                 </div>

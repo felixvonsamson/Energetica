@@ -6,19 +6,27 @@ import { useState, useMemo, useCallback } from "react";
 import { HexTile } from "@/components/map/HexTile";
 import { MapCanvas } from "@/components/map/MapCanvas";
 import { MapHoverBorder } from "@/components/map/MapHoverBorder";
+import { ResourceButton } from "@/components/map/ResourceButton";
 import { ThemeToggle } from "@/components/ui";
 import { useMapContext } from "@/contexts/MapContext";
-import { Theme, useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useMap } from "@/hooks/useMap";
 import { usePlayers } from "@/hooks/usePlayers";
 import { mapApi } from "@/lib/api/map";
 import { formatMass } from "@/lib/format-utils";
+import {
+    RESOURCES,
+    MAX_VALUES,
+    ResourceId,
+    calculateTileFillWithResource,
+    getResourceValue,
+    formatResourceValue,
+} from "@/lib/map-resources";
 import type { ApiResponse } from "@/types/api-helpers";
 import { HexTileResources } from "@/types/map";
 
 type HexTileData = ApiResponse<"/api/v1/map", "get">[number];
-type ResourceId = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 function SettleHelp() {
     return (
@@ -51,186 +59,9 @@ export const Route = createFileRoute("/app/settle")({
     },
 });
 
-// Resource types available for filtering
-const RESOURCES = [
-    { id: 0, name: "Solar", color: 59 },
-    { id: 1, name: "Wind", color: 186 },
-    { id: 2, name: "Hydro", color: 239 },
-    { id: 3, name: "Coal", color: 0 },
-    { id: 4, name: "Gas", color: 275 },
-    { id: 5, name: "Uranium", color: 109 },
-    { id: 6, name: "Climate risk", color: 320 },
-] as const;
-
-// Max values for each resource (for normalization in colouring)
-const MAX_VALUES = [1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10];
-
-// Color interpolation helper
-function hexToRgb(hex: string): [number, number, number] {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-        ? [
-              parseInt(result[1], 16),
-              parseInt(result[2], 16),
-              parseInt(result[3], 16),
-          ]
-        : [0, 0, 0];
-}
-
-function hslToRgb(h: number, s: number, l: number): [number, number, number] {
-    s /= 100;
-    l /= 100;
-    const c = (1 - Math.abs(2 * l - 1)) * s;
-    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-    const m = l - c / 2;
-    let r = 0,
-        g = 0,
-        b = 0;
-
-    if (h < 60) {
-        r = c;
-        g = x;
-        b = 0;
-    } else if (h < 120) {
-        r = x;
-        g = c;
-        b = 0;
-    } else if (h < 180) {
-        r = 0;
-        g = c;
-        b = x;
-    } else if (h < 240) {
-        r = 0;
-        g = x;
-        b = c;
-    } else if (h < 300) {
-        r = x;
-        g = 0;
-        b = c;
-    } else {
-        r = c;
-        g = 0;
-        b = x;
-    }
-
-    return [
-        Math.round((r + m) * 255),
-        Math.round((g + m) * 255),
-        Math.round((b + m) * 255),
-    ];
-}
-
-function interpolateRgb(
-    from: [number, number, number],
-    to: [number, number, number],
-    factor: number,
-): [number, number, number] {
-    return [
-        Math.round(from[0] + (to[0] - from[0]) * factor),
-        Math.round(from[1] + (to[1] - from[1]) * factor),
-        Math.round(from[2] + (to[2] - from[2]) * factor),
-    ];
-}
-
-interface ResourceButtonProps {
-    resource: (typeof RESOURCES)[number];
-    isActive: boolean;
-    onClick: () => void;
-}
-
 interface TileInfoProps {
     selectedTile: HexTileResources;
     playerMap: Record<number, string>;
-}
-
-function ResourceButton({ resource, isActive, onClick }: ResourceButtonProps) {
-    return (
-        <button
-            onClick={onClick}
-            className={`px-4 py-3 rounded transition-all border-2 flex-1 font-medium ${
-                isActive
-                    ? "border-white dark:border-white shadow-lg scale-105 text-white dark:text-white"
-                    : "text-gray-800 dark:text-gray-200 border-transparent hover:border-gray-400 dark:hover:border-gray-500 bg-bone dark:bg-stone-700 hover:bg-tan-hover dark:hover:bg-stone-600"
-            }`}
-            style={{
-                backgroundColor: isActive
-                    ? `hsl(${resource.color}, 55%, 50%)`
-                    : undefined,
-            }}
-        >
-            {resource.name}
-        </button>
-    );
-}
-
-function getResourceValue(tile: HexTileData, resourceId: number): number {
-    switch (resourceId) {
-        case 0:
-            return tile.solar;
-        case 1:
-            return tile.wind;
-        case 2:
-            return tile.hydro;
-        case 3:
-            return tile.coal;
-        case 4:
-            return tile.gas;
-        case 5:
-            return tile.uranium;
-        case 6:
-            return tile.climate_risk;
-        default:
-            return 0;
-    }
-}
-
-function formatResourceValue(
-    tile: HexTileData,
-    resourceId: ResourceId,
-): string {
-    const value = getResourceValue(tile, resourceId);
-    if ([0, 1, 2].includes(resourceId)) {
-        return `${Math.round(value * 100)}%`;
-    } else if ([3, 4, 5].includes(resourceId)) {
-        return formatMass(value);
-    } else {
-        return value.toString();
-    }
-}
-
-function calculateTileFill(
-    tile: HexTileData,
-    activeResourceId: ResourceId | undefined,
-    theme: Theme,
-): string {
-    if (tile.player_id) {
-        return "var(--map-tile-other-player)";
-    } else if (activeResourceId !== undefined) {
-        const resourceValue = getResourceValue(tile, activeResourceId);
-        const maxValue = MAX_VALUES[activeResourceId];
-        const interpolationFactor = resourceValue / maxValue;
-        const hue = RESOURCES[activeResourceId].color;
-
-        // Get the vacant tile color based on theme
-        const vacantColor =
-            theme == "dark"
-                ? ([121, 121, 121] as [number, number, number])
-                : hexToRgb("#e5d9b6");
-
-        // Get the resource color (full saturation and appropriate lightness)
-        const resourceLightness = theme == "dark" ? 50 : 35;
-        const resourceColor = hslToRgb(hue, 100, resourceLightness);
-
-        // Interpolate between vacant and resource color
-        const [r, g, b] = interpolateRgb(
-            vacantColor,
-            resourceColor,
-            interpolationFactor,
-        );
-        return `rgb(${r}, ${g}, ${b})`;
-    } else {
-        return "var(--map-tile-vacant)";
-    }
 }
 
 function calculateTileLabel(
@@ -278,7 +109,15 @@ function SettleTiles({
     return (
         <>
             {mapData.map((tile) => {
-                const fill = calculateTileFill(tile, activeResourceId, theme);
+                const defaultFill = tile.player_id
+                    ? "var(--map-tile-other-player)"
+                    : "var(--map-tile-vacant)";
+                const fill = calculateTileFillWithResource(
+                    tile,
+                    activeResourceId,
+                    theme,
+                    defaultFill,
+                );
                 const {
                     label,
                     size,
