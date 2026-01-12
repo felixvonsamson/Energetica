@@ -29,6 +29,8 @@ import { InfoBanner, Card, CardTitle } from "@/components/ui";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
+import { useProjects } from "@/hooks/useProjects";
+import { useShipments } from "@/hooks/useShipments";
 import { useWeather } from "@/hooks/useWeather";
 import { getMonthName } from "@/lib/date-utils";
 
@@ -107,10 +109,22 @@ function DashboardPage() {
 
 function DashboardContent() {
     const capabilities = useCapabilities();
+    const { data: projectsData } = useProjects();
+    const { data: shipmentsData } = useShipments();
 
     // TODO: Fetch real data from API for these non-capability flags
     const hasDiscoveredGreenhouse = true;
     const hasNetwork = false;
+
+    // Check if there are any construction projects
+    const hasConstructionProjects =
+        (projectsData?.construction_queue?.length ?? 0) > 0;
+
+    // Check if there are any research projects
+    const hasResearchProjects = (projectsData?.research_queue?.length ?? 0) > 0;
+
+    // Check if there are any shipments
+    const hasShipments = (shipmentsData?.shipments?.length ?? 0) > 0;
 
     return (
         <div className="p-4 md:p-8">
@@ -147,21 +161,24 @@ function DashboardContent() {
             <WeatherSection />
             {/* Construction, Research, Shipments */}
             <div className="space-y-6 mb-6">
-                <DashboardSection
-                    title={
-                        <>
-                            <HardHat className="inline w-4 h-4" /> Under
-                            Construction
-                        </>
-                    }
-                    emptyIcon={Construction}
-                    emptyMessage="No facilities under construction"
-                >
-                    <ConstructionProjects showActions={true} />
-                </DashboardSection>
+                {/* Construction - only show if there are any construction projects */}
+                {hasConstructionProjects && (
+                    <DashboardSection
+                        title={
+                            <>
+                                <HardHat className="inline w-4 h-4" /> Under
+                                Construction
+                            </>
+                        }
+                        emptyIcon={Construction}
+                        emptyMessage="No facilities under construction"
+                    >
+                        <ConstructionProjects showActions={true} />
+                    </DashboardSection>
+                )}
 
-                {/* Under research - only show if player has laboratory */}
-                {capabilities?.has_laboratory && (
+                {/* Under research - only show if player has laboratory and has research projects */}
+                {capabilities?.has_laboratory && hasResearchProjects && (
                     <DashboardSection
                         title={
                             <>
@@ -176,8 +193,8 @@ function DashboardContent() {
                     </DashboardSection>
                 )}
 
-                {/* Shipments - only show if player has warehouse */}
-                {capabilities?.has_warehouse && (
+                {/* Shipments - only show if player has warehouse and has shipments */}
+                {capabilities?.has_warehouse && hasShipments && (
                     <DashboardSection
                         title={
                             <>
