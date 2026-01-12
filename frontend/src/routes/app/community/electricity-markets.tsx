@@ -3,22 +3,22 @@ import {
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
-import { Plus, ChevronDown, ChevronUp, Users } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Plus, Users } from "lucide-react";
+import { useCallback, useMemo } from "react";
 
 import { CreateMarketModal } from "@/components/electricity-markets/CreateMarketModal";
 import { JoinMarketModal } from "@/components/electricity-markets/JoinMarketModal";
 import { LeaveMarketModal } from "@/components/electricity-markets/LeaveMarketModal";
+import { MarketDetailModal } from "@/components/electricity-markets/MarketDetailModal";
+import { MarketItem } from "@/components/electricity-markets/MarketItem";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { Button, Card, CardTitle } from "@/components/ui";
-import { Money } from "@/components/ui/Money";
+import { Button, Card, CardTitle, CatalogGrid } from "@/components/ui";
 import { useLatestChartData } from "@/hooks/useCharts";
 import {
     useElectricityMarketForPlayer,
     useElectricityMarkets,
 } from "@/hooks/useElectricityMarkets";
 import { useMe, usePlayerMap } from "@/hooks/usePlayers";
-import { formatPower } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/community/electricity-markets")({
     component: ElectricityMarketsPage,
@@ -36,13 +36,13 @@ export const Route = createFileRoute("/app/community/electricity-markets")({
     validateSearch: (
         search: Record<string, unknown>,
     ): {
-        joinMarketId?: number;
+        market?: number;
+        joinMarket?: number;
         leaveMarket?: "";
         createMarket?: "";
     } => ({
-        joinMarketId: search.joinMarketId
-            ? Number(search.joinMarketId)
-            : undefined,
+        market: search.market ? Number(search.market) : undefined,
+        joinMarket: search.joinMarket ? Number(search.joinMarket) : undefined,
         leaveMarket: search.leaveMarket === "" ? "" : undefined,
         createMarket: search.createMarket === "" ? "" : undefined,
     }),
@@ -87,129 +87,13 @@ function ElectricityMarketsPage() {
     );
 }
 
-interface MarketRowProps {
-    market: { id: number; name: string; member_ids: number[] };
-    isCurrentMarket: boolean;
-    isExpanded: boolean;
-    onToggleExpanded: () => void;
-    onJoin: () => void;
-    onLeave: () => void;
-    playerMap: Record<number, { username: string }>;
-}
-
-function MarketRow({
-    market,
-    isCurrentMarket,
-    isExpanded,
-    onToggleExpanded,
-    onJoin,
-    onLeave,
-    playerMap,
-}: MarketRowProps) {
-    // Fetch latest market data (price and quantity)
-    const { data: marketData } = useLatestChartData({
-        chartType: "network-data",
-        networkId: market.id,
-    });
-
-    const price = marketData?.price;
-    const quantity = marketData?.quantity;
-
-    const marketRow = (
-        <tr
-            key={market.id}
-            onClick={onToggleExpanded}
-            className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
-        >
-            <td className="py-3 px-4 font-medium text-primary">
-                {market.name}
-            </td>
-            <td className="py-3 px-4 text-center">
-                <div className="flex items-center justify-center gap-2">
-                    <span className="text-gray-600 dark:text-gray-400">
-                        {market.member_ids.length}
-                    </span>
-                    {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    ) : (
-                        <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    )}
-                </div>
-            </td>
-            <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
-                {price !== undefined && price > 0 ? (
-                    <Money amount={price} />
-                ) : (
-                    <span className="text-gray-400 dark:text-gray-600">
-                        N/A
-                    </span>
-                )}
-            </td>
-            <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
-                {quantity !== undefined && quantity > 0 ? (
-                    formatPower(quantity)
-                ) : (
-                    <span className="text-gray-400 dark:text-gray-600">
-                        N/A
-                    </span>
-                )}
-            </td>
-            <td
-                className="py-3 px-4 text-center"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {isCurrentMarket ? (
-                    <Button variant="destructive" size="sm" onClick={onLeave}>
-                        Leave
-                    </Button>
-                ) : (
-                    <Button variant="primary" size="sm" onClick={onJoin}>
-                        Join
-                    </Button>
-                )}
-            </td>
-        </tr>
-    );
-
-    const expandedRow = isExpanded ? (
-        <tr
-            key={`expanded-${market.id}`}
-            className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30"
-        >
-            <td colSpan={5} className="py-4 px-4">
-                <div className="ml-4">
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                        Members ({market.member_ids.length})
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                        {market.member_ids.map((memberId) => (
-                            <div
-                                key={memberId}
-                                className="text-sm text-gray-600 dark:text-gray-400"
-                            >
-                                {playerMap[memberId].username}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </td>
-        </tr>
-    ) : null;
-
-    return (
-        <>
-            {marketRow}
-            {expandedRow}
-        </>
-    );
-}
-
 function ElectricityMarketsContent() {
     const navigate = useNavigate({
         from: "/app/community/electricity-markets",
     });
     const {
-        joinMarketId,
+        market: marketId,
+        joinMarket: joinMarketId,
         leaveMarket: leaveMarketSearch,
         createMarket: createMarketSearch,
     } = useSearch({
@@ -223,15 +107,22 @@ function ElectricityMarketsContent() {
     const playerMap = usePlayerMap();
     const currentMarket = useElectricityMarketForPlayer(player?.id);
 
-    const [expandedMarketId, setExpandedMarketId] = useState<number | null>(
-        null,
+    const markets = useMemo(
+        () => data?.electricity_markets ?? [],
+        [data?.electricity_markets],
     );
 
-    const markets = data?.electricity_markets;
+    // Find selected market from URL param
+    const selectedMarket = useMemo(
+        () => markets.find((m) => m.id === marketId) || null,
+        [markets, marketId],
+    );
 
-    const toggleExpanded = (marketId: number) => {
-        setExpandedMarketId(expandedMarketId === marketId ? null : marketId);
-    };
+    // Fetch market data for selected market
+    const { data: selectedMarketData } = useLatestChartData({
+        chartType: "network-data",
+        networkId: selectedMarket?.id ?? 0,
+    });
 
     const handleCloseModal = useCallback(() => {
         navigate({ search: {}, replace: true });
@@ -244,7 +135,7 @@ function ElectricityMarketsContent() {
                 <h1 className="text-4xl md:text-5xl font-bold">
                     Electricity Markets
                 </h1>
-                {markets && markets?.length !== 0 && (
+                {markets && markets.length !== 0 && (
                     <Button
                         variant="primary"
                         onClick={() => {
@@ -262,11 +153,8 @@ function ElectricityMarketsContent() {
             </div>
 
             {/* Loading state */}
-            {isLoading ||
-            !markets ||
-            currentMarket === undefined ||
-            !playerMap ? (
-                <div className="text-center py-8 text-gray-600 dark:text-gray-400">
+            {isLoading || currentMarket === undefined || !playerMap ? (
+                <div className="text-center py-8 text-muted-foreground">
                     Loading electricity markets...
                 </div>
             ) : isError ? (
@@ -276,66 +164,56 @@ function ElectricityMarketsContent() {
             ) : markets.length === 0 ? (
                 <EmptyState />
             ) : (
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="border-b border-gray-300 dark:border-gray-600">
-                                <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
-                                    Market Name
-                                </th>
-                                <th className="text-center py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
-                                    Members
-                                </th>
-                                <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
-                                    Last Price
-                                </th>
-                                <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
-                                    Volume
-                                </th>
-                                <th className="text-center py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
-                                    Action
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {markets.map((market) => {
-                                const isCurrentMarket =
-                                    currentMarket?.id === market.id;
-                                const isExpanded =
-                                    expandedMarketId === market.id;
+                <>
+                    <CatalogGrid>
+                        {markets.map((market) => {
+                            const isCurrentMarket =
+                                currentMarket?.id === market.id;
 
-                                return (
-                                    <MarketRow
-                                        key={market.id}
-                                        market={market}
-                                        isCurrentMarket={isCurrentMarket}
-                                        isExpanded={isExpanded}
-                                        onToggleExpanded={() =>
-                                            toggleExpanded(market.id)
-                                        }
-                                        onJoin={() => {
-                                            navigate({
-                                                search: {
-                                                    joinMarketId: market.id,
-                                                },
-                                                replace: true,
-                                            });
-                                        }}
-                                        onLeave={() => {
-                                            navigate({
-                                                search: {
-                                                    leaveMarket: "",
-                                                },
-                                                replace: true,
-                                            });
-                                        }}
-                                        playerMap={playerMap}
-                                    />
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+                            return (
+                                <MarketItem
+                                    key={market.id}
+                                    marketName={market.name}
+                                    memberCount={market.member_ids.length}
+                                    isCurrentMarket={isCurrentMarket}
+                                    onClick={() =>
+                                        navigate({
+                                            search: { market: market.id },
+                                        })
+                                    }
+                                />
+                            );
+                        })}
+                    </CatalogGrid>
+
+                    {/* Detail Modal */}
+                    {selectedMarket && playerMap && (
+                        <MarketDetailModal
+                            isOpen={selectedMarket !== null}
+                            onClose={() => navigate({ search: {} })}
+                            market={selectedMarket}
+                            playerMap={playerMap}
+                            price={selectedMarketData?.price}
+                            volume={selectedMarketData?.quantity}
+                            isCurrentMarket={
+                                currentMarket?.id === selectedMarket.id
+                            }
+                            onJoin={() => {
+                                // Open the join confirmation modal
+                                navigate({
+                                    search: { joinMarket: selectedMarket.id },
+                                    replace: true,
+                                });
+                            }}
+                            onLeave={() => {
+                                navigate({
+                                    search: { leaveMarket: "" },
+                                    replace: true,
+                                });
+                            }}
+                        />
+                    )}
+                </>
             )}
 
             {/* Create Market Modal */}
@@ -357,7 +235,7 @@ function ElectricityMarketsContent() {
             {/* Join Market Modal */}
             {joinMarketId && (
                 <JoinMarketModal
-                    isOpen={joinMarketId !== null}
+                    isOpen={joinMarketId !== undefined}
                     onClose={handleCloseModal}
                     marketId={joinMarketId}
                 />

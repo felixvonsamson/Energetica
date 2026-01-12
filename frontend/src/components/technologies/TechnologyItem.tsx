@@ -38,7 +38,7 @@ export function TechnologyItem({
             onClick={onClick}
         >
             {/* Image with lock overlay */}
-            <div className="relative mb-3 aspect-[3/2]">
+            <div className="relative mb-3 aspect-3/2">
                 <img
                     src={imageUrl}
                     alt={`${technologyName} technology`}
@@ -67,7 +67,7 @@ export function TechnologyItem({
                             />
                         </h3>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                         <Money amount={price} iconSize="sm" long />
                     </div>
                 </div>
