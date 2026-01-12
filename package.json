@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "cd frontend && npm run dev",
+    "dev:host": "cd frontend && npm run dev -- --host",
     "build": "cd frontend && npm run build",
     "lint:check": "cd frontend && npm run lint:check",
     "tsc:check": "cd frontend && npm run tsc:check",
