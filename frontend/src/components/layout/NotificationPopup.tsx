@@ -27,7 +27,10 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
         useMarkAllNotificationsRead();
 
     const notifications = useMemo(() => {
-        return data?.notifications || [];
+        const notifs = data?.notifications || [];
+        return [...notifs].sort((a, b) => {
+            return new Date(b.time).getTime() - new Date(a.time).getTime();
+        });
     }, [data]);
 
     const unreadCount = useMemo(() => {
