@@ -125,7 +125,7 @@ export function MessageContainer({
                                 <div
                                     key={message.id}
                                     className={cn(
-                                        "p-3 rounded-lg wrap-break-word max-w-[70%]",
+                                        "p-3 rounded-lg wrap-break-word max-w-[70%] whitespace-pre-line",
                                         isOwnMessage
                                             ? "bg-pine dark:bg-brand-green text-white rounded-br-none"
                                             : "bg-secondary rounded-bl-none",
