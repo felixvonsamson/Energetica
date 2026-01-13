@@ -1,7 +1,7 @@
 /** Chat components export. */
 
-export { NewGroupChatModal } from "./NewGroupChatModal";
-export { ChatSidebar } from "./ChatSidebar";
-export { ChatWindow } from "./ChatWindow";
-export { NewChatModal } from "./NewChatModal";
-export { ChatDisclaimerModal } from "./ChatDisclaimerModal";
+export { NewGroupChatModal } from "@/components/chat/new-group-chat-modal";
+export { ChatSidebar } from "@/components/chat/chat-sidebar";
+export { ChatWindow } from "@/components/chat/chat-window";
+export { NewChatModal } from "@/components/chat/new-chat-modal";
+export { ChatDisclaimerModal } from "@/components/chat/chat-disclaimer-modal";

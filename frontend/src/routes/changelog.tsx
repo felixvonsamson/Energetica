@@ -2,7 +2,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 
-import { RedirectToLegacy } from "@/components/RedirectToLegacy";
+import { RedirectToLegacy } from "@/components/redirect-to-legacy";
 
 export const Route = createFileRoute("/changelog")({
     component: () => <RedirectToLegacy to="/changelog" />,

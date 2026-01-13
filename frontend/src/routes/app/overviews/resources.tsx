@@ -10,9 +10,9 @@ import {
     filterNonZeroSeries,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
-import { GameLayout } from "@/components/layout/GameLayout";
+import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardTitle } from "@/components/ui";
-import { useTimeMode } from "@/contexts/TimeModeContext";
+import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";

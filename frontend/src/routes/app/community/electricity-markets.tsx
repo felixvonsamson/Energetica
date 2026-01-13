@@ -6,12 +6,12 @@ import {
 import { Plus, Users } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
-import { CreateMarketModal } from "@/components/electricity-markets/CreateMarketModal";
-import { JoinMarketModal } from "@/components/electricity-markets/JoinMarketModal";
-import { LeaveMarketModal } from "@/components/electricity-markets/LeaveMarketModal";
-import { MarketDetailModal } from "@/components/electricity-markets/MarketDetailModal";
-import { MarketItem } from "@/components/electricity-markets/MarketItem";
-import { GameLayout } from "@/components/layout/GameLayout";
+import { CreateMarketModal } from "@/components/electricity-markets/create-market-modal";
+import { JoinMarketModal } from "@/components/electricity-markets/join-market-modal";
+import { LeaveMarketModal } from "@/components/electricity-markets/leave-market-modal";
+import { MarketDetailModal } from "@/components/electricity-markets/market-detail-modal";
+import { MarketItem } from "@/components/electricity-markets/market-item";
+import { GameLayout } from "@/components/layout/game-layout";
 import { Button, Card, CardTitle, CatalogGrid } from "@/components/ui";
 import { useLatestChartData } from "@/hooks/useCharts";
 import {

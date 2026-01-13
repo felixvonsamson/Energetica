@@ -20,10 +20,10 @@ import {
     createExcludeKeysFilter,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
-import { GameLayout } from "@/components/layout/GameLayout";
+import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardTitle, Money } from "@/components/ui";
-import { FacilityName } from "@/components/ui/AssetName";
-import { useTimeMode } from "@/contexts/TimeModeContext";
+import { FacilityName } from "@/components/ui/asset-name";
+import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData, useLatestChartData } from "@/hooks/useCharts";
 import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";

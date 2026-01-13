@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-import { useSocket } from "@/contexts/SocketContext";
+import { useSocket } from "@/contexts/socket-context";
 
 export function useOnlineStatus() {
     const { isConnected } = useSocket();

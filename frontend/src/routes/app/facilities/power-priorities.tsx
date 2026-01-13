@@ -3,8 +3,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 
-import { GameLayout } from "@/components/layout/GameLayout";
-import { PriorityTable } from "@/components/power-priorities/PriorityTable";
+import { GameLayout } from "@/components/layout/game-layout";
+import { PriorityTable } from "@/components/power-priorities/priority-table";
 import type { PowerPriorityItem } from "@/components/power-priorities/types";
 import { useLatestChartData } from "@/hooks/useCharts";
 import { useFacilityStatuses, useFacilities } from "@/hooks/useFacilities";

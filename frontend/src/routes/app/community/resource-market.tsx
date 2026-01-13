@@ -8,10 +8,10 @@ import {
 import { Plus, Trash2, Eye, EyeOff, Truck } from "lucide-react";
 import { useState, useMemo } from "react";
 
-import { IncomingShipmentsModal } from "@/components/dashboard/IncomingShipmentsModal";
-import { GameLayout } from "@/components/layout/GameLayout";
-import { CreateAskModal } from "@/components/resource-market/CreateAskModal";
-import { PurchaseModal } from "@/components/resource-market/PurchaseModal";
+import { IncomingShipmentsModal } from "@/components/dashboard/incoming-shipments-modal";
+import { GameLayout } from "@/components/layout/game-layout";
+import { CreateAskModal } from "@/components/resource-market/create-ask-modal";
+import { PurchaseModal } from "@/components/resource-market/purchase-modal";
 import { Button, Card, Money } from "@/components/ui";
 import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
 import { usePlayerResources } from "@/hooks/usePlayerResources";

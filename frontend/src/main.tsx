@@ -5,11 +5,11 @@ import ReactDOM from "react-dom/client";
 
 import { routeTree } from "./routeTree.gen";
 
-import { AuthProvider } from "@/contexts/AuthContext";
-import { GameTickProvider } from "@/contexts/GameTickContext";
-import { SocketProvider } from "@/contexts/SocketContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { TimeModeProvider } from "@/contexts/TimeModeContext";
+import { AuthProvider } from "@/contexts/auth-context";
+import { GameTickProvider } from "@/contexts/game-tick-context";
+import { SocketProvider } from "@/contexts/socket-context";
+import { ThemeProvider } from "@/contexts/theme-context";
+import { TimeModeProvider } from "@/contexts/time-mode-context";
 import { clearAssetColorCache } from "@/lib/assets/asset-colors";
 import { queryClient } from "@/lib/query-client";
 

@@ -18,13 +18,13 @@ import {
     HardHat,
 } from "lucide-react";
 
-import { AchievementCard } from "@/components/dashboard/AchievementCard";
-import { ConstructionProjects } from "@/components/dashboard/ConstructionProjects";
-import { DashboardSection } from "@/components/dashboard/DashboardSection";
-import { IncomingShipments } from "@/components/dashboard/IncomingShipments";
-import { QuickLinkCard } from "@/components/dashboard/QuickLinkCard";
-import { ResearchProjects } from "@/components/dashboard/ResearchProjects";
-import { GameLayout } from "@/components/layout/GameLayout";
+import { AchievementCard } from "@/components/dashboard/achievement-card";
+import { ConstructionProjects } from "@/components/dashboard/construction-projects";
+import { DashboardSection } from "@/components/dashboard/dashboard-section";
+import { IncomingShipments } from "@/components/dashboard/incoming-shipments";
+import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
+import { ResearchProjects } from "@/components/dashboard/research-projects";
+import { GameLayout } from "@/components/layout/game-layout";
 import { InfoBanner, Card, CardTitle } from "@/components/ui";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useCapabilities } from "@/hooks/useCapabilities";

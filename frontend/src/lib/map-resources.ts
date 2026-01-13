@@ -1,6 +1,6 @@
 /** Shared utilities and constants for map resource visualization and heatmaps. */
 
-import { Theme } from "@/contexts/ThemeContext";
+import { Theme } from "@/contexts/theme-context";
 import { formatMass } from "@/lib/format-utils";
 
 export type ResourceId = 0 | 1 | 2 | 3 | 4 | 5 | 6;

@@ -1,33 +1,37 @@
-export { Card, CardHeader, CardTitle, CardContent } from "./Card";
-export { Button } from "./Button";
-export { Modal } from "./Modal";
-export { CatalogGrid } from "./CatalogGrid";
-export { InfoBanner } from "./InfoBanner";
-export { EmptyState } from "./EmptyState";
-export { ProgressBar } from "./ProgressBar";
-export { FacilityGauge } from "./FacilityGauge";
-export { ThemeToggle } from "./ThemeToggle";
-export { Money } from "./Money";
-export { CashFlow } from "./CashFlow";
-export { TogglingDuration, Duration, TimeModeToggle } from "./Duration";
-export { ConfirmDialog } from "./ConfirmDialog";
+export { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+export { Button } from "@/components/ui/button";
+export { Modal } from "@/components/ui/modal";
+export { CatalogGrid } from "@/components/ui/catalog-grid";
+export { InfoBanner } from "@/components/ui/info-banner";
+export { EmptyState } from "@/components/ui/empty-state";
+export { ProgressBar } from "@/components/ui/progress-bar";
+export { FacilityGauge } from "@/components/ui/facility-gauge";
+export { ThemeToggle } from "@/components/ui/theme-toggle";
+export { Money } from "@/components/ui/money";
+export { CashFlow } from "@/components/ui/cash-flow";
+export {
+    TogglingDuration,
+    Duration,
+    TimeModeToggle,
+} from "@/components/ui/duration";
+export { ConfirmDialog } from "@/components/ui/confirm-dialog";
 export {
     AssetName,
     FacilityName,
     TechnologyName,
     ResourceName,
     useAssetName,
-} from "./AssetName";
-export type { AssetNameMode, AssetNameProps } from "./AssetName";
+} from "@/components/ui/asset-name";
+export type { AssetNameMode, AssetNameProps } from "@/components/ui/asset-name";
 export {
     AssetIcon,
     FacilityIcon,
     TechnologyIcon,
     ResourceIcon,
-} from "./AssetIcon";
+} from "@/components/ui/asset-icon";
 export type {
     AssetIconProps,
     FacilityIconProps,
     TechnologyIconProps,
     ResourceIconProps,
-} from "./AssetIcon";
+} from "@/components/ui/asset-icon";

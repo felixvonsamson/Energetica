@@ -6,9 +6,9 @@ import {
 import { Info, HardHat } from "lucide-react";
 import { useMemo } from "react";
 
-import { ConstructionProjectsModal } from "@/components/dashboard/ConstructionProjectsModal";
+import { ConstructionProjectsModal } from "@/components/dashboard/construction-projects-modal";
 import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
-import { GameLayout } from "@/components/layout/GameLayout";
+import { GameLayout } from "@/components/layout/game-layout";
 import {
     ResourceName,
     CashFlow,

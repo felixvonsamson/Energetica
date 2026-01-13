@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useTickQuery } from "@/contexts/GameTickContext";
+import { useTickQuery } from "@/contexts/game-tick-context";
 import { electricityMarketsApi } from "@/lib/api/electricity-markets";
 import { powerPrioritiesApi } from "@/lib/api/power-priorities";
 import { queryKeys } from "@/lib/query-client";

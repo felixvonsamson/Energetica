@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { UserPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 
-import { HomeLayout } from "@/components/HomeLayout";
+import { HomeLayout } from "@/components/home-layout";
 import { Card, Button, InfoBanner } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/lib/api/auth";

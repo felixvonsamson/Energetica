@@ -3,7 +3,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { GameLayout } from "@/components/layout/GameLayout";
+import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CashFlow } from "@/components/ui";
 import { useHasCapability } from "@/hooks/useCapabilities";
 import { useLeaderboards } from "@/hooks/useLeaderboards";

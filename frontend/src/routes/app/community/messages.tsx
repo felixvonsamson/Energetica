@@ -11,7 +11,7 @@ import {
     NewChatModal,
     NewGroupChatModal,
 } from "@/components/chat";
-import { GameLayout } from "@/components/layout/GameLayout";
+import { GameLayout } from "@/components/layout/game-layout";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useMessagesPage } from "@/hooks/useMessagesPage";
 

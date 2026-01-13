@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createElement } from "react";
 
-import { HomeLayout } from "@/components/HomeLayout";
+import { HomeLayout } from "@/components/home-layout";
 import {
     allAssetIcons,
     extractionFacilityIcons,

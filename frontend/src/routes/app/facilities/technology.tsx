@@ -6,8 +6,8 @@ import {
 import { Microscope } from "lucide-react";
 import { useMemo } from "react";
 
-import { ResearchProjectsModal } from "@/components/dashboard/ResearchProjectsModal";
-import { GameLayout } from "@/components/layout/GameLayout";
+import { ResearchProjectsModal } from "@/components/dashboard/research-projects-modal";
+import { GameLayout } from "@/components/layout/game-layout";
 import {
     TechnologyItem,
     TechnologyDetailModal,

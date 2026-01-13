@@ -3,10 +3,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { FacilityGroupTable } from "@/components/facilities/FacilityGroupTable";
-import { GameLayout } from "@/components/layout/GameLayout";
+import { FacilityGroupTable } from "@/components/facilities/facility-group-table";
+import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardTitle } from "@/components/ui";
-import { FacilityGauge } from "@/components/ui/FacilityGauge";
+import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { dummyFacilities } from "@/data/dummyFacilities";
 import { useHasCapability } from "@/hooks/useCapabilities";
 import { useFacilities } from "@/hooks/useFacilities";

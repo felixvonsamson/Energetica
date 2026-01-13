@@ -1,6 +1,6 @@
 // https://tanstack.com/router/latest/docs/framework/react/guide/static-route-data
 
-import { Capabilities } from "./types/players";
+import { Capabilities } from "@/types/players";
 
 type RouteConfig =
     | {

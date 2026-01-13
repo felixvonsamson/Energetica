@@ -9,7 +9,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 
-import { HomeLayout } from "@/components/HomeLayout";
+import { HomeLayout } from "@/components/home-layout";
 
 export const Route = createFileRoute("/learning-tool")({
     component: RouteComponent,

@@ -7,7 +7,7 @@
  * display.
  */
 
-import type { TimeMode } from "@/contexts/TimeModeContext";
+import type { TimeMode } from "@/contexts/time-mode-context";
 
 // Unit definitions
 const POWER_UNITS = [" W", " kW", " MW", " GW", " TW"];

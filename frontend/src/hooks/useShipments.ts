@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { useTickQuery } from "@/contexts/GameTickContext";
+import { useTickQuery } from "@/contexts/game-tick-context";
 import { shipmentsApi } from "@/lib/api/shipments";
 import { queryKeys } from "@/lib/query-client";
 

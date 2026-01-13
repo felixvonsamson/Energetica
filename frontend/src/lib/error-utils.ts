@@ -21,7 +21,7 @@
  *     ```;
  */
 
-import { ApiClientError } from "./api-client";
+import { ApiClientError } from "@/lib/api-client";
 
 /**
  * Maps backend error messages to user-friendly messages.

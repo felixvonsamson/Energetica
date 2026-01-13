@@ -3,13 +3,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo, useCallback } from "react";
 
-import { HexTile } from "@/components/map/HexTile";
-import { MapCanvas } from "@/components/map/MapCanvas";
-import { MapHoverBorder } from "@/components/map/MapHoverBorder";
-import { ResourceButton } from "@/components/map/ResourceButton";
+import { HexTile } from "@/components/map/hex-tile";
+import { MapCanvas } from "@/components/map/map-canvas";
+import { MapHoverBorder } from "@/components/map/map-hover-border";
+import { ResourceButton } from "@/components/map/resource-button";
 import { ThemeToggle } from "@/components/ui";
-import { useMapContext } from "@/contexts/MapContext";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useMapContext } from "@/contexts/map-context";
+import { useTheme } from "@/contexts/theme-context";
 import { useAuth } from "@/hooks/useAuth";
 import { useMap } from "@/hooks/useMap";
 import { usePlayers } from "@/hooks/usePlayers";

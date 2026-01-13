@@ -3,7 +3,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { JSX, useEffect } from "react";
 
-import { WikiLayout } from "@/components/wiki/WikiLayout";
+import { WikiLayout } from "@/components/wiki/wiki-layout";
 
 // Eagerly import all MDX files (no lazy loading - all bundled together)
 // This adds ~50-100KB to the bundle but eliminates navigation delays

@@ -23,13 +23,6 @@ import {
 } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import {
-    ChartType,
-    Resolution,
-    TickRange,
-    toStringResolution,
-} from "../types/charts";
-
 import { useGameTick } from "@/hooks/useGameTick";
 import { chartsApi } from "@/lib/api/charts";
 import {
@@ -50,6 +43,12 @@ import {
     reorderObjectKeys,
 } from "@/lib/charts/chart-key-order";
 import { queryKeys } from "@/lib/query-client";
+import {
+    ChartType,
+    Resolution,
+    TickRange,
+    toStringResolution,
+} from "@/types/charts";
 
 /** Map chart types to their corresponding key ordering */
 const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {

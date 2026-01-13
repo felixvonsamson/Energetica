@@ -2,7 +2,7 @@
 
 import { useContext } from "react";
 
-import { GameTickContext } from "@/contexts/GameTickContext";
+import { GameTickContext } from "@/contexts/game-tick-context";
 
 export function useGameTick() {
     const context = useContext(GameTickContext);
