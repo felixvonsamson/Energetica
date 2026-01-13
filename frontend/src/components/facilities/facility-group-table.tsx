@@ -174,7 +174,6 @@ function GroupActions({
                             />
                         }
                         confirmLabel="Upgrade All"
-                        variant="primary"
                         onConfirm={() =>
                             upgradeAllMutation.mutate(facilityName)
                         }

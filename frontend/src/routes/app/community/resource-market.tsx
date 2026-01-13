@@ -239,7 +239,7 @@ function ResourceMarketContent() {
             {/* Action bar */}
             <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
                 <Button
-                    variant="primary"
+                    variant="default"
                     onClick={() =>
                         navigate({
                             search: { createAsk: true },
@@ -253,7 +253,7 @@ function ResourceMarketContent() {
 
                 {/* Toggle hide own asks */}
                 <Button
-                    variant={hideOwnAsks ? "primary" : "outline"}
+                    variant={hideOwnAsks ? "default" : "outline"}
                     onClick={() => setHideOwnAsks(!hideOwnAsks)}
                     className="flex items-center gap-2"
                     title={
@@ -274,7 +274,7 @@ function ResourceMarketContent() {
                 <div className="flex gap-2 flex-wrap justify-center">
                     <Button
                         variant={
-                            filterResource === "all" ? "primary" : "outline"
+                            filterResource === "all" ? "default" : "outline"
                         }
                         onClick={() => setFilterResource("all")}
                     >
@@ -285,7 +285,7 @@ function ResourceMarketContent() {
                             key={resource}
                             variant={
                                 filterResource === resource
-                                    ? "primary"
+                                    ? "default"
                                     : "outline"
                             }
                             onClick={() => setFilterResource(resource)}
@@ -446,7 +446,7 @@ function AskRow({ ask, currentPlayerId, onPurchaseClick }: AskRowProps) {
                 <div className="flex gap-2 justify-center">
                     {!isOwnAsk && (
                         <Button
-                            variant="primary"
+                            variant="default"
                             size="sm"
                             onClick={() =>
                                 onPurchaseClick({

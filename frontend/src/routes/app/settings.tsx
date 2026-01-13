@@ -120,7 +120,7 @@ function SettingsContent() {
                         </h2>
                         <Button
                             onClick={() => setShowChangePasswordModal(true)}
-                            variant="primary"
+                            variant="default"
                         >
                             Change Password
                         </Button>
@@ -225,7 +225,7 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
                 {error && <InfoBanner variant="error">{error}</InfoBanner>}
 
                 {successMessage && (
-                    <InfoBanner variant="success">{successMessage}</InfoBanner>
+                    <InfoBanner variant="info">{successMessage}</InfoBanner>
                 )}
 
                 <div>
@@ -285,7 +285,7 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
                 <div className="flex justify-center gap-4 pt-4">
                     <Button
                         type="submit"
-                        variant="primary"
+                        variant="default"
                         disabled={isPending}
                     >
                         {isPending ? "Changing..." : "Change Password"}

@@ -3,6 +3,8 @@
 
 /* 2. Tailwind layer injection */
 @import "tailwindcss";
+@import "tw-animate-css";
+
 @plugin "@tailwindcss/typography";
 
 /* 3. Tailwind v4 Theme Configuration - Option A: Two-Layer Architecture
@@ -54,6 +56,26 @@
     --color-info-foreground: var(--info-foreground);
     --color-warning: var(--warning);
     --color-warning-foreground: var(--warning-foreground);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --radius-2xl: calc(var(--radius) + 8px);
+    --radius-3xl: calc(var(--radius) + 12px);
+    --radius-4xl: calc(var(--radius) + 16px);
 }
 
 /* 4. Base layer with runtime theme values */
@@ -93,6 +115,23 @@
         --ring: var(--color-pine);
 
         --radius: 0.5rem;
+
+        /* Chart colors (light mode) */
+        --chart-1: oklch(0.646 0.222 41.116);
+        --chart-2: oklch(0.6 0.118 184.704);
+        --chart-3: oklch(0.398 0.07 227.392);
+        --chart-4: oklch(0.828 0.189 84.429);
+        --chart-5: oklch(0.769 0.188 70.08);
+
+        /* Sidebar colors (light mode) */
+        --sidebar: var(--color-bone);
+        --sidebar-foreground: var(--color-pine);
+        --sidebar-primary: var(--color-pine);
+        --sidebar-primary-foreground: #ffffff;
+        --sidebar-accent: var(--color-tan-hover);
+        --sidebar-accent-foreground: var(--color-pine);
+        --sidebar-border: var(--color-tan-green);
+        --sidebar-ring: var(--color-pine);
 
         /* Status/Alert colors (light mode) */
         --info: rgb(37, 99, 235);
@@ -194,6 +233,23 @@
         --ring: var(--color-brand-green);
 
         --radius: 0.5rem;
+
+        /* Chart colors (dark mode) */
+        --chart-1: oklch(0.488 0.243 264.376);
+        --chart-2: oklch(0.696 0.17 162.48);
+        --chart-3: oklch(0.769 0.188 70.08);
+        --chart-4: oklch(0.627 0.265 303.9);
+        --chart-5: oklch(0.645 0.246 16.439);
+
+        /* Sidebar colors (dark mode) */
+        --sidebar: #2d2d2d;
+        --sidebar-foreground: #ffffff;
+        --sidebar-primary: var(--color-brand-green);
+        --sidebar-primary-foreground: #ffffff;
+        --sidebar-accent: var(--color-pine);
+        --sidebar-accent-foreground: #e5e5e5;
+        --sidebar-border: #404040;
+        --sidebar-ring: var(--color-brand-green);
 
         /* Status/Alert colors (dark mode) */
         --info: rgb(96, 165, 250);
@@ -395,4 +451,5 @@
 
 /* Configure dark mode selector */
 /* stylelint-disable-next-line at-rule-no-unknown */
-@variant dark (&:where(.dark, .dark *));
+/* @variant dark (&:where(.dark, .dark *)); */
+@custom-variant dark (&:is(.dark *));

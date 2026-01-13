@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 
 import { HomeLayout } from "@/components/home-layout";
 import { Card, Button, InfoBanner } from "@/components/ui";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/lib/api/auth";
 import { handleApiError } from "@/lib/error-utils";
@@ -197,20 +198,17 @@ function SignUpForm() {
 
                     <Button
                         type="submit"
-                        variant="primary"
+                        variant={isLoading ? "outline" : "default"}
                         size="lg"
-                        isLoading={isLoading}
                         disabled={isLoading}
                         className="w-full flex items-center justify-center gap-2"
                     >
                         {isLoading ? (
-                            "Creating account..."
+                            <Spinner />
                         ) : (
-                            <>
-                                <UserPlus className="w-5 h-5" />
-                                Create Account
-                            </>
+                            <UserPlus className="w-5 h-5" />
                         )}
+                        <>Create Account</>
                     </Button>
                 </form>
 

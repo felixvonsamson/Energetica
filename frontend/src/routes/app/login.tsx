@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 
 import { HomeLayout } from "@/components/home-layout";
 import { Card, Button, InfoBanner } from "@/components/ui";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/lib/api/auth";
 import { handleApiError, isErrorType } from "@/lib/error-utils";
@@ -166,20 +167,17 @@ function LoginForm() {
 
                     <Button
                         type="submit"
-                        variant="primary"
+                        variant={isLoading ? "outline" : "default"}
                         size="lg"
-                        isLoading={isLoading}
                         disabled={isLoading}
                         className="w-full flex items-center justify-center gap-2"
                     >
                         {isLoading ? (
-                            "Logging in..."
+                            <Spinner />
                         ) : (
-                            <>
-                                <LogIn className="w-5 h-5" />
-                                Login
-                            </>
+                            <LogIn className="w-5 h-5" />
                         )}
+                        <>Login</>
                     </Button>
                 </form>
 

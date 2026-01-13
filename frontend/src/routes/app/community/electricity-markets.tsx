@@ -137,7 +137,7 @@ function ElectricityMarketsContent() {
                 </h1>
                 {markets && markets.length !== 0 && (
                     <Button
-                        variant="primary"
+                        variant="default"
                         onClick={() => {
                             navigate({
                                 search: { createMarket: "" },

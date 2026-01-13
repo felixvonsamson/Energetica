@@ -20,7 +20,7 @@ interface ConfirmDialogProps {
     /** Label for the cancel button */
     cancelLabel?: string;
     /** Visual variant for the confirm button */
-    variant?: "danger" | "primary";
+    variant?: "danger" | "default";
     /** Callback when user confirms */
     onConfirm: () => void;
     /** Optional callback when dialog closes */
@@ -48,7 +48,7 @@ export function ConfirmDialog({
     description,
     confirmLabel = "Confirm",
     cancelLabel = "Cancel",
-    variant = "primary",
+    variant = "default",
     onConfirm,
     onCancel,
     isPending = false,
@@ -86,7 +86,7 @@ export function ConfirmDialog({
                         </Button>
                         <Button
                             variant={
-                                variant === "danger" ? "destructive" : "primary"
+                                variant === "danger" ? "destructive" : "default"
                             }
                             onClick={handleConfirm}
                             disabled={isPending}

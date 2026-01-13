@@ -66,7 +66,7 @@ export function CreateAskModal({
                                 type="button"
                                 variant={
                                     selectedResource === resource
-                                        ? "primary"
+                                        ? "default"
                                         : "outline"
                                 }
                                 onClick={() => setSelectedResource(resource)}
@@ -183,7 +183,7 @@ export function CreateAskModal({
                     </Button>
                     <Button
                         type="submit"
-                        variant="primary"
+                        variant="default"
                         disabled={createMutation.isPending}
                     >
                         {createMutation.isPending

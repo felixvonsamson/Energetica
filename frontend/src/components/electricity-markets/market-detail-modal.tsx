@@ -151,7 +151,7 @@ export function MarketDetailModal({
                             Leave Market
                         </Button>
                     ) : (
-                        <Button variant="primary" size="lg" onClick={onJoin}>
+                        <Button variant="default" size="lg" onClick={onJoin}>
                             Join Market
                         </Button>
                     )}

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { type LucideIcon } from "lucide-react";
 import { createElement } from "react";
 
 import { HomeLayout } from "@/components/home-layout";
@@ -43,7 +44,7 @@ function analyzeIconUsage() {
 interface IconCategoryProps {
     title: string;
     description: string;
-    icons: Record<string, React.ComponentType>;
+    icons: Record<string, LucideIcon>;
     iconUsage: Map<string, string[]>;
 }
 

@@ -108,7 +108,6 @@ export function ProgressItem({
                                 size="sm"
                                 onClick={onResume}
                                 disabled={isLoading}
-                                isLoading={isResuming}
                                 className="p-1"
                                 aria-label="Resume project"
                             >
@@ -122,7 +121,6 @@ export function ProgressItem({
                                     size="sm"
                                     onClick={onPause}
                                     disabled={isLoading}
-                                    isLoading={isPausing}
                                     className="p-1"
                                     aria-label="Pause project"
                                 >
@@ -137,7 +135,6 @@ export function ProgressItem({
                                 size="sm"
                                 onClick={onIncreasePriority}
                                 disabled={isLoading}
-                                isLoading={isChangingPriority}
                                 className="p-1"
                                 aria-label="Increase priority"
                             >
@@ -150,7 +147,6 @@ export function ProgressItem({
                                 size="sm"
                                 onClick={onDecreasePriority}
                                 disabled={isLoading}
-                                isLoading={isChangingPriority}
                                 className="p-1"
                                 aria-label="Decrease priority"
                             >
@@ -165,7 +161,6 @@ export function ProgressItem({
                                 size="sm"
                                 onClick={onCancel}
                                 disabled={isLoading}
-                                isLoading={isCancelling}
                                 className="p-1 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/30 dark:hover:text-red-400"
                                 aria-label="Cancel project"
                             >

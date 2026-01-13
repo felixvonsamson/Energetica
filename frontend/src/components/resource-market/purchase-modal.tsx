@@ -73,7 +73,7 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
                     <div className="flex gap-2">
                         <Button
                             type="button"
-                            variant={buyAll ? "primary" : "outline"}
+                            variant={buyAll ? "default" : "outline"}
                             onClick={() => setBuyAll(true)}
                             className="flex-1"
                         >
@@ -81,7 +81,7 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
                         </Button>
                         <Button
                             type="button"
-                            variant={!buyAll ? "primary" : "outline"}
+                            variant={!buyAll ? "default" : "outline"}
                             onClick={() => setBuyAll(false)}
                             className="flex-1"
                         >
@@ -136,7 +136,7 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
                     </Button>
                     <Button
                         type="submit"
-                        variant="primary"
+                        variant="default"
                         disabled={
                             purchaseMutation.isPending || (!buyAll && !quantity)
                         }

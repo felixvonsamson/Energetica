@@ -176,7 +176,7 @@ export function JoinMarketModal({
                         Cancel
                     </Button>
                     <Button
-                        variant="primary"
+                        variant="default"
                         onClick={handleConfirm}
                         disabled={isPending}
                     >
