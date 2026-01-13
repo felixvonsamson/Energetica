@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { Button, Modal, Money } from "@/components/ui";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useCreateAsk } from "@/hooks/useResourceMarket";
 import { formatMass } from "@/lib/format-utils";
 import { RESOURCE_LABELS } from "@/types/resource-market";
@@ -57,9 +58,7 @@ export function CreateAskModal({
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Resource selection */}
                 <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-100">
-                        Resource Type
-                    </label>
+                    <Label>Resource Type</Label>
                     <div className="grid grid-cols-3 gap-2">
                         {RESOURCE_TYPES.map((resource) => (
                             <Button
@@ -102,12 +101,9 @@ export function CreateAskModal({
 
                 {/* Quantity */}
                 <div>
-                    <label
-                        htmlFor="quantity"
-                        className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-100"
-                    >
+                    <Label htmlFor="quantity" className="mb-2">
                         Quantity (in tons)
-                    </label>
+                    </Label>
                     <Input
                         type="number"
                         id="quantity"
@@ -142,12 +138,9 @@ export function CreateAskModal({
 
                 {/* Price */}
                 <div>
-                    <label
-                        htmlFor="price"
-                        className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-100"
-                    >
+                    <Label htmlFor="price" className="mb-2">
                         Price per ton
-                    </label>
+                    </Label>
                     <Input
                         type="number"
                         id="price"

@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { Button, Modal, Money } from "@/components/ui";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { usePurchaseAsk } from "@/hooks/useResourceMarket";
 import { formatMass } from "@/lib/format-utils";
 import { RESOURCE_LABELS, ResourceType } from "@/types/resource-market";
@@ -68,9 +69,7 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
 
                 {/* Purchase amount selection */}
                 <div className="space-y-3">
-                    <label className="block text-sm font-medium">
-                        Purchase Amount
-                    </label>
+                    <Label>Purchase Amount</Label>
                     <div className="flex gap-2">
                         <Button
                             type="button"

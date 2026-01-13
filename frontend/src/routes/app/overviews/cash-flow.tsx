@@ -20,6 +20,7 @@ import {
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardTitle, CashFlow } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
@@ -464,9 +465,7 @@ function RevenueTypePicker({
 }: RevenueTypePickerProps) {
     return (
         <div>
-            <label className="block text-sm font-medium mb-2">
-                Revenue Type
-            </label>
+            <Label className="mb-2">Revenue Type</Label>
             <div className="flex gap-2">
                 <button
                     onClick={() => onRevenueTypeChange("revenues")}
@@ -511,7 +510,7 @@ interface ViewModePickerProps {
 function ViewModePicker({ viewMode, onViewModeChange }: ViewModePickerProps) {
     return (
         <div>
-            <label className="block text-sm font-medium mb-2">View Mode</label>
+            <Label className="mb-2">View Mode</Label>
             <div className="flex gap-2">
                 <button
                     onClick={() => onViewModeChange("normal")}
@@ -549,7 +548,7 @@ function NetProfitViewModePicker({
 }: NetProfitViewModePickerProps) {
     return (
         <div>
-            <label className="block text-sm font-medium mb-2">View Mode</label>
+            <Label className="mb-2">View Mode</Label>
             <div className="flex gap-2">
                 <button
                     onClick={() => onViewModeChange("net")}

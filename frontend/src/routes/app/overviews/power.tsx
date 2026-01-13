@@ -14,6 +14,7 @@ import {
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardTitle } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
@@ -230,7 +231,7 @@ function ChartTypePicker({
 }: ChartTypePickerProps) {
     return (
         <div>
-            <label className="block text-sm font-medium mb-2">Chart Type</label>
+            <Label className="mb-2">Chart Type</Label>
             <div className="flex gap-2">
                 <button
                     onClick={() => onChartTypeChange("power-sources")}

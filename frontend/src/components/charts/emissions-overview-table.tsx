@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 
 import { AssetIcon } from "@/components/ui";
 import { AssetName } from "@/components/ui/asset-name";
+import { Label } from "@/components/ui/label";
 
 interface EmissionsOverviewTableProps {
     /** Chart data with time series for each emissions source */
@@ -209,7 +210,7 @@ export function EmissionsOverviewTable({
                                 {formatMass(row.totalEmissions)}
                             </td>
                             <td className="py-2 px-4 text-center">
-                                <label className="inline-flex items-center cursor-pointer">
+                                <Label className="inline-flex items-center cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={
@@ -220,7 +221,7 @@ export function EmissionsOverviewTable({
                                         }
                                         className="w-4 h-4 text-blue-600"
                                     />
-                                </label>
+                                </Label>
                             </td>
                         </tr>
                     ))}

@@ -23,6 +23,7 @@ import {
 import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardTitle, Money } from "@/components/ui";
 import { FacilityName } from "@/components/ui/asset-name";
+import { Label } from "@/components/ui/label";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData, useLatestChartData } from "@/hooks/useCharts";
@@ -374,7 +375,7 @@ function NetworkSelector({
 }: NetworkSelectorProps) {
     return (
         <div>
-            <label className="block text-sm font-medium mb-2">Network</label>
+            <Label className="mb-2">Network</Label>
             <select
                 value={selectedNetworkId}
                 onChange={(e) => onNetworkChange(Number(e.target.value))}
@@ -481,9 +482,7 @@ function BreakdownTypePicker({
 }: BreakdownTypePickerProps) {
     return (
         <div>
-            <label className="block text-sm font-medium mb-2">
-                Breakdown Type
-            </label>
+            <Label className="mb-2">Breakdown Type</Label>
             <div className="flex gap-2">
                 <button
                     onClick={() => onBreakdownTypeChange("production")}
@@ -521,9 +520,7 @@ function BreakdownModePicker({
 }: BreakdownModePickerProps) {
     return (
         <div>
-            <label className="block text-sm font-medium mb-2">
-                Breakdown Mode
-            </label>
+            <Label className="mb-2">Breakdown Mode</Label>
             <div className="flex gap-2">
                 <button
                     onClick={() => onBreakdownModeChange("player")}

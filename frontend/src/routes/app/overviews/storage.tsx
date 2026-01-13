@@ -14,6 +14,7 @@ import {
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardTitle } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
@@ -264,7 +265,7 @@ interface ViewModePickerProps {
 function ViewModePicker({ viewMode, onViewModeChange }: ViewModePickerProps) {
     return (
         <div>
-            <label className="block text-sm font-medium mb-2">View Mode</label>
+            <Label className="mb-2">View Mode</Label>
             <div className="flex gap-2">
                 <button
                     onClick={() => onViewModeChange("normal")}

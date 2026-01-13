@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { Modal, FacilityName, FacilityIcon, Button } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/classname-utils";
 import { ProjectType } from "@/types/projects";
 
@@ -86,10 +87,10 @@ export function FacilityComparisonModal<T>({
                 <div className="grid grid-cols-3 gap-4">
                     {slots.map((slot, index) => (
                         <div key={index} className="space-y-2">
-                            <label className="block text-sm font-semibold">
+                            <Label>
                                 Facility {index + 1}
                                 {index >= 2 && " (Optional)"}
-                            </label>
+                            </Label>
                             <select
                                 value={slot.selected || ""}
                                 onChange={(e) =>

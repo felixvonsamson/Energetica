@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatList, useCreateGroupChat } from "@/hooks/useChats";
@@ -151,7 +152,7 @@ export function NewGroupChatModal({
                     </div>
                 )}
                 <div className="pb-4">
-                    <label htmlFor="chat-title" className="block mb-2">
+                    <Label htmlFor="chat-title" className="mb-2">
                         Chat title
                         {isTitleRequired && (
                             <span className="text-red-600 dark:text-red-400">
@@ -159,7 +160,7 @@ export function NewGroupChatModal({
                                 *
                             </span>
                         )}
-                    </label>
+                    </Label>
                     <Input
                         id="chat-title"
                         type="text"
@@ -212,9 +213,9 @@ export function NewGroupChatModal({
                 </div>
 
                 <div className="border-t border-border py-4">
-                    <label htmlFor="player-search" className="block mb-3">
+                    <Label htmlFor="player-search" className="mb-3">
                         Add players
-                    </label>
+                    </Label>
                     <Input
                         id="player-search"
                         type="search"

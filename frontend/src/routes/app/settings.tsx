@@ -4,6 +4,7 @@ import { useState } from "react";
 import { GameLayout } from "@/components/layout/game-layout";
 import { Modal, Card, Button, InfoBanner } from "@/components/ui";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useChangePassword } from "@/hooks/useAuthQueries";
 import { handleApiError } from "@/lib/error-utils";
 
@@ -99,7 +100,7 @@ function SettingsContent() {
                                     events
                                 </p>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
+                            <Label className="relative inline-flex items-center cursor-pointer">
                                 <Input
                                     type="checkbox"
                                     checked={notificationsEnabled}
@@ -108,7 +109,7 @@ function SettingsContent() {
                                     className="sr-only peer"
                                 />
                                 <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-green rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-green dark:peer-checked:bg-brand-green"></div>
-                            </label>
+                            </Label>
                         </div>
                     </div>
                 </Card>
@@ -230,12 +231,9 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
                 )}
 
                 <div>
-                    <label
-                        htmlFor="old_password"
-                        className="block text-sm font-medium mb-2"
-                    >
+                    <Label htmlFor="old_password" className="mb-2">
                         Old Password
-                    </label>
+                    </Label>
                     <Input
                         type="password"
                         id="old_password"
@@ -247,12 +245,9 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
                 </div>
 
                 <div>
-                    <label
-                        htmlFor="new_password"
-                        className="block text-sm font-medium mb-2"
-                    >
+                    <Label htmlFor="new_password" className="mb-2">
                         New Password
-                    </label>
+                    </Label>
                     <Input
                         type="password"
                         id="new_password"
@@ -264,12 +259,9 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
                 </div>
 
                 <div>
-                    <label
-                        htmlFor="confirm_password"
-                        className="block text-sm font-medium mb-2"
-                    >
+                    <Label htmlFor="confirm_password" className="mb-2">
                         Confirm New Password
-                    </label>
+                    </Label>
                     <Input
                         type="password"
                         id="confirm_password"

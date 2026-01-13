@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatList, useCreateGroupChat } from "@/hooks/useChats";
@@ -154,12 +155,9 @@ export function NewChatModal({
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            <label
-                                htmlFor="player-search"
-                                className="block text-sm font-medium"
-                            >
+                            <Label htmlFor="player-search">
                                 Select a player
-                            </label>
+                            </Label>
                             <Input
                                 id="player-search"
                                 type="search"

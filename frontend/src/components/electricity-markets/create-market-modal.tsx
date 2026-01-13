@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import {
     useCreateElectricityMarket,
@@ -102,13 +103,13 @@ export function CreateMarketModal({ isOpen, onClose }: CreateMarketModalProps) {
 
                 {/* Market name input */}
                 <div className="pb-4">
-                    <label htmlFor="market-name" className="block mb-2">
+                    <Label htmlFor="market-name" className="mb-2">
                         Market name
                         <span className="text-red-600 dark:text-red-400">
                             {" "}
                             *
                         </span>
-                    </label>
+                    </Label>
                     <Input
                         id="market-name"
                         type="text"

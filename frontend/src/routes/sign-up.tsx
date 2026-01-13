@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { HomeLayout } from "@/components/home-layout";
 import { Card, Button, InfoBanner } from "@/components/ui";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/lib/api/auth";
@@ -133,12 +134,9 @@ function SignUpForm() {
                 {/* Sign Up Form */}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label
-                            htmlFor="username"
-                            className="block text-sm font-medium text-primary mb-2"
-                        >
+                        <Label htmlFor="username" className="mb-2">
                             Username (3-18 characters)
-                        </label>
+                        </Label>
                         <Input
                             type="text"
                             id="username"
@@ -156,12 +154,9 @@ function SignUpForm() {
                     </div>
 
                     <div>
-                        <label
-                            htmlFor="password"
-                            className="block text-sm font-medium text-primary mb-2"
-                        >
+                        <Label htmlFor="password" className="mb-2">
                             Password (minimum 7 characters)
-                        </label>
+                        </Label>
                         <Input
                             type="password"
                             id="password"
@@ -177,12 +172,9 @@ function SignUpForm() {
                     </div>
 
                     <div>
-                        <label
-                            htmlFor="confirmPassword"
-                            className="block text-sm font-medium text-primary mb-2"
-                        >
+                        <Label htmlFor="confirmPassword" className="mb-2">
                             Confirm Password
-                        </label>
+                        </Label>
                         <Input
                             type="password"
                             id="confirmPassword"

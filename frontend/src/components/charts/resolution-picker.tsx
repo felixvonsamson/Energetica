@@ -1,6 +1,7 @@
 /** Resolution picker component for time series charts. */
 
 import { Duration, TimeModeToggle } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { resolutions } from "@/types/charts";
 
@@ -21,7 +22,7 @@ export function ResolutionPicker({
     const { selectedResolution, setResolution } = useTimeMode();
     return (
         <div>
-            <label className="block text-sm font-medium mb-2">Resolution</label>
+            <Label className="mb-2">Resolution</Label>
             <div className="flex flex-wrap gap-2">
                 {currentTick &&
                     resolutions
