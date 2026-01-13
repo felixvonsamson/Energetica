@@ -1,7 +1,13 @@
 import { Microscope } from "lucide-react";
 
 import { ResearchProjects } from "@/components/dashboard/research-projects";
-import { Modal } from "@/components/ui";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useProjects } from "@/hooks/useProjects";
 
 interface ResearchProjectsModalProps {
@@ -27,19 +33,19 @@ export function ResearchProjectsModal({
     }
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title=""
-            className="max-w-4xl max-h-[90vh] overflow-y-auto"
-        >
-            <div className="space-y-4">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <Microscope className="w-6 h-6" />
-                    Under Research
-                </h2>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Microscope className="w-6 h-6" />
+                        Under Research
+                    </DialogTitle>
+                    <DialogDescription>
+                        View ongoing research projects and their progress.
+                    </DialogDescription>
+                </DialogHeader>
                 <ResearchProjects showActions={true} />
-            </div>
-        </Modal>
+            </DialogContent>
+        </Dialog>
     );
 }

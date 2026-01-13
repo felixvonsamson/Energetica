@@ -1,10 +1,20 @@
 import { X } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { InfoBanner } from "@/components/ui/info-banner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Modal } from "@/components/ui/modal";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatList, useCreateGroupChat } from "@/hooks/useChats";
 import { useFilteredPlayers } from "@/hooks/useFilteredPlayers";
@@ -69,7 +79,8 @@ export function NewChatModal({
               )
             : undefined;
 
-    const handleCreateChat = () => {
+    const handleCreateChat = (e: React.FormEvent) => {
+        e.preventDefault();
         if (!selectedPlayer) return;
 
         if (existingChat) {
@@ -129,94 +140,114 @@ export function NewChatModal({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Write to player">
-            <div className="space-y-0 flex flex-col">
-                {error && (
-                    <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-lg text-sm mb-4 animate-in fade-in duration-200">
-                        {error}
-                    </div>
-                )}
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+            <form onSubmit={handleCreateChat} id="new-chat-form">
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Write to player</DialogTitle>
+                        <DialogDescription>
+                            Select a player to start a conversation.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                {/* Selected Player Display */}
-                <div className="pb-4">
-                    {selectedPlayer ? (
-                        <div className="space-y-2">
-                            <p className="text-sm font-medium">
-                                Selected player
-                            </p>
-                            <button
-                                onClick={handleRemovePlayer}
-                                aria-label={`Remove ${selectedPlayer.username}`}
-                                className="flex items-center gap-2 bg-pine dark:bg-brand-green text-white px-3 py-1 rounded-full text-sm hover:opacity-80 transition-opacity animate-in zoom-in duration-200"
-                            >
-                                {selectedPlayer.username}
-                                <X className="w-3 h-3" />
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="space-y-2">
-                            <Label htmlFor="player-search">
-                                Select a player
-                            </Label>
-                            <Input
-                                id="player-search"
-                                type="search"
-                                autoComplete="off"
-                                value={playerInput}
-                                onChange={(e) =>
-                                    handlePlayerInputChange(e.target.value)
-                                }
-                                placeholder="Search players..."
-                            />
-                        </div>
-                    )}
-                </div>
+                    <div className="space-y-4">
+                        {error && (
+                            <InfoBanner variant="error">{error}</InfoBanner>
+                        )}
 
-                {/* Player List */}
-                {!selectedPlayer && (
-                    <div className="border-t border-border">
-                        <div className="max-h-60 overflow-y-auto bg-card rounded-lg">
-                            {filteredPlayers.length > 0 ? (
-                                <div className="divide-y divide-border">
-                                    {filteredPlayers.map((player: Player) => (
-                                        <button
-                                            key={player.id}
-                                            onClick={() =>
-                                                handleSelectPlayer(player)
-                                            }
-                                            className="w-full text-left px-4 py-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-muted transition-colors"
-                                        >
-                                            {player.username}
-                                        </button>
-                                    ))}
+                        <div>
+                            {selectedPlayer ? (
+                                <div className="space-y-2">
+                                    <p className="text-sm font-medium">
+                                        Selected player
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={handleRemovePlayer}
+                                        aria-label={`Remove ${selectedPlayer.username}`}
+                                        className="rounded-full"
+                                    >
+                                        {selectedPlayer.username}
+                                        <X className="w-3 h-3 ml-2" />
+                                    </Button>
                                 </div>
                             ) : (
-                                <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                                    {playerInput.trim()
-                                        ? "No players found"
-                                        : "No players available"}
+                                <div className="space-y-2">
+                                    <Label htmlFor="player-search">
+                                        Select a player
+                                    </Label>
+                                    <Input
+                                        id="player-search"
+                                        type="search"
+                                        autoComplete="off"
+                                        value={playerInput}
+                                        onChange={(e) =>
+                                            handlePlayerInputChange(
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="Search players..."
+                                    />
                                 </div>
                             )}
                         </div>
-                    </div>
-                )}
 
-                <div className="border-t border-border pt-4">
-                    <Button
-                        onClick={handleCreateChat}
-                        disabled={!selectedPlayer || isPending}
-                        className="w-full transition-opacity"
-                    >
-                        {isPending
-                            ? existingChat
-                                ? "Opening..."
-                                : "Creating..."
-                            : existingChat
-                              ? "Go to existing chat"
-                              : "Create new chat"}
-                    </Button>
-                </div>
-            </div>
-        </Modal>
+                        {!selectedPlayer && (
+                            <div className="max-h-60 overflow-y-auto bg-card rounded-lg border border-border">
+                                {filteredPlayers.length > 0 ? (
+                                    <div className="divide-y divide-border">
+                                        {filteredPlayers.map(
+                                            (player: Player) => (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    key={player.id}
+                                                    onClick={() =>
+                                                        handleSelectPlayer(
+                                                            player,
+                                                        )
+                                                    }
+                                                    className="w-full justify-start rounded-none px-4 py-3 h-auto"
+                                                >
+                                                    {player.username}
+                                                </Button>
+                                            ),
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="px-4 py-8 text-center text-muted-foreground">
+                                        {playerInput.trim()
+                                            ? "No players found"
+                                            : "No players available"}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline" disabled={isPending}>
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Button
+                            type="submit"
+                            form="new-chat-form"
+                            variant={isPending ? "outline" : "default"}
+                            disabled={!selectedPlayer || isPending}
+                            className="flex items-center gap-2"
+                        >
+                            {isPending && <Spinner />}
+                            {existingChat
+                                ? "Go to existing chat"
+                                : "Create new chat"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </form>
+        </Dialog>
     );
 }

@@ -1,8 +1,17 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { InfoBanner } from "@/components/ui/info-banner";
-import { Modal } from "@/components/ui/modal";
+import { Spinner } from "@/components/ui/spinner";
 import {
     useLeaveElectricityMarket,
     useElectricityMarketForPlayer,
@@ -29,7 +38,8 @@ export function LeaveMarketModal({ isOpen, onClose }: LeaveMarketModalProps) {
         onClose();
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = (e: React.FormEvent) => {
+        e.preventDefault();
         if (!market) return;
         setError(null);
         leaveMarket(market.id, {
@@ -73,64 +83,83 @@ export function LeaveMarketModal({ isOpen, onClose }: LeaveMarketModalProps) {
 
     return (
         market && (
-            <Modal isOpen={isOpen} onClose={handleClose} title="Leave Market">
-                <div className="space-y-4">
-                    {/* Error message */}
-                    {error && (
-                        <InfoBanner variant="error" className="text-sm">
-                            {error}
-                        </InfoBanner>
-                    )}
+            <Dialog
+                open={isOpen}
+                onOpenChange={(open) => !open && handleClose()}
+            >
+                <form onSubmit={handleConfirm} id="leave-market-form">
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Leave Market</DialogTitle>
+                            <DialogDescription>
+                                Leave {market.name} and stop trading with its
+                                members.
+                            </DialogDescription>
+                        </DialogHeader>
 
-                    {/* Confirmation text */}
-                    <p>
-                        Are you sure you want to leave{" "}
-                        <span className="font-semibold">{market.name}</span>?
-                    </p>
+                        <div className="space-y-4">
+                            {/* Error message */}
+                            {error && (
+                                <InfoBanner variant="error" className="text-sm">
+                                    {error}
+                                </InfoBanner>
+                            )}
 
-                    {/* Last member warning */}
-                    {isLastMember && (
-                        <InfoBanner variant="warning">
-                            <div>
-                                <p className="font-semibold mb-1">
-                                    Market will be permanently deleted
-                                </p>
-                                <p className="text-sm">
-                                    You are the last member of{" "}
-                                    <span className="font-semibold">
-                                        {market.name}
-                                    </span>
-                                    .
-                                </p>
-                                <p className="text-sm">
-                                    <span className="font-semibold">
-                                        {market.name}
-                                    </span>{" "}
-                                    will be permanently deleted when you leave.
-                                </p>
-                            </div>
-                        </InfoBanner>
-                    )}
+                            {/* Confirmation text */}
+                            <p>
+                                Are you sure you want to leave{" "}
+                                <span className="font-semibold">
+                                    {market.name}
+                                </span>
+                                ?
+                            </p>
 
-                    {/* Action buttons */}
-                    <div className="flex gap-3 justify-end pt-4 border-t border-border">
-                        <Button
-                            variant="secondary"
-                            onClick={onClose}
-                            disabled={isPending}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={handleConfirm}
-                            disabled={isPending}
-                        >
-                            {isPending ? "Leaving..." : "Leave Market"}
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+                            {/* Last member warning */}
+                            {isLastMember && (
+                                <InfoBanner variant="warning">
+                                    <div>
+                                        <p className="font-semibold mb-1">
+                                            Market will be permanently deleted
+                                        </p>
+                                        <p className="text-sm">
+                                            You are the last member of{" "}
+                                            <span className="font-semibold">
+                                                {market.name}
+                                            </span>
+                                            .
+                                        </p>
+                                        <p className="text-sm">
+                                            <span className="font-semibold">
+                                                {market.name}
+                                            </span>{" "}
+                                            will be permanently deleted when you
+                                            leave.
+                                        </p>
+                                    </div>
+                                </InfoBanner>
+                            )}
+                        </div>
+
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button variant="outline" disabled={isPending}>
+                                    Cancel
+                                </Button>
+                            </DialogClose>
+                            <Button
+                                type="submit"
+                                form="leave-market-form"
+                                variant={isPending ? "outline" : "destructive"}
+                                disabled={isPending}
+                                className="flex items-center gap-2"
+                            >
+                                {isPending && <Spinner />}
+                                Leave Market
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </form>
+            </Dialog>
         )
     );
 }

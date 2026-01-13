@@ -2,9 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
-import { Modal, Card, Button, InfoBanner } from "@/components/ui";
+import { Card, Button, InfoBanner } from "@/components/ui";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { useChangePassword } from "@/hooks/useAuthQueries";
 import { handleApiError } from "@/lib/error-utils";
 
@@ -222,66 +232,87 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Change Password">
-            <form onSubmit={handleSubmit} className="space-y-4">
-                {error && <InfoBanner variant="error">{error}</InfoBanner>}
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+            <form onSubmit={handleSubmit} id="change-password-form">
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Change Password</DialogTitle>
+                        <DialogDescription>
+                            Enter your old password and choose a new one.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                {successMessage && (
-                    <InfoBanner variant="info">{successMessage}</InfoBanner>
-                )}
+                    <div className="space-y-4">
+                        {error && (
+                            <InfoBanner variant="error">{error}</InfoBanner>
+                        )}
 
-                <div>
-                    <Label htmlFor="old_password" className="mb-2">
-                        Old Password
-                    </Label>
-                    <Input
-                        type="password"
-                        id="old_password"
-                        value={oldPassword}
-                        onChange={(e) => setOldPassword(e.target.value)}
-                        placeholder="Enter old password"
-                        disabled={isPending}
-                    />
-                </div>
+                        {successMessage && (
+                            <InfoBanner variant="info">
+                                {successMessage}
+                            </InfoBanner>
+                        )}
 
-                <div>
-                    <Label htmlFor="new_password" className="mb-2">
-                        New Password
-                    </Label>
-                    <Input
-                        type="password"
-                        id="new_password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Enter new password"
-                        disabled={isPending}
-                    />
-                </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="old_password">Old Password</Label>
+                            <Input
+                                type="password"
+                                id="old_password"
+                                value={oldPassword}
+                                onChange={(e) => setOldPassword(e.target.value)}
+                                placeholder="Enter old password"
+                                disabled={isPending}
+                            />
+                        </div>
 
-                <div>
-                    <Label htmlFor="confirm_password" className="mb-2">
-                        Confirm New Password
-                    </Label>
-                    <Input
-                        type="password"
-                        id="confirm_password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Confirm new password"
-                        disabled={isPending}
-                    />
-                </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="new_password">New Password</Label>
+                            <Input
+                                type="password"
+                                id="new_password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="Enter new password"
+                                disabled={isPending}
+                            />
+                        </div>
 
-                <div className="flex justify-center gap-4 pt-4">
-                    <Button
-                        type="submit"
-                        variant="default"
-                        disabled={isPending}
-                    >
-                        {isPending ? "Changing..." : "Change Password"}
-                    </Button>
-                </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="confirm_password">
+                                Confirm New Password
+                            </Label>
+                            <Input
+                                type="password"
+                                id="confirm_password"
+                                value={confirmPassword}
+                                onChange={(e) =>
+                                    setConfirmPassword(e.target.value)
+                                }
+                                placeholder="Confirm new password"
+                                disabled={isPending}
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline" disabled={isPending}>
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Button
+                            type="submit"
+                            form="change-password-form"
+                            variant={isPending ? "outline" : "default"}
+                            disabled={isPending}
+                            className="flex items-center gap-2"
+                        >
+                            {isPending && <Spinner />}
+                            Change Password
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
             </form>
-        </Modal>
+        </Dialog>
     );
 }

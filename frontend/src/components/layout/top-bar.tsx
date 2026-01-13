@@ -24,7 +24,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Navigation } from "@/components/layout/navigation";
 import { NotificationPopup } from "@/components/layout/notification-popup";
-import { Modal } from "@/components/ui";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useNavigation } from "@/contexts/navigation-context";
 import { useAuth } from "@/hooks/useAuth";
@@ -244,16 +250,23 @@ export function TopBar() {
 
             {/* Help / info modal */}
             {staticData?.infoModal && (
-                <Modal
-                    isOpen={isShowingHelp}
-                    onClose={handleCloseHelp}
-                    title={
-                        staticData.infoModal.title ??
-                        "Help: " + staticData.title
-                    }
+                <Dialog
+                    open={isShowingHelp}
+                    onOpenChange={(open) => !open && handleCloseHelp()}
                 >
-                    {staticData.infoModal.contents}
-                </Modal>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>
+                                {staticData.infoModal.title ??
+                                    "Help: " + staticData.title}
+                            </DialogTitle>
+                            <DialogDescription>
+                                Information and help for this page.
+                            </DialogDescription>
+                        </DialogHeader>
+                        {staticData.infoModal.contents}
+                    </DialogContent>
+                </Dialog>
             )}
         </>
     );

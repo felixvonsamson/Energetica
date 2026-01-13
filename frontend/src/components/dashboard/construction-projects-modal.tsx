@@ -1,7 +1,13 @@
 import { HardHat } from "lucide-react";
 
 import { ConstructionProjects } from "@/components/dashboard/construction-projects";
-import { Modal } from "@/components/ui";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useProjects } from "@/hooks/useProjects";
 
 interface ConstructionProjectsModalProps {
@@ -28,19 +34,19 @@ export function ConstructionProjectsModal({
     }
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title=""
-            className="max-w-4xl max-h-[90vh] overflow-y-auto"
-        >
-            <div className="space-y-4">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <HardHat className="w-6 h-6" />
-                    Under Construction
-                </h2>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <HardHat className="w-6 h-6" />
+                        Under Construction
+                    </DialogTitle>
+                    <DialogDescription>
+                        View ongoing construction projects and their progress.
+                    </DialogDescription>
+                </DialogHeader>
                 <ConstructionProjects showActions={true} />
-            </div>
-        </Modal>
+            </DialogContent>
+        </Dialog>
     );
 }

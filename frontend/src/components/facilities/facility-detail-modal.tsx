@@ -3,12 +3,20 @@ import { ReactNode } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
 import {
-    Modal,
     FacilityName,
     FacilityIcon,
     Money,
     CardContent,
 } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useQueueProject } from "@/hooks/useProjects";
 import { ProjectType, Requirement } from "@/types/projects";
 
@@ -59,81 +67,92 @@ export function FacilityDetailModal<T>({
     const imageUrl = `/static/images/${facilityType}_facilities/${facility.name}.${imageExtension}`;
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title=""
-            className="max-w-4xl max-h-[90vh] overflow-y-auto"
-        >
-            <div className="space-y-6">
-                {/* Image */}
-                <div className="w-full">
-                    <img
-                        src={imageUrl}
-                        alt={`${facility.name} ${facilityType} facility`}
-                        className="w-full h-64 object-cover rounded-lg"
-                    />
-                </div>
-
-                {/* Header */}
-                <div className="flex flex-wrap items-center gap-3 justify-between">
-                    <div className="flex items-center gap-3">
-                        <h2 className="text-2xl font-bold flex items-center gap-2">
-                            <FacilityIcon facility={facility.name} size={28} />
-                            <FacilityName
-                                facility={facility.name}
-                                mode="long"
-                            />
-                        </h2>
-                        {extraHeaderContent && extraHeaderContent(facility)}
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="text-xl font-semibold">
-                            <Money amount={facility.price} iconSize="lg" long />
-                        </div>
-                        <a
-                            href={facility.wikipedia_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="hover:opacity-80"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <ExternalLink className="w-5 h-5" />
-                        </a>
-                    </div>
-                </div>
-
-                {/* Description */}
-                <CardContent>
-                    {renderDescription ? (
-                        renderDescription(facility)
-                    ) : (
-                        <div
-                            dangerouslySetInnerHTML={{
-                                __html: facility.description,
-                            }}
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent>
+                <DialogHeader className="sr-only">
+                    <DialogTitle>
+                        <FacilityName facility={facility.name} mode="long" />
+                    </DialogTitle>
+                    <DialogDescription>
+                        Facility details, requirements, and construction
+                        information.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6">
+                    {/* Image */}
+                    <div className="w-auto">
+                        <img
+                            src={imageUrl}
+                            alt={`${facility.name} ${facilityType} facility`}
+                            className="w-full aspect-3/2 object-cover rounded-lg"
                         />
-                    )}
-                </CardContent>
+                    </div>
 
-                {/* Requirements */}
-                {facility.requirements_status !== "satisfied" &&
-                    facility.requirements && (
-                        <CardContent>
-                            <RequirementsDisplay
-                                requirements={facility.requirements}
+                    {/* Header */}
+                    <div className="flex flex-wrap items-center gap-3 justify-between">
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-2xl font-bold flex items-center gap-2">
+                                <FacilityIcon
+                                    facility={facility.name}
+                                    size={28}
+                                />
+                                <FacilityName
+                                    facility={facility.name}
+                                    mode="long"
+                                />
+                            </h2>
+                            {extraHeaderContent && extraHeaderContent(facility)}
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="text-xl font-semibold">
+                                <Money
+                                    amount={facility.price}
+                                    iconSize="lg"
+                                    long
+                                />
+                            </div>
+                            <a
+                                href={facility.wikipedia_link}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:opacity-80"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <ExternalLink className="w-5 h-5" />
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Description */}
+                    <CardContent>
+                        {renderDescription ? (
+                            renderDescription(facility)
+                        ) : (
+                            <div
+                                dangerouslySetInnerHTML={{
+                                    __html: facility.description,
+                                }}
                             />
-                        </CardContent>
-                    )}
+                        )}
+                    </CardContent>
 
-                {/* Stats Table */}
-                <CardContent className="flex justify-around">
-                    <div className="w-xl">{renderStatsTable(facility)}</div>
-                </CardContent>
+                    {/* Requirements */}
+                    {facility.requirements_status !== "satisfied" &&
+                        facility.requirements && (
+                            <CardContent>
+                                <RequirementsDisplay
+                                    requirements={facility.requirements}
+                                />
+                            </CardContent>
+                        )}
 
-                {/* Construction Info */}
-                <CardContent className="flex justify-around">
-                    <div className="w-xl">
+                    {/* Stats Table */}
+                    <CardContent className="flex justify-around">
+                        {renderStatsTable(facility)}
+                    </CardContent>
+
+                    {/* Construction Info */}
+                    <CardContent className="flex justify-around">
                         <ConstructionInfo
                             constructionTime={facility.construction_time}
                             constructionPower={facility.construction_power}
@@ -141,37 +160,40 @@ export function FacilityDetailModal<T>({
                                 facility.construction_pollution ?? undefined
                             }
                         />
-                    </div>
-                </CardContent>
-
-                {/* Action Buttons */}
-                <div className="flex justify-center gap-3 pt-4 border-t border-border/50">
+                    </CardContent>
+                </div>
+                <DialogFooter>
+                    {/* Action Buttons */}
                     {onCompare && (
-                        <button
+                        <Button
+                            size="lg"
+                            variant="secondary"
                             onClick={onCompare}
-                            className="px-6 py-3 rounded-lg font-semibold bg-muted hover:bg-muted/80 transition-colors text-lg flex items-center gap-2"
+                            className="px-6 text-lg font-semibold"
                         >
-                            <GitCompareArrows className="w-5 h-5" />
+                            <GitCompareArrows className="w-5 h-5 mr-2" />
                             Compare
-                        </button>
+                        </Button>
                     )}
-                    <button
+                    <Button
+                        size="lg"
                         onClick={handleConstruction}
                         disabled={
                             facility.requirements_status === "unsatisfied"
                         }
-                        className={`px-8 py-3 rounded-lg font-bold text-white transition-colors text-lg ${
+                        variant={
                             facility.requirements_status === "unsatisfied"
-                                ? "bg-destructive cursor-not-allowed"
-                                : "bg-brand-green hover:bg-brand-green/80"
-                        }`}
+                                ? "destructive"
+                                : "default"
+                        }
+                        className="px-8 text-lg font-bold"
                     >
                         {facility.requirements_status === "unsatisfied"
                             ? "Locked"
                             : "Start Construction"}
-                    </button>
-                </div>
-            </div>
-        </Modal>
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }

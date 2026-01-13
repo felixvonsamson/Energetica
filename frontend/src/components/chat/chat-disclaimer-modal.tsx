@@ -1,5 +1,13 @@
-import { Button } from "@/components/ui";
-import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ChatDisclaimerModalProps {
     isOpen: boolean;
@@ -11,17 +19,25 @@ export function ChatDisclaimerModal({
     onDismiss,
 }: ChatDisclaimerModalProps) {
     return (
-        <Modal isOpen={isOpen} onClose={onDismiss} title="Chat Disclaimer">
-            <div className="space-y-4">
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onDismiss()}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Chat Disclaimer</DialogTitle>
+                    <DialogDescription>
+                        Important information about chat usage.
+                    </DialogDescription>
+                </DialogHeader>
                 <p>
                     This is a disclaimer that tells you that the chat is not
                     censored and that any message can be read by the
                     administrators.
                 </p>
-                <Button onClick={onDismiss} className="w-full">
-                    OK
-                </Button>
-            </div>
-        </Modal>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button className="w-full">OK</Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }

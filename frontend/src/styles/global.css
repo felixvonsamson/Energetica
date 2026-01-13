@@ -26,7 +26,6 @@
     --color-brand-green: #5f8d4e;
     --color-pine: #285430;
     --color-pine-darker: #1b3820;
-    --color-alert-red: #f44336;
     --color-alert-orange: #f59f00;
     --color-white: #ffffff;
 
@@ -107,11 +106,11 @@
         --accent: var(--color-brand-green);
         --accent-foreground: #ffffff;
 
-        --destructive: var(--color-alert-red);
+        --destructive: oklch(0.6427 0.2153 28.81);
         --destructive-foreground: #ffffff;
 
         --border: var(--color-tan-green);
-        --input: var(--color-tan-green);
+        --input: var(--color-pine);
         --ring: var(--color-pine);
 
         --radius: 0.5rem;
@@ -225,7 +224,7 @@
         --accent: var(--color-brand-green);
         --accent-foreground: #000000;
 
-        --destructive: var(--color-alert-red);
+        --destructive: oklch(52.816% 0.21229 29.916);
         --destructive-foreground: #ffffff;
 
         --border: #404040;

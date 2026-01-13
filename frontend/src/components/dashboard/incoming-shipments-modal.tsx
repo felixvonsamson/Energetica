@@ -1,7 +1,13 @@
 import { Truck } from "lucide-react";
 
 import { IncomingShipments } from "@/components/dashboard/incoming-shipments";
-import { Modal } from "@/components/ui";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useShipments } from "@/hooks/useShipments";
 
 interface IncomingShipmentsModalProps {
@@ -27,19 +33,19 @@ export function IncomingShipmentsModal({
     }
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title=""
-            className="max-w-4xl max-h-[90vh] overflow-y-auto"
-        >
-            <div className="space-y-4">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <Truck className="w-6 h-6" />
-                    Incoming Shipments
-                </h2>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Truck className="w-6 h-6" />
+                        Incoming Shipments
+                    </DialogTitle>
+                    <DialogDescription>
+                        Track your incoming resource shipments and deliveries.
+                    </DialogDescription>
+                </DialogHeader>
                 <IncomingShipments />
-            </div>
-        </Modal>
+            </DialogContent>
+        </Dialog>
     );
 }

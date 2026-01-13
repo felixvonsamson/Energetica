@@ -1,6 +1,5 @@
 export { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 export { Button } from "@/components/ui/button";
-export { Modal } from "@/components/ui/modal";
 export { CatalogGrid } from "@/components/ui/catalog-grid";
 export { InfoBanner } from "@/components/ui/info-banner";
 export { EmptyState } from "@/components/ui/empty-state";

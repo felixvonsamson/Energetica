@@ -1,10 +1,19 @@
-import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { InfoBanner } from "@/components/ui/info-banner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Modal } from "@/components/ui/modal";
+import { Spinner } from "@/components/ui/spinner";
 import {
     useCreateElectricityMarket,
     useElectricityMarketForPlayer,
@@ -40,7 +49,8 @@ export function CreateMarketModal({ isOpen, onClose }: CreateMarketModalProps) {
         currentMarket !== null &&
         currentMarket.member_ids.length === 1;
 
-    const handleCreateMarket = () => {
+    const handleCreateMarket = (e: React.FormEvent) => {
+        e.preventDefault();
         if (isNameMissing || hasNameError) return;
 
         setError(null);
@@ -88,104 +98,108 @@ export function CreateMarketModal({ isOpen, onClose }: CreateMarketModalProps) {
     };
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={handleClose}
-            title="Create Electricity Market"
-        >
-            <div className="space-y-0 flex flex-col">
-                {/* Error message */}
-                {error && (
-                    <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-lg text-sm mb-4 animate-in fade-in duration-200">
-                        {error}
-                    </div>
-                )}
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+            <form onSubmit={handleCreateMarket} id="create-market-form">
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Create Electricity Market</DialogTitle>
+                        <DialogDescription>
+                            Create a new market to trade electricity with other
+                            players.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                {/* Market name input */}
-                <div className="pb-4">
-                    <Label htmlFor="market-name" className="mb-2">
-                        Market name
-                        <span className="text-red-600 dark:text-red-400">
-                            {" "}
-                            *
-                        </span>
-                    </Label>
-                    <Input
-                        id="market-name"
-                        type="text"
-                        value={marketName}
-                        onChange={(e) => {
-                            setMarketName(e.target.value);
-                            setError(null);
-                        }}
-                        placeholder="Enter market name"
-                        aria-invalid={hasNameError}
-                    />
-                    <div className="h-6 mt-1">
-                        {isNameTooShort && (
-                            <p className="text-sm text-red-600 dark:text-red-400 animate-in fade-in duration-200">
-                                Market name must be at least 3 characters
-                            </p>
+                    <div className="space-y-4">
+                        {error && (
+                            <InfoBanner variant="error">{error}</InfoBanner>
                         )}
-                        {isNameTooLong && (
-                            <p className="text-sm text-red-600 dark:text-red-400 animate-in fade-in duration-200">
-                                Market name must be at most 40 characters
-                            </p>
+
+                        <div className="grid gap-3">
+                            <Label htmlFor="market-name">
+                                Market name
+                                <span className="text-destructive"> *</span>
+                            </Label>
+                            <Input
+                                id="market-name"
+                                type="text"
+                                value={marketName}
+                                onChange={(e) => {
+                                    setMarketName(e.target.value);
+                                    setError(null);
+                                }}
+                                placeholder="Enter market name"
+                                aria-invalid={hasNameError}
+                            />
+                            {isNameTooShort && (
+                                <p className="text-sm text-destructive">
+                                    Market name must be at least 3 characters
+                                </p>
+                            )}
+                            {isNameTooLong && (
+                                <p className="text-sm text-destructive">
+                                    Market name must be at most 40 characters
+                                </p>
+                            )}
+                        </div>
+
+                        {currentMarket && !willDeleteCurrentMarket && (
+                            <InfoBanner variant="warning">
+                                <div>
+                                    <p className="font-semibold mb-1">
+                                        You'll leave your current market
+                                    </p>
+                                    <p className="text-sm">
+                                        Creating a new market will automatically
+                                        remove you from{" "}
+                                        <span className="font-semibold">
+                                            {currentMarket.name}
+                                        </span>
+                                        .
+                                    </p>
+                                </div>
+                            </InfoBanner>
+                        )}
+
+                        {willDeleteCurrentMarket && (
+                            <InfoBanner variant="error">
+                                <div>
+                                    <p className="font-semibold mb-1">
+                                        Market will be permanently deleted
+                                    </p>
+                                    <p className="text-sm">
+                                        As you are the last member of{" "}
+                                        <span className="font-semibold">
+                                            {currentMarket.name}
+                                        </span>
+                                        , it will be permanently deleted when
+                                        you create a new market.
+                                    </p>
+                                </div>
+                            </InfoBanner>
                         )}
                     </div>
-                </div>
 
-                {/* Warning: Already in market */}
-                {currentMarket && !willDeleteCurrentMarket && (
-                    <div className="p-4 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 rounded-lg flex gap-3 mb-4 animate-in fade-in duration-200">
-                        <AlertTriangle className="w-5 h-5 text-yellow-700 dark:text-yellow-400 shrink-0 mt-0.5" />
-                        <div>
-                            <p className="font-semibold text-yellow-700 dark:text-yellow-400 mb-1">
-                                You'll leave your current market
-                            </p>
-                            <p className="text-sm text-yellow-700 dark:text-yellow-400">
-                                Creating a new market will automatically remove
-                                you from{" "}
-                                <span className="font-semibold">
-                                    {currentMarket.name}
-                                </span>
-                                .
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Warning: Will delete current market */}
-                {willDeleteCurrentMarket && (
-                    <div className="p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 rounded-lg flex gap-3 mb-4 animate-in fade-in duration-200">
-                        <AlertTriangle className="w-5 h-5 text-red-700 dark:text-red-400 shrink-0 mt-0.5" />
-                        <div>
-                            <p className="font-semibold text-red-700 dark:text-red-400 mb-1">
-                                Market will be permanently deleted
-                            </p>
-                            <p className="text-sm text-red-700 dark:text-red-400">
-                                As you are the last member of{" "}
-                                <span className="font-semibold">
-                                    {currentMarket.name}
-                                </span>
-                                , it will be permanently deleted when you create
-                                a new market.
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Action buttons */}
-                <div className="border-t border-border pt-4">
-                    <Button
-                        onClick={handleCreateMarket}
-                        disabled={isPending || isNameMissing || hasNameError}
-                        className="w-full transition-opacity"
-                    >
-                        {isPending ? "Creating..." : "Create Market"}
-                    </Button>
-                </div>
-            </div>
-        </Modal>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline" disabled={isPending}>
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Button
+                            type="submit"
+                            form="create-market-form"
+                            variant={isPending ? "outline" : "default"}
+                            disabled={
+                                isPending || isNameMissing || hasNameError
+                            }
+                            className="flex items-center gap-2"
+                        >
+                            {isPending && <Spinner />}
+                            Create Market
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </form>
+        </Dialog>
     );
 }

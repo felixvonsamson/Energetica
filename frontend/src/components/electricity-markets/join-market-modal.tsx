@@ -1,8 +1,17 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { InfoBanner } from "@/components/ui/info-banner";
-import { Modal } from "@/components/ui/modal";
+import { Spinner } from "@/components/ui/spinner";
 import {
     useJoinElectricityMarket,
     useElectricityMarkets,
@@ -47,7 +56,8 @@ export function JoinMarketModal({
         onClose();
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = (e: React.FormEvent) => {
+        e.preventDefault();
         setError(null);
         joinMarket(marketId, {
             onSuccess: () => {
@@ -89,101 +99,112 @@ export function JoinMarketModal({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Join Market">
-            <div className="space-y-4">
-                {/* Error message */}
-                {error && (
-                    <InfoBanner variant="error" className="text-sm">
-                        {error}
-                    </InfoBanner>
-                )}
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+            <form onSubmit={handleConfirm} id="join-market-form">
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Join Market</DialogTitle>
+                        <DialogDescription>
+                            Join {marketName} and start trading electricity with
+                            other members.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                {/* Info about what joining entails - for new players */}
-                {!isAlreadyInMarket && (
-                    <InfoBanner variant="info">
-                        <div>
-                            <p className="font-semibold mb-1">
-                                Joining a market
-                            </p>
-                            <p className="text-sm">
-                                By joining an electricity market, you'll be able
-                                to trade electricity with other market members
-                                at negotiated prices.
-                            </p>
-                        </div>
-                    </InfoBanner>
-                )}
+                    <div className="space-y-4">
+                        {/* Error message */}
+                        {error && (
+                            <InfoBanner variant="error" className="text-sm">
+                                {error}
+                            </InfoBanner>
+                        )}
 
-                {/* Warning about leaving current market */}
-                {isAlreadyInMarket && (
-                    <InfoBanner variant="warning">
-                        <div>
-                            <p className="font-semibold mb-1">
-                                You'll leave your current market
-                            </p>
-                            <p className="text-sm">
-                                Joining{" "}
-                                <span className="font-semibold">
-                                    {marketName}
-                                </span>{" "}
-                                will automatically remove you from{" "}
-                                <span className="font-semibold">
-                                    {currentMarketName}
-                                </span>
-                                .
-                            </p>
-                        </div>
-                    </InfoBanner>
-                )}
+                        {/* Info about what joining entails - for new players */}
+                        {!isAlreadyInMarket && (
+                            <InfoBanner variant="info">
+                                <div>
+                                    <p className="font-semibold mb-1">
+                                        Joining a market
+                                    </p>
+                                    <p className="text-sm">
+                                        By joining an electricity market, you'll
+                                        be able to trade electricity with other
+                                        market members at negotiated prices.
+                                    </p>
+                                </div>
+                            </InfoBanner>
+                        )}
 
-                {/* Warning about deleting current market */}
-                {willDeleteCurrentNetwork && (
-                    <InfoBanner variant="error">
-                        <div>
-                            <p className="font-semibold mb-1">
-                                Market will be permanently deleted
-                            </p>
-                            <p className="text-sm">
-                                As you are its last member,{" "}
-                                <span className="font-semibold">
-                                    {currentMarketName}
-                                </span>{" "}
-                                will be permanently deleted when you join{" "}
-                                <span className="font-semibold">
-                                    {marketName}
-                                </span>
-                                .
-                            </p>
-                        </div>
-                    </InfoBanner>
-                )}
+                        {/* Warning about leaving current market */}
+                        {isAlreadyInMarket && (
+                            <InfoBanner variant="warning">
+                                <div>
+                                    <p className="font-semibold mb-1">
+                                        You'll leave your current market
+                                    </p>
+                                    <p className="text-sm">
+                                        Joining{" "}
+                                        <span className="font-semibold">
+                                            {marketName}
+                                        </span>{" "}
+                                        will automatically remove you from{" "}
+                                        <span className="font-semibold">
+                                            {currentMarketName}
+                                        </span>
+                                        .
+                                    </p>
+                                </div>
+                            </InfoBanner>
+                        )}
 
-                {/* Confirmation text */}
-                <div className="text-white">
-                    <p>
-                        Are you sure you want to join{" "}
-                        <span className="font-semibold">{marketName}</span>?
-                    </p>
-                </div>
+                        {/* Warning about deleting current market */}
+                        {willDeleteCurrentNetwork && (
+                            <InfoBanner variant="error">
+                                <div>
+                                    <p className="font-semibold mb-1">
+                                        Market will be permanently deleted
+                                    </p>
+                                    <p className="text-sm">
+                                        As you are its last member,{" "}
+                                        <span className="font-semibold">
+                                            {currentMarketName}
+                                        </span>{" "}
+                                        will be permanently deleted when you
+                                        join{" "}
+                                        <span className="font-semibold">
+                                            {marketName}
+                                        </span>
+                                        .
+                                    </p>
+                                </div>
+                            </InfoBanner>
+                        )}
 
-                {/* Action buttons */}
-                <div className="flex gap-3 justify-end pt-4 border-t border-border">
-                    <Button
-                        variant="secondary"
-                        onClick={onClose}
-                        disabled={isPending}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="default"
-                        onClick={handleConfirm}
-                        disabled={isPending}
-                    >
-                        {isPending ? "Joining..." : "Join Market"}
-                    </Button>
-                </div>
-            </div>
-        </Modal>
+                        {/* Confirmation text */}
+                        <p>
+                            Are you sure you want to join{" "}
+                            <span className="font-semibold">{marketName}</span>?
+                        </p>
+                    </div>
+
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline" disabled={isPending}>
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Button
+                            type="submit"
+                            form="join-market-form"
+                            variant={isPending ? "outline" : "default"}
+                            disabled={isPending}
+                            className="flex items-center gap-2"
+                        >
+                            {isPending && <Spinner />}
+                            Join Market
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </form>
+        </Dialog>
     );
 }

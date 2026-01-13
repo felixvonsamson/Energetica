@@ -6,7 +6,16 @@
 import { useState, ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Modal } from "@/components/ui/modal";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ConfirmDialogProps {
     /** The trigger element (button) that opens the dialog */
@@ -70,32 +79,47 @@ export function ConfirmDialog({
             {/* Clone the trigger and add onClick handler */}
             <div onClick={() => setIsOpen(true)}>{trigger}</div>
 
-            <Modal isOpen={isOpen} onClose={handleCancel} title={title}>
-                <div className="space-y-4">
-                    {/* Description content */}
-                    {description}
+            <Dialog
+                open={isOpen}
+                onOpenChange={(open) => !open && handleCancel()}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{title}</DialogTitle>
+                        <DialogDescription>
+                            {typeof description === "string"
+                                ? description
+                                : null}
+                        </DialogDescription>
+                    </DialogHeader>
 
-                    {/* Action buttons */}
-                    <div className="flex gap-3 justify-end">
-                        <Button
-                            variant="secondary"
-                            onClick={handleCancel}
-                            disabled={isPending}
-                        >
-                            {cancelLabel}
-                        </Button>
+                    {/* Description content */}
+                    {typeof description !== "string" && description}
+
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline" disabled={isPending}>
+                                {cancelLabel}
+                            </Button>
+                        </DialogClose>
                         <Button
                             variant={
-                                variant === "danger" ? "destructive" : "default"
+                                isPending
+                                    ? "outline"
+                                    : variant === "danger"
+                                      ? "destructive"
+                                      : "default"
                             }
                             onClick={handleConfirm}
                             disabled={isPending}
+                            className="flex items-center gap-2"
                         >
+                            {isPending && <Spinner />}
                             {confirmLabel}
                         </Button>
-                    </div>
-                </div>
-            </Modal>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
