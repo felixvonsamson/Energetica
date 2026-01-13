@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Button, Modal, Money } from "@/components/ui";
+import { Input } from "@/components/ui/input";
 import { usePurchaseAsk } from "@/hooks/useResourceMarket";
 import { formatMass } from "@/lib/format-utils";
 import { RESOURCE_LABELS, ResourceType } from "@/types/resource-market";
@@ -92,7 +93,7 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
                     {/* Custom amount input */}
                     {!buyAll && (
                         <div className="space-y-2">
-                            <input
+                            <Input
                                 type="number"
                                 value={quantity}
                                 onChange={(e) => setQuantity(e.target.value)}
@@ -100,7 +101,6 @@ export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
                                 max={maxQuantityTons}
                                 step="0.01"
                                 placeholder="Enter quantity in tons"
-                                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-card focus:ring-2 focus:ring-brand-green focus:border-transparent"
                             />
                             <p className="text-xs text-gray-500">
                                 Max: {maxQuantityTons.toFixed(2)} tons

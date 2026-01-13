@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 
 import { HomeLayout } from "@/components/home-layout";
 import { Card, Button, InfoBanner } from "@/components/ui";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/lib/api/auth";
@@ -131,7 +132,7 @@ function LoginForm() {
                         >
                             Username
                         </label>
-                        <input
+                        <Input
                             type="text"
                             id="username"
                             name="username"
@@ -139,7 +140,6 @@ function LoginForm() {
                             onChange={(e) => setUsername(e.target.value)}
                             placeholder="Enter username"
                             disabled={isLoading}
-                            className="w-full px-4 py-3 rounded-lg border-2 border-border bg-card text-primary placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             autoComplete="username"
                             autoFocus
                         />
@@ -152,7 +152,7 @@ function LoginForm() {
                         >
                             Password
                         </label>
-                        <input
+                        <Input
                             type="password"
                             id="password"
                             name="password"
@@ -160,7 +160,6 @@ function LoginForm() {
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Enter password"
                             disabled={isLoading}
-                            className="w-full px-4 py-3 rounded-lg border-2 border-border bg-card text-primary placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             autoComplete="current-password"
                         />
                     </div>

@@ -5,6 +5,7 @@
 
 import { Minus, Plus } from "lucide-react";
 
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/classname-utils";
 
 interface PriceInputProps {
@@ -67,21 +68,13 @@ export function PriceInput({
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">
                     $
                 </span>
-                <input
+                <Input
                     type="number"
                     value={value.toFixed(2)}
                     onChange={handleChange}
                     disabled={disabled}
                     step="0.01"
                     min="-4.99"
-                    className={cn(
-                        "font-mono w-30 pl-6 pr-2 py-1.5 text-sm rounded-md",
-                        "border border-gray-300 dark:border-gray-600",
-                        "bg-card",
-                        "text-gray-900 dark:text-gray-100",
-                        "focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-transparent",
-                        disabled && "opacity-50 cursor-not-allowed",
-                    )}
                 />
             </div>
 

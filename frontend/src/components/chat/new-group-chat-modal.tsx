@@ -2,6 +2,7 @@ import { X, Check } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui";
+import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatList, useCreateGroupChat } from "@/hooks/useChats";
@@ -159,7 +160,7 @@ export function NewGroupChatModal({
                             </span>
                         )}
                     </label>
-                    <input
+                    <Input
                         id="chat-title"
                         type="text"
                         value={chatTitle}
@@ -168,11 +169,7 @@ export function NewGroupChatModal({
                             setError(null);
                         }}
                         placeholder="Enter chat title"
-                        className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition ${
-                            isTitleMissing
-                                ? "border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/20 focus:ring-red-500 dark:focus:ring-red-500"
-                                : "border-border bg-card focus:ring-pine dark:focus:ring-brand-green"
-                        }`}
+                        aria-invalid={isTitleMissing}
                     />
                     <div className="h-6 mt-1">
                         {isTitleMissing && (
@@ -218,7 +215,7 @@ export function NewGroupChatModal({
                     <label htmlFor="player-search" className="block mb-3">
                         Add players
                     </label>
-                    <input
+                    <Input
                         id="player-search"
                         type="search"
                         autoComplete="off"
@@ -227,7 +224,6 @@ export function NewGroupChatModal({
                             handlePlayerInputChange(e.target.value)
                         }
                         placeholder="Search players..."
-                        className="w-full px-4 py-2 rounded-lg border border-input bg-card focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green mb-3"
                     />
                     <div className="max-h-60 overflow-y-auto border border-border rounded-lg bg-card">
                         {filteredPlayers.length > 0 ? (

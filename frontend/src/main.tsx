@@ -3,8 +3,6 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import React, { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
-import { routeTree } from "./routeTree.gen";
-
 import { AuthProvider } from "@/contexts/auth-context";
 import { GameTickProvider } from "@/contexts/game-tick-context";
 import { SocketProvider } from "@/contexts/socket-context";
@@ -12,6 +10,8 @@ import { ThemeProvider } from "@/contexts/theme-context";
 import { TimeModeProvider } from "@/contexts/time-mode-context";
 import { clearAssetColorCache } from "@/lib/assets/asset-colors";
 import { queryClient } from "@/lib/query-client";
+
+import { routeTree } from "./routeTree.gen";
 
 import "./styles/global.css";
 

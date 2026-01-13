@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Button, Modal, Money } from "@/components/ui";
+import { Input } from "@/components/ui/input";
 import { useCreateAsk } from "@/hooks/useResourceMarket";
 import { formatMass } from "@/lib/format-utils";
 import { RESOURCE_LABELS } from "@/types/resource-market";
@@ -107,7 +108,7 @@ export function CreateAskModal({
                     >
                         Quantity (in tons)
                     </label>
-                    <input
+                    <Input
                         type="number"
                         id="quantity"
                         value={quantity}
@@ -147,7 +148,7 @@ export function CreateAskModal({
                     >
                         Price per ton
                     </label>
-                    <input
+                    <Input
                         type="number"
                         id="price"
                         value={price}
@@ -155,7 +156,6 @@ export function CreateAskModal({
                         min="0.01"
                         step="0.01"
                         required
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-card text-card-foreground focus:ring-2 focus:ring-brand-green focus:border-transparent"
                         placeholder="Enter price per ton"
                     />
                 </div>

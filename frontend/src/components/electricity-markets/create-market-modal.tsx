@@ -2,6 +2,7 @@ import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui";
+import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import {
     useCreateElectricityMarket,
@@ -108,7 +109,7 @@ export function CreateMarketModal({ isOpen, onClose }: CreateMarketModalProps) {
                             *
                         </span>
                     </label>
-                    <input
+                    <Input
                         id="market-name"
                         type="text"
                         value={marketName}
@@ -117,11 +118,7 @@ export function CreateMarketModal({ isOpen, onClose }: CreateMarketModalProps) {
                             setError(null);
                         }}
                         placeholder="Enter market name"
-                        className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition ${
-                            hasNameError
-                                ? "border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/20 focus:ring-red-500 dark:focus:ring-red-500"
-                                : "border-border bg-card focus:ring-pine dark:focus:ring-brand-green"
-                        }`}
+                        aria-invalid={hasNameError}
                     />
                     <div className="h-6 mt-1">
                         {isNameTooShort && (

@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
 import { Modal, Card, Button, InfoBanner } from "@/components/ui";
+import { Input } from "@/components/ui/input";
 import { useChangePassword } from "@/hooks/useAuthQueries";
 import { handleApiError } from "@/lib/error-utils";
 
@@ -99,7 +100,7 @@ function SettingsContent() {
                                 </p>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
-                                <input
+                                <Input
                                     type="checkbox"
                                     checked={notificationsEnabled}
                                     onChange={handleNotificationsToggle}
@@ -231,17 +232,16 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
                 <div>
                     <label
                         htmlFor="old_password"
-                        className="block text-sm font-medium mb-2 text-white"
+                        className="block text-sm font-medium mb-2"
                     >
                         Old Password
                     </label>
-                    <input
+                    <Input
                         type="password"
                         id="old_password"
                         value={oldPassword}
                         onChange={(e) => setOldPassword(e.target.value)}
                         placeholder="Enter old password"
-                        className="w-full px-4 py-2 rounded-lg bg-card text-foreground border-2 border-border focus:border-brand-green dark:focus:border-brand-green focus:outline-none transition-colors"
                         disabled={isPending}
                     />
                 </div>
@@ -249,17 +249,16 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
                 <div>
                     <label
                         htmlFor="new_password"
-                        className="block text-sm font-medium mb-2 text-white"
+                        className="block text-sm font-medium mb-2"
                     >
                         New Password
                     </label>
-                    <input
+                    <Input
                         type="password"
                         id="new_password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="Enter new password"
-                        className="w-full px-4 py-2 rounded-lg bg-card text-foreground border-2 border-border focus:border-brand-green dark:focus:border-brand-green focus:outline-none transition-colors"
                         disabled={isPending}
                     />
                 </div>
@@ -267,17 +266,16 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
                 <div>
                     <label
                         htmlFor="confirm_password"
-                        className="block text-sm font-medium mb-2 text-white"
+                        className="block text-sm font-medium mb-2"
                     >
                         Confirm New Password
                     </label>
-                    <input
+                    <Input
                         type="password"
                         id="confirm_password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Confirm new password"
-                        className="w-full px-4 py-2 rounded-lg bg-card text-foreground border-2 border-border focus:border-brand-green dark:focus:border-brand-green focus:outline-none transition-colors"
                         disabled={isPending}
                     />
                 </div>

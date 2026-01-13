@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 
 import { HomeLayout } from "@/components/home-layout";
 import { Card, Button, InfoBanner } from "@/components/ui";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/lib/api/auth";
@@ -138,7 +139,7 @@ function SignUpForm() {
                         >
                             Username (3-18 characters)
                         </label>
-                        <input
+                        <Input
                             type="text"
                             id="username"
                             name="username"
@@ -161,7 +162,7 @@ function SignUpForm() {
                         >
                             Password (minimum 7 characters)
                         </label>
-                        <input
+                        <Input
                             type="password"
                             id="password"
                             name="password"
@@ -182,7 +183,7 @@ function SignUpForm() {
                         >
                             Confirm Password
                         </label>
-                        <input
+                        <Input
                             type="password"
                             id="confirmPassword"
                             name="confirmPassword"
@@ -191,7 +192,6 @@ function SignUpForm() {
                             placeholder="Confirm your password"
                             disabled={isLoading}
                             minLength={7}
-                            className="w-full px-4 py-3 rounded-lg border-2 border-input bg-card text-foreground placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             autoComplete="new-password"
                         />
                     </div>

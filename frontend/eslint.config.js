@@ -36,12 +36,18 @@ export default defineConfig([
                 React: "readonly",
             },
         },
-    },
-    reactHooks.configs.flat["recommended-latest"],
-    // jsdoc.configs["flat/recommended"],
-    {
         plugins: {
             import: importPlugin,
+        },
+        settings: {
+            "import/resolver": {
+                typescript: {
+                    alwaysTryTypes: true,
+                    project: "./tsconfig.json",
+                },
+                node: true,
+            },
+            "import/internal-regex": "^@/",
         },
         rules: {
             "import/order": [
@@ -62,6 +68,20 @@ export default defineConfig([
                     "newlines-between": "always",
                 },
             ],
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        {
+                            group: ["../*"],
+                            message:
+                                "Relative parent imports are not allowed. Use absolute imports with @/ instead.",
+                        },
+                    ],
+                },
+            ],
         },
     },
+    reactHooks.configs.flat["recommended-latest"],
+    // jsdoc.configs["flat/recommended"],
 ]);

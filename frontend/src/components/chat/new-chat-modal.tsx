@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui";
+import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatList, useCreateGroupChat } from "@/hooks/useChats";
@@ -159,7 +160,7 @@ export function NewChatModal({
                             >
                                 Select a player
                             </label>
-                            <input
+                            <Input
                                 id="player-search"
                                 type="search"
                                 autoComplete="off"
@@ -168,7 +169,6 @@ export function NewChatModal({
                                     handlePlayerInputChange(e.target.value)
                                 }
                                 placeholder="Search players..."
-                                className="w-full px-4 py-2 rounded-lg border border-input bg-card focus:outline-none focus:ring-2 focus:ring-pine dark:focus:ring-brand-green"
                             />
                         </div>
                     )}
