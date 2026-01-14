@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { FacilityGroupTable } from "@/components/facilities/facility-group-table";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardTitle } from "@/components/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { dummyFacilities } from "@/data/dummyFacilities";
 import { useHasCapability } from "@/hooks/useCapabilities";
@@ -111,10 +111,12 @@ function FacilityManagementContent() {
                 return (
                     <section className="mb-8">
                         <Card>
-                            <CardTitle className="mb-4">
-                                Power Facilities
-                            </CardTitle>
-                            <div className="overflow-x-auto">
+                            <CardHeader>
+                                <CardTitle className="mb-4">
+                                    Power Facilities
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="overflow-x-auto">
                                 <FacilityGroupTable
                                     facilities={
                                         displayFacilities.power_facilities
@@ -177,7 +179,7 @@ function FacilityManagementContent() {
                                     ]}
                                     emptyMessage="No power facilities built yet"
                                 />
-                            </div>
+                            </CardContent>
                         </Card>
                     </section>
                 );
@@ -185,10 +187,12 @@ function FacilityManagementContent() {
                 return (
                     <section className="mb-8">
                         <Card>
-                            <CardTitle className="mb-4">
-                                Storage Facilities
-                            </CardTitle>
-                            <div className="overflow-x-auto">
+                            <CardHeader>
+                                <CardTitle className="mb-4">
+                                    Storage Facilities
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="overflow-x-auto">
                                 <FacilityGroupTable
                                     facilities={
                                         displayFacilities.storage_facilities
@@ -254,7 +258,7 @@ function FacilityManagementContent() {
                                     ]}
                                     emptyMessage="No storage facilities built yet"
                                 />
-                            </div>
+                            </CardContent>
                         </Card>
                     </section>
                 );
@@ -262,10 +266,12 @@ function FacilityManagementContent() {
                 return (
                     <section className="mb-8">
                         <Card>
-                            <CardTitle className="mb-4">
-                                Extraction Facilities
-                            </CardTitle>
-                            <div className="overflow-x-auto">
+                            <CardHeader>
+                                <CardTitle className="mb-4">
+                                    Extraction Facilities
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="overflow-x-auto">
                                 <FacilityGroupTable
                                     facilities={
                                         displayFacilities.extraction_facilities
@@ -328,7 +334,7 @@ function FacilityManagementContent() {
                                     ]}
                                     emptyMessage="No extraction facilities built yet"
                                 />
-                            </div>
+                            </CardContent>
                         </Card>
                     </section>
                 );

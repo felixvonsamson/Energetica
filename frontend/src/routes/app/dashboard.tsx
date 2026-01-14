@@ -25,7 +25,13 @@ import { IncomingShipments } from "@/components/dashboard/incoming-shipments";
 import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { ResearchProjects } from "@/components/dashboard/research-projects";
 import { GameLayout } from "@/components/layout/game-layout";
-import { InfoBanner, Card, CardTitle } from "@/components/ui";
+import {
+    InfoBanner,
+    Card,
+    CardTitle,
+    CardHeader,
+    CardContent,
+} from "@/components/ui";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
@@ -466,46 +472,49 @@ function AchievementSection() {
     return (
         <section className="mb-6">
             <Card>
-                <CardTitle className="mb-4">
-                    <Trophy className="inline w-6 h-6 mr-2" />
-                    Achievement Progression
-                </CardTitle>
-
-                {isLoading ? (
-                    <div className="text-center text-gray-500 py-4">
-                        Loading achievements...
-                    </div>
-                ) : isError ? (
-                    <div className="text-center text-red-600 dark:text-red-400 py-4">
-                        Failed to load achievements
-                    </div>
-                ) : achievementsData?.achievements &&
-                  achievementsData.achievements.length > 0 ? (
-                    <div className="space-y-3">
-                        {achievementsData.achievements.map(
-                            (achievement: {
-                                id: string;
-                                name: string;
-                                status: number;
-                                objective: number;
-                                reward: number;
-                            }) => (
-                                <AchievementCard
-                                    key={achievement.id}
-                                    id={achievement.id}
-                                    name={achievement.name}
-                                    status={achievement.status}
-                                    objective={achievement.objective}
-                                    reward={achievement.reward}
-                                />
-                            ),
-                        )}
-                    </div>
-                ) : (
-                    <div className="text-center text-gray-500 py-4">
-                        No upcoming achievements
-                    </div>
-                )}
+                <CardHeader>
+                    <CardTitle className="mb-4">
+                        <Trophy className="inline w-6 h-6 mr-2" />
+                        Achievement Progression
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {isLoading ? (
+                        <div className="text-center text-gray-500 py-4">
+                            Loading achievements...
+                        </div>
+                    ) : isError ? (
+                        <div className="text-center text-red-600 dark:text-red-400 py-4">
+                            Failed to load achievements
+                        </div>
+                    ) : achievementsData?.achievements &&
+                      achievementsData.achievements.length > 0 ? (
+                        <div className="space-y-3">
+                            {achievementsData.achievements.map(
+                                (achievement: {
+                                    id: string;
+                                    name: string;
+                                    status: number;
+                                    objective: number;
+                                    reward: number;
+                                }) => (
+                                    <AchievementCard
+                                        key={achievement.id}
+                                        id={achievement.id}
+                                        name={achievement.name}
+                                        status={achievement.status}
+                                        objective={achievement.objective}
+                                        reward={achievement.reward}
+                                    />
+                                ),
+                            )}
+                        </div>
+                    ) : (
+                        <div className="text-center text-gray-500 py-4">
+                            No upcoming achievements
+                        </div>
+                    )}
+                </CardContent>
             </Card>
         </section>
     );
@@ -596,108 +605,118 @@ function DailyQuizSection() {
         <section className="mb-6">
             <div className="flex justify-center">
                 <Card className="border-2 border-border max-w-2xl w-full">
-                    <CardTitle className="text-center mb-4">
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
-                        <span className="mx-2">Daily Quiz</span>
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
-                    </CardTitle>
+                    <CardHeader>
+                        <CardTitle className="text-center mb-4">
+                            <img
+                                src="/static/images/icons/quiz.png"
+                                className="inline w-6 h-6"
+                                alt=""
+                            />
+                            <span className="mx-2">Daily Quiz</span>
+                            <img
+                                src="/static/images/icons/quiz.png"
+                                className="inline w-6 h-6"
+                                alt=""
+                            />
+                        </CardTitle>
+                    </CardHeader>
 
-                    <div className="space-y-4">
-                        {isLoading ? (
-                            <div className="text-center text-gray-500">
-                                Loading quiz question...
-                            </div>
-                        ) : isError ? (
-                            <div className="text-center text-alert-red">
-                                Failed to load quiz question
-                            </div>
-                        ) : quizData ? (
-                            <>
-                                {/* Question */}
-                                <p className="text-lg text-center mb-4">
-                                    {quizData.question}
-                                </p>
-
-                                {/* Answer Buttons */}
-                                <div className="space-y-3">
-                                    <button
-                                        onClick={() =>
-                                            handleAnswerClick("answer1")
-                                        }
-                                        disabled={hasAnswered || isPending}
-                                        className={getButtonClass("answer1")}
-                                    >
-                                        <span className="block pr-24">
-                                            {quizData.answer1}
-                                        </span>
-                                        {getAnswerIndicator("answer1")}
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            handleAnswerClick("answer2")
-                                        }
-                                        disabled={hasAnswered || isPending}
-                                        className={getButtonClass("answer2")}
-                                    >
-                                        <span className="block pr-24">
-                                            {quizData.answer2}
-                                        </span>
-                                        {getAnswerIndicator("answer2")}
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            handleAnswerClick("answer3")
-                                        }
-                                        disabled={hasAnswered || isPending}
-                                        className={getButtonClass("answer3")}
-                                    >
-                                        <span className="block pr-24">
-                                            {quizData.answer3}
-                                        </span>
-                                        {getAnswerIndicator("answer3")}
-                                    </button>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {isLoading ? (
+                                <div className="text-center text-gray-500">
+                                    Loading quiz question...
                                 </div>
-
-                                {/* Explanation and Learn More (only shown after answering) */}
-                                {hasAnswered && quizData.explanation && (
-                                    <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
-                                        <p className="text-center mb-3">
-                                            {quizData.explanation}
-                                        </p>
-                                        {quizData.learn_more_link && (
-                                            <p className="text-center">
-                                                <a
-                                                    href={
-                                                        quizData.learn_more_link
-                                                    }
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
-                                                >
-                                                    Learn more
-                                                </a>
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Submitting state */}
-                                {isPending && (
-                                    <p className="text-center text-gray-500 text-sm">
-                                        Submitting answer...
+                            ) : isError ? (
+                                <div className="text-center text-alert-red">
+                                    Failed to load quiz question
+                                </div>
+                            ) : quizData ? (
+                                <>
+                                    {/* Question */}
+                                    <p className="text-lg text-center mb-4">
+                                        {quizData.question}
                                     </p>
-                                )}
-                            </>
-                        ) : null}
-                    </div>
+
+                                    {/* Answer Buttons */}
+                                    <div className="space-y-3">
+                                        <button
+                                            onClick={() =>
+                                                handleAnswerClick("answer1")
+                                            }
+                                            disabled={hasAnswered || isPending}
+                                            className={getButtonClass(
+                                                "answer1",
+                                            )}
+                                        >
+                                            <span className="block pr-24">
+                                                {quizData.answer1}
+                                            </span>
+                                            {getAnswerIndicator("answer1")}
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                handleAnswerClick("answer2")
+                                            }
+                                            disabled={hasAnswered || isPending}
+                                            className={getButtonClass(
+                                                "answer2",
+                                            )}
+                                        >
+                                            <span className="block pr-24">
+                                                {quizData.answer2}
+                                            </span>
+                                            {getAnswerIndicator("answer2")}
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                handleAnswerClick("answer3")
+                                            }
+                                            disabled={hasAnswered || isPending}
+                                            className={getButtonClass(
+                                                "answer3",
+                                            )}
+                                        >
+                                            <span className="block pr-24">
+                                                {quizData.answer3}
+                                            </span>
+                                            {getAnswerIndicator("answer3")}
+                                        </button>
+                                    </div>
+
+                                    {/* Explanation and Learn More (only shown after answering) */}
+                                    {hasAnswered && quizData.explanation && (
+                                        <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                                            <p className="text-center mb-3">
+                                                {quizData.explanation}
+                                            </p>
+                                            {quizData.learn_more_link && (
+                                                <p className="text-center">
+                                                    <a
+                                                        href={
+                                                            quizData.learn_more_link
+                                                        }
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                                                    >
+                                                        Learn more
+                                                    </a>
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Submitting state */}
+                                    {isPending && (
+                                        <p className="text-center text-gray-500 text-sm">
+                                            Submitting answer...
+                                        </p>
+                                    )}
+                                </>
+                            ) : null}
+                        </div>
+                    </CardContent>
                 </Card>
             </div>
         </section>

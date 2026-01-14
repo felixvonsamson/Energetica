@@ -26,7 +26,7 @@ import type {
     PowerPriorityItem,
     RenewableFacilityType,
 } from "@/components/power-priorities/types";
-import { Card } from "@/components/ui";
+import { Card, CardContent } from "@/components/ui";
 import { cn } from "@/lib/classname-utils";
 import { getPriorityItemKey } from "@/lib/power-priorities-utils";
 import type { ApiResponse } from "@/types/api-helpers";
@@ -171,71 +171,75 @@ export function PriorityTable({
 
     return (
         <Card>
-            {displayItems.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                    {emptyMessage}
-                </p>
-            ) : (
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                >
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-170 border-separate border-spacing-y-2">
-                            <thead>
-                                <tr
-                                    className={cn(
-                                        "text-xs font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700",
-                                    )}
-                                >
-                                    <th className="text-center py-2 px-3 w-15">
-                                        Cons #
-                                    </th>
-                                    <th className="text-left py-2 px-3">
-                                        Facility
-                                    </th>
-                                    <th className="text-right py-2 px-3 w-30">
-                                        Power
-                                    </th>
-                                    <th className="py-2 px-3 w-40 hidden lg:table-cell">
-                                        Usage
-                                    </th>
-                                    <th className="py-2 px-3 w-60">Price</th>
-                                    <th className="text-right py-2 px-3 w-10">
-                                        Status
-                                    </th>
-                                    <th className="text-center py-2 px-3 w-15">
-                                        Prod #
-                                    </th>
-                                </tr>
-                            </thead>
-                            {isEditMode ? (
-                                <SortableContext
-                                    items={itemIds}
-                                    strategy={verticalListSortingStrategy}
-                                >
+            <CardContent>
+                {displayItems.length === 0 ? (
+                    <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                        {emptyMessage}
+                    </p>
+                ) : (
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-170 border-separate border-spacing-y-2">
+                                <thead>
+                                    <tr
+                                        className={cn(
+                                            "text-xs font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700",
+                                        )}
+                                    >
+                                        <th className="text-center py-2 px-3 w-15">
+                                            Cons #
+                                        </th>
+                                        <th className="text-left py-2 px-3">
+                                            Facility
+                                        </th>
+                                        <th className="text-right py-2 px-3 w-30">
+                                            Power
+                                        </th>
+                                        <th className="py-2 px-3 w-40 hidden lg:table-cell">
+                                            Usage
+                                        </th>
+                                        <th className="py-2 px-3 w-60">
+                                            Price
+                                        </th>
+                                        <th className="text-right py-2 px-3 w-10">
+                                            Status
+                                        </th>
+                                        <th className="text-center py-2 px-3 w-15">
+                                            Prod #
+                                        </th>
+                                    </tr>
+                                </thead>
+                                {isEditMode ? (
+                                    <SortableContext
+                                        items={itemIds}
+                                        strategy={verticalListSortingStrategy}
+                                    >
+                                        <tbody>{renderPriorityItems()}</tbody>
+                                    </SortableContext>
+                                ) : (
                                     <tbody>{renderPriorityItems()}</tbody>
-                                </SortableContext>
-                            ) : (
-                                <tbody>{renderPriorityItems()}</tbody>
-                            )}
-                            {renewables.length > 0 && (
-                                <RenewablesSection
-                                    renewables={renewables}
-                                    statuses={statuses}
-                                    productionPowerLevels={
-                                        productionPowerLevels
-                                    }
-                                    productionCapacityByType={
-                                        productionCapacityByType
-                                    }
-                                />
-                            )}
-                        </table>
-                    </div>
-                </DndContext>
-            )}
+                                )}
+                                {renewables.length > 0 && (
+                                    <RenewablesSection
+                                        renewables={renewables}
+                                        statuses={statuses}
+                                        productionPowerLevels={
+                                            productionPowerLevels
+                                        }
+                                        productionCapacityByType={
+                                            productionCapacityByType
+                                        }
+                                    />
+                                )}
+                            </table>
+                        </div>
+                    </DndContext>
+                )}
+            </CardContent>
         </Card>
     );
 }

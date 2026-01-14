@@ -13,7 +13,7 @@ import {
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardTitle } from "@/components/ui";
+import { Card, CardContent, CardTitle } from "@/components/ui";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
@@ -164,32 +164,101 @@ function EmissionsOverviewContent() {
             </h1>
 
             <Card>
-                <ResolutionPicker currentTick={currentTick} />
+                <CardContent>
+                    <ResolutionPicker currentTick={currentTick} />
+                </CardContent>
             </Card>
 
             {/* CO2 in Atmosphere */}
             <Card>
-                <div className="mb-4">
-                    <CardTitle>CO₂ in the Atmosphere</CardTitle>
+                <CardTitle>
+                    CO₂ in the Atmosphere
                     <p className="text-sm text-gray-600 mt-1">
                         (affected by all players)
                     </p>
-                </div>
+                </CardTitle>
 
-                <CO2Chart
-                    chartData={climateData}
-                    isLoading={isClimateLoading}
-                    isError={isClimateError}
-                    viewMode={co2ViewMode}
-                    unitMode={co2UnitMode}
-                />
+                <CardContent>
+                    <CO2Chart
+                        chartData={climateData}
+                        isLoading={isClimateLoading}
+                        isError={isClimateError}
+                        viewMode={co2ViewMode}
+                        unitMode={co2UnitMode}
+                    />
 
-                <div className="mt-4 flex flex-wrap gap-4">
-                    <div className="flex gap-2">
+                    <div className="mt-4 flex flex-wrap gap-4">
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setCo2ViewMode("absolute")}
+                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                                    co2ViewMode === "absolute"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                }`}
+                            >
+                                Absolute
+                            </button>
+                            <button
+                                onClick={() => setCo2ViewMode("relative")}
+                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                                    co2ViewMode === "relative"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                }`}
+                            >
+                                Relative
+                            </button>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setCo2UnitMode("concentration")}
+                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                                    co2UnitMode === "concentration"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                }`}
+                            >
+                                Concentration
+                            </button>
+                            <button
+                                onClick={() => setCo2UnitMode("quantity")}
+                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                                    co2UnitMode === "quantity"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                }`}
+                            >
+                                Quantity
+                            </button>
+                        </div>
+                    </div>
+                    {co2UnitMode === "concentration" && (
+                        <div className="mt-2 text-sm text-gray-600">
+                            ‰ = parts per thousand &emsp; ppm = parts per
+                            million &emsp; ppb = parts per billion
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Global Temperature */}
+            <Card>
+                <CardTitle>Global Average Temperature</CardTitle>
+
+                <CardContent>
+                    <TemperatureChart
+                        chartData={temperatureData}
+                        isLoading={isTemperatureLoading}
+                        isError={isTemperatureError}
+                        viewMode={tempViewMode}
+                    />
+
+                    <div className="mt-4 flex gap-2">
                         <button
-                            onClick={() => setCo2ViewMode("absolute")}
+                            onClick={() => setTempViewMode("absolute")}
                             className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                co2ViewMode === "absolute"
+                                tempViewMode === "absolute"
                                     ? "bg-blue-600 text-white"
                                     : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                             }`}
@@ -197,9 +266,9 @@ function EmissionsOverviewContent() {
                             Absolute
                         </button>
                         <button
-                            onClick={() => setCo2ViewMode("relative")}
+                            onClick={() => setTempViewMode("relative")}
                             className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                co2ViewMode === "relative"
+                                tempViewMode === "relative"
                                     ? "bg-blue-600 text-white"
                                     : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                             }`}
@@ -207,147 +276,86 @@ function EmissionsOverviewContent() {
                             Relative
                         </button>
                     </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setCo2UnitMode("concentration")}
-                            className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                co2UnitMode === "concentration"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                            }`}
-                        >
-                            Concentration
-                        </button>
-                        <button
-                            onClick={() => setCo2UnitMode("quantity")}
-                            className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                co2UnitMode === "quantity"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                            }`}
-                        >
-                            Quantity
-                        </button>
-                    </div>
-                </div>
-                {co2UnitMode === "concentration" && (
-                    <div className="mt-2 text-sm text-gray-600">
-                        ‰ = parts per thousand &emsp; ppm = parts per million
-                        &emsp; ppb = parts per billion
-                    </div>
-                )}
-            </Card>
-
-            {/* Global Temperature */}
-            <Card>
-                <div className="mb-4">
-                    <CardTitle>Global Average Temperature</CardTitle>
-                </div>
-
-                <TemperatureChart
-                    chartData={temperatureData}
-                    isLoading={isTemperatureLoading}
-                    isError={isTemperatureError}
-                    viewMode={tempViewMode}
-                />
-
-                <div className="mt-4 flex gap-2">
-                    <button
-                        onClick={() => setTempViewMode("absolute")}
-                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                            tempViewMode === "absolute"
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                        }`}
-                    >
-                        Absolute
-                    </button>
-                    <button
-                        onClick={() => setTempViewMode("relative")}
-                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                            tempViewMode === "relative"
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                        }`}
-                    >
-                        Relative
-                    </button>
-                </div>
+                </CardContent>
             </Card>
 
             {/* Personal Emissions */}
             <Card>
-                <div className="flex items-center gap-2 mb-4">
+                <CardTitle className="flex items-center gap-2 mb-4">
                     <Cloud className="w-6 h-6 text-gray-500" />
-                    <CardTitle>Your Emissions</CardTitle>
-                </div>
+                    Your Emissions
+                </CardTitle>
 
-                <EmissionsChart
-                    chartData={emissionsData}
-                    isLoading={isEmissionsLoading}
-                    isError={isEmissionsError}
-                    hiddenSources={hiddenSources}
-                    viewMode={emissionsViewMode}
-                    cumulativeMode={emissionsCumulativeMode}
-                />
-
-                <div className="mt-4 flex flex-wrap gap-4">
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setEmissionsViewMode("normal")}
-                            className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                emissionsViewMode === "normal"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                            }`}
-                        >
-                            Normal
-                        </button>
-                        <button
-                            onClick={() => setEmissionsViewMode("percent")}
-                            className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                emissionsViewMode === "percent"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                            }`}
-                        >
-                            Percent
-                        </button>
-                    </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setEmissionsCumulativeMode("rates")}
-                            className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                emissionsCumulativeMode === "rates"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                            }`}
-                        >
-                            Rates
-                        </button>
-                        <button
-                            onClick={() =>
-                                setEmissionsCumulativeMode("cumulative")
-                            }
-                            className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                emissionsCumulativeMode === "cumulative"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                            }`}
-                        >
-                            Cumulative
-                        </button>
-                    </div>
-                </div>
-
-                <div className="mt-6">
-                    <EmissionsOverviewTable
+                <CardContent>
+                    <EmissionsChart
                         chartData={emissionsData}
-                        resolution={selectedResolution.resolution}
+                        isLoading={isEmissionsLoading}
+                        isError={isEmissionsError}
                         hiddenSources={hiddenSources}
-                        onToggleSource={handleToggleSource}
+                        viewMode={emissionsViewMode}
+                        cumulativeMode={emissionsCumulativeMode}
                     />
-                </div>
+
+                    <div className="mt-4 flex flex-wrap gap-4">
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setEmissionsViewMode("normal")}
+                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                                    emissionsViewMode === "normal"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                }`}
+                            >
+                                Normal
+                            </button>
+                            <button
+                                onClick={() => setEmissionsViewMode("percent")}
+                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                                    emissionsViewMode === "percent"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                }`}
+                            >
+                                Percent
+                            </button>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() =>
+                                    setEmissionsCumulativeMode("rates")
+                                }
+                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                                    emissionsCumulativeMode === "rates"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                }`}
+                            >
+                                Rates
+                            </button>
+                            <button
+                                onClick={() =>
+                                    setEmissionsCumulativeMode("cumulative")
+                                }
+                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
+                                    emissionsCumulativeMode === "cumulative"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                }`}
+                            >
+                                Cumulative
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="mt-6">
+                        <EmissionsOverviewTable
+                            chartData={emissionsData}
+                            resolution={selectedResolution.resolution}
+                            hiddenSources={hiddenSources}
+                            onToggleSource={handleToggleSource}
+                        />
+                    </div>
+                </CardContent>
             </Card>
         </div>
     );

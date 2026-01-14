@@ -4,13 +4,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { MessageCircle, Users, Shield } from "lucide-react";
 import { useState } from "react";
 
-import {
-    ChatDisclaimerModal,
-    ChatSidebar,
-    ChatWindow,
-    NewChatModal,
-    NewGroupChatModal,
-} from "@/components/chat";
+import { ChatDisclaimerModal } from "@/components/chat/chat-disclaimer-modal";
+import { ChatSidebar } from "@/components/chat/chat-sidebar";
+import { ChatWindow } from "@/components/chat/chat-window";
+import { NewChatModal } from "@/components/chat/new-chat-modal";
+import { NewGroupChatModal } from "@/components/chat/new-group-chat-modal";
 import { GameLayout } from "@/components/layout/game-layout";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useMessagesPage } from "@/hooks/useMessagesPage";

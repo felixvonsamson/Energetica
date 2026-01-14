@@ -12,7 +12,14 @@ import { LeaveMarketModal } from "@/components/electricity-markets/leave-market-
 import { MarketDetailModal } from "@/components/electricity-markets/market-detail-modal";
 import { MarketItem } from "@/components/electricity-markets/market-item";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Button, Card, CardTitle, CatalogGrid } from "@/components/ui";
+import {
+    Button,
+    Card,
+    CardHeader,
+    CardTitle,
+    CatalogGrid,
+} from "@/components/ui";
+import { CardAction, CardContent } from "@/components/ui/card";
 import { useLatestChartData } from "@/hooks/useCharts";
 import {
     useElectricityMarketForPlayer,
@@ -251,20 +258,26 @@ function EmptyState() {
 
     return (
         <Card className="text-center py-12">
-            <CardTitle className="mb-4">No Electricity Markets Yet</CardTitle>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-                There are currently no electricity markets. Be the first to
-                create one!
-            </p>
-            <button
-                className="inline-flex items-center gap-2 px-6 py-2 bg-pine dark:bg-brand-green text-white rounded-lg hover:opacity-80 transition-opacity"
-                onClick={() => {
-                    navigate({ search: { createMarket: "" } });
-                }}
-            >
-                <Plus className="w-5 h-5" />
-                Create Market
-            </button>
+            <CardHeader>
+                <CardTitle>No Electricity Markets Yet</CardTitle>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    There are currently no electricity markets. Be the first to
+                    create one!
+                </p>
+            </CardHeader>
+            <CardContent>
+                <CardAction>
+                    <button
+                        className="inline-flex items-center gap-2 px-6 py-2 bg-pine dark:bg-brand-green text-white rounded-lg hover:opacity-80 transition-opacity"
+                        onClick={() => {
+                            navigate({ search: { createMarket: "" } });
+                        }}
+                    >
+                        <Plus className="w-5 h-5" />
+                        Create Market
+                    </button>
+                </CardAction>
+            </CardContent>
         </Card>
     );
 }

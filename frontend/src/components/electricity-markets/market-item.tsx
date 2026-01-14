@@ -1,6 +1,6 @@
 import { Users, Check } from "lucide-react";
 
-import { Card } from "@/components/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { cn } from "@/lib/classname-utils";
 
 interface MarketItemProps {
@@ -25,7 +25,7 @@ export function MarketItem({
             className={cn(
                 "cursor-pointer transition-all duration-200",
                 "hover:border-brand-green hover:scale-105",
-                "flex flex-col h-full p-4 relative",
+                "flex flex-col h-full relative",
                 isCurrentMarket && "border-brand-green bg-brand-green/5",
             )}
             onClick={onClick}
@@ -38,7 +38,7 @@ export function MarketItem({
             )}
 
             {/* Icon */}
-            <div className="mb-4 flex justify-center">
+            <CardContent className="flex justify-center">
                 <div
                     className={cn(
                         "w-20 h-20 rounded-full flex items-center justify-center",
@@ -54,20 +54,18 @@ export function MarketItem({
                         )}
                     />
                 </div>
-            </div>
+            </CardContent>
 
             {/* Market info */}
-            <div className="flex flex-col items-center gap-2 text-center">
-                <h3 className="font-semibold text-base leading-tight">
-                    {marketName}
-                </h3>
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <CardHeader className="text-center">
+                <CardTitle className="text-base">{marketName}</CardTitle>
+                <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
                     <Users className="w-4 h-4" />
                     <span>
                         {memberCount} {memberCount === 1 ? "member" : "members"}
                     </span>
                 </div>
-            </div>
+            </CardHeader>
         </Card>
     );
 }

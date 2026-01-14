@@ -11,7 +11,7 @@ import {
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardTitle } from "@/components/ui";
+import { Card, CardContent, CardTitle } from "@/components/ui";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
@@ -101,20 +101,24 @@ function ResourcesOverviewContent() {
             </h1>
 
             <Card className="mb-6">
-                <ResolutionPicker currentTick={currentTick} />
+                <CardContent>
+                    <ResolutionPicker currentTick={currentTick} />
+                </CardContent>
             </Card>
 
             <Card>
-                <div className="flex items-center gap-2 mb-4">
-                    <Package className="w-6 h-6 text-amber-600" />
-                    <CardTitle>Resource Stocks</CardTitle>
-                </div>
+                <CardContent>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Package className="w-6 h-6 text-amber-600" />
+                        <CardTitle>Resource Stocks</CardTitle>
+                    </div>
 
-                <ResourcesChart
-                    chartData={resourcesData}
-                    isLoading={isResourcesLoading}
-                    isError={isResourcesError}
-                />
+                    <ResourcesChart
+                        chartData={resourcesData}
+                        isLoading={isResourcesLoading}
+                        isError={isResourcesError}
+                    />
+                </CardContent>
             </Card>
         </div>
     );

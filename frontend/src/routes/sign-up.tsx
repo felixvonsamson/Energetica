@@ -3,7 +3,14 @@ import { UserPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { HomeLayout } from "@/components/home-layout";
-import { Card, Button, InfoBanner } from "@/components/ui";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    Button,
+    InfoBanner,
+} from "@/components/ui";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -119,103 +126,105 @@ function SignUpForm() {
             </div>
 
             {/* Sign Up Card */}
-            <Card className="p-8 shadow-lg">
-                <h2 className="text-3xl font-bold text-center mb-6 text-primary">
-                    Create Account
-                </h2>
+            <Card className="shadow-lg">
+                <CardHeader className="text-center">
+                    <CardTitle className="text-3xl">Create Account</CardTitle>
+                </CardHeader>
 
-                {/* Error Banner */}
-                {error && (
-                    <InfoBanner variant="error" className="mb-6">
-                        {error}
-                    </InfoBanner>
-                )}
+                <CardContent>
+                    {/* Error Banner */}
+                    {error && (
+                        <InfoBanner variant="error" className="mb-6">
+                            {error}
+                        </InfoBanner>
+                    )}
 
-                {/* Sign Up Form */}
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <Label htmlFor="username" className="mb-2">
-                            Username (3-18 characters)
-                        </Label>
-                        <Input
-                            type="text"
-                            id="username"
-                            name="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Choose a username"
+                    {/* Sign Up Form */}
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                            <Label htmlFor="username" className="mb-2">
+                                Username (3-18 characters)
+                            </Label>
+                            <Input
+                                type="text"
+                                id="username"
+                                name="username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                placeholder="Choose a username"
+                                disabled={isLoading}
+                                minLength={3}
+                                maxLength={18}
+                                autoComplete="username"
+                                autoFocus
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="password" className="mb-2">
+                                Password (minimum 7 characters)
+                            </Label>
+                            <Input
+                                type="password"
+                                id="password"
+                                name="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Choose a password"
+                                disabled={isLoading}
+                                minLength={7}
+                                autoComplete="new-password"
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="confirmPassword" className="mb-2">
+                                Confirm Password
+                            </Label>
+                            <Input
+                                type="password"
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                value={confirmPassword}
+                                onChange={(e) =>
+                                    setConfirmPassword(e.target.value)
+                                }
+                                placeholder="Confirm your password"
+                                disabled={isLoading}
+                                minLength={7}
+                                autoComplete="new-password"
+                            />
+                        </div>
+
+                        <Button
+                            type="submit"
+                            variant={isLoading ? "outline" : "default"}
+                            size="lg"
                             disabled={isLoading}
-                            minLength={3}
-                            maxLength={18}
-                            className="w-full px-4 py-3 rounded-lg border-2 border-input bg-card text-foreground placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                            autoComplete="username"
-                            autoFocus
-                        />
-                    </div>
-
-                    <div>
-                        <Label htmlFor="password" className="mb-2">
-                            Password (minimum 7 characters)
-                        </Label>
-                        <Input
-                            type="password"
-                            id="password"
-                            name="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Choose a password"
-                            disabled={isLoading}
-                            minLength={7}
-                            className="w-full px-4 py-3 rounded-lg border-2 border-input bg-card text-foreground placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                            autoComplete="new-password"
-                        />
-                    </div>
-
-                    <div>
-                        <Label htmlFor="confirmPassword" className="mb-2">
-                            Confirm Password
-                        </Label>
-                        <Input
-                            type="password"
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="Confirm your password"
-                            disabled={isLoading}
-                            minLength={7}
-                            autoComplete="new-password"
-                        />
-                    </div>
-
-                    <Button
-                        type="submit"
-                        variant={isLoading ? "outline" : "default"}
-                        size="lg"
-                        disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-2"
-                    >
-                        {isLoading ? (
-                            <Spinner />
-                        ) : (
-                            <UserPlus className="w-5 h-5" />
-                        )}
-                        <>Create Account</>
-                    </Button>
-                </form>
-
-                {/* Login Link */}
-                <div className="mt-6 text-center">
-                    <p className="text-sm text-primary">
-                        Already have an account?{" "}
-                        <Link
-                            to="/app/login"
-                            className="text-brand-green hover:opacity-80 transition-opacity font-medium underline"
+                            className="w-full flex items-center justify-center gap-2"
                         >
-                            Login here
-                        </Link>
-                    </p>
-                </div>
+                            {isLoading ? (
+                                <Spinner />
+                            ) : (
+                                <UserPlus className="w-5 h-5" />
+                            )}
+                            <>Create Account</>
+                        </Button>
+                    </form>
+
+                    {/* Login Link */}
+                    <div className="mt-6 text-center">
+                        <p className="text-sm text-primary">
+                            Already have an account?{" "}
+                            <Link
+                                to="/app/login"
+                                className="text-brand-green hover:opacity-80 transition-opacity font-medium underline"
+                            >
+                                Login here
+                            </Link>
+                        </p>
+                    </div>
+                </CardContent>
             </Card>
         </div>
     );

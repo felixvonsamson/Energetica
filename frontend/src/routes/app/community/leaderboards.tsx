@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CashFlow } from "@/components/ui";
+import { Card, CardContent, CashFlow } from "@/components/ui";
 import { useHasCapability } from "@/hooks/useCapabilities";
 import { useLeaderboards } from "@/hooks/useLeaderboards";
 import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
@@ -781,7 +781,7 @@ function LeaderboardsContent() {
 
             {/* Leaderboards Table */}
             <Card>
-                <div className="overflow-x-auto">
+                <CardContent className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="bg-secondary">
@@ -799,7 +799,7 @@ function LeaderboardsContent() {
                             ))}
                         </tbody>
                     </table>
-                </div>
+                </CardContent>
             </Card>
         </div>
     );

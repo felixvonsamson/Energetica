@@ -1,6 +1,14 @@
 import { Lock } from "lucide-react";
 
-import { Card, TechnologyIcon, TechnologyName, Money } from "@/components/ui";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    TechnologyIcon,
+    TechnologyName,
+    Money,
+} from "@/components/ui";
 import { cn } from "@/lib/classname-utils";
 import { ProjectType } from "@/types/projects";
 
@@ -38,46 +46,42 @@ export function TechnologyItem({
             onClick={onClick}
         >
             {/* Image with lock overlay */}
-            <div className="relative mb-3 aspect-3/2">
-                <img
-                    src={imageUrl}
-                    alt={`${technologyName} technology`}
-                    className="w-full h-full object-cover rounded"
-                    onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                    }}
-                />
-                {isLocked && (
-                    <div className="absolute inset-0 bg-black/60 rounded flex items-center justify-center">
-                        <Lock className="w-12 h-12 text-white" />
-                    </div>
-                )}
-            </div>
-
-            {/* Technology info */}
-            <div className="flex-1 flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                        <TechnologyIcon technology={technologyName} size={20} />
-                        <h3 className="font-semibold text-sm leading-tight truncate">
-                            <TechnologyName
-                                technology={technologyName}
-                                level={level}
-                                mode="long"
-                            />
-                        </h3>
-                    </div>
-                    <div className="shrink-0">
-                        <Money amount={price} iconSize="sm" long />
-                    </div>
+            <CardContent>
+                <div className="relative aspect-3/2">
+                    <img
+                        src={imageUrl}
+                        alt={`${technologyName} technology`}
+                        className="w-full h-full object-cover rounded"
+                        onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                        }}
+                    />
+                    {isLocked && (
+                        <div className="absolute inset-0 bg-black/60 rounded flex items-center justify-center">
+                            <Lock className="w-12 h-12 text-white" />
+                        </div>
+                    )}
                 </div>
+            </CardContent>
 
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 min-w-0 justify-between">
+                    <div className="flex gap-2 shrink-0">
+                        <TechnologyIcon technology={technologyName} size={20} />
+                        <TechnologyName
+                            technology={technologyName}
+                            level={level}
+                            mode="long"
+                        />
+                    </div>
+                    <Money amount={price} iconSize="sm" long />
+                </CardTitle>
                 {discount && (
-                    <div className="text-green-500 text-xs">
+                    <div className="text-success text-xs">
                         <em>(-{Math.round((1 - discount) * 100)}%)</em>
                     </div>
                 )}
-            </div>
+            </CardHeader>
         </Card>
     );
 }

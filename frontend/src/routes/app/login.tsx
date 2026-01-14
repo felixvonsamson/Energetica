@@ -3,7 +3,14 @@ import { LogIn } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { HomeLayout } from "@/components/home-layout";
-import { Card, Button, InfoBanner } from "@/components/ui";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    Button,
+    InfoBanner,
+} from "@/components/ui";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -112,84 +119,86 @@ function LoginForm() {
             </div>
 
             {/* Login Card */}
-            <Card className="p-8 shadow-lg">
-                <h2 className="text-3xl font-bold text-center mb-6 text-primary">
-                    Login
-                </h2>
+            <Card className="shadow-lg">
+                <CardHeader className="text-center">
+                    <CardTitle className="text-3xl">Login</CardTitle>
+                </CardHeader>
 
-                {/* Error Banner */}
-                {error && (
-                    <InfoBanner variant="error" className="mb-6">
-                        <div dangerouslySetInnerHTML={{ __html: error }} />
-                    </InfoBanner>
-                )}
+                <CardContent>
+                    {/* Error Banner */}
+                    {error && (
+                        <InfoBanner variant="error" className="mb-6">
+                            <div dangerouslySetInnerHTML={{ __html: error }} />
+                        </InfoBanner>
+                    )}
 
-                {/* Login Form */}
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <Label htmlFor="username" className="mb-2">
-                            Username
-                        </Label>
-                        <Input
-                            type="text"
-                            id="username"
-                            name="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Enter username"
-                            disabled={isLoading}
-                            autoComplete="username"
-                            autoFocus
-                        />
-                    </div>
+                    {/* Login Form */}
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                            <Label htmlFor="username" className="mb-2">
+                                Username
+                            </Label>
+                            <Input
+                                type="text"
+                                id="username"
+                                name="username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                placeholder="Enter username"
+                                disabled={isLoading}
+                                autoComplete="username"
+                                autoFocus
+                            />
+                        </div>
 
-                    <div>
-                        <Label htmlFor="password" className="mb-2">
-                            Password
-                        </Label>
-                        <Input
-                            type="password"
-                            id="password"
-                            name="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter password"
-                            disabled={isLoading}
-                            autoComplete="current-password"
-                        />
-                    </div>
+                        <div>
+                            <Label htmlFor="password" className="mb-2">
+                                Password
+                            </Label>
+                            <Input
+                                type="password"
+                                id="password"
+                                name="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Enter password"
+                                disabled={isLoading}
+                                autoComplete="current-password"
+                            />
+                        </div>
 
-                    <Button
-                        type="submit"
-                        variant={isLoading ? "outline" : "default"}
-                        size="lg"
-                        disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-2"
-                    >
-                        {isLoading ? (
-                            <Spinner />
-                        ) : (
-                            <LogIn className="w-5 h-5" />
-                        )}
-                        <>Login</>
-                    </Button>
-                </form>
-
-                {/* Sign Up Link */}
-                <div className="mt-6">
-                    <div className="text-center text-sm text-primary mb-3">
-                        - OR -
-                    </div>
-                    <Link to="/sign-up">
                         <Button
-                            variant="secondary"
+                            type="submit"
+                            variant={isLoading ? "outline" : "default"}
                             size="lg"
-                            className="w-full"
+                            disabled={isLoading}
+                            className="w-full flex items-center justify-center gap-2"
                         >
-                            Create account
+                            {isLoading ? (
+                                <Spinner />
+                            ) : (
+                                <LogIn className="w-5 h-5" />
+                            )}
+                            <>Login</>
                         </Button>
-                    </Link>
-                </div>
+                    </form>
+
+                    {/* Sign Up Link */}
+                    <div className="mt-6">
+                        <div className="text-center text-sm text-primary mb-3">
+                            - OR -
+                        </div>
+                        <Link to="/sign-up">
+                            <Button
+                                variant="secondary"
+                                size="lg"
+                                className="w-full"
+                            >
+                                Create account
+                            </Button>
+                        </Link>
+                    </div>
+                </CardContent>
             </Card>
         </div>
     );

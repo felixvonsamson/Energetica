@@ -13,7 +13,7 @@ import {
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardTitle } from "@/components/ui";
+import { Card, CardContent, CardTitle } from "@/components/ui";
 import { Label } from "@/components/ui/label";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
@@ -130,41 +130,45 @@ function PowerOverviewContent() {
             </h1>
 
             <Card className="mb-6">
-                <div className="space-y-4">
-                    <ChartTypePicker
-                        chartType={chartType}
-                        onChartTypeChange={setChartType}
-                    />
-                    <ResolutionPicker currentTick={currentTick} />
-                </div>
+                <CardContent>
+                    <div className="space-y-4">
+                        <ChartTypePicker
+                            chartType={chartType}
+                            onChartTypeChange={setChartType}
+                        />
+                        <ResolutionPicker currentTick={currentTick} />
+                    </div>
+                </CardContent>
             </Card>
 
             <Card className="mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <Zap className="w-6 h-6 text-yellow-500" />
-                    <CardTitle>
-                        {chartType === "power-sources"
-                            ? "Power Generation"
-                            : "Power Consumption"}
-                    </CardTitle>
-                </div>
+                <CardContent>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Zap className="w-6 h-6 text-yellow-500" />
+                        <CardTitle>
+                            {chartType === "power-sources"
+                                ? "Power Generation"
+                                : "Power Consumption"}
+                        </CardTitle>
+                    </div>
 
-                <PowerChart
-                    chartData={chartData}
-                    isLoading={isChartLoading}
-                    isError={isError}
-                    hiddenFacilities={hiddenFacilities}
-                />
-
-                <div className="mt-6">
-                    <PowerOverviewTable
-                        chartType={chartType}
+                    <PowerChart
                         chartData={chartData}
-                        resolution={selectedResolution.resolution}
+                        isLoading={isChartLoading}
+                        isError={isError}
                         hiddenFacilities={hiddenFacilities}
-                        onToggleFacility={handleToggleFacility}
                     />
-                </div>
+
+                    <div className="mt-6">
+                        <PowerOverviewTable
+                            chartType={chartType}
+                            chartData={chartData}
+                            resolution={selectedResolution.resolution}
+                            hiddenFacilities={hiddenFacilities}
+                            onToggleFacility={handleToggleFacility}
+                        />
+                    </div>
+                </CardContent>
             </Card>
         </div>
     );

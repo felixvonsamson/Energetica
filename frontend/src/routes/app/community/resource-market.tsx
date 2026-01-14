@@ -12,7 +12,7 @@ import { IncomingShipmentsModal } from "@/components/dashboard/incoming-shipment
 import { GameLayout } from "@/components/layout/game-layout";
 import { CreateAskModal } from "@/components/resource-market/create-ask-modal";
 import { PurchaseModal } from "@/components/resource-market/purchase-modal";
-import { Button, Card, Money } from "@/components/ui";
+import { Button, Card, CardContent, Money } from "@/components/ui";
 import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import {
@@ -298,7 +298,7 @@ function ResourceMarketContent() {
 
             {/* Market table */}
             <Card>
-                <div className="overflow-x-auto">
+                <CardContent className="overflow-x-auto">
                     {filteredAndSortedAsks.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
                             {filterResource === "all"
@@ -367,7 +367,7 @@ function ResourceMarketContent() {
                             </tbody>
                         </table>
                     )}
-                </div>
+                </CardContent>
             </Card>
 
             {/* Purchase modal - rendered outside the table to avoid nesting violations */}

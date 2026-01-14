@@ -1,7 +1,13 @@
 import { type LucideIcon } from "lucide-react";
 import { type ReactNode } from "react";
 
-import { Card, CardTitle, CardContent, EmptyState } from "@/components/ui";
+import {
+    Card,
+    CardTitle,
+    CardContent,
+    EmptyState,
+    CardHeader,
+} from "@/components/ui";
 
 interface DashboardSectionProps {
     title: ReactNode;
@@ -19,7 +25,9 @@ export function DashboardSection({
 }: DashboardSectionProps) {
     return (
         <Card>
-            <CardTitle>{title}</CardTitle>
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+            </CardHeader>
             <CardContent>
                 {children || (
                     <EmptyState

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, Button, InfoBanner } from "@/components/ui";
+import { Card, Button, InfoBanner, CardContent } from "@/components/ui";
 import {
     Dialog,
     DialogClose,
@@ -99,34 +99,32 @@ function SettingsContent() {
             <div className="max-w-2xl mx-auto space-y-6">
                 {/* Browser Notifications Card */}
                 <Card className="border-2 border-border">
-                    <div className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="text-lg font-semibold mb-2">
-                                    Browser Notifications
-                                </h2>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    Receive notifications about important game
-                                    events
-                                </p>
-                            </div>
-                            <Label className="relative inline-flex items-center cursor-pointer">
-                                <Input
-                                    type="checkbox"
-                                    checked={notificationsEnabled}
-                                    onChange={handleNotificationsToggle}
-                                    disabled={notificationsLoading}
-                                    className="sr-only peer"
-                                />
-                                <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-green rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-green dark:peer-checked:bg-brand-green"></div>
-                            </Label>
+                    <CardContent className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold mb-2">
+                                Browser Notifications
+                            </h2>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Receive notifications about important game
+                                events
+                            </p>
                         </div>
-                    </div>
+                        <Label className="relative inline-flex items-center cursor-pointer">
+                            <Input
+                                type="checkbox"
+                                checked={notificationsEnabled}
+                                onChange={handleNotificationsToggle}
+                                disabled={notificationsLoading}
+                                className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-green rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-green dark:peer-checked:bg-brand-green"></div>
+                        </Label>
+                    </CardContent>
                 </Card>
 
                 {/* Password Settings Card */}
                 <Card className="border-2 border-border">
-                    <div className="p-6">
+                    <CardContent>
                         <h2 className="text-lg font-semibold mb-4">
                             Password Settings
                         </h2>
@@ -136,7 +134,7 @@ function SettingsContent() {
                         >
                             Change Password
                         </Button>
-                    </div>
+                    </CardContent>
                 </Card>
             </div>
 

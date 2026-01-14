@@ -13,7 +13,7 @@ import {
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardTitle } from "@/components/ui";
+import { Card, CardContent, CardTitle } from "@/components/ui";
 import { Label } from "@/components/ui/label";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
@@ -127,36 +127,40 @@ function StorageOverviewContent() {
             </h1>
 
             <Card className="mb-6">
-                <div className="space-y-4">
-                    <ViewModePicker
-                        viewMode={viewMode}
-                        onViewModeChange={setViewMode}
-                    />
-                    <ResolutionPicker currentTick={currentTick} />
-                </div>
+                <CardContent>
+                    <div className="space-y-4">
+                        <ViewModePicker
+                            viewMode={viewMode}
+                            onViewModeChange={setViewMode}
+                        />
+                        <ResolutionPicker currentTick={currentTick} />
+                    </div>
+                </CardContent>
             </Card>
 
             <Card className="mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <Battery className="w-6 h-6 text-blue-500" />
-                    <CardTitle>Stored Energy</CardTitle>
-                </div>
+                <CardContent>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Battery className="w-6 h-6 text-blue-500" />
+                        <CardTitle>Stored Energy</CardTitle>
+                    </div>
 
-                <StorageChart
-                    chartData={chartData}
-                    isLoading={isChartLoading}
-                    isError={isError}
-                    hiddenFacilities={hiddenFacilities}
-                    viewMode={viewMode}
-                />
-
-                <div className="mt-6">
-                    <StorageOverviewTable
+                    <StorageChart
                         chartData={chartData}
+                        isLoading={isChartLoading}
+                        isError={isError}
                         hiddenFacilities={hiddenFacilities}
-                        onToggleFacility={handleToggleFacility}
+                        viewMode={viewMode}
                     />
-                </div>
+
+                    <div className="mt-6">
+                        <StorageOverviewTable
+                            chartData={chartData}
+                            hiddenFacilities={hiddenFacilities}
+                            onToggleFacility={handleToggleFacility}
+                        />
+                    </div>
+                </CardContent>
             </Card>
         </div>
     );

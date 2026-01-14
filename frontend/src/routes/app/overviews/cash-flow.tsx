@@ -19,7 +19,7 @@ import {
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardTitle, CashFlow } from "@/components/ui";
+import { Card, CardContent, CardTitle, CashFlow } from "@/components/ui";
 import { Label } from "@/components/ui/label";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
@@ -265,56 +265,60 @@ function RevenuesOverviewContent() {
             </h1>
 
             <Card className="mb-6">
-                <div className="space-y-4">
-                    <RevenueTypePicker
-                        revenueType={revenueType}
-                        onRevenueTypeChange={setRevenueType}
-                    />
-                    {revenueType === "net-profit" ? (
-                        <NetProfitViewModePicker
-                            viewMode={netProfitViewMode}
-                            onViewModeChange={setNetProfitViewMode}
+                <CardContent>
+                    <div className="space-y-4">
+                        <RevenueTypePicker
+                            revenueType={revenueType}
+                            onRevenueTypeChange={setRevenueType}
                         />
-                    ) : (
-                        <ViewModePicker
-                            viewMode={viewMode}
-                            onViewModeChange={setViewMode}
-                        />
-                    )}
-                    <ResolutionPicker currentTick={currentTick} />
-                </div>
+                        {revenueType === "net-profit" ? (
+                            <NetProfitViewModePicker
+                                viewMode={netProfitViewMode}
+                                onViewModeChange={setNetProfitViewMode}
+                            />
+                        ) : (
+                            <ViewModePicker
+                                viewMode={viewMode}
+                                onViewModeChange={setViewMode}
+                            />
+                        )}
+                        <ResolutionPicker currentTick={currentTick} />
+                    </div>
+                </CardContent>
             </Card>
 
             <Card className="mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <DollarSign className="w-6 h-6 text-amber-500" />
-                    <CardTitle>
-                        {revenueType === "revenues"
-                            ? "Revenues"
-                            : revenueType === "expenses"
-                              ? "Expenses"
-                              : "Revenues & Expenses"}
-                    </CardTitle>
-                </div>
+                <CardContent>
+                    <div className="flex items-center gap-2 mb-4">
+                        <DollarSign className="w-6 h-6 text-amber-500" />
+                        <CardTitle>
+                            {revenueType === "revenues"
+                                ? "Revenues"
+                                : revenueType === "expenses"
+                                  ? "Expenses"
+                                  : "Revenues & Expenses"}
+                        </CardTitle>
+                    </div>
 
-                <RevenuesChart
-                    chartData={filteredChartData}
-                    isLoading={isChartLoading}
-                    isError={isError}
-                    hiddenFacilities={hiddenFacilities}
-                    viewMode={viewMode}
-                    revenueType={revenueType}
-                    netProfitViewMode={netProfitViewMode}
-                />
-
-                <div className="mt-6">
-                    <CashFlowOverviewTable
+                    <RevenuesChart
                         chartData={filteredChartData}
-                        revenueType={revenueType}
+                        isLoading={isChartLoading}
+                        isError={isError}
                         hiddenFacilities={hiddenFacilities}
-                        onToggleFacility={handleToggleFacility}
+                        viewMode={viewMode}
+                        revenueType={revenueType}
+                        netProfitViewMode={netProfitViewMode}
                     />
-                </div>
+
+                    <div className="mt-6">
+                        <CashFlowOverviewTable
+                            chartData={filteredChartData}
+                            revenueType={revenueType}
+                            hiddenFacilities={hiddenFacilities}
+                            onToggleFacility={handleToggleFacility}
+                        />
+                    </div>
+                </CardContent>
             </Card>
         </div>
     );

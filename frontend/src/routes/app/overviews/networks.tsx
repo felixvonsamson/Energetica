@@ -21,7 +21,13 @@ import {
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardTitle, Money } from "@/components/ui";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    Money,
+} from "@/components/ui";
 import { FacilityName } from "@/components/ui/asset-name";
 import { Label } from "@/components/ui/label";
 import { useTimeMode } from "@/contexts/time-mode-context";
@@ -220,10 +226,12 @@ function NetworksOverviewContent() {
                     Networks Overview
                 </h1>
                 <Card>
-                    <p className="text-gray-600">
-                        You are not currently in an electricity market. Join or
-                        create a market to view network data.
-                    </p>
+                    <CardContent>
+                        <p className="text-muted">
+                            You are not currently in an electricity market. Join
+                            or create a market to view network data.
+                        </p>
+                    </CardContent>
                 </Card>
             </div>
         );
@@ -236,127 +244,147 @@ function NetworksOverviewContent() {
             </h1>
 
             <Card className="mb-6">
-                <div className="space-y-4">
-                    <NetworkSelector
-                        markets={marketsData?.electricity_markets ?? []}
-                        selectedNetworkId={selectedNetworkId}
-                        onNetworkChange={handleNetworkChange}
-                    />
-                    <ResolutionPicker currentTick={currentTick} />
-                </div>
+                <CardContent>
+                    <div className="space-y-4">
+                        <NetworkSelector
+                            markets={marketsData?.electricity_markets ?? []}
+                            selectedNetworkId={selectedNetworkId}
+                            onNetworkChange={handleNetworkChange}
+                        />
+                        <ResolutionPicker currentTick={currentTick} />
+                    </div>
+                </CardContent>
             </Card>
 
             {/* Latest Values Display */}
             <Card className="mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <NetworkIcon className="w-6 h-6 text-blue-500" />
-                    <CardTitle>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <NetworkIcon className="w-6 h-6 text-blue-500" />
                         {selectedNetwork?.name ?? "Network"} - Current Values
                     </CardTitle>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="text-sm text-gray-600 mb-1">
-                            Market Price
+                </CardHeader>
+
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <div className="text-sm text-gray-600 mb-1">
+                                Market Price
+                            </div>
+                            <div className="text-2xl font-bold">
+                                {isLatestLoading ? (
+                                    "Loading..."
+                                ) : (
+                                    <Money amount={latestPrice} />
+                                )}
+                                <span className="text-sm font-normal text-gray-600 ml-1">
+                                    /Wh
+                                </span>
+                            </div>
                         </div>
-                        <div className="text-2xl font-bold">
-                            {isLatestLoading ? (
-                                "Loading..."
-                            ) : (
-                                <Money amount={latestPrice} />
-                            )}
-                            <span className="text-sm font-normal text-gray-600 ml-1">
-                                /Wh
-                            </span>
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <div className="text-sm text-gray-600 mb-1">
+                                Clearing Volume
+                            </div>
+                            <div className="text-2xl font-bold">
+                                {isLatestLoading
+                                    ? "Loading..."
+                                    : formatPower(latestQuantity)}
+                            </div>
                         </div>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="text-sm text-gray-600 mb-1">
-                            Clearing Volume
-                        </div>
-                        <div className="text-2xl font-bold">
-                            {isLatestLoading
-                                ? "Loading..."
-                                : formatPower(latestQuantity)}
-                        </div>
-                    </div>
-                </div>
+                </CardContent>
             </Card>
 
             {/* Price Chart */}
             <Card className="mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-6 h-6 text-green-500" />
-                    <CardTitle>Market Price</CardTitle>
-                </div>
-                <PriceChart
-                    chartData={chartData}
-                    isLoading={isChartLoading}
-                    isError={isError}
-                />
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 mb-4">
+                        <TrendingUp className="w-6 h-6 text-green-500" />
+                        Market Price
+                    </CardTitle>
+                </CardHeader>
+
+                <CardContent>
+                    <PriceChart
+                        chartData={chartData}
+                        isLoading={isChartLoading}
+                        isError={isError}
+                    />
+                </CardContent>
             </Card>
 
             {/* Clearing Volume Chart */}
             <Card className="mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <Activity className="w-6 h-6 text-purple-500" />
-                    <CardTitle>Clearing Volume</CardTitle>
-                </div>
-                <ClearingVolumeChart
-                    chartData={chartData}
-                    isLoading={isChartLoading}
-                    isError={isError}
-                />
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Activity className="w-6 h-6 text-purple-500" />
+                        Clearing Volume
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ClearingVolumeChart
+                        chartData={chartData}
+                        isLoading={isChartLoading}
+                        isError={isError}
+                    />
+                </CardContent>
             </Card>
 
             {/* Breakdown Section */}
             <Card className="mb-6">
-                <div className="space-y-4">
-                    <BreakdownTypePicker
-                        breakdownType={breakdownType}
-                        onBreakdownTypeChange={setBreakdownType}
-                    />
-                    <BreakdownModePicker
-                        breakdownMode={breakdownMode}
-                        onBreakdownModeChange={setBreakdownMode}
-                    />
-                </div>
+                <CardContent>
+                    <div className="space-y-4">
+                        <BreakdownTypePicker
+                            breakdownType={breakdownType}
+                            onBreakdownTypeChange={setBreakdownType}
+                        />
+                        <BreakdownModePicker
+                            breakdownMode={breakdownMode}
+                            onBreakdownModeChange={setBreakdownMode}
+                        />
+                    </div>
+                </CardContent>
             </Card>
 
             <Card className="mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                    {breakdownMode === "player" ? (
-                        <Users className="w-6 h-6 text-blue-500" />
-                    ) : (
-                        <Layers className="w-6 h-6 text-orange-500" />
-                    )}
+                <CardHeader>
                     <CardTitle>
-                        {breakdownType === "production"
-                            ? "Production"
-                            : "Consumption"}{" "}
-                        by {breakdownMode === "player" ? "Player" : "Type"}
+                        <div className="flex items-center gap-2 mb-4">
+                            {breakdownMode === "player" ? (
+                                <Users className="w-6 h-6 text-blue-500" />
+                            ) : (
+                                <Layers className="w-6 h-6 text-orange-500" />
+                            )}
+                            {breakdownType === "production"
+                                ? "Production"
+                                : "Consumption"}{" "}
+                            by {breakdownMode === "player" ? "Player" : "Type"}
+                        </div>
                     </CardTitle>
-                </div>
+                </CardHeader>
 
-                <BreakdownChart
-                    chartData={breakdownChartData}
-                    isLoading={isBreakdownLoading}
-                    isError={isBreakdownError}
-                    hiddenItems={hiddenBreakdownItems}
-                    breakdownMode={breakdownMode}
-                    playerMap={playerMap}
-                />
-
-                <div className="mt-6">
-                    <NetworkBreakdownTable
+                <CardContent>
+                    <BreakdownChart
                         chartData={breakdownChartData}
-                        resolution={selectedResolution.resolution}
+                        isLoading={isBreakdownLoading}
+                        isError={isBreakdownError}
                         hiddenItems={hiddenBreakdownItems}
-                        onToggleItem={handleToggleBreakdownItem}
                         breakdownMode={breakdownMode}
-                        breakdownType={breakdownType}
+                        playerMap={playerMap}
                     />
-                </div>
+
+                    <div className="mt-6">
+                        <NetworkBreakdownTable
+                            chartData={breakdownChartData}
+                            resolution={selectedResolution.resolution}
+                            hiddenItems={hiddenBreakdownItems}
+                            onToggleItem={handleToggleBreakdownItem}
+                            breakdownMode={breakdownMode}
+                            breakdownType={breakdownType}
+                        />
+                    </div>
+                </CardContent>
             </Card>
         </div>
     );
