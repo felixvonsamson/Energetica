@@ -123,12 +123,12 @@
         --chart-5: oklch(0.769 0.188 70.08);
 
         /* Sidebar colors (light mode) */
-        --sidebar: var(--color-bone);
-        --sidebar-foreground: var(--color-pine);
-        --sidebar-primary: var(--color-pine);
+        --sidebar: var(--color-brand-green);
+        --sidebar-foreground: var(--color-pine-darker);
+        --sidebar-primary: var(--color-tan-green);
         --sidebar-primary-foreground: #ffffff;
         --sidebar-accent: var(--color-tan-hover);
-        --sidebar-accent-foreground: var(--color-pine);
+        --sidebar-accent-foreground: var(--color-pine-darker);
         --sidebar-border: var(--color-tan-green);
         --sidebar-ring: var(--color-pine);
 
@@ -452,3 +452,12 @@
 /* stylelint-disable-next-line at-rule-no-unknown */
 /* @variant dark (&:where(.dark, .dark *)); */
 @custom-variant dark (&:is(.dark *));
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+}

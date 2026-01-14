@@ -1,7 +1,4 @@
-/**
- * Top bar component showing logo, money, resources, workers, user actions, and
- * navigation.
- */
+/** Top bar component showing money, resources, workers, and user actions. */
 
 import {
     Link,
@@ -17,12 +14,10 @@ import {
     Hammer,
     HelpCircle,
     LogOut,
-    Menu,
     Settings,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Navigation } from "@/components/layout/navigation";
 import { NotificationPopup } from "@/components/layout/notification-popup";
 import {
     Dialog,
@@ -31,8 +26,9 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { useNavigation } from "@/contexts/navigation-context";
 import { useAuth } from "@/hooks/useAuth";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useUnreadNotificationsCount } from "@/hooks/useNotifications";
@@ -49,7 +45,6 @@ import { Workers } from "@/types/workers";
 export function TopBar() {
     const { user } = useAuth();
     const capabilities = useCapabilities();
-    const { isMenuOpen, setIsMenuOpen } = useNavigation();
     const {
         data: moneyData,
         isLoading: isMoneyLoading,
@@ -90,7 +85,6 @@ export function TopBar() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         navigate({ search: { ...search, help: "" } as any, replace: true });
     }, [navigate, search]);
-    // If
     useEffect(() => {
         if (!staticData) return;
         if (!staticData.infoModal) handleCloseHelp();
@@ -120,127 +114,114 @@ export function TopBar() {
 
     return (
         <>
-            {/* Navigation - both bar for desktop and side window for mobile */}
-            <Navigation />
+            <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+                {/* Sidebar trigger */}
+                <SidebarTrigger className="-ml-1" />
+                <Separator
+                    orientation="vertical"
+                    className="mr-2 data-[orientation=vertical]:h-4"
+                />
 
-            <div className="bg-background border-b border-pine-darker px-4 py-1">
-                <div className="flex items-center justify-between gap-4">
-                    {/* Logo */}
-                    {Logo()}
+                <div className="flex flex-1 items-center justify-between gap-4">
+                    {/* Money and Resources */}
+                    <div className="flex gap-3 items-center">
+                        {/* Money */}
+                        {MoneyDisplay(
+                            isMoneyLoading,
+                            moneyData,
+                            isMoneyError,
+                            isConnected,
+                            moneyError,
+                        )}
 
-                    {/* Resources and Actions */}
-                    <div className="flex items-center gap-4">
-                        {/* Money and Resources */}
-                        <div className="bg-background text-foreground rounded px-3 py-0 md:px-4">
-                            <div className="flex gap-3 md:gap-3 items-center">
-                                {/* Money */}
-                                {MoneyDisplay(
-                                    isMoneyLoading,
-                                    moneyData,
-                                    isMoneyError,
-                                    isConnected,
-                                    moneyError,
-                                )}
-
-                                {/* Resource Gauges - only show if warehouse unlocked */}
-                                {capabilities?.has_warehouse &&
-                                    ResourceGauges(
-                                        isResourcesError,
-                                        isResourcesLoading,
-                                        resourcesData,
-                                    )}
-
-                                {/* Workers */}
-                                {WorkersDisplay(
-                                    isWorkersError,
-                                    isWorkersLoading,
-                                    workersData,
-                                    capabilities,
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Help Button, Settings, Notifications, Theme Toggle, and Mobile Menu */}
-                        <div className="flex gap-2 shrink-0">
-                            {staticData?.infoModal && (
-                                <button
-                                    onClick={() => handleShowHelp()}
-                                    className="px-2 py-2 text-foreground rounded hover:bg-tan-hover dark:hover:bg-muted transition-colors h-9 aspect-square"
-                                    aria-label="Show help"
-                                >
-                                    <HelpCircle size={20} />
-                                </button>
+                        {/* Resource Gauges - only show if warehouse unlocked */}
+                        {capabilities?.has_warehouse &&
+                            ResourceGauges(
+                                isResourcesError,
+                                isResourcesLoading,
+                                resourcesData,
                             )}
 
+                        {/* Workers */}
+                        {WorkersDisplay(
+                            isWorkersError,
+                            isWorkersLoading,
+                            workersData,
+                            capabilities,
+                        )}
+                    </div>
+
+                    {/* Help Button, Notifications, and User Menu */}
+                    <div className="flex gap-2 shrink-0">
+                        {staticData?.infoModal && (
                             <button
-                                onClick={() => setShowNotifications(true)}
-                                className="bg-card text-foreground px-2 py-2 lg:px-4 rounded hover:bg-tan-hover dark:hover:bg-muted transition-colors relative flex items-center justify-center aspect-square lg:aspect-auto h-9"
+                                onClick={() => handleShowHelp()}
+                                className="px-2 py-2 text-foreground rounded hover:bg-accent transition-colors h-9 aspect-square"
+                                aria-label="Show help"
                             >
-                                <Bell size={20} />
-                                <span className="ml-2 hidden lg:inline">
-                                    Notifications
+                                <HelpCircle size={20} />
+                            </button>
+                        )}
+
+                        <button
+                            onClick={() => setShowNotifications(true)}
+                            className="bg-card text-foreground px-2 py-2 lg:px-4 rounded hover:bg-accent transition-colors relative flex items-center justify-center aspect-square lg:aspect-auto h-9"
+                        >
+                            <Bell size={20} />
+                            <span className="ml-2 hidden lg:inline">
+                                Notifications
+                            </span>
+                            {/* Unread badge */}
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                    {unreadCount}
                                 </span>
-                                {/* Unread badge */}
-                                {unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-pine dark:bg-brand-green text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                        {unreadCount}
-                                    </span>
-                                )}
-                            </button>
+                            )}
+                        </button>
 
-                            {/* User dropdown */}
-                            <div className="relative" ref={userDropdownRef}>
-                                <button
-                                    onClick={() =>
-                                        setShowUserDropdown(!showUserDropdown)
-                                    }
-                                    className="bg-card text-foreground px-2 py-2 rounded hover:bg-tan-hover dark:hover:bg-muted transition-colors flex items-center justify-center aspect-square h-9"
-                                    aria-label="User menu"
-                                >
-                                    <CircleUser size={20} />
-                                </button>
-
-                                {/* Dropdown menu */}
-                                {showUserDropdown && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded shadow-lg z-50">
-                                        <ThemeToggle variant="menu-item" />
-
-                                        <Link
-                                            to="/app/settings"
-                                            onClick={() =>
-                                                setShowUserDropdown(false)
-                                            }
-                                            className="flex items-center gap-2 px-4 py-3 text-foreground hover:bg-tan-hover dark:hover:bg-muted transition-colors border-b border-border/50"
-                                        >
-                                            <Settings size={20} />
-                                            <span>Settings</span>
-                                        </Link>
-                                        <Link
-                                            to="/app/logout"
-                                            onClick={() =>
-                                                setShowUserDropdown(false)
-                                            }
-                                            className="flex items-center gap-2 px-4 py-3 text-foreground hover:bg-tan-hover dark:hover:bg-muted transition-colors"
-                                        >
-                                            <LogOut size={20} />
-                                            <span>Logout</span>
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Mobile menu button */}
+                        {/* User dropdown */}
+                        <div className="relative" ref={userDropdownRef}>
                             <button
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="md:hidden bg-card text-foreground px-2 py-2 rounded hover:bg-tan-hover dark:hover:bg-muted transition-colors flex items-center justify-center aspect-square h-9"
-                                aria-label="Toggle navigation menu"
+                                onClick={() =>
+                                    setShowUserDropdown(!showUserDropdown)
+                                }
+                                className="bg-card text-foreground px-2 py-2 rounded hover:bg-accent transition-colors flex items-center justify-center aspect-square h-9"
+                                aria-label="User menu"
                             >
-                                <Menu size={20} />
+                                <CircleUser size={20} />
                             </button>
+
+                            {/* Dropdown menu */}
+                            {showUserDropdown && (
+                                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded shadow-lg z-50">
+                                    <ThemeToggle variant="menu-item" />
+
+                                    <Link
+                                        to="/app/settings"
+                                        onClick={() =>
+                                            setShowUserDropdown(false)
+                                        }
+                                        className="flex items-center gap-2 px-4 py-3 text-foreground hover:bg-accent transition-colors border-b border-border/50"
+                                    >
+                                        <Settings size={20} />
+                                        <span>Settings</span>
+                                    </Link>
+                                    <Link
+                                        to="/app/logout"
+                                        onClick={() =>
+                                            setShowUserDropdown(false)
+                                        }
+                                        className="flex items-center gap-2 px-4 py-3 text-foreground hover:bg-accent transition-colors"
+                                    >
+                                        <LogOut size={20} />
+                                        <span>Logout</span>
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-            </div>
+            </header>
 
             {/* Notification Popup Modal */}
             <NotificationPopup
@@ -438,22 +419,6 @@ function MoneyDisplay(
                     </span>
                 </>
             )}
-        </div>
-    );
-}
-
-function Logo() {
-    return (
-        <div className="flex items-center gap-2">
-            <img
-                src="/static/images/icon.svg"
-                alt="Energetica"
-                className="w-8 h-8 brightness-0 saturate-100 hue-rotate-90 opacity-70 dark:invert dark:brightness-100 dark:saturate-100 dark:hue-rotate-0 dark:opacity-100"
-                style={{
-                    filter: "brightness(0) saturate(100%) invert(18%) sepia(18%) saturate(2873%) hue-rotate(88deg) brightness(95%) contrast(88%)",
-                }}
-            />
-            <span className="text-xl font-bold text-primary">Energetica</span>
         </div>
     );
 }
