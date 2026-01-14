@@ -196,7 +196,7 @@ Places to get started with in the documentation:
 
 -   [Architecture Overview](../architecture/overview.md) - Understand system design
 -   [Frontend Documentation](../frontend/overview.md) - React patterns and conventions
--   [API Documentation](../backend/api.md) - Backend API structure
+-   [API Documentation](../architecture/api.md) - Backend API structure
 
 ## Getting Help
 
