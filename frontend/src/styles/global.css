@@ -109,7 +109,7 @@
         --destructive: oklch(0.6427 0.2153 28.81);
         --destructive-foreground: #ffffff;
 
-        --border: var(--color-tan-green);
+        --border: #876d22;
         --input: var(--color-pine);
         --ring: var(--color-pine);
 
