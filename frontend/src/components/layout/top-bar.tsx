@@ -10,6 +10,7 @@ import {
     AlertCircle,
     Bell,
     CircleUser,
+    FlagTriangleRight,
     FlaskConical,
     Hammer,
     HelpCircle,
@@ -177,12 +178,24 @@ export function TopBar() {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
+                                    <a
+                                        href={
+                                            "https://github.com/felixvonsamson/Energetica/issues/new"
+                                        }
+                                        target="_blank"
+                                    >
+                                        <FlagTriangleRight size={20} />
+                                        Report an issue
+                                    </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
                                     <Link
                                         to="/app/settings"
                                         className="flex items-center gap-2"
                                     >
                                         <Settings size={20} />
-                                        <span>Settings</span>
+                                        Settings
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
@@ -191,7 +204,7 @@ export function TopBar() {
                                         className="flex items-center gap-2"
                                     >
                                         <LogOut size={20} />
-                                        <span>Logout</span>
+                                        Logout
                                     </Link>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
