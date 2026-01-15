@@ -253,7 +253,8 @@ function PowerPrioritiesContent() {
         <div className="p-4 md:p-8 space-y-6">
             {/* Header */}
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">Power Priorities</h1>
+                <div className="grow" />
+
                 {!isEditMode ? (
                     <button
                         onClick={handleEnterEdit}

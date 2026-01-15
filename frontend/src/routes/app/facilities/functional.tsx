@@ -107,13 +107,6 @@ function FunctionalFacilitiesContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title */}
-            <div className="flex items-center justify-center gap-3 mb-6">
-                <h1 className="text-4xl md:text-5xl font-bold text-center">
-                    Functional Facilities
-                </h1>
-            </div>
-
             {/* Construction projects button - only shown if there are ongoing projects */}
             {hasConstructionProjects && (
                 <div className="mb-6 flex justify-center">

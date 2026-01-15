@@ -88,13 +88,6 @@ function SettingsContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title */}
-            <div className="flex items-center justify-center mb-8">
-                <h1 className="text-4xl md:text-5xl font-bold text-center">
-                    Settings
-                </h1>
-            </div>
-
             {/* Settings cards */}
             <div className="max-w-2xl mx-auto space-y-6">
                 {/* Browser Notifications Card */}

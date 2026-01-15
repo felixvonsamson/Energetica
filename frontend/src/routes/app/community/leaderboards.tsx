@@ -737,13 +737,6 @@ function LeaderboardsContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title */}
-            <div className="flex items-center justify-center mb-6">
-                <h1 className="text-4xl md:text-5xl font-bold text-center">
-                    Leaderboards
-                </h1>
-            </div>
-
             {/* Category Filter */}
             <div className="mb-6 flex flex-wrap gap-2 justify-center">
                 {(

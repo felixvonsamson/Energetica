@@ -201,13 +201,6 @@ function ResourceMarketContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title */}
-            <div className="flex items-center justify-center gap-3 mb-6">
-                <h1 className="text-4xl md:text-5xl font-bold text-center">
-                    Resource Market
-                </h1>
-            </div>
-
             {/* Put on sale modal */}
             <CreateAskModal
                 isOpen={createAsk === true}

@@ -157,12 +157,29 @@ function PowerFacilitiesContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title */}
             <div className="flex items-center justify-center gap-3 mb-6">
-                <h1 className="text-4xl md:text-5xl font-bold text-center">
-                    Power Facilities
-                </h1>
-                <button
+                <div className="grow" />
+
+                {/* Construction projects button - only shown if there are ongoing projects */}
+                {hasConstructionProjects && (
+                    <Button
+                        variant="outline"
+                        onClick={() =>
+                            navigate({
+                                search: (prev) => ({
+                                    ...prev,
+                                    projects: true,
+                                }),
+                            })
+                        }
+                        className="flex items-center gap-2"
+                    >
+                        <HardHat className="w-5 h-5" />
+                        View Construction Projects
+                    </Button>
+                )}
+
+                <Button
                     onClick={() =>
                         navigate({
                             search: { compare: "" },
@@ -172,26 +189,8 @@ function PowerFacilitiesContent() {
                 >
                     <GitCompareArrows className="w-5 h-5" />
                     Compare
-                </button>
+                </Button>
             </div>
-
-            {/* Construction projects button - only shown if there are ongoing projects */}
-            {hasConstructionProjects && (
-                <div className="mb-6 flex justify-center">
-                    <Button
-                        variant="outline"
-                        onClick={() =>
-                            navigate({
-                                search: (prev) => ({ ...prev, projects: true }),
-                            })
-                        }
-                        className="flex items-center gap-2"
-                    >
-                        <HardHat className="w-5 h-5" />
-                        View Construction Projects
-                    </Button>
-                </div>
-            )}
 
             {/* Loading state */}
             {(isCatalogLoading || isResourcesLoading) && (

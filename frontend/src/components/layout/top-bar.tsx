@@ -2,7 +2,7 @@
 
 import {
     Link,
-    useLocation,
+    useMatches,
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationPopup } from "@/components/layout/notification-popup";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
@@ -36,7 +38,6 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { usePlayerMoney } from "@/hooks/usePlayerMoney";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
-import { useRouteStaticData } from "@/hooks/useRouteStaticData";
 import { cn } from "@/lib/classname-utils";
 import { Money } from "@/types/money";
 import { Resources } from "@/types/resources";
@@ -66,9 +67,9 @@ export function TopBar() {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
     const userDropdownRef = useRef<HTMLDivElement>(null);
-
-    const location = useLocation();
-    const staticData = useRouteStaticData(location as never);
+    const matches = useMatches();
+    const currentMatch = matches[matches.length - 1];
+    const staticData = currentMatch?.staticData;
     const search = useSearch({
         strict: false,
     });
@@ -122,6 +123,13 @@ export function TopBar() {
                     className="mr-2 data-[orientation=vertical]:h-4"
                 />
 
+                <Breadcrumbs />
+
+                <Separator
+                    orientation="vertical"
+                    className="mx-2 data-[orientation=vertical]:h-4"
+                />
+
                 <div className="flex flex-1 items-center justify-between gap-4">
                     {/* Money and Resources */}
                     <div className="flex gap-3 items-center">
@@ -154,18 +162,20 @@ export function TopBar() {
                     {/* Help Button, Notifications, and User Menu */}
                     <div className="flex gap-2 shrink-0">
                         {staticData?.infoModal && (
-                            <button
+                            <Button
                                 onClick={() => handleShowHelp()}
-                                className="px-2 py-2 text-foreground rounded hover:bg-accent transition-colors h-9 aspect-square"
+                                variant="ghost"
+                                size="icon"
                                 aria-label="Show help"
                             >
                                 <HelpCircle size={20} />
-                            </button>
+                            </Button>
                         )}
 
-                        <button
+                        <Button
                             onClick={() => setShowNotifications(true)}
-                            className="bg-card text-foreground px-2 py-2 lg:px-4 rounded hover:bg-accent transition-colors relative flex items-center justify-center aspect-square lg:aspect-auto h-9"
+                            variant="ghost"
+                            className="relative lg:px-4 aspect-square lg:aspect-auto"
                         >
                             <Bell size={20} />
                             <span className="ml-2 hidden lg:inline">
@@ -177,19 +187,20 @@ export function TopBar() {
                                     {unreadCount}
                                 </span>
                             )}
-                        </button>
+                        </Button>
 
                         {/* User dropdown */}
                         <div className="relative" ref={userDropdownRef}>
-                            <button
+                            <Button
                                 onClick={() =>
                                     setShowUserDropdown(!showUserDropdown)
                                 }
-                                className="bg-card text-foreground px-2 py-2 rounded hover:bg-accent transition-colors flex items-center justify-center aspect-square h-9"
+                                variant="ghost"
+                                size="icon"
                                 aria-label="User menu"
                             >
                                 <CircleUser size={20} />
-                            </button>
+                            </Button>
 
                             {/* Dropdown menu */}
                             {showUserDropdown && (
@@ -275,7 +286,7 @@ function WorkersDisplay(
                         : `${workersData?.construction.available ?? 0}/${workersData?.construction.total ?? 0}`}
                 </span>
                 <Hammer size={16} />
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5">
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5 border">
                     Construction workers
                 </div>
             </div>
@@ -289,7 +300,7 @@ function WorkersDisplay(
                             : `${workersData?.laboratory.available ?? 0}/${workersData?.laboratory.total ?? 0}`}
                     </span>
                     <FlaskConical size={16} />
-                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5">
+                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5 border">
                         Lab workers
                     </div>
                 </div>
@@ -307,7 +318,7 @@ function ResourceGauges(
         <div className="flex flex-col gap-1">
             {/* Coal */}
             <div className="relative group">
-                <div className="w-16 h-3 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className="w-16 h-3 bg-muted rounded-full overflow-hidden">
                     <div
                         className={`h-full ${isResourcesError ? "opacity-75" : ""}`}
                         style={{
@@ -323,7 +334,7 @@ function ResourceGauges(
                         }}
                     ></div>
                 </div>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5">
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5 border">
                     Coal stock:{" "}
                     {isResourcesLoading
                         ? "..."
@@ -333,7 +344,7 @@ function ResourceGauges(
 
             {/* Gas */}
             <div className="relative group">
-                <div className="w-16 h-3 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className="w-16 h-3 bg-muted rounded-full overflow-hidden">
                     <div
                         className={`h-full ${isResourcesError ? "opacity-75" : ""}`}
                         style={{
@@ -349,7 +360,7 @@ function ResourceGauges(
                         }}
                     ></div>
                 </div>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5">
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5 border">
                     Gas stock:{" "}
                     {isResourcesLoading
                         ? "..."
@@ -359,7 +370,7 @@ function ResourceGauges(
 
             {/* Uranium */}
             <div className="relative group">
-                <div className="w-16 h-3 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className="w-16 h-3 bg-muted rounded-full overflow-hidden">
                     <div
                         className={`h-full ${isResourcesError ? "opacity-75" : ""}`}
                         style={{
@@ -376,7 +387,7 @@ function ResourceGauges(
                         }}
                     ></div>
                 </div>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5">
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5 border">
                     Uranium stock:{" "}
                     {isResourcesLoading
                         ? "..."
@@ -397,13 +408,13 @@ function MoneyDisplay(
     return (
         <div className="text-base md:text-xl lg:text-2xl font-bold relative whitespace-nowrap">
             {isMoneyLoading && !moneyData ? (
-                <span className="text-gray-500">Loading...</span>
+                <span className="text-muted-foreground">Loading...</span>
             ) : (
                 <>
                     {/* Show offline indicator if error */}
                     {isMoneyError && !isConnected && (
                         <span
-                            className="absolute -top-1 -right-1 text-xs text-red-600"
+                            className="absolute -top-1 -right-1 text-xs text-destructive"
                             title={moneyError?.message || "Connection lost"}
                         >
                             <AlertCircle size={16} />

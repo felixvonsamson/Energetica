@@ -134,12 +134,6 @@ function DashboardContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Title with info icon */}
-            <div className="flex items-center justify-center gap-3 mb-6">
-                <h1 className="text-4xl md:text-5xl font-bold text-center">
-                    Dashboard
-                </h1>
-            </div>
             {/* Development info banner */}
             <InfoBanner variant="info" className="mb-6">
                 <Construction className="inline w-4 h-4" /> This game is still

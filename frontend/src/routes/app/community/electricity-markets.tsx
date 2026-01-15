@@ -138,11 +138,8 @@ function ElectricityMarketsContent() {
     return (
         <div className="p-4 md:p-8">
             {/* Title */}
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-4xl md:text-5xl font-bold">
-                    Electricity Markets
-                </h1>
-                {markets && markets.length !== 0 && (
+            {markets && markets.length !== 0 && (
+                <div className="flex items-center justify-between mb-6">
                     <Button
                         variant="default"
                         onClick={() => {
@@ -151,13 +148,13 @@ function ElectricityMarketsContent() {
                                 replace: true,
                             });
                         }}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 ml-auto"
                     >
                         <Plus className="w-5 h-5" />
                         Create Market
                     </Button>
-                )}
-            </div>
+                </div>
+            )}
 
             {/* Loading state */}
             {isLoading || currentMarket === undefined || !playerMap ? (

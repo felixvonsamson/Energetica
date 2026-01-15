@@ -260,10 +260,6 @@ function RevenuesOverviewContent() {
 
     return (
         <div className="p-4 md:p-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-8">
-                Cash Flow Overview
-            </h1>
-
             <Card className="mb-6">
                 <CardContent>
                     <div className="space-y-4">

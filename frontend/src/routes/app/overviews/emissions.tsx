@@ -159,10 +159,6 @@ function EmissionsOverviewContent() {
 
     return (
         <div className="p-4 md:p-8 space-y-6">
-            <h1 className="text-4xl md:text-5xl font-bold mb-8">
-                Emissions & Climate Overview
-            </h1>
-
             <Card>
                 <CardContent>
                     <ResolutionPicker currentTick={currentTick} />
