@@ -2,7 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, Button, InfoBanner, CardContent } from "@/components/ui";
+import {
+    Card,
+    Button,
+    InfoBanner,
+    CardContent,
+    ThemeToggle,
+} from "@/components/ui";
 import {
     Dialog,
     DialogClose,
@@ -91,7 +97,7 @@ function SettingsContent() {
             {/* Settings cards */}
             <div className="max-w-2xl mx-auto space-y-6">
                 {/* Browser Notifications Card */}
-                <Card className="border-2 border-border">
+                <Card>
                     <CardContent className="flex items-center justify-between">
                         <div>
                             <h2 className="text-lg font-semibold mb-2">
@@ -115,8 +121,22 @@ function SettingsContent() {
                     </CardContent>
                 </Card>
 
+                <Card>
+                    <CardContent className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold mb-2">
+                                Theme
+                            </h2>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Choose between light and dark theme
+                            </p>
+                        </div>
+                        <ThemeToggle />
+                    </CardContent>
+                </Card>
+
                 {/* Password Settings Card */}
-                <Card className="border-2 border-border">
+                <Card>
                     <CardContent>
                         <h2 className="text-lg font-semibold mb-4">
                             Password Settings

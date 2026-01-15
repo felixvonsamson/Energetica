@@ -386,7 +386,7 @@ function WeatherSection() {
 function BeginnersGuide() {
     return (
         <section className="mb-6">
-            <Card className="border-2 border-border">
+            <Card>
                 <CardTitle className="mb-4">Beginners guide</CardTitle>
                 <div className="space-y-4 text-base">
                     <p>Welcome to Energetica!</p>
@@ -544,7 +544,7 @@ function DailyQuizSection() {
 
         if (!hasAnswered) {
             // Before answering - normal clickable button
-            return `${baseClass} bg-card border-2 border-border hover:border-brand-green dark:hover:border-brand-green hover:shadow-md text-foreground disabled:opacity-50 disabled:cursor-not-allowed`;
+            return `${baseClass} bg-card border-1 border-border hover:border-brand-green dark:hover:border-brand-green hover:shadow-md text-foreground disabled:opacity-50 disabled:cursor-not-allowed`;
         }
 
         // After answering - show feedback
@@ -553,16 +553,16 @@ function DailyQuizSection() {
 
         if (wasSelected && isCorrect) {
             // User selected correct answer
-            return `${baseClass} bg-green-50 dark:bg-green-900/20 border-2 border-green-600 dark:border-green-500 text-green-800 dark:text-green-300 cursor-default`;
+            return `${baseClass} bg-green-50 dark:bg-green-900/20 border-1 border-green-600 dark:border-green-500 text-green-800 dark:text-green-300 cursor-default`;
         } else if (wasSelected && !isCorrect) {
             // User selected wrong answer
-            return `${baseClass} bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-400 text-red-800 dark:text-red-300 cursor-default`;
+            return `${baseClass} bg-red-50 dark:bg-red-900/20 border-1 border-red-500 dark:border-red-400 text-red-800 dark:text-red-300 cursor-default`;
         } else if (isCorrect) {
             // Correct answer (not selected)
-            return `${baseClass} bg-green-50 dark:bg-green-900/20 border-2 border-green-500 dark:border-green-400 text-green-800 dark:text-green-300 cursor-default`;
+            return `${baseClass} bg-green-50 dark:bg-green-900/20 border-1 border-green-500 dark:border-green-400 text-green-800 dark:text-green-300 cursor-default`;
         } else {
             // Incorrect answer (not selected)
-            return `${baseClass} bg-card border-2 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 cursor-default opacity-60`;
+            return `${baseClass} bg-card border-gray-300 border-1 dark:border-gray-600 text-gray-600 dark:text-gray-400 cursor-default opacity-60`;
         }
     };
 
@@ -598,7 +598,7 @@ function DailyQuizSection() {
     return (
         <section className="mb-6">
             <div className="flex justify-center">
-                <Card className="border-2 border-border max-w-2xl w-full">
+                <Card className="max-w-2xl w-full">
                     <CardHeader>
                         <CardTitle className="text-center mb-4">
                             <img
