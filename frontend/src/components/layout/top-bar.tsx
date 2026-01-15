@@ -36,11 +36,9 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import { useUnreadNotificationsCount } from "@/hooks/useNotifications";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { usePlayerMoney } from "@/hooks/usePlayerMoney";
-import { usePlayerResources } from "@/hooks/usePlayerResources";
 import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
 import { cn } from "@/lib/classname-utils";
 import { Money } from "@/types/money";
-import { Resources } from "@/types/resources";
 import { Workers } from "@/types/workers";
 
 export function TopBar() {
@@ -57,11 +55,6 @@ export function TopBar() {
         isLoading: isWorkersLoading,
         isError: isWorkersError,
     } = usePlayerWorkers();
-    const {
-        data: resourcesData,
-        isLoading: isResourcesLoading,
-        isError: isResourcesError,
-    } = usePlayerResources();
     const { isConnected } = useOnlineStatus();
     const unreadCount = useUnreadNotificationsCount();
     const [showNotifications, setShowNotifications] = useState(false);
@@ -130,7 +123,9 @@ export function TopBar() {
                     className="mx-2 data-[orientation=vertical]:h-4"
                 />
 
-                <div className="flex flex-1 items-center justify-between gap-4">
+                <div className="grow" />
+
+                <div className="flex items-center justify-between gap-4">
                     {/* Money and Resources */}
                     <div className="flex gap-3 items-center">
                         {/* Money */}
@@ -141,14 +136,6 @@ export function TopBar() {
                             isConnected,
                             moneyError,
                         )}
-
-                        {/* Resource Gauges - only show if warehouse unlocked */}
-                        {capabilities?.has_warehouse &&
-                            ResourceGauges(
-                                isResourcesError,
-                                isResourcesLoading,
-                                resourcesData,
-                            )}
 
                         {/* Workers */}
                         {WorkersDisplay(
@@ -178,9 +165,6 @@ export function TopBar() {
                             className="relative lg:px-4 aspect-square lg:aspect-auto"
                         >
                             <Bell size={20} />
-                            <span className="ml-2 hidden lg:inline">
-                                Notifications
-                            </span>
                             {/* Unread badge */}
                             {unreadCount > 0 && (
                                 <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -277,7 +261,7 @@ function WorkersDisplay(
     } | null,
 ) {
     return (
-        <div className="flex flex-col text-sm justify-around">
+        <>
             {/* Construction Workers */}
             <div className="flex items-center gap-1 relative group">
                 <span className={isWorkersError ? "opacity-75" : ""}>
@@ -305,96 +289,7 @@ function WorkersDisplay(
                     </div>
                 </div>
             )}
-        </div>
-    );
-}
-
-function ResourceGauges(
-    isResourcesError: boolean,
-    isResourcesLoading: boolean,
-    resourcesData: Resources | undefined,
-) {
-    return (
-        <div className="flex flex-col gap-1">
-            {/* Coal */}
-            <div className="relative group">
-                <div className="w-16 h-3 bg-muted rounded-full overflow-hidden">
-                    <div
-                        className={`h-full ${isResourcesError ? "opacity-75" : ""}`}
-                        style={{
-                            width: isResourcesLoading
-                                ? "0%"
-                                : `${Math.min(
-                                      100,
-                                      ((resourcesData?.coal.stock ?? 0) /
-                                          (resourcesData?.coal.capacity || 1)) *
-                                          100,
-                                  )}%`,
-                            backgroundColor: "var(--asset-color-coal)",
-                        }}
-                    ></div>
-                </div>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5 border">
-                    Coal stock:{" "}
-                    {isResourcesLoading
-                        ? "..."
-                        : `${(resourcesData?.coal.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.coal.capacity ?? 0).toFixed(0)}kg`}
-                </div>
-            </div>
-
-            {/* Gas */}
-            <div className="relative group">
-                <div className="w-16 h-3 bg-muted rounded-full overflow-hidden">
-                    <div
-                        className={`h-full ${isResourcesError ? "opacity-75" : ""}`}
-                        style={{
-                            width: isResourcesLoading
-                                ? "0%"
-                                : `${Math.min(
-                                      100,
-                                      ((resourcesData?.gas.stock ?? 0) /
-                                          (resourcesData?.gas.capacity || 1)) *
-                                          100,
-                                  )}%`,
-                            backgroundColor: "var(--asset-color-gas)",
-                        }}
-                    ></div>
-                </div>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5 border">
-                    Gas stock:{" "}
-                    {isResourcesLoading
-                        ? "..."
-                        : `${(resourcesData?.gas.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.gas.capacity ?? 0).toFixed(0)}kg`}
-                </div>
-            </div>
-
-            {/* Uranium */}
-            <div className="relative group">
-                <div className="w-16 h-3 bg-muted rounded-full overflow-hidden">
-                    <div
-                        className={`h-full ${isResourcesError ? "opacity-75" : ""}`}
-                        style={{
-                            width: isResourcesLoading
-                                ? "0%"
-                                : `${Math.min(
-                                      100,
-                                      ((resourcesData?.uranium.stock ?? 0) /
-                                          (resourcesData?.uranium.capacity ||
-                                              1)) *
-                                          100,
-                                  )}%`,
-                            backgroundColor: "var(--asset-color-uranium)",
-                        }}
-                    ></div>
-                </div>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-5 border">
-                    Uranium stock:{" "}
-                    {isResourcesLoading
-                        ? "..."
-                        : `${(resourcesData?.uranium.stock ?? 0).toFixed(0)}kg / ${(resourcesData?.uranium.capacity ?? 0).toFixed(0)}kg`}
-                </div>
-            </div>
-        </div>
+        </>
     );
 }
 
