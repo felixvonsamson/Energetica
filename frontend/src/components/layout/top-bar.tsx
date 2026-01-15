@@ -16,7 +16,7 @@ import {
     LogOut,
     Settings,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationPopup } from "@/components/layout/notification-popup";
@@ -28,6 +28,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -58,8 +65,6 @@ export function TopBar() {
     const { isConnected } = useOnlineStatus();
     const unreadCount = useUnreadNotificationsCount();
     const [showNotifications, setShowNotifications] = useState(false);
-    const [showUserDropdown, setShowUserDropdown] = useState(false);
-    const userDropdownRef = useRef<HTMLDivElement>(null);
     const matches = useMatches();
     const currentMatch = matches[matches.length - 1];
     const staticData = currentMatch?.staticData;
@@ -83,25 +88,6 @@ export function TopBar() {
         if (!staticData) return;
         if (!staticData.infoModal) handleCloseHelp();
     }, [staticData, handleCloseHelp]);
-
-    // Close user dropdown when clicking outside
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (
-                userDropdownRef.current &&
-                !userDropdownRef.current.contains(event.target as Node)
-            ) {
-                setShowUserDropdown(false);
-            }
-        }
-
-        if (showUserDropdown) {
-            document.addEventListener("mousedown", handleClickOutside);
-            return () => {
-                document.removeEventListener("mousedown", handleClickOutside);
-            };
-        }
-    }, [showUserDropdown]);
 
     if (!user) return null;
     if (!capabilities) return null;
@@ -174,46 +160,41 @@ export function TopBar() {
                         </Button>
 
                         {/* User dropdown */}
-                        <div className="relative" ref={userDropdownRef}>
-                            <Button
-                                onClick={() =>
-                                    setShowUserDropdown(!showUserDropdown)
-                                }
-                                variant="ghost"
-                                size="icon"
-                                aria-label="User menu"
-                            >
-                                <CircleUser size={20} />
-                            </Button>
-
-                            {/* Dropdown menu */}
-                            {showUserDropdown && (
-                                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded shadow-lg z-50">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label="User menu"
+                                >
+                                    <CircleUser size={20} />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem asChild>
                                     <ThemeToggle variant="menu-item" />
-
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
                                     <Link
                                         to="/app/settings"
-                                        onClick={() =>
-                                            setShowUserDropdown(false)
-                                        }
-                                        className="flex items-center gap-2 px-4 py-3 text-foreground hover:bg-accent transition-colors border-b border-border/50"
+                                        className="flex items-center gap-2"
                                     >
                                         <Settings size={20} />
                                         <span>Settings</span>
                                     </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
                                     <Link
                                         to="/app/logout"
-                                        onClick={() =>
-                                            setShowUserDropdown(false)
-                                        }
-                                        className="flex items-center gap-2 px-4 py-3 text-foreground hover:bg-accent transition-colors"
+                                        className="flex items-center gap-2"
                                     >
                                         <LogOut size={20} />
                                         <span>Logout</span>
                                     </Link>
-                                </div>
-                            )}
-                        </div>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
             </header>
