@@ -21,6 +21,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationPopup } from "@/components/layout/notification-popup";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
     Dialog,
     DialogContent,
@@ -133,11 +134,11 @@ export function TopBar() {
                     </div>
 
                     {/* Help Button, Notifications, and User Menu */}
-                    <div className="flex gap-2 shrink-0">
+                    <ButtonGroup>
                         {staticData?.infoModal && (
                             <Button
                                 onClick={() => handleShowHelp()}
-                                variant="ghost"
+                                variant="outline"
                                 size="icon"
                                 aria-label="Show help"
                             >
@@ -147,13 +148,13 @@ export function TopBar() {
 
                         <Button
                             onClick={() => setShowNotifications(true)}
-                            variant="ghost"
+                            variant="outline"
                             className="relative lg:px-4 aspect-square lg:aspect-auto"
                         >
                             <Bell size={20} />
                             {/* Unread badge */}
                             {unreadCount > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center z-20">
                                     {unreadCount}
                                 </span>
                             )}
@@ -163,7 +164,7 @@ export function TopBar() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="icon"
                                     aria-label="User menu"
                                 >
@@ -195,7 +196,7 @@ export function TopBar() {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </div>
+                    </ButtonGroup>
                 </div>
             </header>
 

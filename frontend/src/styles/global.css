@@ -222,7 +222,7 @@
         --muted-foreground: #a0a0a0;
 
         --accent: var(--color-brand-green);
-        --accent-foreground: #000000;
+        --accent-foreground: #ffffff;
 
         --destructive: oklch(52.816% 0.21229 29.916);
         --destructive-foreground: #ffffff;
