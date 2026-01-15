@@ -246,7 +246,7 @@ function MapContent() {
     }
 
     return (
-        <div className="p-4 flex flex-col lg:h-screen">
+        <div className="p-4 flex flex-col h-full">
             {/* Title */}
             <div className="flex items-center justify-center mb-6 lg:shrink-0">
                 <h1 className="text-3xl md:text-4xl font-bold text-center">

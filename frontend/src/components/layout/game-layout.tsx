@@ -18,12 +18,14 @@ export function GameLayout({ children }: GameLayoutProps) {
         <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
-                <div className="flex min-h-screen flex-col">
+                <div className="flex h-screen flex-col">
                     {/* Top bar with resources and notifications */}
                     <TopBar />
 
                     {/* Main content area */}
-                    <main className="flex-1 2xl:px-50">{children}</main>
+                    <main className="flex-1 overflow-auto 2xl:px-50">
+                        {children}
+                    </main>
 
                     {/* Toast notifications container */}
                     <div
