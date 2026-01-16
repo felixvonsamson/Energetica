@@ -18,8 +18,8 @@ export function WindTable() {
     };
 
     const getCellColor = (value: number) => {
-        if (value >= 40) return "text-green-600";
-        if (value < 20) return "text-red-600";
+        if (value >= 40) return "text-success";
+        if (value < 20) return "text-destructive";
         return "";
     };
 

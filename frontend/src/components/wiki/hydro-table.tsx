@@ -15,10 +15,10 @@ export function HydroTable() {
     };
 
     const getCellColor = (value: string | number) => {
-        if (value === "99+") return "text-red-600";
+        if (value === "99+") return "text-destructive";
         const numValue = typeof value === "number" ? value : parseFloat(value);
-        if (numValue <= 2.0) return "text-green-600";
-        if (numValue >= 10) return "text-red-600";
+        if (numValue <= 2.0) return "text-success";
+        if (numValue >= 10) return "text-destructive";
         return "";
     };
 

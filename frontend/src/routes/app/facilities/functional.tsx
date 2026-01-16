@@ -136,7 +136,7 @@ function FunctionalFacilitiesContent() {
 
             {/* Loading state */}
             {isCatalogLoading && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                     Loading facilities...
                 </div>
             )}
@@ -187,7 +187,7 @@ function FunctionalFacilitiesContent() {
                                             <strong>
                                                 {/* TODO: disable link when locked */}
                                                 <Link
-                                                    className="text-blue-600 dark:text-blue-400"
+                                                    className="text-info"
                                                     to="/app/facilities/technology"
                                                 >
                                                     Technologies
@@ -204,7 +204,7 @@ function FunctionalFacilitiesContent() {
                                             <strong>
                                                 {/* TODO: disable link when locked */}
                                                 <Link
-                                                    className="text-blue-600 dark:text-blue-400"
+                                                    className="text-info"
                                                     to="/app/facilities/extraction"
                                                 >
                                                     resources

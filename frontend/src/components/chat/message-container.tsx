@@ -68,7 +68,7 @@ export function MessageContainer({
 
     if (!selectedChatId) {
         return (
-            <div className="flex-1 flex items-center justify-center text-gray-500">
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
                 Select a chat to start messaging
             </div>
         );
@@ -76,7 +76,7 @@ export function MessageContainer({
 
     if (isLoading || !playerMap) {
         return (
-            <div className="flex-1 flex items-center justify-center text-gray-500">
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
                 Loading messages...
             </div>
         );
@@ -84,7 +84,7 @@ export function MessageContainer({
 
     if (messages.length === 0) {
         return (
-            <div className="flex-1 flex items-center justify-center text-gray-500">
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
                 No messages yet. Start the conversation!
             </div>
         );
@@ -106,7 +106,7 @@ export function MessageContainer({
                     >
                         {/* Show player name and timestamp only for the first message in the group */}
                         {group.showTimestamp && (
-                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1 px-1">
+                            <div className="text-sm text-muted-foreground mb-1 px-1">
                                 {showPlayerName && (
                                     <>{playerMap[group.playerId].username} • </>
                                 )}
@@ -127,8 +127,8 @@ export function MessageContainer({
                                     className={cn(
                                         "p-3 rounded-lg wrap-break-word max-w-[70%] whitespace-pre-line",
                                         isOwnMessage
-                                            ? "bg-pine dark:bg-brand-green text-white rounded-br-none"
-                                            : "bg-secondary rounded-bl-none",
+                                            ? "bg-primary text-primary-foreground rounded-br-none"
+                                            : "bg-secondary text-secondary-foreground rounded-bl-none",
                                     )}
                                 >
                                     {message.text}

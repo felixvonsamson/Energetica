@@ -84,7 +84,7 @@ function FacilityManagementContent() {
 
     if (error && !SHOW_DUMMY_DATA) {
         return (
-            <div className="p-4 md:p-8 text-center text-red-600">
+            <div className="p-4 md:p-8 text-center text-destructive">
                 <p className="text-lg">Error loading data</p>
             </div>
         );

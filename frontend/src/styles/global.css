@@ -55,6 +55,8 @@
     --color-info-foreground: var(--info-foreground);
     --color-warning: var(--warning);
     --color-warning-foreground: var(--warning-foreground);
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -137,6 +139,8 @@
         --info-foreground: #ffffff;
         --warning: var(--color-alert-orange);
         --warning-foreground: #000000;
+        --success: rgb(22, 163, 74);
+        --success-foreground: #ffffff;
 
         /* Asset colours - Power facilities (water) */
         --asset-color-watermill: rgb(0, 180, 216);
@@ -255,6 +259,8 @@
         --info-foreground: #000000;
         --warning: rgb(251, 191, 36);
         --warning-foreground: #000000;
+        --success: rgb(74, 222, 128);
+        --success-foreground: #000000;
 
         /* Asset colours - Power facilities (water) - adjusted for dark mode */
         --asset-color-watermill: rgb(100, 210, 236);

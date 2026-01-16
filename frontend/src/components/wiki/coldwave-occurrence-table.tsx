@@ -16,8 +16,8 @@ export function ColdwaveOccurrenceTable() {
     };
 
     const getCellColor = (value: number | null) => {
-        if (value === null) return "text-green-600";
-        if (value >= 1) return "text-red-600";
+        if (value === null) return "text-success";
+        if (value >= 1) return "text-destructive";
         return "";
     };
 

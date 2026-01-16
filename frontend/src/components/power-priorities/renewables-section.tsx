@@ -45,9 +45,9 @@ export function RenewablesSection({
             <tr>
                 <td
                     colSpan={7}
-                    className="pt-4 pb-2 px-3 border-t-2 border-gray-300 dark:border-gray-600"
+                    className="pt-4 pb-2 px-3 border-t-2 border-border"
                 >
-                    <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                    <h3 className="text-sm font-semibold text-muted-foreground">
                         Renewables (always active)
                     </h3>
                 </td>
@@ -69,7 +69,7 @@ export function RenewablesSection({
                         </td>
 
                         {/* Current power */}
-                        <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400 bg-secondary">
+                        <td className="py-3 px-3 text-right text-xs text-muted-foreground bg-secondary">
                             {currentPowerMW !== undefined ? (
                                 <span className="font-mono">
                                     {formatPower(currentPowerMW)}
@@ -92,7 +92,7 @@ export function RenewablesSection({
                                     }
                                 />
                             ) : (
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                <div className="text-xs text-muted-foreground">
                                     —
                                 </div>
                             )}

@@ -40,10 +40,10 @@ export function RequirementsDisplay({
                             key={`${req.name}-${req.level}`}
                             className={
                                 req.status === "satisfied"
-                                    ? "text-green-600 dark:text-green-400"
+                                    ? "text-success"
                                     : req.status === "queued"
-                                      ? "text-yellow-600 dark:text-yellow-400"
-                                      : "text-red-600 dark:text-red-400"
+                                      ? "text-warning"
+                                      : "text-destructive"
                             }
                         >
                             -{" "}

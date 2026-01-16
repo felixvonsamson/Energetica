@@ -264,22 +264,22 @@ export function TimeSeriesChart({
                                 >
                                     <stop
                                         offset="0"
-                                        stopColor="green"
+                                        stopColor="var(--success)"
                                         stopOpacity={1}
                                     />
                                     <stop
                                         offset={offset}
-                                        stopColor="green"
+                                        stopColor="var(--success)"
                                         stopOpacity={1}
                                     />
                                     <stop
                                         offset={offset}
-                                        stopColor="red"
+                                        stopColor="var(--destructive)"
                                         stopOpacity={1}
                                     />
                                     <stop
                                         offset="1"
-                                        stopColor="red"
+                                        stopColor="var(--destructive)"
                                         stopOpacity={1}
                                     />
                                 </linearGradient>

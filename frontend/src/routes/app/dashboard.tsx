@@ -396,14 +396,14 @@ function BeginnersGuide() {
                         monitor their{" "}
                         <Link
                             to="/app/overviews/power"
-                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                            className="text-info underline hover:opacity-80"
                         >
                             power generation and consumption
                         </Link>{" "}
                         as well as your{" "}
                         <Link
                             to="/app/overviews/cash-flow"
-                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                            className="text-info underline hover:opacity-80"
                         >
                             revenues
                         </Link>{" "}
@@ -415,21 +415,21 @@ function BeginnersGuide() {
                         <b>expand your production</b> by investing in{" "}
                         <Link
                             to="/app/facilities/power"
-                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                            className="text-info underline hover:opacity-80"
                         >
                             Power Facilities
                         </Link>{" "}
                         and upgrading your industry on the{" "}
                         <Link
                             to="/app/facilities/functional"
-                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                            className="text-info underline hover:opacity-80"
                         >
                             Functional Facilities
                         </Link>{" "}
                         page. You also have access to{" "}
                         <Link
                             to="/app/facilities/storage"
-                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                            className="text-info underline hover:opacity-80"
                         >
                             Storage Facilities
                         </Link>{" "}
@@ -447,7 +447,7 @@ function BeginnersGuide() {
                         on any game mechanics, consult the{" "}
                         <a
                             href="/wiki/introduction"
-                            className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                            className="text-info underline hover:opacity-80"
                         >
                             wiki
                         </a>
@@ -478,7 +478,7 @@ function AchievementSection() {
                             Loading achievements...
                         </div>
                     ) : isError ? (
-                        <div className="text-center text-red-600 dark:text-red-400 py-4">
+                        <div className="text-center text-destructive py-4">
                             Failed to load achievements
                         </div>
                     ) : achievementsData?.achievements &&
@@ -553,16 +553,16 @@ function DailyQuizSection() {
 
         if (wasSelected && isCorrect) {
             // User selected correct answer
-            return `${baseClass} bg-green-50 dark:bg-green-900/20 border-1 border-green-600 dark:border-green-500 text-green-800 dark:text-green-300 cursor-default`;
+            return `${baseClass} bg-success/10 border-1 border-success text-success cursor-default`;
         } else if (wasSelected && !isCorrect) {
             // User selected wrong answer
-            return `${baseClass} bg-red-50 dark:bg-red-900/20 border-1 border-red-500 dark:border-red-400 text-red-800 dark:text-red-300 cursor-default`;
+            return `${baseClass} bg-destructive/10 border-1 border-destructive text-destructive cursor-default`;
         } else if (isCorrect) {
             // Correct answer (not selected)
-            return `${baseClass} bg-green-50 dark:bg-green-900/20 border-1 border-green-500 dark:border-green-400 text-green-800 dark:text-green-300 cursor-default`;
+            return `${baseClass} bg-success/10 border-1 border-success text-success cursor-default`;
         } else {
             // Incorrect answer (not selected)
-            return `${baseClass} bg-card border-gray-300 border-1 dark:border-gray-600 text-gray-600 dark:text-gray-400 cursor-default opacity-60`;
+            return `${baseClass} bg-card border-1 border-border text-muted-foreground cursor-default opacity-60`;
         }
     };
 
@@ -575,19 +575,19 @@ function DailyQuizSection() {
 
         if (wasSelected && isCorrect) {
             return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 dark:text-green-400 font-bold">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success font-bold">
                     ✓ Your answer
                 </span>
             );
         } else if (wasSelected && !isCorrect) {
             return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600 dark:text-red-400 font-bold">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive font-bold">
                     ✗ Your answer
                 </span>
             );
         } else if (isCorrect) {
             return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 dark:text-green-400 font-bold">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success font-bold">
                     ✓ Correct
                 </span>
             );
@@ -692,7 +692,7 @@ function DailyQuizSection() {
                                                         }
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="text-blue-600 dark:text-blue-400 underline hover:opacity-80"
+                                                        className="text-info underline hover:opacity-80"
                                                     >
                                                         Learn more
                                                     </a>

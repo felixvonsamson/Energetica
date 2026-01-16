@@ -79,7 +79,7 @@ function LeaderboardsContent() {
 
     if (error || !leaderboards?.rows) {
         return (
-            <div className="p-4 md:p-8 text-center text-red-600">
+            <div className="p-4 md:p-8 text-center text-destructive">
                 <p className="text-lg">Error loading leaderboards</p>
             </div>
         );

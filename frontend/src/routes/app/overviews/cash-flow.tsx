@@ -345,10 +345,10 @@ function RevenuesChart({
 
     // Custom color getter for breakdown mode
     const getBreakdownColor = useCallback((key: string) => {
-        if (key === "baseline") return "#9ca3af"; // gray-400
-        if (key === "profit") return "#22c55e"; // green-500
-        if (key === "loss") return "#ef4444"; // red-500
-        return "#000000";
+        if (key === "baseline") return "hsl(var(--muted-foreground) / 0.5)";
+        if (key === "profit") return "var(--success)";
+        if (key === "loss") return "var(--destructive)";
+        return "var(--foreground)";
     }, []);
 
     // Create a composite filter that combines non-zero filtering with visibility filtering
