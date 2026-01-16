@@ -34,6 +34,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -173,6 +174,9 @@ export function TopBar() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuLabel asChild>
+                                    <p>{user.username}</p>
+                                </DropdownMenuLabel>
                                 <DropdownMenuItem asChild>
                                     <ThemeToggle variant="menu-item" />
                                 </DropdownMenuItem>
