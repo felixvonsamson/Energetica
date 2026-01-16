@@ -9,6 +9,7 @@ import {
     TechnologyName,
     Money,
 } from "@/components/ui";
+import { CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/classname-utils";
 import { ProjectType } from "@/types/projects";
 
@@ -45,6 +46,26 @@ export function TechnologyItem({
             )}
             onClick={onClick}
         >
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 min-w-0 justify-between">
+                    <TechnologyIcon technology={technologyName} size={20} />
+                    <TechnologyName
+                        technology={technologyName}
+                        level={level}
+                        mode="long"
+                    />
+                    <div className="grow" />
+                </CardTitle>
+                <CardDescription className="flex items-center gap-2">
+                    <Money amount={price} iconSize="sm" long />
+                    {discount && (
+                        <div className="text-success text-xs">
+                            <em>(-{Math.round((1 - discount) * 100)}%)</em>
+                        </div>
+                    )}
+                </CardDescription>
+            </CardHeader>
+
             {/* Image with lock overlay */}
             <CardContent>
                 <div className="relative aspect-3/2">
@@ -63,25 +84,6 @@ export function TechnologyItem({
                     )}
                 </div>
             </CardContent>
-
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2 min-w-0 justify-between">
-                    <div className="flex gap-2 shrink-0">
-                        <TechnologyIcon technology={technologyName} size={20} />
-                        <TechnologyName
-                            technology={technologyName}
-                            level={level}
-                            mode="long"
-                        />
-                    </div>
-                    <Money amount={price} iconSize="sm" long />
-                </CardTitle>
-                {discount && (
-                    <div className="text-success text-xs">
-                        <em>(-{Math.round((1 - discount) * 100)}%)</em>
-                    </div>
-                )}
-            </CardHeader>
         </Card>
     );
 }

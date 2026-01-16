@@ -32,6 +32,8 @@ export type AssetNameMode = "long" | "short" | "auto";
 export interface AssetNameProps {
     /** The asset ID from the backend (e.g., "PV_solar", "coal_burner") */
     assetId: string;
+    /** Sting to add to end of name, e.g. "lvl. 4" */
+    suffix?: string;
     /** Display mode: "long", "short", or "auto" (short with tooltip) */
     mode?: AssetNameMode;
     /** Additional CSS classes */
@@ -69,6 +71,7 @@ export interface AssetNameProps {
  */
 export function AssetName({
     assetId,
+    suffix = "",
     mode = "long",
     className,
     as: Component = "span",
@@ -88,11 +91,17 @@ export function AssetName({
         return (
             <Component className={className} title={assetName.long}>
                 {assetName.short}
+                {suffix}
             </Component>
         );
     }
 
-    return <Component className={className}>{displayText}</Component>;
+    return (
+        <Component className={className}>
+            {displayText}
+            {suffix}
+        </Component>
+    );
 }
 
 /** Props for FacilityName component. */
@@ -143,8 +152,11 @@ export function TechnologyName({
     if (level !== undefined) {
         return (
             <>
-                <AssetName assetId={technology} {...props} />
-                <span> lvl. {level}</span>
+                <AssetName
+                    assetId={technology}
+                    {...props}
+                    suffix={` lvl. ${level}`}
+                />
             </>
         );
     }

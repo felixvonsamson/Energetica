@@ -9,6 +9,7 @@ import {
     FacilityName,
     Money,
 } from "@/components/ui";
+import { CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/classname-utils";
 import { ProjectType } from "@/types/projects";
 
@@ -47,13 +48,13 @@ export function FacilityItem({
         >
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 min-w-0 justify-between">
-                    <div className="flex gap-2 shrink-0">
-                        <FacilityIcon facility={facilityName} size={20} />
-                        <FacilityName facility={facilityName} mode="long" />
-                    </div>
-                    <Money amount={price} iconSize="sm" long />
+                    <FacilityIcon facility={facilityName} size={20} />
+                    <FacilityName facility={facilityName} mode="long" />
+                    <div className="grow" />
                 </CardTitle>
-                <div className="shrink-0" />
+                <CardDescription>
+                    <Money amount={price} iconSize="sm" long />
+                </CardDescription>
             </CardHeader>
             {/* Image with lock overlay */}
             <CardContent>
