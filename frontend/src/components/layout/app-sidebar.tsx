@@ -6,6 +6,7 @@
 import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 
+import Icon from "@/assets/icon.svg?react";
 import {
     Collapsible,
     CollapsibleContent,
@@ -52,11 +53,7 @@ export function AppSidebar() {
         <Sidebar side="left" collapsible="offcanvas">
             <SidebarHeader className="flex-row items-center justify-center">
                 <div className="flex aspect-square size-12 items-center justify-center">
-                    <img
-                        src="/static/images/icon.svg"
-                        alt="Energetica"
-                        className="w-full h-full size-5 brightness-0"
-                    />
+                    <Icon className="size-20 fill-sidebar-foreground" />
                 </div>
                 <span className="text-2xl font-semibold">Energetica</span>
             </SidebarHeader>

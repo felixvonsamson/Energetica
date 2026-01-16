@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
+import svgr from "vite-plugin-svgr";
 import path from "path";
 
 export default defineConfig(({ mode }) => {
@@ -25,6 +26,23 @@ export default defineConfig(({ mode }) => {
                 rehypePlugins: [rehypeSlug, rehypeKatex],
             }),
             tailwindcss(),
+            svgr({
+                svgrOptions: {
+                    ref: true,
+                    svgoConfig: {
+                        plugins: [
+                            {
+                                name: "preset-default",
+                                params: {
+                                    overrides: {
+                                        removeViewBox: false,
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            }),
             react(),
         ],
         resolve: {

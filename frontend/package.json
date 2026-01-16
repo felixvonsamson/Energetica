@@ -63,7 +63,8 @@
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.49.0",
         "vite": "^7.2.7",
-        "vite-plugin-dts": "^4.5.4"
+        "vite-plugin-dts": "^4.5.4",
+        "vite-plugin-svgr": "^4.5.0"
     },
     "lint-staged": {
         "frontend/src/**/*.{ts,tsx}": [
