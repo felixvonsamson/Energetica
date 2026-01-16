@@ -91,6 +91,8 @@ function LeaderboardsContent() {
     ): unknown => {
         if (key.includes(".")) {
             const [first, ...rest] = key.split(".");
+            if (!first) return undefined;
+
             const nextObj = obj[first];
             if (typeof nextObj === "object" && nextObj !== null) {
                 return getNestedValue(

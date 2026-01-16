@@ -198,7 +198,10 @@ function RouteComponent() {
                         {reusedIcons
                             .sort((a, b) => b[1].length - a[1].length)
                             .map(([iconName, assets]) => {
-                                const IconComponent = allAssetIcons[assets[0]];
+                                const firstAsset = assets[0];
+                                if (!firstAsset) return null;
+                                const IconComponent = allAssetIcons[firstAsset];
+                                if (!IconComponent) return null;
                                 return (
                                     <div
                                         key={iconName}

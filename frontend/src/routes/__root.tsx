@@ -26,7 +26,7 @@ function RootComponent() {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading } = useAuth();
     const capabilities = useCapabilities();
-    const routeConfig = matches[matches.length - 1].staticData?.routeConfig;
+    const routeConfig = matches[matches.length - 1]?.staticData?.routeConfig;
 
     useEffect(() => {
         if (isLoading) return;

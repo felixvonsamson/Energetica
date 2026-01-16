@@ -50,10 +50,9 @@ export function WindTable() {
                                 <th>{facilities}</th>
                                 {windPotentials.map(
                                     (potential, potentialIndex) => {
+                                        const row = capacityFactors[facilities];
                                         const value =
-                                            capacityFactors[facilities][
-                                                potentialIndex
-                                            ];
+                                            row?.[potentialIndex] ?? 0;
                                         return (
                                             <td
                                                 key={potential}

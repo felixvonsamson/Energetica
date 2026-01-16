@@ -135,8 +135,13 @@ export function TimeSeriesChart({
     const seriesComponents = useMemo(() => {
         if (!data || data.length === 0) return [];
 
+        const firstDataPoint = data[0];
+        if (!firstDataPoint) return [];
+
         // Extract all keys except 'tick'
-        const dataKeys = Object.keys(data[0]).filter((key) => key !== "tick");
+        const dataKeys = Object.keys(firstDataPoint).filter(
+            (key) => key !== "tick",
+        );
 
         // Apply filtering if provided
         const filteredKeys = filterDataKeys

@@ -32,7 +32,7 @@ export function getMonthName(monthNumber: number): string {
     if (monthNumber < 1 || monthNumber > 12) {
         return "Unknown";
     }
-    return MONTH_NAMES[monthNumber - 1];
+    return MONTH_NAMES[monthNumber - 1] ?? "Unknown";
 }
 
 /**

@@ -161,7 +161,7 @@ function MapTiles({
                         tile={hoveredTile}
                         username={
                             hoveredTile.player_id
-                                ? playerMap[hoveredTile.player_id]
+                                ? (playerMap[hoveredTile.player_id] ?? null)
                                 : null
                         }
                         distance={calculateDistance(hoveredTile.id)}

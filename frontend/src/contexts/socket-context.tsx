@@ -3,7 +3,7 @@
  * and provides socket instance to components.
  */
 
-import React, {
+import {
     createContext,
     useContext,
     useEffect,

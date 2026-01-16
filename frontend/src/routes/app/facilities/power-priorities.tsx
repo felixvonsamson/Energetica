@@ -85,18 +85,16 @@ function PowerPrioritiesContent() {
 
         // Power facilities
         facilitiesData.power_facilities.forEach((facility) => {
-            if (!capacities[facility.facility]) {
-                capacities[facility.facility] = 0;
-            }
-            capacities[facility.facility] += facility.max_power_generation;
+            capacities[facility.facility] =
+                (capacities[facility.facility] ?? 0) +
+                facility.max_power_generation;
         });
 
         // Storage facilities (when generating/discharging)
         facilitiesData.storage_facilities.forEach((facility) => {
-            if (!capacities[facility.facility]) {
-                capacities[facility.facility] = 0;
-            }
-            capacities[facility.facility] += facility.max_power_generation;
+            capacities[facility.facility] =
+                (capacities[facility.facility] ?? 0) +
+                facility.max_power_generation;
         });
 
         return capacities;
@@ -109,18 +107,14 @@ function PowerPrioritiesContent() {
 
         // Extraction facilities
         facilitiesData.extraction_facilities.forEach((facility) => {
-            if (!capacities[facility.facility]) {
-                capacities[facility.facility] = 0;
-            }
-            capacities[facility.facility] += facility.max_power_use;
+            capacities[facility.facility] =
+                (capacities[facility.facility] ?? 0) + facility.max_power_use;
         });
 
         // Storage facilities (when charging)
         facilitiesData.storage_facilities.forEach((facility) => {
-            if (!capacities[facility.facility]) {
-                capacities[facility.facility] = 0;
-            }
-            capacities[facility.facility] += facility.max_power_use;
+            capacities[facility.facility] =
+                (capacities[facility.facility] ?? 0) + facility.max_power_use;
         });
 
         return capacities;
@@ -243,7 +237,7 @@ function PowerPrioritiesContent() {
         // Assign sorted prices to items in the new order
         const updatedPriorities = newPriorities.map((item, index) => ({
             ...item,
-            price: sortedPrices[index],
+            price: sortedPrices[index] ?? item.price,
         }));
 
         setPendingPriorities(updatedPriorities);

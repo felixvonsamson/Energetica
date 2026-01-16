@@ -217,6 +217,9 @@ export function useLatestChartData({
     }
 
     const lastDatapoint = chartData[chartData.length - 1];
+    if (!lastDatapoint) {
+        return { data: {}, isLoading, isError };
+    }
 
     // Remove the 'tick' property to return just the data values
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

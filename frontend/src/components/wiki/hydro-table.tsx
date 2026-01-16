@@ -49,10 +49,9 @@ export function HydroTable() {
                                 <th>{facilities}</th>
                                 {hydroPotentials.map(
                                     (potential, potentialIndex) => {
+                                        const row = costMultipliers[facilities];
                                         const value =
-                                            costMultipliers[facilities][
-                                                potentialIndex
-                                            ];
+                                            row?.[potentialIndex] ?? 0;
                                         return (
                                             <td
                                                 key={potential}

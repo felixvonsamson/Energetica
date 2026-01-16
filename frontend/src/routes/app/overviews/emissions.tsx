@@ -585,14 +585,9 @@ function EmissionsChart({
                     const val = typeof dp[key] === "number" ? dp[key] : 0;
                     const rate = (val as number) || 0;
 
-                    // Initialize cumulative value if not exists
-                    if (!(key in cumulative)) {
-                        cumulative[key] = 0;
-                    }
-
                     // Add the emission for this period (rate * resolution)
                     // Resolution is already accounted for in the rate from the API
-                    cumulative[key] += rate;
+                    cumulative[key] = (cumulative[key] ?? 0) + rate;
 
                     result[key] = cumulative[key];
                 });

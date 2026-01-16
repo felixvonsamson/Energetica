@@ -43,19 +43,24 @@ export function ColdwaveOccurrenceTable() {
                         </tr>
                     </thead>
                     <tbody>
-                        {referenceTemps.map((refTemp) => (
-                            <tr key={refTemp}>
-                                <th className="p-2">{refTemp}°C</th>
-                                {occurrences[refTemp].map((value, index) => (
-                                    <td
-                                        key={temperatureAnomalies[index]}
-                                        className={`p-2 text-center ${getCellColor(value)}`}
-                                    >
-                                        {value === null ? "-" : value}
-                                    </td>
-                                ))}
-                            </tr>
-                        ))}
+                        {referenceTemps.map((refTemp) => {
+                            const row = occurrences[refTemp];
+                            if (!row) return null;
+
+                            return (
+                                <tr key={refTemp}>
+                                    <th className="p-2">{refTemp}°C</th>
+                                    {row.map((value, index) => (
+                                        <td
+                                            key={temperatureAnomalies[index]}
+                                            className={`p-2 text-center ${getCellColor(value)}`}
+                                        >
+                                            {value === null ? "-" : value}
+                                        </td>
+                                    ))}
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

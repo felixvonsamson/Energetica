@@ -44,7 +44,8 @@ export function TimeModeProvider({ children }: TimeModeProviderProps) {
     };
 
     const [selectedResolutionIndex, setResolution] = useState(0);
-    const selectedResolution = resolutions[selectedResolutionIndex];
+    const selectedResolution =
+        resolutions[selectedResolutionIndex] ?? resolutions[0]!;
 
     const value = {
         mode,

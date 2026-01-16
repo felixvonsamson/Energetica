@@ -58,14 +58,16 @@ function generalUpgradeFormat(
             value2 /= 1_000;
             unitIndex += 1;
         }
-        return `0${units[unitIndex][0]} → ${value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unitIndex]}`;
+        const unit = units[unitIndex] ?? "";
+        return `0${unit[0] ?? ""} → ${value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${unit}`;
     } else {
         while (value1 >= 10_000 && unitIndex < units.length - 1) {
             value1 /= 1_000;
             value2 /= 1_000;
             unitIndex += 1;
         }
-        return `${value1.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unitIndex][0]} → ${value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${units[unitIndex]}`;
+        const unit = units[unitIndex] ?? "";
+        return `${value1.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${unit[0] ?? ""} → ${value2.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}${unit}`;
     }
 }
 

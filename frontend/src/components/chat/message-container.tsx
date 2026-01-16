@@ -41,6 +41,8 @@ export function MessageContainer({
 
         for (let i = 0; i < messages.length; i++) {
             const currentMessage = messages[i];
+            if (!currentMessage) continue; // Skip if undefined (shouldn't happen)
+
             const previousMessage = i > 0 ? messages[i - 1] : null;
 
             const shouldStartNewGroup =
@@ -57,7 +59,10 @@ export function MessageContainer({
                     showTimestamp: true,
                 });
             } else {
-                groups[groups.length - 1].messages.push(currentMessage);
+                const lastGroup = groups[groups.length - 1];
+                if (lastGroup) {
+                    lastGroup.messages.push(currentMessage);
+                }
             }
         }
 
@@ -95,10 +100,17 @@ export function MessageContainer({
             {messageGroups.map((group) => {
                 const isOwnMessage = group.playerId === user?.player_id;
                 const showPlayerName = isGroupChat && !isOwnMessage;
+                const firstMessage = group.messages[0];
+                const player = playerMap[group.playerId];
+
+                // Skip groups without messages (shouldn't happen but type-safety)
+                if (!firstMessage) {
+                    return null;
+                }
 
                 return (
                     <div
-                        key={`group-${group.messages[0].id}`}
+                        key={`group-${firstMessage.id}`}
                         className={cn(
                             "flex flex-col",
                             isOwnMessage ? "items-end" : "items-start",
@@ -107,10 +119,10 @@ export function MessageContainer({
                         {/* Show player name and timestamp only for the first message in the group */}
                         {group.showTimestamp && (
                             <div className="text-sm text-muted-foreground mb-1 px-1">
-                                {showPlayerName && (
-                                    <>{playerMap[group.playerId].username} • </>
+                                {showPlayerName && player && (
+                                    <>{player.username} • </>
                                 )}
-                                {formatTimestamp(group.messages[0].timestamp)}
+                                {formatTimestamp(firstMessage.timestamp)}
                             </div>
                         )}
 

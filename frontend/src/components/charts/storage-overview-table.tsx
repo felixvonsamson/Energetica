@@ -131,8 +131,8 @@ export function StorageOverviewTable({
                 let cumulDischarging = 0;
 
                 for (let i = 1; i < chartData.length; i++) {
-                    const prevLevel = chartData[i - 1][facilityType] || 0;
-                    const currentLevel = chartData[i][facilityType] || 0;
+                    const prevLevel = chartData[i - 1]?.[facilityType] ?? 0;
+                    const currentLevel = chartData[i]?.[facilityType] ?? 0;
                     const change = currentLevel - prevLevel;
 
                     if (change > 0) {
@@ -144,7 +144,7 @@ export function StorageOverviewTable({
 
                 // Get current level (last data point)
                 const currentLevel =
-                    chartData[chartData.length - 1][facilityType] || 0;
+                    chartData[chartData.length - 1]?.[facilityType] ?? 0;
 
                 // Get max capacity from facilities data
                 const facilities = facilitiesData.storage_facilities.filter(

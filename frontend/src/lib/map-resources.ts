@@ -17,18 +17,21 @@ export const RESOURCES = [
 ] as const;
 
 // Max values for each resource (for normalization in colouring)
-export const MAX_VALUES = [1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10];
+export const MAX_VALUES = [
+    1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10,
+] as const;
 
 // Color interpolation helpers
 export function hexToRgb(hex: string): [number, number, number] {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-        ? [
-              parseInt(result[1], 16),
-              parseInt(result[2], 16),
-              parseInt(result[3], 16),
-          ]
-        : [0, 0, 0];
+    if (!result || !result[1] || !result[2] || !result[3]) {
+        return [0, 0, 0];
+    }
+    return [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16),
+    ];
 }
 
 export function hslToRgb(

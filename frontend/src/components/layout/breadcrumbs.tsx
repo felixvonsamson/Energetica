@@ -41,6 +41,8 @@ function generateBreadcrumbs(pathname: string): string[] {
     let currentPath = "";
     for (let i = 0; i < segments.length; i++) {
         const segment = segments[i];
+        if (!segment) continue; // Skip undefined segments
+
         currentPath += "/" + segment;
 
         // Skip the first "app" segment as it's redundant

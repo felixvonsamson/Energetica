@@ -277,7 +277,9 @@ export function getValidationFieldErrors(
         const errors: Record<string, string> = {};
         for (const err of error.detail.detail) {
             const field = err.loc[err.loc.length - 1];
-            errors[field] = err.msg;
+            if (field !== undefined) {
+                errors[field] = err.msg;
+            }
         }
         return errors;
     }

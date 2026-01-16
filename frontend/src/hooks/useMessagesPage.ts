@@ -56,11 +56,14 @@ export function useMessagesPage() {
             chatListData?.chats &&
             chatListData.chats.length > 0
         ) {
-            const firstChatId = chatListData.chats[0].id;
-            navigate({
-                search: { selectedChatId: firstChatId, showDisclaimer },
-            });
-            openChat(firstChatId);
+            const firstChat = chatListData.chats[0];
+            if (firstChat) {
+                const firstChatId = firstChat.id;
+                navigate({
+                    search: { selectedChatId: firstChatId, showDisclaimer },
+                });
+                openChat(firstChatId);
+            }
         }
     }, [chatListData, selectedChatId, showDisclaimer, navigate, openChat]);
 

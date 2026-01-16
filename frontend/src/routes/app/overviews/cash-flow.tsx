@@ -159,15 +159,18 @@ function RevenuesOverviewContent() {
 
         // Process revenues data
         revenuesData.forEach((dataPoint: Record<string, number>) => {
-            if (!tickMap.has(dataPoint.tick)) {
-                tickMap.set(dataPoint.tick, { tick: dataPoint.tick });
+            const tick = dataPoint.tick;
+            if (typeof tick !== "number") return;
+
+            if (!tickMap.has(tick)) {
+                tickMap.set(tick, { tick });
             }
-            const result = tickMap.get(dataPoint.tick)!;
+            const result = tickMap.get(tick)!;
 
             Object.keys(dataPoint).forEach((key) => {
                 if (key === "tick") return;
 
-                const value = dataPoint[key] || 0;
+                const value = dataPoint[key] ?? 0;
 
                 if (revenueType === "revenues") {
                     // Only include positive values from revenues
@@ -202,10 +205,13 @@ function RevenuesOverviewContent() {
             opCostsData.length > 0
         ) {
             opCostsData.forEach((dataPoint: Record<string, number>) => {
-                if (!tickMap.has(dataPoint.tick)) {
-                    tickMap.set(dataPoint.tick, { tick: dataPoint.tick });
+                const tick = dataPoint.tick;
+                if (typeof tick !== "number") return;
+
+                if (!tickMap.has(tick)) {
+                    tickMap.set(tick, { tick });
                 }
-                const result = tickMap.get(dataPoint.tick)!;
+                const result = tickMap.get(tick)!;
 
                 Object.keys(dataPoint).forEach((key) => {
                     if (key === "tick") return;
@@ -214,11 +220,7 @@ function RevenuesOverviewContent() {
 
                     if (revenueType === "expenses") {
                         // Op-costs are negative, display as positive for expenses view
-                        // Initialize the key if it doesn't exist yet
-                        if (!(key in result)) {
-                            result[key] = 0;
-                        }
-                        result[key] += Math.abs(value);
+                        result[key] = (result[key] ?? 0) + Math.abs(value);
                     } else if (revenueType === "net-profit") {
                         if (netProfitViewMode === "net") {
                             // For "net": aggregate op-costs into single "net-profit" value
@@ -237,7 +239,7 @@ function RevenuesOverviewContent() {
 
         // Convert map to sorted array
         let result = Array.from(tickMap.values()).sort(
-            (a, b) => a.tick - b.tick,
+            (a, b) => (a.tick ?? 0) - (b.tick ?? 0),
         );
 
         // For breakdown mode, transform gross-revenues and total-expenses into stacked series
@@ -247,7 +249,7 @@ function RevenuesOverviewContent() {
                 const totalExpenses = dataPoint["total-expenses"] || 0;
 
                 return {
-                    tick: dataPoint.tick,
+                    tick: dataPoint.tick ?? 0,
                     baseline: Math.min(grossRevenues, totalExpenses),
                     profit: Math.max(0, grossRevenues - totalExpenses),
                     loss: Math.max(0, totalExpenses - grossRevenues),

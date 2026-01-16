@@ -619,7 +619,10 @@ function BreakdownChart({
                           for (let i = 0; i < key.length; i++) {
                               hash = key.charCodeAt(i) + ((hash << 5) - hash);
                           }
-                          return colors[Math.abs(hash) % colors.length];
+                          return (
+                              colors[Math.abs(hash) % colors.length] ??
+                              "#3b82f6"
+                          );
                       },
             filterDataKeys,
             formatValue: (value: number) => formatPower(value),

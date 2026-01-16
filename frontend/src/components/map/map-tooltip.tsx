@@ -49,8 +49,10 @@ export function MapTooltip({
     }
 
     // Resource data with max values and colors (from original code)
-    const maxValues = [1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10];
-    const resourceColors = [59, 186, 239, 0, 275, 109, 320]; // HSL hue values
+    const maxValues = [
+        1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10,
+    ] as const;
+    const resourceColors = [59, 186, 239, 0, 275, 109, 320] as const; // HSL hue values
 
     const resources: ResourceInfo[] = [
         {

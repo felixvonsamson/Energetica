@@ -3,7 +3,7 @@
  * cookies and fetches user data from the backend.
  */
 
-import React, {
+import {
     createContext,
     useState,
     useEffect,
