@@ -312,7 +312,7 @@ def _get_network_data(
     """
     network = Network.getitem(
         network_id,
-        error=HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Network not found"),
+        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Network not found"),
     )
 
     current_tick = engine.total_t

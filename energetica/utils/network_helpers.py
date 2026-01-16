@@ -16,7 +16,7 @@ def join_network(player: Player, network: Network | None) -> Network:
         # as HTTP_404_NOT_FOUND
         raise GameError(GameExceptionType.NO_SUCH_NETWORK)
     if player.network is not None:
-        raise GameError(GameExceptionType.PLAYER_ALREADY_IN_NETWORK)
+        leave_network(player)
     player.network = network
     network.members.append(player)
     network.capacities.update_network(network)
@@ -34,6 +34,8 @@ def create_network(player: Player, name: str) -> Network:
         raise GameError(GameExceptionType.NETWORK_NOT_UNLOCKED)
     if len(list(Network.filter_by(name=name))):
         raise GameError(GameExceptionType.NAME_ALREADY_USED)
+    if player.network is not None:
+        leave_network(player)
     new_network = Network(name=name, members=[player])
     player.network = new_network
     engine.log(f"{player.username} created the network {name}")
