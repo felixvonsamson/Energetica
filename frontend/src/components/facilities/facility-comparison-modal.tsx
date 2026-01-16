@@ -97,7 +97,10 @@ export function FacilityComparisonModal<T>({
                     {/* Selection Dropdowns */}
                     <div className="grid grid-cols-3 gap-4">
                         {slots.map((slot, index) => (
-                            <div key={index} className="space-y-2">
+                            <div
+                                key={slot.selected || `empty-slot-${index}`}
+                                className="space-y-2"
+                            >
                                 <Label>
                                     Facility {index + 1}
                                     {index >= 2 && " (Optional)"}

@@ -404,6 +404,16 @@ function RevenuesChart({
     const isShowingPercent =
         viewMode === "percent" && revenueType !== "net-profit";
 
+    const formatValue = useCallback(
+        (value: number) =>
+            isShowingPercent ? (
+                `${value.toFixed(1)}%`
+            ) : (
+                <CashFlow amountPerTick={value} />
+            ),
+        [isShowingPercent],
+    );
+
     const chartConfig: TimeSeriesChartConfig | undefined = useMemo(() => {
         if (!gameEngineConfig) return undefined;
 
@@ -418,12 +428,7 @@ function RevenuesChart({
             showBrush: true,
             getColor: isBreakdownMode ? getBreakdownColor : getColor,
             filterDataKeys,
-            formatValue: (value: number) =>
-                isShowingPercent ? (
-                    `${value.toFixed(1)}%`
-                ) : (
-                    <CashFlow amountPerTick={value} />
-                ),
+            formatValue,
             formatYAxis: (value: number) =>
                 isShowingPercent
                     ? `${value}%`
@@ -438,6 +443,7 @@ function RevenuesChart({
         getBreakdownColor,
         getColor,
         filterDataKeys,
+        formatValue,
         isShowingPercent,
         timeMode,
     ]);

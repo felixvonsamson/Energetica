@@ -380,9 +380,9 @@ export function FacilityGroupTable<T extends FacilityBase>({
                     >
                         Name{getSortIndicator("facility")}
                     </th>
-                    {columns.map((col, idx) => (
+                    {columns.map((col) => (
                         <th
-                            key={idx}
+                            key={col.header}
                             className={`py-3 px-4 font-semibold ${col.className || ""} ${
                                 col.sortable
                                     ? "cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
@@ -468,9 +468,9 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                     />{" "}
                                     ({count})
                                 </td>
-                                {columns.map((col, idx) => (
+                                {columns.map((col) => (
                                     <td
-                                        key={idx}
+                                        key={col.header}
                                         className={`py-3 px-4 ${col.className || ""}`}
                                     >
                                         {col.renderSummary(facilityGroup)}
@@ -510,9 +510,9 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                         <td className="py-3 px-4 pl-12 opacity-0">
                                             {facility.facility}
                                         </td>
-                                        {columns.map((col, idx) => (
+                                        {columns.map((col) => (
                                             <td
-                                                key={idx}
+                                                key={col.header}
                                                 className={`py-3 px-4 ${col.className || ""}`}
                                             >
                                                 {col.render(facility)}

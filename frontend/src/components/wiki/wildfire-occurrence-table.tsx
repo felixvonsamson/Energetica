@@ -27,7 +27,7 @@ export function WildfireOccurrenceTable() {
                 <table className="border-collapse">
                     <thead>
                         <tr>
-                            <th className="p-2"></th>
+                            <th className="p-2" />
                             <th className="p-2" colSpan={7}>
                                 Temperature Anomaly
                             </th>
@@ -48,7 +48,7 @@ export function WildfireOccurrenceTable() {
                                 <th className="p-2">{refTemp}°C</th>
                                 {occurrences[refTemp].map((value, index) => (
                                     <td
-                                        key={index}
+                                        key={temperatureAnomalies[index]}
                                         className={`p-2 text-center ${getCellColor(value)}`}
                                     >
                                         {value === null ? "-" : value}

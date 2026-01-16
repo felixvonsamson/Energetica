@@ -92,13 +92,13 @@ export function MessageContainer({
 
     return (
         <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-            {messageGroups.map((group, groupIndex) => {
+            {messageGroups.map((group) => {
                 const isOwnMessage = group.playerId === user?.player_id;
                 const showPlayerName = isGroupChat && !isOwnMessage;
 
                 return (
                     <div
-                        key={`group-${groupIndex}`}
+                        key={`group-${group.messages[0].id}`}
                         className={cn(
                             "flex flex-col",
                             isOwnMessage ? "items-end" : "items-start",

@@ -183,6 +183,7 @@ export function TopBar() {
                                             "https://github.com/felixvonsamson/Energetica/issues/new"
                                         }
                                         target="_blank"
+                                        rel="noreferrer"
                                     >
                                         <FlagTriangleRight size={20} />
                                         Report an issue

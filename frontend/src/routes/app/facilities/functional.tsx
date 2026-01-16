@@ -5,7 +5,7 @@ import {
     Link,
 } from "@tanstack/react-router";
 import { HardHat } from "lucide-react";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import { ConstructionProjectsModal } from "@/components/dashboard/construction-projects-modal";
 import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
@@ -104,6 +104,15 @@ function FunctionalFacilitiesContent() {
     // Check if there are any construction projects
     const hasConstructionProjects =
         (projectsData?.construction_queue?.length ?? 0) > 0;
+
+    const extraHeaderContent = useCallback(
+        (facility: FunctionalFacility) => (
+            <span className="text-lg">
+                lvl. <em className="text-xl">{facility.level}</em>
+            </span>
+        ),
+        [],
+    );
 
     return (
         <div className="p-4 md:p-8">
@@ -219,14 +228,7 @@ function FunctionalFacilitiesContent() {
                                     facility={facility}
                                 />
                             )}
-                            extraHeaderContent={(facility) => (
-                                <span className="text-lg">
-                                    lvl.{" "}
-                                    <em className="text-xl">
-                                        {facility.level}
-                                    </em>
-                                </span>
-                            )}
+                            extraHeaderContent={extraHeaderContent}
                         />
                     )}
                 </>

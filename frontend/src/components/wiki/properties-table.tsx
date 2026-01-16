@@ -28,8 +28,8 @@ export function PropertiesTable({ properties, headers }: PropertiesTableProps) {
                         </thead>
                     )}
                     <tbody>
-                        {properties.map((property, index) => (
-                            <tr key={index}>
+                        {properties.map((property) => (
+                            <tr key={property.label}>
                                 <th className="text-left pr-8 py-2 font-semibold whitespace-nowrap">
                                     {property.label}
                                 </th>

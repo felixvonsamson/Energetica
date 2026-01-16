@@ -204,6 +204,27 @@ export function TimeSeriesChart({
         [mode, gameEngine, currentTick],
     );
 
+    const tooltipContent = useCallback(
+        (props: {
+            active?: boolean;
+            payload?: ReadonlyArray<{
+                value: number;
+                name: string;
+                [key: string]: unknown;
+            }>;
+            label?: string | number;
+        }) => (
+            <CustomTooltipContent
+                active={props.active}
+                payload={props.payload}
+                label={props.label}
+                formatValue={formatValue}
+                formatLabel={formatLabel}
+            />
+        ),
+        [formatValue, formatLabel],
+    );
+
     if (isLoading) {
         return <ChartLoadingState />;
     }
@@ -280,18 +301,7 @@ export function TimeSeriesChart({
                     <Brush dataKey="tick" height={30} stroke="#7a7a7aff" />
                 )}
                 {seriesComponents}
-                <Tooltip
-                    content={(props) => (
-                        <CustomTooltipContent
-                            active={props.active}
-                            payload={props.payload}
-                            label={props.label}
-                            formatValue={formatValue}
-                            formatLabel={formatLabel}
-                        />
-                    )}
-                    isAnimationActive={false}
-                />
+                <Tooltip content={tooltipContent} isAnimationActive={false} />
             </ChartComponent>
         </ResponsiveContainer>
     );
@@ -335,7 +345,7 @@ function CustomTooltipContent({
                     )}
                 <thead hidden>
                     <tr>
-                        <th></th>
+                        <th />
                         <th>{"label"}</th>
                         <th>{"value"}</th>
                     </tr>
@@ -347,7 +357,7 @@ function CustomTooltipContent({
                             (a, b) => (b.value as number) - (a.value as number),
                         )
                         .map((p) => (
-                            <tr>
+                            <tr key={p.name}>
                                 <td>
                                     <div
                                         className="h-6 aspect-square"

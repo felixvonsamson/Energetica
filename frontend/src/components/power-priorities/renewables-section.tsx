@@ -52,16 +52,16 @@ export function RenewablesSection({
                     </h3>
                 </td>
             </tr>
-            {renewables.map((renewable, idx) => {
+            {renewables.map((renewable) => {
                 // Look up status for this renewable, default to "available"
                 const status = statuses.renewables[renewable] || "available";
                 const currentPowerMW = productionPowerLevels[renewable];
                 const capacityMW = productionCapacityByType[renewable] || 0;
 
                 return (
-                    <tr key={`renewable-${idx}`}>
+                    <tr key={renewable}>
                         {/* Empty consumption priority column */}
-                        <td className="bg-transparent"></td>
+                        <td className="bg-transparent" />
 
                         {/* Facility name */}
                         <td className="py-3 px-3 font-medium bg-secondary rounded-l-lg">

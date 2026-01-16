@@ -34,11 +34,11 @@ export function WindTable() {
                 <table>
                     <thead>
                         <tr>
-                            <th></th>
+                            <th />
                             <th colSpan={6}>Wind potential</th>
                         </tr>
                         <tr>
-                            <th></th>
+                            <th />
                             {windPotentials.map((potential) => (
                                 <th key={potential}>{potential}%</th>
                             ))}
@@ -48,20 +48,22 @@ export function WindTable() {
                         {existingFacilities.map((facilities) => (
                             <tr key={facilities}>
                                 <th>{facilities}</th>
-                                {windPotentials.map((_, potentialIndex) => {
-                                    const value =
-                                        capacityFactors[facilities][
-                                            potentialIndex
-                                        ];
-                                    return (
-                                        <td
-                                            key={potentialIndex}
-                                            className={getCellColor(value)}
-                                        >
-                                            {value}%
-                                        </td>
-                                    );
-                                })}
+                                {windPotentials.map(
+                                    (potential, potentialIndex) => {
+                                        const value =
+                                            capacityFactors[facilities][
+                                                potentialIndex
+                                            ];
+                                        return (
+                                            <td
+                                                key={potential}
+                                                className={getCellColor(value)}
+                                            >
+                                                {value}%
+                                            </td>
+                                        );
+                                    },
+                                )}
                             </tr>
                         ))}
                     </tbody>

@@ -1,4 +1,5 @@
 import reactHooks from "eslint-plugin-react-hooks";
+import react from "eslint-plugin-react";
 import jsdoc from "eslint-plugin-jsdoc";
 import importPlugin from "eslint-plugin-import";
 import tseslint from "typescript-eslint";
@@ -38,6 +39,7 @@ export default defineConfig([
         },
         plugins: {
             import: importPlugin,
+            react: react,
         },
         settings: {
             "import/resolver": {
@@ -48,6 +50,9 @@ export default defineConfig([
                 node: true,
             },
             "import/internal-regex": "^@/",
+            react: {
+                version: "detect",
+            },
         },
         rules: {
             "import/order": [
@@ -80,6 +85,24 @@ export default defineConfig([
                     ],
                 },
             ],
+            // React-specific rules
+            "react/jsx-key": "error",
+            "react/jsx-no-target-blank": "error",
+            "react/no-array-index-key": "warn",
+            "react/no-children-prop": "error",
+            "react/no-danger-with-children": "error",
+            "react/no-unstable-nested-components": "warn",
+            "react/self-closing-comp": "warn",
+            // TypeScript unused variables and imports
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                {
+                    argsIgnorePattern: "^_",
+                    varsIgnorePattern: "^_",
+                    caughtErrorsIgnorePattern: "^_",
+                },
+            ],
+            "import/no-duplicates": "error",
         },
     },
     reactHooks.configs.flat["recommended-latest"],

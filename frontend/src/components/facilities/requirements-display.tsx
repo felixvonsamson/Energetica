@@ -29,7 +29,7 @@ export function RequirementsDisplay({
         <div className="bg-muted/50 p-3 rounded">
             <div className="font-bold mb-2">Unlock with:</div>
             <ul className="space-y-1 ml-4">
-                {requirements.map((req, idx) => {
+                {requirements.map((req) => {
                     const isTech = isTechnology(req.name);
                     const route = isTech
                         ? getTechnologyRoute(req.name)
@@ -37,7 +37,7 @@ export function RequirementsDisplay({
 
                     return (
                         <li
-                            key={idx}
+                            key={`${req.name}-${req.level}`}
                             className={
                                 req.status === "satisfied"
                                     ? "text-green-600 dark:text-green-400"

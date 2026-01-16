@@ -27,7 +27,7 @@ export function ColdwaveOccurrenceTable() {
                 <table className="border-collapse">
                     <thead>
                         <tr>
-                            <th className="p-2"></th>
+                            <th className="p-2" />
                             <th className="p-2" colSpan={9}>
                                 Temperature Anomaly
                             </th>
@@ -48,7 +48,7 @@ export function ColdwaveOccurrenceTable() {
                                 <th className="p-2">{refTemp}°C</th>
                                 {occurrences[refTemp].map((value, index) => (
                                     <td
-                                        key={index}
+                                        key={temperatureAnomalies[index]}
                                         className={`p-2 text-center ${getCellColor(value)}`}
                                     >
                                         {value === null ? "-" : value}

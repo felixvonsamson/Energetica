@@ -20,8 +20,8 @@ export function TimeConversionTable() {
                         </tr>
                     </thead>
                     <tbody>
-                        {conversions.map((conversion, index) => (
-                            <tr key={index}>
+                        {conversions.map((conversion) => (
+                            <tr key={conversion.ticks}>
                                 <td>{conversion.realTime}</td>
                                 <td>{conversion.inGameTime}</td>
                                 <td>{conversion.ticks}</td>

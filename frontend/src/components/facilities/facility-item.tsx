@@ -53,7 +53,7 @@ export function FacilityItem({
                     </div>
                     <Money amount={price} iconSize="sm" long />
                 </CardTitle>
-                <div className="shrink-0"></div>
+                <div className="shrink-0" />
             </CardHeader>
             {/* Image with lock overlay */}
             <CardContent>

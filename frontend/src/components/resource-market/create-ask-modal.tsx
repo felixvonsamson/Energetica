@@ -15,8 +15,11 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useCreateAsk } from "@/hooks/useResourceMarket";
 import { formatMass } from "@/lib/format-utils";
-import { RESOURCE_LABELS } from "@/types/resource-market";
-import { ResourceType, RESOURCE_TYPES } from "@/types/resource-market";
+import {
+    RESOURCE_LABELS,
+    ResourceType,
+    RESOURCE_TYPES,
+} from "@/types/resource-market";
 
 interface CreateAskModalProps {
     isOpen: boolean;

@@ -33,11 +33,11 @@ export function HydroTable() {
                 <table>
                     <thead>
                         <tr>
-                            <th></th>
+                            <th />
                             <th colSpan={6}>Hydro potential</th>
                         </tr>
                         <tr>
-                            <th></th>
+                            <th />
                             {hydroPotentials.map((potential) => (
                                 <th key={potential}>{potential}%</th>
                             ))}
@@ -47,20 +47,22 @@ export function HydroTable() {
                         {existingFacilities.map((facilities) => (
                             <tr key={facilities}>
                                 <th>{facilities}</th>
-                                {hydroPotentials.map((_, potentialIndex) => {
-                                    const value =
-                                        costMultipliers[facilities][
-                                            potentialIndex
-                                        ];
-                                    return (
-                                        <td
-                                            key={potentialIndex}
-                                            className={getCellColor(value)}
-                                        >
-                                            {value}
-                                        </td>
-                                    );
-                                })}
+                                {hydroPotentials.map(
+                                    (potential, potentialIndex) => {
+                                        const value =
+                                            costMultipliers[facilities][
+                                                potentialIndex
+                                            ];
+                                        return (
+                                            <td
+                                                key={potential}
+                                                className={getCellColor(value)}
+                                            >
+                                                {value}
+                                            </td>
+                                        );
+                                    },
+                                )}
                             </tr>
                         ))}
                     </tbody>
