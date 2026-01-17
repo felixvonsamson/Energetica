@@ -412,6 +412,8 @@ function useFetchChartGaps({
             if (isNetworkChart && networkId !== undefined) {
                 // Network chart - pass networkId as first parameter
                 return {
+                    // chartType is encoded in queryKeyFn selection, resolution is passed as resolutionKey
+                    // eslint-disable-next-line @tanstack/query/exhaustive-deps
                     queryKey: (queryKeyFn as NetworkChartQueryKeyFn)(
                         networkId,
                         resolutionKey,
@@ -435,6 +437,8 @@ function useFetchChartGaps({
             } else {
                 // Regular chart
                 return {
+                    // chartType is encoded in queryKeyFn selection, resolution is passed as resolutionKey
+                    // eslint-disable-next-line @tanstack/query/exhaustive-deps
                     queryKey: (queryKeyFn as RegularChartQueryKeyFn)(
                         resolutionKey,
                         range.startTick,
