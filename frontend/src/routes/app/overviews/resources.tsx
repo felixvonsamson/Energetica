@@ -133,6 +133,7 @@ function ResourcesChart({
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
+            chartType: "resources",
             chartVariant: "area",
             stacked: false,
             showBrush: true,

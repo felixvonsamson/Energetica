@@ -230,6 +230,7 @@ function StorageChart({
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
+            chartType: "storage-level",
             chartVariant: viewMode === "normal" ? "area" : "line",
             stacked: viewMode === "normal" ? true : false,
             showBrush: true,

@@ -22,10 +22,17 @@ import { useTimeMode } from "@/contexts/time-mode-context";
 import { useGameEngine } from "@/hooks/useGame";
 import { useGameTick } from "@/hooks/useGameTick";
 import { assetCSSColourVariable } from "@/lib/assets/asset-colors";
+import {
+    KEY_ORDER_BY_CHART_TYPE,
+    reorderObjectKeys,
+} from "@/lib/charts/chart-key-order";
 import { formatDuration } from "@/lib/format-utils";
+import { ChartType } from "@/types/charts";
 
 /** Configuration for how to render a time series chart. */
 export interface TimeSeriesChartConfig {
+    /** Chart type - used to maintain deliberate key ordering when filtering */
+    chartType?: ChartType;
     /** Type of chart to render */
     chartVariant: "area" | "line" | "bar";
     /** Whether to stack multiple series */
@@ -85,6 +92,7 @@ export function TimeSeriesChart({
     errorMessage = "Failed to load data",
 }: TimeSeriesChartProps) {
     const {
+        chartType,
         chartVariant = "area",
         stacked = false,
         height = 500,
@@ -97,16 +105,27 @@ export function TimeSeriesChart({
         gradientKeys = [],
     } = config;
 
+    // Reorder data keys if chartType is provided to preserve deliberate ordering
+    const orderedData = useMemo(() => {
+        if (!chartType) return data;
+        const keyOrder = KEY_ORDER_BY_CHART_TYPE[chartType];
+        return data.map((dataPoint) => reorderObjectKeys(dataPoint, keyOrder));
+    }, [data, chartType]);
+
     // Calculate gradient offsets for keys that need value-based gradients
     const gradientOffsets = useMemo(() => {
         const offsets: Record<string, number> = {};
 
-        if (!data || data.length === 0 || gradientKeys.length === 0) {
+        if (
+            !orderedData ||
+            orderedData.length === 0 ||
+            gradientKeys.length === 0
+        ) {
             return offsets;
         }
 
         gradientKeys.forEach((key) => {
-            const values = data
+            const values = orderedData
                 .map((d) => (typeof d[key] === "number" ? d[key] : 0) as number)
                 .filter((v) => !isNaN(v));
 
@@ -129,13 +148,13 @@ export function TimeSeriesChart({
         });
 
         return offsets;
-    }, [data, gradientKeys]);
+    }, [orderedData, gradientKeys]);
 
     // Extract and filter data keys
     const seriesComponents = useMemo(() => {
-        if (!data || data.length === 0) return [];
+        if (!orderedData || orderedData.length === 0) return [];
 
-        const firstDataPoint = data[0];
+        const firstDataPoint = orderedData[0];
         if (!firstDataPoint) return [];
 
         // Extract all keys except 'tick'
@@ -146,7 +165,7 @@ export function TimeSeriesChart({
         // Apply filtering if provided
         const filteredKeys = filterDataKeys
             ? dataKeys.filter((key) =>
-                  filterDataKeys.every((cond) => cond(key, data)),
+                  filterDataKeys.every((cond) => cond(key, orderedData)),
               )
             : dataKeys;
 
@@ -195,7 +214,21 @@ export function TimeSeriesChart({
                     return null;
             }
         });
-    }, [data, chartVariant, stacked, getColor, filterDataKeys, gradientKeys]);
+    }, [
+        orderedData,
+        chartVariant,
+        stacked,
+        getColor,
+        filterDataKeys,
+        gradientKeys,
+    ]);
+
+    // Create a stable key from the series order to force re-render when order changes
+    const chartKey = useMemo(() => {
+        if (!orderedData || orderedData.length === 0) return "empty";
+        const keys = seriesComponents.map((c) => c?.key).filter(Boolean);
+        return keys.join("-");
+    }, [seriesComponents, orderedData]);
 
     const { currentTick } = useGameTick();
     const { mode } = useTimeMode();
@@ -252,7 +285,7 @@ export function TimeSeriesChart({
 
     return (
         <ResponsiveContainer width="100%" height={height}>
-            <ChartComponent data={data}>
+            <ChartComponent key={chartKey} data={orderedData}>
                 {/* Define gradients for keys that need value-based fills */}
                 {gradientKeys.length > 0 && (
                     <defs>

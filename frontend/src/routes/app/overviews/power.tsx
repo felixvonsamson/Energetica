@@ -155,6 +155,7 @@ function PowerOverviewContent() {
                 className="mb-6"
             >
                 <PowerChart
+                    chartType={chartType}
                     chartData={chartData}
                     isLoading={isChartLoading}
                     isError={isError}
@@ -176,6 +177,7 @@ function PowerOverviewContent() {
 }
 
 interface PowerChartProps {
+    chartType: ChartType;
     chartData: Array<Record<string, unknown>>;
     isLoading: boolean;
     isError: boolean;
@@ -183,6 +185,7 @@ interface PowerChartProps {
 }
 
 function PowerChart({
+    chartType,
     chartData,
     isLoading,
     isError,
@@ -193,6 +196,7 @@ function PowerChart({
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
+            chartType,
             chartVariant: "area",
             stacked: true,
             showBrush: true,
@@ -205,12 +209,12 @@ function PowerChart({
             formatValue: formatPower,
             formatYAxis: (value: number) => formatPower(value),
         }),
-        [getColor, filterDataKeys],
+        [chartType, getColor, filterDataKeys],
     );
 
     return (
         <TimeSeriesChart
-            data={chartData as Array<Record<string, unknown>>}
+            data={chartData}
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}

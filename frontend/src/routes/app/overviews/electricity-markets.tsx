@@ -369,6 +369,7 @@ function MarketsOverviewContent() {
                 className="mb-6"
             >
                 <BreakdownChart
+                    chartType={breakdownChartType}
                     chartData={breakdownChartData}
                     isLoading={isBreakdownLoading}
                     isError={isBreakdownError}
@@ -438,6 +439,7 @@ function PriceChart({ chartData, isLoading, isError }: PriceChartProps) {
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
+            chartType: "network-data",
             chartVariant: "line",
             stacked: false,
             showBrush: true,
@@ -480,6 +482,7 @@ function ClearingVolumeChart({
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
+            chartType: "network-data",
             chartVariant: "bar",
             stacked: false,
             showBrush: true,
@@ -502,6 +505,7 @@ function ClearingVolumeChart({
 }
 
 interface BreakdownChartProps {
+    chartType: ChartType;
     chartData: Array<Record<string, unknown>>;
     isLoading: boolean;
     isError: boolean;
@@ -511,6 +515,7 @@ interface BreakdownChartProps {
 }
 
 function BreakdownChart({
+    chartType,
     chartData,
     isLoading,
     isError,
@@ -523,6 +528,7 @@ function BreakdownChart({
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
+            chartType,
             chartVariant: "bar",
             stacked: true,
             showBrush: true,
@@ -559,7 +565,7 @@ function BreakdownChart({
                           playerMap?.[parseInt(key)]?.username ?? key
                     : undefined,
         }),
-        [getColor, filterDataKeys, breakdownMode, playerMap],
+        [chartType, getColor, filterDataKeys, breakdownMode, playerMap],
     );
 
     return (

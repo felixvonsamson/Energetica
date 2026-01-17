@@ -479,7 +479,16 @@ function RevenuesChart({
         const isNetMode =
             revenueType === "net-profit" && netProfitViewMode === "net";
 
+        // Determine chartType based on revenue type for proper key ordering
+        const chartType =
+            revenueType === "revenues"
+                ? "revenues"
+                : revenueType === "expenses"
+                  ? "op-costs"
+                  : undefined; // net-profit uses synthetic keys
+
         return {
+            chartType,
             chartVariant: "area",
             stacked: true,
             showBrush: true,

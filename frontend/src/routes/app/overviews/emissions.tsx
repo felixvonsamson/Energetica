@@ -621,6 +621,7 @@ function EmissionsChart({
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
+            chartType: "emissions",
             chartVariant: "area",
             stacked: true,
             height: 400,
