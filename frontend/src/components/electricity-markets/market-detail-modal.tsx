@@ -108,7 +108,7 @@ export function MarketDetailModal({
                                     Last Price
                                 </div>
                                 <div className="text-xl font-semibold">
-                                    {price !== undefined && price > 0 ? (
+                                    {price !== undefined ? (
                                         <Money amount={price} />
                                     ) : (
                                         <span className="text-muted-foreground">
