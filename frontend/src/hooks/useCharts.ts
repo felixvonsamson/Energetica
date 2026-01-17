@@ -26,20 +26,7 @@ import { useMemo } from "react";
 import { useGameTick } from "@/hooks/useGameTick";
 import { chartsApi } from "@/lib/api/charts";
 import {
-    POWER_GENERATION_KEYS,
-    POWER_CONSUMPTION_KEYS,
-    STORAGE_LEVEL_KEYS,
-    REVENUES_KEYS,
-    OP_COSTS_KEYS,
-    EMISSIONS_KEYS,
-    CLIMATE_KEYS,
-    TEMPERATURE_KEYS,
-    RESOURCES_KEYS,
-    NETWORK_DATA_KEYS,
-    NETWORK_EXPORTS_KEYS,
-    NETWORK_IMPORTS_KEYS,
-    NETWORK_GENERATION_KEYS,
-    NETWORK_CONSUMPTION_KEYS,
+    KEY_ORDER_BY_CHART_TYPE,
     reorderObjectKeys,
 } from "@/lib/charts/chart-key-order";
 import { queryKeys } from "@/lib/query-client";
@@ -50,26 +37,11 @@ import {
     toStringResolution,
 } from "@/types/charts";
 
-/** Map chart types to their corresponding key ordering */
-const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {
-    "power-sources": POWER_GENERATION_KEYS,
-    "power-sinks": POWER_CONSUMPTION_KEYS,
-    "storage-level": STORAGE_LEVEL_KEYS,
-    revenues: REVENUES_KEYS,
-    "op-costs": OP_COSTS_KEYS,
-    emissions: EMISSIONS_KEYS,
-    climate: CLIMATE_KEYS,
-    temperature: TEMPERATURE_KEYS,
-    resources: RESOURCES_KEYS,
-    "network-data": NETWORK_DATA_KEYS,
-    "network-exports": NETWORK_EXPORTS_KEYS,
-    "network-imports": NETWORK_IMPORTS_KEYS,
-    "network-generation": NETWORK_GENERATION_KEYS,
-    "network-consumption": NETWORK_CONSUMPTION_KEYS,
-};
-
-/** Main exported hook. Returns all chart datapoints relevant to the request. */
-export function useCurrentChartData({
+/**
+ * Internal helper that fetches chart data without fallback logic. Used as a
+ * base for useCurrentChartData.
+ */
+function useCurrentChartDataBase({
     chartType,
     currentTick,
     resolution,
@@ -110,38 +82,33 @@ export function useCurrentChartData({
 }
 
 /**
- * Hook that provides the latest snapshot of chart data without UI jitter.
+ * Main exported hook. Returns all chart datapoints relevant to the request.
  *
- * Always fetches data at resolution 1 for the current tick. While that data is
- * loading, returns the previous tick's cached data (if available) instead of
- * showing empty states, preventing UI flicker during tick transitions.
- *
- * @returns Object with power levels by source/sink (e.g., {coal: 100, wind:
- *   50})
+ * Includes jitter prevention: while loading new data for the current tick,
+ * displays cached data from the previous range (if available) to prevent empty
+ * states and UI flicker during tick transitions.
  */
-export function useLatestChartData({
+export function useCurrentChartData({
     chartType,
+    currentTick,
+    resolution,
+    maxDatapoints,
     networkId,
 }: {
     chartType: ChartType;
+    currentTick: number | undefined;
+    resolution: Resolution;
+    maxDatapoints: number;
     networkId?: number;
-}): {
-    data: Record<string, number>;
-    isLoading: boolean;
-    isError: boolean;
-} {
-    const { currentTick } = useGameTick();
+}) {
     const queryClient = useQueryClient();
 
-    const resolution = 1;
-    const maxDatapoints = 1;
-
-    // Attempt to fetch data for the current tick
+    // Fetch data for current tick range
     const {
         chartData: currentData,
         isLoading: currentIsLoading,
         isError,
-    } = useCurrentChartData({
+    } = useCurrentChartDataBase({
         chartType,
         currentTick,
         resolution,
@@ -149,7 +116,7 @@ export function useLatestChartData({
         networkId,
     });
 
-    // If current data is loading, try to get cached data from previous tick
+    // If current data is loading, try to get cached data from previous range
     const cachedFallbackData = useMemo(() => {
         // Only attempt fallback if:
         // 1. Current data is still loading
@@ -159,7 +126,7 @@ export function useLatestChartData({
         }
 
         // Calculate range for the previous tick
-        const previousTick = currentTick - 1;
+        const previousTick = currentTick - resolution;
         if (previousTick < 0) {
             return null; // No previous tick exists
         }
@@ -175,7 +142,7 @@ export function useLatestChartData({
 
         const previousRange = { startTick, count };
 
-        // Check if we have cached data for the previous tick
+        // Check if we have cached data for the previous range
         const cachedRanges = getCachedChartRanges({
             queryClient,
             chartType,
@@ -195,21 +162,67 @@ export function useLatestChartData({
             resolution,
             chartType,
         });
-    }, [currentIsLoading, currentTick, queryClient, chartType, networkId]);
+    }, [
+        currentIsLoading,
+        currentTick,
+        resolution,
+        maxDatapoints,
+        queryClient,
+        chartType,
+        networkId,
+    ]);
 
     // Determine what data to return
-    let chartData = currentData;
-    let isLoading = currentIsLoading;
-
     if (
         currentIsLoading &&
         cachedFallbackData &&
         cachedFallbackData.length > 0
     ) {
         // We're loading new data but have cached fallback - use it
-        chartData = cachedFallbackData;
-        isLoading = false; // Don't show loading state since we have data
+        return {
+            chartData: cachedFallbackData,
+            isLoading: false, // Don't show loading state since we have data
+            isError,
+        };
     }
+
+    return { chartData: currentData, isLoading: currentIsLoading, isError };
+}
+
+/**
+ * Hook that provides the latest snapshot of chart data without UI jitter.
+ *
+ * Always fetches data at resolution 1 for the current tick. Leverages
+ * useCurrentChartData's fallback mechanism to show previous tick's data while
+ * loading, preventing UI flicker during tick transitions.
+ *
+ * @returns Object with power levels by source/sink (e.g., {coal: 100, wind:
+ *   50})
+ */
+export function useLatestChartData({
+    chartType,
+    networkId,
+}: {
+    chartType: ChartType;
+    networkId?: number;
+}): {
+    data: Record<string, number>;
+    isLoading: boolean;
+    isError: boolean;
+} {
+    const { currentTick } = useGameTick();
+
+    const resolution = 1;
+    const maxDatapoints = 1;
+
+    // Fetch data for the current tick (with fallback handled internally)
+    const { chartData, isLoading, isError } = useCurrentChartData({
+        chartType,
+        currentTick,
+        resolution,
+        maxDatapoints,
+        networkId,
+    });
 
     // Extract the last datapoint (or return empty object)
     if (chartData.length === 0) {
@@ -297,7 +310,7 @@ function aggregateChartData({
  * Combines data from multiple cache entries to construct a complete time series
  * for the requested range. Triggers fetches for missing data ranges and waits.
  */
-export function useChartData({
+function useChartData({
     chartType,
     resolution,
     range,
@@ -540,7 +553,7 @@ function getCacheGaps({
  *
  * @returns Array of cached ranges, sorted by startTick ascending
  */
-export function getCachedChartRanges({
+function getCachedChartRanges({
     queryClient,
     chartType,
     resolution,

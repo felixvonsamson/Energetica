@@ -3,6 +3,8 @@
  * matches the order defined in energetica/static/charts/electricity.js
  */
 
+import { ChartType } from "@/types/charts";
+
 export const POWER_GENERATION_KEYS = [
     "watermill",
     "small_water_dam",
@@ -151,3 +153,20 @@ export function reorderObjectKeys(
 
     return result;
 }
+/** Map chart types to their corresponding key ordering */
+export const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {
+    "power-sources": POWER_GENERATION_KEYS,
+    "power-sinks": POWER_CONSUMPTION_KEYS,
+    "storage-level": STORAGE_LEVEL_KEYS,
+    revenues: REVENUES_KEYS,
+    "op-costs": OP_COSTS_KEYS,
+    emissions: EMISSIONS_KEYS,
+    climate: CLIMATE_KEYS,
+    temperature: TEMPERATURE_KEYS,
+    resources: RESOURCES_KEYS,
+    "network-data": NETWORK_DATA_KEYS,
+    "network-exports": NETWORK_EXPORTS_KEYS,
+    "network-imports": NETWORK_IMPORTS_KEYS,
+    "network-generation": NETWORK_GENERATION_KEYS,
+    "network-consumption": NETWORK_CONSUMPTION_KEYS,
+};
