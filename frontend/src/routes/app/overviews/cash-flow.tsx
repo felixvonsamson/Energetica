@@ -17,14 +17,10 @@ import {
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import {
-    Card,
-    CardContent,
-    CashFlow,
-    ButtonGroup,
-    type ButtonGroupOption,
-} from "@/components/ui";
+import { Card, CardContent, CashFlow } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useChartFilters } from "@/hooks/useChartFilters";
@@ -104,21 +100,21 @@ function RevenuesOverviewPage() {
     );
 }
 
-const REVENUE_TYPE_OPTIONS: ButtonGroupOption<RevenueType>[] = [
+const REVENUE_TYPE_OPTIONS = [
     { value: "revenues", label: "Revenues" },
     { value: "expenses", label: "Expenses" },
     { value: "net-profit", label: "Net Profit" },
-];
+] as const;
 
-const VIEW_MODE_OPTIONS: ButtonGroupOption<"normal" | "percent">[] = [
+const VIEW_MODE_OPTIONS = [
     { value: "normal", label: "Normal" },
     { value: "percent", label: "Percent" },
-];
+] as const;
 
-const NET_PROFIT_VIEW_MODE_OPTIONS: ButtonGroupOption<NetProfitViewMode>[] = [
+const NET_PROFIT_VIEW_MODE_OPTIONS = [
     { value: "net", label: "Net" },
     { value: "breakdown", label: "Breakdown" },
-];
+] as const;
 
 function RevenuesOverviewContent() {
     const { currentTick } = useGameTick();
@@ -272,26 +268,74 @@ function RevenuesOverviewContent() {
             <Card className="mb-6">
                 <CardContent>
                     <div className="space-y-4">
-                        <ButtonGroup
-                            label="Revenue Type"
-                            value={revenueType}
-                            options={REVENUE_TYPE_OPTIONS}
-                            onChange={setRevenueType}
-                        />
+                        <div>
+                            <Label className="mb-2">Revenue Type</Label>
+                            <Tabs
+                                value={revenueType}
+                                onValueChange={(value) =>
+                                    setRevenueType(value as RevenueType)
+                                }
+                            >
+                                <TabsList>
+                                    {REVENUE_TYPE_OPTIONS.map((option) => (
+                                        <TabsTrigger
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        </div>
                         {revenueType === "net-profit" ? (
-                            <ButtonGroup
-                                label="View Mode"
-                                value={netProfitViewMode}
-                                options={NET_PROFIT_VIEW_MODE_OPTIONS}
-                                onChange={setNetProfitViewMode}
-                            />
+                            <div>
+                                <Label className="mb-2">View Mode</Label>
+                                <Tabs
+                                    value={netProfitViewMode}
+                                    onValueChange={(value) =>
+                                        setNetProfitViewMode(
+                                            value as NetProfitViewMode,
+                                        )
+                                    }
+                                >
+                                    <TabsList>
+                                        {NET_PROFIT_VIEW_MODE_OPTIONS.map(
+                                            (option) => (
+                                                <TabsTrigger
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </TabsTrigger>
+                                            ),
+                                        )}
+                                    </TabsList>
+                                </Tabs>
+                            </div>
                         ) : (
-                            <ButtonGroup
-                                label="View Mode"
-                                value={viewMode}
-                                options={VIEW_MODE_OPTIONS}
-                                onChange={setViewMode}
-                            />
+                            <div>
+                                <Label className="mb-2">View Mode</Label>
+                                <Tabs
+                                    value={viewMode}
+                                    onValueChange={(value) =>
+                                        setViewMode(
+                                            value as "normal" | "percent",
+                                        )
+                                    }
+                                >
+                                    <TabsList>
+                                        {VIEW_MODE_OPTIONS.map((option) => (
+                                            <TabsTrigger
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </TabsTrigger>
+                                        ))}
+                                    </TabsList>
+                                </Tabs>
+                            </div>
                         )}
                         <ResolutionPicker currentTick={currentTick} />
                     </div>

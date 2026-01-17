@@ -2,6 +2,7 @@
 
 import { Duration, TimeModeToggle } from "@/components/ui";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { resolutions } from "@/types/charts";
 
@@ -20,35 +21,40 @@ export function ResolutionPicker({
     minDatapoints = 60,
 }: ResolutionPickerProps) {
     const { selectedResolution, setResolution } = useTimeMode();
+
+    const availableResolutions = currentTick
+        ? resolutions.filter(
+              (res) => currentTick > res.resolution * minDatapoints,
+          )
+        : [];
+
     return (
         <div>
             <Label className="mb-2">Resolution</Label>
-            <div className="flex flex-wrap gap-2">
-                {currentTick &&
-                    resolutions
-                        .filter(
-                            // Only show resolution if there's enough data
-                            (res) =>
-                                currentTick > res.resolution * minDatapoints,
-                        )
-                        .map((res) => (
-                            <button
-                                key={res.id}
-                                onClick={() => setResolution(res.id)}
-                                className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
-                                    selectedResolution.id === res.id
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                }`}
-                            >
-                                <Duration
-                                    ticks={
-                                        res.resolution *
-                                        (res.id === 0 ? 60 : 360)
-                                    }
-                                />
-                            </button>
-                        ))}
+            <div className="flex flex-wrap gap-2 items-center">
+                {availableResolutions.length > 0 && (
+                    <Tabs
+                        value={String(selectedResolution.id)}
+                        onValueChange={(value) => setResolution(Number(value))}
+                    >
+                        <TabsList>
+                            {availableResolutions.map((res) => (
+                                <TabsTrigger
+                                    key={res.id}
+                                    value={String(res.id)}
+                                    className="w-12"
+                                >
+                                    <Duration
+                                        ticks={
+                                            res.resolution *
+                                            (res.id === 0 ? 60 : 360)
+                                        }
+                                    />
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
+                )}
                 <TimeModeToggle />
             </div>
         </div>

@@ -25,12 +25,11 @@ import {
     CardHeader,
     CardTitle,
     Money,
-    ButtonGroup,
-    type ButtonGroupOption,
 } from "@/components/ui";
 import { FacilityName } from "@/components/ui/asset-name";
 import { ChartCard } from "@/components/ui/chart-card";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useChartFilters } from "@/hooks/useChartFilters";
@@ -113,17 +112,15 @@ function MarketsOverviewPage() {
     );
 }
 
-const BREAKDOWN_TYPE_OPTIONS: ButtonGroupOption<
-    "production" | "consumption"
->[] = [
+const BREAKDOWN_TYPE_OPTIONS = [
     { value: "production", label: "Production" },
     { value: "consumption", label: "Consumption" },
-];
+] as const;
 
-const BREAKDOWN_MODE_OPTIONS: ButtonGroupOption<"player" | "type">[] = [
+const BREAKDOWN_MODE_OPTIONS = [
     { value: "player", label: "By Player" },
     { value: "type", label: "By Type" },
-];
+] as const;
 
 function MarketsOverviewContent() {
     const { currentTick } = useGameTick();
@@ -319,18 +316,48 @@ function MarketsOverviewContent() {
             <Card className="mb-6">
                 <CardContent>
                     <div className="space-y-4">
-                        <ButtonGroup
-                            label="Breakdown Type"
-                            value={breakdownType}
-                            options={BREAKDOWN_TYPE_OPTIONS}
-                            onChange={setBreakdownType}
-                        />
-                        <ButtonGroup
-                            label="Breakdown Mode"
-                            value={breakdownMode}
-                            options={BREAKDOWN_MODE_OPTIONS}
-                            onChange={setBreakdownMode}
-                        />
+                        <div>
+                            <Label className="mb-2">Breakdown Type</Label>
+                            <Tabs
+                                value={breakdownType}
+                                onValueChange={(value) =>
+                                    setBreakdownType(
+                                        value as "production" | "consumption",
+                                    )
+                                }
+                            >
+                                <TabsList>
+                                    {BREAKDOWN_TYPE_OPTIONS.map((option) => (
+                                        <TabsTrigger
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        </div>
+                        <div>
+                            <Label className="mb-2">Breakdown Mode</Label>
+                            <Tabs
+                                value={breakdownMode}
+                                onValueChange={(value) =>
+                                    setBreakdownMode(value as "player" | "type")
+                                }
+                            >
+                                <TabsList>
+                                    {BREAKDOWN_MODE_OPTIONS.map((option) => (
+                                        <TabsTrigger
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

@@ -11,13 +11,10 @@ import {
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import {
-    Card,
-    CardContent,
-    ButtonGroup,
-    type ButtonGroupOption,
-} from "@/components/ui";
+import { Card, CardContent } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useChartFilters } from "@/hooks/useChartFilters";
@@ -87,10 +84,10 @@ function PowerOverviewPage() {
     );
 }
 
-const CHART_TYPE_OPTIONS: ButtonGroupOption<ChartType>[] = [
+const CHART_TYPE_OPTIONS = [
     { value: "power-sources", label: "Generation (Sources)" },
     { value: "power-sinks", label: "Consumption (Sinks)" },
-];
+] as const;
 
 function PowerOverviewContent() {
     const { currentTick } = useGameTick();
@@ -122,12 +119,26 @@ function PowerOverviewContent() {
             <Card className="mb-6">
                 <CardContent>
                     <div className="space-y-4">
-                        <ButtonGroup
-                            label="Chart Type"
-                            value={chartType}
-                            options={CHART_TYPE_OPTIONS}
-                            onChange={setChartType}
-                        />
+                        <div>
+                            <Label className="mb-2">Chart Type</Label>
+                            <Tabs
+                                value={chartType}
+                                onValueChange={(value) =>
+                                    setChartType(value as ChartType)
+                                }
+                            >
+                                <TabsList>
+                                    {CHART_TYPE_OPTIONS.map((option) => (
+                                        <TabsTrigger
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        </div>
                         <ResolutionPicker currentTick={currentTick} />
                     </div>
                 </CardContent>

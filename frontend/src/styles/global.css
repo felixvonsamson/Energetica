@@ -102,7 +102,7 @@
         --secondary: var(--color-tan-green);
         --secondary-foreground: #000000;
 
-        /* --muted: var(--content-bg); */
+        --muted: #d3bf94;
         --muted-foreground: var(--color-brand-green);
 
         --accent: var(--color-brand-green);
@@ -222,8 +222,8 @@
         --secondary: var(--color-pine);
         --secondary-foreground: #e5e5e5;
 
-        /* --muted: var(--content-bg); */
-        --muted-foreground: #a0a0a0;
+        --muted: #424242;
+        --muted-foreground: #b7b7b7;
 
         --accent: var(--color-brand-green);
         --accent-foreground: #ffffff;

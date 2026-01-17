@@ -11,13 +11,9 @@ import {
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import {
-    Card,
-    CardContent,
-    ButtonGroup,
-    type ButtonGroupOption,
-} from "@/components/ui";
+import { Card, CardContent } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useChartFilters } from "@/hooks/useChartFilters";
@@ -93,28 +89,25 @@ function EmissionsOverviewPage() {
     );
 }
 
-const ABSOLUTE_RELATIVE_OPTIONS: ButtonGroupOption<"absolute" | "relative">[] =
-    [
-        { value: "absolute", label: "Absolute" },
-        { value: "relative", label: "Relative" },
-    ];
+const ABSOLUTE_RELATIVE_OPTIONS = [
+    { value: "absolute", label: "Absolute" },
+    { value: "relative", label: "Relative" },
+] as const;
 
-const CO2_UNIT_OPTIONS: ButtonGroupOption<"concentration" | "quantity">[] = [
+const CO2_UNIT_OPTIONS = [
     { value: "concentration", label: "Concentration" },
     { value: "quantity", label: "Quantity" },
-];
+] as const;
 
-const EMISSIONS_VIEW_OPTIONS: ButtonGroupOption<"normal" | "percent">[] = [
+const EMISSIONS_VIEW_OPTIONS = [
     { value: "normal", label: "Normal" },
     { value: "percent", label: "Percent" },
-];
+] as const;
 
-const EMISSIONS_CUMULATIVE_OPTIONS: ButtonGroupOption<
-    "rates" | "cumulative"
->[] = [
+const EMISSIONS_CUMULATIVE_OPTIONS = [
     { value: "rates", label: "Rates" },
     { value: "cumulative", label: "Cumulative" },
-];
+] as const;
 
 function EmissionsOverviewContent() {
     const { currentTick } = useGameTick();
@@ -197,16 +190,42 @@ function EmissionsOverviewContent() {
                 />
 
                 <div className="mt-4 flex flex-wrap gap-4">
-                    <ButtonGroup
+                    <Tabs
                         value={co2ViewMode}
-                        options={ABSOLUTE_RELATIVE_OPTIONS}
-                        onChange={setCo2ViewMode}
-                    />
-                    <ButtonGroup
+                        onValueChange={(value) =>
+                            setCo2ViewMode(value as "absolute" | "relative")
+                        }
+                    >
+                        <TabsList>
+                            {ABSOLUTE_RELATIVE_OPTIONS.map((option) => (
+                                <TabsTrigger
+                                    key={option.value}
+                                    value={option.value}
+                                >
+                                    {option.label}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
+                    <Tabs
                         value={co2UnitMode}
-                        options={CO2_UNIT_OPTIONS}
-                        onChange={setCo2UnitMode}
-                    />
+                        onValueChange={(value) =>
+                            setCo2UnitMode(
+                                value as "concentration" | "quantity",
+                            )
+                        }
+                    >
+                        <TabsList>
+                            {CO2_UNIT_OPTIONS.map((option) => (
+                                <TabsTrigger
+                                    key={option.value}
+                                    value={option.value}
+                                >
+                                    {option.label}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
                 </div>
                 {co2UnitMode === "concentration" && (
                     <div className="mt-2 text-sm text-muted-foreground">
@@ -230,11 +249,23 @@ function EmissionsOverviewContent() {
                 />
 
                 <div className="mt-4">
-                    <ButtonGroup
+                    <Tabs
                         value={tempViewMode}
-                        options={ABSOLUTE_RELATIVE_OPTIONS}
-                        onChange={setTempViewMode}
-                    />
+                        onValueChange={(value) =>
+                            setTempViewMode(value as "absolute" | "relative")
+                        }
+                    >
+                        <TabsList>
+                            {ABSOLUTE_RELATIVE_OPTIONS.map((option) => (
+                                <TabsTrigger
+                                    key={option.value}
+                                    value={option.value}
+                                >
+                                    {option.label}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
                 </div>
             </ChartCard>
 
@@ -254,16 +285,42 @@ function EmissionsOverviewContent() {
                 />
 
                 <div className="mt-4 flex flex-wrap gap-4">
-                    <ButtonGroup
+                    <Tabs
                         value={emissionsViewMode}
-                        options={EMISSIONS_VIEW_OPTIONS}
-                        onChange={setEmissionsViewMode}
-                    />
-                    <ButtonGroup
+                        onValueChange={(value) =>
+                            setEmissionsViewMode(value as "normal" | "percent")
+                        }
+                    >
+                        <TabsList>
+                            {EMISSIONS_VIEW_OPTIONS.map((option) => (
+                                <TabsTrigger
+                                    key={option.value}
+                                    value={option.value}
+                                >
+                                    {option.label}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
+                    <Tabs
                         value={emissionsCumulativeMode}
-                        options={EMISSIONS_CUMULATIVE_OPTIONS}
-                        onChange={setEmissionsCumulativeMode}
-                    />
+                        onValueChange={(value) =>
+                            setEmissionsCumulativeMode(
+                                value as "rates" | "cumulative",
+                            )
+                        }
+                    >
+                        <TabsList>
+                            {EMISSIONS_CUMULATIVE_OPTIONS.map((option) => (
+                                <TabsTrigger
+                                    key={option.value}
+                                    value={option.value}
+                                >
+                                    {option.label}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
                 </div>
 
                 <div className="mt-6">
