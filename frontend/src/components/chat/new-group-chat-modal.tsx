@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useChatList, useCreateGroupChat } from "@/hooks/useChats";
 import { useFilteredPlayers } from "@/hooks/useFilteredPlayers";
 import { usePlayers } from "@/hooks/usePlayers";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 import type { Player, Chat } from "@/types/chats";
 
 interface NewGroupChatModalProps {

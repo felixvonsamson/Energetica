@@ -14,7 +14,7 @@ import { HelpCircle } from "lucide-react";
 import { createElement } from "react";
 
 import { getAssetIcon } from "@/lib/assets/asset-icons";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 
 export interface AssetIconProps {
     /** The asset ID from the backend (e.g., "PV_solar", "coal_burner") */

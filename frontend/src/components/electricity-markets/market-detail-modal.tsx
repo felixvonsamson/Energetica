@@ -8,8 +8,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/classname-utils";
 import { formatPower } from "@/lib/format-utils";
+import { cn } from "@/lib/utils";
 
 interface MarketDetailModalProps {
     isOpen: boolean;

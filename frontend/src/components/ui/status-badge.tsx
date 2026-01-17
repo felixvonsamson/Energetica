@@ -1,6 +1,6 @@
 import { Clock, Gauge, Pause, PlayCircle, Truck } from "lucide-react";
 
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {
     status: "paused" | "waiting" | "ongoing" | "in-transit" | "slowed";

@@ -17,8 +17,8 @@
 import { Money } from "@/components/ui/money";
 import { useTimeMode, type TimeMode } from "@/contexts/time-mode-context";
 import { useGameEngine } from "@/hooks/useGame";
-import { cn } from "@/lib/classname-utils";
 import { amountPerTickToCashFlowRate, getUnitSuffix } from "@/lib/format-utils";
+import { cn } from "@/lib/utils";
 
 interface CashFlowProps {
     /** Cash flow in money per tick (source of truth) */

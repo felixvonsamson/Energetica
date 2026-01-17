@@ -1,7 +1,7 @@
 import { Users, Check } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 
 interface MarketItemProps {
     marketName: string;

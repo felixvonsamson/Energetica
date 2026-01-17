@@ -47,7 +47,7 @@ import { useUnreadNotificationsCount } from "@/hooks/useNotifications";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { usePlayerMoney } from "@/hooks/usePlayerMoney";
 import { usePlayerWorkers } from "@/hooks/usePlayerWorkers";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 import { Money } from "@/types/money";
 import { Workers } from "@/types/workers";
 

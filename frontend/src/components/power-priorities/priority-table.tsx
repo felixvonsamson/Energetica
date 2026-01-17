@@ -27,8 +27,8 @@ import type {
     RenewableFacilityType,
 } from "@/components/power-priorities/types";
 import { Card, CardContent } from "@/components/ui";
-import { cn } from "@/lib/classname-utils";
 import { getPriorityItemKey } from "@/lib/power-priorities-utils";
+import { cn } from "@/lib/utils";
 import type { ApiResponse } from "@/types/api-helpers";
 
 interface PriorityTableProps {

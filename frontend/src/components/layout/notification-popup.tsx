@@ -21,7 +21,7 @@ import {
     useDeleteNotification,
     useMarkAllNotificationsRead,
 } from "@/hooks/useNotifications";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 
 interface NotificationPopupProps {
     isOpen: boolean;

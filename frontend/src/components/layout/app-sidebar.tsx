@@ -32,7 +32,6 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import { useChatList } from "@/hooks/useChats";
 import { useRouteUnlocked } from "@/hooks/useRouteStaticData";
 import { useSidebarMenuState } from "@/hooks/useSidebarMenuState";
-import { cn } from "@/lib/classname-utils";
 import {
     mobileOnlyNavigation,
     navigationConfig,
@@ -41,6 +40,7 @@ import {
     type NavLinkConfig,
     type Capabilities,
 } from "@/lib/nav-config";
+import { cn } from "@/lib/utils";
 
 export function AppSidebar() {
     const capabilities = useCapabilities();

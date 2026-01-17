@@ -24,14 +24,9 @@ import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { IncomingShipments } from "@/components/dashboard/incoming-shipments";
 import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { ResearchProjects } from "@/components/dashboard/research-projects";
+import { DevelopmentBanner } from "@/components/development-banner";
 import { GameLayout } from "@/components/layout/game-layout";
-import {
-    InfoBanner,
-    Card,
-    CardTitle,
-    CardHeader,
-    CardContent,
-} from "@/components/ui";
+import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
@@ -133,85 +128,66 @@ function DashboardContent() {
     const hasShipments = (shipmentsData?.shipments?.length ?? 0) > 0;
 
     return (
-        <div className="p-4 md:p-8">
+        <div className="p-4 md:p-8 flex flex-col gap-6">
             {/* Development info banner */}
-            <InfoBanner variant="info" className="mb-6">
-                <Construction className="inline w-4 h-4" /> This game is still
-                under development! <Construction className="inline w-4 h-4" />{" "}
-                Join the{" "}
-                <img
-                    src="/static/images/icons/WhatsApp.svg"
-                    className="inline w-4 h-4"
-                    alt="WhatsApp"
-                />
-                <a
-                    href="https://chat.whatsapp.com/ILiTJvsOMb2K6ZvRi1WCOn"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline hover:opacity-80"
-                >
-                    {" "}
-                    Energetica Community
-                </a>{" "}
-                to stay updated with the latest news, report bugs, and engage
-                with the community. You can also contact me directly
-                (felixvonsamson@gmail.com)
-            </InfoBanner>
+            <DevelopmentBanner />
+
             {/* Weather section */}
             <WeatherSection />
+
             {/* Construction, Research, Shipments */}
-            <div className="space-y-6 mb-6">
-                {/* Construction - only show if there are any construction projects */}
-                {hasConstructionProjects && (
-                    <DashboardSection
-                        title={
-                            <>
-                                <HardHat className="inline w-4 h-4" /> Under
-                                Construction
-                            </>
-                        }
-                        emptyIcon={Construction}
-                        emptyMessage="No facilities under construction"
-                    >
-                        <ConstructionProjects showActions={true} />
-                    </DashboardSection>
-                )}
+            {/* Construction - only show if there are any construction projects */}
+            {hasConstructionProjects && (
+                <DashboardSection
+                    title={
+                        <>
+                            <HardHat className="inline w-4 h-4" /> Under
+                            Construction
+                        </>
+                    }
+                    emptyIcon={Construction}
+                    emptyMessage="No facilities under construction"
+                >
+                    <ConstructionProjects showActions={true} />
+                </DashboardSection>
+            )}
 
-                {/* Under research - only show if player has laboratory and has research projects */}
-                {capabilities?.has_laboratory && hasResearchProjects && (
-                    <DashboardSection
-                        title={
-                            <>
-                                <Microscope className="inline w-4 h-4" /> Under
-                                Research
-                            </>
-                        }
-                        emptyIcon={FlaskConical}
-                        emptyMessage="No technologies under research"
-                    >
-                        <ResearchProjects showActions={true} />
-                    </DashboardSection>
-                )}
+            {/* Under research - only show if player has laboratory and has research projects */}
+            {capabilities?.has_laboratory && hasResearchProjects && (
+                <DashboardSection
+                    title={
+                        <>
+                            <Microscope className="inline w-4 h-4" /> Under
+                            Research
+                        </>
+                    }
+                    emptyIcon={FlaskConical}
+                    emptyMessage="No technologies under research"
+                >
+                    <ResearchProjects showActions={true} />
+                </DashboardSection>
+            )}
 
-                {/* Shipments - only show if player has warehouse and has shipments */}
-                {capabilities?.has_warehouse && hasShipments && (
-                    <DashboardSection
-                        title={
-                            <>
-                                <Truck className="inline w-4 h-4" /> Shipments
-                            </>
-                        }
-                        emptyIcon={Truck}
-                        emptyMessage="No shipments on the way"
-                    >
-                        <IncomingShipments />
-                    </DashboardSection>
-                )}
-            </div>
+            {/* Shipments - only show if player has warehouse and has shipments */}
+            {capabilities?.has_warehouse && hasShipments && (
+                <DashboardSection
+                    title={
+                        <>
+                            <Truck className="inline w-4 h-4" /> Shipments
+                        </>
+                    }
+                    emptyIcon={Truck}
+                    emptyMessage="No shipments on the way"
+                >
+                    <IncomingShipments />
+                </DashboardSection>
+            )}
+
             {/* Beginners guide */}
             {!capabilities?.has_network && <BeginnersGuide />}
+
             {/* Quick links grid */}
-            <section className="mb-6">
+            <section>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <QuickLinkCard
                         to="/app/overviews/cash-flow"
@@ -258,8 +234,10 @@ function DashboardContent() {
                     />
                 </div>
             </section>
+
             {/* Achievement progression */}
             <AchievementSection />
+
             {/* Daily quiz */}
             <DailyQuizSection />
         </div>
@@ -274,189 +252,175 @@ function WeatherSection() {
     } = useWeather();
 
     return (
-        <section className="mb-6">
-            <Card>
-                <CardTitle className="text-center mb-4">
-                    Current weather conditions
-                </CardTitle>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-2">
-                    {isWeatherLoading && !weatherData ? (
-                        <div className="col-span-full text-center text-gray-500">
-                            Loading...
-                        </div>
-                    ) : isWeatherError ? (
-                        <div className="col-span-full text-center text-alert-red">
-                            Failed to load weather data
-                        </div>
-                    ) : weatherData ? (
-                        <>
-                            {/* Month with year progress indicator */}
-                            <div className="px-2">
-                                <div className="mb-2 whitespace-nowrap">
-                                    Month:{" "}
-                                    <b>
-                                        {getMonthName(weatherData.month_number)}
-                                    </b>
-                                </div>
-                                <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                    {/* Full-width padded container defines the travel range */}
-                                    <div className="absolute inset-0 mx-3 flex items-center">
-                                        {/* Positioned wrapper moves within the padded space */}
-                                        <div
-                                            className="absolute"
-                                            style={{
-                                                left: `${weatherData.year_progress * 100}%`,
-                                            }}
-                                        >
-                                            {/* Dot centred on position */}
-                                            <div className="w-3 h-3 bg-pine dark:bg-brand-green rounded-full -translate-x-1/2" />
-                                        </div>
+        <Card>
+            <CardTitle className="text-center mb-4">
+                Current weather conditions
+            </CardTitle>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-2">
+                {isWeatherLoading && !weatherData ? (
+                    <div className="col-span-full text-center text-gray-500">
+                        Loading...
+                    </div>
+                ) : isWeatherError ? (
+                    <div className="col-span-full text-center text-alert-red">
+                        Failed to load weather data
+                    </div>
+                ) : weatherData ? (
+                    <>
+                        {/* Month with year progress indicator */}
+                        <div className="px-2">
+                            <div className="mb-2 whitespace-nowrap">
+                                Month:{" "}
+                                <b>{getMonthName(weatherData.month_number)}</b>
+                            </div>
+                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                {/* Full-width padded container defines the travel range */}
+                                <div className="absolute inset-0 mx-3 flex items-center">
+                                    {/* Positioned wrapper moves within the padded space */}
+                                    <div
+                                        className="absolute"
+                                        style={{
+                                            left: `${weatherData.year_progress * 100}%`,
+                                        }}
+                                    >
+                                        {/* Dot centred on position */}
+                                        <div className="w-3 h-3 bg-pine dark:bg-brand-green rounded-full -translate-x-1/2" />
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Solar Irradiance with visual bar */}
-                            <div className="px-2">
-                                <div className="mb-2 whitespace-nowrap">
-                                    Irradiance:{" "}
-                                    <b>
-                                        {Math.round(
-                                            weatherData.solar_irradiance,
-                                        )}{" "}
-                                        W/m²
-                                    </b>
-                                </div>
-                                <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-yellow-500 dark:bg-yellow-400 transition-all duration-300"
-                                        style={{
-                                            width: `${Math.min(100, (weatherData.solar_irradiance / 1000) * 100)}%`,
-                                        }}
-                                    />
-                                </div>
+                        {/* Solar Irradiance with visual bar */}
+                        <div className="px-2">
+                            <div className="mb-2 whitespace-nowrap">
+                                Irradiance:{" "}
+                                <b>
+                                    {Math.round(weatherData.solar_irradiance)}{" "}
+                                    W/m²
+                                </b>
                             </div>
+                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-yellow-500 dark:bg-yellow-400 transition-all duration-300"
+                                    style={{
+                                        width: `${Math.min(100, (weatherData.solar_irradiance / 1000) * 100)}%`,
+                                    }}
+                                />
+                            </div>
+                        </div>
 
-                            {/* Wind Speed with visual bar */}
-                            <div className="px-2">
-                                <div className="mb-2 whitespace-nowrap">
-                                    Wind speed:{" "}
-                                    <b>
-                                        {Math.round(weatherData.wind_speed)}{" "}
-                                        km/h
-                                    </b>
-                                </div>
-                                <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-cyan-500 dark:bg-cyan-400 transition-all duration-300"
-                                        style={{
-                                            width: `${Math.min(100, (weatherData.wind_speed / 60) * 100)}%`,
-                                        }}
-                                    />
-                                </div>
+                        {/* Wind Speed with visual bar */}
+                        <div className="px-2">
+                            <div className="mb-2 whitespace-nowrap">
+                                Wind speed:{" "}
+                                <b>{Math.round(weatherData.wind_speed)} km/h</b>
                             </div>
+                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-cyan-500 dark:bg-cyan-400 transition-all duration-300"
+                                    style={{
+                                        width: `${Math.min(100, (weatherData.wind_speed / 60) * 100)}%`,
+                                    }}
+                                />
+                            </div>
+                        </div>
 
-                            {/* River Discharge with visual bar */}
-                            <div className="px-2">
-                                <div className="mb-2 whitespace-nowrap">
-                                    River discharge:{" "}
-                                    <b>
-                                        {Math.round(
-                                            weatherData.river_discharge,
-                                        )}{" "}
-                                        m³/s
-                                    </b>
-                                </div>
-                                <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-blue-500 dark:bg-blue-400 transition-all duration-300"
-                                        style={{
-                                            width: `${Math.min(100, (weatherData.river_discharge / 150) * 100)}%`,
-                                        }}
-                                    />
-                                </div>
+                        {/* River Discharge with visual bar */}
+                        <div className="px-2">
+                            <div className="mb-2 whitespace-nowrap">
+                                River discharge:{" "}
+                                <b>
+                                    {Math.round(weatherData.river_discharge)}{" "}
+                                    m³/s
+                                </b>
                             </div>
-                        </>
-                    ) : null}
-                </div>
-            </Card>
-        </section>
+                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-blue-500 dark:bg-blue-400 transition-all duration-300"
+                                    style={{
+                                        width: `${Math.min(100, (weatherData.river_discharge / 150) * 100)}%`,
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </>
+                ) : null}
+            </div>
+        </Card>
     );
 }
 
 function BeginnersGuide() {
     return (
-        <section className="mb-6">
-            <Card>
-                <CardTitle className="mb-4">Beginners guide</CardTitle>
-                <div className="space-y-4 text-base">
-                    <p>Welcome to Energetica!</p>
-                    <p>
-                        You begin your journey with <b>1 steam engine</b> and a
-                        small <b>industry</b>, generating revenues. You can
-                        monitor their{" "}
-                        <Link
-                            to="/app/overviews/power"
-                            className="text-info underline hover:opacity-80"
-                        >
-                            power generation and consumption
-                        </Link>{" "}
-                        as well as your{" "}
-                        <Link
-                            to="/app/overviews/cash-flow"
-                            className="text-info underline hover:opacity-80"
-                        >
-                            revenues
-                        </Link>{" "}
-                        under the <i>Production Overview</i> tab in the top
-                        menu.
-                    </p>
-                    <p>
-                        The first thing you will probably want to do is to{" "}
-                        <b>expand your production</b> by investing in{" "}
-                        <Link
-                            to="/app/facilities/power"
-                            className="text-info underline hover:opacity-80"
-                        >
-                            Power Facilities
-                        </Link>{" "}
-                        and upgrading your industry on the{" "}
-                        <Link
-                            to="/app/facilities/functional"
-                            className="text-info underline hover:opacity-80"
-                        >
-                            Functional Facilities
-                        </Link>{" "}
-                        page. You also have access to{" "}
-                        <Link
-                            to="/app/facilities/storage"
-                            className="text-info underline hover:opacity-80"
-                        >
-                            Storage Facilities
-                        </Link>{" "}
-                        to store energy. You will unlock new technologies and
-                        more game mechanics as you progress.
-                    </p>
-                    <p>
-                        Engage with other players via the <i>Community</i> tab.
-                    </p>
-                    <p>
-                        If you are lost, click on the{" "}
-                        <HelpCircle className="inline w-4 h-4" /> icon on the
-                        right side of the title, you will find explanations
-                        about the content of the page. For detailed explanations
-                        on any game mechanics, consult the{" "}
-                        <a
-                            href="/wiki/introduction"
-                            className="text-info underline hover:opacity-80"
-                        >
-                            wiki
-                        </a>
-                        .
-                    </p>
-                    <p>Best of luck in your energy adventure!</p>
-                </div>
-            </Card>
-        </section>
+        <Card>
+            <CardTitle className="mb-4">Beginners guide</CardTitle>
+            <div className="space-y-4 text-base">
+                <p>Welcome to Energetica!</p>
+                <p>
+                    You begin your journey with <b>1 steam engine</b> and a
+                    small <b>industry</b>, generating revenues. You can monitor
+                    their{" "}
+                    <Link
+                        to="/app/overviews/power"
+                        className="text-info underline hover:opacity-80"
+                    >
+                        power generation and consumption
+                    </Link>{" "}
+                    as well as your{" "}
+                    <Link
+                        to="/app/overviews/cash-flow"
+                        className="text-info underline hover:opacity-80"
+                    >
+                        revenues
+                    </Link>{" "}
+                    under the <i>Production Overview</i> tab in the top menu.
+                </p>
+                <p>
+                    The first thing you will probably want to do is to{" "}
+                    <b>expand your production</b> by investing in{" "}
+                    <Link
+                        to="/app/facilities/power"
+                        className="text-info underline hover:opacity-80"
+                    >
+                        Power Facilities
+                    </Link>{" "}
+                    and upgrading your industry on the{" "}
+                    <Link
+                        to="/app/facilities/functional"
+                        className="text-info underline hover:opacity-80"
+                    >
+                        Functional Facilities
+                    </Link>{" "}
+                    page. You also have access to{" "}
+                    <Link
+                        to="/app/facilities/storage"
+                        className="text-info underline hover:opacity-80"
+                    >
+                        Storage Facilities
+                    </Link>{" "}
+                    to store energy. You will unlock new technologies and more
+                    game mechanics as you progress.
+                </p>
+                <p>
+                    Engage with other players via the <i>Community</i> tab.
+                </p>
+                <p>
+                    If you are lost, click on the{" "}
+                    <HelpCircle className="inline w-4 h-4" /> icon on the right
+                    side of the title, you will find explanations about the
+                    content of the page. For detailed explanations on any game
+                    mechanics, consult the{" "}
+                    <a
+                        href="/wiki/introduction"
+                        className="text-info underline hover:opacity-80"
+                    >
+                        wiki
+                    </a>
+                    .
+                </p>
+                <p>Best of luck in your energy adventure!</p>
+            </div>
+        </Card>
     );
 }
 
@@ -464,53 +428,51 @@ function AchievementSection() {
     const { data: achievementsData, isLoading, isError } = useAchievements();
 
     return (
-        <section className="mb-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="mb-4">
-                        <Trophy className="inline w-6 h-6 mr-2" />
-                        Achievement Progression
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {isLoading ? (
-                        <div className="text-center text-gray-500 py-4">
-                            Loading achievements...
-                        </div>
-                    ) : isError ? (
-                        <div className="text-center text-destructive py-4">
-                            Failed to load achievements
-                        </div>
-                    ) : achievementsData?.achievements &&
-                      achievementsData.achievements.length > 0 ? (
-                        <div className="space-y-3">
-                            {achievementsData.achievements.map(
-                                (achievement: {
-                                    id: string;
-                                    name: string;
-                                    status: number;
-                                    objective: number;
-                                    reward: number;
-                                }) => (
-                                    <AchievementCard
-                                        key={achievement.id}
-                                        id={achievement.id}
-                                        name={achievement.name}
-                                        status={achievement.status}
-                                        objective={achievement.objective}
-                                        reward={achievement.reward}
-                                    />
-                                ),
-                            )}
-                        </div>
-                    ) : (
-                        <div className="text-center text-gray-500 py-4">
-                            No upcoming achievements
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-        </section>
+        <Card>
+            <CardHeader>
+                <CardTitle className="mb-4">
+                    <Trophy className="inline w-6 h-6 mr-2" />
+                    Achievement Progression
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                    <div className="text-center text-gray-500 py-4">
+                        Loading achievements...
+                    </div>
+                ) : isError ? (
+                    <div className="text-center text-destructive py-4">
+                        Failed to load achievements
+                    </div>
+                ) : achievementsData?.achievements &&
+                  achievementsData.achievements.length > 0 ? (
+                    <div className="space-y-3">
+                        {achievementsData.achievements.map(
+                            (achievement: {
+                                id: string;
+                                name: string;
+                                status: number;
+                                objective: number;
+                                reward: number;
+                            }) => (
+                                <AchievementCard
+                                    key={achievement.id}
+                                    id={achievement.id}
+                                    name={achievement.name}
+                                    status={achievement.status}
+                                    objective={achievement.objective}
+                                    reward={achievement.reward}
+                                />
+                            ),
+                        )}
+                    </div>
+                ) : (
+                    <div className="text-center text-gray-500 py-4">
+                        No upcoming achievements
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }
 
@@ -596,123 +558,115 @@ function DailyQuizSection() {
     };
 
     return (
-        <section className="mb-6">
-            <div className="flex justify-center">
-                <Card className="max-w-2xl w-full">
-                    <CardHeader>
-                        <CardTitle className="text-center mb-4">
-                            <img
-                                src="/static/images/icons/quiz.png"
-                                className="inline w-6 h-6"
-                                alt=""
-                            />
-                            <span className="mx-2">Daily Quiz</span>
-                            <img
-                                src="/static/images/icons/quiz.png"
-                                className="inline w-6 h-6"
-                                alt=""
-                            />
-                        </CardTitle>
-                    </CardHeader>
+        <div className="flex justify-center">
+            <Card className="max-w-2xl w-full">
+                <CardHeader>
+                    <CardTitle className="text-center mb-4">
+                        <img
+                            src="/static/images/icons/quiz.png"
+                            className="inline w-6 h-6"
+                            alt=""
+                        />
+                        <span className="mx-2">Daily Quiz</span>
+                        <img
+                            src="/static/images/icons/quiz.png"
+                            className="inline w-6 h-6"
+                            alt=""
+                        />
+                    </CardTitle>
+                </CardHeader>
 
-                    <CardContent>
-                        <div className="space-y-4">
-                            {isLoading ? (
-                                <div className="text-center text-gray-500">
-                                    Loading quiz question...
+                <CardContent>
+                    <div className="space-y-4">
+                        {isLoading ? (
+                            <div className="text-center text-gray-500">
+                                Loading quiz question...
+                            </div>
+                        ) : isError ? (
+                            <div className="text-center text-alert-red">
+                                Failed to load quiz question
+                            </div>
+                        ) : quizData ? (
+                            <>
+                                {/* Question */}
+                                <p className="text-lg text-center mb-4">
+                                    {quizData.question}
+                                </p>
+
+                                {/* Answer Buttons */}
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={() =>
+                                            handleAnswerClick("answer1")
+                                        }
+                                        disabled={hasAnswered || isPending}
+                                        className={getButtonClass("answer1")}
+                                    >
+                                        <span className="block pr-24">
+                                            {quizData.answer1}
+                                        </span>
+                                        {getAnswerIndicator("answer1")}
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            handleAnswerClick("answer2")
+                                        }
+                                        disabled={hasAnswered || isPending}
+                                        className={getButtonClass("answer2")}
+                                    >
+                                        <span className="block pr-24">
+                                            {quizData.answer2}
+                                        </span>
+                                        {getAnswerIndicator("answer2")}
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            handleAnswerClick("answer3")
+                                        }
+                                        disabled={hasAnswered || isPending}
+                                        className={getButtonClass("answer3")}
+                                    >
+                                        <span className="block pr-24">
+                                            {quizData.answer3}
+                                        </span>
+                                        {getAnswerIndicator("answer3")}
+                                    </button>
                                 </div>
-                            ) : isError ? (
-                                <div className="text-center text-alert-red">
-                                    Failed to load quiz question
-                                </div>
-                            ) : quizData ? (
-                                <>
-                                    {/* Question */}
-                                    <p className="text-lg text-center mb-4">
-                                        {quizData.question}
-                                    </p>
 
-                                    {/* Answer Buttons */}
-                                    <div className="space-y-3">
-                                        <button
-                                            onClick={() =>
-                                                handleAnswerClick("answer1")
-                                            }
-                                            disabled={hasAnswered || isPending}
-                                            className={getButtonClass(
-                                                "answer1",
-                                            )}
-                                        >
-                                            <span className="block pr-24">
-                                                {quizData.answer1}
-                                            </span>
-                                            {getAnswerIndicator("answer1")}
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                handleAnswerClick("answer2")
-                                            }
-                                            disabled={hasAnswered || isPending}
-                                            className={getButtonClass(
-                                                "answer2",
-                                            )}
-                                        >
-                                            <span className="block pr-24">
-                                                {quizData.answer2}
-                                            </span>
-                                            {getAnswerIndicator("answer2")}
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                handleAnswerClick("answer3")
-                                            }
-                                            disabled={hasAnswered || isPending}
-                                            className={getButtonClass(
-                                                "answer3",
-                                            )}
-                                        >
-                                            <span className="block pr-24">
-                                                {quizData.answer3}
-                                            </span>
-                                            {getAnswerIndicator("answer3")}
-                                        </button>
-                                    </div>
-
-                                    {/* Explanation and Learn More (only shown after answering) */}
-                                    {hasAnswered && quizData.explanation && (
-                                        <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
-                                            <p className="text-center mb-3">
-                                                {quizData.explanation}
-                                            </p>
-                                            {quizData.learn_more_link && (
-                                                <p className="text-center">
-                                                    <a
-                                                        href={
-                                                            quizData.learn_more_link
-                                                        }
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="text-info underline hover:opacity-80"
-                                                    >
-                                                        Learn more
-                                                    </a>
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Submitting state */}
-                                    {isPending && (
-                                        <p className="text-center text-gray-500 text-sm">
-                                            Submitting answer...
+                                {/* Explanation and Learn More (only shown after answering) */}
+                                {hasAnswered && quizData.explanation && (
+                                    <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                                        <p className="text-center mb-3">
+                                            {quizData.explanation}
                                         </p>
-                                    )}
-                                </>
-                            ) : null}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        </section>
+                                        {quizData.learn_more_link && (
+                                            <p className="text-center">
+                                                <a
+                                                    href={
+                                                        quizData.learn_more_link
+                                                    }
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="text-info underline hover:opacity-80"
+                                                >
+                                                    Learn more
+                                                </a>
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Submitting state */}
+                                {isPending && (
+                                    <p className="text-center text-gray-500 text-sm">
+                                        Submitting answer...
+                                    </p>
+                                )}
+                            </>
+                        ) : null}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     );
 }

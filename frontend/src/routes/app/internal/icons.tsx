@@ -13,7 +13,7 @@ import {
     storageFacilityIcons,
     technologyIcons,
 } from "@/lib/assets/asset-icons";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/internal/icons")({
     component: RouteComponent,

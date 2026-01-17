@@ -10,7 +10,7 @@ import { HomeLayout } from "@/components/home-layout";
 import { GameLayout } from "@/components/layout/game-layout";
 import { MdxContent } from "@/components/mdx-content";
 import { useAuth } from "@/hooks/useAuth";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 
 interface WikiLayoutProps {
     children: ReactNode;

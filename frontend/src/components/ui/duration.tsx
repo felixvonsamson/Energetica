@@ -18,8 +18,8 @@ import { Clock, CalendarClock } from "lucide-react";
 
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useGameEngine } from "@/hooks/useGame";
-import { cn } from "@/lib/classname-utils";
 import { formatDuration } from "@/lib/format-utils";
+import { cn } from "@/lib/utils";
 
 interface DurationProps {
     /** Duration in ticks (source of truth) */

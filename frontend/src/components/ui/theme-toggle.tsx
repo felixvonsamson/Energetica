@@ -3,7 +3,7 @@ import { forwardRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/theme-context";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 
 interface ThemeToggleProps extends React.ComponentPropsWithoutRef<"button"> {
     variant?: "icon-only" | "menu-item";

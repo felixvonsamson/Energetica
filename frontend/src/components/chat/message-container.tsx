@@ -2,8 +2,8 @@ import { useEffect, useRef } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayerMap } from "@/hooks/usePlayers";
-import { cn } from "@/lib/classname-utils";
 import { formatTimestamp } from "@/lib/format-utils";
+import { cn } from "@/lib/utils";
 import type { Message } from "@/types/chats";
 
 interface MessageContainerProps {

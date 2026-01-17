@@ -23,7 +23,7 @@ import type {
     ConsumptionStatus,
     RenewableStatus,
 } from "@/components/power-priorities/types";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 
 type FacilityStatus = ProductionStatus | ConsumptionStatus | RenewableStatus;
 

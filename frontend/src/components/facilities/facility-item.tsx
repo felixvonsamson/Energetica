@@ -10,7 +10,7 @@ import {
     Money,
 } from "@/components/ui";
 import { CardDescription } from "@/components/ui/card";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 import { ProjectType } from "@/types/projects";
 
 interface FacilityItemProps {

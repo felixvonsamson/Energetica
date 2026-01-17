@@ -18,12 +18,12 @@ import type {
 import { Money } from "@/components/ui";
 import { AssetName } from "@/components/ui/asset-name";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
-import { cn } from "@/lib/classname-utils";
 import { formatPower } from "@/lib/format-utils";
 import {
     getPriorityItemDisplayName,
     getPriorityItemKey,
 } from "@/lib/power-priorities-utils";
+import { cn } from "@/lib/utils";
 import type { ApiResponse } from "@/types/api-helpers";
 
 interface PriorityItemProps {

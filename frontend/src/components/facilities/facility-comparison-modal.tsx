@@ -9,7 +9,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 import { ProjectType } from "@/types/projects";
 
 interface ComparisonSlot {

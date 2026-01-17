@@ -6,7 +6,7 @@
 import { Minus, Plus } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 
 interface PriceInputProps {
     /** Current price value */

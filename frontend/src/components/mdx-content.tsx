@@ -5,7 +5,7 @@
 
 import { type ReactNode, useEffect } from "react";
 
-import { cn } from "@/lib/classname-utils";
+import { cn } from "@/lib/utils";
 
 interface MdxContentProps {
     children: ReactNode;
