@@ -2,24 +2,29 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Battery, TrendingUp, BarChart3, Funnel } from "lucide-react";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 
 import {
     TimeSeriesChart,
     ResolutionPicker,
     StorageOverviewTable,
-    filterNonZeroSeries,
-    createExcludeKeysFilter,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent, CardTitle } from "@/components/ui";
-import { Label } from "@/components/ui/label";
+import {
+    Card,
+    CardContent,
+    ButtonGroup,
+    type ButtonGroupOption,
+} from "@/components/ui";
+import { ChartCard } from "@/components/ui/chart-card";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
+import { useChartFilters } from "@/hooks/useChartFilters";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useFacilities } from "@/hooks/useFacilities";
 import { useGameTick } from "@/hooks/useGameTick";
+import { useToggleSet } from "@/hooks/useToggleSet";
 import { formatEnergy } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/overviews/storage")({
@@ -86,12 +91,15 @@ function StorageOverviewPage() {
     );
 }
 
+const VIEW_MODE_OPTIONS: ButtonGroupOption<"normal" | "percent">[] = [
+    { value: "normal", label: "Stored Capacity" },
+    { value: "percent", label: "State of Charge" },
+];
+
 function StorageOverviewContent() {
     const { currentTick } = useGameTick();
     const [viewMode, setViewMode] = useState<"normal" | "percent">("normal");
-    const [hiddenFacilities, setHiddenFacilities] = useState<Set<string>>(
-        new Set(),
-    );
+    const [hiddenFacilities, toggleFacility] = useToggleSet<string>();
 
     const { selectedResolution } = useTimeMode();
 
@@ -107,57 +115,44 @@ function StorageOverviewContent() {
         maxDatapoints: selectedResolution.datapoints,
     });
 
-    // Toggle facility visibility
-    const handleToggleFacility = useCallback((facilityType: string) => {
-        setHiddenFacilities((prev) => {
-            const next = new Set(prev);
-            if (next.has(facilityType)) {
-                next.delete(facilityType);
-            } else {
-                next.add(facilityType);
-            }
-            return next;
-        });
-    }, []);
-
     return (
         <div className="p-4 md:p-8">
             <Card className="mb-6">
                 <CardContent>
                     <div className="space-y-4">
-                        <ViewModePicker
-                            viewMode={viewMode}
-                            onViewModeChange={setViewMode}
+                        <ButtonGroup
+                            label="View Mode"
+                            value={viewMode}
+                            options={VIEW_MODE_OPTIONS}
+                            onChange={setViewMode}
                         />
                         <ResolutionPicker currentTick={currentTick} />
                     </div>
                 </CardContent>
             </Card>
 
-            <Card className="mb-6">
-                <CardContent>
-                    <div className="flex items-center gap-2 mb-4">
-                        <Battery className="w-6 h-6 text-blue-500" />
-                        <CardTitle>Stored Energy</CardTitle>
-                    </div>
+            <ChartCard
+                icon={Battery}
+                iconClassName="text-primary"
+                title="Stored Energy"
+                className="mb-6"
+            >
+                <StorageChart
+                    chartData={chartData}
+                    isLoading={isChartLoading}
+                    isError={isError}
+                    hiddenFacilities={hiddenFacilities}
+                    viewMode={viewMode}
+                />
 
-                    <StorageChart
+                <div className="mt-6">
+                    <StorageOverviewTable
                         chartData={chartData}
-                        isLoading={isChartLoading}
-                        isError={isError}
                         hiddenFacilities={hiddenFacilities}
-                        viewMode={viewMode}
+                        onToggleFacility={toggleFacility}
                     />
-
-                    <div className="mt-6">
-                        <StorageOverviewTable
-                            chartData={chartData}
-                            hiddenFacilities={hiddenFacilities}
-                            onToggleFacility={handleToggleFacility}
-                        />
-                    </div>
-                </CardContent>
-            </Card>
+                </div>
+            </ChartCard>
         </div>
     );
 }
@@ -178,16 +173,8 @@ function StorageChart({
     viewMode,
 }: StorageChartProps) {
     const getColor = useAssetColorGetter();
-
     const { data: facilities } = useFacilities();
-
-    // Create a composite filter that combines non-zero filtering with visibility filtering
-    const filterDataKeys = useMemo(() => {
-        return [
-            filterNonZeroSeries,
-            createExcludeKeysFilter(Array.from(hiddenFacilities)),
-        ];
-    }, [hiddenFacilities]);
+    const filterDataKeys = useChartFilters(hiddenFacilities);
 
     // Transform data for percent view if needed
     const transformedData: Array<Record<string, unknown>> = useMemo(() => {
@@ -254,40 +241,5 @@ function StorageChart({
             isLoading={isLoading}
             isError={isError}
         />
-    );
-}
-
-interface ViewModePickerProps {
-    viewMode: "normal" | "percent";
-    onViewModeChange: (mode: "normal" | "percent") => void;
-}
-
-function ViewModePicker({ viewMode, onViewModeChange }: ViewModePickerProps) {
-    return (
-        <div>
-            <Label className="mb-2">View Mode</Label>
-            <div className="flex gap-2">
-                <button
-                    onClick={() => onViewModeChange("normal")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        viewMode === "normal"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Stored Capacity
-                </button>
-                <button
-                    onClick={() => onViewModeChange("percent")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        viewMode === "percent"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    State of Charge
-                </button>
-            </div>
-        </div>
     );
 }

@@ -2,23 +2,28 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Zap, TrendingUp, TrendingDown, Funnel } from "lucide-react";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 
 import {
     TimeSeriesChart,
     ResolutionPicker,
     PowerOverviewTable,
-    filterNonZeroSeries,
-    createExcludeKeysFilter,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent, CardTitle } from "@/components/ui";
-import { Label } from "@/components/ui/label";
+import {
+    Card,
+    CardContent,
+    ButtonGroup,
+    type ButtonGroupOption,
+} from "@/components/ui";
+import { ChartCard } from "@/components/ui/chart-card";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
+import { useChartFilters } from "@/hooks/useChartFilters";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
+import { useToggleSet } from "@/hooks/useToggleSet";
 import { formatPower } from "@/lib/format-utils";
 import { ChartType } from "@/types/charts";
 
@@ -82,11 +87,16 @@ function PowerOverviewPage() {
     );
 }
 
+const CHART_TYPE_OPTIONS: ButtonGroupOption<ChartType>[] = [
+    { value: "power-sources", label: "Generation (Sources)" },
+    { value: "power-sinks", label: "Consumption (Sinks)" },
+];
+
 function PowerOverviewContent() {
     const { currentTick } = useGameTick();
     const [chartType, setChartType] = useState<ChartType>("power-sources");
-    const [hiddenSources, setHiddenSources] = useState<Set<string>>(new Set());
-    const [hiddenSinks, setHiddenSinks] = useState<Set<string>>(new Set());
+    const [hiddenSources, toggleSource] = useToggleSet<string>();
+    const [hiddenSinks, toggleSink] = useToggleSet<string>();
 
     const { selectedResolution } = useTimeMode();
     // Fetch chart data to share between chart and table
@@ -101,71 +111,55 @@ function PowerOverviewContent() {
         maxDatapoints: selectedResolution.datapoints,
     });
 
-    // Get the appropriate hidden set based on chart type
+    // Get the appropriate hidden set and toggle function based on chart type
     const hiddenFacilities =
         chartType === "power-sources" ? hiddenSources : hiddenSinks;
-    const setHiddenFacilities =
-        chartType === "power-sources" ? setHiddenSources : setHiddenSinks;
-
-    // Toggle facility visibility
-    const handleToggleFacility = useCallback(
-        (facilityType: string) => {
-            setHiddenFacilities((prev) => {
-                const next = new Set(prev);
-                if (next.has(facilityType)) {
-                    next.delete(facilityType);
-                } else {
-                    next.add(facilityType);
-                }
-                return next;
-            });
-        },
-        [setHiddenFacilities],
-    );
+    const toggleFacility =
+        chartType === "power-sources" ? toggleSource : toggleSink;
 
     return (
         <div className="p-4 md:p-8">
             <Card className="mb-6">
                 <CardContent>
                     <div className="space-y-4">
-                        <ChartTypePicker
-                            chartType={chartType}
-                            onChartTypeChange={setChartType}
+                        <ButtonGroup
+                            label="Chart Type"
+                            value={chartType}
+                            options={CHART_TYPE_OPTIONS}
+                            onChange={setChartType}
                         />
                         <ResolutionPicker currentTick={currentTick} />
                     </div>
                 </CardContent>
             </Card>
 
-            <Card className="mb-6">
-                <CardContent>
-                    <div className="flex items-center gap-2 mb-4">
-                        <Zap className="w-6 h-6 text-yellow-500" />
-                        <CardTitle>
-                            {chartType === "power-sources"
-                                ? "Power Generation"
-                                : "Power Consumption"}
-                        </CardTitle>
-                    </div>
+            <ChartCard
+                icon={Zap}
+                iconClassName="text-primary"
+                title={
+                    chartType === "power-sources"
+                        ? "Power Generation"
+                        : "Power Consumption"
+                }
+                className="mb-6"
+            >
+                <PowerChart
+                    chartData={chartData}
+                    isLoading={isChartLoading}
+                    isError={isError}
+                    hiddenFacilities={hiddenFacilities}
+                />
 
-                    <PowerChart
+                <div className="mt-6">
+                    <PowerOverviewTable
+                        chartType={chartType}
                         chartData={chartData}
-                        isLoading={isChartLoading}
-                        isError={isError}
+                        resolution={selectedResolution.resolution}
                         hiddenFacilities={hiddenFacilities}
+                        onToggleFacility={toggleFacility}
                     />
-
-                    <div className="mt-6">
-                        <PowerOverviewTable
-                            chartType={chartType}
-                            chartData={chartData}
-                            resolution={selectedResolution.resolution}
-                            hiddenFacilities={hiddenFacilities}
-                            onToggleFacility={handleToggleFacility}
-                        />
-                    </div>
-                </CardContent>
-            </Card>
+                </div>
+            </ChartCard>
         </div>
     );
 }
@@ -184,14 +178,7 @@ function PowerChart({
     hiddenFacilities,
 }: PowerChartProps) {
     const getColor = useAssetColorGetter();
-
-    // Create a composite filter that combines non-zero filtering with visibility filtering
-    const filterDataKeys = useMemo(() => {
-        return [
-            filterNonZeroSeries,
-            createExcludeKeysFilter(Array.from(hiddenFacilities)),
-        ];
-    }, [hiddenFacilities]);
+    const filterDataKeys = useChartFilters(hiddenFacilities);
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
@@ -217,43 +204,5 @@ function PowerChart({
             isLoading={isLoading}
             isError={isError}
         />
-    );
-}
-
-interface ChartTypePickerProps {
-    chartType: ChartType;
-    onChartTypeChange: (type: ChartType) => void;
-}
-
-function ChartTypePicker({
-    chartType,
-    onChartTypeChange,
-}: ChartTypePickerProps) {
-    return (
-        <div>
-            <Label className="mb-2">Chart Type</Label>
-            <div className="flex gap-2">
-                <button
-                    onClick={() => onChartTypeChange("power-sources")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        chartType === "power-sources"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Generation (Sources)
-                </button>
-                <button
-                    onClick={() => onChartTypeChange("power-sinks")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        chartType === "power-sinks"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Consumption (Sinks)
-                </button>
-            </div>
-        </div>
     );
 }

@@ -13,14 +13,14 @@ export function filterNonZeroSeries(key: string, data: unknown[]): boolean {
 
 /** Creates a filter that excludes specific keys. */
 export function createExcludeKeysFilter(excludeKeys: string[]) {
-    return (key: string): boolean => {
+    return (key: string, _data: unknown[]): boolean => {
         return !excludeKeys.includes(key);
     };
 }
 
 /** Creates a filter that only includes specific keys. */
 export function createIncludeKeysFilter(includeKeys: string[]) {
-    return (key: string): boolean => {
+    return (key: string, _data: unknown[]): boolean => {
         return includeKeys.includes(key);
     };
 }

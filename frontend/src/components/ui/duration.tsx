@@ -58,7 +58,7 @@ interface TogglingDurationProps {
  * modes.
  *
  * @example
- *     <Duration ticks={1000} /> // Shows togglable duration based on ticks
+ *     <Duration ticks={1000} /> // Shows toggle-able duration based on ticks
  *     <Duration ticks={1000} compact showIcon /> // With compact format and icon on the right
  */
 export function TogglingDuration({

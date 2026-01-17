@@ -14,18 +14,24 @@ import {
     TimeSeriesChart,
     ResolutionPicker,
     CashFlowOverviewTable,
-    filterNonZeroSeries,
-    createExcludeKeysFilter,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent, CardTitle, CashFlow } from "@/components/ui";
-import { Label } from "@/components/ui/label";
+import {
+    Card,
+    CardContent,
+    CashFlow,
+    ButtonGroup,
+    type ButtonGroupOption,
+} from "@/components/ui";
+import { ChartCard } from "@/components/ui/chart-card";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
+import { useChartFilters } from "@/hooks/useChartFilters";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameEngine } from "@/hooks/useGame";
 import { useGameTick } from "@/hooks/useGameTick";
+import { useToggleSet } from "@/hooks/useToggleSet";
 import { formatCashFlow } from "@/lib/format-utils";
 
 type RevenueType = "revenues" | "expenses" | "net-profit";
@@ -98,15 +104,29 @@ function RevenuesOverviewPage() {
     );
 }
 
+const REVENUE_TYPE_OPTIONS: ButtonGroupOption<RevenueType>[] = [
+    { value: "revenues", label: "Revenues" },
+    { value: "expenses", label: "Expenses" },
+    { value: "net-profit", label: "Net Profit" },
+];
+
+const VIEW_MODE_OPTIONS: ButtonGroupOption<"normal" | "percent">[] = [
+    { value: "normal", label: "Normal" },
+    { value: "percent", label: "Percent" },
+];
+
+const NET_PROFIT_VIEW_MODE_OPTIONS: ButtonGroupOption<NetProfitViewMode>[] = [
+    { value: "net", label: "Net" },
+    { value: "breakdown", label: "Breakdown" },
+];
+
 function RevenuesOverviewContent() {
     const { currentTick } = useGameTick();
     const [viewMode, setViewMode] = useState<"normal" | "percent">("normal");
     const [netProfitViewMode, setNetProfitViewMode] =
         useState<NetProfitViewMode>("net");
     const [revenueType, setRevenueType] = useState<RevenueType>("revenues");
-    const [hiddenFacilities, setHiddenFacilities] = useState<Set<string>>(
-        new Set(),
-    );
+    const [hiddenFacilities, toggleFacility] = useToggleSet<string>();
     const { selectedResolution } = useTimeMode();
 
     // Fetch both revenue and op-costs chart data
@@ -134,19 +154,6 @@ function RevenuesOverviewContent() {
 
     const isChartLoading = isRevenuesLoading || isOpCostsLoading;
     const isError = isRevenuesError || isOpCostsError;
-
-    // Toggle facility visibility
-    const handleToggleFacility = useCallback((facilityType: string) => {
-        setHiddenFacilities((prev) => {
-            const next = new Set(prev);
-            if (next.has(facilityType)) {
-                next.delete(facilityType);
-            } else {
-                next.add(facilityType);
-            }
-            return next;
-        });
-    }, []);
 
     // Merge and filter data based on revenue type
     const filteredChartData = useMemo(() => {
@@ -265,19 +272,25 @@ function RevenuesOverviewContent() {
             <Card className="mb-6">
                 <CardContent>
                     <div className="space-y-4">
-                        <RevenueTypePicker
-                            revenueType={revenueType}
-                            onRevenueTypeChange={setRevenueType}
+                        <ButtonGroup
+                            label="Revenue Type"
+                            value={revenueType}
+                            options={REVENUE_TYPE_OPTIONS}
+                            onChange={setRevenueType}
                         />
                         {revenueType === "net-profit" ? (
-                            <NetProfitViewModePicker
-                                viewMode={netProfitViewMode}
-                                onViewModeChange={setNetProfitViewMode}
+                            <ButtonGroup
+                                label="View Mode"
+                                value={netProfitViewMode}
+                                options={NET_PROFIT_VIEW_MODE_OPTIONS}
+                                onChange={setNetProfitViewMode}
                             />
                         ) : (
-                            <ViewModePicker
-                                viewMode={viewMode}
-                                onViewModeChange={setViewMode}
+                            <ButtonGroup
+                                label="View Mode"
+                                value={viewMode}
+                                options={VIEW_MODE_OPTIONS}
+                                onChange={setViewMode}
                             />
                         )}
                         <ResolutionPicker currentTick={currentTick} />
@@ -285,39 +298,37 @@ function RevenuesOverviewContent() {
                 </CardContent>
             </Card>
 
-            <Card className="mb-6">
-                <CardContent>
-                    <div className="flex items-center gap-2 mb-4">
-                        <DollarSign className="w-6 h-6 text-amber-500" />
-                        <CardTitle>
-                            {revenueType === "revenues"
-                                ? "Revenues"
-                                : revenueType === "expenses"
-                                  ? "Expenses"
-                                  : "Revenues & Expenses"}
-                        </CardTitle>
-                    </div>
+            <ChartCard
+                icon={DollarSign}
+                iconClassName="text-primary"
+                title={
+                    revenueType === "revenues"
+                        ? "Revenues"
+                        : revenueType === "expenses"
+                          ? "Expenses"
+                          : "Revenues & Expenses"
+                }
+                className="mb-6"
+            >
+                <RevenuesChart
+                    chartData={filteredChartData}
+                    isLoading={isChartLoading}
+                    isError={isError}
+                    hiddenFacilities={hiddenFacilities}
+                    viewMode={viewMode}
+                    revenueType={revenueType}
+                    netProfitViewMode={netProfitViewMode}
+                />
 
-                    <RevenuesChart
+                <div className="mt-6">
+                    <CashFlowOverviewTable
                         chartData={filteredChartData}
-                        isLoading={isChartLoading}
-                        isError={isError}
-                        hiddenFacilities={hiddenFacilities}
-                        viewMode={viewMode}
                         revenueType={revenueType}
-                        netProfitViewMode={netProfitViewMode}
+                        hiddenFacilities={hiddenFacilities}
+                        onToggleFacility={toggleFacility}
                     />
-
-                    <div className="mt-6">
-                        <CashFlowOverviewTable
-                            chartData={filteredChartData}
-                            revenueType={revenueType}
-                            hiddenFacilities={hiddenFacilities}
-                            onToggleFacility={handleToggleFacility}
-                        />
-                    </div>
-                </CardContent>
-            </Card>
+                </div>
+            </ChartCard>
         </div>
     );
 }
@@ -353,20 +364,20 @@ function RevenuesChart({
         return "var(--foreground)";
     }, []);
 
-    // Create a composite filter that combines non-zero filtering with visibility filtering
-    const filterDataKeys = useMemo(() => {
-        // For net-profit view, use includeAllSeries since we have aggregated values
-        // For breakdown mode, also use includeAllSeries to show all three series
-        // filterNonZeroSeries only keeps values > 0, which filters out negative values
-        return [
-            createExcludeKeysFilter(Array.from(hiddenFacilities)),
-            ...(revenueType === "net-profit" ? [] : [filterNonZeroSeries]),
-        ];
-    }, [hiddenFacilities, revenueType]);
+    // Create filters - don't filter non-zero for net-profit view
+    const filterDataKeys = useChartFilters(
+        hiddenFacilities,
+        revenueType !== "net-profit",
+    );
 
     // Transform data for percent view if needed
     const transformedData: Array<Record<string, unknown>> = useMemo(() => {
-        if (viewMode === "normal" || !chartData || chartData.length === 0) {
+        if (
+            viewMode === "normal" ||
+            revenueType === "net-profit" ||
+            !chartData ||
+            chartData.length === 0
+        ) {
             return chartData;
         }
 
@@ -401,7 +412,7 @@ function RevenuesChart({
 
             return result;
         });
-    }, [chartData, viewMode]);
+    }, [chartData, viewMode, revenueType]);
 
     const isShowingPercent =
         viewMode === "percent" && revenueType !== "net-profit";
@@ -459,126 +470,5 @@ function RevenuesChart({
             isLoading={isLoading}
             isError={isError}
         />
-    );
-}
-
-interface RevenueTypePickerProps {
-    revenueType: RevenueType;
-    onRevenueTypeChange: (type: RevenueType) => void;
-}
-
-function RevenueTypePicker({
-    revenueType,
-    onRevenueTypeChange,
-}: RevenueTypePickerProps) {
-    return (
-        <div>
-            <Label className="mb-2">Revenue Type</Label>
-            <div className="flex gap-2">
-                <button
-                    onClick={() => onRevenueTypeChange("revenues")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        revenueType === "revenues"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Revenues
-                </button>
-                <button
-                    onClick={() => onRevenueTypeChange("expenses")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        revenueType === "expenses"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Expenses
-                </button>
-                <button
-                    onClick={() => onRevenueTypeChange("net-profit")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        revenueType === "net-profit"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Net Profit
-                </button>
-            </div>
-        </div>
-    );
-}
-
-interface ViewModePickerProps {
-    viewMode: "normal" | "percent";
-    onViewModeChange: (mode: "normal" | "percent") => void;
-}
-
-function ViewModePicker({ viewMode, onViewModeChange }: ViewModePickerProps) {
-    return (
-        <div>
-            <Label className="mb-2">View Mode</Label>
-            <div className="flex gap-2">
-                <button
-                    onClick={() => onViewModeChange("normal")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        viewMode === "normal"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Normal
-                </button>
-                <button
-                    onClick={() => onViewModeChange("percent")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        viewMode === "percent"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Percent
-                </button>
-            </div>
-        </div>
-    );
-}
-
-interface NetProfitViewModePickerProps {
-    viewMode: NetProfitViewMode;
-    onViewModeChange: (mode: NetProfitViewMode) => void;
-}
-
-function NetProfitViewModePicker({
-    viewMode,
-    onViewModeChange,
-}: NetProfitViewModePickerProps) {
-    return (
-        <div>
-            <Label className="mb-2">View Mode</Label>
-            <div className="flex gap-2">
-                <button
-                    onClick={() => onViewModeChange("net")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        viewMode === "net"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Net
-                </button>
-                <button
-                    onClick={() => onViewModeChange("breakdown")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        viewMode === "breakdown"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Breakdown
-                </button>
-            </div>
-        </div>
     );
 }

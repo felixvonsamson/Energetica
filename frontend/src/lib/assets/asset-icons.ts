@@ -5,7 +5,7 @@
  * Follows the same pattern as asset-names.ts for consistency.
  */
 
-import { windmill } from "@lucide/lab";
+import { dollarSignSquare, windmill } from "@lucide/lab";
 import {
     createLucideIcon,
     Factory,
@@ -46,10 +46,12 @@ import {
     CloudRain,
     ArrowUpRight,
     Repeat,
+    SquareDashedBottom,
 } from "lucide-react";
 
 // Create React components from @lucide/lab icon data
 const Windmill = createLucideIcon("Windmill", windmill);
+const DollarSignSquare = createLucideIcon("DollarSignSquare", dollarSignSquare);
 
 /**
  * Power facility icons. Covers renewable (wind, solar, hydro) and controllable
@@ -142,6 +144,8 @@ export const specialIcons: Record<string, LucideIcon> = {
     price: DollarSign,
     quantity: Hash,
     temperature: Thermometer,
+    baseline: SquareDashedBottom,
+    profit: DollarSignSquare,
 };
 
 /** Combined registry of all asset icons. */

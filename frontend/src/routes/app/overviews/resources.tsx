@@ -11,7 +11,8 @@ import {
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent, CardTitle } from "@/components/ui";
+import { Card, CardContent } from "@/components/ui";
+import { ChartCard } from "@/components/ui/chart-card";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
@@ -102,20 +103,17 @@ function ResourcesOverviewContent() {
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardContent>
-                    <div className="flex items-center gap-2 mb-4">
-                        <Package className="w-6 h-6 text-amber-600" />
-                        <CardTitle>Resource Stocks</CardTitle>
-                    </div>
-
-                    <ResourcesChart
-                        chartData={resourcesData}
-                        isLoading={isResourcesLoading}
-                        isError={isResourcesError}
-                    />
-                </CardContent>
-            </Card>
+            <ChartCard
+                icon={Package}
+                iconClassName="text-primary"
+                title="Resource Stocks"
+            >
+                <ResourcesChart
+                    chartData={resourcesData}
+                    isLoading={isResourcesLoading}
+                    isError={isResourcesError}
+                />
+            </ChartCard>
         </div>
     );
 }

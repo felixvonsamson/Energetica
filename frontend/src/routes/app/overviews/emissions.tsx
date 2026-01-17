@@ -8,16 +8,22 @@ import {
     TimeSeriesChart,
     ResolutionPicker,
     EmissionsOverviewTable,
-    filterNonZeroSeries,
-    createExcludeKeysFilter,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent, CardTitle } from "@/components/ui";
+import {
+    Card,
+    CardContent,
+    ButtonGroup,
+    type ButtonGroupOption,
+} from "@/components/ui";
+import { ChartCard } from "@/components/ui/chart-card";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
+import { useChartFilters } from "@/hooks/useChartFilters";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
+import { useToggleSet } from "@/hooks/useToggleSet";
 
 export const Route = createFileRoute("/app/overviews/emissions")({
     component: EmissionsOverviewPage,
@@ -87,9 +93,32 @@ function EmissionsOverviewPage() {
     );
 }
 
+const ABSOLUTE_RELATIVE_OPTIONS: ButtonGroupOption<"absolute" | "relative">[] =
+    [
+        { value: "absolute", label: "Absolute" },
+        { value: "relative", label: "Relative" },
+    ];
+
+const CO2_UNIT_OPTIONS: ButtonGroupOption<"concentration" | "quantity">[] = [
+    { value: "concentration", label: "Concentration" },
+    { value: "quantity", label: "Quantity" },
+];
+
+const EMISSIONS_VIEW_OPTIONS: ButtonGroupOption<"normal" | "percent">[] = [
+    { value: "normal", label: "Normal" },
+    { value: "percent", label: "Percent" },
+];
+
+const EMISSIONS_CUMULATIVE_OPTIONS: ButtonGroupOption<
+    "rates" | "cumulative"
+>[] = [
+    { value: "rates", label: "Rates" },
+    { value: "cumulative", label: "Cumulative" },
+];
+
 function EmissionsOverviewContent() {
     const { currentTick } = useGameTick();
-    const [hiddenSources, setHiddenSources] = useState<Set<string>>(new Set());
+    const [hiddenSources, toggleSource] = useToggleSet<string>();
     const [co2ViewMode, setCo2ViewMode] = useState<"absolute" | "relative">(
         "absolute",
     );
@@ -144,19 +173,6 @@ function EmissionsOverviewContent() {
         maxDatapoints: selectedResolution.datapoints,
     });
 
-    // Toggle source visibility
-    const handleToggleSource = useCallback((sourceType: string) => {
-        setHiddenSources((prev) => {
-            const next = new Set(prev);
-            if (next.has(sourceType)) {
-                next.delete(sourceType);
-            } else {
-                next.add(sourceType);
-            }
-            return next;
-        });
-    }, []);
-
     return (
         <div className="p-4 md:p-8 space-y-6">
             <Card>
@@ -166,193 +182,99 @@ function EmissionsOverviewContent() {
             </Card>
 
             {/* CO2 in Atmosphere */}
-            <Card>
-                <CardTitle>
-                    CO₂ in the Atmosphere
-                    <p className="text-sm text-gray-600 mt-1">
-                        (affected by all players)
-                    </p>
-                </CardTitle>
+            <ChartCard
+                icon={Globe}
+                iconClassName="text-primary"
+                title="CO₂ in the Atmosphere"
+                subtitle="(affected by all players)"
+            >
+                <CO2Chart
+                    chartData={climateData}
+                    isLoading={isClimateLoading}
+                    isError={isClimateError}
+                    viewMode={co2ViewMode}
+                    unitMode={co2UnitMode}
+                />
 
-                <CardContent>
-                    <CO2Chart
-                        chartData={climateData}
-                        isLoading={isClimateLoading}
-                        isError={isClimateError}
-                        viewMode={co2ViewMode}
-                        unitMode={co2UnitMode}
+                <div className="mt-4 flex flex-wrap gap-4">
+                    <ButtonGroup
+                        value={co2ViewMode}
+                        options={ABSOLUTE_RELATIVE_OPTIONS}
+                        onChange={setCo2ViewMode}
                     />
-
-                    <div className="mt-4 flex flex-wrap gap-4">
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setCo2ViewMode("absolute")}
-                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                    co2ViewMode === "absolute"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                }`}
-                            >
-                                Absolute
-                            </button>
-                            <button
-                                onClick={() => setCo2ViewMode("relative")}
-                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                    co2ViewMode === "relative"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                }`}
-                            >
-                                Relative
-                            </button>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setCo2UnitMode("concentration")}
-                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                    co2UnitMode === "concentration"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                }`}
-                            >
-                                Concentration
-                            </button>
-                            <button
-                                onClick={() => setCo2UnitMode("quantity")}
-                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                    co2UnitMode === "quantity"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                }`}
-                            >
-                                Quantity
-                            </button>
-                        </div>
+                    <ButtonGroup
+                        value={co2UnitMode}
+                        options={CO2_UNIT_OPTIONS}
+                        onChange={setCo2UnitMode}
+                    />
+                </div>
+                {co2UnitMode === "concentration" && (
+                    <div className="mt-2 text-sm text-muted-foreground">
+                        ‰ = parts per thousand &emsp; ppm = parts per million
+                        &emsp; ppb = parts per billion
                     </div>
-                    {co2UnitMode === "concentration" && (
-                        <div className="mt-2 text-sm text-gray-600">
-                            ‰ = parts per thousand &emsp; ppm = parts per
-                            million &emsp; ppb = parts per billion
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                )}
+            </ChartCard>
 
             {/* Global Temperature */}
-            <Card>
-                <CardTitle>Global Average Temperature</CardTitle>
+            <ChartCard
+                icon={Thermometer}
+                iconClassName="text-primary"
+                title="Global Average Temperature"
+            >
+                <TemperatureChart
+                    chartData={temperatureData}
+                    isLoading={isTemperatureLoading}
+                    isError={isTemperatureError}
+                    viewMode={tempViewMode}
+                />
 
-                <CardContent>
-                    <TemperatureChart
-                        chartData={temperatureData}
-                        isLoading={isTemperatureLoading}
-                        isError={isTemperatureError}
-                        viewMode={tempViewMode}
+                <div className="mt-4">
+                    <ButtonGroup
+                        value={tempViewMode}
+                        options={ABSOLUTE_RELATIVE_OPTIONS}
+                        onChange={setTempViewMode}
                     />
-
-                    <div className="mt-4 flex gap-2">
-                        <button
-                            onClick={() => setTempViewMode("absolute")}
-                            className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                tempViewMode === "absolute"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                            }`}
-                        >
-                            Absolute
-                        </button>
-                        <button
-                            onClick={() => setTempViewMode("relative")}
-                            className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                tempViewMode === "relative"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                            }`}
-                        >
-                            Relative
-                        </button>
-                    </div>
-                </CardContent>
-            </Card>
+                </div>
+            </ChartCard>
 
             {/* Personal Emissions */}
-            <Card>
-                <CardTitle className="flex items-center gap-2 mb-4">
-                    <Cloud className="w-6 h-6 text-gray-500" />
-                    Your Emissions
-                </CardTitle>
+            <ChartCard
+                icon={Cloud}
+                iconClassName="text-primary"
+                title="Your Emissions"
+            >
+                <EmissionsChart
+                    chartData={emissionsData}
+                    isLoading={isEmissionsLoading}
+                    isError={isEmissionsError}
+                    hiddenSources={hiddenSources}
+                    viewMode={emissionsViewMode}
+                    cumulativeMode={emissionsCumulativeMode}
+                />
 
-                <CardContent>
-                    <EmissionsChart
-                        chartData={emissionsData}
-                        isLoading={isEmissionsLoading}
-                        isError={isEmissionsError}
-                        hiddenSources={hiddenSources}
-                        viewMode={emissionsViewMode}
-                        cumulativeMode={emissionsCumulativeMode}
+                <div className="mt-4 flex flex-wrap gap-4">
+                    <ButtonGroup
+                        value={emissionsViewMode}
+                        options={EMISSIONS_VIEW_OPTIONS}
+                        onChange={setEmissionsViewMode}
                     />
+                    <ButtonGroup
+                        value={emissionsCumulativeMode}
+                        options={EMISSIONS_CUMULATIVE_OPTIONS}
+                        onChange={setEmissionsCumulativeMode}
+                    />
+                </div>
 
-                    <div className="mt-4 flex flex-wrap gap-4">
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setEmissionsViewMode("normal")}
-                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                    emissionsViewMode === "normal"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                }`}
-                            >
-                                Normal
-                            </button>
-                            <button
-                                onClick={() => setEmissionsViewMode("percent")}
-                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                    emissionsViewMode === "percent"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                }`}
-                            >
-                                Percent
-                            </button>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() =>
-                                    setEmissionsCumulativeMode("rates")
-                                }
-                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                    emissionsCumulativeMode === "rates"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                }`}
-                            >
-                                Rates
-                            </button>
-                            <button
-                                onClick={() =>
-                                    setEmissionsCumulativeMode("cumulative")
-                                }
-                                className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                                    emissionsCumulativeMode === "cumulative"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                }`}
-                            >
-                                Cumulative
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="mt-6">
-                        <EmissionsOverviewTable
-                            chartData={emissionsData}
-                            resolution={selectedResolution.resolution}
-                            hiddenSources={hiddenSources}
-                            onToggleSource={handleToggleSource}
-                        />
-                    </div>
-                </CardContent>
-            </Card>
+                <div className="mt-6">
+                    <EmissionsOverviewTable
+                        chartData={emissionsData}
+                        resolution={selectedResolution.resolution}
+                        hiddenSources={hiddenSources}
+                        onToggleSource={toggleSource}
+                    />
+                </div>
+            </ChartCard>
         </div>
     );
 }
@@ -549,14 +471,7 @@ function EmissionsChart({
     cumulativeMode,
 }: EmissionsChartProps) {
     const getColor = useAssetColorGetter();
-
-    // Create a composite filter that combines non-zero filtering with visibility filtering
-    const filterDataKeys = useMemo(() => {
-        return [
-            filterNonZeroSeries,
-            createExcludeKeysFilter(Array.from(hiddenSources)),
-        ];
-    }, [hiddenSources]);
+    const filterDataKeys = useChartFilters(hiddenSources);
 
     // Transform data for cumulative and percent view
     const transformedData: Array<Record<string, unknown>> = useMemo(() => {

@@ -11,13 +11,11 @@ import {
     Users,
     Layers,
 } from "lucide-react";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 
 import {
     TimeSeriesChart,
     ResolutionPicker,
-    filterNonZeroSeries,
-    createExcludeKeysFilter,
     type TimeSeriesChartConfig,
 } from "@/components/charts";
 import { GameLayout } from "@/components/layout/game-layout";
@@ -27,11 +25,15 @@ import {
     CardHeader,
     CardTitle,
     Money,
+    ButtonGroup,
+    type ButtonGroupOption,
 } from "@/components/ui";
 import { FacilityName } from "@/components/ui/asset-name";
+import { ChartCard } from "@/components/ui/chart-card";
 import { Label } from "@/components/ui/label";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
+import { useChartFilters } from "@/hooks/useChartFilters";
 import { useCurrentChartData, useLatestChartData } from "@/hooks/useCharts";
 import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
 import {
@@ -41,6 +43,7 @@ import {
 import { useGameEngine } from "@/hooks/useGame";
 import { useGameTick } from "@/hooks/useGameTick";
 import { usePlayerMap } from "@/hooks/usePlayers";
+import { useToggleSet } from "@/hooks/useToggleSet";
 import { formatPower, formatEnergy } from "@/lib/format-utils";
 import type { ChartType } from "@/types/charts";
 import type { Player } from "@/types/players";
@@ -110,6 +113,18 @@ function MarketsOverviewPage() {
     );
 }
 
+const BREAKDOWN_TYPE_OPTIONS: ButtonGroupOption<
+    "production" | "consumption"
+>[] = [
+    { value: "production", label: "Production" },
+    { value: "consumption", label: "Consumption" },
+];
+
+const BREAKDOWN_MODE_OPTIONS: ButtonGroupOption<"player" | "type">[] = [
+    { value: "player", label: "By Player" },
+    { value: "type", label: "By Type" },
+];
+
 function MarketsOverviewContent() {
     const { currentTick } = useGameTick();
     const { playerId } = useCurrentPlayer();
@@ -165,9 +180,7 @@ function MarketsOverviewContent() {
     const [breakdownMode, setBreakdownMode] = useState<"player" | "type">(
         "player",
     );
-    const [hiddenBreakdownItems, setHiddenBreakdownItems] = useState<
-        Set<string>
-    >(new Set());
+    const [hiddenBreakdownItems, toggleBreakdownItem] = useToggleSet<string>();
 
     // Determine which chart type to use for breakdown
     const breakdownChartType: ChartType = useMemo(() => {
@@ -202,19 +215,6 @@ function MarketsOverviewContent() {
             search: { marketId: marketId },
         });
     };
-
-    // Toggle breakdown item visibility
-    const handleToggleBreakdownItem = useCallback((item: string) => {
-        setHiddenBreakdownItems((prev) => {
-            const next = new Set(prev);
-            if (next.has(item)) {
-                next.delete(item);
-            } else {
-                next.add(item);
-            }
-            return next;
-        });
-    }, []);
 
     // Show message if player is not in a market and none selected
     if (!selectedMarketId) {
@@ -288,95 +288,79 @@ function MarketsOverviewContent() {
             </Card>
 
             {/* Price Chart */}
-            <Card className="mb-6">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 mb-4">
-                        <TrendingUp className="w-6 h-6 text-green-500" />
-                        Market Price
-                    </CardTitle>
-                </CardHeader>
-
-                <CardContent>
-                    <PriceChart
-                        chartData={chartData}
-                        isLoading={isChartLoading}
-                        isError={isError}
-                    />
-                </CardContent>
-            </Card>
+            <ChartCard
+                icon={TrendingUp}
+                iconClassName="text-primary"
+                title="Market Price"
+                className="mb-6"
+            >
+                <PriceChart
+                    chartData={chartData}
+                    isLoading={isChartLoading}
+                    isError={isError}
+                />
+            </ChartCard>
 
             {/* Clearing Volume Chart */}
-            <Card className="mb-6">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Activity className="w-6 h-6 text-purple-500" />
-                        Clearing Volume
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ClearingVolumeChart
-                        chartData={chartData}
-                        isLoading={isChartLoading}
-                        isError={isError}
-                    />
-                </CardContent>
-            </Card>
+            <ChartCard
+                icon={Activity}
+                iconClassName="text-primary"
+                title="Clearing Volume"
+                className="mb-6"
+            >
+                <ClearingVolumeChart
+                    chartData={chartData}
+                    isLoading={isChartLoading}
+                    isError={isError}
+                />
+            </ChartCard>
 
             {/* Breakdown Section */}
             <Card className="mb-6">
                 <CardContent>
                     <div className="space-y-4">
-                        <BreakdownTypePicker
-                            breakdownType={breakdownType}
-                            onBreakdownTypeChange={setBreakdownType}
+                        <ButtonGroup
+                            label="Breakdown Type"
+                            value={breakdownType}
+                            options={BREAKDOWN_TYPE_OPTIONS}
+                            onChange={setBreakdownType}
                         />
-                        <BreakdownModePicker
-                            breakdownMode={breakdownMode}
-                            onBreakdownModeChange={setBreakdownMode}
+                        <ButtonGroup
+                            label="Breakdown Mode"
+                            value={breakdownMode}
+                            options={BREAKDOWN_MODE_OPTIONS}
+                            onChange={setBreakdownMode}
                         />
                     </div>
                 </CardContent>
             </Card>
 
-            <Card className="mb-6">
-                <CardHeader>
-                    <CardTitle>
-                        <div className="flex items-center gap-2 mb-4">
-                            {breakdownMode === "player" ? (
-                                <Users className="w-6 h-6 text-blue-500" />
-                            ) : (
-                                <Layers className="w-6 h-6 text-orange-500" />
-                            )}
-                            {breakdownType === "production"
-                                ? "Production"
-                                : "Consumption"}{" "}
-                            by {breakdownMode === "player" ? "Player" : "Type"}
-                        </div>
-                    </CardTitle>
-                </CardHeader>
+            <ChartCard
+                icon={breakdownMode === "player" ? Users : Layers}
+                iconClassName="text-primary"
+                title={`${breakdownType === "production" ? "Production" : "Consumption"} by ${breakdownMode === "player" ? "Player" : "Type"}`}
+                className="mb-6"
+            >
+                <BreakdownChart
+                    chartData={breakdownChartData}
+                    isLoading={isBreakdownLoading}
+                    isError={isBreakdownError}
+                    hiddenItems={hiddenBreakdownItems}
+                    breakdownMode={breakdownMode}
+                    playerMap={playerMap}
+                />
 
-                <CardContent>
-                    <BreakdownChart
+                <div className="mt-6">
+                    <MarketBreakdownTable
                         chartData={breakdownChartData}
-                        isLoading={isBreakdownLoading}
-                        isError={isBreakdownError}
+                        resolution={selectedResolution.resolution}
                         hiddenItems={hiddenBreakdownItems}
+                        onToggleItem={toggleBreakdownItem}
                         breakdownMode={breakdownMode}
-                        playerMap={playerMap}
+                        breakdownType={breakdownType}
                     />
-
-                    <div className="mt-6">
-                        <MarketBreakdownTable
-                            chartData={breakdownChartData}
-                            resolution={selectedResolution.resolution}
-                            hiddenItems={hiddenBreakdownItems}
-                            onToggleItem={handleToggleBreakdownItem}
-                            breakdownMode={breakdownMode}
-                            breakdownType={breakdownType}
-                        />
-                    </div>
-                </CardContent>
-            </Card>
+                </div>
+            </ChartCard>
         </div>
     );
 }
@@ -490,82 +474,6 @@ function ClearingVolumeChart({
     );
 }
 
-interface BreakdownTypePickerProps {
-    breakdownType: "production" | "consumption";
-    onBreakdownTypeChange: (type: "production" | "consumption") => void;
-}
-
-function BreakdownTypePicker({
-    breakdownType,
-    onBreakdownTypeChange,
-}: BreakdownTypePickerProps) {
-    return (
-        <div>
-            <Label className="mb-2">Breakdown Type</Label>
-            <div className="flex gap-2">
-                <button
-                    onClick={() => onBreakdownTypeChange("production")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        breakdownType === "production"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Production
-                </button>
-                <button
-                    onClick={() => onBreakdownTypeChange("consumption")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        breakdownType === "consumption"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    Consumption
-                </button>
-            </div>
-        </div>
-    );
-}
-
-interface BreakdownModePickerProps {
-    breakdownMode: "player" | "type";
-    onBreakdownModeChange: (mode: "player" | "type") => void;
-}
-
-function BreakdownModePicker({
-    breakdownMode,
-    onBreakdownModeChange,
-}: BreakdownModePickerProps) {
-    return (
-        <div>
-            <Label className="mb-2">Breakdown Mode</Label>
-            <div className="flex gap-2">
-                <button
-                    onClick={() => onBreakdownModeChange("player")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        breakdownMode === "player"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    By Player
-                </button>
-                <button
-                    onClick={() => onBreakdownModeChange("type")}
-                    className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                        breakdownMode === "type"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                >
-                    By Type
-                </button>
-            </div>
-        </div>
-    );
-}
-
 interface BreakdownChartProps {
     chartData: Array<Record<string, unknown>>;
     isLoading: boolean;
@@ -584,14 +492,7 @@ function BreakdownChart({
     playerMap,
 }: BreakdownChartProps) {
     const getColor = useAssetColorGetter();
-
-    // Create a composite filter
-    const filterDataKeys = useMemo(() => {
-        return [
-            filterNonZeroSeries,
-            createExcludeKeysFilter(Array.from(hiddenItems)),
-        ];
-    }, [hiddenItems]);
+    const filterDataKeys = useChartFilters(hiddenItems);
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({

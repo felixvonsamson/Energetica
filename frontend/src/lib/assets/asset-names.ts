@@ -273,6 +273,14 @@ export const specialNames: Record<string, AssetDisplayName> = {
         long: "Temperature",
         short: "Temp",
     },
+    baseline: {
+        long: "Baseline",
+        short: "Baseline",
+    },
+    profit: {
+        long: "Profit",
+        short: "Profit",
+    },
 };
 
 /** Combined registry of all asset names. */
