@@ -21,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 import { useChangePassword } from "@/hooks/useAuthQueries";
 import { handleApiError } from "@/lib/error-utils";
 
@@ -108,16 +109,13 @@ function SettingsContent() {
                                 events
                             </p>
                         </div>
-                        <Label className="relative inline-flex items-center cursor-pointer">
-                            <Input
-                                type="checkbox"
-                                checked={notificationsEnabled}
-                                onChange={handleNotificationsToggle}
-                                disabled={notificationsLoading}
-                                className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-green rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-green dark:peer-checked:bg-brand-green" />
-                        </Label>
+
+                        <Switch
+                            id="notifications-switch"
+                            checked={notificationsEnabled}
+                            onCheckedChange={handleNotificationsToggle}
+                            disabled={notificationsLoading}
+                        />
                     </CardContent>
                 </Card>
 
