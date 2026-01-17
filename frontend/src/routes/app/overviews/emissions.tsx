@@ -20,6 +20,7 @@ import { useChartFilters } from "@/hooks/useChartFilters";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
 import { useToggleSet } from "@/hooks/useToggleSet";
+import { formatEmissions } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/overviews/emissions")({
     component: EmissionsOverviewPage,
@@ -613,20 +614,7 @@ function EmissionsChart({
             if (viewMode === "percent") {
                 return `${value.toFixed(1)}%`;
             }
-
-            // Format as mass (kg)
-            const abs = Math.abs(value);
-            if (abs >= 1e12) {
-                return `${(value / 1e12).toFixed(2)} Tt`;
-            } else if (abs >= 1e9) {
-                return `${(value / 1e9).toFixed(2)} Gt`;
-            } else if (abs >= 1e6) {
-                return `${(value / 1e6).toFixed(2)} Mt`;
-            } else if (abs >= 1e3) {
-                return `${(value / 1e3).toFixed(2)} t`;
-            } else {
-                return `${value.toFixed(2)} kg`;
-            }
+            return formatEmissions(value);
         },
         [viewMode],
     );

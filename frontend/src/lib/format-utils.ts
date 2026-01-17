@@ -146,6 +146,30 @@ export function formatUpgradeMass(
     return generalUpgradeFormat(value1, value2, MASS_UNITS);
 }
 
+/**
+ * Format emissions/large mass values using scientific metric prefixes (kg, t,
+ * Mt, Gt, Tt). Uses absolute thresholds and displays decimals.
+ *
+ * @example
+ *     formatEmissions(500); // "500.00 kg"
+ *     formatEmissions(15000); // "15.00 t"
+ *     formatEmissions(1500000000); // "1.50 Gt"
+ */
+export function formatEmissions(value: number): string {
+    const abs = Math.abs(value);
+    if (abs >= 1e12) {
+        return `${(value / 1e12).toFixed(2)} Tt`;
+    } else if (abs >= 1e9) {
+        return `${(value / 1e9).toFixed(2)} Gt`;
+    } else if (abs >= 1e6) {
+        return `${(value / 1e6).toFixed(2)} Mt`;
+    } else if (abs >= 1e3) {
+        return `${(value / 1e3).toFixed(2)} t`;
+    } else {
+        return `${value.toFixed(2)} kg`;
+    }
+}
+
 // === Mass Rate Formatting ===
 
 /**
