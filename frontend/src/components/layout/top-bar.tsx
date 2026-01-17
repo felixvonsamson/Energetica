@@ -135,9 +135,9 @@ export function TopBar() {
                         )}
                     </div>
 
-                    {/* Help Button, Notifications, and User Menu */}
-                    <ButtonGroup>
-                        {staticData?.infoModal && (
+                    {/* Help Button */}
+                    {staticData?.infoModal && (
+                        <ButtonGroup>
                             <Button
                                 onClick={() => handleShowHelp()}
                                 variant="outline"
@@ -146,8 +146,11 @@ export function TopBar() {
                             >
                                 <HelpCircle size={20} />
                             </Button>
-                        )}
+                        </ButtonGroup>
+                    )}
 
+                    {/* Notifications, Theme Toggle and User Menu */}
+                    <ButtonGroup>
                         <Button
                             onClick={() => setShowNotifications(true)}
                             variant="outline"
@@ -161,6 +164,8 @@ export function TopBar() {
                                 </span>
                             )}
                         </Button>
+
+                        <ThemeToggle variant="icon-only" />
 
                         {/* User dropdown */}
                         <DropdownMenu>
@@ -177,9 +182,6 @@ export function TopBar() {
                                 <DropdownMenuLabel asChild>
                                     <p>{user.username}</p>
                                 </DropdownMenuLabel>
-                                <DropdownMenuItem asChild>
-                                    <ThemeToggle variant="menu-item" />
-                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
                                     <a

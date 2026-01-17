@@ -40,7 +40,7 @@ export const ThemeToggle = forwardRef<HTMLButtonElement, ThemeToggleProps>(
             <Button
                 ref={ref}
                 onClick={handleClick}
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 className={className}
                 aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
