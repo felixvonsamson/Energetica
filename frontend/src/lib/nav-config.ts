@@ -95,8 +95,8 @@ export const navigationConfig: NavigationItemConfig[] = [
             },
             {
                 type: "link",
-                label: "Networks",
-                to: "/app/overviews/networks",
+                label: "Electricity Markets",
+                to: "/app/overviews/electricity-markets",
                 icon: Network,
             },
         ],

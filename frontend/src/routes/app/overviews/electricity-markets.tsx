@@ -45,36 +45,34 @@ import { formatPower, formatEnergy } from "@/lib/format-utils";
 import type { ChartType } from "@/types/charts";
 import type { Player } from "@/types/players";
 
-interface NetworksSearchParams {
-    networkId?: number;
+interface MarketsSearchParams {
+    marketId?: number;
 }
 
-export const Route = createFileRoute("/app/overviews/networks")({
-    component: NetworksOverviewPage,
+export const Route = createFileRoute("/app/overviews/electricity-markets")({
+    component: MarketsOverviewPage,
     staticData: {
-        title: "Networks Overview",
+        title: "Markets Overview",
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_network,
         },
         infoModal: {
-            contents: <NetworksOverviewHelp />,
+            contents: <MarketsOverviewHelp />,
         },
     },
-    validateSearch: (
-        search: Record<string, unknown>,
-    ): NetworksSearchParams => ({
-        networkId: search.networkId ? Number(search.networkId) : undefined,
+    validateSearch: (search: Record<string, unknown>): MarketsSearchParams => ({
+        marketId: search.marketId ? Number(search.marketId) : undefined,
     }),
 });
 
-function NetworksOverviewHelp() {
+function MarketsOverviewHelp() {
     return (
         <div className="space-y-3">
             <p>
                 This page shows electricity market price and clearing volume
-                over time for a selected network.
+                over time for a selected market.
             </p>
             <ul className="list-none space-y-1 ml-4">
                 <li className="flex items-center gap-2">
@@ -94,7 +92,7 @@ function NetworksOverviewHelp() {
                 <li className="flex items-center gap-2">
                     <NetworkIcon className="w-4 h-4 shrink-0" />
                     <span>
-                        Use the network selector to view different electricity
+                        Use the market selector to view different electricity
                         markets
                     </span>
                 </li>
@@ -104,35 +102,35 @@ function NetworksOverviewHelp() {
     );
 }
 
-function NetworksOverviewPage() {
+function MarketsOverviewPage() {
     return (
         <GameLayout>
-            <NetworksOverviewContent />
+            <MarketsOverviewContent />
         </GameLayout>
     );
 }
 
-function NetworksOverviewContent() {
+function MarketsOverviewContent() {
     const { currentTick } = useGameTick();
     const { playerId } = useCurrentPlayer();
     const navigate = useNavigate();
-    const { networkId: searchNetworkId } = Route.useSearch();
+    const { marketId: searchMarketId } = Route.useSearch();
 
-    // Get player's network as fallback
+    // Get player's market as fallback
     const playerMarket = useElectricityMarketForPlayer(playerId);
     const { data: marketsData } = useElectricityMarkets();
     const playerMap = usePlayerMap();
 
-    // Determine which network to show
-    const selectedNetworkId = searchNetworkId ?? playerMarket?.id;
+    // Determine which market to show
+    const selectedMarketId = searchMarketId ?? playerMarket?.id;
 
-    // Find the selected network name
-    const selectedNetwork = useMemo(() => {
-        if (!marketsData || !selectedNetworkId) return null;
+    // Find the selected market name
+    const selectedMarket = useMemo(() => {
+        if (!marketsData || !selectedMarketId) return null;
         return marketsData.electricity_markets.find(
-            (m) => m.id === selectedNetworkId,
+            (m) => m.id === selectedMarketId,
         );
-    }, [marketsData, selectedNetworkId]);
+    }, [marketsData, selectedMarketId]);
 
     const { selectedResolution } = useTimeMode();
 
@@ -146,14 +144,14 @@ function NetworksOverviewContent() {
         currentTick,
         resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
-        networkId: selectedNetworkId,
+        networkId: selectedMarketId,
     });
 
     // Fetch latest data for real-time display
     const { data: latestData, isLoading: isLatestLoading } = useLatestChartData(
         {
             chartType: "network-data",
-            networkId: selectedNetworkId,
+            networkId: selectedMarketId,
         },
     );
 
@@ -194,14 +192,14 @@ function NetworksOverviewContent() {
         currentTick,
         resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
-        networkId: selectedNetworkId,
+        networkId: selectedMarketId,
     });
 
-    // Handle network selection change
-    const handleNetworkChange = (networkId: number) => {
+    // Handle market selection change
+    const handleMarketChange = (marketId: number) => {
         navigate({
-            to: "/app/overviews/networks",
-            search: { networkId },
+            to: "/app/overviews/electricity-markets",
+            search: { marketId: marketId },
         });
     };
 
@@ -218,15 +216,15 @@ function NetworksOverviewContent() {
         });
     }, []);
 
-    // Show message if player is not in a network and none selected
-    if (!selectedNetworkId) {
+    // Show message if player is not in a market and none selected
+    if (!selectedMarketId) {
         return (
             <div className="p-4 md:p-8">
                 <Card>
                     <CardContent>
                         <p className="text-muted">
                             You are not currently in an electricity market. Join
-                            or create a market to view network data.
+                            or create a market to view market data.
                         </p>
                     </CardContent>
                 </Card>
@@ -239,10 +237,10 @@ function NetworksOverviewContent() {
             <Card className="mb-6">
                 <CardContent>
                     <div className="space-y-4">
-                        <NetworkSelector
+                        <MarketSelector
                             markets={marketsData?.electricity_markets ?? []}
-                            selectedNetworkId={selectedNetworkId}
-                            onNetworkChange={handleNetworkChange}
+                            selectedMarketId={selectedMarketId}
+                            onMarketChange={handleMarketChange}
                         />
                         <ResolutionPicker currentTick={currentTick} />
                     </div>
@@ -254,7 +252,7 @@ function NetworksOverviewContent() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <NetworkIcon className="w-6 h-6 text-blue-500" />
-                        {selectedNetwork?.name ?? "Network"} - Current Values
+                        {selectedMarket?.name ?? "Market"} - Current Values
                     </CardTitle>
                 </CardHeader>
 
@@ -368,7 +366,7 @@ function NetworksOverviewContent() {
                     />
 
                     <div className="mt-6">
-                        <NetworkBreakdownTable
+                        <MarketBreakdownTable
                             chartData={breakdownChartData}
                             resolution={selectedResolution.resolution}
                             hiddenItems={hiddenBreakdownItems}
@@ -383,23 +381,23 @@ function NetworksOverviewContent() {
     );
 }
 
-interface NetworkSelectorProps {
+interface MarketSelectorProps {
     markets: Array<{ id: number; name: string }>;
-    selectedNetworkId: number;
-    onNetworkChange: (networkId: number) => void;
+    selectedMarketId: number;
+    onMarketChange: (marketId: number) => void;
 }
 
-function NetworkSelector({
+function MarketSelector({
     markets,
-    selectedNetworkId,
-    onNetworkChange,
-}: NetworkSelectorProps) {
+    selectedMarketId: selectedMarketId,
+    onMarketChange: onMarketChange,
+}: MarketSelectorProps) {
     return (
         <div>
-            <Label className="mb-2">Network</Label>
+            <Label className="mb-2">Market</Label>
             <select
-                value={selectedNetworkId}
-                onChange={(e) => onNetworkChange(Number(e.target.value))}
+                value={selectedMarketId}
+                onChange={(e) => onMarketChange(Number(e.target.value))}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
                 {markets.map((market) => (
@@ -646,7 +644,7 @@ function BreakdownChart({
     );
 }
 
-interface NetworkBreakdownTableProps {
+interface MarketBreakdownTableProps {
     chartData: Array<Record<string, unknown>>;
     resolution: number;
     hiddenItems: Set<string>;
@@ -655,14 +653,14 @@ interface NetworkBreakdownTableProps {
     breakdownType: "production" | "consumption";
 }
 
-function NetworkBreakdownTable({
+function MarketBreakdownTable({
     chartData,
     resolution,
     hiddenItems,
     onToggleItem,
     breakdownMode,
     breakdownType,
-}: NetworkBreakdownTableProps) {
+}: MarketBreakdownTableProps) {
     const [sortKey, setSortKey] = useState<"name" | "energy">("energy");
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
     const { data: gameEngine } = useGameEngine();
