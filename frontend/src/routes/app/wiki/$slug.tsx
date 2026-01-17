@@ -1,7 +1,7 @@
 /** Dynamic route for wiki pages. Loads MDX content based on the slug parameter. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { JSX, useEffect } from "react";
+import { JSX } from "react";
 
 import { WikiLayout } from "@/components/wiki/wiki-layout";
 
@@ -28,25 +28,6 @@ export const Route = createFileRoute("/app/wiki/$slug")({
     },
 });
 
-/** Wrapper component that scrolls to hash anchor after content loads */
-function ContentWithHashScroll({ children }: { children: React.ReactNode }) {
-    useEffect(() => {
-        // After content is mounted, scroll to hash if present
-        const hash = window.location.hash;
-        if (hash) {
-            // Use setTimeout to ensure the DOM is fully rendered
-            setTimeout(() => {
-                const element = document.getElementById(hash.slice(1));
-                if (element) {
-                    element.scrollIntoView({ behavior: "smooth" });
-                }
-            }, 0);
-        }
-    }, []);
-
-    return <>{children}</>;
-}
-
 function WikiPage() {
     const { slug } = Route.useParams();
     const Content = wikiPages[slug];
@@ -66,9 +47,7 @@ function WikiPage() {
 
     return (
         <WikiLayout>
-            <ContentWithHashScroll>
-                <Content />
-            </ContentWithHashScroll>
+            <Content />
         </WikiLayout>
     );
 }

@@ -201,7 +201,7 @@ export const mobileOnlyNavigation: NavigationItemConfig[] = [
     {
         type: "link",
         label: "Changelog",
-        to: "/changelog",
+        to: "/app/changelog",
         icon: List,
     },
 ];

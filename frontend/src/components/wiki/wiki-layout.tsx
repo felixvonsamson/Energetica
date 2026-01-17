@@ -8,6 +8,7 @@ import { type ReactNode } from "react";
 
 import { HomeLayout } from "@/components/home-layout";
 import { GameLayout } from "@/components/layout/game-layout";
+import { MdxContent } from "@/components/mdx-content";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/classname-utils";
 
@@ -37,9 +38,7 @@ export function WikiLayout({ children }: WikiLayoutProps) {
     const content = (
         <div className="bg-background text-foreground px-6 lg:px-8 pb-24">
             {/* MDX content with prose styling */}
-            <article className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
-                {children}
-            </article>
+            <MdxContent>{children}</MdxContent>
 
             {/* Navigation */}
             <nav className="max-w-4xl mx-auto mt-12">
