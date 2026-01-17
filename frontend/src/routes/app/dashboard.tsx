@@ -20,20 +20,19 @@ import {
 
 import { AchievementCard } from "@/components/dashboard/achievement-card";
 import { ConstructionProjects } from "@/components/dashboard/construction-projects";
+import { DailyQuizSection } from "@/components/dashboard/daily-quiz";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { IncomingShipments } from "@/components/dashboard/incoming-shipments";
 import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { ResearchProjects } from "@/components/dashboard/research-projects";
+import { WeatherSection } from "@/components/dashboard/weather";
 import { DevelopmentBanner } from "@/components/development-banner";
 import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
 import { useProjects } from "@/hooks/useProjects";
 import { useShipments } from "@/hooks/useShipments";
-import { useWeather } from "@/hooks/useWeather";
-import { getMonthName } from "@/lib/date-utils";
 
 export const Route = createFileRoute("/app/dashboard")({
     component: DashboardPage,
@@ -135,7 +134,6 @@ function DashboardContent() {
             {/* Weather section */}
             <WeatherSection />
 
-            {/* Construction, Research, Shipments */}
             {/* Construction - only show if there are any construction projects */}
             {hasConstructionProjects && (
                 <DashboardSection
@@ -241,112 +239,6 @@ function DashboardContent() {
             {/* Daily quiz */}
             <DailyQuizSection />
         </div>
-    );
-}
-
-function WeatherSection() {
-    const {
-        data: weatherData,
-        isLoading: isWeatherLoading,
-        isError: isWeatherError,
-    } = useWeather();
-
-    return (
-        <Card>
-            <CardTitle className="text-center mb-4">
-                Current weather conditions
-            </CardTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-2">
-                {isWeatherLoading && !weatherData ? (
-                    <div className="col-span-full text-center text-gray-500">
-                        Loading...
-                    </div>
-                ) : isWeatherError ? (
-                    <div className="col-span-full text-center text-alert-red">
-                        Failed to load weather data
-                    </div>
-                ) : weatherData ? (
-                    <>
-                        {/* Month with year progress indicator */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                Month:{" "}
-                                <b>{getMonthName(weatherData.month_number)}</b>
-                            </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                {/* Full-width padded container defines the travel range */}
-                                <div className="absolute inset-0 mx-3 flex items-center">
-                                    {/* Positioned wrapper moves within the padded space */}
-                                    <div
-                                        className="absolute"
-                                        style={{
-                                            left: `${weatherData.year_progress * 100}%`,
-                                        }}
-                                    >
-                                        {/* Dot centred on position */}
-                                        <div className="w-3 h-3 bg-pine dark:bg-brand-green rounded-full -translate-x-1/2" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Solar Irradiance with visual bar */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                Irradiance:{" "}
-                                <b>
-                                    {Math.round(weatherData.solar_irradiance)}{" "}
-                                    W/m²
-                                </b>
-                            </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-yellow-500 dark:bg-yellow-400 transition-all duration-300"
-                                    style={{
-                                        width: `${Math.min(100, (weatherData.solar_irradiance / 1000) * 100)}%`,
-                                    }}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Wind Speed with visual bar */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                Wind speed:{" "}
-                                <b>{Math.round(weatherData.wind_speed)} km/h</b>
-                            </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-cyan-500 dark:bg-cyan-400 transition-all duration-300"
-                                    style={{
-                                        width: `${Math.min(100, (weatherData.wind_speed / 60) * 100)}%`,
-                                    }}
-                                />
-                            </div>
-                        </div>
-
-                        {/* River Discharge with visual bar */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                River discharge:{" "}
-                                <b>
-                                    {Math.round(weatherData.river_discharge)}{" "}
-                                    m³/s
-                                </b>
-                            </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-blue-500 dark:bg-blue-400 transition-all duration-300"
-                                    style={{
-                                        width: `${Math.min(100, (weatherData.river_discharge / 150) * 100)}%`,
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </>
-                ) : null}
-            </div>
-        </Card>
     );
 }
 
@@ -473,200 +365,5 @@ function AchievementSection() {
                 )}
             </CardContent>
         </Card>
-    );
-}
-
-function DailyQuizSection() {
-    // TODO: correctly answering the daily quiz earns the player 1 XP point. This is not communicated in the new UI
-    const { data: quizData, isLoading, isError } = useDailyQuiz();
-    const { mutate: submitAnswer, isPending } = useSubmitQuizAnswer();
-
-    const handleAnswerClick = (answer: "answer1" | "answer2" | "answer3") => {
-        if (!quizData || quizData.player_answer) return; // Already answered
-        submitAnswer(answer);
-    };
-
-    const hasAnswered =
-        quizData?.player_answer !== undefined &&
-        quizData?.player_answer !== null;
-
-    // Helper to determine if an answer is correct
-    const isCorrectAnswer = (answer: "answer1" | "answer2" | "answer3") => {
-        if (!quizData?.correct_answer) return false;
-        return (
-            quizData.correct_answer === answer ||
-            quizData.correct_answer === "all correct"
-        );
-    };
-
-    // Helper to get button styling based on state
-    const getButtonClass = (answer: "answer1" | "answer2" | "answer3") => {
-        const baseClass =
-            "w-full px-4 py-3 rounded-lg font-medium transition-all duration-300 ease-out relative";
-
-        if (!hasAnswered) {
-            // Before answering - normal clickable button
-            return `${baseClass} bg-card border-1 border-border hover:border-brand-green dark:hover:border-brand-green hover:shadow-md text-foreground disabled:opacity-50 disabled:cursor-not-allowed`;
-        }
-
-        // After answering - show feedback
-        const isCorrect = isCorrectAnswer(answer);
-        const wasSelected = quizData.player_answer === answer;
-
-        if (wasSelected && isCorrect) {
-            // User selected correct answer
-            return `${baseClass} bg-success/10 border-1 border-success text-success cursor-default`;
-        } else if (wasSelected && !isCorrect) {
-            // User selected wrong answer
-            return `${baseClass} bg-destructive/10 border-1 border-destructive text-destructive cursor-default`;
-        } else if (isCorrect) {
-            // Correct answer (not selected)
-            return `${baseClass} bg-success/10 border-1 border-success text-success cursor-default`;
-        } else {
-            // Incorrect answer (not selected)
-            return `${baseClass} bg-card border-1 border-border text-muted-foreground cursor-default opacity-60`;
-        }
-    };
-
-    // Helper to render answer icon/indicator
-    const getAnswerIndicator = (answer: "answer1" | "answer2" | "answer3") => {
-        if (!hasAnswered) return null;
-
-        const isCorrect = isCorrectAnswer(answer);
-        const wasSelected = quizData.player_answer === answer;
-
-        if (wasSelected && isCorrect) {
-            return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success font-bold">
-                    ✓ Your answer
-                </span>
-            );
-        } else if (wasSelected && !isCorrect) {
-            return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive font-bold">
-                    ✗ Your answer
-                </span>
-            );
-        } else if (isCorrect) {
-            return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success font-bold">
-                    ✓ Correct
-                </span>
-            );
-        }
-        return null;
-    };
-
-    return (
-        <div className="flex justify-center">
-            <Card className="max-w-2xl w-full">
-                <CardHeader>
-                    <CardTitle className="text-center mb-4">
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
-                        <span className="mx-2">Daily Quiz</span>
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
-                    </CardTitle>
-                </CardHeader>
-
-                <CardContent>
-                    <div className="space-y-4">
-                        {isLoading ? (
-                            <div className="text-center text-gray-500">
-                                Loading quiz question...
-                            </div>
-                        ) : isError ? (
-                            <div className="text-center text-alert-red">
-                                Failed to load quiz question
-                            </div>
-                        ) : quizData ? (
-                            <>
-                                {/* Question */}
-                                <p className="text-lg text-center mb-4">
-                                    {quizData.question}
-                                </p>
-
-                                {/* Answer Buttons */}
-                                <div className="space-y-3">
-                                    <button
-                                        onClick={() =>
-                                            handleAnswerClick("answer1")
-                                        }
-                                        disabled={hasAnswered || isPending}
-                                        className={getButtonClass("answer1")}
-                                    >
-                                        <span className="block pr-24">
-                                            {quizData.answer1}
-                                        </span>
-                                        {getAnswerIndicator("answer1")}
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            handleAnswerClick("answer2")
-                                        }
-                                        disabled={hasAnswered || isPending}
-                                        className={getButtonClass("answer2")}
-                                    >
-                                        <span className="block pr-24">
-                                            {quizData.answer2}
-                                        </span>
-                                        {getAnswerIndicator("answer2")}
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            handleAnswerClick("answer3")
-                                        }
-                                        disabled={hasAnswered || isPending}
-                                        className={getButtonClass("answer3")}
-                                    >
-                                        <span className="block pr-24">
-                                            {quizData.answer3}
-                                        </span>
-                                        {getAnswerIndicator("answer3")}
-                                    </button>
-                                </div>
-
-                                {/* Explanation and Learn More (only shown after answering) */}
-                                {hasAnswered && quizData.explanation && (
-                                    <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
-                                        <p className="text-center mb-3">
-                                            {quizData.explanation}
-                                        </p>
-                                        {quizData.learn_more_link && (
-                                            <p className="text-center">
-                                                <a
-                                                    href={
-                                                        quizData.learn_more_link
-                                                    }
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="text-info underline hover:opacity-80"
-                                                >
-                                                    Learn more
-                                                </a>
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Submitting state */}
-                                {isPending && (
-                                    <p className="text-center text-gray-500 text-sm">
-                                        Submitting answer...
-                                    </p>
-                                )}
-                            </>
-                        ) : null}
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
     );
 }

@@ -15,18 +15,13 @@
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
         "module": "ESNext",
-        "moduleResolution": "Node",
+        "moduleResolution": "bundler", // Changed from "Node"
         "resolveJsonModule": true,
         "isolatedModules": true,
         "noEmit": true,
         "jsx": "react-jsx",
         "baseUrl": ".",
-        "paths": { "@/*": ["./src/*"] },
-        "plugins": [
-            {
-                "name": "@mdx-js/typescript-plugin"
-            }
-        ]
+        "paths": { "@/*": ["./src/*"] }
     },
     "include": ["src"],
     "exclude": ["**/*.mdx"]
