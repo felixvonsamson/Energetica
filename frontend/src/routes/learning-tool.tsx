@@ -139,6 +139,7 @@ function RouteComponent() {
                                                         index === 1 ? 0 : 1
                                                     ]
                                                 }
+                                                alt=""
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>

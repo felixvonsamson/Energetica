@@ -4,6 +4,7 @@ import jsdoc from "eslint-plugin-jsdoc";
 import importPlugin from "eslint-plugin-import";
 import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 
 export default defineConfig([
     {
@@ -106,5 +107,6 @@ export default defineConfig([
         },
     },
     reactHooks.configs.flat["recommended-latest"],
+    jsxA11y.flatConfigs.recommended,
     // jsdoc.configs["flat/recommended"],
 ]);

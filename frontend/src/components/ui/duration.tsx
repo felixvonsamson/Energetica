@@ -74,9 +74,18 @@ export function TogglingDuration({
 
     return (
         <span
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
                 e.stopPropagation();
                 toggleMode();
+            }}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleMode();
+                }
             }}
             className={cn(
                 "inline-flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer transition-colors",
@@ -104,9 +113,18 @@ export function TimeModeToggle({ className }: TimeModeToggleProps) {
 
     return (
         <span
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
                 e.stopPropagation();
                 toggleMode();
+            }}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleMode();
+                }
             }}
             className={cn(
                 "inline-flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer transition-colors",

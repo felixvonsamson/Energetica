@@ -156,6 +156,7 @@ function SignUpForm() {
                                 minLength={3}
                                 maxLength={18}
                                 autoComplete="username"
+                                // eslint-disable-next-line jsx-a11y/no-autofocus
                                 autoFocus
                             />
                         </div>

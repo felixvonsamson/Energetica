@@ -147,6 +147,7 @@ function LoginForm() {
                                 placeholder="Enter username"
                                 disabled={isLoading}
                                 autoComplete="username"
+                                // eslint-disable-next-line jsx-a11y/no-autofocus
                                 autoFocus
                             />
                         </div>

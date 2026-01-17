@@ -77,7 +77,19 @@ export function ConfirmDialog({
     return (
         <>
             {/* Clone the trigger and add onClick handler */}
-            <div onClick={() => setIsOpen(true)}>{trigger}</div>
+            <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setIsOpen(true)}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setIsOpen(true);
+                    }
+                }}
+            >
+                {trigger}
+            </div>
 
             <Dialog
                 open={isOpen}
