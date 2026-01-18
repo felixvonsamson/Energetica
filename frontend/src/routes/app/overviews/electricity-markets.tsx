@@ -255,25 +255,21 @@ function MarketsOverviewContent() {
 
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <div className="text-sm text-gray-600 mb-1">
-                                Market Price
-                            </div>
+                        <div className="bg-muted text-muted-foreground p-4 rounded-lg border border-border">
+                            <div className="text-sm mb-1">Market Price</div>
                             <div className="text-2xl font-bold">
                                 {isLatestLoading ? (
                                     "Loading..."
                                 ) : (
                                     <Money amount={latestPrice} />
                                 )}
-                                <span className="text-sm font-normal text-gray-600 ml-1">
+                                <span className="text-sm font-normal ml-1">
                                     /Wh
                                 </span>
                             </div>
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <div className="text-sm text-gray-600 mb-1">
-                                Clearing Volume
-                            </div>
+                        <div className="bg-muted text-muted-foreground p-4 rounded-lg border border-border">
+                            <div className="text-sm mb-1">Clearing Volume</div>
                             <div className="text-2xl font-bold">
                                 {isLatestLoading
                                     ? "Loading..."

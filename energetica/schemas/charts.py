@@ -220,3 +220,23 @@ class NetworkConsumptionResponse(ChartDataResponse[NetworkConsumptionKey]):
     series: dict[NetworkConsumptionKey, list[float]] = Field(
         description="Time series data for consumption by each type in the network, with power values in W",
     )
+
+
+class MarketCurveData(BaseModel):
+    """Model for market supply or demand curve data."""
+
+    player_id: list[int] = Field(description="Player IDs for each curve segment")
+    capacity: list[float] = Field(description="Capacity values in W")
+    price: list[float] = Field(description="Price values in $/Wh")
+    facility: list[str] = Field(description="Facility type for each segment")
+    cumul_capacities: list[float] = Field(description="Cumulative capacity in W")
+
+
+class MarketDataResponse(BaseModel):
+    """Response model for market supply/demand curve data at a specific tick."""
+
+    tick: int = Field(description="The tick (timestamp) for this market data snapshot")
+    capacities: MarketCurveData = Field(description="Supply curve data (offers)")
+    demands: MarketCurveData = Field(description="Demand curve data (bids)")
+    market_price: float = Field(description="Market clearing price in $/Wh")
+    market_quantity: float = Field(description="Market clearing quantity in W")

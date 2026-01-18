@@ -29,6 +29,8 @@ from energetica.globals import engine
 from energetica.schemas.charts import (
     ClimateDataResponse,
     EmissionsResponse,
+    MarketCurveData,
+    MarketDataResponse,
     NetworkConsumptionResponse,
     NetworkDataResponse,
     NetworkExportsResponse,
@@ -618,3 +620,63 @@ def get_network_consumption(
     """
     data = _get_network_data(network_id, start_tick, count, "consumption", resolution)
     return NetworkConsumptionResponse(resolution=resolution, **data)
+
+
+@router.get("/networks/{network_id}/market/{tick}")
+def get_market_data(
+    player: Annotated[Player, Depends(get_settled_player)],
+    network_id: int,
+    tick: int,
+) -> MarketDataResponse:
+    """
+    Get market supply/demand curve data for a specific historical tick.
+
+    This endpoint returns the complete market state including supply and demand curves,
+    player imports/exports, generation, consumption, and market clearing price/quantity.
+
+    Parameters:
+        network_id: ID of the network
+        tick: Absolute tick number to retrieve market data for
+    """
+    # Verify the network exists
+    network = Network.getitem(
+        network_id,
+        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Network not found"),
+    )
+
+    # Validate tick is not in the future
+    current_tick = engine.total_t
+    if tick >= current_tick:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Requested tick ({tick}) must be less than current tick ({current_tick})",
+        )
+
+    # Load market data from pickle file
+    market_file_path = Path(f"instance/data/networks/{network_id}/charts/market_t{tick}.pck")
+    if not market_file_path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Market data not found for tick {tick}",
+        )
+
+    try:
+        with open(market_file_path, "rb") as file:
+            market_data = pickle.load(file)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load market data: {str(e)}",
+        )
+
+    # Convert DataFrames to dict format
+    capacities_dict = market_data["capacities"].to_dict(orient="list")
+    demands_dict = market_data["demands"].to_dict(orient="list")
+
+    return MarketDataResponse(
+        tick=tick,
+        capacities=MarketCurveData(**capacities_dict),
+        demands=MarketCurveData(**demands_dict),
+        market_price=market_data["market_price"],
+        market_quantity=market_data["market_quantity"],
+    )

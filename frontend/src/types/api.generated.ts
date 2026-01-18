@@ -581,6 +581,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/charts/networks/{network_id}/market/{tick}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Market Data
+         *
+         * Get market supply/demand curve data for a specific historical tick.
+         *
+         *     This endpoint returns the complete market state including supply and demand curves,
+         *     player imports/exports, generation, consumption, and market clearing price/quantity.
+         *
+         *     Parameters:
+         *         network_id: ID of the network
+         *         tick: Absolute tick number to retrieve market data for
+         */
+        get: operations["get_market_data_api_v1_charts_networks__network_id__market__tick__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/chats": {
         parameters: {
             query?: never;
@@ -3157,6 +3185,73 @@ export interface components {
             password: string;
         };
         /**
+         * MarketCurveData
+         *
+         * Model for market supply or demand curve data.
+         */
+        MarketCurveData: {
+            /**
+             * Player Id
+             *
+             * Player IDs for each curve segment
+             */
+            player_id: number[];
+            /**
+             * Capacity
+             *
+             * Capacity values in W
+             */
+            capacity: number[];
+            /**
+             * Price
+             *
+             * Price values in $/Wh
+             */
+            price: number[];
+            /**
+             * Facility
+             *
+             * Facility type for each segment
+             */
+            facility: string[];
+            /**
+             * Cumul Capacities
+             *
+             * Cumulative capacity in W
+             */
+            cumul_capacities: number[];
+        };
+        /**
+         * MarketDataResponse
+         *
+         * Response model for market supply/demand curve data at a specific
+         * tick.
+         */
+        MarketDataResponse: {
+            /**
+             * Tick
+             *
+             * The tick (timestamp) for this market data snapshot
+             */
+            tick: number;
+            /** Supply curve data (offers) */
+            capacities: components["schemas"]["MarketCurveData"];
+            /** Demand curve data (bids) */
+            demands: components["schemas"]["MarketCurveData"];
+            /**
+             * Market Price
+             *
+             * Market clearing price in $/Wh
+             */
+            market_price: number;
+            /**
+             * Market Quantity
+             *
+             * Market clearing quantity in W
+             */
+            market_quantity: number;
+        };
+        /**
          * MessageCreate
          *
          * Request model for sending a new message.
@@ -5349,6 +5444,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NetworkConsumptionResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_market_data_api_v1_charts_networks__network_id__market__tick__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                network_id: number;
+                tick: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketDataResponse"];
                 };
             };
             /** Validation Error */
