@@ -172,71 +172,71 @@ class ResourcesResponse(ChartDataResponse[ResourcesKey]):
     )
 
 
-# Network data responses (network-specific, not player-specific)
-NetworkDataKey = Literal["price", "quantity"]
+# Market data responses (market-specific, not player-specific)
+MarketDataKey = Literal["price", "quantity"]
 
 
-class NetworkDataResponse(ChartDataResponse[NetworkDataKey]):
-    """Response model for network price and quantity time series."""
+class MarketClearingDataResponse(ChartDataResponse[MarketDataKey]):
+    """Response model for market price and quantity time series."""
 
-    series: dict[NetworkDataKey, list[float]] = Field(
-        description="Time series data for network price ($/Wh) and quantity (W)",
+    series: dict[MarketDataKey, list[float]] = Field(
+        description="Time series data for market price ($/Wh) and quantity (W)",
     )
 
 
-class NetworkExportsResponse(ChartDataResponse[str]):
-    """Response model for network exports by player time series."""
+class MarketExportsResponse(ChartDataResponse[str]):
+    """Response model for market exports by player time series."""
 
     series: dict[str, list[float]] = Field(
         description="Time series data for exports by each player, with power values in W",
     )
 
 
-class NetworkImportsResponse(ChartDataResponse[str]):
-    """Response model for network imports by player time series."""
+class MarketImportsResponse(ChartDataResponse[str]):
+    """Response model for market imports by player time series."""
 
     series: dict[str, list[float]] = Field(
         description="Time series data for imports by each player, with power values in W",
     )
 
 
-NetworkGenerationKey = PowerSourcesKey
+MarketGenerationKey = PowerSourcesKey
 
 
-class NetworkGenerationResponse(ChartDataResponse[NetworkGenerationKey]):
-    """Response model for network generation by type time series."""
+class MarketGenerationResponse(ChartDataResponse[MarketGenerationKey]):
+    """Response model for market generation by type time series."""
 
-    series: dict[NetworkGenerationKey, list[float]] = Field(
-        description="Time series data for generation by each facility type in the network, with power values in W",
+    series: dict[MarketGenerationKey, list[float]] = Field(
+        description="Time series data for generation by each facility type in the market, with power values in W",
     )
 
 
-NetworkConsumptionKey = PowerSinksKey
+MarketConsumptionKey = PowerSinksKey
 
 
-class NetworkConsumptionResponse(ChartDataResponse[NetworkConsumptionKey]):
-    """Response model for network consumption by type time series."""
+class MarketConsumptionResponse(ChartDataResponse[MarketConsumptionKey]):
+    """Response model for market consumption by type time series."""
 
-    series: dict[NetworkConsumptionKey, list[float]] = Field(
-        description="Time series data for consumption by each type in the network, with power values in W",
+    series: dict[MarketConsumptionKey, list[float]] = Field(
+        description="Time series data for consumption by each type in the market, with power values in W",
     )
 
 
-class MarketCurveData(BaseModel):
-    """Model for market supply or demand curve data."""
+class MarketOrderData(BaseModel):
+    """Model for market order data."""
 
-    player_id: list[int] = Field(description="Player IDs for each curve segment")
+    player_id: list[int] = Field(description="Player IDs for each order")
     capacity: list[float] = Field(description="Capacity values in W")
     price: list[float] = Field(description="Price values in $/Wh")
-    facility: list[str] = Field(description="Facility type for each segment")
+    facility: list[str] = Field(description="Facility type for each order")
     cumul_capacities: list[float] = Field(description="Cumulative capacity in W")
 
 
-class MarketDataResponse(BaseModel):
-    """Response model for market supply/demand curve data at a specific tick."""
+class MarketOrdersDataResponse(BaseModel):
+    """Response model for market order data at a specific tick."""
 
     tick: int = Field(description="The tick (timestamp) for this market data snapshot")
-    capacities: MarketCurveData = Field(description="Supply curve data (offers)")
-    demands: MarketCurveData = Field(description="Demand curve data (bids)")
+    capacities: MarketOrderData = Field(description="Supply / sell / ask orders")
+    demands: MarketOrderData = Field(description="Demand / bid orders")
     market_price: float = Field(description="Market clearing price in $/Wh")
     market_quantity: float = Field(description="Market clearing quantity in W")

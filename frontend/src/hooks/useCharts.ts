@@ -47,13 +47,13 @@ function useCurrentChartDataBase({
     currentTick,
     resolution,
     maxDatapoints,
-    networkId,
+    marketId,
 }: {
     chartType: ChartType;
     currentTick: number | undefined;
     resolution: Resolution;
     maxDatapoints: number;
-    networkId?: number;
+    marketId?: number;
 }) {
     // Determine the corresponding tick range
     const range = useMemo(() => {
@@ -72,7 +72,7 @@ function useCurrentChartDataBase({
         data: chartData,
         isLoading,
         isError,
-    } = useChartData({ chartType, range, resolution, networkId });
+    } = useChartData({ chartType, range, resolution, marketId });
 
     // Return empty state if currentTick is not loaded
     if (!currentTick) {
@@ -94,13 +94,13 @@ export function useCurrentChartData({
     currentTick,
     resolution,
     maxDatapoints,
-    networkId,
+    marketId,
 }: {
     chartType: ChartType;
     currentTick: number | undefined;
     resolution: Resolution;
     maxDatapoints: number;
-    networkId?: number;
+    marketId?: number;
 }) {
     const queryClient = useQueryClient();
 
@@ -114,7 +114,7 @@ export function useCurrentChartData({
         currentTick,
         resolution,
         maxDatapoints,
-        networkId,
+        marketId,
     });
 
     // If current data is loading, try to get cached data from previous range
@@ -149,7 +149,7 @@ export function useCurrentChartData({
             chartType,
             resolution,
             range: previousRange,
-            networkId,
+            marketId,
         });
 
         if (cachedRanges.length === 0) {
@@ -170,7 +170,7 @@ export function useCurrentChartData({
         maxDatapoints,
         queryClient,
         chartType,
-        networkId,
+        marketId,
     ]);
 
     // Determine what data to return
@@ -202,10 +202,10 @@ export function useCurrentChartData({
  */
 export function useLatestChartData({
     chartType,
-    networkId,
+    marketId,
 }: {
     chartType: ChartType;
-    networkId?: number;
+    marketId?: number;
 }): {
     data: Record<string, number>;
     isLoading: boolean;
@@ -222,7 +222,7 @@ export function useLatestChartData({
         currentTick,
         resolution,
         maxDatapoints,
-        networkId,
+        marketId,
     });
 
     // Extract the last datapoint (or return empty object)
@@ -315,12 +315,12 @@ function useChartData({
     chartType,
     resolution,
     range,
-    networkId,
+    marketId,
 }: {
     chartType: ChartType;
     resolution: Resolution;
     range: TickRange;
-    networkId?: number;
+    marketId?: number;
 }) {
     const queryClient = useQueryClient();
 
@@ -329,7 +329,7 @@ function useChartData({
         chartType,
         resolution,
         range,
-        networkId,
+        marketId,
     });
 
     const allCachedRanges = getCachedChartRanges({
@@ -337,14 +337,14 @@ function useChartData({
         chartType,
         resolution,
         range,
-        networkId,
+        marketId,
     });
 
     const { isLoading, isError } = useFetchChartGaps({
         chartType,
         resolution,
         rangesToFetch,
-        networkId,
+        marketId,
     });
 
     const aggregatedData = useMemo(() => {
@@ -370,9 +370,9 @@ type RegularChartQueryKeyFn = (
     count: number,
 ) => readonly unknown[];
 
-/** Query key function type for network charts */
-type NetworkChartQueryKeyFn = (
-    networkId: number,
+/** Query key function type for market charts */
+type MarketChartQueryKeyFn = (
+    marketId: number,
     resolution: string,
     startTick: number,
     count: number,
@@ -396,7 +396,7 @@ const QUERY_KEY_FN_BY_CHART_TYPE = {
     "network-consumption": queryKeys.charts.networkConsumption,
 } as const;
 
-const NETWORK_CHART_TYPES: ChartType[] = [
+const MARKET_CHART_TYPES: ChartType[] = [
     "network-data",
     "network-exports",
     "network-imports",
@@ -409,34 +409,34 @@ function useFetchChartGaps({
     chartType,
     resolution,
     rangesToFetch,
-    networkId,
+    marketId,
 }: {
     chartType: ChartType;
     resolution: Resolution;
     rangesToFetch: TickRange[];
-    networkId?: number;
+    marketId?: number;
 }) {
     const resolutionKey = toStringResolution(resolution);
-    const isNetworkChart = NETWORK_CHART_TYPES.includes(chartType);
+    const isMarketChart = MARKET_CHART_TYPES.includes(chartType);
 
     const queries = useQueries({
         queries: rangesToFetch.map((range) => {
             const queryKeyFn = QUERY_KEY_FN_BY_CHART_TYPE[chartType];
 
-            if (isNetworkChart && networkId !== undefined) {
-                // Network chart - pass networkId as first parameter
+            if (isMarketChart && marketId !== undefined) {
+                // Market chart - pass marketId as first parameter
                 return {
                     // chartType is encoded in queryKeyFn selection, resolution is passed as resolutionKey
                     // eslint-disable-next-line @tanstack/query/exhaustive-deps
-                    queryKey: (queryKeyFn as NetworkChartQueryKeyFn)(
-                        networkId,
+                    queryKey: (queryKeyFn as MarketChartQueryKeyFn)(
+                        marketId,
                         resolutionKey,
                         range.startTick,
                         range.count,
                     ),
                     queryFn: () =>
-                        chartsApi.getNetworkChartData({
-                            networkId,
+                        chartsApi.getMarketChartData({
+                            marketId,
                             chartType: chartType as
                                 | "network-data"
                                 | "network-exports"
@@ -495,7 +495,7 @@ interface GetCacheGapsParams {
     chartType: ChartType;
     resolution: Resolution;
     range: TickRange;
-    networkId?: number;
+    marketId?: number;
 }
 
 function getCacheGaps({
@@ -503,7 +503,7 @@ function getCacheGaps({
     chartType,
     resolution,
     range,
-    networkId,
+    marketId,
 }: GetCacheGapsParams): TickRange[] {
     // Find all cached ranges overlapping with desired range [start, end)
     const cachedRanges = getCachedChartRanges({
@@ -511,7 +511,7 @@ function getCacheGaps({
         chartType,
         resolution,
         range,
-        networkId,
+        marketId,
     });
 
     // If no cache, fetch entire desired range
@@ -559,21 +559,21 @@ function getCachedChartRanges({
     chartType,
     resolution,
     range,
-    networkId,
+    marketId,
 }: {
     queryClient: QueryClient;
     chartType: ChartType;
     resolution: Resolution;
     range: TickRange;
-    networkId?: number;
+    marketId?: number;
 }): CachedTickRange[] {
     const cache = queryClient.getQueryCache();
-    const isNetworkChart = NETWORK_CHART_TYPES.includes(chartType);
+    const isMarketChart = MARKET_CHART_TYPES.includes(chartType);
 
     // Build query key filter based on chart type
     const queryKeyPrefix =
-        isNetworkChart && networkId !== undefined
-            ? ["charts", chartType, networkId, toStringResolution(resolution)]
+        isMarketChart && marketId !== undefined
+            ? ["charts", chartType, marketId, toStringResolution(resolution)]
             : ["charts", chartType, toStringResolution(resolution)];
 
     const filters = {
@@ -586,8 +586,8 @@ function getCachedChartRanges({
     const endTick = range.startTick + range.count * resolution;
     const ranges: CachedTickRange[] = queries
         .map((query) => {
-            if (isNetworkChart && networkId !== undefined) {
-                // Network chart query key: ["charts", chartType, networkId, resolution, startTick, count]
+            if (isMarketChart && marketId !== undefined) {
+                // Market chart query key: ["charts", chartType, marketId, resolution, startTick, count]
                 const queryKey = query.queryKey as [
                     string,
                     string,
@@ -644,21 +644,21 @@ function getCachedChartRanges({
  * player imports/exports, generation, consumption, and market clearing
  * price/quantity.
  *
- * @param networkId - ID of the network
+ * @param marketId - ID of the market
  * @param tick - Specific tick to fetch market data for
  * @returns Market data including supply/demand curves and clearing
  *   price/quantity
  */
 export function useMarketData({
-    networkId,
+    marketId,
     tick,
 }: {
-    networkId: number;
+    marketId: number;
     tick: number;
 }) {
     return useQuery({
-        queryKey: queryKeys.charts.marketData(networkId, tick),
-        queryFn: () => chartsApi.getMarketData(networkId, tick),
+        queryKey: queryKeys.charts.marketData(marketId, tick),
+        queryFn: () => chartsApi.getMarketData(marketId, tick),
         staleTime: Infinity, // Historical market data never changes
     });
 }

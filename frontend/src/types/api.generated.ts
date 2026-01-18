@@ -431,7 +431,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/charts/networks/{network_id}/network_data/{resolution}": {
+    "/api/v1/charts/markets/{market_id}/network_data/{resolution}": {
         parameters: {
             query?: never;
             header?: never;
@@ -447,12 +447,12 @@ export interface paths {
          *     This is network-specific data showing market clearing price and quantity.
          *
          *     Parameters:
-         *         network_id: ID of the network
+         *         market_id: ID of the network
          *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
          *         start_tick: First tick to include (must be aligned to resolution)
          *         count: Number of datapoints to retrieve
          */
-        get: operations["get_network_data_api_v1_charts_networks__network_id__network_data__resolution__get"];
+        get: operations["get_network_data_api_v1_charts_markets__market_id__network_data__resolution__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -461,7 +461,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/charts/networks/{network_id}/exports/{resolution}": {
+    "/api/v1/charts/markets/{market_id}/exports/{resolution}": {
         parameters: {
             query?: never;
             header?: never;
@@ -477,12 +477,12 @@ export interface paths {
          *     This is network-specific data showing power exported by each player.
          *
          *     Parameters:
-         *         network_id: ID of the network
+         *         market_id: ID of the network
          *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
          *         start_tick: First tick to include (must be aligned to resolution)
          *         count: Number of datapoints to retrieve
          */
-        get: operations["get_network_exports_api_v1_charts_networks__network_id__exports__resolution__get"];
+        get: operations["get_network_exports_api_v1_charts_markets__market_id__exports__resolution__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -491,7 +491,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/charts/networks/{network_id}/imports/{resolution}": {
+    "/api/v1/charts/markets/{market_id}/imports/{resolution}": {
         parameters: {
             query?: never;
             header?: never;
@@ -507,12 +507,12 @@ export interface paths {
          *     This is network-specific data showing power imported by each player.
          *
          *     Parameters:
-         *         network_id: ID of the network
+         *         market_id: ID of the network
          *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
          *         start_tick: First tick to include (must be aligned to resolution)
          *         count: Number of datapoints to retrieve
          */
-        get: operations["get_network_imports_api_v1_charts_networks__network_id__imports__resolution__get"];
+        get: operations["get_network_imports_api_v1_charts_markets__market_id__imports__resolution__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -521,7 +521,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/charts/networks/{network_id}/generation/{resolution}": {
+    "/api/v1/charts/markets/{market_id}/generation/{resolution}": {
         parameters: {
             query?: never;
             header?: never;
@@ -537,12 +537,12 @@ export interface paths {
          *     This is network-specific data showing total generation by facility type across all network members.
          *
          *     Parameters:
-         *         network_id: ID of the network
+         *         market_id: ID of the network
          *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
          *         start_tick: First tick to include (must be aligned to resolution)
          *         count: Number of datapoints to retrieve
          */
-        get: operations["get_network_generation_api_v1_charts_networks__network_id__generation__resolution__get"];
+        get: operations["get_network_generation_api_v1_charts_markets__market_id__generation__resolution__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -551,7 +551,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/charts/networks/{network_id}/consumption/{resolution}": {
+    "/api/v1/charts/markets/{market_id}/consumption/{resolution}": {
         parameters: {
             query?: never;
             header?: never;
@@ -567,12 +567,12 @@ export interface paths {
          *     This is network-specific data showing total consumption by type across all network members.
          *
          *     Parameters:
-         *         network_id: ID of the network
+         *         market_id: ID of the network
          *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
          *         start_tick: First tick to include (must be aligned to resolution)
          *         count: Number of datapoints to retrieve
          */
-        get: operations["get_network_consumption_api_v1_charts_networks__network_id__consumption__resolution__get"];
+        get: operations["get_network_consumption_api_v1_charts_markets__market_id__consumption__resolution__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -581,7 +581,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/charts/networks/{network_id}/market/{tick}": {
+    "/api/v1/charts/markets/{market_id}/market/{tick}": {
         parameters: {
             query?: never;
             header?: never;
@@ -597,10 +597,10 @@ export interface paths {
          *     player imports/exports, generation, consumption, and market clearing price/quantity.
          *
          *     Parameters:
-         *         network_id: ID of the network
+         *         market_id: ID of the market
          *         tick: Absolute tick number to retrieve market data for
          */
-        get: operations["get_market_data_api_v1_charts_networks__network_id__market__tick__get"];
+        get: operations["get_market_data_api_v1_charts_markets__market_id__market__tick__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3185,15 +3185,194 @@ export interface components {
             password: string;
         };
         /**
-         * MarketCurveData
+         * MarketClearingDataResponse
          *
-         * Model for market supply or demand curve data.
+         * Response model for market price and quantity time series.
          */
-        MarketCurveData: {
+        MarketClearingDataResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for market price ($/Wh) and quantity (W)
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
+         * MarketConsumptionResponse
+         *
+         * Response model for market consumption by type time series.
+         */
+        MarketConsumptionResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for consumption by each type in the market, with
+             * power values in W
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
+         * MarketExportsResponse
+         *
+         * Response model for market exports by player time series.
+         */
+        MarketExportsResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for exports by each player, with power values in
+             * W
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
+         * MarketGenerationResponse
+         *
+         * Response model for market generation by type time series.
+         */
+        MarketGenerationResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for generation by each facility type in the
+             * market, with power values in W
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
+         * MarketImportsResponse
+         *
+         * Response model for market imports by player time series.
+         */
+        MarketImportsResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for imports by each player, with power values in
+             * W
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
+         * MarketOrderData
+         *
+         * Model for market order data.
+         */
+        MarketOrderData: {
             /**
              * Player Id
              *
-             * Player IDs for each curve segment
+             * Player IDs for each order
              */
             player_id: number[];
             /**
@@ -3211,7 +3390,7 @@ export interface components {
             /**
              * Facility
              *
-             * Facility type for each segment
+             * Facility type for each order
              */
             facility: string[];
             /**
@@ -3222,22 +3401,21 @@ export interface components {
             cumul_capacities: number[];
         };
         /**
-         * MarketDataResponse
+         * MarketOrdersDataResponse
          *
-         * Response model for market supply/demand curve data at a specific
-         * tick.
+         * Response model for market order data at a specific tick.
          */
-        MarketDataResponse: {
+        MarketOrdersDataResponse: {
             /**
              * Tick
              *
              * The tick (timestamp) for this market data snapshot
              */
             tick: number;
-            /** Supply curve data (offers) */
-            capacities: components["schemas"]["MarketCurveData"];
-            /** Demand curve data (bids) */
-            demands: components["schemas"]["MarketCurveData"];
+            /** Supply / sell / ask orders */
+            capacities: components["schemas"]["MarketOrderData"];
+            /** Demand / bid orders */
+            demands: components["schemas"]["MarketOrderData"];
             /**
              * Market Price
              *
@@ -3292,185 +3470,6 @@ export interface components {
         MoneyOut: {
             /** Money */
             money: number;
-        };
-        /**
-         * NetworkConsumptionResponse
-         *
-         * Response model for network consumption by type time series.
-         */
-        NetworkConsumptionResponse: {
-            /**
-             * Start Tick
-             *
-             * The starting tick (timestamp) of the data series
-             */
-            start_tick: number;
-            /**
-             * Count
-             *
-             * Number of data points in the series
-             */
-            count: number;
-            /**
-             * Resolution
-             *
-             * Time resolution between data points in ticks
-             *
-             * @enum {string}
-             */
-            resolution: "1" | "6" | "36" | "216" | "1296";
-            /**
-             * Series
-             *
-             * Time series data for consumption by each type in the network,
-             * with power values in W
-             */
-            series: {
-                [key: string]: number[];
-            };
-        };
-        /**
-         * NetworkDataResponse
-         *
-         * Response model for network price and quantity time series.
-         */
-        NetworkDataResponse: {
-            /**
-             * Start Tick
-             *
-             * The starting tick (timestamp) of the data series
-             */
-            start_tick: number;
-            /**
-             * Count
-             *
-             * Number of data points in the series
-             */
-            count: number;
-            /**
-             * Resolution
-             *
-             * Time resolution between data points in ticks
-             *
-             * @enum {string}
-             */
-            resolution: "1" | "6" | "36" | "216" | "1296";
-            /**
-             * Series
-             *
-             * Time series data for network price ($/Wh) and quantity (W)
-             */
-            series: {
-                [key: string]: number[];
-            };
-        };
-        /**
-         * NetworkExportsResponse
-         *
-         * Response model for network exports by player time series.
-         */
-        NetworkExportsResponse: {
-            /**
-             * Start Tick
-             *
-             * The starting tick (timestamp) of the data series
-             */
-            start_tick: number;
-            /**
-             * Count
-             *
-             * Number of data points in the series
-             */
-            count: number;
-            /**
-             * Resolution
-             *
-             * Time resolution between data points in ticks
-             *
-             * @enum {string}
-             */
-            resolution: "1" | "6" | "36" | "216" | "1296";
-            /**
-             * Series
-             *
-             * Time series data for exports by each player, with power values in
-             * W
-             */
-            series: {
-                [key: string]: number[];
-            };
-        };
-        /**
-         * NetworkGenerationResponse
-         *
-         * Response model for network generation by type time series.
-         */
-        NetworkGenerationResponse: {
-            /**
-             * Start Tick
-             *
-             * The starting tick (timestamp) of the data series
-             */
-            start_tick: number;
-            /**
-             * Count
-             *
-             * Number of data points in the series
-             */
-            count: number;
-            /**
-             * Resolution
-             *
-             * Time resolution between data points in ticks
-             *
-             * @enum {string}
-             */
-            resolution: "1" | "6" | "36" | "216" | "1296";
-            /**
-             * Series
-             *
-             * Time series data for generation by each facility type in the
-             * network, with power values in W
-             */
-            series: {
-                [key: string]: number[];
-            };
-        };
-        /**
-         * NetworkImportsResponse
-         *
-         * Response model for network imports by player time series.
-         */
-        NetworkImportsResponse: {
-            /**
-             * Start Tick
-             *
-             * The starting tick (timestamp) of the data series
-             */
-            start_tick: number;
-            /**
-             * Count
-             *
-             * Number of data points in the series
-             */
-            count: number;
-            /**
-             * Resolution
-             *
-             * Time resolution between data points in ticks
-             *
-             * @enum {string}
-             */
-            resolution: "1" | "6" | "36" | "216" | "1296";
-            /**
-             * Series
-             *
-             * Time series data for imports by each player, with power values in
-             * W
-             */
-            series: {
-                [key: string]: number[];
-            };
         };
         /**
          * NonFacilityBidType
@@ -5282,7 +5281,7 @@ export interface operations {
             };
         };
     };
-    get_network_data_api_v1_charts_networks__network_id__network_data__resolution__get: {
+    get_network_data_api_v1_charts_markets__market_id__network_data__resolution__get: {
         parameters: {
             query: {
                 start_tick: number;
@@ -5290,7 +5289,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                network_id: number;
+                market_id: number;
                 resolution: "1" | "6" | "36" | "216" | "1296";
             };
             cookie?: never;
@@ -5303,7 +5302,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NetworkDataResponse"];
+                    "application/json": components["schemas"]["MarketClearingDataResponse"];
                 };
             };
             /** Validation Error */
@@ -5317,7 +5316,7 @@ export interface operations {
             };
         };
     };
-    get_network_exports_api_v1_charts_networks__network_id__exports__resolution__get: {
+    get_network_exports_api_v1_charts_markets__market_id__exports__resolution__get: {
         parameters: {
             query: {
                 start_tick: number;
@@ -5325,7 +5324,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                network_id: number;
+                market_id: number;
                 resolution: "1" | "6" | "36" | "216" | "1296";
             };
             cookie?: never;
@@ -5338,7 +5337,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NetworkExportsResponse"];
+                    "application/json": components["schemas"]["MarketExportsResponse"];
                 };
             };
             /** Validation Error */
@@ -5352,7 +5351,7 @@ export interface operations {
             };
         };
     };
-    get_network_imports_api_v1_charts_networks__network_id__imports__resolution__get: {
+    get_network_imports_api_v1_charts_markets__market_id__imports__resolution__get: {
         parameters: {
             query: {
                 start_tick: number;
@@ -5360,7 +5359,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                network_id: number;
+                market_id: number;
                 resolution: "1" | "6" | "36" | "216" | "1296";
             };
             cookie?: never;
@@ -5373,7 +5372,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NetworkImportsResponse"];
+                    "application/json": components["schemas"]["MarketImportsResponse"];
                 };
             };
             /** Validation Error */
@@ -5387,7 +5386,7 @@ export interface operations {
             };
         };
     };
-    get_network_generation_api_v1_charts_networks__network_id__generation__resolution__get: {
+    get_network_generation_api_v1_charts_markets__market_id__generation__resolution__get: {
         parameters: {
             query: {
                 start_tick: number;
@@ -5395,7 +5394,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                network_id: number;
+                market_id: number;
                 resolution: "1" | "6" | "36" | "216" | "1296";
             };
             cookie?: never;
@@ -5408,7 +5407,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NetworkGenerationResponse"];
+                    "application/json": components["schemas"]["MarketGenerationResponse"];
                 };
             };
             /** Validation Error */
@@ -5422,7 +5421,7 @@ export interface operations {
             };
         };
     };
-    get_network_consumption_api_v1_charts_networks__network_id__consumption__resolution__get: {
+    get_network_consumption_api_v1_charts_markets__market_id__consumption__resolution__get: {
         parameters: {
             query: {
                 start_tick: number;
@@ -5430,7 +5429,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                network_id: number;
+                market_id: number;
                 resolution: "1" | "6" | "36" | "216" | "1296";
             };
             cookie?: never;
@@ -5443,7 +5442,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NetworkConsumptionResponse"];
+                    "application/json": components["schemas"]["MarketConsumptionResponse"];
                 };
             };
             /** Validation Error */
@@ -5457,12 +5456,12 @@ export interface operations {
             };
         };
     };
-    get_market_data_api_v1_charts_networks__network_id__market__tick__get: {
+    get_market_data_api_v1_charts_markets__market_id__market__tick__get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                network_id: number;
+                market_id: number;
                 tick: number;
             };
             cookie?: never;
@@ -5475,7 +5474,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MarketDataResponse"];
+                    "application/json": components["schemas"]["MarketOrdersDataResponse"];
                 };
             };
             /** Validation Error */

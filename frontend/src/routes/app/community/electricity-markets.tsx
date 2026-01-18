@@ -128,7 +128,7 @@ function ElectricityMarketsContent() {
     // Fetch market data for selected market
     const { data: selectedMarketData } = useLatestChartData({
         chartType: "network-data",
-        networkId: selectedMarket?.id ?? 0,
+        marketId: selectedMarket?.id ?? 0,
     });
 
     const handleCloseModal = useCallback(() => {

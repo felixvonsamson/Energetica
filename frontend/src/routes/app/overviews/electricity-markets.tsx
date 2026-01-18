@@ -156,14 +156,14 @@ function MarketsOverviewContent() {
         currentTick,
         resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
-        networkId: selectedMarketId,
+        marketId: selectedMarketId,
     });
 
     // Fetch latest data for real-time display
     const { data: latestData, isLoading: isLatestLoading } = useLatestChartData(
         {
             chartType: "network-data",
-            networkId: selectedMarketId,
+            marketId: selectedMarketId,
         },
     );
 
@@ -202,7 +202,7 @@ function MarketsOverviewContent() {
         currentTick,
         resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
-        networkId: selectedMarketId,
+        marketId: selectedMarketId,
     });
 
     // Handle market selection change

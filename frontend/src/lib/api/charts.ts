@@ -10,8 +10,8 @@ interface ChartParams {
     range: TickRange;
 }
 
-interface NetworkChartParams {
-    networkId: number;
+interface MarketChartParams {
+    marketId: number;
     chartType:
         | "network-data"
         | "network-exports"
@@ -33,13 +33,13 @@ export const chartsApi = {
         return response;
     },
 
-    /** Get network chart data */
-    getNetworkChartData: async ({
-        networkId,
+    /** Get market chart data */
+    getMarketChartData: async ({
+        marketId,
         chartType,
         resolution,
         range,
-    }: NetworkChartParams) => {
+    }: MarketChartParams) => {
         // Map frontend chart type to backend endpoint
         const endpointMap = {
             "network-data": "network_data",
@@ -51,27 +51,27 @@ export const chartsApi = {
         const endpoint = endpointMap[chartType];
         const response = await apiClient.get<
             ApiResponse<
-                | "/api/v1/charts/networks/{network_id}/network_data/{resolution}"
-                | "/api/v1/charts/networks/{network_id}/exports/{resolution}"
-                | "/api/v1/charts/networks/{network_id}/imports/{resolution}"
-                | "/api/v1/charts/networks/{network_id}/generation/{resolution}"
-                | "/api/v1/charts/networks/{network_id}/consumption/{resolution}",
+                | "/api/v1/charts/markets/{market_id}/network_data/{resolution}"
+                | "/api/v1/charts/markets/{market_id}/exports/{resolution}"
+                | "/api/v1/charts/markets/{market_id}/imports/{resolution}"
+                | "/api/v1/charts/markets/{market_id}/generation/{resolution}"
+                | "/api/v1/charts/markets/{market_id}/consumption/{resolution}",
                 "get"
             >
-        >(`/charts/networks/${networkId}/${endpoint}/${resolution}`, {
+        >(`/charts/markets/${marketId}/${endpoint}/${resolution}`, {
             params: { start_tick: range.startTick, count: range.count },
         });
         return response;
     },
 
     /** Get market supply/demand curve data for a specific tick */
-    getMarketData: async (networkId: number, tick: number) => {
+    getMarketData: async (marketId: number, tick: number) => {
         const response = await apiClient.get<
             ApiResponse<
-                "/api/v1/charts/networks/{network_id}/market/{tick}",
+                "/api/v1/charts/markets/{market_id}/market/{tick}",
                 "get"
             >
-        >(`/charts/networks/${networkId}/market/${tick}`);
+        >(`/charts/markets/${marketId}/market/${tick}`);
         return response;
     },
 };
