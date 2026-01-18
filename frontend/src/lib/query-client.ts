@@ -156,6 +156,8 @@ export const queryKeys = {
                 startTick,
                 count,
             ] as const,
+        marketData: (networkId: number, tick: number) =>
+            ["charts", "market-data", networkId, tick] as const,
     },
     network: {
         all: ["networks"] as const,

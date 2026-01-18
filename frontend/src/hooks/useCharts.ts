@@ -19,6 +19,7 @@ import {
     Query,
     QueryClient,
     useQueries,
+    useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -634,4 +635,30 @@ function getCachedChartRanges({
         .sort((a, b) => a.range.startTick - b.range.startTick);
 
     return ranges;
+}
+
+/**
+ * Hook to fetch market supply/demand curve data for a specific tick.
+ *
+ * This returns the complete market state including supply and demand curves,
+ * player imports/exports, generation, consumption, and market clearing
+ * price/quantity.
+ *
+ * @param networkId - ID of the network
+ * @param tick - Specific tick to fetch market data for
+ * @returns Market data including supply/demand curves and clearing
+ *   price/quantity
+ */
+export function useMarketData({
+    networkId,
+    tick,
+}: {
+    networkId: number;
+    tick: number;
+}) {
+    return useQuery({
+        queryKey: queryKeys.charts.marketData(networkId, tick),
+        queryFn: () => chartsApi.getMarketData(networkId, tick),
+        staleTime: Infinity, // Historical market data never changes
+    });
 }

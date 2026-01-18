@@ -63,4 +63,15 @@ export const chartsApi = {
         });
         return response;
     },
+
+    /** Get market supply/demand curve data for a specific tick */
+    getMarketData: async (networkId: number, tick: number) => {
+        const response = await apiClient.get<
+            ApiResponse<
+                "/api/v1/charts/networks/{network_id}/market/{tick}",
+                "get"
+            >
+        >(`/charts/networks/${networkId}/market/${tick}`);
+        return response;
+    },
 };
