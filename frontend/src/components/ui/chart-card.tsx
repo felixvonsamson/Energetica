@@ -61,7 +61,9 @@ export function ChartCard({
                     </div>
                 </CardHeader>
             )}
-            <CardContent>{children}</CardContent>
+            <CardContent className="flex flex-col gap-6">
+                {children}
+            </CardContent>
         </Card>
     );
 }

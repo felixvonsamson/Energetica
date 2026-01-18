@@ -1,13 +1,148 @@
-/**
- * Emissions overview table component that displays aggregated CO2 emissions
- * data by source.
- */
+import { useCallback, useMemo, useState } from "react";
 
-import { useMemo, useState } from "react";
-
+import {
+    TimeSeriesChart,
+    TimeSeriesChartConfig,
+} from "@/components/charts/time-series-chart";
 import { AssetIcon } from "@/components/ui";
 import { AssetName } from "@/components/ui/asset-name";
 import { Label } from "@/components/ui/label";
+import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
+import { useChartFilters } from "@/hooks/useChartFilters";
+import { formatEmissions } from "@/lib/format-utils";
+
+// Emissions Chart Component
+interface EmissionsChartProps {
+    chartData: Array<Record<string, unknown>>;
+    isLoading: boolean;
+    isError: boolean;
+    hiddenSources: Set<string>;
+    viewMode: "normal" | "percent";
+    cumulativeMode: "rates" | "cumulative";
+}
+
+export function EmissionsChart({
+    chartData,
+    isLoading,
+    isError,
+    hiddenSources,
+    viewMode,
+    cumulativeMode,
+}: EmissionsChartProps) {
+    const getColor = useAssetColorGetter();
+    const filterDataKeys = useChartFilters(hiddenSources);
+
+    // Transform data for cumulative and percent view
+    const transformedData: Array<Record<string, unknown>> = useMemo(() => {
+        if (!chartData || chartData.length === 0) {
+            return chartData;
+        }
+
+        let processedData = chartData;
+
+        // Apply cumulative transformation first if needed
+        if (cumulativeMode === "cumulative") {
+            // Calculate cumulative emissions by integrating rates over time
+            const cumulativeData: Array<Record<string, unknown>> = [];
+            const cumulative: Record<string, number> = {};
+
+            // Process in reverse order (oldest to newest)
+            for (let i = chartData.length - 1; i >= 0; i--) {
+                const dp = chartData[i] as Record<string, unknown>;
+                const result: Record<string, unknown> = {
+                    tick: typeof dp.tick === "number" ? dp.tick : 0,
+                };
+
+                Object.keys(dp).forEach((key) => {
+                    if (key === "tick") return;
+
+                    const val = typeof dp[key] === "number" ? dp[key] : 0;
+                    const rate = (val as number) || 0;
+
+                    // Add the emission for this period (rate * resolution)
+                    // Resolution is already accounted for in the rate from the API
+                    cumulative[key] = (cumulative[key] ?? 0) + rate;
+
+                    result[key] = cumulative[key];
+                });
+
+                cumulativeData.unshift(result);
+            }
+
+            processedData = cumulativeData;
+        }
+
+        // Apply percent transformation if needed
+        if (viewMode === "percent") {
+            return processedData.map((dataPoint) => {
+                const dp = dataPoint as Record<string, unknown>;
+                const result: Record<string, unknown> = {
+                    tick: typeof dp.tick === "number" ? dp.tick : 0,
+                };
+
+                // Calculate total for this datapoint (absolute values)
+                let total = 0;
+                Object.keys(dp).forEach((key) => {
+                    if (key !== "tick") {
+                        const val = typeof dp[key] === "number" ? dp[key] : 0;
+                        total += Math.abs((val as number) || 0);
+                    }
+                });
+
+                Object.keys(dp).forEach((key) => {
+                    if (key === "tick") return;
+
+                    const val = typeof dp[key] === "number" ? dp[key] : 0;
+                    const value = (val as number) || 0;
+                    if (total > 0) {
+                        // Calculate percentage, preserving sign
+                        result[key] =
+                            (Math.abs(value) / total) * 100 * Math.sign(value);
+                    } else {
+                        result[key] = 0;
+                    }
+                });
+
+                return result;
+            });
+        }
+
+        return processedData;
+    }, [chartData, viewMode, cumulativeMode]);
+
+    const formatValue = useCallback(
+        (value: number): string => {
+            if (viewMode === "percent") {
+                return `${value.toFixed(1)}%`;
+            }
+            return formatEmissions(value);
+        },
+        [viewMode],
+    );
+
+    const chartConfig: TimeSeriesChartConfig = useMemo(
+        () => ({
+            chartType: "emissions",
+            chartVariant: "area",
+            stacked: true,
+            height: 400,
+            showBrush: true,
+            getColor,
+            filterDataKeys,
+            formatValue,
+        }),
+        [getColor, filterDataKeys, formatValue],
+    );
+
+    return (
+        <TimeSeriesChart
+            data={transformedData}
+            config={chartConfig}
+            isLoading={isLoading}
+            isError={isError}
+        />
+    );
+}
 
 interface EmissionsOverviewTableProps {
     /** Chart data with time series for each emissions source */

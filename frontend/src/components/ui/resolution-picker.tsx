@@ -24,7 +24,8 @@ export function ResolutionPicker({
 
     const availableResolutions = currentTick
         ? resolutions.filter(
-              (res) => currentTick > res.resolution * minDatapoints,
+              (res) =>
+                  res.id === 0 || currentTick > res.resolution * minDatapoints,
           )
         : [];
 

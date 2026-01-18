@@ -2,26 +2,22 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Zap, TrendingUp, TrendingDown, Funnel } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 
 import {
-    TimeSeriesChart,
-    ResolutionPicker,
+    PowerChart,
     PowerOverviewTable,
-    type TimeSeriesChartConfig,
-} from "@/components/charts";
+} from "@/components/charts/power-chart";
 import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardContent } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { Label } from "@/components/ui/label";
+import { ResolutionPicker } from "@/components/ui/resolution-picker";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
-import { useChartFilters } from "@/hooks/useChartFilters";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
 import { useToggleSet } from "@/hooks/useToggleSet";
-import { formatPower } from "@/lib/format-utils";
 import { ChartType } from "@/types/charts";
 
 export const Route = createFileRoute("/app/overviews/power")({
@@ -152,7 +148,6 @@ function PowerOverviewContent() {
                         ? "Power Generation"
                         : "Power Consumption"
                 }
-                className="mb-6"
             >
                 <PowerChart
                     chartType={chartType}
@@ -162,62 +157,14 @@ function PowerOverviewContent() {
                     hiddenFacilities={hiddenFacilities}
                 />
 
-                <div className="mt-6">
-                    <PowerOverviewTable
-                        chartType={chartType}
-                        chartData={chartData}
-                        resolution={selectedResolution.resolution}
-                        hiddenFacilities={hiddenFacilities}
-                        onToggleFacility={toggleFacility}
-                    />
-                </div>
+                <PowerOverviewTable
+                    chartType={chartType}
+                    chartData={chartData}
+                    resolution={selectedResolution.resolution}
+                    hiddenFacilities={hiddenFacilities}
+                    onToggleFacility={toggleFacility}
+                />
             </ChartCard>
         </div>
-    );
-}
-
-interface PowerChartProps {
-    chartType: ChartType;
-    chartData: Array<Record<string, unknown>>;
-    isLoading: boolean;
-    isError: boolean;
-    hiddenFacilities: Set<string>;
-}
-
-function PowerChart({
-    chartType,
-    chartData,
-    isLoading,
-    isError,
-    hiddenFacilities,
-}: PowerChartProps) {
-    const getColor = useAssetColorGetter();
-    const filterDataKeys = useChartFilters(hiddenFacilities);
-
-    const chartConfig: TimeSeriesChartConfig = useMemo(
-        () => ({
-            chartType,
-            chartVariant: "area",
-            stacked: true,
-            showBrush: true,
-            getColor,
-            filterDataKeys,
-            formatTooltip: (value: number, name: string) => [
-                formatPower(value),
-                name,
-            ],
-            formatValue: formatPower,
-            formatYAxis: (value: number) => formatPower(value),
-        }),
-        [chartType, getColor, filterDataKeys],
-    );
-
-    return (
-        <TimeSeriesChart
-            data={chartData}
-            config={chartConfig}
-            isLoading={isLoading}
-            isError={isError}
-        />
     );
 }

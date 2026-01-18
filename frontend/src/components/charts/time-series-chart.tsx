@@ -1,5 +1,6 @@
 /** Generic time series chart component supporting multiple chart types. */
 
+import { RefreshCw } from "lucide-react";
 import { useCallback, useMemo, type ReactNode } from "react";
 import {
     XAxis,
@@ -16,7 +17,6 @@ import {
     Brush,
 } from "recharts";
 
-import { ChartLoadingState } from "@/components/charts/chart-loading-state";
 import { AssetName, Duration, FacilityIcon } from "@/components/ui";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useGameEngine } from "@/hooks/useGame";
@@ -264,7 +264,16 @@ export function TimeSeriesChart({
     );
 
     if (isLoading) {
-        return <ChartLoadingState />;
+        // TODO: use shadcn, make take same space as real charts to avoid page scrolling
+        return (
+            <div
+                className="w-full flex items-center justify-center py-12"
+                style={{ height: `${height}px` }}
+            >
+                <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                Loading data...
+            </div>
+        );
     }
 
     if (isError) {

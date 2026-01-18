@@ -2,22 +2,15 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Package, TrendingUp, Warehouse } from "lucide-react";
-import { useMemo } from "react";
 
-import {
-    TimeSeriesChart,
-    ResolutionPicker,
-    filterNonZeroSeries,
-    type TimeSeriesChartConfig,
-} from "@/components/charts";
+import { ResourcesChart } from "@/components/charts/resources-chart";
 import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardContent } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
+import { ResolutionPicker } from "@/components/ui/resolution-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
-import { formatMass } from "@/lib/format-utils";
 
 export const Route = createFileRoute("/app/overviews/resources")({
     component: ResourcesOverviewPage,
@@ -115,42 +108,5 @@ function ResourcesOverviewContent() {
                 />
             </ChartCard>
         </div>
-    );
-}
-
-interface ResourcesChartProps {
-    chartData: Array<Record<string, unknown>>;
-    isLoading: boolean;
-    isError: boolean;
-}
-
-function ResourcesChart({
-    chartData,
-    isLoading,
-    isError,
-}: ResourcesChartProps) {
-    const getColor = useAssetColorGetter();
-
-    const chartConfig: TimeSeriesChartConfig = useMemo(
-        () => ({
-            chartType: "resources",
-            chartVariant: "area",
-            stacked: false,
-            showBrush: true,
-            getColor,
-            filterDataKeys: [filterNonZeroSeries],
-            formatValue: formatMass,
-            formatYAxis: (value: number) => formatMass(value),
-        }),
-        [getColor],
-    );
-
-    return (
-        <TimeSeriesChart
-            data={chartData as Array<Record<string, unknown>>}
-            config={chartConfig}
-            isLoading={isLoading}
-            isError={isError}
-        />
     );
 }

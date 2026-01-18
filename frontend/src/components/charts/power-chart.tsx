@@ -1,3 +1,63 @@
+import { useMemo, useState } from "react";
+
+import {
+    TimeSeriesChart,
+    TimeSeriesChartConfig,
+} from "@/components/charts/time-series-chart";
+import { FacilityName, FacilityIcon } from "@/components/ui";
+import { FacilityGauge } from "@/components/ui/facility-gauge";
+import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
+import { useChartFilters } from "@/hooks/useChartFilters";
+import { useFacilities } from "@/hooks/useFacilities";
+import { useGameEngine } from "@/hooks/useGame";
+import { formatPower, formatEnergy } from "@/lib/format-utils";
+import type { ChartType } from "@/types/charts";
+
+interface PowerChartProps {
+    chartType: ChartType;
+    chartData: Array<Record<string, unknown>>;
+    isLoading: boolean;
+    isError: boolean;
+    hiddenFacilities: Set<string>;
+}
+
+export function PowerChart({
+    chartType,
+    chartData,
+    isLoading,
+    isError,
+    hiddenFacilities,
+}: PowerChartProps) {
+    const getColor = useAssetColorGetter();
+    const filterDataKeys = useChartFilters(hiddenFacilities);
+
+    const chartConfig: TimeSeriesChartConfig = useMemo(
+        () => ({
+            chartType,
+            chartVariant: "area",
+            stacked: true,
+            showBrush: true,
+            getColor,
+            filterDataKeys,
+            formatTooltip: (value: number, name: string) => [
+                formatPower(value),
+                name,
+            ],
+            formatValue: formatPower,
+            formatYAxis: (value: number) => formatPower(value),
+        }),
+        [chartType, getColor, filterDataKeys],
+    );
+
+    return (
+        <TimeSeriesChart
+            data={chartData}
+            config={chartConfig}
+            isLoading={isLoading}
+            isError={isError}
+        />
+    );
+}
 /**
  * Power overview table component that displays aggregated generation or
  * consumption data by facility type.
@@ -5,15 +65,6 @@
  * Shows total energy generated/consumed over the selected period, installed
  * capacity, and used capacity for generation view.
  */
-
-import { useMemo, useState } from "react";
-
-import { FacilityName, FacilityIcon } from "@/components/ui";
-import { FacilityGauge } from "@/components/ui/facility-gauge";
-import { useFacilities } from "@/hooks/useFacilities";
-import { useGameEngine } from "@/hooks/useGame";
-import { formatEnergy, formatPower } from "@/lib/format-utils";
-import type { ChartType } from "@/types/charts";
 
 interface PowerOverviewTableProps {
     /** Chart type determining if we show generation or consumption table */

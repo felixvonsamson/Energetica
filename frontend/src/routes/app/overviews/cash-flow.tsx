@@ -8,30 +8,24 @@ import {
     PieChart,
     Funnel,
 } from "lucide-react";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 
 import {
-    TimeSeriesChart,
-    ResolutionPicker,
+    NetProfitViewMode,
+    CashFlowChart,
+    CashFlowType,
     CashFlowOverviewTable,
-    type TimeSeriesChartConfig,
-} from "@/components/charts";
+} from "@/components/charts/cash-flow-chart";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent, CashFlow } from "@/components/ui";
+import { Card, CardContent } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { Label } from "@/components/ui/label";
+import { ResolutionPicker } from "@/components/ui/resolution-picker";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
-import { useChartFilters } from "@/hooks/useChartFilters";
 import { useCurrentChartData } from "@/hooks/useCharts";
-import { useGameEngine } from "@/hooks/useGame";
 import { useGameTick } from "@/hooks/useGameTick";
 import { useToggleSet } from "@/hooks/useToggleSet";
-import { formatCashFlow } from "@/lib/format-utils";
-
-type RevenueType = "revenues" | "expenses" | "net-profit";
-type NetProfitViewMode = "net" | "breakdown";
 
 export const Route = createFileRoute("/app/overviews/cash-flow")({
     component: RevenuesOverviewPage,
@@ -121,7 +115,7 @@ function RevenuesOverviewContent() {
     const [viewMode, setViewMode] = useState<"normal" | "percent">("normal");
     const [netProfitViewMode, setNetProfitViewMode] =
         useState<NetProfitViewMode>("net");
-    const [revenueType, setRevenueType] = useState<RevenueType>("revenues");
+    const [revenueType, setRevenueType] = useState<CashFlowType>("revenues");
     const [hiddenFacilities, toggleFacility] = useToggleSet<string>();
     const { selectedResolution } = useTimeMode();
 
@@ -273,7 +267,7 @@ function RevenuesOverviewContent() {
                             <Tabs
                                 value={revenueType}
                                 onValueChange={(value) =>
-                                    setRevenueType(value as RevenueType)
+                                    setRevenueType(value as CashFlowType)
                                 }
                             >
                                 <TabsList>
@@ -352,9 +346,8 @@ function RevenuesOverviewContent() {
                           ? "Expenses"
                           : "Revenues & Expenses"
                 }
-                className="mb-6"
             >
-                <RevenuesChart
+                <CashFlowChart
                     chartData={filteredChartData}
                     isLoading={isChartLoading}
                     isError={isError}
@@ -364,164 +357,13 @@ function RevenuesOverviewContent() {
                     netProfitViewMode={netProfitViewMode}
                 />
 
-                <div className="mt-6">
-                    <CashFlowOverviewTable
-                        chartData={filteredChartData}
-                        revenueType={revenueType}
-                        hiddenFacilities={hiddenFacilities}
-                        onToggleFacility={toggleFacility}
-                    />
-                </div>
+                <CashFlowOverviewTable
+                    chartData={filteredChartData}
+                    revenueType={revenueType}
+                    hiddenFacilities={hiddenFacilities}
+                    onToggleFacility={toggleFacility}
+                />
             </ChartCard>
         </div>
-    );
-}
-
-interface RevenuesChartProps {
-    chartData: Array<Record<string, unknown>>;
-    isLoading: boolean;
-    isError: boolean;
-    hiddenFacilities: Set<string>;
-    viewMode: "normal" | "percent";
-    revenueType: RevenueType;
-    netProfitViewMode: NetProfitViewMode;
-}
-
-function RevenuesChart({
-    chartData,
-    isLoading,
-    isError,
-    hiddenFacilities,
-    viewMode,
-    revenueType,
-    netProfitViewMode,
-}: RevenuesChartProps) {
-    const { data: gameEngineConfig } = useGameEngine();
-    const { mode: timeMode } = useTimeMode();
-    const getColor = useAssetColorGetter();
-
-    // Custom color getter for breakdown mode
-    const getBreakdownColor = useCallback((key: string) => {
-        if (key === "baseline") return "hsl(var(--muted-foreground) / 0.5)";
-        if (key === "profit") return "var(--success)";
-        if (key === "loss") return "var(--destructive)";
-        return "var(--foreground)";
-    }, []);
-
-    // Create filters - don't filter non-zero for net-profit view
-    const filterDataKeys = useChartFilters(
-        hiddenFacilities,
-        revenueType !== "net-profit",
-    );
-
-    // Transform data for percent view if needed
-    const transformedData: Array<Record<string, unknown>> = useMemo(() => {
-        if (
-            viewMode === "normal" ||
-            revenueType === "net-profit" ||
-            !chartData ||
-            chartData.length === 0
-        ) {
-            return chartData;
-        }
-
-        // For percent view, calculate percentage based on total
-        return chartData.map((dataPoint) => {
-            const dp = dataPoint as Record<string, unknown>;
-            const result: Record<string, unknown> = {
-                tick: typeof dp.tick === "number" ? dp.tick : 0,
-            };
-
-            // Calculate total for this datapoint
-            let total = 0;
-            Object.keys(dp).forEach((key) => {
-                if (key !== "tick") {
-                    const val = typeof dp[key] === "number" ? dp[key] : 0;
-                    total += Math.abs((val as number) || 0);
-                }
-            });
-
-            Object.keys(dp).forEach((key) => {
-                if (key === "tick") return;
-
-                const val = typeof dp[key] === "number" ? dp[key] : 0;
-                const value = (val as number) || 0;
-                if (total > 0) {
-                    // Preserve sign in percent view
-                    result[key] = (value / total) * 100;
-                } else {
-                    result[key] = 0;
-                }
-            });
-
-            return result;
-        });
-    }, [chartData, viewMode, revenueType]);
-
-    const isShowingPercent =
-        viewMode === "percent" && revenueType !== "net-profit";
-
-    const formatValue = useCallback(
-        (value: number) =>
-            isShowingPercent ? (
-                `${value.toFixed(1)}%`
-            ) : (
-                <CashFlow amountPerTick={value} />
-            ),
-        [isShowingPercent],
-    );
-
-    const chartConfig: TimeSeriesChartConfig | undefined = useMemo(() => {
-        if (!gameEngineConfig) return undefined;
-
-        const isBreakdownMode =
-            revenueType === "net-profit" && netProfitViewMode === "breakdown";
-        const isNetMode =
-            revenueType === "net-profit" && netProfitViewMode === "net";
-
-        // Determine chartType based on revenue type for proper key ordering
-        const chartType =
-            revenueType === "revenues"
-                ? "revenues"
-                : revenueType === "expenses"
-                  ? "op-costs"
-                  : undefined; // net-profit uses synthetic keys
-
-        return {
-            chartType,
-            chartVariant: "area",
-            stacked: true,
-            showBrush: true,
-            getColor: isBreakdownMode ? getBreakdownColor : getColor,
-            filterDataKeys,
-            formatValue,
-            formatYAxis: (value: number) =>
-                isShowingPercent
-                    ? `${value}%`
-                    : formatCashFlow(value, "h", gameEngineConfig, timeMode),
-            // Use gradient fill for the "net-profit" series only in net mode
-            gradientKeys: isNetMode ? ["net-profit"] : [],
-        };
-    }, [
-        gameEngineConfig,
-        revenueType,
-        netProfitViewMode,
-        getBreakdownColor,
-        getColor,
-        filterDataKeys,
-        formatValue,
-        isShowingPercent,
-        timeMode,
-    ]);
-
-    if (!chartConfig) return <></>;
-
-    return (
-        <TimeSeriesChart
-            data={transformedData}
-            config={chartConfig}
-            isLoading={isLoading}
-            isError={isError}
-        />
     );
 }

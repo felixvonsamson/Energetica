@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 /**
  * Storage overview table component that displays aggregated storage data by
  * facility type.
@@ -6,13 +7,105 @@
  * state of charge for each storage facility type.
  */
 
-import { useMemo, useState } from "react";
-
+import {
+    TimeSeriesChart,
+    TimeSeriesChartConfig,
+} from "@/components/charts/time-series-chart";
 import { FacilityIcon } from "@/components/ui";
 import { FacilityName } from "@/components/ui/asset-name";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
+import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
+import { useChartFilters } from "@/hooks/useChartFilters";
 import { useFacilities } from "@/hooks/useFacilities";
 import { formatEnergy } from "@/lib/format-utils";
+
+interface StorageChartProps {
+    chartData: Array<Record<string, unknown>>;
+    isLoading: boolean;
+    isError: boolean;
+    hiddenFacilities: Set<string>;
+    viewMode: "normal" | "percent";
+}
+
+export function StorageChart({
+    chartData,
+    isLoading,
+    isError,
+    hiddenFacilities,
+    viewMode,
+}: StorageChartProps) {
+    const getColor = useAssetColorGetter();
+    const { data: facilities } = useFacilities();
+    const filterDataKeys = useChartFilters(hiddenFacilities);
+
+    // Transform data for percent view if needed
+    const transformedData: Array<Record<string, unknown>> = useMemo(() => {
+        if (viewMode === "normal" || !chartData || chartData.length === 0) {
+            return chartData;
+        }
+
+        // For percent view, we need to calculate the percentage of capacity for each facility
+        // This requires knowing the max capacity for each facility
+        // For now, we'll calculate percentage based on the max value in the series
+        return chartData.map((dataPoint) => {
+            const dp = dataPoint as Record<string, unknown>;
+            const result: Record<string, unknown> = {
+                tick: typeof dp.tick === "number" ? dp.tick : 0,
+            };
+
+            if (!facilities) return result;
+
+            Object.keys(dp).forEach((key) => {
+                if (key === "tick") return;
+
+                const maxValue = facilities.storage_facilities.reduce(
+                    (runningMax, facility) =>
+                        facility.facility === key
+                            ? runningMax + facility.storage_capacity
+                            : runningMax,
+                    0,
+                );
+
+                const currentVal = typeof dp[key] === "number" ? dp[key] : 0;
+                if (maxValue !== undefined && maxValue > 0) {
+                    result[key] =
+                        (((currentVal as number) || 0) / maxValue) * 100;
+                } else {
+                    result[key] = 0;
+                }
+            });
+
+            return result;
+        });
+    }, [chartData, facilities, viewMode]);
+
+    const chartConfig: TimeSeriesChartConfig = useMemo(
+        () => ({
+            chartType: "storage-level",
+            chartVariant: viewMode === "normal" ? "area" : "line",
+            stacked: viewMode === "normal" ? true : false,
+            showBrush: true,
+            getColor,
+            filterDataKeys,
+            formatValue:
+                viewMode === "normal"
+                    ? formatEnergy
+                    : (value: number) => `${value.toFixed(1)}%`,
+            formatYAxis: (value: number) =>
+                viewMode === "normal" ? formatEnergy(value) : `${value}%`,
+        }),
+        [viewMode, getColor, filterDataKeys],
+    );
+
+    return (
+        <TimeSeriesChart
+            data={transformedData}
+            config={chartConfig}
+            isLoading={isLoading}
+            isError={isError}
+        />
+    );
+}
 
 interface StorageOverviewTableProps {
     /** Chart data with time series for each facility type */
