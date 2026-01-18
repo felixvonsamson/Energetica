@@ -45,9 +45,9 @@ interface PriorityTableProps {
     /** Facility statuses from the API */
     statuses: ApiResponse<"/api/v1/facilities/statuses", "get">;
     /** Production power levels by facility type */
-    productionPowerLevels?: Record<string, number>;
+    productionPowerLevels?: Partial<Record<string, number>>;
     /** Consumption power levels by facility type */
-    consumptionPowerLevels?: Record<string, number>;
+    consumptionPowerLevels?: Partial<Record<string, number>>;
     /** Production capacity by facility type */
     productionCapacityByType?: Record<string, number>;
     /** Consumption capacity by facility type */

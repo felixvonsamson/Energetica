@@ -4,18 +4,30 @@ import {
     TimeSeriesChart,
     TimeSeriesChartConfig,
 } from "@/components/charts/time-series-chart";
+import { useCurrentChartData } from "@/hooks/useCharts";
+import { useGameTick } from "@/hooks/useGameTick";
+import { ResolutionOption } from "@/types/charts";
 
 interface MarketPriceChartProps {
-    chartData: Array<Record<string, unknown>>;
-    isLoading: boolean;
-    isError: boolean;
+    selectedResolution: ResolutionOption;
+    marketId: number;
 }
 
 export function MarketPriceChart({
-    chartData,
-    isLoading,
-    isError,
+    selectedResolution,
+    marketId,
 }: MarketPriceChartProps) {
+    const { currentTick } = useGameTick();
+
+    // Fetch chart data for network-data
+    const { chartData, isLoading, isError } = useCurrentChartData({
+        chartType: "network-data",
+        currentTick,
+        resolution: selectedResolution.resolution,
+        maxDatapoints: selectedResolution.datapoints,
+        marketId,
+    });
+
     // Extract only price data
     const priceData = useMemo(() => {
         return chartData.map((dataPoint) => ({

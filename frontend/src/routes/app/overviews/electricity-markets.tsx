@@ -14,6 +14,8 @@ import {
 import { useMemo, useState } from "react";
 
 import {
+    BreakdownMode,
+    BreakdownType,
     MarketClearingTable,
     MarketClearingVolumeChart,
 } from "@/components/charts/market-clearing-volume-chart";
@@ -33,8 +35,9 @@ import {
     SegmentedPicker,
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
+import { Switch } from "@/components/ui/switch";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useCurrentChartData, useLatestChartData } from "@/hooks/useCharts";
+import { useLatestChartData } from "@/hooks/useCharts";
 import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
 import {
     useElectricityMarkets,
@@ -44,7 +47,6 @@ import { useGameTick } from "@/hooks/useGameTick";
 import { usePlayerMap } from "@/hooks/usePlayers";
 import { useToggleSet } from "@/hooks/useToggleSet";
 import { formatPower } from "@/lib/format-utils";
-import type { ChartType } from "@/types/charts";
 
 interface MarketsSearchParams {
     marketId?: number;
@@ -111,12 +113,6 @@ function MarketsOverviewPage() {
     );
 }
 
-const BREAKDOWN_TYPE_OPTIONS = [
-    { value: "clearing", label: "Clearing Volume" },
-    { value: "production", label: "Production" },
-    { value: "consumption", label: "Consumption" },
-] as const;
-
 const BREAKDOWN_MODE_OPTIONS = [
     { value: "player", label: "By Player" },
     { value: "type", label: "By Type" },
@@ -146,19 +142,6 @@ function MarketsOverviewContent() {
 
     const { selectedResolution } = useTimeMode();
 
-    // Fetch chart data for network-data
-    const {
-        chartData,
-        isLoading: isChartLoading,
-        isError,
-    } = useCurrentChartData({
-        chartType: "network-data",
-        currentTick,
-        resolution: selectedResolution.resolution,
-        maxDatapoints: selectedResolution.datapoints,
-        marketId: selectedMarketId,
-    });
-
     // Fetch latest data for real-time display
     const { data: latestData, isLoading: isLatestLoading } = useLatestChartData(
         {
@@ -171,45 +154,10 @@ function MarketsOverviewContent() {
     const latestQuantity = latestData.quantity ?? 0;
 
     // Breakdown state
-    const [breakdownType, setBreakdownType] = useState<
-        "clearing" | "production" | "consumption"
-    >("clearing");
-    const [breakdownMode, setBreakdownMode] = useState<"player" | "type">(
-        "player",
-    );
+    const [breakdownEnabled, setBreakdownEnabled] = useState<boolean>(false);
+    const [breakdownType, setBreakdownType] = useState<BreakdownType>("supply");
+    const [breakdownMode, setBreakdownMode] = useState<BreakdownMode>("player");
     const [hiddenBreakdownItems, toggleBreakdownItem] = useToggleSet<string>();
-
-    // Determine which chart type to use for breakdown
-    const breakdownChartType: ChartType = useMemo(() => {
-        if (breakdownType === "clearing") {
-            return "network-data"; // Use network-data for clearing volume
-        } else if (breakdownType === "production") {
-            return breakdownMode === "player"
-                ? "network-exports"
-                : "network-generation";
-        } else {
-            return breakdownMode === "player"
-                ? "network-imports"
-                : "network-consumption";
-        }
-    }, [breakdownType, breakdownMode]);
-
-    // Fetch breakdown chart data (use existing data for clearing type)
-    const {
-        chartData: breakdownChartData,
-        isLoading: isBreakdownLoading,
-        isError: isBreakdownError,
-    } = useCurrentChartData({
-        chartType: breakdownChartType,
-        currentTick,
-        resolution: selectedResolution.resolution,
-        maxDatapoints: selectedResolution.datapoints,
-        marketId: selectedMarketId,
-    });
-
-    // For clearing type, use the chartData directly
-    const finalBreakdownData =
-        breakdownType === "clearing" ? chartData : breakdownChartData;
 
     // Handle market selection change
     const handleMarketChange = (marketId: number) => {
@@ -218,6 +166,16 @@ function MarketsOverviewContent() {
             search: { marketId: marketId },
         });
     };
+
+    const clearingChartTitle = `Clearing Volume ${
+        !breakdownEnabled
+            ? ""
+            : `by ${
+                  breakdownMode === "player"
+                      ? `Player ${breakdownType === "demand" ? "Imports" : "Exports"}`
+                      : `${breakdownType === "demand" ? "Consumption" : "Production"} Type`
+              }`
+    }`;
 
     // Show message if player is not in a market and none selected
     if (!selectedMarketId) {
@@ -242,8 +200,8 @@ function MarketsOverviewContent() {
                     <div className="space-y-4">
                         <MarketSelector
                             markets={marketsData?.electricity_markets ?? []}
-                            selectedMarketId={selectedMarketId}
-                            onMarketChange={handleMarketChange}
+                            marketId={selectedMarketId}
+                            onMarketIdChange={handleMarketChange}
                         />
                         <ResolutionPicker currentTick={currentTick} />
                     </div>
@@ -294,60 +252,78 @@ function MarketsOverviewContent() {
                 className="mb-6"
             >
                 <MarketPriceChart
-                    chartData={chartData}
-                    isLoading={isChartLoading}
-                    isError={isError}
+                    selectedResolution={selectedResolution}
+                    marketId={selectedMarketId}
                 />
             </ChartCard>
 
             {/* Breakdown Section */}
             <Card className="mb-6">
                 <CardContent>
-                    <div className="space-y-4">
-                        <div>
-                            <Label className="mb-2">Breakdown Type</Label>
-                            <SegmentedPicker
-                                value={breakdownType}
-                                onValueChange={(value) =>
-                                    setBreakdownType(
-                                        value as
-                                            | "clearing"
-                                            | "production"
-                                            | "consumption",
-                                    )
-                                }
-                            >
-                                {BREAKDOWN_TYPE_OPTIONS.map((option) => (
-                                    <SegmentedPickerOption
-                                        key={option.value}
-                                        value={option.value}
-                                    >
-                                        {option.label}
-                                    </SegmentedPickerOption>
-                                ))}
-                            </SegmentedPicker>
+                    <div className="flex flex-row gap-10 justify-between">
+                        <div className="flex flex-row gap-4 items-center">
+                            <Label className="mb-2" htmlFor="breakdown-switch">
+                                Breakdown
+                            </Label>
+                            <Switch
+                                id="breakdown-switch"
+                                checked={breakdownEnabled}
+                                onCheckedChange={setBreakdownEnabled}
+                            />
                         </div>
-                        {breakdownType !== "clearing" && (
-                            <div>
-                                <Label className="mb-2">Breakdown Mode</Label>
-                                <SegmentedPicker
-                                    value={breakdownMode}
-                                    onValueChange={(value) =>
-                                        setBreakdownMode(
-                                            value as "player" | "type",
-                                        )
-                                    }
-                                >
-                                    {BREAKDOWN_MODE_OPTIONS.map((option) => (
+                        {breakdownEnabled && (
+                            <>
+                                <div className="flex flex-row gap-4 items-center">
+                                    <Label className="mb-2">Breakdown By</Label>
+                                    <SegmentedPicker
+                                        value={breakdownMode}
+                                        onValueChange={(value) =>
+                                            setBreakdownMode(
+                                                value as BreakdownMode,
+                                            )
+                                        }
+                                    >
+                                        {BREAKDOWN_MODE_OPTIONS.map(
+                                            (option) => (
+                                                <SegmentedPickerOption
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </SegmentedPickerOption>
+                                            ),
+                                        )}
+                                    </SegmentedPicker>
+                                </div>
+                                <div className="flex flex-row gap-4 items-center">
+                                    <Label className="mb-2">Show</Label>
+                                    <SegmentedPicker
+                                        value={breakdownType}
+                                        onValueChange={(value) =>
+                                            setBreakdownType(
+                                                value as BreakdownType,
+                                            )
+                                        }
+                                    >
                                         <SegmentedPickerOption
-                                            key={option.value}
-                                            value={option.value}
+                                            key={"supply"}
+                                            value={"supply"}
                                         >
-                                            {option.label}
+                                            {breakdownMode === "player"
+                                                ? "Exports"
+                                                : "Production"}
                                         </SegmentedPickerOption>
-                                    ))}
-                                </SegmentedPicker>
-                            </div>
+                                        <SegmentedPickerOption
+                                            key={"demand"}
+                                            value={"demand"}
+                                        >
+                                            {breakdownMode === "player"
+                                                ? "Imports"
+                                                : "Consumption"}
+                                        </SegmentedPickerOption>
+                                    </SegmentedPicker>
+                                </div>
+                            </>
                         )}
                     </div>
                 </CardContent>
@@ -355,50 +331,35 @@ function MarketsOverviewContent() {
 
             <ChartCard
                 icon={
-                    breakdownType === "clearing"
+                    !breakdownEnabled
                         ? Activity
                         : breakdownMode === "player"
                           ? Users
                           : Layers
                 }
                 iconClassName="text-primary"
-                title={
-                    breakdownType === "clearing"
-                        ? "Clearing Volume"
-                        : `${breakdownType === "production" ? "Production" : "Consumption"} by ${breakdownMode === "player" ? "Player" : "Type"}`
-                }
-                className="mb-6"
+                title={clearingChartTitle}
             >
                 <MarketClearingVolumeChart
-                    chartType={breakdownChartType}
-                    chartData={finalBreakdownData}
-                    isLoading={
-                        breakdownType === "clearing"
-                            ? isChartLoading
-                            : isBreakdownLoading
-                    }
-                    isError={
-                        breakdownType === "clearing"
-                            ? isError
-                            : isBreakdownError
-                    }
+                    resolution={selectedResolution}
+                    marketId={selectedMarketId}
                     hiddenItems={hiddenBreakdownItems}
+                    breakdownEnabled={breakdownEnabled}
                     breakdownMode={breakdownMode}
                     breakdownType={breakdownType}
                     playerMap={playerMap}
                 />
 
-                {breakdownType !== "clearing" && (
-                    <div className="mt-6">
-                        <MarketClearingTable
-                            chartData={finalBreakdownData}
-                            resolution={selectedResolution.resolution}
-                            hiddenItems={hiddenBreakdownItems}
-                            onToggleItem={toggleBreakdownItem}
-                            breakdownMode={breakdownMode}
-                            breakdownType={breakdownType}
-                        />
-                    </div>
+                {breakdownEnabled && (
+                    <MarketClearingTable
+                        resolution={selectedResolution}
+                        marketId={selectedMarketId}
+                        hiddenItems={hiddenBreakdownItems}
+                        onToggleItem={toggleBreakdownItem}
+                        breakdownEnabled={breakdownEnabled}
+                        breakdownMode={breakdownMode}
+                        breakdownType={breakdownType}
+                    />
                 )}
             </ChartCard>
         </div>
@@ -407,21 +368,22 @@ function MarketsOverviewContent() {
 
 interface MarketSelectorProps {
     markets: Array<{ id: number; name: string }>;
-    selectedMarketId: number;
-    onMarketChange: (marketId: number) => void;
+    marketId: number;
+    onMarketIdChange: (marketId: number) => void;
 }
 
+// TODO: use shadcn selectors
 function MarketSelector({
     markets,
-    selectedMarketId: selectedMarketId,
-    onMarketChange: onMarketChange,
+    marketId,
+    onMarketIdChange,
 }: MarketSelectorProps) {
     return (
         <div>
             <Label className="mb-2">Market</Label>
             <select
-                value={selectedMarketId}
-                onChange={(e) => onMarketChange(Number(e.target.value))}
+                value={marketId}
+                onChange={(e) => onMarketIdChange(Number(e.target.value))}
                 className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
                 {markets.map((market) => (

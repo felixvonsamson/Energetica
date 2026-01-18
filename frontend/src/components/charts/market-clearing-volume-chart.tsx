@@ -8,80 +8,121 @@ import { FacilityName } from "@/components/ui/asset-name";
 import { Button } from "@/components/ui/button";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useChartFilters } from "@/hooks/useChartFilters";
+import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameEngine } from "@/hooks/useGame";
+import { useGameTick } from "@/hooks/useGameTick";
 import { usePlayerMap } from "@/hooks/usePlayers";
+import { createIncludeKeysFilter } from "@/lib/charts/chart-utils";
 import { formatEnergy, formatPower } from "@/lib/format-utils";
-import { ChartType } from "@/types/charts";
+import { ChartType, ResolutionOption } from "@/types/charts";
 import { Player } from "@/types/players";
 
+export type BreakdownType = "supply" | "demand";
+export type BreakdownMode = "player" | "type";
+
+function useMarketClearingData(
+    resolution: ResolutionOption,
+    marketId: number,
+    breakdownEnabled: boolean,
+    breakdownType: BreakdownType,
+    breakdownMode: BreakdownMode,
+) {
+    const { currentTick } = useGameTick();
+
+    // Determine which chart type to use for breakdown
+    const chartType: ChartType = useMemo(() => {
+        if (!breakdownEnabled) {
+            return "network-data"; // Use network-data for clearing volume
+        } else if (breakdownType === "supply") {
+            return breakdownMode === "player"
+                ? "network-exports"
+                : "network-generation";
+        } else {
+            return breakdownMode === "player"
+                ? "network-imports"
+                : "network-consumption";
+        }
+    }, [breakdownEnabled, breakdownType, breakdownMode]);
+
+    // Fetch breakdown chart data (use existing data for clearing type)
+    const { chartData, isLoading, isError } = useCurrentChartData({
+        chartType,
+        currentTick,
+        resolution: resolution.resolution,
+        maxDatapoints: resolution.datapoints,
+        marketId,
+    });
+
+    return { chartType, chartData, isLoading, isError };
+}
+
 interface MarketClearingChartProps {
-    chartType: ChartType;
-    chartData: Array<Record<string, unknown>>;
-    isLoading: boolean;
-    isError: boolean;
+    resolution: ResolutionOption;
+    marketId: number;
     hiddenItems: Set<string>;
-    breakdownMode: "player" | "type";
-    breakdownType: "clearing" | "production" | "consumption";
+    breakdownEnabled: boolean;
+    breakdownMode: BreakdownMode;
+    breakdownType: BreakdownType;
     playerMap?: Record<number, Player>;
 }
 
 export function MarketClearingVolumeChart({
-    chartType,
-    chartData,
-    isLoading,
-    isError,
+    resolution,
+    marketId,
     hiddenItems,
+    breakdownEnabled,
     breakdownMode,
     breakdownType,
     playerMap,
 }: MarketClearingChartProps) {
     const getColor = useAssetColorGetter();
-    const filterDataKeys = useChartFilters(hiddenItems);
 
-    // For clearing type, extract only quantity data
-    const processedData = useMemo(() => {
-        if (breakdownType === "clearing") {
-            return chartData.map((dataPoint) => ({
-                tick: dataPoint.tick as number,
-                quantity: dataPoint.quantity as number,
-            }));
-        }
-        return chartData;
-    }, [chartData, breakdownType]);
+    // filters
+    const breakdownFilter = useChartFilters(hiddenItems);
+    const quantityFilter = createIncludeKeysFilter(["quantity"]);
+
+    const { chartType, chartData, isLoading, isError } = useMarketClearingData(
+        resolution,
+        marketId,
+        breakdownEnabled,
+        breakdownType,
+        breakdownMode,
+    );
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
             chartType,
             chartVariant: "bar",
-            stacked: breakdownType !== "clearing",
+            stacked: breakdownEnabled,
             showBrush: true,
-            getColor:
-                breakdownType === "clearing"
-                    ? () => "var(--chart-1)"
-                    : breakdownMode === "type"
-                      ? getColor
-                      : (key: string) => {
-                            // For player mode, use a hash-based color from chart palette
-                            const colors = [
-                                "var(--chart-1)",
-                                "var(--chart-2)",
-                                "var(--chart-3)",
-                                "var(--chart-4)",
-                                "var(--chart-5)",
-                                "var(--chart-6)",
-                                "var(--chart-7)",
-                                "var(--chart-8)",
-                            ];
-                            let hash = 0;
-                            for (let i = 0; i < key.length; i++) {
-                                hash = key.charCodeAt(i) + ((hash << 5) - hash);
-                            }
-                            return (
-                                colors[Math.abs(hash) % colors.length] ??
-                                "var(--chart-1)"
-                            );
-                        },
-            filterDataKeys: breakdownType === "clearing" ? [] : filterDataKeys,
+            getColor: !breakdownEnabled
+                ? () => "var(--chart-2)"
+                : breakdownMode === "type"
+                  ? getColor
+                  : (key: string) => {
+                        // For player mode, use a hash-based color from chart palette
+                        const colors = [
+                            "var(--chart-1)",
+                            "var(--chart-2)",
+                            "var(--chart-3)",
+                            "var(--chart-4)",
+                            "var(--chart-5)",
+                            "var(--chart-6)",
+                            "var(--chart-7)",
+                            "var(--chart-8)",
+                        ];
+                        let hash = 0;
+                        for (let i = 0; i < key.length; i++) {
+                            hash = key.charCodeAt(i) + ((hash << 5) - hash);
+                        }
+                        return (
+                            colors[Math.abs(hash) % colors.length] ??
+                            "var(--chart-1)"
+                        );
+                    },
+            filterDataKeys: breakdownEnabled
+                ? breakdownFilter
+                : [quantityFilter],
             formatValue: (value: number) => formatPower(value),
             formatYAxis: (value: number) => formatPower(value),
             formatLabel:
@@ -92,17 +133,18 @@ export function MarketClearingVolumeChart({
         }),
         [
             chartType,
-            getColor,
-            filterDataKeys,
+            breakdownEnabled,
             breakdownMode,
-            breakdownType,
+            getColor,
+            breakdownFilter,
+            quantityFilter,
             playerMap,
         ],
     );
 
     return (
         <TimeSeriesChart
-            data={processedData}
+            data={chartData}
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}
@@ -111,22 +153,32 @@ export function MarketClearingVolumeChart({
 }
 
 interface MarketClearingVolumeTableProps {
-    chartData: Array<Record<string, unknown>>;
-    resolution: number;
+    resolution: ResolutionOption;
+    marketId: number;
     hiddenItems: Set<string>;
     onToggleItem: (item: string) => void;
-    breakdownMode: "player" | "type";
-    breakdownType: "production" | "consumption";
+    breakdownEnabled: boolean;
+    breakdownMode: BreakdownMode;
+    breakdownType: BreakdownType;
 }
 
 export function MarketClearingTable({
-    chartData,
     resolution,
+    marketId,
     hiddenItems,
     onToggleItem,
+    breakdownEnabled,
     breakdownMode,
     breakdownType,
 }: MarketClearingVolumeTableProps) {
+    const { chartData } = useMarketClearingData(
+        resolution,
+        marketId,
+        breakdownEnabled,
+        breakdownType,
+        breakdownMode,
+    );
+
     const [sortKey, setSortKey] = useState<"name" | "energy">("energy");
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
     const { data: gameEngine } = useGameEngine();
@@ -151,7 +203,8 @@ export function MarketClearingTable({
             const totalEnergy = chartData.reduce((sum, dataPoint) => {
                 const power = (dataPoint[item] as number) || 0;
                 const timeInHours =
-                    (resolution * gameEngine.game_seconds_per_tick) / 3600;
+                    (resolution.resolution * gameEngine.game_seconds_per_tick) /
+                    3600;
                 return sum + power * timeInHours;
             }, 0);
 
@@ -238,7 +291,7 @@ export function MarketClearingTable({
                             className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-secondary/80 transition-colors"
                             onClick={() => handleSort("energy")}
                         >
-                            {breakdownType === "production"
+                            {breakdownType === "supply"
                                 ? "Exported"
                                 : "Imported"}
                             {getSortIndicator("energy")}

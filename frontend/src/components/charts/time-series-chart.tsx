@@ -376,7 +376,13 @@ function CustomTooltipContent({
     const { currentTick } = useGameTick();
     const { mode } = useTimeMode();
 
-    const isVisible = active && payload && payload.length;
+    const sortedPayload = payload
+        ? payload
+              .filter((p) => p.value !== 0)
+              .sort((a, b) => (b.value as number) - (a.value as number))
+        : undefined;
+
+    const isVisible = active && sortedPayload && sortedPayload.length;
     if (!isVisible) return null;
     return (
         <div className="bg-neutral-100 dark:bg-neutral-600 p-2">
@@ -398,38 +404,34 @@ function CustomTooltipContent({
                     </tr>
                 </thead>
                 <tbody>
-                    {payload
-                        .filter((p) => p.value !== 0)
-                        .sort(
-                            (a, b) => (b.value as number) - (a.value as number),
-                        )
-                        .map((p) => (
-                            <tr key={p.name}>
-                                <td>
-                                    <div
-                                        className="h-6 aspect-square"
-                                        style={{
-                                            backgroundColor:
-                                                assetCSSColourVariable(p.name),
-                                        }}
-                                    />
-                                </td>
-                                <td className="px-2 min-w-30">
-                                    {formatLabel ? (
-                                        formatLabel(p.name)
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            <FacilityIcon
-                                                facility={p.name}
-                                                size={18}
-                                            />
-                                            <AssetName assetId={p.name} />
-                                        </div>
-                                    )}
-                                </td>
-                                <td className="px-2">{formatValue(p.value)}</td>
-                            </tr>
-                        ))}
+                    {sortedPayload.map((p) => (
+                        <tr key={p.name}>
+                            <td>
+                                <div
+                                    className="h-6 aspect-square"
+                                    style={{
+                                        backgroundColor: assetCSSColourVariable(
+                                            p.name,
+                                        ),
+                                    }}
+                                />
+                            </td>
+                            <td className="px-2 min-w-30">
+                                {formatLabel ? (
+                                    formatLabel(p.name)
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <FacilityIcon
+                                            facility={p.name}
+                                            size={18}
+                                        />
+                                        <AssetName assetId={p.name} />
+                                    </div>
+                                )}
+                            </td>
+                            <td className="px-2">{formatValue(p.value)}</td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
         </div>

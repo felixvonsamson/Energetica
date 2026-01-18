@@ -153,6 +153,40 @@ export function reorderObjectKeys(
 
     return result;
 }
+/**
+ * Type-level mapping of chart types to their data keys. Enables type-safe chart
+ * data access with proper autocomplete and compile-time checking.
+ */
+export type ChartDataKeys = {
+    "power-sources": (typeof POWER_GENERATION_KEYS)[number];
+    "power-sinks": (typeof POWER_CONSUMPTION_KEYS)[number];
+    "storage-level": (typeof STORAGE_LEVEL_KEYS)[number];
+    revenues: (typeof REVENUES_KEYS)[number];
+    "op-costs": (typeof OP_COSTS_KEYS)[number];
+    emissions: (typeof EMISSIONS_KEYS)[number];
+    climate: (typeof CLIMATE_KEYS)[number];
+    temperature: (typeof TEMPERATURE_KEYS)[number];
+    resources: (typeof RESOURCES_KEYS)[number];
+    "network-data": (typeof NETWORK_DATA_KEYS)[number];
+    "network-exports": string; // Dynamic player IDs
+    "network-imports": string; // Dynamic player IDs
+    "network-generation": (typeof NETWORK_GENERATION_KEYS)[number];
+    "network-consumption": (typeof NETWORK_CONSUMPTION_KEYS)[number];
+};
+
+/**
+ * Generic chart data point type. Each chart type returns data points with a
+ * tick number and values for each of its specific keys.
+ *
+ * @example
+ *     // For network-data chart type:
+ *     ChartDataPoint<"network-data"> = { tick: number; price: number; quantity:
+ *     number }
+ */
+export type ChartDataPoint<T extends ChartType> = {
+    tick: number;
+} & Record<ChartDataKeys[T], number>;
+
 /** Map chart types to their corresponding key ordering */
 export const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {
     "power-sources": POWER_GENERATION_KEYS,

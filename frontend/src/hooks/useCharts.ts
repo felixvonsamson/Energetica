@@ -27,6 +27,7 @@ import { useMemo } from "react";
 import { useGameTick } from "@/hooks/useGameTick";
 import { chartsApi } from "@/lib/api/charts";
 import {
+    ChartDataPoint,
     KEY_ORDER_BY_CHART_TYPE,
     reorderObjectKeys,
 } from "@/lib/charts/chart-key-order";
@@ -42,14 +43,14 @@ import {
  * Internal helper that fetches chart data without fallback logic. Used as a
  * base for useCurrentChartData.
  */
-function useCurrentChartDataBase({
+function useCurrentChartDataBase<T extends ChartType>({
     chartType,
     currentTick,
     resolution,
     maxDatapoints,
     marketId,
 }: {
-    chartType: ChartType;
+    chartType: T;
     currentTick: number | undefined;
     resolution: Resolution;
     maxDatapoints: number;
@@ -89,19 +90,23 @@ function useCurrentChartDataBase({
  * displays cached data from the previous range (if available) to prevent empty
  * states and UI flicker during tick transitions.
  */
-export function useCurrentChartData({
+export function useCurrentChartData<T extends ChartType>({
     chartType,
     currentTick,
     resolution,
     maxDatapoints,
     marketId,
 }: {
-    chartType: ChartType;
+    chartType: T;
     currentTick: number | undefined;
     resolution: Resolution;
     maxDatapoints: number;
     marketId?: number;
-}) {
+}): {
+    chartData: ChartDataPoint<T>[];
+    isLoading: boolean;
+    isError: boolean;
+} {
     const queryClient = useQueryClient();
 
     // Fetch data for current tick range
@@ -181,13 +186,17 @@ export function useCurrentChartData({
     ) {
         // We're loading new data but have cached fallback - use it
         return {
-            chartData: cachedFallbackData,
+            chartData: cachedFallbackData as ChartDataPoint<T>[],
             isLoading: false, // Don't show loading state since we have data
             isError,
         };
     }
 
-    return { chartData: currentData, isLoading: currentIsLoading, isError };
+    return {
+        chartData: currentData as ChartDataPoint<T>[],
+        isLoading: currentIsLoading,
+        isError,
+    };
 }
 
 /**
@@ -200,14 +209,14 @@ export function useCurrentChartData({
  * @returns Object with power levels by source/sink (e.g., {coal: 100, wind:
  *   50})
  */
-export function useLatestChartData({
+export function useLatestChartData<T extends ChartType>({
     chartType,
     marketId,
 }: {
-    chartType: ChartType;
+    chartType: T;
     marketId?: number;
 }): {
-    data: Record<string, number>;
+    data: Partial<Record<string, number>>;
     isLoading: boolean;
     isError: boolean;
 } {
@@ -246,7 +255,7 @@ export function useLatestChartData({
  * Helper function to aggregate chart data from cached ranges. Extracted for
  * reuse in both useChartData and useLatestChartData.
  */
-function aggregateChartData({
+function aggregateChartData<T extends ChartType>({
     cachedRanges,
     range,
     resolution,
@@ -255,8 +264,8 @@ function aggregateChartData({
     cachedRanges: CachedTickRange[];
     range: TickRange;
     resolution: Resolution;
-    chartType: ChartType;
-}) {
+    chartType: T;
+}): ChartDataPoint<T>[] {
     // Calculate the exclusive end tick of the desired range
     const endTick = range.startTick + range.count * resolution;
 
@@ -299,7 +308,7 @@ function aggregateChartData({
             return {
                 tick,
                 ...reorderedSources,
-            };
+            } as ChartDataPoint<T>;
         });
 
     return result;
@@ -311,17 +320,21 @@ function aggregateChartData({
  * Combines data from multiple cache entries to construct a complete time series
  * for the requested range. Triggers fetches for missing data ranges and waits.
  */
-function useChartData({
+function useChartData<T extends ChartType>({
     chartType,
     resolution,
     range,
     marketId,
 }: {
-    chartType: ChartType;
+    chartType: T;
     resolution: Resolution;
     range: TickRange;
     marketId?: number;
-}) {
+}): {
+    data: ChartDataPoint<T>[];
+    isLoading: boolean;
+    isError: boolean;
+} {
     const queryClient = useQueryClient();
 
     const rangesToFetch = getCacheGaps({
