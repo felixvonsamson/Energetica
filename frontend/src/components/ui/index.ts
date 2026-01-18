@@ -34,3 +34,7 @@ export type {
     TechnologyIconProps,
     ResourceIconProps,
 } from "@/components/ui/asset-icon";
+export {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@/components/ui/segmented-picker";

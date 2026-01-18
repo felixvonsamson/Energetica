@@ -21,7 +21,10 @@ import { Card, CardContent } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { Label } from "@/components/ui/label";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@/components/ui/segmented-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
@@ -264,28 +267,26 @@ function RevenuesOverviewContent() {
                     <div className="space-y-4">
                         <div>
                             <Label className="mb-2">Revenue Type</Label>
-                            <Tabs
+                            <SegmentedPicker
                                 value={revenueType}
                                 onValueChange={(value) =>
                                     setRevenueType(value as CashFlowType)
                                 }
                             >
-                                <TabsList>
-                                    {REVENUE_TYPE_OPTIONS.map((option) => (
-                                        <TabsTrigger
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
-                            </Tabs>
+                                {REVENUE_TYPE_OPTIONS.map((option) => (
+                                    <SegmentedPickerOption
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </SegmentedPickerOption>
+                                ))}
+                            </SegmentedPicker>
                         </div>
                         {revenueType === "net-profit" ? (
                             <div>
                                 <Label className="mb-2">View Mode</Label>
-                                <Tabs
+                                <SegmentedPicker
                                     value={netProfitViewMode}
                                     onValueChange={(value) =>
                                         setNetProfitViewMode(
@@ -293,24 +294,22 @@ function RevenuesOverviewContent() {
                                         )
                                     }
                                 >
-                                    <TabsList>
-                                        {NET_PROFIT_VIEW_MODE_OPTIONS.map(
-                                            (option) => (
-                                                <TabsTrigger
-                                                    key={option.value}
-                                                    value={option.value}
-                                                >
-                                                    {option.label}
-                                                </TabsTrigger>
-                                            ),
-                                        )}
-                                    </TabsList>
-                                </Tabs>
+                                    {NET_PROFIT_VIEW_MODE_OPTIONS.map(
+                                        (option) => (
+                                            <SegmentedPickerOption
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SegmentedPickerOption>
+                                        ),
+                                    )}
+                                </SegmentedPicker>
                             </div>
                         ) : (
                             <div>
                                 <Label className="mb-2">View Mode</Label>
-                                <Tabs
+                                <SegmentedPicker
                                     value={viewMode}
                                     onValueChange={(value) =>
                                         setViewMode(
@@ -318,17 +317,15 @@ function RevenuesOverviewContent() {
                                         )
                                     }
                                 >
-                                    <TabsList>
-                                        {VIEW_MODE_OPTIONS.map((option) => (
-                                            <TabsTrigger
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
-                                </Tabs>
+                                    {VIEW_MODE_OPTIONS.map((option) => (
+                                        <SegmentedPickerOption
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </SegmentedPickerOption>
+                                    ))}
+                                </SegmentedPicker>
                             </div>
                         )}
                         <ResolutionPicker currentTick={currentTick} />

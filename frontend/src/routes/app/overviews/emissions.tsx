@@ -14,7 +14,10 @@ import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardContent } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@/components/ui/segmented-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
@@ -189,24 +192,22 @@ function EmissionsOverviewContent() {
                 />
 
                 <div className="mt-4 flex flex-wrap gap-4">
-                    <Tabs
+                    <SegmentedPicker
                         value={co2ViewMode}
                         onValueChange={(value) =>
                             setCo2ViewMode(value as "absolute" | "relative")
                         }
                     >
-                        <TabsList>
-                            {ABSOLUTE_RELATIVE_OPTIONS.map((option) => (
-                                <TabsTrigger
-                                    key={option.value}
-                                    value={option.value}
-                                >
-                                    {option.label}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </Tabs>
-                    <Tabs
+                        {ABSOLUTE_RELATIVE_OPTIONS.map((option) => (
+                            <SegmentedPickerOption
+                                key={option.value}
+                                value={option.value}
+                            >
+                                {option.label}
+                            </SegmentedPickerOption>
+                        ))}
+                    </SegmentedPicker>
+                    <SegmentedPicker
                         value={co2UnitMode}
                         onValueChange={(value) =>
                             setCo2UnitMode(
@@ -214,17 +215,15 @@ function EmissionsOverviewContent() {
                             )
                         }
                     >
-                        <TabsList>
-                            {CO2_UNIT_OPTIONS.map((option) => (
-                                <TabsTrigger
-                                    key={option.value}
-                                    value={option.value}
-                                >
-                                    {option.label}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </Tabs>
+                        {CO2_UNIT_OPTIONS.map((option) => (
+                            <SegmentedPickerOption
+                                key={option.value}
+                                value={option.value}
+                            >
+                                {option.label}
+                            </SegmentedPickerOption>
+                        ))}
+                    </SegmentedPicker>
                 </div>
                 {co2UnitMode === "concentration" && (
                     <div className="mt-2 text-sm text-muted-foreground">
@@ -248,23 +247,21 @@ function EmissionsOverviewContent() {
                 />
 
                 <div className="mt-4">
-                    <Tabs
+                    <SegmentedPicker
                         value={tempViewMode}
                         onValueChange={(value) =>
                             setTempViewMode(value as "absolute" | "relative")
                         }
                     >
-                        <TabsList>
-                            {ABSOLUTE_RELATIVE_OPTIONS.map((option) => (
-                                <TabsTrigger
-                                    key={option.value}
-                                    value={option.value}
-                                >
-                                    {option.label}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </Tabs>
+                        {ABSOLUTE_RELATIVE_OPTIONS.map((option) => (
+                            <SegmentedPickerOption
+                                key={option.value}
+                                value={option.value}
+                            >
+                                {option.label}
+                            </SegmentedPickerOption>
+                        ))}
+                    </SegmentedPicker>
                 </div>
             </ChartCard>
 
@@ -284,24 +281,22 @@ function EmissionsOverviewContent() {
                 />
 
                 <div className="mt-4 flex flex-wrap gap-4">
-                    <Tabs
+                    <SegmentedPicker
                         value={emissionsViewMode}
                         onValueChange={(value) =>
                             setEmissionsViewMode(value as "normal" | "percent")
                         }
                     >
-                        <TabsList>
-                            {EMISSIONS_VIEW_OPTIONS.map((option) => (
-                                <TabsTrigger
-                                    key={option.value}
-                                    value={option.value}
-                                >
-                                    {option.label}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </Tabs>
-                    <Tabs
+                        {EMISSIONS_VIEW_OPTIONS.map((option) => (
+                            <SegmentedPickerOption
+                                key={option.value}
+                                value={option.value}
+                            >
+                                {option.label}
+                            </SegmentedPickerOption>
+                        ))}
+                    </SegmentedPicker>
+                    <SegmentedPicker
                         value={emissionsCumulativeMode}
                         onValueChange={(value) =>
                             setEmissionsCumulativeMode(
@@ -309,17 +304,15 @@ function EmissionsOverviewContent() {
                             )
                         }
                     >
-                        <TabsList>
-                            {EMISSIONS_CUMULATIVE_OPTIONS.map((option) => (
-                                <TabsTrigger
-                                    key={option.value}
-                                    value={option.value}
-                                >
-                                    {option.label}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </Tabs>
+                        {EMISSIONS_CUMULATIVE_OPTIONS.map((option) => (
+                            <SegmentedPickerOption
+                                key={option.value}
+                                value={option.value}
+                            >
+                                {option.label}
+                            </SegmentedPickerOption>
+                        ))}
+                    </SegmentedPicker>
                 </div>
 
                 <EmissionsOverviewTable

@@ -13,7 +13,10 @@ import { Card, CardContent } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { Label } from "@/components/ui/label";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@/components/ui/segmented-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
@@ -117,23 +120,21 @@ function PowerOverviewContent() {
                     <div className="space-y-4">
                         <div>
                             <Label className="mb-2">Chart Type</Label>
-                            <Tabs
+                            <SegmentedPicker
                                 value={chartType}
                                 onValueChange={(value) =>
                                     setChartType(value as ChartType)
                                 }
                             >
-                                <TabsList>
-                                    {CHART_TYPE_OPTIONS.map((option) => (
-                                        <TabsTrigger
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
-                            </Tabs>
+                                {CHART_TYPE_OPTIONS.map((option) => (
+                                    <SegmentedPickerOption
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </SegmentedPickerOption>
+                                ))}
+                            </SegmentedPicker>
                         </div>
                         <ResolutionPicker currentTick={currentTick} />
                     </div>

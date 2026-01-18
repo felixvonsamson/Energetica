@@ -2,7 +2,10 @@
 
 import { Duration, TimeModeToggle } from "@/components/ui";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@/components/ui/segmented-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { resolutions } from "@/types/charts";
 
@@ -34,27 +37,25 @@ export function ResolutionPicker({
             <Label className="mb-2">Resolution</Label>
             <div className="flex flex-wrap gap-2 items-center">
                 {availableResolutions.length > 0 && (
-                    <Tabs
+                    <SegmentedPicker
                         value={String(selectedResolution.id)}
                         onValueChange={(value) => setResolution(Number(value))}
                     >
-                        <TabsList>
-                            {availableResolutions.map((res) => (
-                                <TabsTrigger
-                                    key={res.id}
-                                    value={String(res.id)}
-                                    className="w-12"
-                                >
-                                    <Duration
-                                        ticks={
-                                            res.resolution *
-                                            (res.id === 0 ? 60 : 360)
-                                        }
-                                    />
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </Tabs>
+                        {availableResolutions.map((res) => (
+                            <SegmentedPickerOption
+                                key={res.id}
+                                value={String(res.id)}
+                                className="w-12"
+                            >
+                                <Duration
+                                    ticks={
+                                        res.resolution *
+                                        (res.id === 0 ? 60 : 360)
+                                    }
+                                />
+                            </SegmentedPickerOption>
+                        ))}
+                    </SegmentedPicker>
                 )}
                 <TimeModeToggle />
             </div>

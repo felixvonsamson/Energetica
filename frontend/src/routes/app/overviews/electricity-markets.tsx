@@ -29,7 +29,10 @@ import {
 import { ChartCard } from "@/components/ui/chart-card";
 import { Label } from "@/components/ui/label";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@/components/ui/segmented-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useCurrentChartData, useLatestChartData } from "@/hooks/useCharts";
 import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
@@ -303,7 +306,7 @@ function MarketsOverviewContent() {
                     <div className="space-y-4">
                         <div>
                             <Label className="mb-2">Breakdown Type</Label>
-                            <Tabs
+                            <SegmentedPicker
                                 value={breakdownType}
                                 onValueChange={(value) =>
                                     setBreakdownType(
@@ -314,22 +317,20 @@ function MarketsOverviewContent() {
                                     )
                                 }
                             >
-                                <TabsList>
-                                    {BREAKDOWN_TYPE_OPTIONS.map((option) => (
-                                        <TabsTrigger
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
-                            </Tabs>
+                                {BREAKDOWN_TYPE_OPTIONS.map((option) => (
+                                    <SegmentedPickerOption
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </SegmentedPickerOption>
+                                ))}
+                            </SegmentedPicker>
                         </div>
                         {breakdownType !== "clearing" && (
                             <div>
                                 <Label className="mb-2">Breakdown Mode</Label>
-                                <Tabs
+                                <SegmentedPicker
                                     value={breakdownMode}
                                     onValueChange={(value) =>
                                         setBreakdownMode(
@@ -337,19 +338,15 @@ function MarketsOverviewContent() {
                                         )
                                     }
                                 >
-                                    <TabsList>
-                                        {BREAKDOWN_MODE_OPTIONS.map(
-                                            (option) => (
-                                                <TabsTrigger
-                                                    key={option.value}
-                                                    value={option.value}
-                                                >
-                                                    {option.label}
-                                                </TabsTrigger>
-                                            ),
-                                        )}
-                                    </TabsList>
-                                </Tabs>
+                                    {BREAKDOWN_MODE_OPTIONS.map((option) => (
+                                        <SegmentedPickerOption
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </SegmentedPickerOption>
+                                    ))}
+                                </SegmentedPicker>
                             </div>
                         )}
                     </div>
