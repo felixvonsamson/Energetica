@@ -20,6 +20,7 @@ import {
     MarketClearingVolumeChart,
 } from "@/components/charts/market-clearing-volume-chart";
 import { MarketPriceChart } from "@/components/charts/market-price-chart";
+import { SupplyDemandChart } from "@/components/charts/supply-demand-chart";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
     Card,
@@ -145,7 +146,7 @@ function MarketsOverviewContent() {
     // Fetch latest data for real-time display
     const { data: latestData, isLoading: isLatestLoading } = useLatestChartData(
         {
-            chartType: "network-data",
+            chartType: "market-clearing-data",
             marketId: selectedMarketId,
         },
     );
@@ -194,8 +195,8 @@ function MarketsOverviewContent() {
     }
 
     return (
-        <div className="p-4 md:p-8">
-            <Card className="mb-6">
+        <div className="p-4 md:p-8 flex flex-col gap-6">
+            <Card>
                 <CardContent>
                     <div className="space-y-4">
                         <MarketSelector
@@ -209,7 +210,7 @@ function MarketsOverviewContent() {
             </Card>
 
             {/* Latest Values Display */}
-            <Card className="mb-6">
+            <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <NetworkIcon className="w-6 h-6 text-primary" />
@@ -249,7 +250,6 @@ function MarketsOverviewContent() {
                 icon={TrendingUp}
                 iconClassName="text-primary"
                 title="Market Price"
-                className="mb-6"
             >
                 <MarketPriceChart
                     selectedResolution={selectedResolution}
@@ -258,7 +258,7 @@ function MarketsOverviewContent() {
             </ChartCard>
 
             {/* Breakdown Section */}
-            <Card className="mb-6">
+            <Card>
                 <CardContent>
                     <div className="flex flex-row gap-10 justify-between">
                         <div className="flex flex-row gap-4 items-center">
@@ -274,7 +274,7 @@ function MarketsOverviewContent() {
                         {breakdownEnabled && (
                             <>
                                 <div className="flex flex-row gap-4 items-center">
-                                    <Label className="mb-2">Breakdown By</Label>
+                                    <Label className="mb-2">Breakdown</Label>
                                     <SegmentedPicker
                                         value={breakdownMode}
                                         onValueChange={(value) =>
@@ -362,6 +362,20 @@ function MarketsOverviewContent() {
                     />
                 )}
             </ChartCard>
+
+            {/* Supply/Demand Curves */}
+            {currentTick !== undefined && (
+                <ChartCard
+                    icon={TrendingUp}
+                    iconClassName="text-primary"
+                    title="Supply & Demand Curves"
+                >
+                    <SupplyDemandChart
+                        marketId={selectedMarketId}
+                        tick={currentTick - 1}
+                    />
+                </ChartCard>
+            )}
         </div>
     );
 }

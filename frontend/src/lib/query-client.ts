@@ -1,6 +1,44 @@
 /**
- * TanStack Query client configuration. Provides sensible defaults for caching
- * and error handling.
+ * TanStack Query client configuration and centralized query keys.
+ *
+ * ## What This File Does
+ *
+ * 1. **Query Client Setup**: Configures TanStack Query with sensible defaults for
+ *    caching, retries, and error handling across the entire application.
+ * 2. **Centralized Query Keys**: Defines ALL query keys used throughout the app in
+ *    one place. This is critical because:
+ *
+ *    - Backend can invalidate frontend cache by referencing these same keys via
+ *         Socket.IO
+ *    - Prevents typos and ensures consistency across the codebase
+ *    - Makes refactoring easier (change key structure in one place)
+ *
+ * ## Query Key Pattern
+ *
+ * Query keys follow a hierarchical structure from general to specific:
+ *
+ * ```ts
+ * ["domain", "resource", ...specificParams];
+ * // Example: ["charts", "markets", marketId, "exports", resolution, startTick, count]
+ * ```
+ *
+ * ## Backend Cache Invalidation
+ *
+ * The backend invalidates frontend caches via Socket.IO by emitting query keys:
+ *
+ * ```python
+ * player.emit("invalidate", {
+ *     queries: [
+ *         ["facilities", "all"],
+ *         ["charts", "markets", market_id, "exports"],
+ *     ],
+ * });
+ * ```
+ *
+ * These keys MUST match the structure defined in queryKeys below.
+ *
+ * IMPORTANT: Never hardcode query keys elsewhere - always import from this
+ * file.
  */
 
 import { QueryClient } from "@tanstack/react-query";
@@ -86,78 +124,83 @@ export const queryKeys = {
             ["charts", "temperature", resolution, startTick, count] as const,
         resources: (resolution: string, startTick: number, count: number) =>
             ["charts", "resources", resolution, startTick, count] as const,
-        networkData: (
-            networkId: number,
+        marketClearingData: (
+            marketId: number,
             resolution: string,
             startTick: number,
             count: number,
         ) =>
             [
                 "charts",
-                "network-data",
-                networkId,
+                "markets",
+                marketId,
+                "clearing-data",
                 resolution,
                 startTick,
                 count,
             ] as const,
-        networkExports: (
-            networkId: number,
+        marketExports: (
+            marketId: number,
             resolution: string,
             startTick: number,
             count: number,
         ) =>
             [
                 "charts",
-                "network-exports",
-                networkId,
+                "markets",
+                marketId,
+                "exports",
                 resolution,
                 startTick,
                 count,
             ] as const,
-        networkImports: (
-            networkId: number,
+        marketImports: (
+            marketId: number,
             resolution: string,
             startTick: number,
             count: number,
         ) =>
             [
                 "charts",
-                "network-imports",
-                networkId,
+                "markets",
+                marketId,
+                "imports",
                 resolution,
                 startTick,
                 count,
             ] as const,
-        networkGeneration: (
-            networkId: number,
+        marketGeneration: (
+            marketId: number,
             resolution: string,
             startTick: number,
             count: number,
         ) =>
             [
                 "charts",
-                "network-generation",
-                networkId,
+                "markets",
+                marketId,
+                "generation",
                 resolution,
                 startTick,
                 count,
             ] as const,
-        networkConsumption: (
-            networkId: number,
+        marketConsumption: (
+            marketId: number,
             resolution: string,
             startTick: number,
             count: number,
         ) =>
             [
                 "charts",
-                "network-consumption",
-                networkId,
+                "markets",
+                marketId,
+                "consumption",
                 resolution,
                 startTick,
                 count,
             ] as const,
-        marketData: (networkId: number, tick: number) =>
-            ["charts", "market-data", networkId, tick] as const,
+        marketOrderData: (marketId: number, tick: number) =>
+            ["charts", "markets", marketId, "orders", tick] as const,
     },
     network: {
         all: ["networks"] as const,

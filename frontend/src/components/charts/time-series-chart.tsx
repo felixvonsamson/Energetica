@@ -1,7 +1,13 @@
 /** Generic time series chart component supporting multiple chart types. */
 
 import { RefreshCw } from "lucide-react";
-import { useCallback, useMemo, type ReactNode } from "react";
+import {
+    ForwardRefExoticComponent,
+    RefAttributes,
+    useCallback,
+    useMemo,
+    type ReactNode,
+} from "react";
 import {
     XAxis,
     YAxis,
@@ -16,12 +22,12 @@ import {
     Bar,
     Brush,
 } from "recharts";
+import { CartesianChartProps } from "recharts/types/util/types";
 
-import { AssetName, Duration, FacilityIcon } from "@/components/ui";
+import { CustomTooltipContent } from "@/components/charts/tooltip-content";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useGameEngine } from "@/hooks/useGame";
 import { useGameTick } from "@/hooks/useGameTick";
-import { assetCSSColourVariable } from "@/lib/assets/asset-colors";
 import {
     KEY_ORDER_BY_CHART_TYPE,
     reorderObjectKeys,
@@ -29,12 +35,25 @@ import {
 import { formatDuration } from "@/lib/format-utils";
 import { ChartType } from "@/types/charts";
 
+type ChartVariant = "area" | "line" | "bar";
+
+const CHART_VARIANT_MAPPING: Record<
+    ChartVariant,
+    ForwardRefExoticComponent<
+        CartesianChartProps & RefAttributes<SVGSVGElement>
+    >
+> = {
+    area: AreaChart,
+    line: LineChart,
+    bar: BarChart,
+};
+
 /** Configuration for how to render a time series chart. */
 export interface TimeSeriesChartConfig {
     /** Chart type - used to maintain deliberate key ordering when filtering */
     chartType?: ChartType;
     /** Type of chart to render */
-    chartVariant: "area" | "line" | "bar";
+    chartVariant: ChartVariant;
     /** Whether to stack multiple series */
     stacked?: boolean;
     /** Height of the chart in pixels */
@@ -53,18 +72,6 @@ export interface TimeSeriesChartConfig {
     formatLabel?: (key: string) => ReactNode;
     /** Keys that should use gradient fill based on positive/negative values */
     gradientKeys?: string[];
-}
-
-/** Props for a data series component (Area, Line, Bar). */
-export interface SeriesComponentProps {
-    key: string;
-    dataKey: string;
-    stackId?: string;
-    fill?: string;
-    stroke?: string;
-    fillOpacity?: number;
-    isAnimationActive?: boolean;
-    [key: string]: unknown;
 }
 
 interface TimeSeriesChartProps {
@@ -86,12 +93,7 @@ interface TimeSeriesChartProps {
  */
 export function TimeSeriesChart({
     data,
-    config,
-    isLoading = false,
-    isError = false,
-    errorMessage = "Failed to load data",
-}: TimeSeriesChartProps) {
-    const {
+    config: {
         chartType,
         chartVariant = "area",
         stacked = false,
@@ -103,8 +105,11 @@ export function TimeSeriesChart({
         formatValue,
         formatLabel,
         gradientKeys = [],
-    } = config;
-
+    },
+    isLoading = false,
+    isError = false,
+    errorMessage = "Failed to load data",
+}: TimeSeriesChartProps) {
     // Reorder data keys if chartType is provided to preserve deliberate ordering
     const orderedData = useMemo(() => {
         if (!chartType) return data;
@@ -284,13 +289,7 @@ export function TimeSeriesChart({
         );
     }
 
-    // Select the appropriate chart component
-    const ChartComponent =
-        chartVariant === "area"
-            ? AreaChart
-            : chartVariant === "line"
-              ? LineChart
-              : BarChart;
+    const ChartComponent = CHART_VARIANT_MAPPING[chartVariant];
 
     return (
         <ResponsiveContainer width="100%" height={height}>
@@ -351,89 +350,5 @@ export function TimeSeriesChart({
                 <Tooltip content={tooltipContent} isAnimationActive={false} />
             </ChartComponent>
         </ResponsiveContainer>
-    );
-}
-
-interface CustomTooltipContentProps {
-    active?: boolean;
-    payload?: ReadonlyArray<{
-        value: number;
-        name: string;
-        [key: string]: unknown;
-    }>;
-    label?: string | number;
-    formatValue: (value: number) => ReactNode;
-    formatLabel?: (key: string) => ReactNode;
-}
-
-function CustomTooltipContent({
-    active,
-    payload,
-    label,
-    formatValue,
-    formatLabel,
-}: CustomTooltipContentProps) {
-    const { currentTick } = useGameTick();
-    const { mode } = useTimeMode();
-
-    const sortedPayload = payload
-        ? payload
-              .filter((p) => p.value !== 0)
-              .sort((a, b) => (b.value as number) - (a.value as number))
-        : undefined;
-
-    const isVisible = active && sortedPayload && sortedPayload.length;
-    if (!isVisible) return null;
-    return (
-        <div className="bg-neutral-100 dark:bg-neutral-600 p-2">
-            <table>
-                {currentTick !== undefined &&
-                    label !== undefined &&
-                    typeof label === "number" && (
-                        <caption className="caption-bottom">
-                            <Duration ticks={currentTick - label} compact />
-                            <>{" ago "}</>
-                            {mode}
-                        </caption>
-                    )}
-                <thead hidden>
-                    <tr>
-                        <th />
-                        <th>{"label"}</th>
-                        <th>{"value"}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {sortedPayload.map((p) => (
-                        <tr key={p.name}>
-                            <td>
-                                <div
-                                    className="h-6 aspect-square"
-                                    style={{
-                                        backgroundColor: assetCSSColourVariable(
-                                            p.name,
-                                        ),
-                                    }}
-                                />
-                            </td>
-                            <td className="px-2 min-w-30">
-                                {formatLabel ? (
-                                    formatLabel(p.name)
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <FacilityIcon
-                                            facility={p.name}
-                                            size={18}
-                                        />
-                                        <AssetName assetId={p.name} />
-                                    </div>
-                                )}
-                            </td>
-                            <td className="px-2">{formatValue(p.value)}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
     );
 }

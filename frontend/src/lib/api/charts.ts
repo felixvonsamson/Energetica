@@ -13,11 +13,11 @@ interface ChartParams {
 interface MarketChartParams {
     marketId: number;
     chartType:
-        | "network-data"
-        | "network-exports"
-        | "network-imports"
-        | "network-generation"
-        | "network-consumption";
+        | "market-clearing-data"
+        | "market-exports"
+        | "market-imports"
+        | "market-generation"
+        | "market-consumption";
     resolution: Resolution;
     range: TickRange;
 }
@@ -42,11 +42,11 @@ export const chartsApi = {
     }: MarketChartParams) => {
         // Map frontend chart type to backend endpoint
         const endpointMap = {
-            "network-data": "network_data",
-            "network-exports": "exports",
-            "network-imports": "imports",
-            "network-generation": "generation",
-            "network-consumption": "consumption",
+            "market-clearing-data": "network_data",
+            "market-exports": "exports",
+            "market-imports": "imports",
+            "market-generation": "generation",
+            "market-consumption": "consumption",
         } as const;
         const endpoint = endpointMap[chartType];
         const response = await apiClient.get<

@@ -402,20 +402,32 @@ const QUERY_KEY_FN_BY_CHART_TYPE = {
     climate: queryKeys.charts.climate,
     temperature: queryKeys.charts.temperature,
     resources: queryKeys.charts.resources,
-    "network-data": queryKeys.charts.networkData,
-    "network-exports": queryKeys.charts.networkExports,
-    "network-imports": queryKeys.charts.networkImports,
-    "network-generation": queryKeys.charts.networkGeneration,
-    "network-consumption": queryKeys.charts.networkConsumption,
+    "market-clearing-data": queryKeys.charts.marketClearingData,
+    "market-exports": queryKeys.charts.marketExports,
+    "market-imports": queryKeys.charts.marketImports,
+    "market-generation": queryKeys.charts.marketGeneration,
+    "market-consumption": queryKeys.charts.marketConsumption,
 } as const;
 
 const MARKET_CHART_TYPES: ChartType[] = [
-    "network-data",
-    "network-exports",
-    "network-imports",
-    "network-generation",
-    "network-consumption",
+    "market-clearing-data",
+    "market-exports",
+    "market-imports",
+    "market-generation",
+    "market-consumption",
 ];
+
+/** Extract the sub-type from a market chart type for query key construction */
+function getMarketChartSubType(chartType: ChartType): string {
+    const mapping = {
+        "market-clearing-data": "clearing-data",
+        "market-exports": "exports",
+        "market-imports": "imports",
+        "market-generation": "generation",
+        "market-consumption": "consumption",
+    } as const;
+    return mapping[chartType as keyof typeof mapping] || chartType;
+}
 
 /** Fetches ranges concurrently. */
 function useFetchChartGaps({
@@ -451,11 +463,11 @@ function useFetchChartGaps({
                         chartsApi.getMarketChartData({
                             marketId,
                             chartType: chartType as
-                                | "network-data"
-                                | "network-exports"
-                                | "network-imports"
-                                | "network-generation"
-                                | "network-consumption",
+                                | "market-clearing-data"
+                                | "market-exports"
+                                | "market-imports"
+                                | "market-generation"
+                                | "market-consumption",
                             resolution,
                             range,
                         }),
@@ -584,9 +596,17 @@ function getCachedChartRanges({
     const isMarketChart = MARKET_CHART_TYPES.includes(chartType);
 
     // Build query key filter based on chart type
+    // Market charts have structure: ["charts", "markets", marketId, chartSubType, resolution, ...]
+    // Regular charts have structure: ["charts", chartType, resolution, ...]
     const queryKeyPrefix =
         isMarketChart && marketId !== undefined
-            ? ["charts", chartType, marketId, toStringResolution(resolution)]
+            ? [
+                  "charts",
+                  "markets",
+                  marketId,
+                  getMarketChartSubType(chartType),
+                  toStringResolution(resolution),
+              ]
             : ["charts", chartType, toStringResolution(resolution)];
 
     const filters = {
@@ -600,16 +620,17 @@ function getCachedChartRanges({
     const ranges: CachedTickRange[] = queries
         .map((query) => {
             if (isMarketChart && marketId !== undefined) {
-                // Market chart query key: ["charts", chartType, marketId, resolution, startTick, count]
+                // Market chart query key: ["charts", "markets", marketId, chartSubType, resolution, startTick, count]
                 const queryKey = query.queryKey as [
                     string,
                     string,
                     number,
                     string,
+                    string,
                     number,
                     number,
                 ];
-                const [, , , , startTick, count] = queryKey;
+                const [, , , , , startTick, count] = queryKey;
                 return {
                     range: {
                         startTick: startTick,
@@ -670,7 +691,7 @@ export function useMarketData({
     tick: number;
 }) {
     return useQuery({
-        queryKey: queryKeys.charts.marketData(marketId, tick),
+        queryKey: queryKeys.charts.marketOrderData(marketId, tick),
         queryFn: () => chartsApi.getMarketData(marketId, tick),
         staleTime: Infinity, // Historical market data never changes
     });

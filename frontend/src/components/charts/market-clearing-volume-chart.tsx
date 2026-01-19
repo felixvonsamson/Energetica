@@ -32,15 +32,15 @@ function useMarketClearingData(
     // Determine which chart type to use for breakdown
     const chartType: ChartType = useMemo(() => {
         if (!breakdownEnabled) {
-            return "network-data"; // Use network-data for clearing volume
+            return "market-clearing-data"; // Use market-clearing-data for clearing volume
         } else if (breakdownType === "supply") {
             return breakdownMode === "player"
-                ? "network-exports"
-                : "network-generation";
+                ? "market-exports"
+                : "market-generation";
         } else {
             return breakdownMode === "player"
-                ? "network-imports"
-                : "network-consumption";
+                ? "market-imports"
+                : "market-consumption";
         }
     }, [breakdownEnabled, breakdownType, breakdownMode]);
 

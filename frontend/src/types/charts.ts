@@ -10,11 +10,11 @@ export type ChartType =
     | "climate"
     | "temperature"
     | "resources"
-    | "network-data"
-    | "network-exports"
-    | "network-imports"
-    | "network-generation"
-    | "network-consumption";
+    | "market-clearing-data"
+    | "market-exports"
+    | "market-imports"
+    | "market-generation"
+    | "market-consumption";
 
 export interface ResolutionOption {
     id: number;
