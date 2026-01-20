@@ -4,7 +4,7 @@ import {
     TimeSeriesChart,
     TimeSeriesChartConfig,
 } from "@/components/charts/time-series-chart";
-import { AssetIcon } from "@/components/ui";
+import { AssetIcon } from "@/components/ui/asset-icon";
 import { AssetName } from "@/components/ui/asset-name";
 import { Label } from "@/components/ui/label";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";

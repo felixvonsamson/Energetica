@@ -11,7 +11,7 @@ import {
     TimeSeriesChart,
     TimeSeriesChartConfig,
 } from "@/components/charts/time-series-chart";
-import { FacilityIcon } from "@/components/ui";
+import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";

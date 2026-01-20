@@ -4,8 +4,10 @@ import {
     TimeSeriesChart,
     TimeSeriesChartConfig,
 } from "@/components/charts/time-series-chart";
-import { FacilityIcon, FacilityName, Money } from "@/components/ui";
+import { FacilityIcon } from "@/components/ui/asset-icon";
+import { FacilityName } from "@/components/ui/asset-name";
 import { CashFlow } from "@/components/ui/cash-flow";
+import { Money } from "@/components/ui/money";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useChartFilters } from "@/hooks/useChartFilters";

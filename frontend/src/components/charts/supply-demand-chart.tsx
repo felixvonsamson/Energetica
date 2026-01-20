@@ -14,14 +14,22 @@ import {
     YAxis,
 } from "recharts";
 
+import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useMarketData } from "@/hooks/useCharts";
+import { getHashBasedChartColor } from "@/lib/charts/chart-utils";
 import { formatPower } from "@/lib/format-utils";
+
+export type BreakdownType = "supply" | "demand";
+export type BreakdownMode = "player" | "type";
 
 interface SupplyDemandChartProps {
     marketId: number;
     tick: number;
     height?: number;
     showOrderBlocks?: boolean;
+    breakdownEnabled?: boolean;
+    breakdownMode?: BreakdownMode;
+    breakdownType?: BreakdownType;
 }
 
 interface CurvePoint {
@@ -68,10 +76,14 @@ function CustomTooltip({ active, payload }: CustomTooltipProps): ReactNode {
 /**
  * Transforms order data into a stepped curve for Recharts. Creates points for a
  * ragged supply or demand curve from discrete orders.
+ *
+ * @param extensionPrice - Optional price to extend the curve vertically after
+ *   the last order
  */
 function createSteppedCurve(
     prices: number[],
     cumulCapacities: number[],
+    extensionPrice?: number,
 ): CurvePoint[] {
     if (prices.length === 0) return [];
 
@@ -91,6 +103,12 @@ function createSteppedCurve(
         points.push({ quantity: currCumul, price });
     }
 
+    // Add vertical extension at the end if extensionPrice is provided
+    if (extensionPrice !== undefined && prices.length > 0) {
+        const lastQuantity = cumulCapacities[cumulCapacities.length - 1] ?? 0;
+        points.push({ quantity: lastQuantity, price: extensionPrice });
+    }
+
     return points;
 }
 
@@ -104,7 +122,11 @@ export function SupplyDemandChart({
     tick,
     height = 500,
     showOrderBlocks = true,
+    breakdownEnabled = false,
+    breakdownMode = "player",
+    breakdownType = "supply",
 }: SupplyDemandChartProps) {
+    const getColor = useAssetColorGetter();
     const {
         data: marketData,
         isLoading,
@@ -124,14 +146,29 @@ export function SupplyDemandChart({
             };
         }
 
+        // Calculate extension prices
+        // Supply extends up to highest demand price
+        const highestDemandPrice =
+            marketData.demands.price.length > 0
+                ? Math.max(...marketData.demands.price)
+                : undefined;
+
+        // Demand extends down to lowest supply price
+        const lowestSupplyPrice =
+            marketData.capacities.price.length > 0
+                ? Math.min(...marketData.capacities.price)
+                : undefined;
+
         const supply = createSteppedCurve(
             marketData.capacities.price,
             marketData.capacities.cumul_capacities,
+            highestDemandPrice,
         );
 
         const demand = createSteppedCurve(
             marketData.demands.price,
             marketData.demands.cumul_capacities,
+            lowestSupplyPrice,
         );
 
         // Create order blocks for ReferenceArea
@@ -180,6 +217,30 @@ export function SupplyDemandChart({
         }));
     }, [demandCurve]);
 
+    // Color getter function matching MarketClearingVolumeChart
+    // Keep consistent function signature for React Compiler
+    const getBlockColor = (
+        blockType: "supply" | "demand",
+        facility?: string,
+        playerId?: number,
+    ): string => {
+        if (!breakdownEnabled) {
+            // Default colors when breakdown is disabled
+            return blockType === "supply" ? "var(--chart-1)" : "var(--chart-2)";
+        }
+
+        if (breakdownMode === "type") {
+            // Use facility color getter
+            return facility ? getColor(facility) : "var(--chart-1)";
+        }
+
+        // Player mode - use hash-based color from chart palette
+        const key = playerId?.toString() ?? facility ?? "unknown";
+        return getHashBasedChartColor(key);
+    };
+
+    const fillOpacity = !breakdownEnabled ? 0.2 : 0.7;
+
     if (isLoading) {
         return (
             <div
@@ -227,34 +288,50 @@ export function SupplyDemandChart({
 
                 {/* Order blocks */}
                 {showOrderBlocks &&
-                    orderBlocks.supply.map((block) => (
-                        <ReferenceArea
-                            key={block.id}
-                            x1={block.x1}
-                            x2={block.x2}
-                            y1={block.y1}
-                            y2={block.y2}
-                            fill="var(--chart-1)"
-                            fillOpacity={0.2}
-                            stroke="var(--chart-1)"
-                            strokeOpacity={0.5}
-                        />
-                    ))}
+                    (!breakdownEnabled || breakdownType === "supply") &&
+                    orderBlocks.supply.map((block) => {
+                        const color = getBlockColor(
+                            "supply",
+                            block.facility,
+                            block.playerId,
+                        );
+                        return (
+                            <ReferenceArea
+                                key={block.id}
+                                x1={block.x1}
+                                x2={block.x2}
+                                y1={block.y1}
+                                y2={block.y2}
+                                fill={color}
+                                fillOpacity={fillOpacity}
+                                stroke={color}
+                                strokeOpacity={0.5}
+                            />
+                        );
+                    })}
 
                 {showOrderBlocks &&
-                    orderBlocks.demand.map((block) => (
-                        <ReferenceArea
-                            key={block.id}
-                            x1={block.x1}
-                            x2={block.x2}
-                            y1={block.y1}
-                            y2={block.y2}
-                            fill="var(--chart-2)"
-                            fillOpacity={0.2}
-                            stroke="var(--chart-2)"
-                            strokeOpacity={0.5}
-                        />
-                    ))}
+                    (!breakdownEnabled || breakdownType === "demand") &&
+                    orderBlocks.demand.map((block) => {
+                        const color = getBlockColor(
+                            "demand",
+                            block.facility,
+                            block.playerId,
+                        );
+                        return (
+                            <ReferenceArea
+                                key={block.id}
+                                x1={block.x1}
+                                x2={block.x2}
+                                y1={block.y1}
+                                y2={block.y2}
+                                fill={color}
+                                fillOpacity={fillOpacity}
+                                stroke={color}
+                                strokeOpacity={0.5}
+                            />
+                        );
+                    })}
 
                 {/* Supply curve */}
                 <Line

@@ -45,7 +45,6 @@ import {
     useElectricityMarketForPlayer,
 } from "@/hooks/useElectricityMarkets";
 import { useGameTick } from "@/hooks/useGameTick";
-import { usePlayerMap } from "@/hooks/usePlayers";
 import { useToggleSet } from "@/hooks/useToggleSet";
 import { formatPower } from "@/lib/format-utils";
 
@@ -128,7 +127,6 @@ function MarketsOverviewContent() {
     // Get player's market as fallback
     const playerMarket = useElectricityMarketForPlayer(playerId);
     const { data: marketsData } = useElectricityMarkets();
-    const playerMap = usePlayerMap();
 
     // Determine which market to show
     const selectedMarketId = searchMarketId ?? playerMarket?.id;
@@ -347,7 +345,6 @@ function MarketsOverviewContent() {
                     breakdownEnabled={breakdownEnabled}
                     breakdownMode={breakdownMode}
                     breakdownType={breakdownType}
-                    playerMap={playerMap}
                 />
 
                 {breakdownEnabled && (
@@ -373,6 +370,9 @@ function MarketsOverviewContent() {
                     <SupplyDemandChart
                         marketId={selectedMarketId}
                         tick={currentTick - 1}
+                        breakdownEnabled={breakdownEnabled}
+                        breakdownMode={breakdownMode}
+                        breakdownType={breakdownType}
                     />
                 </ChartCard>
             )}

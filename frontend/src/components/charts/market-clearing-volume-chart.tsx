@@ -12,10 +12,12 @@ import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameEngine } from "@/hooks/useGame";
 import { useGameTick } from "@/hooks/useGameTick";
 import { usePlayerMap } from "@/hooks/usePlayers";
-import { createIncludeKeysFilter } from "@/lib/charts/chart-utils";
+import {
+    createIncludeKeysFilter,
+    getHashBasedChartColor,
+} from "@/lib/charts/chart-utils";
 import { formatEnergy, formatPower } from "@/lib/format-utils";
 import { ChartType, ResolutionOption } from "@/types/charts";
-import { Player } from "@/types/players";
 
 export type BreakdownType = "supply" | "demand";
 export type BreakdownMode = "player" | "type";
@@ -63,7 +65,6 @@ interface MarketClearingChartProps {
     breakdownEnabled: boolean;
     breakdownMode: BreakdownMode;
     breakdownType: BreakdownType;
-    playerMap?: Record<number, Player>;
 }
 
 export function MarketClearingVolumeChart({
@@ -73,9 +74,9 @@ export function MarketClearingVolumeChart({
     breakdownEnabled,
     breakdownMode,
     breakdownType,
-    playerMap,
 }: MarketClearingChartProps) {
     const getColor = useAssetColorGetter();
+    const playerMap = usePlayerMap();
 
     // filters
     const breakdownFilter = useChartFilters(hiddenItems);
@@ -99,27 +100,7 @@ export function MarketClearingVolumeChart({
                 ? () => "var(--chart-2)"
                 : breakdownMode === "type"
                   ? getColor
-                  : (key: string) => {
-                        // For player mode, use a hash-based color from chart palette
-                        const colors = [
-                            "var(--chart-1)",
-                            "var(--chart-2)",
-                            "var(--chart-3)",
-                            "var(--chart-4)",
-                            "var(--chart-5)",
-                            "var(--chart-6)",
-                            "var(--chart-7)",
-                            "var(--chart-8)",
-                        ];
-                        let hash = 0;
-                        for (let i = 0; i < key.length; i++) {
-                            hash = key.charCodeAt(i) + ((hash << 5) - hash);
-                        }
-                        return (
-                            colors[Math.abs(hash) % colors.length] ??
-                            "var(--chart-1)"
-                        );
-                    },
+                  : getHashBasedChartColor,
             filterDataKeys: breakdownEnabled
                 ? breakdownFilter
                 : [quantityFilter],
