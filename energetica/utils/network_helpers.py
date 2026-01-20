@@ -36,7 +36,7 @@ def create_network(player: Player, name: str) -> Network:
         raise GameError(GameExceptionType.NAME_ALREADY_USED)
     if player.network is not None:
         leave_network(player)
-    new_network = Network(name=name, members=[player])
+    new_network = Network(name=name, members=[player], created_tick=engine.total_t)
     player.network = new_network
     engine.log(f"{player.username} created the network {name}")
     return new_network

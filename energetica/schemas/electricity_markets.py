@@ -25,11 +25,15 @@ class ElectricityMarketBase(BaseModel):
 class ElectricityMarketOut(ElectricityMarketBase):
     id: int = Field(description="ID of the electricity market")
     member_ids: list[int] = Field(description="List of player IDs in the electricity market")
+    created_tick: int = Field(description="Tick when the electricity market was created")
 
     @classmethod
     def from_network(cls, network: Network) -> ElectricityMarketOut:
         return ElectricityMarketOut(
-            id=network.id, name=network.name, member_ids=[member.id for member in network.members]
+            id=network.id,
+            name=network.name,
+            member_ids=[member.id for member in network.members],
+            created_tick=network.created_tick,
         )
 
 
