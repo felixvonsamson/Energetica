@@ -11,7 +11,7 @@ import {
     Users,
     Layers,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import {
     BreakdownMode,
@@ -36,6 +36,7 @@ import {
     SegmentedPicker,
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
+import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useLatestChartData } from "@/hooks/useCharts";
@@ -43,6 +44,7 @@ import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
 import {
     useElectricityMarkets,
     useElectricityMarketForPlayer,
+    useElectricityMarket,
 } from "@/hooks/useElectricityMarkets";
 import { useGameTick } from "@/hooks/useGameTick";
 import { useToggleSet } from "@/hooks/useToggleSet";
@@ -152,6 +154,31 @@ function MarketsOverviewContent() {
     const latestPrice = latestData.price ?? 0;
     const latestQuantity = latestData.quantity ?? 0;
 
+    // Get market details for tick bounds
+    const marketDetails = useElectricityMarket(selectedMarketId ?? 0);
+
+    // Historical tick selection state
+    // Initialize to current tick - 1 (most recent market clearing)
+    const [selectedTick, setSelectedTick] = useState<number>(
+        currentTick !== undefined ? currentTick - 1 : 0,
+    );
+
+    // Update selectedTick when currentTick changes (keep it at the latest by default)
+    React.useEffect(() => {
+        if (currentTick !== undefined) {
+            setSelectedTick(currentTick - 1);
+        }
+    }, [currentTick]);
+
+    // Calculate tick bounds for the slider
+    // Lower bound: max of market creation tick and (currentTick - 1440) to respect 1440 tick data retention
+    // Upper bound: currentTick - 1 (most recent market clearing)
+    const minTick =
+        currentTick !== undefined && marketDetails
+            ? Math.max(marketDetails.created_tick, currentTick - 1440)
+            : 0;
+    const maxTick = currentTick !== undefined ? currentTick - 1 : 0;
+
     // Breakdown state
     const [breakdownEnabled, setBreakdownEnabled] = useState<boolean>(false);
     const [breakdownType, setBreakdownType] = useState<BreakdownType>("supply");
@@ -224,19 +251,23 @@ function MarketsOverviewContent() {
                                 {isLatestLoading ? (
                                     "Loading..."
                                 ) : (
-                                    <Money amount={latestPrice} />
+                                    <span className="text-foreground">
+                                        <Money amount={latestPrice} />
+                                        /Wh
+                                    </span>
                                 )}
-                                <span className="text-sm font-normal ml-1">
-                                    /Wh
-                                </span>
                             </div>
                         </div>
                         <div className="bg-muted text-muted-foreground p-4 rounded-lg border border-border">
                             <div className="text-sm mb-1">Clearing Volume</div>
                             <div className="text-2xl font-bold">
-                                {isLatestLoading
-                                    ? "Loading..."
-                                    : formatPower(latestQuantity)}
+                                {isLatestLoading ? (
+                                    "Loading..."
+                                ) : (
+                                    <span className="font-mono text-foreground">
+                                        {formatPower(latestQuantity)}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -367,9 +398,31 @@ function MarketsOverviewContent() {
                     iconClassName="text-primary"
                     title="Supply & Demand Curves"
                 >
+                    <div className="space-y-4 mb-4">
+                        <div className="flex items-center justify-between gap-4">
+                            <Label className="text-sm font-medium shrink-0">
+                                Historical Tick: {selectedTick}
+                            </Label>
+                            <div className="flex-1">
+                                <Slider
+                                    min={minTick}
+                                    max={maxTick}
+                                    step={1}
+                                    value={[selectedTick]}
+                                    onValueChange={(values) =>
+                                        setSelectedTick(values[0] ?? minTick)
+                                    }
+                                    disabled={minTick >= maxTick}
+                                />
+                            </div>
+                            <div className="text-sm text-muted-foreground shrink-0">
+                                {minTick} - {maxTick}
+                            </div>
+                        </div>
+                    </div>
                     <SupplyDemandChart
                         marketId={selectedMarketId}
-                        tick={currentTick - 1}
+                        tick={selectedTick}
                         breakdownEnabled={breakdownEnabled}
                         breakdownMode={breakdownMode}
                         breakdownType={breakdownType}

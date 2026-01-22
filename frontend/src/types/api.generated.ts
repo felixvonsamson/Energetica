@@ -2826,6 +2826,12 @@ export interface components {
              * List of player IDs in the electricity market
              */
             member_ids: number[];
+            /**
+             * Created Tick
+             *
+             * Tick when the electricity market was created
+             */
+            created_tick: number;
         };
         /**
          * EmissionsResponse
