@@ -6,7 +6,7 @@
 import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 
-import Icon from "@/assets/icon.svg?react";
+import Logo from "@/assets/icon.svg?react";
 import {
     Collapsible,
     CollapsibleContent,
@@ -42,23 +42,44 @@ import {
 } from "@/lib/nav-config";
 import { cn } from "@/lib/utils";
 
-export function AppSidebar() {
+interface AppSidebarProps {
+    scrollPosition?: number;
+}
+
+export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
     const capabilities = useCapabilities();
     const { data: chatListData } = useChatList();
     const unreadChatCount = chatListData?.unread_chat_count || 0;
 
     if (!capabilities) return null;
 
+    // Calculate rotation based on scroll position (1 full rotation every 1000px)
+    const rotation = -(scrollPosition / 10000) * 360;
+
     return (
-        <Sidebar side="left" collapsible="offcanvas">
-            <SidebarHeader className="flex-row items-center justify-center">
+        <Sidebar
+            side="left"
+            collapsible="offcanvas"
+            className="relative overflow-hidden"
+        >
+            {/* Large background logo */}
+            <div
+                className="pointer-events-none absolute left-0 top-1/2 z-0 -translate-x-[55%] -translate-y-1/2 opacity-[0.3]  duration-50"
+                style={{
+                    transform: `rotate(${rotation}deg)`,
+                }}
+            >
+                <Logo className="size-200 fill-sidebar-foreground" />
+            </div>
+
+            <SidebarHeader className="relative z-10 flex-row items-center justify-center">
                 <div className="flex aspect-square size-12 items-center justify-center">
-                    <Icon className="size-20 fill-sidebar-foreground" />
+                    <Logo className="size-20 fill-sidebar-foreground" />
                 </div>
                 <span className="text-2xl font-semibold">Energetica</span>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="relative z-10">
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu>
@@ -87,7 +108,7 @@ export function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter>
+            <SidebarFooter className="relative z-10">
                 <SidebarMenu>
                     {mobileOnlyNavigation.map((item) => {
                         if (item.type !== "link") return null;
