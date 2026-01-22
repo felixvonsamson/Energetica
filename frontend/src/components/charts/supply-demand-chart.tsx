@@ -17,7 +17,7 @@ import {
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useMarketData } from "@/hooks/useCharts";
 import { getHashBasedChartColor } from "@/lib/charts/chart-utils";
-import { formatPower } from "@/lib/format-utils";
+import { formatMoney, formatPower } from "@/lib/format-utils";
 
 export type BreakdownType = "supply" | "demand";
 export type BreakdownMode = "player" | "type";
@@ -113,6 +113,47 @@ function createSteppedCurve(
 }
 
 /**
+ * Generates predictable tick values for an axis based on the range. Uses round
+ * numbers to provide a consistent frame of reference.
+ */
+function generateNiceTicks(
+    min: number,
+    max: number,
+    targetCount = 5,
+): number[] {
+    const range = max - min;
+    if (range === 0) return [min];
+
+    // Calculate order of magnitude
+    const roughStep = range / (targetCount - 1);
+    const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+
+    // Try different nice step sizes (1, 2, 5 multiplied by magnitude)
+    const niceSteps = [1, 2, 5, 10].map((n) => n * magnitude);
+    const step =
+        niceSteps.find((s) => range / s <= targetCount) ??
+        niceSteps[niceSteps.length - 1] ??
+        magnitude;
+
+    // Generate ticks
+    const ticks: number[] = [];
+    const startTick = Math.floor(min / step) * step;
+
+    for (let tick = startTick; tick <= max; tick += step) {
+        if (tick >= min) {
+            ticks.push(tick);
+        }
+    }
+
+    // Ensure max is included
+    if (ticks[ticks.length - 1] !== max) {
+        ticks.push(max);
+    }
+
+    return ticks;
+}
+
+/**
  * Supply and demand chart showing market clearing with order blocks. Displays
  * ragged supply/demand curves from discrete orders, clearing point, and
  * individual order blocks.
@@ -137,12 +178,24 @@ export function SupplyDemandChart({
     });
 
     // Transform data into supply and demand curves
-    const { supplyCurve, demandCurve, orderBlocks } = useMemo(() => {
+    const {
+        supplyCurve,
+        demandCurve,
+        orderBlocks,
+        priceDomain,
+        quantityDomain,
+        priceTicks,
+        quantityTicks,
+    } = useMemo(() => {
         if (!marketData) {
             return {
                 supplyCurve: [],
                 demandCurve: [],
                 orderBlocks: { supply: [], demand: [] },
+                priceDomain: [0, 1] as [number, number],
+                quantityDomain: [0, 1] as [number, number],
+                priceTicks: [0, 1],
+                quantityTicks: [0, 1],
             };
         }
 
@@ -194,10 +247,42 @@ export function SupplyDemandChart({
             capacity: marketData.demands.capacity[i],
         }));
 
+        // Calculate exact bounds for the data
+        const allPrices = [
+            ...marketData.capacities.price,
+            ...marketData.demands.price,
+        ];
+        const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
+        const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : 1;
+
+        const maxSupplyQuantity =
+            marketData.capacities.cumul_capacities.length > 0
+                ? (marketData.capacities.cumul_capacities[
+                      marketData.capacities.cumul_capacities.length - 1
+                  ] ?? 0)
+                : 0;
+        const maxDemandQuantity =
+            marketData.demands.cumul_capacities.length > 0
+                ? (marketData.demands.cumul_capacities[
+                      marketData.demands.cumul_capacities.length - 1
+                  ] ?? 0)
+                : 0;
+        const maxQuantity = Math.max(maxSupplyQuantity, maxDemandQuantity, 1);
+
+        // Generate predictable ticks
+        const priceDomain: [number, number] = [minPrice, maxPrice];
+        const quantityDomain: [number, number] = [0, maxQuantity];
+        const priceTicks = generateNiceTicks(minPrice, maxPrice, 6);
+        const quantityTicks = generateNiceTicks(0, maxQuantity, 6);
+
         return {
             supplyCurve: supply,
             demandCurve: demand,
             orderBlocks: { supply: supplyBlocks, demand: demandBlocks },
+            priceDomain,
+            quantityDomain,
+            priceTicks,
+            quantityTicks,
         };
     }, [marketData]);
 
@@ -268,17 +353,21 @@ export function SupplyDemandChart({
                 <XAxis
                     dataKey="quantity"
                     type="number"
+                    domain={quantityDomain}
+                    ticks={quantityTicks}
                     tick={{ fontSize: 12 }}
                     tickFormatter={(value: number) => formatPower(value)}
                     label={{
-                        value: "Quantity (W)",
+                        value: "Quantity",
                         position: "insideBottom",
                         offset: -5,
                     }}
                 />
                 <YAxis
+                    domain={priceDomain}
+                    ticks={priceTicks}
                     tick={{ fontSize: 12 }}
-                    tickFormatter={(value: number) => `$${value.toFixed(6)}`}
+                    tickFormatter={(value: number) => `$${formatMoney(value)}`}
                     label={{
                         value: "Price ($/Wh)",
                         angle: -90,
@@ -364,7 +453,7 @@ export function SupplyDemandChart({
                     stroke="var(--background)"
                     strokeWidth={2}
                     label={{
-                        value: `Clearing: ${formatPower(marketData.market_quantity)} @ $${marketData.market_price.toFixed(6)}/Wh`,
+                        value: `Clearing: ${formatPower(marketData.market_quantity)} @ $${formatMoney(marketData.market_price)}/Wh`,
                         position: "top",
                         fill: "var(--foreground)",
                         fontSize: 12,
