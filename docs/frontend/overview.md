@@ -51,7 +51,7 @@ Route protection for different access levels: done with staticData, see tanstack
 **Solution:**
 
 ```bash
-npm run generate-types
+bun generate-types
 
 # Restart TypeScript server in your IDE
 # VS Code: Cmd/Ctrl + Shift + P → "TypeScript: Restart TS Server"
@@ -76,7 +76,7 @@ kill -9 <PID>
 ```bash
 # Clear node_modules and reinstall
 rm -rf node_modules package-lock.json
-npm install
+bun install
 ```
 
 ### Hot Module Replacement (HMR) Not Working
@@ -90,10 +90,10 @@ npm install
 
 ```bash
 # Check build output
-npm run build
+bun build
 
 # Check for type errors
-npx tsc --noEmit
+bun x tsc --noEmit
 
 # Verify output directory
 ls -la ../energetica/static/react/

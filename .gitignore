@@ -5,6 +5,7 @@ __pycache__
 .DS_Store
 .venv
 **/node_modules/*
+.eslintcache
 energetica/static/react/*
 frontend/src/routeTree.gen.ts
 scripts/openapi-schema.json

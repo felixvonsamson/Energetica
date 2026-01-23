@@ -23,7 +23,7 @@ After modifying backend API schemas or routes, regenerate TypeScript types:
 
 ```bash
 cd frontend
-npm run generate-types
+bun generate-types
 ```
 
 This script:

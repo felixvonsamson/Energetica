@@ -4,7 +4,7 @@
         "dev": "vite",
         "build": "vite build",
         "generate-types": "bash ../scripts/generate-types.sh",
-        "lint:check": "eslint . --max-warnings 0",
+        "lint:check": "eslint . --max-warnings 0 --cache",
         "pretty": "prettier --write \"./**/*.{ts,tsx}\"",
         "tsc:check": "tsc --noEmit"
     },
@@ -71,13 +71,5 @@
         "vite": "^7.2.7",
         "vite-plugin-dts": "^4.5.4",
         "vite-plugin-svgr": "^4.5.0"
-    },
-    "lint-staged": {
-        "frontend/src/**/*.{ts,tsx}": [
-            "npm run lint:check --prefix frontend"
-        ],
-        "frontend/**/*.{ts,tsx,js,jsx,json,css}": [
-            "npm run pretty --prefix frontend"
-        ]
     }
 }

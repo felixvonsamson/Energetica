@@ -88,9 +88,9 @@ A VS Code task "run server" is configured in `.vscode/tasks.json`—use Command 
 
 ```
 cd frontend
-npm install
-npm run dev  # Vite dev server
-npm run build
+bun install
+bun dev  # Vite dev server
+bun build
 ```
 
 The React frontend is in active development; some legacy vanilla JS / p5.js + Jinja pieces may remain during migration.

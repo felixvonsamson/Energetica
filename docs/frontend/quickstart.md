@@ -4,7 +4,7 @@
 
 ```bash
 cd frontend
-npm install
+bun install
 ```
 
 ## Development
@@ -20,7 +20,7 @@ python main.py --env dev
 
 ```bash
 # From frontend directory
-npm run dev
+bun dev
 ```
 
 ### 3. Test

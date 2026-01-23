@@ -6,7 +6,7 @@ Guide for integrating backend API calls with automatic type generation.
 
 **TL;DR - Complete workflow in 5 steps:**
 
-1. **Generate types**: `npm run generate-types`
+1. **Generate types**: `bun generate-types`
 2. **Add API method** in `src/lib/*-api.ts`:
     ```ts
     export const myApi = {
@@ -392,7 +392,7 @@ Types are automatically generated from the FastAPI OpenAPI schema.
 ### Generate Types
 
 ```bash
-npm run generate-types
+bun generate-types
 ```
 
 This creates `src/types/api.generated.ts` with all API types.
@@ -424,7 +424,7 @@ const user: User = await apiClient.get("/auth/me");
 
 ### When to Regenerate
 
-Run `npm run generate-types` when:
+Run `bun generate-types` when:
 
 -   Backend API endpoints change
 -   Request/response schemas change
@@ -570,7 +570,7 @@ Adding support for `/api/v1/players/me/resources`:
 ### 1. Generate Types
 
 ```bash
-npm run generate-types
+bun generate-types
 ```
 
 ### 2. Add API Method
@@ -771,7 +771,7 @@ const queries = useQueries({
 
 **Types not updating**
 
-Run `npm run generate-types` and restart TypeScript server.
+Run `bun generate-types` and restart TypeScript server.
 
 **Queries not refetching on tick**
 

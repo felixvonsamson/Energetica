@@ -13,7 +13,7 @@ cd Energetica
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-npm install && cd ..
+bun install && cd ..
 ```
 
 ### Run the Backend
@@ -27,13 +27,13 @@ source .venv/bin/activate && python main.py --env dev
 Use existing backend:
 
 ```bash
-VITE_BACKEND_URL=https://energetica-game.org npm run dev
+VITE_BACKEND_URL=https://energetica-game.org bun dev
 ```
 
 Use http://localhost:8000 as backend:
 
 ```bash
-npm run dev
+bun dev
 ```
 
 Or configure `/frontend/.env.example`.
@@ -44,9 +44,15 @@ Visit http://localhost:5173/app/dashboard
 
 Ensure you have the following installed:
 
--   **Python 3.12 or higher** (`python --version` or `python3 --version`)
--   **Node.js 18 or higher** and npm (`node --version` and `npm --version`)
--   **Git** (`git --version`)
+- **Python 3.12 or higher** (`python --version` or `python3 --version`)
+- **Bun 1.0 or higher** (`bun --version`) - [Install Bun](https://bun.sh)
+- **Git** (`git --version`)
+
+To install Bun:
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
 
 ## Installation
 
@@ -76,7 +82,7 @@ pip install -r requirements.txt
 
 ```bash
 cd frontend
-npm install
+bun install
 cd ..
 ```
 
@@ -124,7 +130,7 @@ INFO:     Application startup complete.
 ```bash
 # From project root
 cd frontend
-npm run dev
+bun dev
 ```
 
 You should see:
@@ -144,10 +150,10 @@ If you only want to work on the frontend and connect to an existing backend:
 cd frontend
 
 # Connect to local backend (default)
-npm run dev
+bun dev
 
 # OR connect to production backend
-VITE_BACKEND_URL=https://energetica-game.org npm run dev
+VITE_BACKEND_URL=https://energetica-game.org bun dev
 ```
 
 ## Quick Reference
@@ -155,12 +161,12 @@ VITE_BACKEND_URL=https://energetica-game.org npm run dev
 ### Frontend Commands
 
 ```bash
-npm run dev              # Start dev server (http://localhost:5173)
-npm run build            # Build for production
-npm run lint:check       # Check ESLint errors
-npm run tsc:check        # TypeScript type checking
-npm run pretty           # Format code with Prettier
-npm run generate-types   # Generate API types from OpenAPI schema
+bun dev              # Start dev server (http://localhost:5173)
+bun build            # Build for production
+bun lint:check       # Check ESLint errors
+bun tsc:check        # TypeScript type checking
+bun pretty           # Format code with Prettier
+bun generate-types   # Generate API types from OpenAPI schema
 ```
 
 ### Backend Commands
@@ -194,14 +200,14 @@ python main.py --env dev --rm_instance
 
 Places to get started with in the documentation:
 
--   [Architecture Overview](../architecture/overview.md) - Understand system design
--   [Frontend Documentation](../frontend/overview.md) - React patterns and conventions
--   [API Documentation](../architecture/api.md) - Backend API structure
+- [Architecture Overview](../architecture/overview.md) - Understand system design
+- [Frontend Documentation](../frontend/overview.md) - React patterns and conventions
+- [API Documentation](../architecture/api.md) - Backend API structure
 
 ## Getting Help
 
--   **Issues:** [GitHub Issues](https://github.com/felixvonsamson/Energetica/issues)
--   **Discussions:** [GitHub Discussions](https://github.com/felixvonsamson/Energetica/discussions)
--   **Documentation:** Check `docs/` folder for specific topics
+- **Issues:** [GitHub Issues](https://github.com/felixvonsamson/Energetica/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/felixvonsamson/Energetica/discussions)
+- **Documentation:** Check `docs/` folder for specific topics
 
 Welcome to the Energetica project! Happy coding!

@@ -85,7 +85,7 @@ export const WorstCase: StoryObj = {
 };
 ```
 
-Run: `npx storybook dev`
+Run: `bun x storybook dev`
 
 **Pros:** Polished UI, component-focused, good for documentation
 **Cons:** Extra tool, more setup overhead
@@ -96,8 +96,8 @@ Run: `npx storybook dev`
 
 Automatically set by Vite (don't manually configure):
 
--   `true` when running `npm run dev`
--   `false` when running `npm run build`
+-   `true` when running `bun dev`
+-   `false` when running `bun build`
 
 ### Custom Environment Variables
 

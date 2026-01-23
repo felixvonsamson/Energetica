@@ -30,7 +30,7 @@ import { Button } from "./Button";
 import { Card } from "./Card";
 ```
 
-Run `npm run lint:check -- --fix` to automatically sort imports, or use "Fix all eslint errors" in VSCode.
+Run `bun lint:check -- --fix` to automatically sort imports, or use "Fix all eslint errors" in VSCode.
 
 ### TODO
 
