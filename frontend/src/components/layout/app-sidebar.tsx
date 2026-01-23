@@ -76,7 +76,9 @@ export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
                 <div className="flex aspect-square size-12 items-center justify-center">
                     <Logo className="size-20 fill-sidebar-foreground" />
                 </div>
-                <span className="text-2xl font-semibold">Energetica</span>
+                <span className="text-2xl font-semibold font-[Expletus_Sans]">
+                    Energetica
+                </span>
             </SidebarHeader>
 
             <SidebarContent className="relative z-10">
