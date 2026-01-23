@@ -70,6 +70,10 @@
     --color-chart-3: var(--chart-3);
     --color-chart-2: var(--chart-2);
     --color-chart-1: var(--chart-1);
+
+    /* Tailwind theme variables */
+    --spacing: 0.25rem;
+    --radius: 0.5rem;
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
@@ -114,8 +118,6 @@
         --border: #876d22;
         --input: var(--color-pine);
         --ring: var(--color-pine);
-
-        --radius: 0.5rem;
 
         /* Chart colors (light mode) */
         --chart-1: oklch(0.646 0.222 41.116);
@@ -234,8 +236,6 @@
         --border: #404040;
         --input: #606060;
         --ring: var(--color-brand-green);
-
-        --radius: 0.5rem;
 
         /* Chart colors (dark mode) */
         --chart-1: oklch(0.488 0.243 264.376);
