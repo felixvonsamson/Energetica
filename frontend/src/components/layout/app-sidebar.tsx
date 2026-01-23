@@ -69,7 +69,7 @@ export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
                     transform: `rotate(${rotation}deg)`,
                 }}
             >
-                <Logo className="size-200 fill-sidebar-foreground" />
+                <Logo className="size-200 fill-bone" />
             </div>
 
             <SidebarHeader className="relative z-10 flex-row items-center justify-center">
