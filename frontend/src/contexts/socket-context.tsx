@@ -38,22 +38,19 @@ export function SocketProvider({ children }: SocketProviderProps) {
     const [error, setError] = useState<Error | null>(null);
     const socketRef = useRef<Socket | null>(null);
 
-    // Socket.IO requires a settled player (not admin, not unsettled)
-    const canConnect =
-        isAuthenticated && user?.role === "player" && user?.is_settled;
+    // Socket.IO requires an authenticated player (not admin)
+    // Unsettled players can connect to receive broadcasts (e.g., map updates when others settle)
+    const canConnect = isAuthenticated && user?.role === "player";
 
     useEffect(() => {
-        // Only connect if user is a settled player
+        // Only connect if user is a player
         if (!canConnect) {
             console.log("[Socket.IO] Not connecting:", {
                 isAuthenticated,
                 role: user?.role,
-                isSettled: user?.is_settled,
                 reason: !isAuthenticated
                     ? "Not authenticated"
-                    : user?.role !== "player"
-                      ? "User is not a player (admin?)"
-                      : "User not settled (needs location choice)",
+                    : "User is not a player (admin?)",
             });
             // Disconnect if we have a connection and user logged out
             if (socketRef.current) {
@@ -81,7 +78,10 @@ export function SocketProvider({ children }: SocketProviderProps) {
             return;
         }
 
-        console.log("[Socket.IO] Attempting connection for settled player...");
+        console.log(
+            "[Socket.IO] Attempting connection for player",
+            user?.is_settled ? "(settled)" : "(unsettled)",
+        );
 
         // Create socket connection
         const newSocket = io();

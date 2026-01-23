@@ -1,8 +1,17 @@
 # Real-time Data Synchronization
 
-Given that much of the game data changes frequently (on every tick, when players take actions) it is not sufficient for clients to just poll data from the server. The solution is for the server to maintain two-way communication with clients. The protocol used for this is Socket.IO.
+Server maintains real-time bidirectional communication with clients via Socket.IO. Game data changes frequently (every tick, player actions), so push updates are essential.
 
-See also: [**Data Fetching**](frontend/data-fetching.md) - TanStack Query, API client, mutation patterns
+**See also:** [Data Fetching](/docs/frontend/data-fetching.md) - TanStack Query, API client, mutation patterns
+
+## Connection Requirements
+
+- **Authenticated players only** (not admins)
+- **Both settled and unsettled players can connect**
+  - Unsettled players (choosing location) receive broadcasts (e.g., map updates)
+  - Settled players receive broadcasts + player-specific events
+- Uses session cookie authentication
+- Multi-device support: same player can have multiple connected clients
 
 ## Core Principle: Single Source of Truth
 
@@ -46,201 +55,121 @@ def send_worker_info(self):
 
 **Benefits:** Single source of truth, API and SocketIO always match, type-safe, DRY.
 
-## Decision Matrix: Send Data vs Invalidate
+## Send Data vs Invalidate
 
-### When to Send Data Directly
+Two strategies for keeping frontend in sync:
 
-**Criteria:**
+### 1. Send Data Directly
 
--   Data is small (<1KB)
--   Data changes frequently OR is critical for UX
--   You want instant updates without round-trip delay
-
-**Example: Workers**
+**When:** Small data (<1KB), frequent changes, critical UX
 
 ```python
-# Backend
+# Backend - send complete data
 player.emit("worker_info", WorkersOut.from_player(player).model_dump())
 
-# Frontend - instant update, no HTTP request
+# Frontend - instant update (centralized in GameTickContext)
 useSocketEvent("worker_info", (data) => {
     queryClient.setQueryData(queryKeys.players.workers, data);
 });
 ```
 
-**Size:** ~50 bytes
+**Benefits:** Instant update, no HTTP round-trip, better UX
 
-```json
-{
-    "construction": { "available": 1, "total": 1 },
-    "laboratory": { "available": 0, "total": 0 }
-}
-```
+### 2. Invalidate Cache
 
-### When to Invalidate Only
-
-**Criteria:**
-
--   Data is large (>1KB, complex objects)
--   Data may not be actively displayed
--   Slight delay is acceptable
-
-**Example: Facilities List**
+**When:** Large data (>1KB), may not be displayed, delay acceptable
 
 ```python
-# Backend - just tell frontend to refetch
-player.emit("invalidate", {
-    "queries": [["facilities", "all"]]
-})
+# Backend - tell frontend to refetch (if needed)
+player.invalidate_queries(["facilities", "all"])
 
-# Frontend - refetches if query is active
-useSocketEvent("invalidate", (data) => {
-    data.queries.forEach(key =>
-        queryClient.invalidateQueries({ queryKey: key })
-    );
-});
+# Frontend - already set up in GameTickContext
+# Refetches only if query is active (component mounted)
 ```
 
-**Why:** Facility list could be large (100+ facilities × multiple fields).
+**Benefits:** Efficient for large data, automatic refetch management, lazy loading
 
 ### Size Guidelines
 
-| Size              | Strategy   | Example                        |
-| ----------------- | ---------- | ------------------------------ |
-| Tiny (<100 bytes) | Send data  | Money, workers, single values  |
-| Small (<1KB)      | Send data  | Player stats, small lists      |
-| Medium (1-10KB)   | Depends    | Facility list, tech tree       |
-| Large (>10KB)     | Invalidate | Network graph, historical data |
+| Size           | Strategy   | Examples                     |
+| -------------- | ---------- | ---------------------------- |
+| <100 bytes     | Send       | Money, workers, counters     |
+| 100B - 1KB     | Send       | Player stats, small lists    |
+| 1KB - 10KB     | Invalidate | Facilities, technologies     |
+| >10KB          | Invalidate | Network graph, history charts |
 
-**Rule of thumb:** If it fits in a tweet (280 bytes), send it.
+**Rule of thumb:** If it fits in a tweet (280 bytes), send it. If unsure, invalidate.
 
 ## Implementation Patterns
 
-### Pattern 1: Simple Value Updates
-
-**Backend:**
+### Pattern 1: Send Small Data
 
 ```python
-# In player.py or wherever the value changes
+# Backend
 def update_money(self, amount: float):
     self.money = amount
-
     from energetica.schemas.players import MoneyOut
     self.emit("money_updated", MoneyOut.from_player(self).model_dump())
 ```
 
-**Frontend:**
+Frontend listeners are centralized in `GameTickContext` - no per-component code needed.
 
-```ts
-// In GameTickContext.tsx (centralized listener)
-useSocketEvent("money_updated", (data) => {
-    queryClient.setQueryData(queryKeys.players.money, data);
-});
-```
-
-**Advantages:** Instant updates, no extra HTTP request, single source of truth.
-
-### Pattern 2: Invalidation for Complex Data
-
-**Backend:**
+### Pattern 2: Invalidate Large Data
 
 ```python
-# In facilities.py
+# Backend
 def build_facility(player: Player, facility_type: str):
     # ... build facility
-
-    # Use the helper method for cleaner syntax
-    player.invalidate_queries(
-        ["facilities", "all"],
-        ["players", "me", "money"],
-    )
+    player.invalidate_queries(["facilities", "all"])
 ```
 
-**Frontend:** Already set up in GameTickContext - no extra code needed.
-
-**Advantages:** Flexible (invalidates multiple queries), good for large/complex data, automatic refetch management.
-
-**Note:** Use `player.invalidate_queries()` or `engine.invalidate_queries()` instead of raw `emit()` calls. The helper method provides better readability and documentation.
+Frontend automatically refetches if query is active. **Always use `player.invalidate_queries()` or `engine.invalidate_queries()` helper methods** (not raw `emit()` calls).
 
 ### Pattern 3: Hybrid (Recommended)
 
-Send critical small data + invalidate related complex data.
-
-**Backend:**
+Combine both: send critical small data + invalidate complex data.
 
 ```python
 def build_facility(player: Player, facility_type: str):
     # ... build facility
 
-    # Send small critical data directly
+    # Send small critical data for instant UI update
     from energetica.schemas.players import MoneyOut, WorkersOut
     player.emit("money_updated", MoneyOut.from_player(player).model_dump())
     player.emit("worker_info", WorkersOut.from_player(player).model_dump())
 
-    # Invalidate complex data using the helper method
+    # Invalidate large data (refetches only if displayed)
     player.invalidate_queries(
         ["facilities", "all"],
         ["networks", "capacities"],
     )
 ```
 
-**Why:** Money/workers update instantly (better UX), facility list only refetches if user is viewing it.
+## Invalidation Helper Methods
 
-## Query Invalidation from Backend
-
-Backend tells frontend which queries are stale. Frontend refetches them.
-
-### Backend
+**Always use helper methods** (not raw `emit()` calls):
 
 ```python
-from energetica.database.player import Player
-
-def build_facility(player: Player, facility_type: str):
-    # ... perform the build
-
-    # Invalidate affected queries on ALL connected devices
-    # Use the helper method for clean, readable invalidation
-    player.invalidate_queries(
-        ["players", "me", "money"],
-        ["facilities", "all"],
-        ["players", "me", "resources"],
-    )
-```
-
-### Helper Methods
-
-Both `Player` and `GameEngine` classes provide an `invalidate_queries()` helper method:
-
-```python
-# Single query
-player.invalidate_queries(["chats"])
-
-# Multiple queries
+# Player-specific invalidation (all player's devices)
 player.invalidate_queries(
-    ["facilities", "all"],
     ["players", "me", "money"],
+    ["facilities", "all"],
 )
 
-# Engine-wide invalidation (for all players)
+# Engine-wide invalidation (all connected players)
 engine.invalidate_queries(["resource-market", "asks"])
 ```
 
-**Benefits:**
+**Benefits:** Cleaner, self-documenting, variadic arguments
 
--   Cleaner, more readable than raw `emit()` calls
--   Self-documenting - clear intent
--   Docstring references the frontend query keys for easy lookup
--   Accepts multiple query keys as variadic arguments
+### Query Keys Must Match Frontend
 
-### Frontend
-
-Already set up in `GameTickContext`. Query keys must match those defined in `frontend/src/lib/query-client.ts`:
+Backend query keys must match `frontend/src/lib/query-client.ts`:
 
 ```ts
 export const queryKeys = {
     players: {
         money: ["players", "me", "money"] as const,
-        resources: ["players", "me", "resources"] as const,
     },
     facilities: {
         all: ["facilities", "all"] as const,
@@ -248,193 +177,106 @@ export const queryKeys = {
 } as const;
 ```
 
-### How It Works
+### Multi-Device Sync
 
-1. User builds facility on Device A
-2. Backend processes build, emits `"invalidate"` to all player's devices
-3. Device A & Device B: Query marked stale
-4. Device A (on facilities page): Immediately refetches
-5. Device B (on dashboard): Waits until user navigates to facilities page
+1. User acts on Device A
+2. Backend invalidates query on **all player's devices**
+3. Device A (viewing data): Refetches immediately
+4. Device B (not viewing): Waits until user navigates to that page
 
-**Key:** TanStack Query only refetches if the data is actively being used.
+TanStack Query only refetches if data is actively displayed.
 
-## Common Data Types
+## Common Examples
 
-### Send Directly
-
-**Money:**
+### Send Directly (Small Data)
 
 ```python
+# Money (~20 bytes)
 from energetica.schemas.players import MoneyOut
 player.emit("money_updated", MoneyOut.from_player(player).model_dump())
-```
 
-Size: ~20 bytes `{"money": 12345.67}`
-
-**Workers:**
-
-```python
+# Workers (~50 bytes)
 from energetica.schemas.players import WorkersOut
 player.emit("worker_info", WorkersOut.from_player(player).model_dump())
 ```
 
-Size: ~50 bytes
-
-**Single facility status:**
+### Invalidate (Large Data)
 
 ```python
-from energetica.schemas.facilities import FacilityStatusOut
-player.emit("facility_status", {
-    "id": facility.id,
-    "status": FacilityStatusOut.from_facility(facility).model_dump()
-})
-```
-
-Size: ~200 bytes
-
-### Invalidate
-
-**Facility list:**
-
-```python
+# Facility list (100+ facilities)
 player.invalidate_queries(["facilities", "all"])
-```
 
-Reason: Could be 100+ facilities
-
-**Network graph:**
-
-```python
+# Network graph (complex topology)
 player.invalidate_queries(["networks", "graph"])
-```
 
-Reason: Complex topology
-
-**Historical data:**
-
-```python
+# Historical charts (large time series)
 player.invalidate_queries(["charts", "production"])
 ```
 
-Reason: Large time series
-
-## Anti-Patterns
-
-### 1. Emitting Raw Dicts Instead of Using Schemas
+## Anti-Patterns to Avoid
 
 ```python
-# BAD
-player.emit("worker_info", {
-    "construction": {...},  # Hand-crafted
-})
+# ❌ BAD: Hand-crafted dicts instead of schemas
+player.emit("worker_info", {"construction": {...}})
 
-# GOOD
+# ✅ GOOD: Use schemas (single source of truth)
 from energetica.schemas.players import WorkersOut
 player.emit("worker_info", WorkersOut.from_player(player).model_dump())
-```
 
-### 2. Sending Large Data Frequently
+# ❌ BAD: Sending large data frequently
+player.emit("full_state", {"money": ..., "facilities": [100+ items]})
 
-```python
-# BAD - sends entire facility list on every money change
-player.emit("full_game_state", {
-    "money": player.money,
-    "facilities": [...],  # Large!
-    "technologies": [...],  # Large!
-})
-
-# GOOD - send only what changed
-from energetica.schemas.players import MoneyOut
+# ✅ GOOD: Send only what changed
 player.emit("money_updated", MoneyOut.from_player(player).model_dump())
-```
 
-### 3. Not Handling Multi-Device Sync
-
-```python
-# BAD - only emits to current socket
+# ❌ BAD: Single-device emit (breaks multi-device sync)
 socketio.emit("update", data, room=request.sid)
 
-# GOOD - emits to all player's devices
-player.emit("update", data)  # Automatically handles all connections
-```
+# ✅ GOOD: All player's devices
+player.emit("update", data)
 
-### 4. Invalidating Too Broadly
-
-```python
-# BAD - invalidates everything
+# ❌ BAD: Over-broad invalidation
 player.invalidate_queries(["players"], ["facilities"], ["networks"])
 
-# GOOD - specific invalidation
+# ✅ GOOD: Specific invalidation
 player.invalidate_queries(["facilities", "all"])
 ```
 
-## Frontend Listening Patterns
+## Frontend Socket Listeners
 
-### Centralized in GameTickContext
-
-All SocketIO listeners in one place:
+**All SocketIO listeners are centralized in `GameTickContext`** - no per-component listeners needed.
 
 ```ts
-// src/contexts/GameTickContext.tsx
-export function GameTickProvider({ children }) {
-    const queryClient = useQueryClient();
+// frontend/src/contexts/game-tick-context.tsx
+useSocketEvent("money_updated", (data) => {
+    queryClient.setQueryData(queryKeys.players.money, data);
+});
 
-    useSocketEvent("money_updated", (data) => {
-        queryClient.setQueryData(queryKeys.players.money, data);
-    });
-
-    useSocketEvent("worker_info", (data) => {
-        queryClient.setQueryData(queryKeys.players.workers, data);
-    });
-
-    useSocketEvent("invalidate", (data) => {
-        data.queries.forEach((key) =>
-            queryClient.invalidateQueries({ queryKey: key })
-        );
-    });
-}
+useSocketEvent("invalidate", (data) => {
+    data.queries.forEach((key) =>
+        queryClient.invalidateQueries({ queryKey: key }),
+    );
+});
 ```
 
-**Benefits:** All listeners in one place, works globally, runs even when component unmounted.
+**Why centralized:**
+- Listeners run globally (even when specific components unmounted)
+- All socket logic in one place
+- Prevents stale data from missed events
 
-### Avoid: Per-Component Listeners
+## Common Use Cases
 
-```ts
-// BAD - listener only works when component mounted
-function MoneyDisplay() {
-    const queryClient = useQueryClient();
-
-    useSocketEvent("money_updated", (data) => {
-        queryClient.setQueryData(queryKeys.players.money, data);
-    });
-}
-```
-
-**Problem:** If component unmounts, listener stops. Data gets stale.
-
-## Common Patterns
-
-### Action with Multiple Effects
+### Actions with Multiple Effects
 
 ```python
-def build_power_plant(player: Player, facility_type: str, location: tuple):
-    # Deduct money
+def build_facility(player: Player, facility_type: str):
+    # ... perform build
     player.money -= cost
 
-    # Add facility
-    facility = create_facility(player, facility_type, location)
-
-    # Update capacities
-    update_network_capacities(player)
-
-    # Send money directly + invalidate the rest
+    # Hybrid: send small critical data + invalidate large data
     from energetica.schemas.players import MoneyOut
     player.emit("money_updated", MoneyOut.from_player(player).model_dump())
-    player.invalidate_queries(
-        ["facilities", "all"],
-        ["facilities", "power"],
-        ["networks", "capacities"],
-    )
+    player.invalidate_queries(["facilities", "all"], ["networks", "capacities"])
 ```
 
 ### Tick Updates
@@ -442,88 +284,47 @@ def build_power_plant(player: Player, facility_type: str, location: tuple):
 ```python
 def tick():
     # ... process tick
-
-    # Tick event handled separately
-    engine.socketio.emit("tick", {"tick": engine.total_t})
-
-    # Don't emit invalidation for every tick - queries use useTickQuery
+    engine.emit("tick", {"tick": engine.total_t})
+    # Don't manually invalidate - queries using useTickQuery auto-invalidate
 ```
 
-### Multi-Player Effects
+### Multi-Player Actions
 
 ```python
 def trade_resources(seller: Player, buyer: Player, resource: str, amount: int):
-    # Update both players
-    seller.money += price
-    buyer.money -= price
+    # ... perform trade
 
     # Invalidate for both players
     for player in [seller, buyer]:
-        player.invalidate_queries(
-            ["players", "me", "money"],
-            ["players", "me", "resources"],
-        )
+        player.invalidate_queries(["players", "me", "money"], ["players", "me", "resources"])
 ```
 
-## Migration Guide
-
-If you have existing hand-crafted SocketIO emits:
-
-### Step 1: Create Schema (if missing)
+### Broadcast to All Players
 
 ```python
-# In schemas/players.py
-class FacilityCountOut(BaseModel):
-    power: int
-    storage: int
+def update_resource_market():
+    # ... update market
 
-    @classmethod
-    def from_player(cls, player: Player) -> FacilityCountOut:
-        return FacilityCountOut(
-            power=len(player.power_facilities),
-            storage=len(player.storage_facilities),
-        )
+    # Broadcast to all connected players
+    engine.invalidate_queries(["resource-market", "asks"])
 ```
 
-### Step 2: Use Schema in Emit
+## Quick Reference
 
-```python
-# Before
-player.emit("facility_counts", {
-    "power": len(player.power_facilities),
-    "storage": len(player.storage_facilities),
-})
+| Data Size    | Strategy   | Examples                           |
+| ------------ | ---------- | ---------------------------------- |
+| <100 bytes   | Send       | Money, workers, counters           |
+| 100B - 1KB   | Send       | Player stats, small lists          |
+| 1KB - 10KB   | Invalidate | Facilities, technologies           |
+| >10KB        | Invalidate | Network graph, historical charts   |
 
-# After
-from energetica.schemas.players import FacilityCountOut
-player.emit("facility_counts", FacilityCountOut.from_player(player).model_dump())
-```
-
-### Step 3: Update API Endpoint (if exists)
-
-```python
-@router.get("/me/facility-counts")
-def get_facility_counts(
-    player: Annotated[Player, Depends(get_settled_player)]
-) -> FacilityCountOut:
-    return FacilityCountOut.from_player(player)
-```
-
-Now API and SocketIO use identical schema.
-
-## Summary
-
-| Scenario           | Strategy      | Example                      |
-| ------------------ | ------------- | ---------------------------- |
-| Tiny data (<100B)  | Send directly | Money, workers, counters     |
-| Small data (<1KB)  | Send directly | Player stats, small lists    |
-| Large data (>1KB)  | Invalidate    | Facilities, network, history |
-| Critical UX data   | Send directly | Money, active status         |
-| Infrequent changes | Send directly | Configuration, settings      |
-
-**Golden Rule:** Use schemas everywhere, decide send vs invalidate based on data size and UX impact.
+**Golden Rules:**
+1. **Always use Pydantic schemas** (never hand-crafted dicts)
+2. **Use helper methods** (`player.invalidate_queries()`, not raw `emit()`)
+3. **Query keys must match** `frontend/src/lib/query-client.ts`
+4. **When unsure, invalidate** (more efficient for large data)
 
 ## See Also
 
--   [architecture/api.md](./api.md) - Frontend API integration & query invalidation
--   [frontend/data-fetching.md](../frontend/data-fetching.md) - TODO
+- [architecture/api.md](./api.md) - API patterns & REST endpoints
+- [frontend/data-fetching.md](../frontend/data-fetching.md) - TanStack Query patterns

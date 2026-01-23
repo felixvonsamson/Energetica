@@ -22,7 +22,7 @@ def setup_socketio(app: FastAPI) -> None:
     engine.socketio = sio
     app.mount("/socket.io", socketio.ASGIApp(engine.socketio))
 
-    connected_users_by_sid: dict[str, Player] = {}
+    connected_users_by_sid: dict[str, Player | None] = {}
 
     @sio.event
     def connect(sid: str, environ: dict[str, Any], auth: Any) -> None:
@@ -40,14 +40,19 @@ def setup_socketio(app: FastAPI) -> None:
             raise ConnectionRefusedError("authentication failed: invalid token")
         if user.role != "player":
             raise ConnectionRefusedError("authentication failed: not a player")
-        if user.player is None:
-            raise ConnectionRefusedError("authentication failed: not settled")
-        user.player.socketio_clients.append(sid)
-        connected_users_by_sid[sid] = user.player
+
+        # Allow unsettled players to connect so they can receive broadcasts (e.g., map updates)
+        # Only track socketio_clients if player exists (for targeted player.emit())
+        if user.player is not None:
+            user.player.socketio_clients.append(sid)
+            connected_users_by_sid[sid] = user.player
+        else:
+            # Track unsettled users with None so we can clean up on disconnect
+            connected_users_by_sid[sid] = None
 
     @sio.event
     def disconnect(sid: str) -> None:
         """Clean up user on disconnect."""
         player = connected_users_by_sid.pop(sid, None)
-        if player:
+        if player is not None:
             player.socketio_clients.remove(sid)
