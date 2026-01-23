@@ -1,7 +1,17 @@
 /** Supply and demand curve chart for electricity markets */
 
+import { scaleLinear } from "d3-scale";
 import { RefreshCw } from "lucide-react";
-import { useMemo, type ReactNode } from "react";
+import {
+    useMemo,
+    useState,
+    useRef,
+    useEffect,
+    useCallback,
+    memo,
+    type ReactNode,
+    type MouseEvent,
+} from "react";
 import {
     CartesianGrid,
     Line,
@@ -9,7 +19,6 @@ import {
     ReferenceDot,
     ReferenceArea,
     ResponsiveContainer,
-    Tooltip,
     XAxis,
     YAxis,
 } from "recharts";
@@ -32,46 +41,120 @@ interface SupplyDemandChartProps {
     breakdownType?: BreakdownType;
 }
 
+// Chart margins - used consistently for layout and coordinate calculations
+const CHART_MARGIN = {
+    top: 5,
+    right: 10,
+    bottom: 40,
+    left: 80, // Increased to account for Y-axis label and tick labels
+} as const;
+
 interface CurvePoint {
     quantity: number;
     price: number;
 }
 
-interface TooltipData {
-    quantity: number;
-    supply?: number;
-    demand?: number;
+/**
+ * Performs linear interpolation on a curve to find the Y value at a given X
+ * position. Returns null if X is outside the curve's range.
+ */
+function interpolateAtX(curve: CurvePoint[], targetX: number): number | null {
+    if (curve.length === 0) return null;
+    if (targetX < 0) return null;
+
+    // Find the two points that bracket targetX
+    for (let i = 0; i < curve.length - 1; i++) {
+        const p1 = curve[i];
+        const p2 = curve[i + 1];
+
+        if (!p1 || !p2) continue;
+
+        // Check if targetX is between these two points
+        if (targetX >= p1.quantity && targetX <= p2.quantity) {
+            // Handle vertical segments (same quantity, different price)
+            if (p2.quantity === p1.quantity) {
+                return p2.price;
+            }
+
+            // Linear interpolation: y = y1 + (y2 - y1) * (x - x1) / (x2 - x1)
+            const ratio = (targetX - p1.quantity) / (p2.quantity - p1.quantity);
+            return p1.price + (p2.price - p1.price) * ratio;
+        }
+    }
+
+    // If targetX is beyond the last point, return the last price
+    const lastPoint = curve[curve.length - 1];
+    if (lastPoint && targetX >= lastPoint.quantity) {
+        return lastPoint.price;
+    }
+
+    return null;
 }
 
 interface CustomTooltipProps {
-    active?: boolean;
-    payload?: ReadonlyArray<{
-        value: number;
-        name: string;
-        payload: TooltipData;
-        [key: string]: unknown;
-    }>;
+    quantity: number;
+    supplyPrice: number | null;
+    demandPrice: number | null;
 }
 
-function CustomTooltip({ active, payload }: CustomTooltipProps): ReactNode {
-    if (!active || !payload || payload.length === 0) return null;
-
-    const data = payload[0]?.payload;
-    if (!data) return null;
+// Memoized tooltip to prevent re-rendering when position changes
+const CustomTooltip = memo(function CustomTooltip({
+    quantity,
+    supplyPrice,
+    demandPrice,
+}: CustomTooltipProps): ReactNode {
     return (
-        <div className="bg-card border border-border p-2 rounded shadow-md">
+        <div className="bg-card border border-border p-2 rounded shadow-md pointer-events-none">
             <p className="text-sm font-semibold">
-                Quantity: {formatPower(data.quantity)}
+                Quantity: {formatPower(quantity)}
             </p>
-            {data.supply !== undefined && (
-                <p className="text-sm">Supply: ${data.supply.toFixed(6)}/Wh</p>
+            {supplyPrice !== null && (
+                <p className="text-sm">Supply: ${supplyPrice.toFixed(6)}/Wh</p>
             )}
-            {data.demand !== undefined && (
-                <p className="text-sm">Demand: ${data.demand.toFixed(6)}/Wh</p>
+            {demandPrice !== null && (
+                <p className="text-sm">Demand: ${demandPrice.toFixed(6)}/Wh</p>
             )}
         </div>
     );
+});
+
+interface OrderBlockProps {
+    id: string;
+    x1: number;
+    x2: number;
+    y1: number;
+    y2: number;
+    color: string;
+    fillOpacity: number;
+    isHovered: boolean;
 }
+
+// Memoized order block component to prevent re-rendering when not hovered
+const OrderBlock = memo(function OrderBlock({
+    id,
+    x1,
+    x2,
+    y1,
+    y2,
+    color,
+    fillOpacity,
+    isHovered,
+}: OrderBlockProps) {
+    return (
+        <ReferenceArea
+            key={id}
+            x1={x1}
+            x2={x2}
+            y1={y1}
+            y2={y2}
+            fill={color}
+            fillOpacity={isHovered ? 0.9 : fillOpacity}
+            stroke={color}
+            strokeOpacity={isHovered ? 0.8 : 0.5}
+            strokeWidth={isHovered ? 2 : 1}
+        />
+    );
+});
 
 /**
  * Transforms order data into a stepped curve for Recharts. Creates points for a
@@ -158,7 +241,7 @@ function generateNiceTicks(
  * ragged supply/demand curves from discrete orders, clearing point, and
  * individual order blocks.
  */
-export function SupplyDemandChart({
+function SupplyDemandChartInner({
     marketId,
     tick,
     height = 500,
@@ -176,6 +259,29 @@ export function SupplyDemandChart({
         marketId,
         tick,
     });
+
+    // State for tooltip content (only changes when actual values change)
+    const [tooltipContent, setTooltipContent] = useState<{
+        quantity: number;
+        supplyPrice: number | null;
+        demandPrice: number | null;
+    } | null>(null);
+
+    // State for currently hovered order block (only changes when block changes)
+    const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
+
+    // State for measured Y-axis width (for calculating dead space)
+    const [yAxisWidth, setYAxisWidth] = useState<number>(0);
+
+    // Ref to the container for coordinate calculations
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Ref to tooltip div for direct style manipulation (avoids re-renders)
+    const tooltipRef = useRef<HTMLDivElement>(null);
+
+    // Throttle mouse move updates to reduce memory churn
+    const lastUpdateTime = useRef<number>(0);
+    const THROTTLE_MS = 16; // ~60fps
 
     // Transform data into supply and demand curves
     const {
@@ -302,29 +408,209 @@ export function SupplyDemandChart({
         }));
     }, [demandCurve]);
 
-    // Color getter function matching MarketClearingVolumeChart
-    // Keep consistent function signature for React Compiler
-    const getBlockColor = (
-        blockType: "supply" | "demand",
-        facility?: string,
-        playerId?: number,
-    ): string => {
-        if (!breakdownEnabled) {
-            // Default colors when breakdown is disabled
-            return blockType === "supply" ? "var(--chart-1)" : "var(--chart-2)";
-        }
+    // Memoize color getter function to prevent recreation on every render
+    const getBlockColor = useCallback(
+        (
+            blockType: "supply" | "demand",
+            facility?: string,
+            playerId?: number,
+        ): string => {
+            if (!breakdownEnabled) {
+                // Default colors when breakdown is disabled
+                return blockType === "supply"
+                    ? "var(--chart-1)"
+                    : "var(--chart-2)";
+            }
 
-        if (breakdownMode === "type") {
-            // Use facility color getter
-            return facility ? getColor(facility) : "var(--chart-1)";
-        }
+            if (breakdownMode === "type") {
+                // Use facility color getter
+                return facility ? getColor(facility) : "var(--chart-1)";
+            }
 
-        // Player mode - use hash-based color from chart palette
-        const key = playerId?.toString() ?? facility ?? "unknown";
-        return getHashBasedChartColor(key);
-    };
+            // Player mode - use hash-based color from chart palette
+            const key = playerId?.toString() ?? facility ?? "unknown";
+            return getHashBasedChartColor(key);
+        },
+        [breakdownEnabled, breakdownMode, getColor],
+    );
 
     const fillOpacity = !breakdownEnabled ? 0.2 : 0.7;
+
+    // Create d3 scales for coordinate conversions
+    const xScale = useMemo(() => {
+        return scaleLinear().domain(quantityDomain).range([0, 1]); // Will be scaled to actual pixel range in mouse handler
+    }, [quantityDomain]);
+
+    const yScale = useMemo(() => {
+        return scaleLinear().domain(priceDomain).range([1, 0]); // Inverted because Y coordinates increase downward
+    }, [priceDomain]);
+
+    // Measure the actual Y-axis width after render
+    // Only re-measure when the max price tick changes (affects label width)
+    const maxPriceTick = priceTicks[priceTicks.length - 1];
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        // Defer measurement to next animation frame to ensure Recharts has rendered
+        const rafId = requestAnimationFrame(() => {
+            if (!containerRef.current) return;
+
+            // Query for the Y-axis group element rendered by Recharts
+            const yAxisElement = containerRef.current.querySelector(
+                ".recharts-yAxis",
+            ) as SVGGElement | null;
+
+            if (yAxisElement) {
+                try {
+                    // Get the bounding box of the Y-axis (includes tick labels and axis label)
+                    const bbox = yAxisElement.getBBox();
+                    // Add a small buffer for safety
+                    const newWidth = bbox.width + 5;
+                    // Only update if changed to avoid unnecessary re-renders
+                    setYAxisWidth((prev) =>
+                        Math.abs(prev - newWidth) > 1 ? newWidth : prev,
+                    );
+                } catch {
+                    // getBBox can fail in some edge cases, ignore
+                }
+            }
+        });
+
+        return () => cancelAnimationFrame(rafId);
+    }, [maxPriceTick]); // Only re-measure when max price tick changes
+
+    // Mouse move handler to track cursor and interpolate values
+    // Optimized to minimize state updates and re-renders
+    const handleMouseMove = useCallback(
+        (event: MouseEvent<HTMLDivElement>) => {
+            // Throttle updates to reduce memory churn
+            const now = performance.now();
+            if (now - lastUpdateTime.current < THROTTLE_MS) {
+                return;
+            }
+            lastUpdateTime.current = now;
+
+            if (!containerRef.current) return;
+
+            // Cache rect calculation - only call once
+            const rect = containerRef.current.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            // Calculate the chart area dimensions
+            // Use the measured Y-axis width to account for tick labels and axis label
+            // that extend beyond the margin into the "dead space"
+            const chartLeft = CHART_MARGIN.left + yAxisWidth;
+            const chartRight = rect.width - CHART_MARGIN.right;
+            const chartWidth = chartRight - chartLeft;
+
+            // Check if mouse is within chart bounds
+            if (mouseX < chartLeft || mouseX > chartRight) {
+                setTooltipContent(null);
+                setHoveredBlockId(null);
+                return;
+            }
+
+            // Convert mouse X position to quantity value
+            const normalizedX = (mouseX - chartLeft) / chartWidth;
+            const [minQ, maxQ] = xScale.domain();
+            const quantity = minQ! + normalizedX * (maxQ! - minQ!);
+
+            // Interpolate supply and demand prices at this quantity
+            const supplyPrice = interpolateAtX(supplyCurve, quantity);
+            const demandPrice = interpolateAtX(demandCurve, quantity);
+
+            // Determine which order block is hovered (only in breakdown mode)
+            let foundBlockId: string | null = null;
+            let blockPrice: number | undefined = undefined;
+
+            if (breakdownEnabled && showOrderBlocks) {
+                // Only check supply blocks when showing supply breakdown
+                if (breakdownType === "supply") {
+                    for (const block of orderBlocks.supply) {
+                        if (
+                            block.x1 !== undefined &&
+                            block.x2 !== undefined &&
+                            quantity >= block.x1 &&
+                            quantity <= block.x2
+                        ) {
+                            foundBlockId = block.id;
+                            blockPrice = block.y2;
+                            break;
+                        }
+                    }
+                }
+                // Only check demand blocks when showing demand breakdown
+                else if (breakdownType === "demand") {
+                    for (const block of orderBlocks.demand) {
+                        if (
+                            block.x1 !== undefined &&
+                            block.x2 !== undefined &&
+                            quantity >= block.x1 &&
+                            quantity <= block.x2
+                        ) {
+                            foundBlockId = block.id;
+                            blockPrice = block.y2;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Only update hovered block ID if it changed (prevents re-renders)
+            setHoveredBlockId((prev) =>
+                prev !== foundBlockId ? foundBlockId : prev,
+            );
+
+            // Calculate Y position for tooltip
+            let tooltipY = mouseY;
+            if (blockPrice !== undefined) {
+                // Convert price to pixel position using the Y scale
+                const chartTop = CHART_MARGIN.top;
+                const chartBottom = rect.height - CHART_MARGIN.bottom;
+                const chartHeight = chartBottom - chartTop;
+
+                const normalizedY = yScale(blockPrice);
+                tooltipY = chartTop + normalizedY * chartHeight;
+            }
+
+            // Update tooltip position directly via ref (no re-render)
+            if (tooltipRef.current) {
+                const tooltipOffset = 100;
+                tooltipRef.current.style.left = `${mouseX + 10}px`;
+                tooltipRef.current.style.top = `${tooltipY - tooltipOffset}px`;
+            }
+
+            // Only update tooltip content if values changed (prevents re-renders)
+            setTooltipContent((prev) => {
+                if (
+                    !prev ||
+                    prev.quantity !== quantity ||
+                    prev.supplyPrice !== supplyPrice ||
+                    prev.demandPrice !== demandPrice
+                ) {
+                    return { quantity, supplyPrice, demandPrice };
+                }
+                return prev;
+            });
+        },
+        [
+            yAxisWidth,
+            xScale,
+            yScale,
+            supplyCurve,
+            demandCurve,
+            breakdownEnabled,
+            showOrderBlocks,
+            breakdownType,
+            orderBlocks,
+        ],
+    );
+
+    const handleMouseLeave = useCallback(() => {
+        setTooltipContent(null);
+        setHoveredBlockId(null);
+    }, []);
 
     if (isLoading) {
         return (
@@ -347,121 +633,151 @@ export function SupplyDemandChart({
     }
 
     return (
-        <ResponsiveContainer width="100%" height={height}>
-            <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                    dataKey="quantity"
-                    type="number"
-                    domain={quantityDomain}
-                    ticks={quantityTicks}
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value: number) => formatPower(value)}
-                    label={{
-                        value: "Quantity",
-                        position: "insideBottom",
-                        offset: -5,
-                    }}
-                />
-                <YAxis
-                    domain={priceDomain}
-                    ticks={priceTicks}
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value: number) => `$${formatMoney(value)}`}
-                    label={{
-                        value: "Price ($/Wh)",
-                        angle: -90,
-                        position: "insideLeft",
-                    }}
-                />
+        <div
+            ref={containerRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            style={{
+                position: "relative",
+                width: "100%",
+                height: `${height}px`,
+            }}
+        >
+            <ResponsiveContainer width="100%" height={height}>
+                <LineChart data={chartData} margin={CHART_MARGIN}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                        dataKey="quantity"
+                        type="number"
+                        domain={quantityDomain}
+                        ticks={quantityTicks}
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(value: number) => formatPower(value)}
+                        label={{
+                            value: "Quantity",
+                            position: "insideBottom",
+                            offset: -5,
+                        }}
+                    />
+                    <YAxis
+                        domain={priceDomain}
+                        ticks={priceTicks}
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(value: number) =>
+                            `$${formatMoney(value)}`
+                        }
+                        label={{
+                            value: "Price ($/Wh)",
+                            angle: -90,
+                            position: "insideLeft",
+                        }}
+                    />
 
-                {/* Order blocks */}
-                {showOrderBlocks &&
-                    (!breakdownEnabled || breakdownType === "supply") &&
-                    orderBlocks.supply.map((block) => {
-                        const color = getBlockColor(
-                            "supply",
-                            block.facility,
-                            block.playerId,
-                        );
-                        return (
-                            <ReferenceArea
+                    {/* Order blocks - using memoized component to prevent re-renders */}
+                    {showOrderBlocks &&
+                        (!breakdownEnabled || breakdownType === "supply") &&
+                        orderBlocks.supply.map((block) => (
+                            <OrderBlock
                                 key={block.id}
-                                x1={block.x1}
-                                x2={block.x2}
-                                y1={block.y1}
-                                y2={block.y2}
-                                fill={color}
+                                id={block.id}
+                                x1={block.x1!}
+                                x2={block.x2!}
+                                y1={block.y1!}
+                                y2={block.y2!}
+                                color={getBlockColor(
+                                    "supply",
+                                    block.facility,
+                                    block.playerId,
+                                )}
                                 fillOpacity={fillOpacity}
-                                stroke={color}
-                                strokeOpacity={0.5}
+                                isHovered={hoveredBlockId === block.id}
                             />
-                        );
-                    })}
+                        ))}
 
-                {showOrderBlocks &&
-                    (!breakdownEnabled || breakdownType === "demand") &&
-                    orderBlocks.demand.map((block) => {
-                        const color = getBlockColor(
-                            "demand",
-                            block.facility,
-                            block.playerId,
-                        );
-                        return (
-                            <ReferenceArea
+                    {showOrderBlocks &&
+                        (!breakdownEnabled || breakdownType === "demand") &&
+                        orderBlocks.demand.map((block) => (
+                            <OrderBlock
                                 key={block.id}
-                                x1={block.x1}
-                                x2={block.x2}
-                                y1={block.y1}
-                                y2={block.y2}
-                                fill={color}
+                                id={block.id}
+                                x1={block.x1!}
+                                x2={block.x2!}
+                                y1={block.y1!}
+                                y2={block.y2!}
+                                color={getBlockColor(
+                                    "demand",
+                                    block.facility,
+                                    block.playerId,
+                                )}
                                 fillOpacity={fillOpacity}
-                                stroke={color}
-                                strokeOpacity={0.5}
+                                isHovered={hoveredBlockId === block.id}
                             />
-                        );
-                    })}
+                        ))}
 
-                {/* Supply curve */}
-                <Line
-                    type="linear"
-                    dataKey="supply"
-                    data={chartData}
-                    stroke="var(--chart-1)"
-                    strokeWidth={2}
-                    dot={false}
-                    isAnimationActive={false}
-                />
+                    {/* Supply curve */}
+                    <Line
+                        type="linear"
+                        dataKey="supply"
+                        data={chartData}
+                        stroke="var(--chart-1)"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={false}
+                        isAnimationActive={false}
+                    />
 
-                {/* Demand curve */}
-                <Line
-                    type="linear"
-                    dataKey="demand"
-                    data={demandChartData}
-                    stroke="var(--chart-2)"
-                    strokeWidth={2}
-                    dot={false}
-                    isAnimationActive={false}
-                />
+                    {/* Demand curve */}
+                    <Line
+                        type="linear"
+                        dataKey="demand"
+                        data={demandChartData}
+                        stroke="var(--chart-2)"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={false}
+                        isAnimationActive={false}
+                    />
 
-                {/* Clearing price/volume point */}
-                <ReferenceDot
-                    x={marketData.market_quantity}
-                    y={marketData.market_price}
-                    r={6}
-                    fill="var(--primary)"
-                    stroke="var(--background)"
-                    strokeWidth={2}
-                    label={{
-                        value: `Clearing: ${formatPower(marketData.market_quantity)} @ $${formatMoney(marketData.market_price)}/Wh`,
-                        position: "top",
-                        fill: "var(--foreground)",
-                        fontSize: 12,
+                    {/* Clearing price/volume point */}
+                    <ReferenceDot
+                        x={marketData.market_quantity}
+                        y={marketData.market_price}
+                        r={6}
+                        fill="var(--primary)"
+                        stroke="var(--background)"
+                        strokeWidth={2}
+                        label={{
+                            value: `Clearing: ${formatPower(marketData.market_quantity)} @ $${formatMoney(marketData.market_price)}/Wh`,
+                            position: "top",
+                            fill: "var(--foreground)",
+                            fontSize: 12,
+                        }}
+                    />
+                </LineChart>
+            </ResponsiveContainer>
+
+            {/* Custom tooltip with interpolated values */}
+            {tooltipContent && (
+                <div
+                    ref={tooltipRef}
+                    style={{
+                        position: "absolute",
+                        zIndex: 50,
+                        left: 0,
+                        top: 0,
                     }}
-                />
-
-                <Tooltip content={<CustomTooltip />} />
-            </LineChart>
-        </ResponsiveContainer>
+                >
+                    <CustomTooltip
+                        quantity={tooltipContent.quantity}
+                        supplyPrice={tooltipContent.supplyPrice}
+                        demandPrice={tooltipContent.demandPrice}
+                    />
+                </div>
+            )}
+        </div>
     );
 }
+
+// Memoize component to prevent re-renders when props haven't changed
+// This is critical for slider performance - prevents re-creating hundreds of objects
+export const SupplyDemandChart = memo(SupplyDemandChartInner);

@@ -712,51 +712,40 @@ export function useMarketData({
     });
 
     // If data is loading, try to find the closest cached tick
+    // Optimized: check specific nearby ticks instead of searching entire cache
     const cachedFallbackData = useMemo(() => {
         // Only use fallback if loading and don't have current data
         if (!query.isLoading || query.data) {
             return null;
         }
 
-        // Search for cached data from nearby ticks
-        const cache = queryClient.getQueryCache();
-        const queryKeyPrefix = ["charts", "markets", marketId, "orders"];
+        // Try nearby ticks in order of proximity (±1, ±2, ±3, etc.)
+        // This is much faster than iterating through all cached queries
+        const maxDistance = 20;
+        for (let dist = 1; dist <= maxDistance; dist++) {
+            // Try tick - dist first (recent past is more likely to be useful)
+            const lowerTick = tick - dist;
+            const lowerQuery =
+                queryClient.getQueryData<MarketOrdersDataResponse>(
+                    queryKeys.charts.marketOrderData(marketId, lowerTick),
+                );
+            if (lowerQuery) {
+                return lowerQuery;
+            }
 
-        const allMarketQueries = cache.findAll({
-            queryKey: queryKeyPrefix,
-            predicate: (q: Query) =>
-                q.state.status === "success" && !!q.state.data,
-        });
-
-        if (allMarketQueries.length === 0) {
-            return null; // No cached data available
-        }
-
-        // Find the cached tick closest to the requested tick
-        let closestQuery: Query | null = null;
-        let minDistance = Infinity;
-
-        for (const q of allMarketQueries) {
-            // Query key structure: ["charts", "markets", marketId, "orders", tick]
-            const queryKey = q.queryKey as [
-                string,
-                string,
-                number,
-                string,
-                number,
-            ];
-            const cachedTick = queryKey[4];
-            const distance = Math.abs(cachedTick - tick);
-
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestQuery = q;
+            // Then try tick + dist
+            const higherTick = tick + dist;
+            const higherQuery =
+                queryClient.getQueryData<MarketOrdersDataResponse>(
+                    queryKeys.charts.marketOrderData(marketId, higherTick),
+                );
+            if (higherQuery) {
+                return higherQuery;
             }
         }
 
-        // Type assertion: we know this is MarketOrdersDataResponse based on query key structure
-        return (closestQuery?.state.data as MarketOrdersDataResponse) || null;
-    }, [query.isLoading, query.data, queryClient, marketId, tick]);
+        return null; // No cached data available nearby
+    }, [queryClient, marketId, tick, query.isLoading, query.data]);
 
     // If loading and we have fallback data, return that instead
     if (query.isLoading && cachedFallbackData) {
