@@ -1,85 +1,165 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "run server",
-			"type": "shell",
-			"command": "${command:python.interpreterPath} main.py --env dev",
-			"presentation": {
-				"clear": true
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		},
-		{
-			"label": "run server (fast clock)",
-			"type": "shell",
-			"command": "${command:python.interpreterPath} main.py --env dev --clock_time 1 --in_game_seconds_per_tick 3600",
-			"presentation": {
-				"clear": true
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		},
-		{
-			"label": "run with init_test_players",
-			"type": "shell",
-			"command": "${command:python.interpreterPath} main.py --env dev --rm_instance --run_init_test_players",
-			"presentation": {
-				"clear": true,
-				"focus": true
-			},
-			"group": {
-				"kind": "build"
-			}
-		},
-		{
-			"label": "remove instance",
-			"type": "shell",
-			"command": "rm -rf instance/ checkpoints/",
-			"presentation": {
-				"reveal": "never"
-			},
-			"group": {
-				"kind": "none"
-			},
-			"problemMatcher": [ ]
-		},
-		{
-			"label": "run sign-up disabled",
-			"type": "shell",
-			"command": "${command:python.interpreterPath} main.py --env dev --rm_instance --disable_signups",
-			"presentation": {
-				"clear": true
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		},
-		{
-			"type": "npm",
-			"script": "build",
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"problemMatcher": [ ],
-			"options": {
-				"cwd": "${workspaceFolder}/frontend"
-			},
-			"presentation": {
-				"echo": true,
-				"reveal": "silent",
-				"focus": false,
-				"panel": "dedicated",
-				"showReuseMessage": true,
-				"clear": true
-			}
-		}
-	]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "run server",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} main.py --env dev",
+            "presentation": {
+                "clear": true
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "run server (fast clock)",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} main.py --env dev --clock_time 1 --in_game_seconds_per_tick 3600",
+            "presentation": {
+                "clear": true
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "run with init_test_players",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} main.py --env dev --rm_instance --run_init_test_players",
+            "presentation": {
+                "clear": true,
+                "focus": true
+            },
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "remove instance",
+            "type": "shell",
+            "command": "rm -rf instance/ checkpoints/",
+            "presentation": {
+                "reveal": "never"
+            },
+            "group": {
+                "kind": "none"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "run sign-up disabled",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} main.py --env dev --rm_instance --disable_signups",
+            "presentation": {
+                "clear": true
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "npm",
+            "script": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}/frontend"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": true
+            }
+        },
+        {
+            "type": "npm",
+            "script": "dev",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}/frontend"
+            },
+            "presentation": {
+                "echo": true,
+                "focus": false,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": true
+            }
+        },
+        {
+            "label": "generate types",
+            "type": "npm",
+            "script": "generate-types",
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}/frontend"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "showReuseMessage": false,
+                "clear": true
+            }
+        },
+        {
+            "label": "Deploy",
+            "type": "shell",
+            "command": "bash",
+            "args": ["./scripts/deploy.sh", "--force", "--yes"],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "focus": true
+            }
+        },
+        {
+            "label": "Deploy frontend only",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "./scripts/deploy.sh",
+                "--force",
+                "--yes",
+                "--skip-backend"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "focus": true
+            }
+        },
+        {
+            "label": "Sync instance from deployment",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "rm -rf instance/ checkpoints/ && rsync -avz --delete \"${DEPLOY_HOST:-energetica-game-deploy}:/var/www/energetica/instance/\" instance/"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "focus": true
+            }
+        }
+    ]
 }

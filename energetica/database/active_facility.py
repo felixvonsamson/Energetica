@@ -76,7 +76,6 @@ class ActiveFacility(DBModel):
     @property
     def extraction_rate(self) -> float:
         """Rate at which the facility extracts resources from the ground. Defined only for extraction facilities."""
-        assert self.player.tile is not None
         assert isinstance(self.facility_type, ExtractionFacilityType)
         return (
             self.const_config["base_extraction_rate_per_day"]
@@ -107,7 +106,11 @@ class ActiveFacility(DBModel):
 
     @property
     def max_power_use(self) -> float:
-        """Maximum power consumption of the facility in W. Defined only for extraction facilities."""
+        """Maximum power consumption of the facility in W. Defined for extraction and storage facilities."""
+        if isinstance(self.facility_type, StorageFacilityType):
+            # For storage facilities, charging power equals discharging power
+            return self.const_config["base_power_generation"] * self.multipliers["power_production_multiplier"]
+        # For extraction facilities
         return self.const_config["base_power_consumption"] * self.multipliers["power_consumption_multiplier"]
 
     @property

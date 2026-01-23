@@ -20,6 +20,7 @@ class AskOut(AskBase):
     """Schema for an ask in the resource market."""
 
     id: int = Field(description="ID of the ask in the resource market.")
+    seller_id: int = Field(description="ID of the player selling the resource.")
 
     @classmethod
     def from_resource_on_sale(cls, resource_on_sale: ResourceOnSale) -> AskOut:
@@ -28,6 +29,7 @@ class AskOut(AskBase):
             resource_type=resource_on_sale.resource,
             unit_price=resource_on_sale.unit_price,
             quantity=resource_on_sale.quantity,
+            seller_id=resource_on_sale.player.id,
         )
 
 
@@ -53,4 +55,16 @@ class AskListOut(BaseModel):
 class PurchaseOrderCreate(BaseModel):
     """Schema for a purchase order in the resource market."""
 
-    quantity: float = Field(gt=0, description="Quantity of the resource in kg.")
+    quantity: float | None = Field(
+        default=None,
+        gt=0,
+        description="Quantity of the resource in kg. If not provided, purchases all available quantity.",
+    )
+
+
+class DeliveryCalculationResponse(BaseModel):
+    """Response with calculated delivery time for a resource shipment."""
+
+    shipment_time: float = Field(
+        description="Estimated shipment time in game ticks.",
+    )

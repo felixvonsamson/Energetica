@@ -20,7 +20,7 @@ from energetica.enums import (
 )
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
-from energetica.schemas.networks import AskItem, AskType, BidItem, BidType, PowerPriorityItem
+from energetica.schemas.electricity_markets import AskItem, AskType, BidItem, BidType, PowerPriorityItem
 from energetica.utils.hashing import stable_hash
 
 
@@ -121,7 +121,7 @@ class NetworkPrices:
         for key, price in self.ask_prices.items():
             if key not in player.capacities or player.capacities[key]["power"] == 0:
                 continue
-            type_key_price.append((AskItem(side="ask", type=key), price))
+            type_key_price.append((AskItem(side="ask", type=key, price=price), price))
 
         for key, price in self.bid_prices.items():
             if isinstance(key, StorageFacilityType):
@@ -140,7 +140,7 @@ class NetworkPrices:
             elif key == NonFacilityBidType.TRANSPORT:
                 if player.functional_facility_lvl[FunctionalFacilityType.WAREHOUSE] == 0:
                     continue
-            type_key_price.append((BidItem(side="bid", type=key), price))
+            type_key_price.append((BidItem(side="bid", type=key, price=price), price))
 
         type_key_price.sort(key=lambda x: x[1])
         return [x[0] for x in type_key_price]

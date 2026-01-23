@@ -132,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 console.log(players[player_id].network_id);
                                 return;
                             }
-                            send_json(`/api/v1/networks/${player_network_id}:leave`).then((response) => {
+                            send_json(`/api/v1/electricity-markets/${player_network_id}:leave`).then((response) => {
                                 if (response.status == 200) {
                                     sessionStorage.removeItem("players");
                                     sessionStorage.removeItem("networks");
@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
         join_network_form.addEventListener("submit", (event) => {
             event.preventDefault();  // Prevent the default form submission
             const network_id = join_network_form.elements["choose_network"].value;
-            send_json(`/api/v1/networks/${network_id}:join`).then((response) => {
+            send_json(`/api/v1/electricity-markets/${network_id}:join`).then((response) => {
                 if (response.status == 200) {
                     sessionStorage.removeItem("players");
                     sessionStorage.removeItem("networks");
@@ -182,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 addError("Name must be between 3 and 40 characters");
                 return;
             }
-            send_json("/api/v1/networks", { name: network_name }).then((response) => {
+            send_json("/api/v1/electricity-markets", { name: network_name }).then((response) => {
                 if (response.status == 200) {
                     sessionStorage.removeItem("players");
                     sessionStorage.removeItem("networks");

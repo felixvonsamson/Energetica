@@ -22,4 +22,9 @@ jobs:
           pip install -r requirements.txt
       - name: Run tests
         run: |
-          pytest
+          # Skip slow external link tests on regular branches, include on releases
+          if [[ "${{ github.ref }}" == refs/heads/release/* ]]; then
+            pytest
+          else
+            pytest -m "not external_links"
+          fi

@@ -44,7 +44,7 @@ from energetica.utils.tick_execution import state_update
 
 def create_app(
     *,
-    port: int = 5001,
+    port: int = 8000,
     clock_time: int = 30,
     in_game_seconds_per_tick: int = 240,
     run_init_test_players: bool = False,

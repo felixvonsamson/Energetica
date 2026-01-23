@@ -248,8 +248,6 @@ def hydro_price_multiplier(player: Player, hydro_facility_type: HydroFacilityTyp
 
     This is determined by the tile's hydro potential, and the number of hydro facilities / the next available location.
     """
-    if not player.tile:
-        raise GameError(GameExceptionType.TILE_NOT_FOUND)  # TODO(mglst): handle this case
     return hydro_price_function(
         next_available_location(player, hydro_facility_type),
         player.tile.potentials[Renewable.HYDRO],
@@ -264,8 +262,6 @@ def wind_speed_multiplier(player: Player, wind_facility_type: WindFacilityType) 
     Depends on the `player`'s current number of wind facilities and wind potential.
     """
     # calculating the wind speed multiplier linked to the number of wind turbines
-    if not player.tile:
-        raise GameError(GameExceptionType.TILE_NOT_FOUND)  # TODO(mglst): handle this case
     return wind_speed_function(
         next_available_location(player, wind_facility_type),
         player.tile.potentials[Renewable.WIND],
@@ -655,8 +651,6 @@ def _capacity_factors(player: Player, renewable_power_facility_type: ProjectType
             }
             return capacity_factors[latitude]
 
-        if not player.tile:
-            raise GameError(GameExceptionType.TILE_NOT_FOUND)
         return {
             "capacity_factor": f"{100 * capacity_factor_solar(player.tile.coordinates[1]):.0f}%",
         }
@@ -682,8 +676,6 @@ def _package_power_storage_extraction_facility_base(player: Player, facility_typ
 
 def package_power_facilities(player: Player) -> list[dict]:
     """Package data relevant for the power_facilities frontend."""
-    # TODO(mglst): add wind and hydro potential
-    # https://github.com/users/felixvonsamson/projects/1/views/15?pane=issue&itemId=71832436
     const_config_assets = engine.const_config["assets"]
     return [
         _package_project_base(player, power_facility)
@@ -701,13 +693,24 @@ def package_power_facilities(player: Player) -> list[dict]:
             else {}
         )
         | (
-            {"high_hydro_cost": hydro_price_multiplier(player, power_facility) >= 13.0}
+            {
+                "high_hydro_cost": hydro_price_multiplier(player, power_facility) >= 13.0,
+                "hydro_potential": player.tile.potentials[Renewable.HYDRO],
+            }
             if isinstance(power_facility, HydroFacilityType)
             else {}
         )
         | (
-            {"low_wind_speed": wind_speed_multiplier(player, power_facility) <= 0.55}
+            {
+                "low_wind_speed": wind_speed_multiplier(player, power_facility) <= 0.55,
+                "wind_potential": player.tile.potentials[Renewable.WIND],
+            }
             if isinstance(power_facility, WindFacilityType)
+            else {}
+        )
+        | (
+            {"solar_potential": player.tile.potentials[Renewable.SOLAR]}
+            if isinstance(power_facility, SolarFacilityType)
             else {}
         )
         for power_facility in power_facility_types
@@ -744,9 +747,6 @@ def package_extraction_facilities(player: Player) -> list[dict]:
             Fuel.URANIUM: 2_400_000,
         }
         return tile.fuel_reserves[fuel] < limits[fuel]
-
-    if not player.tile:
-        raise GameError(GameExceptionType.TILE_NOT_FOUND)
 
     return [
         _package_project_base(player, extraction_facility)
@@ -940,10 +940,7 @@ def package_available_technologies(player: Player) -> list[dict]:
         _package_project_base(player, technology)
         | {
             "level": levels[technology],
-            "affected_facilities": [
-                const_config_assets[facility]["name"]
-                for facility in const_config_assets[technology]["affected_facilities"]
-            ],
+            "affected_facilities": const_config_assets[technology]["affected_facilities"],
         }
         | (
             {

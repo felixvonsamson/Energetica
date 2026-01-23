@@ -58,6 +58,8 @@ def tick() -> None:
     elif engine.total_t % (10 * 60 / engine.clock_time) == 0:
         engine.save()
 
+    engine.emit("tick", {"tick": engine.total_t})
+
 
 def check_events_completion() -> None:
     """Check if projects have finished, shipments have arrived or facilities arrived at end of life."""

@@ -1,41 +1,469 @@
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Expletus+Sans&display=swap');
+/* 1. Import Google font */
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Expletus+Sans&display=swap");
 
-html,
-body,
-#root {
-    height: 100%;
-    margin: 0;
-    /* Disable scrolling */
-    overflow: hidden;
-}
+/* 2. Tailwind layer injection */
+@import "tailwindcss";
+@import "tw-animate-css";
 
-body {
-    font-family: 'Baloo 2', sans-serif;
-}
+@plugin "@tailwindcss/typography";
 
-main {
-    width: 100%;
-}
+/* 3. Tailwind v4 Theme Configuration - Option A: Two-Layer Architecture
+   ========================================================================
+   LAYER 1: Base palette (raw color values)
+   LAYER 2: Semantic tokens (reference :root variables for theming)
 
-:root {
-    --color-white: #ffffff;
+   See docs/frontend/tailwind-v4-theming.md for details.
+   ======================================================================== */
+/* stylelint-disable-next-line at-rule-no-unknown */
+@theme inline {
+    /* ============================================
+       Base Color Palette (Source of Truth)
+       ============================================ */
     --color-bone: #e5d9b6;
+    --color-bone-dark: #83640e;
     --color-tan-green: #a4be7b;
-    --color-tan-hover: #B5CA95;
-    --color-green: #5f8d4e;
+    --color-tan-hover: #b5ca95;
+    --color-brand-green: #5f8d4e;
     --color-pine: #285430;
-    --color-pine-darker: #1B3820;
-    --color-red: #f44336;
-    --color-orange: #f59f00;
+    --color-pine-darker: #1b3820;
+    --color-alert-orange: #f59f00;
+    --color-white: #ffffff;
 
-    --text-on-light: #000000;
-    --text-on-dark: #ffffff;
+    /* shadcn/ui semantic tokens (for future compatibility) */
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
 
-    /* An example for a font */
-    --font-sans: system-ui, sans-serif;
+    /* Status/Alert colors */
+    --color-info: var(--info);
+    --color-info-foreground: var(--info-foreground);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --radius-2xl: calc(var(--radius) + 8px);
+    --radius-3xl: calc(var(--radius) + 12px);
+    --radius-4xl: calc(var(--radius) + 16px);
 }
 
-h1 {
+/* 4. Base layer with runtime theme values */
+@layer base {
+    /* ============================================
+       Light Mode (Default)
+       These values are swapped at runtime for theming
+       ============================================ */
+    :root {
+        /* shadcn/ui semantic colors (light mode) */
+        --background: var(--color-tan-green);
+        --foreground: var(--color-pine);
+
+        --card: var(--color-bone);
+        --card-foreground: var(--color-pine);
+
+        --popover: var(--color-bone);
+        --popover-foreground: var(--color-pine);
+
+        --primary: var(--color-pine);
+        --primary-foreground: #ffffff;
+
+        --secondary: var(--color-tan-green);
+        --secondary-foreground: #000000;
+
+        --muted: #d3bf94;
+        --muted-foreground: var(--color-brand-green);
+
+        --accent: var(--color-brand-green);
+        --accent-foreground: #ffffff;
+
+        --destructive: oklch(0.6427 0.2153 28.81);
+        --destructive-foreground: #ffffff;
+
+        --border: #876d22;
+        --input: var(--color-pine);
+        --ring: var(--color-pine);
+
+        --radius: 0.5rem;
+
+        /* Chart colors (light mode) */
+        --chart-1: oklch(0.646 0.222 41.116);
+        --chart-2: oklch(0.6 0.118 184.704);
+        --chart-3: oklch(0.398 0.07 227.392);
+        --chart-4: oklch(0.828 0.189 84.429);
+        --chart-5: oklch(0.769 0.188 70.08);
+
+        /* Sidebar colors (light mode) */
+        --sidebar: var(--color-brand-green);
+        --sidebar-foreground: var(--color-pine-darker);
+        --sidebar-primary: var(--color-tan-green);
+        --sidebar-primary-foreground: #ffffff;
+        --sidebar-accent: var(--color-tan-hover);
+        --sidebar-accent-foreground: var(--color-pine-darker);
+        --sidebar-border: var(--color-tan-green);
+        --sidebar-ring: var(--color-pine);
+
+        /* Status/Alert colors (light mode) */
+        --info: rgb(37, 99, 235);
+        --info-foreground: #ffffff;
+        --warning: var(--color-alert-orange);
+        --warning-foreground: #000000;
+        --success: rgb(22, 163, 74);
+        --success-foreground: #ffffff;
+
+        /* Asset colours - Power facilities (water) */
+        --asset-color-watermill: rgb(0, 180, 216);
+        --asset-color-small-water-dam: rgb(0, 119, 182);
+        --asset-color-large-water-dam: rgb(3, 4, 94);
+
+        /* Asset colours - Power facilities (nuclear) */
+        --asset-color-nuclear-reactor: rgb(191, 210, 0);
+        --asset-color-nuclear-reactor-gen4: rgb(128, 185, 24);
+
+        /* Asset colours - Power facilities (fossil) */
+        --asset-color-steam-engine: rgb(151, 157, 172);
+        --asset-color-coal-burner: rgb(0, 0, 0);
+        --asset-color-gas-burner: rgb(171, 196, 255);
+        --asset-color-combined-cycle: rgb(92, 77, 125);
+
+        /* Asset colours - Power facilities (wind) */
+        --asset-color-windmill: rgb(156, 197, 161);
+        --asset-color-onshore-wind-turbine: rgb(73, 160, 120);
+        --asset-color-offshore-wind-turbine: rgb(33, 104, 105);
+
+        /* Asset colours - Power facilities (solar) */
+        --asset-color-csp-solar: rgb(255, 170, 0);
+        --asset-color-pv-solar: rgb(255, 234, 0);
+
+        /* Asset colours - Storage facilities */
+        --asset-color-small-pumped-hydro: rgb(0, 150, 199);
+        --asset-color-large-pumped-hydro: rgb(2, 62, 138);
+        --asset-color-lithium-ion-batteries: rgb(108, 88, 76);
+        --asset-color-solid-state-batteries: rgb(169, 132, 103);
+        --asset-color-molten-salt: rgb(119, 47, 26);
+        --asset-color-hydrogen-storage: rgb(144, 241, 239);
+
+        /* Asset colours - Extraction facilities */
+        --asset-color-coal-mine: rgb(73, 80, 87);
+        --asset-color-gas-drilling-site: rgb(76, 201, 240);
+        --asset-color-uranium-mine: rgb(238, 239, 32);
+
+        /* Asset colours - Resources */
+        --asset-color-coal: rgb(0, 0, 0);
+        --asset-color-gas: rgb(171, 196, 255);
+        --asset-color-uranium: rgb(191, 210, 0);
+        --asset-color-imports: rgb(255, 89, 94);
+        --asset-color-exports: rgb(138, 201, 38);
+        --asset-color-dumping: rgb(208, 0, 0);
+
+        /* Asset colours - Functional facilities */
+        --asset-color-industry: rgb(188, 108, 37);
+        --asset-color-research: rgb(255, 255, 255);
+        --asset-color-construction: rgb(255, 123, 0);
+        --asset-color-transport: rgb(106, 0, 244);
+        --asset-color-carbon-capture: rgb(173, 181, 189);
+
+        /* Map tile colours */
+        --map-selected-tile-hover: var(--color-pine-darker);
+        --map-tile-current-player: hsl(0, 64%, 47%);
+        --map-tile-other-player: var(--color-brand-green);
+        --map-tile-vacant: var(--color-bone);
+    }
+
+    /* ============================================
+       Dark Mode
+       Swaps semantic token values for dark theme
+       ============================================ */
+    :root.dark {
+        /* shadcn/ui semantic colors (dark mode) */
+        --background: #0a0a0a;
+        --foreground: oklch(100% 0 0);
+
+        --card: #2d2d2d;
+        --card-foreground: #ffffff;
+
+        --popover: #2d2d2d;
+        --popover-foreground: #ffffff;
+
+        --primary: var(--color-brand-green);
+        --primary-foreground: var(--color-white);
+
+        --secondary: var(--color-pine);
+        --secondary-foreground: #e5e5e5;
+
+        --muted: #424242;
+        --muted-foreground: #b7b7b7;
+
+        --accent: var(--color-brand-green);
+        --accent-foreground: #ffffff;
+
+        --destructive: oklch(52.816% 0.21229 29.916);
+        --destructive-foreground: #ffffff;
+
+        --border: #404040;
+        --input: #606060;
+        --ring: var(--color-brand-green);
+
+        --radius: 0.5rem;
+
+        /* Chart colors (dark mode) */
+        --chart-1: oklch(0.488 0.243 264.376);
+        --chart-2: oklch(0.696 0.17 162.48);
+        --chart-3: oklch(0.769 0.188 70.08);
+        --chart-4: oklch(0.627 0.265 303.9);
+        --chart-5: oklch(0.645 0.246 16.439);
+
+        /* Sidebar colors (dark mode) */
+        --sidebar: #2d2d2d;
+        --sidebar-foreground: #ffffff;
+        --sidebar-primary: var(--color-brand-green);
+        --sidebar-primary-foreground: #ffffff;
+        --sidebar-accent: var(--color-pine);
+        --sidebar-accent-foreground: #e5e5e5;
+        --sidebar-border: #404040;
+        --sidebar-ring: var(--color-brand-green);
+
+        /* Status/Alert colors (dark mode) */
+        --info: rgb(96, 165, 250);
+        --info-foreground: #000000;
+        --warning: rgb(251, 191, 36);
+        --warning-foreground: #000000;
+        --success: rgb(74, 222, 128);
+        --success-foreground: #000000;
+
+        /* Asset colours - Power facilities (water) - adjusted for dark mode */
+        --asset-color-watermill: rgb(100, 210, 236);
+        --asset-color-small-water-dam: rgb(80, 169, 222);
+        --asset-color-large-water-dam: rgb(100, 120, 200);
+
+        /* Asset colours - Power facilities (nuclear) */
+        --asset-color-nuclear-reactor: rgb(206, 220, 80);
+        --asset-color-nuclear-reactor-gen4: rgb(158, 210, 84);
+
+        /* Asset colours - Power facilities (fossil) */
+        --asset-color-steam-engine: rgb(171, 177, 192);
+        --asset-color-coal-burner: rgb(120, 120, 120);
+        --asset-color-gas-burner: rgb(141, 176, 255);
+        --asset-color-combined-cycle: rgb(142, 127, 175);
+
+        /* Asset colours - Power facilities (wind) */
+        --asset-color-windmill: rgb(136, 207, 141);
+        --asset-color-onshore-wind-turbine: rgb(103, 190, 150);
+        --asset-color-offshore-wind-turbine: rgb(83, 154, 155);
+
+        /* Asset colours - Power facilities (solar) */
+        --asset-color-csp-solar: rgb(255, 190, 60);
+        --asset-color-pv-solar: rgb(255, 244, 80);
+
+        /* Asset colours - Storage facilities */
+        --asset-color-small-pumped-hydro: rgb(80, 190, 229);
+        --asset-color-large-pumped-hydro: rgb(82, 132, 208);
+        --asset-color-lithium-ion-batteries: rgb(158, 138, 126);
+        --asset-color-solid-state-batteries: rgb(199, 162, 133);
+        --asset-color-molten-salt: rgb(189, 107, 76);
+        --asset-color-hydrogen-storage: rgb(124, 231, 229);
+
+        /* Asset colours - Extraction facilities */
+        --asset-color-coal-mine: rgb(133, 140, 147);
+        --asset-color-gas-drilling-site: rgb(96, 211, 250);
+        --asset-color-uranium-mine: rgb(214, 214, 60);
+
+        /* Asset colours - Resources */
+        --asset-color-coal: rgb(120, 120, 120);
+        --asset-color-gas: rgb(141, 176, 255);
+        --asset-color-uranium: rgb(206, 220, 80);
+        --asset-color-imports: rgb(255, 129, 134);
+        --asset-color-exports: rgb(168, 221, 78);
+        --asset-color-dumping: rgb(248, 80, 80);
+
+        /* Asset colours - Functional facilities */
+        --asset-color-industry: rgb(218, 148, 77);
+        --asset-color-research: rgb(220, 220, 220);
+        --asset-color-construction: rgb(255, 163, 60);
+        --asset-color-transport: rgb(156, 80, 255);
+        --asset-color-carbon-capture: rgb(153, 161, 169);
+
+        /* Map tile colours - same as light mode */
+        --map-selected-tile-hover: hsl(0, 0%, 89%);
+        --map-tile-current-player: hsl(0, 97%, 23%);
+        --map-tile-other-player: var(--color-pine-darker);
+        --map-tile-vacant: rgb(121, 121, 121);
+    }
+
+    html,
+    body,
+    #root {
+        height: 100%;
+        margin: 0;
+    }
+
+    body {
+        font-family: "Baloo 2", system-ui, sans-serif;
+        color: var(--primary);
+        background-color: var(--background);
+    }
+
+    main {
+        width: 100%;
+    }
+
+    h1 {
+        font-weight: 500;
+    }
+}
+
+/* Prose (Typography) customization for wiki pages */
+.prose {
+    --tw-prose-body: var(--foreground);
+    --tw-prose-headings: var(--foreground) !important;
+    --tw-prose-links: rgb(37, 99, 235);
+    --tw-prose-bold: var(--foreground);
+    --tw-prose-code: var(--foreground);
+    --tw-prose-pre-bg: var(--color-bone);
+    /* --tw-prose-th-borders: #d1d5db; */
+    /* --tw-prose-td-borders: #d1d5db; */
+    /* --tw-prose-th-borders: #00000000;
+    --tw-prose-td-borders: #00000000; */
+    /* max-width: none; */
+}
+
+.dark .prose {
+    --tw-prose-links: rgb(96, 165, 250);
+    --tw-prose-pre-bg: #3a3a3a;
+    /* --tw-prose-th-borders: #4b5563; */
+    /* --tw-prose-td-borders: #4b5563; */
+}
+
+/* Custom prose element styling */
+.prose h1 {
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    font-weight: 800;
+}
+
+.prose h2 {
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.prose h3 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.prose a {
     font-weight: 500;
-    color: var(--color-pine-darker);
+    text-decoration: none;
+}
+
+.prose a:hover {
+    text-decoration: underline;
+}
+
+.prose code {
+    background-color: var(--tw-prose-pre-bg);
+    padding: 0.25rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+    font-weight: 500;
+}
+
+.prose code::before,
+.prose code::after {
+    content: "";
+}
+
+.prose pre {
+    background-color: var(--tw-prose-pre-bg);
+}
+
+.prose pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.prose thead th {
+    background-color: var(--tw-prose-pre-bg);
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.prose tbody th {
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.prose td {
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.prose table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.prose tbody tr {
+    background-color: var(--color-bone);
+}
+
+.prose tbody tr:nth-child(odd) {
+    background-color: #d6c79a;
+}
+
+.dark .prose tbody tr {
+    background-color: var(--color-dark-bg-secondary);
+}
+
+.dark .prose tbody tr:nth-child(odd) {
+    background-color: #3a3a3a;
+}
+
+/* Configure dark mode selector */
+/* stylelint-disable-next-line at-rule-no-unknown */
+/* @variant dark (&:where(.dark, .dark *)); */
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
 }

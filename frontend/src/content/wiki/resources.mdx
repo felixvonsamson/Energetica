@@ -1,0 +1,79 @@
+import { ResourcesExtractionTable } from "@/components/wiki/resources-extraction-table";
+
+# Wiki - Natural Resources
+
+There are three types of natural resources available to players:
+
+- Coal
+- Gas
+- Uranium
+
+These resources are distributed on each tile across the [Map](/app/wiki/map), can be extracted by [Extraction Facilities](#extraction-facilities), can be traded on the [Resource Market](#resource-market), and are used as fuel for some [Power Facilities](/app/wiki/power-facilities).
+
+## Extraction Facilities
+
+Extraction Facilities are what allow players to extract fossil resources from their own tile. Each of the three natural resources has a dedicated extraction facility. Unlocking these facilities requires different levels of [mineral extraction](/app/technologies#mineral-extraction) technology and [Warehouse](/app/wiki/functional-facilities#the-warehouse).
+
+For more information about building power facilities, see [Starting a Projects](/app/wiki/projects#starting-a-project).
+
+Each extraction facility has the following characteristics:
+
+- **Power Consumption:** Maximum power consumption of the facility. This consumption is proportional to the amount of resources extracted. When an extraction facility is inactive, it doesn't consume any power.
+- **Resource Production:** Extraction speed of one facility measured in kg or tons per hour ([in-game time](/app/wiki/time-and-weather#game-time)). The extraction speed is influenced by the extraction rate, available resources in the ground, and the level of [mineral extraction](/app/technologies#mineral-extraction).
+- **Operation cost:** Operational cost of the extraction facility consisting of 20% fixed costs and 80% variable cost.
+- **CO<sub>2</sub> Emissions:** Amount of CO<sub>2</sub> emitted during resource extraction. Emissions are proportional to the resource production and measured in kg of CO<sub>2</sub> per ton of extracted resource.
+- **Lifespan:** Lifespan of the extraction facility.
+
+The formula for extraction speed of natural resource i is:
+
+$$
+es_i = er_i \times q_i \times 1.4^{ME} \times n_{ef,i}
+$$
+
+where $es_i$ is the extraction speed in tons/h, $er_i$ is the base extraction rate in h<sup>-1</sup>, $q_i$ is the amount of the resource i in the ground on the player's tile in tons, $ME$ is the level of the technology [mineral extraction](/app/technologies#mineral-extraction), and $n_{ef,i}$ is the number of extraction facilities for the resource i owned by the player.
+
+Base extraction rates are fixed and determine the fraction of underground resources extractable per day by one facility. They are given in the following table:
+
+<ResourcesExtractionTable />
+
+_ig = [in-game time](/app/wiki/time-and-weather#game-time)_
+
+Resources extracted from these facilities are stored in the [Warehouse](/app/wiki/functional-facilities#the-warehouse). Extraction Facilities cease operation when the warehouse reach full capacity.
+
+The construction process for an extraction facility aligns with that of power facilities, detailed in the [Construction of a Facility](/app/wiki/power-facilities#construction-of-a-plant) section.
+
+## Resource Market
+
+The resource market serves as a marketplace for natural resources.
+
+To add an offer for a specific quantity of a resource at a chosen price, users can click on the "Put on sale" button on the market. This offer will be displayed as a new tile on the page. The amount put up for sale is stored in your warehouse but cannot be consumed until sold (visible as "on sale" in the [resource graph](/app/resources)).
+
+Once another player buys a portion of your offer, you receive the money, and the sold amount is shipped. To remove offers from the market, users can repurchase their own resources without losing money, thereby regaining access to the resources.
+
+If users wish to purchase resources from another player, they can click on the tile of interest, specify the desired amount within the available offer, and click "buy". The purchased resources will be shipped to their location (refer to [resource shipment](#resource-shipment)).
+
+### Resource Shipment
+
+When a certain amount of a natural resource is bought on the market, it is shipped from the seller to the buyer. The shipment duration and electricity consumption are calculated based on the following formulas:
+
+$$
+t_{ship} = t_{base} \times dist \times 0.85^{TT}
+$$
+
+$$
+P_{ship} = \frac{E_{base} \times q_{ship} \times 1.15^{TT}}{t_{base} \times 0.85^{TT}}
+$$
+
+with:
+
+- $t_{ship}$: shipment duration in hours
+- $t_{base}$: base value of shipment duration: 5.3 h/tile ([in-game time](/app/wiki/time-and-weather#game-time)) or 16 min/tile (real-time)
+- $dist$: distance between buyer and seller in tiles
+- $TT$: level of [transport technology](/app/technologies#transport-technology)
+- $P_{ship}$: power consumed for shipping in W
+- $E_{base}$: base energy need of shipments: 5 Wh/kg/tile
+- $q_{ship}$: quantity of shipped resources in kg
+
+If the energy demand of the shipment isn't met, it is paused.
+
+Upon arrival, if the buyer's warehouse lacks sufficient capacity to store the shipped amount, excess resources will be lost.

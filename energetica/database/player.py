@@ -29,6 +29,7 @@ from energetica.enums import (
     PowerFacilityType,
     ProjectStatus,
     ProjectType,
+    RenewableFacilityType,
     StorageFacilityType,
     TechnologyType,
     WindFacilityType,
@@ -37,6 +38,7 @@ from energetica.enums import (
 from energetica.globals import MAIN_EVENT_LOOP, engine
 from energetica.schemas.achievements import AchievementOut
 from energetica.schemas.browser_notifications import Subscription
+from energetica.schemas.electricity_markets import AskType, BidType
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -44,6 +46,7 @@ from energetica.technology_effects import (
     package_power_facilities,
     package_storage_facilities,
 )
+from energetica.types.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -96,6 +99,11 @@ class Player(DBModel):
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
     capacities: CapacityData = field(default_factory=CapacityData)
     cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
+
+    # Facility statuses (updated each tick after market resolution)
+    renewable_statuses: dict[RenewableFacilityType, RenewableStatus] = field(default_factory=dict)
+    production_statuses: dict[AskType, ProductionStatus] = field(default_factory=dict)
+    consumption_statuses: dict[BidType, ConsumptionStatus] = field(default_factory=dict)
 
     achievements: dict[str, int] = field(
         default_factory=lambda: {
@@ -151,6 +159,19 @@ class Player(DBModel):
         """Post initialization method for Player."""
         super().__post_init__()
         self.network_prices.init_prices_with_randomness(self)
+
+    def __setstate__(self, state: dict) -> None:
+        """Called when unpickling - handle backward compatibility for new fields."""
+        # Restore the object's state
+        self.__dict__.update(state)
+
+        # Backward compatibility: Initialize new fields for old Player objects loaded from pickle
+        if not hasattr(self, "renewable_statuses"):
+            self.renewable_statuses = {}
+        if not hasattr(self, "production_statuses"):
+            self.production_statuses = {}
+        if not hasattr(self, "consumption_statuses"):
+            self.consumption_statuses = {}
 
     def __hash__(self) -> int:
         """Return the hash of the player's id."""
@@ -255,11 +276,6 @@ class Player(DBModel):
         ]
         return messages_list
 
-    def mark_chat_as_read(self, chat: Chat) -> None:
-        """Mark a chat as read."""
-        self.last_opened_chat_id = chat.id
-        chat.player_last_read_index[self.id] = len(chat.messages) - 1
-
     def unread_chat_count(self) -> int:
         """Return the number of unread chats."""
         return Chat.count(
@@ -302,6 +318,25 @@ class Player(DBModel):
         """Emit a socketio event to the player's clients."""
         for sid in self.socketio_clients:
             asyncio.run_coroutine_threadsafe(engine.socketio.emit(event, *args, to=sid), MAIN_EVENT_LOOP)
+
+    def invalidate_queries(self, *query_keys: list[str | int]) -> None:
+        """
+        Invalidate React Query caches on the frontend.
+
+        Tells the frontend that specific query caches are stale and should be refetched.
+        Query keys must match those defined in frontend/src/lib/query-client.ts
+
+        Args:
+            query_keys: One or more query keys to invalidate.
+                       Each key is a list of strings and/or integers.
+
+        Examples:
+            player.invalidate_queries(["chats"])
+            player.invalidate_queries(["resource-market", "asks"])
+            player.invalidate_queries(["chats"], ["chats", chat_id, "messages"])  # With integer ID
+            player.invalidate_queries(["chats"], ["auth", "me"])  # Multiple queries
+        """
+        self.emit("invalidate", {"queries": list(query_keys)})
 
     def send_new_data(self, new_values: Any) -> None:
         """Send the new data to the player's clients."""
@@ -402,19 +437,11 @@ class Player(DBModel):
 
     def send_worker_info(self) -> None:
         """Send the number of available construction and lab workers to the player's clients."""
-        self.emit(
-            "worker_info",
-            {
-                "construction": {
-                    "available": self.available_workers(WorkerType.CONSTRUCTION),
-                    "total": self.workers[WorkerType.CONSTRUCTION],
-                },
-                "laboratory": {
-                    "available": self.available_workers(WorkerType.RESEARCH),
-                    "total": self.workers[WorkerType.RESEARCH],
-                },
-            },
-        )
+        from energetica.schemas.players import WorkersOut
+
+        # Use the same schema as the API endpoint to avoid duplication
+        data = WorkersOut.from_player(self).model_dump()
+        self.emit("worker_info", data)
 
     def calculate_net_emissions(self) -> float:
         """Calculate the net emissions of the player."""
@@ -472,6 +499,7 @@ class Player(DBModel):
                         reward=achievement_data["rewards"][current_lvl],
                     )
                 self.notify("Achievement", message)
+                self.invalidate_queries(["auth", "me"])
 
     def check_construction_achievements(self, construction_name: str) -> None:
         """Check for player achievements that may be unlocked by a construction."""
@@ -481,6 +509,7 @@ class Player(DBModel):
                 self.progression_metrics["xp"] += achievements[achievement]["reward"]
                 message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
                 self.notify("Achievement", message)
+                self.invalidate_queries(["auth", "me"])
 
     def check_technology_achievement(self) -> None:
         """Check for technology achievement."""
@@ -498,6 +527,7 @@ class Player(DBModel):
                 reward=achievements["technology"]["rewards"][current_lvl],
             )
             self.notify("Achievement", message)
+            self.invalidate_queries(["auth", "me"])
 
     def check_trading_achievement(self) -> None:
         """Check for trading achievement."""
@@ -616,7 +646,11 @@ class Player(DBModel):
         )
 
     def package_active_facilities(self) -> dict[str, dict[int, dict[str, Any]]]:
-        """Package the player's active facilities."""
+        """
+        Package the player's active facilities.
+
+        This function is deprecated and superseded by PowerFacilityOut in energetica/schemas/facilities.py
+        """
         return {
             "power_facilities": self.package_active_power_facilities(),
             "storage_facilities": self.package_active_storage_facilities(),

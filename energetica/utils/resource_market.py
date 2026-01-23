@@ -11,17 +11,29 @@ from energetica.globals import engine
 from energetica.utils.formatting import display_money, format_mass
 
 
+def calculate_shipment_duration(buyer: Player, seller: Player) -> float:
+    """Calculate shipment duration in game ticks between buyer and seller tiles."""
+    dq = buyer.tile.coordinates[0] - seller.tile.coordinates[0]
+    dr = buyer.tile.coordinates[1] - seller.tile.coordinates[1]
+    distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
+    shipment_duration = distance * buyer.config["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
+    return math.ceil(shipment_duration)
+
+
 def create_ask(player: Player, fuel: Fuel, quantity: float, unit_price: float) -> ResourceOnSale:
     """Put an offer on the resource market."""
     if player.resources[fuel] - player.resources_on_sale[fuel] < quantity:
         raise GameError(GameExceptionType.NOT_ENOUGH_RESOURCE)
     player.resources_on_sale[fuel] += quantity
-    return ResourceOnSale(
+    ask = ResourceOnSale(
         resource=fuel,
         quantity=quantity,
         unit_price=unit_price,
         player=player,
     )
+    # Invalidate resource market asks for everyone since the market list changed
+    engine.invalidate_queries(["resource-market", "asks"])
+    return ask
 
 
 def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> ResourceOnSale | None:
@@ -30,8 +42,6 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
 
     Return the resulting ResourceOnSale if this is a partial purchase, return None otherwise.
     """
-    assert buyer.tile is not None
-    assert sale.player.tile is not None
     if quantity > sale.quantity:
         raise GameError(GameExceptionType.INVALID_QUANTITY)
     total_price = sale.unit_price * quantity
@@ -42,8 +52,9 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
         buyer.resources_on_sale[sale.resource] -= quantity
         if sale.quantity == 0:
             sale.delete()
-            return None
-        return sale
+        # Invalidate resource market asks for everyone since the market list changed
+        engine.invalidate_queries(["resource-market", "asks"])
+        return None if sale.quantity == 0 else sale
     else:
         if total_price > buyer.money:
             raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
@@ -60,11 +71,7 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
         sale.player.check_trading_achievement()
 
         # Calculate shipment duration
-        dq = buyer.tile.coordinates[0] - sale.player.tile.coordinates[0]
-        dr = buyer.tile.coordinates[1] - sale.player.tile.coordinates[1]
-        distance = math.sqrt(2 * (dq**2 + dr**2 + dq * dr))
-        shipment_duration = distance * buyer.config["transport"]["time_per_tile"] / engine.in_game_seconds_per_tick
-        shipment_duration = math.ceil(shipment_duration)
+        shipment_duration = calculate_shipment_duration(buyer, sale.player)
 
         OngoingShipment(
             resource=sale.resource,
@@ -87,8 +94,29 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
         if sale.quantity == 0:
             # Player is purchasing all available quantity
             sale.delete()
-            return None
-        return sale
+
+        # Invalidate resource market asks for everyone since the market list changed
+        engine.invalidate_queries(["resource-market", "asks"])
+        return None if sale.quantity == 0 else sale
+
+
+def patch_ask(sale: ResourceOnSale, unit_price: float | None = None, quantity: float | None = None) -> ResourceOnSale:
+    """Update an ask in the resource market."""
+    if unit_price is not None:
+        sale.unit_price = unit_price
+    if quantity is not None:
+        sale.quantity = quantity
+    # Invalidate resource market asks for everyone since an ask was modified
+    engine.invalidate_queries(["resource-market", "asks"])
+    return sale
+
+
+def delete_ask(sale: ResourceOnSale) -> None:
+    """Delete an ask from the resource market."""
+    sale.player.resources_on_sale[sale.resource] -= sale.quantity
+    sale.delete()
+    # Invalidate resource market asks for everyone since the market list changed
+    engine.invalidate_queries(["resource-market", "asks"])
 
 
 def store_import(player: Player, fuel: Fuel, quantity: float) -> None:
@@ -97,7 +125,6 @@ def store_import(player: Player, fuel: Fuel, quantity: float) -> None:
 
     This function is executed when a resource shipment arrives.
     """
-    assert player.tile is not None
     max_cap: float = player.config["warehouse_capacities"][fuel]
     if player.resources[fuel] + quantity > max_cap:
         # excess resources are stored in the ground

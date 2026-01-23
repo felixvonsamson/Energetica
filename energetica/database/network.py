@@ -21,6 +21,7 @@ class Network(DBModel):
 
     name: str
     members: list[Player]
+    created_tick: int = field(default=0)
 
     rolling_history: CircularBufferNetwork = field(default_factory=CircularBufferNetwork)
     capacities: CapacityData = field(default_factory=CapacityData)
@@ -31,6 +32,15 @@ class Network(DBModel):
         Path(f"{network_path}/charts").mkdir(parents=True, exist_ok=True)
 
         self.capacities.update_network(self)
+
+    def __setstate__(self, state: dict) -> None:
+        """Called when unpickling - handle backward compatibility for new fields."""
+        # Restore the object's state
+        self.__dict__.update(state)
+
+        # Backward compatibility: Initialize created_tick for old Network objects loaded from pickle
+        if not hasattr(self, "created_tick"):
+            self.created_tick = 0
 
     def delete(self) -> None:
         network_path = f"instance/data/networks/{self.id}"

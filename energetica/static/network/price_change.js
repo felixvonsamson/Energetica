@@ -203,7 +203,7 @@ function change_prices() {
             }),
         )
     };
-    fetch("/api/v1/networks/prices", {
+    fetch("/api/v1/electricity-markets/prices", {
         method: "PATCH",
         headers: {
             Accept: "application/json",

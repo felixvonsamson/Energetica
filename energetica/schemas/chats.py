@@ -26,6 +26,7 @@ class ChatOut(BaseModel):
     initials: list[str]
     is_group: bool
     unread_messages_count: int
+    participant_ids: list[int]
 
     @classmethod
     def from_chat(cls, player: Player, chat: Chat) -> ChatOut:
@@ -35,6 +36,7 @@ class ChatOut(BaseModel):
             initials=chat.initials(player),
             is_group=chat.is_group(),
             unread_messages_count=chat.unread_messages_count_for_player(player),
+            participant_ids=sorted([p.id for p in chat.participants]),
         )
 
 

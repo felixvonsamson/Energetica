@@ -55,7 +55,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--port",
         type=int,
-        default=5001,
+        default=8000,
         help="Port on witch the server should run",
         choices=range(65536),
         metavar="{0..65535}",

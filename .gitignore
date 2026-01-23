@@ -4,8 +4,12 @@ checkpoints/*
 __pycache__
 .DS_Store
 .venv
-frontend/node_modules/*
+**/node_modules/*
 energetica/static/react/*
 frontend/src/routeTree.gen.ts
+scripts/openapi-schema.json
 admin_accounts.txt
 *actions_history.log
+.env
+frontend/.env
+.claude

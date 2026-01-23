@@ -41,6 +41,12 @@ class Chat(DBModel):
     messages: list[Message] = field(default_factory=list)
     player_last_read_index: dict[int, int] = field(default_factory=dict)
 
+    def add_player(self, player: Player) -> None:
+        """Add a player to the list of participants."""
+        self.participants.add(player)
+        for player in self.participants:
+            player.invalidate_queries(["chats"])
+
     def is_group(self) -> bool:
         """Check if the chat is a group chat."""
         return len(self.participants) > 2
@@ -76,6 +82,11 @@ class Chat(DBModel):
             if len(initials) == max_initials_size:
                 break
         return initials
+
+    def open_for_player(self, player: Player) -> None:
+        """Mark the chat as opened by a player, setting it as their last opened chat and marking it as read."""
+        player.last_opened_chat_id = self.id
+        self.player_last_read_index[player.id] = len(self.messages) - 1
 
 
 @dataclass

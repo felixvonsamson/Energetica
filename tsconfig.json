@@ -1,5 +1,5 @@
 {
     "extends": "./frontend/tsconfig.json",
-    "include": [ "frontend/src" ],
-    "exclude": [ "energetica/static/react" ]
+    "include": ["frontend/src"],
+    "exclude": ["energetica/static/react"]
 }

@@ -62,7 +62,7 @@ class CircularBufferPlayer:
         if subcategory not in self._data[category]:
             self._data[category][subcategory] = deque([0.0] * 360, maxlen=360)
 
-    def get_data(self, t: int = 216) -> dict[str, Any]:
+    def get_data(self, t: int = 216) -> dict[str, dict[str, list[float]]]:
         """Return the last t ticks of the data."""
         result: dict[str, Any] = defaultdict(lambda: defaultdict(dict))
         for category, subcategories in self._data.items():

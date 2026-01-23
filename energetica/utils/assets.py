@@ -141,6 +141,9 @@ def finish_project(project: OngoingProject, *, skip_notifications: bool = False)
     player.emit("finish_construction", ProjectListOut.from_player(player).model_dump())
 
     if isinstance(project.project_type, FunctionalFacilityType):
+        # Invalidate auth/me to update player capabilities when functional facilities are built
+        # Capabilities control UI visibility (lab workers, resource gauges, page access, etc.)
+        player.invalidate_queries(["auth", "me"])
         player.invalidate_recompute_and_dispatch_data_for_pages(
             # Update power page if project is a warehouse, since all fuel-consuming power facilities require some level
             # of warehouse to be built
@@ -232,6 +235,12 @@ def upgrade_facility(facility: ActiveFacility) -> None:
     facility.player.capacities.update(facility.player, facility.facility_type)
     engine.log(f"{facility.player.username} upgraded the facility {facility.facility_type}.")
 
+    # Invalidate queries so frontend updates
+    facility.player.invalidate_queries(
+        ["facilities"],
+        ["players", "me", "money"],
+    )
+
 
 def upgrade_all_of_type(
     player: Player,
@@ -252,6 +261,13 @@ def upgrade_all_of_type(
         upgrade_facility(facility)
     engine.log(f"All facilities of type {facility_type} upgraded for {player.username}.")
 
+    # Note: upgrade_facility already invalidates per facility, but we invalidate again
+    # here to ensure a single invalidation after all upgrades are complete
+    player.invalidate_queries(
+        ["facilities"],
+        ["players", "me", "money"],
+    )
+
 
 def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: bool = True) -> None:
     """
@@ -259,7 +275,6 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
 
     This function is executed when a facility is decommissioned.
     """
-    assert player.tile is not None
     if facility is None or facility.player != player:
         raise GameError(GameExceptionType.FACILITY_NOT_FOUND)
     if isinstance(facility.facility_type, TechnologyType | FunctionalFacilityType):
@@ -284,7 +299,7 @@ def remove_asset(player: Player, facility: ActiveFacility, *, decommissioning: b
             ),
         )
         engine.log(f"The facility {facility_name} from {player.username} has been decommissioned.")
-        # if there is no generation capacity anymore, a new steam engine is created for the player in order to avoid accounts with no power generation
+        # if there is no generation capacity any more, a new steam engine is created for the player in order to avoid accounts with no power generation
         active_power_facilities = list(
             ActiveFacility.filter(lambda af: af.player == player and af.facility_type in power_facility_types),
         )
@@ -520,6 +535,9 @@ def decrease_project_priority(player: Player, project: OngoingProject) -> None:
 
     priority_list[index + 1], priority_list[index] = (priority_list[index], priority_list[index + 1])
 
+    # Invalidate queries so frontend updates
+    player.invalidate_queries(["projects"])
+
 
 def increase_project_priority(player: Player, project: OngoingProject) -> None:
     """
@@ -565,13 +583,13 @@ def pause_project(player: Player, project: OngoingProject) -> None:
                 break
     # Remove all dependent projects from the priority list, and reinsert them at the right place
     if insertion_index is None:
-        # If insertion_index is None, then there are no preexisting paused projects
+        # If insertion_index is None, then there are no pre-existing paused projects
         for dependent in dependency:
             priority_list.remove(dependent)
         for dependent in dependency:
             priority_list.append(dependent)
     else:
-        # If insertion_index is not None, then there are preexisting paused projects
+        # If insertion_index is not None, then there are pre-existing paused projects
         priority_list = [
             *[id for id in priority_list[:insertion_index] if id not in dependency],
             *dependency,
@@ -584,6 +602,9 @@ def pause_project(player: Player, project: OngoingProject) -> None:
     player.send_worker_info()
 
     engine.log(f"{player.username} paused the project {project.id} {project.project_type}")
+
+    # Invalidate queries so frontend updates
+    player.invalidate_queries(["projects"])
 
 
 def resume_project(player: Player, project: OngoingProject) -> None:
@@ -617,7 +638,12 @@ def resume_project(player: Player, project: OngoingProject) -> None:
         priority_list.insert(insertion_index, project)
     else:
         priority_list.append(project)
+
+    player.send_worker_info()
     engine.log(f"{player.username} unpaused the project {project.id} {project.project_type}")
+
+    # Invalidate queries so frontend updates
+    player.invalidate_queries(["projects"])
 
 
 def toggle_pause_project(player: Player, project: OngoingProject) -> None:

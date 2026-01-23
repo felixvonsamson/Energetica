@@ -122,8 +122,8 @@ def init_test_players() -> None:
     player2 = create_player("user2", "password")
     player3 = create_player("user3", "password")
 
-    # setup_network("net1", [player1, player2])
-    setup_network("net2", [player3])
+    setup_network("net1", [player1, player2, player3])
+    # setup_network("net2", [player3])
 
     # Player 1
     player1.money = 1_000_000_000

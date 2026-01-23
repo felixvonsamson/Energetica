@@ -6,9 +6,18 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.database.messages import Notification
 from energetica.database.player import Player
+from energetica.schemas.notifications import NotificationListOut, NotificationOut
 from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/notifications", tags=["Game Notifications"])
+
+
+@router.get("")
+def get_notifications(player: Annotated[Player, Depends(get_settled_player)]) -> NotificationListOut:
+    """Get all notifications for the current player."""
+    return NotificationListOut(
+        notifications=[NotificationOut.from_notification(notification) for notification in player.notifications]
+    )
 
 
 @router.delete("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)

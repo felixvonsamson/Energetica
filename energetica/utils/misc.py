@@ -254,7 +254,7 @@ def initialize_player(user: User, tile: HexTile) -> Player:
     )
     player.capacities.update(player, ControllableFacilityType.STEAM_ENGINE)
 
-    engine.general_chat.participants.add(player)
+    engine.general_chat.add_player(player)
 
     add_player_to_data(player)
 
@@ -276,9 +276,15 @@ def submit_quiz_answer(player: Player, player_answer: str) -> bool:
     if player_answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
         player.progression_metrics["xp"] += 1
         engine.log(f"{player.username} answered the quiz correctly")
-        return True
-    engine.log(f"{player.username} answered the quiz incorrectly")
-    return False
+        is_answer_correct = True
+    else:
+        engine.log(f"{player.username} answered the quiz incorrectly")
+        is_answer_correct = False
+
+    # Invalidate quiz query on all devices for this player
+    player.invalidate_queries(["daily-quiz", "today"])
+
+    return is_answer_correct
 
 
 def get_quiz_question(player: Player) -> DailyQuizBase:
