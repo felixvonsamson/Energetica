@@ -10,6 +10,7 @@ export type Theme = "light" | "dark" | "auto";
 
 interface ThemeContextValue {
     theme: Theme;
+    resolvedTheme: "light" | "dark";
     toggleTheme: () => void;
     setTheme: (theme: Theme) => void;
 }
@@ -35,13 +36,22 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         return "auto";
     });
 
+    const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() => {
+        if (theme === "auto") {
+            return window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+        }
+        return theme;
+    });
+
     // Use useLayoutEffect to apply theme SYNCHRONOUSLY before other effects
     // This ensures the DOM class is updated before useAssetColorGetter tries to read CSS variables
     useLayoutEffect(() => {
         const root = document.documentElement;
 
         // Determine the actual theme to apply
-        const resolvedTheme =
+        const newResolvedTheme =
             theme === "auto"
                 ? window.matchMedia("(prefers-color-scheme: dark)").matches
                     ? "dark"
@@ -50,7 +60,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
         // Apply theme to document
         root.classList.remove("light", "dark");
-        root.classList.add(resolvedTheme);
+        root.classList.add(newResolvedTheme);
+        setResolvedTheme(newResolvedTheme);
 
         // Save to localStorage
         localStorage.setItem("theme", theme);
@@ -61,8 +72,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
                 "(prefers-color-scheme: dark)",
             );
             const handleChange = (e: MediaQueryListEvent) => {
+                const resolved = e.matches ? "dark" : "light";
                 root.classList.remove("light", "dark");
-                root.classList.add(e.matches ? "dark" : "light");
+                root.classList.add(resolved);
+                setResolvedTheme(resolved);
             };
 
             mediaQuery.addEventListener("change", handleChange);
@@ -83,7 +96,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+        <ThemeContext.Provider value={{ theme, resolvedTheme, toggleTheme, setTheme }}>
             {children}
         </ThemeContext.Provider>
     );
