@@ -8,17 +8,16 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { TogglingDuration } from "@/components/ui/duration";
+import { useGameTick } from "@/hooks/useGameTick";
 import { formatPower } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
+import { ElectricityMarket } from "@/types/electricity-markets";
 
 interface MarketDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    market: {
-        id: number;
-        name: string;
-        member_ids: number[];
-    };
+    market: ElectricityMarket;
     playerMap: Record<number, { username: string }>;
     price?: number;
     volume?: number;
@@ -42,6 +41,12 @@ export function MarketDetailModal({
     onJoin,
     onLeave,
 }: MarketDetailModalProps) {
+    const { currentTick } = useGameTick();
+    const marketAge =
+        currentTick !== undefined
+            ? currentTick - market.created_tick
+            : undefined;
+
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -94,7 +99,7 @@ export function MarketDetailModal({
 
                     {/* Market Stats */}
                     <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
                             <div>
                                 <div className="text-sm text-muted-foreground mb-1">
                                     Members
@@ -124,6 +129,25 @@ export function MarketDetailModal({
                                 <div className="text-xl font-semibold font-mono">
                                     {volume !== undefined && volume > 0 ? (
                                         formatPower(volume)
+                                    ) : (
+                                        <span className="text-muted-foreground">
+                                            N/A
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground mb-1">
+                                    Age
+                                </div>
+                                <div className="text-xl font-semibold">
+                                    {marketAge !== undefined ? (
+                                        <TogglingDuration
+                                            ticks={marketAge}
+                                            compact
+                                            showIcon={false}
+                                            className="justify-center"
+                                        />
                                     ) : (
                                         <span className="text-muted-foreground">
                                             N/A
