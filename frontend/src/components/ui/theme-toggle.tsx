@@ -1,4 +1,4 @@
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, SunMoon } from "lucide-react";
 import { forwardRef } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ interface ThemeToggleProps extends React.ComponentPropsWithoutRef<"button"> {
     variant?: "icon-only" | "menu-item";
 }
 
-/** Toggle button for switching between light and dark mode. */
+/** Toggle button for switching between light, dark, and auto mode. */
 export const ThemeToggle = forwardRef<HTMLButtonElement, ThemeToggleProps>(
     ({ variant = "icon-only", className, onClick, ...props }, ref) => {
         const { theme, toggleTheme } = useTheme();
@@ -19,7 +19,17 @@ export const ThemeToggle = forwardRef<HTMLButtonElement, ThemeToggleProps>(
             onClick?.(e);
         };
 
-        const icon = theme === "light" ? <Moon size={20} /> : <Sun size={20} />;
+        const icon =
+            theme === "light" ? (
+                <Moon size={20} />
+            ) : theme === "dark" ? (
+                <Sun size={20} />
+            ) : (
+                <SunMoon size={20} />
+            );
+
+        const nextTheme =
+            theme === "light" ? "dark" : theme === "dark" ? "auto" : "light";
 
         if (variant === "menu-item") {
             return (
@@ -27,7 +37,7 @@ export const ThemeToggle = forwardRef<HTMLButtonElement, ThemeToggleProps>(
                     ref={ref}
                     onClick={handleClick}
                     className={cn("flex items-center gap-2 w-full", className)}
-                    aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+                    aria-label={`Switch to ${nextTheme} mode`}
                     {...props}
                 >
                     {icon}
@@ -43,7 +53,7 @@ export const ThemeToggle = forwardRef<HTMLButtonElement, ThemeToggleProps>(
                 variant="outline"
                 size="icon"
                 className={className}
-                aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+                aria-label={`Switch to ${nextTheme} mode`}
                 {...props}
             >
                 {icon}
