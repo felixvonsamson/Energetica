@@ -37,15 +37,19 @@ function RouteComponent() {
                 {/* Our Story */}
                 <section className="flex flex-col gap-4">
                     <TypographyH2>Origins of the Project</TypographyH2>
-                    <TypographyP>
-                        Energetica began as a semester project at{" "}
-                        <strong>ETH Zürich</strong>. The game received strong
-                        reactions, and high engagement from early players.
-                    </TypographyP>
-                    <TypographyP>
-                        Since then, the project has continued to grow. We have
-                        built up a dedicated team from around the world.
-                    </TypographyP>
+                    <div>
+                        <TypographyP>
+                            Energetica began as a semester project at{" "}
+                            <strong>ETH Zürich</strong>. The game received
+                            strong reactions, and high engagement from early
+                            players.
+                        </TypographyP>
+                        <TypographyP>
+                            Since then, the project has continued to grow. We
+                            have built up a dedicated team from around the
+                            world.
+                        </TypographyP>
+                    </div>
                 </section>
                 {/* Our Team */}
                 <section className="flex flex-col gap-4">

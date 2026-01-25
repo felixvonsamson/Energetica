@@ -22,7 +22,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
+import {
+    TypographyH2,
+    TypographyLarge,
+    TypographyMuted,
+} from "@/components/ui/typography";
 import { useChangePassword } from "@/hooks/useAuthQueries";
 import { handleApiError } from "@/lib/error-utils";
 
@@ -102,8 +106,10 @@ function SettingsContent() {
                 <Card>
                     <CardContent className="flex items-center justify-between">
                         <div>
-                            <TypographyH2 className="text-lg mb-2">
-                                Browser Notifications
+                            <TypographyH2>
+                                <TypographyLarge>
+                                    Browser Notifications
+                                </TypographyLarge>
                             </TypographyH2>
                             <TypographyMuted>
                                 Receive notifications about important game
@@ -123,8 +129,8 @@ function SettingsContent() {
                 <Card>
                     <CardContent className="flex items-center justify-between">
                         <div>
-                            <TypographyH2 className="text-lg mb-2">
-                                Theme
+                            <TypographyH2>
+                                <TypographyLarge>Theme</TypographyLarge>
                             </TypographyH2>
                             <TypographyMuted>
                                 Choose between light and dark theme
@@ -136,9 +142,9 @@ function SettingsContent() {
 
                 {/* Password Settings Card */}
                 <Card>
-                    <CardContent>
-                        <TypographyH2 className="text-lg mb-4">
-                            Password Settings
+                    <CardContent className="flex items-center justify-between">
+                        <TypographyH2>
+                            <TypographyLarge>Password Settings</TypographyLarge>
                         </TypographyH2>
                         <Button
                             onClick={() => setShowChangePasswordModal(true)}

@@ -1,13 +1,22 @@
 /** Settlement page - allows player to choose their starting location on the map. */
 
+import { Dialog } from "@radix-ui/react-dialog";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { HelpCircle } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
 
 import { HexTile } from "@/components/map/hex-tile";
 import { MapCanvas } from "@/components/map/map-canvas";
 import { MapHoverBorder } from "@/components/map/map-hover-border";
 import { ResourceButton } from "@/components/map/resource-button";
-import { ThemeToggle } from "@/components/ui";
+import { Button, ThemeToggle } from "@/components/ui";
+import { ButtonGroup } from "@/components/ui/button-group";
+import {
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { TypographyH1, TypographyH2 } from "@/components/ui/typography";
 import { useMapContext } from "@/contexts/map-context";
 import { useTheme } from "@/contexts/theme-context";
@@ -191,6 +200,10 @@ function SettleContent() {
         }
     };
 
+    const [isShowingHelp, setShowingHelp] = useState(false);
+    const handleShowHelp = useCallback(() => setShowingHelp(true), []);
+    const handleCloseHelp = useCallback(() => setShowingHelp(false), []);
+
     if (isMapLoading || isPlayersLoading) {
         return (
             <div className="flex items-center justify-center h-96">
@@ -214,7 +227,17 @@ function SettleContent() {
                 <TypographyH1 className="text-center flex-1">
                     Location choice
                 </TypographyH1>
-                <ThemeToggle />
+                <ButtonGroup>
+                    <Button
+                        onClick={() => handleShowHelp()}
+                        variant="outline"
+                        size="icon"
+                        aria-label="Show help"
+                    >
+                        <HelpCircle size={20} />
+                    </Button>
+                    <ThemeToggle />
+                </ButtonGroup>
             </div>
 
             <div className="flex flex-col lg:flex-row gap-4 lg:flex-1 lg:min-h-0">
@@ -251,19 +274,22 @@ function SettleContent() {
                 <div className="bg-card p-4 rounded-lg lg:flex-1 lg:min-w-64 lg:max-w-96 lg:flex lg:flex-col">
                     {!selectedTile ? (
                         <div>
-                            <TypographyH2 className="text-xl mb-3 text-center">
-                                INFO
+                            <TypographyH2 className="mb-3 text-center">
+                                Welcome!
                             </TypographyH2>
                             <p className="text-sm mb-3">
-                                Please choose an available location on the map.
-                                The menu on the left allows you to see where
-                                different natural resources are located on the
-                                map. The location choice is DEFINITIVE, you will
+                                Choose an available location on the map. The
+                                location choice is <b>definitive</b> - you will
                                 not be able to change it during the game.
                             </p>
+                            <p className="text-sm mb-3">
+                                Use the buttons to see where different natural
+                                resources are located on the map to make an
+                                informed decision.
+                            </p>
                             <p className="text-sm">
-                                If you need help, click on the book icon next to
-                                the title.
+                                If you need help, click on the help button in
+                                the top right corner.
                             </p>
                         </div>
                     ) : (
@@ -274,6 +300,20 @@ function SettleContent() {
                     )}
                 </div>
             </div>
+            <Dialog
+                open={isShowingHelp}
+                onOpenChange={(open) => !open && handleCloseHelp()}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{"Help: Location Choice"}</DialogTitle>
+                        <DialogDescription>
+                            Information and help for this page.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <SettleHelp />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
@@ -302,8 +342,8 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
 
     return (
         <div className="lg:flex lg:flex-col lg:h-full animate-fadeIn">
-            <TypographyH2 className="text-xl mb-3 text-center lg:shrink-0 animate-slideDown">
-                RESOURCES
+            <TypographyH2 className="mb-3 text-center lg:shrink-0 animate-slideDown">
+                Resources
             </TypographyH2>
             <div className="space-y-3 lg:flex-1 lg:overflow-y-auto lg:min-h-0">
                 {RESOURCES.map((resource, index) => {

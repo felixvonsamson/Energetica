@@ -191,7 +191,7 @@ function RouteComponent() {
 
                 {/* Priority List */}
                 <section className="rounded-lg border-2 border-orange-300 bg-orange-50 p-6 dark:border-orange-700 dark:bg-orange-950">
-                    <TypographyH2 className="mb-3 text-xl text-orange-900 dark:text-orange-100">
+                    <TypographyH2 className="mb-3 text-orange-900 dark:text-orange-100">
                         🎯 Priority: Icons That Need Custom Replacements
                     </TypographyH2>
                     <p className="mb-4 text-sm text-orange-800 dark:text-orange-200">
@@ -251,7 +251,7 @@ function RouteComponent() {
 
                 {/* Design Guidelines */}
                 <section className="rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-950">
-                    <TypographyH2 className="mb-3 text-xl text-blue-900 dark:text-blue-100">
+                    <TypographyH2 className="mb-3 text-blue-900 dark:text-blue-100">
                         📐 Design Guidelines
                     </TypographyH2>
                     <div className="grid gap-4 md:grid-cols-2">
