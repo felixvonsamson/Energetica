@@ -6,10 +6,11 @@ import {
     type ReactNode,
 } from "react";
 
-export type Theme = "light" | "dark";
+export type Theme = "light" | "dark" | "auto";
 
 interface ThemeContextValue {
     theme: Theme;
+    resolvedTheme: "light" | "dark";
     toggleTheme: () => void;
     setTheme: (theme: Theme) => void;
 }
@@ -24,30 +25,70 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     const [theme, setThemeState] = useState<Theme>(() => {
         // Check localStorage first
         const stored = localStorage.getItem("theme") as Theme | null;
-        if (stored) return stored;
-
-        // Check system preference
-        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            return "dark";
+        if (
+            stored &&
+            (stored === "light" || stored === "dark" || stored === "auto")
+        ) {
+            return stored;
         }
 
-        return "light";
+        // Default to auto mode
+        return "auto";
+    });
+
+    const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() => {
+        if (theme === "auto") {
+            return window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+        }
+        return theme;
     });
 
     // Use useLayoutEffect to apply theme SYNCHRONOUSLY before other effects
     // This ensures the DOM class is updated before useAssetColorGetter tries to read CSS variables
     useLayoutEffect(() => {
-        // Apply theme to document
         const root = document.documentElement;
+
+        // Determine the actual theme to apply
+        const newResolvedTheme =
+            theme === "auto"
+                ? window.matchMedia("(prefers-color-scheme: dark)").matches
+                    ? "dark"
+                    : "light"
+                : theme;
+
+        // Apply theme to document
         root.classList.remove("light", "dark");
-        root.classList.add(theme);
+        root.classList.add(newResolvedTheme);
+        setResolvedTheme(newResolvedTheme);
 
         // Save to localStorage
         localStorage.setItem("theme", theme);
+
+        // Listen for system preference changes when in auto mode
+        if (theme === "auto") {
+            const mediaQuery = window.matchMedia(
+                "(prefers-color-scheme: dark)",
+            );
+            const handleChange = (e: MediaQueryListEvent) => {
+                const resolved = e.matches ? "dark" : "light";
+                root.classList.remove("light", "dark");
+                root.classList.add(resolved);
+                setResolvedTheme(resolved);
+            };
+
+            mediaQuery.addEventListener("change", handleChange);
+            return () => mediaQuery.removeEventListener("change", handleChange);
+        }
     }, [theme]);
 
     const toggleTheme = () => {
-        setThemeState((prev) => (prev === "light" ? "dark" : "light"));
+        setThemeState((prev) => {
+            if (prev === "light") return "dark";
+            if (prev === "dark") return "auto";
+            return "light";
+        });
     };
 
     const setTheme = (newTheme: Theme) => {
@@ -55,7 +96,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+        <ThemeContext.Provider value={{ theme, resolvedTheme, toggleTheme, setTheme }}>
             {children}
         </ThemeContext.Provider>
     );

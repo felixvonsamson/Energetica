@@ -25,9 +25,9 @@ import { clearAssetColorCache, getAssetColor } from "@/lib/assets/asset-colors";
  *   color
  */
 export function useAssetColorGetter() {
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
     // Use separate state to track when theme has been applied to DOM
-    const [appliedTheme, setAppliedTheme] = useState(theme);
+    const [appliedTheme, setAppliedTheme] = useState(resolvedTheme);
     // Track cache version to force re-render when cache is invalidated (e.g., during HMR)
     const [cacheVersion, setCacheVersion] = useState(0);
 
@@ -36,8 +36,8 @@ export function useAssetColorGetter() {
     // updated with the new theme class before we read colors
     useEffect(() => {
         clearAssetColorCache();
-        setAppliedTheme(theme);
-    }, [theme]);
+        setAppliedTheme(resolvedTheme);
+    }, [resolvedTheme]);
 
     // Listen for cache invalidation events (e.g., from HMR when CSS changes)
     useEffect(() => {
