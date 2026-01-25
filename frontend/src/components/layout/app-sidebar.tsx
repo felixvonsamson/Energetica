@@ -28,6 +28,7 @@ import {
     SidebarMenuSubItem,
     SidebarRail,
 } from "@/components/ui/sidebar";
+import { TypographyBrand, TypographyH2 } from "@/components/ui/typography";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useChatList } from "@/hooks/useChats";
 import { useRouteUnlocked } from "@/hooks/useRouteStaticData";
@@ -76,9 +77,11 @@ export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
                 <div className="flex aspect-square size-12 items-center justify-center">
                     <Logo className="size-20 fill-sidebar-foreground" />
                 </div>
-                <span className="text-2xl font-semibold font-[Expletus_Sans]">
-                    Energetica
-                </span>
+                {/* <span className="text-2xl font-semibold font-[Expletus_Sans]"> */}
+                <TypographyH2>
+                    <TypographyBrand>Energetica</TypographyBrand>
+                </TypographyH2>
+                {/* </span> */}
             </SidebarHeader>
 
             <SidebarContent className="relative z-10">

@@ -3,6 +3,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { JSX } from "react";
 
+import { TypographyH1, TypographyLead } from "@/components/ui/typography";
 import { WikiLayout } from "@/components/wiki/wiki-layout";
 
 // Eagerly import all MDX files (no lazy loading - all bundled together)
@@ -36,10 +37,10 @@ function WikiPage() {
         return (
             <WikiLayout>
                 <div className="text-center py-12">
-                    <h1 className="text-3xl font-bold mb-4">Page Not Found</h1>
-                    <p className="text-lg">
+                    <TypographyH1 className="mb-4">Page Not Found</TypographyH1>
+                    <TypographyLead>
                         The wiki page "{slug}" does not exist.
-                    </p>
+                    </TypographyLead>
                 </div>
             </WikiLayout>
         );

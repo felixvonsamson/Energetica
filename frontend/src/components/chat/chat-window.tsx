@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { MessageContainer } from "@/components/chat/message-container";
 import { MessageInput } from "@/components/chat/message-input";
+import { TypographyH2 } from "@/components/ui/typography";
 import type { Message, Chat } from "@/types/chats";
 
 interface ChatWindowProps {
@@ -38,11 +39,11 @@ export function ChatWindow({
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
                         )}
-                        <h2 className="text-2xl font-bold text-center flex-1">
+                        <TypographyH2 className="text-center flex-1">
                             {selectedChat
                                 ? selectedChat.display_name
                                 : "Select a chat"}
-                        </h2>
+                        </TypographyH2>
                     </div>
                 </div>
 

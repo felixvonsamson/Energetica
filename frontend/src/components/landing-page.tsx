@@ -2,6 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { Cable, ChevronRight, Lightbulb, Unlink, Zap } from "lucide-react";
 
 import { HomeLayout } from "@/components/home-layout";
+import {
+    TypographyH1,
+    TypographyH2,
+    TypographyH3,
+    TypographyLead,
+    TypographyMuted,
+} from "@/components/ui/typography";
 
 export function LandingPage() {
     const features = [
@@ -44,14 +51,14 @@ export function LandingPage() {
 
                         <div className="relative mx-8  py-24 sm:py-32 lg:py-32 ">
                             <div className="text-center">
-                                <h1 className="text-4xl font-bold tracking-tight text-primary-foreground sm:text-6xl lg:text-7xl leading-tight">
+                                <TypographyH1 className="tracking-tight text-primary-foreground sm:text-6xl lg:text-7xl leading-tight">
                                     Learn Energy Systems by Playing
-                                </h1>
-                                <p className="mt-8 text-lg text-primary-foreground sm:text-xl max-w-3xl mx-auto leading-relaxed">
+                                </TypographyH1>
+                                <TypographyLead className="mt-8 text-primary-foreground sm:text-xl max-w-3xl mx-auto leading-relaxed">
                                     Energetica is multiplayer real-time
                                     simulation game about building sustainable
                                     futures.
-                                </p>
+                                </TypographyLead>
                             </div>
                         </div>
                     </div>
@@ -73,15 +80,15 @@ export function LandingPage() {
                     </div>
                 </section>
                 <section className="px-6 max-w-5xl mx-auto text-center">
-                    <h2 className="text-3xl font-bold mb-6 text-primary">
+                    <TypographyH2 className="mb-6 text-primary">
                         Why Energetica?
-                    </h2>
-                    <p className="text-lg max-w-3xl text-primary">
+                    </TypographyH2>
+                    <TypographyLead className="max-w-3xl text-primary">
                         Climate change and the energy transition are defining
                         challenges. Energetica helps players experience the
                         trade-offs, strategies, and cooperation needed to build
                         a sustainable future.
-                    </p>
+                    </TypographyLead>
                 </section>
                 <section>
                     <div className="max-w-6xl mx-auto grid gap-8 xl:grid-cols-2 2xl:grid-cols-4">
@@ -93,13 +100,13 @@ export function LandingPage() {
                                 <div className="flex flex-row items-center justify-center gap-4">
                                     {/* <f.icon className="mx-auto h-10 w-10 text-indigo-600 mb-4" /> */}
                                     {f.icon}
-                                    <h3 className="text-xl font-semibold text-foreground">
+                                    <TypographyH3 className="text-xl text-foreground">
                                         {f.title}
-                                    </h3>
+                                    </TypographyH3>
                                 </div>
-                                <p className="text-muted-foreground">
+                                <TypographyMuted>
                                     {f.description}
-                                </p>
+                                </TypographyMuted>
                             </div>
                         ))}
                     </div>

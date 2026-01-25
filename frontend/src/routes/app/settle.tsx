@@ -8,6 +8,7 @@ import { MapCanvas } from "@/components/map/map-canvas";
 import { MapHoverBorder } from "@/components/map/map-hover-border";
 import { ResourceButton } from "@/components/map/resource-button";
 import { ThemeToggle } from "@/components/ui";
+import { TypographyH1, TypographyH2 } from "@/components/ui/typography";
 import { useMapContext } from "@/contexts/map-context";
 import { useTheme } from "@/contexts/theme-context";
 import { useAuth } from "@/hooks/useAuth";
@@ -210,9 +211,9 @@ function SettleContent() {
         <div className="p-4 flex flex-col lg:h-screen">
             {/* Title with theme toggle */}
             <div className="flex items-center justify-between gap-3 mb-6 lg:shrink-0">
-                <h1 className="text-3xl md:text-4xl font-bold text-center flex-1">
+                <TypographyH1 className="text-center flex-1">
                     Location choice
-                </h1>
+                </TypographyH1>
                 <ThemeToggle />
             </div>
 
@@ -250,9 +251,9 @@ function SettleContent() {
                 <div className="bg-card p-4 rounded-lg lg:flex-1 lg:min-w-64 lg:max-w-96 lg:flex lg:flex-col">
                     {!selectedTile ? (
                         <div>
-                            <h2 className="text-xl font-bold mb-3 text-center">
+                            <TypographyH2 className="text-xl mb-3 text-center">
                                 INFO
-                            </h2>
+                            </TypographyH2>
                             <p className="text-sm mb-3">
                                 Please choose an available location on the map.
                                 The menu on the left allows you to see where
@@ -301,9 +302,9 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
 
     return (
         <div className="lg:flex lg:flex-col lg:h-full animate-fadeIn">
-            <h2 className="text-xl font-bold mb-3 text-center lg:shrink-0 animate-slideDown">
+            <TypographyH2 className="text-xl mb-3 text-center lg:shrink-0 animate-slideDown">
                 RESOURCES
-            </h2>
+            </TypographyH2>
             <div className="space-y-3 lg:flex-1 lg:overflow-y-auto lg:min-h-0">
                 {RESOURCES.map((resource, index) => {
                     const value = getResourceValue(selectedTile, resource.id);

@@ -17,6 +17,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { TypographyH2 } from "@/components/ui/typography";
 import { useQueueProject } from "@/hooks/useProjects";
 import { ProjectType, Requirement } from "@/types/projects";
 
@@ -91,7 +92,7 @@ export function FacilityDetailModal<T>({
                     {/* Header */}
                     <div className="flex flex-wrap items-center gap-3 justify-between">
                         <div className="flex items-center gap-3">
-                            <h2 className="text-2xl font-bold flex items-center gap-2">
+                            <TypographyH2 className="flex items-center gap-2">
                                 <FacilityIcon
                                     facility={facility.name}
                                     size={28}
@@ -100,7 +101,7 @@ export function FacilityDetailModal<T>({
                                     facility={facility.name}
                                     mode="long"
                                 />
-                            </h2>
+                            </TypographyH2>
                             {extraHeaderContent && extraHeaderContent(facility)}
                         </div>
                         <div className="flex items-center gap-3">

@@ -38,6 +38,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Money as MoneyComponent } from "@/components/ui/money";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -318,13 +319,12 @@ function MoneyDisplay(
                         </span>
                     )}
                     {/* Show stale data even if error */}
-                    <span className={cn(isMoneyError && "opacity-75")}>
-                        $
-                        {(moneyData?.money ?? 0).toLocaleString(undefined, {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0,
-                        })}
-                    </span>
+                    <MoneyComponent
+                        amount={moneyData?.money ?? 0}
+                        long
+                        iconSize="lg"
+                        className={cn(isMoneyError && "opacity-75")}
+                    />
                 </>
             )}
         </div>

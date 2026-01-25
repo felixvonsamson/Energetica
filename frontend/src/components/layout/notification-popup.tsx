@@ -16,6 +16,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
+import { TypographyH2, TypographySmall } from "@/components/ui/typography";
 import {
     useNotifications,
     useDeleteNotification,
@@ -108,9 +109,11 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                     >
                                         <div className="flex items-start justify-between mb-2">
                                             <div className="flex items-center gap-2">
-                                                <h3 className="font-bold text-card-foreground">
-                                                    {notification.title}
-                                                </h3>
+                                                <TypographyH2>
+                                                    <TypographySmall>
+                                                        {notification.title}
+                                                    </TypographySmall>
+                                                </TypographyH2>
                                                 {!notification.read && (
                                                     <Circle className="w-2 h-2 fill-current text-primary" />
                                                 )}

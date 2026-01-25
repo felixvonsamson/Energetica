@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
+import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 import { useChangePassword } from "@/hooks/useAuthQueries";
 import { handleApiError } from "@/lib/error-utils";
 
@@ -101,13 +102,13 @@ function SettingsContent() {
                 <Card>
                     <CardContent className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold mb-2">
+                            <TypographyH2 className="text-lg mb-2">
                                 Browser Notifications
-                            </h2>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            </TypographyH2>
+                            <TypographyMuted>
                                 Receive notifications about important game
                                 events
-                            </p>
+                            </TypographyMuted>
                         </div>
 
                         <Switch
@@ -122,12 +123,12 @@ function SettingsContent() {
                 <Card>
                     <CardContent className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold mb-2">
+                            <TypographyH2 className="text-lg mb-2">
                                 Theme
-                            </h2>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            </TypographyH2>
+                            <TypographyMuted>
                                 Choose between light and dark theme
-                            </p>
+                            </TypographyMuted>
                         </div>
                         <ThemeToggle />
                     </CardContent>
@@ -136,9 +137,9 @@ function SettingsContent() {
                 {/* Password Settings Card */}
                 <Card>
                     <CardContent>
-                        <h2 className="text-lg font-semibold mb-4">
+                        <TypographyH2 className="text-lg mb-4">
                             Password Settings
-                        </h2>
+                        </TypographyH2>
                         <Button
                             onClick={() => setShowChangePasswordModal(true)}
                             variant="default"

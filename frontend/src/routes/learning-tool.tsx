@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { HomeLayout } from "@/components/home-layout";
+import { TypographyH3, TypographyP } from "@/components/ui/typography";
 
 export const Route = createFileRoute("/learning-tool")({
     component: RouteComponent,
@@ -123,11 +124,11 @@ function RouteComponent() {
                                     >
                                         <div className="flex flex-row items-center justify-center gap-4 text-foreground">
                                             {f.icon}
-                                            <h3 className="text-xl font-semibold">
+                                            <TypographyH3 className="text-xl">
                                                 {f.title}
-                                            </h3>
+                                            </TypographyH3>
                                         </div>
-                                        <p>{f.description}</p>
+                                        <TypographyP>{f.description}</TypographyP>
                                     </div>
 
                                     {/* Add image tile after 2nd and 4th position */}

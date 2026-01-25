@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { TypographyBrand } from "@/components/ui/typography";
 import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/lib/api/auth";
 import { handleApiError, isErrorType } from "@/lib/error-utils";
@@ -107,9 +108,9 @@ function LoginForm() {
         <div className="w-full max-w-md">
             {/* Branding */}
             <div className="text-center mb-8">
-                <h1 className="text-5xl font-bold text-primary mb-4">
+                <TypographyBrand className="text-5xl text-primary mb-4 block">
                     Energetica
-                </h1>
+                </TypographyBrand>
                 <Link
                     to="/landing-page"
                     className="text-base text-primary hover:opacity-80 transition-opacity underline"

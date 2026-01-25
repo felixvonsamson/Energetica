@@ -18,6 +18,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { TypographyH2 } from "@/components/ui/typography";
 import { useQueueProject } from "@/hooks/useProjects";
 import { getFacilityRoute } from "@/lib/facility-routes";
 import { ProjectType, Requirement } from "@/types/projects";
@@ -96,7 +97,7 @@ export function TechnologyDetailModal<T>({
                     {/* Header */}
                     <div className="flex flex-wrap items-center gap-3 justify-between">
                         <div className="flex items-center gap-3">
-                            <h2 className="text-2xl font-bold flex items-center gap-2">
+                            <TypographyH2 className="flex items-center gap-2">
                                 <TechnologyIcon
                                     technology={technology.name}
                                     size={28}
@@ -106,7 +107,7 @@ export function TechnologyDetailModal<T>({
                                     level={technology.level}
                                     mode="long"
                                 />
-                            </h2>
+                            </TypographyH2>
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="text-xl font-semibold">
