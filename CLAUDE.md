@@ -2,14 +2,16 @@
 
 Web game for energy systems with a focus on electricity.
 
-**Stack:** Python/FastAPI backend (`energetica/`), TypeScript/React frontend (`frontend/`)
+**Stack:** Python/FastAPI backend (`energetica/`), TypeScript/React/Tailwind v4 frontend (`frontend/`)
 **Package manager:** `bun`
 **Docs:** See `docs/` (indexed in `docs/README.md`)
+
+There is no `tailwind.config.ts`, we're using the v4 syntax so everything in `frontend/src/styles/global.css`.
 
 ## Essential Commands
 
 - `bun run generate-types` - **Run after backend schema changes** (generates TS types from OpenAPI)
-- `bun run dev` - Start frontend dev server (Tailwind v4)
+- `bun run dev` - Start frontend dev server
 - `bun run lint:check` - ESLint
 - `bun run tsc:check` - TypeScript type checking
 
@@ -42,7 +44,34 @@ queryClient.invalidateQueries({ queryKey: ["facilities", "all"] });
     - `frontend/src/components/ui/asset-name.tsx` for facility/technology names
     - Lucide icons: `import { DollarSign } from "lucide-react"`
 
-**Imports:** Use fully qualified `@/` imports (not `index.ts` barrel exports)
+**Typography:** Use typography components instead of inline Tailwind or raw HTML:
+
+```tsx
+// ✅ Correct - semantic components
+import { TypographyH1, TypographyH2, TypographyP, TypographyMuted } from "@/components/ui";
+
+<TypographyH1>Main Title</TypographyH1>
+<TypographyH2>Section Heading</TypographyH2>
+<TypographyP>Body text content</TypographyP>
+<TypographyMuted>Secondary information</TypographyMuted>
+
+// ✅ Correct - composable with data components
+<TypographyH3>
+    Revenue: <Money amount={50000} />
+</TypographyH3>
+
+// ✅ Correct - brand font for special emphasis
+<TypographyBrand className="text-4xl">Energetica</TypographyBrand>
+```
+
+**Available typography components:**
+
+- Semantic: `TypographyH1`, `TypographyH2`, `TypographyH3`, `TypographyH4`, `TypographyP`
+- Visual modifiers: `TypographyLead`, `TypographyLarge`, `TypographySmall`, `TypographyMuted`
+- Specialty: `TypographyBrand` (Expletus Sans), `TypographyInlineCode`, `TypographyBlockquote`
+- Data: `DataValue` (monospaced base for numerical data), `Money` (uses DataValue internally)
+
+**Imports:** Use fully qualified `@/` imports (not `index.ts` barrel exports) avoid relative imports.
 
 ### Frontend: API Types
 

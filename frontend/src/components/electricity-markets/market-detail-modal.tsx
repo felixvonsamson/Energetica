@@ -8,6 +8,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { TypographyH2, TypographyH3 } from "@/components/ui/typography";
 import { TogglingDuration } from "@/components/ui/duration";
 import { useGameTick } from "@/hooks/useGameTick";
 import { formatPower } from "@/lib/format-utils";
@@ -86,9 +87,9 @@ export function MarketDetailModal({
 
                     {/* Header */}
                     <div className="text-center">
-                        <h2 className="text-3xl font-bold mb-2">
+                        <TypographyH2 className="mb-2">
                             {market.name}
-                        </h2>
+                        </TypographyH2>
                         {isCurrentMarket && (
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-green/10 text-brand-green text-sm font-medium">
                                 <Check className="w-4 h-4" />
@@ -160,9 +161,9 @@ export function MarketDetailModal({
 
                     {/* Members List */}
                     <CardContent>
-                        <h3 className="text-lg font-semibold mb-3">
+                        <TypographyH3 className="text-lg mb-3">
                             Market Members
-                        </h3>
+                        </TypographyH3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                             {market.member_ids.map((memberId) => (
                                 <div

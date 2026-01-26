@@ -4,6 +4,13 @@ import { createElement } from "react";
 
 import { HomeLayout } from "@/components/home-layout";
 import {
+    TypographyH1,
+    TypographyH2,
+    TypographyH3,
+    TypographyLead,
+    TypographyMuted,
+} from "@/components/ui/typography";
+import {
     allAssetIcons,
     extractionFacilityIcons,
     functionalFacilityIcons,
@@ -23,7 +30,7 @@ export const Route = createFileRoute("/app/internal/icons")({
 });
 
 /**
- * Analyzes icon usage across all asset categories to identify which icons are
+ * Analyses icon usage across all asset categories to identify which icons are
  * reused for multiple assets.
  */
 function analyzeIconUsage() {
@@ -57,10 +64,8 @@ function IconCategory({
     return (
         <section className="flex flex-col gap-4">
             <div className="border-b border-gray-300 pb-2 dark:border-gray-700">
-                <h2 className="text-2xl font-bold">{title}</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {description}
-                </p>
+                <TypographyH2>{title}</TypographyH2>
+                <TypographyMuted>{description}</TypographyMuted>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {Object.entries(icons).map(([assetId, IconComponent]) => {
@@ -140,12 +145,12 @@ function RouteComponent() {
             <div className="flex flex-col gap-8 px-6 lg:px-8">
                 {/* Header */}
                 <section className="flex flex-col gap-2">
-                    <h1 className="text-4xl font-bold">
+                    <TypographyH1>
                         Icon Showcase & Design Reference
-                    </h1>
-                    <p className="text-lg text-gray-600 dark:text-gray-400">
+                    </TypographyH1>
+                    <TypographyLead>
                         Comprehensive overview of all icons used in Energetica
-                    </p>
+                    </TypographyLead>
                 </section>
 
                 {/* Statistics */}
@@ -186,9 +191,9 @@ function RouteComponent() {
 
                 {/* Priority List */}
                 <section className="rounded-lg border-2 border-orange-300 bg-orange-50 p-6 dark:border-orange-700 dark:bg-orange-950">
-                    <h2 className="mb-3 text-xl font-bold text-orange-900 dark:text-orange-100">
+                    <TypographyH2 className="mb-3 text-orange-900 dark:text-orange-100">
                         🎯 Priority: Icons That Need Custom Replacements
-                    </h2>
+                    </TypographyH2>
                     <p className="mb-4 text-sm text-orange-800 dark:text-orange-200">
                         These Lucide icons are currently reused for multiple
                         different assets. Creating unique icons for these will
@@ -246,14 +251,14 @@ function RouteComponent() {
 
                 {/* Design Guidelines */}
                 <section className="rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-950">
-                    <h2 className="mb-3 text-xl font-bold text-blue-900 dark:text-blue-100">
+                    <TypographyH2 className="mb-3 text-blue-900 dark:text-blue-100">
                         📐 Design Guidelines
-                    </h2>
+                    </TypographyH2>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div>
-                            <h3 className="mb-2 font-semibold text-blue-900 dark:text-blue-100">
+                            <TypographyH3 className="mb-2 text-blue-900 dark:text-blue-100">
                                 Technical Specs
-                            </h3>
+                            </TypographyH3>
                             <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
                                 <li>• Format: SVG</li>
                                 <li>• ViewBox: 24×24</li>
@@ -265,9 +270,9 @@ function RouteComponent() {
                             </ul>
                         </div>
                         <div>
-                            <h3 className="mb-2 font-semibold text-blue-900 dark:text-blue-100">
+                            <TypographyH3 className="mb-2 text-blue-900 dark:text-blue-100">
                                 Style Reference
-                            </h3>
+                            </TypographyH3>
                             <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
                                 <li>
                                     • Base style:{" "}

@@ -1,6 +1,7 @@
 import { Link, LinkProps } from "@tanstack/react-router";
 import { type LucideIcon } from "lucide-react";
 
+import { TypographyH2, TypographyLarge } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
 interface QuickLinkCardProps {
@@ -28,7 +29,9 @@ export function QuickLinkCard({
             )}
         >
             {Icon && <Icon className="w-8 h-8 mx-auto mb-2 text-foreground" />}
-            <h2 className="text-xl font-bold text-foreground">{title}</h2>
+            <TypographyH2 className="text-foreground">
+                <TypographyLarge>{title}</TypographyLarge>
+            </TypographyH2>
         </Link>
     );
 }

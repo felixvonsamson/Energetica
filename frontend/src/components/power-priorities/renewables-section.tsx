@@ -11,6 +11,11 @@ import type { RenewableFacilityType } from "@/components/power-priorities/types"
 import { Money } from "@/components/ui";
 import { AssetName } from "@/components/ui/asset-name";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
+import {
+    TypographyH3,
+    TypographyMuted,
+    TypographySmall,
+} from "@/components/ui/typography";
 import { formatPower } from "@/lib/format-utils";
 import type { ApiResponse } from "@/types/api-helpers";
 
@@ -47,9 +52,13 @@ export function RenewablesSection({
                     colSpan={7}
                     className="pt-4 pb-2 px-3 border-t-2 border-border"
                 >
-                    <h3 className="text-sm font-semibold text-muted-foreground">
-                        Renewables (always active)
-                    </h3>
+                    <TypographyH3>
+                        <TypographyMuted>
+                            <TypographySmall>
+                                Renewables (always active)
+                            </TypographySmall>
+                        </TypographyMuted>
+                    </TypographyH3>
                 </td>
             </tr>
             {renewables.map((renewable) => {

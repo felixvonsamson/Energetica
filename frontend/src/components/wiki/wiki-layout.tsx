@@ -9,6 +9,7 @@ import { type ReactNode } from "react";
 import { HomeLayout } from "@/components/home-layout";
 import { GameLayout } from "@/components/layout/game-layout";
 import { MdxContent } from "@/components/mdx-content";
+import { TypographyH2 } from "@/components/ui/typography";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -42,9 +43,9 @@ export function WikiLayout({ children }: WikiLayoutProps) {
 
             {/* Navigation */}
             <nav className="max-w-4xl mx-auto mt-12">
-                <h2 className="text-2xl font-bold text-center mb-6">
+                <TypographyH2 className="text-center mb-6">
                     Navigation
-                </h2>
+                </TypographyH2>
                 <div className="flex flex-wrap gap-2 justify-center">
                     {wikiLinks.map((link) => {
                         const isActive = link.slug === currentSlug;
