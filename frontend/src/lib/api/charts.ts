@@ -13,7 +13,7 @@ interface ChartParams {
 interface MarketChartParams {
     marketId: number;
     chartType:
-        | "market-clearing-data"
+        | "market-clearing"
         | "market-exports"
         | "market-imports"
         | "market-generation"
@@ -42,7 +42,7 @@ export const chartsApi = {
     }: MarketChartParams) => {
         // Map frontend chart type to backend endpoint
         const endpointMap = {
-            "market-clearing-data": "network_data",
+            "market-clearing": "clearing",
             "market-exports": "exports",
             "market-imports": "imports",
             "market-generation": "generation",
@@ -51,7 +51,7 @@ export const chartsApi = {
         const endpoint = endpointMap[chartType];
         const response = await apiClient.get<
             ApiResponse<
-                | "/api/v1/charts/markets/{market_id}/network_data/{resolution}"
+                | "/api/v1/charts/markets/{market_id}/clearing/{resolution}"
                 | "/api/v1/charts/markets/{market_id}/exports/{resolution}"
                 | "/api/v1/charts/markets/{market_id}/imports/{resolution}"
                 | "/api/v1/charts/markets/{market_id}/generation/{resolution}"

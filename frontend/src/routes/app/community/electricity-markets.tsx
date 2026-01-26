@@ -127,7 +127,7 @@ function ElectricityMarketsContent() {
 
     // Fetch market data for selected market
     const { data: selectedMarketData } = useLatestChartData({
-        chartType: "market-clearing-data",
+        chartType: "market-clearing",
         marketId: selectedMarket?.id ?? 0,
     });
 

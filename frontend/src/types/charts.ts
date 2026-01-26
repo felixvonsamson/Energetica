@@ -10,7 +10,7 @@ export type ChartType =
     | "climate"
     | "temperature"
     | "resources"
-    | "market-clearing-data"
+    | "market-clearing"
     | "market-exports"
     | "market-imports"
     | "market-generation"

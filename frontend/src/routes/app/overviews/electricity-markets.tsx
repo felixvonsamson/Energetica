@@ -146,7 +146,7 @@ function MarketsOverviewContent() {
     // Fetch latest data for real-time display
     const { data: latestData, isLoading: isLatestLoading } = useLatestChartData(
         {
-            chartType: "market-clearing-data",
+            chartType: "market-clearing",
             marketId: selectedMarketId,
         },
     );

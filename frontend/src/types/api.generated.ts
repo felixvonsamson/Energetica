@@ -431,7 +431,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/charts/markets/{market_id}/network_data/{resolution}": {
+    "/api/v1/charts/markets/{market_id}/clearing/{resolution}": {
         parameters: {
             query?: never;
             header?: never;
@@ -439,7 +439,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Network Data
+         * Get Network Clearing
          *
          * Get network price and quantity time series at the specified
          * resolution.
@@ -452,7 +452,7 @@ export interface paths {
          *         start_tick: First tick to include (must be aligned to resolution)
          *         count: Number of datapoints to retrieve
          */
-        get: operations["get_network_data_api_v1_charts_markets__market_id__network_data__resolution__get"];
+        get: operations["get_network_clearing_api_v1_charts_markets__market_id__clearing__resolution__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5287,7 +5287,7 @@ export interface operations {
             };
         };
     };
-    get_network_data_api_v1_charts_markets__market_id__network_data__resolution__get: {
+    get_network_clearing_api_v1_charts_markets__market_id__clearing__resolution__get: {
         parameters: {
             query: {
                 start_tick: number;

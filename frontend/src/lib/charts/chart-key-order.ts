@@ -167,7 +167,7 @@ export type ChartDataKeys = {
     climate: (typeof CLIMATE_KEYS)[number];
     temperature: (typeof TEMPERATURE_KEYS)[number];
     resources: (typeof RESOURCES_KEYS)[number];
-    "market-clearing-data": (typeof MARKET_CLEARING_DATA_KEYS)[number];
+    "market-clearing": (typeof MARKET_CLEARING_DATA_KEYS)[number];
     "market-exports": string; // Dynamic player IDs
     "market-imports": string; // Dynamic player IDs
     "market-generation": (typeof MARKET_GENERATION_KEYS)[number];
@@ -179,8 +179,8 @@ export type ChartDataKeys = {
  * tick number and values for each of its specific keys.
  *
  * @example
- *     // For market-clearing-data chart type:
- *     ChartDataPoint<"market-clearing-data"> = { tick: number; price: number; quantity: number }
+ *     // For market-clearing chart type:
+ *     ChartDataPoint<"market-clearing"> = { tick: number; price: number; quantity: number }
  */
 export type ChartDataPoint<T extends ChartType> = {
     tick: number;
@@ -197,7 +197,7 @@ export const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {
     climate: CLIMATE_KEYS,
     temperature: TEMPERATURE_KEYS,
     resources: RESOURCES_KEYS,
-    "market-clearing-data": MARKET_CLEARING_DATA_KEYS,
+    "market-clearing": MARKET_CLEARING_DATA_KEYS,
     "market-exports": MARKET_EXPORTS_KEYS,
     "market-imports": MARKET_IMPORTS_KEYS,
     "market-generation": MARKET_GENERATION_KEYS,

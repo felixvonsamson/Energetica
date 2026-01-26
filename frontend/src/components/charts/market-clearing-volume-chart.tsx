@@ -34,7 +34,7 @@ function useMarketClearingData(
     // Determine which chart type to use for breakdown
     const chartType: ChartType = useMemo(() => {
         if (!breakdownEnabled) {
-            return "market-clearing-data"; // Use market-clearing-data for clearing volume
+            return "market-clearing"; // Use market-clearing for clearing volume
         } else if (breakdownType === "supply") {
             return breakdownMode === "player"
                 ? "market-exports"
@@ -93,7 +93,7 @@ export function MarketClearingVolumeChart({
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
             chartType,
-            chartVariant: "bar",
+            chartVariant: "area",
             stacked: breakdownEnabled,
             showBrush: true,
             getColor: !breakdownEnabled
