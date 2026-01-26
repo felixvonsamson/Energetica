@@ -6,7 +6,6 @@ import {
     useMemo,
     useState,
     useRef,
-    useEffect,
     useCallback,
     memo,
     type ReactNode,
@@ -25,7 +24,13 @@ import {
 
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useMarketData } from "@/hooks/useCharts";
-import { getHashBasedChartColor } from "@/lib/charts/chart-utils";
+import { useRechartsChartArea } from "@/hooks/useRechartsChartArea";
+import {
+    getHashBasedChartColor,
+    interpolateAtX,
+    createSteppedCurve,
+    generateNiceTicks,
+} from "@/lib/charts/chart-utils";
 import { formatMoney, formatPower } from "@/lib/format-utils";
 
 export type BreakdownType = "supply" | "demand";
@@ -39,56 +44,6 @@ interface SupplyDemandChartProps {
     breakdownEnabled?: boolean;
     breakdownMode?: BreakdownMode;
     breakdownType?: BreakdownType;
-}
-
-// Chart margins - used consistently for layout and coordinate calculations
-const CHART_MARGIN = {
-    top: 5,
-    right: 10,
-    bottom: 40,
-    left: 80, // Increased to account for Y-axis label and tick labels
-} as const;
-
-interface CurvePoint {
-    quantity: number;
-    price: number;
-}
-
-/**
- * Performs linear interpolation on a curve to find the Y value at a given X
- * position. Returns null if X is outside the curve's range.
- */
-function interpolateAtX(curve: CurvePoint[], targetX: number): number | null {
-    if (curve.length === 0) return null;
-    if (targetX < 0) return null;
-
-    // Find the two points that bracket targetX
-    for (let i = 0; i < curve.length - 1; i++) {
-        const p1 = curve[i];
-        const p2 = curve[i + 1];
-
-        if (!p1 || !p2) continue;
-
-        // Check if targetX is between these two points
-        if (targetX >= p1.quantity && targetX <= p2.quantity) {
-            // Handle vertical segments (same quantity, different price)
-            if (p2.quantity === p1.quantity) {
-                return p2.price;
-            }
-
-            // Linear interpolation: y = y1 + (y2 - y1) * (x - x1) / (x2 - x1)
-            const ratio = (targetX - p1.quantity) / (p2.quantity - p1.quantity);
-            return p1.price + (p2.price - p1.price) * ratio;
-        }
-    }
-
-    // If targetX is beyond the last point, return the last price
-    const lastPoint = curve[curve.length - 1];
-    if (lastPoint && targetX >= lastPoint.quantity) {
-        return lastPoint.price;
-    }
-
-    return null;
 }
 
 interface CustomTooltipProps {
@@ -157,86 +112,6 @@ const OrderBlock = memo(function OrderBlock({
 });
 
 /**
- * Transforms order data into a stepped curve for Recharts. Creates points for a
- * ragged supply or demand curve from discrete orders.
- *
- * @param extensionPrice - Optional price to extend the curve vertically after
- *   the last order
- */
-function createSteppedCurve(
-    prices: number[],
-    cumulCapacities: number[],
-    extensionPrice?: number,
-): CurvePoint[] {
-    if (prices.length === 0) return [];
-
-    const points: CurvePoint[] = [];
-
-    // Start at origin
-    points.push({ quantity: 0, price: 0 });
-
-    for (let i = 0; i < prices.length; i++) {
-        const prevCumul = i === 0 ? 0 : (cumulCapacities[i - 1] ?? 0);
-        const currCumul = cumulCapacities[i] ?? 0;
-        const price = prices[i] ?? 0;
-
-        // Add vertical step (price change at same quantity)
-        points.push({ quantity: prevCumul, price });
-        // Add horizontal step (quantity change at same price)
-        points.push({ quantity: currCumul, price });
-    }
-
-    // Add vertical extension at the end if extensionPrice is provided
-    if (extensionPrice !== undefined && prices.length > 0) {
-        const lastQuantity = cumulCapacities[cumulCapacities.length - 1] ?? 0;
-        points.push({ quantity: lastQuantity, price: extensionPrice });
-    }
-
-    return points;
-}
-
-/**
- * Generates predictable tick values for an axis based on the range. Uses round
- * numbers to provide a consistent frame of reference.
- */
-function generateNiceTicks(
-    min: number,
-    max: number,
-    targetCount = 5,
-): number[] {
-    const range = max - min;
-    if (range === 0) return [min];
-
-    // Calculate order of magnitude
-    const roughStep = range / (targetCount - 1);
-    const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
-
-    // Try different nice step sizes (1, 2, 5 multiplied by magnitude)
-    const niceSteps = [1, 2, 5, 10].map((n) => n * magnitude);
-    const step =
-        niceSteps.find((s) => range / s <= targetCount) ??
-        niceSteps[niceSteps.length - 1] ??
-        magnitude;
-
-    // Generate ticks
-    const ticks: number[] = [];
-    const startTick = Math.floor(min / step) * step;
-
-    for (let tick = startTick; tick <= max; tick += step) {
-        if (tick >= min) {
-            ticks.push(tick);
-        }
-    }
-
-    // Ensure max is included
-    if (ticks[ticks.length - 1] !== max) {
-        ticks.push(max);
-    }
-
-    return ticks;
-}
-
-/**
  * Supply and demand chart showing market clearing with order blocks. Displays
  * ragged supply/demand curves from discrete orders, clearing point, and
  * individual order blocks.
@@ -269,9 +144,6 @@ function SupplyDemandChartInner({
 
     // State for currently hovered order block (only changes when block changes)
     const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
-
-    // State for measured Y-axis width (for calculating dead space)
-    const [yAxisWidth, setYAxisWidth] = useState<number>(0);
 
     // Ref to the container for coordinate calculations
     const containerRef = useRef<HTMLDivElement>(null);
@@ -445,39 +317,14 @@ function SupplyDemandChartInner({
         return scaleLinear().domain(priceDomain).range([1, 0]); // Inverted because Y coordinates increase downward
     }, [priceDomain]);
 
-    // Measure the actual Y-axis width after render
-    // Only re-measure when the max price tick changes (affects label width)
+    // Measure the actual chart plotting area from Recharts internals
+    // Re-measure when tick values change (affects layout)
     const maxPriceTick = priceTicks[priceTicks.length - 1];
-    useEffect(() => {
-        if (!containerRef.current) return;
-
-        // Defer measurement to next animation frame to ensure Recharts has rendered
-        const rafId = requestAnimationFrame(() => {
-            if (!containerRef.current) return;
-
-            // Query for the Y-axis group element rendered by Recharts
-            const yAxisElement = containerRef.current.querySelector(
-                ".recharts-yAxis",
-            ) as SVGGElement | null;
-
-            if (yAxisElement) {
-                try {
-                    // Get the bounding box of the Y-axis (includes tick labels and axis label)
-                    const bbox = yAxisElement.getBBox();
-                    // Add a small buffer for safety
-                    const newWidth = bbox.width + 5;
-                    // Only update if changed to avoid unnecessary re-renders
-                    setYAxisWidth((prev) =>
-                        Math.abs(prev - newWidth) > 1 ? newWidth : prev,
-                    );
-                } catch {
-                    // getBBox can fail in some edge cases, ignore
-                }
-            }
-        });
-
-        return () => cancelAnimationFrame(rafId);
-    }, [maxPriceTick]); // Only re-measure when max price tick changes
+    const maxQuantityTick = quantityTicks[quantityTicks.length - 1];
+    const chartArea = useRechartsChartArea(containerRef, [
+        maxPriceTick,
+        maxQuantityTick,
+    ]);
 
     // Mouse move handler to track cursor and interpolate values
     // Optimized to minimize state updates and re-renders
@@ -490,22 +337,28 @@ function SupplyDemandChartInner({
             }
             lastUpdateTime.current = now;
 
-            if (!containerRef.current) return;
+            if (!containerRef.current || !chartArea) return;
 
             // Cache rect calculation - only call once
             const rect = containerRef.current.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
 
-            // Calculate the chart area dimensions
-            // Use the measured Y-axis width to account for tick labels and axis label
-            // that extend beyond the margin into the "dead space"
-            const chartLeft = CHART_MARGIN.left + yAxisWidth;
-            const chartRight = rect.width - CHART_MARGIN.right;
-            const chartWidth = chartRight - chartLeft;
+            // Use the measured chart area from Recharts internals
+            const chartLeft = chartArea.left;
+            const chartRight = chartArea.left + chartArea.width;
+            const chartTop = chartArea.top;
+            const chartBottom = chartArea.top + chartArea.height;
+            const chartWidth = chartArea.width;
+            const chartHeight = chartArea.height;
 
             // Check if mouse is within chart bounds
-            if (mouseX < chartLeft || mouseX > chartRight) {
+            if (
+                mouseX < chartLeft ||
+                mouseX > chartRight ||
+                mouseY < chartTop ||
+                mouseY > chartBottom
+            ) {
                 setTooltipContent(null);
                 setHoveredBlockId(null);
                 return;
@@ -566,10 +419,7 @@ function SupplyDemandChartInner({
             let tooltipY = mouseY;
             if (blockPrice !== undefined) {
                 // Convert price to pixel position using the Y scale
-                const chartTop = CHART_MARGIN.top;
-                const chartBottom = rect.height - CHART_MARGIN.bottom;
-                const chartHeight = chartBottom - chartTop;
-
+                // Use the already-calculated chart dimensions
                 const normalizedY = yScale(blockPrice);
                 tooltipY = chartTop + normalizedY * chartHeight;
             }
@@ -595,7 +445,7 @@ function SupplyDemandChartInner({
             });
         },
         [
-            yAxisWidth,
+            chartArea,
             xScale,
             yScale,
             supplyCurve,
@@ -644,7 +494,7 @@ function SupplyDemandChartInner({
             }}
         >
             <ResponsiveContainer width="100%" height={height}>
-                <LineChart data={chartData} margin={CHART_MARGIN}>
+                <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                         dataKey="quantity"
