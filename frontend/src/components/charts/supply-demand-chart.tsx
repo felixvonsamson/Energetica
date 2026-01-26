@@ -41,14 +41,6 @@ interface SupplyDemandChartProps {
     breakdownType?: BreakdownType;
 }
 
-// Chart margins - used consistently for layout and coordinate calculations
-const CHART_MARGIN = {
-    top: 5,
-    right: 10,
-    bottom: 40,
-    left: 80, // Increased to account for Y-axis label and tick labels
-} as const;
-
 interface CurvePoint {
     quantity: number;
     price: number;
@@ -270,8 +262,13 @@ function SupplyDemandChartInner({
     // State for currently hovered order block (only changes when block changes)
     const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
 
-    // State for measured Y-axis width (for calculating dead space)
-    const [yAxisWidth, setYAxisWidth] = useState<number>(0);
+    // State for measured chart plotting area (determined from Recharts internals)
+    const [chartArea, setChartArea] = useState<{
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+    } | null>(null);
 
     // Ref to the container for coordinate calculations
     const containerRef = useRef<HTMLDivElement>(null);
@@ -445,9 +442,10 @@ function SupplyDemandChartInner({
         return scaleLinear().domain(priceDomain).range([1, 0]); // Inverted because Y coordinates increase downward
     }, [priceDomain]);
 
-    // Measure the actual Y-axis width after render
-    // Only re-measure when the max price tick changes (affects label width)
+    // Measure the actual chart plotting area after render by querying Recharts internals
+    // The CartesianGrid or clipPath gives us the exact plotting area coordinates
     const maxPriceTick = priceTicks[priceTicks.length - 1];
+    const maxQuantityTick = quantityTicks[quantityTicks.length - 1];
     useEffect(() => {
         if (!containerRef.current) return;
 
@@ -455,21 +453,37 @@ function SupplyDemandChartInner({
         const rafId = requestAnimationFrame(() => {
             if (!containerRef.current) return;
 
-            // Query for the Y-axis group element rendered by Recharts
-            const yAxisElement = containerRef.current.querySelector(
-                ".recharts-yAxis",
+            // Query for the CartesianGrid which defines the exact chart plotting area
+            // This is more reliable than measuring axes, which have labels in separate groups
+            const gridElement = containerRef.current.querySelector(
+                ".recharts-cartesian-grid",
             ) as SVGGElement | null;
 
-            if (yAxisElement) {
+            if (gridElement) {
                 try {
-                    // Get the bounding box of the Y-axis (includes tick labels and axis label)
-                    const bbox = yAxisElement.getBBox();
-                    // Add a small buffer for safety
-                    const newWidth = bbox.width + 5;
-                    // Only update if changed to avoid unnecessary re-renders
-                    setYAxisWidth((prev) =>
-                        Math.abs(prev - newWidth) > 1 ? newWidth : prev,
-                    );
+                    // Get the bounding box of the grid - this IS the chart area
+                    const bbox = gridElement.getBBox();
+
+                    const newArea = {
+                        left: bbox.x,
+                        top: bbox.y,
+                        width: bbox.width,
+                        height: bbox.height,
+                    };
+
+                    // Only update if meaningfully changed
+                    setChartArea((prev) => {
+                        if (
+                            !prev ||
+                            Math.abs(prev.left - newArea.left) > 1 ||
+                            Math.abs(prev.top - newArea.top) > 1 ||
+                            Math.abs(prev.width - newArea.width) > 1 ||
+                            Math.abs(prev.height - newArea.height) > 1
+                        ) {
+                            return newArea;
+                        }
+                        return prev;
+                    });
                 } catch {
                     // getBBox can fail in some edge cases, ignore
                 }
@@ -477,7 +491,7 @@ function SupplyDemandChartInner({
         });
 
         return () => cancelAnimationFrame(rafId);
-    }, [maxPriceTick]); // Only re-measure when max price tick changes
+    }, [maxPriceTick, maxQuantityTick]); // Re-measure when ticks change
 
     // Mouse move handler to track cursor and interpolate values
     // Optimized to minimize state updates and re-renders
@@ -490,22 +504,28 @@ function SupplyDemandChartInner({
             }
             lastUpdateTime.current = now;
 
-            if (!containerRef.current) return;
+            if (!containerRef.current || !chartArea) return;
 
             // Cache rect calculation - only call once
             const rect = containerRef.current.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
 
-            // Calculate the chart area dimensions
-            // Use the measured Y-axis width to account for tick labels and axis label
-            // that extend beyond the margin into the "dead space"
-            const chartLeft = CHART_MARGIN.left + yAxisWidth;
-            const chartRight = rect.width - CHART_MARGIN.right;
-            const chartWidth = chartRight - chartLeft;
+            // Use the measured chart area from Recharts internals
+            const chartLeft = chartArea.left;
+            const chartRight = chartArea.left + chartArea.width;
+            const chartTop = chartArea.top;
+            const chartBottom = chartArea.top + chartArea.height;
+            const chartWidth = chartArea.width;
+            const chartHeight = chartArea.height;
 
             // Check if mouse is within chart bounds
-            if (mouseX < chartLeft || mouseX > chartRight) {
+            if (
+                mouseX < chartLeft ||
+                mouseX > chartRight ||
+                mouseY < chartTop ||
+                mouseY > chartBottom
+            ) {
                 setTooltipContent(null);
                 setHoveredBlockId(null);
                 return;
@@ -566,10 +586,7 @@ function SupplyDemandChartInner({
             let tooltipY = mouseY;
             if (blockPrice !== undefined) {
                 // Convert price to pixel position using the Y scale
-                const chartTop = CHART_MARGIN.top;
-                const chartBottom = rect.height - CHART_MARGIN.bottom;
-                const chartHeight = chartBottom - chartTop;
-
+                // Use the already-calculated chart dimensions
                 const normalizedY = yScale(blockPrice);
                 tooltipY = chartTop + normalizedY * chartHeight;
             }
@@ -595,7 +612,7 @@ function SupplyDemandChartInner({
             });
         },
         [
-            yAxisWidth,
+            chartArea,
             xScale,
             yScale,
             supplyCurve,
@@ -644,7 +661,7 @@ function SupplyDemandChartInner({
             }}
         >
             <ResponsiveContainer width="100%" height={height}>
-                <LineChart data={chartData} margin={CHART_MARGIN}>
+                <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                         dataKey="quantity"
