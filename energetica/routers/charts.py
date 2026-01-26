@@ -507,8 +507,8 @@ def get_resources(
     return ResourcesResponse(resolution=resolution, **data)
 
 
-@router.get("/markets/{market_id}/network_data/{resolution}")
-def get_network_data(
+@router.get("/markets/{market_id}/clearing/{resolution}")
+def get_network_clearing(
     market_id: int,
     resolution: Resolution,
     start_tick: int,

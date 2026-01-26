@@ -21,7 +21,7 @@ export function MarketPriceChart({
 
     // Fetch chart data for network-data
     const { chartData, isLoading, isError } = useCurrentChartData({
-        chartType: "market-clearing-data",
+        chartType: "market-clearing",
         currentTick,
         resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
@@ -38,7 +38,7 @@ export function MarketPriceChart({
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
-            chartType: "market-clearing-data",
+            chartType: "market-clearing",
             chartVariant: "line",
             stacked: false,
             showBrush: true,

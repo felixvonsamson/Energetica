@@ -403,7 +403,7 @@ const QUERY_KEY_FN_BY_CHART_TYPE = {
     climate: queryKeys.charts.climate,
     temperature: queryKeys.charts.temperature,
     resources: queryKeys.charts.resources,
-    "market-clearing-data": queryKeys.charts.marketClearingData,
+    "market-clearing": queryKeys.charts.marketClearingData,
     "market-exports": queryKeys.charts.marketExports,
     "market-imports": queryKeys.charts.marketImports,
     "market-generation": queryKeys.charts.marketGeneration,
@@ -411,7 +411,7 @@ const QUERY_KEY_FN_BY_CHART_TYPE = {
 } as const;
 
 const MARKET_CHART_TYPES: ChartType[] = [
-    "market-clearing-data",
+    "market-clearing",
     "market-exports",
     "market-imports",
     "market-generation",
@@ -421,7 +421,7 @@ const MARKET_CHART_TYPES: ChartType[] = [
 /** Extract the sub-type from a market chart type for query key construction */
 function getMarketChartSubType(chartType: ChartType): string {
     const mapping = {
-        "market-clearing-data": "clearing-data",
+        "market-clearing": "clearing-data",
         "market-exports": "exports",
         "market-imports": "imports",
         "market-generation": "generation",
@@ -464,7 +464,7 @@ function useFetchChartGaps({
                         chartsApi.getMarketChartData({
                             marketId,
                             chartType: chartType as
-                                | "market-clearing-data"
+                                | "market-clearing"
                                 | "market-exports"
                                 | "market-imports"
                                 | "market-generation"
