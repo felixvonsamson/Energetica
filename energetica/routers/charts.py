@@ -319,7 +319,7 @@ def _get_network_data(
 
     current_tick = engine.total_t
     fresh_rolling_history_tick_count = current_tick % 216
-    pickle_path = f"instance/data/markets/{network.id}/network_data.pck"
+    pickle_path = f"instance/data/networks/{network.id}/time_series.pck"
     rolling_history_data = network.rolling_history.get_data(t=fresh_rolling_history_tick_count)[data_category]
 
     return _get_time_series_data(
