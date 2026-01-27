@@ -50,24 +50,30 @@ function useCurrentChartDataBase<T extends ChartType>({
     resolution,
     maxDatapoints,
     marketId,
+    minTick,
 }: {
     chartType: T;
     currentTick: number | undefined;
     resolution: Resolution;
     maxDatapoints: number;
     marketId?: number;
+    minTick?: number;
 }) {
     // Determine the corresponding tick range
     const range = useMemo(() => {
         if (!currentTick) {
             return { startTick: 0, count: 0 };
         }
+        const effectiveMinTick = minTick ?? 0;
         const startTick =
             resolution *
-            Math.max(0, Math.floor(currentTick / resolution - maxDatapoints));
+            Math.max(
+                Math.floor(effectiveMinTick / resolution),
+                Math.floor(currentTick / resolution - maxDatapoints),
+            );
         const count = Math.floor((currentTick - startTick) / resolution);
         return { startTick, count };
-    }, [currentTick, resolution, maxDatapoints]);
+    }, [currentTick, resolution, maxDatapoints, minTick]);
 
     // Call helper hook (always called, handles empty range gracefully)
     const {
@@ -97,12 +103,14 @@ export function useCurrentChartData<T extends ChartType>({
     resolution,
     maxDatapoints,
     marketId,
+    minTick,
 }: {
     chartType: T;
     currentTick: number | undefined;
     resolution: Resolution;
     maxDatapoints: number;
     marketId?: number;
+    minTick?: number;
 }): {
     chartData: ChartDataPoint<T>[];
     isLoading: boolean;
@@ -121,6 +129,7 @@ export function useCurrentChartData<T extends ChartType>({
         resolution,
         maxDatapoints,
         marketId,
+        minTick,
     });
 
     // If current data is loading, try to get cached data from previous range
@@ -134,13 +143,17 @@ export function useCurrentChartData<T extends ChartType>({
 
         // Calculate range for the previous tick
         const previousTick = currentTick - resolution;
-        if (previousTick < 0) {
+        const effectiveMinTick = minTick ?? 0;
+        if (previousTick < effectiveMinTick) {
             return null; // No previous tick exists
         }
 
         const startTick =
             resolution *
-            Math.max(0, Math.floor(previousTick / resolution - maxDatapoints));
+            Math.max(
+                Math.floor(effectiveMinTick / resolution),
+                Math.floor(previousTick / resolution - maxDatapoints),
+            );
         const count = Math.floor((previousTick - startTick) / resolution);
 
         if (count === 0) {
@@ -177,6 +190,7 @@ export function useCurrentChartData<T extends ChartType>({
         queryClient,
         chartType,
         marketId,
+        minTick,
     ]);
 
     // Determine what data to return
@@ -213,9 +227,11 @@ export function useCurrentChartData<T extends ChartType>({
 export function useLatestChartData<T extends ChartType>({
     chartType,
     marketId,
+    minTick,
 }: {
     chartType: T;
     marketId?: number;
+    minTick?: number;
 }): {
     data: Partial<Record<string, number>>;
     isLoading: boolean;
@@ -233,6 +249,7 @@ export function useLatestChartData<T extends ChartType>({
         resolution,
         maxDatapoints,
         marketId,
+        minTick,
     });
 
     // Extract the last datapoint (or return empty object)

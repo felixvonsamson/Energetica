@@ -11,11 +11,13 @@ import { ResolutionOption } from "@/types/charts";
 interface MarketPriceChartProps {
     selectedResolution: ResolutionOption;
     marketId: number;
+    minTick?: number;
 }
 
 export function MarketPriceChart({
     selectedResolution,
     marketId,
+    minTick,
 }: MarketPriceChartProps) {
     const { currentTick } = useGameTick();
 
@@ -26,6 +28,7 @@ export function MarketPriceChart({
         resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
         marketId,
+        minTick,
     });
 
     // Extract only price data

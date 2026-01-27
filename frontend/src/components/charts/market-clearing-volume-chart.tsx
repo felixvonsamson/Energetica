@@ -28,6 +28,7 @@ function useMarketClearingData(
     breakdownEnabled: boolean,
     breakdownType: BreakdownType,
     breakdownMode: BreakdownMode,
+    minTick?: number,
 ) {
     const { currentTick } = useGameTick();
 
@@ -53,6 +54,7 @@ function useMarketClearingData(
         resolution: resolution.resolution,
         maxDatapoints: resolution.datapoints,
         marketId,
+        minTick,
     });
 
     return { chartType, chartData, isLoading, isError };
@@ -65,6 +67,7 @@ interface MarketClearingChartProps {
     breakdownEnabled: boolean;
     breakdownMode: BreakdownMode;
     breakdownType: BreakdownType;
+    minTick?: number;
 }
 
 export function MarketClearingVolumeChart({
@@ -74,6 +77,7 @@ export function MarketClearingVolumeChart({
     breakdownEnabled,
     breakdownMode,
     breakdownType,
+    minTick,
 }: MarketClearingChartProps) {
     const getColor = useAssetColorGetter();
     const playerMap = usePlayerMap();
@@ -88,6 +92,7 @@ export function MarketClearingVolumeChart({
         breakdownEnabled,
         breakdownType,
         breakdownMode,
+        minTick,
     );
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
@@ -141,6 +146,7 @@ interface MarketClearingVolumeTableProps {
     breakdownEnabled: boolean;
     breakdownMode: BreakdownMode;
     breakdownType: BreakdownType;
+    minTick?: number;
 }
 
 export function MarketClearingTable({
@@ -151,6 +157,7 @@ export function MarketClearingTable({
     breakdownEnabled,
     breakdownMode,
     breakdownType,
+    minTick,
 }: MarketClearingVolumeTableProps) {
     const { chartData } = useMarketClearingData(
         resolution,
@@ -158,6 +165,7 @@ export function MarketClearingTable({
         breakdownEnabled,
         breakdownType,
         breakdownMode,
+        minTick,
     );
 
     const [sortKey, setSortKey] = useState<"name" | "energy">("energy");

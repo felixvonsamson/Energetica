@@ -13,6 +13,8 @@ interface ResolutionPickerProps {
     currentTick: number | undefined;
     /** Minimum number of datapoints required to show a resolution option */
     minDatapoints?: number;
+    /** Minimum tick where data is available (e.g., when a market was created) */
+    minTick?: number;
 }
 
 /**
@@ -22,14 +24,16 @@ interface ResolutionPickerProps {
 export function ResolutionPicker({
     currentTick,
     minDatapoints = 60,
+    minTick,
 }: ResolutionPickerProps) {
     const { selectedResolution, setResolution } = useTimeMode();
 
     const availableResolutions = currentTick
-        ? resolutions.filter(
-              (res) =>
-                  res.id === 0 || currentTick > res.resolution * minDatapoints,
-          )
+        ? resolutions.filter((res) => {
+              if (res.id === 0) return true;
+              const dataAge = currentTick - (minTick ?? 0);
+              return dataAge > res.resolution * minDatapoints;
+          })
         : [];
 
     return (
