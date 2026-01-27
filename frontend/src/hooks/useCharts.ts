@@ -447,6 +447,47 @@ function getMarketChartSubType(chartType: ChartType): string {
     return mapping[chartType as keyof typeof mapping] || chartType;
 }
 
+/**
+ * Extracts tick range from a query key.
+ * Both regular and market chart query keys end with [..., startTick, count].
+ */
+function extractRangeFromQueryKey(
+    queryKey: readonly unknown[],
+): TickRange | null {
+    const len = queryKey.length;
+    if (len < 2) return null;
+    const count = queryKey[len - 1];
+    const startTick = queryKey[len - 2];
+    if (typeof startTick !== "number" || typeof count !== "number")
+        return null;
+    return { startTick, count };
+}
+
+/**
+ * Builds the query key prefix for a chart type and resolution.
+ * Market charts: ["charts", "markets", marketId, chartSubType, resolution]
+ * Regular charts: ["charts", chartType, resolution]
+ */
+function buildChartQueryKeyPrefix(
+    chartType: ChartType,
+    resolution: Resolution,
+    marketId?: number,
+): unknown[] {
+    const isMarketChart = MARKET_CHART_TYPES.includes(chartType);
+
+    if (isMarketChart && marketId !== undefined) {
+        return [
+            "charts",
+            "markets",
+            marketId,
+            getMarketChartSubType(chartType),
+            toStringResolution(resolution),
+        ];
+    }
+
+    return ["charts", chartType, toStringResolution(resolution)];
+}
+
 /** Fetches ranges concurrently. */
 function useFetchChartGaps({
     chartType,
@@ -619,21 +660,12 @@ function getCachedChartRanges({
     marketId?: number;
 }): CachedTickRange[] {
     const cache = queryClient.getQueryCache();
-    const isMarketChart = MARKET_CHART_TYPES.includes(chartType);
 
-    // Build query key filter based on chart type
-    // Market charts have structure: ["charts", "markets", marketId, chartSubType, resolution, ...]
-    // Regular charts have structure: ["charts", chartType, resolution, ...]
-    const queryKeyPrefix =
-        isMarketChart && marketId !== undefined
-            ? [
-                  "charts",
-                  "markets",
-                  marketId,
-                  getMarketChartSubType(chartType),
-                  toStringResolution(resolution),
-              ]
-            : ["charts", chartType, toStringResolution(resolution)];
+    const queryKeyPrefix = buildChartQueryKeyPrefix(
+        chartType,
+        resolution,
+        marketId,
+    );
 
     const filters = {
         queryKey: queryKeyPrefix,
@@ -645,44 +677,15 @@ function getCachedChartRanges({
     const endTick = range.startTick + range.count * resolution;
     const ranges: CachedTickRange[] = queries
         .map((query) => {
-            if (isMarketChart && marketId !== undefined) {
-                // Market chart query key: ["charts", "markets", marketId, chartSubType, resolution, startTick, count]
-                const queryKey = query.queryKey as [
-                    string,
-                    string,
-                    number,
-                    string,
-                    string,
-                    number,
-                    number,
-                ];
-                const [, , , , , startTick, count] = queryKey;
-                return {
-                    range: {
-                        startTick: startTick,
-                        count: count,
-                    },
-                    data: query.state.data,
-                } as CachedTickRange;
-            } else {
-                // Regular chart query key: ["charts", chartType, resolution, startTick, count]
-                const queryKey = query.queryKey as [
-                    string,
-                    string,
-                    string,
-                    number,
-                    number,
-                ];
-                const [, , , startTick, count] = queryKey;
-                return {
-                    range: {
-                        startTick: startTick,
-                        count: count,
-                    },
-                    data: query.state.data,
-                } as CachedTickRange;
-            }
+            const tickRange = extractRangeFromQueryKey(query.queryKey);
+            if (!tickRange) return null;
+
+            return {
+                range: tickRange,
+                data: query.state.data,
+            } as CachedTickRange;
         })
+        .filter((cache): cache is CachedTickRange => cache !== null)
         .filter((cache) => {
             const cachedRangeEndTick =
                 cache.range.startTick + cache.range.count * resolution;
