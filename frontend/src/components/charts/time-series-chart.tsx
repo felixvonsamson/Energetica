@@ -35,7 +35,7 @@ import {
 import { formatDuration } from "@/lib/format-utils";
 import { ChartType } from "@/types/charts";
 
-type ChartVariant = "area" | "line" | "bar";
+type ChartVariant = "area" | "steppedLine" | "smoothLine" | "bar";
 
 const CHART_VARIANT_MAPPING: Record<
     ChartVariant,
@@ -44,7 +44,8 @@ const CHART_VARIANT_MAPPING: Record<
     >
 > = {
     area: AreaChart,
-    line: LineChart,
+    smoothLine: LineChart,
+    steppedLine: LineChart,
     bar: BarChart,
 };
 
@@ -196,7 +197,7 @@ export function TimeSeriesChart({
                             type={"step"}
                         />
                     );
-                case "line":
+                case "steppedLine":
                     return (
                         <Line
                             key={key}
@@ -204,6 +205,18 @@ export function TimeSeriesChart({
                             stroke={color}
                             strokeWidth={2}
                             dot={false}
+                            type={"step"}
+                        />
+                    );
+                case "smoothLine":
+                    return (
+                        <Line
+                            key={key}
+                            {...commonProps}
+                            stroke={color}
+                            strokeWidth={2}
+                            dot={false}
+                            type={"monotone"}
                         />
                     );
                 case "bar":

@@ -39,7 +39,7 @@ export function MarketPriceChart({
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
             chartType: "market-clearing",
-            chartVariant: "line",
+            chartVariant: "steppedLine",
             stacked: false,
             showBrush: true,
             getColor: () => "var(--chart-2)",
