@@ -276,9 +276,10 @@ export function TimeSeriesChart({
                 label={props.label}
                 formatValue={formatValue}
                 formatLabel={formatLabel}
+                getColor={getColor}
             />
         ),
-        [formatValue, formatLabel],
+        [formatValue, formatLabel, getColor],
     );
 
     if (isLoading) {

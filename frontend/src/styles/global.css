@@ -65,11 +65,11 @@
     --color-sidebar-primary: var(--sidebar-primary);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
     --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
 
     /* Tailwind theme variables */
     --spacing: 0.25rem;
@@ -123,8 +123,9 @@
         --chart-1: oklch(0.646 0.222 41.116);
         --chart-2: oklch(0.6 0.118 184.704);
         --chart-3: oklch(0.398 0.07 227.392);
-        --chart-4: oklch(0.828 0.189 84.429);
-        --chart-5: oklch(0.769 0.188 70.08);
+        --chart-4: oklch(93.3% 0.19724 104.33);
+        --chart-5: oklch(73.797% 0.18336 54.681);
+        --chart-6: oklch(63.061% 0.29882 315.557);
 
         /* Sidebar colors (light mode) */
         --sidebar: var(--color-brand-green);
@@ -243,6 +244,7 @@
         --chart-3: oklch(0.769 0.188 70.08);
         --chart-4: oklch(0.627 0.265 303.9);
         --chart-5: oklch(0.645 0.246 16.439);
+        --chart-6: oklch(65.47% 0.30127 319.606);
 
         /* Sidebar colors (dark mode) */
         --sidebar: #2d2d2d;
