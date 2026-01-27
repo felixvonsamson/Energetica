@@ -491,6 +491,14 @@ function useFetchChartGaps({
                         }),
                     staleTime: 60 * 1000,
                 };
+            } else if (isMarketChart && marketId === undefined) {
+                // Market chart without marketId - skip the query
+                return {
+                    queryKey: ["skip", chartType, resolutionKey],
+                    queryFn: () => Promise.resolve({ series: {} }),
+                    enabled: false,
+                    staleTime: 60 * 1000,
+                };
             } else {
                 // Regular chart
                 return {
