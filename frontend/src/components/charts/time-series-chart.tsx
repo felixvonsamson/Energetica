@@ -73,6 +73,8 @@ export interface TimeSeriesChartConfig {
     formatLabel?: (key: string) => ReactNode;
     /** Keys that should use gradient fill based on positive/negative values */
     gradientKeys?: string[];
+    /** Whether to hide zero values in tooltips (default: true) */
+    hideZeroValues?: boolean;
 }
 
 interface TimeSeriesChartProps {
@@ -106,6 +108,7 @@ export function TimeSeriesChart({
         formatValue,
         formatLabel,
         gradientKeys = [],
+        hideZeroValues = true,
     },
     isLoading = false,
     isError = false,
@@ -277,9 +280,10 @@ export function TimeSeriesChart({
                 formatValue={formatValue}
                 formatLabel={formatLabel}
                 getColor={getColor}
+                hideZeroValues={hideZeroValues}
             />
         ),
-        [formatValue, formatLabel, getColor],
+        [formatValue, formatLabel, getColor, hideZeroValues],
     );
 
     if (isLoading) {

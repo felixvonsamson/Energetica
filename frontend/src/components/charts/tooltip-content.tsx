@@ -21,6 +21,7 @@ interface CustomTooltipContentProps {
     formatValue: (value: number) => ReactNode;
     formatLabel?: (key: string) => ReactNode;
     getColor?: (key: string) => string;
+    hideZeroValues?: boolean;
 }
 export function CustomTooltipContent({
     active,
@@ -29,13 +30,14 @@ export function CustomTooltipContent({
     formatValue,
     formatLabel,
     getColor,
+    hideZeroValues = true,
 }: CustomTooltipContentProps) {
     const { currentTick } = useGameTick();
     const { mode } = useTimeMode();
 
     const sortedPayload = payload
         ? payload
-              .filter((p) => p.value !== 0)
+              .filter((p) => !hideZeroValues || p.value !== 0)
               .sort((a, b) => (b.value as number) - (a.value as number))
         : undefined;
 

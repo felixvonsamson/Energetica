@@ -116,6 +116,7 @@ export function MarketClearingVolumeChart({
                     ? (key: string) =>
                           playerMap?.[parseInt(key)]?.username ?? key
                     : undefined,
+            hideZeroValues: false,
         }),
         [
             chartType,

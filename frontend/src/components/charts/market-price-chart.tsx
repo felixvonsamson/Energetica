@@ -49,6 +49,7 @@ export function MarketPriceChart({
             filterDataKeys: [],
             formatValue: (value: number) => `$${value.toFixed(6)}`,
             formatYAxis: (value: number) => `$${value.toFixed(6)}`,
+            hideZeroValues: false,
         }),
         [],
     );
