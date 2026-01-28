@@ -138,9 +138,11 @@ function EmissionsOverviewContent() {
         isLoading: isEmissionsLoading,
         isError: isEmissionsError,
     } = useCurrentChartData({
-        chartType: "emissions",
+        config: {
+            chartType: "emissions",
+            resolution: selectedResolution.resolution,
+        },
         currentTick,
-        resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
     });
 
@@ -150,9 +152,11 @@ function EmissionsOverviewContent() {
         isLoading: isClimateLoading,
         isError: isClimateError,
     } = useCurrentChartData({
-        chartType: "climate",
+        config: {
+            chartType: "climate",
+            resolution: selectedResolution.resolution,
+        },
         currentTick,
-        resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
     });
 
@@ -162,9 +166,11 @@ function EmissionsOverviewContent() {
         isLoading: isTemperatureLoading,
         isError: isTemperatureError,
     } = useCurrentChartData({
-        chartType: "temperature",
+        config: {
+            chartType: "temperature",
+            resolution: selectedResolution.resolution,
+        },
         currentTick,
-        resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
     });
 

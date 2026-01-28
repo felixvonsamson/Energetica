@@ -48,11 +48,9 @@ function useMarketClearingData(
 
     // Fetch breakdown chart data (use existing data for clearing type)
     const { chartData, isLoading, isError } = useCurrentChartData({
-        chartType,
+        config: { chartType, resolution: resolution.resolution, marketId },
         currentTick,
-        resolution: resolution.resolution,
         maxDatapoints: resolution.datapoints,
-        marketId,
     });
 
     return { chartType, chartData, isLoading, isError };
@@ -65,6 +63,7 @@ interface MarketClearingChartProps {
     breakdownEnabled: boolean;
     breakdownMode: BreakdownMode;
     breakdownType: BreakdownType;
+    minTick?: number;
 }
 
 export function MarketClearingVolumeChart({
@@ -111,6 +110,7 @@ export function MarketClearingVolumeChart({
                     ? (key: string) =>
                           playerMap?.[parseInt(key)]?.username ?? key
                     : undefined,
+            hideZeroValues: false,
         }),
         [
             chartType,
@@ -141,6 +141,7 @@ interface MarketClearingVolumeTableProps {
     breakdownEnabled: boolean;
     breakdownMode: BreakdownMode;
     breakdownType: BreakdownType;
+    minTick?: number;
 }
 
 export function MarketClearingTable({

@@ -12,11 +12,16 @@ interface CustomTooltipContentProps {
     payload?: ReadonlyArray<{
         value: number;
         name: string;
+        color?: string;
+        fill?: string;
+        stroke?: string;
         [key: string]: unknown;
     }>;
     label?: string | number;
     formatValue: (value: number) => ReactNode;
     formatLabel?: (key: string) => ReactNode;
+    getColor?: (key: string) => string;
+    hideZeroValues?: boolean;
 }
 export function CustomTooltipContent({
     active,
@@ -24,13 +29,15 @@ export function CustomTooltipContent({
     label,
     formatValue,
     formatLabel,
+    getColor,
+    hideZeroValues = true,
 }: CustomTooltipContentProps) {
     const { currentTick } = useGameTick();
     const { mode } = useTimeMode();
 
     const sortedPayload = payload
         ? payload
-              .filter((p) => p.value !== 0)
+              .filter((p) => !hideZeroValues || p.value !== 0)
               .sort((a, b) => (b.value as number) - (a.value as number))
         : undefined;
 
@@ -56,34 +63,38 @@ export function CustomTooltipContent({
                     </tr>
                 </thead>
                 <tbody>
-                    {sortedPayload.map((p) => (
-                        <tr key={p.name}>
-                            <td>
-                                <div
-                                    className="h-6 aspect-square"
-                                    style={{
-                                        backgroundColor: assetCSSColourVariable(
-                                            p.name,
-                                        ),
-                                    }}
-                                />
-                            </td>
-                            <td className="px-2 min-w-30">
-                                {formatLabel ? (
-                                    formatLabel(p.name)
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <FacilityIcon
-                                            facility={p.name}
-                                            size={18}
-                                        />
-                                        <AssetName assetId={p.name} />
-                                    </div>
-                                )}
-                            </td>
-                            <td className="px-2">{formatValue(p.value)}</td>
-                        </tr>
-                    ))}
+                    {sortedPayload.map((p) => {
+                        // Use getColor function if provided, otherwise fall back to asset color
+                        const color = getColor
+                            ? getColor(p.name)
+                            : assetCSSColourVariable(p.name);
+                        return (
+                            <tr key={p.name}>
+                                <td>
+                                    <div
+                                        className="h-6 aspect-square"
+                                        style={{
+                                            backgroundColor: color,
+                                        }}
+                                    />
+                                </td>
+                                <td className="px-2 min-w-30">
+                                    {formatLabel ? (
+                                        formatLabel(p.name)
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <FacilityIcon
+                                                facility={p.name}
+                                                size={18}
+                                            />
+                                            <AssetName assetId={p.name} />
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="px-2">{formatValue(p.value)}</td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

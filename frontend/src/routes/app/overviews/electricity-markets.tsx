@@ -143,19 +143,19 @@ function MarketsOverviewContent() {
 
     const { selectedResolution } = useTimeMode();
 
+    // Get market details for tick bounds
+    const marketDetails = useElectricityMarket(selectedMarketId ?? 0);
+
     // Fetch latest data for real-time display
     const { data: latestData, isLoading: isLatestLoading } = useLatestChartData(
         {
             chartType: "market-clearing",
-            marketId: selectedMarketId,
+            marketId: selectedMarketId ?? 0,
         },
     );
 
     const latestPrice = latestData.price ?? 0;
     const latestQuantity = latestData.quantity ?? 0;
-
-    // Get market details for tick bounds
-    const marketDetails = useElectricityMarket(selectedMarketId ?? 0);
 
     // Historical tick selection state
     // Initialize to current tick - 1 (most recent market clearing)
@@ -229,7 +229,10 @@ function MarketsOverviewContent() {
                             marketId={selectedMarketId}
                             onMarketIdChange={handleMarketChange}
                         />
-                        <ResolutionPicker currentTick={currentTick} />
+                        <ResolutionPicker
+                            currentTick={currentTick}
+                            minTick={marketDetails?.created_tick}
+                        />
                     </div>
                 </CardContent>
             </Card>
@@ -283,6 +286,7 @@ function MarketsOverviewContent() {
                 <MarketPriceChart
                     selectedResolution={selectedResolution}
                     marketId={selectedMarketId}
+                    minTick={marketDetails?.created_tick}
                 />
             </ChartCard>
 
@@ -376,6 +380,7 @@ function MarketsOverviewContent() {
                     breakdownEnabled={breakdownEnabled}
                     breakdownMode={breakdownMode}
                     breakdownType={breakdownType}
+                    minTick={marketDetails?.created_tick}
                 />
 
                 {breakdownEnabled && (
@@ -387,6 +392,7 @@ function MarketsOverviewContent() {
                         breakdownEnabled={breakdownEnabled}
                         breakdownMode={breakdownMode}
                         breakdownType={breakdownType}
+                        minTick={marketDetails?.created_tick}
                     />
                 )}
             </ChartCard>

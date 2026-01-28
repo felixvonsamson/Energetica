@@ -89,7 +89,7 @@ export function CO2Chart({
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
-            chartVariant: "line",
+            chartVariant: "smoothLine",
             stacked: false,
             showBrush: true,
             getColor: (key: string) => (key === "CO2" ? "#ef4444" : "#9ca3af"),

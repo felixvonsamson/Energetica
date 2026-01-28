@@ -52,7 +52,7 @@ export function TemperatureChart({
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
-            chartVariant: "line",
+            chartVariant: "smoothLine",
             stacked: false,
             height: 400,
             showBrush: true,

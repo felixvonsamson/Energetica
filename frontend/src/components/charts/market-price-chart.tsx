@@ -11,6 +11,7 @@ import { ResolutionOption } from "@/types/charts";
 interface MarketPriceChartProps {
     selectedResolution: ResolutionOption;
     marketId: number;
+    minTick?: number;
 }
 
 export function MarketPriceChart({
@@ -21,11 +22,13 @@ export function MarketPriceChart({
 
     // Fetch chart data for network-data
     const { chartData, isLoading, isError } = useCurrentChartData({
-        chartType: "market-clearing",
+        config: {
+            chartType: "market-clearing",
+            resolution: selectedResolution.resolution,
+            marketId,
+        },
         currentTick,
-        resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
-        marketId,
     });
 
     // Extract only price data
@@ -39,13 +42,14 @@ export function MarketPriceChart({
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
             chartType: "market-clearing",
-            chartVariant: "line",
+            chartVariant: "steppedLine",
             stacked: false,
             showBrush: true,
             getColor: () => "var(--chart-2)",
             filterDataKeys: [],
             formatValue: (value: number) => `$${value.toFixed(6)}`,
             formatYAxis: (value: number) => `$${value.toFixed(6)}`,
+            hideZeroValues: false,
         }),
         [],
     );

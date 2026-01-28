@@ -21,7 +21,6 @@ import { useTimeMode } from "@/contexts/time-mode-context";
 import { useCurrentChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
 import { useToggleSet } from "@/hooks/useToggleSet";
-import { ChartType } from "@/types/charts";
 
 export const Route = createFileRoute("/app/overviews/power")({
     component: PowerOverviewPage,
@@ -90,7 +89,9 @@ const CHART_TYPE_OPTIONS = [
 
 function PowerOverviewContent() {
     const { currentTick } = useGameTick();
-    const [chartType, setChartType] = useState<ChartType>("power-sources");
+    const [chartType, setChartType] = useState<"power-sources" | "power-sinks">(
+        "power-sources",
+    );
     const [hiddenSources, toggleSource] = useToggleSet<string>();
     const [hiddenSinks, toggleSink] = useToggleSet<string>();
 
@@ -101,9 +102,8 @@ function PowerOverviewContent() {
         isLoading: isChartLoading,
         isError,
     } = useCurrentChartData({
-        chartType,
+        config: { chartType, resolution: selectedResolution.resolution },
         currentTick,
-        resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
     });
 
@@ -122,9 +122,7 @@ function PowerOverviewContent() {
                             <Label className="mb-2">Chart Type</Label>
                             <SegmentedPicker
                                 value={chartType}
-                                onValueChange={(value) =>
-                                    setChartType(value as ChartType)
-                                }
+                                onValueChange={(value) => setChartType(value)}
                             >
                                 {CHART_TYPE_OPTIONS.map((option) => (
                                     <SegmentedPickerOption

@@ -104,9 +104,11 @@ function StorageOverviewContent() {
         isLoading: isChartLoading,
         isError,
     } = useCurrentChartData({
-        chartType: "storage-level",
+        config: {
+            chartType: "storage-level",
+            resolution: selectedResolution.resolution,
+        },
         currentTick,
-        resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
     });
 

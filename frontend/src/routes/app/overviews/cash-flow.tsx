@@ -128,9 +128,11 @@ function RevenuesOverviewContent() {
         isLoading: isRevenuesLoading,
         isError: isRevenuesError,
     } = useCurrentChartData({
-        chartType: "revenues",
+        config: {
+            chartType: "revenues",
+            resolution: selectedResolution.resolution,
+        },
         currentTick,
-        resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
     });
 
@@ -139,9 +141,11 @@ function RevenuesOverviewContent() {
         isLoading: isOpCostsLoading,
         isError: isOpCostsError,
     } = useCurrentChartData({
-        chartType: "op-costs",
+        config: {
+            chartType: "op-costs",
+            resolution: selectedResolution.resolution,
+        },
         currentTick,
-        resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
     });
 

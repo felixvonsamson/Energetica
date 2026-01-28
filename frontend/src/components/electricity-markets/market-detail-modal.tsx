@@ -8,8 +8,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { TypographyH2, TypographyH3 } from "@/components/ui/typography";
 import { TogglingDuration } from "@/components/ui/duration";
+import { TypographyH2, TypographyH3 } from "@/components/ui/typography";
 import { useGameTick } from "@/hooks/useGameTick";
 import { formatPower } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
