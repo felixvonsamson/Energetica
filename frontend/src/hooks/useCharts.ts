@@ -53,62 +53,17 @@ type ChartIdentifier =
 type ChartQueryConfig = ChartIdentifier & { resolution: Resolution };
 
 /**
- * Internal helper that fetches chart data without fallback logic. Used as a
- * base for useCurrentChartData.
- */
-function useCurrentChartDataBase({
-    config,
-    currentTick,
-    maxDatapoints,
-}: {
-    config: ChartQueryConfig;
-    currentTick: number | undefined;
-    maxDatapoints: number;
-}) {
-    // Determine the corresponding tick range
-    const range = useMemo(() => {
-        if (!currentTick) {
-            return { startTick: 0, count: 0 };
-        }
-        const startTick =
-            config.resolution *
-            Math.max(
-                0,
-                Math.floor(currentTick / config.resolution - maxDatapoints),
-            );
-        const count = Math.floor((currentTick - startTick) / config.resolution);
-        return { startTick, count };
-    }, [currentTick, config.resolution, maxDatapoints]);
-
-    // Call helper hook (always called, handles empty range gracefully)
-    const {
-        data: chartData,
-        isLoading,
-        isError,
-    } = useChartData({ config, range, chartType: config.chartType });
-
-    // Return empty state if currentTick is not loaded
-    if (!currentTick) {
-        return { chartData: [], isLoading: true, isError: false };
-    }
-
-    return { chartData, isLoading, isError };
-}
-
-/**
  * Main exported hook. Returns all chart datapoints relevant to the request.
  *
  * Includes jitter prevention: while loading new data for the current tick,
  * displays cached data from the previous range (if available) to prevent empty
  * states and UI flicker during tick transitions.
  */
-export function useCurrentChartData<T extends ChartType>({
+export function useChartData<T extends ChartType>({
     config,
-    currentTick,
     maxDatapoints,
 }: {
     config: ChartQueryConfig & { chartType: T };
-    currentTick: number | undefined;
     maxDatapoints: number;
 }): {
     chartData: ChartDataPoint<T>[];
@@ -116,118 +71,97 @@ export function useCurrentChartData<T extends ChartType>({
     isError: boolean;
 } {
     const queryClient = useQueryClient();
-
+    const { currentTick } = useGameTick();
     const resolution = config.resolution;
-
-    // Fetch data for current tick range
-    const {
-        chartData: currentData,
-        isLoading: currentIsLoading,
-        isError,
-    } = useCurrentChartDataBase({
-        config,
-        currentTick,
+    const range = computeRange({ currentTick, resolution, maxDatapoints });
+    const rangeOld = computeRange({
+        currentTick: currentTick ? currentTick - 1 : undefined,
+        resolution,
         maxDatapoints,
     });
 
-    // If current data is loading, try to get cached data from previous range
-    const cachedFallbackData = useMemo(() => {
-        // Only attempt fallback if:
-        // 1. Current data is still loading
-        // 2. We have a valid current tick
-        if (!currentIsLoading || !currentTick) {
-            return null;
-        }
+    // Call helper hook
+    const { data } = useChartDataOnRange({
+        config,
+        range,
+        chartType: config.chartType,
+    });
+    // as fallback, try to get cached data from previous range
+    const { data: cachedFallbackData } = useChartDataOnRange({
+        config,
+        range: rangeOld,
+        chartType: config.chartType,
+    });
 
-        // Calculate range for the previous tick
-        const previousTick = currentTick - resolution;
-        if (previousTick < 0) {
-            return null; // No previous tick exists
-        }
-
-        const startTick =
-            resolution *
-            Math.max(0, Math.floor(previousTick / resolution - maxDatapoints));
-        const count = Math.floor((previousTick - startTick) / resolution);
-
-        if (count === 0) {
-            return null; // No data points in range
-        }
-
-        const previousRange = { startTick, count };
-
-        // Check if we have cached data for the previous range
-        const cachedRanges = getCachedChartRanges({
-            queryClient,
-            config,
-            range: previousRange,
-        });
-
-        if (cachedRanges.length === 0) {
-            return null; // No cached data available
-        }
-
-        // Aggregate cached data (same logic as useChartData)
-        return aggregateChartData({
-            cachedRanges,
-            range: previousRange,
-            resolution,
-            chartType: config.chartType,
-        });
-    }, [
-        currentIsLoading,
-        currentTick,
-        resolution,
-        maxDatapoints,
+    // Also, trigger fetches
+    const rangesToFetch = getCacheGaps({
         queryClient,
         config,
-    ]);
+        range,
+    });
+    const { isLoading, isError } = useFetchChartGaps({
+        config,
+        rangesToFetch,
+    });
 
     // Determine what data to return
-    if (
-        currentIsLoading &&
-        cachedFallbackData &&
-        cachedFallbackData.length > 0
-    ) {
+    if (isLoading && cachedFallbackData.length > 0) {
         // We're loading new data but have cached fallback - use it
         return {
-            chartData: cachedFallbackData as ChartDataPoint<T>[],
+            chartData: cachedFallbackData,
             isLoading: false, // Don't show loading state since we have data
             isError,
         };
     }
 
     return {
-        chartData: currentData as ChartDataPoint<T>[],
-        isLoading: currentIsLoading,
+        chartData: data,
+        isLoading,
         isError,
     };
+}
+
+/** Calculate the tick range for a given current tick and resolution */
+function computeRange({
+    currentTick,
+    resolution,
+    maxDatapoints,
+}: {
+    currentTick: number | undefined;
+    resolution: Resolution;
+    maxDatapoints: number;
+}): TickRange {
+    if (!currentTick) {
+        return { startTick: 0, count: 0 };
+    }
+    const startTick =
+        resolution *
+        Math.max(0, Math.floor(currentTick / resolution - maxDatapoints));
+    const count = Math.floor((currentTick - startTick) / resolution);
+    return { startTick, count };
 }
 
 /**
  * Hook that provides the latest snapshot of chart data without UI jitter.
  *
  * Always fetches data at resolution 1 for the current tick. Leverages
- * useCurrentChartData's fallback mechanism to show previous tick's data while
- * loading, preventing UI flicker during tick transitions.
+ * useChartData's fallback mechanism to show previous tick's data while loading,
+ * preventing UI flicker during tick transitions.
  *
  * @returns Object with power levels by source/sink (e.g., {coal: 100, wind:
  *   50})
  */
-export function useLatestChartData(chartIdentifier: ChartIdentifier): {
+export function useLatestChartDataSlice(chartIdentifier: ChartIdentifier): {
     data: Partial<Record<string, number>>;
     isLoading: boolean;
     isError: boolean;
 } {
-    const { currentTick } = useGameTick();
-
     const resolution = 1;
     const maxDatapoints = 1;
 
     // Fetch data for the current tick (with fallback handled internally)
-    const { chartData, isLoading, isError } = useCurrentChartData({
+    const { chartData, isLoading, isError } = useChartData({
         config: { ...chartIdentifier, resolution: resolution },
-        currentTick,
         maxDatapoints,
     });
 
@@ -248,10 +182,7 @@ export function useLatestChartData(chartIdentifier: ChartIdentifier): {
     return { data, isLoading, isError };
 }
 
-/**
- * Helper function to aggregate chart data from cached ranges. Extracted for
- * reuse in both useChartData and useLatestChartData.
- */
+/** Helper function to aggregate chart data from cached ranges. */
 function aggregateChartData<T extends ChartType>({
     cachedRanges,
     range,
@@ -315,9 +246,9 @@ function aggregateChartData<T extends ChartType>({
  * Aggregates chart data from multiple cached query ranges.
  *
  * Combines data from multiple cache entries to construct a complete time series
- * for the requested range. Triggers fetches for missing data ranges and waits.
+ * for the requested range.
  */
-function useChartData<T extends ChartType>({
+function useChartDataOnRange<T extends ChartType>({
     config,
     range,
     chartType,
@@ -327,26 +258,13 @@ function useChartData<T extends ChartType>({
     chartType: T;
 }): {
     data: ChartDataPoint<T>[];
-    isLoading: boolean;
-    isError: boolean;
 } {
     const queryClient = useQueryClient();
-
-    const rangesToFetch = getCacheGaps({
-        queryClient,
-        config,
-        range,
-    });
 
     const allCachedRanges = getCachedChartRanges({
         queryClient,
         config,
         range,
-    });
-
-    const { isLoading, isError } = useFetchChartGaps({
-        config,
-        rangesToFetch,
     });
 
     const aggregatedData = useMemo(() => {
@@ -359,9 +277,7 @@ function useChartData<T extends ChartType>({
     }, [allCachedRanges, chartType, range, config.resolution]);
 
     return {
-        data: isLoading ? [] : aggregatedData,
-        isLoading,
-        isError,
+        data: aggregatedData,
     };
 }
 
@@ -565,28 +481,26 @@ function getCacheGaps({
 
     // Otherwise, identify gaps between cached ranges
     const rangesToFetch: TickRange[] = [];
-    let currentTick = range.startTick;
+    let tick = range.startTick;
 
     for (const cached of cachedRanges) {
         // Accumulate if there is a gap with previous cached range
-        if (currentTick < cached.range.startTick) {
+        if (tick < cached.range.startTick) {
             rangesToFetch.push({
-                startTick: currentTick,
-                count:
-                    (cached.range.startTick - currentTick) / config.resolution,
+                startTick: tick,
+                count: (cached.range.startTick - tick) / config.resolution,
             });
         }
         // Advance past this cached range
-        currentTick =
-            cached.range.startTick + cached.range.count * config.resolution;
+        tick = cached.range.startTick + cached.range.count * config.resolution;
     }
 
     // Add a final requested range if the last cached range is strictly inside the requested range
     const desiredEndTick = range.startTick + range.count * config.resolution;
-    if (currentTick < desiredEndTick) {
+    if (tick < desiredEndTick) {
         rangesToFetch.push({
-            startTick: currentTick,
-            count: (desiredEndTick - currentTick) / config.resolution,
+            startTick: tick,
+            count: (desiredEndTick - tick) / config.resolution,
         });
     }
 
@@ -609,6 +523,8 @@ function getCachedChartRanges({
     config: ChartQueryConfig;
     range: TickRange;
 }): CachedTickRange[] {
+    if (range.count === 0) return [];
+
     const cache = queryClient.getQueryCache();
 
     const queryKeyPrefix = buildChartQueryKeyPrefix(config);

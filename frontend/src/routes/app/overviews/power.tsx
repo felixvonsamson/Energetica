@@ -18,7 +18,7 @@ import {
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useCurrentChartData } from "@/hooks/useCharts";
+import { useChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
 import { useToggleSet } from "@/hooks/useToggleSet";
 
@@ -101,9 +101,8 @@ function PowerOverviewContent() {
         chartData,
         isLoading: isChartLoading,
         isError,
-    } = useCurrentChartData({
+    } = useChartData({
         config: { chartType, resolution: selectedResolution.resolution },
-        currentTick,
         maxDatapoints: selectedResolution.datapoints,
     });
 

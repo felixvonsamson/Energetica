@@ -4,8 +4,7 @@ import {
     TimeSeriesChart,
     TimeSeriesChartConfig,
 } from "@/components/charts/time-series-chart";
-import { useCurrentChartData } from "@/hooks/useCharts";
-import { useGameTick } from "@/hooks/useGameTick";
+import { useChartData } from "@/hooks/useCharts";
 import { ResolutionOption } from "@/types/charts";
 
 interface MarketPriceChartProps {
@@ -18,16 +17,13 @@ export function MarketPriceChart({
     selectedResolution,
     marketId,
 }: MarketPriceChartProps) {
-    const { currentTick } = useGameTick();
-
     // Fetch chart data for network-data
-    const { chartData, isLoading, isError } = useCurrentChartData({
+    const { chartData, isLoading, isError } = useChartData({
         config: {
             chartType: "market-clearing",
             resolution: selectedResolution.resolution,
             marketId,
         },
-        currentTick,
         maxDatapoints: selectedResolution.datapoints,
     });
 

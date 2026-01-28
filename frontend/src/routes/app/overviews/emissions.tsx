@@ -19,7 +19,7 @@ import {
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useCurrentChartData } from "@/hooks/useCharts";
+import { useChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
 import { useToggleSet } from "@/hooks/useToggleSet";
 
@@ -137,12 +137,11 @@ function EmissionsOverviewContent() {
         chartData: emissionsData,
         isLoading: isEmissionsLoading,
         isError: isEmissionsError,
-    } = useCurrentChartData({
+    } = useChartData({
         config: {
             chartType: "emissions",
             resolution: selectedResolution.resolution,
         },
-        currentTick,
         maxDatapoints: selectedResolution.datapoints,
     });
 
@@ -151,12 +150,11 @@ function EmissionsOverviewContent() {
         chartData: climateData,
         isLoading: isClimateLoading,
         isError: isClimateError,
-    } = useCurrentChartData({
+    } = useChartData({
         config: {
             chartType: "climate",
             resolution: selectedResolution.resolution,
         },
-        currentTick,
         maxDatapoints: selectedResolution.datapoints,
     });
 
@@ -165,12 +163,11 @@ function EmissionsOverviewContent() {
         chartData: temperatureData,
         isLoading: isTemperatureLoading,
         isError: isTemperatureError,
-    } = useCurrentChartData({
+    } = useChartData({
         config: {
             chartType: "temperature",
             resolution: selectedResolution.resolution,
         },
-        currentTick,
         maxDatapoints: selectedResolution.datapoints,
     });
 

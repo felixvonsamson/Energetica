@@ -20,7 +20,7 @@ import {
     CatalogGrid,
 } from "@/components/ui";
 import { CardAction, CardContent } from "@/components/ui/card";
-import { useLatestChartData } from "@/hooks/useCharts";
+import { useLatestChartDataSlice } from "@/hooks/useCharts";
 import {
     useElectricityMarketForPlayer,
     useElectricityMarkets,
@@ -126,7 +126,7 @@ function ElectricityMarketsContent() {
     );
 
     // Fetch market data for selected market
-    const { data: selectedMarketData } = useLatestChartData({
+    const { data: selectedMarketData } = useLatestChartDataSlice({
         chartType: "market-clearing",
         marketId: selectedMarket?.id ?? 0,
     });
