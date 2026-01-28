@@ -30,27 +30,17 @@ import {
     ChartDataPoint,
     KEY_ORDER_BY_CHART_TYPE,
     reorderObjectKeys,
-} from "@/lib/charts/chart-key-order";
-import { queryKeys } from "@/lib/query-client";
-import { ExcludePrefix, IncludePrefix } from "@/lib/type-utils";
-import { ApiResponse } from "@/types/api-helpers";
+} from "@/lib/charts/key-order";
 import {
-    ChartType,
-    Resolution,
-    TickRange,
-    toStringResolution,
-} from "@/types/charts";
-
-type ChartIdentifier =
-    | {
-          chartType: ExcludePrefix<ChartType, "market-">;
-      }
-    | {
-          chartType: IncludePrefix<ChartType, "market-">;
-          marketId: number;
-      };
-
-type ChartQueryConfig = ChartIdentifier & { resolution: Resolution };
+    ChartQueryConfig,
+    ChartIdentifier,
+    buildChartQueryKeyPrefix,
+    extractRangeFromQueryKey,
+    buildChartQueryKey,
+} from "@/lib/charts/query-keys";
+import { queryKeys } from "@/lib/query-client";
+import { ApiResponse } from "@/types/api-helpers";
+import { ChartType, Resolution, TickRange } from "@/types/charts";
 
 /**
  * Main exported hook. Returns all chart datapoints relevant to the request.
@@ -281,100 +271,6 @@ function useChartDataOnRange<T extends ChartType>({
     };
 }
 
-/** Query key function type for regular charts */
-type RegularChartQueryKeyFn = (
-    resolution: string,
-    startTick: number,
-    count: number,
-) => readonly unknown[];
-
-/** Query key function type for market charts */
-type MarketChartQueryKeyFn = (
-    marketId: number,
-    resolution: string,
-    startTick: number,
-    count: number,
-) => readonly unknown[];
-
-/** Map chart types to their corresponding query key functions */
-const QUERY_KEY_FN_BY_CHART_TYPE = {
-    "power-sources": queryKeys.charts.powerSources,
-    "power-sinks": queryKeys.charts.powerSinks,
-    "storage-level": queryKeys.charts.storageLevel,
-    revenues: queryKeys.charts.revenues,
-    "op-costs": queryKeys.charts.opCosts,
-    emissions: queryKeys.charts.emissions,
-    climate: queryKeys.charts.climate,
-    temperature: queryKeys.charts.temperature,
-    resources: queryKeys.charts.resources,
-    "market-clearing": queryKeys.charts.marketClearingData,
-    "market-exports": queryKeys.charts.marketExports,
-    "market-imports": queryKeys.charts.marketImports,
-    "market-generation": queryKeys.charts.marketGeneration,
-    "market-consumption": queryKeys.charts.marketConsumption,
-} as const;
-
-const MARKET_CHART_TYPES: ChartType[] = [
-    "market-clearing",
-    "market-exports",
-    "market-imports",
-    "market-generation",
-    "market-consumption",
-];
-
-/** Extract the sub-type from a market chart type for query key construction */
-function getMarketChartSubType(chartType: ChartType): string {
-    const mapping = {
-        "market-clearing": "clearing-data",
-        "market-exports": "exports",
-        "market-imports": "imports",
-        "market-generation": "generation",
-        "market-consumption": "consumption",
-    } as const;
-    return mapping[chartType as keyof typeof mapping] || chartType;
-}
-
-/**
- * Extracts tick range from a query key. Both regular and market chart query
- * keys end with [..., startTick, count].
- */
-function extractRangeFromQueryKey(
-    queryKey: readonly unknown[],
-): TickRange | null {
-    const len = queryKey.length;
-    if (len < 2) return null;
-    const count = queryKey[len - 1];
-    const startTick = queryKey[len - 2];
-    if (typeof startTick !== "number" || typeof count !== "number") return null;
-    return { startTick, count };
-}
-
-/**
- * Builds the query key prefix for a chart type and resolution. Market charts:
- * ["charts", "markets", marketId, chartSubType, resolution] Regular charts:
- * ["charts", chartType, resolution]
- */
-function buildChartQueryKeyPrefix(config: ChartQueryConfig): unknown[] {
-    const isMarketChart = MARKET_CHART_TYPES.includes(config.chartType);
-
-    if (isMarketChart) {
-        // TypeScript knows config has marketId here due to discriminated union
-        const marketConfig = config as Extract<
-            ChartQueryConfig,
-            { chartType: IncludePrefix<ChartType, "market-"> }
-        >;
-        return [
-            "charts",
-            "markets",
-            marketConfig.marketId,
-            getMarketChartSubType(marketConfig.chartType),
-            toStringResolution(marketConfig.resolution),
-        ];
-    }
-
-    return ["charts", config.chartType, toStringResolution(config.resolution)];
-}
-
 /** Fetches ranges concurrently. */
 function useFetchChartGaps({
     config,
@@ -383,59 +279,18 @@ function useFetchChartGaps({
     config: ChartQueryConfig;
     rangesToFetch: TickRange[];
 }) {
-    const resolutionKey = toStringResolution(config.resolution);
-    const isMarketChart = MARKET_CHART_TYPES.includes(config.chartType);
-    const queryKeyFn = QUERY_KEY_FN_BY_CHART_TYPE[config.chartType];
-
     const queries = useQueries({
         queries: rangesToFetch.map((range) => {
-            if (isMarketChart) {
-                // TypeScript knows config has marketId here
-                const marketConfig = config as Extract<
-                    ChartQueryConfig,
-                    { chartType: IncludePrefix<ChartType, "market-"> }
-                >;
-                return {
-                    // chartType is encoded in queryKeyFn selection, resolution is passed as resolutionKey
-                    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-                    queryKey: (queryKeyFn as MarketChartQueryKeyFn)(
-                        marketConfig.marketId,
-                        resolutionKey,
-                        range.startTick,
-                        range.count,
-                    ),
-                    queryFn: () =>
-                        chartsApi.getMarketChartData({
-                            marketId: marketConfig.marketId,
-                            chartType: marketConfig.chartType as
-                                | "market-clearing"
-                                | "market-exports"
-                                | "market-imports"
-                                | "market-generation"
-                                | "market-consumption",
-                            resolution: config.resolution,
-                            range,
-                        }),
-                    staleTime: 60 * 1000,
-                };
-            } else {
-                return {
-                    // chartType is encoded in queryKeyFn selection, resolution is passed as resolutionKey
-                    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-                    queryKey: (queryKeyFn as RegularChartQueryKeyFn)(
-                        resolutionKey,
-                        range.startTick,
-                        range.count,
-                    ),
-                    queryFn: () =>
-                        chartsApi.getChartData({
-                            chartType: config.chartType,
-                            resolution: config.resolution,
-                            range,
-                        }),
-                    staleTime: 60 * 1000,
-                };
-            }
+            return {
+                queryKey: buildChartQueryKey(config, range),
+                queryFn: () =>
+                    chartsApi.getChartData({
+                        identifier: config,
+                        resolution: config.resolution,
+                        range,
+                    }),
+                staleTime: 60 * 1000,
+            };
         }),
     });
 

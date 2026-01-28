@@ -25,12 +25,12 @@ import {
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useMarketData } from "@/hooks/useCharts";
 import { useRechartsChartArea } from "@/hooks/useRechartsChartArea";
+import { getHashBasedChartColor } from "@/lib/charts/color-utils";
 import {
-    getHashBasedChartColor,
     interpolateAtX,
     createSteppedCurve,
     generateNiceTicks,
-} from "@/lib/charts/chart-utils";
+} from "@/lib/charts/ui-utils";
 import { formatMoney, formatPower } from "@/lib/format-utils";
 
 export type BreakdownType = "supply" | "demand";

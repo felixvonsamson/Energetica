@@ -11,10 +11,8 @@ import { useChartFilters } from "@/hooks/useChartFilters";
 import { useChartData } from "@/hooks/useCharts";
 import { useGameEngine } from "@/hooks/useGame";
 import { usePlayerMap } from "@/hooks/usePlayers";
-import {
-    createIncludeKeysFilter,
-    getHashBasedChartColor,
-} from "@/lib/charts/chart-utils";
+import { getHashBasedChartColor } from "@/lib/charts/color-utils";
+import { createIncludeKeysFilter } from "@/lib/charts/filter-utils";
 import { formatEnergy, formatPower } from "@/lib/format-utils";
 import { ChartType, ResolutionOption } from "@/types/charts";
 

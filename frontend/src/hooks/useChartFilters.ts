@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import {
     createExcludeKeysFilter,
     filterNonZeroSeries,
-} from "@/lib/charts/chart-utils";
+} from "@/lib/charts/filter-utils";
 
 /**
  * Creates a standard set of chart filters combining non-zero filtering with
