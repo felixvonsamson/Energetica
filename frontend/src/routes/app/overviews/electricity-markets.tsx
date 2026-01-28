@@ -150,8 +150,7 @@ function MarketsOverviewContent() {
     const { data: latestData, isLoading: isLatestLoading } = useLatestChartData(
         {
             chartType: "market-clearing",
-            marketId: selectedMarketId,
-            minTick: marketDetails?.created_tick,
+            marketId: selectedMarketId ?? 0,
         },
     );
 

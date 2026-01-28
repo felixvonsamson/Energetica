@@ -82,9 +82,11 @@ function ResourcesOverviewContent() {
         isLoading: isResourcesLoading,
         isError: isResourcesError,
     } = useCurrentChartData({
-        chartType: "resources",
+        config: {
+            chartType: "resources",
+            resolution: selectedResolution.resolution,
+        },
         currentTick,
-        resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
     });
 

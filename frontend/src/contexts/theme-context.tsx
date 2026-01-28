@@ -1,10 +1,5 @@
-import {
-    createContext,
-    useContext,
-    useLayoutEffect,
-    useState,
-    type ReactNode,
-} from "react";
+import React from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 export type Theme = "light" | "dark" | "auto";
 
@@ -47,7 +42,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     // Use useLayoutEffect to apply theme SYNCHRONOUSLY before other effects
     // This ensures the DOM class is updated before useAssetColorGetter tries to read CSS variables
-    useLayoutEffect(() => {
+    React.useLayoutEffect(() => {
         const root = document.documentElement;
 
         // Determine the actual theme to apply
@@ -96,7 +91,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, resolvedTheme, toggleTheme, setTheme }}>
+        <ThemeContext.Provider
+            value={{ theme, resolvedTheme, toggleTheme, setTheme }}
+        >
             {children}
         </ThemeContext.Provider>
     );

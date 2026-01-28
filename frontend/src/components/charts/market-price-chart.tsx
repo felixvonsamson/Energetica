@@ -17,18 +17,18 @@ interface MarketPriceChartProps {
 export function MarketPriceChart({
     selectedResolution,
     marketId,
-    minTick,
 }: MarketPriceChartProps) {
     const { currentTick } = useGameTick();
 
     // Fetch chart data for network-data
     const { chartData, isLoading, isError } = useCurrentChartData({
-        chartType: "market-clearing",
+        config: {
+            chartType: "market-clearing",
+            resolution: selectedResolution.resolution,
+            marketId,
+        },
         currentTick,
-        resolution: selectedResolution.resolution,
         maxDatapoints: selectedResolution.datapoints,
-        marketId,
-        minTick,
     });
 
     // Extract only price data
