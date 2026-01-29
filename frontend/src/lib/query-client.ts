@@ -202,10 +202,6 @@ export const queryKeys = {
         marketOrderData: (marketId: number, tick: number) =>
             ["charts", "markets", marketId, "orders", tick] as const,
     },
-    network: {
-        all: ["networks"] as const,
-        capacities: ["networks", "capacities"] as const,
-    },
     powerPriorities: {
         all: ["power-priorities"] as const,
     },

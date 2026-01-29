@@ -21,6 +21,10 @@ def join_network(player: Player, network: Network | None) -> Network:
     network.members.append(player)
     network.capacities.update_network(network)
     engine.log(f"{player.username} joined the network {network.name}")
+
+    # Invalidate electricity markets list for all players (membership changed)
+    engine.invalidate_queries(["electricity-markets"])
+
     return network
 
 
@@ -39,6 +43,10 @@ def create_network(player: Player, name: str) -> Network:
     new_network = Network(name=name, members=[player], created_tick=engine.total_t)
     player.network = new_network
     engine.log(f"{player.username} created the network {name}")
+
+    # Invalidate electricity markets list for all players (new market created)
+    engine.invalidate_queries(["electricity-markets"])
+
     return new_network
 
 
@@ -50,9 +58,14 @@ def leave_network(player: Player) -> Network | None:
     player.network = None
     network.members.remove(player)
     engine.log(f"{player.username} left the network {network.name}")
+
+    # Invalidate electricity markets list for all players (membership changed)
+    engine.invalidate_queries(["electricity-markets"])
+
     # delete network if it is empty
     if not network.members:
         engine.log(f"The network {network.name} has been deleted because it was empty")
         network.delete()
         return None
+
     return network

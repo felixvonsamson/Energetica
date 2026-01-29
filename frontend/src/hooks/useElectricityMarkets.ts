@@ -33,10 +33,6 @@ export function useJoinElectricityMarket() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.electricityMarkets.all,
             });
-            // Invalidate network data since player is now in a network
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.network.all,
-            });
         },
     });
 }
@@ -52,10 +48,6 @@ export function useLeaveElectricityMarket() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.electricityMarkets.all,
             });
-            // Invalidate network data since player is no longer in a network
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.network.all,
-            });
         },
     });
 }
@@ -70,10 +62,6 @@ export function useCreateElectricityMarket() {
             // Invalidate the list of electricity markets to show the new market
             queryClient.invalidateQueries({
                 queryKey: queryKeys.electricityMarkets.all,
-            });
-            // Invalidate network data since a new network was created
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.network.all,
             });
         },
     });
