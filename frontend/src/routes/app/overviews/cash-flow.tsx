@@ -26,7 +26,7 @@ import {
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useCurrentChartData } from "@/hooks/useCharts";
+import { useChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
 import { useToggleSet } from "@/hooks/useToggleSet";
 
@@ -127,12 +127,11 @@ function RevenuesOverviewContent() {
         chartData: revenuesData,
         isLoading: isRevenuesLoading,
         isError: isRevenuesError,
-    } = useCurrentChartData({
+    } = useChartData({
         config: {
             chartType: "revenues",
             resolution: selectedResolution.resolution,
         },
-        currentTick,
         maxDatapoints: selectedResolution.datapoints,
     });
 
@@ -140,12 +139,11 @@ function RevenuesOverviewContent() {
         chartData: opCostsData,
         isLoading: isOpCostsLoading,
         isError: isOpCostsError,
-    } = useCurrentChartData({
+    } = useChartData({
         config: {
             chartType: "op-costs",
             resolution: selectedResolution.resolution,
         },
-        currentTick,
         maxDatapoints: selectedResolution.datapoints,
     });
 

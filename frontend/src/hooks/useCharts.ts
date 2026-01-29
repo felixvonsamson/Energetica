@@ -30,70 +30,17 @@ import {
     ChartDataPoint,
     KEY_ORDER_BY_CHART_TYPE,
     reorderObjectKeys,
-} from "@/lib/charts/chart-key-order";
-import { queryKeys } from "@/lib/query-client";
-import { ExcludePrefix, IncludePrefix } from "@/lib/type-utils";
-import { ApiResponse } from "@/types/api-helpers";
+} from "@/lib/charts/key-order";
 import {
-    ChartType,
-    Resolution,
-    TickRange,
-    toStringResolution,
-} from "@/types/charts";
-
-type ChartIdentifier =
-    | {
-          chartType: ExcludePrefix<ChartType, "market-">;
-      }
-    | {
-          chartType: IncludePrefix<ChartType, "market-">;
-          marketId: number;
-      };
-
-type ChartQueryConfig = ChartIdentifier & { resolution: Resolution };
-
-/**
- * Internal helper that fetches chart data without fallback logic. Used as a
- * base for useCurrentChartData.
- */
-function useCurrentChartDataBase({
-    config,
-    currentTick,
-    maxDatapoints,
-}: {
-    config: ChartQueryConfig;
-    currentTick: number | undefined;
-    maxDatapoints: number;
-}) {
-    // Determine the corresponding tick range
-    const range = useMemo(() => {
-        if (!currentTick) {
-            return { startTick: 0, count: 0 };
-        }
-        const startTick =
-            config.resolution *
-            Math.max(
-                0,
-                Math.floor(currentTick / config.resolution - maxDatapoints),
-            );
-        const count = Math.floor((currentTick - startTick) / config.resolution);
-        return { startTick, count };
-    }, [currentTick, config.resolution, maxDatapoints]);
-
-    // Call helper hook (always called, handles empty range gracefully)
-    const {
-        data: chartData,
-        isLoading,
-        isError,
-    } = useChartData({ config, range, chartType: config.chartType });
-
-    // Return empty state if currentTick is not loaded
-    if (!currentTick) {
-        return { chartData: [], isLoading: true, isError: false };
-    }
-
-    return { chartData, isLoading, isError };
-}
+    ChartQueryConfig,
+    ChartIdentifier,
+    buildChartQueryKeyPrefix,
+    extractRangeFromQueryKey,
+    buildChartQueryKey,
+} from "@/lib/charts/query-keys";
+import { queryKeys } from "@/lib/query-client";
+import { ApiResponse } from "@/types/api-helpers";
+import { ChartType, Resolution, TickRange } from "@/types/charts";
 
 /**
  * Main exported hook. Returns all chart datapoints relevant to the request.
@@ -102,13 +49,11 @@ function useCurrentChartDataBase({
  * displays cached data from the previous range (if available) to prevent empty
  * states and UI flicker during tick transitions.
  */
-export function useCurrentChartData<T extends ChartType>({
+export function useChartData<T extends ChartType>({
     config,
-    currentTick,
     maxDatapoints,
 }: {
     config: ChartQueryConfig & { chartType: T };
-    currentTick: number | undefined;
     maxDatapoints: number;
 }): {
     chartData: ChartDataPoint<T>[];
@@ -116,118 +61,97 @@ export function useCurrentChartData<T extends ChartType>({
     isError: boolean;
 } {
     const queryClient = useQueryClient();
-
+    const { currentTick } = useGameTick();
     const resolution = config.resolution;
-
-    // Fetch data for current tick range
-    const {
-        chartData: currentData,
-        isLoading: currentIsLoading,
-        isError,
-    } = useCurrentChartDataBase({
-        config,
-        currentTick,
+    const range = computeRange({ currentTick, resolution, maxDatapoints });
+    const rangeOld = computeRange({
+        currentTick: currentTick ? currentTick - 1 : undefined,
+        resolution,
         maxDatapoints,
     });
 
-    // If current data is loading, try to get cached data from previous range
-    const cachedFallbackData = useMemo(() => {
-        // Only attempt fallback if:
-        // 1. Current data is still loading
-        // 2. We have a valid current tick
-        if (!currentIsLoading || !currentTick) {
-            return null;
-        }
+    // Call helper hook
+    const { data } = useChartDataOnRange({
+        config,
+        range,
+        chartType: config.chartType,
+    });
+    // as fallback, try to get cached data from previous range
+    const { data: cachedFallbackData } = useChartDataOnRange({
+        config,
+        range: rangeOld,
+        chartType: config.chartType,
+    });
 
-        // Calculate range for the previous tick
-        const previousTick = currentTick - resolution;
-        if (previousTick < 0) {
-            return null; // No previous tick exists
-        }
-
-        const startTick =
-            resolution *
-            Math.max(0, Math.floor(previousTick / resolution - maxDatapoints));
-        const count = Math.floor((previousTick - startTick) / resolution);
-
-        if (count === 0) {
-            return null; // No data points in range
-        }
-
-        const previousRange = { startTick, count };
-
-        // Check if we have cached data for the previous range
-        const cachedRanges = getCachedChartRanges({
-            queryClient,
-            config,
-            range: previousRange,
-        });
-
-        if (cachedRanges.length === 0) {
-            return null; // No cached data available
-        }
-
-        // Aggregate cached data (same logic as useChartData)
-        return aggregateChartData({
-            cachedRanges,
-            range: previousRange,
-            resolution,
-            chartType: config.chartType,
-        });
-    }, [
-        currentIsLoading,
-        currentTick,
-        resolution,
-        maxDatapoints,
+    // Also, trigger fetches
+    const rangesToFetch = getCacheGaps({
         queryClient,
         config,
-    ]);
+        range,
+    });
+    const { isLoading, isError } = useFetchChartGaps({
+        config,
+        rangesToFetch,
+    });
 
     // Determine what data to return
-    if (
-        currentIsLoading &&
-        cachedFallbackData &&
-        cachedFallbackData.length > 0
-    ) {
+    if (isLoading && cachedFallbackData.length > 0) {
         // We're loading new data but have cached fallback - use it
         return {
-            chartData: cachedFallbackData as ChartDataPoint<T>[],
+            chartData: cachedFallbackData,
             isLoading: false, // Don't show loading state since we have data
             isError,
         };
     }
 
     return {
-        chartData: currentData as ChartDataPoint<T>[],
-        isLoading: currentIsLoading,
+        chartData: data,
+        isLoading,
         isError,
     };
+}
+
+/** Calculate the tick range for a given current tick and resolution */
+function computeRange({
+    currentTick,
+    resolution,
+    maxDatapoints,
+}: {
+    currentTick: number | undefined;
+    resolution: Resolution;
+    maxDatapoints: number;
+}): TickRange {
+    if (!currentTick) {
+        return { startTick: 0, count: 0 };
+    }
+    const startTick =
+        resolution *
+        Math.max(0, Math.floor(currentTick / resolution - maxDatapoints));
+    const count = Math.floor((currentTick - startTick) / resolution);
+    return { startTick, count };
 }
 
 /**
  * Hook that provides the latest snapshot of chart data without UI jitter.
  *
  * Always fetches data at resolution 1 for the current tick. Leverages
- * useCurrentChartData's fallback mechanism to show previous tick's data while
- * loading, preventing UI flicker during tick transitions.
+ * useChartData's fallback mechanism to show previous tick's data while loading,
+ * preventing UI flicker during tick transitions.
  *
  * @returns Object with power levels by source/sink (e.g., {coal: 100, wind:
  *   50})
  */
-export function useLatestChartData(chartIdentifier: ChartIdentifier): {
+export function useLatestChartDataSlice(chartIdentifier: ChartIdentifier): {
     data: Partial<Record<string, number>>;
     isLoading: boolean;
     isError: boolean;
 } {
-    const { currentTick } = useGameTick();
-
     const resolution = 1;
     const maxDatapoints = 1;
 
     // Fetch data for the current tick (with fallback handled internally)
-    const { chartData, isLoading, isError } = useCurrentChartData({
+    const { chartData, isLoading, isError } = useChartData({
         config: { ...chartIdentifier, resolution: resolution },
-        currentTick,
         maxDatapoints,
     });
 
@@ -248,10 +172,7 @@ export function useLatestChartData(chartIdentifier: ChartIdentifier): {
     return { data, isLoading, isError };
 }
 
-/**
- * Helper function to aggregate chart data from cached ranges. Extracted for
- * reuse in both useChartData and useLatestChartData.
- */
+/** Helper function to aggregate chart data from cached ranges. */
 function aggregateChartData<T extends ChartType>({
     cachedRanges,
     range,
@@ -315,9 +236,9 @@ function aggregateChartData<T extends ChartType>({
  * Aggregates chart data from multiple cached query ranges.
  *
  * Combines data from multiple cache entries to construct a complete time series
- * for the requested range. Triggers fetches for missing data ranges and waits.
+ * for the requested range.
  */
-function useChartData<T extends ChartType>({
+function useChartDataOnRange<T extends ChartType>({
     config,
     range,
     chartType,
@@ -327,26 +248,13 @@ function useChartData<T extends ChartType>({
     chartType: T;
 }): {
     data: ChartDataPoint<T>[];
-    isLoading: boolean;
-    isError: boolean;
 } {
     const queryClient = useQueryClient();
-
-    const rangesToFetch = getCacheGaps({
-        queryClient,
-        config,
-        range,
-    });
 
     const allCachedRanges = getCachedChartRanges({
         queryClient,
         config,
         range,
-    });
-
-    const { isLoading, isError } = useFetchChartGaps({
-        config,
-        rangesToFetch,
     });
 
     const aggregatedData = useMemo(() => {
@@ -359,104 +267,8 @@ function useChartData<T extends ChartType>({
     }, [allCachedRanges, chartType, range, config.resolution]);
 
     return {
-        data: isLoading ? [] : aggregatedData,
-        isLoading,
-        isError,
+        data: aggregatedData,
     };
-}
-
-/** Query key function type for regular charts */
-type RegularChartQueryKeyFn = (
-    resolution: string,
-    startTick: number,
-    count: number,
-) => readonly unknown[];
-
-/** Query key function type for market charts */
-type MarketChartQueryKeyFn = (
-    marketId: number,
-    resolution: string,
-    startTick: number,
-    count: number,
-) => readonly unknown[];
-
-/** Map chart types to their corresponding query key functions */
-const QUERY_KEY_FN_BY_CHART_TYPE = {
-    "power-sources": queryKeys.charts.powerSources,
-    "power-sinks": queryKeys.charts.powerSinks,
-    "storage-level": queryKeys.charts.storageLevel,
-    revenues: queryKeys.charts.revenues,
-    "op-costs": queryKeys.charts.opCosts,
-    emissions: queryKeys.charts.emissions,
-    climate: queryKeys.charts.climate,
-    temperature: queryKeys.charts.temperature,
-    resources: queryKeys.charts.resources,
-    "market-clearing": queryKeys.charts.marketClearingData,
-    "market-exports": queryKeys.charts.marketExports,
-    "market-imports": queryKeys.charts.marketImports,
-    "market-generation": queryKeys.charts.marketGeneration,
-    "market-consumption": queryKeys.charts.marketConsumption,
-} as const;
-
-const MARKET_CHART_TYPES: ChartType[] = [
-    "market-clearing",
-    "market-exports",
-    "market-imports",
-    "market-generation",
-    "market-consumption",
-];
-
-/** Extract the sub-type from a market chart type for query key construction */
-function getMarketChartSubType(chartType: ChartType): string {
-    const mapping = {
-        "market-clearing": "clearing-data",
-        "market-exports": "exports",
-        "market-imports": "imports",
-        "market-generation": "generation",
-        "market-consumption": "consumption",
-    } as const;
-    return mapping[chartType as keyof typeof mapping] || chartType;
-}
-
-/**
- * Extracts tick range from a query key. Both regular and market chart query
- * keys end with [..., startTick, count].
- */
-function extractRangeFromQueryKey(
-    queryKey: readonly unknown[],
-): TickRange | null {
-    const len = queryKey.length;
-    if (len < 2) return null;
-    const count = queryKey[len - 1];
-    const startTick = queryKey[len - 2];
-    if (typeof startTick !== "number" || typeof count !== "number") return null;
-    return { startTick, count };
-}
-
-/**
- * Builds the query key prefix for a chart type and resolution. Market charts:
- * ["charts", "markets", marketId, chartSubType, resolution] Regular charts:
- * ["charts", chartType, resolution]
- */
-function buildChartQueryKeyPrefix(config: ChartQueryConfig): unknown[] {
-    const isMarketChart = MARKET_CHART_TYPES.includes(config.chartType);
-
-    if (isMarketChart) {
-        // TypeScript knows config has marketId here due to discriminated union
-        const marketConfig = config as Extract<
-            ChartQueryConfig,
-            { chartType: IncludePrefix<ChartType, "market-"> }
-        >;
-        return [
-            "charts",
-            "markets",
-            marketConfig.marketId,
-            getMarketChartSubType(marketConfig.chartType),
-            toStringResolution(marketConfig.resolution),
-        ];
-    }
-
-    return ["charts", config.chartType, toStringResolution(config.resolution)];
 }
 
 /** Fetches ranges concurrently. */
@@ -467,59 +279,18 @@ function useFetchChartGaps({
     config: ChartQueryConfig;
     rangesToFetch: TickRange[];
 }) {
-    const resolutionKey = toStringResolution(config.resolution);
-    const isMarketChart = MARKET_CHART_TYPES.includes(config.chartType);
-    const queryKeyFn = QUERY_KEY_FN_BY_CHART_TYPE[config.chartType];
-
     const queries = useQueries({
         queries: rangesToFetch.map((range) => {
-            if (isMarketChart) {
-                // TypeScript knows config has marketId here
-                const marketConfig = config as Extract<
-                    ChartQueryConfig,
-                    { chartType: IncludePrefix<ChartType, "market-"> }
-                >;
-                return {
-                    // chartType is encoded in queryKeyFn selection, resolution is passed as resolutionKey
-                    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-                    queryKey: (queryKeyFn as MarketChartQueryKeyFn)(
-                        marketConfig.marketId,
-                        resolutionKey,
-                        range.startTick,
-                        range.count,
-                    ),
-                    queryFn: () =>
-                        chartsApi.getMarketChartData({
-                            marketId: marketConfig.marketId,
-                            chartType: marketConfig.chartType as
-                                | "market-clearing"
-                                | "market-exports"
-                                | "market-imports"
-                                | "market-generation"
-                                | "market-consumption",
-                            resolution: config.resolution,
-                            range,
-                        }),
-                    staleTime: 60 * 1000,
-                };
-            } else {
-                return {
-                    // chartType is encoded in queryKeyFn selection, resolution is passed as resolutionKey
-                    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-                    queryKey: (queryKeyFn as RegularChartQueryKeyFn)(
-                        resolutionKey,
-                        range.startTick,
-                        range.count,
-                    ),
-                    queryFn: () =>
-                        chartsApi.getChartData({
-                            chartType: config.chartType,
-                            resolution: config.resolution,
-                            range,
-                        }),
-                    staleTime: 60 * 1000,
-                };
-            }
+            return {
+                queryKey: buildChartQueryKey(config, range),
+                queryFn: () =>
+                    chartsApi.getChartData({
+                        identifier: config,
+                        resolution: config.resolution,
+                        range,
+                    }),
+                staleTime: 60 * 1000,
+            };
         }),
     });
 
@@ -565,28 +336,26 @@ function getCacheGaps({
 
     // Otherwise, identify gaps between cached ranges
     const rangesToFetch: TickRange[] = [];
-    let currentTick = range.startTick;
+    let tick = range.startTick;
 
     for (const cached of cachedRanges) {
         // Accumulate if there is a gap with previous cached range
-        if (currentTick < cached.range.startTick) {
+        if (tick < cached.range.startTick) {
             rangesToFetch.push({
-                startTick: currentTick,
-                count:
-                    (cached.range.startTick - currentTick) / config.resolution,
+                startTick: tick,
+                count: (cached.range.startTick - tick) / config.resolution,
             });
         }
         // Advance past this cached range
-        currentTick =
-            cached.range.startTick + cached.range.count * config.resolution;
+        tick = cached.range.startTick + cached.range.count * config.resolution;
     }
 
     // Add a final requested range if the last cached range is strictly inside the requested range
     const desiredEndTick = range.startTick + range.count * config.resolution;
-    if (currentTick < desiredEndTick) {
+    if (tick < desiredEndTick) {
         rangesToFetch.push({
-            startTick: currentTick,
-            count: (desiredEndTick - currentTick) / config.resolution,
+            startTick: tick,
+            count: (desiredEndTick - tick) / config.resolution,
         });
     }
 
@@ -609,6 +378,8 @@ function getCachedChartRanges({
     config: ChartQueryConfig;
     range: TickRange;
 }): CachedTickRange[] {
+    if (range.count === 0) return [];
+
     const cache = queryClient.getQueryCache();
 
     const queryKeyPrefix = buildChartQueryKeyPrefix(config);

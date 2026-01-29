@@ -1,61 +1,9 @@
-/** Utility functions for chart data processing. */
-
-/**
- * Default filter that excludes data keys where all values are zero. Useful for
- * removing series that have no data.
- */
-export function filterNonZeroSeries(key: string, data: unknown[]): boolean {
-    return data.some((dataPoint) => {
-        const value = (dataPoint as Record<string, unknown>)[key] ?? 0;
-        return typeof value === "number" && value > 0;
-    });
-}
-
-/** Creates a filter that excludes specific keys. */
-export function createExcludeKeysFilter(excludeKeys: string[]) {
-    return (key: string, _data: unknown[]): boolean => {
-        return !excludeKeys.includes(key);
-    };
-}
-
-/** Creates a filter that only includes specific keys. */
-export function createIncludeKeysFilter(includeKeys: string[]) {
-    return (key: string, _data: unknown[]): boolean => {
-        return includeKeys.includes(key);
-    };
-}
-
-/** Chart color palette using semantic CSS variables. */
-export const CHART_COLORS = [
-    "var(--chart-1)",
-    "var(--chart-2)",
-    "var(--chart-3)",
-    "var(--chart-4)",
-    "var(--chart-5)",
-    "var(--chart-6)",
-] as const;
-
-/**
- * Returns a consistent color from the chart palette based on a hash of the key.
- * Useful for assigning colors to dynamic data series (e.g., player names,
- * IDs).
- */
-export function getHashBasedChartColor(key: string): string {
-    let hash = 0;
-    for (let i = 0; i < key.length; i++) {
-        hash = key.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return (
-        CHART_COLORS[Math.abs(hash) % CHART_COLORS.length] ?? CHART_COLORS[0]
-    );
-}
-
 /** Point in a curve with quantity (x-axis) and price (y-axis) coordinates. */
+
 export interface CurvePoint {
     quantity: number;
     price: number;
 }
-
 /**
  * Performs linear interpolation on a curve to find the Y value at a given X
  * position. Returns null if X is outside the curve's range.
@@ -63,6 +11,7 @@ export interface CurvePoint {
  * Useful for finding values at arbitrary positions along stepped or continuous
  * curves, such as supply/demand curves in market charts.
  */
+
 export function interpolateAtX(
     curve: CurvePoint[],
     targetX: number,
@@ -98,7 +47,6 @@ export function interpolateAtX(
 
     return null;
 }
-
 /**
  * Transforms order data into a stepped curve for visualization. Creates points
  * for a ragged supply or demand curve from discrete orders.
@@ -111,6 +59,7 @@ export function interpolateAtX(
  * @param extensionPrice - Optional price to extend the curve vertically after
  *   the last order
  */
+
 export function createSteppedCurve(
     prices: number[],
     cumulCapacities: number[],
@@ -142,7 +91,6 @@ export function createSteppedCurve(
 
     return points;
 }
-
 /**
  * Generates predictable tick values for an axis based on the range. Uses round
  * numbers to provide a consistent frame of reference.
@@ -155,6 +103,7 @@ export function createSteppedCurve(
  * @param targetCount - Desired number of ticks (default: 5)
  * @returns Array of tick values
  */
+
 export function generateNiceTicks(
     min: number,
     max: number,

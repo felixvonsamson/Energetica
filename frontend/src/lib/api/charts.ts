@@ -1,66 +1,46 @@
 /** API client for chart data endpoints. */
 
 import { apiClient } from "@/lib/api-client";
+import { ChartIdentifier } from "@/lib/charts/query-keys";
 import type { ApiResponse } from "@/types/api-helpers";
-import { ChartType, Resolution, TickRange } from "@/types/charts";
-
-interface ChartParams {
-    chartType: ChartType;
-    resolution: Resolution;
-    range: TickRange;
-}
-
-interface MarketChartParams {
-    marketId: number;
-    chartType:
-        | "market-clearing"
-        | "market-exports"
-        | "market-imports"
-        | "market-generation"
-        | "market-consumption";
-    resolution: Resolution;
-    range: TickRange;
-}
+import { Resolution, TickRange } from "@/types/charts";
 
 export const chartsApi = {
     /** Get chart data */
-    getChartData: async ({ chartType, resolution, range }: ChartParams) => {
-        const response = await apiClient.get<
-            ApiResponse<"/api/v1/charts/power-sources/{resolution}", "get">
-        >(`/charts/${chartType}/${resolution}`, {
-            params: { start_tick: range.startTick, count: range.count },
-        });
-        return response;
-    },
-
-    /** Get market chart data */
-    getMarketChartData: async ({
-        marketId,
-        chartType,
+    getChartData: async ({
+        identifier,
         resolution,
         range,
-    }: MarketChartParams) => {
-        // Map frontend chart type to backend endpoint
-        const endpointMap = {
-            "market-clearing": "clearing",
-            "market-exports": "exports",
-            "market-imports": "imports",
-            "market-generation": "generation",
-            "market-consumption": "consumption",
-        } as const;
-        const endpoint = endpointMap[chartType];
-        const response = await apiClient.get<
-            ApiResponse<
-                | "/api/v1/charts/markets/{market_id}/clearing/{resolution}"
-                | "/api/v1/charts/markets/{market_id}/exports/{resolution}"
-                | "/api/v1/charts/markets/{market_id}/imports/{resolution}"
-                | "/api/v1/charts/markets/{market_id}/generation/{resolution}"
-                | "/api/v1/charts/markets/{market_id}/consumption/{resolution}",
-                "get"
-            >
-        >(`/charts/markets/${marketId}/${endpoint}/${resolution}`, {
-            params: { start_tick: range.startTick, count: range.count },
-        });
+    }: {
+        identifier: ChartIdentifier;
+        resolution: Resolution;
+        range: TickRange;
+    }) => {
+        const params = { start_tick: range.startTick, count: range.count };
+
+        // TypeScript narrows here!
+        if ("marketId" in identifier) {
+            // Build market endpoint
+            const endpointMap = {
+                "market-clearing": "clearing",
+                "market-exports": "exports",
+                "market-imports": "imports",
+                "market-generation": "generation",
+                "market-consumption": "consumption",
+            } as const;
+            const endpointSubtype = endpointMap[identifier.chartType];
+            const response = await apiClient.get(
+                `/charts/markets/${identifier.marketId}/${endpointSubtype}/${resolution}`,
+                { params },
+            );
+            return response;
+        }
+
+        // Build regular endpoint
+        const response = await apiClient.get(
+            `/charts/${identifier.chartType}/${resolution}`,
+            { params },
+        );
         return response;
     },
 

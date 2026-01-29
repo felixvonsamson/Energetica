@@ -6,7 +6,7 @@ import { useState, useMemo } from "react";
 import { GameLayout } from "@/components/layout/game-layout";
 import { PriorityTable } from "@/components/power-priorities/priority-table";
 import type { PowerPriorityItem } from "@/components/power-priorities/types";
-import { useLatestChartData } from "@/hooks/useCharts";
+import { useLatestChartDataSlice } from "@/hooks/useCharts";
 import { useFacilityStatuses, useFacilities } from "@/hooks/useFacilities";
 import {
     usePowerPriorities,
@@ -69,10 +69,10 @@ function PowerPrioritiesContent() {
     const updateElectricityPrices = useUpdateElectricityPrices();
 
     // Fetch current power data (uses latest available data to prevent UI jitter)
-    const { data: productionPowerLevels } = useLatestChartData({
+    const { data: productionPowerLevels } = useLatestChartDataSlice({
         chartType: "power-sources",
     });
-    const { data: consumptionPowerLevels } = useLatestChartData({
+    const { data: consumptionPowerLevels } = useLatestChartDataSlice({
         chartType: "power-sinks",
     });
 

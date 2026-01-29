@@ -39,7 +39,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useLatestChartData } from "@/hooks/useCharts";
+import { useLatestChartDataSlice } from "@/hooks/useCharts";
 import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
 import {
     useElectricityMarkets,
@@ -147,12 +147,11 @@ function MarketsOverviewContent() {
     const marketDetails = useElectricityMarket(selectedMarketId ?? 0);
 
     // Fetch latest data for real-time display
-    const { data: latestData, isLoading: isLatestLoading } = useLatestChartData(
-        {
+    const { data: latestData, isLoading: isLatestLoading } =
+        useLatestChartDataSlice({
             chartType: "market-clearing",
             marketId: selectedMarketId ?? 0,
-        },
-    );
+        });
 
     const latestPrice = latestData.price ?? 0;
     const latestQuantity = latestData.quantity ?? 0;

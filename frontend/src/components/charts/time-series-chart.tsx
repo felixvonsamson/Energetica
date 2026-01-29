@@ -31,7 +31,7 @@ import { useGameTick } from "@/hooks/useGameTick";
 import {
     KEY_ORDER_BY_CHART_TYPE,
     reorderObjectKeys,
-} from "@/lib/charts/chart-key-order";
+} from "@/lib/charts/key-order";
 import { formatDuration } from "@/lib/format-utils";
 import { ChartType } from "@/types/charts";
 

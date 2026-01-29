@@ -5,7 +5,7 @@ import {
     TimeSeriesChartConfig,
 } from "@/components/charts/time-series-chart";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
-import { filterNonZeroSeries } from "@/lib/charts/chart-utils";
+import { filterNonZeroSeries } from "@/lib/charts/filter-utils";
 import { formatMass } from "@/lib/format-utils";
 
 interface ResourcesChartProps {

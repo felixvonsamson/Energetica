@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useCurrentChartData } from "@/hooks/useCharts";
+import { useChartData } from "@/hooks/useCharts";
 import { useGameTick } from "@/hooks/useGameTick";
 
 export const Route = createFileRoute("/app/overviews/resources")({
@@ -81,12 +81,11 @@ function ResourcesOverviewContent() {
         chartData: resourcesData,
         isLoading: isResourcesLoading,
         isError: isResourcesError,
-    } = useCurrentChartData({
+    } = useChartData({
         config: {
             chartType: "resources",
             resolution: selectedResolution.resolution,
         },
-        currentTick,
         maxDatapoints: selectedResolution.datapoints,
     });
 

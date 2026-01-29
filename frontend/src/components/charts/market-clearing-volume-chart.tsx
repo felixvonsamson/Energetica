@@ -8,14 +8,11 @@ import { FacilityName } from "@/components/ui/asset-name";
 import { Button } from "@/components/ui/button";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useChartFilters } from "@/hooks/useChartFilters";
-import { useCurrentChartData } from "@/hooks/useCharts";
+import { useChartData } from "@/hooks/useCharts";
 import { useGameEngine } from "@/hooks/useGame";
-import { useGameTick } from "@/hooks/useGameTick";
 import { usePlayerMap } from "@/hooks/usePlayers";
-import {
-    createIncludeKeysFilter,
-    getHashBasedChartColor,
-} from "@/lib/charts/chart-utils";
+import { getHashBasedChartColor } from "@/lib/charts/color-utils";
+import { createIncludeKeysFilter } from "@/lib/charts/filter-utils";
 import { formatEnergy, formatPower } from "@/lib/format-utils";
 import { ChartType, ResolutionOption } from "@/types/charts";
 
@@ -29,8 +26,6 @@ function useMarketClearingData(
     breakdownType: BreakdownType,
     breakdownMode: BreakdownMode,
 ) {
-    const { currentTick } = useGameTick();
-
     // Determine which chart type to use for breakdown
     const chartType: ChartType = useMemo(() => {
         if (!breakdownEnabled) {
@@ -47,9 +42,8 @@ function useMarketClearingData(
     }, [breakdownEnabled, breakdownType, breakdownMode]);
 
     // Fetch breakdown chart data (use existing data for clearing type)
-    const { chartData, isLoading, isError } = useCurrentChartData({
+    const { chartData, isLoading, isError } = useChartData({
         config: { chartType, resolution: resolution.resolution, marketId },
-        currentTick,
         maxDatapoints: resolution.datapoints,
     });
 
