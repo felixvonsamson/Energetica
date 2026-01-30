@@ -21,6 +21,7 @@ import {
     Line,
     Bar,
     Brush,
+    ReferenceLine,
 } from "recharts";
 import { CartesianChartProps } from "recharts/types/util/types";
 
@@ -82,6 +83,8 @@ interface TimeSeriesChartProps {
     data: Array<Record<string, unknown>>;
     /** Chart configuration */
     config: TimeSeriesChartConfig;
+    /** Additional chart components */
+    children?: React.ReactNode;
     /** Loading state */
     isLoading?: boolean;
     /** Error state */
@@ -113,6 +116,7 @@ export function TimeSeriesChart({
     isLoading = false,
     isError = false,
     errorMessage = "Failed to load data",
+    children = <></>,
 }: TimeSeriesChartProps) {
     // Reorder data keys if chartType is provided to preserve deliberate ordering
     const orderedData = useMemo(() => {
@@ -366,6 +370,20 @@ export function TimeSeriesChart({
                 )}
                 {seriesComponents}
                 <Tooltip content={tooltipContent} isAnimationActive={false} />
+                {/* Clearing price line */}
+                <ReferenceLine
+                    x={0}
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    label={{
+                        value: "Game Start",
+                        position: "insideTopLeft",
+                        fill: "var(--muted-foreground)",
+                        fontSize: 12,
+                    }}
+                />
+                {children}
             </ChartComponent>
         </ResponsiveContainer>
     );

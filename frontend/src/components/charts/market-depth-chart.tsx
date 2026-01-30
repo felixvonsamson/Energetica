@@ -438,7 +438,7 @@ function MarketDepthChartInner({
                         label={{
                             value: `Clearing: $${formatMoney(clearingPrice)}/Wh`,
                             position: "insideTop",
-                            fill: "var(--foreground)",
+                            fill: "var(--muted-foreground)",
                             fontSize: 12,
                         }}
                     />
