@@ -82,7 +82,7 @@ export function StorageChart({
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
             chartType: "storage-level",
-            chartVariant: viewMode === "normal" ? "area" : "steppedLine",
+            chartVariant: viewMode === "normal" ? "area" : "smoothLine",
             stacked: viewMode === "normal" ? true : false,
             showBrush: true,
             getColor,
