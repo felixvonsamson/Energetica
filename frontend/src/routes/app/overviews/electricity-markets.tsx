@@ -10,6 +10,7 @@ import {
     Network as NetworkIcon,
     Users,
     Layers,
+    BookOpenText,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
@@ -19,6 +20,7 @@ import {
     MarketClearingTable,
     MarketClearingVolumeChart,
 } from "@/components/charts/market-clearing-volume-chart";
+import { MarketDepthChart } from "@/components/charts/market-depth-chart";
 import { MarketPriceChart } from "@/components/charts/market-price-chart";
 import { SupplyDemandChart } from "@/components/charts/supply-demand-chart";
 import { GameLayout } from "@/components/layout/game-layout";
@@ -398,41 +400,82 @@ function MarketsOverviewContent() {
 
             {/* Supply/Demand Curves */}
             {currentTick !== undefined && (
-                <ChartCard
-                    icon={TrendingUp}
-                    iconClassName="text-primary"
-                    title="Supply & Demand Curves"
-                >
-                    <div className="space-y-4 mb-4">
-                        <div className="flex items-center justify-between gap-4">
-                            <Label className="text-sm font-medium shrink-0">
-                                Historical Tick: {selectedTick}
-                            </Label>
-                            <div className="flex-1">
-                                <Slider
-                                    min={minTick}
-                                    max={maxTick}
-                                    step={1}
-                                    value={[selectedTick]}
-                                    onValueChange={(values) =>
-                                        setSelectedTick(values[0] ?? minTick)
-                                    }
-                                    disabled={minTick >= maxTick}
-                                />
-                            </div>
-                            <div className="text-sm text-muted-foreground shrink-0">
-                                {minTick} - {maxTick}
+                <>
+                    <ChartCard
+                        icon={TrendingUp}
+                        iconClassName="text-primary"
+                        title="Supply & Demand Curves"
+                    >
+                        <div className="space-y-4 mb-4">
+                            <div className="flex items-center justify-between gap-4">
+                                <Label className="text-sm font-medium shrink-0">
+                                    Historical Tick: {selectedTick}
+                                </Label>
+                                <div className="flex-1">
+                                    <Slider
+                                        min={minTick}
+                                        max={maxTick}
+                                        step={1}
+                                        value={[selectedTick]}
+                                        onValueChange={(values) =>
+                                            setSelectedTick(
+                                                values[0] ?? minTick,
+                                            )
+                                        }
+                                        disabled={minTick >= maxTick}
+                                    />
+                                </div>
+                                <div className="text-sm text-muted-foreground shrink-0">
+                                    {minTick} - {maxTick}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <SupplyDemandChart
-                        marketId={selectedMarketId}
-                        tick={selectedTick}
-                        breakdownEnabled={breakdownEnabled}
-                        breakdownMode={breakdownMode}
-                        breakdownType={breakdownType}
-                    />
-                </ChartCard>
+                        <SupplyDemandChart
+                            marketId={selectedMarketId}
+                            tick={selectedTick}
+                            breakdownEnabled={breakdownEnabled}
+                            breakdownMode={breakdownMode}
+                            breakdownType={breakdownType}
+                        />
+                    </ChartCard>
+                    <ChartCard
+                        icon={BookOpenText}
+                        iconClassName="text-primary"
+                        title="Order Book Depth Chart"
+                    >
+                        <div className="space-y-4 mb-4">
+                            <div className="flex items-center justify-between gap-4">
+                                <Label className="text-sm font-medium shrink-0">
+                                    Historical Tick: {selectedTick}
+                                </Label>
+                                <div className="flex-1">
+                                    <Slider
+                                        min={minTick}
+                                        max={maxTick}
+                                        step={1}
+                                        value={[selectedTick]}
+                                        onValueChange={(values) =>
+                                            setSelectedTick(
+                                                values[0] ?? minTick,
+                                            )
+                                        }
+                                        disabled={minTick >= maxTick}
+                                    />
+                                </div>
+                                <div className="text-sm text-muted-foreground shrink-0">
+                                    {minTick} - {maxTick}
+                                </div>
+                            </div>
+                        </div>
+                        <MarketDepthChart
+                            marketId={selectedMarketId}
+                            tick={selectedTick}
+                            // breakdownEnabled={breakdownEnabled}
+                            // breakdownMode={breakdownMode}
+                            // breakdownType={breakdownType}
+                        />
+                    </ChartCard>
+                </>
             )}
         </div>
     );
