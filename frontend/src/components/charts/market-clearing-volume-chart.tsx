@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { ReferenceLine } from "recharts";
 
 import {
     TimeSeriesChart,
@@ -9,10 +10,12 @@ import { Button } from "@/components/ui/button";
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
 import { useChartFilters } from "@/hooks/useChartFilters";
 import { useChartData } from "@/hooks/useCharts";
+import { useElectricityMarket } from "@/hooks/useElectricityMarkets";
 import { useGameEngine } from "@/hooks/useGame";
 import { usePlayerMap } from "@/hooks/usePlayers";
 import { getHashBasedChartColor } from "@/lib/charts/color-utils";
 import { createIncludeKeysFilter } from "@/lib/charts/filter-utils";
+import { KEY_ORDER_BY_CHART_TYPE } from "@/lib/charts/key-order";
 import { formatEnergy, formatPower } from "@/lib/format-utils";
 import { ChartType, ResolutionOption } from "@/types/charts";
 
@@ -26,6 +29,7 @@ function useMarketClearingData(
     breakdownType: BreakdownType,
     breakdownMode: BreakdownMode,
 ) {
+    const market = useElectricityMarket(marketId);
     // Determine which chart type to use for breakdown
     const chartType: ChartType = useMemo(() => {
         if (!breakdownEnabled) {
@@ -47,7 +51,22 @@ function useMarketClearingData(
         maxDatapoints: resolution.datapoints,
     });
 
-    return { chartType, chartData, isLoading, isError };
+    const filteredChartData = useMemo(() => {
+        if (!market) return [];
+        const emptyDatapoint = Object.fromEntries(
+            KEY_ORDER_BY_CHART_TYPE[chartType].map((key) => [key, null]),
+        );
+        return chartData.map((dataPoint) =>
+            dataPoint.tick <= market.created_tick
+                ? {
+                      tick: dataPoint.tick,
+                      ...emptyDatapoint,
+                  }
+                : dataPoint,
+        );
+    }, [chartData, chartType, market]);
+
+    return { chartType, chartData: filteredChartData, isLoading, isError };
 }
 
 interface MarketClearingChartProps {
@@ -68,6 +87,7 @@ export function MarketClearingVolumeChart({
     breakdownMode,
     breakdownType,
 }: MarketClearingChartProps) {
+    const market = useElectricityMarket(marketId);
     const getColor = useAssetColorGetter();
     const playerMap = usePlayerMap();
 
@@ -123,7 +143,22 @@ export function MarketClearingVolumeChart({
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}
-        />
+        >
+            {market !== null && (
+                <ReferenceLine
+                    x={market.created_tick}
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    label={{
+                        value: "Market Creation",
+                        position: "insideTopLeft",
+                        fill: "var(--muted-foreground)",
+                        fontSize: 12,
+                    }}
+                />
+            )}
+        </TimeSeriesChart>
     );
 }
 
@@ -162,7 +197,7 @@ export function MarketClearingTable({
 
     // Calculate aggregated data for each item
     const rows = useMemo(() => {
-        if (!chartData || chartData.length === 0 || !gameEngine) return [];
+        if (chartData.length === 0 || !gameEngine) return [];
 
         // Get all items from the chart data
         const items = new Set<string>();

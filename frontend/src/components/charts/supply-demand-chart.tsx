@@ -20,6 +20,7 @@ import {
     ResponsiveContainer,
     XAxis,
     YAxis,
+    ReferenceLine,
 } from "recharts";
 
 import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
@@ -64,10 +65,10 @@ const CustomTooltip = memo(function CustomTooltip({
                 Quantity: {formatPower(quantity)}
             </p>
             {supplyPrice !== null && (
-                <p className="text-sm">Supply: ${supplyPrice.toFixed(6)}/Wh</p>
+                <p className="text-sm">Supply: ${supplyPrice.toFixed(6)}/MWh</p>
             )}
             {demandPrice !== null && (
-                <p className="text-sm">Demand: ${demandPrice.toFixed(6)}/Wh</p>
+                <p className="text-sm">Demand: ${demandPrice.toFixed(6)}/MWh</p>
             )}
         </div>
     );
@@ -517,7 +518,7 @@ function SupplyDemandChartInner({
                             `$${formatMoney(value)}`
                         }
                         label={{
-                            value: "Price ($/Wh)",
+                            value: "Price ($/MWh)",
                             angle: -90,
                             position: "insideLeft",
                         }}
@@ -588,6 +589,31 @@ function SupplyDemandChartInner({
                         isAnimationActive={false}
                     />
 
+                    <ReferenceLine
+                        x={marketData.market_quantity}
+                        stroke="var(--primary)"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        label={{
+                            value: `Clearing Volume: ${formatPower(marketData.market_quantity)}`,
+                            position: "insideTop",
+                            fill: "var(--muted-foreground)",
+                            fontSize: 12,
+                        }}
+                    />
+                    <ReferenceLine
+                        y={marketData.market_price}
+                        stroke="var(--primary)"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        label={{
+                            value: `Clearing Price: $${formatMoney(marketData.market_price)}/MWh`,
+                            position: "insideBottomLeft",
+                            fill: "var(--muted-foreground)",
+                            fontSize: 12,
+                        }}
+                    />
+
                     {/* Clearing price/volume point */}
                     <ReferenceDot
                         x={marketData.market_quantity}
@@ -596,12 +622,6 @@ function SupplyDemandChartInner({
                         fill="var(--primary)"
                         stroke="var(--background)"
                         strokeWidth={2}
-                        label={{
-                            value: `Clearing: ${formatPower(marketData.market_quantity)} @ $${formatMoney(marketData.market_price)}/Wh`,
-                            position: "top",
-                            fill: "var(--foreground)",
-                            fontSize: 12,
-                        }}
                     />
                 </LineChart>
             </ResponsiveContainer>

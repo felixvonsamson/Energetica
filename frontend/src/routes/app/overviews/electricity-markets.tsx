@@ -86,7 +86,7 @@ function MarketsOverviewHelp() {
                     <TrendingUp className="w-4 h-4 shrink-0" />
                     <span>
                         <b>Market Price:</b> The clearing price at which
-                        electricity trades in the market ($/Wh)
+                        electricity trades in the market ($/MWh)
                     </span>
                 </li>
                 <li className="flex items-center gap-2">
@@ -257,7 +257,7 @@ function MarketsOverviewContent() {
                                 ) : (
                                     <span className="text-foreground">
                                         <Money amount={latestPrice} />
-                                        /Wh
+                                        /MWh
                                     </span>
                                 )}
                             </div>

@@ -1,10 +1,12 @@
 import { useMemo } from "react";
+import { ReferenceLine } from "recharts";
 
 import {
     TimeSeriesChart,
     TimeSeriesChartConfig,
 } from "@/components/charts/time-series-chart";
 import { useChartData } from "@/hooks/useCharts";
+import { useElectricityMarket } from "@/hooks/useElectricityMarkets";
 import { ResolutionOption } from "@/types/charts";
 
 interface MarketPriceChartProps {
@@ -17,6 +19,8 @@ export function MarketPriceChart({
     selectedResolution,
     marketId,
 }: MarketPriceChartProps) {
+    const market = useElectricityMarket(marketId);
+
     // Fetch chart data for network-data
     const { chartData, isLoading, isError } = useChartData({
         config: {
@@ -29,11 +33,16 @@ export function MarketPriceChart({
 
     // Extract only price data
     const priceData = useMemo(() => {
-        return chartData.map((dataPoint) => ({
-            tick: dataPoint.tick as number,
-            price: dataPoint.price as number,
-        }));
-    }, [chartData]);
+        if (!market) return [];
+        return chartData.map((dataPoint) =>
+            dataPoint.tick <= market.created_tick
+                ? { tick: dataPoint.tick, price: null }
+                : {
+                      tick: dataPoint.tick,
+                      price: dataPoint.price,
+                  },
+        );
+    }, [chartData, market]);
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
@@ -56,6 +65,21 @@ export function MarketPriceChart({
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}
-        />
+        >
+            {market !== null && (
+                <ReferenceLine
+                    x={market?.created_tick}
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    label={{
+                        value: "Market Creation",
+                        position: "insideTopLeft",
+                        fill: "var(--muted-foreground)",
+                        fontSize: 12,
+                    }}
+                />
+            )}
+        </TimeSeriesChart>
     );
 }
