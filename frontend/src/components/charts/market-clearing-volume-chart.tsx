@@ -146,7 +146,7 @@ export function MarketClearingVolumeChart({
         >
             {market !== null && (
                 <ReferenceLine
-                    x={market?.created_tick}
+                    x={market.created_tick}
                     stroke="var(--primary)"
                     strokeWidth={2}
                     strokeDasharray="5 5"
@@ -197,7 +197,7 @@ export function MarketClearingTable({
 
     // Calculate aggregated data for each item
     const rows = useMemo(() => {
-        if (!chartData || chartData.length === 0 || !gameEngine) return [];
+        if (chartData.length === 0 || !gameEngine) return [];
 
         // Get all items from the chart data
         const items = new Set<string>();

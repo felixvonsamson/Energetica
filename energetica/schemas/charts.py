@@ -180,7 +180,7 @@ class MarketClearingDataResponse(ChartDataResponse[MarketDataKey]):
     """Response model for market price and quantity time series."""
 
     series: dict[MarketDataKey, list[float]] = Field(
-        description="Time series data for market price ($/Wh) and quantity (W)",
+        description="Time series data for market price ($/MWh) and quantity (W)",
     )
 
 
@@ -227,7 +227,7 @@ class MarketOrderData(BaseModel):
 
     player_id: list[int] = Field(description="Player IDs for each order")
     capacity: list[float] = Field(description="Capacity values in W")
-    price: list[float] = Field(description="Price values in $/Wh")
+    price: list[float] = Field(description="Price values in $/MWh")
     facility: list[str] = Field(description="Facility type for each order")
     cumul_capacities: list[float] = Field(description="Cumulative capacity in W")
 
@@ -238,5 +238,5 @@ class MarketOrdersDataResponse(BaseModel):
     tick: int = Field(description="The tick (timestamp) for this market data snapshot")
     capacities: MarketOrderData = Field(description="Supply / sell / ask orders")
     demands: MarketOrderData = Field(description="Demand / bid orders")
-    market_price: float = Field(description="Market clearing price in $/Wh")
+    market_price: float = Field(description="Market clearing price in $/MWh")
     market_quantity: float = Field(description="Market clearing quantity in W")

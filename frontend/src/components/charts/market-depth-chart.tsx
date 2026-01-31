@@ -49,7 +49,7 @@ const CustomTooltip = memo(function CustomTooltip({
         <div className="bg-card border border-border p-2 rounded shadow-md pointer-events-none">
             <p className="text-sm font-semibold">
                 <Money amount={price} />
-                /Wh
+                /MWh
             </p>
             {supplyVolume !== null && (
                 <p className="text-sm">Supply: {formatPower(supplyVolume)}</p>
@@ -388,7 +388,7 @@ function MarketDepthChartInner({
                             `$${formatMoney(value)}`
                         }
                         label={{
-                            value: "Price ($/Wh)",
+                            value: "Price ($/MWh)",
                             position: "insideBottom",
                             offset: -5,
                         }}
@@ -436,7 +436,7 @@ function MarketDepthChartInner({
                         strokeWidth={2}
                         strokeDasharray="5 5"
                         label={{
-                            value: `Clearing: $${formatMoney(clearingPrice)}/Wh`,
+                            value: `Clearing: $${formatMoney(clearingPrice)}/MWh`,
                             position: "insideTop",
                             fill: "var(--muted-foreground)",
                             fontSize: 12,

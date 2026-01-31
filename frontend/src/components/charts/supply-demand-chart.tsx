@@ -65,10 +65,10 @@ const CustomTooltip = memo(function CustomTooltip({
                 Quantity: {formatPower(quantity)}
             </p>
             {supplyPrice !== null && (
-                <p className="text-sm">Supply: ${supplyPrice.toFixed(6)}/Wh</p>
+                <p className="text-sm">Supply: ${supplyPrice.toFixed(6)}/MWh</p>
             )}
             {demandPrice !== null && (
-                <p className="text-sm">Demand: ${demandPrice.toFixed(6)}/Wh</p>
+                <p className="text-sm">Demand: ${demandPrice.toFixed(6)}/MWh</p>
             )}
         </div>
     );
@@ -518,7 +518,7 @@ function SupplyDemandChartInner({
                             `$${formatMoney(value)}`
                         }
                         label={{
-                            value: "Price ($/Wh)",
+                            value: "Price ($/MWh)",
                             angle: -90,
                             position: "insideLeft",
                         }}

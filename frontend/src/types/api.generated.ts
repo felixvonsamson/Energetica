@@ -3219,7 +3219,7 @@ export interface components {
             /**
              * Series
              *
-             * Time series data for market price ($/Wh) and quantity (W)
+             * Time series data for market price ($/MWh) and quantity (W)
              */
             series: {
                 [key: string]: number[];
@@ -3390,7 +3390,7 @@ export interface components {
             /**
              * Price
              *
-             * Price values in $/Wh
+             * Price values in $/MWh
              */
             price: number[];
             /**
@@ -3425,7 +3425,7 @@ export interface components {
             /**
              * Market Price
              *
-             * Market clearing price in $/Wh
+             * Market clearing price in $/MWh
              */
             market_price: number;
             /**
