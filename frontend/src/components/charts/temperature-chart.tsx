@@ -21,7 +21,7 @@ export function TemperatureChart({
 }: TemperatureChartProps) {
     // Transform data based on view mode
     const transformedData = useMemo(() => {
-        if (!chartData || chartData.length === 0) return [];
+        if (chartData.length === 0) return [];
 
         return chartData.map((dataPoint) => {
             const dp = dataPoint as Record<string, unknown>;

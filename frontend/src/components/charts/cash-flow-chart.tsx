@@ -59,7 +59,6 @@ export function CashFlowChart({
         if (
             viewMode === "normal" ||
             revenueType === "net-profit" ||
-            !chartData ||
             chartData.length === 0
         ) {
             return chartData;
@@ -195,7 +194,7 @@ export function CashFlowOverviewTable({
 
     // Check if all facilities are hidden
     const allHidden = useMemo(() => {
-        if (!chartData || chartData.length === 0) return false;
+        if (chartData.length === 0) return false;
         const facilityTypes = new Set<string>();
         chartData.forEach((dataPoint) => {
             Object.keys(dataPoint).forEach((key) => {
@@ -213,7 +212,7 @@ export function CashFlowOverviewTable({
     }, [chartData, hiddenFacilities]);
 
     const handleToggleAll = () => {
-        if (!chartData || chartData.length === 0) return;
+        if (chartData.length === 0) return;
         const facilityTypes = new Set<string>();
         chartData.forEach((dataPoint) => {
             Object.keys(dataPoint).forEach((key) => {
@@ -243,7 +242,7 @@ export function CashFlowOverviewTable({
 
     // Calculate aggregated data for each facility type
     const facilityRows = useMemo(() => {
-        if (!chartData || chartData.length === 0) return [];
+        if (chartData.length === 0) return [];
 
         // Get all facility types from the chart data
         const facilityTypes = new Set<string>();

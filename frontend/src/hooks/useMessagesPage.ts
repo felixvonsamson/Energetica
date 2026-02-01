@@ -67,7 +67,7 @@ export function useMessagesPage() {
         }
     }, [chatListData, selectedChatId, showDisclaimer, navigate, openChat]);
 
-    const selectedChat = chatListData?.chats?.find(
+    const selectedChat = chatListData?.chats.find(
         (chat) => chat.id === selectedChatId,
     );
 

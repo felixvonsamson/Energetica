@@ -104,6 +104,7 @@ export default defineConfig([
                     caughtErrorsIgnorePattern: "^_",
                 },
             ],
+            "@typescript-eslint/no-unnecessary-condition": "warn",
             "import/no-duplicates": "error",
         },
     },

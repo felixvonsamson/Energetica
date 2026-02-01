@@ -25,7 +25,7 @@ export function IncomingShipmentsModal({
 }: IncomingShipmentsModalProps) {
     const { data: shipmentsData } = useShipments();
 
-    const hasShipments = (shipmentsData?.shipments?.length ?? 0) > 0;
+    const hasShipments = (shipmentsData?.shipments.length ?? 0) > 0;
 
     // Don't render if there are no shipments (shouldn't happen if button logic is correct)
     if (!hasShipments) {

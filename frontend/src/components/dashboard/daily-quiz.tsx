@@ -13,7 +13,7 @@ export function DailyQuizSection() {
 
     const hasAnswered =
         quizData?.player_answer !== undefined &&
-        quizData?.player_answer !== null;
+        quizData.player_answer !== null;
 
     // Helper to determine if an answer is correct
     const isCorrectAnswer = (answer: "answer1" | "answer2" | "answer3") => {

@@ -132,12 +132,7 @@ function StorageFacilitiesContent() {
 
     // Check if there are any construction projects
     const hasConstructionProjects =
-        (projectsData?.construction_queue?.length ?? 0) > 0;
-
-    // Image extension map for facilities that use PNG instead of JPG
-    const imageExtensionMap = {
-        small_pumped_hydro: "png" as const,
-    };
+        (projectsData?.construction_queue.length ?? 0) > 0;
 
     return (
         <div className="p-4 md:p-8">
@@ -205,11 +200,6 @@ function StorageFacilitiesContent() {
                                     facility.requirements_status ===
                                     "unsatisfied"
                                 }
-                                imageExtension={
-                                    imageExtensionMap[
-                                        facility.name as keyof typeof imageExtensionMap
-                                    ]
-                                }
                                 onClick={() =>
                                     navigate({
                                         search: { facility: facility.name },
@@ -220,31 +210,22 @@ function StorageFacilitiesContent() {
                     </CatalogGrid>
 
                     {/* Detail Modal */}
-                    {selectedFacility && (
-                        <FacilityDetailModal
-                            isOpen={selectedFacility !== null}
-                            onClose={() => navigate({ search: {} })}
-                            facility={selectedFacility}
-                            facilityType="storage"
-                            onCompare={() =>
-                                navigate({
-                                    search: {
-                                        compare: selectedFacility.name,
-                                    },
-                                })
-                            }
-                            renderStatsTable={(facility) => (
-                                <StorageFacilityStatsTable
-                                    facility={facility}
-                                />
-                            )}
-                            imageExtension={
-                                imageExtensionMap[
-                                    selectedFacility.name as keyof typeof imageExtensionMap
-                                ]
-                            }
-                        />
-                    )}
+                    <FacilityDetailModal
+                        isOpen={selectedFacility !== null}
+                        onClose={() => navigate({ search: {} })}
+                        facility={selectedFacility}
+                        facilityType="storage"
+                        onCompare={(facility) =>
+                            navigate({
+                                search: {
+                                    compare: facility.name,
+                                },
+                            })
+                        }
+                        renderStatsTable={(facility) => (
+                            <StorageFacilityStatsTable facility={facility} />
+                        )}
+                    />
 
                     {/* Comparison Modal */}
                     <FacilityComparisonModal

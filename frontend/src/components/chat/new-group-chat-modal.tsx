@@ -133,20 +133,13 @@ export function NewGroupChatModal({
                                     data?: { game_exception_type?: string };
                                 };
                             }
-                        )?.response?.data?.game_exception_type ===
+                        ).response?.data?.game_exception_type ===
                         "chatAlreadyExist"
                     ) {
                         // Chat was created concurrently, find it and select it
-                        if (existingGroupChat) {
-                            setChatTitle("");
-                            setGroupMembers([]);
-                            onChatSelected?.((existingGroupChat as Chat).id);
-                            onClose();
-                        } else {
-                            setError(
-                                "Chat with these participants already exists. Please refresh and try again.",
-                            );
-                        }
+                        setError(
+                            "Chat with these participants already exists. Please refresh and try again.",
+                        );
                     } else {
                         setError("Failed to create chat. Please try again.");
                     }

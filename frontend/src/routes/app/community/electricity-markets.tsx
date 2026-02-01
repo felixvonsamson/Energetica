@@ -4,7 +4,7 @@ import {
     useSearch,
 } from "@tanstack/react-router";
 import { Plus, Users } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 
 import { CreateMarketModal } from "@/components/electricity-markets/create-market-modal";
 import { JoinMarketModal } from "@/components/electricity-markets/join-market-modal";
@@ -20,12 +20,17 @@ import {
     CatalogGrid,
 } from "@/components/ui";
 import { CardAction, CardContent } from "@/components/ui/card";
-import { useLatestChartDataSlice } from "@/hooks/useCharts";
 import {
-    useElectricityMarketForPlayer,
+    useElectricityMarket,
     useElectricityMarkets,
 } from "@/hooks/useElectricityMarkets";
-import { useMe, usePlayerMap } from "@/hooks/usePlayers";
+
+type ElectricityMarketsSearch = {
+    market?: number;
+    joinMarket?: number;
+    leaveMarket?: "";
+    createMarket?: "";
+};
 
 export const Route = createFileRoute("/app/community/electricity-markets")({
     component: ElectricityMarketsPage,
@@ -42,12 +47,7 @@ export const Route = createFileRoute("/app/community/electricity-markets")({
     },
     validateSearch: (
         search: Record<string, unknown>,
-    ): {
-        market?: number;
-        joinMarket?: number;
-        leaveMarket?: "";
-        createMarket?: "";
-    } => ({
+    ): ElectricityMarketsSearch => ({
         market: search.market ? Number(search.market) : undefined,
         joinMarket: search.joinMarket ? Number(search.joinMarket) : undefined,
         leaveMarket: search.leaveMarket === "" ? "" : undefined,
@@ -99,41 +99,26 @@ function ElectricityMarketsContent() {
         from: "/app/community/electricity-markets",
     });
     const {
-        market: marketId,
+        market: searchMarket,
         joinMarket: joinMarketId,
         leaveMarket: leaveMarketSearch,
         createMarket: createMarketSearch,
     } = useSearch({
         from: "/app/community/electricity-markets",
     });
-    const isShowingLeaveMarket = leaveMarketSearch === "";
-    const isShowingCreateMarket = createMarketSearch === "";
-
-    const { data, isLoading, isError } = useElectricityMarkets();
-    const player = useMe();
-    const playerMap = usePlayerMap();
-    const currentMarket = useElectricityMarketForPlayer(player?.id);
-
-    const markets = useMemo(
-        () => data?.electricity_markets ?? [],
-        [data?.electricity_markets],
-    );
-
-    // Find selected market from URL param
-    const selectedMarket = useMemo(
-        () => markets.find((m) => m.id === marketId) || null,
-        [markets, marketId],
-    );
-
-    // Fetch market data for selected market
-    const { data: selectedMarketData } = useLatestChartDataSlice({
-        chartType: "market-clearing",
-        marketId: selectedMarket?.id ?? 0,
-    });
-
+    const {
+        data: electricity_markets,
+        isLoading,
+        isError,
+    } = useElectricityMarkets();
+    const selectedMarket = useElectricityMarket(searchMarket ?? null);
     const handleCloseModal = useCallback(() => {
         navigate({ search: {}, replace: true });
     }, [navigate]);
+
+    const isShowingLeaveMarket = leaveMarketSearch === "";
+    const isShowingCreateMarket = createMarketSearch === "";
+    const markets = electricity_markets?.electricity_markets;
 
     return (
         <div className="p-4 md:p-8">
@@ -157,7 +142,9 @@ function ElectricityMarketsContent() {
             )}
 
             {/* Loading state */}
-            {isLoading || currentMarket === undefined || !playerMap ? (
+            {isLoading ||
+            markets === undefined ||
+            selectedMarket === undefined ? (
                 <div className="text-center py-8 text-muted-foreground">
                     Loading electricity markets...
                 </div>
@@ -171,15 +158,10 @@ function ElectricityMarketsContent() {
                 <>
                     <CatalogGrid>
                         {markets.map((market) => {
-                            const isCurrentMarket =
-                                currentMarket?.id === market.id;
-
                             return (
                                 <MarketItem
                                     key={market.id}
-                                    marketName={market.name}
-                                    memberCount={market.member_ids.length}
-                                    isCurrentMarket={isCurrentMarket}
+                                    market={market}
                                     onClick={() =>
                                         navigate({
                                             search: { market: market.id },
@@ -191,32 +173,24 @@ function ElectricityMarketsContent() {
                     </CatalogGrid>
 
                     {/* Detail Modal */}
-                    {selectedMarket && playerMap && (
-                        <MarketDetailModal
-                            isOpen={selectedMarket !== null}
-                            onClose={() => navigate({ search: {} })}
-                            market={selectedMarket}
-                            playerMap={playerMap}
-                            price={selectedMarketData?.price}
-                            volume={selectedMarketData?.quantity}
-                            isCurrentMarket={
-                                currentMarket?.id === selectedMarket.id
-                            }
-                            onJoin={() => {
-                                // Open the join confirmation modal
-                                navigate({
-                                    search: { joinMarket: selectedMarket.id },
-                                    replace: true,
-                                });
-                            }}
-                            onLeave={() => {
-                                navigate({
-                                    search: { leaveMarket: "" },
-                                    replace: true,
-                                });
-                            }}
-                        />
-                    )}
+                    <MarketDetailModal
+                        isOpen={selectedMarket !== null}
+                        onClose={() => navigate({ search: {} })}
+                        market={selectedMarket}
+                        onJoin={(market) => {
+                            // Open the join confirmation modal
+                            navigate({
+                                search: { joinMarket: market.id },
+                                replace: true,
+                            });
+                        }}
+                        onLeave={() => {
+                            navigate({
+                                search: { leaveMarket: "" },
+                                replace: true,
+                            });
+                        }}
+                    />
                 </>
             )}
 
@@ -229,21 +203,17 @@ function ElectricityMarketsContent() {
             )}
 
             {/* Leave Market Modal */}
-            {isShowingLeaveMarket && (
-                <LeaveMarketModal
-                    isOpen={isShowingLeaveMarket}
-                    onClose={handleCloseModal}
-                />
-            )}
+            <LeaveMarketModal
+                isOpen={isShowingLeaveMarket}
+                onClose={handleCloseModal}
+            />
 
             {/* Join Market Modal */}
-            {joinMarketId && (
-                <JoinMarketModal
-                    isOpen={joinMarketId !== undefined}
-                    onClose={handleCloseModal}
-                    marketId={joinMarketId}
-                />
-            )}
+            <JoinMarketModal
+                isOpen={joinMarketId !== undefined}
+                onClose={handleCloseModal}
+                marketId={joinMarketId ?? null}
+            />
         </div>
     );
 }

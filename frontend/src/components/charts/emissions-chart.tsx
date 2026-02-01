@@ -34,7 +34,7 @@ export function EmissionsChart({
 
     // Transform data for cumulative and percent view
     const transformedData: Array<Record<string, unknown>> = useMemo(() => {
-        if (!chartData || chartData.length === 0) {
+        if (chartData.length === 0) {
             return chartData;
         }
 
@@ -191,7 +191,7 @@ export function EmissionsOverviewTable({
 
     // Check if all sources are hidden
     const allHidden = useMemo(() => {
-        if (!chartData || chartData.length === 0) return false;
+        if (chartData.length === 0) return false;
         const sourceTypes = new Set<string>();
         chartData.forEach((dataPoint) => {
             Object.keys(dataPoint).forEach((key) => {
@@ -207,7 +207,7 @@ export function EmissionsOverviewTable({
     }, [chartData, hiddenSources]);
 
     const handleToggleAll = () => {
-        if (!chartData || chartData.length === 0) return;
+        if (chartData.length === 0) return;
         const sourceTypes = new Set<string>();
         chartData.forEach((dataPoint) => {
             Object.keys(dataPoint).forEach((key) => {
@@ -234,7 +234,7 @@ export function EmissionsOverviewTable({
 
     // Aggregate emissions data
     const rows = useMemo<SourceRow[]>(() => {
-        if (!chartData || chartData.length === 0) return [];
+        if (chartData.length === 0) return [];
 
         // Calculate total emissions for each source
         const totals = new Map<string, number>();
@@ -291,7 +291,7 @@ export function EmissionsOverviewTable({
         return sortDirection === "asc" ? "↑" : "↓";
     };
 
-    if (!chartData || chartData.length === 0) {
+    if (chartData.length === 0) {
         return (
             <div className="text-center text-gray-500 py-4">
                 No emissions data available

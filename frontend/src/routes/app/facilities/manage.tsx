@@ -64,12 +64,13 @@ function FacilityManagementContent() {
         error: facilitiesError,
     } = useFacilities();
     const hasStorage = useHasCapability("has_storage");
+    const hasWarehouse = useHasCapability("has_warehouse");
 
     // Only show category UI if more than just power facilities are available
-    const showCategoryUI = hasStorage;
+    const showCategoryUI = hasStorage || hasWarehouse;
 
     // TEMPORARY: Set to true to showcase all asset colors with dummy data
-    const SHOW_DUMMY_DATA = false;
+    const SHOW_DUMMY_DATA = false as boolean;
 
     const isLoading = facilitiesLoading;
     const error = facilitiesError;

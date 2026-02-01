@@ -36,7 +36,6 @@ import { useSidebarMenuState } from "@/hooks/useSidebarMenuState";
 import {
     mobileOnlyNavigation,
     navigationConfig,
-    SHOW_LOCKED_ROUTES_AS_DISABLED,
     type NavGroupConfig,
     type NavLinkConfig,
     type Capabilities,
@@ -211,12 +210,7 @@ function NavLinkItem({ item, capabilities, badgeCount }: NavLinkItemProps) {
     const Icon = item.icon;
     const isUnlocked = useRouteUnlocked(item.to, capabilities);
 
-    // If not using disabled mode, hide locked items
-    if (!SHOW_LOCKED_ROUTES_AS_DISABLED && !isUnlocked) {
-        return null;
-    }
-
-    const disabled = SHOW_LOCKED_ROUTES_AS_DISABLED && !isUnlocked;
+    const disabled = !isUnlocked;
     const itemPath = typeof item.to === "string" ? item.to : String(item.to);
     const isActive = location.pathname === itemPath;
 
@@ -269,12 +263,7 @@ function NavSubLinkItem({
     const Icon = item.icon;
     const isUnlocked = useRouteUnlocked(item.to, capabilities);
 
-    // If not using disabled mode, hide locked items
-    if (!SHOW_LOCKED_ROUTES_AS_DISABLED && !isUnlocked) {
-        return null;
-    }
-
-    const disabled = SHOW_LOCKED_ROUTES_AS_DISABLED && !isUnlocked;
+    const disabled = !isUnlocked;
     const itemPath = typeof item.to === "string" ? item.to : String(item.to);
     const isActive = location.pathname === itemPath;
 

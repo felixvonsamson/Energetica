@@ -6,12 +6,14 @@ import {
     toStringResolution,
 } from "@/types/charts";
 
+type MarketChartType = IncludePrefix<ChartType, "market-">;
+
 export type ChartIdentifier =
     | {
           chartType: ExcludePrefix<ChartType, "market-">;
       }
     | {
-          chartType: IncludePrefix<ChartType, "market-">;
+          chartType: MarketChartType;
           marketId: number;
       };
 
@@ -20,7 +22,7 @@ export type ChartQueryConfig = ChartIdentifier & {
 };
 
 /** Extract the sub-type from a market chart type for query key construction */
-function getMarketChartSubType(chartType: ChartType): string {
+function getMarketChartSubType(chartType: MarketChartType): string {
     const mapping = {
         "market-clearing": "clearing-data",
         "market-exports": "exports",
@@ -28,7 +30,7 @@ function getMarketChartSubType(chartType: ChartType): string {
         "market-generation": "generation",
         "market-consumption": "consumption",
     } as const;
-    return mapping[chartType as keyof typeof mapping] || chartType;
+    return mapping[chartType];
 }
 
 /**

@@ -379,35 +379,40 @@ function SupplyDemandChartInner({
             let blockPrice: number | undefined = undefined;
 
             if (breakdownEnabled && showOrderBlocks) {
-                // Only check supply blocks when showing supply breakdown
-                if (breakdownType === "supply") {
-                    for (const block of orderBlocks.supply) {
-                        if (
-                            block.x1 !== undefined &&
-                            block.x2 !== undefined &&
-                            quantity >= block.x1 &&
-                            quantity <= block.x2
-                        ) {
-                            foundBlockId = block.id;
-                            blockPrice = block.y2;
-                            break;
+                switch (breakdownType) {
+                    // Only check supply blocks when showing supply breakdown
+                    case "supply":
+                        for (const block of orderBlocks.supply) {
+                            if (
+                                block.x1 !== undefined &&
+                                block.x2 !== undefined &&
+                                quantity >= block.x1 &&
+                                quantity <= block.x2
+                            ) {
+                                foundBlockId = block.id;
+                                blockPrice = block.y2;
+                                break;
+                            }
                         }
-                    }
-                }
-                // Only check demand blocks when showing demand breakdown
-                else if (breakdownType === "demand") {
-                    for (const block of orderBlocks.demand) {
-                        if (
-                            block.x1 !== undefined &&
-                            block.x2 !== undefined &&
-                            quantity >= block.x1 &&
-                            quantity <= block.x2
-                        ) {
-                            foundBlockId = block.id;
-                            blockPrice = block.y2;
-                            break;
+                        break;
+
+                    // Only check demand blocks when showing demand breakdown
+                    case "demand":
+                        for (const block of orderBlocks.demand) {
+                            if (
+                                block.x1 !== undefined &&
+                                block.x2 !== undefined &&
+                                quantity >= block.x1 &&
+                                quantity <= block.x2
+                            ) {
+                                foundBlockId = block.id;
+                                blockPrice = block.y2;
+                                break;
+                            }
                         }
-                    }
+                        break;
+                    default:
+                        throw breakdownType satisfies never;
                 }
             }
 

@@ -80,7 +80,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
         console.log(
             "[Socket.IO] Attempting connection for player",
-            user?.is_settled ? "(settled)" : "(unsettled)",
+            user.is_settled ? "(settled)" : "(unsettled)",
         );
 
         // Create socket connection

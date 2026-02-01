@@ -10,8 +10,8 @@ sudo bash scripts/vps-setup.sh
 
 The script will prompt you for:
 
--   Git repository branch to deploy
--   Confirmation that your domain points to the VPS
+- Git repository branch to deploy
+- Confirmation that your domain points to the VPS
 
 It handles: Apache, Python venv, Node.js, SSL (Let's Encrypt), systemd service, firewall.
 
@@ -44,10 +44,10 @@ The script builds the frontend locally, checks git status, pulls code on the VPS
 
 ### Options
 
--   `--force` - Deploy with uncommitted local changes
--   `--yes` - Skip confirmation prompt
--   `--skip-backend` - Sync frontend files only (no git pull, no service restart)
--   `--skip-frontend-build` - Skip building frontend (for backend-only changes)
+- `--force` - Deploy with uncommitted local changes
+- `--yes` - Skip confirmation prompt
+- `--skip-backend` - Sync frontend files only (no git pull, no service restart)
+- `--skip-frontend-build` - Skip building frontend (for backend-only changes)
 
 ## Rollback
 

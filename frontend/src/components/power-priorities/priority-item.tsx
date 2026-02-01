@@ -149,13 +149,11 @@ export function PriorityItem({
 
             {/* Current power */}
             <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400 bg-secondary">
-                {currentPowerMW !== undefined ? (
+                {
                     <span className="font-mono">
                         {formatPower(currentPowerMW)}
                     </span>
-                ) : (
-                    <span>—</span>
-                )}
+                }
             </td>
 
             {/* Power gauge (hidden on mobile) */}
@@ -184,7 +182,7 @@ export function PriorityItem({
             )}
 
             {/* Price input (only in price mode) */}
-            {isEditMode && item.price !== null && item.price !== undefined && (
+            {isEditMode && (
                 <td className="py-0 px-3 bg-secondary">
                     <PriceInput
                         value={item.price}

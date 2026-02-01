@@ -22,7 +22,7 @@ import { useMyId } from "@/hooks/usePlayers";
 interface JoinMarketModalProps {
     isOpen: boolean;
     onClose: () => void;
-    marketId: number;
+    marketId: number | null;
 }
 
 export function JoinMarketModal({
@@ -59,6 +59,7 @@ export function JoinMarketModal({
     const handleConfirm = (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+        if (marketId === null) return;
         joinMarket(marketId, {
             onSuccess: () => {
                 onClose();

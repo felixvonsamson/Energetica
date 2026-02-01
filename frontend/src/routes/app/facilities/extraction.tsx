@@ -116,7 +116,7 @@ function ExtractionFacilitiesContent() {
 
     // Check if there are any construction projects
     const hasConstructionProjects =
-        (projectsData?.construction_queue?.length ?? 0) > 0;
+        (projectsData?.construction_queue.length ?? 0) > 0;
 
     return (
         <div className="p-4 md:p-8">
@@ -176,60 +176,51 @@ function ExtractionFacilitiesContent() {
                     </CatalogGrid>
 
                     {/* Detail Modal */}
-                    {selectedFacility && (
-                        <FacilityDetailModal
-                            isOpen={selectedFacility !== null}
-                            onClose={() => navigate({ search: {} })}
-                            facility={selectedFacility}
-                            facilityType="extraction"
-                            renderDescription={(facility) => (
-                                <div>
-                                    <div
-                                        className="mb-2"
-                                        dangerouslySetInnerHTML={{
-                                            __html: facility.description,
-                                        }}
-                                    />
-
-                                    {/* Underground reserves indicator */}
-                                    {resourcesData &&
-                                        resourcesData[
-                                            facility.resource_production
-                                                .name as keyof typeof resourcesData
-                                        ] && (
-                                            <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1 mt-2">
-                                                <Info className="w-4 h-4 shrink-0" />
-                                                <span>
-                                                    Underground reserves of{" "}
-                                                    <ResourceName
-                                                        resource={
-                                                            facility
-                                                                .resource_production
-                                                                .name
-                                                        }
-                                                    />
-                                                    :{" "}
-                                                    <strong>
-                                                        {formatMass(
-                                                            resourcesData[
-                                                                facility
-                                                                    .resource_production
-                                                                    .name as keyof typeof resourcesData
-                                                            ]?.reserves ?? 0,
-                                                        )}
-                                                    </strong>
-                                                </span>
-                                            </div>
-                                        )}
-                                </div>
-                            )}
-                            renderStatsTable={(facility) => (
-                                <ExtractionFacilityStatsTable
-                                    facility={facility}
+                    <FacilityDetailModal
+                        isOpen={selectedFacility !== null}
+                        onClose={() => navigate({ search: {} })}
+                        facility={selectedFacility}
+                        facilityType="extraction"
+                        renderDescription={(facility) => (
+                            <div>
+                                <div
+                                    className="mb-2"
+                                    dangerouslySetInnerHTML={{
+                                        __html: facility.description,
+                                    }}
                                 />
-                            )}
-                        />
-                    )}
+
+                                {/* Underground reserves indicator */}
+                                {resourcesData && (
+                                    <div className="text-blue-600 dark:text-blue-400 italic flex items-center gap-1 mt-2">
+                                        <Info className="w-4 h-4 shrink-0" />
+                                        <span>
+                                            Underground reserves of{" "}
+                                            <ResourceName
+                                                resource={
+                                                    facility.resource_production
+                                                        .name
+                                                }
+                                            />
+                                            :{" "}
+                                            <strong>
+                                                {formatMass(
+                                                    resourcesData[
+                                                        facility
+                                                            .resource_production
+                                                            .name as keyof typeof resourcesData
+                                                    ].reserves,
+                                                )}
+                                            </strong>
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        renderStatsTable={(facility) => (
+                            <ExtractionFacilityStatsTable facility={facility} />
+                        )}
+                    />
                 </>
             )}
 

@@ -26,7 +26,7 @@ function RootComponent() {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading } = useAuth();
     const capabilities = useCapabilities();
-    const routeConfig = matches[matches.length - 1]?.staticData?.routeConfig;
+    const routeConfig = matches[matches.length - 1]?.staticData.routeConfig;
 
     useEffect(() => {
         if (isLoading) return;
@@ -40,7 +40,7 @@ function RootComponent() {
         }
 
         // Check user has the correct role
-        if (routeConfig.requiredRole !== user?.role) {
+        if (routeConfig.requiredRole !== user.role) {
             navigate({ to: "/app/logout" });
             return;
         }
@@ -48,6 +48,7 @@ function RootComponent() {
         const requiredRole = routeConfig.requiredRole;
 
         switch (requiredRole) {
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             case "player":
                 // Redirect according to settled status
                 if (routeConfig.requiresSettledTile && !user.is_settled) {
@@ -84,15 +85,18 @@ function RootComponent() {
     // Prevent rendering protected routes before redirect logic runs
     if (routeConfig && routeConfig.requiredRole !== null) {
         if (!isAuthenticated || !user) return "Loading...";
-        if (routeConfig.requiredRole !== user?.role) return "Loading...";
-        if (routeConfig.requiredRole === "player") {
-            if (routeConfig.requiresSettledTile && !user.is_settled)
-                return "Loading...";
-            if (!routeConfig.requiresSettledTile && user.is_settled)
-                return "Loading...";
-            if (capabilities === null) return "Loading...";
-            const routeIsUnlocked = routeConfig.isUnlocked(capabilities);
-            if (!routeIsUnlocked) return "Loading...";
+        if (routeConfig.requiredRole !== user.role) return "Loading...";
+        switch (routeConfig.requiredRole) {
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            case "player":
+                if (routeConfig.requiresSettledTile && !user.is_settled)
+                    return "Loading...";
+                if (!routeConfig.requiresSettledTile && user.is_settled)
+                    return "Loading...";
+                if (capabilities === null) return "Loading...";
+                const routeIsUnlocked = routeConfig.isUnlocked(capabilities);
+                if (!routeIsUnlocked) return "Loading...";
+                break;
         }
     }
 

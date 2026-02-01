@@ -40,7 +40,7 @@ export function StorageChart({
 
     // Transform data for percent view if needed
     const transformedData: Array<Record<string, unknown>> = useMemo(() => {
-        if (viewMode === "normal" || !chartData || chartData.length === 0) {
+        if (viewMode === "normal" || chartData.length === 0) {
             return chartData;
         }
 
@@ -67,7 +67,7 @@ export function StorageChart({
                 );
 
                 const currentVal = typeof dp[key] === "number" ? dp[key] : 0;
-                if (maxValue !== undefined && maxValue > 0) {
+                if (maxValue > 0) {
                     result[key] =
                         (((currentVal as number) || 0) / maxValue) * 100;
                 } else {
@@ -155,7 +155,7 @@ export function StorageOverviewTable({
 
     // Check if all facilities are hidden
     const allHidden = useMemo(() => {
-        if (!chartData || chartData.length === 0) return false;
+        if (chartData.length === 0) return false;
         const facilityTypes = new Set<string>();
         chartData.forEach((dataPoint) => {
             Object.keys(dataPoint).forEach((key) => {
@@ -173,7 +173,7 @@ export function StorageOverviewTable({
     }, [chartData, hiddenFacilities]);
 
     const handleToggleAll = () => {
-        if (!chartData || chartData.length === 0) return;
+        if (chartData.length === 0) return;
         const facilityTypes = new Set<string>();
         chartData.forEach((dataPoint) => {
             Object.keys(dataPoint).forEach((key) => {
@@ -203,7 +203,7 @@ export function StorageOverviewTable({
 
     // Calculate aggregated data for each facility type
     const facilityRows = useMemo(() => {
-        if (!chartData || chartData.length === 0) return [];
+        if (chartData.length === 0) return [];
         if (!facilitiesData) return [];
 
         // Get all facility types from the chart data

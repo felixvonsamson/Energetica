@@ -602,5 +602,5 @@ export function formatAchievementValue(
     };
 
     const formatter = formattingMap[achievementId as AchievementId];
-    return formatter ? formatter(value) : value.toString();
+    return formatter(value);
 }

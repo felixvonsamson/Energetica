@@ -103,7 +103,7 @@ function FunctionalFacilitiesContent() {
 
     // Check if there are any construction projects
     const hasConstructionProjects =
-        (projectsData?.construction_queue?.length ?? 0) > 0;
+        (projectsData?.construction_queue.length ?? 0) > 0;
 
     const extraHeaderContent = useCallback(
         (facility: FunctionalFacility) => (
@@ -172,65 +172,61 @@ function FunctionalFacilitiesContent() {
                     </CatalogGrid>
 
                     {/* Detail Modal */}
-                    {selectedFacility && (
-                        <FacilityDetailModal
-                            isOpen={selectedFacility !== null}
-                            onClose={() => navigate({ search: {} })}
-                            facility={selectedFacility}
-                            facilityType="functional"
-                            renderDescription={(facility) => {
-                                // Custom descriptions for laboratory and warehouse
-                                if (facility.name === "laboratory") {
-                                    return (
-                                        <>
-                                            The laboratory is needed to research{" "}
-                                            <strong>
-                                                {/* TODO: disable link when locked */}
-                                                <Link
-                                                    className="text-info"
-                                                    to="/app/facilities/technology"
-                                                >
-                                                    Technologies
-                                                </Link>
-                                            </strong>
-                                            .<br />
-                                            +1 lab worker every 3rd level.
-                                        </>
-                                    );
-                                } else if (facility.name === "warehouse") {
-                                    return (
-                                        <>
-                                            The warehouse stores physical{" "}
-                                            <strong>
-                                                {/* TODO: disable link when locked */}
-                                                <Link
-                                                    className="text-info"
-                                                    to="/app/facilities/extraction"
-                                                >
-                                                    resources
-                                                </Link>
-                                            </strong>
-                                            .
-                                        </>
-                                    );
-                                } else {
-                                    return (
-                                        <div
-                                            dangerouslySetInnerHTML={{
-                                                __html: facility.description,
-                                            }}
-                                        />
-                                    );
-                                }
-                            }}
-                            renderStatsTable={(facility) => (
-                                <FunctionalFacilityStatsTable
-                                    facility={facility}
-                                />
-                            )}
-                            extraHeaderContent={extraHeaderContent}
-                        />
-                    )}
+                    <FacilityDetailModal
+                        isOpen={selectedFacility !== null}
+                        onClose={() => navigate({ search: {} })}
+                        facility={selectedFacility}
+                        facilityType="functional"
+                        renderDescription={(facility) => {
+                            // Custom descriptions for laboratory and warehouse
+                            if (facility.name === "laboratory") {
+                                return (
+                                    <>
+                                        The laboratory is needed to research{" "}
+                                        <strong>
+                                            {/* TODO: disable link when locked */}
+                                            <Link
+                                                className="text-info"
+                                                to="/app/facilities/technology"
+                                            >
+                                                Technologies
+                                            </Link>
+                                        </strong>
+                                        .<br />
+                                        +1 lab worker every 3rd level.
+                                    </>
+                                );
+                            } else if (facility.name === "warehouse") {
+                                return (
+                                    <>
+                                        The warehouse stores physical{" "}
+                                        <strong>
+                                            {/* TODO: disable link when locked */}
+                                            <Link
+                                                className="text-info"
+                                                to="/app/facilities/extraction"
+                                            >
+                                                resources
+                                            </Link>
+                                        </strong>
+                                        .
+                                    </>
+                                );
+                            } else {
+                                return (
+                                    <div
+                                        dangerouslySetInnerHTML={{
+                                            __html: facility.description,
+                                        }}
+                                    />
+                                );
+                            }
+                        }}
+                        renderStatsTable={(facility) => (
+                            <FunctionalFacilityStatsTable facility={facility} />
+                        )}
+                        extraHeaderContent={extraHeaderContent}
+                    />
                 </>
             )}
 
