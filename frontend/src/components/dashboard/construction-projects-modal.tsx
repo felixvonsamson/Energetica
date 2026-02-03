@@ -26,7 +26,7 @@ export function ConstructionProjectsModal({
     const { data: projectsData } = useProjects();
 
     const hasConstructionProjects =
-        (projectsData?.construction_queue?.length ?? 0) > 0;
+        (projectsData?.construction_queue.length ?? 0) > 0;
 
     // Don't render if there are no projects (shouldn't happen if button logic is correct)
     if (!hasConstructionProjects) {

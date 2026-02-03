@@ -146,14 +146,7 @@ function PowerFacilitiesContent() {
 
     // Check if there are any construction projects
     const hasConstructionProjects =
-        (projectsData?.construction_queue?.length ?? 0) > 0;
-
-    // Image extension map for facilities that use PNG instead of JPG
-    const imageExtensionMap = {
-        combined_cycle: "png" as const,
-        nuclear_reactor_gen4: "png" as const,
-        steam_engine: "png" as const,
-    };
+        (projectsData?.construction_queue.length ?? 0) > 0;
 
     return (
         <div className="p-4 md:p-8">
@@ -222,11 +215,6 @@ function PowerFacilitiesContent() {
                                         facility.requirements_status ===
                                         "unsatisfied"
                                     }
-                                    imageExtension={
-                                        imageExtensionMap[
-                                            facility.name as keyof typeof imageExtensionMap
-                                        ]
-                                    }
                                     onClick={() =>
                                         navigate({
                                             search: { facility: facility.name },
@@ -237,60 +225,45 @@ function PowerFacilitiesContent() {
                         </CatalogGrid>
 
                         {/* Detail Modal */}
-                        {selectedFacility && (
-                            <FacilityDetailModal
-                                isOpen={selectedFacility !== null}
-                                onClose={() => navigate({ search: {} })}
-                                facility={selectedFacility}
-                                facilityType="power"
-                                onCompare={() =>
-                                    navigate({
-                                        search: {
-                                            compare: selectedFacility.name,
-                                        },
-                                    })
-                                }
-                                renderDescription={(facility) => (
-                                    <div>
-                                        <div
-                                            className="mb-2"
-                                            dangerouslySetInnerHTML={{
-                                                __html: facility.description,
-                                            }}
-                                        />
-                                        <ResourceStockIndicators
-                                            facilityName={facility.name}
-                                            windPotential={
-                                                facility.wind_potential
-                                            }
-                                            solarPotential={
-                                                facility.solar_potential
-                                            }
-                                            hydroPotential={
-                                                facility.hydro_potential
-                                            }
-                                            highHydroCost={
-                                                facility.high_hydro_cost
-                                            }
-                                            lowWindSpeed={
-                                                facility.low_wind_speed
-                                            }
-                                            playerResources={playerResources}
-                                        />
-                                    </div>
-                                )}
-                                renderStatsTable={(facility) => (
-                                    <PowerFacilityStatsTable
-                                        facility={facility}
+                        <FacilityDetailModal
+                            isOpen={selectedFacility !== null}
+                            onClose={() => navigate({ search: {} })}
+                            facility={selectedFacility}
+                            facilityType="power"
+                            onCompare={(facility) =>
+                                navigate({
+                                    search: {
+                                        compare: facility.name,
+                                    },
+                                })
+                            }
+                            renderDescription={(facility) => (
+                                <div>
+                                    <div
+                                        className="mb-2"
+                                        dangerouslySetInnerHTML={{
+                                            __html: facility.description,
+                                        }}
                                     />
-                                )}
-                                imageExtension={
-                                    imageExtensionMap[
-                                        selectedFacility.name as keyof typeof imageExtensionMap
-                                    ]
-                                }
-                            />
-                        )}
+                                    <ResourceStockIndicators
+                                        facilityName={facility.name}
+                                        windPotential={facility.wind_potential}
+                                        solarPotential={
+                                            facility.solar_potential
+                                        }
+                                        hydroPotential={
+                                            facility.hydro_potential
+                                        }
+                                        highHydroCost={facility.high_hydro_cost}
+                                        lowWindSpeed={facility.low_wind_speed}
+                                        playerResources={playerResources}
+                                    />
+                                </div>
+                            )}
+                            renderStatsTable={(facility) => (
+                                <PowerFacilityStatsTable facility={facility} />
+                            )}
+                        />
 
                         {/* Comparison Modal */}
                         <FacilityComparisonModal

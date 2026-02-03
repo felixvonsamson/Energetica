@@ -15,7 +15,7 @@ export function WeatherSection() {
                 Current weather conditions
             </CardTitle>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-2">
-                {isWeatherLoading && !weatherData ? (
+                {isWeatherLoading ? (
                     <div className="col-span-full text-center text-gray-500">
                         Loading...
                     </div>

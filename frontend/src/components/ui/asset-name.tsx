@@ -19,6 +19,7 @@ import {
     getAssetLongName,
     getAssetShortName,
 } from "@/lib/assets/asset-names";
+import { Fuel } from "@/types/fuel";
 
 /**
  * Display mode for asset names.
@@ -167,7 +168,7 @@ export function TechnologyName({
 /** Props for ResourceName component. */
 export interface ResourceNameProps extends Omit<AssetNameProps, "assetId"> {
     /** The resource type from the API */
-    resource: string;
+    resource: Fuel;
 }
 
 /**

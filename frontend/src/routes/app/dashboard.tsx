@@ -30,7 +30,7 @@ import { DevelopmentBanner } from "@/components/development-banner";
 import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui";
 import { useAchievements } from "@/hooks/useAchievements";
-import { useCapabilities } from "@/hooks/useCapabilities";
+import { useCapabilities, useHasCapability } from "@/hooks/useCapabilities";
 import { useProjects } from "@/hooks/useProjects";
 import { useShipments } from "@/hooks/useShipments";
 
@@ -112,19 +112,20 @@ function DashboardContent() {
     const { data: projectsData } = useProjects();
     const { data: shipmentsData } = useShipments();
 
-    // TODO: Fetch real data from API for these non-capability flags
-    const hasDiscoveredGreenhouse = true;
-    const hasNetwork = false;
+    const hasDiscoveredGreenhouse = useHasCapability(
+        "has_greenhouse_gas_effect",
+    );
+    const hasNetwork = useHasCapability("has_network");
 
     // Check if there are any construction projects
     const hasConstructionProjects =
-        (projectsData?.construction_queue?.length ?? 0) > 0;
+        (projectsData?.construction_queue.length ?? 0) > 0;
 
     // Check if there are any research projects
-    const hasResearchProjects = (projectsData?.research_queue?.length ?? 0) > 0;
+    const hasResearchProjects = (projectsData?.research_queue.length ?? 0) > 0;
 
     // Check if there are any shipments
-    const hasShipments = (shipmentsData?.shipments?.length ?? 0) > 0;
+    const hasShipments = (shipmentsData?.shipments.length ?? 0) > 0;
 
     return (
         <div className="p-4 md:p-8 flex flex-col gap-6">

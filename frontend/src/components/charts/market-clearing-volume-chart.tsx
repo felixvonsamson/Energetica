@@ -144,7 +144,7 @@ export function MarketClearingVolumeChart({
             isLoading={isLoading}
             isError={isError}
         >
-            {market !== null && (
+            {market && (
                 <ReferenceLine
                     x={market.created_tick}
                     stroke="var(--primary)"

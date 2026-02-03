@@ -45,7 +45,7 @@ export function ChatSidebar({
                             <div className="text-center text-gray-500 py-4">
                                 Loading chats...
                             </div>
-                        ) : !chats || chats.length === 0 ? (
+                        ) : chats.length === 0 ? (
                             <div className="text-center text-gray-500 py-4">
                                 No chats yet
                             </div>

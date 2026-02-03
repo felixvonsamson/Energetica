@@ -460,7 +460,7 @@ export function useMarketData({
     // Optimized: check specific nearby ticks instead of searching entire cache
     const cachedFallbackData = useMemo(() => {
         // Only use fallback if loading and don't have current data
-        if (!query.isLoading || query.data) {
+        if (!query.isLoading) {
             return null;
         }
 
@@ -490,7 +490,7 @@ export function useMarketData({
         }
 
         return null; // No cached data available nearby
-    }, [queryClient, marketId, tick, query.isLoading, query.data]);
+    }, [queryClient, marketId, tick, query.isLoading]);
 
     // If loading and we have fallback data, return that instead
     if (query.isLoading && cachedFallbackData) {

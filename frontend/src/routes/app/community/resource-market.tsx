@@ -114,7 +114,7 @@ function ResourceMarketContent() {
     const asks = useMemo(() => asksData?.asks || [], [asksData]);
 
     // Check if there are any shipments
-    const hasShipments = (shipmentsData?.shipments?.length ?? 0) > 0;
+    const hasShipments = (shipmentsData?.shipments.length ?? 0) > 0;
 
     // Filter and sort asks
     const filteredAndSortedAsks = useMemo(() => {
@@ -364,13 +364,11 @@ function ResourceMarketContent() {
             </Card>
 
             {/* Purchase modal - rendered outside the table to avoid nesting violations */}
-            {selectedAskForPurchase && (
-                <PurchaseModal
-                    isOpen={selectedAskForPurchase !== null}
-                    onClose={() => navigate({ search: {} })}
-                    ask={selectedAskForPurchase}
-                />
-            )}
+            <PurchaseModal
+                isOpen={selectedAskForPurchase !== null}
+                onClose={() => navigate({ search: {} })}
+                ask={selectedAskForPurchase}
+            />
 
             {/* Incoming Shipments Modal */}
             <IncomingShipmentsModal

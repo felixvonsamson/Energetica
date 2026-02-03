@@ -102,7 +102,7 @@ function TechnologyContent() {
     );
 
     // Check if there are any research projects
-    const hasResearchProjects = (projectsData?.research_queue?.length ?? 0) > 0;
+    const hasResearchProjects = (projectsData?.research_queue.length ?? 0) > 0;
 
     return (
         <div className="p-4 md:p-8">
@@ -163,18 +163,14 @@ function TechnologyContent() {
                     </CatalogGrid>
 
                     {/* Detail Modal */}
-                    {selectedTechnology && (
-                        <TechnologyDetailModal
-                            isOpen={selectedTechnology !== null}
-                            onClose={() => navigate({ search: {} })}
-                            technology={selectedTechnology}
-                            renderEffectsTable={(technology) => (
-                                <TechnologyEffectsTable
-                                    technology={technology}
-                                />
-                            )}
-                        />
-                    )}
+                    <TechnologyDetailModal
+                        isOpen={selectedTechnology !== null}
+                        onClose={() => navigate({ search: {} })}
+                        technology={selectedTechnology}
+                        renderEffectsTable={(technology) => (
+                            <TechnologyEffectsTable technology={technology} />
+                        )}
+                    />
                 </>
             )}
 

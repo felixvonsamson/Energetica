@@ -13,8 +13,8 @@ from energetica import create_app
 
 def generate_schema() -> None:
     """Generate OpenAPI schema and write to file."""
-    # Create app without running it (env="dev" to avoid unnecessary initialization)
-    app = create_app(env="dev")
+    # Create minimal app for schema generation only
+    app = create_app(env="dev", schema_only=True)
 
     # Get the OpenAPI spec
     openapi_spec = app.openapi()

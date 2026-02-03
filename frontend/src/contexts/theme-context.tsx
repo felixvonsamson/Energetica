@@ -20,10 +20,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     const [theme, setThemeState] = useState<Theme>(() => {
         // Check localStorage first
         const stored = localStorage.getItem("theme") as Theme | null;
-        if (
-            stored &&
-            (stored === "light" || stored === "dark" || stored === "auto")
-        ) {
+        if (stored !== null) {
             return stored;
         }
 

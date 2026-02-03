@@ -25,7 +25,7 @@ export function ResearchProjectsModal({
 }: ResearchProjectsModalProps) {
     const { data: projectsData } = useProjects();
 
-    const hasResearchProjects = (projectsData?.research_queue?.length ?? 0) > 0;
+    const hasResearchProjects = (projectsData?.research_queue.length ?? 0) > 0;
 
     // Don't render if there are no projects (shouldn't happen if button logic is correct)
     if (!hasResearchProjects) {

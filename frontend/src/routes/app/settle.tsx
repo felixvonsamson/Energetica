@@ -324,7 +324,7 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
     const [isSettling, setIsSettling] = useState(false);
 
     const handleSettleLocation = useCallback(async () => {
-        if (!selectedTile || isSettling) return;
+        if (isSettling) return;
 
         setIsSettling(true);
         try {

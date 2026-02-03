@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from energetica.enums import (
     ExtractionFacilityType,
+    Fuel,
     FunctionalFacilityType,
     PowerFacilityType,
     ProjectStatus,
@@ -241,7 +242,7 @@ class StorageFacilityCatalogListOut(BaseModel):
 class ResourceProduction(BaseModel):
     """Represents resource production info for an extraction facility."""
 
-    name: str
+    name: Fuel
     rate: float
 
 

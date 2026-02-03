@@ -23,7 +23,7 @@ export function CO2Chart({
 }: CO2ChartProps) {
     // Transform data based on view mode and unit mode
     const transformedData = useMemo(() => {
-        if (!chartData || chartData.length === 0) return [];
+        if (chartData.length === 0) return [];
 
         const REFERENCE_CO2 = 4e10; // kg - reference CO2 level
         const KG_TO_PPM = 3 / 4e5; // Conversion factor

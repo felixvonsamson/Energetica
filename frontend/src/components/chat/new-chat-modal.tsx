@@ -112,11 +112,11 @@ export function NewChatModal({
                                     data?: { game_exception_type?: string };
                                 };
                             }
-                        )?.response?.data?.game_exception_type ===
+                        ).response?.data?.game_exception_type ===
                         "chatAlreadyExist"
                     ) {
                         // Chat was created concurrently, find it and select it
-                        const newChat = chatListData?.chats?.find(
+                        const newChat = chatListData?.chats.find(
                             (chat) =>
                                 chat.display_name === selectedPlayer.username &&
                                 !chat.is_group,

@@ -45,9 +45,7 @@ export function CreateMarketModal({ isOpen, onClose }: CreateMarketModalProps) {
     const isNameTooLong = marketName.length > 40;
     const hasNameError = isNameTooShort || isNameTooLong;
     const willDeleteCurrentMarket =
-        currentMarket &&
-        currentMarket !== null &&
-        currentMarket.member_ids.length === 1;
+        currentMarket && currentMarket.member_ids.length === 1;
 
     const handleCreateMarket = (e: React.FormEvent) => {
         e.preventDefault();

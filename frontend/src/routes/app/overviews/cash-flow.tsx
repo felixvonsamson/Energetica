@@ -152,7 +152,7 @@ function RevenuesOverviewContent() {
 
     // Merge and filter data based on revenue type
     const filteredChartData = useMemo(() => {
-        if (!revenuesData || revenuesData.length === 0) {
+        if (revenuesData.length === 0) {
             return [];
         }
 
@@ -174,28 +174,34 @@ function RevenuesOverviewContent() {
 
                 const value = dataPoint[key] ?? 0;
 
-                if (revenueType === "revenues") {
-                    // Only include positive values from revenues
-                    result[key] = value > 0 ? value : 0;
-                } else if (revenueType === "expenses") {
-                    // Only include negative values from revenues, displayed as positive
-                    result[key] = value < 0 ? Math.abs(value) : 0;
-                } else if (revenueType === "net-profit") {
-                    if (netProfitViewMode === "net") {
-                        // For "net": aggregate into single "net-profit" value
-                        result["net-profit"] =
-                            (result["net-profit"] || 0) + value;
-                    } else {
-                        // For "breakdown": track gross revenues and expenses separately
-                        if (value > 0) {
-                            result["gross-revenues"] =
-                                (result["gross-revenues"] || 0) + value;
-                        } else if (value < 0) {
-                            result["total-expenses"] =
-                                (result["total-expenses"] || 0) +
-                                Math.abs(value);
+                switch (revenueType) {
+                    case "revenues":
+                        // Only include positive values from revenues
+                        result[key] = value > 0 ? value : 0;
+                        break;
+                    case "expenses":
+                        // Only include negative values from revenues, displayed as positive
+                        result[key] = value < 0 ? Math.abs(value) : 0;
+                        break;
+                    case "net-profit":
+                        if (netProfitViewMode === "net") {
+                            // For "net": aggregate into single "net-profit" value
+                            result["net-profit"] =
+                                (result["net-profit"] || 0) + value;
+                        } else {
+                            // For "breakdown": track gross revenues and expenses separately
+                            if (value > 0) {
+                                result["gross-revenues"] =
+                                    (result["gross-revenues"] || 0) + value;
+                            } else if (value < 0) {
+                                result["total-expenses"] =
+                                    (result["total-expenses"] || 0) +
+                                    Math.abs(value);
+                            }
                         }
-                    }
+                        break;
+                    default:
+                        throw revenueType satisfies never;
                 }
             });
         });
@@ -203,7 +209,6 @@ function RevenuesOverviewContent() {
         // Process op-costs data (only for expenses and all views)
         if (
             (revenueType === "expenses" || revenueType === "net-profit") &&
-            opCostsData &&
             opCostsData.length > 0
         ) {
             opCostsData.forEach((dataPoint: Record<string, number>) => {
@@ -220,20 +225,25 @@ function RevenuesOverviewContent() {
 
                     const value = dataPoint[key] || 0;
 
-                    if (revenueType === "expenses") {
-                        // Op-costs are negative, display as positive for expenses view
-                        result[key] = (result[key] ?? 0) + Math.abs(value);
-                    } else if (revenueType === "net-profit") {
-                        if (netProfitViewMode === "net") {
-                            // For "net": aggregate op-costs into single "net-profit" value
-                            result["net-profit"] =
-                                (result["net-profit"] || 0) + value;
-                        } else {
-                            // For "breakdown": add op-costs to total expenses
-                            result["total-expenses"] =
-                                (result["total-expenses"] || 0) +
-                                Math.abs(value);
-                        }
+                    switch (revenueType) {
+                        case "expenses":
+                            // Op-costs are negative, display as positive for expenses view
+                            result[key] = (result[key] ?? 0) + Math.abs(value);
+                            break;
+                        case "net-profit":
+                            if (netProfitViewMode === "net") {
+                                // For "net": aggregate op-costs into single "net-profit" value
+                                result["net-profit"] =
+                                    (result["net-profit"] || 0) + value;
+                            } else {
+                                // For "breakdown": add op-costs to total expenses
+                                result["total-expenses"] =
+                                    (result["total-expenses"] || 0) +
+                                    Math.abs(value);
+                            }
+                            break;
+                        default:
+                            throw revenueType satisfies never;
                     }
                 });
             });

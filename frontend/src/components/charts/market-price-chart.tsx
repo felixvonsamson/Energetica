@@ -66,9 +66,9 @@ export function MarketPriceChart({
             isLoading={isLoading}
             isError={isError}
         >
-            {market !== null && (
+            {market && (
                 <ReferenceLine
-                    x={market?.created_tick}
+                    x={market.created_tick}
                     stroke="var(--primary)"
                     strokeWidth={2}
                     strokeDasharray="5 5"

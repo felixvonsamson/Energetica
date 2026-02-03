@@ -129,11 +129,7 @@ export function TimeSeriesChart({
     const gradientOffsets = useMemo(() => {
         const offsets: Record<string, number> = {};
 
-        if (
-            !orderedData ||
-            orderedData.length === 0 ||
-            gradientKeys.length === 0
-        ) {
+        if (orderedData.length === 0 || gradientKeys.length === 0) {
             return offsets;
         }
 
@@ -165,7 +161,7 @@ export function TimeSeriesChart({
 
     // Extract and filter data keys
     const seriesComponents = useMemo(() => {
-        if (!orderedData || orderedData.length === 0) return [];
+        if (orderedData.length === 0) return [];
 
         const firstDataPoint = orderedData[0];
         if (!firstDataPoint) return [];
@@ -236,7 +232,7 @@ export function TimeSeriesChart({
                         />
                     );
                 default:
-                    return null;
+                    throw chartVariant satisfies never;
             }
         });
     }, [
@@ -250,8 +246,8 @@ export function TimeSeriesChart({
 
     // Create a stable key from the series order to force re-render when order changes
     const chartKey = useMemo(() => {
-        if (!orderedData || orderedData.length === 0) return "empty";
-        const keys = seriesComponents.map((c) => c?.key).filter(Boolean);
+        if (orderedData.length === 0) return "empty";
+        const keys = seriesComponents.map((c) => c.key).filter(Boolean);
         return keys.join("-");
     }, [seriesComponents, orderedData]);
 

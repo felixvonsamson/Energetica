@@ -327,10 +327,6 @@ export function FacilityGroupTable<T extends FacilityBase>({
                 );
             }
 
-            if (aVal == null && bVal == null) return 0;
-            if (aVal == null) return 1;
-            if (bVal == null) return -1;
-
             const compareResult = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 
             return sortConfig.direction === "asc"

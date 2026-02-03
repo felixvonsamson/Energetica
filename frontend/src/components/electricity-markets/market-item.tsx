@@ -1,12 +1,12 @@
 import { Users, Check } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { useMyMarket } from "@/hooks/useElectricityMarkets";
 import { cn } from "@/lib/utils";
+import { ElectricityMarket } from "@/types/electricity-markets";
 
 interface MarketItemProps {
-    marketName: string;
-    memberCount: number;
-    isCurrentMarket: boolean;
+    market: ElectricityMarket;
     onClick: () => void;
 }
 
@@ -14,12 +14,10 @@ interface MarketItemProps {
  * Compact market card for grid display. Shows minimal info: name, member count,
  * and current market indicator. Opens detail modal on click.
  */
-export function MarketItem({
-    marketName,
-    memberCount,
-    isCurrentMarket,
-    onClick,
-}: MarketItemProps) {
+export function MarketItem({ market, onClick }: MarketItemProps) {
+    const currentMarket = useMyMarket();
+    const isCurrentMarket = currentMarket?.id === market.id;
+
     return (
         <Card
             className={cn(
@@ -58,11 +56,12 @@ export function MarketItem({
 
             {/* Market info */}
             <CardHeader className="text-center">
-                <CardTitle className="text-base">{marketName}</CardTitle>
+                <CardTitle className="text-base">{market.name}</CardTitle>
                 <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
                     <Users className="w-4 h-4" />
                     <span>
-                        {memberCount} {memberCount === 1 ? "member" : "members"}
+                        {market.member_ids.length}{" "}
+                        {market.member_ids.length === 1 ? "member" : "members"}
                     </span>
                 </div>
             </CardHeader>

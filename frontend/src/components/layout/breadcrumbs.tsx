@@ -16,17 +16,22 @@ import { navigationConfig } from "@/lib/nav-config";
 function findLabelInNavConfig(pathname: string): string | null {
     // Search through navigation config for matching route
     for (const item of navigationConfig) {
-        if (item.type === "link") {
-            if (item.to === pathname) {
-                return item.label;
-            }
-        } else if (item.type === "dropdown") {
-            // Check parent label
-            for (const child of item.children) {
-                if (child.to === pathname) {
-                    return child.label;
+        switch (item.type) {
+            case "link":
+                if (item.to === pathname) {
+                    return item.label;
                 }
-            }
+                break;
+            case "dropdown":
+                // Check parent label
+                for (const child of item.children) {
+                    if (child.to === pathname) {
+                        return child.label;
+                    }
+                }
+                break;
+            default:
+                throw item satisfies never;
         }
     }
     return null;

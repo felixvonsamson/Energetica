@@ -62,8 +62,15 @@ def create_app(
     skip_adding_handlers: bool = False,  # TODO(mglst): revisit if this is still needed, currently unused
     env: Literal["dev"] | Literal["prod"],
     disable_signups: bool = False,
+    schema_only: bool = False,
 ) -> FastAPI:
     """Set up the app and the game engine."""
+    if schema_only:
+        # Minimal FastAPI app for OpenAPI schema generation only
+        app = FastAPI()
+        setup_routes(app)
+        return app
+
     print(f"Server is running in {env} mode")
     if simulate_checkpoint_ticks is None:
         simulate_checkpoint_ticks = []
