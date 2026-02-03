@@ -6,8 +6,8 @@ import {
 import { Info, HardHat } from "lucide-react";
 import { useMemo } from "react";
 
-import { ConstructionProjectsModal } from "@/components/dashboard/construction-projects-modal";
-import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
+import { ConstructionProjectsDialog } from "@/components/dashboard/construction-projects-dialog";
+import { FacilityItem, FacilityDetailDialog } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
     ResourceName,
@@ -63,7 +63,7 @@ export const Route = createFileRoute("/app/facilities/extraction")({
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_warehouse,
         },
-        infoModal: {
+        infoDialog: {
             contents: <ExtractionFacilitiesHelp />,
         },
     },
@@ -173,8 +173,8 @@ function ExtractionFacilitiesContent() {
                         ))}
                     </CatalogGrid>
 
-                    {/* Detail Modal */}
-                    <FacilityDetailModal<ExtractionFacility>
+                    {/* Detail Dialog */}
+                    <FacilityDetailDialog<ExtractionFacility>
                         isOpen={selectedFacility !== null}
                         onClose={() => navigate({ search: {} })}
                         facility={selectedFacility}
@@ -222,8 +222,8 @@ function ExtractionFacilitiesContent() {
                 </>
             )}
 
-            {/* Construction Projects Modal */}
-            <ConstructionProjectsModal
+            {/* Construction Projects Dialog */}
+            <ConstructionProjectsDialog
                 isOpen={projects === true}
                 onClose={() =>
                     navigate({

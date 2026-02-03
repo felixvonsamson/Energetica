@@ -65,7 +65,7 @@ export const Route = createFileRoute("/app/overviews/electricity-markets")({
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_network,
         },
-        infoModal: {
+        infoDialog: {
             contents: <MarketsOverviewHelp />,
         },
     },

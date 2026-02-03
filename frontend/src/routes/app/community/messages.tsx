@@ -4,11 +4,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { MessageCircle, Users, Shield } from "lucide-react";
 import { useState } from "react";
 
-import { ChatDisclaimerModal } from "@/components/chat/chat-disclaimer-modal";
+import { ChatDisclaimerDialog } from "@/components/chat/chat-disclaimer-dialog";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { ChatWindow } from "@/components/chat/chat-window";
-import { NewChatModal } from "@/components/chat/new-chat-modal";
-import { NewGroupChatModal } from "@/components/chat/new-group-chat-modal";
+import { NewChatDialog } from "@/components/chat/new-chat-dialog";
+import { NewGroupChatDialog } from "@/components/chat/new-group-chat-dialog";
 import { GameLayout } from "@/components/layout/game-layout";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useMessagesPage } from "@/hooks/useMessagesPage";
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/app/community/messages")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
-        infoModal: {
+        infoDialog: {
             contents: <MessagesHelp />,
         },
     },
@@ -90,10 +90,10 @@ function MessagesContent() {
         setSelectedChatId,
         showDisclaimer,
         handleDismissDisclaimer,
-        showNewChatModal,
-        setShowNewChatModal,
-        showGroupChatModal,
-        setShowGroupChatModal,
+        showNewChatDialog,
+        setShowNewChatDialog,
+        showGroupChatDialog,
+        setShowGroupChatDialog,
         isChatListLoading,
         isChatMessagesLoading,
         chatListData,
@@ -116,25 +116,25 @@ function MessagesContent() {
 
     return (
         <div className="p-4 md:p-8 flex flex-col h-full overflow-hidden">
-            {/* Disclaimer Modal */}
-            <ChatDisclaimerModal
+            {/* Disclaimer Dialog */}
+            <ChatDisclaimerDialog
                 isOpen={showDisclaimer}
                 onDismiss={handleDismissDisclaimer}
             />
 
-            {/* New Chat Modal */}
-            <NewChatModal
-                isOpen={showNewChatModal}
-                onClose={() => setShowNewChatModal(false)}
+            {/* New Chat Dialog */}
+            <NewChatDialog
+                isOpen={showNewChatDialog}
+                onClose={() => setShowNewChatDialog(false)}
                 onChatSelected={(chatId) => {
                     handleChatSelect(chatId);
                 }}
             />
 
-            {/* New Group Chat Modal */}
-            <NewGroupChatModal
-                isOpen={showGroupChatModal}
-                onClose={() => setShowGroupChatModal(false)}
+            {/* New Group Chat Dialog */}
+            <NewGroupChatDialog
+                isOpen={showGroupChatDialog}
+                onClose={() => setShowGroupChatDialog(false)}
                 onChatSelected={(chatId) => {
                     handleChatSelect(chatId);
                 }}
@@ -149,8 +149,8 @@ function MessagesContent() {
                         chats={chatListData?.chats || []}
                         selectedChatId={selectedChatId}
                         onChatSelect={handleChatSelect}
-                        onNewChatClick={() => setShowNewChatModal(true)}
-                        onNewGroupChatClick={() => setShowGroupChatModal(true)}
+                        onNewChatClick={() => setShowNewChatDialog(true)}
+                        onNewGroupChatClick={() => setShowGroupChatDialog(true)}
                     />
                 )}
 
@@ -161,7 +161,7 @@ function MessagesContent() {
                         selectedChatId={selectedChatId}
                         isMessagesLoading={isChatMessagesLoading}
                         messages={chatMessagesData?.messages || []}
-                        isModalOpen={showNewChatModal || showGroupChatModal}
+                        isDialogOpen={showNewChatDialog || showGroupChatDialog}
                         onBackClick={handleBackToList}
                         showBackButton={showMobileChatView && isMobile}
                     />

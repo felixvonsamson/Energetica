@@ -32,7 +32,7 @@ export const Route = createFileRoute("/app/overviews/emissions")({
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_greenhouse_gas_effect,
         },
-        infoModal: {
+        infoDialog: {
             contents: <EmissionsOverviewHelp />,
         },
     },

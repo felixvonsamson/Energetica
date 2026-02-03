@@ -41,7 +41,7 @@ export const Route = createFileRoute("/app/facilities/manage")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
-        infoModal: {
+        infoDialog: {
             contents: <FacilityManagementHelp />,
         },
     },

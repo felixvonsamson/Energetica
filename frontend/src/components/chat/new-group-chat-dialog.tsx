@@ -22,17 +22,17 @@ import { usePlayers } from "@/hooks/usePlayers";
 import { cn } from "@/lib/utils";
 import type { Player, Chat } from "@/types/chats";
 
-interface NewGroupChatModalProps {
+interface NewGroupChatDialogProps {
     isOpen: boolean;
     onClose: () => void;
     onChatSelected?: (chatId: number) => void;
 }
 
-export function NewGroupChatModal({
+export function NewGroupChatDialog({
     isOpen,
     onClose,
     onChatSelected,
-}: NewGroupChatModalProps) {
+}: NewGroupChatDialogProps) {
     const [chatTitle, setChatTitle] = useState("");
     const [groupMembers, setGroupMembers] = useState<Player[]>([]);
     const [playerInput, setPlayerInput] = useState("");
@@ -48,7 +48,7 @@ export function NewGroupChatModal({
         user?.player_id,
     );
 
-    // Reset state when modal closes
+    // Reset state when dialog closes
     const handleClose = () => {
         setChatTitle("");
         setGroupMembers([]);

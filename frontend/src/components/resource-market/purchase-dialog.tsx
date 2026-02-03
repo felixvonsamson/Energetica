@@ -17,7 +17,7 @@ import { usePurchaseAsk } from "@/hooks/useResourceMarket";
 import { formatMass } from "@/lib/format-utils";
 import { RESOURCE_LABELS, ResourceType } from "@/types/resource-market";
 
-export interface PurchaseModalProps {
+export interface PurchaseDialogProps {
     isOpen: boolean;
     onClose: () => void;
     ask: {
@@ -28,7 +28,7 @@ export interface PurchaseModalProps {
     } | null;
 }
 
-export function PurchaseModal({ isOpen, onClose, ask }: PurchaseModalProps) {
+export function PurchaseDialog({ isOpen, onClose, ask }: PurchaseDialogProps) {
     const [buyAll, setBuyAll] = useState(true);
     const [quantity, setQuantity] = useState(
         (ask?.quantity ?? 0 / 1000).toString(),

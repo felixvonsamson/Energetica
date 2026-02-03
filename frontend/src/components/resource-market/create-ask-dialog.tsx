@@ -21,7 +21,7 @@ import {
     RESOURCE_TYPES,
 } from "@/types/resource-market";
 
-interface CreateAskModalProps {
+interface CreateAskDialogProps {
     isOpen: boolean;
     onClose: () => void;
     resources?: {
@@ -30,11 +30,11 @@ interface CreateAskModalProps {
         uranium: { stock: number; capacity: number; reserves: number };
     };
 }
-export function CreateAskModal({
+export function CreateAskDialog({
     isOpen,
     onClose,
     resources,
-}: CreateAskModalProps) {
+}: CreateAskDialogProps) {
     const [selectedResource, setSelectedResource] =
         useState<ResourceType>("coal");
     const [quantity, setQuantity] = useState("");

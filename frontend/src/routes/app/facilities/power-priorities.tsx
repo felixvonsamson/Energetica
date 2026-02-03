@@ -43,7 +43,7 @@ export const Route = createFileRoute("/app/facilities/power-priorities")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
-        infoModal: {
+        infoDialog: {
             contents: <PowerPrioritiesHelp />,
         },
     },

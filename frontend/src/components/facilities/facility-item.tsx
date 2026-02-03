@@ -25,7 +25,7 @@ interface FacilityItemProps {
 
 /**
  * Compact facility card for grid display. Shows minimal info: image, icon,
- * name, price, and lock status. Opens detail modal on click.
+ * name, price, and lock status. Opens detail dialog on click.
  */
 export function FacilityItem({
     facilityName,

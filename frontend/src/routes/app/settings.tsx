@@ -47,7 +47,7 @@ export const Route = createFileRoute("/app/settings")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
-        infoModal: {
+        infoDialog: {
             contents: <SettingsHelp />,
         },
     },
@@ -62,7 +62,7 @@ function SettingsPage() {
 }
 
 function SettingsContent() {
-    const [showChangePasswordModal, setShowChangePasswordModal] =
+    const [showChangePasswordDialog, setShowChangePasswordDialog] =
         useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
@@ -147,7 +147,7 @@ function SettingsContent() {
                             <TypographyLarge>Password Settings</TypographyLarge>
                         </TypographyH2>
                         <Button
-                            onClick={() => setShowChangePasswordModal(true)}
+                            onClick={() => setShowChangePasswordDialog(true)}
                             variant="default"
                         >
                             Change Password
@@ -156,21 +156,21 @@ function SettingsContent() {
                 </Card>
             </div>
 
-            {/* Change Password Modal */}
-            <ChangePasswordModal
-                isOpen={showChangePasswordModal}
-                onClose={() => setShowChangePasswordModal(false)}
+            {/* Change Password Dialog */}
+            <ChangePasswordDialog
+                isOpen={showChangePasswordDialog}
+                onClose={() => setShowChangePasswordDialog(false)}
             />
         </div>
     );
 }
 
-interface ChangePasswordModalProps {
+interface ChangePasswordDialogProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
+function ChangePasswordDialog({ isOpen, onClose }: ChangePasswordDialogProps) {
     const { mutate: changePassword, isPending } = useChangePassword();
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");

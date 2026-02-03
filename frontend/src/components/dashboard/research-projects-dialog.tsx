@@ -10,19 +10,19 @@ import {
 } from "@/components/ui/dialog";
 import { useProjects } from "@/hooks/useProjects";
 
-interface ResearchProjectsModalProps {
+interface ResearchProjectsDialogProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
 /**
- * Modal displaying ongoing research projects with progress tracking. Shows the
+ * Dialog displaying ongoing research projects with progress tracking. Shows the
  * same content as the dashboard research section.
  */
-export function ResearchProjectsModal({
+export function ResearchProjectsDialog({
     isOpen,
     onClose,
-}: ResearchProjectsModalProps) {
+}: ResearchProjectsDialogProps) {
     const { data: projectsData } = useProjects();
 
     const hasResearchProjects = (projectsData?.research_queue.length ?? 0) > 0;

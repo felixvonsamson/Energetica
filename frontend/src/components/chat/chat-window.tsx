@@ -10,7 +10,7 @@ interface ChatWindowProps {
     selectedChatId: number | null;
     isMessagesLoading: boolean;
     messages: Message[];
-    isModalOpen: boolean;
+    isDialogOpen: boolean;
     onBackClick?: () => void;
     showBackButton?: boolean;
 }
@@ -20,7 +20,7 @@ export function ChatWindow({
     selectedChatId,
     isMessagesLoading,
     messages,
-    isModalOpen,
+    isDialogOpen,
     onBackClick,
     showBackButton,
 }: ChatWindowProps) {
@@ -62,7 +62,7 @@ export function ChatWindow({
                         <MessageInput
                             chatId={selectedChatId}
                             isDisabled={!selectedChat}
-                            isModalOpen={isModalOpen}
+                            isDialogOpen={isDialogOpen}
                         />
                     )}
                 </div>

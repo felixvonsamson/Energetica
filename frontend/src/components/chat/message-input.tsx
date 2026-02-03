@@ -6,13 +6,13 @@ import { useSendMessage } from "@/hooks/useChats";
 interface MessageInputProps {
     chatId: number;
     isDisabled: boolean;
-    isModalOpen: boolean;
+    isDialogOpen: boolean;
 }
 
 export function MessageInput({
     chatId,
     isDisabled,
-    isModalOpen,
+    isDialogOpen,
 }: MessageInputProps) {
     const [message, setMessage] = useState("");
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -61,10 +61,10 @@ export function MessageInput({
     };
 
     useEffect(() => {
-        if (!isModalOpen) {
+        if (!isDialogOpen) {
             inputRef.current?.focus();
         }
-    }, [isModalOpen]);
+    }, [isDialogOpen]);
 
     useEffect(() => {
         adjustHeight();

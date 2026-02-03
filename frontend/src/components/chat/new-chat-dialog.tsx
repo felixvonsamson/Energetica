@@ -21,17 +21,17 @@ import { useFilteredPlayers } from "@/hooks/useFilteredPlayers";
 import { usePlayers } from "@/hooks/usePlayers";
 import type { Player } from "@/types/chats";
 
-interface NewChatModalProps {
+interface NewChatDialogProps {
     isOpen: boolean;
     onClose: () => void;
     onChatSelected?: (chatId: number) => void;
 }
 
-export function NewChatModal({
+export function NewChatDialog({
     isOpen,
     onClose,
     onChatSelected,
-}: NewChatModalProps) {
+}: NewChatDialogProps) {
     const [playerInput, setPlayerInput] = useState("");
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export function NewChatModal({
         user?.player_id,
     );
 
-    // Reset state when modal closes
+    // Reset state when dialog closes
     const handleClose = () => {
         setPlayerInput("");
         setSelectedPlayer(null);

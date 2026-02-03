@@ -1,5 +1,5 @@
 /**
- * Notification popup modal. Shows all notifications with ability to mark as
+ * Notification popup dialog. Shows all notifications with ability to mark as
  * read and delete.
  */
 

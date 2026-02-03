@@ -8,10 +8,10 @@ import {
 import { Plus, Trash2, Eye, EyeOff, Truck } from "lucide-react";
 import { useState, useMemo } from "react";
 
-import { IncomingShipmentsModal } from "@/components/dashboard/incoming-shipments-modal";
+import { IncomingShipmentsDialog } from "@/components/dashboard/incoming-shipments-dialog";
 import { GameLayout } from "@/components/layout/game-layout";
-import { CreateAskModal } from "@/components/resource-market/create-ask-modal";
-import { PurchaseModal } from "@/components/resource-market/purchase-modal";
+import { CreateAskDialog } from "@/components/resource-market/create-ask-dialog";
+import { PurchaseDialog } from "@/components/resource-market/purchase-dialog";
 import { Button, Card, CardContent, Money } from "@/components/ui";
 import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
 import { usePlayerResources } from "@/hooks/usePlayerResources";
@@ -52,7 +52,7 @@ export const Route = createFileRoute("/app/community/resource-market")({
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_warehouse,
         },
-        infoModal: {
+        infoDialog: {
             contents: <ResourceMarketHelp />,
         },
     },
@@ -201,8 +201,8 @@ function ResourceMarketContent() {
 
     return (
         <div className="p-4 md:p-8">
-            {/* Put on sale modal */}
-            <CreateAskModal
+            {/* Put on sale dialog */}
+            <CreateAskDialog
                 isOpen={createAsk === true}
                 onClose={() => navigate({ search: {} })}
                 resources={resources}
@@ -363,15 +363,15 @@ function ResourceMarketContent() {
                 </CardContent>
             </Card>
 
-            {/* Purchase modal - rendered outside the table to avoid nesting violations */}
-            <PurchaseModal
+            {/* Purchase dialog - rendered outside the table to avoid nesting violations */}
+            <PurchaseDialog
                 isOpen={selectedAskForPurchase !== null}
                 onClose={() => navigate({ search: {} })}
                 ask={selectedAskForPurchase}
             />
 
-            {/* Incoming Shipments Modal */}
-            <IncomingShipmentsModal
+            {/* Incoming Shipments Dialog */}
+            <IncomingShipmentsDialog
                 isOpen={shipments === true}
                 onClose={() =>
                     navigate({

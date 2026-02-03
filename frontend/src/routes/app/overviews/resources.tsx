@@ -21,7 +21,7 @@ export const Route = createFileRoute("/app/overviews/resources")({
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_warehouse,
         },
-        infoModal: {
+        infoDialog: {
             contents: <ResourcesOverviewHelp />,
         },
     },

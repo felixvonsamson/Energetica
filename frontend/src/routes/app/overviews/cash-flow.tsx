@@ -39,7 +39,7 @@ export const Route = createFileRoute("/app/overviews/cash-flow")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
-        infoModal: {
+        infoDialog: {
             contents: <CashFlowOverviewHelp />,
         },
     },

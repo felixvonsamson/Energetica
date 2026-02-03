@@ -31,7 +31,7 @@ export const Route = createFileRoute("/app/overviews/storage")({
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_storage,
         },
-        infoModal: {
+        infoDialog: {
             contents: <StorageOverviewHelp />,
         },
     },

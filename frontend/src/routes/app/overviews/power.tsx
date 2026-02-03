@@ -31,7 +31,7 @@ export const Route = createFileRoute("/app/overviews/power")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
-        infoModal: {
+        infoDialog: {
             contents: <PowerOverviewHelp />,
         },
     },

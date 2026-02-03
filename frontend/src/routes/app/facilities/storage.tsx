@@ -6,11 +6,11 @@ import {
 import { GitCompareArrows, HardHat } from "lucide-react";
 import { useMemo } from "react";
 
-import { ConstructionProjectsModal } from "@/components/dashboard/construction-projects-modal";
+import { ConstructionProjectsDialog } from "@/components/dashboard/construction-projects-dialog";
 import {
     FacilityItem,
-    FacilityDetailModal,
-    FacilityComparisonModal,
+    FacilityDetailDialog,
+    FacilityComparisonDialog,
 } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
@@ -62,7 +62,7 @@ export const Route = createFileRoute("/app/facilities/storage")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
-        infoModal: {
+        infoDialog: {
             contents: <StorageFacilitiesHelp />,
         },
     },
@@ -209,8 +209,8 @@ function StorageFacilitiesContent() {
                         ))}
                     </CatalogGrid>
 
-                    {/* Detail Modal */}
-                    <FacilityDetailModal
+                    {/* Detail Dialog */}
+                    <FacilityDetailDialog
                         isOpen={selectedFacility !== null}
                         onClose={() => navigate({ search: {} })}
                         facility={selectedFacility}
@@ -227,8 +227,8 @@ function StorageFacilitiesContent() {
                         )}
                     />
 
-                    {/* Comparison Modal */}
-                    <FacilityComparisonModal
+                    {/* Comparison Dialog */}
+                    <FacilityComparisonDialog
                         isOpen={compare !== undefined}
                         onClose={() => navigate({ search: {} })}
                         facilities={facilities}
@@ -248,8 +248,8 @@ function StorageFacilitiesContent() {
                 </>
             )}
 
-            {/* Construction Projects Modal */}
-            <ConstructionProjectsModal
+            {/* Construction Projects Dialog */}
+            <ConstructionProjectsDialog
                 isOpen={projects === true}
                 onClose={() =>
                     navigate({

@@ -20,19 +20,22 @@ import {
 } from "@/hooks/useElectricityMarkets";
 import { useMe } from "@/hooks/usePlayers";
 
-interface CreateMarketModalProps {
+interface CreateMarketDialogProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-export function CreateMarketModal({ isOpen, onClose }: CreateMarketModalProps) {
+export function CreateMarketDialog({
+    isOpen,
+    onClose,
+}: CreateMarketDialogProps) {
     const [marketName, setMarketName] = useState("");
     const [error, setError] = useState<string | null>(null);
     const { mutate: createMarket, isPending } = useCreateElectricityMarket();
     const me = useMe();
     const currentMarket = useElectricityMarketForPlayer(me?.id);
 
-    // Reset state when modal closes
+    // Reset state when dialog closes
     const handleClose = () => {
         setMarketName("");
         setError(null);

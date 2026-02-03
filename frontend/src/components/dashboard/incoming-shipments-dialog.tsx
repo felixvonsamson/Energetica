@@ -10,19 +10,19 @@ import {
 } from "@/components/ui/dialog";
 import { useShipments } from "@/hooks/useShipments";
 
-interface IncomingShipmentsModalProps {
+interface IncomingShipmentsDialogProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
 /**
- * Modal displaying incoming resource shipments with progress tracking. Shows
+ * Dialog displaying incoming resource shipments with progress tracking. Shows
  * the same content as the dashboard shipments section.
  */
-export function IncomingShipmentsModal({
+export function IncomingShipmentsDialog({
     isOpen,
     onClose,
-}: IncomingShipmentsModalProps) {
+}: IncomingShipmentsDialogProps) {
     const { data: shipmentsData } = useShipments();
 
     const hasShipments = (shipmentsData?.shipments.length ?? 0) > 0;

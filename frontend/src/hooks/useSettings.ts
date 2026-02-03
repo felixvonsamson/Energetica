@@ -19,7 +19,7 @@ import { queryKeys, queryClient } from "@/lib/query-client";
  * @example
  *     const { data: settings } = useSettings();
  *     if (settings?.show_disclaimer) {
- *     return <DisclaimerModal />;
+ *     return <DisclaimerDialog />;
  *     }
  *
  * @returns Query result with current user settings

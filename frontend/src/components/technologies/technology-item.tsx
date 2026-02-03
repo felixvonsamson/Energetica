@@ -24,7 +24,7 @@ interface TechnologyItemProps {
 
 /**
  * Compact technology card for grid display. Shows minimal info: image, icon,
- * name, price, discount, and lock status. Opens detail modal on click.
+ * name, price, discount, and lock status. Opens detail dialog on click.
  */
 export function TechnologyItem({
     technologyName,

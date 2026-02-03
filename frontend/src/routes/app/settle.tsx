@@ -63,7 +63,7 @@ export const Route = createFileRoute("/app/settle")({
     component: SettlePage,
     staticData: {
         title: "Location choice",
-        infoModal: {
+        infoDialog: {
             contents: <SettleHelp />,
         },
     },

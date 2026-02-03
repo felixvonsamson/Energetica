@@ -7,8 +7,8 @@ import {
 import { HardHat } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
-import { ConstructionProjectsModal } from "@/components/dashboard/construction-projects-modal";
-import { FacilityItem, FacilityDetailModal } from "@/components/facilities";
+import { ConstructionProjectsDialog } from "@/components/dashboard/construction-projects-dialog";
+import { FacilityItem, FacilityDetailDialog } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/game-layout";
 import { Money, CatalogGrid, Button } from "@/components/ui";
 import {
@@ -52,7 +52,7 @@ export const Route = createFileRoute("/app/facilities/functional")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
-        infoModal: {
+        infoDialog: {
             contents: <FunctionalFacilitiesHelp />,
         },
     },
@@ -171,8 +171,8 @@ function FunctionalFacilitiesContent() {
                         ))}
                     </CatalogGrid>
 
-                    {/* Detail Modal */}
-                    <FacilityDetailModal
+                    {/* Detail Dialog */}
+                    <FacilityDetailDialog
                         isOpen={selectedFacility !== null}
                         onClose={() => navigate({ search: {} })}
                         facility={selectedFacility}
@@ -230,8 +230,8 @@ function FunctionalFacilitiesContent() {
                 </>
             )}
 
-            {/* Construction Projects Modal */}
-            <ConstructionProjectsModal
+            {/* Construction Projects Dialog */}
+            <ConstructionProjectsDialog
                 isOpen={projects === true}
                 onClose={() =>
                     navigate({

@@ -6,10 +6,10 @@ import {
 import { Plus, Users } from "lucide-react";
 import { useCallback } from "react";
 
-import { CreateMarketModal } from "@/components/electricity-markets/create-market-modal";
-import { JoinMarketModal } from "@/components/electricity-markets/join-market-modal";
-import { LeaveMarketModal } from "@/components/electricity-markets/leave-market-modal";
-import { MarketDetailModal } from "@/components/electricity-markets/market-detail-modal";
+import { CreateMarketDialog } from "@/components/electricity-markets/create-market-dialog";
+import { JoinMarketDialog } from "@/components/electricity-markets/join-market-dialog";
+import { LeaveMarketDialog } from "@/components/electricity-markets/leave-market-dialog";
+import { MarketDetailDialog } from "@/components/electricity-markets/market-detail-dialog";
 import { MarketItem } from "@/components/electricity-markets/market-item";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/app/community/electricity-markets")({
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_network,
         },
-        infoModal: {
+        infoDialog: {
             contents: <ElectricityMarketsHelp />,
         },
     },
@@ -112,7 +112,7 @@ function ElectricityMarketsContent() {
         isError,
     } = useElectricityMarkets();
     const selectedMarket = useElectricityMarket(searchMarket ?? null);
-    const handleCloseModal = useCallback(() => {
+    const handleCloseDialog = useCallback(() => {
         navigate({ search: {}, replace: true });
     }, [navigate]);
 
@@ -172,13 +172,13 @@ function ElectricityMarketsContent() {
                         })}
                     </CatalogGrid>
 
-                    {/* Detail Modal */}
-                    <MarketDetailModal
+                    {/* Detail Dialog */}
+                    <MarketDetailDialog
                         isOpen={selectedMarket !== null}
                         onClose={() => navigate({ search: {} })}
                         market={selectedMarket}
                         onJoin={(market) => {
-                            // Open the join confirmation modal
+                            // Open the join confirmation dialog
                             navigate({
                                 search: { joinMarket: market.id },
                                 replace: true,
@@ -194,24 +194,24 @@ function ElectricityMarketsContent() {
                 </>
             )}
 
-            {/* Create Market Modal */}
+            {/* Create Market Dialog */}
             {isShowingCreateMarket && (
-                <CreateMarketModal
+                <CreateMarketDialog
                     isOpen={isShowingCreateMarket}
-                    onClose={handleCloseModal}
+                    onClose={handleCloseDialog}
                 />
             )}
 
-            {/* Leave Market Modal */}
-            <LeaveMarketModal
+            {/* Leave Market Dialog */}
+            <LeaveMarketDialog
                 isOpen={isShowingLeaveMarket}
-                onClose={handleCloseModal}
+                onClose={handleCloseDialog}
             />
 
-            {/* Join Market Modal */}
-            <JoinMarketModal
+            {/* Join Market Dialog */}
+            <JoinMarketDialog
                 isOpen={joinMarketId !== undefined}
-                onClose={handleCloseModal}
+                onClose={handleCloseDialog}
                 marketId={joinMarketId ?? null}
             />
         </div>

@@ -49,7 +49,7 @@ interface TechnologyDetailModalProps<T> {
  * Modal displaying detailed technology information. Shows full specs,
  * requirements, research info, and action buttons.
  */
-export function TechnologyDetailModal<T>({
+export function TechnologyDetailDialog<T>({
     isOpen,
     onClose,
     technology,

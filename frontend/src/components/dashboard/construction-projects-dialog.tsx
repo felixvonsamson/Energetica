@@ -10,19 +10,19 @@ import {
 } from "@/components/ui/dialog";
 import { useProjects } from "@/hooks/useProjects";
 
-interface ConstructionProjectsModalProps {
+interface ConstructionProjectsDialogProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
 /**
- * Modal displaying ongoing construction projects with progress tracking. Shows
+ * Dialog displaying ongoing construction projects with progress tracking. Shows
  * the same content as the dashboard construction section.
  */
-export function ConstructionProjectsModal({
+export function ConstructionProjectsDialog({
     isOpen,
     onClose,
-}: ConstructionProjectsModalProps) {
+}: ConstructionProjectsDialogProps) {
     const { data: projectsData } = useProjects();
 
     const hasConstructionProjects =

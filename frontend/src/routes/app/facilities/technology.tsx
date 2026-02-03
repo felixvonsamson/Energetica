@@ -6,11 +6,11 @@ import {
 import { Microscope } from "lucide-react";
 import { useMemo } from "react";
 
-import { ResearchProjectsModal } from "@/components/dashboard/research-projects-modal";
+import { ResearchProjectsDialog } from "@/components/dashboard/research-projects-dialog";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
     TechnologyItem,
-    TechnologyDetailModal,
+    TechnologyDetailDialog,
     TechnologyEffectsTable,
 } from "@/components/technologies";
 import { CatalogGrid, Button } from "@/components/ui";
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/app/facilities/technology")({
             requiresSettledTile: true,
             isUnlocked: (cap) => cap.has_laboratory,
         },
-        infoModal: {
+        infoDialog: {
             contents: <TechnologiesHelp />,
         },
     },
@@ -162,8 +162,8 @@ function TechnologyContent() {
                         ))}
                     </CatalogGrid>
 
-                    {/* Detail Modal */}
-                    <TechnologyDetailModal
+                    {/* Detail Dialog */}
+                    <TechnologyDetailDialog
                         isOpen={selectedTechnology !== null}
                         onClose={() => navigate({ search: {} })}
                         technology={selectedTechnology}
@@ -174,8 +174,8 @@ function TechnologyContent() {
                 </>
             )}
 
-            {/* Research Projects Modal */}
-            <ResearchProjectsModal
+            {/* Research Projects Dialog */}
+            <ResearchProjectsDialog
                 isOpen={projects === true}
                 onClose={() =>
                     navigate({

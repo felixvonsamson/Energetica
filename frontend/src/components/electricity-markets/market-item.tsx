@@ -12,7 +12,7 @@ interface MarketItemProps {
 
 /**
  * Compact market card for grid display. Shows minimal info: name, member count,
- * and current market indicator. Opens detail modal on click.
+ * and current market indicator. Opens detail dialog on click.
  */
 export function MarketItem({ market, onClick }: MarketItemProps) {
     const currentMarket = useMyMarket();

@@ -43,7 +43,7 @@ export const Route = createFileRoute("/app/dashboard")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
-        infoModal: {
+        infoDialog: {
             contents: <DashboardHelp />,
         },
     },

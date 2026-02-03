@@ -8,7 +8,7 @@
 The codebase had inconsistent text styling with ad-hoc Tailwind classes scattered everywhere (`text-4xl font-bold`, `text-xl font-semibold`, etc.). No h1/h2/h3 HTML tags in use—just styled divs and paragraphs. This created:
 
 - **Maintenance burden**: Changing heading styles meant finding/replacing Tailwind classes across files
-- **Inconsistency**: Same semantic element (e.g., modal titles) styled differently in different places
+- **Inconsistency**: Same semantic element (e.g., dialog titles) styled differently in different places
 - **No semantic HTML**: Accessibility and SEO suffered without proper heading hierarchy
 - **Data display problems**: Numbers in tables were hard to scan due to variable-width fonts
 
@@ -41,6 +41,7 @@ Following shadcn's pattern:
 3. **Domain-specific** (`Money`, `DataValue`) - Game-specific data display
 
 This enables natural composition:
+
 ```tsx
 <TypographyH1>
     Revenue: <Money amount={50000} />
@@ -80,9 +81,10 @@ When file gets unwieldy (>500 lines?), consider splitting. Not needed at ~200 li
 **Non-breaking**: Components added alongside existing Tailwind patterns. No big-bang refactor required.
 
 **Progressive adoption**:
+
 1. New code uses typography components (enforced via CLAUDE.md)
 2. Existing code refactored opportunistically when files are touched
-3. High-value pages (dashboard, modals) prioritized for visual consistency
+3. High-value pages (dashboard, dialogs) prioritized for visual consistency
 
 **Example migration**: About page went from `<p className="text-4xl font-bold">` to `<TypographyH1>` without changing behavior—just improved maintainability and semantics.
 
@@ -91,6 +93,7 @@ When file gets unwieldy (>500 lines?), consider splitting. Not needed at ~200 li
 ### Data Components (Not Yet Implemented)
 
 The `DataValue` foundation enables systematic expansion:
+
 ```tsx
 <Power value={facility.power} />     // formatPower + monospace
 <Energy value={battery.capacity} />  // formatEnergy + monospace
@@ -102,9 +105,10 @@ These can be added progressively as format-utils functions are componentized. Ea
 ### Table Integration
 
 When implementing `@tanstack/react-table`, numeric cells should default to:
+
 ```tsx
 <TableCell className="font-mono text-right">
-  <DataValue>{value}</DataValue>
+    <DataValue>{value}</DataValue>
 </TableCell>
 ```
 
@@ -130,6 +134,7 @@ Single change point—all data components update automatically.
 ---
 
 **See also:**
+
 - `CLAUDE.md` - Usage patterns and examples
 - `frontend/src/components/ui/typography-examples.tsx` - Visual reference
 - `frontend/src/components/ui/money.tsx` - Example of DataValue composition

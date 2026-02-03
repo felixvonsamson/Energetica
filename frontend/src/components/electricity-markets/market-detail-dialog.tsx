@@ -18,7 +18,7 @@ import { formatPower } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 import { ElectricityMarket } from "@/types/electricity-markets";
 
-interface MarketDetailModalProps {
+interface MarketDetailDialogProps {
     isOpen: boolean;
     market: ElectricityMarket | null;
     onClose: () => void;
@@ -27,16 +27,16 @@ interface MarketDetailModalProps {
 }
 
 /**
- * Modal displaying detailed market information. Shows members, price, volume,
+ * Dialog displaying detailed market information. Shows members, price, volume,
  * and action buttons.
  */
-export function MarketDetailModal({
+export function MarketDetailDialog({
     isOpen,
     market,
     onClose,
     onJoin,
     onLeave,
-}: MarketDetailModalProps) {
+}: MarketDetailDialogProps) {
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -46,7 +46,7 @@ export function MarketDetailModal({
     );
 }
 
-// Content for MarketDetailModal
+// Content for MarketDetailDialog
 function MarketContent(
     market: ElectricityMarket,
     onLeave: (market: ElectricityMarket) => void,

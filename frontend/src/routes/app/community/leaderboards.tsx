@@ -32,7 +32,7 @@ export const Route = createFileRoute("/app/community/leaderboards")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
-        infoModal: {
+        infoDialog: {
             contents: <LeaderboardsHelp />,
         },
     },

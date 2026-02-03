@@ -19,17 +19,17 @@ import {
 } from "@/hooks/useElectricityMarkets";
 import { useMyId } from "@/hooks/usePlayers";
 
-interface JoinMarketModalProps {
+interface JoinMarketDialogProps {
     isOpen: boolean;
     onClose: () => void;
     marketId: number | null;
 }
 
-export function JoinMarketModal({
+export function JoinMarketDialog({
     isOpen,
     onClose,
     marketId,
-}: JoinMarketModalProps) {
+}: JoinMarketDialogProps) {
     const [error, setError] = useState<string | null>(null);
     const { mutate: joinMarket, isPending } = useJoinElectricityMarket();
     const { data: marketsData } = useElectricityMarkets();
@@ -50,7 +50,7 @@ export function JoinMarketModal({
     const willDeleteCurrentNetwork =
         isAlreadyInMarket && currentMarketMemberCount === 1;
 
-    // Reset state when modal closes
+    // Reset state when dialog closes
     const handleClose = () => {
         setError(null);
         onClose();

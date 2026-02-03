@@ -90,7 +90,7 @@ export function TopBar() {
     }, [navigate, search]);
     useEffect(() => {
         if (!staticData) return;
-        if (!staticData.infoModal) handleCloseHelp();
+        if (!staticData.infoDialog) handleCloseHelp();
     }, [staticData, handleCloseHelp]);
 
     if (!user) return null;
@@ -137,7 +137,7 @@ export function TopBar() {
                     </div>
 
                     {/* Help Button */}
-                    {staticData?.infoModal && (
+                    {staticData?.infoDialog && (
                         <ButtonGroup>
                             <Button
                                 onClick={() => handleShowHelp()}
@@ -221,14 +221,14 @@ export function TopBar() {
                 </div>
             </header>
 
-            {/* Notification Popup Modal */}
+            {/* Notification Popup Dialog */}
             <NotificationPopup
                 isOpen={showNotifications}
                 onClose={() => setShowNotifications(false)}
             />
 
-            {/* Help / info modal */}
-            {staticData?.infoModal && (
+            {/* Help / info dialog */}
+            {staticData?.infoDialog && (
                 <Dialog
                     open={isShowingHelp}
                     onOpenChange={(open) => !open && handleCloseHelp()}
@@ -236,14 +236,14 @@ export function TopBar() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>
-                                {staticData.infoModal.title ??
+                                {staticData.infoDialog.title ??
                                     "Help: " + staticData.title}
                             </DialogTitle>
                             <DialogDescription>
                                 Information and help for this page.
                             </DialogDescription>
                         </DialogHeader>
-                        {staticData.infoModal.contents}
+                        {staticData.infoDialog.contents}
                     </DialogContent>
                 </Dialog>
             )}

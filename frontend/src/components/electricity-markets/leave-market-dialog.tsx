@@ -18,12 +18,12 @@ import {
 } from "@/hooks/useElectricityMarkets";
 import { useMe } from "@/hooks/usePlayers";
 
-interface LeaveMarketModalProps {
+interface LeaveMarketDialogProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-export function LeaveMarketModal({ isOpen, onClose }: LeaveMarketModalProps) {
+export function LeaveMarketDialog({ isOpen, onClose }: LeaveMarketDialogProps) {
     const [error, setError] = useState<string | null>(null);
     const { mutate: leaveMarket, isPending } = useLeaveElectricityMarket();
 
@@ -32,7 +32,7 @@ export function LeaveMarketModal({ isOpen, onClose }: LeaveMarketModalProps) {
 
     const isLastMember = market?.member_ids.length === 1;
 
-    // Reset state when modal closes
+    // Reset state when dialog closes
     const handleClose = () => {
         setError(null);
         onClose();

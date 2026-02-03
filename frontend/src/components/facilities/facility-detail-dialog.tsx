@@ -22,7 +22,7 @@ import { useQueueProject } from "@/hooks/useProjects";
 import { imageExtensionMap } from "@/lib/projects";
 import { ProjectType, Requirement } from "@/types/projects";
 
-interface FacilityDetailModalProps<T> {
+interface FacilityDetailDialogProps<T> {
     isOpen: boolean;
     onClose: () => void;
     facility:
@@ -46,10 +46,10 @@ interface FacilityDetailModalProps<T> {
 }
 
 /**
- * Modal displaying detailed facility information. Shows full specs,
+ * Dialog displaying detailed facility information. Shows full specs,
  * requirements, construction info, and action buttons.
  */
-export function FacilityDetailModal<T>({
+export function FacilityDetailDialog<T>({
     isOpen,
     onClose,
     facility,
@@ -58,7 +58,7 @@ export function FacilityDetailModal<T>({
     renderStatsTable,
     extraHeaderContent,
     onCompare,
-}: FacilityDetailModalProps<T>) {
+}: FacilityDetailDialogProps<T>) {
     const queueProjectMutation = useQueueProject();
 
     const handleConstruction = () => {
@@ -85,7 +85,7 @@ export function FacilityDetailModal<T>({
     );
 }
 
-// Non-empty content for FacilityDetailModal
+// Non-empty content for FacilityDetailDialog
 function FacilityContent<T>(
     facility: T & {
         name: ProjectType;

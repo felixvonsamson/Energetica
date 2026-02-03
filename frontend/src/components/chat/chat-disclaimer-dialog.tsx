@@ -9,15 +9,15 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 
-interface ChatDisclaimerModalProps {
+interface ChatDisclaimerDialogProps {
     isOpen: boolean;
     onDismiss: () => void;
 }
 
-export function ChatDisclaimerModal({
+export function ChatDisclaimerDialog({
     isOpen,
     onDismiss,
-}: ChatDisclaimerModalProps) {
+}: ChatDisclaimerDialogProps) {
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onDismiss()}>
             <DialogContent>

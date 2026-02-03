@@ -4,15 +4,15 @@ Standards and patterns for the React migration.
 
 **Quick Links:**
 
--   [styling.md](styling.md) - Tailwind patterns and theme colors
--   [animations.md](animations.md) - Animation and transition guidelines
--   [asset-colours.md](asset-colours.md) - Asset-specific color system
+- [styling.md](styling.md) - Tailwind patterns and theme colors
+- [animations.md](animations.md) - Animation and transition guidelines
+- [asset-colours.md](asset-colours.md) - Asset-specific color system
 
 ### File Naming
 
--   Components: `PascalCase.tsx` (e.g., `DashboardCard.tsx`)
--   Hooks: `use*.ts` (e.g., `usePlayerMoney.ts`)
--   Typescript utils: `camelCase.ts` (e.g., `formatCurrency.ts`)
+- Components: `PascalCase.tsx` (e.g., `DashboardCard.tsx`)
+- Hooks: `use*.ts` (e.g., `usePlayerMoney.ts`)
+- Typescript utils: `camelCase.ts` (e.g., `formatCurrency.ts`)
 
 ## Component Guidelines
 
@@ -24,9 +24,9 @@ For components for routes, these can be directly defined in the route. If that c
 
 For comprehensive styling guidelines, see:
 
--   **[styling.md](styling.md)** - Tailwind patterns, theme colors, responsive design
--   **[animations.md](animations.md)** - Animation and transition best practices
--   **[asset-colours.md](asset-colours.md)** - Asset-specific color system
+- **[styling.md](styling.md)** - Tailwind patterns, theme colors, responsive design
+- **[animations.md](animations.md)** - Animation and transition best practices
+- **[asset-colours.md](asset-colours.md)** - Asset-specific color system
 
 ### Quick Reference
 
@@ -46,7 +46,7 @@ Use `useState` for component-local state:
 const [groupMembers, setGroupMembers] = useState<Player[]>([]);
 ```
 
-See [`NewGroupChatModal.tsx`](/frontend/src/components/chat/NewGroupChatModal.tsx) for a full example.
+See [`NewGroupChatDialog.tsx`](/frontend/src/components/chat/NewGroupChatDialog.tsx) for a full example.
 
 ### Server State
 
@@ -143,7 +143,7 @@ import type { Requirement } from "@/types/projects";
 ### ARIA Labels
 
 ```ts
-<button onClick={onClose} aria-label="Close modal">
+<button onClick={onClose} aria-label="Close dialog">
     <X className="w-5 h-5" />
 </button>
 ```
@@ -163,17 +163,17 @@ import type { Requirement } from "@/types/projects";
 
 Before submitting a PR:
 
--   [ ] Using lucide-react icons, not emojis
--   [ ] Animations follow guidelines (see [animations.md](animations.md))
--   [ ] Responsive design tested
+- [ ] Using lucide-react icons, not emojis
+- [ ] Animations follow guidelines (see [animations.md](animations.md))
+- [ ] Responsive design tested
 
 ## See Also
 
--   [styling.md](styling.md) - Tailwind patterns and theme colors
--   [animations.md](animations.md) - Animation and transition guidelines
--   [asset-colours.md](asset-colours.md) - Asset-specific color system
--   [api.md](../architecture/api.md) - API integration and query patterns
--   [architecture/overview.md](../architecture/overview.md) - Foundation and architecture overview
+- [styling.md](styling.md) - Tailwind patterns and theme colors
+- [animations.md](animations.md) - Animation and transition guidelines
+- [asset-colours.md](asset-colours.md) - Asset-specific color system
+- [api.md](../architecture/api.md) - API integration and query patterns
+- [architecture/overview.md](../architecture/overview.md) - Foundation and architecture overview
 
 ## TODO
 

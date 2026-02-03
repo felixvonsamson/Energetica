@@ -48,7 +48,7 @@ export const Route = createFileRoute("/app/community/map")({
             requiresSettledTile: true,
             isUnlocked: () => true,
         },
-        infoModal: {
+        infoDialog: {
             contents: <MapHelp />,
         },
     },

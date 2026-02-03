@@ -17,7 +17,7 @@ interface ComparisonSlot {
     available: string[];
 }
 
-interface FacilityComparisonModalProps<T> {
+interface FacilityComparisonDialogProps<T> {
     isOpen: boolean;
     onClose: () => void;
     facilities: T[];
@@ -30,10 +30,10 @@ interface FacilityComparisonModalProps<T> {
 }
 
 /**
- * Modal for comparing 2-3 facilities side-by-side. Displays comparable data
+ * Dialog for comparing 2-3 facilities side-by-side. Displays comparable data
  * aligned horizontally across columns.
  */
-export function FacilityComparisonModal<T>({
+export function FacilityComparisonDialog<T>({
     isOpen,
     onClose,
     facilities,
@@ -43,7 +43,7 @@ export function FacilityComparisonModal<T>({
     onFacilityClick,
     getFacilityName,
     renderComparisonRows,
-}: FacilityComparisonModalProps<T>) {
+}: FacilityComparisonDialogProps<T>) {
     // Ensure we have exactly 3 slots (can be empty)
     const slots: ComparisonSlot[] = useMemo(() => {
         const result: ComparisonSlot[] = [];

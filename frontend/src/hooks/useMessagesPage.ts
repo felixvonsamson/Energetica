@@ -14,9 +14,9 @@ export function useMessagesPage() {
         from: "/app/community/messages",
     });
 
-    // Local state for modals
-    const [showNewChatModal, setShowNewChatModal] = useState(false);
-    const [showGroupChatModal, setShowGroupChatModal] = useState(false);
+    // Local state for dialogs
+    const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+    const [showGroupChatDialog, setShowGroupChatDialog] = useState(false);
 
     const selectedChatIdRef = useRef<number | null>(selectedChatId ?? null);
 
@@ -94,10 +94,10 @@ export function useMessagesPage() {
         },
         showDisclaimer: shouldShowDisclaimer,
         handleDismissDisclaimer,
-        showNewChatModal,
-        setShowNewChatModal,
-        showGroupChatModal,
-        setShowGroupChatModal,
+        showNewChatDialog,
+        setShowNewChatDialog,
+        showGroupChatDialog,
+        setShowGroupChatDialog,
         isChatListLoading,
         isChatMessagesLoading,
         chatListData,
