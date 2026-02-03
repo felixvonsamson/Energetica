@@ -22,7 +22,7 @@ import {
     useProjects,
 } from "@/hooks/useProjects";
 import { formatPower, formatMass } from "@/lib/format-utils";
-import type { ApiSchema } from "@/types/api-helpers";
+import { ExtractionFacility } from "@/types/projects";
 
 function ExtractionFacilitiesHelp() {
     return (
@@ -85,8 +85,6 @@ function ExtractionFacilitiesPage() {
         </GameLayout>
     );
 }
-
-type ExtractionFacility = ApiSchema<"ExtractionFacilityCatalogOut">;
 
 function ExtractionFacilitiesContent() {
     const navigate = useNavigate({ from: "/app/facilities/extraction" });
@@ -176,7 +174,7 @@ function ExtractionFacilitiesContent() {
                     </CatalogGrid>
 
                     {/* Detail Modal */}
-                    <FacilityDetailModal
+                    <FacilityDetailModal<ExtractionFacility>
                         isOpen={selectedFacility !== null}
                         onClose={() => navigate({ search: {} })}
                         facility={selectedFacility}
@@ -208,7 +206,7 @@ function ExtractionFacilitiesContent() {
                                                     resourcesData[
                                                         facility
                                                             .resource_production
-                                                            .name as keyof typeof resourcesData
+                                                            .name
                                                     ].reserves,
                                                 )}
                                             </strong>

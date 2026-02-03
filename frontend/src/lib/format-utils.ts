@@ -569,16 +569,6 @@ export function formatCashFlow(
 
 // === Achievement-Specific Formatting ===
 
-/** Type for achievement IDs that require specific formatting. */
-type AchievementId =
-    | "power_consumption"
-    | "energy_storage"
-    | "mineral_extraction"
-    | "network_import"
-    | "network_export"
-    | "trading"
-    | "network";
-
 /**
  * Format achievement values based on their type. Maps achievement IDs to their
  * appropriate formatting function.
@@ -591,7 +581,7 @@ export function formatAchievementValue(
     value: number,
     achievementId: string,
 ): string {
-    const formattingMap: Record<AchievementId, (v: number) => string> = {
+    const formattingMap: Record<string, (v: number) => string> = {
         power_consumption: formatPower,
         energy_storage: formatEnergy,
         mineral_extraction: formatMass,
@@ -601,6 +591,6 @@ export function formatAchievementValue(
         network: formatPower,
     };
 
-    const formatter = formattingMap[achievementId as AchievementId];
-    return formatter(value);
+    const formatter = formattingMap[achievementId];
+    return formatter ? formatter(value) : value.toString();
 }

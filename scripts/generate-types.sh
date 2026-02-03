@@ -19,11 +19,11 @@ echo "📋 Generating OpenAPI schema from backend..."
 }
 
 # Generate TypeScript types
-npx openapi-typescript "$SCHEMA_FILE" -o "$OUTPUT_FILE"
+bunx openapi-typescript "$SCHEMA_FILE" -o "$OUTPUT_FILE"
 echo "✓ Types generated at $OUTPUT_FILE"
 
 # Format
 echo "🎨 Formatting generated types..."
-npx prettier --write "$OUTPUT_FILE"
+(cd "$PROJECT_ROOT/frontend" && bunx prettier --write src/types/api.generated.ts)
 
 echo "✨ Done!"
