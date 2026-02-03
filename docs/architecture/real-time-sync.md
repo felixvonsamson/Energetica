@@ -8,8 +8,8 @@ Server maintains real-time bidirectional communication with clients via Socket.I
 
 - **Authenticated players only** (not admins)
 - **Both settled and unsettled players can connect**
-  - Unsettled players (choosing location) receive broadcasts (e.g., map updates)
-  - Settled players receive broadcasts + player-specific events
+    - Unsettled players (choosing location) receive broadcasts (e.g., map updates)
+    - Settled players receive broadcasts + player-specific events
 - Uses session cookie authentication
 - Multi-device support: same player can have multiple connected clients
 
@@ -91,12 +91,12 @@ player.invalidate_queries(["facilities", "all"])
 
 ### Size Guidelines
 
-| Size           | Strategy   | Examples                     |
-| -------------- | ---------- | ---------------------------- |
-| <100 bytes     | Send       | Money, workers, counters     |
-| 100B - 1KB     | Send       | Player stats, small lists    |
-| 1KB - 10KB     | Invalidate | Facilities, technologies     |
-| >10KB          | Invalidate | Network graph, history charts |
+| Size       | Strategy   | Examples                      |
+| ---------- | ---------- | ----------------------------- |
+| <100 bytes | Send       | Money, workers, counters      |
+| 100B - 1KB | Send       | Player stats, small lists     |
+| 1KB - 10KB | Invalidate | Facilities, technologies      |
+| >10KB      | Invalidate | Network graph, history charts |
 
 **Rule of thumb:** If it fits in a tweet (280 bytes), send it. If unsure, invalidate.
 
@@ -260,6 +260,7 @@ useSocketEvent("invalidate", (data) => {
 ```
 
 **Why centralized:**
+
 - Listeners run globally (even when specific components unmounted)
 - All socket logic in one place
 - Prevents stale data from missed events
@@ -311,14 +312,15 @@ def update_resource_market():
 
 ## Quick Reference
 
-| Data Size    | Strategy   | Examples                           |
-| ------------ | ---------- | ---------------------------------- |
-| <100 bytes   | Send       | Money, workers, counters           |
-| 100B - 1KB   | Send       | Player stats, small lists          |
-| 1KB - 10KB   | Invalidate | Facilities, technologies           |
-| >10KB        | Invalidate | Network graph, historical charts   |
+| Data Size  | Strategy   | Examples                         |
+| ---------- | ---------- | -------------------------------- |
+| <100 bytes | Send       | Money, workers, counters         |
+| 100B - 1KB | Send       | Player stats, small lists        |
+| 1KB - 10KB | Invalidate | Facilities, technologies         |
+| >10KB      | Invalidate | Network graph, historical charts |
 
 **Golden Rules:**
+
 1. **Always use Pydantic schemas** (never hand-crafted dicts)
 2. **Use helper methods** (`player.invalidate_queries()`, not raw `emit()`)
 3. **Query keys must match** `frontend/src/lib/query-client.ts`

@@ -4,6 +4,17 @@ APIs are defined in the backed using FastAPI + Pydantic. See `<URL>/docs` for Sw
 
 Note that there is an intention for players to be able to use the API themselves directly. Hence swagger.
 
+## Design: AIP-136
+
+APIs use AIP-136 style syntax, .i.e. POST requests with a verb, e.g. in energetica/routers/resource_market.py:
+
+Use POST with verb suffixes for actions:
+
+```py
+@router.post("/asks/{ask_id}:purchase")
+@router.post("/facilities/{facility_id}:start")
+```
+
 ## Backend patterns
 
 See routers/ see schemas/
@@ -77,7 +88,3 @@ flowchart TB
      error_middleware--Creates 400 Response-->middleware
      client<--HTTP Request / Response-->middleware
 ```
-
-### Other
-
-API use AIP-136 style syntax, .i.e. POST requests with a verb, e.g. in energetica/routers/resource_market.py:

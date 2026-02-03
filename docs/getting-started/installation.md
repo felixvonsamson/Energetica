@@ -163,8 +163,8 @@ VITE_BACKEND_URL=https://energetica-game.org bun dev
 ```bash
 bun dev              # Start dev server (http://localhost:5173)
 bun build            # Build for production
-bun lint:check       # Check ESLint errors
-bun tsc:check        # TypeScript type checking
+bun lint       # Check ESLint errors
+bun typecheck        # TypeScript type checking
 bun pretty           # Format code with Prettier
 bun generate-types   # Generate API types from OpenAPI schema
 ```

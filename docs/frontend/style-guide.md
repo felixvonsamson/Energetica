@@ -30,7 +30,7 @@ import { Button } from "./Button";
 import { Card } from "./Card";
 ```
 
-Run `bun lint:check -- --fix` to automatically sort imports, or use "Fix all eslint errors" in VSCode.
+Run `bun lint -- --fix` to automatically sort imports, or use "Fix all eslint errors" in VSCode.
 
 ### TODO
 
@@ -38,12 +38,12 @@ Run `bun lint:check -- --fix` to automatically sort imports, or use "Fix all esl
 
 **Content should include**:
 
--   ESLint rules & why they exist
--   TypeScript strict mode
--   Prettier formatting
--   Pre-commit hooks
--   What must pass before merge
--   How to fix common violations
+- ESLint rules & why they exist
+- TypeScript strict mode
+- Prettier formatting
+- Pre-commit hooks
+- What must pass before merge
+- How to fix common violations
 
 **Length**: 150-200 lines
 

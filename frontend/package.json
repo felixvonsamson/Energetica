@@ -4,9 +4,9 @@
         "dev": "vite",
         "build": "vite build",
         "generate-types": "bash ../scripts/generate-types.sh",
-        "lint:check": "eslint . --max-warnings 0 --cache",
+        "lint": "eslint . --max-warnings 0 --cache",
         "pretty": "prettier --write \"./**/*.{ts,tsx}\"",
-        "tsc:check": "tsc --noEmit"
+        "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "@dnd-kit/core": "^6.3.1",

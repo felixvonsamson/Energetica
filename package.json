@@ -1,15 +1,15 @@
 {
-  "name": "energetica",
-  "version": "1.0.0",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "dev": "cd frontend && bun run dev",
-    "dev:host": "cd frontend && bun run dev -- --host",
-    "build": "cd frontend && bun run build",
-    "lint:check": "cd frontend && bun run lint:check",
-    "tsc:check": "cd frontend && bun run tsc:check",
-    "pretty": "cd frontend && bun run pretty",
-    "generate-types": "cd frontend && bun run generate-types"
-  }
+    "name": "energetica",
+    "version": "1.0.0",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "cd frontend && bun run dev",
+        "dev:remote": "cd frontend && VITE_BACKEND_URL=https://energetica-game.org bun run dev",
+        "build": "cd frontend && bun run build",
+        "lint": "cd frontend && bun run lint",
+        "typecheck": "cd frontend && bun run typecheck",
+        "pretty": "cd frontend && bun run pretty",
+        "generate-types": "cd frontend && bun run generate-types"
+    }
 }
