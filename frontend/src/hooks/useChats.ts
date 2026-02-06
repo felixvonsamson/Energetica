@@ -176,3 +176,8 @@ export function useOpenChat() {
         },
     });
 }
+
+export function useUnreadChatsCount(): number | undefined {
+    const { data } = useChatList();
+    return data?.unread_chat_count;
+}

@@ -6,7 +6,7 @@
 import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 
-import Logo from "@/../public/icon.svg?react";
+import Logo from "@/assets/icon.svg?react";
 import {
     Collapsible,
     CollapsibleContent,
@@ -14,31 +14,30 @@ import {
 } from "@/components/ui/collapsible";
 import {
     Sidebar,
+    SidebarHeader,
     SidebarContent,
-    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
-    SidebarHeader,
     SidebarMenu,
-    SidebarMenuBadge,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarMenuSub,
-    SidebarMenuSubButton,
-    SidebarMenuSubItem,
+    SidebarFooter,
     SidebarRail,
+    SidebarMenuItem,
+    SidebarMenuButton,
+    SidebarMenuSub,
+    SidebarMenuBadge,
+    SidebarMenuSubItem,
+    SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { TypographyBrand, TypographyH2 } from "@/components/ui/typography";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useChatList } from "@/hooks/useChats";
+import { useUnreadChatsCount } from "@/hooks/useChats";
 import { useRouteUnlocked } from "@/hooks/useRouteStaticData";
 import { useSidebarMenuState } from "@/hooks/useSidebarMenuState";
 import {
-    mobileOnlyNavigation,
-    navigationConfig,
+    navConfigFooter,
+    navConfig,
     type NavGroupConfig,
     type NavLinkConfig,
-    type Capabilities,
 } from "@/lib/nav-config";
 import { cn } from "@/lib/utils";
 
@@ -47,12 +46,6 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
-    const capabilities = useCapabilities();
-    const { data: chatListData } = useChatList();
-    const unreadChatCount = chatListData?.unread_chat_count || 0;
-
-    if (!capabilities) return null;
-
     // Calculate rotation based on scroll position (1 full rotation every 1000px)
     const rotation = -(scrollPosition / 10000) * 360;
 
@@ -85,13 +78,12 @@ export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {navigationConfig.map((item) => {
+                            {navConfig.map((item) => {
                                 if (item.type === "link") {
                                     return (
                                         <NavLinkItem
                                             key={item.label}
                                             item={item}
-                                            capabilities={capabilities}
                                         />
                                     );
                                 }
@@ -100,8 +92,6 @@ export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
                                     <NavGroupItem
                                         key={item.label}
                                         item={item}
-                                        capabilities={capabilities}
-                                        unreadChatCount={unreadChatCount}
                                     />
                                 );
                             })}
@@ -112,15 +102,9 @@ export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
 
             <SidebarFooter className="relative z-10">
                 <SidebarMenu>
-                    {mobileOnlyNavigation.map((item) => {
+                    {navConfigFooter.map((item) => {
                         if (item.type !== "link") return null;
-                        return (
-                            <NavLinkItem
-                                key={item.label}
-                                item={item}
-                                capabilities={capabilities}
-                            />
-                        );
+                        return <NavLinkItem key={item.label} item={item} />;
                     })}
                 </SidebarMenu>
             </SidebarFooter>
@@ -130,17 +114,7 @@ export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
     );
 }
 
-interface NavGroupItemProps {
-    item: NavGroupConfig;
-    capabilities: Capabilities;
-    unreadChatCount: number;
-}
-
-function NavGroupItem({
-    item,
-    capabilities,
-    unreadChatCount,
-}: NavGroupItemProps) {
+function NavGroupItem({ item }: { item: NavGroupConfig }) {
     const location = useLocation();
     const Icon = item.icon;
 
@@ -153,9 +127,6 @@ function NavGroupItem({
 
     // Use persistent state for menu open/closed
     const [isOpen, setIsOpen] = useSidebarMenuState(item.label, isGroupActive);
-
-    // Calculate badge count for group (e.g., Community group shows unread messages)
-    const groupBadgeCount = item.label === "Community" ? unreadChatCount : 0;
 
     return (
         <Collapsible
@@ -171,10 +142,8 @@ function NavGroupItem({
                     >
                         <Icon className="size-4" />
                         <span>{item.label}</span>
-                        {groupBadgeCount > 0 && (
-                            <span className="ml-auto mr-2 flex size-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
-                                {groupBadgeCount > 99 ? "99+" : groupBadgeCount}
-                            </span>
+                        {item.label === "Community" && (
+                            <UnreadChatsBadge className="right-7" />
                         )}
                         <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>
@@ -183,15 +152,7 @@ function NavGroupItem({
             <CollapsibleContent>
                 <SidebarMenuSub>
                     {item.children.map((child) => (
-                        <NavSubLinkItem
-                            key={child.label}
-                            item={child}
-                            capabilities={capabilities}
-                            showBadge={child.label === "Messages"}
-                            badgeCount={
-                                child.label === "Messages" ? unreadChatCount : 0
-                            }
-                        />
+                        <NavSubLinkItem key={child.label} item={child} />
                     ))}
                 </SidebarMenuSub>
             </CollapsibleContent>
@@ -199,13 +160,8 @@ function NavGroupItem({
     );
 }
 
-interface NavLinkItemProps {
-    item: NavLinkConfig;
-    capabilities: Capabilities;
-    badgeCount?: number;
-}
-
-function NavLinkItem({ item, capabilities, badgeCount }: NavLinkItemProps) {
+function NavLinkItem({ item }: { item: NavLinkConfig }) {
+    const capabilities = useCapabilities();
     const location = useLocation();
     const Icon = item.icon;
     const isUnlocked = useRouteUnlocked(item.to, capabilities);
@@ -217,48 +173,23 @@ function NavLinkItem({ item, capabilities, badgeCount }: NavLinkItemProps) {
     return (
         <SidebarMenuItem>
             <SidebarMenuButton
-                asChild={!disabled}
+                asChild
                 isActive={isActive}
                 disabled={disabled}
                 tooltip={item.label}
             >
-                {disabled ? (
-                    <div className="flex items-center gap-2 opacity-50">
-                        <Icon className="size-4" />
-                        <span>{item.label}</span>
-                    </div>
-                ) : (
-                    <Link
-                        to={item.to}
-                        params={item.params as LinkProps["params"]}
-                    >
-                        <Icon className="size-4" />
-                        <span>{item.label}</span>
-                    </Link>
-                )}
+                <Link to={item.to} params={item.params as LinkProps["params"]}>
+                    <Icon className="size-4" />
+                    <span>{item.label}</span>
+                </Link>
             </SidebarMenuButton>
-            {badgeCount !== undefined && badgeCount > 0 && (
-                <SidebarMenuBadge className="bg-destructive text-destructive-foreground">
-                    {badgeCount > 99 ? "99+" : badgeCount}
-                </SidebarMenuBadge>
-            )}
+            {item.to === "/app/community/messages" && <UnreadChatsBadge />}
         </SidebarMenuItem>
     );
 }
 
-interface NavSubLinkItemProps {
-    item: NavLinkConfig;
-    capabilities: Capabilities;
-    showBadge?: boolean;
-    badgeCount?: number;
-}
-
-function NavSubLinkItem({
-    item,
-    capabilities,
-    showBadge,
-    badgeCount,
-}: NavSubLinkItemProps) {
+function NavSubLinkItem({ item }: { item: NavLinkConfig }) {
+    const capabilities = useCapabilities();
     const location = useLocation();
     const Icon = item.icon;
     const isUnlocked = useRouteUnlocked(item.to, capabilities);
@@ -270,39 +201,37 @@ function NavSubLinkItem({
     return (
         <SidebarMenuSubItem>
             <SidebarMenuSubButton
-                asChild={!disabled}
+                asChild
                 isActive={isActive}
                 className={cn(disabled && "pointer-events-none opacity-50")}
             >
-                {disabled ? (
-                    <div className="flex items-center gap-2">
-                        <Icon className="size-4" />
-                        <span>{item.label}</span>
-                        {showBadge &&
-                            badgeCount !== undefined &&
-                            badgeCount > 0 && (
-                                <span className="ml-auto flex size-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
-                                    {badgeCount > 99 ? "99+" : badgeCount}
-                                </span>
-                            )}
-                    </div>
-                ) : (
-                    <Link
-                        to={item.to}
-                        params={item.params as LinkProps["params"]}
-                    >
-                        <Icon className="size-4" />
-                        <span>{item.label}</span>
-                        {showBadge &&
-                            badgeCount !== undefined &&
-                            badgeCount > 0 && (
-                                <span className="ml-auto flex size-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
-                                    {badgeCount > 99 ? "99+" : badgeCount}
-                                </span>
-                            )}
-                    </Link>
-                )}
+                <Link to={item.to} params={item.params as LinkProps["params"]}>
+                    <Icon className="size-4" />
+                    <span>{item.label}</span>
+                    {item.to === "/app/community/messages" && (
+                        <UnreadChatsBadge />
+                    )}
+                </Link>
             </SidebarMenuSubButton>
         </SidebarMenuSubItem>
+    );
+}
+
+function UnreadChatsBadge({ className = "" }: { className?: string }) {
+    const unreadChatsCount = useUnreadChatsCount();
+
+    return (
+        <>
+            {unreadChatsCount !== undefined && unreadChatsCount > 0 && (
+                <SidebarMenuBadge
+                    className={cn(
+                        "bg-destructive text-destructive-foreground",
+                        className,
+                    )}
+                >
+                    {unreadChatsCount > 99 ? "99+" : unreadChatsCount}
+                </SidebarMenuBadge>
+            )}
+        </>
     );
 }

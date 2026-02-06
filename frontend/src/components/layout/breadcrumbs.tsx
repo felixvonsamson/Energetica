@@ -7,7 +7,7 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { navigationConfig } from "@/lib/nav-config";
+import { navConfig } from "@/lib/nav-config";
 
 /**
  * Look up a label for a route path in the navigation config. Returns null if
@@ -15,7 +15,7 @@ import { navigationConfig } from "@/lib/nav-config";
  */
 function findLabelInNavConfig(pathname: string): string | null {
     // Search through navigation config for matching route
-    for (const item of navigationConfig) {
+    for (const item of navConfig) {
         switch (item.type) {
             case "link":
                 if (item.to === pathname) {

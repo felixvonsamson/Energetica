@@ -1,35 +1,6 @@
 import type { LinkProps } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import {
-    LayoutDashboard,
-    TrendingUp,
-    Zap,
-    BatteryFull,
-    Package,
-    Leaf,
-    Coins,
-    FlaskConical,
-    Globe,
-    Factory,
-    Mail,
-    Map,
-    Trophy,
-    Pickaxe,
-    Warehouse,
-    BookMarked,
-    List,
-    SlidersVertical,
-    ListOrdered,
-    Network,
-} from "lucide-react";
-
-export interface Capabilities {
-    has_laboratory: boolean;
-    has_warehouse: boolean;
-    has_storage: boolean;
-    has_network: boolean;
-    has_greenhouse_gas_effect: boolean;
-}
+import * as lucideReact from "lucide-react";
 
 export interface NavLinkConfig {
     type: "link";
@@ -46,162 +17,158 @@ export interface NavGroupConfig {
     children: NavLinkConfig[];
 }
 
-/** Control whether locked routes are hidden or shown as disabled */
-export const SHOW_LOCKED_ROUTES_AS_DISABLED = true;
+type NavItemConfig = NavLinkConfig | NavGroupConfig;
 
-export type NavigationItemConfig = NavLinkConfig | NavGroupConfig;
-
-export const navigationConfig: NavigationItemConfig[] = [
+export const navConfig: NavItemConfig[] = [
     {
         type: "link",
         label: "Dashboard",
         to: "/app/dashboard",
-        icon: LayoutDashboard,
+        icon: lucideReact.LayoutDashboard,
     },
     {
         type: "dropdown",
         label: "Overviews",
-        icon: TrendingUp,
+        icon: lucideReact.TrendingUp,
         children: [
             {
                 type: "link",
                 label: "Cash Flow",
                 to: "/app/overviews/cash-flow",
-                icon: Coins,
+                icon: lucideReact.Coins,
             },
             {
                 type: "link",
                 label: "Power",
                 to: "/app/overviews/power",
-                icon: Zap,
+                icon: lucideReact.Zap,
             },
             {
                 type: "link",
                 label: "Storage",
                 to: "/app/overviews/storage",
-                icon: BatteryFull,
+                icon: lucideReact.BatteryFull,
             },
             {
                 type: "link",
                 label: "Resources",
                 to: "/app/overviews/resources",
-                icon: Package,
+                icon: lucideReact.Package,
             },
             {
                 type: "link",
                 label: "Emissions",
                 to: "/app/overviews/emissions",
-                icon: Leaf,
+                icon: lucideReact.Leaf,
             },
             {
                 type: "link",
                 label: "Electricity Markets",
                 to: "/app/overviews/electricity-markets",
-                icon: Network,
+                icon: lucideReact.Network,
             },
         ],
     },
     {
         type: "dropdown",
         label: "Facilities",
-        icon: Factory,
+        icon: lucideReact.Factory,
         children: [
             {
                 type: "link",
                 label: "Management",
                 to: "/app/facilities/manage",
-                icon: SlidersVertical,
+                icon: lucideReact.SlidersVertical,
             },
             {
                 type: "link",
                 label: "Power Priorities",
                 to: "/app/facilities/power-priorities",
-                icon: ListOrdered,
+                icon: lucideReact.ListOrdered,
             },
             {
                 type: "link",
                 label: "Power Facilities",
                 to: "/app/facilities/power",
-                icon: Zap,
+                icon: lucideReact.Zap,
             },
             {
                 type: "link",
                 label: "Storage Facilities",
                 to: "/app/facilities/storage",
-                icon: BatteryFull,
+                icon: lucideReact.BatteryFull,
             },
             {
                 type: "link",
                 label: "Extraction Facilities",
                 to: "/app/facilities/extraction",
-                icon: Pickaxe,
+                icon: lucideReact.Pickaxe,
             },
             {
                 type: "link",
                 label: "Functional Facilities",
                 to: "/app/facilities/functional",
-                icon: Warehouse,
+                icon: lucideReact.Warehouse,
             },
             {
                 type: "link",
                 label: "Technology",
                 to: "/app/facilities/technology",
-                icon: FlaskConical,
+                icon: lucideReact.FlaskConical,
             },
         ],
     },
     {
         type: "dropdown",
         label: "Community",
-        icon: Globe,
+        icon: lucideReact.Globe,
         children: [
             {
                 type: "link",
                 label: "Electricity Markets",
                 to: "/app/community/electricity-markets",
-                icon: Network,
+                icon: lucideReact.Network,
             },
             {
                 type: "link",
                 label: "Resources Market",
                 to: "/app/community/resource-market",
-                icon: Package,
+                icon: lucideReact.Package,
             },
             {
                 type: "link",
                 label: "Messages",
                 to: "/app/community/messages",
-                icon: Mail,
+                icon: lucideReact.Mail,
             },
             {
                 type: "link",
                 label: "Map",
                 to: "/app/community/map",
-                icon: Map,
+                icon: lucideReact.Map,
             },
             {
                 type: "link",
                 label: "Leaderboards",
                 to: "/app/community/leaderboards",
-                icon: Trophy,
+                icon: lucideReact.Trophy,
             },
         ],
     },
 ];
 
-/** Additional navigation items for mobile sidebar only */
-export const mobileOnlyNavigation: NavigationItemConfig[] = [
+export const navConfigFooter: NavItemConfig[] = [
     {
         type: "link",
         label: "Game Wiki",
         to: "/app/wiki/$slug",
         params: { slug: "introduction" },
-        icon: BookMarked,
+        icon: lucideReact.BookMarked,
     },
     {
         type: "link",
         label: "Changelog",
         to: "/app/changelog",
-        icon: List,
+        icon: lucideReact.List,
     },
 ];

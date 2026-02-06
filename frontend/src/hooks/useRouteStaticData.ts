@@ -28,7 +28,7 @@ export function useRouteStaticData(
 /** Check if a route is unlocked based on its capabilities. */
 export function useRouteUnlocked(
     to: LinkProps["to"],
-    capabilities: Capabilities | null,
+    capabilities: Capabilities | null | undefined,
 ): boolean {
     // Get the router instance to access the route data
     // Note: This hook must be called in a component context
