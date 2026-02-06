@@ -13,7 +13,10 @@ export const projectsApi = {
 
     /** Queue a new construction or research project. */
     queueProject: (data: ApiRequestBody<"/api/v1/projects", "post">) =>
-        apiClient.post<void>("/projects", data),
+        apiClient.post<ApiResponse<"/api/v1/projects", "post">>(
+            "/projects",
+            data,
+        ),
 
     /** Cancel an ongoing project. */
     cancelProject: (projectId: number) =>

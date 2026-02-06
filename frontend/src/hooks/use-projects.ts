@@ -103,12 +103,10 @@ export function useTechnologiesCatalog() {
 export function useQueueProject() {
     return useMutation({
         mutationFn: projectsApi.queueProject,
-        onSuccess: () => {
-            // Invalidate projects list to show the new project
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.projects.all,
-            });
-            // Also invalidate player money since construction costs money
+        onSuccess: (data) => {
+            // Update cache directly with returned list (avoids refetch)
+            queryClient.setQueryData(queryKeys.projects.all, data);
+            // Invalidate player money since construction costs money
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.money,
             });
@@ -120,10 +118,10 @@ export function useQueueProject() {
 export function useCancelProject() {
     return useMutation({
         mutationFn: projectsApi.cancelProject,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.projects.all,
-            });
+        onSuccess: (data) => {
+            // Update cache directly with returned list (avoids refetch)
+            queryClient.setQueryData(queryKeys.projects.all, data);
+            // Invalidate player money since cancellation refunds money
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.money,
             });
@@ -135,10 +133,9 @@ export function useCancelProject() {
 export function usePauseProject() {
     return useMutation({
         mutationFn: projectsApi.pauseProject,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.projects.all,
-            });
+        onSuccess: (data) => {
+            // Update cache directly with returned list (avoids refetch)
+            queryClient.setQueryData(queryKeys.projects.all, data);
         },
     });
 }
@@ -147,10 +144,9 @@ export function usePauseProject() {
 export function useResumeProject() {
     return useMutation({
         mutationFn: projectsApi.resumeProject,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.projects.all,
-            });
+        onSuccess: (data) => {
+            // Update cache directly with returned list (avoids refetch)
+            queryClient.setQueryData(queryKeys.projects.all, data);
         },
     });
 }
@@ -159,10 +155,9 @@ export function useResumeProject() {
 export function useDecreaseProjectPriority() {
     return useMutation({
         mutationFn: projectsApi.decreasePriority,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.projects.all,
-            });
+        onSuccess: (data) => {
+            // Update cache directly with returned list (avoids refetch)
+            queryClient.setQueryData(queryKeys.projects.all, data);
         },
     });
 }
@@ -171,10 +166,9 @@ export function useDecreaseProjectPriority() {
 export function useIncreaseProjectPriority() {
     return useMutation({
         mutationFn: projectsApi.increasePriority,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.projects.all,
-            });
+        onSuccess: (data) => {
+            // Update cache directly with returned list (avoids refetch)
+            queryClient.setQueryData(queryKeys.projects.all, data);
         },
     });
 }
