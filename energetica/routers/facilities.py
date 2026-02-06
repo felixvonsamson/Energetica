@@ -9,7 +9,7 @@ from energetica.database.player import Player
 from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType
 from energetica.schemas.facilities import FacilitiesListOut, FacilityStatuses
 from energetica.schemas.players import MoneyOut
-from energetica.utils import assets
+from energetica.utils import facilities
 from energetica.utils.auth import get_settled_player
 
 router = APIRouter(prefix="/facilities", tags=["Facilities"])
@@ -32,7 +32,7 @@ def upgrade_facility(
     facility = ActiveFacility.getitem(facility_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if facility.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    assets.upgrade_facility(facility=facility)
+    facilities.upgrade_facility(facility=facility)
     return MoneyOut.from_player(player)
 
 
@@ -42,7 +42,7 @@ async def upgrade_all_of_type(
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> MoneyOut:
     """Upgrade all facilities of a certain type."""
-    assets.upgrade_all_of_type(player=player, facility_type=facility_type)
+    facilities.upgrade_all_facilities(player=player, facility_type=facility_type)
     return MoneyOut.from_player(player)
 
 
@@ -55,7 +55,7 @@ async def dismantle_facility(
     facility = ActiveFacility.getitem(facility_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if facility.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    assets.dismantle_facility(facility=facility)
+    facilities.dismantle_facility(facility=facility)
     return MoneyOut.from_player(player)
 
 
@@ -65,7 +65,7 @@ async def dismantle_all_of_type(
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> MoneyOut:
     """Dismantle all facilities of a certain type."""
-    assets.dismantle_all_of_type(player=player, facility_type=facility_type)
+    facilities.dismantle_all_facilities(player=player, facility_type=facility_type)
     return MoneyOut.from_player(player)
 
 

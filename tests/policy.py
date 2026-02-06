@@ -20,7 +20,7 @@ from energetica.enums import (
 from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.utils import assets
+from energetica.utils import projects
 
 
 def str_to_policy(txt: str) -> Policy:
@@ -150,7 +150,7 @@ class QueueProjectPolicy(Policy):
 
     def take_action(self, player: Player) -> None:
         try:
-            assets.queue_project(player, self.project_type)
+            projects.queue_project(player, self.project_type)
             print(f"player {player.id} queued project {self.project_type}")
             self.is_done = True
         except (GameError, Confirm):
@@ -187,7 +187,7 @@ class StarterPolicy(Policy):
         # )
         if next_industry_average_consumption < current_capacity:
             try:
-                assets.queue_project(player, FunctionalFacilityType.INDUSTRY)
+                projects.queue_project(player, FunctionalFacilityType.INDUSTRY)
                 print(f"player {player.id} queued project {FunctionalFacilityType.INDUSTRY}")
                 return
             except (GameError, Confirm):
@@ -245,7 +245,7 @@ class StarterPolicy(Policy):
         while lcoe_for_facility:
             cheapest_facility = min(lcoe_for_facility, key=lambda key: lcoe_for_facility[key])
             try:
-                assets.queue_project(player, cheapest_facility)
+                projects.queue_project(player, cheapest_facility)
                 print(f"player {player.id} queued project {cheapest_facility}")
                 return
             except Confirm:

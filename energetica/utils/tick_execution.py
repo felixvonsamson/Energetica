@@ -12,8 +12,8 @@ from energetica.database.player import Player
 from energetica.enums import StorageFacilityType
 from energetica.globals import engine
 from energetica.schemas.simulate import TickAction
-from energetica.utils import assets
-from energetica.utils.assets import remove_asset
+from energetica.utils import projects
+from energetica.utils.facilities import remove_facility
 from energetica.utils.climate_helpers import check_climate_events
 from energetica.utils.misc import save_past_data
 from energetica.utils.resource_market import store_import
@@ -70,7 +70,7 @@ def check_events_completion() -> None:
         ),
     )
     for fc in finished_constructions:
-        assets.finish_project(fc)
+        projects.complete_project(fc)
 
     # check if shipment arrived
     arrived_shipments = list(OngoingShipment.filter(lambda shipment: shipment.arrival_tick <= engine.total_t))
@@ -91,7 +91,7 @@ def check_events_completion() -> None:
             available_capacity = player.capacities[facility.facility_type]["capacity"]
             if stored_energy > available_capacity:
                 continue
-        remove_asset(player, facility)
+        remove_facility(player, facility)
 
     # check end of climate events
     finished_climate_events = list(ClimateEventRecovery.filter(lambda event: event.end_tick <= engine.total_t))

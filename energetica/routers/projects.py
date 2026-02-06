@@ -15,8 +15,8 @@ from energetica.schemas.projects import (
     StorageFacilityCatalogListOut,
     TechnologyCatalogListOut,
 )
-from energetica.utils import assets
 from energetica.utils.auth import get_settled_player
+from energetica.utils import projects
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -40,7 +40,7 @@ def queue_project(
 
     Returns the updated list of all projects to avoid a subsequent fetch.
     """
-    assets.queue_project(player=player, project_type=project.type, force=force)
+    projects.queue_project(player=player, project_type=project.type, force=force)
     return get_projects(player)
 
 
@@ -58,7 +58,7 @@ def cancel_project(
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    assets.cancel_project(player=player, project=project, force=force)
+    projects.cancel_project(player=player, project=project, force=force)
     return get_projects(player)
 
 
@@ -75,7 +75,7 @@ def request_pause_project(
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    assets.pause_project(player=player, project=project)
+    projects.pause_project(player=player, project=project)
     return get_projects(player)
 
 
@@ -92,7 +92,7 @@ def request_resume_project(
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    assets.resume_project(player=player, project=project)
+    projects.resume_project(player=player, project=project)
     return get_projects(player)
 
 
@@ -109,7 +109,7 @@ async def decrease_project_priority(
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    assets.decrease_project_priority(player=player, project=project)
+    projects.decrease_project_priority(player=player, project=project)
     return get_projects(player)
 
 
@@ -126,7 +126,7 @@ async def increase_project_priority(
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    assets.increase_project_priority(player=player, project=project)
+    projects.increase_project_priority(player=player, project=project)
     return get_projects(player)
 
 

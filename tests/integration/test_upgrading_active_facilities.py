@@ -9,7 +9,7 @@ from energetica.enums import (
     WindFacilityType,
 )
 from energetica.init_test_players import add_asset
-from energetica.utils.assets import upgrade_facility
+from energetica.utils.facilities import upgrade_facility
 from energetica.utils.auth import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.tick_execution import tick
