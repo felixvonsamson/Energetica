@@ -12,17 +12,18 @@ from energetica.database.user import User
 from energetica.enums import ControllableFacilityType, FunctionalFacilityType, ProjectStatus, TechnologyType, WorkerType
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.utils.assets import (
-    cancel_project,
-    decrease_project_priority,
-    finish_project,
-    increase_project_priority,
-    pause_project,
+from energetica.utils.projects import (
     queue_project,
-    toggle_pause_project,
 )
 from energetica.utils.auth import generate_password_hash
+from energetica.utils.projects import (
+    cancel_project,
+    decrease_project_priority,
+    complete_project,
+    increase_project_priority,
+)
 from energetica.utils.map_helpers import confirm_location
+from energetica.utils.projects import pause_project, toggle_pause_project
 
 
 def validate_rules(player: Player) -> None:
@@ -276,7 +277,7 @@ def test_technologies_pausing_propagates_requirements() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
-    finish_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
+    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
 
     validate_rules(player)
     technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS, force=True)
@@ -302,7 +303,7 @@ def test_math_and_building_tech() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
-    finish_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
+    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
 
     validate_rules(player)
     technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS, force=True)
@@ -329,7 +330,7 @@ def test_swapping_waiting_and_paused_researches() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
-    finish_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
+    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
 
     validate_rules(player)
     technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS, force=True)
@@ -367,7 +368,7 @@ def test_increasing_priority_of_paused_and_blocked_research() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
-    finish_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
+    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
     player.workers[WorkerType.RESEARCH] = 2
 
     validate_rules(player)

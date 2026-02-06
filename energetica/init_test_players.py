@@ -19,10 +19,11 @@ from energetica.enums import (
 )
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
-from energetica.utils.assets import finish_project, queue_project
+from energetica.utils.projects import queue_project
 from energetica.utils.auth import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
+from energetica.utils.projects import complete_project
 
 
 def add_asset(player: Player, project_type: ProjectType, n: int) -> None:
@@ -35,7 +36,7 @@ def add_asset(player: Player, project_type: ProjectType, n: int) -> None:
             ignore_requirements_and_money=True,
             skip_notifications=True,
         )
-        finish_project(ongoing_project, skip_notifications=True)
+        complete_project(ongoing_project, skip_notifications=True)
     engine.log(f"Added {n} {project_type} for {player.username}")
 
 
