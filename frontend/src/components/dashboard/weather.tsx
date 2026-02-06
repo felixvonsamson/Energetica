@@ -1,5 +1,5 @@
 import { Card, CardTitle } from "@/components/ui/card";
-import { useWeather } from "@/hooks/useWeather";
+import { useWeather } from "@/hooks/use-weather";
 import { getMonthName } from "@/lib/date-utils";
 
 export function WeatherSection() {

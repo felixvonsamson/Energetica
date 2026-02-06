@@ -6,7 +6,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { playerApi } from "@/lib/api/player";
 import { queryKeys } from "@/lib/query-client";
 import { Player } from "@/types/players";

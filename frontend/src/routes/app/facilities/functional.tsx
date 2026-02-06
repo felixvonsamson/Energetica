@@ -14,7 +14,7 @@ import { Money, CatalogGrid, Button } from "@/components/ui";
 import {
     useFunctionalFacilitiesCatalog,
     useProjects,
-} from "@/hooks/useProjects";
+} from "@/hooks/use-projects";
 import {
     formatUpgradePower,
     formatUpgradeMass,

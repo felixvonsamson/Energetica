@@ -13,14 +13,14 @@ import { GameLayout } from "@/components/layout/game-layout";
 import { CreateAskDialog } from "@/components/resource-market/create-ask-dialog";
 import { PurchaseDialog } from "@/components/resource-market/purchase-dialog";
 import { Button, Card, CardContent, Money } from "@/components/ui";
-import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
-import { usePlayerResources } from "@/hooks/usePlayerResources";
+import { useCurrentPlayer } from "@/hooks/use-current-player";
+import { usePlayerResources } from "@/hooks/use-player-resources";
 import {
     useResourceMarketAsks,
     useDeleteAsk,
     useCalculateDeliveryTime,
-} from "@/hooks/useResourceMarket";
-import { useShipments } from "@/hooks/useShipments";
+} from "@/hooks/use-resource-market";
+import { useShipments } from "@/hooks/use-shipments";
 import { formatMass } from "@/lib/format-utils";
 import {
     ResourceType,

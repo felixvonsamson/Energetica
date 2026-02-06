@@ -8,7 +8,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { useProjects } from "@/hooks/useProjects";
+import { useProjects } from "@/hooks/use-projects";
 
 interface ResearchProjectsDialogProps {
     isOpen: boolean;

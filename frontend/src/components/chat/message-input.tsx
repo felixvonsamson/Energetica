@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 import { Button } from "@/components/ui";
-import { useSendMessage } from "@/hooks/useChats";
+import { useSendMessage } from "@/hooks/use-chats";
 
 interface MessageInputProps {
     chatId: number;

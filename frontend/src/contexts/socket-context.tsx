@@ -14,7 +14,7 @@ import {
 } from "react";
 import io from "socket.io-client";
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 
 // Socket type is the return type of io()
 type Socket = ReturnType<typeof io>;

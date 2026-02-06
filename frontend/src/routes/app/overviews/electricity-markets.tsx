@@ -41,15 +41,15 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useLatestChartDataSlice } from "@/hooks/useCharts";
-import { useCurrentPlayer } from "@/hooks/useCurrentPlayer";
+import { useLatestChartDataSlice } from "@/hooks/use-charts";
+import { useCurrentPlayer } from "@/hooks/use-current-player";
 import {
     useElectricityMarkets,
     useElectricityMarketForPlayer,
     useElectricityMarket,
-} from "@/hooks/useElectricityMarkets";
-import { useGameTick } from "@/hooks/useGameTick";
-import { useToggleSet } from "@/hooks/useToggleSet";
+} from "@/hooks/use-electricity-markets";
+import { useGameTick } from "@/hooks/use-game-tick";
+import { useToggleSet } from "@/hooks/use-toggle-set";
 import { formatPower } from "@/lib/format-utils";
 
 interface MarketsSearchParams {

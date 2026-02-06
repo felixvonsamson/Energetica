@@ -22,8 +22,8 @@ import {
 } from "recharts";
 
 import { Money } from "@/components/ui/money";
-import { useMarketData } from "@/hooks/useCharts";
-import { useRechartsChartArea } from "@/hooks/useRechartsChartArea";
+import { useMarketData } from "@/hooks/use-charts";
+import { useRechartsChartArea } from "@/hooks/use-recharts-chart-area";
 import { generateNiceTicks } from "@/lib/charts/ui-utils";
 import { formatMoney, formatPower } from "@/lib/format-utils";
 

@@ -6,13 +6,13 @@ import { useState, useMemo } from "react";
 import { GameLayout } from "@/components/layout/game-layout";
 import { PriorityTable } from "@/components/power-priorities/priority-table";
 import type { PowerPriorityItem } from "@/components/power-priorities/types";
-import { useLatestChartDataSlice } from "@/hooks/useCharts";
-import { useFacilityStatuses, useFacilities } from "@/hooks/useFacilities";
+import { useLatestChartDataSlice } from "@/hooks/use-charts";
+import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
 import {
     usePowerPriorities,
     useUpdatePowerPriorities,
     useUpdateElectricityPrices,
-} from "@/hooks/usePowerPriorities";
+} from "@/hooks/use-power-priorities";
 import { getPriorityItemKey } from "@/lib/power-priorities-utils";
 
 function PowerPrioritiesHelp() {

@@ -21,8 +21,8 @@ import {
     Money,
     Button,
 } from "@/components/ui";
-import { usePlayerResources } from "@/hooks/usePlayerResources";
-import { usePowerFacilitiesCatalog, useProjects } from "@/hooks/useProjects";
+import { usePlayerResources } from "@/hooks/use-player-resources";
+import { usePowerFacilitiesCatalog, useProjects } from "@/hooks/use-projects";
 import { formatPower, formatMass } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
 

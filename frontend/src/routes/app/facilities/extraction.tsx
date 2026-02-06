@@ -16,11 +16,11 @@ import {
     CatalogGrid,
     Button,
 } from "@/components/ui";
-import { usePlayerResources } from "@/hooks/usePlayerResources";
+import { usePlayerResources } from "@/hooks/use-player-resources";
 import {
     useExtractionFacilitiesCatalog,
     useProjects,
-} from "@/hooks/useProjects";
+} from "@/hooks/use-projects";
 import { formatPower, formatMass } from "@/lib/format-utils";
 import { ExtractionFacility } from "@/types/projects";
 

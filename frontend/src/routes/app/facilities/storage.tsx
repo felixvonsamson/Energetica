@@ -20,7 +20,7 @@ import {
     Money,
     Button,
 } from "@/components/ui";
-import { useStorageFacilitiesCatalog, useProjects } from "@/hooks/useProjects";
+import { useStorageFacilitiesCatalog, useProjects } from "@/hooks/use-projects";
 import { formatPower, formatEnergy } from "@/lib/format-utils";
 import type { ApiSchema } from "@/types/api-helpers";
 

@@ -24,7 +24,7 @@ import {
 } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import { useGameTick } from "@/hooks/useGameTick";
+import { useGameTick } from "@/hooks/use-game-tick";
 import { chartsApi } from "@/lib/api/charts";
 import {
     ChartDataPoint,

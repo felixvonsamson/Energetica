@@ -29,10 +29,10 @@ import { WeatherSection } from "@/components/dashboard/weather";
 import { DevelopmentBanner } from "@/components/development-banner";
 import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui";
-import { useAchievements } from "@/hooks/useAchievements";
-import { useCapabilities, useHasCapability } from "@/hooks/useCapabilities";
-import { useProjects } from "@/hooks/useProjects";
-import { useShipments } from "@/hooks/useShipments";
+import { useAchievements } from "@/hooks/use-achievements";
+import { useCapabilities, useHasCapability } from "@/hooks/use-capabilities";
+import { useProjects } from "@/hooks/use-projects";
+import { useShipments } from "@/hooks/use-shipments";
 
 export const Route = createFileRoute("/app/dashboard")({
     component: DashboardPage,

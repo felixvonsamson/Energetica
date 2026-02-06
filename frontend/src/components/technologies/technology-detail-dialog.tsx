@@ -19,7 +19,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { TypographyH2 } from "@/components/ui/typography";
-import { useQueueProject } from "@/hooks/useProjects";
+import { useQueueProject } from "@/hooks/use-projects";
 import { getFacilityRoute } from "@/lib/facility-routes";
 import { ProjectType, Requirement } from "@/types/projects";
 

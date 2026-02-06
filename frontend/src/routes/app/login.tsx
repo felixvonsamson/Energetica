@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { TypographyBrand } from "@/components/ui/typography";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { authApi } from "@/lib/api/auth";
 import { handleApiError, isErrorType } from "@/lib/error-utils";
 

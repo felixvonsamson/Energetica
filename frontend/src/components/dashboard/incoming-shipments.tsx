@@ -1,8 +1,8 @@
 import { ProgressItem } from "@/components/dashboard/progress-item";
 import { AssetName } from "@/components/ui/asset-name";
-import { useGameEngine } from "@/hooks/useGame";
-import { useGameTick } from "@/hooks/useGameTick";
-import { useShipments } from "@/hooks/useShipments";
+import { useGameEngine } from "@/hooks/use-game";
+import { useGameTick } from "@/hooks/use-game-tick";
+import { useShipments } from "@/hooks/use-shipments";
 import {
     formatMass,
     formatTicksRemaining,

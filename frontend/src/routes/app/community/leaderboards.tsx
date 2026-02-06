@@ -5,8 +5,8 @@ import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardContent, CashFlow } from "@/components/ui";
-import { useHasCapability } from "@/hooks/useCapabilities";
-import { useLeaderboards } from "@/hooks/useLeaderboards";
+import { useHasCapability } from "@/hooks/use-capabilities";
+import { useLeaderboards } from "@/hooks/use-leaderboards";
 import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
 import type { PlayerDetailStats } from "@/types/leaderboards";
 

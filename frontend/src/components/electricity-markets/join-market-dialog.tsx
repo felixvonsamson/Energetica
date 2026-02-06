@@ -16,8 +16,8 @@ import {
     useJoinElectricityMarket,
     useElectricityMarkets,
     useElectricityMarket,
-} from "@/hooks/useElectricityMarkets";
-import { useMyId } from "@/hooks/usePlayers";
+} from "@/hooks/use-electricity-markets";
+import { useMyId } from "@/hooks/use-players";
 
 interface JoinMarketDialogProps {
     isOpen: boolean;

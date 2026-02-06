@@ -7,8 +7,8 @@ import {
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { AssetName } from "@/components/ui/asset-name";
 import { Label } from "@/components/ui/label";
-import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
-import { useChartFilters } from "@/hooks/useChartFilters";
+import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
+import { useChartFilters } from "@/hooks/use-chart-filters";
 import { formatEmissions } from "@/lib/format-utils";
 
 // Emissions Chart Component

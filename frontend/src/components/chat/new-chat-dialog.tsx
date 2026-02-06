@@ -15,10 +15,10 @@ import { InfoBanner } from "@/components/ui/info-banner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { useAuth } from "@/hooks/useAuth";
-import { useChatList, useCreateGroupChat } from "@/hooks/useChats";
-import { useFilteredPlayers } from "@/hooks/useFilteredPlayers";
-import { usePlayers } from "@/hooks/usePlayers";
+import { useAuth } from "@/hooks/use-auth";
+import { useChatList, useCreateGroupChat } from "@/hooks/use-chats";
+import { useFilteredPlayers } from "@/hooks/use-filtered-players";
+import { usePlayers } from "@/hooks/use-players";
 import type { Player } from "@/types/chats";
 
 interface NewChatDialogProps {

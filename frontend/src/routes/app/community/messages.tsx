@@ -10,8 +10,8 @@ import { ChatWindow } from "@/components/chat/chat-window";
 import { NewChatDialog } from "@/components/chat/new-chat-dialog";
 import { NewGroupChatDialog } from "@/components/chat/new-group-chat-dialog";
 import { GameLayout } from "@/components/layout/game-layout";
-import { useIsMobile } from "@/hooks/useIsMobile";
-import { useMessagesPage } from "@/hooks/useMessagesPage";
+import { useIsMobile } from "@/hooks/use-is-mobile";
+import { useMessagesPage } from "@/hooks/use-messages-page";
 
 export const Route = createFileRoute("/app/community/messages")({
     component: MessagesPage,

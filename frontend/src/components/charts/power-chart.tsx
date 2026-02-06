@@ -7,10 +7,10 @@ import {
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
-import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
-import { useChartFilters } from "@/hooks/useChartFilters";
-import { useFacilities } from "@/hooks/useFacilities";
-import { useGameEngine } from "@/hooks/useGame";
+import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
+import { useChartFilters } from "@/hooks/use-chart-filters";
+import { useFacilities } from "@/hooks/use-facilities";
+import { useGameEngine } from "@/hooks/use-game";
 import { formatPower, formatEnergy } from "@/lib/format-utils";
 import type { ChartType } from "@/types/charts";
 

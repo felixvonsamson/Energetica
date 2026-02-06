@@ -23,9 +23,9 @@ import {
     ReferenceLine,
 } from "recharts";
 
-import { useAssetColorGetter } from "@/hooks/useAssetColorGetter";
-import { useMarketData } from "@/hooks/useCharts";
-import { useRechartsChartArea } from "@/hooks/useRechartsChartArea";
+import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
+import { useMarketData } from "@/hooks/use-charts";
+import { useRechartsChartArea } from "@/hooks/use-recharts-chart-area";
 import { getHashBasedChartColor } from "@/lib/charts/color-utils";
 import {
     interpolateAtX,

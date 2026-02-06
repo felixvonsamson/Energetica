@@ -6,8 +6,8 @@ import {
 } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { useAuth } from "@/hooks/useAuth";
-import { useCapabilities } from "@/hooks/useCapabilities";
+import { useAuth } from "@/hooks/use-auth";
+import { useCapabilities } from "@/hooks/use-capabilities";
 
 export const Route = createRootRoute({
     staticData: { title: "", routeConfig: { requiredRole: null } },

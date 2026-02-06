@@ -17,8 +17,8 @@ import { Spinner } from "@/components/ui/spinner";
 import {
     useCreateElectricityMarket,
     useElectricityMarketForPlayer,
-} from "@/hooks/useElectricityMarkets";
-import { useMe } from "@/hooks/usePlayers";
+} from "@/hooks/use-electricity-markets";
+import { useMe } from "@/hooks/use-players";
 
 interface CreateMarketDialogProps {
     isOpen: boolean;

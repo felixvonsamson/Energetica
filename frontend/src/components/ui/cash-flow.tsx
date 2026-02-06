@@ -16,7 +16,7 @@
 
 import { Money } from "@/components/ui/money";
 import { useTimeMode, type TimeMode } from "@/contexts/time-mode-context";
-import { useGameEngine } from "@/hooks/useGame";
+import { useGameEngine } from "@/hooks/use-game";
 import { amountPerTickToCashFlowRate, getUnitSuffix } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 

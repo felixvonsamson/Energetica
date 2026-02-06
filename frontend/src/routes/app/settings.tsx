@@ -27,7 +27,7 @@ import {
     TypographyLarge,
     TypographyMuted,
 } from "@/components/ui/typography";
-import { useChangePassword } from "@/hooks/useAuthQueries";
+import { useChangePassword } from "@/hooks/use-auth-queries";
 import { handleApiError } from "@/lib/error-utils";
 
 function SettingsHelp() {

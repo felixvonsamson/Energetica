@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { usePurchaseAsk } from "@/hooks/useResourceMarket";
+import { usePurchaseAsk } from "@/hooks/use-resource-market";
 import { formatMass } from "@/lib/format-utils";
 import { RESOURCE_LABELS, ResourceType } from "@/types/resource-market";
 

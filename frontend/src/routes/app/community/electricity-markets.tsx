@@ -23,7 +23,7 @@ import { CardAction, CardContent } from "@/components/ui/card";
 import {
     useElectricityMarket,
     useElectricityMarkets,
-} from "@/hooks/useElectricityMarkets";
+} from "@/hooks/use-electricity-markets";
 
 type ElectricityMarketsSearch = {
     market?: number;

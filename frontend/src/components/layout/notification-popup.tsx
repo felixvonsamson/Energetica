@@ -21,7 +21,7 @@ import {
     useNotifications,
     useDeleteNotification,
     useMarkAllNotificationsRead,
-} from "@/hooks/useNotifications";
+} from "@/hooks/use-notifications";
 import { cn } from "@/lib/utils";
 
 interface NotificationPopupProps {

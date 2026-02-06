@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
-import { useAuth } from "@/hooks/useAuth";
-import { usePlayerMap } from "@/hooks/usePlayers";
+import { useAuth } from "@/hooks/use-auth";
+import { usePlayerMap } from "@/hooks/use-players";
 import { formatTimestamp } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 import type { Message } from "@/types/chats";

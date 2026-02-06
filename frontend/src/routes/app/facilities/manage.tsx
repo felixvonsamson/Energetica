@@ -8,8 +8,8 @@ import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { dummyFacilities } from "@/data/dummyFacilities";
-import { useHasCapability } from "@/hooks/useCapabilities";
-import { useFacilities } from "@/hooks/useFacilities";
+import { useHasCapability } from "@/hooks/use-capabilities";
+import { useFacilities } from "@/hooks/use-facilities";
 import { formatPower, formatEnergy, formatMassRate } from "@/lib/format-utils";
 
 type FacilityCategory = "power" | "storage" | "extraction";

@@ -1,7 +1,7 @@
 import { Users, Check } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { useMyMarket } from "@/hooks/useElectricityMarkets";
+import { useMyMarket } from "@/hooks/use-electricity-markets";
 import { cn } from "@/lib/utils";
 import { ElectricityMarket } from "@/types/electricity-markets";
 

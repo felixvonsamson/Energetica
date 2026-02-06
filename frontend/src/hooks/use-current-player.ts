@@ -16,7 +16,7 @@
  *   settled
  */
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 
 interface CurrentPlayerContext {
     /** The current player's ID (guaranteed to be non-null) */

@@ -11,7 +11,7 @@
  * - Feature gating: if (!hasStorage) return <UpgradePrompt />
  */
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import type { PlayerCapabilities } from "@/types/capabilities";
 
 // Re-export for convenience (types should come from @/types/capabilities)

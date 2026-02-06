@@ -4,7 +4,7 @@ import { FacilityIcon } from "@/components/ui/asset-icon";
 import { AssetName } from "@/components/ui/asset-name";
 import { Duration } from "@/components/ui/duration";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useGameTick } from "@/hooks/useGameTick";
+import { useGameTick } from "@/hooks/use-game-tick";
 import { assetCSSColourVariable } from "@/lib/assets/asset-colors";
 
 interface CustomTooltipContentProps {

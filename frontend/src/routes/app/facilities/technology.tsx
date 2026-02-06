@@ -14,7 +14,7 @@ import {
     TechnologyEffectsTable,
 } from "@/components/technologies";
 import { CatalogGrid, Button } from "@/components/ui";
-import { useTechnologiesCatalog, useProjects } from "@/hooks/useProjects";
+import { useTechnologiesCatalog, useProjects } from "@/hooks/use-projects";
 
 function TechnologiesHelp() {
     return (

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/useDailyQuiz";
+import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/use-daily-quiz";
 
 export function DailyQuizSection() {
     // TODO: correctly answering the daily quiz earns the player 1 XP point. This is not communicated in the new UI

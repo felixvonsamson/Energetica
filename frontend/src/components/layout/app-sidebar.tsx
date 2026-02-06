@@ -29,10 +29,10 @@ import {
     SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { TypographyBrand, TypographyH2 } from "@/components/ui/typography";
-import { useCapabilities } from "@/hooks/useCapabilities";
-import { useUnreadChatsCount } from "@/hooks/useChats";
-import { useRouteUnlocked } from "@/hooks/useRouteStaticData";
-import { useSidebarMenuState } from "@/hooks/useSidebarMenuState";
+import { useCapabilities } from "@/hooks/use-capabilities";
+import { useUnreadChatsCount } from "@/hooks/use-chats";
+import { useRouteUnlocked } from "@/hooks/use-route-static-data";
+import { useSidebarMenuState } from "@/hooks/use-sidebar-menu-state";
 import {
     navConfigFooter,
     navConfig,

@@ -20,9 +20,9 @@ import {
 import { TypographyH1, TypographyH2 } from "@/components/ui/typography";
 import { useMapContext } from "@/contexts/map-context";
 import { useTheme } from "@/contexts/theme-context";
-import { useAuth } from "@/hooks/useAuth";
-import { useMap } from "@/hooks/useMap";
-import { usePlayers } from "@/hooks/usePlayers";
+import { useAuth } from "@/hooks/use-auth";
+import { useMap } from "@/hooks/use-map";
+import { usePlayers } from "@/hooks/use-players";
 import { mapApi } from "@/lib/api/map";
 import { formatMass } from "@/lib/format-utils";
 import {

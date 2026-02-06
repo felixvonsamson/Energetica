@@ -18,7 +18,7 @@ import {
     useUpgradeAllOfType,
     useDismantleFacility,
     useDismantleAllOfType,
-} from "@/hooks/useFacilities";
+} from "@/hooks/use-facilities";
 
 interface FacilityBase {
     id: number;

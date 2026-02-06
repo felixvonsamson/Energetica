@@ -2,8 +2,8 @@ import { useMemo } from "react";
 
 import { ProgressItem } from "@/components/dashboard/progress-item";
 import { AssetName } from "@/components/ui/asset-name";
-import { useGameEngine } from "@/hooks/useGame";
-import { useGameTick } from "@/hooks/useGameTick";
+import { useGameEngine } from "@/hooks/use-game";
+import { useGameTick } from "@/hooks/use-game-tick";
 import {
     useCancelProject,
     useDecreaseProjectPriority,
@@ -11,7 +11,7 @@ import {
     usePauseProject,
     useProjects,
     useResumeProject,
-} from "@/hooks/useProjects";
+} from "@/hooks/use-projects";
 import { formatTicksRemaining, getTicksRemaining } from "@/lib/format-utils";
 import { calculateProjectProgress } from "@/lib/progress-utils";
 import { isConstructionProject } from "@/lib/project-utils";

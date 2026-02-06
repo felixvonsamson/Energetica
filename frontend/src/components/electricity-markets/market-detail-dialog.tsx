@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/dialog";
 import { TogglingDuration } from "@/components/ui/duration";
 import { TypographyH2, TypographyH3 } from "@/components/ui/typography";
-import { useLatestChartDataSlice } from "@/hooks/useCharts";
-import { useMyMarket } from "@/hooks/useElectricityMarkets";
-import { useGameTick } from "@/hooks/useGameTick";
-import { usePlayerMap } from "@/hooks/usePlayers";
+import { useLatestChartDataSlice } from "@/hooks/use-charts";
+import { useMyMarket } from "@/hooks/use-electricity-markets";
+import { useGameTick } from "@/hooks/use-game-tick";
+import { usePlayerMap } from "@/hooks/use-players";
 import { formatPower } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 import { ElectricityMarket } from "@/types/electricity-markets";

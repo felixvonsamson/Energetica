@@ -18,7 +18,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { TypographyH2 } from "@/components/ui/typography";
-import { useQueueProject } from "@/hooks/useProjects";
+import { useQueueProject } from "@/hooks/use-projects";
 import { imageExtensionMap } from "@/lib/projects";
 import { ProjectType, Requirement } from "@/types/projects";
 

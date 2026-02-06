@@ -15,8 +15,8 @@ import { Spinner } from "@/components/ui/spinner";
 import {
     useLeaveElectricityMarket,
     useElectricityMarketForPlayer,
-} from "@/hooks/useElectricityMarkets";
-import { useMe } from "@/hooks/usePlayers";
+} from "@/hooks/use-electricity-markets";
+import { useMe } from "@/hooks/use-players";
 
 interface LeaveMarketDialogProps {
     isOpen: boolean;

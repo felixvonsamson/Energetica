@@ -15,7 +15,7 @@ import {
     MapContextValue,
     MapContext,
 } from "@/contexts/map-context";
-import { useContainerDimensions } from "@/hooks/useContainerDimensions";
+import { useContainerDimensions } from "@/hooks/use-container-dimensions";
 import { calculateHexSizeWithConstraints } from "@/lib/hex-utils";
 
 /**

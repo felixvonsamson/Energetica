@@ -10,7 +10,7 @@ import { HomeLayout } from "@/components/home-layout";
 import { GameLayout } from "@/components/layout/game-layout";
 import { MdxContent } from "@/components/mdx-content";
 import { TypographyH2 } from "@/components/ui/typography";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
 interface WikiLayoutProps {

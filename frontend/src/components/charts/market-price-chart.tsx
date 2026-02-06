@@ -5,8 +5,8 @@ import {
     TimeSeriesChart,
     TimeSeriesChartConfig,
 } from "@/components/charts/time-series-chart";
-import { useChartData } from "@/hooks/useCharts";
-import { useElectricityMarket } from "@/hooks/useElectricityMarkets";
+import { useChartData } from "@/hooks/use-charts";
+import { useElectricityMarket } from "@/hooks/use-electricity-markets";
 import { ResolutionOption } from "@/types/charts";
 
 interface MarketPriceChartProps {

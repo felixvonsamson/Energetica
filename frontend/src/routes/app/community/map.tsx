@@ -10,9 +10,9 @@ import { MapTooltip } from "@/components/map/map-tooltip";
 import { ResourceButton } from "@/components/map/resource-button";
 import { useMapContext } from "@/contexts/map-context";
 import { useTheme } from "@/contexts/theme-context";
-import { useAuth } from "@/hooks/useAuth";
-import { useMap } from "@/hooks/useMap";
-import { usePlayers } from "@/hooks/usePlayers";
+import { useAuth } from "@/hooks/use-auth";
+import { useMap } from "@/hooks/use-map";
+import { usePlayers } from "@/hooks/use-players";
 import { getHexPosition } from "@/lib/hex-utils";
 import {
     RESOURCES,

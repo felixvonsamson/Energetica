@@ -8,7 +8,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { useShipments } from "@/hooks/useShipments";
+import { useShipments } from "@/hooks/use-shipments";
 
 interface IncomingShipmentsDialogProps {
     isOpen: boolean;

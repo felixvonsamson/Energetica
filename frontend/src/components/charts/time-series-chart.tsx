@@ -27,8 +27,8 @@ import { CartesianChartProps } from "recharts/types/util/types";
 
 import { CustomTooltipContent } from "@/components/charts/tooltip-content";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useGameEngine } from "@/hooks/useGame";
-import { useGameTick } from "@/hooks/useGameTick";
+import { useGameEngine } from "@/hooks/use-game";
+import { useGameTick } from "@/hooks/use-game-tick";
 import {
     KEY_ORDER_BY_CHART_TYPE,
     reorderObjectKeys,

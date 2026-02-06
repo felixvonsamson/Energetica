@@ -19,9 +19,9 @@ import {
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
-import { useChartData } from "@/hooks/useCharts";
-import { useGameTick } from "@/hooks/useGameTick";
-import { useToggleSet } from "@/hooks/useToggleSet";
+import { useChartData } from "@/hooks/use-charts";
+import { useGameTick } from "@/hooks/use-game-tick";
+import { useToggleSet } from "@/hooks/use-toggle-set";
 
 export const Route = createFileRoute("/app/overviews/emissions")({
     component: EmissionsOverviewPage,
