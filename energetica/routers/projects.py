@@ -29,14 +29,19 @@ def get_projects(
     return ProjectListOut.from_player(player)
 
 
-@router.post("", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("", status_code=status.HTTP_200_OK)
 def queue_project(
     player: Annotated[Player, Depends(get_settled_player)],
     project: ProjectIn,
     force: bool = False,
-) -> None:
-    """Start a construction or research project for the player."""
+) -> ProjectListOut:
+    """
+    Start a construction or research project for the player.
+
+    Returns the updated list of all projects to avoid a subsequent fetch.
+    """
     assets.queue_project(player=player, project_type=project.type, force=force)
+    return get_projects(player)
 
 
 @router.post("/{project_id}:cancel")
@@ -45,7 +50,11 @@ def cancel_project(
     project_id: int,
     force: bool = False,
 ) -> ProjectListOut:
-    """Cancel an ongoing project."""
+    """
+    Cancel an ongoing project.
+
+    Returns the updated list of all projects to avoid a subsequent fetch.
+    """
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
@@ -58,7 +67,11 @@ def request_pause_project(
     player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
 ) -> ProjectListOut:
-    """Pause or unpause an ongoing project."""
+    """
+    Pause an ongoing project.
+
+    Returns the updated list of all projects to avoid a subsequent fetch.
+    """
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
@@ -71,7 +84,11 @@ def request_resume_project(
     player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
 ) -> ProjectListOut:
-    """Pause or unpause an ongoing project."""
+    """
+    Resume a paused project.
+
+    Returns the updated list of all projects to avoid a subsequent fetch.
+    """
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
@@ -84,7 +101,11 @@ async def decrease_project_priority(
     player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
 ) -> ProjectListOut:
-    """Decrease the priority of a projects."""
+    """
+    Decrease the priority of a project.
+
+    Returns the updated list with new ordering to avoid a subsequent fetch.
+    """
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
@@ -97,7 +118,11 @@ async def increase_project_priority(
     player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
 ) -> ProjectListOut:
-    """Increase the priority of a projects."""
+    """
+    Increase the priority of a project.
+
+    Returns the updated list with new ordering to avoid a subsequent fetch.
+    """
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)

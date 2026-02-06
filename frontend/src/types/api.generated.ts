@@ -1242,6 +1242,8 @@ export interface paths {
          * Queue Project
          *
          * Start a construction or research project for the player.
+         *
+         *     Returns the updated list of all projects to avoid a subsequent fetch.
          */
         post: operations["queue_project_api_v1_projects_post"];
         delete?: never;
@@ -1263,6 +1265,8 @@ export interface paths {
          * Cancel Project
          *
          * Cancel an ongoing project.
+         *
+         *     Returns the updated list of all projects to avoid a subsequent fetch.
          */
         post: operations["cancel_project_api_v1_projects__project_id__cancel_post"];
         delete?: never;
@@ -1283,7 +1287,9 @@ export interface paths {
         /**
          * Request Pause Project
          *
-         * Pause or unpause an ongoing project.
+         * Pause an ongoing project.
+         *
+         *     Returns the updated list of all projects to avoid a subsequent fetch.
          */
         post: operations["request_pause_project_api_v1_projects__project_id__pause_post"];
         delete?: never;
@@ -1304,7 +1310,9 @@ export interface paths {
         /**
          * Request Resume Project
          *
-         * Pause or unpause an ongoing project.
+         * Resume a paused project.
+         *
+         *     Returns the updated list of all projects to avoid a subsequent fetch.
          */
         post: operations["request_resume_project_api_v1_projects__project_id__resume_post"];
         delete?: never;
@@ -1325,7 +1333,9 @@ export interface paths {
         /**
          * Decrease Project Priority
          *
-         * Decrease the priority of a projects.
+         * Decrease the priority of a project.
+         *
+         *     Returns the updated list with new ordering to avoid a subsequent fetch.
          */
         post: operations["decrease_project_priority_api_v1_projects__project_id__decrease_priority_post"];
         delete?: never;
@@ -1346,7 +1356,9 @@ export interface paths {
         /**
          * Increase Project Priority
          *
-         * Increase the priority of a projects.
+         * Increase the priority of a project.
+         *
+         *     Returns the updated list with new ordering to avoid a subsequent fetch.
          */
         post: operations["increase_project_priority_api_v1_projects__project_id__increase_priority_post"];
         delete?: never;
@@ -6414,11 +6426,13 @@ export interface operations {
         };
         responses: {
             /** Successful Response */
-            204: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ProjectListOut"];
+                };
             };
             /** Validation Error */
             422: {
