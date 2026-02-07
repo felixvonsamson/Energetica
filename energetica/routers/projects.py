@@ -33,14 +33,13 @@ def get_projects(
 def queue_project(
     player: Annotated[Player, Depends(get_settled_player)],
     project: ProjectIn,
-    force: bool = False,
 ) -> ProjectListOut:
     """
     Start a construction or research project for the player.
 
     Returns the updated list of all projects to avoid a subsequent fetch.
     """
-    projects.queue_project(player=player, project_type=project.type, force=force)
+    projects.queue_project(player=player, project_type=project.type)
     return get_projects(player)
 
 
@@ -48,7 +47,6 @@ def queue_project(
 def cancel_project(
     player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
-    force: bool = False,
 ) -> ProjectListOut:
     """
     Cancel an ongoing project.
@@ -58,7 +56,7 @@ def cancel_project(
     project = OngoingProject.getitem(project_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if project.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    projects.cancel_project(player=player, project=project, force=force)
+    projects.cancel_project(player=player, project=project)
     return get_projects(player)
 
 

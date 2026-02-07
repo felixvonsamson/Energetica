@@ -3953,6 +3953,18 @@ export interface components {
             level: number | null;
             /** Speed */
             speed: number;
+            /**
+             * Cancellation Refund
+             *
+             * Amount refunded if project is cancelled now
+             */
+            cancellation_refund: number;
+            /**
+             * Cancellation Refund Percentage
+             *
+             * Percentage of original cost refunded (0-80)
+             */
+            cancellation_refund_percentage: number;
         };
         /**
          * ProjectStatus
@@ -6412,9 +6424,7 @@ export interface operations {
     };
     queue_project_api_v1_projects_post: {
         parameters: {
-            query?: {
-                force?: boolean;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -6447,9 +6457,7 @@ export interface operations {
     };
     cancel_project_api_v1_projects__project_id__cancel_post: {
         parameters: {
-            query?: {
-                force?: boolean;
-            };
+            query?: never;
             header?: never;
             path: {
                 project_id: number;

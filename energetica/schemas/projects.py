@@ -40,6 +40,8 @@ class ProjectOut(BaseModel):
     display_name: str  # TODO(mglst): move this to the frontend
     level: int | None
     speed: float
+    cancellation_refund: float = Field(description="Amount refunded if project is cancelled now")
+    cancellation_refund_percentage: float = Field(description="Percentage of original cost refunded (0-80)")
 
     @classmethod
     def from_ongoing_project(cls, ongoing_project: OngoingProject) -> ProjectOut:
@@ -53,6 +55,8 @@ class ProjectOut(BaseModel):
             display_name=engine.const_config["assets"][ongoing_project.project_type]["name"],
             level=ongoing_project.level,
             speed=ongoing_project.speed,
+            cancellation_refund=ongoing_project.cancellation_refund(),
+            cancellation_refund_percentage=ongoing_project.cancellation_refund_percentage(),
         )
 
 

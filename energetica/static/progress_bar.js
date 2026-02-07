@@ -91,8 +91,8 @@ function format_seconds(totalSeconds, show_seconds = true) {
 }
 
 // information sent to the server when a new facility is created
-function start_construction(facility, force = false) {
-  send_json(`/api/v1/projects?force=${force}`, { type: facility })
+function start_construction(facility) {
+  send_json(`/api/v1/projects`, { type: facility })
     .then((response) => {
       response.json().then((body) => {
         if (response.status === 200) {
@@ -100,8 +100,6 @@ function start_construction(facility, force = false) {
           sessionStorage.setItem("projectsData", JSON.stringify(body));
           refresh_progressBar();
           addToast("Construction started");
-        } else if (response.status === 300) {
-          are_you_sure_start_construction(facility, body.capacity, body.construction_power);
         } else {
           if (catchValidationErrors(response, body)) return;
           if (catchGameErrors(response, body)) return;
@@ -113,8 +111,22 @@ function start_construction(facility, force = false) {
     });
 }
 
-function cancel_construction(construction_id, force = false) {
-  send_json(`/api/v1/projects/${construction_id}:cancel?force=${force}`, {})
+function cancel_construction(construction_id) {
+  // Get project data to show refund info in confirmation
+  const projectsData = JSON.parse(sessionStorage.getItem("projectsData") || "{}");
+  const project = projectsData.projects?.find(p => p.id === construction_id);
+
+  // Show confirmation popup using the UI from notifications.js
+  if (project && project.cancellation_refund_percentage !== undefined) {
+    are_you_sure_cancel_construction(construction_id, `${Math.round(project.cancellation_refund_percentage)}%`);
+  } else {
+    // Fallback if project data not available
+    are_you_sure_cancel_construction(construction_id, "some");
+  }
+}
+
+function execute_cancel_construction(construction_id) {
+  send_json(`/api/v1/projects/${construction_id}:cancel`, {})
     .then((response) => {
       response.json().then((body) => {
         if (catchValidationErrors(response, body)) return;
@@ -128,16 +140,6 @@ function cancel_construction(construction_id, force = false) {
           );
           refresh_progressBar();
           setTimeout(() => { window.location = window.location; }, 100);
-        } else if (response.status === 300) {
-          if (body.type == "HasDependents") {
-            const dependents = body.dependents;
-            has_dependents_cancel_construction(construction_id, dependents);
-          } else if (body.type == "areYouSure") {
-            const refund = body.refund;
-            are_you_sure_cancel_construction(construction_id, refund);
-          } else {
-            addError("Something went wrong");
-          }
         } else {
           addError("Something went wrong");
         }

@@ -116,6 +116,24 @@ class OngoingProject(DBModel):
         else:
             return self.end_tick_or_ticks_passed / self.duration
 
+    def cancellation_refund(self) -> float:
+        """Calculate the refund amount if this project were cancelled now."""
+        from energetica.enums import HydroFacilityType
+
+        refund = (
+            0.8
+            * engine.const_config["assets"][self.project_type]["base_price"]
+            * self.multipliers["price_multiplier"]
+            * (1 - self.progress())
+        )
+        if isinstance(self.project_type, HydroFacilityType):
+            refund *= self.multipliers["hydro_price_multiplier"]
+        return refund
+
+    def cancellation_refund_percentage(self) -> float:
+        """Calculate the refund percentage (0-80) if this project were cancelled now."""
+        return 80 * (1 - self.progress())
+
     def updated_speed(self) -> float | None:
         """Return the speed of the project except if it is 1 and unchanged since last tick."""
         if self.speed != self.previous_speed or self.speed != 1:
