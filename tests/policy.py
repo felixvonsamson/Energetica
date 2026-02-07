@@ -17,7 +17,6 @@ from energetica.enums import (
     WindFacilityType,
     WorkerType,
 )
-from energetica.game_engine import Confirm
 from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.utils import projects
@@ -153,7 +152,7 @@ class QueueProjectPolicy(Policy):
             projects.queue_project(player, self.project_type)
             print(f"player {player.id} queued project {self.project_type}")
             self.is_done = True
-        except (GameError, Confirm):
+        except GameError:
             pass
 
 
@@ -190,7 +189,7 @@ class StarterPolicy(Policy):
                 projects.queue_project(player, FunctionalFacilityType.INDUSTRY)
                 print(f"player {player.id} queued project {FunctionalFacilityType.INDUSTRY}")
                 return
-            except (GameError, Confirm):
+            except GameError:
                 # Not enough money. Wait for funds - return early
                 return
 
@@ -248,10 +247,6 @@ class StarterPolicy(Policy):
                 projects.queue_project(player, cheapest_facility)
                 print(f"player {player.id} queued project {cheapest_facility}")
                 return
-            except Confirm:
-                # Not enough power! Try the next cheapest facility
-                lcoe_for_facility.pop(cheapest_facility)
-                continue
             except GameError:
                 # Not enough money. Wait for funds - return early
                 return

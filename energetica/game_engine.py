@@ -312,14 +312,3 @@ class GameEngine(object):
             engine.invalidate_queries(["chats"], ["auth", "me"])  # Multiple queries
         """
         self.emit("invalidate", {"queries": list(query_keys)})
-
-
-# TODO(mglst): Convert this class to an instance of GameError
-
-
-class Confirm(Exception):
-    """Use this class to ask the player to confirm an action."""
-
-    def __init__(self, **kwargs: Any) -> None:
-        self.__dict__.update(kwargs)
-        Exception.__init__(self, "Please confirm this action.")
