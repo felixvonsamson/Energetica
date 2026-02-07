@@ -35,7 +35,7 @@ class ActiveFacility(DBModel):
     @property
     def decommissioning(self) -> bool:
         """Returns True if the facility is being decommissioned."""
-        return self.end_of_life <= engine.total_t
+        return self.end_of_life == 0
 
     @property
     def const_config(self) -> dict:
