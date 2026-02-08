@@ -1,6 +1,18 @@
 {
     // General
     "files.exclude": {
+        ".git": true,
+        ".venv": true,
+        "**/node_modules": true,
+        "**/__pycache__": true,
+        "**/.ruff_cache": true,
+        "instance": true,
+        "admin_accounts.txt": true
+    },
+    "search.exclude": {
+        ".git": true,
+        ".venv": true,
+        "**/node_modules": true,
         "**/__pycache__": true,
         "**/.ruff_cache": true,
         "instance": true,

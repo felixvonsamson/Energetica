@@ -17,6 +17,10 @@ Deprecated Frontend: Deprecated Jinja `energetica/templates/`
 - `bun run lint`
 - `bun run generate-types`
 
+## Python env
+
+`.venv/bin`
+
 ### Frontend: API Types
 
 `bun run generate-types` creates `frontend/src/types/api.generated.ts` is the bridge for full stack type safety.
