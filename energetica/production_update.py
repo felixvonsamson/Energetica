@@ -38,9 +38,7 @@ from energetica.utils.misc import calculate_river_discharge, calculate_solar_irr
 
 
 def update_electricity() -> None:
-    """
-    Main simulation tick for electricity, markets, resources and emissions.
-    """
+    """Main simulation tick for electricity, markets, resources and emissions."""
     # --- Global climate update ---
     engine.current_climate_data.init_new_value()
 
@@ -101,7 +99,7 @@ def update_electricity() -> None:
 
     for player in players:
         if player.network is None:
-            # --- Player electicity update without market ---
+            # --- Player electricity update without market ---
             calculate_demand(new_values[player.id], player)
             # Initialize consumption statuses before market resolution
             initialize_consumption_statuses(player, new_values[player.id])
@@ -140,7 +138,7 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
                 af.usage = usage
 
     for storage_facility in StorageFacilityType:
-        # TODO/COMENT (Felix): Storage facilites have a SOC and a generation/consumption usage that can be defined as the current power produced/consumed divided by the max power. Currently, we only show the SOC as usage, but it would be interesting to show both values in the frontend.
+        # TODO/COMMENT (Felix): Storage facilities have a SOC and a generation/consumption usage that can be defined as the current power produced/consumed divided by the max power. Currently, we only show the SOC as usage, but it would be interesting to show both values in the frontend.
         if storage_facility in player.capacities:
             if player.capacities[storage_facility]["capacity"] == 0:
                 usage = np.inf  # TODO (Felix): update frontend to show "draining..."
@@ -158,9 +156,7 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
 
 def update_player_progress_values(player: Player, new_values: dict) -> None:
     # TODO (Felix): Should be moved somewhere else, e.g. player.py ?
-    """
-    Update the player progress values and checks for new unlocks and achievements.
-    """
+    """Update the player progress values and checks for new unlocks and achievements."""
     # calculate moving average revenue TODO (Felix): Separate function ?
     player.progression_metrics["average_revenues"] = (
         player.progression_metrics["average_revenues"]
@@ -202,9 +198,7 @@ def init_market() -> dict[str, pd.DataFrame]:
 
 def update_storage_lvls(new_values: dict, player: Player) -> None:
     # TODO (Felix): should be moved somewhere else, e.g. active_facility.py ?
-    """
-    Update storage levels according to the use of storage facilities.
-    """
+    """Update storage levels according to the use of storage facilities."""
     generation = new_values["generation"]
     demand = new_values["demand"]
     storage = new_values["storage"]
@@ -358,7 +352,7 @@ def calculate_demand(new_values: dict, player: Player) -> None:
     shipment_demand(player, demand)
     storage_demand(player, demand)
 
-    # consider cost of climate events if any TODO (Felix): the placement of this fuction call is very questionable, we are talking about power here and this is calculating costs.
+    # consider cost of climate events if any TODO (Felix): the placement of this function call is very questionable, we are talking about power here and this is calculating costs.
     climate_event_recovery_cost(player, revenues)
 
     if player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE] > 0:
@@ -443,7 +437,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
 
     # allow a maximum overdraft of the equivalent of the daily income of the industry
     max_overdraft = -player.config["industry"]["income_per_day"]
-    notification_txt = "You exceeded your credit limit, you can't buy electricity on the market anymore."
+    notification_txt = "You exceeded your credit limit, you can't buy electricity on the market any more."
     do_not_send = len(player.notifications) > 0 and player.notifications[-1].content == notification_txt
     if player.money < max_overdraft and player.network is not None and not do_not_send:
         player.notify(
