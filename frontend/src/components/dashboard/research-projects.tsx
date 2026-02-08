@@ -73,7 +73,7 @@ export function ResearchProjects({
 
                 // Calculate time remaining
                 let timeRemaining: string | undefined;
-                if (project.status !== 0 && project.end_tick && engine) {
+                if (project.status !== "paused" && project.end_tick && engine) {
                     // Not paused - calculate time remaining
                     const ticksLeft = getTicksRemaining(
                         project.end_tick,
@@ -82,16 +82,7 @@ export function ResearchProjects({
                     timeRemaining = formatTicksRemaining(ticksLeft, engine);
                 }
 
-                // Map status enum to string
-                const statusMap: Record<
-                    number,
-                    "paused" | "waiting" | "ongoing"
-                > = {
-                    0: "paused",
-                    1: "waiting",
-                    2: "ongoing",
-                };
-                const status = statusMap[project.status] || "ongoing";
+                const status = project.status;
 
                 // Queue position
                 const queueIndex = researchQueue.indexOf(project.id);
