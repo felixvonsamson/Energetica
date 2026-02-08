@@ -12,16 +12,13 @@ from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
     FunctionalFacilityType,
-    HydroFacilityType,
     PowerFacilityType,
     ProjectStatus,
     ProjectType,
     StorageFacilityType,
     TechnologyType,
     WorkerType,
-    power_facility_types,
 )
-from energetica.game_engine import Confirm
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.schemas.projects import ProjectListOut
@@ -33,7 +30,6 @@ def queue_project(
     player: Player,
     project_type: ProjectType,
     *,
-    force: bool = False,
     ignore_requirements_and_money: bool = False,
     skip_notifications: bool = False,
 ) -> OngoingProject:
@@ -53,13 +49,6 @@ def queue_project(
         raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
 
     construction_power = technology_effects.construction_power(player, project_type)
-    if not force and not player.is_in_network:
-        capacity = 0
-        for gen in power_facility_types:
-            if gen in player.capacities:
-                capacity += player.capacities[gen]["power"]
-        if construction_power > capacity:
-            raise Confirm(type="areYouSure", capacity=capacity, construction_power=construction_power)
 
     if not ignore_requirements_and_money:
         player.money -= real_price
@@ -88,7 +77,7 @@ def queue_project(
     return new_construction
 
 
-def cancel_project(player: Player, project: OngoingProject, *, force: bool = False) -> None:
+def cancel_project(player: Player, project: OngoingProject) -> None:
     """Cancel an ongoing project."""
     if project is None or project.player != player:
         raise GameError(GameExceptionType.PROJECT_NOT_FOUND)
@@ -102,18 +91,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
     if dependents:
         raise GameError(GameExceptionType.HAS_DEPENDENTS, dependents=dependents)
 
-    if not force:
-        raise Confirm(type="areYouSure", refund=f"{round(80 * (1 - project.progress()))}%")
-
-    refund = (
-        0.8
-        * engine.const_config["assets"][project.project_type]["base_price"]
-        * project.multipliers["price_multiplier"]
-        * (1 - project.progress())
-    )
-    if isinstance(project.project_type, HydroFacilityType):
-        refund *= project.multipliers["hydro_price_multiplier"]
-    player.money += refund
+    player.money += project.cancellation_refund()
     priority_list.remove(project)
 
     project.delete()
@@ -123,6 +101,7 @@ def cancel_project(player: Player, project: OngoingProject, *, force: bool = Fal
 
     engine.log(f"{player.username} cancelled the project {project.project_type}")
 
+    player.invalidate_queries(["projects"])
     invalidate_data_on_project_update(player, project.project_type)
 
 

@@ -51,10 +51,11 @@ function are_you_sure_cancel_construction(construction_id, refund) {
   document.getElementById('are_you_sure_popup').classList.remove('hidden');
   document.getElementById('are_you_sure_content').innerHTML = `Are you sure you want to cancel this construction?<br>
   You will recover ${refund} of the initial cost.`;
-  document.getElementById('yes_im_sure').setAttribute('onclick', `cancel_construction(${construction_id}, force=true); hide_are_you_sure()`);
+  document.getElementById('yes_im_sure').setAttribute('onclick', `execute_cancel_construction(${construction_id}); hide_are_you_sure()`);
   document.getElementById('no_cancel').innerHTML = '<b>No</b>';
 }
 
+// Deprecated and no longer used - keeping for reference
 function are_you_sure_start_construction(facility, capacity, construction_power) {
   document.getElementById('are_you_sure_popup').classList.remove('hidden');
   document.getElementById('are_you_sure_content').innerHTML = `

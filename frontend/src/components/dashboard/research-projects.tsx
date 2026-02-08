@@ -126,7 +126,16 @@ export function ResearchProjects({
                         }
                         onCancel={
                             showActions
-                                ? () => cancelMutation.mutate(project.id)
+                                ? () => {
+                                      const confirmed = window.confirm(
+                                          `Cancel ${project.display_name}?\n\n` +
+                                              `You will receive a refund of ${project.cancellation_refund.toFixed(0)}€ ` +
+                                              `(${project.cancellation_refund_percentage.toFixed(0)}% of the original cost).`,
+                                      );
+                                      if (confirmed) {
+                                          cancelMutation.mutate(project.id);
+                                      }
+                                  }
                                 : undefined
                         }
                         onIncreasePriority={

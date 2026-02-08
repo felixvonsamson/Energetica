@@ -148,10 +148,10 @@ def test_swap_waiting_and_ongoing_constructions() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     validate_rules(player)
-    construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE)
     validate_rules(player)
     assert construction_a.status == ProjectStatus.ONGOING
-    construction_b = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    construction_b = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE)
     validate_rules(player)
     assert construction_b.status == ProjectStatus.WAITING
     decrease_project_priority(player, construction_a)
@@ -171,10 +171,10 @@ def test_cancel_construction() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     validate_rules(player)
-    construction = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    construction = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE)
     validate_rules(player)
     assert construction.status == ProjectStatus.ONGOING
-    cancel_project(player, construction, force=True)
+    cancel_project(player, construction)
     validate_rules(player)
     assert len(player.constructions_by_priority) == 0
 
@@ -191,7 +191,7 @@ def test_pause_construction() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     validate_rules(player)
-    construction = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    construction = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE)
     validate_rules(player)
     assert construction.status == ProjectStatus.ONGOING
     toggle_pause_project(player, construction)
@@ -213,9 +213,9 @@ def test_queue_two_pause_one() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     validate_rules(player)
-    construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE)
     validate_rules(player)
-    construction_b = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    construction_b = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE)
     validate_rules(player)
     toggle_pause_project(player, construction_a)
     validate_rules(player)
@@ -234,11 +234,11 @@ def test_three_constructions_with_pause() -> None:
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
     validate_rules(player)
-    construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    construction_a = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE)
     validate_rules(player)
-    queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE)
     validate_rules(player)
-    construction_c = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    construction_c = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE)
     validate_rules(player)
     toggle_pause_project(player, construction_c)
     validate_rules(player)
@@ -256,11 +256,11 @@ def test_add_two_and_cancel_one() -> None:
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
     validate_rules(player)
-    construction_1 = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    construction_1 = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE)
     validate_rules(player)
-    construction_2 = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE, force=True)
+    construction_2 = queue_project(player=player, project_type=ControllableFacilityType.STEAM_ENGINE)
     validate_rules(player)
-    cancel_project(player, construction_1, force=True)
+    cancel_project(player, construction_1)
     validate_rules(player)
     assert player.constructions_by_priority == [construction_2]
 
@@ -277,13 +277,13 @@ def test_technologies_pausing_propagates_requirements() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
-    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
+    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY))
 
     validate_rules(player)
-    technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS, force=True)
+    technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS)
     validate_rules(player)
     assert technology_a.status == ProjectStatus.ONGOING
-    technology_b = queue_project(player=player, project_type=TechnologyType.MECHANICAL_ENGINEERING, force=True)
+    technology_b = queue_project(player=player, project_type=TechnologyType.MECHANICAL_ENGINEERING)
     validate_rules(player)
     assert technology_b.status == ProjectStatus.WAITING
     toggle_pause_project(player, technology_a)
@@ -303,13 +303,13 @@ def test_math_and_building_tech() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
-    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
+    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY))
 
     validate_rules(player)
-    technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS, force=True)
+    technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS)
     validate_rules(player)
     assert technology_a.status == ProjectStatus.ONGOING
-    technology_c = queue_project(player=player, project_type=TechnologyType.MECHANICAL_ENGINEERING, force=True)
+    technology_c = queue_project(player=player, project_type=TechnologyType.MECHANICAL_ENGINEERING)
     validate_rules(player)
     assert technology_c.status == ProjectStatus.WAITING
 
@@ -330,14 +330,14 @@ def test_swapping_waiting_and_paused_researches() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
-    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
+    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY))
 
     validate_rules(player)
-    technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS, force=True)
+    technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS)
     validate_rules(player)
-    technology_b = queue_project(player=player, project_type=TechnologyType.BUILDING_TECHNOLOGY, force=True)
+    technology_b = queue_project(player=player, project_type=TechnologyType.BUILDING_TECHNOLOGY)
     validate_rules(player)
-    technology_c = queue_project(player=player, project_type=TechnologyType.MECHANICAL_ENGINEERING, force=True)
+    technology_c = queue_project(player=player, project_type=TechnologyType.MECHANICAL_ENGINEERING)
     validate_rules(player)
     pause_project(player, technology_c)
     validate_rules(player)
@@ -368,15 +368,15 @@ def test_increasing_priority_of_paused_and_blocked_research() -> None:
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     player.money = 1_000_000_000
-    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY, force=True))
+    complete_project(queue_project(player=player, project_type=FunctionalFacilityType.LABORATORY))
     player.workers[WorkerType.RESEARCH] = 2
 
     validate_rules(player)
-    technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS, force=True)
+    technology_a = queue_project(player=player, project_type=TechnologyType.MATHEMATICS)
     validate_rules(player)
-    technology_b = queue_project(player=player, project_type=TechnologyType.BUILDING_TECHNOLOGY, force=True)
+    technology_b = queue_project(player=player, project_type=TechnologyType.BUILDING_TECHNOLOGY)
     validate_rules(player)
-    technology_c = queue_project(player=player, project_type=TechnologyType.MECHANICAL_ENGINEERING, force=True)
+    technology_c = queue_project(player=player, project_type=TechnologyType.MECHANICAL_ENGINEERING)
     validate_rules(player)
     with pytest.raises(GameError):
         # (*)
