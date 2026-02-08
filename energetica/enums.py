@@ -247,3 +247,29 @@ class ProjectStatus(StrEnum):
         """Backward compatibility: handle old IntEnum values (0=paused, 1=waiting, 2=ongoing)."""
         _legacy = {0: cls.PAUSED, 1: cls.WAITING, 2: cls.ONGOING}
         return _legacy.get(value)  # type: ignore[arg-type]
+
+    def __lt__(self, other: object) -> bool:
+        """Preserve numeric ordering: PAUSED < WAITING < ONGOING."""
+        if not isinstance(other, ProjectStatus):
+            return NotImplemented
+        order = {self.PAUSED: 0, self.WAITING: 1, self.ONGOING: 2}
+        return order[self] < order[other]
+
+    def __le__(self, other: object) -> bool:
+        """Preserve numeric ordering: PAUSED <= WAITING <= ONGOING."""
+        if not isinstance(other, ProjectStatus):
+            return NotImplemented
+        return self == other or self < other
+
+    def __gt__(self, other: object) -> bool:
+        """Preserve numeric ordering: PAUSED < WAITING < ONGOING."""
+        if not isinstance(other, ProjectStatus):
+            return NotImplemented
+        order = {self.PAUSED: 0, self.WAITING: 1, self.ONGOING: 2}
+        return order[self] > order[other]
+
+    def __ge__(self, other: object) -> bool:
+        """Preserve numeric ordering: PAUSED <= WAITING <= ONGOING."""
+        if not isinstance(other, ProjectStatus):
+            return NotImplemented
+        return self == other or self > other
