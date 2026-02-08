@@ -9,7 +9,7 @@ from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
-from energetica.enums import StorageFacilityType
+from energetica.enums import ProjectStatus, StorageFacilityType
 from energetica.globals import engine
 from energetica.schemas.simulate import TickAction
 from energetica.utils import projects
@@ -66,7 +66,8 @@ def check_events_completion() -> None:
     # check if constructions finished
     finished_constructions = list(
         OngoingProject.filter(
-            lambda construction: construction.end_tick_or_ticks_passed <= engine.total_t and construction.status == 2,
+            lambda construction: construction.end_tick_or_ticks_passed <= engine.total_t
+            and construction.status == ProjectStatus.ONGOING,
         ),
     )
     for fc in finished_constructions:
