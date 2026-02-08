@@ -13,7 +13,7 @@ from energetica.enums import StorageFacilityType
 from energetica.globals import engine
 from energetica.schemas.simulate import TickAction
 from energetica.utils import projects
-from energetica.utils.facilities import remove_facility
+from energetica.utils.facilities import dismantle_facility, remove_facility
 from energetica.utils.climate_helpers import check_climate_events
 from energetica.utils.misc import save_past_data
 from energetica.utils.resource_market import store_import
@@ -40,8 +40,8 @@ def tick() -> None:
     if (engine.total_t + engine.delta_t) % (24 * 60 * 60 / engine.clock_time) == 0:
         engine.new_daily_question()
     check_events_completion()
-    check_climate_events()
     production_update.update_electricity()
+    check_climate_events()  # climate events should happen after electricity production because destruction of storage facilities will write directly into player's circular buffer, and this should write should happen on the new tick's data since values for old ticks should be considered read-only, since they represent the past, and we shouldn't rewrite the past retroactively.
 
     log_entry = TickAction(
         timestamp=start,
@@ -81,17 +81,30 @@ def check_events_completion() -> None:
         player.emit("finish_shipment", player.package_shipments())
 
     # check end of lifespan of facilities
-    eolt_facilities = list(ActiveFacility.filter_by(remaining_lifespan=None))
-    for facility in eolt_facilities:
+    new_eolt_facilities = list(ActiveFacility.filter_by(remaining_lifespan=None, decommissioning=False))
+    for facility in new_eolt_facilities:
         player = facility.player
-        if facility.facility_type in StorageFacilityType:
-            if facility.end_of_life == engine.total_t:
-                player.capacities.update(player, facility.facility_type)
-            stored_energy = player.rolling_history.get_last_data("storage", facility.facility_type)
-            available_capacity = player.capacities[facility.facility_type]["capacity"]
-            if stored_energy > available_capacity:
-                continue
-        remove_facility(player, facility)
+        dismantle_facility(facility)
+        player.notify(
+            "Decommissioning",
+            (
+                f"The facility {facility.display_name} reached the end of its operational lifespan and had to be "
+                "decommissioned. The cost of this operation was "
+                f"{round(facility.dismantle_cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
+            ),
+        )
+        engine.log(f"The facility {facility.display_name} from {player.username} has been decommissioned.")
+
+    # check storage facilities that are decommissioning and empty
+    decommissioned_storage_facilities = list(
+        ActiveFacility.filter(lambda af: af.decommissioning == True and af.facility_type in StorageFacilityType)
+    )
+    for facility in decommissioned_storage_facilities:
+        player = facility.player
+        stored_energy = player.rolling_history.get_last_data("storage", facility.facility_type)
+        available_capacity = player.capacities[facility.facility_type]["capacity"]
+        if stored_energy < available_capacity:
+            remove_facility(facility)
 
     # check end of climate events
     finished_climate_events = list(ClimateEventRecovery.filter(lambda event: event.end_tick <= engine.total_t))

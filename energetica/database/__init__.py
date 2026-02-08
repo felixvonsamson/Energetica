@@ -96,6 +96,7 @@ class DBModel:
         facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
         worker_type: WorkerType
         remaining_lifespan: float | None
+        decommissioning: bool
         name: str
         username: str
         player: Player | None  # None because of HexTile
