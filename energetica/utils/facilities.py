@@ -71,11 +71,11 @@ def upgrade_all_facilities(
     )
 
 
-def remove_facility(facility: ActiveFacility, *, decommissioning: bool = False) -> None:
+def remove_facility(facility: ActiveFacility) -> None:
     """
     Remove a facility.
 
-    This function is called either when a facility is dismantlement or when destroyed by a natural disasters.
+    This function is called either when a facility is dismantled or destroyed by a natural disasters.
     """
     player = facility.player
     facility.delete()
@@ -91,7 +91,12 @@ def destroy_facility(player: Player, facility: ActiveFacility, event_name: str) 
     """Destroyed a facility, by a climate event."""
     cleanup_cost = 0.1 * facility.total_cost
     player.money -= cleanup_cost
-    remove_facility(facility, decommissioning=False)
+    if facility.facility_type in StorageFacilityType:
+        # The player looses the stored energy in that facility. Assume energy is stored uniformly across storage facilities of that type.
+        n = ActiveFacility.count_when(facility_type=facility.facility_type)
+        stored = player.rolling_history.get_last_data("storage", facility.facility_type)
+        player.rolling_history._data["storage"][facility.facility_type][-1] = stored * (n - 1) / n
+    remove_facility(facility)
     player.notify(
         "Destruction",
         (
@@ -115,7 +120,7 @@ def dismantle_facility(facility: ActiveFacility, manually_triggered: bool = Fals
         player.capacities.update(player, facility.facility_type)
         engine.log(f"{player.username} marked the storage facility {facility.facility_type} for dismantlement.")
     else:
-        remove_facility(facility, decommissioning=False)
+        remove_facility(facility)
         engine.log(f"{player.username} dismantled the facility {facility.facility_type}.")
 
 

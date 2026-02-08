@@ -40,8 +40,8 @@ def tick() -> None:
     if (engine.total_t + engine.delta_t) % (24 * 60 * 60 / engine.clock_time) == 0:
         engine.new_daily_question()
     check_events_completion()
-    check_climate_events()
     production_update.update_electricity()
+    check_climate_events()  # climate events should happen after electricity production because destruction of storage facilities will write directly into player's circular buffer, and this should write should happen on the new tick's data since values for old ticks should be considered read-only, since they represent the past, and we shouldn't rewrite the past retroactively.
 
     log_entry = TickAction(
         timestamp=start,
