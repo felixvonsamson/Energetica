@@ -107,12 +107,10 @@ def destroy_facility(player: Player, facility: ActiveFacility, event_name: str) 
     engine.log(f"{player.username} : {facility.facility_type} destroyed by {event_name}.")
 
 
-def dismantle_facility(facility: ActiveFacility, manually_triggered: bool = False) -> None:
+def dismantle_facility(facility: ActiveFacility) -> None:
     """Dismantle a facility."""
     dismantle_cost = facility.dismantle_cost
     player = facility.player
-    if player.money < dismantle_cost and manually_triggered:
-        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
     player.money -= dismantle_cost
 
     if isinstance(facility.facility_type, StorageFacilityType):
@@ -139,7 +137,7 @@ def dismantle_all_facilities(
     if player.money < sum(map(lambda facility: cast(float, facility.dismantle_cost), facilities)):
         raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
     for facility in facilities:
-        dismantle_facility(facility, manually_triggered=True)
+        dismantle_facility(facility)
 
 
 def save_powerless_player(player: Player) -> None:

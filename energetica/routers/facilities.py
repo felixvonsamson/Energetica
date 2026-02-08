@@ -59,7 +59,7 @@ async def dismantle_facility(
     facility = ActiveFacility.getitem(facility_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if facility.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not own this facility")
-    facilities.dismantle_facility(facility=facility, manually_triggered=True)
+    facilities.dismantle_facility(facility)
     return MoneyOut.from_player(player)
 
 
