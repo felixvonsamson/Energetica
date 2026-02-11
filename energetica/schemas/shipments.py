@@ -17,6 +17,7 @@ class ShipmentOut(ShipmentBase):
     id: int
     arrival_tick: float = Field(gt=0)
     duration: float
+    speed: float
 
     @classmethod
     def from_shipment(cls, shipment: OngoingShipment) -> ShipmentOut:
@@ -26,6 +27,7 @@ class ShipmentOut(ShipmentBase):
             quantity=shipment.quantity,
             arrival_tick=shipment.arrival_tick,
             duration=shipment.duration,
+            speed=shipment.speed,
         )
 
 

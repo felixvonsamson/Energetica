@@ -1,6 +1,6 @@
 import { Microscope } from "lucide-react";
 
-import { ResearchProjects } from "@/components/dashboard/research-projects";
+import { ProjectList } from "@/components/dashboard/progress-lists";
 import {
     Dialog,
     DialogContent,
@@ -44,7 +44,7 @@ export function ResearchProjectsDialog({
                         View ongoing research projects and their progress.
                     </DialogDescription>
                 </DialogHeader>
-                <ResearchProjects showActions={true} />
+                <ProjectList projectCategory={"research"} />
             </DialogContent>
         </Dialog>
     );

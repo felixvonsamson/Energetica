@@ -1,6 +1,6 @@
 import { HardHat } from "lucide-react";
 
-import { ConstructionProjects } from "@/components/dashboard/construction-projects";
+import { ProjectList } from "@/components/dashboard/progress-lists";
 import {
     Dialog,
     DialogContent,
@@ -45,7 +45,7 @@ export function ConstructionProjectsDialog({
                         View ongoing construction projects and their progress.
                     </DialogDescription>
                 </DialogHeader>
-                <ConstructionProjects showActions={true} />
+                <ProjectList projectCategory={"construction"} />
             </DialogContent>
         </Dialog>
     );
