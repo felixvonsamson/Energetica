@@ -38,17 +38,16 @@ from energetica.utils.misc import calculate_river_discharge, calculate_solar_irr
 
 
 def update_electricity() -> None:
-    """Update the electricity generation and storage status for all players."""
-    # calculate new co2 and temperature values
+    """Main simulation tick for electricity, markets, resources and emissions."""
+    # --- Global climate update ---
     engine.current_climate_data.init_new_value()
+
+    # --- Initialization ---
     players: list[Player] = list(Player.all())
     networks = Network.all()
+    new_values = {player.id: player.rolling_history.init_new_data() for player in players}
 
-    new_values = {}
-    for player in players:
-        new_values[player.id] = player.rolling_history.init_new_data()
-
-    # reset progress speeds fot all ongoing projects and shipments
+    # --- Resetting speeds of ongoing projects and shipments---
     ongoing_projects = OngoingProject.filter_by(status=ProjectStatus.ONGOING)
     for op in ongoing_projects:
         op.reset_speed()
@@ -57,6 +56,7 @@ def update_electricity() -> None:
         os.reset_speed()
 
     for network in networks:
+        # --- Market resolution ---
         market = init_market()
         for player in network.members:
             calculate_demand(new_values[player.id], player)
@@ -98,14 +98,16 @@ def update_electricity() -> None:
             pickle.dump(market, file)
 
     for player in players:
-        # Power generation calculation for players that are not in a network
         if player.network is None:
+            # --- Player electricity update without market ---
             calculate_demand(new_values[player.id], player)
             # Initialize consumption statuses before market resolution
             initialize_consumption_statuses(player, new_values[player.id])
             market_price = calculate_generation_without_market(new_values, player)
             # Calculate production/renewable statuses after market resolution
             update_production_and_renewable_statuses(player, new_values[player.id], market_price)
+
+        # --- Update player values and send to client ---
         set_facilities_usage(new_values[player.id], player)
         calculate_net_import(new_values[player.id])
         update_storage_lvls(new_values[player.id], player)
@@ -119,7 +121,16 @@ def update_electricity() -> None:
 
 
 def set_facilities_usage(new_values: dict, player: Player) -> None:
-    """Set the usage of the facilities to the database."""
+    # TODO (Felix): should be moved somewhere else, e.g. active_facility.py ?
+    """
+    Set the usage of the facilities to the database.
+    > Controllable facilities:
+    usage = actual production / max production
+    > Storage facilities:
+    usage = state of charge = stored energy / capacity
+    > Extraction facilities:
+    usage = actual extraction / max extraction.
+    """
     for controllable_facility in ControllableFacilityType:
         if controllable_facility in player.capacities:
             usage = new_values["generation"][controllable_facility] / player.capacities[controllable_facility]["power"]
@@ -127,6 +138,7 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
                 af.usage = usage
 
     for storage_facility in StorageFacilityType:
+        # TODO/COMMENT (Felix): Storage facilities have a SOC and a generation/consumption usage that can be defined as the current power produced/consumed divided by the max power. Currently, we only show the SOC as usage, but it would be interesting to show both values in the frontend.
         if storage_facility in player.capacities:
             if player.capacities[storage_facility]["capacity"] == 0:
                 usage = np.inf  # TODO (Felix): update frontend to show "draining..."
@@ -143,8 +155,9 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
 
 
 def update_player_progress_values(player: Player, new_values: dict) -> None:
+    # TODO (Felix): Should be moved somewhere else, e.g. player.py ?
     """Update the player progress values and checks for new unlocks and achievements."""
-    # calculate moving average revenue
+    # calculate moving average revenue TODO (Felix): Separate function ?
     player.progression_metrics["average_revenues"] = (
         player.progression_metrics["average_revenues"]
         + 3600
@@ -175,6 +188,7 @@ def update_player_progress_values(player: Player, new_values: dict) -> None:
 
 
 def init_market() -> dict[str, pd.DataFrame]:
+    # TODO (Felix): should be moved somewhere else, e.g. create a Market class in market.py (new) ?
     """Initialize an empty market."""
     return {
         "capacities": pd.DataFrame({"player_id": [], "capacity": [], "price": [], "facility": []}),
@@ -183,6 +197,7 @@ def init_market() -> dict[str, pd.DataFrame]:
 
 
 def update_storage_lvls(new_values: dict, player: Player) -> None:
+    # TODO (Felix): should be moved somewhere else, e.g. active_facility.py ?
     """Update storage levels according to the use of storage facilities."""
     generation = new_values["generation"]
     demand = new_values["demand"]
@@ -219,6 +234,7 @@ def calculate_net_import(new_values: dict) -> None:
     # The exports is the positive part of the net exchange and imports are the negative part
     new_values["demand"]["exports"] = max(0.0, net_exchange)
     new_values["generation"]["imports"] = max(0.0, -net_exchange)
+
     exp_rev = new_values["revenues"]["exports"]
     imp_rev = new_values["revenues"]["imports"]
     net_exchange_revenues = exp_rev + imp_rev
@@ -235,7 +251,8 @@ def calculate_net_import(new_values: dict) -> None:
 
 
 def extraction_facility_demand(new_values: dict, player: Player, demand: dict) -> None:
-    """Calculate power consumption of extraction facilities."""
+    # TODO (Felix): should be moved somewhere else, e.g. active_facility.py ?
+    """Calculate maximal power consumption of extraction facilities."""
     player_resources = new_values["resources"]
     warehouse_caps = player.config["warehouse_capacities"]
     for fuel in Fuel:
@@ -253,8 +270,9 @@ def extraction_facility_demand(new_values: dict, player: Player, demand: dict) -
 
 
 def industry_demand_and_revenues(player: Player, demand: dict, revenues: dict) -> None:
-    """Calculate power consumption and revenues from industry."""
-    # interpolating seasonal factor on the day
+    # TODO (Felix): should be moved somewhere else, e.g. player.py ?
+    """Calculate maximal power consumption and revenues from industry."""
+    # interpolating seasonal factor on the day TODO (Felix): should be moved to a separate function
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
     real_t = engine.total_t + engine.delta_t  # this ensures that the year starts at real time midnight
     day = round(real_t // ticks_per_day)
@@ -286,7 +304,8 @@ def industry_demand_and_revenues(player: Player, demand: dict, revenues: dict) -
 
 
 def projects_demand(player: Player, demand: dict) -> None:
-    """Calculate power consumption for ongoing projects."""
+    # TODO (Felix): should be moved somewhere else, e.g. ongoing_project.py ?
+    """Calculate the maximal power consumption for ongoing projects."""
     for research in player.researches_by_priority:
         if research.is_ongoing:
             demand["research"] += research.project_power
@@ -296,13 +315,15 @@ def projects_demand(player: Player, demand: dict) -> None:
 
 
 def shipment_demand(player: Player, demand: dict) -> None:
-    """Calculate the power consumption for shipments."""
+    # TODO (Felix): should be moved somewhere else, e.g. ongoing_shipment.py ?
+    """Calculate the maximal power consumption for shipments."""
     for shipment in OngoingShipment.filter_by(player=player):
         demand["transport"] += shipment.power_demand
 
 
 def storage_demand(player: Player, demand: dict) -> None:
-    """Calculate the maximal demand of storage plants."""
+    # TODO (Felix): should be moved somewhere else, e.g. active_facility.py ?
+    """Calculate the maximal power consumption for storage facilities (charging)."""
     for facility in StorageFacilityType:
         if player.capacities.get(facility) is not None:
             demand[facility] = calculate_prod(
@@ -321,7 +342,7 @@ def climate_event_recovery_cost(player: Player, revenues: dict) -> None:
 
 
 def calculate_demand(new_values: dict, player: Player) -> None:
-    """Calculate the electricity demand of one player."""
+    """Calculate the maximal electricity demand of one player."""
     demand = new_values["demand"]
     revenues = new_values["revenues"]
 
@@ -331,7 +352,7 @@ def calculate_demand(new_values: dict, player: Player) -> None:
     shipment_demand(player, demand)
     storage_demand(player, demand)
 
-    # consider cost of climate events if any
+    # consider cost of climate events if any TODO (Felix): the placement of this function call is very questionable, we are talking about power here and this is calculating costs.
     climate_event_recovery_cost(player, revenues)
 
     if player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE] > 0:
@@ -350,13 +371,15 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
     Returns:
         The market clearing price from the internal market
     """
+    # --- Initialization ---
     internal_market = init_market()
     generation = new_values[player.id]["generation"]
     demand = new_values[player.id]["demand"]
     resource_reservations = reset_resource_reservations()
 
-    # generation of non controllable facilities is calculated from weather data
+    # generation of non controllable facilities is calculated from weather data.
     renewables_generation(player, generation)
+    # TODO (Felix): Renewables_generation() should be included in minimal_generation()
     minimal_generation(player, generation, resource_reservations)
     # Obligatory generation is put on the internal market at a price of -5
     for facility in (*StorageFacilityType, *power_facility_types):
@@ -414,7 +437,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
 
     # allow a maximum overdraft of the equivalent of the daily income of the industry
     max_overdraft = -player.config["industry"]["income_per_day"]
-    notification_txt = "You exceeded your credit limit, you can't buy electricity on the market anymore."
+    notification_txt = "You exceeded your credit limit, you can't buy electricity on the market any more."
     do_not_send = len(player.notifications) > 0 and player.notifications[-1].content == notification_txt
     if player.money < max_overdraft and player.network is not None and not do_not_send:
         player.notify(
@@ -454,6 +477,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
 
 
 def market_logic(new_values: dict, market: dict) -> None:
+    # TODO (Felix): should be moved somewhere else, e.g. market.py (new)
     """
     Perform the market logic for a network.
 
@@ -566,6 +590,7 @@ def market_logic(new_values: dict, market: dict) -> None:
 
 
 def market_optimum(offers_og: Any, demands_og: Any) -> tuple[float, float]:
+    # TODO (Felix) : Move to market.py (new)
     """Find market price and quantity by finding the intersection of demand and supply."""
     offers = offers_og.copy()
     demands = demands_og.copy()
@@ -602,6 +627,7 @@ def market_optimum(offers_og: Any, demands_og: Any) -> tuple[float, float]:
 
 
 def renewables_generation(player: Player, generation: dict) -> None:
+    # TODO (Felix): should be moved somewhere else, e.g. active_facility.py ?
     """Calculate the generation of renewable facilities."""
     in_game_seconds_passed: int = (engine.total_t + engine.delta_t) * engine.in_game_seconds_per_tick
     # WIND
@@ -618,6 +644,7 @@ def renewables_generation(player: Player, generation: dict) -> None:
 
 
 def solar_generation(player: Player, generation: dict, in_game_seconds_passed: int) -> None:
+    # TODO (Felix): Should be moved but idk where
     """
     Calculate the power generated by solar facilities.
 
@@ -643,6 +670,7 @@ def solar_generation(player: Player, generation: dict, in_game_seconds_passed: i
 
 
 def wind_generation(player: Player, generation: dict, in_game_seconds_passed: int) -> None:
+    # TODO (Felix): Should be moved but idk where
     """
     Calculate the power generated by wind facilities.
 
@@ -686,6 +714,7 @@ def calculate_prod(
     resource_reservations: dict[Fuel, float] | None,
     filling: bool = False,
 ) -> float:
+    # TODO (Felix): should be moved somewhere else, e.g. market.py or active_facility.py ?
     """
     Calculate the min or max power production of controllable facilities for this tick.
 
@@ -755,6 +784,7 @@ def calculate_prod(
 
 
 def minimal_generation(player: Player, generation: dict, resource_reservations: dict[Fuel, float]) -> None:
+    # TODO (Felix): Should include renewables_generation() since it is also minimal obligatory generation.
     """Calculate the minimal generation of controllable facilities."""
     for facility in (*ControllableFacilityType, *StorageFacilityType):
         if player.capacities.get(facility) is not None:
@@ -767,6 +797,7 @@ def minimal_generation(player: Player, generation: dict, resource_reservations: 
 
 
 def place_bid(market: dict, player_id: int, capacity: float, price: float, facility: str) -> dict:
+    # TODO (Felix): should be moved somewhere else, e.g. market.py (new) ?
     """Make an bid (offer, supply) on the market."""
     if capacity > 0:
         new_row = pd.DataFrame(
@@ -782,6 +813,7 @@ def place_bid(market: dict, player_id: int, capacity: float, price: float, facil
 
 
 def place_ask(market: dict, player_id: int, demand: float, price: float, facility: str) -> dict:
+    # TODO (Felix): should be moved somewhere else, e.g. market.py (new) ?
     """Make an ask (demand) on the market."""
     if demand > 0:
         new_row = pd.DataFrame(
@@ -892,6 +924,7 @@ def construction_emissions(new_values: dict, player: Player) -> None:
 
 
 def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfaction: float) -> None:
+    # TODO (Felix): should be moved somewhere else, e.g. market.py (new) ?
     """
     Take measures to reduce power demand.
 
