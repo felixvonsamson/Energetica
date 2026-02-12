@@ -89,9 +89,10 @@ function calculateTileLabel(
         };
     }
     if (activeResourceId !== undefined) {
+      const formattedLabel = formatResourceValue(tile, activeResourceId);
         return {
-            label: formatResourceValue(tile, activeResourceId),
-            size: Math.max(10, s / 4),
+            label: formattedLabel,
+            size: Math.min(20, 3 * s / formattedLabel.length),
             fill: "black",
         };
     }
