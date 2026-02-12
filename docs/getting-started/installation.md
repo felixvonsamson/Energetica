@@ -13,7 +13,7 @@ cd Energetica
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-bun install && cd ..
+cd frontend/ && bun install && cd ..
 ```
 
 ### Run the Backend
