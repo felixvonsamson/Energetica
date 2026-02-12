@@ -7,7 +7,7 @@ Planned future enums include facility names
 
 from __future__ import annotations
 
-from enum import IntEnum, StrEnum
+from enum import StrEnum
 
 
 class WorkerType(StrEnum):
@@ -235,14 +235,41 @@ project_types_extended: set[ProjectType | NonFacilityBidType] = project_types | 
 str_to_project_type_extended: dict[str, ProjectType | NonFacilityBidType] = {str(f): f for f in project_types_extended}
 
 
-class ProjectStatus(IntEnum):
+class ProjectStatus(StrEnum):
     """Class that stores the status of ongoing projects."""
 
-    # TODO(mglst): make this class a StrEnum. This will be useful for schemas and JSON serialization for APIs.
-    # PAUSED = "paused"
-    # WAITING = "waiting"
-    # ONGOING = "ongoing"
+    PAUSED = "paused"
+    WAITING = "waiting"
+    ONGOING = "ongoing"
 
-    PAUSED = 0
-    WAITING = 1
-    ONGOING = 2
+    @classmethod
+    def _missing_(cls, value: object) -> ProjectStatus | None:
+        """Backward compatibility: handle old IntEnum values (0=paused, 1=waiting, 2=ongoing)."""
+        _legacy = {0: cls.PAUSED, 1: cls.WAITING, 2: cls.ONGOING}
+        return _legacy.get(value)  # type: ignore[arg-type]
+
+    def __lt__(self, other: object) -> bool:
+        """Preserve numeric ordering: PAUSED < WAITING < ONGOING."""
+        if not isinstance(other, ProjectStatus):
+            return NotImplemented
+        order = {self.PAUSED: 0, self.WAITING: 1, self.ONGOING: 2}
+        return order[self] < order[other]
+
+    def __le__(self, other: object) -> bool:
+        """Preserve numeric ordering: PAUSED <= WAITING <= ONGOING."""
+        if not isinstance(other, ProjectStatus):
+            return NotImplemented
+        return self == other or self < other
+
+    def __gt__(self, other: object) -> bool:
+        """Preserve numeric ordering: PAUSED < WAITING < ONGOING."""
+        if not isinstance(other, ProjectStatus):
+            return NotImplemented
+        order = {self.PAUSED: 0, self.WAITING: 1, self.ONGOING: 2}
+        return order[self] > order[other]
+
+    def __ge__(self, other: object) -> bool:
+        """Preserve numeric ordering: PAUSED <= WAITING <= ONGOING."""
+        if not isinstance(other, ProjectStatus):
+            return NotImplemented
+        return self == other or self > other

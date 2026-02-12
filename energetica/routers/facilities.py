@@ -6,7 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.player import Player
-from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType
+from energetica.enums import (
+    ExtractionFacilityType,
+    PowerFacilityType,
+    StorageFacilityType,
+)
 from energetica.schemas.facilities import FacilitiesListOut, FacilityStatuses
 from energetica.schemas.players import MoneyOut
 from energetica.utils import facilities
@@ -54,8 +58,8 @@ async def dismantle_facility(
     """Dismantle a facility."""
     facility = ActiveFacility.getitem(facility_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if facility.player != player:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    facilities.dismantle_facility(facility=facility)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not own this facility")
+    facilities.dismantle_facility(facility)
     return MoneyOut.from_player(player)
 
 

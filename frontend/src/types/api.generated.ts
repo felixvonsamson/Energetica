@@ -3971,9 +3971,9 @@ export interface components {
          *
          * Class that stores the status of ongoing projects.
          *
-         * @enum {integer}
+         * @enum {string}
          */
-        ProjectStatus: 0 | 1 | 2;
+        ProjectStatus: "paused" | "waiting" | "ongoing";
         /**
          * PurchaseOrderCreate
          *

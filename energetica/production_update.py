@@ -48,7 +48,7 @@ def update_electricity() -> None:
     new_values = {player.id: player.rolling_history.init_new_data() for player in players}
 
     # --- Resetting speeds of ongoing projects and shipments---
-    ongoing_projects = OngoingProject.filter_by(status=2)
+    ongoing_projects = OngoingProject.filter_by(status=ProjectStatus.ONGOING)
     for op in ongoing_projects:
         op.reset_speed()
     ongoing_shipments = OngoingShipment.all()

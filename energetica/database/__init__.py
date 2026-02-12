@@ -12,7 +12,14 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
     from energetica.database.player import Player
-    from energetica.enums import ExtractionFacilityType, PowerFacilityType, ProjectType, StorageFacilityType, WorkerType
+    from energetica.enums import (
+        ExtractionFacilityType,
+        PowerFacilityType,
+        ProjectStatus,
+        ProjectType,
+        StorageFacilityType,
+        WorkerType,
+    )
 
 T = TypeVar("T", bound="DBModel")
 
@@ -96,13 +103,14 @@ class DBModel:
         facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
         worker_type: WorkerType
         remaining_lifespan: float | None
+        decommissioning: bool
         name: str
         username: str
         player: Player | None  # None because of HexTile
         # HexTile
         coordinates: tuple[int, int]
         # OngoingProject
-        status: int
+        status: ProjectStatus
         # User
         role: Literal["player", "admin"]
 

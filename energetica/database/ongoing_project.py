@@ -26,7 +26,7 @@ class OngoingProject(DBModel):
     duration: float  # in game ticks
     project_power: float  # Power consumed by the project
     project_pollution: float  # Emissions produced by the project
-    status: ProjectStatus = ProjectStatus.PAUSED  # 0 for paused, 1 for waiting, 2 for ongoing. See ProjectStatus
+    status: ProjectStatus = ProjectStatus.PAUSED
     end_tick_or_ticks_passed: float = 0  # in game ticks when the project will be finished or ticks passed if paused
 
     # multipliers to keep track of the technology level at the time of the start of the project
