@@ -19,6 +19,7 @@ import {
     getAssetLongName,
     getAssetShortName,
 } from "@/lib/assets/asset-names";
+import { cn } from "@/lib/utils";
 import { Fuel } from "@/types/fuel";
 
 /**
@@ -43,33 +44,7 @@ export interface AssetNameProps {
     as?: ElementType;
 }
 
-/**
- * Renders an asset name with flexible display options.
- *
- * @example
- *     // Full name
- *     <AssetName assetId="PV_solar" mode="long" />;
- *     // Output: "Photovoltaics"
- *
- * @example
- *     // Short name
- *     <AssetName assetId="PV_solar" mode="short" />;
- *     // Output: "PV Solar"
- *
- * @example
- *     // Auto mode: short name with tooltip
- *     <AssetName assetId="PV_solar" mode="auto" />;
- *     // Output: "PV Solar" with tooltip showing "Photovoltaics"
- *
- * @example
- *     // Custom element and styling
- *     <AssetName
- *         assetId="nuclear_reactor_gen4"
- *         mode="short"
- *         as="strong"
- *         className="text-brand-green"
- *     />;
- */
+/** Renders an asset name with flexible display options. */
 export function AssetName({
     assetId,
     suffix = "",
@@ -92,15 +67,15 @@ export function AssetName({
         return (
             <Component className={className} title={assetName.long}>
                 {assetName.short}
-                {suffix}
+                <div className="text-muted-foreground">{suffix}</div>
             </Component>
         );
     }
 
     return (
-        <Component className={className}>
+        <Component className={cn("flex gap-1", className)}>
             {displayText}
-            {suffix}
+            <div className="text-muted-foreground">{suffix}</div>
         </Component>
     );
 }
@@ -114,9 +89,6 @@ export interface FacilityNameProps extends Omit<AssetNameProps, "assetId"> {
 /**
  * Specialized component for facility names. Alias for AssetName with clearer
  * semantic meaning.
- *
- * @example
- *     <FacilityName facility="PV_solar" mode="short" />;
  */
 export function FacilityName({ facility, ...props }: FacilityNameProps) {
     return <AssetName assetId={facility} {...props} />;
@@ -127,36 +99,26 @@ export interface TechnologyNameProps extends Omit<AssetNameProps, "assetId"> {
     /** The technology type from the API */
     technology: string;
     /** Optional technology level to display */
-    level?: number;
+    level: number | null;
 }
 
 /**
  * Specialized component for technology names. Alias for AssetName with clearer
- * semantic meaning.
- *
- * @example
- *     <TechnologyName technology="nuclear_engineering" mode="auto" />;
- *
- * @example
- *     // With level display
- *     <TechnologyName
- *         technology="nuclear_engineering"
- *         level={3}
- *         mode="auto"
- *     />;
+ * semantic meaning. TODO: this component really can be used for more than just
+ * technologies - so could be named e.g. ProjectName
  */
 export function TechnologyName({
     technology,
     level,
     ...props
 }: TechnologyNameProps) {
-    if (level !== undefined) {
+    if (level !== null) {
         return (
             <>
                 <AssetName
                     assetId={technology}
                     {...props}
-                    suffix={` lvl. ${level}`}
+                    suffix={` Level ${level}`}
                 />
             </>
         );
@@ -174,9 +136,6 @@ export interface ResourceNameProps extends Omit<AssetNameProps, "assetId"> {
 /**
  * Specialized component for resource names. Alias for AssetName with clearer
  * semantic meaning.
- *
- * @example
- *     <ResourceName resource="uranium" mode="short" />;
  */
 export function ResourceName({ resource, ...props }: ResourceNameProps) {
     return <AssetName assetId={resource} {...props} />;
@@ -185,14 +144,6 @@ export function ResourceName({ resource, ...props }: ResourceNameProps) {
 /**
  * Utility hook to get asset display names programmatically. Useful when you
  * need the name as a string rather than a component.
- *
- * @example
- *     const name = useAssetName("PV_solar");
- *     console.log(name.long()); // "Photovoltaics"
- *     console.log(name.short()); // "PV Solar"
- *
- * @param assetId - The asset identifier
- * @returns Object with long and short name getters
  */
 export function useAssetName(assetId: string) {
     return {

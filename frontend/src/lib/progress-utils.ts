@@ -1,5 +1,25 @@
 /** Utilities for calculating progress percentages for projects and shipments. */
 
+import { useGameTick } from "@/hooks/use-game-tick";
+import { ProjectStatus } from "@/types/projects";
+
+export function useProjectProgress(
+    duration: number,
+    endTick: number | null,
+    ticksPassed: number | null,
+    status: ProjectStatus,
+) {
+    const { currentTick } = useGameTick();
+    if (currentTick === undefined) return 0;
+    return calculateProjectProgress(
+        duration,
+        endTick,
+        ticksPassed,
+        currentTick,
+        status,
+    );
+}
+
 /**
  * Calculate progress percentage for a project (construction or research).
  *
@@ -20,12 +40,12 @@ export function calculateProjectProgress(
     endTick: number | null,
     ticksPassed: number | null,
     currentTick: number,
-    status: "paused" | "waiting" | "ongoing",
+    status: ProjectStatus,
 ): number {
-    if (status === "paused" && ticksPassed !== null) {
+    if ((status === "paused" || status === "waiting") && ticksPassed !== null) {
         // Paused project: use ticks_passed
         return Math.min(100, Math.max(0, (ticksPassed / duration) * 100));
-    } else if ((status === "waiting" || status === "ongoing") && endTick !== null) {
+    } else if (status === "ongoing" && endTick !== null) {
         // Ongoing or waiting project: calculate from end_tick
         const ticksRemaining = Math.max(0, endTick - currentTick);
         const ticksCompleted = duration - ticksRemaining;
@@ -34,6 +54,15 @@ export function calculateProjectProgress(
 
     // Fallback: no progress
     return 0;
+}
+
+export function useShipmentProgress(
+    duration: number,
+    arrivalTick: number,
+): number {
+    const { currentTick } = useGameTick();
+    if (currentTick === undefined) return 0;
+    return calculateShipmentProgress(duration, arrivalTick, currentTick);
 }
 
 /**

@@ -4194,6 +4194,8 @@ export interface components {
             arrival_tick: number;
             /** Duration */
             duration: number;
+            /** Speed */
+            speed: number;
         };
         /** SignupRequest */
         SignupRequest: {

@@ -19,12 +19,13 @@ import {
 } from "lucide-react";
 
 import { AchievementCard } from "@/components/dashboard/achievement-card";
-import { ConstructionProjects } from "@/components/dashboard/construction-projects";
 import { DailyQuizSection } from "@/components/dashboard/daily-quiz";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
-import { IncomingShipments } from "@/components/dashboard/incoming-shipments";
+import {
+    ProjectList,
+    ShipmentList,
+} from "@/components/dashboard/progress-lists";
 import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
-import { ResearchProjects } from "@/components/dashboard/research-projects";
 import { WeatherSection } from "@/components/dashboard/weather";
 import { DevelopmentBanner } from "@/components/development-banner";
 import { GameLayout } from "@/components/layout/game-layout";
@@ -137,18 +138,18 @@ function DashboardContent() {
 
             {/* Construction - only show if there are any construction projects */}
             {hasConstructionProjects && (
-                <DashboardSection
-                    title={
-                        <>
-                            <HardHat className="inline w-4 h-4" /> Under
-                            Construction
-                        </>
-                    }
-                    emptyIcon={Construction}
-                    emptyMessage="No facilities under construction"
-                >
-                    <ConstructionProjects showActions={true} />
-                </DashboardSection>
+                <>
+                    <DashboardSection
+                        title={
+                            <>
+                                <HardHat className="inline w-4 h-4" /> Under
+                                Construction
+                            </>
+                        }
+                    >
+                        <ProjectList projectCategory={"construction"} />
+                    </DashboardSection>
+                </>
             )}
 
             {/* Under research - only show if player has laboratory and has research projects */}
@@ -163,7 +164,7 @@ function DashboardContent() {
                     emptyIcon={FlaskConical}
                     emptyMessage="No technologies under research"
                 >
-                    <ResearchProjects showActions={true} />
+                    <ProjectList projectCategory={"research"} />
                 </DashboardSection>
             )}
 
@@ -178,7 +179,7 @@ function DashboardContent() {
                     emptyIcon={Truck}
                     emptyMessage="No shipments on the way"
                 >
-                    <IncomingShipments />
+                    <ShipmentList />
                 </DashboardSection>
             )}
 
