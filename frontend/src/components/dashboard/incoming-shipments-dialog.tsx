@@ -1,6 +1,6 @@
 import { Truck } from "lucide-react";
 
-import { IncomingShipments } from "@/components/dashboard/incoming-shipments";
+import { ShipmentList } from "@/components/dashboard/progress-lists";
 import {
     Dialog,
     DialogContent,
@@ -44,7 +44,7 @@ export function IncomingShipmentsDialog({
                         Track your incoming resource shipments and deliveries.
                     </DialogDescription>
                 </DialogHeader>
-                <IncomingShipments />
+                <ShipmentList />
             </DialogContent>
         </Dialog>
     );

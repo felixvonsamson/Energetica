@@ -1,6 +1,6 @@
+// @ts-nocheck
 import reactHooks from "eslint-plugin-react-hooks";
 import react from "eslint-plugin-react";
-import jsdoc from "eslint-plugin-jsdoc";
 import importPlugin from "eslint-plugin-import";
 import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
@@ -12,6 +12,7 @@ export default defineConfig([
         ignores: ["node_modules/", "dist/", "*.config.ts", "*.config.js"],
     },
     ...tseslint.configs.recommended,
+    react.configs.flat.recommended,
     {
         files: ["src/**/*.{ts,tsx}"],
         languageOptions: {
@@ -41,9 +42,11 @@ export default defineConfig([
         },
         plugins: {
             import: importPlugin,
-            react: react,
         },
         settings: {
+            react: {
+                version: "detect",
+            },
             "import/resolver": {
                 typescript: {
                     alwaysTryTypes: true,
@@ -52,9 +55,6 @@ export default defineConfig([
                 node: true,
             },
             "import/internal-regex": "^@/",
-            react: {
-                version: "detect",
-            },
         },
         rules: {
             "import/order": [
@@ -87,12 +87,9 @@ export default defineConfig([
                     ],
                 },
             ],
-            // React-specific rules
-            "react/jsx-key": "error",
-            "react/jsx-no-target-blank": "error",
+            // React extras (recommended rules come from react.configs.flat.recommended above)
+            "react/no-unescaped-entities": "off",
             "react/no-array-index-key": "warn",
-            "react/no-children-prop": "error",
-            "react/no-danger-with-children": "error",
             "react/no-unstable-nested-components": "warn",
             "react/self-closing-comp": "warn",
             // TypeScript unused variables and imports
@@ -111,5 +108,4 @@ export default defineConfig([
     reactHooks.configs.flat["recommended-latest"],
     jsxA11y.flatConfigs.recommended,
     ...pluginQuery.configs["flat/recommended"],
-    // jsdoc.configs["flat/recommended"],
 ]);
