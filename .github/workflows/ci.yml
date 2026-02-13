@@ -7,6 +7,21 @@ on:
     branches: [main, dev, release/*]
 
 jobs:
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install
+        working-directory: frontend
+      - name: Typecheck
+        run: bun run typecheck
+        working-directory: frontend
+      - name: Lint
+        run: bun run lint
+        working-directory: frontend
+
   unit-tests:
     runs-on: ubuntu-latest
     steps:
