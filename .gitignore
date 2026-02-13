@@ -7,7 +7,6 @@ __pycache__
 **/node_modules/*
 .eslintcache
 energetica/static/react/*
-frontend/src/routeTree.gen.ts
 scripts/openapi-schema.json
 admin_accounts.txt
 *actions_history.log
