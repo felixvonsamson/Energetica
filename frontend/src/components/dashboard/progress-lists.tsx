@@ -202,7 +202,7 @@ function ProjectItem({ project }: ProjectItemProps) {
                         <AlertDialogAction variant="destructive" asChild>
                             <Button
                                 onClick={onCancel}
-                                disabled={cancelMutation.isPaused}
+                                disabled={cancelMutation.isPending}
                             >
                                 Continue
                             </Button>
