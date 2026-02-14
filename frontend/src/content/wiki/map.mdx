@@ -5,7 +5,7 @@ import { HydroTable } from "@/components/wiki/hydro-table";
 
 Upon creating an account, your initial task is to select a location on the map. It's crucial to note that this choice is **permanent**; there won't be any opportunity to expand or alter your chosen tile. Choose wisely.
 
-The map consists of a hexagonal grid comprising 331 tiles, visualized on Community > [Map](/map_view). The map can be considered as an island with rivers flowing from inside to the coast. The south of the map is considered to be at the equator, while the north is close to the north pole.
+The map consists of a hexagonal grid comprising 331 tiles, visualized on the [Map](/app/community/map) page. The map can be considered as an island with rivers flowing from inside to the coast. The south of the map is considered to be at the equator, while the north is close to the north pole.
 
 Each tile offers a specific assortment of resources and location specific climate risks. The six natural resources can be categorized into renewable and fossil fuel types:
 
@@ -15,7 +15,7 @@ _Note:_ In the following subsections, the concept of "locations" is used to expl
 
 ### Solar Potential
 
-The solar potential is expressed in Watts per square meter (W/m²), indicating the maximum irradiance achievable at this latitude. The higher this maximum irradiance, the greater the power production of photovoltaic (PV) and concentrated solar power (CSP) plants. See [solar power generation](/app/wiki/power-facilities#solar-power-generation) for more information.
+The solar potential is expressed in Watts per square meter (W/m²), indicating the maximum irradiance achievable at this latitude. The higher this maximum irradiance, the greater the power production of photovoltaic (PV) and concentrated solar power (CSP) plants. See [solar power generation](./power-facilities.mdx#solar-power-generation) for more information.
 
 ### Wind Potential
 
@@ -27,7 +27,7 @@ The following table illustrates the **capacity factors** of a wind facility base
 
 <WindTable />
 
-For more information about the power generation of wind facilities, refer to [Wind Power Generation](/app/wiki/power-facilities#wind-power-generation).
+For more information about the power generation of wind facilities, refer to [Wind Power Generation](./power-facilities.mdx#wind-power-generation).
 
 ### Hydro Potential
 
@@ -53,7 +53,7 @@ $$
 omc_{i,n} = omc_{i,base} \times pm(hp, n_i)
 $$
 
-For more information about the power generation of hydro facilities, refer to [Hydropower Generation](/app/wiki/power-facilities#hydro-power-generation).
+For more information about the power generation of hydro facilities, refer to [Hydropower Generation](./power-facilities.mdx#hydro-power-generation).
 
 ### General Notes
 
@@ -62,8 +62,8 @@ For more information about the power generation of hydro facilities, refer to [H
 
 ## Fossil Fuels
 
-- **Coal, Gas, and Uranium:** These indicate the quantity of each resource stored underground on a specific tile. Extraction Facilities allow you to extract these resources. For detailed procedures, consult the [extraction facilities](/app/wiki/resources#extraction-facilities) section.
+- **Coal, Gas, and Uranium:** These indicate the quantity of each resource stored underground on a specific tile. Extraction Facilities allow you to extract these resources. For detailed procedures, consult the [extraction facilities](./resources.mdx#extraction-facilities) section.
 
 ## Climate Risks
 
-Each tile has a specific climate risk score, which indicates the likelihood and severity of climate-related events (higher means higher risks). For example, heatwaves will be more frequent in tiles near the equator, while cold waves will be more common in polar regions. For more information, refer to the section on [Climate Events](/app/wiki/climate-effects#climate-events) for more information.
+Each tile has a specific climate risk score, which indicates the likelihood and severity of climate-related events (higher means higher risks). For example, heatwaves will be more frequent in tiles near the equator, while cold waves will be more common in polar regions. For more information, refer to the section on [Climate Events](./climate-effects.mdx#climate-events) for more information.

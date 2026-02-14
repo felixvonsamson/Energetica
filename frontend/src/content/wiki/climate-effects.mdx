@@ -5,7 +5,7 @@ import { WildfireOccurrenceTable } from "@/components/wiki/wildfire-occurrence-t
 
 # Wiki - Climate Change
 
-Once a player unlocks the climate change achievement (Research chemistry lvl 1), they will have access to the page [Emissions](/app/production/emissions) in the production overviews. There they will see the server's CO<sub>2</sub> concentration, the server's climate and their personal emissions.
+Once a player unlocks the climate change achievement (Research chemistry lvl 1), they will have access to the page [Emissions](/app/overviews/emissions) in the production overviews. There they will see the server's CO<sub>2</sub> concentration, the server's climate and their personal emissions.
 
 **Quick links:**
 
@@ -17,7 +17,7 @@ Once a player unlocks the climate change achievement (Research chemistry lvl 1),
 
 ## CO<sub>2</sub> Emissions
 
-Sources of CO<sub>2</sub> emissions are constructions and all facilities that consume fuel plus the steam engine (controllable facilities). Additionally, the functional facility [Carbon Capture](/app/wiki/functional-facilities#carbon-capture) can absorb CO<sub>2</sub> from the atmosphere and store it.
+Sources of CO<sub>2</sub> emissions are constructions and all facilities that consume fuel plus the steam engine (controllable facilities). Additionally, the functional facility [Carbon Capture](./functional-facilities.mdx#carbon-capture) can absorb CO<sub>2</sub> from the atmosphere and store it.
 
 The atmosphere is shared between all players and the CO<sub>2</sub> emitted by all players will increase the server's CO<sub>2</sub> concentration. The reference value for the server's "natural" CO<sub>2</sub> concentration is 300 ppm (parts per million) which corresponds to a base value of 40 Mt of CO<sub>2</sub> in the atmosphere.
 
@@ -31,7 +31,7 @@ The so called _global temperature anomaly_ is the difference between the server'
 
 Climate events have a low chance of occurring naturally every game tick however, the probability of their occurrence increases with climate change. Climate events are always negative and can have a wide range of consequences.
 
-All tiles do not have the same risk of being affected by a climate event. A climate risk score is visible in the [Map](/app/map) that indicates the probability and the severity of the climate events in each tile.
+All tiles do not have the same risk of being affected by a climate event. A climate risk score is visible in the [Map](/app/community/map) that indicates the probability and the severity of the climate events in each tile.
 
 ### Heatwave
 
@@ -58,7 +58,7 @@ Heatwaves have a higher chance of occurring with higher global temperatures. The
     ]}
 />
 
-The probability of the occurrence of a heatwave is affected by both the global temperature anomaly (the bigger the deviation the higher the risk) and the server's current GAT (the higher the temperature the higher the risk). The following table shows the expected occurrence of heatwaves per [in-game day](/app/wiki/time-and-weather#game-time) depending on the Reference GAT and the temperature anomaly.
+The probability of the occurrence of a heatwave is affected by both the global temperature anomaly (the bigger the deviation the higher the risk) and the server's current GAT (the higher the temperature the higher the risk). The following table shows the expected occurrence of heatwaves per [in-game day](./time-and-weather.mdx#game-time) depending on the Reference GAT and the temperature anomaly.
 
 <HeatwaveOccurrenceTable />
 
@@ -84,7 +84,7 @@ Coldwaves have a higher chance of occurring with lower global temperatures. They
     ]}
 />
 
-The probability of the occurrence of a coldwave is affected by both the global temperature anomaly (the bigger the deviation the higher the risk) and the server's current GAT (the lower the temperature the higher the risk). The following table shows the expected occurrence of coldwaves per [in-game day](/app/wiki/time-and-weather#game-time) depending on the Reference GAT and the temperature anomaly.
+The probability of the occurrence of a coldwave is affected by both the global temperature anomaly (the bigger the deviation the higher the risk) and the server's current GAT (the lower the temperature the higher the risk). The following table shows the expected occurrence of coldwaves per [in-game day](./time-and-weather.mdx#game-time) depending on the Reference GAT and the temperature anomaly.
 
 <ColdwaveOccurrenceTable />
 
@@ -133,7 +133,7 @@ Wildfires have a higher chance of occurring with higher global temperatures. The
     ]}
 />
 
-The probability of the occurrence of a wildfire is affected by the server's current GAT, the higher the temperature the higher the risk. The following table shows the expected occurrence of wildfires per [in-game day](/app/wiki/time-and-weather#game-time) depending on the Reference GAT and the temperature anomaly.
+The probability of the occurrence of a wildfire is affected by the server's current GAT, the higher the temperature the higher the risk. The following table shows the expected occurrence of wildfires per [in-game day](./time-and-weather.mdx#game-time) depending on the Reference GAT and the temperature anomaly.
 
 <WildfireOccurrenceTable />
 
@@ -182,7 +182,7 @@ Floods can only occur in tiles with a hydro potential higher than 20% and have a
     ]}
 />
 
-The probability of the occurrence of a flood is affected by the server's current temperature anomaly, the higher the deviation the higher the risk. The following graph shows the expected occurrence of floods per [in-game day](/app/wiki/time-and-weather#game-time) depending on the temperature anomaly.
+The probability of the occurrence of a flood is affected by the server's current temperature anomaly, the higher the deviation the higher the risk. The following graph shows the expected occurrence of floods per [in-game day](./time-and-weather.mdx#game-time) depending on the temperature anomaly.
 
 ![Expected occurrence graph for floods](/static/images/wiki/expected_occurrence_flood.jpg)
 
@@ -221,7 +221,7 @@ The hurricane is the most destructive climate event. It can occur anywhere on th
     ]}
 />
 
-The probability of the occurrence of a hurricane is affected by the server's current temperature anomaly, the higher the deviation the higher the risk. The following graph shows the expected occurrence of hurricanes per [in-game day](/app/wiki/time-and-weather#game-time) depending on the temperature anomaly.
+The probability of the occurrence of a hurricane is affected by the server's current temperature anomaly, the higher the deviation the higher the risk. The following graph shows the expected occurrence of hurricanes per [in-game day](./time-and-weather.mdx#game-time) depending on the temperature anomaly.
 
 ![Expected occurrence graph for hurricanes](/static/images/wiki/expected_occurrence_hurricane.jpg)
 

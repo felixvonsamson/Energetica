@@ -18,7 +18,7 @@ The current in-game weather conditions, consisting of solar irradiance, wind spe
 
 ### Solar Irradiance
 
-The solar irradiance is used to calculate the electricity production of [solar power facilities](/app/wiki/power-facilities#solar-power-generation).
+The solar irradiance is used to calculate the electricity production of [solar power facilities](./power-facilities.mdx#solar-power-generation).
 
 Solar irradiance is the power per unit area received from the sun and is measured in watts per square meter (W/m²). The solar irradiance is influenced by the time of day, the season, the geographical location and the cloud coverage of the sky. The seasonal, diurnal and geographical influence can be modelled with a clear sky irradiance model, however the cloud coverage is much more stochastic. The game generates a three dimensional perlin noise moving in time to simulate the moving clouds with some regions with high cloud coverage and some with low or no cloud coverage. The following image shows how this cloud coverage over the map looks like.
 
@@ -34,12 +34,12 @@ When a facility is built, a random location inside the player's tile is attribut
 
 ### Wind Speed
 
-The wind speed is used to calculate the electricity production of [wind power facilities](/app/wiki/power-facilities#wind-power-generation).
+The wind speed is used to calculate the electricity production of [wind power facilities](./power-facilities.mdx#wind-power-generation).
 
 The wind speed is given in kilometres per hour (km/h) and varies with different frequencies. In the game it is modelled with a tree dimensional perlin noise superposed with a sinusoidal function to simulate the daily and seasonal variations. In general the wind is stronger during the night and in winter than during the day and in summer but the exact values are random and vary from one location to another.
 
 ### River Discharge
 
-The river discharge is used to calculate the electricity production of [hydropower facilities](/app/wiki/power-facilities#hydro-power-generation).
+The river discharge is used to calculate the electricity production of [hydropower facilities](./power-facilities.mdx#hydro-power-generation).
 
-The river discharge is given in cubic meters per second (m³/s) and varies seasonally (see [figure](/app/wiki/power-facilities#seasonal-variation-rivers-graph)).
+The river discharge is given in cubic meters per second (m³/s) and varies seasonally (see [figure](./power-facilities.mdx#seasonal-variation-rivers-graph)).
