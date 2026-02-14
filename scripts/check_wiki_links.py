@@ -31,6 +31,41 @@ def extract_hrefs(content: str) -> list[str]:
     return hrefs
 
 
+def github_slug(text: str) -> str:
+    """Convert heading text to an anchor ID using the github-slugger algorithm."""
+    text = re.sub(r"<[^>]+>", "", text)  # strip HTML tags
+    text = text.lower()
+    # Keep only alphanumeric, underscore, space, hyphen (mirrors github-slugger regex)
+    text = re.sub(r"[^\w\s-]", "", text)
+    text = text.replace(" ", "-")
+    return text
+
+
+def extract_anchors(mdx_path: Path) -> set[str]:
+    """Extract all valid anchor IDs from an MDX file.
+
+    Includes heading-derived IDs (github-slugger algorithm, with duplicate
+    tracking) and explicit id="..." attributes.
+    """
+    content = mdx_path.read_text()
+    anchors: set[str] = set()
+    occurrences: dict[str, int] = {}
+
+    for m in re.finditer(r"^#{1,6}\s+(.+)$", content, re.MULTILINE):
+        base = github_slug(m.group(1).rstrip())
+        if base in occurrences:
+            occurrences[base] += 1
+            anchors.add(f"{base}-{occurrences[base]}")
+        else:
+            occurrences[base] = 0
+            anchors.add(base)
+
+    for m in re.finditer(r'id="([^"]+)"', content):
+        anchors.add(m.group(1))
+
+    return anchors
+
+
 def build_route_patterns(routes_dir: Path) -> list[re.Pattern]:
     """Build regex patterns from TanStack Router file-based route files."""
     patterns = []
@@ -68,10 +103,16 @@ def check_url(url: str) -> int | str:
 
 def validate(href: str, route_patterns: list[re.Pattern]) -> tuple[bool, str]:
     """Returns (ok, status_label) for a given href."""
-    base = href.split("#")[0]
+    base, _, anchor = href.partition("#")
     if base.startswith("./") and base.endswith(".mdx"):
-        exists = (WIKI_DIR / base[2:]).exists()
-        return exists, "file" if exists else "missing"
+        mdx_path = WIKI_DIR / base[2:]
+        if not mdx_path.exists():
+            return False, "missing"
+        if anchor:
+            valid = extract_anchors(mdx_path)
+            if anchor not in valid:
+                return False, f"no anchor #{anchor}"
+        return True, "file"
     if base.startswith("/app/"):
         ok = check_app_route(base, route_patterns)
         return ok, "route" if ok else "no route"
@@ -113,13 +154,16 @@ def main():
             href_sources.setdefault(href, []).append(slug)
 
     # ── Link check ────────────────────────────────────────────────
-    # Deduplicate by base path (strip hash) for HTTP checks, keep full href for display
-    seen_bases: set[str] = set()
+    # For .mdx links, use the full href as the key so each unique anchor is checked.
+    # For HTTP/route links, deduplicate by base to avoid redundant network requests.
+    seen_keys: set[str] = set()
     unique_hrefs: list[str] = []
     for href in href_sources:
         base = href.split("#")[0]
-        if base not in seen_bases:
-            seen_bases.add(base)
+        is_mdx = base.startswith("./") and base.endswith(".mdx")
+        key = href if is_mdx else base
+        if key not in seen_keys:
+            seen_keys.add(key)
             unique_hrefs.append(href)
 
     print(f"{BOLD}Checking {len(unique_hrefs)} unique links...{RESET}\n")
