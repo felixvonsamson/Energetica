@@ -53,6 +53,7 @@ const router = createRouter({
         queryClient,
     },
     stringifySearch: stringifySearchWithFlags,
+    scrollRestoration: true,
 });
 
 declare module "@tanstack/react-router" {

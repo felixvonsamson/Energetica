@@ -7,9 +7,11 @@ repos:
       - id: ruff-check
         types_or: [python, pyi]
         args: [--fix]
+        files: ^energetica/
       # Run the formatter for python.
       - id: ruff-format
         types_or: [python, pyi]
+        files: ^energetica/
 
   - repo: local
     hooks:
@@ -18,7 +20,7 @@ repos:
         name: lint-staged
         entry: npx lint-staged
         language: system
-        always_run: true
+        files: ^frontend/src/.*\.(ts|tsx)$
         pass_filenames: false
       - id: frontend-typecheck
         name: frontend typecheck

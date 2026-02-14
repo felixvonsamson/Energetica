@@ -4,7 +4,7 @@ import { PropertiesTable } from "@/components/wiki/properties-table";
 
 Functional Facilities in Energetica are distinct from power, storage, and extraction facilities as they operate on a level-based system. Each upgrade to a higher level incurs increasing costs in terms of construction price, time, and energy.
 
-For more information about building functional facilities, see [Starting a Project](/app/wiki/projects#starting-a-project).
+For more information about building functional facilities, see [Starting a Project](./projects.mdx#starting-a-project).
 
 There are four unique functional facilities:
 
@@ -18,7 +18,7 @@ $$
 D = D_{base} \times dv(t) \times sv(t)
 $$
 
-with $D_{base}$ the base demand as indicated on the page [Functional facilities](/app/functional-facilities), $dv()$ the daily variations shown in the following graph, $sv()$ the seasonal variations shown in the following graph and $t$ the in-game date and time ([1 in-game year = 72 real-time days](/app/wiki/time-and-weather#game-time)).
+with $D_{base}$ the base demand as indicated on the page [Functional facilities](/app/facilities/functional), $dv()$ the daily variations shown in the following graph, $sv()$ the seasonal variations shown in the following graph and $t$ the in-game date and time ([1 in-game year = 72 real-time days](./time-and-weather.mdx#game-time)).
 
 <div className="flex flex-row flex-wrap justify-center gap-4 py-8">
     <img
@@ -37,7 +37,7 @@ If the industry's demand isn't met, revenues are proportional to the satisfactio
 
 ## The Laboratory
 
-The laboratory is needed for researching [technologies](/app/wiki/technologies). Different technology levels require corresponding laboratory levels. It also enhances research speed by 10% and for every 3rd upgrade, a new lab worker is unlocked.
+The laboratory is needed for researching [technologies](./technologies.mdx). Different technology levels require corresponding laboratory levels. It also enhances research speed by 10% and for every 3rd upgrade, a new lab worker is unlocked.
 
 ## The Warehouse
 
@@ -69,6 +69,6 @@ with:
 - $ar_{CO_2}$ : CO<sub>2</sub> absorption rate in kg/h
 - $ar_{base}$ : base value for fraction of CO<sub>2</sub> that can be absorbed from the atmosphere : 0.000005/h
 - $q_{CO_2,atm}$ : amount of CO<sub>2</sub> in the atmosphere in kg
-- $CC$ : level of [Carbon Capture](/app/functional-facilities#carbon-capture)
+- $CC$ : level of [Carbon Capture](/app/facilities/functional#carbon-capture)
 - $P_{CC}$ : power consumed by carbon capture
 - $P_{base}$ : base power consumption of carbon capture : 10 MW

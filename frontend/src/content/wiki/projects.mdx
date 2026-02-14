@@ -22,36 +22,34 @@ There are different types of projects that can be started on their corresponding
                 <tr>
                     <td className="px-4 py-2">Constructions</td>
                     <td className="px-4 py-2">
-                        <a href="/app/wiki/power-facilities">
-                            Power Facilities
-                        </a>
+                        <a href="./power-facilities.mdx">Power Facilities</a>
                         <br />
-                        <a href="/app/wiki/storage-facilities">
+                        <a href="./storage-facilities.mdx">
                             Storage Facilities
                         </a>
                         <br />
-                        <a href="/app/wiki/resources#extraction-facilities">
+                        <a href="./resources.mdx#extraction-facilities">
                             Extraction Facilities
                         </a>
                         <br />
-                        <a href="/app/wiki/functional-facilities">
+                        <a href="./functional-facilities.mdx">
                             Functional Facilities
                         </a>
                     </td>
                     <td className="px-4 py-2">
-                        <a href="/app/power-facilities">
+                        <a href="/app/facilities/power">
                             Power Facilities page
                         </a>
                         <br />
-                        <a href="/app/storage-facilities">
+                        <a href="/app/facilities/storage">
                             Storage Facilities page
                         </a>
                         <br />
-                        <a href="/app/extraction-facilities">
+                        <a href="/app/facilities/extraction">
                             Extraction Facilities page
                         </a>
                         <br />
-                        <a href="/app/functional-facilities">
+                        <a href="/app/facilities/functional">
                             Functional Facilities page
                         </a>
                     </td>
@@ -59,21 +57,23 @@ There are different types of projects that can be started on their corresponding
                 <tr>
                     <td className="px-4 py-2">Researches</td>
                     <td className="px-4 py-2">
-                        <a href="/app/wiki/technologies">Technologies</a>
+                        <a href="./technologies.mdx">Technologies</a>
                     </td>
                     <td className="px-4 py-2">
-                        <a href="/app/technology">Technology page</a>
+                        <a href="/app/facilities/technology">Technology page</a>
                     </td>
                 </tr>
                 <tr>
                     <td className="px-4 py-2">Shipments</td>
                     <td className="px-4 py-2">
-                        <a href="/app/wiki/resources#resource-market">
+                        <a href="./resources.mdx#resource-market">
                             Resource Market
                         </a>
                     </td>
                     <td className="px-4 py-2">
-                        <a href="/app/resource-market">Resource Market page</a>
+                        <a href="/app/community/resource-market">
+                            Resource Market page
+                        </a>
                     </td>
                 </tr>
             </tbody>
@@ -144,15 +144,15 @@ Players can queue arbitrarily many projects at any time, but only projects with 
 
 Note: shipments do not require workers - all resources start shipment immediately after the order is placed and it cannot be interrupted.
 
-Every player starts with one construction worker and, after building a [Laboratory](/app/functional-facilities#laboratory), one research worker.
+Every player starts with one construction worker and, after building a [Laboratory](/app/facilities/functional#laboratory), one research worker.
 
-Researching [Building Technology](/app/technology#building-technology) will unlock additional construction workers, and increase the speed of construction projects.
+Researching [Building Technology](/app/facilities/technology#building-technology) will unlock additional construction workers, and increase the speed of construction projects.
 
-Upgrading the [Laboratory](/app/functional-facilities#laboratory) will unlock additional research workers (every third upgrade), and increase the speed of research projects.
+Upgrading the [Laboratory](/app/facilities/functional#laboratory) will unlock additional research workers (every third upgrade), and increase the speed of research projects.
 
 ### Tracking Project Progression
 
-Players can keep track of project progress through the [Dashboard](/app/home).
+Players can keep track of project progress through the [Dashboard](/app/dashboard).
 
 <div className="flex justify-center my-8">
     <img
@@ -178,7 +178,7 @@ Constructions and research projects can be cancelled at any time using the cross
 
 ## Managing Active Facilities
 
-Once a construction project is completed, it becomes an active facility. They are listed on the [Profile](/app/profile) page.
+Once a construction project is completed, it becomes an active facility. They are listed on the [Facility Management](/app/facilities/manage) page.
 
 <div className="flex justify-center my-8">
     <img
@@ -192,7 +192,7 @@ Once a construction project is completed, it becomes an active facility. They ar
 
 Each power, storage, and extraction facility incurs operational and maintenance costs. For renewable power facilities and storage facilities, these costs are fixed, while for controllable power facilities and extraction facilities, there is both a fixed and a variable component. The fixed costs represent 20% of the total O&M costs, while the variable costs, dependent on the power production / consumption of the facility, constitute the remaining 80%. As an exception, nuclear facilities, such as the Nuclear Reactor and Gen4 Nuclear, differ in that they have a fixed cost fraction of 50%. The O&M costs provided for each facility in the power facilities page are based on 100% power production / consumption.
 
-Players can keep track of their O&M costs over time through the [Revenues](/app/overviews/revenues) graphs.
+Players can keep track of their O&M costs over time through the [Cash Flow](/app/overviews/cash-flow) graphs.
 
 ### Upgrades
 

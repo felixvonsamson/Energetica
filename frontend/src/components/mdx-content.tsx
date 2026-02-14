@@ -3,7 +3,8 @@
  * anchor scrolling support. Used by wiki pages and changelog.
  */
 
-import { type ReactNode, useEffect } from "react";
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import { type ReactNode, useEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -26,24 +27,46 @@ export function MdxContent({
     className,
     enableHashScroll = true,
 }: MdxContentProps) {
-    useEffect(() => {
-        if (!enableHashScroll) return;
+    const navigate = useNavigate();
+    const { hash } = useLocation();
+    const articleRef = useRef<HTMLElement>(null);
 
-        // After content is mounted, scroll to hash if present
-        const hash = window.location.hash;
-        if (hash) {
-            // Use setTimeout to ensure the DOM is fully rendered
-            setTimeout(() => {
-                const element = document.getElementById(hash.slice(1));
-                if (element) {
-                    element.scrollIntoView({ behavior: "smooth" });
-                }
-            }, 0);
+    useEffect(() => {
+        const article = articleRef.current;
+        if (!article) return;
+
+        function handleClick(e: MouseEvent) {
+            const anchor = (e.target as HTMLElement).closest("a");
+            if (!anchor) return;
+            const href = anchor.getAttribute("href");
+            const mdxMatch = href?.match(/^\.\/([^#]+)\.mdx(#.*)?$/);
+            if (mdxMatch) {
+                e.preventDefault();
+                navigate({
+                    to: "/app/wiki/$slug",
+                    params: { slug: mdxMatch[1]! },
+                    hash: mdxMatch[2]?.slice(1),
+                });
+            }
         }
-    }, [enableHashScroll]);
+
+        article.addEventListener("click", handleClick);
+        return () => article.removeEventListener("click", handleClick);
+    }, [navigate]);
+
+    useEffect(() => {
+        if (!enableHashScroll || !hash) return;
+
+        // Scroll to hash after render. Re-runs whenever the hash changes so
+        // wiki-to-wiki navigation (same MdxContent instance, new hash) works.
+        setTimeout(() => {
+            document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
+        }, 0);
+    }, [enableHashScroll, hash]);
 
     return (
         <article
+            ref={articleRef}
             className={cn(
                 "max-w-4xl mx-auto prose prose-lg dark:prose-invert",
                 className,
