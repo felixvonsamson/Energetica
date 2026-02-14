@@ -3,7 +3,7 @@
  * anchor scrolling support. Used by wiki pages and changelog.
  */
 
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
@@ -28,6 +28,7 @@ export function MdxContent({
     enableHashScroll = true,
 }: MdxContentProps) {
     const navigate = useNavigate();
+    const { hash } = useLocation();
     const articleRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -54,20 +55,14 @@ export function MdxContent({
     }, [navigate]);
 
     useEffect(() => {
-        if (!enableHashScroll) return;
+        if (!enableHashScroll || !hash) return;
 
-        // After content is mounted, scroll to hash if present
-        const hash = window.location.hash;
-        if (hash) {
-            // Use setTimeout to ensure the DOM is fully rendered
-            setTimeout(() => {
-                const element = document.getElementById(hash.slice(1));
-                if (element) {
-                    element.scrollIntoView({ behavior: "smooth" });
-                }
-            }, 0);
-        }
-    }, [enableHashScroll]);
+        // Scroll to hash after render. Re-runs whenever the hash changes so
+        // wiki-to-wiki navigation (same MdxContent instance, new hash) works.
+        setTimeout(() => {
+            document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
+        }, 0);
+    }, [enableHashScroll, hash]);
 
     return (
         <article
