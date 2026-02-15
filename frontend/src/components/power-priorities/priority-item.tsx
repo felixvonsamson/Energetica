@@ -1,6 +1,7 @@
 /**
  * Priority item component - displays a single facility in the priority list.
  * Shows facility name, status, current power, price input, and bump buttons.
+ * Owns its own mutation logic for bump reordering and price editing.
  */
 
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -15,28 +16,25 @@ import type {
 import { AssetName } from "@/components/ui/asset-name";
 import { Button } from "@/components/ui/button";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
+import { useUpdateElectricityPrices } from "@/hooks/use-power-priorities";
 import { formatPower } from "@/lib/format-utils";
-import { getPriorityItemDisplayName } from "@/lib/power-priorities-utils";
+import { getPriorityItemKey, getPriorityItemDisplayName } from "@/lib/power-priorities-utils";
 import { cn } from "@/lib/utils";
 import type { ApiResponse } from "@/types/api-helpers";
 
 interface PriorityItemProps {
     /** The priority item to display */
     item: PowerPriorityItem;
+    /** The complete unified priority array — needed to compute reorders */
+    allPriorities: PowerPriorityItem[];
     /** Consumption priority (1-based, null if not a consumption item) */
     consumptionPriority: number | null;
     /** Production priority (1-based, null if not a production item) */
     productionPriority: number | null;
-    /** Called when the user commits a new price (blur / Enter) */
-    onPriceCommit: (newPrice: number) => void;
-    /** Called when the user clicks a bump button */
-    onBump: (direction: "up" | "down") => void;
     /** Whether the ↑ bump button should be disabled (already at top of list) */
     canBumpUp: boolean;
     /** Whether the ↓ bump button should be disabled (already at bottom of list) */
     canBumpDown: boolean;
-    /** Disable all interaction while a mutation is in flight */
-    isMutating?: boolean;
     /** Facility statuses from the API */
     statuses: ApiResponse<"/api/v1/facilities/statuses", "get">;
     /** Current power level in MW */
@@ -55,17 +53,18 @@ interface PriorityItemProps {
  */
 export function PriorityItem({
     item,
+    allPriorities,
     consumptionPriority,
     productionPriority,
-    onPriceCommit,
-    onBump,
     canBumpUp,
     canBumpDown,
-    isMutating = false,
     statuses,
     currentPowerMW = 0,
     capacityMW = 0,
 }: PriorityItemProps) {
+    const updateElectricityPrices = useUpdateElectricityPrices();
+    const isMutating = updateElectricityPrices.isPending;
+
     const suffix = getPriorityItemDisplayName(item);
 
     const status: ProductionStatus | ConsumptionStatus | null | undefined =
@@ -76,12 +75,71 @@ export function PriorityItem({
     const isConsumption = item.side === "bid";
     const isProduction = item.side === "ask";
 
+    /** Submits updated prices derived from a reordered/repriced priority array. */
+    const submitPrices = async (updatedPriorities: PowerPriorityItem[]) => {
+        const asks = updatedPriorities
+            .filter((p) => p.side === "ask")
+            .map((p) => ({ type: p.type, price: p.price || 0 }));
+        const bids = updatedPriorities
+            .filter((p) => p.side === "bid")
+            .map((p) => ({ type: p.type, price: p.price || 0 }));
+        await updateElectricityPrices.mutateAsync({ asks, bids });
+    };
+
+    /**
+     * Bumps this item one step up or down in the visual table by swapping it
+     * with its neighbour in allPriorities, then redistributing prices so the
+     * order is preserved on the backend (which sorts by price ascending).
+     */
+    const handleBump = async (direction: "up" | "down") => {
+        const idx = allPriorities.findIndex(
+            (p) => getPriorityItemKey(p) === getPriorityItemKey(item),
+        );
+        if (idx === -1) return;
+
+        // "up" in the visual table = move to higher allPriorities index (lower priority).
+        // "down" = lower allPriorities index (higher priority).
+        const neighbourIdx = direction === "up" ? idx + 1 : idx - 1;
+        if (neighbourIdx < 0 || neighbourIdx >= allPriorities.length) return;
+
+        const reordered = [...allPriorities];
+        const a = reordered[idx]!;
+        const b = reordered[neighbourIdx]!;
+        reordered[idx] = b;
+        reordered[neighbourIdx] = a;
+
+        // Redistribute existing prices to match the new order so the backend
+        // stores them in the intended sequence.
+        const sortedPrices = [...reordered.map((p) => p.price)].sort(
+            (a, b) => a - b,
+        );
+        const withPrices = reordered.map((p, i) => ({
+            ...p,
+            price: sortedPrices[i] ?? p.price,
+        }));
+
+        await submitPrices(withPrices);
+    };
+
+    /**
+     * Applies a direct price edit. Re-sorts the priority list by the new
+     * prices so the backend order stays consistent.
+     */
+    const handlePriceCommit = async (newPrice: number) => {
+        const key = getPriorityItemKey(item);
+        const updated = allPriorities.map((p) =>
+            getPriorityItemKey(p) === key ? { ...p, price: newPrice } : p,
+        );
+        const sorted = [...updated].sort((a, b) => a.price - b.price);
+        await submitPrices(sorted);
+    };
+
     const bumpButtons = (priority: number) => (
         <div className="inline-flex items-center gap-1">
             <Button
                 variant="ghost"
                 size="icon-sm"
-                onClick={() => onBump("up")}
+                onClick={() => handleBump("up")}
                 disabled={!canBumpUp || isMutating}
                 title="Move up (lower priority)"
                 aria-label="Move up"
@@ -94,7 +152,7 @@ export function PriorityItem({
             <Button
                 variant="secondary"
                 size="icon-sm"
-                onClick={() => onBump("down")}
+                onClick={() => handleBump("down")}
                 disabled={!canBumpDown || isMutating}
                 title="Move down (higher priority)"
                 aria-label="Move down"
@@ -158,7 +216,7 @@ export function PriorityItem({
             <td className="py-0 px-3 bg-secondary">
                 <PriceInput
                     value={item.price}
-                    onCommit={onPriceCommit}
+                    onCommit={handlePriceCommit}
                     disabled={isMutating}
                 />
             </td>

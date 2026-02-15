@@ -1,72 +1,108 @@
 /**
  * Priority table component - displays all production and consumption facilities
- * in a single interleaved table. Supports bump-button reordering and inline
- * price editing.
+ * in a single interleaved table. Fetches its own data. Supports bump-button
+ * reordering and inline price editing (delegated to each PriorityItem row).
  */
+
+import { useMemo } from "react";
 
 import { PriorityItem } from "@/components/power-priorities/priority-item";
 import { RenewablesSection } from "@/components/power-priorities/renewables-section";
-import type {
-    PowerPriorityItem,
-    RenewableFacilityType,
-} from "@/components/power-priorities/types";
 import { Card, CardContent } from "@/components/ui";
+import { useLatestChartDataSlice } from "@/hooks/use-charts";
+import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
+import { usePowerPriorities } from "@/hooks/use-power-priorities";
 import { getPriorityItemKey } from "@/lib/power-priorities-utils";
-import type { ApiResponse } from "@/types/api-helpers";
 
-interface PriorityTableProps {
-    /** Renewable facilities shown at the end of the table */
-    renewables?: RenewableFacilityType[];
-    /** Called when user bumps a row up or down */
-    onBump: (item: PowerPriorityItem, direction: "up" | "down") => void;
-    /** Called when user commits a price edit */
-    onPriceCommit: (item: PowerPriorityItem, newPrice: number) => void;
-    /** Whether a mutation is in flight (disables all interactive controls) */
-    isMutating?: boolean;
-    /** The complete unified priority array (index 0 = highest priority) */
-    allPriorities?: PowerPriorityItem[];
-    /** Facility statuses from the API */
-    statuses: ApiResponse<"/api/v1/facilities/statuses", "get">;
-    /** Production power levels by facility type */
-    productionPowerLevels?: Partial<Record<string, number>>;
-    /** Consumption power levels by facility type */
-    consumptionPowerLevels?: Partial<Record<string, number>>;
-    /** Production capacity by facility type */
-    productionCapacityByType?: Record<string, number>;
-    /** Consumption capacity by facility type */
-    consumptionCapacityByType?: Record<string, number>;
-}
+export function PriorityTable() {
+    const { data: prioritiesData, isLoading, error } = usePowerPriorities();
+    const {
+        data: statusesData,
+        isLoading: statusesLoading,
+        error: statusesError,
+    } = useFacilityStatuses();
+    const { data: facilitiesData } = useFacilities();
 
-export function PriorityTable({
-    renewables = [],
-    onBump,
-    onPriceCommit,
-    isMutating = false,
-    allPriorities = [],
-    statuses,
-    productionPowerLevels = {},
-    consumptionPowerLevels = {},
-    productionCapacityByType = {},
-    consumptionCapacityByType = {},
-}: PriorityTableProps) {
+    const { data: productionPowerLevels } = useLatestChartDataSlice({
+        chartType: "power-sources",
+    });
+    const { data: consumptionPowerLevels } = useLatestChartDataSlice({
+        chartType: "power-sinks",
+    });
+
+    const productionCapacityByType = useMemo(() => {
+        if (!facilitiesData) return {};
+        const capacities: Record<string, number> = {};
+        facilitiesData.power_facilities.forEach((f) => {
+            capacities[f.facility] =
+                (capacities[f.facility] ?? 0) + f.max_power_generation;
+        });
+        facilitiesData.storage_facilities.forEach((f) => {
+            capacities[f.facility] =
+                (capacities[f.facility] ?? 0) + f.max_power_generation;
+        });
+        return capacities;
+    }, [facilitiesData]);
+
+    const consumptionCapacityByType = useMemo(() => {
+        if (!facilitiesData) return {};
+        const capacities: Record<string, number> = {};
+        facilitiesData.extraction_facilities.forEach((f) => {
+            capacities[f.facility] =
+                (capacities[f.facility] ?? 0) + f.max_power_use;
+        });
+        facilitiesData.storage_facilities.forEach((f) => {
+            capacities[f.facility] =
+                (capacities[f.facility] ?? 0) + f.max_power_use;
+        });
+        return capacities;
+    }, [facilitiesData]);
+
+    if (isLoading || statusesLoading) {
+        return (
+            <div className="p-4 md:p-8 text-center">
+                <p className="text-lg">Loading power priorities...</p>
+            </div>
+        );
+    }
+
+    if (error || statusesError) {
+        return (
+            <div className="p-4 md:p-8 text-center text-alert-red">
+                <p className="text-lg">Error loading power priorities</p>
+                <p className="text-sm mt-2">
+                    {error instanceof Error
+                        ? error.message
+                        : statusesError instanceof Error
+                          ? statusesError.message
+                          : "Unknown error"}
+                </p>
+            </div>
+        );
+    }
+
+    if (!prioritiesData || !statusesData) {
+        return null;
+    }
+
+    const { renewables, power_priorities } = prioritiesData;
+
     // Reverse so the table reads top=lowest-priority, bottom=highest-priority.
-    // The bump logic operates on allPriorities indices, so we pass the original
-    // index to each item via a closure.
-    const displayItems = [...allPriorities].reverse();
+    const displayItems = [...power_priorities].reverse();
 
     const renderPriorityItems = () =>
         displayItems.map((item, displayIndex) => {
-            const originalIndex = allPriorities.findIndex(
+            const originalIndex = power_priorities.findIndex(
                 (p) => getPriorityItemKey(p) === getPriorityItemKey(item),
             );
 
-            const consumptionItemsAfter = allPriorities
+            const consumptionItemsAfter = power_priorities
                 .slice(originalIndex + 1)
                 .filter((i) => i.side === "bid").length;
             const consumptionPriority =
                 item.side === "bid" ? consumptionItemsAfter + 1 : null;
 
-            const productionItemsBefore = allPriorities
+            const productionItemsBefore = power_priorities
                 .slice(0, originalIndex)
                 .filter((i) => i.side === "ask").length;
             const productionPriority =
@@ -81,8 +117,6 @@ export function PriorityTable({
                     ? productionCapacityByType[item.type]
                     : consumptionCapacityByType[item.type];
 
-            // canBumpUp: can move higher up the visual table (lower overall priority)
-            // canBumpDown: can move lower in the visual table (higher overall priority)
             const canBumpUp = displayIndex > 0;
             const canBumpDown = displayIndex < displayItems.length - 1;
 
@@ -90,14 +124,12 @@ export function PriorityTable({
                 <PriorityItem
                     key={getPriorityItemKey(item)}
                     item={item}
+                    allPriorities={power_priorities}
                     consumptionPriority={consumptionPriority}
                     productionPriority={productionPriority}
-                    onPriceCommit={(newPrice) => onPriceCommit(item, newPrice)}
-                    onBump={(direction) => onBump(item, direction)}
                     canBumpUp={canBumpUp}
                     canBumpDown={canBumpDown}
-                    isMutating={isMutating}
-                    statuses={statuses}
+                    statuses={statusesData}
                     currentPowerMW={currentPowerMW}
                     capacityMW={capacityMW}
                 />
@@ -141,7 +173,7 @@ export function PriorityTable({
                             {renewables.length > 0 && (
                                 <RenewablesSection
                                     renewables={renewables}
-                                    statuses={statuses}
+                                    statuses={statusesData}
                                     productionPowerLevels={
                                         productionPowerLevels
                                     }
