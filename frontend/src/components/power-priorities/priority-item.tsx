@@ -1,8 +1,7 @@
 /**
  * Priority item component - displays a single facility in the priority list.
- * Self-contained: fetches its own data, derives all display values from
- * allPriorities, and owns its mutation logic for bump reordering and price
- * editing.
+ * Self-contained: fetches its own data, and owns its mutation logic for bump
+ * reordering and price editing.
  */
 
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -20,16 +19,20 @@ import { Button } from "@/components/ui/button";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
-import { useUpdateElectricityPrices } from "@/hooks/use-power-priorities";
+import {
+    usePowerPriorities,
+    useUpdateElectricityPrices,
+} from "@/hooks/use-power-priorities";
 import { formatPower } from "@/lib/format-utils";
-import { getPriorityItemKey, getPriorityItemDisplayName } from "@/lib/power-priorities-utils";
+import { getPriorityItemDisplayName } from "@/lib/power-priorities-utils";
 import { cn } from "@/lib/utils";
 
 interface PriorityItemProps {
-    /** The priority item to display */
     item: PowerPriorityItem;
-    /** The complete unified priority array — used to derive ordering and display values */
-    allPriorities: PowerPriorityItem[];
+    /** Index of this item in the original (high→low priority) array */
+    originalIndex: number;
+    canBumpUp: boolean;
+    canBumpDown: boolean;
 }
 
 /**
@@ -40,10 +43,17 @@ interface PriorityItemProps {
  * variant="secondary" — ↓ is always the "increase priority" action for both
  * sides, so it gets the visual weight.
  */
-export function PriorityItem({ item, allPriorities }: PriorityItemProps) {
+export function PriorityItem({
+    item,
+    originalIndex,
+    canBumpUp,
+    canBumpDown,
+}: PriorityItemProps) {
     const updateElectricityPrices = useUpdateElectricityPrices();
     const isMutating = updateElectricityPrices.isPending;
 
+    // Cached — no extra network request.
+    const { data: prioritiesData } = usePowerPriorities();
     const { data: statusesData } = useFacilityStatuses();
     const { data: facilitiesData } = useFacilities();
     const { data: productionPowerLevels } = useLatestChartDataSlice({
@@ -62,29 +72,6 @@ export function PriorityItem({ item, allPriorities }: PriorityItemProps) {
 
     const isConsumption = item.side === "bid";
     const isProduction = item.side === "ask";
-
-    // Derive position and bump eligibility from allPriorities.
-    // allPriorities[0] = highest priority; the table displays in reverse
-    // (top = lowest priority), so:
-    //   canBumpUp   = item can move toward top of screen (lower priority) = not already last in array
-    //   canBumpDown = item can move toward bottom of screen (higher priority) = not already first in array
-    const originalIndex = allPriorities.findIndex(
-        (p) => getPriorityItemKey(p) === getPriorityItemKey(item),
-    );
-    const canBumpUp = originalIndex < allPriorities.length - 1;
-    const canBumpDown = originalIndex > 0;
-
-    const consumptionItemsAfter = allPriorities
-        .slice(originalIndex + 1)
-        .filter((p) => p.side === "bid").length;
-    const consumptionPriority =
-        isConsumption && originalIndex !== -1 ? consumptionItemsAfter + 1 : null;
-
-    const productionItemsBefore = allPriorities
-        .slice(0, originalIndex)
-        .filter((p) => p.side === "ask").length;
-    const productionPriority =
-        isProduction && originalIndex !== -1 ? productionItemsBefore + 1 : null;
 
     const currentPowerMW =
         item.side === "ask"
@@ -126,15 +113,16 @@ export function PriorityItem({ item, allPriorities }: PriorityItemProps) {
 
     /**
      * Bumps this item one step up or down in the visual table by swapping it
-     * with its neighbour in allPriorities, then redistributing prices so the
-     * order is preserved on the backend (which sorts by price ascending).
+     * with its neighbour, then redistributing prices so the order is preserved
+     * on the backend (which sorts by price ascending).
      */
     const handleBump = async (direction: "up" | "down") => {
-        if (originalIndex === -1) return;
+        const allPriorities = prioritiesData?.power_priorities ?? [];
 
-        // "up" in the visual table = move to higher allPriorities index (lower priority).
-        // "down" = lower allPriorities index (higher priority).
-        const neighbourIdx = direction === "up" ? originalIndex + 1 : originalIndex - 1;
+        // "up" in the visual table = move to higher index (lower priority).
+        // "down" = lower index (higher priority).
+        const neighbourIdx =
+            direction === "up" ? originalIndex + 1 : originalIndex - 1;
         if (neighbourIdx < 0 || neighbourIdx >= allPriorities.length) return;
 
         const reordered = [...allPriorities];
@@ -161,15 +149,15 @@ export function PriorityItem({ item, allPriorities }: PriorityItemProps) {
      * prices so the backend order stays consistent.
      */
     const handlePriceCommit = async (newPrice: number) => {
-        const key = getPriorityItemKey(item);
-        const updated = allPriorities.map((p) =>
-            getPriorityItemKey(p) === key ? { ...p, price: newPrice } : p,
+        const allPriorities = prioritiesData?.power_priorities ?? [];
+        const updated = allPriorities.map((p, i) =>
+            i === originalIndex ? { ...p, price: newPrice } : p,
         );
         const sorted = [...updated].sort((a, b) => a.price - b.price);
         await submitPrices(sorted);
     };
 
-    const bumpButtons = (priority: number) => (
+    const bumpButtons = (
         <div className="inline-flex items-center gap-1">
             <Button
                 variant="ghost"
@@ -181,9 +169,6 @@ export function PriorityItem({ item, allPriorities }: PriorityItemProps) {
             >
                 <ChevronUp className="size-4" />
             </Button>
-            <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 w-6 text-center tabular-nums">
-                #{priority}
-            </span>
             <Button
                 variant="secondary"
                 size="icon-sm"
@@ -208,9 +193,7 @@ export function PriorityItem({ item, allPriorities }: PriorityItemProps) {
                         : "bg-transparent",
                 )}
             >
-                {isConsumption && consumptionPriority !== null
-                    ? bumpButtons(consumptionPriority)
-                    : null}
+                {isConsumption ? bumpButtons : null}
             </td>
 
             {/* Facility name */}
@@ -277,9 +260,7 @@ export function PriorityItem({ item, allPriorities }: PriorityItemProps) {
                         : "bg-transparent",
                 )}
             >
-                {isProduction && productionPriority !== null
-                    ? bumpButtons(productionPriority)
-                    : null}
+                {isProduction ? bumpButtons : null}
             </td>
         </tr>
     );

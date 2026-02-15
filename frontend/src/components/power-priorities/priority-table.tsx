@@ -53,8 +53,8 @@ export function PriorityTable() {
                         <table className="w-full min-w-170 border-separate border-spacing-y-2">
                             <thead>
                                 <tr className="text-xs font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                                    <th className="text-center py-2 px-2 w-24">
-                                        Cons #
+                                    <th className="text-center py-2 px-2 w-16">
+                                        Cons
                                     </th>
                                     <th className="text-left py-2 px-3">
                                         Facility
@@ -69,19 +69,31 @@ export function PriorityTable() {
                                     <th className="text-right py-2 px-3 w-10">
                                         Status
                                     </th>
-                                    <th className="text-center py-2 px-2 w-24">
-                                        Prod #
+                                    <th className="text-center py-2 px-2 w-16">
+                                        Prod
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {displayItems.map((item) => (
-                                    <PriorityItem
-                                        key={getPriorityItemKey(item)}
-                                        item={item}
-                                        allPriorities={power_priorities}
-                                    />
-                                ))}
+                                {displayItems.map((item, displayIndex) => {
+                                    // O(1): originalIndex derived directly from display position.
+                                    const originalIndex =
+                                        power_priorities.length -
+                                        1 -
+                                        displayIndex;
+                                    return (
+                                        <PriorityItem
+                                            key={getPriorityItemKey(item)}
+                                            item={item}
+                                            originalIndex={originalIndex}
+                                            canBumpUp={displayIndex > 0}
+                                            canBumpDown={
+                                                displayIndex <
+                                                displayItems.length - 1
+                                            }
+                                        />
+                                    );
+                                })}
                             </tbody>
                             {renewables.length > 0 && (
                                 <RenewablesSection renewables={renewables} />
