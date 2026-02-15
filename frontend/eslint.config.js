@@ -11,6 +11,7 @@ export default defineConfig([
     {
         ignores: ["node_modules/", "dist/", "*.config.ts", "*.config.js"],
     },
+    { settings: { react: { version: "detect" } } },
     ...tseslint.configs.recommended,
     react.configs.flat.recommended,
     {
@@ -44,9 +45,6 @@ export default defineConfig([
             import: importPlugin,
         },
         settings: {
-            react: {
-                version: "detect",
-            },
             "import/resolver": {
                 typescript: {
                     alwaysTryTypes: true,
