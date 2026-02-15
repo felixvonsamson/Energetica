@@ -94,3 +94,6 @@ async def change_electricity_market_prices(
         updated_bids={bid.type: bid.price for bid in prices_change_request.bids},
     )
     engine.log(f"{player.username} updated their prices")
+    player.invalidate_queries(
+        ["power-priorities"],
+    )

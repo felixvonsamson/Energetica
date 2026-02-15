@@ -38,13 +38,10 @@ export function PriorityTable() {
 
     const { renewables, power_priorities } = prioritiesData;
 
-    // Reverse so the table reads top=lowest-priority, bottom=highest-priority.
-    const displayItems = [...power_priorities].reverse();
-
     return (
         <Card>
             <CardContent>
-                {displayItems.length === 0 ? (
+                {power_priorities.length === 0 ? (
                     <p className="text-gray-500 dark:text-gray-400 text-center py-8">
                         No facilities available
                     </p>
@@ -75,25 +72,20 @@ export function PriorityTable() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {displayItems.map((item, displayIndex) => {
-                                    // O(1): originalIndex derived directly from display position.
-                                    const originalIndex =
-                                        power_priorities.length -
-                                        1 -
-                                        displayIndex;
-                                    return (
+                                {power_priorities
+                                    .map((item, originalIndex) => (
                                         <PriorityItem
                                             key={getPriorityItemKey(item)}
                                             item={item}
                                             originalIndex={originalIndex}
-                                            canBumpUp={displayIndex > 0}
-                                            canBumpDown={
-                                                displayIndex <
-                                                displayItems.length - 1
+                                            canBumpUp={
+                                                originalIndex <
+                                                power_priorities.length - 1
                                             }
+                                            canBumpDown={originalIndex > 0}
                                         />
-                                    );
-                                })}
+                                    ))
+                                    .reverse()}
                             </tbody>
                             {renewables.length > 0 && (
                                 <RenewablesSection renewables={renewables} />

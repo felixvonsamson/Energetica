@@ -32,5 +32,4 @@ def put_power_priorities(
     # Invalidate React Query cache
     player.invalidate_queries(
         ["power-priorities"],
-        ["facilities"],  # Priorities affect facility production
     )

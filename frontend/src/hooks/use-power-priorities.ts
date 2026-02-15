@@ -6,6 +6,9 @@ import { useTickQuery } from "@/contexts/game-tick-context";
 import { electricityMarketsApi } from "@/lib/api/electricity-markets";
 import { powerPrioritiesApi } from "@/lib/api/power-priorities";
 import { queryKeys } from "@/lib/query-client";
+import type { ApiResponse } from "@/types/api-helpers";
+
+type PowerPrioritiesData = ApiResponse<"/api/v1/power-priorities", "get">;
 
 /**
  * Hook to fetch power priorities for the current player. Priorities change
@@ -23,46 +26,56 @@ export function usePowerPriorities() {
 }
 
 /**
- * Hook to update power priorities order (drag mode). Used when player is NOT in
- * a network or using drag handles.
+ * Hook to update power priorities order. Applies an optimistic cache update
+ * so the reorder is reflected immediately; rolls back on error. The server
+ * sends socket.io invalidation to all clients on success.
  */
 export function useUpdatePowerPriorities() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: powerPrioritiesApi.update,
-        onSuccess: () => {
-            // Invalidate power priorities and facilities (priorities affect production)
-            queryClient.invalidateQueries({
+        onMutate: async (newData) => {
+            // Prevent in-flight refetches from overwriting the optimistic state.
+            await queryClient.cancelQueries({
                 queryKey: queryKeys.powerPriorities.all,
             });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.facilities.all,
-            });
+
+            const previousData = queryClient.getQueryData<PowerPrioritiesData>(
+                queryKeys.powerPriorities.all,
+            );
+
+            queryClient.setQueryData<PowerPrioritiesData>(
+                queryKeys.powerPriorities.all,
+                (old) => {
+                    if (!old) return old;
+                    return {
+                        ...old,
+                        power_priorities: newData.power_priorities,
+                    };
+                },
+            );
+
+            return { previousData };
+        },
+        onError: (_err, _newData, context) => {
+            // Roll back to the snapshot taken before the optimistic update.
+            if (context?.previousData !== undefined) {
+                queryClient.setQueryData(
+                    queryKeys.powerPriorities.all,
+                    context.previousData,
+                );
+            }
         },
     });
 }
 
 /**
- * Hook to update electricity market prices (price mode). Used when player IS in
- * a network and using price inputs.
+ * Hook to update electricity market prices. The server sends socket.io
+ * invalidation to all clients on success.
  */
 export function useUpdateElectricityPrices() {
-    const queryClient = useQueryClient();
-
     return useMutation({
         mutationFn: electricityMarketsApi.changePrices,
-        onSuccess: () => {
-            // Invalidate electricity markets, power priorities, and facilities
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.electricityMarkets.all,
-            });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.powerPriorities.all,
-            });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.facilities.all,
-            });
-        },
     });
 }

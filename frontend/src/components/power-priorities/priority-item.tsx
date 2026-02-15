@@ -22,6 +22,7 @@ import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
 import {
     usePowerPriorities,
     useUpdateElectricityPrices,
+    useUpdatePowerPriorities,
 } from "@/hooks/use-power-priorities";
 import { formatPower } from "@/lib/format-utils";
 import { getPriorityItemDisplayName } from "@/lib/power-priorities-utils";
@@ -49,10 +50,12 @@ export function PriorityItem({
     canBumpUp,
     canBumpDown,
 }: PriorityItemProps) {
+    const updatePowerPriorities = useUpdatePowerPriorities();
     const updateElectricityPrices = useUpdateElectricityPrices();
-    const isMutating = updateElectricityPrices.isPending;
+    const isMutating =
+        updatePowerPriorities.isPending || updateElectricityPrices.isPending;
 
-    // Cached — no extra network request.
+    // All cached — no extra network requests.
     const { data: prioritiesData } = usePowerPriorities();
     const { data: statusesData } = useFacilityStatuses();
     const { data: facilitiesData } = useFacilities();
@@ -100,61 +103,48 @@ export function PriorityItem({
         );
     }, [facilitiesData, item.type, item.side]);
 
-    /** Submits updated prices derived from a reordered/repriced priority array. */
-    const submitPrices = async (updatedPriorities: PowerPriorityItem[]) => {
-        const asks = updatedPriorities
-            .filter((p) => p.side === "ask")
-            .map((p) => ({ type: p.type, price: p.price || 0 }));
-        const bids = updatedPriorities
-            .filter((p) => p.side === "bid")
-            .map((p) => ({ type: p.type, price: p.price || 0 }));
-        await updateElectricityPrices.mutateAsync({ asks, bids });
-    };
-
     /**
-     * Bumps this item one step up or down in the visual table by swapping it
-     * with its neighbour, then redistributing prices so the order is preserved
-     * on the backend (which sorts by price ascending).
+     * Swaps this item with its neighbour and submits the new order. Price
+     * redistribution is handled server-side.
      */
     const handleBump = async (direction: "up" | "down") => {
         const allPriorities = prioritiesData?.power_priorities ?? [];
-
-        // "up" in the visual table = move to higher index (lower priority).
-        // "down" = lower index (higher priority).
         const neighbourIdx =
             direction === "up" ? originalIndex + 1 : originalIndex - 1;
         if (neighbourIdx < 0 || neighbourIdx >= allPriorities.length) return;
 
         const reordered = [...allPriorities];
-        const a = reordered[originalIndex]!;
-        const b = reordered[neighbourIdx]!;
-        reordered[originalIndex] = b;
-        reordered[neighbourIdx] = a;
+        [reordered[originalIndex], reordered[neighbourIdx]] = [
+            reordered[neighbourIdx]!,
+            reordered[originalIndex]!,
+        ];
 
-        // Redistribute existing prices to match the new order so the backend
-        // stores them in the intended sequence.
-        const sortedPrices = [...reordered.map((p) => p.price)].sort(
-            (x, y) => x - y,
-        );
-        const withPrices = reordered.map((p, i) => ({
-            ...p,
-            price: sortedPrices[i] ?? p.price,
-        }));
-
-        await submitPrices(withPrices);
+        await updatePowerPriorities.mutateAsync({
+            power_priorities: reordered,
+        });
     };
 
-    /**
-     * Applies a direct price edit. Re-sorts the priority list by the new
-     * prices so the backend order stays consistent.
-     */
+    /** Commits a price edit for this item. */
     const handlePriceCommit = async (newPrice: number) => {
-        const allPriorities = prioritiesData?.power_priorities ?? [];
-        const updated = allPriorities.map((p, i) =>
-            i === originalIndex ? { ...p, price: newPrice } : p,
-        );
-        const sorted = [...updated].sort((a, b) => a.price - b.price);
-        await submitPrices(sorted);
+        const asks = (prioritiesData?.power_priorities ?? [])
+            .filter((p) => p.side === "ask")
+            .map((p) => ({
+                type: p.type,
+                price:
+                    p.type === item.type && item.side === "ask"
+                        ? newPrice
+                        : p.price,
+            }));
+        const bids = (prioritiesData?.power_priorities ?? [])
+            .filter((p) => p.side === "bid")
+            .map((p) => ({
+                type: p.type,
+                price:
+                    p.type === item.type && item.side === "bid"
+                        ? newPrice
+                        : p.price,
+            }));
+        await updateElectricityPrices.mutateAsync({ asks, bids });
     };
 
     const bumpButtons = (
@@ -170,7 +160,7 @@ export function PriorityItem({
                 <ChevronUp className="size-4" />
             </Button>
             <Button
-                variant="secondary"
+                variant="ghost"
                 size="icon-sm"
                 onClick={() => handleBump("down")}
                 disabled={!canBumpDown || isMutating}
@@ -213,7 +203,9 @@ export function PriorityItem({
 
             {/* Current power */}
             <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400 bg-secondary">
-                <span className="font-mono">{formatPower(currentPowerMW ?? 0)}</span>
+                <span className="font-mono">
+                    {formatPower(currentPowerMW ?? 0)}
+                </span>
             </td>
 
             {/* Power gauge (hidden on mobile) */}
