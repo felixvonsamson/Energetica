@@ -1,7 +1,7 @@
 /** Power Priorities page - Manage production and consumption priorities. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
 import { PriorityTable } from "@/components/power-priorities/priority-table";
@@ -10,7 +10,6 @@ import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
 import {
     usePowerPriorities,
-    useUpdatePowerPriorities,
     useUpdateElectricityPrices,
 } from "@/hooks/use-power-priorities";
 import { getPriorityItemKey } from "@/lib/power-priorities-utils";
@@ -23,7 +22,7 @@ function PowerPrioritiesHelp() {
                 the order in which they will be used to satisfy your demand.
             </p>
             <p>
-                Drag and drop facilities in the list to change their priority.
+                Use the ↑ / ↓ buttons on each row to change its priority.
                 Higher priority facilities will be used first.
             </p>
             <p>
@@ -65,10 +64,8 @@ function PowerPrioritiesContent() {
         error: statusesError,
     } = useFacilityStatuses();
     const { data: facilitiesData } = useFacilities();
-    const updatePriorities = useUpdatePowerPriorities();
     const updateElectricityPrices = useUpdateElectricityPrices();
 
-    // Fetch current power data (uses latest available data to prevent UI jitter)
     const { data: productionPowerLevels } = useLatestChartDataSlice({
         chartType: "power-sources",
     });
@@ -76,60 +73,33 @@ function PowerPrioritiesContent() {
         chartType: "power-sinks",
     });
 
-    // Calculate production and consumption capacities separately
-    // (storage facilities appear in both!)
     const productionCapacityByType = useMemo(() => {
         if (!facilitiesData) return {};
-
         const capacities: Record<string, number> = {};
-
-        // Power facilities
-        facilitiesData.power_facilities.forEach((facility) => {
-            capacities[facility.facility] =
-                (capacities[facility.facility] ?? 0) +
-                facility.max_power_generation;
+        facilitiesData.power_facilities.forEach((f) => {
+            capacities[f.facility] =
+                (capacities[f.facility] ?? 0) + f.max_power_generation;
         });
-
-        // Storage facilities (when generating/discharging)
-        facilitiesData.storage_facilities.forEach((facility) => {
-            capacities[facility.facility] =
-                (capacities[facility.facility] ?? 0) +
-                facility.max_power_generation;
+        facilitiesData.storage_facilities.forEach((f) => {
+            capacities[f.facility] =
+                (capacities[f.facility] ?? 0) + f.max_power_generation;
         });
-
         return capacities;
     }, [facilitiesData]);
 
     const consumptionCapacityByType = useMemo(() => {
         if (!facilitiesData) return {};
-
         const capacities: Record<string, number> = {};
-
-        // Extraction facilities
-        facilitiesData.extraction_facilities.forEach((facility) => {
-            capacities[facility.facility] =
-                (capacities[facility.facility] ?? 0) + facility.max_power_use;
+        facilitiesData.extraction_facilities.forEach((f) => {
+            capacities[f.facility] =
+                (capacities[f.facility] ?? 0) + f.max_power_use;
         });
-
-        // Storage facilities (when charging)
-        facilitiesData.storage_facilities.forEach((facility) => {
-            capacities[facility.facility] =
-                (capacities[facility.facility] ?? 0) + facility.max_power_use;
+        facilitiesData.storage_facilities.forEach((f) => {
+            capacities[f.facility] =
+                (capacities[f.facility] ?? 0) + f.max_power_use;
         });
-
         return capacities;
     }, [facilitiesData]);
-
-    // Edit mode state
-    const [isEditMode, setIsEditMode] = useState(false);
-    const [pendingPriorities, setPendingPriorities] = useState<
-        PowerPriorityItem[] | null
-    >(null);
-
-    // Track pending price changes for price mode
-    const [pendingPriceChanges, setPendingPriceChanges] = useState<
-        Map<string, number>
-    >(new Map());
 
     if (isLoading || statusesLoading) {
         return (
@@ -160,128 +130,81 @@ function PowerPrioritiesContent() {
 
     const { renewables, power_priorities } = prioritiesData;
 
-    // Use pending priorities if in edit mode, otherwise use fetched data
-    const currentPriorities = pendingPriorities || power_priorities;
-
-    // Handlers
-    const handleEnterEdit = () => {
-        setIsEditMode(true);
-        setPendingPriorities([...power_priorities]); // Clone for editing
-        setPendingPriceChanges(new Map()); // Reset price changes
+    /** Submits updated prices derived from a reordered/repriced priority array. */
+    const submitPrices = async (updatedPriorities: PowerPriorityItem[]) => {
+        const asks = updatedPriorities
+            .filter((p) => p.side === "ask")
+            .map((p) => ({ type: p.type, price: p.price || 0 }));
+        const bids = updatedPriorities
+            .filter((p) => p.side === "bid")
+            .map((p) => ({ type: p.type, price: p.price || 0 }));
+        await updateElectricityPrices.mutateAsync({ asks, bids });
     };
 
-    const handleCancel = () => {
-        setIsEditMode(false);
-        setPendingPriorities(null);
-        setPendingPriceChanges(new Map());
-    };
+    /**
+     * Bumps an item one step up or down in the visual table by swapping it with
+     * its neighbour in allPriorities, then redistributing prices so the order
+     * is preserved on the backend (which sorts by price ascending).
+     */
+    const handleBump = async (
+        item: PowerPriorityItem,
+        direction: "up" | "down",
+    ) => {
+        const idx = power_priorities.findIndex(
+            (p) => getPriorityItemKey(p) === getPriorityItemKey(item),
+        );
+        if (idx === -1) return;
 
-    const handlePriceChange = (item: PowerPriorityItem, newPrice: number) => {
-        const itemKey = getPriorityItemKey(item);
-        const newChanges = new Map(pendingPriceChanges);
-        newChanges.set(itemKey, newPrice);
-        setPendingPriceChanges(newChanges);
+        // "up" in the visual table = move to higher allPriorities index (lower priority).
+        // "down" = lower allPriorities index (higher priority).
+        const neighbourIdx = direction === "up" ? idx + 1 : idx - 1;
+        if (neighbourIdx < 0 || neighbourIdx >= power_priorities.length) return;
 
-        // Update the item in pendingPriorities with the new price
-        if (pendingPriorities) {
-            const updatedPriorities = pendingPriorities.map((p) =>
-                getPriorityItemKey(p) === itemKey
-                    ? { ...p, price: newPrice }
-                    : p,
-            );
+        // Swap the two items
+        const reordered = [...power_priorities];
+        const a = reordered[idx]!;
+        const b = reordered[neighbourIdx]!;
+        reordered[idx] = b;
+        reordered[neighbourIdx] = a;
 
-            // Re-sort by price to update order (ascending price = higher priority)
-            const sorted = [...updatedPriorities].sort(
-                (a, b) => a.price - b.price,
-            );
-            setPendingPriorities(sorted);
-        }
-    };
-
-    const handleApply = async () => {
-        if (!pendingPriorities) return;
-
-        try {
-            // if (mode === "drag") {
-            //     // Drag mode: update priorities directly
-            //     await updatePriorities.mutateAsync({
-            //         power_priorities: pendingPriorities,
-            //     });
-            // } else {
-            // Price mode: update prices which will reorder automatically
-            const asks = pendingPriorities
-                .filter((p) => p.side === "ask")
-                .map((p) => ({ type: p.type, price: p.price || 0 }));
-            const bids = pendingPriorities
-                .filter((p) => p.side === "bid")
-                .map((p) => ({ type: p.type, price: p.price || 0 }));
-
-            await updateElectricityPrices.mutateAsync({ asks, bids });
-            // }
-
-            setIsEditMode(false);
-            setPendingPriorities(null);
-            setPendingPriceChanges(new Map());
-        } catch (err) {
-            console.error("Failed to update priorities:", err);
-            alert("Failed to save changes. Please try again.");
-        }
-    };
-
-    const handleReorder = (newPriorities: PowerPriorityItem[]) => {
-        // When reordering, update prices to match the new order
-        // Extract all current prices and sort them
-        const currentPrices = newPriorities.map((item) => item.price);
-        const sortedPrices = [...currentPrices].sort((a, b) => a - b);
-
-        // Assign sorted prices to items in the new order
-        const updatedPriorities = newPriorities.map((item, index) => ({
-            ...item,
-            price: sortedPrices[index] ?? item.price,
+        // Redistribute existing prices to match the new order so the backend
+        // stores them in the intended sequence.
+        const sortedPrices = [...reordered.map((p) => p.price)].sort(
+            (a, b) => a - b,
+        );
+        const withPrices = reordered.map((p, i) => ({
+            ...p,
+            price: sortedPrices[i] ?? p.price,
         }));
 
-        setPendingPriorities(updatedPriorities);
+        await submitPrices(withPrices);
+    };
+
+    /**
+     * Applies a direct price edit. Re-sorts the priority list by the new
+     * prices so the backend order stays consistent.
+     */
+    const handlePriceCommit = async (
+        item: PowerPriorityItem,
+        newPrice: number,
+    ) => {
+        const key = getPriorityItemKey(item);
+        const updated = power_priorities.map((p) =>
+            getPriorityItemKey(p) === key ? { ...p, price: newPrice } : p,
+        );
+        // Sort by price ascending so the cheapest item has highest priority
+        const sorted = [...updated].sort((a, b) => a.price - b.price);
+        await submitPrices(sorted);
     };
 
     return (
         <div className="p-4 md:p-8 space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-                <div className="grow" />
-
-                {!isEditMode ? (
-                    <button
-                        onClick={handleEnterEdit}
-                        className="px-4 py-2 bg-brand-green hover:bg-brand-green/80 text-white rounded-lg"
-                    >
-                        Edit
-                    </button>
-                ) : (
-                    <div className="flex gap-2">
-                        <button
-                            onClick={handleCancel}
-                            className="px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleApply}
-                            disabled={updatePriorities.isPending}
-                            className="px-4 py-2 bg-brand-green hover:bg-brand-green/80 text-white rounded-lg disabled:opacity-50"
-                        >
-                            {updatePriorities.isPending ? "Saving..." : "Apply"}
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            {/* Single table showing all items */}
             <PriorityTable
                 renewables={renewables}
-                isEditMode={isEditMode}
-                onReorder={handleReorder}
-                onPriceChange={handlePriceChange}
-                allPriorities={currentPriorities}
+                onBump={handleBump}
+                onPriceCommit={handlePriceCommit}
+                isMutating={updateElectricityPrices.isPending}
+                allPriorities={power_priorities}
                 statuses={statusesData}
                 productionPowerLevels={productionPowerLevels}
                 consumptionPowerLevels={consumptionPowerLevels}
