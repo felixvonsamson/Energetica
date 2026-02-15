@@ -1,64 +1,19 @@
 /**
- * Priority table component - displays all production and consumption facilities
- * in a single interleaved table. Fetches its own data. Supports bump-button
- * reordering and inline price editing (delegated to each PriorityItem row).
+ * Priority table component - fetches the ordered priority list, handles
+ * loading/error states, and renders PriorityItem rows and the RenewablesSection.
+ * All per-item data fetching and display logic lives in the child components.
  */
-
-import { useMemo } from "react";
 
 import { PriorityItem } from "@/components/power-priorities/priority-item";
 import { RenewablesSection } from "@/components/power-priorities/renewables-section";
 import { Card, CardContent } from "@/components/ui";
-import { useLatestChartDataSlice } from "@/hooks/use-charts";
-import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
 import { usePowerPriorities } from "@/hooks/use-power-priorities";
 import { getPriorityItemKey } from "@/lib/power-priorities-utils";
 
 export function PriorityTable() {
     const { data: prioritiesData, isLoading, error } = usePowerPriorities();
-    const {
-        data: statusesData,
-        isLoading: statusesLoading,
-        error: statusesError,
-    } = useFacilityStatuses();
-    const { data: facilitiesData } = useFacilities();
 
-    const { data: productionPowerLevels } = useLatestChartDataSlice({
-        chartType: "power-sources",
-    });
-    const { data: consumptionPowerLevels } = useLatestChartDataSlice({
-        chartType: "power-sinks",
-    });
-
-    const productionCapacityByType = useMemo(() => {
-        if (!facilitiesData) return {};
-        const capacities: Record<string, number> = {};
-        facilitiesData.power_facilities.forEach((f) => {
-            capacities[f.facility] =
-                (capacities[f.facility] ?? 0) + f.max_power_generation;
-        });
-        facilitiesData.storage_facilities.forEach((f) => {
-            capacities[f.facility] =
-                (capacities[f.facility] ?? 0) + f.max_power_generation;
-        });
-        return capacities;
-    }, [facilitiesData]);
-
-    const consumptionCapacityByType = useMemo(() => {
-        if (!facilitiesData) return {};
-        const capacities: Record<string, number> = {};
-        facilitiesData.extraction_facilities.forEach((f) => {
-            capacities[f.facility] =
-                (capacities[f.facility] ?? 0) + f.max_power_use;
-        });
-        facilitiesData.storage_facilities.forEach((f) => {
-            capacities[f.facility] =
-                (capacities[f.facility] ?? 0) + f.max_power_use;
-        });
-        return capacities;
-    }, [facilitiesData]);
-
-    if (isLoading || statusesLoading) {
+    if (isLoading) {
         return (
             <div className="p-4 md:p-8 text-center">
                 <p className="text-lg">Loading power priorities...</p>
@@ -66,22 +21,18 @@ export function PriorityTable() {
         );
     }
 
-    if (error || statusesError) {
+    if (error) {
         return (
             <div className="p-4 md:p-8 text-center text-alert-red">
                 <p className="text-lg">Error loading power priorities</p>
                 <p className="text-sm mt-2">
-                    {error instanceof Error
-                        ? error.message
-                        : statusesError instanceof Error
-                          ? statusesError.message
-                          : "Unknown error"}
+                    {error instanceof Error ? error.message : "Unknown error"}
                 </p>
             </div>
         );
     }
 
-    if (!prioritiesData || !statusesData) {
+    if (!prioritiesData) {
         return null;
     }
 
@@ -89,52 +40,6 @@ export function PriorityTable() {
 
     // Reverse so the table reads top=lowest-priority, bottom=highest-priority.
     const displayItems = [...power_priorities].reverse();
-
-    const renderPriorityItems = () =>
-        displayItems.map((item, displayIndex) => {
-            const originalIndex = power_priorities.findIndex(
-                (p) => getPriorityItemKey(p) === getPriorityItemKey(item),
-            );
-
-            const consumptionItemsAfter = power_priorities
-                .slice(originalIndex + 1)
-                .filter((i) => i.side === "bid").length;
-            const consumptionPriority =
-                item.side === "bid" ? consumptionItemsAfter + 1 : null;
-
-            const productionItemsBefore = power_priorities
-                .slice(0, originalIndex)
-                .filter((i) => i.side === "ask").length;
-            const productionPriority =
-                item.side === "ask" ? productionItemsBefore + 1 : null;
-
-            const currentPowerMW =
-                item.side === "ask"
-                    ? productionPowerLevels[item.type]
-                    : consumptionPowerLevels[item.type];
-            const capacityMW =
-                item.side === "ask"
-                    ? productionCapacityByType[item.type]
-                    : consumptionCapacityByType[item.type];
-
-            const canBumpUp = displayIndex > 0;
-            const canBumpDown = displayIndex < displayItems.length - 1;
-
-            return (
-                <PriorityItem
-                    key={getPriorityItemKey(item)}
-                    item={item}
-                    allPriorities={power_priorities}
-                    consumptionPriority={consumptionPriority}
-                    productionPriority={productionPriority}
-                    canBumpUp={canBumpUp}
-                    canBumpDown={canBumpDown}
-                    statuses={statusesData}
-                    currentPowerMW={currentPowerMW}
-                    capacityMW={capacityMW}
-                />
-            );
-        });
 
     return (
         <Card>
@@ -169,18 +74,17 @@ export function PriorityTable() {
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody>{renderPriorityItems()}</tbody>
+                            <tbody>
+                                {displayItems.map((item) => (
+                                    <PriorityItem
+                                        key={getPriorityItemKey(item)}
+                                        item={item}
+                                        allPriorities={power_priorities}
+                                    />
+                                ))}
+                            </tbody>
                             {renewables.length > 0 && (
-                                <RenewablesSection
-                                    renewables={renewables}
-                                    statuses={statusesData}
-                                    productionPowerLevels={
-                                        productionPowerLevels
-                                    }
-                                    productionCapacityByType={
-                                        productionCapacityByType
-                                    }
-                                />
+                                <RenewablesSection renewables={renewables} />
                             )}
                         </table>
                     </div>
