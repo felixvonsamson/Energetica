@@ -165,7 +165,7 @@ bun dev              # Start dev server (http://localhost:5173)
 bun build            # Build for production
 bun lint       # Check ESLint errors
 bun typecheck        # TypeScript type checking
-bun pretty           # Format code with Prettier
+bun format           # Format code with Prettier
 bun generate-types   # Generate API types from OpenAPI schema
 ```
 
