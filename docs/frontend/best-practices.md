@@ -46,7 +46,7 @@ Use `useState` for component-local state:
 const [groupMembers, setGroupMembers] = useState<Player[]>([]);
 ```
 
-See [`NewGroupChatDialog.tsx`](/frontend/src/components/chat/NewGroupChatDialog.tsx) for a full example.
+See [`NewGroupChatDialog.tsx`](/frontend/src/components/chat/new-group-chat-dialog.tsx) for a full example.
 
 ### Server State
 
@@ -70,7 +70,7 @@ const { data, isLoading, error } = usePlayerMoney();
 
 ### Global State
 
-Use React Context for app-wide state. See [`ThemeContext.tsx`](/frontend/src/contexts/ThemeContext.tsx) for a real example:
+Use React Context for app-wide state. See [`ThemeContext.tsx`](/frontend/src/contexts/theme-context.tsx) for a real example:
 
 ```ts
 // @/contexts/ThemeContext.tsx
