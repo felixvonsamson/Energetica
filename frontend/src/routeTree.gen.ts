@@ -21,6 +21,7 @@ import { Route as AppLogoutRouteImport } from './routes/app/logout'
 import { Route as AppLoginRouteImport } from './routes/app/login'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppChangelogRouteImport } from './routes/app/changelog'
+import { Route as AppWikiIndexRouteImport } from './routes/app/wiki/index'
 import { Route as AppWikiSlugRouteImport } from './routes/app/wiki/$slug'
 import { Route as AppOverviewsStorageRouteImport } from './routes/app/overviews/storage'
 import { Route as AppOverviewsResourcesRouteImport } from './routes/app/overviews/resources'
@@ -101,6 +102,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
 const AppChangelogRoute = AppChangelogRouteImport.update({
   id: '/app/changelog',
   path: '/app/changelog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppWikiIndexRoute = AppWikiIndexRouteImport.update({
+  id: '/app/wiki/',
+  path: '/app/wiki/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppWikiSlugRoute = AppWikiSlugRouteImport.update({
@@ -247,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/wiki': typeof AppWikiIndexRoute
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
@@ -281,6 +288,7 @@ export interface FileRoutesByTo {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/wiki': typeof AppWikiIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -317,6 +325,7 @@ export interface FileRoutesById {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/wiki/': typeof AppWikiIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -353,6 +362,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/wiki'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/about'
@@ -387,6 +397,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/wiki'
   id:
     | '__root__'
     | '/'
@@ -422,6 +433,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/wiki/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -458,6 +470,7 @@ export interface RootRouteChildren {
   AppOverviewsResourcesRoute: typeof AppOverviewsResourcesRoute
   AppOverviewsStorageRoute: typeof AppOverviewsStorageRoute
   AppWikiSlugRoute: typeof AppWikiSlugRoute
+  AppWikiIndexRoute: typeof AppWikiIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -544,6 +557,13 @@ declare module '@tanstack/react-router' {
       path: '/app/changelog'
       fullPath: '/app/changelog'
       preLoaderRoute: typeof AppChangelogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/wiki/': {
+      id: '/app/wiki/'
+      path: '/app/wiki'
+      fullPath: '/app/wiki'
+      preLoaderRoute: typeof AppWikiIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/wiki/$slug': {
@@ -730,6 +750,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppOverviewsResourcesRoute: AppOverviewsResourcesRoute,
   AppOverviewsStorageRoute: AppOverviewsStorageRoute,
   AppWikiSlugRoute: AppWikiSlugRoute,
+  AppWikiIndexRoute: AppWikiIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
