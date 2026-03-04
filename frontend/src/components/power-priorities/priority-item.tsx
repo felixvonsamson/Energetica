@@ -20,9 +20,8 @@ import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
 import {
-    usePowerPriorities,
     useUpdateElectricityPrices,
-    useUpdatePowerPriorities,
+    useUpdatePowerPriorityBump,
 } from "@/hooks/use-power-priorities";
 import { formatPower } from "@/lib/format-utils";
 import { getPriorityItemDisplayName } from "@/lib/power-priorities-utils";
@@ -30,8 +29,6 @@ import { cn } from "@/lib/utils";
 
 interface PriorityItemProps {
     item: PowerPriorityItem;
-    /** Index of this item in the original (high→low priority) array */
-    originalIndex: number;
     canBumpUp: boolean;
     canBumpDown: boolean;
 }
@@ -46,17 +43,12 @@ interface PriorityItemProps {
  */
 export function PriorityItem({
     item,
-    originalIndex,
     canBumpUp,
     canBumpDown,
 }: PriorityItemProps) {
-    const updatePowerPriorities = useUpdatePowerPriorities();
+    const updatePowerPriorityBump = useUpdatePowerPriorityBump();
     const updateElectricityPrices = useUpdateElectricityPrices();
-    const isMutating =
-        updatePowerPriorities.isPending || updateElectricityPrices.isPending;
 
-    // All cached — no extra network requests.
-    const { data: prioritiesData } = usePowerPriorities();
     const { data: statusesData } = useFacilityStatuses();
     const { data: facilitiesData } = useFacilities();
     const { data: productionPowerLevels } = useLatestChartDataSlice({
@@ -103,48 +95,28 @@ export function PriorityItem({
         );
     }, [facilitiesData, item.type, item.side]);
 
-    /**
-     * Swaps this item with its neighbour and submits the new order. Price
-     * redistribution is handled server-side.
-     */
-    const handleBump = async (direction: "up" | "down") => {
-        const allPriorities = prioritiesData?.power_priorities ?? [];
-        const neighbourIdx =
-            direction === "up" ? originalIndex + 1 : originalIndex - 1;
-        if (neighbourIdx < 0 || neighbourIdx >= allPriorities.length) return;
-
-        const reordered = [...allPriorities];
-        [reordered[originalIndex], reordered[neighbourIdx]] = [
-            reordered[neighbourIdx]!,
-            reordered[originalIndex]!,
-        ];
-
-        await updatePowerPriorities.mutateAsync({
-            power_priorities: reordered,
+    /** Moves this item one step toward higher or lower priority. */
+    const handleBump = (direction: "up" | "down") => {
+        updatePowerPriorityBump.mutate({
+            side: item.side as string,
+            type: item.type as unknown as string,
+            direction: direction === "down" ? "increase" : "decrease",
         });
     };
 
     /** Commits a price edit for this item. */
     const handlePriceCommit = async (newPrice: number) => {
-        const asks = (prioritiesData?.power_priorities ?? [])
-            .filter((p) => p.side === "ask")
-            .map((p) => ({
-                type: p.type,
-                price:
-                    p.type === item.type && item.side === "ask"
-                        ? newPrice
-                        : p.price,
-            }));
-        const bids = (prioritiesData?.power_priorities ?? [])
-            .filter((p) => p.side === "bid")
-            .map((p) => ({
-                type: p.type,
-                price:
-                    p.type === item.type && item.side === "bid"
-                        ? newPrice
-                        : p.price,
-            }));
-        await updateElectricityPrices.mutateAsync({ asks, bids });
+        if (item.side === "ask") {
+            await updateElectricityPrices.mutateAsync({
+                asks: [{ type: item.type, price: newPrice }],
+                bids: [],
+            });
+        } else {
+            await updateElectricityPrices.mutateAsync({
+                asks: [],
+                bids: [{ type: item.type, price: newPrice }],
+            });
+        }
     };
 
     const bumpButtons = (
@@ -153,7 +125,7 @@ export function PriorityItem({
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => handleBump("up")}
-                disabled={!canBumpUp || isMutating}
+                disabled={!canBumpUp || updatePowerPriorityBump.isPending}
                 title="Move up (lower priority)"
                 aria-label="Move up"
             >
@@ -163,7 +135,7 @@ export function PriorityItem({
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => handleBump("down")}
-                disabled={!canBumpDown || isMutating}
+                disabled={!canBumpDown || updatePowerPriorityBump.isPending}
                 title="Move down (higher priority)"
                 aria-label="Move down"
             >
@@ -227,7 +199,7 @@ export function PriorityItem({
                 <PriceInput
                     value={item.price}
                     onCommit={handlePriceCommit}
-                    disabled={isMutating}
+                    disabled={updateElectricityPrices.isPending}
                 />
             </td>
 

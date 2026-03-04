@@ -77,7 +77,6 @@ export function PriorityTable() {
                                         <PriorityItem
                                             key={getPriorityItemKey(item)}
                                             item={item}
-                                            originalIndex={originalIndex}
                                             canBumpUp={
                                                 originalIndex <
                                                 power_priorities.length - 1

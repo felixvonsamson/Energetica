@@ -26,17 +26,21 @@ export function usePowerPriorities() {
 }
 
 /**
- * Hook to update power priorities order. Applies an optimistic cache update
- * so the reorder is reflected immediately; rolls back on error. The server
- * sends socket.io invalidation to all clients on success.
+ * Hook to bump a single power priority item one step up or down. Applies an
+ * optimistic cache update so the reorder is reflected immediately; on success
+ * the authoritative server state is written directly into the cache; on error
+ * the snapshot from onMutate is restored.
  */
-export function useUpdatePowerPriorities() {
+export function useUpdatePowerPriorityBump() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: powerPrioritiesApi.update,
-        onMutate: async (newData) => {
-            // Prevent in-flight refetches from overwriting the optimistic state.
+        mutationFn: (vars: {
+            side: string;
+            type: string;
+            direction: "increase" | "decrease";
+        }) => powerPrioritiesApi.bump(vars),
+        onMutate: async ({ side, type, direction }) => {
             await queryClient.cancelQueries({
                 queryKey: queryKeys.powerPriorities.all,
             });
@@ -49,17 +53,32 @@ export function useUpdatePowerPriorities() {
                 queryKeys.powerPriorities.all,
                 (old) => {
                     if (!old) return old;
-                    return {
-                        ...old,
-                        power_priorities: newData.power_priorities,
-                    };
+                    const priorities = [...old.power_priorities];
+                    const idx = priorities.findIndex(
+                        (p) =>
+                            p.side === side &&
+                            (p.type as unknown as string) === type,
+                    );
+                    if (idx === -1) return old;
+                    const neighbourIdx =
+                        direction === "increase" ? idx - 1 : idx + 1;
+                    if (neighbourIdx < 0 || neighbourIdx >= priorities.length) {
+                        return old;
+                    }
+                    [priorities[idx], priorities[neighbourIdx]] = [
+                        priorities[neighbourIdx]!,
+                        priorities[idx]!,
+                    ];
+                    return { ...old, power_priorities: priorities };
                 },
             );
 
             return { previousData };
         },
-        onError: (_err, _newData, context) => {
-            // Roll back to the snapshot taken before the optimistic update.
+        onSuccess: (data) => {
+            queryClient.setQueryData(queryKeys.powerPriorities.all, data);
+        },
+        onError: (_err, _vars, context) => {
             if (context?.previousData !== undefined) {
                 queryClient.setQueryData(
                     queryKeys.powerPriorities.all,
