@@ -53,7 +53,7 @@ export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
         <Sidebar
             side="left"
             collapsible="offcanvas"
-            className="relative overflow-hidden"
+            className="overflow-hidden"
         >
             {/* Large background logo */}
             <div
