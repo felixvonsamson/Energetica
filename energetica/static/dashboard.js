@@ -46,7 +46,7 @@ function update_weather_conditions() {
         <div class="flex-col flex-grow-1 padding weather_info_container">
             <div>River flow speed: <b>${Math.round(weather_data.river_flow_speed)} m/s</b></div>
             <div class="year-background margin-small">
-                <div class="weather_level water" style="width: calc(${weather_data.river_flow_speed / 150} * 100%);"></div>
+                <div class="weather_level water" style="width: calc(${weather_data.river_flow_speed / 2.5} * 100%);"></div>
             </div>
         </div>`;
         })
