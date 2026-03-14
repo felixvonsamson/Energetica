@@ -254,7 +254,7 @@ function BeginnersGuide() {
                 <CardTitle>Beginners guide</CardTitle>
             </CardHeader>
             <CardContent>
-            <div className="space-y-4 text-base">
+                <div className="space-y-4 text-base">
                 <p>Welcome to Energetica!</p>
                 <p>
                     You begin your journey with <b>1 steam engine</b> and a
