@@ -35,6 +35,8 @@ interface GameTickContextValue {
     currentTick: number | undefined;
     /** Whether the initial tick is still loading */
     isLoadingTick: boolean;
+    /** Real-world timestamp (ms) when the last tick was received */
+    lastTickTimestamp: number | undefined;
 }
 
 export const GameTickContext = createContext<GameTickContextValue | undefined>(
@@ -60,6 +62,9 @@ export function GameTickProvider({ children }: GameTickProviderProps) {
         undefined,
     );
     const [isLoadingTick, setIsLoadingTick] = useState(true);
+    const [lastTickTimestamp, setLastTickTimestamp] = useState<
+        number | undefined
+    >(undefined);
     const [registeredTickQueries, setRegisteredTickQueries] = useState<
         Set<string>
     >(new Set());
@@ -134,6 +139,7 @@ export function GameTickProvider({ children }: GameTickProviderProps) {
     useSocketEvent<TickEventData>("tick", (data) => {
         console.log(`[GameTick] Tick event received: ${data.tick}`);
         setCurrentTick(data.tick);
+        setLastTickTimestamp(Date.now());
         invalidateTickQueries();
     });
 
@@ -149,6 +155,7 @@ export function GameTickProvider({ children }: GameTickProviderProps) {
     const value: GameTickContextValue = {
         currentTick,
         isLoadingTick,
+        lastTickTimestamp,
     };
 
     // Expose registration functions via context (internal use only)
