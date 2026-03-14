@@ -29,7 +29,12 @@ import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { WeatherSection } from "@/components/dashboard/weather";
 import { DevelopmentBanner } from "@/components/development-banner";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui";
 import { useAchievements } from "@/hooks/use-achievements";
 import { useCapabilities, useHasCapability } from "@/hooks/use-capabilities";
 import { useProjects } from "@/hooks/use-projects";
@@ -247,7 +252,10 @@ function DashboardContent() {
 function BeginnersGuide() {
     return (
         <Card>
-            <CardTitle className="mb-4">Beginners guide</CardTitle>
+            <CardHeader>
+                <CardTitle>Beginners guide</CardTitle>
+            </CardHeader>
+            <CardContent>
             <div className="space-y-4 text-base">
                 <p>Welcome to Energetica!</p>
                 <p>
@@ -314,6 +322,7 @@ function BeginnersGuide() {
                 </p>
                 <p>Best of luck in your energy adventure!</p>
             </div>
+            </CardContent>
         </Card>
     );
 }

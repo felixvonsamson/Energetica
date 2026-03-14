@@ -15,6 +15,7 @@ import {
     Hammer,
     HelpCircle,
     LogOut,
+    MoreVertical,
     Settings,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -98,36 +99,36 @@ export function TopBar() {
 
     return (
         <>
-            <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
-                {/* Sidebar trigger */}
-                <SidebarTrigger className="-ml-1" />
-                <Separator
-                    orientation="vertical"
-                    className="mr-2 data-[orientation=vertical]:h-4"
-                />
+            <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b bg-background px-4 gap-2">
+                {/* Left: Sidebar trigger + Breadcrumbs */}
+                <div className="flex items-center gap-2 shrink-0">
+                    <SidebarTrigger className="-ml-1" />
 
-                <Breadcrumbs />
+                    {/* Breadcrumb navigation — hidden on mobile */}
+                    <div className="hidden md:flex items-center gap-2">
+                        <Separator
+                            orientation="vertical"
+                            className="data-[orientation=vertical]:h-4"
+                        />
+                        <Breadcrumbs />
+                    </div>
+                </div>
 
-                <Separator
-                    orientation="vertical"
-                    className="mx-2 data-[orientation=vertical]:h-4"
-                />
+                {/* Center: Money */}
+                <div className="flex-1 flex justify-center items-center">
+                    {MoneyDisplay(
+                        isMoneyLoading,
+                        moneyData,
+                        isMoneyError,
+                        isConnected,
+                        moneyError,
+                    )}
+                </div>
 
-                <div className="grow" />
-
-                <div className="flex items-center justify-between gap-4">
-                    {/* Money and Resources */}
-                    <div className="flex gap-3 items-center">
-                        {/* Money */}
-                        {MoneyDisplay(
-                            isMoneyLoading,
-                            moneyData,
-                            isMoneyError,
-                            isConnected,
-                            moneyError,
-                        )}
-
-                        {/* Workers */}
+                {/* Right: Workers + actions */}
+                <div className="flex items-center gap-4 shrink-0">
+                    {/* Workers — stacked vertically on mobile, horizontal on desktop */}
+                    <div className="flex flex-col md:flex-row items-end md:items-center gap-1 md:gap-3">
                         {WorkersDisplay(
                             isWorkersError,
                             isWorkersLoading,
@@ -150,8 +151,8 @@ export function TopBar() {
                         </ButtonGroup>
                     )}
 
-                    {/* Notifications, Theme Toggle and User Menu */}
-                    <ButtonGroup>
+                    {/* Notifications, Theme Toggle and User Menu — desktop only */}
+                    <ButtonGroup className="hidden md:flex">
                         <Button
                             onClick={() => setShowNotifications(true)}
                             variant="outline"
@@ -218,6 +219,81 @@ export function TopBar() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </ButtonGroup>
+
+                    {/* Three-dots menu — mobile only */}
+                    <div className="md:hidden">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="relative"
+                                    aria-label="Menu"
+                                >
+                                    <MoreVertical size={20} />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center z-20">
+                                            {unreadCount}
+                                        </span>
+                                    )}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem
+                                    onSelect={() =>
+                                        setShowNotifications(true)
+                                    }
+                                >
+                                    <Bell size={20} />
+                                    Notifications
+                                    {unreadCount > 0 && (
+                                        <span className="ml-auto bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                            {unreadCount}
+                                        </span>
+                                    )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <ThemeToggle variant="menu-item" />
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuLabel asChild>
+                                    <p>{user.username}</p>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <a
+                                        href={
+                                            "https://github.com/felixvonsamson/Energetica/issues/new"
+                                        }
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        <FlagTriangleRight size={20} />
+                                        Report an issue
+                                    </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <Link
+                                        to="/app/settings"
+                                        className="flex items-center gap-2"
+                                    >
+                                        <Settings size={20} />
+                                        Settings
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link
+                                        to="/app/logout"
+                                        className="flex items-center gap-2"
+                                    >
+                                        <LogOut size={20} />
+                                        Logout
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </div>
             </header>
 
