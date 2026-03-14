@@ -635,7 +635,9 @@ def renewables_generation(player: Player, generation: dict) -> None:
     # SOLAR
     solar_generation(player, generation, in_game_seconds_passed)
     # HYDRO
-    power_factor = calculate_river_speed(in_game_seconds_passed) / 150
+    power_factor = (
+        calculate_river_speed(in_game_seconds_passed) / 2.5
+    )  # max river speed is 2.5 m/s, so this normalizes the power factor between 0 and 1
     for hydro_facility in HydroFacilityType:
         if player.capacities.get(hydro_facility) is not None:
             generation[hydro_facility] = power_factor * player.capacities[hydro_facility]["power"]

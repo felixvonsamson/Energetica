@@ -12,13 +12,23 @@ import type { LucideIcon } from "lucide-react";
 
 import { useWeather } from "@/hooks/use-weather";
 
-const SHORT_MONTH_NAMES = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+const MONTH_NAMES = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ] as const;
 
 function getShortMonthName(monthNumber: number): string {
-    return SHORT_MONTH_NAMES[monthNumber - 1] ?? "???";
+    return MONTH_NAMES[monthNumber - 1] ?? "???";
 }
 
 function getSkyIcon(clearSkyValue: number, csi: number): LucideIcon {
@@ -52,7 +62,7 @@ interface WeatherItemProps {
 function WeatherItem({ icon: Icon, label, value, sub }: WeatherItemProps) {
     return (
         <div className="flex items-center gap-3">
-            <Icon className="w-8 h-8 shrink-0 text-foreground/70" />
+            <Icon className="w-8 h-8 shrink-0 text-foreground" />
             <div className="leading-tight">
                 <div className="text-sm text-muted-foreground">{label}</div>
                 <div className="font-semibold text-base">
@@ -87,7 +97,10 @@ export function WeatherSection() {
         );
     }
 
-    const SkyIcon = getSkyIcon(weatherData.clear_sky_value, weatherData.clear_sky_index);
+    const SkyIcon = getSkyIcon(
+        weatherData.clear_sky_value,
+        weatherData.clear_sky_index,
+    );
     const windLabel = getWindLabel(weatherData.wind_speed);
     const riverLabel = getRiverLabel(weatherData.river_flow_speed);
 
