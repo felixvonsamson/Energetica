@@ -12,7 +12,7 @@ from noise import pnoise3
 from scipy.stats import norm
 
 from energetica import technology_effects
-from energetica.config.assets import river_discharge_seasonal
+from energetica.config.assets import river_flow_speed_seasonal
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.messages import Chat, Message, Notification
@@ -201,8 +201,9 @@ def save_past_data() -> None:
     # remove old notifications
     for notification in list(
         Notification.filter(
-            lambda notification: notification.title != "Tutorial"
-            and notification.time < datetime.now() - timedelta(weeks=2),
+            lambda notification: (
+                notification.title != "Tutorial" and notification.time < datetime.now() - timedelta(weeks=2)
+            ),
         ),
     ):
         notification.delete()
@@ -315,13 +316,18 @@ def get_quiz_question(player: Player) -> DailyQuizBase:
 # Weather
 
 
-def calculate_solar_irradiance(position: tuple[float, float], total_seconds: float, random_seed: int) -> float:
+def calculate_solar_irradiance(
+    position: tuple[float, float], total_seconds: float, random_seed: int
+) -> tuple[float, float, float]:
     """
     Calculate the solar irradiance for a given location and time.
 
     The clear sky index is derived from a 3d perlin noise function that moves in time to simulate the cloud cover.
     The clear sky index is then multiplied by the clear sky irradiance to get the solar irradiance.
     The irradiance is capped at 1000 W/m^2.
+
+    Returns:
+        (solar_irradiance, clear_sky_value, clear_sky_index)
     """
 
     def transformation(noise_value: float, threshold: float = 0, smoothness: float = 2) -> float:
@@ -355,7 +361,7 @@ def calculate_solar_irradiance(position: tuple[float, float], total_seconds: flo
     )
     csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
     clear_sky = DrHI(weather_datetime.timestamp(), (position[1] - 10) * 85 / 21, 0)
-    return min(950, csi * clear_sky)
+    return min(950, csi * clear_sky), clear_sky, csi
 
 
 def calculate_wind_speed(position: tuple[float, float], total_seconds: float, random_seed: int) -> float:
@@ -384,14 +390,14 @@ def calculate_wind_speed(position: tuple[float, float], total_seconds: float, ra
     )  # type: ignore
 
 
-def calculate_river_discharge(total_seconds: float) -> float:
-    """Calculate the river discharge by interpolating the values from the seasonal variation."""
+def calculate_river_speed(total_seconds: float) -> float:
+    """Calculate the river flow speed by interpolating the values from the seasonal variation."""
     days_since_start = math.floor(total_seconds / 3600 / 24)
     current_day_fraction = (total_seconds % (3600 * 24)) / (3600 * 24)
-    discharge_factor = river_discharge_seasonal[days_since_start % 72] + current_day_fraction * (
-        river_discharge_seasonal[(days_since_start + 1) % 72] - river_discharge_seasonal[days_since_start % 72]
+    flow_speed = river_flow_speed_seasonal[days_since_start % 72] + current_day_fraction * (
+        river_flow_speed_seasonal[(days_since_start + 1) % 72] - river_flow_speed_seasonal[days_since_start % 72]
     )
-    return discharge_factor * 150  # in m^3/s
+    return flow_speed * 2.5  # in m/s
 
 
 def package_weather_data(player: Player) -> WeatherOut:
@@ -400,13 +406,15 @@ def package_weather_data(player: Player) -> WeatherOut:
     y = player.tile.coordinates[1] * 0.5 * 3**0.5
     total_seconds = (engine.total_t + engine.delta_t) * engine.in_game_seconds_per_tick
     random_seed = engine.random_seed
-    solar_irradiance = calculate_solar_irradiance((x, y), total_seconds, random_seed)
+    solar_irradiance, clear_sky_value, clear_sky_index = calculate_solar_irradiance((x, y), total_seconds, random_seed)
     wind_speed = calculate_wind_speed((x, y), total_seconds, random_seed)
-    river_discharge = calculate_river_discharge(total_seconds)
+    river_flow_speed = calculate_river_speed(total_seconds)
     return WeatherOut(
         year_progress=(total_seconds / 3600 / 24 / 72) % 1,
         month_number=1 + math.floor((total_seconds / 3600 / 24 / 6) % 12),
         solar_irradiance=solar_irradiance,
+        clear_sky_value=clear_sky_value,
+        clear_sky_index=clear_sky_index,
         wind_speed=wind_speed,
-        river_discharge=river_discharge,
+        river_flow_speed=river_flow_speed,
     )

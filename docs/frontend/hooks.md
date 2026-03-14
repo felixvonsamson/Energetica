@@ -282,8 +282,8 @@ energetica/schemas/[feature].py
 ```javascript
 // This tells us:
 // 1. Endpoint: /api/v1/weather
-// 2. Fields: month_number, year_progress, solar_irradiance, wind_speed, river_discharge
-// 3. Calculations: irradiance/1000, wind_speed/60, river_discharge/150
+// 2. Fields: month_number, year_progress, solar_irradiance, wind_speed, river_flow_speed
+// 3. Calculations: irradiance/1000, wind_speed/60, river_flow_speed/2.5
 // 4. Display: Progress bars with specific widths
 fetch("/api/v1/weather")
     .then((response) => response.json())
