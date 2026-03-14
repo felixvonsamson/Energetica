@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 import { AchievementCard } from "@/components/dashboard/achievement-card";
-import { DailyQuizSection } from "@/components/dashboard/daily-quiz";
+import { DailyQuizButton } from "@/components/dashboard/daily-quiz";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import {
     ProjectList,
@@ -237,14 +237,12 @@ function DashboardContent() {
                         icon={Trophy}
                         title="Leaderboards"
                     />
+                    <DailyQuizButton />
                 </div>
             </section>
 
             {/* Achievement progression */}
             <AchievementSection />
-
-            {/* Daily quiz */}
-            <DailyQuizSection />
         </div>
     );
 }
