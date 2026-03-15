@@ -394,10 +394,10 @@ def calculate_river_speed(total_seconds: float) -> float:
     """Calculate the river flow speed by interpolating the values from the seasonal variation."""
     days_since_start = math.floor(total_seconds / 3600 / 24)
     current_day_fraction = (total_seconds % (3600 * 24)) / (3600 * 24)
-    flow_speed = river_flow_speed_seasonal[days_since_start % 72] + current_day_fraction * (
+    flow_factor = river_flow_speed_seasonal[days_since_start % 72] + current_day_fraction * (
         river_flow_speed_seasonal[(days_since_start + 1) % 72] - river_flow_speed_seasonal[days_since_start % 72]
     )
-    return flow_speed * 2.5  # in m/s
+    return flow_factor * 2.5  # in m/s
 
 
 def package_weather_data(player: Player) -> WeatherOut:
