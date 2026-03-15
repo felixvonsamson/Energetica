@@ -4,7 +4,8 @@
  */
 
 import { type ReactNode, useState } from "react";
-import { Toaster } from "sonner";
+
+import { Toaster } from "@/components/ui/toaster";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopBar } from "@/components/layout/top-bar";
@@ -38,7 +39,7 @@ export function GameLayout({ children }: GameLayoutProps) {
                         {children}
                     </main>
 
-                    <Toaster position="top-right" richColors />
+                    <Toaster />
                 </div>
             </SidebarInset>
         </SidebarProvider>
