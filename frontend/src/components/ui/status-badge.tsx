@@ -1,4 +1,4 @@
-import { Clock, Gauge, Pause, PlayCircle, Truck } from "lucide-react";
+import { Clock, Pause, PlayCircle, Truck, ZapOff } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -59,13 +59,13 @@ export function StatusBadge({
             styles: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
         },
         slowed: {
-            icon: <Gauge size={iconSize} />,
-            label: "Slowed",
+            icon: <ZapOff size={iconSize} />,
+            label: "Power Shortage",
             styles: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
         },
         stopped: {
-            icon: <Gauge size={iconSize} />,
-            label: "Stopped",
+            icon: <ZapOff size={iconSize} />,
+            label: "Power Shortage",
             styles: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
         },
     };
