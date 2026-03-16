@@ -2,7 +2,9 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
+        "build": "vite build && bun run build:sw",
+        "build:sw": "bun build src/service-worker.ts --outfile ../energetica/static/service-worker.js --target browser",
+        "dev:sw": "bun build src/service-worker.ts --outfile ../energetica/static/service-worker.js --target browser --watch",
         "generate-types": "bash ../scripts/generate-types.sh",
         "lint": "eslint . --max-warnings 0 --cache",
         "lint:fix": "eslint . --fix --cache",
@@ -47,6 +49,7 @@
         "remark-gfm": "^4.0.1",
         "remark-math": "^6.0.0",
         "socket.io-client": "^4.8.1",
+        "sonner": "^2.0.7",
         "tailwind-merge": "^3.4.0",
         "tailwindcss": "^4.1.12"
     },

@@ -350,13 +350,34 @@ def complete_project(project: OngoingProject, *, skip_notifications: bool = Fals
     project_name = engine.const_config["assets"][project.project_type]["name"]
     if not skip_notifications:
         if isinstance(project.project_type, TechnologyType):
-            player.notify("Technologies", f"+ 1 lvl <b>{project_name}</b>.")
+            player.notify(
+                "technology_researched",
+                {
+                    "technology_type": str(project.project_type),
+                    "technology_name": project_name,
+                    "new_level": player.technology_lvl[project.project_type],
+                },
+            )
             engine.log(f"{player.username} : + 1 lvl {project_name}")
         elif isinstance(project.project_type, FunctionalFacilityType):
-            player.notify("Constructions", f"+ 1 lvl <b>{project_name}</b>")
+            player.notify(
+                "construction_finished",
+                {
+                    "project_type": str(project.project_type),
+                    "project_name": project_name,
+                    "level": player.functional_facility_lvl[project.project_type],
+                },
+            )
             engine.log(f"{player.username} : + 1 lvl {project_name}")
         else:
-            player.notify("Constructions", f"+ 1 <b>{project_name}</b>")
+            player.notify(
+                "construction_finished",
+                {
+                    "project_type": str(project.project_type),
+                    "project_name": project_name,
+                    "level": None,
+                },
+            )
             engine.log(f"{player.username} : + 1 {project_name}")
     if isinstance(project.project_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
         eol = engine.total_t + math.ceil(

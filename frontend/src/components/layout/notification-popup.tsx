@@ -23,6 +23,60 @@ import {
     useMarkAllNotificationsRead,
 } from "@/hooks/use-notifications";
 import { cn } from "@/lib/utils";
+import type { components } from "@/types/api.generated";
+
+type NotificationPayload =
+    components["schemas"]["NotificationOut"]["payload"];
+
+function getNotificationTitle(payload: NotificationPayload): string {
+    switch (payload.type) {
+        case "construction_finished":
+            return "Construction finished";
+        case "technology_researched":
+            return "Research complete";
+        case "facility_decommissioned":
+            return "Facility decommissioned";
+        case "facility_destroyed":
+            return "Facility destroyed";
+        case "emergency_facility_created":
+            return "Emergency facility";
+        case "climate_event":
+            return "Climate event";
+        case "resource_sold":
+            return "Resource sold";
+        case "shipment_arrived":
+            return "Shipment arrived";
+        case "credit_limit_exceeded":
+            return "Credit limit exceeded";
+        case "achievement_unlocked":
+            return "Achievement unlocked";
+    }
+}
+
+function getNotificationContent(payload: NotificationPayload): string {
+    switch (payload.type) {
+        case "construction_finished":
+            return `${payload.project_name} is now operational.`;
+        case "technology_researched":
+            return `${payload.technology_name} level ${payload.new_level} unlocked.`;
+        case "facility_decommissioned":
+            return `${payload.facility_name} was decommissioned.`;
+        case "facility_destroyed":
+            return `${payload.facility_name} was destroyed by ${payload.event_name}.`;
+        case "emergency_facility_created":
+            return `A ${payload.facility_name} was created automatically.`;
+        case "climate_event":
+            return `${payload.event_name} is affecting your facilities for ${payload.duration_days} days (${payload.cost_per_hour}/h).`;
+        case "resource_sold":
+            return `${payload.buyer_username} purchased your ${payload.resource}.`;
+        case "shipment_arrived":
+            return `Your ${payload.resource} shipment has arrived.`;
+        case "credit_limit_exceeded":
+            return "Not enough money for market participation.";
+        case "achievement_unlocked":
+            return `You unlocked: ${payload.achievement_name}`;
+    }
+}
 
 interface NotificationPopupProps {
     isOpen: boolean;
@@ -111,7 +165,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                             <div className="flex items-center gap-2">
                                                 <TypographyH2>
                                                     <TypographySmall>
-                                                        {notification.title}
+                                                        {getNotificationTitle(notification.payload)}
                                                     </TypographySmall>
                                                 </TypographyH2>
                                                 {!notification.read && (
@@ -137,12 +191,9 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                                 notification.time,
                                             ).toLocaleString()}
                                         </div>
-                                        <div
-                                            className="text-card-foreground text-sm"
-                                            dangerouslySetInnerHTML={{
-                                                __html: notification.content,
-                                            }}
-                                        />
+                                        <div className="text-card-foreground text-sm">
+                                            {getNotificationContent(notification.payload)}
+                                        </div>
                                     </div>
                                 ))}
                             </div>

@@ -40,11 +40,12 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
         player=player,
     )
     player.notify(
-        climate_events[event_name].name,
-        climate_events[event_name].description.format(
-            duration=round(climate_events[event_name].duration / 3600 / 24),
-            cost=display_money(recovery_cost * ticks_per_day / 24) + "/h",
-        ),
+        "climate_event",
+        {
+            "event_name": climate_events[event_name].name,
+            "duration_days": round(climate_events[event_name].duration / 3600 / 24),
+            "cost_per_hour": display_money(recovery_cost * ticks_per_day / 24) + "/h",
+        },
     )
 
     # check destructions
@@ -52,8 +53,12 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
         player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY] -= 1
         engine.config.update_config_for_user(player)
         player.notify(
-            "Destruction",
-            f"Your industry has been levelled down by 1 due to the {climate_events[event_name].name} event.",
+            "facility_destroyed",
+            {
+                "facility_name": "Industry",
+                "event_name": climate_events[event_name].name,
+                "cleanup_cost": 0.0,
+            },
         )
         engine.log(f"{player.username} : Industry levelled down by {climate_events[event_name].name}.")
     facilities_list = climate_events[event_name].destruction_chance.keys()

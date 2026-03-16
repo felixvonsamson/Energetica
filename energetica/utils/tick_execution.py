@@ -87,12 +87,11 @@ def check_events_completion() -> None:
         player = facility.player
         dismantle_facility(facility)
         player.notify(
-            "Decommissioning",
-            (
-                f"The facility {facility.display_name} reached the end of its operational lifespan and had to be "
-                "decommissioned. The cost of this operation was "
-                f"{round(facility.dismantle_cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
-            ),
+            "facility_decommissioned",
+            {
+                "facility_name": facility.display_name,
+                "dismantle_cost": float(facility.dismantle_cost),
+            },
         )
         engine.log(f"The facility {facility.display_name} from {player.username} has been decommissioned.")
 

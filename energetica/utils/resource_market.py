@@ -82,9 +82,13 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
             player=buyer,
         )
         sale.player.notify(
-            "Resource transaction",
-            f"{buyer.username} bought {format_mass(quantity)} of "
-            f"{sale.resource} for a total cost of {display_money(total_price)}.",
+            "resource_sold",
+            {
+                "buyer_username": buyer.username,
+                "resource": str(sale.resource),
+                "quantity_kg": float(quantity),
+                "total_price": float(total_price),
+            },
         )
         engine.log(
             f"{buyer.username} bought {format_mass(quantity)} of "
@@ -129,24 +133,33 @@ def store_import(player: Player, fuel: Fuel, quantity: float) -> None:
     if player.resources[fuel] + quantity > max_cap:
         # excess resources are stored in the ground
         # TODO(mglst): what if instead it was a political fiasco that the player had to deal with?
+        stored_kg = max_cap - player.resources[fuel]
         player.tile.fuel_reserves[fuel] += player.resources[fuel] + quantity - max_cap
         player.resources[fuel] = max_cap
         player.notify(
-            "OngoingShipments",
-            f"A shipment of {format_mass(quantity)} {fuel} arrived, but "
-            f"only {format_mass(max_cap - player.resources[fuel])} could be "
-            "stored in your warehouse.",
+            "shipment_arrived",
+            {
+                "resource": str(fuel),
+                "quantity_kg": float(quantity),
+                "stored_kg": float(stored_kg),
+                "warehouse_full": True,
+            },
         )
         engine.log(
             f"{player.username} received a shipment of {format_mass(quantity)} "
             f"{fuel}, but could only store "
-            f"{format_mass(max_cap - player.resources[fuel])} "
+            f"{format_mass(stored_kg)} "
             "in their warehouse.",
         )
     else:
         player.resources[fuel] += quantity
         player.notify(
-            "OngoingShipments",
-            f"A shipment of {format_mass(quantity)} {fuel} arrived.",
+            "shipment_arrived",
+            {
+                "resource": str(fuel),
+                "quantity_kg": float(quantity),
+                "stored_kg": float(quantity),
+                "warehouse_full": False,
+            },
         )
         engine.log(f"{player.username} received a shipment of {format_mass(quantity)} {fuel}.")

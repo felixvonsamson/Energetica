@@ -98,11 +98,12 @@ def destroy_facility(player: Player, facility: ActiveFacility, event_name: str) 
         player.rolling_history._data["storage"][facility.facility_type][-1] = stored * (n - 1) / n
     remove_facility(facility)
     player.notify(
-        "Destruction",
-        (
-            f"The facility {facility.facility_type} was destroyed by the {event_name}. The cost of the cleanup was "
-            f"{round(cleanup_cost)}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>."
-        ),
+        "facility_destroyed",
+        {
+            "facility_name": str(facility.facility_type),
+            "event_name": event_name,
+            "cleanup_cost": float(cleanup_cost),
+        },
     )
     engine.log(f"{player.username} : {facility.facility_type} destroyed by {event_name}.")
 
@@ -168,10 +169,9 @@ def save_powerless_player(player: Player) -> None:
             ),
         )
         player.notify(
-            "Emergency Power Generation",
-            (
-                "Due to the decommissioning of your last power generation facility, a new steam engine has been "
-                "created for you."
-            ),
+            "emergency_facility_created",
+            {
+                "facility_name": "Steam Engine",
+            },
         )
         engine.log(f"Emergency power steam engine created for {player.username}.")

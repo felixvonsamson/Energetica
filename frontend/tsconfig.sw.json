@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "lib": ["WebWorker", "WebWorker.ImportScripts", "ESNext"],
+        "allowJs": false,
+        "skipLibCheck": true,
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "isolatedModules": true,
+        "noEmit": true
+    },
+    "include": ["src/service-worker.ts"]
+}

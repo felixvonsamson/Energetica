@@ -1006,6 +1006,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications/subscription-prefs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Subscription Prefs
+         *
+         * Get notification subscription preferences for the current player.
+         */
+        get: operations["get_subscription_prefs_api_v1_notifications_subscription_prefs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Patch Subscription Prefs
+         *
+         * Update notification subscription preferences for the current player.
+         */
+        patch: operations["patch_subscription_prefs_api_v1_notifications_subscription_prefs_patch"];
+        trace?: never;
+    };
     "/api/v1/notifications/{notification_id}": {
         parameters: {
             query?: never;
@@ -1024,7 +1050,12 @@ export interface paths {
         delete: operations["delete_notification_api_v1_notifications__notification_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Patch Notification
+         *
+         * Update read/flagged/archived state of a notification.
+         */
+        patch: operations["patch_notification_api_v1_notifications__notification_id__patch"];
         trace?: never;
     };
     "/api/v1/notifications:markAllRead": {
@@ -2494,6 +2525,19 @@ export interface components {
             /** Status */
             status: number;
         };
+        /** AchievementUnlockedPayload */
+        AchievementUnlockedPayload: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "achievement_unlocked";
+            /** Achievement Key */
+            achievement_key: string;
+            /** Achievement Name */
+            achievement_name: string;
+        };
         /** Ask */
         Ask: {
             /** Type */
@@ -2719,6 +2763,36 @@ export interface components {
                 [key: string]: number[];
             };
         };
+        /** ClimateEventPayload */
+        ClimateEventPayload: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "climate_event";
+            /** Event Name */
+            event_name: string;
+            /** Duration Days */
+            duration_days: number;
+            /** Cost Per Hour */
+            cost_per_hour: string;
+        };
+        /** ConstructionFinishedPayload */
+        ConstructionFinishedPayload: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "construction_finished";
+            /** Project Type */
+            project_type: string;
+            /** Project Name */
+            project_name: string;
+            /** Level */
+            level?: number | null;
+        };
         /**
          * ControllableFacilityType
          *
@@ -2733,6 +2807,15 @@ export interface components {
             | "combined_cycle"
             | "nuclear_reactor"
             | "nuclear_reactor_gen4";
+        /** CreditLimitExceededPayload */
+        CreditLimitExceededPayload: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "credit_limit_exceeded";
+        };
         /** DailyQuizBase */
         DailyQuizBase: {
             /** Question */
@@ -2822,6 +2905,17 @@ export interface components {
              * Tick when the electricity market was created
              */
             created_tick: number;
+        };
+        /** EmergencyFacilityCreatedPayload */
+        EmergencyFacilityCreatedPayload: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "emergency_facility_created";
+            /** Facility Name */
+            facility_name: string;
         };
         /**
          * EmissionsResponse
@@ -2953,6 +3047,34 @@ export interface components {
             storage_facilities: components["schemas"]["StorageFacilityOut"][];
             /** Extraction Facilities */
             extraction_facilities: components["schemas"]["ExtractionFacilityOut"][];
+        };
+        /** FacilityDecommissionedPayload */
+        FacilityDecommissionedPayload: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "facility_decommissioned";
+            /** Facility Name */
+            facility_name: string;
+            /** Dismantle Cost */
+            dismantle_cost: number;
+        };
+        /** FacilityDestroyedPayload */
+        FacilityDestroyedPayload: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "facility_destroyed";
+            /** Facility Name */
+            facility_name: string;
+            /** Event Name */
+            event_name: string;
+            /** Cleanup Cost */
+            cleanup_cost: number;
         };
         /** FacilityStatuses */
         FacilityStatuses: {
@@ -3476,31 +3598,66 @@ export interface components {
          * @enum {string}
          */
         NonFacilityBidType: "construction" | "research" | "transport";
-        /**
-         * NotificationListOut
-         *
-         * Response model for the notification list.
-         */
+        /** NotificationListOut */
         NotificationListOut: {
             /** Notifications */
             notifications: components["schemas"]["NotificationOut"][];
         };
-        /**
-         * NotificationOut
-         *
-         * Response model for a notification.
-         */
+        /** NotificationOut */
         NotificationOut: {
             /** Id */
             id: number;
-            /** Title */
-            title: string;
-            /** Content */
-            content: string;
             /** Time Format: date-time */
             time: string;
             /** Read */
             read: boolean;
+            /** Flagged */
+            flagged: boolean;
+            /** Archived */
+            archived: boolean;
+            /** Payload */
+            payload:
+                | components["schemas"]["ConstructionFinishedPayload"]
+                | components["schemas"]["TechnologyResearchedPayload"]
+                | components["schemas"]["FacilityDecommissionedPayload"]
+                | components["schemas"]["FacilityDestroyedPayload"]
+                | components["schemas"]["EmergencyFacilityCreatedPayload"]
+                | components["schemas"]["ClimateEventPayload"]
+                | components["schemas"]["ResourceSoldPayload"]
+                | components["schemas"]["ShipmentArrivedPayload"]
+                | components["schemas"]["CreditLimitExceededPayload"]
+                | components["schemas"]["AchievementUnlockedPayload"];
+        };
+        /** NotificationPatchIn */
+        NotificationPatchIn: {
+            /** Read */
+            read?: boolean | null;
+            /** Flagged */
+            flagged?: boolean | null;
+            /** Archived */
+            archived?: boolean | null;
+        };
+        /** NotificationSubscriptionPrefsIn */
+        NotificationSubscriptionPrefsIn: {
+            /** Resource Market Bid */
+            resource_market_bid?: boolean | null;
+            /** Network Join Leave */
+            network_join_leave?: boolean | null;
+            /** Resource Market Bid Push */
+            resource_market_bid_push?: boolean | null;
+            /** Network Join Leave Push */
+            network_join_leave_push?: boolean | null;
+        };
+        /** NotificationSubscriptionPrefsOut */
+        NotificationSubscriptionPrefsOut: {
+            /** Resource Market Bid */
+            resource_market_bid: boolean;
+            /** Network Join Leave */
+            network_join_leave: boolean;
+            /** Resource Market Bid Push */
+            resource_market_bid_push: boolean;
+            /** Network Join Leave Push */
+            network_join_leave_push: boolean;
         };
         /**
          * OpCostsResponse
@@ -4016,6 +4173,23 @@ export interface components {
             /** Rate */
             rate: number;
         };
+        /** ResourceSoldPayload */
+        ResourceSoldPayload: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "resource_sold";
+            /** Buyer Username */
+            buyer_username: string;
+            /** Resource */
+            resource: string;
+            /** Quantity Kg */
+            quantity_kg: number;
+            /** Total Price */
+            total_price: number;
+        };
         /** ResourceStats */
         ResourceStats: {
             /** Extracted Resources */
@@ -4168,6 +4342,23 @@ export interface components {
         SettleResponse: {
             /** Player Id */
             player_id: number;
+        };
+        /** ShipmentArrivedPayload */
+        ShipmentArrivedPayload: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "shipment_arrived";
+            /** Resource */
+            resource: string;
+            /** Quantity Kg */
+            quantity_kg: number;
+            /** Stored Kg */
+            stored_kg: number;
+            /** Warehouse Full */
+            warehouse_full: boolean;
         };
         /** ShipmentListOut */
         ShipmentListOut: {
@@ -4537,6 +4728,21 @@ export interface components {
              * Nuclear Engineering level
              */
             nuclear_engineering: number;
+        };
+        /** TechnologyResearchedPayload */
+        TechnologyResearchedPayload: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "technology_researched";
+            /** Technology Type */
+            technology_type: string;
+            /** Technology Name */
+            technology_name: string;
+            /** New Level */
+            new_level: number;
         };
         /**
          * TechnologyType
@@ -6115,6 +6321,57 @@ export interface operations {
             };
         };
     };
+    get_subscription_prefs_api_v1_notifications_subscription_prefs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationSubscriptionPrefsOut"];
+                };
+            };
+        };
+    };
+    patch_subscription_prefs_api_v1_notifications_subscription_prefs_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationSubscriptionPrefsIn"];
+            };
+        };
+        responses: {
+            /** Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_notification_api_v1_notifications__notification_id__delete: {
         parameters: {
             query?: never;
@@ -6125,6 +6382,39 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_notification_api_v1_notifications__notification_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationPatchIn"];
+            };
+        };
         responses: {
             /** Successful Response */
             204: {

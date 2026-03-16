@@ -4,12 +4,26 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from energetica.database import DBModel
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
+
+
+NotificationType = Literal[
+    "construction_finished",
+    "technology_researched",
+    "facility_decommissioned",
+    "facility_destroyed",
+    "emergency_facility_created",
+    "climate_event",
+    "resource_sold",
+    "shipment_arrived",
+    "credit_limit_exceeded",
+    "achievement_unlocked",
+]
 
 
 @dataclass
@@ -93,8 +107,10 @@ class Chat(DBModel):
 class Notification(DBModel):
     """Class for storing data about in-game notifications."""
 
-    title: str
-    content: str
+    type: NotificationType
+    payload: dict
     player: Player
     time: datetime = field(default_factory=datetime.now)
     read: bool = False
+    flagged: bool = False
+    archived: bool = False
