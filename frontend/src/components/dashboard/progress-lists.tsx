@@ -191,58 +191,58 @@ function ProjectItem({ project }: ProjectItemProps) {
 
     return (
         <div className="flex items-stretch gap-2">
-                {/* Priority arrows — outside the card, left side, matching card bg */}
-                <div className="flex flex-col items-center justify-center gap-0.5 shrink-0 self-center">
-                    {!project.isFirst ? (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onIncreasePriority}
-                            disabled={increasePriorityMutation.isPending}
-                            className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
-                            aria-label="Increase priority"
-                        >
-                            <ChevronUp size={14} />
-                        </Button>
-                    ) : (
-                        <div className="h-6 w-6" />
-                    )}
-                    {!project.isLast ? (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onDecreasePriority}
-                            disabled={decreasePriorityMutation.isPending}
-                            className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
-                            aria-label="Decrease priority"
-                        >
-                            <ChevronDown size={14} />
-                        </Button>
-                    ) : (
-                        <div className="h-6 w-6" />
-                    )}
-                </div>
-
-                {/* Card */}
-                <div className="flex-1">
-                    <ProgressCard
-                        status={project.status}
-                        progress={progress}
-                        endTick={project.end_tick}
-                        speed={project.speed}
-                        remainingTicks={
-                            project.duration - (project.ticks_passed ?? 0)
-                        }
-                        label={
-                            <TechnologyName
-                                technology={project.type}
-                                level={project.level}
-                            />
-                        }
-                        actions={cardActions}
-                    />
-                </div>
+            {/* Priority arrows — outside the card, left side, matching card bg */}
+            <div className="flex flex-col items-center justify-center gap-0.5 shrink-0 self-center">
+                {!project.isFirst ? (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onIncreasePriority}
+                        disabled={increasePriorityMutation.isPending}
+                        className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
+                        aria-label="Increase priority"
+                    >
+                        <ChevronUp size={14} />
+                    </Button>
+                ) : (
+                    <div className="h-6 w-6" />
+                )}
+                {!project.isLast ? (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onDecreasePriority}
+                        disabled={decreasePriorityMutation.isPending}
+                        className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
+                        aria-label="Decrease priority"
+                    >
+                        <ChevronDown size={14} />
+                    </Button>
+                ) : (
+                    <div className="h-6 w-6" />
+                )}
             </div>
+
+            {/* Card */}
+            <div className="flex-1">
+                <ProgressCard
+                    status={project.status}
+                    progress={progress}
+                    endTick={project.end_tick}
+                    speed={project.speed}
+                    remainingTicks={
+                        project.duration - (project.ticks_passed ?? 0)
+                    }
+                    label={
+                        <TechnologyName
+                            technology={project.type}
+                            level={project.level}
+                        />
+                    }
+                    actions={cardActions}
+                />
+            </div>
+        </div>
     );
 }
 
@@ -291,9 +291,9 @@ function ProgressCard({
     actions,
 }: ProgressCardProps) {
     return (
-        <div className="p-3 rounded-lg bg-muted/30">
+        <div className="px-3 pt-2 pb-1 rounded-lg bg-muted/30">
             {/* Header row: Badge, Title, Actions */}
-            <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                     <StatusBadge status={status} size="sm" />
                     {speed !== undefined && speed < 1.0 && (
@@ -305,14 +305,16 @@ function ProgressCard({
                     {label}
                 </div>
                 {/* Action buttons */}
-                <div className="flex items-center gap-1 shrink-0">{actions}</div>
+                <div className="flex items-center gap-1 shrink-0">
+                    {actions}
+                </div>
             </div>
 
             {/* Progress bar */}
             <ProgressBar value={progress} showPercentage={false} />
 
             {/* Info row: Time remaining, speed */}
-            <div className="flex items-center justify-between gap-2 mt-2 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-3">
                     <TypographyP>
                         {status === "paused" || status === "waiting" ? (
