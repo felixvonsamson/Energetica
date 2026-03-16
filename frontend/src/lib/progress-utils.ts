@@ -11,6 +11,7 @@ export function useProjectProgress(
     endTick: number | null,
     ticksPassed: number | null,
     status: ProjectStatus,
+    speed: number,
 ) {
     const { currentTick, lastTickTimestamp } = useGameTick();
     const { data: engine } = useGameEngine();
@@ -25,14 +26,18 @@ export function useProjectProgress(
 
     if (currentTick === undefined) return 0;
 
-    // For ongoing projects, interpolate fractional tick progress between server ticks
+    // For ongoing projects, interpolate fractional tick progress between server ticks.
+    // Scale by speed so a slowed project animates proportionally slower.
     let effectiveTick = currentTick;
     if (status === "ongoing" && lastTickTimestamp !== undefined) {
         const tickDurationMs = engine
             ? engine.wall_clock_seconds_per_tick * 1000
             : 60_000;
-        const fraction = Math.min(1, (now - lastTickTimestamp) / tickDurationMs);
-        effectiveTick = currentTick + fraction;
+        const fraction = Math.min(
+            1,
+            (now - lastTickTimestamp) / tickDurationMs,
+        );
+        effectiveTick = currentTick + fraction * speed;
     }
 
     return calculateProjectProgress(
@@ -49,13 +54,15 @@ export function useProjectProgress(
  *
  * Handles both ongoing and paused projects:
  *
- * - Ongoing: Progress based on end_tick and current_tick (supports fractional ticks for smooth animation)
+ * - Ongoing: Progress based on end_tick and current_tick (supports fractional
+ *   ticks for smooth animation)
  * - Paused: Progress based on ticks_passed
  *
  * @param duration - Total duration of the project in ticks
  * @param endTick - When the project will complete (for ongoing projects)
  * @param ticksPassed - How many ticks have passed (for paused projects)
- * @param currentTick - Current game tick (may be fractional for smooth interpolation)
+ * @param currentTick - Current game tick (may be fractional for smooth
+ *   interpolation)
  * @param status - Project status
  * @returns Progress as percentage (0-100)
  */

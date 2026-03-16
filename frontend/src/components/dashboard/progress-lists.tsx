@@ -92,6 +92,7 @@ function ProjectItem({ project }: ProjectItemProps) {
         project.end_tick,
         project.ticks_passed,
         project.status,
+        project.speed,
     );
     const resumeMutation = useResumeProject();
     const onResume = () => resumeMutation.mutate(project.id);
@@ -322,7 +323,7 @@ function ProgressCard({
                                 <TogglingDuration ticks={remainingTicks} />
                             ) : null
                         ) : (
-                            <Countdown endTick={endTick} />
+                            <Countdown endTick={endTick} speed={speed} />
                         )}
                     </TypographyP>
                     {speed !== undefined && speed < 1.0 && (

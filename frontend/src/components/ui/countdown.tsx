@@ -7,7 +7,13 @@ import { useGameTick } from "@/hooks/use-game-tick";
 import { formatDuration } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 
-export function Countdown({ endTick }: { endTick: number | null }) {
+export function Countdown({
+    endTick,
+    speed = 1,
+}: {
+    endTick: number | null;
+    speed?: number;
+}) {
     const { currentTick, lastTickTimestamp } = useGameTick();
     const { data: engine } = useGameEngine();
     const { mode, toggleMode } = useTimeMode();
@@ -26,7 +32,7 @@ export function Countdown({ endTick }: { endTick: number | null }) {
     if (lastTickTimestamp !== undefined) {
         const tickDurationMs = engine.wall_clock_seconds_per_tick * 1000;
         const fraction = Math.min(1, (now - lastTickTimestamp) / tickDurationMs);
-        effectiveTick = currentTick + fraction;
+        effectiveTick = currentTick + fraction * speed;
     }
 
     const ticksLeft = Math.max(0, endTick - effectiveTick);
