@@ -10,8 +10,9 @@
         "noUnusedParameters": true,
         "module": "ESNext",
         "moduleResolution": "bundler",
+        "paths": { "@/*": ["./src/*"] },
         "isolatedModules": true,
         "noEmit": true
     },
-    "include": ["src/service-worker.ts"]
+    "include": ["src/service-worker.ts", "src/types"]
 }

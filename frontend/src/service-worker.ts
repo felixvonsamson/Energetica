@@ -1,24 +1,9 @@
 /// <reference lib="webworker" />
 
+import type { NotificationType } from "@/types/notifications";
+
 // Cast the global scope to ServiceWorkerGlobalScope since this file is a service worker.
 const sw = self as unknown as ServiceWorkerGlobalScope;
-
-// IMPORTANT: This union must be kept in sync manually with:
-//   - energetica/database/messages.py  (NotificationType Literal — source of truth)
-//   - frontend/src/types/notifications.ts  (derived from OpenAPI schema)
-// When adding a new notification type, update this union AND add cases to
-// getNotificationText and getNotificationUrl below.
-type NotificationType =
-    | "construction_finished"
-    | "technology_researched"
-    | "facility_decommissioned"
-    | "facility_destroyed"
-    | "emergency_facility_created"
-    | "climate_event"
-    | "resource_sold"
-    | "shipment_arrived"
-    | "credit_limit_exceeded"
-    | "achievement_unlocked";
 
 interface PushData {
     type: NotificationType;
