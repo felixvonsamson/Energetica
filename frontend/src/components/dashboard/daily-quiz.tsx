@@ -8,8 +8,8 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { TypographyH2, TypographyLarge } from "@/components/ui/typography";
-import { cn } from "@/lib/utils";
 import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/use-daily-quiz";
+import { cn } from "@/lib/utils";
 
 export function DailyQuizButton() {
     return (

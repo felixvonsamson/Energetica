@@ -5,11 +5,10 @@
 
 import { type ReactNode, useState } from "react";
 
-import { Toaster } from "@/components/ui/sonner";
-
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 
 interface GameLayoutProps {
     children: ReactNode;

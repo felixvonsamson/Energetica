@@ -13,7 +13,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { TechnologyName } from "@/components/ui/asset-name";
+import { TechnologyName, ResourceName } from "@/components/ui/asset-name";
 import { Button } from "@/components/ui/button";
 import { Countdown } from "@/components/ui/countdown";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -32,7 +32,6 @@ import { useProjectProgress, useShipmentProgress } from "@/lib/progress-utils";
 import { useProjectQueue } from "@/lib/project-utils";
 import { Project, ProjectCategory, ProjectStatus } from "@/types/projects";
 import { Shipment } from "@/types/shipments";
-import { ResourceName } from "@/components/ui/asset-name";
 
 type ProjectListProps = {
     projectCategory: ProjectCategory;
