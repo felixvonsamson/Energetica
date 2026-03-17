@@ -240,9 +240,7 @@ export function TopBar() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem
-                                    onSelect={() =>
-                                        setShowNotifications(true)
-                                    }
+                                    onSelect={() => setShowNotifications(true)}
                                 >
                                     <Bell size={20} />
                                     Notifications
@@ -398,7 +396,6 @@ function MoneyDisplay(
                     <MoneyComponent
                         amount={moneyData?.money ?? 0}
                         long
-                        iconSize="lg"
                         className={cn(isMoneyError && "opacity-75")}
                     />
                 </>

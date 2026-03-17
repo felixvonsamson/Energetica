@@ -56,7 +56,7 @@ export function FacilityItem({
                     <div className="grow" />
                 </CardTitle>
                 <CardDescription>
-                    <Money amount={price} iconSize="sm" long />
+                    <Money amount={price} long />
                 </CardDescription>
             </CardHeader>
             {/* Image with lock overlay */}
