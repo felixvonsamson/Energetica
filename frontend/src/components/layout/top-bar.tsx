@@ -99,7 +99,7 @@ export function TopBar() {
 
     return (
         <>
-            <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b bg-background px-4 gap-2">
+            <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b bg-topbar px-4 gap-2">
                 {/* Left: Sidebar trigger + Breadcrumbs */}
                 <div className="flex items-center gap-2 shrink-0">
                     <SidebarTrigger className="-ml-1" />
