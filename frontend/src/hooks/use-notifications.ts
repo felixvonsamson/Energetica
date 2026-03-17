@@ -193,6 +193,9 @@ export function useFlagNotification() {
  *
  * Uses optimistic updates so the animation feels instant.
  *
+ * TODO: Archive UI is deferred — this hook is ready for use when the
+ * archived view is re-introduced to the notification panel.
+ *
  * @returns Mutation hook taking `{ id, archived: boolean }`
  */
 export function useArchiveNotification() {

@@ -73,7 +73,7 @@ def delete_notification(
 ) -> None:
     """Delete a notification from the player's notification list."""
     notification = Notification.get(notification_id)
-    if notification is None:
+    if notification is None or notification.player != player:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     player.delete_notification(notification)
 

@@ -168,10 +168,11 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
         if (!isOpen) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Don't capture if focus is inside a button or input
+            // Don't capture if focus is inside an interactive text element
             if (
                 e.target instanceof HTMLButtonElement ||
-                e.target instanceof HTMLInputElement
+                e.target instanceof HTMLInputElement ||
+                e.target instanceof HTMLTextAreaElement
             )
                 return;
 
