@@ -6,6 +6,23 @@ import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { ProjectStatus } from "@/types/projects";
 
+/**
+ * Interpolate the effective game tick between server ticks using wall-clock time.
+ * The fraction is clamped to [0, 1] to guard against clock skew.
+ */
+export function interpolateEffectiveTick(
+    currentTick: number,
+    lastTickTimestamp: number,
+    tickDurationMs: number,
+    speed = 1,
+): number {
+    const fraction = Math.min(
+        1,
+        Math.max(0, (Date.now() - lastTickTimestamp) / tickDurationMs),
+    );
+    return currentTick + fraction * speed;
+}
+
 export function useProjectProgress(
     duration: number,
     endTick: number | null,
@@ -15,7 +32,7 @@ export function useProjectProgress(
 ) {
     const { currentTick, lastTickTimestamp } = useGameTick();
     const { data: engine } = useGameEngine();
-    const [now, setNow] = useState(() => Date.now());
+    const [, setNow] = useState(() => Date.now());
 
     // Update sub-tick clock every 500ms only while a project is ongoing
     useEffect(() => {
@@ -33,11 +50,12 @@ export function useProjectProgress(
         const tickDurationMs = engine
             ? engine.wall_clock_seconds_per_tick * 1000
             : 60_000;
-        const fraction = Math.min(
-            1,
-            (now - lastTickTimestamp) / tickDurationMs,
+        effectiveTick = interpolateEffectiveTick(
+            currentTick,
+            lastTickTimestamp,
+            tickDurationMs,
+            speed,
         );
-        effectiveTick = currentTick + fraction * speed;
     }
 
     return calculateProjectProgress(
@@ -91,9 +109,26 @@ export function useShipmentProgress(
     duration: number,
     arrivalTick: number,
 ): number {
-    const { currentTick } = useGameTick();
+    const { currentTick, lastTickTimestamp } = useGameTick();
+    const { data: engine } = useGameEngine();
+    const [, setNow] = useState(() => Date.now());
+
+    useEffect(() => {
+        const id = setInterval(() => setNow(Date.now()), 500);
+        return () => clearInterval(id);
+    }, []);
+
     if (currentTick === undefined) return 0;
-    return calculateShipmentProgress(duration, arrivalTick, currentTick);
+
+    const tickDurationMs = engine
+        ? engine.wall_clock_seconds_per_tick * 1000
+        : 60_000;
+    const effectiveTick =
+        lastTickTimestamp !== undefined
+            ? interpolateEffectiveTick(currentTick, lastTickTimestamp, tickDurationMs)
+            : currentTick;
+
+    return calculateShipmentProgress(duration, arrivalTick, effectiveTick);
 }
 
 /**

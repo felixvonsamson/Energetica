@@ -662,7 +662,7 @@ def solar_generation(player: Player, generation: dict, in_game_seconds_passed: i
                     facility.position,
                     in_game_seconds_passed,
                     engine.random_seed,
-                )
+                )[0]
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"]
                     * facility.multipliers["power_production_multiplier"]

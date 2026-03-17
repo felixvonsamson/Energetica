@@ -5,6 +5,7 @@ import { useTimeMode } from "@/contexts/time-mode-context";
 import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { formatDuration } from "@/lib/format-utils";
+import { interpolateEffectiveTick } from "@/lib/progress-utils";
 import { cn } from "@/lib/utils";
 
 export function Countdown({
@@ -17,7 +18,7 @@ export function Countdown({
     const { currentTick, lastTickTimestamp } = useGameTick();
     const { data: engine } = useGameEngine();
     const { mode, toggleMode } = useTimeMode();
-    const [now, setNow] = useState(() => Date.now());
+    const [, setNow] = useState(() => Date.now());
 
     useEffect(() => {
         if (!endTick) return;
@@ -28,12 +29,15 @@ export function Countdown({
     if (!endTick || !engine || currentTick === undefined) return null;
 
     // Interpolate sub-tick progress
-    let effectiveTick = currentTick;
-    if (lastTickTimestamp !== undefined) {
-        const tickDurationMs = engine.wall_clock_seconds_per_tick * 1000;
-        const fraction = Math.min(1, (now - lastTickTimestamp) / tickDurationMs);
-        effectiveTick = currentTick + fraction * speed;
-    }
+    const effectiveTick =
+        lastTickTimestamp !== undefined
+            ? interpolateEffectiveTick(
+                  currentTick,
+                  lastTickTimestamp,
+                  engine.wall_clock_seconds_per_tick * 1000,
+                  speed,
+              )
+            : currentTick;
 
     const ticksLeft = Math.max(0, endTick - effectiveTick);
     const otherMode = mode === "game-time" ? "wall-clock" : "game-time";
