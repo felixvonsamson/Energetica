@@ -23,6 +23,8 @@ function getNotificationText(data) {
       return { title: "Credit limit exceeded", body: "Not enough money for market participation." };
     case "achievement_unlocked":
       return { title: "Achievement unlocked", body: `You unlocked: ${p.achievement_name}` };
+    default:
+      return { title: "New notification", body: "" };
   }
 }
 function getNotificationUrl(type, _payload) {
@@ -42,6 +44,8 @@ function getNotificationUrl(type, _payload) {
       return "/app/resource-market";
     case "achievement_unlocked":
       return "/app/achievements";
+    default:
+      return "/app/overview";
   }
 }
 sw.addEventListener("push", (event) => {
