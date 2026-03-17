@@ -133,7 +133,21 @@ export function useMarkNotificationRead() {
     return useMutation<void, Error, number>({
         mutationFn: (id: number) =>
             notificationsApi.patchNotification(id, { read: true }),
-        onSuccess: () => {
+        onMutate: (id) => {
+            queryClient.setQueryData<NotificationListResponse>(
+                queryKeys.notifications.all,
+                (old) => {
+                    if (!old) return old;
+                    return {
+                        ...old,
+                        notifications: old.notifications.map((n) =>
+                            n.id === id ? { ...n, read: true } : n,
+                        ),
+                    };
+                },
+            );
+        },
+        onError: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.notifications.all,
             });
