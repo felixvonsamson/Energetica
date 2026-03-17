@@ -258,6 +258,7 @@ export const queryKeys = {
     },
     notifications: {
         all: ["notifications"] as const,
+        subscriptionPrefs: ["notifications", "subscription-prefs"] as const,
     },
     game: {
         engine: ["game", "engine"] as const,

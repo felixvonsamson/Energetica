@@ -1,11 +1,12 @@
 /**
- * Notification popup dialog. Shows all notifications with ability to mark as
- * read and delete.
+ * Notification popup dialog. Shows all notifications with ability to filter by
+ * category, flag, archive, delete, and mark all as read.
  */
 
 import { Link } from "@tanstack/react-router";
-import { Circle, X } from "lucide-react";
-import { useMemo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArchiveIcon, Bookmark, X } from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,67 +17,86 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { TypographyH2, TypographySmall } from "@/components/ui/typography";
+import { TypographySmall } from "@/components/ui/typography";
 import {
     useNotifications,
     useDeleteNotification,
     useMarkAllNotificationsRead,
+    useFlagNotification,
+    useArchiveNotification,
 } from "@/hooks/use-notifications";
 import { cn } from "@/lib/utils";
-import type { components } from "@/types/api.generated";
+import {
+    NOTIFICATION_CATEGORIES,
+    CATEGORY_LABELS,
+    type NotificationCategory,
+    type NotificationPayload,
+} from "@/types/notifications";
 
-type NotificationPayload =
-    components["schemas"]["NotificationOut"]["payload"];
-
-function getNotificationTitle(payload: NotificationPayload): string {
+function getNotificationText(payload: NotificationPayload): {
+    title: string;
+    body: string;
+} {
     switch (payload.type) {
         case "construction_finished":
-            return "Construction finished";
+            return {
+                title: "Construction finished",
+                body: `${payload.project_name}${payload.level != null ? ` (level ${payload.level})` : ""} is now operational.`,
+            };
         case "technology_researched":
-            return "Research complete";
+            return {
+                title: "Research complete",
+                body: `${payload.technology_name} level ${payload.new_level} unlocked.`,
+            };
         case "facility_decommissioned":
-            return "Facility decommissioned";
+            return {
+                title: "Facility decommissioned",
+                body: `${payload.facility_name} has been decommissioned.`,
+            };
         case "facility_destroyed":
-            return "Facility destroyed";
+            return {
+                title: "Facility destroyed",
+                body: `${payload.facility_name} was destroyed by ${payload.event_name}.`,
+            };
         case "emergency_facility_created":
-            return "Emergency facility";
+            return {
+                title: "Emergency facility",
+                body: `A ${payload.facility_name} was created automatically.`,
+            };
         case "climate_event":
-            return "Climate event";
+            return {
+                title: "Climate event",
+                body: `${payload.event_name} · ${payload.duration_days}d · ${payload.cost_per_hour}`,
+            };
         case "resource_sold":
-            return "Resource sold";
+            return {
+                title: "Resource sold",
+                body: `${payload.buyer_username} purchased your ${payload.resource}.`,
+            };
         case "shipment_arrived":
-            return "Shipment arrived";
+            return {
+                title: "Shipment arrived",
+                body: `${payload.resource}${payload.warehouse_full ? " (warehouse full)" : ""}`,
+            };
         case "credit_limit_exceeded":
-            return "Credit limit exceeded";
+            return {
+                title: "Credit limit exceeded",
+                body: "Not enough money for market participation.",
+            };
         case "achievement_unlocked":
-            return "Achievement unlocked";
+            return {
+                title: "Achievement unlocked",
+                body: payload.achievement_name,
+            };
     }
 }
 
-function getNotificationContent(payload: NotificationPayload): string {
-    switch (payload.type) {
-        case "construction_finished":
-            return `${payload.project_name} is now operational.`;
-        case "technology_researched":
-            return `${payload.technology_name} level ${payload.new_level} unlocked.`;
-        case "facility_decommissioned":
-            return `${payload.facility_name} was decommissioned.`;
-        case "facility_destroyed":
-            return `${payload.facility_name} was destroyed by ${payload.event_name}.`;
-        case "emergency_facility_created":
-            return `A ${payload.facility_name} was created automatically.`;
-        case "climate_event":
-            return `${payload.event_name} is affecting your facilities for ${payload.duration_days} days (${payload.cost_per_hour}/h).`;
-        case "resource_sold":
-            return `${payload.buyer_username} purchased your ${payload.resource}.`;
-        case "shipment_arrived":
-            return `Your ${payload.resource} shipment has arrived.`;
-        case "credit_limit_exceeded":
-            return "Not enough money for market participation.";
-        case "achievement_unlocked":
-            return `You unlocked: ${payload.achievement_name}`;
-    }
-}
+const CATEGORIES: NotificationCategory[] = [
+    "projects",
+    "market",
+    "events",
+    "achievements",
+];
 
 interface NotificationPopupProps {
     isOpen: boolean;
@@ -88,54 +108,90 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
     const { mutate: deleteNotification } = useDeleteNotification();
     const { mutate: markAllRead, isPending: isMarkingAllRead } =
         useMarkAllNotificationsRead();
+    const { mutate: flagNotification } = useFlagNotification();
+    const { mutate: archiveNotification } = useArchiveNotification();
+
+    const [activeCategory, setActiveCategory] = useState<
+        NotificationCategory | "all"
+    >("all");
 
     const notifications = useMemo(() => {
-        const notifs = data?.notifications || [];
-        return [...notifs].sort((a, b) => {
-            return new Date(b.time).getTime() - new Date(a.time).getTime();
-        });
+        const notifs = data?.notifications ?? [];
+        return [...notifs]
+            .filter((n) => !n.archived)
+            .sort(
+                (a, b) =>
+                    new Date(b.time).getTime() - new Date(a.time).getTime(),
+            );
     }, [data]);
 
-    const unreadCount = useMemo(() => {
-        return notifications.filter((n) => !n.read).length;
-    }, [notifications]);
+    const filteredNotifications = useMemo(() => {
+        if (activeCategory === "all") return notifications;
+        return notifications.filter(
+            (n) => NOTIFICATION_CATEGORIES[n.payload.type] === activeCategory,
+        );
+    }, [notifications, activeCategory]);
 
-    const handleMarkAllRead = () => {
-        markAllRead();
-    };
-
-    const handleDeleteNotification = (id: number) => {
-        deleteNotification(id);
-    };
+    const unreadCount = useMemo(
+        () => notifications.filter((n) => !n.read).length,
+        [notifications],
+    );
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Notifications</DialogTitle>
-                    <DialogDescription>
-                        View and manage your notifications.
-                    </DialogDescription>
-                </DialogHeader>
-
-                <div className="flex flex-col max-h-[60vh]">
-                    {/* Mark all as read button */}
-                    {unreadCount > 0 && (
-                        <div className="mb-4 flex justify-end">
+                    <div className="flex items-center justify-between">
+                        <DialogTitle>Notifications</DialogTitle>
+                        {unreadCount > 0 && (
                             <Button
                                 variant="secondary"
                                 size="sm"
-                                onClick={handleMarkAllRead}
+                                onClick={() => markAllRead()}
                                 disabled={isMarkingAllRead}
                                 className="flex items-center gap-2"
                             >
                                 {isMarkingAllRead && <Spinner />}
                                 Mark all as read
                             </Button>
-                        </div>
-                    )}
+                        )}
+                    </div>
+                    <DialogDescription>
+                        View and manage your notifications.
+                    </DialogDescription>
+                </DialogHeader>
 
-                    {/* Notifications List */}
+                <div className="flex flex-col max-h-[60vh]">
+                    {/* Category filter tabs */}
+                    <div className="flex gap-1 mb-3 flex-wrap">
+                        <button
+                            onClick={() => setActiveCategory("all")}
+                            className={cn(
+                                "px-3 py-1 rounded text-sm transition-colors",
+                                activeCategory === "all"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                            )}
+                        >
+                            All
+                        </button>
+                        {CATEGORIES.map((cat) => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                className={cn(
+                                    "px-3 py-1 rounded text-sm transition-colors",
+                                    activeCategory === cat
+                                        ? "bg-primary text-primary-foreground"
+                                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                                )}
+                            >
+                                {CATEGORY_LABELS[cat]}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Notifications list */}
                     <div className="flex-1 overflow-y-auto -mx-6 px-6">
                         {isLoading ? (
                             <div className="text-center text-muted-foreground py-8">
@@ -145,58 +201,126 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                             <div className="text-center text-destructive py-8">
                                 Failed to load notifications
                             </div>
-                        ) : notifications.length === 0 ? (
+                        ) : filteredNotifications.length === 0 ? (
                             <div className="text-center text-muted-foreground py-8">
-                                No notifications
+                                {activeCategory === "all"
+                                    ? "No notifications"
+                                    : "No notifications in this category"}
                             </div>
                         ) : (
-                            <div className="space-y-3">
-                                {notifications.map((notification) => (
-                                    <div
-                                        key={notification.id}
-                                        className={cn(
-                                            "p-4 rounded border",
-                                            notification.read
-                                                ? "bg-secondary/20 border-border"
-                                                : "bg-secondary/60 border-border",
-                                        )}
-                                    >
-                                        <div className="flex items-start justify-between mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <TypographyH2>
-                                                    <TypographySmall>
-                                                        {getNotificationTitle(notification.payload)}
+                            <AnimatePresence initial={false}>
+                                {filteredNotifications.map((notification) => {
+                                    const { title, body } =
+                                        getNotificationText(
+                                            notification.payload,
+                                        );
+                                    return (
+                                        <motion.div
+                                            key={notification.id}
+                                            layout
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{
+                                                opacity: 0,
+                                                height: 0,
+                                                marginBottom: 0,
+                                            }}
+                                            transition={{ duration: 0.2 }}
+                                            className={cn(
+                                                "p-4 rounded border mb-3",
+                                                notification.read
+                                                    ? "bg-secondary/20 border-border"
+                                                    : "bg-secondary/60 border-border",
+                                            )}
+                                        >
+                                            <div className="flex items-start justify-between mb-1">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    {!notification.read && (
+                                                        <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                                                    )}
+                                                    <TypographySmall
+                                                        className={cn(
+                                                            "truncate",
+                                                            !notification.read &&
+                                                                "font-bold",
+                                                        )}
+                                                    >
+                                                        {title}
                                                     </TypographySmall>
-                                                </TypographyH2>
-                                                {!notification.read && (
-                                                    <Circle className="w-2 h-2 fill-current text-primary" />
-                                                )}
+                                                </div>
+                                                <div className="flex items-center gap-1 ml-2 shrink-0">
+                                                    {/* Flag button */}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() =>
+                                                            flagNotification({
+                                                                id: notification.id,
+                                                                flagged:
+                                                                    !notification.flagged,
+                                                            })
+                                                        }
+                                                        className="h-8 w-8"
+                                                        aria-label={
+                                                            notification.flagged
+                                                                ? "Unflag notification"
+                                                                : "Flag notification"
+                                                        }
+                                                    >
+                                                        <Bookmark
+                                                            className={cn(
+                                                                "w-4 h-4",
+                                                                notification.flagged &&
+                                                                    "fill-current text-primary",
+                                                            )}
+                                                        />
+                                                    </Button>
+                                                    {/* Archive button */}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() =>
+                                                            archiveNotification(
+                                                                {
+                                                                    id: notification.id,
+                                                                    archived:
+                                                                        true,
+                                                                },
+                                                            )
+                                                        }
+                                                        className="h-8 w-8"
+                                                        aria-label="Archive notification"
+                                                    >
+                                                        <ArchiveIcon className="w-4 h-4" />
+                                                    </Button>
+                                                    {/* Delete button */}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() =>
+                                                            deleteNotification(
+                                                                notification.id,
+                                                            )
+                                                        }
+                                                        className="h-8 w-8"
+                                                        aria-label="Delete notification"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
                                             </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() =>
-                                                    handleDeleteNotification(
-                                                        notification.id,
-                                                    )
-                                                }
-                                                className="h-8 w-8"
-                                                aria-label="Delete notification"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                        <div className="text-xs text-muted-foreground mb-2">
-                                            {new Date(
-                                                notification.time,
-                                            ).toLocaleString()}
-                                        </div>
-                                        <div className="text-card-foreground text-sm">
-                                            {getNotificationContent(notification.payload)}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                            <div className="text-xs text-muted-foreground mb-1">
+                                                {new Date(
+                                                    notification.time,
+                                                ).toLocaleString()}
+                                            </div>
+                                            <div className="text-card-foreground text-sm">
+                                                {body}
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
+                            </AnimatePresence>
                         )}
                     </div>
 

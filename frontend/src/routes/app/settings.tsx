@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
 import {
@@ -28,7 +28,21 @@ import {
     TypographyMuted,
 } from "@/components/ui/typography";
 import { useChangePassword } from "@/hooks/use-auth-queries";
+import { browserNotificationsApi } from "@/lib/api/browser-notifications";
 import { handleApiError } from "@/lib/error-utils";
+
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray.buffer;
+}
 
 function SettingsHelp() {
     return (
@@ -67,29 +81,95 @@ function SettingsContent() {
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
 
+    // Initialize toggle state from reality on mount
+    useEffect(() => {
+        if (!("serviceWorker" in navigator) || !("PushManager" in window))
+            return;
+        navigator.serviceWorker.ready
+            .then((reg) => reg.pushManager.getSubscription())
+            .then((sub) => {
+                setNotificationsEnabled(!!sub);
+            });
+    }, []);
+
     // Handle browser notifications toggle
     const handleNotificationsToggle = async () => {
         setNotificationsLoading(true);
         try {
-            if ("serviceWorker" in navigator && "Notification" in window) {
-                if (!notificationsEnabled) {
-                    // Request permission and subscribe
-                    const permission = await Notification.requestPermission();
-                    if (permission === "granted") {
-                        setNotificationsEnabled(true);
-                        // TODO: Subscribe to push notifications
-                        // const registration = await navigator.serviceWorker.ready;
-                        // const subscription = await registration.pushManager.subscribe(...);
-                        // Send subscription to backend
-                    }
-                } else {
-                    // Unsubscribe
-                    setNotificationsEnabled(false);
-                    // TODO: Unsubscribe from push notifications
-                    // const registration = await navigator.serviceWorker.ready;
-                    // const subscription = await registration.pushManager.getSubscription();
-                    // if (subscription) subscription.unsubscribe();
+            if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+                return;
+            }
+
+            if (!notificationsEnabled) {
+                // Enable: request permission, subscribe
+                const permission = await Notification.requestPermission();
+                if (permission !== "granted") {
+                    return;
                 }
+
+                await navigator.serviceWorker.register(
+                    "/static/service-worker.js",
+                );
+                const registration = await navigator.serviceWorker.ready;
+
+                const { public_key: vapidKey } =
+                    await browserNotificationsApi.getVapidKey();
+
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(vapidKey),
+                });
+
+                const rawKey = subscription.getKey("p256dh");
+                const rawAuth = subscription.getKey("auth");
+
+                if (!rawKey || !rawAuth) {
+                    throw new Error(
+                        "Failed to retrieve push subscription keys.",
+                    );
+                }
+
+                const p256dh = btoa(
+                    String.fromCharCode(...new Uint8Array(rawKey)),
+                );
+                const auth = btoa(
+                    String.fromCharCode(...new Uint8Array(rawAuth)),
+                );
+
+                await browserNotificationsApi.subscribe({
+                    endpoint: subscription.endpoint,
+                    keys: { p256dh, auth },
+                });
+
+                setNotificationsEnabled(true);
+            } else {
+                // Disable: unsubscribe
+                const registration = await navigator.serviceWorker.ready;
+                const subscription =
+                    await registration.pushManager.getSubscription();
+
+                if (subscription) {
+                    const rawKey = subscription.getKey("p256dh");
+                    const rawAuth = subscription.getKey("auth");
+
+                    if (rawKey && rawAuth) {
+                        const p256dh = btoa(
+                            String.fromCharCode(...new Uint8Array(rawKey)),
+                        );
+                        const auth = btoa(
+                            String.fromCharCode(...new Uint8Array(rawAuth)),
+                        );
+
+                        await browserNotificationsApi.unsubscribe({
+                            endpoint: subscription.endpoint,
+                            keys: { p256dh, auth },
+                        });
+                    }
+
+                    await subscription.unsubscribe();
+                }
+
+                setNotificationsEnabled(false);
             }
         } catch (error) {
             console.error("Failed to toggle notifications:", error);
