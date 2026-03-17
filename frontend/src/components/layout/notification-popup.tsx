@@ -8,7 +8,7 @@
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bookmark, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -118,8 +118,6 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
     >("all");
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
-    const listRef = useRef<HTMLDivElement>(null);
-
     const notifications = useMemo(() => {
         const notifs = data?.notifications ?? [];
         return [...notifs]
@@ -142,15 +140,15 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
         [notifications],
     );
 
-    // Keep selectedId valid when list changes (e.g. after delete)
-    useEffect(() => {
-        if (
+    // Derive the active selection — null if the selected notification is no longer in the list
+    const activeSelectedId = useMemo(
+        () =>
             selectedId !== null &&
-            !filteredNotifications.some((n) => n.id === selectedId)
-        ) {
-            setSelectedId(null);
-        }
-    }, [filteredNotifications, selectedId]);
+            filteredNotifications.some((n) => n.id === selectedId)
+                ? selectedId
+                : null,
+        [filteredNotifications, selectedId],
+    );
 
     const selectNotification = useCallback(
         (id: number) => {
@@ -177,7 +175,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                 return;
 
             const idx = filteredNotifications.findIndex(
-                (n) => n.id === selectedId,
+                (n) => n.id === activeSelectedId,
             );
 
             if (e.key === "ArrowDown") {
@@ -196,14 +194,14 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                 if (prev) selectNotification(prev.id);
             } else if (
                 (e.key === "Delete" || e.key === "Backspace") &&
-                selectedId !== null
+                activeSelectedId !== null
             ) {
                 e.preventDefault();
                 // Move selection to next item before deleting
                 const next =
                     filteredNotifications[idx + 1] ??
                     filteredNotifications[idx - 1];
-                deleteNotification(selectedId);
+                deleteNotification(activeSelectedId);
                 setSelectedId(next?.id ?? null);
             }
         };
@@ -213,7 +211,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
     }, [
         isOpen,
         filteredNotifications,
-        selectedId,
+        activeSelectedId,
         selectNotification,
         deleteNotification,
     ]);
@@ -274,7 +272,6 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
 
                     {/* Notifications list */}
                     <div
-                        ref={listRef}
                         className="flex-1 overflow-y-auto -mx-6 px-6"
                     >
                         {isLoading ? (
@@ -299,7 +296,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                             notification.payload,
                                         );
                                     const isSelected =
-                                        notification.id === selectedId;
+                                        notification.id === activeSelectedId;
                                     return (
                                         <motion.div
                                             key={notification.id}
