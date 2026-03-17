@@ -126,7 +126,7 @@ class NotificationOut(BaseModel):
             read=n.read,
             flagged=n.flagged,
             archived=n.archived,
-            payload=_payload_adapter.validate_python(n.payload),
+            payload=_payload_adapter.validate_python({"type": n.type, **n.payload}),
         )
 
 
