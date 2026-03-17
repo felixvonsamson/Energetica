@@ -1,12 +1,14 @@
 /**
  * Notification popup dialog. Shows all notifications with ability to filter by
- * category, flag, archive, delete, and mark all as read.
+ * category, flag, delete, and mark all as read.
+ * Notifications are selectable via click or arrow keys; selection marks as read.
+ * Delete key removes the selected notification.
  */
 
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArchiveIcon, Bookmark, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Bookmark, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,8 +24,8 @@ import {
     useNotifications,
     useDeleteNotification,
     useMarkAllNotificationsRead,
+    useMarkNotificationRead,
     useFlagNotification,
-    useArchiveNotification,
 } from "@/hooks/use-notifications";
 import { cn } from "@/lib/utils";
 import {
@@ -108,12 +110,15 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
     const { mutate: deleteNotification } = useDeleteNotification();
     const { mutate: markAllRead, isPending: isMarkingAllRead } =
         useMarkAllNotificationsRead();
+    const { mutate: markRead } = useMarkNotificationRead();
     const { mutate: flagNotification } = useFlagNotification();
-    const { mutate: archiveNotification } = useArchiveNotification();
 
     const [activeCategory, setActiveCategory] = useState<
         NotificationCategory | "all"
     >("all");
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+
+    const listRef = useRef<HTMLDivElement>(null);
 
     const notifications = useMemo(() => {
         const notifs = data?.notifications ?? [];
@@ -137,62 +142,140 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
         [notifications],
     );
 
+    // Keep selectedId valid when list changes (e.g. after delete)
+    useEffect(() => {
+        if (
+            selectedId !== null &&
+            !filteredNotifications.some((n) => n.id === selectedId)
+        ) {
+            setSelectedId(null);
+        }
+    }, [filteredNotifications, selectedId]);
+
+    const selectNotification = useCallback(
+        (id: number) => {
+            setSelectedId(id);
+            const notif = filteredNotifications.find((n) => n.id === id);
+            if (notif && !notif.read) {
+                markRead(id);
+            }
+        },
+        [filteredNotifications, markRead],
+    );
+
+    // Keyboard navigation
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Don't capture if focus is inside a button or input
+            if (
+                e.target instanceof HTMLButtonElement ||
+                e.target instanceof HTMLInputElement
+            )
+                return;
+
+            const idx = filteredNotifications.findIndex(
+                (n) => n.id === selectedId,
+            );
+
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                const next =
+                    idx === -1
+                        ? filteredNotifications[0]
+                        : filteredNotifications[idx + 1];
+                if (next) selectNotification(next.id);
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                const prev =
+                    idx <= 0
+                        ? filteredNotifications[0]
+                        : filteredNotifications[idx - 1];
+                if (prev) selectNotification(prev.id);
+            } else if (
+                (e.key === "Delete" || e.key === "Backspace") &&
+                selectedId !== null
+            ) {
+                e.preventDefault();
+                // Move selection to next item before deleting
+                const next =
+                    filteredNotifications[idx + 1] ??
+                    filteredNotifications[idx - 1];
+                deleteNotification(selectedId);
+                setSelectedId(next?.id ?? null);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [
+        isOpen,
+        filteredNotifications,
+        selectedId,
+        selectNotification,
+        deleteNotification,
+    ]);
+
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                    <div className="flex items-center justify-between">
-                        <DialogTitle>Notifications</DialogTitle>
-                        {unreadCount > 0 && (
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => markAllRead()}
-                                disabled={isMarkingAllRead}
-                                className="flex items-center gap-2"
-                            >
-                                {isMarkingAllRead && <Spinner />}
-                                Mark all as read
-                            </Button>
-                        )}
-                    </div>
+                    <DialogTitle>Notifications</DialogTitle>
                     <DialogDescription>
                         View and manage your notifications.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex flex-col max-h-[60vh]">
-                    {/* Category filter tabs */}
-                    <div className="flex gap-1 mb-3 flex-wrap">
-                        <button
-                            onClick={() => setActiveCategory("all")}
-                            className={cn(
-                                "px-3 py-1 rounded text-sm transition-colors",
-                                activeCategory === "all"
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-                            )}
-                        >
-                            All
-                        </button>
-                        {CATEGORIES.map((cat) => (
+                    {/* Category filter tabs + actions row */}
+                    <div className="flex items-center justify-between mb-3 gap-2">
+                        <div className="flex gap-1 flex-wrap">
                             <button
-                                key={cat}
-                                onClick={() => setActiveCategory(cat)}
+                                onClick={() => setActiveCategory("all")}
                                 className={cn(
                                     "px-3 py-1 rounded text-sm transition-colors",
-                                    activeCategory === cat
+                                    activeCategory === "all"
                                         ? "bg-primary text-primary-foreground"
                                         : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
                                 )}
                             >
-                                {CATEGORY_LABELS[cat]}
+                                All
                             </button>
-                        ))}
+                            {CATEGORIES.map((cat) => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setActiveCategory(cat)}
+                                    className={cn(
+                                        "px-3 py-1 rounded text-sm transition-colors",
+                                        activeCategory === cat
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                                    )}
+                                >
+                                    {CATEGORY_LABELS[cat]}
+                                </button>
+                            ))}
+                        </div>
+                        {unreadCount > 0 && (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => markAllRead()}
+                                disabled={isMarkingAllRead}
+                                className="flex items-center gap-2 shrink-0"
+                            >
+                                {isMarkingAllRead && <Spinner />}
+                                Mark all as read
+                            </Button>
+                        )}
                     </div>
 
                     {/* Notifications list */}
-                    <div className="flex-1 overflow-y-auto -mx-6 px-6">
+                    <div
+                        ref={listRef}
+                        className="flex-1 overflow-y-auto -mx-6 px-6"
+                    >
                         {isLoading ? (
                             <div className="text-center text-muted-foreground py-8">
                                 Loading notifications...
@@ -214,6 +297,8 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                         getNotificationText(
                                             notification.payload,
                                         );
+                                    const isSelected =
+                                        notification.id === selectedId;
                                     return (
                                         <motion.div
                                             key={notification.id}
@@ -226,11 +311,18 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                                 marginBottom: 0,
                                             }}
                                             transition={{ duration: 0.2 }}
+                                            onClick={() =>
+                                                selectNotification(
+                                                    notification.id,
+                                                )
+                                            }
                                             className={cn(
-                                                "p-4 rounded border mb-3",
-                                                notification.read
-                                                    ? "bg-secondary/20 border-border"
-                                                    : "bg-secondary/60 border-border",
+                                                "p-4 rounded border mb-3 cursor-pointer transition-colors",
+                                                isSelected
+                                                    ? "border-primary bg-secondary/60"
+                                                    : notification.read
+                                                      ? "bg-secondary/20 border-border hover:border-border/80 hover:bg-secondary/30"
+                                                      : "bg-secondary/60 border-border hover:border-border/80",
                                             )}
                                         >
                                             <div className="flex items-start justify-between mb-1">
@@ -253,13 +345,14 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() =>
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
                                                             flagNotification({
                                                                 id: notification.id,
                                                                 flagged:
                                                                     !notification.flagged,
-                                                            })
-                                                        }
+                                                            });
+                                                        }}
                                                         className="h-8 w-8"
                                                         aria-label={
                                                             notification.flagged
@@ -275,33 +368,16 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                                             )}
                                                         />
                                                     </Button>
-                                                    {/* Archive button */}
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() =>
-                                                            archiveNotification(
-                                                                {
-                                                                    id: notification.id,
-                                                                    archived:
-                                                                        true,
-                                                                },
-                                                            )
-                                                        }
-                                                        className="h-8 w-8"
-                                                        aria-label="Archive notification"
-                                                    >
-                                                        <ArchiveIcon className="w-4 h-4" />
-                                                    </Button>
                                                     {/* Delete button */}
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() =>
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
                                                             deleteNotification(
                                                                 notification.id,
-                                                            )
-                                                        }
+                                                            );
+                                                        }}
                                                         className="h-8 w-8"
                                                         aria-label="Delete notification"
                                                     >
@@ -328,6 +404,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                     <div className="mt-4 pt-4 border-t border-border">
                         <Link
                             to="/app/settings"
+                            onClick={onClose}
                             className="text-muted-foreground hover:text-card-foreground transition-colors text-sm"
                         >
                             Browser notifications settings
