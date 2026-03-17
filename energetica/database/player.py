@@ -145,6 +145,7 @@ class Player(DBModel):
     notification_subscriptions: list[Subscription] = field(default_factory=list)
     notification_opt_ins: dict = field(
         default_factory=lambda: {
+            # these are planned for future notification types, and are not hooked up yet.
             "resource_market_bid": False,
             "network_join_leave": False,
             "resource_market_bid_push": False,
