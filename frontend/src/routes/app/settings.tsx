@@ -80,6 +80,8 @@ function SettingsContent() {
         useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
+    const [notificationsPermissionDenied, setNotificationsPermissionDenied] =
+        useState(false);
 
     // Initialize toggle state from reality on mount
     useEffect(() => {
@@ -104,8 +106,10 @@ function SettingsContent() {
                 // Enable: request permission, subscribe
                 const permission = await Notification.requestPermission();
                 if (permission !== "granted") {
+                    setNotificationsPermissionDenied(true);
                     return;
                 }
+                setNotificationsPermissionDenied(false);
 
                 await navigator.serviceWorker.register(
                     "/static/service-worker.js",
@@ -204,6 +208,15 @@ function SettingsContent() {
                             disabled={notificationsLoading}
                         />
                     </CardContent>
+                    {notificationsPermissionDenied && (
+                        <CardContent>
+                            <InfoBanner variant="error">
+                                Browser notifications were blocked. Please
+                                enable them in your browser settings and try
+                                again.
+                            </InfoBanner>
+                        </CardContent>
+                    )}
                 </Card>
 
                 <Card>

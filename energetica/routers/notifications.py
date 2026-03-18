@@ -22,7 +22,11 @@ router = APIRouter(prefix="/notifications", tags=["Game Notifications"])
 def get_notifications(player: Annotated[Player, Depends(get_settled_player)]) -> NotificationListOut:
     """Get all notifications for the current player."""
     return NotificationListOut(
-        notifications=[NotificationOut.from_notification(notification) for notification in player.notifications]
+        notifications=[
+            out
+            for notification in player.notifications
+            if (out := NotificationOut.from_notification(notification)) is not None
+        ]
     )
 
 

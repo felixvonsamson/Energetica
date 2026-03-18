@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Annotated, Literal, Union
 
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
 if TYPE_CHECKING:
     from energetica.database.messages import Notification
@@ -119,14 +119,18 @@ class NotificationOut(BaseModel):
     payload: NotificationPayload
 
     @classmethod
-    def from_notification(cls, n: Notification) -> NotificationOut:
+    def from_notification(cls, n: Notification) -> NotificationOut | None:
+        try:
+            payload = _payload_adapter.validate_python({**n.payload, "type": n.type})
+        except ValidationError:
+            return None
         return cls(
             id=n.id,
             time=n.time,
             read=n.read,
             flagged=n.flagged,
             archived=n.archived,
-            payload=_payload_adapter.validate_python({"type": n.type, **n.payload}),
+            payload=payload,
         )
 
 
