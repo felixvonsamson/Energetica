@@ -118,7 +118,10 @@ export function useUnreadNotificationsCount() {
     const { data } = useNotifications();
 
     return useMemo(() => {
-        return data?.notifications.filter((n) => !n.read).length ?? 0;
+        return (
+            data?.notifications.filter((n) => !n.read && !n.archived).length ??
+            0
+        );
     }, [data]);
 }
 

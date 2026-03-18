@@ -93,12 +93,7 @@ function getNotificationText(payload: NotificationPayload): {
     }
 }
 
-const CATEGORIES: NotificationCategory[] = [
-    "projects",
-    "market",
-    "events",
-    "achievements",
-];
+const CATEGORIES = Object.keys(CATEGORY_LABELS) as NotificationCategory[];
 
 interface NotificationPopupProps {
     isOpen: boolean;
@@ -136,8 +131,8 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
     }, [notifications, activeCategory]);
 
     const unreadCount = useMemo(
-        () => notifications.filter((n) => !n.read).length,
-        [notifications],
+        () => filteredNotifications.filter((n) => !n.read).length,
+        [filteredNotifications],
     );
 
     // Derive the active selection — null if the selected notification is no longer in the list
