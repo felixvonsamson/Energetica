@@ -19,21 +19,17 @@
     /* ============================================
        Base Color Palette (Source of Truth)
        ============================================ */
-    --color-orange-50: #EEE5CA;
-    --color-orange-100: #e5d9b6;
-    --color-orange-150: #D5C38F;
-    --color-orange-600: #876D22;
-    --color-orange-800: #4B3B0E;
-    --color-green-100: #b5ca95;
-    --color-green-200: #a4be7b;
-    --color-green-500: #5f8d4e;
-    --color-green-700: #285430;
-    --color-green-800: #1b3820;
-    --color-green-900: #0d1f13;
-    --color-alert-orange: #f59f00;
-    --color-alert-red: #f44336;
-    --color-white: #ffffff;
-    --color-black: #000000;
+    --color-bone-50: #EEE5CA;
+    --color-bone-100: #e5d9b6;
+    --color-bone-150: #D5C38F;
+    --color-bone-600: #876D22;
+    --color-bone-800: #4B3B0E;
+    --color-pine-100: #b5ca95;
+    --color-pine-200: #a4be7b;
+    --color-pine-500: #5f8d4e;
+    --color-pine-700: #285430;
+    --color-pine-800: #1b3820;
+    --color-pine-900: #0d1f13;
 
     /* App layout tokens */
     --color-topbar: var(--topbar);
@@ -103,35 +99,35 @@
        ============================================ */
     :root {
         /* shadcn/ui semantic colors (light mode) */
-        --topbar: var(--color-green-100);
+        --topbar: var(--color-pine-100);
 
-        --background: var(--color-green-200);
-        --foreground: var(--color-green-700);
+        --background: var(--color-pine-200);
+        --foreground: var(--color-pine-700);
 
-        --card: var(--color-orange-100);
-        --card-foreground: var(--color-green-700);
+        --card: var(--color-bone-100);
+        --card-foreground: var(--color-pine-700);
 
-        --popover: var(--color-orange-100);
-        --popover-foreground: var(--color-green-700);
+        --popover: var(--color-bone-100);
+        --popover-foreground: var(--color-pine-700);
 
-        --primary: var(--color-green-700);
-        --primary-foreground: var(--color-green-200);
+        --primary: var(--color-pine-700);
+        --primary-foreground: var(--color-pine-200);
 
-        --secondary: var(--color-green-200);
+        --secondary: var(--color-pine-200);
         --secondary-foreground: var(--color-black);
 
-        --muted: var(--color-orange-150);
-        --muted-foreground: var(--color-green-500);
+        --muted: var(--color-bone-150);
+        --muted-foreground: var(--color-pine-500);
 
-        --accent: var(--color-green-500);
+        --accent: var(--color-pine-500);
         --accent-foreground: var(--color-white);
 
-        --destructive: var(--color-alert-red);
+        --destructive: var(--color-red-500);
         --destructive-foreground: var(--color-white);
 
         --border: #876d22;
-        --input: var(--color-green-700);
-        --ring: var(--color-green-700);
+        --input: var(--color-pine-700);
+        --ring: var(--color-pine-700);
 
         /* Chart colors (light mode) */
         --chart-1: oklch(0.646 0.222 41.116);
@@ -142,19 +138,19 @@
         --chart-6: oklch(63.061% 0.29882 315.557);
 
         /* Sidebar colors (light mode) */
-        --sidebar: var(--color-green-500);
-        --sidebar-foreground: var(--color-green-800);
-        --sidebar-primary: var(--color-green-200);
-        --sidebar-primary-foreground: #ffffff;
-        --sidebar-accent: var(--color-green-100);
-        --sidebar-accent-foreground: var(--color-green-800);
-        --sidebar-border: var(--color-green-200);
-        --sidebar-ring: var(--color-green-700);
+        --sidebar: var(--color-pine-500);
+        --sidebar-foreground: var(--color-pine-800);
+        --sidebar-primary: var(--color-pine-200);
+        --sidebar-primary-foreground: var(--color-white);
+        --sidebar-accent: var(--color-pine-100);
+        --sidebar-accent-foreground: var(--color-pine-800);
+        --sidebar-border: var(--color-pine-200);
+        --sidebar-ring: var(--color-pine-700);
 
         /* Status/Alert colors (light mode) */
         --info: rgb(37, 99, 235);
         --info-foreground: #ffffff;
-        --warning: var(--color-alert-orange);
+        --warning: var(--color-amber-500);
         --warning-foreground: #000000;
         --success: rgb(22, 163, 74);
         --success-foreground: #ffffff;
@@ -212,10 +208,10 @@
         --asset-color-carbon-capture: rgb(173, 181, 189);
 
         /* Map tile colours */
-        --map-selected-tile-hover: var(--color-green-800);
+        --map-selected-tile-hover: var(--color-pine-800);
         --map-tile-current-player: hsl(0, 64%, 47%);
-        --map-tile-other-player: var(--color-green-500);
-        --map-tile-vacant: var(--color-orange-100);
+        --map-tile-other-player: var(--color-pine-500);
+        --map-tile-vacant: var(--color-bone-100);
     }
 
     /* ============================================
@@ -224,7 +220,7 @@
        ============================================ */
     :root.dark {
         /* shadcn/ui semantic colors (dark mode) */
-        --topbar: var(--color-green-900);
+        --topbar: var(--color-pine-900);
 
         --background: #0a0a0a;
         --foreground: oklch(100% 0 0);
@@ -235,16 +231,16 @@
         --popover: #2d2d2d;
         --popover-foreground: #ffffff;
 
-        --primary: var(--color-green-500);
+        --primary: var(--color-pine-500);
         --primary-foreground: var(--color-white);
 
-        --secondary: var(--color-green-700);
+        --secondary: var(--color-pine-700);
         --secondary-foreground: #e5e5e5;
 
         --muted: #424242;
         --muted-foreground: #b7b7b7;
 
-        --accent: var(--color-green-500);
+        --accent: var(--color-pine-500);
         --accent-foreground: #ffffff;
 
         --destructive: oklch(52.816% 0.21229 29.916);
@@ -252,7 +248,7 @@
 
         --border: #404040;
         --input: #606060;
-        --ring: var(--color-green-500);
+        --ring: var(--color-pine-500);
 
         /* Chart colors (dark mode) */
         --chart-1: oklch(0.488 0.243 264.376);
@@ -265,12 +261,12 @@
         /* Sidebar colors (dark mode) */
         --sidebar: #2d2d2d;
         --sidebar-foreground: #ffffff;
-        --sidebar-primary: var(--color-green-500);
+        --sidebar-primary: var(--color-pine-500);
         --sidebar-primary-foreground: #ffffff;
-        --sidebar-accent: var(--color-green-700);
+        --sidebar-accent: var(--color-pine-700);
         --sidebar-accent-foreground: #e5e5e5;
         --sidebar-border: #404040;
-        --sidebar-ring: var(--color-green-500);
+        --sidebar-ring: var(--color-pine-500);
 
         /* Status/Alert colors (dark mode) */
         --info: rgb(96, 165, 250);
@@ -335,7 +331,7 @@
         /* Map tile colours - same as light mode */
         --map-selected-tile-hover: hsl(0, 0%, 89%);
         --map-tile-current-player: hsl(0, 97%, 23%);
-        --map-tile-other-player: var(--color-green-800);
+        --map-tile-other-player: var(--color-pine-800);
         --map-tile-vacant: rgb(121, 121, 121);
     }
 
@@ -368,7 +364,7 @@
     --tw-prose-links: rgb(37, 99, 235);
     --tw-prose-bold: var(--foreground);
     --tw-prose-code: var(--foreground);
-    --tw-prose-pre-bg: var(--color-orange-100);
+    --tw-prose-pre-bg: var(--color-bone-100);
     /* --tw-prose-th-borders: #d1d5db; */
     /* --tw-prose-td-borders: #d1d5db; */
     /* --tw-prose-th-borders: #00000000;
@@ -457,7 +453,7 @@
 }
 
 .prose tbody tr {
-    background-color: var(--color-orange-100);
+    background-color: var(--color-bone-100);
 }
 
 .prose tbody tr:nth-child(odd) {
