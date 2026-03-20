@@ -1,7 +1,7 @@
-import { ChevronDown, ChevronUp, Pause, Play, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Pause, Play, Trash2 } from "lucide-react";
 import { ReactNode } from "react";
 
-import { Money } from "@/components/ui";
+import { Money, TogglingDuration } from "@/components/ui";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -13,7 +13,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ResourceName, TechnologyName } from "@/components/ui/asset-name";
+import { TechnologyName, ResourceName } from "@/components/ui/asset-name";
 import { Button } from "@/components/ui/button";
 import { Countdown } from "@/components/ui/countdown";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -49,7 +49,7 @@ export function ProjectList({ projectCategory }: ProjectListProps) {
     }
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-2">
             {projects.map((project) => (
                 <ProjectItem key={project.id} project={project} />
             ))}
@@ -73,7 +73,7 @@ export function ShipmentList() {
     if (shipments.length === 0) return null;
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-2">
             {shipments.map((shipment) => (
                 <ShipmentItem key={shipment.id} shipment={shipment} />
             ))}
@@ -91,6 +91,7 @@ function ProjectItem({ project }: ProjectItemProps) {
         project.end_tick,
         project.ticks_passed,
         project.status,
+        project.speed,
     );
     const resumeMutation = useResumeProject();
     const onResume = () => resumeMutation.mutate(project.id);
@@ -104,7 +105,8 @@ function ProjectItem({ project }: ProjectItemProps) {
         decreasePriorityMutation.mutate(project.id);
     const cancelMutation = useCancelProject();
     const onCancel = () => cancelMutation.mutate(project.id);
-    const actions = (
+
+    const cardActions = (
         <>
             {/* Pause/Resume button */}
             {project.status === "paused" ? (
@@ -131,32 +133,6 @@ function ProjectItem({ project }: ProjectItemProps) {
                 </Button>
             )}
 
-            {/* Priority buttons */}
-            {!project.isFirst && (
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={onIncreasePriority}
-                    disabled={increasePriorityMutation.isPending}
-                    className="p-1"
-                    aria-label="Increase priority"
-                >
-                    <ChevronUp size={14} />
-                </Button>
-            )}
-            {!project.isLast && (
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={onDecreasePriority}
-                    disabled={decreasePriorityMutation.isPending}
-                    className="p-1"
-                    aria-label="Decrease priority"
-                >
-                    <ChevronDown size={14} />
-                </Button>
-            )}
-
             {/* Cancel button */}
             <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -167,7 +143,7 @@ function ProjectItem({ project }: ProjectItemProps) {
                         className="p-1"
                         aria-label="Cancel project"
                     >
-                        <X size={14} />
+                        <Trash2 size={14} />
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -175,17 +151,17 @@ function ProjectItem({ project }: ProjectItemProps) {
                         <AlertDialogTitle>
                             Are you sure you want to cancel this project?
                         </AlertDialogTitle>
-                        <AlertDialogDescription className="flex gap-1">
+                        <AlertDialogDescription className="flex gap-1 text-foreground font-medium">
                             Cancel{" "}
                             <TechnologyName
                                 technology={project.type}
                                 level={project.level}
                             />
                         </AlertDialogDescription>
-                        <AlertDialogDescription>
+                        <AlertDialogDescription className="text-foreground">
                             This action cannot be undone.
                         </AlertDialogDescription>
-                        <AlertDialogDescription>
+                        <AlertDialogDescription className="text-foreground">
                             You will be refunded{" "}
                             <Money amount={project.cancellation_refund} /> i.e.{" "}
                             <DataValue>
@@ -214,19 +190,59 @@ function ProjectItem({ project }: ProjectItemProps) {
     );
 
     return (
-        <ProgressCard
-            status={project.status}
-            progress={progress}
-            endTick={project.end_tick}
-            speed={project.speed}
-            label={
-                <TechnologyName
-                    technology={project.type}
-                    level={project.level}
+        <div className="flex items-stretch gap-2">
+            {/* Priority arrows — outside the card, left side, matching card bg */}
+            <div className="flex flex-col items-center justify-center gap-0.5 shrink-0 self-center">
+                {!project.isFirst ? (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onIncreasePriority}
+                        disabled={increasePriorityMutation.isPending}
+                        className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
+                        aria-label="Increase priority"
+                    >
+                        <ChevronUp size={14} />
+                    </Button>
+                ) : (
+                    <div className="h-6 w-6" />
+                )}
+                {!project.isLast ? (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onDecreasePriority}
+                        disabled={decreasePriorityMutation.isPending}
+                        className="h-6 w-6 p-0 bg-muted/30 hover:bg-muted/60"
+                        aria-label="Decrease priority"
+                    >
+                        <ChevronDown size={14} />
+                    </Button>
+                ) : (
+                    <div className="h-6 w-6" />
+                )}
+            </div>
+
+            {/* Card */}
+            <div className="flex-1">
+                <ProgressCard
+                    status={project.status}
+                    progress={progress}
+                    endTick={project.end_tick}
+                    speed={project.speed}
+                    remainingTicks={
+                        project.duration - (project.ticks_passed ?? 0)
+                    }
+                    label={
+                        <TechnologyName
+                            technology={project.type}
+                            level={project.level}
+                        />
+                    }
+                    actions={cardActions}
                 />
-            }
-            actions={actions}
-        />
+            </div>
+        </div>
     );
 }
 
@@ -259,6 +275,8 @@ interface ProgressCardProps {
     progress: number;
     speed: number | undefined;
     endTick: number | null;
+    /** Ticks remaining (used for waiting status display) */
+    remainingTicks?: number;
     label: ReactNode;
     actions: ReactNode;
 }
@@ -268,15 +286,18 @@ function ProgressCard({
     progress,
     speed,
     endTick,
+    remainingTicks,
     label,
     actions,
 }: ProgressCardProps) {
     return (
-        <div className="p-3 rounded-lg bg-card border border-border">
+        <div className="px-3 pt-2 pb-1 rounded-lg bg-muted/30">
             {/* Header row: Badge, Title, Actions */}
-            <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <StatusBadge status={status} size="sm" />
+                    {!(status === "ongoing" && speed !== undefined && speed === 0) && (
+                        <StatusBadge status={status} size="sm" />
+                    )}
                     {speed !== undefined && speed < 1.0 && (
                         <StatusBadge
                             status={speed > 0 ? "slowed" : "stopped"}
@@ -286,22 +307,24 @@ function ProgressCard({
                     {label}
                 </div>
                 {/* Action buttons */}
-                {actions}
+                <div className="flex items-center gap-1 shrink-0">
+                    {actions}
+                </div>
             </div>
 
             {/* Progress bar */}
             <ProgressBar value={progress} showPercentage={false} />
 
             {/* Info row: Time remaining, speed */}
-            <div className="flex items-center justify-between gap-2 mt-2 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-3">
                     <TypographyP>
-                        {status === "paused" ? (
-                            "Paused"
-                        ) : status === "waiting" ? (
-                            "Waiting"
+                        {status === "paused" || status === "waiting" ? (
+                            remainingTicks !== undefined ? (
+                                <TogglingDuration ticks={remainingTicks} />
+                            ) : null
                         ) : (
-                            <Countdown endTick={endTick} />
+                            <Countdown endTick={endTick} speed={speed} />
                         )}
                     </TypographyP>
                     {speed !== undefined && speed < 1.0 && (

@@ -4,9 +4,12 @@ import {
     useSearch,
 } from "@tanstack/react-router";
 import { Info, HardHat } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
-import { ConstructionProjectsDialog } from "@/components/dashboard/construction-projects-dialog";
+import {
+    ProjectsPanel,
+    ProjectsPanelToggle,
+} from "@/components/dashboard/projects-panel";
 import { FacilityItem, FacilityDetailDialog } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
@@ -14,7 +17,6 @@ import {
     CashFlow,
     Duration,
     CatalogGrid,
-    Button,
 } from "@/components/ui";
 import { usePlayerResources } from "@/hooks/use-player-resources";
 import {
@@ -69,12 +71,8 @@ export const Route = createFileRoute("/app/facilities/extraction")({
     },
     validateSearch: (
         search: Record<string, unknown>,
-    ): { facility?: string; projects?: boolean } => ({
+    ): { facility?: string } => ({
         facility: search.facility ? String(search.facility) : undefined,
-        projects:
-            search.projects === "true" || search.projects === true
-                ? true
-                : undefined,
     }),
 });
 
@@ -88,10 +86,12 @@ function ExtractionFacilitiesPage() {
 
 function ExtractionFacilitiesContent() {
     const navigate = useNavigate({ from: "/app/facilities/extraction" });
-    const { facility, projects } = useSearch({
+    const { facility } = useSearch({
         from: "/app/facilities/extraction",
     });
     const { data: projectsData } = useProjects();
+    const constructionCount = projectsData?.construction_queue.length ?? 0;
+    const [projectsPanelOpen, setProjectsPanelOpen] = useState(false);
 
     const {
         data: catalogData,
@@ -112,29 +112,25 @@ function ExtractionFacilitiesContent() {
         [facilities, facility],
     );
 
-    // Check if there are any construction projects
-    const hasConstructionProjects =
-        (projectsData?.construction_queue.length ?? 0) > 0;
-
     return (
         <div className="p-4 md:p-8">
-            {/* Construction projects button - only shown if there are ongoing projects */}
-            {hasConstructionProjects && (
-                <div className="mb-6 flex justify-center">
-                    <Button
-                        variant="outline"
-                        onClick={() =>
-                            navigate({
-                                search: (prev) => ({ ...prev, projects: true }),
-                            })
-                        }
-                        className="flex items-center gap-2"
-                    >
-                        <HardHat className="w-5 h-5" />
-                        View Construction Projects
-                    </Button>
-                </div>
-            )}
+            {/* Construction projects panel — very top, full width */}
+            <ProjectsPanel
+                projectCategory="construction"
+                icon={HardHat}
+                panelTitle="Under Construction"
+                isOpen={projectsPanelOpen}
+            />
+
+            <div className="flex justify-end mb-6">
+                <ProjectsPanelToggle
+                    count={constructionCount}
+                    icon={HardHat}
+                    buttonLabel="Construction Projects"
+                    isOpen={projectsPanelOpen}
+                    onToggle={() => setProjectsPanelOpen((p) => !p)}
+                />
+            </div>
 
             {/* Loading state */}
             {isCatalogLoading && (
@@ -222,15 +218,6 @@ function ExtractionFacilitiesContent() {
                 </>
             )}
 
-            {/* Construction Projects Dialog */}
-            <ConstructionProjectsDialog
-                isOpen={projects === true}
-                onClose={() =>
-                    navigate({
-                        search: (prev) => ({ ...prev, projects: undefined }),
-                    })
-                }
-            />
         </div>
     );
 }

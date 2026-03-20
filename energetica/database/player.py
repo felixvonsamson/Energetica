@@ -430,7 +430,7 @@ class Player(DBModel):
                     subscription_info=subscription.model_dump(),
                     data=json.dumps(notification_data),
                     vapid_private_key=engine.VAPID_PRIVATE_KEY,
-                    vapid_claims={"aud": audience, "sub": "mailto:felixvonsamson@gmail.com"},
+                    vapid_claims={"aud": audience, "sub": "mailto:energetica.game@gmail.com"},
                 )
             except WebPushException as ex:
                 engine.warn(f"Failed to send notification: {repr(ex)}")
@@ -627,22 +627,25 @@ class Player(DBModel):
     @property
     def power_facilities(self) -> Iterable[ActiveFacility]:
         return ActiveFacility.filter(
-            lambda active_facility: active_facility.player == self
-            and isinstance(active_facility.facility_type, PowerFacilityType),
+            lambda active_facility: (
+                active_facility.player == self and isinstance(active_facility.facility_type, PowerFacilityType)
+            ),
         )
 
     @property
     def storage_facilities(self) -> Iterable[ActiveFacility]:
         return ActiveFacility.filter(
-            lambda active_facility: active_facility.player == self
-            and isinstance(active_facility.facility_type, StorageFacilityType),
+            lambda active_facility: (
+                active_facility.player == self and isinstance(active_facility.facility_type, StorageFacilityType)
+            ),
         )
 
     @property
     def extraction_facilities(self) -> Iterable[ActiveFacility]:
         return ActiveFacility.filter(
-            lambda active_facility: active_facility.player == self
-            and isinstance(active_facility.facility_type, ExtractionFacilityType),
+            lambda active_facility: (
+                active_facility.player == self and isinstance(active_facility.facility_type, ExtractionFacilityType)
+            ),
         )
 
     def package_active_facilities(self) -> dict[str, dict[int, dict[str, Any]]]:
