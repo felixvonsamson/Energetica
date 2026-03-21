@@ -3,13 +3,13 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build && bun run build:sw",
-        "build:sw": "bun build src/service-worker.ts --outfile ../energetica/static/service-worker.js --target browser",
+        "build:sw": "bun ../scripts/generate-sw-routes.ts && bun build src/service-worker.ts --outfile ../energetica/static/service-worker.js --target browser",
         "dev:sw": "bun build src/service-worker.ts --outfile ../energetica/static/service-worker.js --target browser --watch",
         "generate-types": "bash ../scripts/generate-types.sh",
         "lint": "eslint . --max-warnings 0 --cache",
         "lint:fix": "eslint . --fix --cache",
         "format": "prettier --write \"./**/*.{ts,tsx}\"",
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.sw.json",
         "typecheck:watch": "tsc --noEmit --watch"
     },
     "dependencies": {

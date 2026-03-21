@@ -1,18 +1,5 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "lib": ["WebWorker", "WebWorker.ImportScripts", "ESNext"],
-        "allowJs": false,
-        "skipLibCheck": true,
-        "strict": true,
-        "noUncheckedIndexedAccess": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "module": "ESNext",
-        "moduleResolution": "bundler",
-        "paths": { "@/*": ["./src/*"] },
-        "isolatedModules": true,
-        "noEmit": true
-    },
-    "include": ["src/service-worker.ts", "src/types"]
+    "extends": "./tsconfig.json",
+    "include": ["src/service-worker.ts", "src/types/app-routes.ts", "src/types/notifications.ts", "src/types/api-helpers.ts", "src/types/api.generated.ts"],
+    "exclude": []
 }

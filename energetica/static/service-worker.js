@@ -40,7 +40,7 @@ function getNotificationUrl(type, _payload) {
     case "technology_researched":
       return "/app/facilities/technology";
     case "climate_event":
-      return "/app/overview";
+      return "/app/dashboard";
     case "resource_sold":
       return "/app/community/resource-market";
     case "shipment_arrived":
