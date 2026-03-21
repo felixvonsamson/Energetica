@@ -76,6 +76,6 @@ sw.addEventListener("push", (event: PushEvent) => {
 
 sw.addEventListener("notificationclick", (event: NotificationEvent) => {
     event.notification.close();
-    const url: string = (event.notification.data as { url?: string } | null)?.url ?? "https://energetica.ethz.ch";
-    event.waitUntil(sw.clients.openWindow(url));
+    const path: string = (event.notification.data as { url?: string } | null)?.url ?? "/app/overview";
+    event.waitUntil(sw.clients.openWindow(sw.location.origin + path));
 });
