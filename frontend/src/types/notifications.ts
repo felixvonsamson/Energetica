@@ -11,28 +11,11 @@ export type NotificationPayloadOf<T extends NotificationType> = Extract<
     { type: T }
 >;
 
-// Frontend-only category mapping
 export type NotificationCategory =
     | "projects"
     | "market"
     | "events"
     | "achievements";
-
-export const NOTIFICATION_CATEGORIES: Record<
-    NotificationType,
-    NotificationCategory
-> = {
-    construction_finished: "projects",
-    technology_researched: "projects",
-    facility_decommissioned: "projects",
-    facility_destroyed: "events",
-    emergency_facility_created: "projects",
-    climate_event: "events",
-    resource_sold: "market",
-    shipment_arrived: "market",
-    credit_limit_exceeded: "market",
-    achievement_unlocked: "achievements",
-};
 
 export const CATEGORY_LABELS: Record<NotificationCategory, string> = {
     projects: "Projects",

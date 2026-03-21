@@ -27,71 +27,9 @@ import {
     useMarkNotificationRead,
     useFlagNotification,
 } from "@/hooks/use-notifications";
+import { getNotificationCategory, getNotificationContent } from "@/lib/notification-config";
 import { cn } from "@/lib/utils";
-import {
-    NOTIFICATION_CATEGORIES,
-    CATEGORY_LABELS,
-    type NotificationCategory,
-    type NotificationPayload,
-} from "@/types/notifications";
-
-function getNotificationText(payload: NotificationPayload): {
-    title: string;
-    body: string;
-} {
-    switch (payload.type) {
-        case "construction_finished":
-            return {
-                title: "Construction finished",
-                body: `${payload.project_name}${payload.level != null ? ` (level ${payload.level})` : ""} is now operational.`,
-            };
-        case "technology_researched":
-            return {
-                title: "Research complete",
-                body: `${payload.technology_name} level ${payload.new_level} unlocked.`,
-            };
-        case "facility_decommissioned":
-            return {
-                title: "Facility decommissioned",
-                body: `${payload.facility_name} has been decommissioned.`,
-            };
-        case "facility_destroyed":
-            return {
-                title: "Facility destroyed",
-                body: `${payload.facility_name} was destroyed by ${payload.event_name}.`,
-            };
-        case "emergency_facility_created":
-            return {
-                title: "Emergency facility",
-                body: `A ${payload.facility_name} was created automatically.`,
-            };
-        case "climate_event":
-            return {
-                title: "Climate event",
-                body: `${payload.event_name} · ${payload.duration_days}d · ${payload.cost_per_hour}`,
-            };
-        case "resource_sold":
-            return {
-                title: "Resource sold",
-                body: `${payload.buyer_username} purchased your ${payload.resource}.`,
-            };
-        case "shipment_arrived":
-            return {
-                title: "Shipment arrived",
-                body: `${payload.resource}${payload.warehouse_full ? " (warehouse full)" : ""}`,
-            };
-        case "credit_limit_exceeded":
-            return {
-                title: "Credit limit exceeded",
-                body: "Not enough money for market participation.",
-            };
-        case "achievement_unlocked":
-            return {
-                title: "Achievement unlocked",
-                body: payload.achievement_name,
-            };
-    }
-}
+import { CATEGORY_LABELS, type NotificationCategory } from "@/types/notifications";
 
 const CATEGORIES = Object.keys(CATEGORY_LABELS) as NotificationCategory[];
 
@@ -126,7 +64,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
     const filteredNotifications = useMemo(() => {
         if (activeCategory === "all") return notifications;
         return notifications.filter(
-            (n) => NOTIFICATION_CATEGORIES[n.payload.type] === activeCategory,
+            (n) => getNotificationCategory(n.payload.type) === activeCategory,
         );
     }, [notifications, activeCategory]);
 
@@ -287,7 +225,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                             <AnimatePresence initial={false}>
                                 {filteredNotifications.map((notification) => {
                                     const { title, body } =
-                                        getNotificationText(
+                                        getNotificationContent(
                                             notification.payload,
                                         );
                                     const isSelected =
