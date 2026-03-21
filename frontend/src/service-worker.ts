@@ -1,6 +1,9 @@
 /// <reference lib="webworker" />
 
+import type { FileRouteTypes } from "@/routeTree.gen";
 import type { NotificationType } from "@/types/notifications";
+
+type AppRoute = FileRouteTypes["fullPaths"];
 
 // Cast the global scope to ServiceWorkerGlobalScope since this file is a service worker.
 const sw = self as unknown as ServiceWorkerGlobalScope;
@@ -42,7 +45,7 @@ function getNotificationText(data: PushData): { title: string; body: string } {
     }
 }
 
-function getNotificationUrl(type: NotificationType, _payload: Record<string, unknown>): string {
+function getNotificationUrl(type: NotificationType, _payload: Record<string, unknown>): AppRoute {
     switch (type) {
         case "construction_finished":
         case "facility_decommissioned":
