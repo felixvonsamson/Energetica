@@ -48,8 +48,14 @@ const NOTIFICATION_CONFIG = {
         category: "events",
         url: "/app/facilities/manage",
         title: "Facility destroyed",
-        pushBody: (p) => `${p.facility_name} was destroyed by ${p.event_name}.`,
-        inGameBody: (p) => `${p.facility_name} was destroyed by ${p.event_name}.`,
+        pushBody: (p) =>
+            p.facility_name === "industry"
+                ? `Industry was levelled down by ${p.event_name}.`
+                : `${p.facility_name} was destroyed by ${p.event_name}.`,
+        inGameBody: (p) =>
+            p.facility_name === "industry"
+                ? `Industry was levelled down by ${p.event_name}.`
+                : `${p.facility_name} was destroyed by ${p.event_name}.`,
     },
     emergency_facility_created: {
         category: "projects",
