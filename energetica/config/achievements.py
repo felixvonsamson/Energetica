@@ -4,115 +4,105 @@ achievements: dict = {
     "power_consumption": {
         "name": "Power Consumption",
         "metric": "max_power_consumption",
-        "milestones": [10_000_000, 150_000_000, 6_500_000_000, 100_000_000_000, 3_000_000_000_000],
-        "comparisons": [
-            "a village in Europe",
-            "the city of Basel",
-            "Switzerland",
-            "Japan",
-            "the entire world population",
+        "milestones": [
+            {"threshold": 10_000_000, "xp": 5, "comparison_key": "village-in-europe"},
+            {"threshold": 150_000_000, "xp": 10, "comparison_key": "city-of-basel"},
+            {"threshold": 6_500_000_000, "xp": 15, "comparison_key": "switzerland"},
+            {"threshold": 100_000_000_000, "xp": 20, "comparison_key": "japan"},
+            {"threshold": 3_000_000_000_000, "xp": 25, "comparison_key": "world-population"},
         ],
-        "rewards": [5, 10, 15, 20, 25],  # XP
-        "message": (
-            "You have passed the milestone of {value} of power consumption. "
-            "You consume as much electricity as {comparison}. (+{reward} XP)"
-        ),
         "requirements": [],
     },
     "energy_storage": {
         "name": "Energy Storage",
         "metric": "max_energy_stored",
-        "milestones": [8_000_000_000, 160_000_000_000, 5_000_000_000_000],
-        "comparisons": ["Zurich for a day", "Switzerland for a day", "Switzerland for a month"],
-        "rewards": [5, 10, 20],
-        "message": ("You have stored {value} of energy, enough to power {comparison}. (+{reward} XP)"),
+        "milestones": [
+            {"threshold": 8_000_000_000, "xp": 5, "comparison_key": "zurich-for-a-day"},
+            {"threshold": 160_000_000_000, "xp": 10, "comparison_key": "switzerland-for-a-day"},
+            {"threshold": 5_000_000_000_000, "xp": 20, "comparison_key": "switzerland-for-a-month"},
+        ],
         "requirements": ["storage_facilities"],
     },
     "mineral_extraction": {
         "name": "Mineral Extraction",
         "metric": "extracted_resources",
-        "milestones": [500_000, 10_000_000, 200_000_000],
-        "rewards": [5, 10, 15],
-        "message": ("You have extracted {value} of resources. (+{reward} XP)"),
+        "milestones": [
+            {"threshold": 500_000, "xp": 5},
+            {"threshold": 10_000_000, "xp": 10},
+            {"threshold": 200_000_000, "xp": 15},
+        ],
         "requirements": ["warehouse", "laboratory"],
     },
     "network_import": {
         "name": "Network Import",
         "metric": "imported_energy",
-        "milestones": [10_000_000_000, 200_000_000_000, 4_000_000_000_000],
-        "rewards": [5, 10, 15],
-        "message": ("You have imported more than {value} on the market. (+{reward} XP)"),
+        "milestones": [
+            {"threshold": 10_000_000_000, "xp": 5},
+            {"threshold": 200_000_000_000, "xp": 10},
+            {"threshold": 4_000_000_000_000, "xp": 15},
+        ],
         "requirements": ["network"],
     },
     "network_export": {
         "name": "Network Export",
         "metric": "exported_energy",
-        "milestones": [10_000_000_000, 200_000_000_000, 4_000_000_000_000],
-        "rewards": [5, 10, 15],
-        "message": ("You have exported more than {value} on the market. (+{reward} XP)"),
+        "milestones": [
+            {"threshold": 10_000_000_000, "xp": 5},
+            {"threshold": 200_000_000_000, "xp": 10},
+            {"threshold": 4_000_000_000_000, "xp": 15},
+        ],
         "requirements": ["network"],
     },
     "technology": {
         "name": "Technology",
         "metric": "total_technologies",
-        "milestones": [10, 25, 50, 100],
-        "rewards": [5, 10, 15, 20],
-        "message": ("You have researched a total of {value} levels of technologies. (+{reward} XP)"),
+        "milestones": [
+            {"threshold": 10, "xp": 5},
+            {"threshold": 25, "xp": 10},
+            {"threshold": 50, "xp": 15},
+            {"threshold": 100, "xp": 20},
+        ],
         "requirements": ["laboratory"],
     },
     "trading_export": {
         "name": "Resource Export",
         "metric": "sold_resources",
-        "milestones": [200_000, 5_000_000, 100_000_000],
-        "rewards": [5, 10, 15],
-        "message": ("You have exported more than {value} of resources. (+{reward} XP)"),
+        "milestones": [
+            {"threshold": 200_000, "xp": 5},
+            {"threshold": 5_000_000, "xp": 10},
+            {"threshold": 100_000_000, "xp": 15},
+        ],
         "requirements": ["warehouse"],
     },
     "trading_import": {
         "name": "Resource Import",
         "metric": "bought_resources",
-        "milestones": [200_000, 5_000_000, 100_000_000],
-        "rewards": [5, 10, 15],
-        "message": ("You have imported more than {value} of resources. (+{reward} XP)"),
+        "milestones": [
+            {"threshold": 200_000, "xp": 5},
+            {"threshold": 5_000_000, "xp": 10},
+            {"threshold": 100_000_000, "xp": 15},
+        ],
         "requirements": ["warehouse"],
     },
     "network": {
         "name": "Unlock Network",
         "metric": "max_power_consumption",
-        "milestones": [3_000_000],
-        "rewards": [1],
-        "message": (
-            "Your generation capacities are now big enough to join a network and trade electricity. "
-            "See Community > Network. (+{reward} XP)"
-        ),
+        "milestones": [
+            {"threshold": 3_000_000, "xp": 1},
+        ],
         "requirements": [],
     },
     "laboratory": {
         "name": "Unlock Technologies",
         "unlocked_with": ["laboratory"],
-        "reward": 1,
-        "message": (
-            "You have built a laboratory, you can now research technologies to unlock new facilities or improve existing ones. (+{reward} XP)"
-        ),
+        "xp": 1,
         "requirements": [],
     },
     "warehouse": {
         "name": "Unlock Natural Resources",
         "unlocked_with": ["warehouse"],
-        "reward": 1,
-        "message": (
-            "You have built a warehouse to store natural resources, you can now buy resources on the resource market or extract them yourself by building extraction facilities. (+{reward} XP)"
-        ),
+        "xp": 1,
         "requirements": [],
-    },
-    "GHG_effect": {
-        "name": "Discover the Greenhouse Effect",
-        "unlocked_with": ["chemistry"],
-        "reward": 5,
-        "message": (
-            "Scientists have discovered the greenhouse effect and have shown that climate change is caused by human activities and increases the risk of extreme weather events. You can now monitor your CO2 emissions and the climate anomalies in the emissions overview. (+{reward} XP)"
-        ),
-        "requirements": ["laboratory"],
     },
     "storage_facilities": {
         "name": "First Storage Facility",
@@ -124,11 +114,14 @@ achievements: dict = {
             "lithium_ion_batteries",
             "solid_state_batteries",
         ],
-        "reward": 1,
-        "message": (
-            "You have built your first storage facility, you can monitor the stored energy in the energy storage overview. (+{reward} XP)"
-        ),
+        "xp": 1,
         "requirements": [],
+    },
+    "GHG_effect": {
+        "name": "Discover the Greenhouse Effect",
+        "unlocked_with": ["chemistry"],
+        "xp": 5,
+        "requirements": ["laboratory"],
     },
 }
 

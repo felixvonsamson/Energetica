@@ -84,10 +84,71 @@ class CreditLimitExceededPayload(BaseModel):
     type: Literal["credit_limit_exceeded"]
 
 
-class AchievementUnlockedPayload(BaseModel):
-    type: Literal["achievement_unlocked"]
-    achievement_key: str
-    achievement_name: str
+class AchievementUnlockPayload(BaseModel):
+    """One-shot achievement unlocked by constructing a specific facility."""
+
+    type: Literal["achievement_unlock"]
+    achievement_key: Literal["laboratory", "warehouse", "storage_facilities", "GHG_effect"]
+    xp: int
+
+
+# ---------------------------------------------------------------------------
+# Achievement milestone payload — discriminated union on achievement_key.
+# All variants share type: Literal["achievement_milestone"].
+# ---------------------------------------------------------------------------
+
+
+class AchievementMilestonePowerConsumptionPayload(BaseModel):
+    type: Literal["achievement_milestone"]
+    achievement_key: Literal["power_consumption"]
+    comparison_key: Literal[
+        "village-in-europe",
+        "city-of-basel",
+        "switzerland",
+        "japan",
+        "world-population",
+    ]
+    threshold: float
+    xp: int
+
+
+class AchievementMilestoneEnergyStoragePayload(BaseModel):
+    type: Literal["achievement_milestone"]
+    achievement_key: Literal["energy_storage"]
+    comparison_key: Literal[
+        "zurich-for-a-day",
+        "switzerland-for-a-day",
+        "switzerland-for-a-month",
+    ]
+    threshold: float
+    xp: int
+
+
+class AchievementMilestoneBasePayload(BaseModel):
+    """Milestone achievement without a real-world comparison."""
+
+    type: Literal["achievement_milestone"]
+    achievement_key: Literal[
+        "mineral_extraction",
+        "network_import",
+        "network_export",
+        "network",
+        "technology",
+        "trading_export",
+        "trading_import",
+    ]
+    threshold: float
+    xp: int
+
+
+AchievementMilestonePayload = Annotated[
+    Union[
+        AchievementMilestonePowerConsumptionPayload,
+        AchievementMilestoneEnergyStoragePayload,
+        AchievementMilestoneBasePayload,
+    ],
+    Field(discriminator="achievement_key"),
+]
 
 
 # ---------------------------------------------------------------------------
@@ -96,20 +157,20 @@ class AchievementUnlockedPayload(BaseModel):
 # it will never be reachable; no error will be raised.
 # ---------------------------------------------------------------------------
 
-NotificationPayload = Annotated[
-    Union[
-        ConstructionFinishedPayload,
-        TechnologyResearchedPayload,
-        FacilityDecommissionedPayload,
-        FacilityDestroyedPayload,
-        EmergencyFacilityCreatedPayload,
-        ClimateEventPayload,
-        ResourceSoldPayload,
-        ShipmentArrivedPayload,
-        CreditLimitExceededPayload,
-        AchievementUnlockedPayload,
-    ],
-    Field(discriminator="type"),
+NotificationPayload = Union[
+    ConstructionFinishedPayload,
+    TechnologyResearchedPayload,
+    FacilityDecommissionedPayload,
+    FacilityDestroyedPayload,
+    EmergencyFacilityCreatedPayload,
+    ClimateEventPayload,
+    ResourceSoldPayload,
+    ShipmentArrivedPayload,
+    CreditLimitExceededPayload,
+    AchievementMilestonePowerConsumptionPayload,
+    AchievementMilestoneEnergyStoragePayload,
+    AchievementMilestoneBasePayload,
+    AchievementUnlockPayload,
 ]
 
 _payload_adapter = TypeAdapter(NotificationPayload)

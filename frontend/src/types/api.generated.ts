@@ -2512,6 +2512,94 @@ export interface components {
             /** Achievements */
             achievements: components["schemas"]["AchievementOut"][];
         };
+        /**
+         * AchievementMilestoneBasePayload
+         *
+         * Milestone achievement without a real-world comparison.
+         */
+        AchievementMilestoneBasePayload: {
+            /**
+             * Type
+             *
+             * @constant
+             */
+            type: "achievement_milestone";
+            /**
+             * Achievement Key
+             *
+             * @enum {string}
+             */
+            achievement_key:
+                | "mineral_extraction"
+                | "network_import"
+                | "network_export"
+                | "network"
+                | "technology"
+                | "trading_export"
+                | "trading_import";
+            /** Threshold */
+            threshold: number;
+            /** Xp */
+            xp: number;
+        };
+        /** AchievementMilestoneEnergyStoragePayload */
+        AchievementMilestoneEnergyStoragePayload: {
+            /**
+             * Type
+             *
+             * @constant
+             */
+            type: "achievement_milestone";
+            /**
+             * Achievement Key
+             *
+             * @constant
+             */
+            achievement_key: "energy_storage";
+            /**
+             * Comparison Key
+             *
+             * @enum {string}
+             */
+            comparison_key:
+                | "zurich-for-a-day"
+                | "switzerland-for-a-day"
+                | "switzerland-for-a-month";
+            /** Threshold */
+            threshold: number;
+            /** Xp */
+            xp: number;
+        };
+        /** AchievementMilestonePowerConsumptionPayload */
+        AchievementMilestonePowerConsumptionPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             */
+            type: "achievement_milestone";
+            /**
+             * Achievement Key
+             *
+             * @constant
+             */
+            achievement_key: "power_consumption";
+            /**
+             * Comparison Key
+             *
+             * @enum {string}
+             */
+            comparison_key:
+                | "village-in-europe"
+                | "city-of-basel"
+                | "switzerland"
+                | "japan"
+                | "world-population";
+            /** Threshold */
+            threshold: number;
+            /** Xp */
+            xp: number;
+        };
         /** AchievementOut */
         AchievementOut: {
             /** Id */
@@ -2525,18 +2613,30 @@ export interface components {
             /** Status */
             status: number;
         };
-        /** AchievementUnlockedPayload */
-        AchievementUnlockedPayload: {
+        /**
+         * AchievementUnlockPayload
+         *
+         * One-shot achievement unlocked by constructing a specific facility.
+         */
+        AchievementUnlockPayload: {
             /**
-             * Discriminator enum property added by openapi-typescript
+             * Type
+             *
+             * @constant
+             */
+            type: "achievement_unlock";
+            /**
+             * Achievement Key
              *
              * @enum {string}
              */
-            type: "achievement_unlocked";
-            /** Achievement Key */
-            achievement_key: string;
-            /** Achievement Name */
-            achievement_name: string;
+            achievement_key:
+                | "laboratory"
+                | "warehouse"
+                | "storage_facilities"
+                | "GHG_effect";
+            /** Xp */
+            xp: number;
         };
         /** Ask */
         Ask: {
@@ -2766,9 +2866,9 @@ export interface components {
         /** ClimateEventPayload */
         ClimateEventPayload: {
             /**
-             * Discriminator enum property added by openapi-typescript
+             * Type
              *
-             * @enum {string}
+             * @constant
              */
             type: "climate_event";
             /** Event Name */
@@ -2781,9 +2881,9 @@ export interface components {
         /** ConstructionFinishedPayload */
         ConstructionFinishedPayload: {
             /**
-             * Discriminator enum property added by openapi-typescript
+             * Type
              *
-             * @enum {string}
+             * @constant
              */
             type: "construction_finished";
             /** Project Type */
@@ -2810,9 +2910,9 @@ export interface components {
         /** CreditLimitExceededPayload */
         CreditLimitExceededPayload: {
             /**
-             * Discriminator enum property added by openapi-typescript
+             * Type
              *
-             * @enum {string}
+             * @constant
              */
             type: "credit_limit_exceeded";
         };
@@ -2909,9 +3009,9 @@ export interface components {
         /** EmergencyFacilityCreatedPayload */
         EmergencyFacilityCreatedPayload: {
             /**
-             * Discriminator enum property added by openapi-typescript
+             * Type
              *
-             * @enum {string}
+             * @constant
              */
             type: "emergency_facility_created";
             /** Facility Name */
@@ -3051,9 +3151,9 @@ export interface components {
         /** FacilityDecommissionedPayload */
         FacilityDecommissionedPayload: {
             /**
-             * Discriminator enum property added by openapi-typescript
+             * Type
              *
-             * @enum {string}
+             * @constant
              */
             type: "facility_decommissioned";
             /** Facility Name */
@@ -3064,9 +3164,9 @@ export interface components {
         /** FacilityDestroyedPayload */
         FacilityDestroyedPayload: {
             /**
-             * Discriminator enum property added by openapi-typescript
+             * Type
              *
-             * @enum {string}
+             * @constant
              */
             type: "facility_destroyed";
             /** Facility Name */
@@ -3626,7 +3726,10 @@ export interface components {
                 | components["schemas"]["ResourceSoldPayload"]
                 | components["schemas"]["ShipmentArrivedPayload"]
                 | components["schemas"]["CreditLimitExceededPayload"]
-                | components["schemas"]["AchievementUnlockedPayload"];
+                | components["schemas"]["AchievementMilestonePowerConsumptionPayload"]
+                | components["schemas"]["AchievementMilestoneEnergyStoragePayload"]
+                | components["schemas"]["AchievementMilestoneBasePayload"]
+                | components["schemas"]["AchievementUnlockPayload"];
         };
         /** NotificationPatchIn */
         NotificationPatchIn: {
@@ -4176,9 +4279,9 @@ export interface components {
         /** ResourceSoldPayload */
         ResourceSoldPayload: {
             /**
-             * Discriminator enum property added by openapi-typescript
+             * Type
              *
-             * @enum {string}
+             * @constant
              */
             type: "resource_sold";
             /** Buyer Username */
@@ -4346,9 +4449,9 @@ export interface components {
         /** ShipmentArrivedPayload */
         ShipmentArrivedPayload: {
             /**
-             * Discriminator enum property added by openapi-typescript
+             * Type
              *
-             * @enum {string}
+             * @constant
              */
             type: "shipment_arrived";
             /** Resource */
@@ -4732,9 +4835,9 @@ export interface components {
         /** TechnologyResearchedPayload */
         TechnologyResearchedPayload: {
             /**
-             * Discriminator enum property added by openapi-typescript
+             * Type
              *
-             * @enum {string}
+             * @constant
              */
             type: "technology_researched";
             /** Technology Type */

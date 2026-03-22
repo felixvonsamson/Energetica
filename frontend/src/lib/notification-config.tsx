@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { formatAchievementValue } from "@/lib/format-utils";
 import type { AppRoute } from "@/types/app-routes";
 import type {
     NotificationCategory,
@@ -7,6 +8,29 @@ import type {
     NotificationPayloadOf,
     NotificationType,
 } from "@/types/notifications";
+
+type PowerConsumptionComparisonKey = Extract<
+    NotificationPayload,
+    { achievement_key: "power_consumption" }
+>["comparison_key"];
+type EnergyStorageComparisonKey = Extract<
+    NotificationPayload,
+    { achievement_key: "energy_storage" }
+>["comparison_key"];
+
+const POWER_CONSUMPTION_COMPARISON_LABELS: Record<PowerConsumptionComparisonKey, string> = {
+    "village-in-europe": "a village in Europe",
+    "city-of-basel": "the city of Basel",
+    switzerland: "Switzerland",
+    japan: "Japan",
+    "world-population": "the entire world population",
+};
+
+const ENERGY_STORAGE_COMPARISON_LABELS: Record<EnergyStorageComparisonKey, string> = {
+    "zurich-for-a-day": "Zurich for a day",
+    "switzerland-for-a-day": "Switzerland for a day",
+    "switzerland-for-a-month": "Switzerland for a month",
+};
 
 type NotificationDef<T extends NotificationType> = {
     category: NotificationCategory;
@@ -83,14 +107,39 @@ const NOTIFICATION_CONFIG = {
         pushBody: () => "Not enough money for market participation.",
         inGameBody: () => "Not enough money for market participation.",
     },
-    achievement_unlocked: {
+    achievement_milestone: {
         category: "achievements",
         // TODO: redirect to a dedicated achievements page when it exists
         url: "/app/dashboard",
         title: "Achievement unlocked",
-        // TODO: include achievement-specific thresholds and real-world comparisons from config
-        pushBody: (p) => p.achievement_name,
-        inGameBody: (p) => p.achievement_name,
+        pushBody: (p) => {
+            const value = formatAchievementValue(p.threshold, p.achievement_key);
+            let comparison = "";
+            if (p.achievement_key === "power_consumption") {
+                comparison = ` — like ${POWER_CONSUMPTION_COMPARISON_LABELS[p.comparison_key]}`;
+            } else if (p.achievement_key === "energy_storage") {
+                comparison = ` — like ${ENERGY_STORAGE_COMPARISON_LABELS[p.comparison_key]}`;
+            }
+            return `${value}${comparison} (+${p.xp} XP)`;
+        },
+        inGameBody: (p) => {
+            const value = formatAchievementValue(p.threshold, p.achievement_key);
+            let comparison = "";
+            if (p.achievement_key === "power_consumption") {
+                comparison = ` — like ${POWER_CONSUMPTION_COMPARISON_LABELS[p.comparison_key]}`;
+            } else if (p.achievement_key === "energy_storage") {
+                comparison = ` — like ${ENERGY_STORAGE_COMPARISON_LABELS[p.comparison_key]}`;
+            }
+            return `${value}${comparison} (+${p.xp} XP)`;
+        },
+    },
+    achievement_unlock: {
+        category: "achievements",
+        // TODO: redirect to a dedicated achievements page when it exists
+        url: "/app/dashboard",
+        title: "Achievement unlocked",
+        pushBody: (p) => `+${p.xp} XP`,
+        inGameBody: (p) => `+${p.xp} XP`,
     },
 } satisfies { [T in NotificationType]: NotificationDef<T> };
 

@@ -453,6 +453,16 @@ class Player(DBModel):
         """Return True if the player has discovered the greenhouse gas effect."""
         return bool(self.achievements["GHG_effect"])
 
+    def _notify_milestone(self, achievement_key: str, milestone: dict) -> None:
+        payload: dict = {
+            "achievement_key": achievement_key,
+            "threshold": milestone["threshold"],
+            "xp": milestone["xp"],
+        }
+        if "comparison_key" in milestone:
+            payload["comparison_key"] = milestone["comparison_key"]
+        self.notify("achievement_milestone", payload)
+
     def check_continuous_achievements(self) -> None:
         """Check for player achievements that are linked to values that are updated every tick."""
         for achievement in [
@@ -465,19 +475,14 @@ class Player(DBModel):
         ]:
             current_lvl = self.achievements[achievement]
             achievement_data = achievements[achievement]
+            milestone = achievement_data["milestones"][current_lvl]
             if (
                 current_lvl < len(achievement_data["milestones"])
-                and self.progression_metrics[achievement_data["metric"]] >= achievement_data["milestones"][current_lvl]
+                and self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]
             ):
                 self.achievements[achievement] += 1
-                self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
-                self.notify(
-                    "achievement_unlocked",
-                    {
-                        "achievement_key": achievement,
-                        "achievement_name": achievement_data["name"],
-                    },
-                )
+                self.progression_metrics["xp"] += milestone["xp"]
+                self._notify_milestone(achievement, milestone)
                 self.invalidate_queries(["auth", "me"])
 
     def check_construction_achievements(self, construction_name: str) -> None:
@@ -485,12 +490,12 @@ class Player(DBModel):
         for achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
             if not self.achievements[achievement] and construction_name in achievements[achievement]["unlocked_with"]:
                 self.achievements[achievement] = 1
-                self.progression_metrics["xp"] += achievements[achievement]["reward"]
+                self.progression_metrics["xp"] += achievements[achievement]["xp"]
                 self.notify(
-                    "achievement_unlocked",
+                    "achievement_unlock",
                     {
                         "achievement_key": achievement,
-                        "achievement_name": achievements[achievement]["name"],
+                        "xp": achievements[achievement]["xp"],
                     },
                 )
                 self.invalidate_queries(["auth", "me"])
@@ -499,19 +504,14 @@ class Player(DBModel):
         """Check for technology achievement."""
         current_lvl = self.achievements["technology"]
         achievement_data = achievements["technology"]
+        milestone = achievement_data["milestones"][current_lvl]
         if (
             current_lvl < len(achievement_data["milestones"])
-            and self.progression_metrics[achievement_data["metric"]] >= achievement_data["milestones"][current_lvl]
+            and self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]
         ):
             self.achievements["technology"] += 1
-            self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
-            self.notify(
-                "achievement_unlocked",
-                {
-                    "achievement_key": "technology",
-                    "achievement_name": achievement_data["name"],
-                },
-            )
+            self.progression_metrics["xp"] += milestone["xp"]
+            self._notify_milestone("technology", milestone)
             self.invalidate_queries(["auth", "me"])
 
     def check_trading_achievement(self) -> None:
@@ -519,19 +519,14 @@ class Player(DBModel):
         for achievement in ["trading_export", "trading_import"]:
             current_lvl = self.achievements[achievement]
             achievement_data = achievements[achievement]
+            milestone = achievement_data["milestones"][current_lvl]
             if (
                 current_lvl < len(achievement_data["milestones"])
-                and self.progression_metrics[achievement_data["metric"]] >= achievement_data["milestones"][current_lvl]
+                and self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]
             ):
                 self.achievements[achievement] += 1
-                self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
-                self.notify(
-                    "achievement_unlocked",
-                    {
-                        "achievement_key": achievement,
-                        "achievement_name": achievement_data["name"],
-                    },
-                )
+                self.progression_metrics["xp"] += milestone["xp"]
+                self._notify_milestone(achievement, milestone)
 
     def package_upcoming_achievements(self) -> list[AchievementOut]:
         """Package the progress information for the upcoming achievements."""
@@ -545,7 +540,7 @@ class Player(DBModel):
                     achievement = AchievementOut(
                         id=achievement_id,
                         name=achievement_data["name"],
-                        reward=achievement_data["reward"],
+                        reward=achievement_data["xp"],
                         objective=1,
                         status=0,
                     )
@@ -553,12 +548,13 @@ class Player(DBModel):
             else:
                 current_lvl = self.achievements[achievement_id]
                 if current_lvl < len(achievement_data["milestones"]):
+                    milestone = achievement_data["milestones"][current_lvl]
                     status = self.progression_metrics[achievement_data["metric"]]
                     achievement = AchievementOut(
                         id=achievement_id,
                         name=f"{achievement_data['name']} {current_lvl + 1}",
-                        reward=achievement_data["rewards"][current_lvl],
-                        objective=achievement_data["milestones"][current_lvl],
+                        reward=milestone["xp"],
+                        objective=milestone["threshold"],
                         status=round(status),
                     )
                     upcoming_achievements.append(achievement)
