@@ -5,6 +5,8 @@ import {
     ACHIEVEMENT_UNLOCK_CONFIG,
 } from "@/lib/achievement-config";
 import { getAssetLongName } from "@/lib/assets/asset-names";
+import { CLIMATE_EVENT_CONFIG } from "@/lib/climate-event-config";
+import { formatMoney } from "@/lib/format-utils";
 import type { AppRoute } from "@/types/app-routes";
 import type {
     NotificationCategory,
@@ -51,12 +53,12 @@ const NOTIFICATION_CONFIG = {
         title: "Facility destroyed",
         pushBody: (p) =>
             p.facility_type === "industry"
-                ? `Industry was levelled down by ${p.event_name}.`
-                : `${getAssetLongName(p.facility_type)} was destroyed by ${p.event_name}.`,
+                ? `Industry was levelled down by ${CLIMATE_EVENT_CONFIG[p.event_key].name}.`
+                : `${getAssetLongName(p.facility_type)} was destroyed by ${CLIMATE_EVENT_CONFIG[p.event_key].name}.`,
         inGameBody: (p) =>
             p.facility_type === "industry"
-                ? `Industry was levelled down by ${p.event_name}.`
-                : `${getAssetLongName(p.facility_type)} was destroyed by ${p.event_name}.`,
+                ? `Industry was levelled down by ${CLIMATE_EVENT_CONFIG[p.event_key].name}.`
+                : `${getAssetLongName(p.facility_type)} was destroyed by ${CLIMATE_EVENT_CONFIG[p.event_key].name}.`,
     },
     emergency_facility_created: {
         category: "projects",
@@ -70,8 +72,10 @@ const NOTIFICATION_CONFIG = {
         // TODO: redirect to a future "news" page; no logical destination for now
         url: "/app/dashboard",
         title: "Climate event",
-        pushBody: (p) => `${p.event_name} · ${p.duration_days}d · ${p.cost_per_hour}`,
-        inGameBody: (p) => `${p.event_name} · ${p.duration_days}d · ${p.cost_per_hour}`,
+        pushBody: (p) =>
+            `${CLIMATE_EVENT_CONFIG[p.event_key].name} · ${p.duration_days}d · ${formatMoney(p.cost_per_hour)}$/h`,
+        inGameBody: (p) =>
+            `${CLIMATE_EVENT_CONFIG[p.event_key].name} · ${p.duration_days}d · ${formatMoney(p.cost_per_hour)}$/h`,
     },
     resource_sold: {
         category: "market",

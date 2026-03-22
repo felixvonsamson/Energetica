@@ -16,7 +16,7 @@ from energetica.database.map.hex_tile import HexTile
 from energetica.enums import FunctionalFacilityType, Renewable
 from energetica.globals import engine
 from energetica.utils.facilities import destroy_facility
-from energetica.utils.formatting import display_money
+
 from energetica.utils.hashing import stable_hash
 
 
@@ -42,9 +42,9 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
     player.notify(
         "climate_event",
         {
-            "event_name": climate_events[event_name].name,
+            "event_key": event_name,
             "duration_days": round(climate_events[event_name].duration / 3600 / 24),
-            "cost_per_hour": display_money(recovery_cost * ticks_per_day / 24) + "/h",
+            "cost_per_hour": recovery_cost * ticks_per_day / 24,
         },
     )
 
@@ -56,7 +56,7 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
             "facility_destroyed",
             {
                 "facility_type": str(FunctionalFacilityType.INDUSTRY),
-                "event_name": climate_events[event_name].name,
+                "event_key": event_name,
                 "cleanup_cost": 0.0,
             },
         )
@@ -67,7 +67,7 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
     )
     for facility in facilities_at_risk:
         if rng.random() < climate_events[event_name].destruction_chance[facility.facility_type]:
-            destroy_facility(player, facility, str(climate_events[event_name].name))
+            destroy_facility(player, facility, event_name)
             # if a water dam is destroyed it will flood downstream tiles
             if facility.facility_type == "small_water_dam":
                 affected_tiles = tile.get_downstream_tiles(3)

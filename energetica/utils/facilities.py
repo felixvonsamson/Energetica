@@ -87,7 +87,7 @@ def remove_facility(facility: ActiveFacility) -> None:
     invalidate_data_on_project_update(player, facility.facility_type)
 
 
-def destroy_facility(player: Player, facility: ActiveFacility, event_name: str) -> None:
+def destroy_facility(player: Player, facility: ActiveFacility, event_key: str) -> None:
     """Destroyed a facility, by a climate event."""
     cleanup_cost = 0.1 * facility.total_cost
     player.money -= cleanup_cost
@@ -101,7 +101,7 @@ def destroy_facility(player: Player, facility: ActiveFacility, event_name: str) 
         "facility_destroyed",
         {
             "facility_type": str(facility.facility_type),
-            "event_name": event_name,
+            "event_key": event_key,
             "cleanup_cost": float(cleanup_cost),
         },
     )

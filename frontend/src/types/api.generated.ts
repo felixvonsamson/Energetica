@@ -2897,13 +2897,25 @@ export interface components {
              * @constant
              */
             type: "climate_event";
-            /** Event Name */
-            event_name: string;
+            event_key: components["schemas"]["ClimateEventType"];
             /** Duration Days */
             duration_days: number;
             /** Cost Per Hour */
-            cost_per_hour: string;
+            cost_per_hour: number;
         };
+        /**
+         * ClimateEventType
+         *
+         * Enum for climate event types.
+         *
+         * @enum {string}
+         */
+        ClimateEventType:
+            | "flood"
+            | "heat_wave"
+            | "cold_wave"
+            | "hurricane"
+            | "wildfire";
         /** ConstructionFinishedPayload */
         ConstructionFinishedPayload: {
             /**
@@ -3224,8 +3236,7 @@ export interface components {
                 | components["schemas"]["StorageFacilityType"]
                 | components["schemas"]["ExtractionFacilityType"]
                 | components["schemas"]["FunctionalFacilityType"];
-            /** Event Name */
-            event_name: string;
+            event_key: components["schemas"]["ClimateEventType"];
             /** Cleanup Cost */
             cleanup_cost: number;
         };

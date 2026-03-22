@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Annotated, Literal, Union
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
 from energetica.enums import (
+    ClimateEventType,
     ExtractionFacilityType,
     FunctionalFacilityType,
     PowerFacilityType,
@@ -57,7 +58,7 @@ class FacilityDecommissionedPayload(BaseModel):
 class FacilityDestroyedPayload(BaseModel):
     type: Literal["facility_destroyed"]
     facility_type: FacilityType
-    event_name: str
+    event_key: ClimateEventType
     cleanup_cost: float
 
 
@@ -68,9 +69,9 @@ class EmergencyFacilityCreatedPayload(BaseModel):
 
 class ClimateEventPayload(BaseModel):
     type: Literal["climate_event"]
-    event_name: str
+    event_key: ClimateEventType
     duration_days: int
-    cost_per_hour: str
+    cost_per_hour: float
 
 
 class ResourceSoldPayload(BaseModel):

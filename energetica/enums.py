@@ -158,6 +158,16 @@ class FunctionalFacilityType(StrEnum):
         return WorkerType.CONSTRUCTION
 
 
+class ClimateEventType(StrEnum):
+    """Enum for climate event types."""
+
+    FLOOD = "flood"
+    HEAT_WAVE = "heat_wave"
+    COLD_WAVE = "cold_wave"
+    HURRICANE = "hurricane"
+    WILDFIRE = "wildfire"
+
+
 class TechnologyType(StrEnum):
     """Enum for technologies."""
 
