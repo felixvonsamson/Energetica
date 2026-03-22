@@ -54,18 +54,20 @@ const NOTIFICATION_CONFIG = {
         pushBody: (p) =>
             p.facility_type === "industry"
                 ? `Industry was levelled down by ${CLIMATE_EVENT_CONFIG[p.event_key].name}.`
-                : `${getAssetLongName(p.facility_type)} was destroyed by ${CLIMATE_EVENT_CONFIG[p.event_key].name}.`,
+                : `${getAssetLongName(p.facility_type)} was destroyed by a ${CLIMATE_EVENT_CONFIG[p.event_key].name}.`,
         inGameBody: (p) =>
             p.facility_type === "industry"
                 ? `Industry was levelled down by ${CLIMATE_EVENT_CONFIG[p.event_key].name}.`
-                : `${getAssetLongName(p.facility_type)} was destroyed by ${CLIMATE_EVENT_CONFIG[p.event_key].name}.`,
+                : `${getAssetLongName(p.facility_type)} was destroyed by a ${CLIMATE_EVENT_CONFIG[p.event_key].name}.`,
     },
     emergency_facility_created: {
         category: "projects",
         url: "/app/facilities/manage",
         title: "Emergency facility",
-        pushBody: (p) => `A ${getAssetLongName(p.facility_type)} was created automatically.`,
-        inGameBody: (p) => `A ${getAssetLongName(p.facility_type)} was created automatically.`,
+        pushBody: (p) =>
+            `Your last power facility has been decommissioned. An emergency ${getAssetLongName(p.facility_type)} has been deployed to restart your operations.`,
+        inGameBody: (p) =>
+            `Your last power facility has been decommissioned. An emergency ${getAssetLongName(p.facility_type)} has been deployed to restart your operations.`,
     },
     climate_event: {
         category: "events",
