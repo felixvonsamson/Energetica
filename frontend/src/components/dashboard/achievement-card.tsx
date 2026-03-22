@@ -3,7 +3,7 @@
  * name, progress bar, and XP reward.
  */
 
-import { formatAchievementValue } from "@/lib/format-utils";
+import { ACHIEVEMENT_MILESTONE_CONFIG } from "@/lib/achievement-config";
 
 interface AchievementCardProps {
     id: string;
@@ -27,9 +27,12 @@ export function AchievementCard({
     // Calculate progress percentage
     const progressPercent = Math.min(100, (status / objective) * 100);
 
-    // Format the values based on achievement type
-    const formattedStatus = formatAchievementValue(status, id);
-    const formattedObjective = formatAchievementValue(objective, id);
+    const format =
+        ACHIEVEMENT_MILESTONE_CONFIG[
+            id as keyof typeof ACHIEVEMENT_MILESTONE_CONFIG
+        ].format;
+    const formattedStatus = format(status);
+    const formattedObjective = format(objective);
 
     return (
         <div className="flex items-center gap-3">

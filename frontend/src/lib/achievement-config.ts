@@ -1,4 +1,4 @@
-import { formatAchievementValue } from "@/lib/format-utils";
+import { formatEnergy, formatMass, formatPower } from "@/lib/format-utils";
 import type { NotificationPayload } from "@/types/notifications";
 
 // ---------------------------------------------------------------------------
@@ -45,6 +45,7 @@ export const ENERGY_STORAGE_COMPARISON_LABELS: Record<EnergyStorageComparisonKey
 
 type MilestoneConfig<K extends MilestoneAchievementKey> = {
     name: string;
+    format: (v: number) => string;
     body: (p: Extract<MilestonePayload, { achievement_key: K }>) => string;
 };
 
@@ -65,48 +66,57 @@ type BasePayload = Exclude<MilestonePayload, { comparison_key: string }>;
 export const ACHIEVEMENT_MILESTONE_CONFIG = {
     power_consumption: {
         name: "Power Consumption",
+        format: formatPower,
         body: (p: PCPayload) =>
-            `You have passed the milestone of ${formatAchievementValue(p.threshold, "power_consumption")} of power consumption. You consume as much electricity as ${POWER_CONSUMPTION_COMPARISON_LABELS[p.comparison_key]}.`,
+            `You have passed the milestone of ${formatPower(p.threshold)} of power consumption. You consume as much electricity as ${POWER_CONSUMPTION_COMPARISON_LABELS[p.comparison_key]}.`,
     },
     energy_storage: {
         name: "Energy Storage",
+        format: formatEnergy,
         body: (p: ESPayload) =>
-            `You have stored ${formatAchievementValue(p.threshold, "energy_storage")} of energy, enough to power ${ENERGY_STORAGE_COMPARISON_LABELS[p.comparison_key]}.`,
+            `You have stored ${formatEnergy(p.threshold)} of energy, enough to power ${ENERGY_STORAGE_COMPARISON_LABELS[p.comparison_key]}.`,
     },
     mineral_extraction: {
         name: "Mineral Extraction",
+        format: formatMass,
         body: (p: BasePayload) =>
-            `You have extracted ${formatAchievementValue(p.threshold, "mineral_extraction")} of resources.`,
+            `You have extracted ${formatMass(p.threshold)} of resources.`,
     },
     network_import: {
         name: "Network Import",
+        format: formatEnergy,
         body: (p: BasePayload) =>
-            `You have imported more than ${formatAchievementValue(p.threshold, "network_import")} on the market.`,
+            `You have imported more than ${formatEnergy(p.threshold)} on the market.`,
     },
     network_export: {
         name: "Network Export",
+        format: formatEnergy,
         body: (p: BasePayload) =>
-            `You have exported more than ${formatAchievementValue(p.threshold, "network_export")} on the market.`,
+            `You have exported more than ${formatEnergy(p.threshold)} on the market.`,
     },
     network: {
         name: "Unlock Network",
+        format: formatPower,
         body: (_p: BasePayload) =>
             "Your generation capacities are now big enough to join a network and trade electricity. See Community > Network.",
     },
     technology: {
         name: "Technology",
+        format: (v: number) => v.toString(),
         body: (p: BasePayload) =>
             `You have researched a total of ${p.threshold} levels of technologies.`,
     },
     trading_export: {
         name: "Resource Export",
+        format: formatMass,
         body: (p: BasePayload) =>
-            `You have exported more than ${formatAchievementValue(p.threshold, "trading_export")} of resources.`,
+            `You have exported more than ${formatMass(p.threshold)} of resources.`,
     },
     trading_import: {
         name: "Resource Import",
+        format: formatMass,
         body: (p: BasePayload) =>
-            `You have imported more than ${formatAchievementValue(p.threshold, "trading_import")} of resources.`,
+            `You have imported more than ${formatMass(p.threshold)} of resources.`,
     },
 } satisfies { [K in MilestoneAchievementKey]: MilestoneConfig<K> };
 
