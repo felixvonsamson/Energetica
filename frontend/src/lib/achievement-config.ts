@@ -44,13 +44,31 @@ export const ENERGY_STORAGE_COMPARISON_LABELS: Record<EnergyStorageComparisonKey
 // ---------------------------------------------------------------------------
 
 type MilestoneConfig<K extends MilestoneAchievementKey> = {
+    /** Display name for the achievement. Used in:
+     *  - AchievementCard: progress card on the dashboard, with the 1-based
+     *    milestone level appended (e.g. "Power Consumption 2") */
     name: string;
+    /** Formats the achievement's numeric values (status, objective, threshold)
+     *  into a human-readable string with units. Used in:
+     *  - AchievementCard: progress bar label (e.g. "12 GWh / 50 GWh")
+     *  - body: called directly to format the threshold in notification text */
     format: (v: number) => string;
+    /** Generates the notification body text for a milestone event. Used in:
+     *  - notification-config.tsx pushBody: browser push notification (service worker)
+     *  - notification-config.tsx inGameBody: in-game notification panel
+     *  Currently returns a plain string; could become a ReactNode in the future
+     *  to enable richer in-game formatting (links, highlights, etc.). */
     body: (p: Extract<MilestonePayload, { achievement_key: K }>) => string;
 };
 
 type UnlockConfig = {
+    /** Display name for the achievement. Used in:
+     *  - AchievementCard: progress card on the dashboard */
     name: string;
+    /** Notification body text for when the unlock is triggered. Used in:
+     *  - notification-config.tsx pushBody: browser push notification (service worker)
+     *  - notification-config.tsx inGameBody: in-game notification panel
+     *  Static string (no payload needed). Could become a ReactNode in the future. */
     body: string;
 };
 
