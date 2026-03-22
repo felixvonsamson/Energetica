@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
-import type { AppRoute } from "@/types/app-routes";
 import {
     ACHIEVEMENT_MILESTONE_CONFIG,
     ACHIEVEMENT_UNLOCK_CONFIG,
 } from "@/lib/achievement-config";
+import type { AppRoute } from "@/types/app-routes";
 import type {
     NotificationCategory,
     NotificationPayload,

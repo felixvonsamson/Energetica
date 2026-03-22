@@ -1,5 +1,5 @@
-import type { NotificationPayload } from "@/types/notifications";
 import { formatAchievementValue } from "@/lib/format-utils";
+import type { NotificationPayload } from "@/types/notifications";
 
 // ---------------------------------------------------------------------------
 // Payload type aliases
