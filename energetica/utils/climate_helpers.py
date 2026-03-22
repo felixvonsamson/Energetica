@@ -55,7 +55,7 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
         player.notify(
             "facility_destroyed",
             {
-                "facility_name": FunctionalFacilityType.INDUSTRY,
+                "facility_type": str(FunctionalFacilityType.INDUSTRY),
                 "event_name": climate_events[event_name].name,
                 "cleanup_cost": 0.0,
             },

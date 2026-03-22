@@ -354,7 +354,6 @@ def complete_project(project: OngoingProject, *, skip_notifications: bool = Fals
                 "technology_researched",
                 {
                     "technology_type": str(project.project_type),
-                    "technology_name": project_name,
                     "new_level": player.technology_lvl[project.project_type],
                 },
             )
@@ -364,7 +363,6 @@ def complete_project(project: OngoingProject, *, skip_notifications: bool = Fals
                 "construction_finished",
                 {
                     "project_type": str(project.project_type),
-                    "project_name": project_name,
                     "level": player.functional_facility_lvl[project.project_type],
                 },
             )
@@ -374,7 +372,6 @@ def complete_project(project: OngoingProject, *, skip_notifications: bool = Fals
                 "construction_finished",
                 {
                     "project_type": str(project.project_type),
-                    "project_name": project_name,
                     "level": None,
                 },
             )

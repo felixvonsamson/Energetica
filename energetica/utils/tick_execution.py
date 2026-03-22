@@ -89,7 +89,7 @@ def check_events_completion() -> None:
         player.notify(
             "facility_decommissioned",
             {
-                "facility_name": facility.display_name,
+                "facility_type": str(facility.facility_type),
                 "dismantle_cost": float(facility.dismantle_cost),
             },
         )

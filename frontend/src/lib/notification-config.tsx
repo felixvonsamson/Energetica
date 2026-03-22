@@ -4,6 +4,7 @@ import {
     ACHIEVEMENT_MILESTONE_CONFIG,
     ACHIEVEMENT_UNLOCK_CONFIG,
 } from "@/lib/achievement-config";
+import { getAssetLongName } from "@/lib/assets/asset-names";
 import type { AppRoute } from "@/types/app-routes";
 import type {
     NotificationCategory,
@@ -26,43 +27,43 @@ const NOTIFICATION_CONFIG = {
         url: "/app/facilities/manage",
         title: "Construction finished",
         pushBody: (p) =>
-            `${p.project_name}${p.level != null ? ` (level ${p.level})` : ""} is now operational.`,
+            `${getAssetLongName(p.project_type)}${p.level != null ? ` (level ${p.level})` : ""} is now operational.`,
         inGameBody: (p) =>
-            `${p.project_name}${p.level != null ? ` (level ${p.level})` : ""} is now operational.`,
+            `${getAssetLongName(p.project_type)}${p.level != null ? ` (level ${p.level})` : ""} is now operational.`,
     },
     technology_researched: {
         category: "projects",
         url: "/app/facilities/technology",
         title: "Research complete",
-        pushBody: (p) => `${p.technology_name} level ${p.new_level} unlocked.`,
-        inGameBody: (p) => `${p.technology_name} level ${p.new_level} unlocked.`,
+        pushBody: (p) => `${getAssetLongName(p.technology_type)} level ${p.new_level} unlocked.`,
+        inGameBody: (p) => `${getAssetLongName(p.technology_type)} level ${p.new_level} unlocked.`,
     },
     facility_decommissioned: {
         category: "projects",
         url: "/app/facilities/manage",
         title: "Facility decommissioned",
-        pushBody: (p) => `${p.facility_name} has been decommissioned.`,
-        inGameBody: (p) => `${p.facility_name} has been decommissioned.`,
+        pushBody: (p) => `${getAssetLongName(p.facility_type)} has been decommissioned.`,
+        inGameBody: (p) => `${getAssetLongName(p.facility_type)} has been decommissioned.`,
     },
     facility_destroyed: {
         category: "events",
         url: "/app/facilities/manage",
         title: "Facility destroyed",
         pushBody: (p) =>
-            p.facility_name === "industry"
+            p.facility_type === "industry"
                 ? `Industry was levelled down by ${p.event_name}.`
-                : `${p.facility_name} was destroyed by ${p.event_name}.`,
+                : `${getAssetLongName(p.facility_type)} was destroyed by ${p.event_name}.`,
         inGameBody: (p) =>
-            p.facility_name === "industry"
+            p.facility_type === "industry"
                 ? `Industry was levelled down by ${p.event_name}.`
-                : `${p.facility_name} was destroyed by ${p.event_name}.`,
+                : `${getAssetLongName(p.facility_type)} was destroyed by ${p.event_name}.`,
     },
     emergency_facility_created: {
         category: "projects",
         url: "/app/facilities/manage",
         title: "Emergency facility",
-        pushBody: (p) => `A ${p.facility_name} was created automatically.`,
-        inGameBody: (p) => `A ${p.facility_name} was created automatically.`,
+        pushBody: (p) => `A ${getAssetLongName(p.facility_type)} was created automatically.`,
+        inGameBody: (p) => `A ${getAssetLongName(p.facility_type)} was created automatically.`,
     },
     climate_event: {
         category: "events",

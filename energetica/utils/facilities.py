@@ -100,7 +100,7 @@ def destroy_facility(player: Player, facility: ActiveFacility, event_name: str) 
     player.notify(
         "facility_destroyed",
         {
-            "facility_name": str(facility.facility_type),
+            "facility_type": str(facility.facility_type),
             "event_name": event_name,
             "cleanup_cost": float(cleanup_cost),
         },
@@ -171,7 +171,7 @@ def save_powerless_player(player: Player) -> None:
         player.notify(
             "emergency_facility_created",
             {
-                "facility_name": "Steam Engine",
+                "facility_type": str(ControllableFacilityType.STEAM_ENGINE),
             },
         )
         engine.log(f"Emergency power steam engine created for {player.username}.")

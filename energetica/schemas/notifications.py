@@ -7,8 +7,19 @@ from typing import TYPE_CHECKING, Annotated, Literal, Union
 
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
+from energetica.enums import (
+    ExtractionFacilityType,
+    FunctionalFacilityType,
+    PowerFacilityType,
+    ProjectType,
+    StorageFacilityType,
+    TechnologyType,
+)
+
 if TYPE_CHECKING:
     from energetica.database.messages import Notification
+
+FacilityType = PowerFacilityType | StorageFacilityType | ExtractionFacilityType | FunctionalFacilityType
 
 
 # ---------------------------------------------------------------------------
@@ -27,34 +38,32 @@ if TYPE_CHECKING:
 
 class ConstructionFinishedPayload(BaseModel):
     type: Literal["construction_finished"]
-    project_type: str
-    project_name: str
+    project_type: ProjectType
     level: int | None = None  # None for non-levelable facilities
 
 
 class TechnologyResearchedPayload(BaseModel):
     type: Literal["technology_researched"]
-    technology_type: str
-    technology_name: str
+    technology_type: TechnologyType
     new_level: int
 
 
 class FacilityDecommissionedPayload(BaseModel):
     type: Literal["facility_decommissioned"]
-    facility_name: str
+    facility_type: FacilityType
     dismantle_cost: float
 
 
 class FacilityDestroyedPayload(BaseModel):
     type: Literal["facility_destroyed"]
-    facility_name: str
+    facility_type: FacilityType
     event_name: str
     cleanup_cost: float
 
 
 class EmergencyFacilityCreatedPayload(BaseModel):
     type: Literal["emergency_facility_created"]
-    facility_name: str
+    facility_type: FacilityType
 
 
 class ClimateEventPayload(BaseModel):

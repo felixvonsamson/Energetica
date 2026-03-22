@@ -2913,9 +2913,15 @@ export interface components {
              */
             type: "construction_finished";
             /** Project Type */
-            project_type: string;
-            /** Project Name */
-            project_name: string;
+            project_type:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | components["schemas"]["FunctionalFacilityType"]
+                | components["schemas"]["TechnologyType"];
             /** Level */
             level?: number | null;
         };
@@ -3040,8 +3046,15 @@ export interface components {
              * @constant
              */
             type: "emergency_facility_created";
-            /** Facility Name */
-            facility_name: string;
+            /** Facility Type */
+            facility_type:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | components["schemas"]["FunctionalFacilityType"];
         };
         /**
          * EmissionsResponse
@@ -3182,8 +3195,15 @@ export interface components {
              * @constant
              */
             type: "facility_decommissioned";
-            /** Facility Name */
-            facility_name: string;
+            /** Facility Type */
+            facility_type:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | components["schemas"]["FunctionalFacilityType"];
             /** Dismantle Cost */
             dismantle_cost: number;
         };
@@ -3195,8 +3215,15 @@ export interface components {
              * @constant
              */
             type: "facility_destroyed";
-            /** Facility Name */
-            facility_name: string;
+            /** Facility Type */
+            facility_type:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | components["schemas"]["FunctionalFacilityType"];
             /** Event Name */
             event_name: string;
             /** Cleanup Cost */
@@ -4866,10 +4893,7 @@ export interface components {
              * @constant
              */
             type: "technology_researched";
-            /** Technology Type */
-            technology_type: string;
-            /** Technology Name */
-            technology_name: string;
+            technology_type: components["schemas"]["TechnologyType"];
             /** New Level */
             new_level: number;
         };
