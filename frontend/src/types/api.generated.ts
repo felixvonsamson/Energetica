@@ -2510,7 +2510,10 @@ export interface components {
         /** AchievementListOut */
         AchievementListOut: {
             /** Achievements */
-            achievements: components["schemas"]["AchievementOut"][];
+            achievements: (
+                | components["schemas"]["AchievementMilestoneOut"]
+                | components["schemas"]["AchievementUnlockOut"]
+            )[];
         };
         /**
          * AchievementMilestoneBasePayload
@@ -2570,6 +2573,25 @@ export interface components {
             /** Xp */
             xp: number;
         };
+        /** AchievementMilestoneOut */
+        AchievementMilestoneOut: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "milestone";
+            /** Id */
+            id: string;
+            /** Level */
+            level: number;
+            /** Reward */
+            reward: number;
+            /** Objective */
+            objective: number;
+            /** Status */
+            status: number;
+        };
         /** AchievementMilestonePowerConsumptionPayload */
         AchievementMilestonePowerConsumptionPayload: {
             /**
@@ -2600,12 +2622,16 @@ export interface components {
             /** Xp */
             xp: number;
         };
-        /** AchievementOut */
-        AchievementOut: {
+        /** AchievementUnlockOut */
+        AchievementUnlockOut: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "unlock";
             /** Id */
             id: string;
-            /** Name */
-            name: string;
             /** Reward */
             reward: number;
             /** Objective */

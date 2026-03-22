@@ -36,7 +36,7 @@ from energetica.enums import (
     WorkerType,
 )
 from energetica.globals import MAIN_EVENT_LOOP, engine
-from energetica.schemas.achievements import AchievementOut
+from energetica.schemas.achievements import AchievementMilestoneOut, AchievementOut, AchievementUnlockOut
 from energetica.schemas.browser_notifications import Subscription
 from energetica.schemas.electricity_markets import AskType, BidType
 from energetica.technology_effects import (
@@ -537,9 +537,9 @@ class Player(DBModel):
                 continue
             if achievement_id in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
                 if not self.achievements[achievement_id]:
-                    achievement = AchievementOut(
+                    achievement = AchievementUnlockOut(
+                        type="unlock",
                         id=achievement_id,
-                        name=achievement_data["name"],
                         reward=achievement_data["xp"],
                         objective=1,
                         status=0,
@@ -550,9 +550,10 @@ class Player(DBModel):
                 if current_lvl < len(achievement_data["milestones"]):
                     milestone = achievement_data["milestones"][current_lvl]
                     status = self.progression_metrics[achievement_data["metric"]]
-                    achievement = AchievementOut(
+                    achievement = AchievementMilestoneOut(
+                        type="milestone",
                         id=achievement_id,
-                        name=f"{achievement_data['name']} {current_lvl + 1}",
+                        level=current_lvl + 1,
                         reward=milestone["xp"],
                         objective=milestone["threshold"],
                         status=round(status),

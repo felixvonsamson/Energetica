@@ -341,24 +341,12 @@ function AchievementSection() {
                 ) : achievementsData?.achievements &&
                   achievementsData.achievements.length > 0 ? (
                     <div className="space-y-3">
-                        {achievementsData.achievements.map(
-                            (achievement: {
-                                id: string;
-                                name: string;
-                                status: number;
-                                objective: number;
-                                reward: number;
-                            }) => (
-                                <AchievementCard
-                                    key={achievement.id}
-                                    id={achievement.id}
-                                    name={achievement.name}
-                                    status={achievement.status}
-                                    objective={achievement.objective}
-                                    reward={achievement.reward}
-                                />
-                            ),
-                        )}
+                        {achievementsData.achievements.map((achievement) => (
+                            <AchievementCard
+                                key={achievement.id}
+                                {...achievement}
+                            />
+                        ))}
                     </div>
                 ) : (
                     <div className="text-center text-gray-500 py-4">
