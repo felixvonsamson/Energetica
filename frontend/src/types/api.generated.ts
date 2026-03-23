@@ -2526,6 +2526,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default achievement_milestone
              */
             type: "achievement_milestone";
             /**
@@ -2552,6 +2553,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default achievement_milestone
              */
             type: "achievement_milestone";
             /**
@@ -2599,6 +2601,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default achievement_milestone
              */
             type: "achievement_milestone";
             /**
@@ -2650,6 +2653,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default achievement_unlock
              */
             type: "achievement_unlock";
             /**
@@ -2896,6 +2900,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default climate_event
              */
             type: "climate_event";
             event_key: components["schemas"]["ClimateEventType"];
@@ -2923,6 +2928,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default construction_finished
              */
             type: "construction_finished";
             /** Project Type */
@@ -2958,6 +2964,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default credit_limit_exceeded
              */
             type: "credit_limit_exceeded";
         };
@@ -3057,6 +3064,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default emergency_facility_created
              */
             type: "emergency_facility_created";
             /** Facility Type */
@@ -3206,6 +3214,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default facility_decommissioned
              */
             type: "facility_decommissioned";
             /** Facility Type */
@@ -3226,6 +3235,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default facility_destroyed
              */
             type: "facility_destroyed";
             /** Facility Type */
@@ -4325,6 +4335,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default push_notification_test
              */
             type: "push_notification_test";
         };
@@ -4362,12 +4373,12 @@ export interface components {
              * Type
              *
              * @constant
+             * @default resource_sold
              */
             type: "resource_sold";
             /** Buyer Username */
             buyer_username: string;
-            /** Resource */
-            resource: string;
+            resource: components["schemas"]["Fuel"];
             /** Quantity Kg */
             quantity_kg: number;
             /** Total Price */
@@ -4532,6 +4543,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default shipment_arrived
              */
             type: "shipment_arrived";
             /** Resource */
@@ -4918,6 +4930,7 @@ export interface components {
              * Type
              *
              * @constant
+             * @default technology_researched
              */
             type: "technology_researched";
             technology_type: components["schemas"]["TechnologyType"];
