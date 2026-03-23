@@ -53,12 +53,10 @@ def test_push_notification(
 ) -> None:
     """Send a test push notification. If endpoint is provided, sends only to that subscription; otherwise broadcasts to all."""
     payload = PushNotificationTestPayload()
-    if body.endpoint is None:
-        player.notify(payload)
-    else:
-        subscription = next(
-            (s for s in player.push_subscriptions if s.endpoint == body.endpoint),
-            None,
-        )
-        if subscription is not None:
-            player.notify_subscription(subscription, payload)
+    subscriptions = (
+        [s for s in player.push_subscriptions if s.endpoint == body.endpoint]
+        if body.endpoint is not None
+        else player.push_subscriptions
+    )
+    for subscription in subscriptions:
+        player.notify_subscription(subscription, payload)
