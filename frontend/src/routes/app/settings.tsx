@@ -115,8 +115,14 @@ function SettingsContent() {
         setNotificationsError(null);
         try {
             if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+                const isIOS =
+                    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                    (navigator.platform === "MacIntel" &&
+                        navigator.maxTouchPoints > 1);
                 throw new Error(
-                    "Browser notifications are not supported in this browser.",
+                    isIOS
+                        ? "On iOS, add this site to your Home Screen first (Share → Add to Home Screen), then enable notifications from there."
+                        : "Browser notifications are not supported in this browser.",
                 );
             }
 
