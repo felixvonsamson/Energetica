@@ -79,26 +79,31 @@ const NOTIFICATION_CONFIG = {
         url: "/app/dashboard",
         title: "Climate event",
         pushBody: (p) =>
-            `${CLIMATE_EVENT_CONFIG[p.event_key].name} · ${p.duration_days}d · ${formatMoney(p.cost_per_hour)}$/h`,
+            `A ${CLIMATE_EVENT_CONFIG[p.event_key].name} occurred on your tile that might have affected your facilities. The cleanup after this event will last ${p.duration_days} days and cost ${formatMoney(p.cost_per_hour * 24)} per in-game day`,
         inGameBody: (p) =>
-            `${CLIMATE_EVENT_CONFIG[p.event_key].name} · ${p.duration_days}d · ${formatMoney(p.cost_per_hour)}$/h`,
+            `A ${CLIMATE_EVENT_CONFIG[p.event_key].name} occurred on your tile that might have affected your facilities. The cleanup after this event will last ${p.duration_days} days and cost ${formatMoney(p.cost_per_hour * 24)} per in-game day`,
     },
     resource_sold: {
         category: "market",
         url: "/app/community/resource-market",
         title: "Resource sold",
-        pushBody: (p) => `${p.buyer_username} purchased your ${p.resource}.`,
+        pushBody: (p) =>
+            `${p.buyer_username} purchased ${formatMass(p.quantity_kg)} of your ${p.resource} for a total of ${formatMoney(p.total_price)}.`,
         inGameBody: (p) =>
-            `${p.buyer_username} purchased your ${formatMass(p.quantity_kg)} of your ${p.resource} for a total of ${formatMoney(p.total_price)}$.`,
+            `${p.buyer_username} purchased ${formatMass(p.quantity_kg)} of your ${p.resource} for a total of ${formatMoney(p.total_price)}.`,
     },
     shipment_arrived: {
         category: "market",
         url: "/app/overviews/resources",
         title: "Shipment arrived",
         pushBody: (p) =>
-            `${p.resource}${p.warehouse_full ? " (warehouse full)" : ""}`,
+            p.warehouse_full
+                ? `Your shipment of ${p.resource} has arrived, but only ${formatMass(p.stored_kg)} of ${formatMass(p.stored_kg)} were stored, since your warehouse ran out of storage capacity.`
+                : `Your ${formatMass(p.quantity_kg)} shipment of ${p.resource} has arrived.`,
         inGameBody: (p) =>
-            `${p.resource}${p.warehouse_full ? " (warehouse full)" : ""}`,
+            p.warehouse_full
+                ? `Your shipment of ${p.resource} has arrived, but only ${formatMass(p.stored_kg)} of ${formatMass(p.stored_kg)} were stored, since your warehouse ran out of storage capacity.`
+                : `Your ${formatMass(p.quantity_kg)} shipment of ${p.resource} has arrived.`,
     },
     credit_limit_exceeded: {
         category: "market",
