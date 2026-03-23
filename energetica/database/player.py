@@ -21,6 +21,7 @@ from energetica.database.engine_data.circular_buffer_player import CircularBuffe
 from energetica.database.engine_data.cumulative_emissions_data import CumulativeEmissionsData
 from energetica.database.messages import Chat, Notification
 from energetica.schemas.notifications import (
+    PersistableNotificationPayload,
     AchievementMilestoneBasePayload,
     AchievementMilestoneEnergyStoragePayload,
     AchievementMilestonePowerConsumptionPayload,
@@ -431,7 +432,7 @@ class Player(DBModel):
             else:
                 engine.warn(f"Failed to send notification: {repr(ex)}")
 
-    def notify(self, payload: NotificationPayload) -> None:
+    def notify(self, payload: PersistableNotificationPayload) -> None:
         """
         Create a notification.
 
@@ -448,23 +449,8 @@ class Player(DBModel):
                 engine.socketio.emit("invalidate", {"queries": [["notifications"]]}, to=sid), MAIN_EVENT_LOOP
             )
         # Web push
-        notification_data = {
-            "type": payload.type,
-            "payload": payload_dict,
-        }
-        for subscription in self.push_subscriptions:
-            audience = "https://fcm.googleapis.com"
-            if "https://updates.push.services.mozilla.com" in subscription.endpoint:
-                audience = "https://updates.push.services.mozilla.com"
-            try:
-                webpush(
-                    subscription_info=subscription.model_dump(),
-                    data=json.dumps(notification_data),
-                    vapid_private_key=engine.VAPID_PRIVATE_KEY,
-                    vapid_claims={"aud": audience, "sub": "mailto:energetica.game@gmail.com"},
-                )
-            except WebPushException as ex:
-                engine.warn(f"Failed to send notification: {repr(ex)}")
+        for subscription in list(self.push_subscriptions):
+            self.notify_subscription(subscription, payload)
 
     def send_worker_info(self) -> None:
         """Send the number of available construction and lab workers to the player's clients."""

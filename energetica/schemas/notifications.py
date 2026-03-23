@@ -175,8 +175,7 @@ AchievementMilestonePayload = Annotated[
 # it will never be reachable; no error will be raised.
 # ---------------------------------------------------------------------------
 
-NotificationPayload = Union[
-    ChatMessagePayload,
+PersistableNotificationPayload = Union[
     ConstructionFinishedPayload,
     TechnologyResearchedPayload,
     FacilityDecommissionedPayload,
@@ -192,6 +191,8 @@ NotificationPayload = Union[
     AchievementUnlockPayload,
     PushNotificationTestPayload,
 ]
+
+NotificationPayload = Union[ChatMessagePayload, PersistableNotificationPayload]
 
 _payload_adapter = TypeAdapter(NotificationPayload)
 
