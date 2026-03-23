@@ -245,15 +245,11 @@ class NotificationPatchIn(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class NotificationSubscriptionPrefsOut(BaseModel):
+class NotificationFeedSubscriptionsOut(BaseModel):
     resource_market_bid: bool
     network_join_leave: bool
-    resource_market_bid_push: bool
-    network_join_leave_push: bool
 
 
-class NotificationSubscriptionPrefsIn(BaseModel):
+class NotificationFeedSubscriptionsIn(BaseModel):
     resource_market_bid: bool | None = None
     network_join_leave: bool | None = None
-    resource_market_bid_push: bool | None = None
-    network_join_leave_push: bool | None = None

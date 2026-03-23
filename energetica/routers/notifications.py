@@ -7,11 +7,11 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
 from energetica.database.messages import Notification
 from energetica.database.player import Player
 from energetica.schemas.notifications import (
+    NotificationFeedSubscriptionsIn,
+    NotificationFeedSubscriptionsOut,
     NotificationListOut,
     NotificationOut,
     NotificationPatchIn,
-    NotificationSubscriptionPrefsIn,
-    NotificationSubscriptionPrefsOut,
 )
 from energetica.utils.auth import get_settled_player
 
@@ -30,26 +30,26 @@ def get_notifications(player: Annotated[Player, Depends(get_settled_player)]) ->
     )
 
 
-# IMPORTANT: subscription-prefs routes must come BEFORE /{notification_id} to avoid
-# FastAPI matching "subscription-prefs" as a path parameter.
+# IMPORTANT: feed-subscriptions routes must come BEFORE /{notification_id} to avoid
+# FastAPI matching "feed-subscriptions" as a path parameter.
 
 
-@router.get("/subscription-prefs")
-def get_subscription_prefs(
+@router.get("/feed-subscriptions")
+def get_feed_subscriptions(
     player: Annotated[Player, Depends(get_settled_player)],
-) -> NotificationSubscriptionPrefsOut:
-    """Get notification subscription preferences for the current player."""
-    return NotificationSubscriptionPrefsOut(**player.notification_opt_ins)
+) -> NotificationFeedSubscriptionsOut:
+    """Get notification feed subscriptions for the current player."""
+    return NotificationFeedSubscriptionsOut(**player.notification_feed_subscriptions)
 
 
-@router.patch("/subscription-prefs", status_code=status.HTTP_204_NO_CONTENT)
-def patch_subscription_prefs(
+@router.patch("/feed-subscriptions", status_code=status.HTTP_204_NO_CONTENT)
+def patch_feed_subscriptions(
     player: Annotated[Player, Depends(get_settled_player)],
-    body: Annotated[NotificationSubscriptionPrefsIn, Body(...)],
+    body: Annotated[NotificationFeedSubscriptionsIn, Body(...)],
 ) -> None:
-    """Update notification subscription preferences for the current player."""
+    """Update notification feed subscriptions for the current player."""
     for field_name, value in body.model_dump(exclude_none=True).items():
-        player.notification_opt_ins[field_name] = value
+        player.notification_feed_subscriptions[field_name] = value
 
 
 @router.patch("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)

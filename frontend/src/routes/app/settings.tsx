@@ -28,8 +28,15 @@ import {
     TypographyMuted,
 } from "@/components/ui/typography";
 import { useChangePassword } from "@/hooks/use-auth-queries";
-import { browserNotificationsApi } from "@/lib/api/browser-notifications";
+import { browserNotificationsApi } from "@/lib/api/push-subscriptions";
 import { handleApiError } from "@/lib/error-utils";
+import {
+    getAllPushPrefs,
+    setPushPref,
+    PUSH_NOTIF_CATEGORIES,
+    PUSH_NOTIF_CATEGORY_LABELS,
+} from "@/lib/push-notification-prefs";
+import type { NotificationCategory } from "@/types/notifications";
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -82,6 +89,10 @@ function SettingsContent() {
     const [notificationsLoading, setNotificationsLoading] = useState(false);
     const [notificationsPermissionDenied, setNotificationsPermissionDenied] =
         useState(false);
+    const [pushPrefs, setPushPrefs] = useState<Record<
+        NotificationCategory,
+        boolean
+    > | null>(null);
 
     // Initialize toggle state from reality on mount
     useEffect(() => {
@@ -92,6 +103,7 @@ function SettingsContent() {
             .then((sub) => {
                 setNotificationsEnabled(!!sub);
             });
+        getAllPushPrefs().then(setPushPrefs);
     }, []);
 
     // Handle browser notifications toggle
@@ -182,6 +194,16 @@ function SettingsContent() {
         }
     };
 
+    const handleCategoryToggle = async (
+        category: NotificationCategory,
+        enabled: boolean,
+    ) => {
+        await setPushPref(category, enabled);
+        setPushPrefs((prev) =>
+            prev ? { ...prev, [category]: enabled } : prev,
+        );
+    };
+
     return (
         <div className="p-4 md:p-8">
             {/* Settings cards */}
@@ -215,6 +237,30 @@ function SettingsContent() {
                                 enable them in your browser settings and try
                                 again.
                             </InfoBanner>
+                        </CardContent>
+                    )}
+                    {notificationsEnabled && pushPrefs && (
+                        <CardContent className="flex flex-col gap-3 border-t pt-4">
+                            {PUSH_NOTIF_CATEGORIES.map((category) => (
+                                <div
+                                    key={category}
+                                    className="flex items-center justify-between"
+                                >
+                                    <Label htmlFor={`push-pref-${category}`}>
+                                        {PUSH_NOTIF_CATEGORY_LABELS[category]}
+                                    </Label>
+                                    <Switch
+                                        id={`push-pref-${category}`}
+                                        checked={pushPrefs[category]}
+                                        onCheckedChange={(checked) =>
+                                            handleCategoryToggle(
+                                                category,
+                                                checked,
+                                            )
+                                        }
+                                    />
+                                </div>
+                            ))}
                         </CardContent>
                     )}
                 </Card>

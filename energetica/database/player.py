@@ -147,16 +147,14 @@ class Player(DBModel):
         },
     )
 
-    # Browser notifications & preferences
-    # TODO(mglst): type annotation seems wrong. is it not a dictionary?
-    notification_subscriptions: list[Subscription] = field(default_factory=list)
-    notification_opt_ins: dict = field(
+    # Browser push notification subscriptions (push subscription objects)
+    push_subscriptions: list[Subscription] = field(default_factory=list)
+    # Server-side feed subscriptions: opt-in to specific notification streams.
+    # Controls whether the backend generates notifications for these events.
+    notification_feed_subscriptions: dict = field(
         default_factory=lambda: {
-            # these are planned for future notification types, and are not hooked up yet.
             "resource_market_bid": False,
             "network_join_leave": False,
-            "resource_market_bid_push": False,
-            "network_join_leave_push": False,
         }
     )
     socketio_clients: list[str] = field(default_factory=list)
@@ -178,13 +176,14 @@ class Player(DBModel):
             self.production_statuses = {}
         if not hasattr(self, "consumption_statuses"):
             self.consumption_statuses = {}
-        if not hasattr(self, "notification_opt_ins"):
-            self.notification_opt_ins = {
+        if not hasattr(self, "notification_feed_subscriptions"):
+            self.notification_feed_subscriptions = {
                 "resource_market_bid": False,
                 "network_join_leave": False,
-                "resource_market_bid_push": False,
-                "network_join_leave_push": False,
             }
+        # Migrate old notification_opt_ins field
+        if hasattr(self, "notification_opt_ins"):
+            del self.__dict__["notification_opt_ins"]
         self.__dict__.pop("notification_preferences", None)
 
     def __hash__(self) -> int:
@@ -427,7 +426,7 @@ class Player(DBModel):
             "type": payload.type,
             "payload": payload_dict,
         }
-        for subscription in self.notification_subscriptions:
+        for subscription in self.push_subscriptions:
             audience = "https://fcm.googleapis.com"
             if "https://updates.push.services.mozilla.com" in subscription.endpoint:
                 audience = "https://updates.push.services.mozilla.com"

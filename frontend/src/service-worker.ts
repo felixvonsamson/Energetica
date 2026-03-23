@@ -1,7 +1,17 @@
 /// <reference lib="webworker" />
 
-import type { NotificationPayload, NotificationType } from "@/types/notifications";
-import { getNotificationPushText, getNotificationUrl } from "@/lib/notification-config";
+// Run `bun run build:sw` after modifying this file
+
+import type {
+    NotificationPayload,
+    NotificationType,
+} from "@/types/notifications";
+import {
+    getNotificationPushText,
+    getNotificationPath,
+    NOTIFICATION_TYPE_TO_CATEGORY,
+} from "@/lib/notification-config";
+import { getPushPref } from "@/lib/push-notification-prefs";
 
 // Cast the global scope to ServiceWorkerGlobalScope since this file is a service worker.
 const sw = self as unknown as ServiceWorkerGlobalScope;
@@ -11,24 +21,30 @@ interface PushData {
     payload: Record<string, unknown>;
 }
 
-
 sw.addEventListener("push", (event: PushEvent) => {
     if (!event.data) return;
     const data: PushData = event.data.json() as PushData;
     const payload = { type: data.type, ...data.payload } as NotificationPayload;
-    const { title, body } = getNotificationPushText(payload);
-    const url = getNotificationUrl(data.type);
+    const category = NOTIFICATION_TYPE_TO_CATEGORY[data.type] ?? "events";
+
     event.waitUntil(
-        sw.registration.showNotification(title, {
-            body,
-            icon: "/static/images/icon_green.png",
-            data: { url },
-        })
+        getPushPref(category).then((enabled) => {
+            if (!enabled) return;
+            const { title, body } = getNotificationPushText(payload);
+            const path = getNotificationPath(data.type);
+            return sw.registration.showNotification(title, {
+                body,
+                icon: "/static/images/icon_green.png",
+                data: { path },
+            });
+        }),
     );
 });
 
 sw.addEventListener("notificationclick", (event: NotificationEvent) => {
     event.notification.close();
-    const path: string = (event.notification.data as { url?: string } | null)?.url ?? "/app/overview";
+    const path: string =
+        (event.notification.data as { path?: string } | null)?.path ??
+        "/app/overview";
     event.waitUntil(sw.clients.openWindow(sw.location.origin + path));
 });

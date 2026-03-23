@@ -196,8 +196,8 @@ export function useFlagNotification() {
  *
  * Uses optimistic updates so the animation feels instant.
  *
- * TODO: Archive UI is deferred — this hook is ready for use when the
- * archived view is re-introduced to the notification panel.
+ * TODO: Archive UI is deferred — this hook is ready for use when the archived
+ * view is re-introduced to the notification panel.
  *
  * @returns Mutation hook taking `{ id, archived: boolean }`
  */
@@ -228,28 +228,29 @@ export function useArchiveNotification() {
 }
 
 /**
- * Get notification subscription preferences.
+ * Get notification feed subscriptions (server-side opt-in to notification
+ * streams).
  *
- * @returns Query result with subscription preferences
+ * @returns Query result with feed subscriptions
  */
-export function useNotificationSubscriptionPrefs() {
+export function useNotificationFeedSubscriptions() {
     return useQuery({
-        queryKey: queryKeys.notifications.subscriptionPrefs,
-        queryFn: notificationsApi.getSubscriptionPrefs,
+        queryKey: queryKeys.notifications.feedSubscriptions,
+        queryFn: notificationsApi.getFeedSubscriptions,
     });
 }
 
 /**
- * Update notification subscription preferences.
+ * Update notification feed subscriptions.
  *
- * @returns Mutation hook for updating subscription preferences
+ * @returns Mutation hook for updating feed subscriptions
  */
-export function useUpdateNotificationSubscriptionPrefs() {
+export function useUpdateNotificationFeedSubscriptions() {
     return useMutation({
-        mutationFn: notificationsApi.patchSubscriptionPrefs,
+        mutationFn: notificationsApi.patchFeedSubscriptions,
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: queryKeys.notifications.subscriptionPrefs,
+                queryKey: queryKeys.notifications.feedSubscriptions,
             });
         },
     });

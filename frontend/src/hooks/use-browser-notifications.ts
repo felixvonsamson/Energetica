@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { browserNotificationsApi } from "@/lib/api/browser-notifications";
+import { browserNotificationsApi } from "@/lib/api/push-subscriptions";
 import { handleApiError } from "@/lib/error-utils";
 import { queryKeys } from "@/lib/query-client";
 import type { ApiRequestBody } from "@/types/api-helpers";
@@ -20,7 +20,7 @@ export function useSubscribeToPushNotifications() {
     return useMutation({
         mutationFn: (
             data: ApiRequestBody<
-                "/api/v1/browser-notifications:subscribe",
+                "/api/v1/push-subscriptions:subscribe",
                 "post"
             >,
         ) => browserNotificationsApi.subscribe(data),
@@ -35,7 +35,7 @@ export function useUnsubscribeFromPushNotifications() {
     return useMutation({
         mutationFn: (
             data: ApiRequestBody<
-                "/api/v1/browser-notifications:unsubscribe",
+                "/api/v1/push-subscriptions:unsubscribe",
                 "post"
             >,
         ) => browserNotificationsApi.unsubscribe(data),

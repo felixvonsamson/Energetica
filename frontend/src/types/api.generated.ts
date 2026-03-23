@@ -126,7 +126,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/browser-notifications/vapid-public-key": {
+    "/api/v1/push-subscriptions/vapid-public-key": {
         parameters: {
             query?: never;
             header?: never;
@@ -138,7 +138,7 @@ export interface paths {
          *
          * Return VAPID public key.
          */
-        get: operations["get_vapid_key_api_v1_browser_notifications_vapid_public_key_get"];
+        get: operations["get_vapid_key_api_v1_push_subscriptions_vapid_public_key_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -147,7 +147,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/browser-notifications:subscribe": {
+    "/api/v1/push-subscriptions:subscribe": {
         parameters: {
             query?: never;
             header?: never;
@@ -161,14 +161,14 @@ export interface paths {
          *
          * Create a new subscription.
          */
-        post: operations["subscribe_api_v1_browser_notifications_subscribe_post"];
+        post: operations["subscribe_api_v1_push_subscriptions_subscribe_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/browser-notifications:unsubscribe": {
+    "/api/v1/push-subscriptions:unsubscribe": {
         parameters: {
             query?: never;
             header?: never;
@@ -182,7 +182,7 @@ export interface paths {
          *
          * Remove a subscription.
          */
-        post: operations["unsubscribe_api_v1_browser_notifications_unsubscribe_post"];
+        post: operations["unsubscribe_api_v1_push_subscriptions_unsubscribe_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1006,7 +1006,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/notifications/subscription-prefs": {
+    "/api/v1/notifications/feed-subscriptions": {
         parameters: {
             query?: never;
             header?: never;
@@ -1014,22 +1014,22 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Subscription Prefs
+         * Get Feed Subscriptions
          *
-         * Get notification subscription preferences for the current player.
+         * Get notification feed subscriptions for the current player.
          */
-        get: operations["get_subscription_prefs_api_v1_notifications_subscription_prefs_get"];
+        get: operations["get_feed_subscriptions_api_v1_notifications_feed_subscriptions_get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
         /**
-         * Patch Subscription Prefs
+         * Patch Feed Subscriptions
          *
-         * Update notification subscription preferences for the current player.
+         * Update notification feed subscriptions for the current player.
          */
-        patch: operations["patch_subscription_prefs_api_v1_notifications_subscription_prefs_patch"];
+        patch: operations["patch_feed_subscriptions_api_v1_notifications_feed_subscriptions_patch"];
         trace?: never;
     };
     "/api/v1/notifications/{notification_id}": {
@@ -3773,6 +3773,20 @@ export interface components {
          * @enum {string}
          */
         NonFacilityBidType: "construction" | "research" | "transport";
+        /** NotificationFeedSubscriptionsIn */
+        NotificationFeedSubscriptionsIn: {
+            /** Resource Market Bid */
+            resource_market_bid?: boolean | null;
+            /** Network Join Leave */
+            network_join_leave?: boolean | null;
+        };
+        /** NotificationFeedSubscriptionsOut */
+        NotificationFeedSubscriptionsOut: {
+            /** Resource Market Bid */
+            resource_market_bid: boolean;
+            /** Network Join Leave */
+            network_join_leave: boolean;
+        };
         /** NotificationListOut */
         NotificationListOut: {
             /** Notifications */
@@ -3815,28 +3829,6 @@ export interface components {
             flagged?: boolean | null;
             /** Archived */
             archived?: boolean | null;
-        };
-        /** NotificationSubscriptionPrefsIn */
-        NotificationSubscriptionPrefsIn: {
-            /** Resource Market Bid */
-            resource_market_bid?: boolean | null;
-            /** Network Join Leave */
-            network_join_leave?: boolean | null;
-            /** Resource Market Bid Push */
-            resource_market_bid_push?: boolean | null;
-            /** Network Join Leave Push */
-            network_join_leave_push?: boolean | null;
-        };
-        /** NotificationSubscriptionPrefsOut */
-        NotificationSubscriptionPrefsOut: {
-            /** Resource Market Bid */
-            resource_market_bid: boolean;
-            /** Network Join Leave */
-            network_join_leave: boolean;
-            /** Resource Market Bid Push */
-            resource_market_bid_push: boolean;
-            /** Network Join Leave Push */
-            network_join_leave_push: boolean;
         };
         /**
          * OpCostsResponse
@@ -5301,7 +5293,7 @@ export interface operations {
             };
         };
     };
-    get_vapid_key_api_v1_browser_notifications_vapid_public_key_get: {
+    get_vapid_key_api_v1_push_subscriptions_vapid_public_key_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -5321,7 +5313,7 @@ export interface operations {
             };
         };
     };
-    subscribe_api_v1_browser_notifications_subscribe_post: {
+    subscribe_api_v1_push_subscriptions_subscribe_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -5352,7 +5344,7 @@ export interface operations {
             };
         };
     };
-    unsubscribe_api_v1_browser_notifications_unsubscribe_post: {
+    unsubscribe_api_v1_push_subscriptions_unsubscribe_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -6514,7 +6506,7 @@ export interface operations {
             };
         };
     };
-    get_subscription_prefs_api_v1_notifications_subscription_prefs_get: {
+    get_feed_subscriptions_api_v1_notifications_feed_subscriptions_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -6529,12 +6521,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotificationSubscriptionPrefsOut"];
+                    "application/json": components["schemas"]["NotificationFeedSubscriptionsOut"];
                 };
             };
         };
     };
-    patch_subscription_prefs_api_v1_notifications_subscription_prefs_patch: {
+    patch_feed_subscriptions_api_v1_notifications_feed_subscriptions_patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -6543,7 +6535,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NotificationSubscriptionPrefsIn"];
+                "application/json": components["schemas"]["NotificationFeedSubscriptionsIn"];
             };
         };
         responses: {

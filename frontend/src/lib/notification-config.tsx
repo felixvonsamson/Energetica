@@ -17,7 +17,7 @@ import type {
 
 type NotificationDef<T extends NotificationType> = {
     category: NotificationCategory;
-    url: AppRoute;
+    path: AppRoute;
     title: string;
     pushBody: (payload: NotificationPayloadOf<T>) => string;
     inGameBody: (payload: NotificationPayloadOf<T>) => ReactNode;
@@ -26,7 +26,7 @@ type NotificationDef<T extends NotificationType> = {
 const NOTIFICATION_CONFIG = {
     construction_finished: {
         category: "projects",
-        url: "/app/facilities/manage",
+        path: "/app/facilities/manage",
         title: "Construction finished",
         pushBody: (p) =>
             `${getAssetLongName(p.project_type)}${p.level != null ? ` (level ${p.level})` : ""} is now operational.`,
@@ -35,7 +35,7 @@ const NOTIFICATION_CONFIG = {
     },
     technology_researched: {
         category: "projects",
-        url: "/app/facilities/technology",
+        path: "/app/facilities/technology",
         title: "Research complete",
         pushBody: (p) =>
             `${getAssetLongName(p.technology_type)} level ${p.new_level} unlocked.`,
@@ -44,7 +44,7 @@ const NOTIFICATION_CONFIG = {
     },
     facility_decommissioned: {
         category: "projects",
-        url: "/app/facilities/manage",
+        path: "/app/facilities/manage",
         title: "Facility decommissioned",
         pushBody: (p) =>
             `${getAssetLongName(p.facility_type)} has been decommissioned.`,
@@ -53,7 +53,7 @@ const NOTIFICATION_CONFIG = {
     },
     facility_destroyed: {
         category: "events",
-        url: "/app/facilities/manage",
+        path: "/app/facilities/manage",
         title: "Facility destroyed",
         pushBody: (p) =>
             p.facility_type === "industry"
@@ -66,7 +66,7 @@ const NOTIFICATION_CONFIG = {
     },
     emergency_facility_created: {
         category: "projects",
-        url: "/app/facilities/manage",
+        path: "/app/facilities/manage",
         title: "Emergency facility",
         pushBody: (p) =>
             `Your last power facility has been decommissioned. An emergency ${getAssetLongName(p.facility_type)} has been deployed to restart your operations.`,
@@ -76,7 +76,7 @@ const NOTIFICATION_CONFIG = {
     climate_event: {
         category: "events",
         // TODO: redirect to a future "news" page; no logical destination for now
-        url: "/app/dashboard",
+        path: "/app/dashboard",
         title: "Climate event",
         pushBody: (p) =>
             `A ${CLIMATE_EVENT_CONFIG[p.event_key].name} occurred on your tile that might have affected your facilities. The cleanup after this event will last ${p.duration_days} days and cost ${formatMoney(p.cost_per_hour * 24)} per in-game day`,
@@ -85,7 +85,7 @@ const NOTIFICATION_CONFIG = {
     },
     resource_sold: {
         category: "market",
-        url: "/app/community/resource-market",
+        path: "/app/community/resource-market",
         title: "Resource sold",
         pushBody: (p) =>
             `${p.buyer_username} purchased ${formatMass(p.quantity_kg)} of your ${p.resource} for a total of ${formatMoney(p.total_price)}.`,
@@ -94,7 +94,7 @@ const NOTIFICATION_CONFIG = {
     },
     shipment_arrived: {
         category: "market",
-        url: "/app/overviews/resources",
+        path: "/app/overviews/resources",
         title: "Shipment arrived",
         pushBody: (p) =>
             p.warehouse_full
@@ -107,7 +107,7 @@ const NOTIFICATION_CONFIG = {
     },
     credit_limit_exceeded: {
         category: "market",
-        url: "/app/overviews/cash-flow",
+        path: "/app/overviews/cash-flow",
         title: "Credit limit exceeded",
         pushBody: () => "Not enough money for market participation.",
         inGameBody: () => "Not enough money for market participation.",
@@ -115,7 +115,7 @@ const NOTIFICATION_CONFIG = {
     achievement_milestone: {
         category: "achievements",
         // TODO: redirect to a dedicated achievements page when it exists
-        url: "/app/dashboard",
+        path: "/app/dashboard",
         title: "Achievement unlocked",
         pushBody: (p) => {
             // Safe: achievement_key discriminates the correct config entry and payload type.
@@ -138,7 +138,7 @@ const NOTIFICATION_CONFIG = {
     achievement_unlock: {
         category: "achievements",
         // TODO: redirect to a dedicated achievements page when it exists
-        url: "/app/dashboard",
+        path: "/app/dashboard",
         title: "Achievement unlocked",
         pushBody: (p) =>
             `${ACHIEVEMENT_UNLOCK_CONFIG[p.achievement_key].body} (+${p.xp} XP)`,
@@ -147,7 +147,7 @@ const NOTIFICATION_CONFIG = {
     },
     push_notification_test: {
         category: "events",
-        url: "/app/dashboard",
+        path: "/app/dashboard",
         title: "Push notification test",
         pushBody: () =>
             "If you see this, browser push notifications are working.",
@@ -176,8 +176,8 @@ export function getNotificationPushText(payload: NotificationPayload): {
     return { title: def.title, body: def.pushBody(payload) };
 }
 
-export function getNotificationUrl(type: NotificationType): AppRoute {
-    return NOTIFICATION_CONFIG[type].url;
+export function getNotificationPath(type: NotificationType): AppRoute {
+    return NOTIFICATION_CONFIG[type].path;
 }
 
 export function getNotificationCategory(
@@ -185,6 +185,13 @@ export function getNotificationCategory(
 ): NotificationCategory {
     return NOTIFICATION_CONFIG[type].category;
 }
+
+export const NOTIFICATION_TYPE_TO_CATEGORY = Object.fromEntries(
+    Object.entries(NOTIFICATION_CONFIG).map(([type, def]) => [
+        type,
+        def.category,
+    ]),
+) as Record<NotificationType, NotificationCategory>;
 
 export function getNotificationContent(payload: NotificationPayload): {
     title: string;

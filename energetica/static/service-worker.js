@@ -380,70 +380,70 @@ var CLIMATE_EVENT_CONFIG = {
 var NOTIFICATION_CONFIG = {
   construction_finished: {
     category: "projects",
-    url: "/app/facilities/manage",
+    path: "/app/facilities/manage",
     title: "Construction finished",
     pushBody: (p) => `${getAssetLongName(p.project_type)}${p.level != null ? ` (level ${p.level})` : ""} is now operational.`,
     inGameBody: (p) => `${getAssetLongName(p.project_type)}${p.level != null ? ` (level ${p.level})` : ""} is now operational.`
   },
   technology_researched: {
     category: "projects",
-    url: "/app/facilities/technology",
+    path: "/app/facilities/technology",
     title: "Research complete",
     pushBody: (p) => `${getAssetLongName(p.technology_type)} level ${p.new_level} unlocked.`,
     inGameBody: (p) => `${getAssetLongName(p.technology_type)} level ${p.new_level} unlocked.`
   },
   facility_decommissioned: {
     category: "projects",
-    url: "/app/facilities/manage",
+    path: "/app/facilities/manage",
     title: "Facility decommissioned",
     pushBody: (p) => `${getAssetLongName(p.facility_type)} has been decommissioned.`,
     inGameBody: (p) => `${getAssetLongName(p.facility_type)} has been decommissioned.`
   },
   facility_destroyed: {
     category: "events",
-    url: "/app/facilities/manage",
+    path: "/app/facilities/manage",
     title: "Facility destroyed",
     pushBody: (p) => p.facility_type === "industry" ? `Industry was levelled down by a ${CLIMATE_EVENT_CONFIG[p.event_key].name.toLowerCase()}.` : `${getAssetLongName(p.facility_type)} was destroyed by a ${CLIMATE_EVENT_CONFIG[p.event_key].name.toLowerCase()}.`,
     inGameBody: (p) => p.facility_type === "industry" ? `Industry was levelled down by a ${CLIMATE_EVENT_CONFIG[p.event_key].name.toLowerCase()}.` : `${getAssetLongName(p.facility_type)} was destroyed by a ${CLIMATE_EVENT_CONFIG[p.event_key].name.toLowerCase()}.`
   },
   emergency_facility_created: {
     category: "projects",
-    url: "/app/facilities/manage",
+    path: "/app/facilities/manage",
     title: "Emergency facility",
     pushBody: (p) => `Your last power facility has been decommissioned. An emergency ${getAssetLongName(p.facility_type)} has been deployed to restart your operations.`,
     inGameBody: (p) => `Your last power facility has been decommissioned. An emergency ${getAssetLongName(p.facility_type)} has been deployed to restart your operations.`
   },
   climate_event: {
     category: "events",
-    url: "/app/dashboard",
+    path: "/app/dashboard",
     title: "Climate event",
     pushBody: (p) => `A ${CLIMATE_EVENT_CONFIG[p.event_key].name} occurred on your tile that might have affected your facilities. The cleanup after this event will last ${p.duration_days} days and cost ${formatMoney(p.cost_per_hour * 24)} per in-game day`,
     inGameBody: (p) => `A ${CLIMATE_EVENT_CONFIG[p.event_key].name} occurred on your tile that might have affected your facilities. The cleanup after this event will last ${p.duration_days} days and cost ${formatMoney(p.cost_per_hour * 24)} per in-game day`
   },
   resource_sold: {
     category: "market",
-    url: "/app/community/resource-market",
+    path: "/app/community/resource-market",
     title: "Resource sold",
     pushBody: (p) => `${p.buyer_username} purchased ${formatMass(p.quantity_kg)} of your ${p.resource} for a total of ${formatMoney(p.total_price)}.`,
     inGameBody: (p) => `${p.buyer_username} purchased ${formatMass(p.quantity_kg)} of your ${p.resource} for a total of ${formatMoney(p.total_price)}.`
   },
   shipment_arrived: {
     category: "market",
-    url: "/app/overviews/resources",
+    path: "/app/overviews/resources",
     title: "Shipment arrived",
     pushBody: (p) => p.warehouse_full ? `Your shipment of ${p.resource} has arrived, but only ${formatMass(p.stored_kg)} of ${formatMass(p.stored_kg)} were stored, since your warehouse ran out of storage capacity.` : `Your ${formatMass(p.quantity_kg)} shipment of ${p.resource} has arrived.`,
     inGameBody: (p) => p.warehouse_full ? `Your shipment of ${p.resource} has arrived, but only ${formatMass(p.stored_kg)} of ${formatMass(p.stored_kg)} were stored, since your warehouse ran out of storage capacity.` : `Your ${formatMass(p.quantity_kg)} shipment of ${p.resource} has arrived.`
   },
   credit_limit_exceeded: {
     category: "market",
-    url: "/app/overviews/cash-flow",
+    path: "/app/overviews/cash-flow",
     title: "Credit limit exceeded",
     pushBody: () => "Not enough money for market participation.",
     inGameBody: () => "Not enough money for market participation."
   },
   achievement_milestone: {
     category: "achievements",
-    url: "/app/dashboard",
+    path: "/app/dashboard",
     title: "Achievement unlocked",
     pushBody: (p) => {
       const body = ACHIEVEMENT_MILESTONE_CONFIG[p.achievement_key].body(p);
@@ -456,14 +456,14 @@ var NOTIFICATION_CONFIG = {
   },
   achievement_unlock: {
     category: "achievements",
-    url: "/app/dashboard",
+    path: "/app/dashboard",
     title: "Achievement unlocked",
     pushBody: (p) => `${ACHIEVEMENT_UNLOCK_CONFIG[p.achievement_key].body} (+${p.xp} XP)`,
     inGameBody: (p) => `${ACHIEVEMENT_UNLOCK_CONFIG[p.achievement_key].body} (+${p.xp} XP)`
   },
   push_notification_test: {
     category: "events",
-    url: "/app/dashboard",
+    path: "/app/dashboard",
     title: "Push notification test",
     pushBody: () => "If you see this, browser push notifications are working.",
     inGameBody: () => "If you see this, browser push notifications are working."
@@ -474,8 +474,46 @@ function getNotificationPushText(payload) {
   const def = getDef(payload.type);
   return { title: def.title, body: def.pushBody(payload) };
 }
-function getNotificationUrl(type) {
-  return NOTIFICATION_CONFIG[type].url;
+function getNotificationPath(type) {
+  return NOTIFICATION_CONFIG[type].path;
+}
+var NOTIFICATION_TYPE_TO_CATEGORY = Object.fromEntries(Object.entries(NOTIFICATION_CONFIG).map(([type, def]) => [
+  type,
+  def.category
+]));
+
+// src/lib/push-notification-prefs.ts
+var PUSH_NOTIF_CATEGORY_LABELS = {
+  projects: "Projects",
+  market: "Market",
+  events: "Events",
+  achievements: "Achievements"
+};
+var PUSH_NOTIF_CATEGORIES = Object.keys(PUSH_NOTIF_CATEGORY_LABELS);
+var DB_NAME = "energetica";
+var DB_VERSION = 1;
+var STORE_NAME = "push-prefs";
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function getPushPref(category) {
+  const db = await openDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const req = tx.objectStore(STORE_NAME).get(category);
+    req.onsuccess = () => resolve(req.result ?? true);
+    req.onerror = () => resolve(true);
+  });
 }
 
 // src/service-worker.ts
@@ -485,16 +523,21 @@ sw.addEventListener("push", (event) => {
     return;
   const data = event.data.json();
   const payload = { type: data.type, ...data.payload };
-  const { title, body } = getNotificationPushText(payload);
-  const url = getNotificationUrl(data.type);
-  event.waitUntil(sw.registration.showNotification(title, {
-    body,
-    icon: "/static/images/icon_green.png",
-    data: { url }
+  const category = NOTIFICATION_TYPE_TO_CATEGORY[data.type] ?? "events";
+  event.waitUntil(getPushPref(category).then((enabled) => {
+    if (!enabled)
+      return;
+    const { title, body } = getNotificationPushText(payload);
+    const path = getNotificationPath(data.type);
+    return sw.registration.showNotification(title, {
+      body,
+      icon: "/static/images/icon_green.png",
+      data: { path }
+    });
   }));
 });
 sw.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const path = event.notification.data?.url ?? "/app/overview";
+  const path = event.notification.data?.path ?? "/app/overview";
   event.waitUntil(sw.clients.openWindow(sw.location.origin + path));
 });

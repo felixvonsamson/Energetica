@@ -7,7 +7,7 @@ from energetica.globals import engine
 from energetica.schemas.browser_notifications import Subscription, VapidPublicKey
 from energetica.utils.auth import get_settled_player
 
-router = APIRouter(prefix="/browser-notifications", tags=["Browser Notifications"])
+router = APIRouter(prefix="/push-subscriptions", tags=["Browser Notifications"])
 
 
 @router.get("/vapid-public-key")
@@ -22,7 +22,7 @@ def subscribe(
     current_user: Player = Depends(get_settled_player),
 ) -> None:
     """Create a new subscription."""
-    current_user.notification_subscriptions.append(subscription)
+    current_user.push_subscriptions.append(subscription)
 
 
 @router.post(":unsubscribe", status_code=status.HTTP_204_NO_CONTENT)
@@ -32,6 +32,6 @@ def unsubscribe(
 ) -> None:
     """Remove a subscription."""
     try:
-        current_user.notification_subscriptions.remove(subscription)
+        current_user.push_subscriptions.remove(subscription)
     except ValueError:
         pass
