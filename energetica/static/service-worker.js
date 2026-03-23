@@ -378,6 +378,13 @@ var CLIMATE_EVENT_CONFIG = {
 
 // src/lib/notification-config.tsx
 var NOTIFICATION_CONFIG = {
+  chat_message: {
+    category: "messages",
+    path: "/app/community/messages",
+    title: "New message",
+    pushBody: (p) => `${p.sender_username}: ${p.message}`,
+    inGameBody: (p) => `${p.sender_username}: ${p.message}`
+  },
   construction_finished: {
     category: "projects",
     path: "/app/facilities/manage",
@@ -484,6 +491,7 @@ var NOTIFICATION_TYPE_TO_CATEGORY = Object.fromEntries(Object.entries(NOTIFICATI
 
 // src/lib/push-notification-prefs.ts
 var PUSH_NOTIF_CATEGORY_LABELS = {
+  messages: "Messages",
   projects: "Projects",
   market: "Market",
   events: "Events",

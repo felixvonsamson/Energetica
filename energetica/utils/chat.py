@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from energetica.database.messages import Chat, Message
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
+from energetica.schemas.notifications import ChatMessagePayload
 from energetica.utils.misc import send_new_message_sio
 
 if TYPE_CHECKING:
@@ -69,10 +70,17 @@ def add_message(player: Player, message_text: str, chat: Chat) -> Message:
 
     send_new_message_sio(new_message, chat)
 
+    payload = ChatMessagePayload(
+        sender_username=player.username,
+        message=message_text,
+        chat_id=chat.id,
+    )
     for participant in chat.participants:
         # Ensure the "unread chats" is updated
         if participant != player:
             participant.invalidate_queries(["chats"])
+            for subscription in participant.push_subscriptions:
+                participant.notify_subscription(subscription, payload)
 
         participant.invalidate_queries(
             ["chats"],

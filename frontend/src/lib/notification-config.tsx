@@ -24,6 +24,13 @@ type NotificationDef<T extends NotificationType> = {
 };
 
 const NOTIFICATION_CONFIG = {
+    chat_message: {
+        category: "messages",
+        path: "/app/community/messages",
+        title: "New message",
+        pushBody: (p) => `${p.sender_username}: ${p.message}`,
+        inGameBody: (p) => `${p.sender_username}: ${p.message}`,
+    },
     construction_finished: {
         category: "projects",
         path: "/app/facilities/manage",

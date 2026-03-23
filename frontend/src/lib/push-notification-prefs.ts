@@ -13,6 +13,7 @@ import type { NotificationCategory } from "@/types/notifications";
 
 export const PUSH_NOTIF_CATEGORY_LABELS: Record<NotificationCategory, string> =
     {
+        messages: "Messages",
         projects: "Projects",
         market: "Market",
         events: "Events",

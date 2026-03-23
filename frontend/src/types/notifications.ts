@@ -15,9 +15,11 @@ export type NotificationCategory =
     | "projects"
     | "market"
     | "events"
-    | "achievements";
+    | "achievements"
+    | "messages";
 
 export const CATEGORY_LABELS: Record<NotificationCategory, string> = {
+    messages: "Messages",
     projects: "Projects",
     market: "Market",
     events: "Events",

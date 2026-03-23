@@ -97,6 +97,13 @@ class AchievementUnlockPayload(BaseModel):
     xp: int
 
 
+class ChatMessagePayload(BaseModel):
+    type: Literal["chat_message"] = "chat_message"
+    sender_username: str
+    message: str
+    chat_id: int
+
+
 class PushNotificationTestPayload(BaseModel):
     """Dummy notification used exclusively for end-to-end push notification testing."""
 
@@ -169,6 +176,7 @@ AchievementMilestonePayload = Annotated[
 # ---------------------------------------------------------------------------
 
 NotificationPayload = Union[
+    ChatMessagePayload,
     ConstructionFinishedPayload,
     TechnologyResearchedPayload,
     FacilityDecommissionedPayload,

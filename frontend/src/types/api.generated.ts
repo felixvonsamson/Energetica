@@ -2839,6 +2839,22 @@ export interface components {
             /** Unread Chat Count */
             unread_chat_count: number;
         };
+        /** ChatMessagePayload */
+        ChatMessagePayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default chat_message
+             */
+            type: "chat_message";
+            /** Sender Username */
+            sender_username: string;
+            /** Message */
+            message: string;
+            /** Chat Id */
+            chat_id: number;
+        };
         /**
          * ChatOut
          *
@@ -3806,6 +3822,7 @@ export interface components {
             archived: boolean;
             /** Payload */
             payload:
+                | components["schemas"]["ChatMessagePayload"]
                 | components["schemas"]["ConstructionFinishedPayload"]
                 | components["schemas"]["TechnologyResearchedPayload"]
                 | components["schemas"]["FacilityDecommissionedPayload"]
