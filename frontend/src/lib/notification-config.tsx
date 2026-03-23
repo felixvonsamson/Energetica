@@ -57,11 +57,11 @@ const NOTIFICATION_CONFIG = {
         title: "Facility destroyed",
         pushBody: (p) =>
             p.facility_type === "industry"
-                ? `Industry was levelled down by ${CLIMATE_EVENT_CONFIG[p.event_key].name.toLowerCase()}.`
+                ? `Industry was levelled down by a ${CLIMATE_EVENT_CONFIG[p.event_key].name.toLowerCase()}.`
                 : `${getAssetLongName(p.facility_type)} was destroyed by a ${CLIMATE_EVENT_CONFIG[p.event_key].name.toLowerCase()}.`,
         inGameBody: (p) =>
             p.facility_type === "industry"
-                ? `Industry was levelled down by ${CLIMATE_EVENT_CONFIG[p.event_key].name.toLowerCase()}.`
+                ? `Industry was levelled down by a ${CLIMATE_EVENT_CONFIG[p.event_key].name.toLowerCase()}.`
                 : `${getAssetLongName(p.facility_type)} was destroyed by a ${CLIMATE_EVENT_CONFIG[p.event_key].name.toLowerCase()}.`,
     },
     emergency_facility_created: {
