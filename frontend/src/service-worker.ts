@@ -31,7 +31,7 @@ sw.addEventListener("push", (event: PushEvent) => {
         getPushPref(category).then((enabled) => {
             if (!enabled) return;
             const { title, body } = getNotificationPushText(payload);
-            const path = getNotificationPath(data.type);
+            const path = getNotificationPath(payload);
             return sw.registration.showNotification(title, {
                 body,
                 icon: "/static/images/icon_green.png",
