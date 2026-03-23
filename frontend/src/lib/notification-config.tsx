@@ -107,11 +107,11 @@ const NOTIFICATION_CONFIG = {
         title: "Shipment arrived",
         pushBody: (p) =>
             p.warehouse_full
-                ? `Your shipment of ${p.resource} has arrived, but only ${formatMass(p.stored_kg)} of ${formatMass(p.stored_kg)} were stored, since your warehouse ran out of storage capacity.`
+                ? `Your shipment of ${p.resource} has arrived, but only ${formatMass(p.stored_kg)} of ${formatMass(p.quantity_kg)} were stored, since your warehouse ran out of storage capacity.`
                 : `Your ${formatMass(p.quantity_kg)} shipment of ${p.resource} has arrived.`,
         inGameBody: (p) =>
             p.warehouse_full
-                ? `Your shipment of ${p.resource} has arrived, but only ${formatMass(p.stored_kg)} of ${formatMass(p.stored_kg)} were stored, since your warehouse ran out of storage capacity.`
+                ? `Your shipment of ${p.resource} has arrived, but only ${formatMass(p.stored_kg)} of ${formatMass(p.quantity_kg)} were stored, since your warehouse ran out of storage capacity.`
                 : `Your ${formatMass(p.quantity_kg)} shipment of ${p.resource} has arrived.`,
     },
     credit_limit_exceeded: {
