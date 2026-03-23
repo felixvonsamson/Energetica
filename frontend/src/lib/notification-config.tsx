@@ -37,15 +37,19 @@ const NOTIFICATION_CONFIG = {
         category: "projects",
         url: "/app/facilities/technology",
         title: "Research complete",
-        pushBody: (p) => `${getAssetLongName(p.technology_type)} level ${p.new_level} unlocked.`,
-        inGameBody: (p) => `${getAssetLongName(p.technology_type)} level ${p.new_level} unlocked.`,
+        pushBody: (p) =>
+            `${getAssetLongName(p.technology_type)} level ${p.new_level} unlocked.`,
+        inGameBody: (p) =>
+            `${getAssetLongName(p.technology_type)} level ${p.new_level} unlocked.`,
     },
     facility_decommissioned: {
         category: "projects",
         url: "/app/facilities/manage",
         title: "Facility decommissioned",
-        pushBody: (p) => `${getAssetLongName(p.facility_type)} has been decommissioned.`,
-        inGameBody: (p) => `${getAssetLongName(p.facility_type)} has been decommissioned.`,
+        pushBody: (p) =>
+            `${getAssetLongName(p.facility_type)} has been decommissioned.`,
+        inGameBody: (p) =>
+            `${getAssetLongName(p.facility_type)} has been decommissioned.`,
     },
     facility_destroyed: {
         category: "events",
@@ -90,8 +94,10 @@ const NOTIFICATION_CONFIG = {
         category: "market",
         url: "/app/overviews/resources",
         title: "Shipment arrived",
-        pushBody: (p) => `${p.resource}${p.warehouse_full ? " (warehouse full)" : ""}`,
-        inGameBody: (p) => `${p.resource}${p.warehouse_full ? " (warehouse full)" : ""}`,
+        pushBody: (p) =>
+            `${p.resource}${p.warehouse_full ? " (warehouse full)" : ""}`,
+        inGameBody: (p) =>
+            `${p.resource}${p.warehouse_full ? " (warehouse full)" : ""}`,
     },
     credit_limit_exceeded: {
         category: "market",
@@ -107,11 +113,19 @@ const NOTIFICATION_CONFIG = {
         title: "Achievement unlocked",
         pushBody: (p) => {
             // Safe: achievement_key discriminates the correct config entry and payload type.
-            const body = (ACHIEVEMENT_MILESTONE_CONFIG[p.achievement_key].body as (p: never) => string)(p as never);
+            const body = (
+                ACHIEVEMENT_MILESTONE_CONFIG[p.achievement_key].body as (
+                    p: never,
+                ) => string
+            )(p as never);
             return `${body} (+${p.xp} XP)`;
         },
         inGameBody: (p) => {
-            const body = (ACHIEVEMENT_MILESTONE_CONFIG[p.achievement_key].body as (p: never) => string)(p as never);
+            const body = (
+                ACHIEVEMENT_MILESTONE_CONFIG[p.achievement_key].body as (
+                    p: never,
+                ) => string
+            )(p as never);
             return `${body} (+${p.xp} XP)`;
         },
     },
@@ -120,7 +134,8 @@ const NOTIFICATION_CONFIG = {
         // TODO: redirect to a dedicated achievements page when it exists
         url: "/app/dashboard",
         title: "Achievement unlocked",
-        pushBody: (p) => `${ACHIEVEMENT_UNLOCK_CONFIG[p.achievement_key].body} (+${p.xp} XP)`,
+        pushBody: (p) =>
+            `${ACHIEVEMENT_UNLOCK_CONFIG[p.achievement_key].body} (+${p.xp} XP)`,
         inGameBody: (p) =>
             `${ACHIEVEMENT_UNLOCK_CONFIG[p.achievement_key].body} (+${p.xp} XP)`,
     },
@@ -128,8 +143,10 @@ const NOTIFICATION_CONFIG = {
         category: "events",
         url: "/app/dashboard",
         title: "Push notification test",
-        pushBody: () => "If you see this, browser push notifications are working.",
-        inGameBody: () => "If you see this, browser push notifications are working.",
+        pushBody: () =>
+            "If you see this, browser push notifications are working.",
+        inGameBody: () =>
+            "If you see this, browser push notifications are working.",
     },
 } satisfies { [T in NotificationType]: NotificationDef<T> };
 
@@ -145,7 +162,10 @@ type AnyNotificationDef = {
 const getDef = (type: NotificationType) =>
     NOTIFICATION_CONFIG[type] as unknown as AnyNotificationDef;
 
-export function getNotificationPushText(payload: NotificationPayload): { title: string; body: string } {
+export function getNotificationPushText(payload: NotificationPayload): {
+    title: string;
+    body: string;
+} {
     const def = getDef(payload.type);
     return { title: def.title, body: def.pushBody(payload) };
 }
@@ -154,11 +174,16 @@ export function getNotificationUrl(type: NotificationType): AppRoute {
     return NOTIFICATION_CONFIG[type].url;
 }
 
-export function getNotificationCategory(type: NotificationType): NotificationCategory {
+export function getNotificationCategory(
+    type: NotificationType,
+): NotificationCategory {
     return NOTIFICATION_CONFIG[type].category;
 }
 
-export function getNotificationContent(payload: NotificationPayload): { title: string; body: ReactNode } {
+export function getNotificationContent(payload: NotificationPayload): {
+    title: string;
+    body: ReactNode;
+} {
     const def = getDef(payload.type);
     return { title: def.title, body: def.inGameBody(payload) };
 }
