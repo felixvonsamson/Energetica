@@ -129,9 +129,7 @@ function SettingsContent() {
                 }
                 setNotificationsPermissionDenied(false);
 
-                await navigator.serviceWorker.register(
-                    "/static/service-worker.js",
-                );
+                await navigator.serviceWorker.register("/service-worker.js");
                 const registration = await Promise.race([
                     navigator.serviceWorker.ready,
                     new Promise<never>((_, reject) =>
@@ -175,6 +173,8 @@ function SettingsContent() {
                     endpoint: subscription.endpoint,
                     keys: { p256dh, auth },
                 });
+
+                await browserNotificationsApi.test(subscription.endpoint);
 
                 setNotificationsEnabled(true);
             } else {

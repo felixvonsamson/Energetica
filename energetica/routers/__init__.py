@@ -7,7 +7,7 @@ from typing import Awaitable, Callable, cast
 from fastapi import FastAPI, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from energetica.api.http import todo_router
@@ -203,3 +203,10 @@ def setup_routes(app: FastAPI):
     app.include_router(templates_router)
     app.include_router(todo_router, prefix="/api")
     app.mount("/static", StaticFiles(directory="energetica/static"), name="static")
+
+    @app.get("/service-worker.js", include_in_schema=False)
+    async def serve_service_worker() -> FileResponse:
+        return FileResponse(
+            "energetica/static/service-worker.js",
+            media_type="application/javascript",
+        )

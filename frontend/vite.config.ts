@@ -67,6 +67,11 @@ export default defineConfig(({ mode }) => {
                     changeOrigin: true,
                     ws: true,
                 },
+                // Service worker (must be served from root scope by the backend)
+                "^/service-worker.js$": {
+                    target: backendUrl,
+                    changeOrigin: true,
+                },
                 // Auth and location routes
                 "^/(logout|location_choice)$": {
                     target: backendUrl,

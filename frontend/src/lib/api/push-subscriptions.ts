@@ -25,4 +25,11 @@ export const browserNotificationsApi = {
         apiClient.post<
             ApiResponse<"/api/v1/push-subscriptions:unsubscribe", "post">
         >("/push-subscriptions:unsubscribe", data),
+
+    /** Send a test push notification. If endpoint provided, targets only that subscription. */
+    test: (endpoint?: string) =>
+        apiClient.post<ApiResponse<"/api/v1/push-subscriptions:test", "post">>(
+            "/push-subscriptions:test",
+            endpoint ? { endpoint } : {},
+        ),
 };

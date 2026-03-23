@@ -405,6 +405,25 @@ class Player(DBModel):
                 }
         return shipment_speeds
 
+    def notify_subscription(self, subscription: Subscription, payload: NotificationPayload) -> None:
+        """Send a push notification to a single subscription without creating a notification object."""
+        notification_data = {
+            "type": payload.type,
+            "payload": payload.model_dump(exclude={"type"}),
+        }
+        audience = "https://fcm.googleapis.com"
+        if "https://updates.push.services.mozilla.com" in subscription.endpoint:
+            audience = "https://updates.push.services.mozilla.com"
+        try:
+            webpush(
+                subscription_info=subscription.model_dump(),
+                data=json.dumps(notification_data),
+                vapid_private_key=engine.VAPID_PRIVATE_KEY,
+                vapid_claims={"aud": audience, "sub": "mailto:energetica.game@gmail.com"},
+            )
+        except WebPushException as ex:
+            engine.warn(f"Failed to send notification: {repr(ex)}")
+
     def notify(self, payload: NotificationPayload) -> None:
         """
         Create a notification.

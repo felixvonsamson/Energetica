@@ -1,11 +1,20 @@
 """routes for browser notifications."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
+from pydantic import BaseModel
 
 from energetica.database.player import Player
 from energetica.globals import engine
 from energetica.schemas.browser_notifications import Subscription, VapidPublicKey
+from energetica.schemas.notifications import PushNotificationTestPayload
 from energetica.utils.auth import get_settled_player
+
+
+class TestPushBody(BaseModel):
+    endpoint: str | None = None
+
 
 router = APIRouter(prefix="/push-subscriptions", tags=["Browser Notifications"])
 
@@ -35,3 +44,21 @@ def unsubscribe(
         current_user.push_subscriptions.remove(subscription)
     except ValueError:
         pass
+
+
+@router.post(":test", status_code=status.HTTP_204_NO_CONTENT)
+def test_push_notification(
+    player: Annotated[Player, Depends(get_settled_player)],
+    body: TestPushBody = TestPushBody(),
+) -> None:
+    """Send a test push notification. If endpoint is provided, sends only to that subscription; otherwise broadcasts to all."""
+    payload = PushNotificationTestPayload()
+    if body.endpoint is None:
+        player.notify(payload)
+    else:
+        subscription = next(
+            (s for s in player.push_subscriptions if s.endpoint == body.endpoint),
+            None,
+        )
+        if subscription is not None:
+            player.notify_subscription(subscription, payload)

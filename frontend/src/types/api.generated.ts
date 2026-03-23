@@ -189,6 +189,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/push-subscriptions:test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Push Notification
+         *
+         * Send a test push notification. If endpoint is provided, sends only to
+         * that subscription; otherwise broadcasts to all.
+         */
+        post: operations["test_push_notification_api_v1_push_subscriptions_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/charts/power-sources/{resolution}": {
         parameters: {
             query?: never;
@@ -2455,28 +2477,6 @@ export interface paths {
          * Change the view mode for the graphs (basic, normal, expert).
          */
         post: operations["change_graph_view_api_change_graph_view_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/test_notification": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Test Notification
-         *
-         * Send a push_notification_test notification to verify the push
-         * pipeline end-to-end.
-         */
-        get: operations["test_notification_api_test_notification_get"];
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4985,6 +4985,11 @@ export interface components {
                 [key: string]: number[];
             };
         };
+        /** TestPushBody */
+        TestPushBody: {
+            /** Endpoint */
+            endpoint?: string | null;
+        };
         /**
          * UserOut
          *
@@ -5354,6 +5359,37 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["Subscription"];
+            };
+        };
+        responses: {
+            /** Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_push_notification_api_v1_push_subscriptions_test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TestPushBody"];
             };
         };
         responses: {
@@ -8317,26 +8353,6 @@ export interface operations {
         };
     };
     change_graph_view_api_change_graph_view_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    test_notification_api_test_notification_get: {
         parameters: {
             query?: never;
             header?: never;
