@@ -21,6 +21,7 @@ from energetica.enums import (
 )
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
+from energetica.schemas.notifications import ConstructionFinishedPayload, TechnologyResearchedPayload
 from energetica.schemas.projects import ProjectListOut
 from energetica.utils.workers import deploy_available_workers
 from energetica.utils.hashing import stable_hash
@@ -351,29 +352,26 @@ def complete_project(project: OngoingProject, *, skip_notifications: bool = Fals
     if not skip_notifications:
         if isinstance(project.project_type, TechnologyType):
             player.notify(
-                "technology_researched",
-                {
-                    "technology_type": str(project.project_type),
-                    "new_level": player.technology_lvl[project.project_type],
-                },
+                TechnologyResearchedPayload(
+                    technology_type=project.project_type,
+                    new_level=player.technology_lvl[project.project_type],
+                )
             )
             engine.log(f"{player.username} : + 1 lvl {project_name}")
         elif isinstance(project.project_type, FunctionalFacilityType):
             player.notify(
-                "construction_finished",
-                {
-                    "project_type": str(project.project_type),
-                    "level": player.functional_facility_lvl[project.project_type],
-                },
+                ConstructionFinishedPayload(
+                    project_type=project.project_type,
+                    level=player.functional_facility_lvl[project.project_type],
+                )
             )
             engine.log(f"{player.username} : + 1 lvl {project_name}")
         else:
             player.notify(
-                "construction_finished",
-                {
-                    "project_type": str(project.project_type),
-                    "level": None,
-                },
+                ConstructionFinishedPayload(
+                    project_type=project.project_type,
+                    level=None,
+                )
             )
             engine.log(f"{player.username} : + 1 {project_name}")
     if isinstance(project.project_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):

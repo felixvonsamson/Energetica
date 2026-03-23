@@ -33,6 +33,7 @@ from energetica.enums import (
 )
 from energetica.globals import engine
 from energetica.schemas.electricity_markets import AskType
+from energetica.schemas.notifications import CreditLimitExceededPayload
 from energetica.types.facility_statuses import ProductionStatus
 from energetica.utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
 
@@ -439,7 +440,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
     max_overdraft = -player.config["industry"]["income_per_day"]
     do_not_send = len(player.notifications) > 0 and player.notifications[-1].type == "credit_limit_exceeded"
     if player.money < max_overdraft and player.network is not None and not do_not_send:
-        player.notify("credit_limit_exceeded", {})
+        player.notify(CreditLimitExceededPayload())
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
     # are used and replace it with a cached property or something similar that generates a list of all demands and offer types

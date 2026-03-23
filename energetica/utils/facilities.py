@@ -8,12 +8,14 @@ from energetica import technology_effects
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.player import Player
 from energetica.enums import (
+    ClimateEventType,
     ControllableFacilityType,
     ExtractionFacilityType,
     PowerFacilityType,
     StorageFacilityType,
     power_facility_types,
 )
+from energetica.schemas.notifications import EmergencyFacilityCreatedPayload, FacilityDestroyedPayload
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.utils.projects import invalidate_data_on_project_update
@@ -98,12 +100,11 @@ def destroy_facility(player: Player, facility: ActiveFacility, event_key: str) -
         player.rolling_history._data["storage"][facility.facility_type][-1] = stored * (n - 1) / n
     remove_facility(facility)
     player.notify(
-        "facility_destroyed",
-        {
-            "facility_type": str(facility.facility_type),
-            "event_key": event_key,
-            "cleanup_cost": float(cleanup_cost),
-        },
+        FacilityDestroyedPayload(
+            facility_type=facility.facility_type,
+            event_key=ClimateEventType(event_key),
+            cleanup_cost=float(cleanup_cost),
+        )
     )
     engine.log(f"{player.username} : {facility.facility_type} destroyed by {event_name}.")
 
@@ -169,9 +170,8 @@ def save_powerless_player(player: Player) -> None:
             ),
         )
         player.notify(
-            "emergency_facility_created",
-            {
-                "facility_type": str(ControllableFacilityType.STEAM_ENGINE),
-            },
+            EmergencyFacilityCreatedPayload(
+                facility_type=ControllableFacilityType.STEAM_ENGINE,
+            )
         )
         engine.log(f"Emergency power steam engine created for {player.username}.")

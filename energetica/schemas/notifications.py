@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 from energetica.enums import (
     ClimateEventType,
     ExtractionFacilityType,
+    Fuel,
     FunctionalFacilityType,
     PowerFacilityType,
     ProjectType,
@@ -38,52 +39,52 @@ FacilityType = PowerFacilityType | StorageFacilityType | ExtractionFacilityType 
 
 
 class ConstructionFinishedPayload(BaseModel):
-    type: Literal["construction_finished"]
+    type: Literal["construction_finished"] = "construction_finished"
     project_type: ProjectType
     level: int | None = None  # None for non-levelable facilities
 
 
 class TechnologyResearchedPayload(BaseModel):
-    type: Literal["technology_researched"]
+    type: Literal["technology_researched"] = "technology_researched"
     technology_type: TechnologyType
     new_level: int
 
 
 class FacilityDecommissionedPayload(BaseModel):
-    type: Literal["facility_decommissioned"]
+    type: Literal["facility_decommissioned"] = "facility_decommissioned"
     facility_type: FacilityType
     dismantle_cost: float
 
 
 class FacilityDestroyedPayload(BaseModel):
-    type: Literal["facility_destroyed"]
+    type: Literal["facility_destroyed"] = "facility_destroyed"
     facility_type: FacilityType
     event_key: ClimateEventType
     cleanup_cost: float
 
 
 class EmergencyFacilityCreatedPayload(BaseModel):
-    type: Literal["emergency_facility_created"]
+    type: Literal["emergency_facility_created"] = "emergency_facility_created"
     facility_type: FacilityType
 
 
 class ClimateEventPayload(BaseModel):
-    type: Literal["climate_event"]
+    type: Literal["climate_event"] = "climate_event"
     event_key: ClimateEventType
     duration_days: int
     cost_per_hour: float
 
 
 class ResourceSoldPayload(BaseModel):
-    type: Literal["resource_sold"]
+    type: Literal["resource_sold"] = "resource_sold"
     buyer_username: str
-    resource: str
+    resource: Fuel
     quantity_kg: float
     total_price: float
 
 
 class ShipmentArrivedPayload(BaseModel):
-    type: Literal["shipment_arrived"]
+    type: Literal["shipment_arrived"] = "shipment_arrived"
     resource: str
     quantity_kg: float
     stored_kg: float
@@ -91,13 +92,13 @@ class ShipmentArrivedPayload(BaseModel):
 
 
 class CreditLimitExceededPayload(BaseModel):
-    type: Literal["credit_limit_exceeded"]
+    type: Literal["credit_limit_exceeded"] = "credit_limit_exceeded"
 
 
 class AchievementUnlockPayload(BaseModel):
     """One-shot achievement unlocked by constructing a specific facility."""
 
-    type: Literal["achievement_unlock"]
+    type: Literal["achievement_unlock"] = "achievement_unlock"
     achievement_key: Literal["laboratory", "warehouse", "storage_facilities", "GHG_effect"]
     xp: int
 
@@ -105,7 +106,7 @@ class AchievementUnlockPayload(BaseModel):
 class PushNotificationTestPayload(BaseModel):
     """Dummy notification used exclusively for end-to-end push notification testing."""
 
-    type: Literal["push_notification_test"]
+    type: Literal["push_notification_test"] = "push_notification_test"
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +116,7 @@ class PushNotificationTestPayload(BaseModel):
 
 
 class AchievementMilestonePowerConsumptionPayload(BaseModel):
-    type: Literal["achievement_milestone"]
+    type: Literal["achievement_milestone"] = "achievement_milestone"
     achievement_key: Literal["power_consumption"]
     comparison_key: Literal[
         "village-in-europe",
@@ -129,7 +130,7 @@ class AchievementMilestonePowerConsumptionPayload(BaseModel):
 
 
 class AchievementMilestoneEnergyStoragePayload(BaseModel):
-    type: Literal["achievement_milestone"]
+    type: Literal["achievement_milestone"] = "achievement_milestone"
     achievement_key: Literal["energy_storage"]
     comparison_key: Literal[
         "zurich-for-a-day",
@@ -143,7 +144,7 @@ class AchievementMilestoneEnergyStoragePayload(BaseModel):
 class AchievementMilestoneBasePayload(BaseModel):
     """Milestone achievement without a real-world comparison."""
 
-    type: Literal["achievement_milestone"]
+    type: Literal["achievement_milestone"] = "achievement_milestone"
     achievement_key: Literal[
         "mineral_extraction",
         "network_import",

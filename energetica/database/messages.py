@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 #    NOTE: these switches have `default` fallbacks, so TypeScript will NOT
 #    catch a missing case — you must add it manually.
 #
-# 7. Add a player.notify("your_type", {...}) call at the relevant backend
+# 7. Add a player.notify(YourTypePayload(...)) call at the relevant backend
 #    event site (utils/, production_update.py, etc.).
 # ---------------------------------------------------------------------------
 

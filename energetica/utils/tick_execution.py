@@ -13,6 +13,7 @@ from energetica.enums import ProjectStatus, StorageFacilityType
 from energetica.globals import engine
 from energetica.schemas.simulate import TickAction
 from energetica.utils import projects
+from energetica.schemas.notifications import FacilityDecommissionedPayload
 from energetica.utils.facilities import dismantle_facility, remove_facility
 from energetica.utils.climate_helpers import check_climate_events
 from energetica.utils.misc import save_past_data
@@ -87,11 +88,10 @@ def check_events_completion() -> None:
         player = facility.player
         dismantle_facility(facility)
         player.notify(
-            "facility_decommissioned",
-            {
-                "facility_type": str(facility.facility_type),
-                "dismantle_cost": float(facility.dismantle_cost),
-            },
+            FacilityDecommissionedPayload(
+                facility_type=facility.facility_type,
+                dismantle_cost=float(facility.dismantle_cost),
+            )
         )
         engine.log(f"The facility {facility.display_name} from {player.username} has been decommissioned.")
 

@@ -13,6 +13,7 @@ from energetica.config.assets import wind_power_curve
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.globals import engine
+from energetica.schemas.notifications import PushNotificationTestPayload
 from energetica.utils.auth import get_settled_player
 from energetica.utils.misc import empty_network_data, empty_player_data
 
@@ -187,7 +188,7 @@ async def change_graph_view(  # noqa: ANN201
 @todo_router.get("/test_notification")
 def test_notification(player: Annotated[Player, Depends(get_settled_player)]):  # noqa: ANN201
     """Send a push_notification_test notification to verify the push pipeline end-to-end."""
-    player.notify("push_notification_test", {})
+    player.notify(PushNotificationTestPayload())
     return {"response": "success"}
 
 

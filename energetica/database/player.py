@@ -18,7 +18,14 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data.capacity_data import CapacityData
 from energetica.database.engine_data.circular_buffer_player import CircularBufferPlayer
 from energetica.database.engine_data.cumulative_emissions_data import CumulativeEmissionsData
-from energetica.database.messages import Chat, Notification, NotificationType
+from energetica.database.messages import Chat, Notification
+from energetica.schemas.notifications import (
+    AchievementMilestoneBasePayload,
+    AchievementMilestoneEnergyStoragePayload,
+    AchievementMilestonePowerConsumptionPayload,
+    AchievementUnlockPayload,
+    NotificationPayload,
+)
 from energetica.database.network_prices import NetworkPrices
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.ongoing_shipment import OngoingShipment
@@ -399,7 +406,7 @@ class Player(DBModel):
                 }
         return shipment_speeds
 
-    def notify(self, notif_type: NotificationType, payload: dict) -> None:
+    def notify(self, payload: NotificationPayload) -> None:
         """
         Create a notification.
 
@@ -408,7 +415,8 @@ class Player(DBModel):
         2. It emits a socketio "invalidate" event to the player's active web clients.
         3. It sends the notification using webpush to the player's subscribed browser(s).
         """
-        Notification(type=notif_type, payload=payload, player=self)
+        payload_dict = payload.model_dump(exclude={"type"})
+        Notification(type=payload.type, payload=payload_dict, player=self)
         # Real-time invalidation
         for sid in self.socketio_clients:
             asyncio.run_coroutine_threadsafe(
@@ -416,8 +424,8 @@ class Player(DBModel):
             )
         # Web push
         notification_data = {
-            "type": notif_type,
-            "payload": payload,
+            "type": payload.type,
+            "payload": payload_dict,
         }
         for subscription in self.notification_subscriptions:
             audience = "https://fcm.googleapis.com"
@@ -454,14 +462,27 @@ class Player(DBModel):
         return bool(self.achievements["GHG_effect"])
 
     def _notify_milestone(self, achievement_key: str, milestone: dict) -> None:
-        payload: dict = {
-            "achievement_key": achievement_key,
-            "threshold": milestone["threshold"],
-            "xp": milestone["xp"],
-        }
-        if "comparison_key" in milestone:
-            payload["comparison_key"] = milestone["comparison_key"]
-        self.notify("achievement_milestone", payload)
+        if achievement_key == "power_consumption":
+            payload: NotificationPayload = AchievementMilestonePowerConsumptionPayload(
+                achievement_key="power_consumption",
+                comparison_key=milestone["comparison_key"],
+                threshold=milestone["threshold"],
+                xp=milestone["xp"],
+            )
+        elif achievement_key == "energy_storage":
+            payload = AchievementMilestoneEnergyStoragePayload(
+                achievement_key="energy_storage",
+                comparison_key=milestone["comparison_key"],
+                threshold=milestone["threshold"],
+                xp=milestone["xp"],
+            )
+        else:
+            payload = AchievementMilestoneBasePayload(
+                achievement_key=achievement_key,  # type: ignore[arg-type]
+                threshold=milestone["threshold"],
+                xp=milestone["xp"],
+            )
+        self.notify(payload)
 
     def check_continuous_achievements(self) -> None:
         """Check for player achievements that are linked to values that are updated every tick."""
@@ -492,11 +513,10 @@ class Player(DBModel):
                 self.achievements[achievement] = 1
                 self.progression_metrics["xp"] += achievements[achievement]["xp"]
                 self.notify(
-                    "achievement_unlock",
-                    {
-                        "achievement_key": achievement,
-                        "xp": achievements[achievement]["xp"],
-                    },
+                    AchievementUnlockPayload(
+                        achievement_key=achievement,  # type: ignore[arg-type]
+                        xp=achievements[achievement]["xp"],
+                    )
                 )
                 self.invalidate_queries(["auth", "me"])
 
