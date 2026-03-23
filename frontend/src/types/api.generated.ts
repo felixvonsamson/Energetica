@@ -2471,7 +2471,8 @@ export interface paths {
         /**
          * Test Notification
          *
-         * Send a dummy browser notification to the player.
+         * Send a push_notification_test notification to verify the push
+         * pipeline end-to-end.
          */
         get: operations["test_notification_api_test_notification_get"];
         put?: never;
@@ -3793,7 +3794,8 @@ export interface components {
                 | components["schemas"]["AchievementMilestonePowerConsumptionPayload"]
                 | components["schemas"]["AchievementMilestoneEnergyStoragePayload"]
                 | components["schemas"]["AchievementMilestoneBasePayload"]
-                | components["schemas"]["AchievementUnlockPayload"];
+                | components["schemas"]["AchievementUnlockPayload"]
+                | components["schemas"]["PushNotificationTestPayload"];
         };
         /** NotificationPatchIn */
         NotificationPatchIn: {
@@ -4311,6 +4313,20 @@ export interface components {
              * available quantity.
              */
             quantity?: number | null;
+        };
+        /**
+         * PushNotificationTestPayload
+         *
+         * Dummy notification used exclusively for end-to-end push notification
+         * testing.
+         */
+        PushNotificationTestPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             */
+            type: "push_notification_test";
         };
         /**
          * RequirementOut

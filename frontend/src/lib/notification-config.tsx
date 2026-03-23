@@ -124,6 +124,13 @@ const NOTIFICATION_CONFIG = {
         inGameBody: (p) =>
             `${ACHIEVEMENT_UNLOCK_CONFIG[p.achievement_key].body} (+${p.xp} XP)`,
     },
+    push_notification_test: {
+        category: "events",
+        url: "/app/dashboard",
+        title: "Push notification test",
+        pushBody: () => "If you see this, browser push notifications are working.",
+        inGameBody: () => "If you see this, browser push notifications are working.",
+    },
 } satisfies { [T in NotificationType]: NotificationDef<T> };
 
 // Widen the payload-specific function signatures so callers can pass any NotificationPayload.

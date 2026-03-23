@@ -52,6 +52,7 @@ NotificationType = Literal[
     "credit_limit_exceeded",
     "achievement_milestone",
     "achievement_unlock",
+    "push_notification_test",
 ]
 
 

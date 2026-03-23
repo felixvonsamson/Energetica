@@ -102,6 +102,12 @@ class AchievementUnlockPayload(BaseModel):
     xp: int
 
 
+class PushNotificationTestPayload(BaseModel):
+    """Dummy notification used exclusively for end-to-end push notification testing."""
+
+    type: Literal["push_notification_test"]
+
+
 # ---------------------------------------------------------------------------
 # Achievement milestone payload — discriminated union on achievement_key.
 # All variants share type: Literal["achievement_milestone"].
@@ -181,6 +187,7 @@ NotificationPayload = Union[
     AchievementMilestoneEnergyStoragePayload,
     AchievementMilestoneBasePayload,
     AchievementUnlockPayload,
+    PushNotificationTestPayload,
 ]
 
 _payload_adapter = TypeAdapter(NotificationPayload)

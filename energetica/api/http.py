@@ -186,15 +186,8 @@ async def change_graph_view(  # noqa: ANN201
 
 @todo_router.get("/test_notification")
 def test_notification(player: Annotated[Player, Depends(get_settled_player)]):  # noqa: ANN201
-    """Send a dummy browser notification to the player."""
-    player.notify(
-        "achievement_milestone",
-        {
-            "achievement_key": "technology",
-            "threshold": 10,
-            "xp": 5,
-        },
-    )
+    """Send a push_notification_test notification to verify the push pipeline end-to-end."""
+    player.notify("push_notification_test", {})
     return {"response": "success"}
 
 
