@@ -6,7 +6,7 @@ import {
 } from "@/lib/achievement-config";
 import { getAssetLongName } from "@/lib/assets/asset-names";
 import { CLIMATE_EVENT_CONFIG } from "@/lib/climate-event-config";
-import { formatMoney } from "@/lib/format-utils";
+import { formatMass, formatMoney } from "@/lib/format-utils";
 import type { AppRoute } from "@/types/app-routes";
 import type {
     NotificationCategory,
@@ -88,7 +88,8 @@ const NOTIFICATION_CONFIG = {
         url: "/app/community/resource-market",
         title: "Resource sold",
         pushBody: (p) => `${p.buyer_username} purchased your ${p.resource}.`,
-        inGameBody: (p) => `${p.buyer_username} purchased your ${p.resource}.`,
+        inGameBody: (p) =>
+            `${p.buyer_username} purchased your ${formatMass(p.quantity_kg)} of your ${p.resource} for a total of ${formatMoney(p.total_price)}$.`,
     },
     shipment_arrived: {
         category: "market",
