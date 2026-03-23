@@ -67,8 +67,12 @@ export default defineConfig(({ mode }) => {
                     changeOrigin: true,
                     ws: true,
                 },
-                // Service worker (must be served from root scope by the backend)
+                // Service worker and manifest must be served from root by the backend
                 "^/service-worker.js$": {
+                    target: backendUrl,
+                    changeOrigin: true,
+                },
+                "^/manifest.json$": {
                     target: backendUrl,
                     changeOrigin: true,
                 },
