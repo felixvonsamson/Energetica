@@ -89,6 +89,9 @@ function SettingsContent() {
     const [notificationsLoading, setNotificationsLoading] = useState(false);
     const [notificationsPermissionDenied, setNotificationsPermissionDenied] =
         useState(false);
+    const [notificationsError, setNotificationsError] = useState<string | null>(
+        null,
+    );
     const [pushPrefs, setPushPrefs] = useState<Record<
         NotificationCategory,
         boolean
@@ -109,9 +112,12 @@ function SettingsContent() {
     // Handle browser notifications toggle
     const handleNotificationsToggle = async () => {
         setNotificationsLoading(true);
+        setNotificationsError(null);
         try {
             if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-                return;
+                throw new Error(
+                    "Browser notifications are not supported in this browser.",
+                );
             }
 
             if (!notificationsEnabled) {
@@ -126,7 +132,20 @@ function SettingsContent() {
                 await navigator.serviceWorker.register(
                     "/static/service-worker.js",
                 );
-                const registration = await navigator.serviceWorker.ready;
+                const registration = await Promise.race([
+                    navigator.serviceWorker.ready,
+                    new Promise<never>((_, reject) =>
+                        setTimeout(
+                            () =>
+                                reject(
+                                    new Error(
+                                        "Service worker took too long to activate. Try reloading the page.",
+                                    ),
+                                ),
+                            10_000,
+                        ),
+                    ),
+                ]);
 
                 const { public_key: vapidKey } =
                     await browserNotificationsApi.getVapidKey();
@@ -160,7 +179,20 @@ function SettingsContent() {
                 setNotificationsEnabled(true);
             } else {
                 // Disable: unsubscribe
-                const registration = await navigator.serviceWorker.ready;
+                const registration = await Promise.race([
+                    navigator.serviceWorker.ready,
+                    new Promise<never>((_, reject) =>
+                        setTimeout(
+                            () =>
+                                reject(
+                                    new Error(
+                                        "Service worker took too long to activate. Try reloading the page.",
+                                    ),
+                                ),
+                            10_000,
+                        ),
+                    ),
+                ]);
                 const subscription =
                     await registration.pushManager.getSubscription();
 
@@ -189,6 +221,11 @@ function SettingsContent() {
             }
         } catch (error) {
             console.error("Failed to toggle notifications:", error);
+            setNotificationsError(
+                error instanceof Error
+                    ? error.message
+                    : "Something went wrong. Please try again.",
+            );
         } finally {
             setNotificationsLoading(false);
         }
@@ -223,12 +260,15 @@ function SettingsContent() {
                             </TypographyMuted>
                         </div>
 
-                        <Switch
-                            id="notifications-switch"
-                            checked={notificationsEnabled}
-                            onCheckedChange={handleNotificationsToggle}
-                            disabled={notificationsLoading}
-                        />
+                        <div className="flex items-center gap-2">
+                            {notificationsLoading && <Spinner />}
+                            <Switch
+                                id="notifications-switch"
+                                checked={notificationsEnabled}
+                                onCheckedChange={handleNotificationsToggle}
+                                disabled={notificationsLoading}
+                            />
+                        </div>
                     </CardContent>
                     {notificationsPermissionDenied && (
                         <CardContent>
@@ -236,6 +276,13 @@ function SettingsContent() {
                                 Browser notifications were blocked. Please
                                 enable them in your browser settings and try
                                 again.
+                            </InfoBanner>
+                        </CardContent>
+                    )}
+                    {notificationsError && (
+                        <CardContent>
+                            <InfoBanner variant="error">
+                                {notificationsError}
                             </InfoBanner>
                         </CardContent>
                     )}
