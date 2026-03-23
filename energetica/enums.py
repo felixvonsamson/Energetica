@@ -230,6 +230,8 @@ power_facility_types: list[PowerFacilityType] = [
     ControllableFacilityType.NUCLEAR_REACTOR_GEN4,
 ]
 
+FacilityType = PowerFacilityType | StorageFacilityType | ExtractionFacilityType | FunctionalFacilityType
+
 ProjectType = PowerFacilityType | StorageFacilityType | ExtractionFacilityType | FunctionalFacilityType | TechnologyType
 project_types: set[ProjectType] = {
     *power_facility_types,
