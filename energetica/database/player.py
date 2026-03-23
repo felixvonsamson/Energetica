@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -411,9 +412,8 @@ class Player(DBModel):
             "type": payload.type,
             "payload": payload.model_dump(exclude={"type"}),
         }
-        audience = "https://fcm.googleapis.com"
-        if "https://updates.push.services.mozilla.com" in subscription.endpoint:
-            audience = "https://updates.push.services.mozilla.com"
+        parsed = urlparse(subscription.endpoint)
+        audience = f"{parsed.scheme}://{parsed.netloc}"
         try:
             webpush(
                 subscription_info=subscription.model_dump(),
