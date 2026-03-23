@@ -495,11 +495,10 @@ class Player(DBModel):
         ]:
             current_lvl = self.achievements[achievement]
             achievement_data = achievements[achievement]
+            if current_lvl >= len(achievement_data["milestones"]):
+                continue
             milestone = achievement_data["milestones"][current_lvl]
-            if (
-                current_lvl < len(achievement_data["milestones"])
-                and self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]
-            ):
+            if self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]:
                 self.achievements[achievement] += 1
                 self.progression_metrics["xp"] += milestone["xp"]
                 self._notify_milestone(achievement, milestone)
@@ -523,11 +522,10 @@ class Player(DBModel):
         """Check for technology achievement."""
         current_lvl = self.achievements["technology"]
         achievement_data = achievements["technology"]
+        if current_lvl >= len(achievement_data["milestones"]):
+            return
         milestone = achievement_data["milestones"][current_lvl]
-        if (
-            current_lvl < len(achievement_data["milestones"])
-            and self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]
-        ):
+        if self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]:
             self.achievements["technology"] += 1
             self.progression_metrics["xp"] += milestone["xp"]
             self._notify_milestone("technology", milestone)
@@ -538,11 +536,10 @@ class Player(DBModel):
         for achievement in ["trading_export", "trading_import"]:
             current_lvl = self.achievements[achievement]
             achievement_data = achievements[achievement]
+            if current_lvl >= len(achievement_data["milestones"]):
+                continue
             milestone = achievement_data["milestones"][current_lvl]
-            if (
-                current_lvl < len(achievement_data["milestones"])
-                and self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]
-            ):
+            if self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]:
                 self.achievements[achievement] += 1
                 self.progression_metrics["xp"] += milestone["xp"]
                 self._notify_milestone(achievement, milestone)
