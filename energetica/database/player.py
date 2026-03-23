@@ -422,7 +422,14 @@ class Player(DBModel):
                 vapid_claims={"aud": audience, "sub": "mailto:energetica.game@gmail.com"},
             )
         except WebPushException as ex:
-            engine.warn(f"Failed to send notification: {repr(ex)}")
+            if ex.response is not None and ex.response.status_code == 410:
+                # Subscription has expired or been revoked — remove it
+                try:
+                    self.push_subscriptions.remove(subscription)
+                except ValueError:
+                    pass
+            else:
+                engine.warn(f"Failed to send notification: {repr(ex)}")
 
     def notify(self, payload: NotificationPayload) -> None:
         """
