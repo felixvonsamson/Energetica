@@ -1,109 +1,140 @@
-import { Card, CardTitle } from "@/components/ui/card";
+import {
+    Calendar,
+    Cloud,
+    CloudSun,
+    Droplets,
+    Moon,
+    Sun,
+    Sunrise,
+    Wind,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
 import { useWeather } from "@/hooks/use-weather";
-import { getMonthName } from "@/lib/date-utils";
+
+const MONTH_NAMES = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+] as const;
+
+function getShortMonthName(monthNumber: number): string {
+    return MONTH_NAMES[monthNumber - 1] ?? "???";
+}
+
+function getSkyIcon(clearSkyValue: number, csi: number): LucideIcon {
+    if (clearSkyValue < 10) return Moon;
+    if (csi < 0.4) return Cloud;
+    if (csi <= 0.8) return CloudSun;
+    if (clearSkyValue <= 250) return Sunrise;
+    return Sun;
+}
+
+function getWindLabel(windSpeed: number): string {
+    if (windSpeed < 20) return "Low";
+    if (windSpeed < 50) return "Medium";
+    if (windSpeed < 80) return "High";
+    return "Storm";
+}
+
+function getRiverLabel(riverSpeed: number): string {
+    if (riverSpeed < 1) return "Low";
+    if (riverSpeed < 2) return "Medium";
+    return "High";
+}
+
+interface WeatherItemProps {
+    icon: LucideIcon;
+    label: string;
+    value: string;
+    sub?: string;
+}
+
+function WeatherItem({ icon: Icon, label, value, sub }: WeatherItemProps) {
+    return (
+        <div className="flex items-center gap-3">
+            <Icon className="w-8 h-8 shrink-0 text-foreground" />
+            <div className="leading-tight">
+                <div className="text-sm text-muted-foreground">{label}</div>
+                <div className="font-semibold text-base">
+                    {value}
+                    {sub && (
+                        <span className="font-normal text-muted-foreground ml-1.5">
+                            {sub}
+                        </span>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export function WeatherSection() {
-    const {
-        data: weatherData,
-        isLoading: isWeatherLoading,
-        isError: isWeatherError,
-    } = useWeather();
+    const { data: weatherData, isLoading, isError } = useWeather();
+
+    if (isLoading) {
+        return (
+            <div className="text-center text-muted-foreground text-sm py-1">
+                Loading weather…
+            </div>
+        );
+    }
+
+    if (isError || !weatherData) {
+        return (
+            <div className="text-center text-destructive text-sm py-1">
+                Failed to load weather data
+            </div>
+        );
+    }
+
+    const SkyIcon = getSkyIcon(
+        weatherData.clear_sky_value,
+        weatherData.clear_sky_index,
+    );
+    const windLabel = getWindLabel(weatherData.wind_speed);
+    const riverLabel = getRiverLabel(weatherData.river_flow_speed);
 
     return (
-        <Card>
-            <CardTitle className="text-center mb-4">
-                Current weather conditions
-            </CardTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-2">
-                {isWeatherLoading ? (
-                    <div className="col-span-full text-center text-gray-500">
-                        Loading...
-                    </div>
-                ) : isWeatherError ? (
-                    <div className="col-span-full text-center text-alert-red">
-                        Failed to load weather data
-                    </div>
-                ) : weatherData ? (
-                    <>
-                        {/* Month with year progress indicator */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                Month:{" "}
-                                <b>{getMonthName(weatherData.month_number)}</b>
-                            </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                {/* Full-width padded container defines the travel range */}
-                                <div className="absolute inset-0 mx-3 flex items-center">
-                                    {/* Positioned wrapper moves within the padded space */}
-                                    <div
-                                        className="absolute"
-                                        style={{
-                                            left: `${weatherData.year_progress * 100}%`,
-                                        }}
-                                    >
-                                        {/* Dot centred on position */}
-                                        <div className="w-3 h-3 bg-pine dark:bg-brand-green rounded-full -translate-x-1/2" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+        <div className="flex flex-wrap justify-around items-center gap-y-3 px-1">
+            {/* Month */}
+            <WeatherItem
+                icon={Calendar}
+                label="Month"
+                value={getShortMonthName(weatherData.month_number)}
+            />
 
-                        {/* Solar Irradiance with visual bar */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                Irradiance:{" "}
-                                <b>
-                                    {Math.round(weatherData.solar_irradiance)}{" "}
-                                    W/m²
-                                </b>
-                            </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-yellow-500 dark:bg-yellow-400 transition-all duration-300"
-                                    style={{
-                                        width: `${Math.min(100, (weatherData.solar_irradiance / 1000) * 100)}%`,
-                                    }}
-                                />
-                            </div>
-                        </div>
+            {/* Solar irradiance + sky condition */}
+            <WeatherItem
+                icon={SkyIcon}
+                label="Irradiance"
+                value={`${Math.round(weatherData.solar_irradiance)} W/m²`}
+            />
 
-                        {/* Wind Speed with visual bar */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                Wind speed:{" "}
-                                <b>{Math.round(weatherData.wind_speed)} km/h</b>
-                            </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-cyan-500 dark:bg-cyan-400 transition-all duration-300"
-                                    style={{
-                                        width: `${Math.min(100, (weatherData.wind_speed / 60) * 100)}%`,
-                                    }}
-                                />
-                            </div>
-                        </div>
+            {/* Wind */}
+            <WeatherItem
+                icon={Wind}
+                label="Wind"
+                value={windLabel}
+                sub={`${Math.round(weatherData.wind_speed)} km/h`}
+            />
 
-                        {/* River Discharge with visual bar */}
-                        <div className="px-2">
-                            <div className="mb-2 whitespace-nowrap">
-                                River discharge:{" "}
-                                <b>
-                                    {Math.round(weatherData.river_discharge)}{" "}
-                                    m³/s
-                                </b>
-                            </div>
-                            <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-blue-500 dark:bg-blue-400 transition-all duration-300"
-                                    style={{
-                                        width: `${Math.min(100, (weatherData.river_discharge / 150) * 100)}%`,
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </>
-                ) : null}
-            </div>
-        </Card>
+            {/* River flow */}
+            <WeatherItem
+                icon={Droplets}
+                label="River flow"
+                value={riverLabel}
+                sub={`${weatherData.river_flow_speed.toFixed(1)} m/s`}
+            />
+        </div>
     );
 }

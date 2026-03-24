@@ -1673,7 +1673,7 @@ export interface paths {
          * Get Current Weather
          *
          * Get the current weather data including date, irradiance, wind speed,
-         * and river discharge.
+         * and river flow speed.
          */
         get: operations["get_current_weather_api_v1_weather_get"];
         put?: never;
@@ -5094,21 +5094,34 @@ export interface components {
             /**
              * Solar Irradiance
              *
-             * In units of TODO
+             * Solar irradiance in W/m², capped at 950
              */
             solar_irradiance: number;
             /**
+             * Clear Sky Value
+             *
+             * Clear sky irradiance in W/m² (before cloud cover)
+             */
+            clear_sky_value: number;
+            /**
+             * Clear Sky Index
+             *
+             * Clear sky index (0–1): fraction of clear sky irradiance reaching
+             * ground
+             */
+            clear_sky_index: number;
+            /**
              * Wind Speed
              *
-             * In units of TODO
+             * Wind speed in km/h
              */
             wind_speed: number;
             /**
-             * River Discharge
+             * River Flow Speed
              *
-             * In units of TODO
+             * River flow speed in m/s
              */
-            river_discharge: number;
+            river_flow_speed: number;
         };
         /**
          * WindFacilityType

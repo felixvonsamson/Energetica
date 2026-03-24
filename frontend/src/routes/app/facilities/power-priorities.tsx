@@ -41,7 +41,7 @@ export const Route = createFileRoute("/app/facilities/power-priorities")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: () => true,
+            isUnlocked: (cap) => cap.has_network,
         },
         infoDialog: {
             contents: <PowerPrioritiesHelp />,

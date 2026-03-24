@@ -4,9 +4,12 @@ import {
     useSearch,
 } from "@tanstack/react-router";
 import { GitCompareArrows, HardHat } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
-import { ConstructionProjectsDialog } from "@/components/dashboard/construction-projects-dialog";
+import {
+    ProjectsPanel,
+    ProjectsPanelToggle,
+} from "@/components/dashboard/projects-panel";
 import {
     FacilityItem,
     FacilityDetailDialog,
@@ -68,14 +71,10 @@ export const Route = createFileRoute("/app/facilities/storage")({
     },
     validateSearch: (
         search: Record<string, unknown>,
-    ): { facility?: string; compare?: string; projects?: boolean } => ({
+    ): { facility?: string; compare?: string } => ({
         facility: search.facility ? String(search.facility) : undefined,
         compare:
             search.compare !== undefined ? String(search.compare) : undefined,
-        projects:
-            search.projects === "true" || search.projects === true
-                ? true
-                : undefined,
     }),
 });
 
@@ -91,10 +90,12 @@ type StorageFacility = ApiSchema<"StorageFacilityCatalogOut">;
 
 function StorageFacilitiesContent() {
     const navigate = useNavigate({ from: "/app/facilities/storage" });
-    const { facility, compare, projects } = useSearch({
+    const { facility, compare } = useSearch({
         from: "/app/facilities/storage",
     });
     const { data: projectsData } = useProjects();
+    const constructionCount = projectsData?.construction_queue.length ?? 0;
+    const [projectsPanelOpen, setProjectsPanelOpen] = useState(false);
 
     const {
         data: catalogData,
@@ -130,35 +131,24 @@ function StorageFacilitiesContent() {
         });
     };
 
-    // Check if there are any construction projects
-    const hasConstructionProjects =
-        (projectsData?.construction_queue.length ?? 0) > 0;
-
     return (
         <div className="p-4 md:p-8">
-            {/* Title */}
-            <div className="flex items-center justify-center gap-3 mb-6">
-                <div className="grow" />
+            {/* Construction projects panel — very top, full width */}
+            <ProjectsPanel
+                projectCategory="construction"
+                icon={HardHat}
+                panelTitle="Under Construction"
+                isOpen={projectsPanelOpen}
+            />
 
-                {/* Construction projects button - only shown if there are ongoing projects */}
-                {hasConstructionProjects && (
-                    <Button
-                        variant="outline"
-                        onClick={() =>
-                            navigate({
-                                search: (prev) => ({
-                                    ...prev,
-                                    projects: true,
-                                }),
-                            })
-                        }
-                        className="flex items-center gap-2"
-                    >
-                        <HardHat className="w-5 h-5" />
-                        View Construction Projects
-                    </Button>
-                )}
-
+            <div className="flex justify-end gap-3 mb-6">
+                <ProjectsPanelToggle
+                    count={constructionCount}
+                    icon={HardHat}
+                    buttonLabel="Construction Projects"
+                    isOpen={projectsPanelOpen}
+                    onToggle={() => setProjectsPanelOpen((p) => !p)}
+                />
                 <Button
                     onClick={() =>
                         navigate({
@@ -248,15 +238,6 @@ function StorageFacilitiesContent() {
                 </>
             )}
 
-            {/* Construction Projects Dialog */}
-            <ConstructionProjectsDialog
-                isOpen={projects === true}
-                onClose={() =>
-                    navigate({
-                        search: (prev) => ({ ...prev, projects: undefined }),
-                    })
-                }
-            />
         </div>
     );
 }

@@ -116,11 +116,7 @@ export function TechnologyDetailDialog<T>({
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="text-xl font-semibold">
-                                        <Money
-                                            amount={technology.price}
-                                            iconSize="lg"
-                                            long
-                                        />
+                                        <Money amount={technology.price} long />
                                     </div>
                                     {/* Knowledge spillover discount */}
                                     {technology.discount && (

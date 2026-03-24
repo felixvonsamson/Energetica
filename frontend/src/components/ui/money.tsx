@@ -5,11 +5,10 @@
  * Built on top of DataValue for consistent monospaced display.
  */
 
-import { DollarSign } from "lucide-react";
-
 import { formatMoney } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 
+import { CoinIcon } from "./coin-icon";
 import { DataValue } from "./typography";
 
 interface MoneyProps {
@@ -38,29 +37,15 @@ interface MoneyProps {
  *     <TypographyH1><Money amount={50000} /></TypographyH1>
  *     <TypographyMuted><Money amount={100} /></TypographyMuted>
  */
-export function Money({
-    amount,
-    long = false,
-    className,
-    iconSize = "sm",
-}: MoneyProps) {
-    const sizeClasses = {
-        sm: "w-3 h-3",
-        md: "w-4 h-4",
-        lg: "w-5 h-5",
-    };
-
+export function Money({ amount, long = false, className }: MoneyProps) {
     if (amount === null) return "-";
 
     return (
         <DataValue
-            className={cn("inline-flex items-center gap-0.5", className)}
+            className={cn("inline-flex items-baseline gap-1", className)}
         >
             {formatMoney(amount, long)}
-            <DollarSign
-                className={cn(sizeClasses[iconSize])}
-                strokeWidth={2.5}
-            />
+            <CoinIcon className={"w-[1em] h-[1em] translate-y-[0.15em]"} />
         </DataValue>
     );
 }

@@ -1,9 +1,11 @@
 /** Hooks for fetching and managing construction/research projects. */
 
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { useTickQuery } from "@/contexts/game-tick-context";
 import { projectsApi } from "@/lib/api/projects";
+import { getUserFriendlyError } from "@/lib/error-utils";
 import { queryKeys, queryClient } from "@/lib/query-client";
 
 /**
@@ -159,6 +161,9 @@ export function useDecreaseProjectPriority() {
             // Update cache directly with returned list (avoids refetch)
             queryClient.setQueryData(queryKeys.projects.all, data);
         },
+        onError: (error) => {
+            toast.error(getUserFriendlyError(error));
+        },
     });
 }
 
@@ -169,6 +174,9 @@ export function useIncreaseProjectPriority() {
         onSuccess: (data) => {
             // Update cache directly with returned list (avoids refetch)
             queryClient.setQueryData(queryKeys.projects.all, data);
+        },
+        onError: (error) => {
+            toast.error(getUserFriendlyError(error));
         },
     });
 }

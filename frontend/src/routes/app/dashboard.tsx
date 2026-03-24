@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 import { AchievementCard } from "@/components/dashboard/achievement-card";
-import { DailyQuizSection } from "@/components/dashboard/daily-quiz";
+import { DailyQuizButton } from "@/components/dashboard/daily-quiz";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import {
     ProjectList,
@@ -29,7 +29,12 @@ import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { WeatherSection } from "@/components/dashboard/weather";
 import { DevelopmentBanner } from "@/components/development-banner";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui";
 import { useAchievements } from "@/hooks/use-achievements";
 import { useCapabilities, useHasCapability } from "@/hooks/use-capabilities";
 import { useProjects } from "@/hooks/use-projects";
@@ -232,14 +237,12 @@ function DashboardContent() {
                         icon={Trophy}
                         title="Leaderboards"
                     />
+                    <DailyQuizButton />
                 </div>
             </section>
 
             {/* Achievement progression */}
             <AchievementSection />
-
-            {/* Daily quiz */}
-            <DailyQuizSection />
         </div>
     );
 }
@@ -247,8 +250,11 @@ function DashboardContent() {
 function BeginnersGuide() {
     return (
         <Card>
-            <CardTitle className="mb-4">Beginners guide</CardTitle>
-            <div className="space-y-4 text-base">
+            <CardHeader>
+                <CardTitle>Beginners guide</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4 text-base">
                 <p>Welcome to Energetica!</p>
                 <p>
                     You begin your journey with <b>1 steam engine</b> and a
@@ -314,6 +320,7 @@ function BeginnersGuide() {
                 </p>
                 <p>Best of luck in your energy adventure!</p>
             </div>
+            </CardContent>
         </Card>
     );
 }

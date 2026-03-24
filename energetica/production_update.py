@@ -35,7 +35,7 @@ from energetica.globals import engine
 from energetica.schemas.electricity_markets import AskType
 from energetica.schemas.notifications import CreditLimitExceededPayload
 from energetica.types.facility_statuses import ProductionStatus
-from energetica.utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
+from energetica.utils.misc import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
 
 
 def update_electricity() -> None:
@@ -632,7 +632,9 @@ def renewables_generation(player: Player, generation: dict) -> None:
     # SOLAR
     solar_generation(player, generation, in_game_seconds_passed)
     # HYDRO
-    power_factor = calculate_river_discharge(in_game_seconds_passed) / 150
+    power_factor = (
+        calculate_river_speed(in_game_seconds_passed) / 2.5
+    )  # max river speed is 2.5 m/s, so this normalizes the power factor between 0 and 1
     for hydro_facility in HydroFacilityType:
         if player.capacities.get(hydro_facility) is not None:
             generation[hydro_facility] = power_factor * player.capacities[hydro_facility]["power"]
@@ -657,7 +659,7 @@ def solar_generation(player: Player, generation: dict, in_game_seconds_passed: i
                     facility.position,
                     in_game_seconds_passed,
                     engine.random_seed,
-                )
+                )[0]
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"]
                     * facility.multipliers["power_production_multiplier"]

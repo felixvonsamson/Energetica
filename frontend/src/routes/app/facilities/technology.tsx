@@ -4,16 +4,19 @@ import {
     useSearch,
 } from "@tanstack/react-router";
 import { Microscope } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
-import { ResearchProjectsDialog } from "@/components/dashboard/research-projects-dialog";
+import {
+    ProjectsPanel,
+    ProjectsPanelToggle,
+} from "@/components/dashboard/projects-panel";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
     TechnologyItem,
     TechnologyDetailDialog,
     TechnologyEffectsTable,
 } from "@/components/technologies";
-import { CatalogGrid, Button } from "@/components/ui";
+import { CatalogGrid } from "@/components/ui";
 import { useTechnologiesCatalog, useProjects } from "@/hooks/use-projects";
 
 function TechnologiesHelp() {
@@ -60,12 +63,8 @@ export const Route = createFileRoute("/app/facilities/technology")({
     },
     validateSearch: (
         search: Record<string, unknown>,
-    ): { technology?: string; projects?: boolean } => ({
+    ): { technology?: string } => ({
         technology: search.technology ? String(search.technology) : undefined,
-        projects:
-            search.projects === "true" || search.projects === true
-                ? true
-                : undefined,
     }),
 });
 
@@ -79,10 +78,12 @@ function TechnologyPage() {
 
 function TechnologyContent() {
     const navigate = useNavigate({ from: "/app/facilities/technology" });
-    const { technology, projects } = useSearch({
+    const { technology } = useSearch({
         from: "/app/facilities/technology",
     });
     const { data: projectsData } = useProjects();
+    const researchCount = projectsData?.research_queue.length ?? 0;
+    const [projectsPanelOpen, setProjectsPanelOpen] = useState(false);
 
     const {
         data: catalogData,
@@ -101,28 +102,25 @@ function TechnologyContent() {
         [technologies, technology],
     );
 
-    // Check if there are any research projects
-    const hasResearchProjects = (projectsData?.research_queue.length ?? 0) > 0;
-
     return (
         <div className="p-4 md:p-8">
-            {/* Research projects button - only shown if there are ongoing projects */}
-            {hasResearchProjects && (
-                <div className="mb-6 flex justify-center">
-                    <Button
-                        variant="outline"
-                        onClick={() =>
-                            navigate({
-                                search: (prev) => ({ ...prev, projects: true }),
-                            })
-                        }
-                        className="flex items-center gap-2"
-                    >
-                        <Microscope className="w-5 h-5" />
-                        View Research Projects
-                    </Button>
-                </div>
-            )}
+            {/* Research projects panel — very top, full width */}
+            <ProjectsPanel
+                projectCategory="research"
+                icon={Microscope}
+                panelTitle="Under Research"
+                isOpen={projectsPanelOpen}
+            />
+
+            <div className="flex justify-end mb-6">
+                <ProjectsPanelToggle
+                    count={researchCount}
+                    icon={Microscope}
+                    buttonLabel="Research Projects"
+                    isOpen={projectsPanelOpen}
+                    onToggle={() => setProjectsPanelOpen((p) => !p)}
+                />
+            </div>
 
             {/* Loading state */}
             {isCatalogLoading && (
@@ -174,15 +172,6 @@ function TechnologyContent() {
                 </>
             )}
 
-            {/* Research Projects Dialog */}
-            <ResearchProjectsDialog
-                isOpen={projects === true}
-                onClose={() =>
-                    navigate({
-                        search: (prev) => ({ ...prev, projects: undefined }),
-                    })
-                }
-            />
         </div>
     );
 }

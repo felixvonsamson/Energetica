@@ -818,7 +818,7 @@ wind_power_curve: list[float] = [
     0,
 ]  # from 0 to 90 km/h
 
-river_discharge_seasonal = [
+river_flow_speed_seasonal = [
     0.252,
     0.245,
     0.238,

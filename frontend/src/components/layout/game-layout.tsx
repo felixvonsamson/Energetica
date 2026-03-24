@@ -8,6 +8,7 @@ import { type ReactNode, useState } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 
 interface GameLayoutProps {
     children: ReactNode;
@@ -37,11 +38,7 @@ export function GameLayout({ children }: GameLayoutProps) {
                         {children}
                     </main>
 
-                    {/* Toast notifications container */}
-                    <div
-                        id="toasts"
-                        className="fixed top-4 right-4 z-50 flex flex-col gap-2"
-                    />
+                    <Toaster position="top-center" richColors />
                 </div>
             </SidebarInset>
         </SidebarProvider>

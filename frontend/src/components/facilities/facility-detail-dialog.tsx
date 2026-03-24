@@ -143,7 +143,7 @@ function FacilityContent<T>(
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="text-xl font-semibold">
-                            <Money amount={facility.price} iconSize="lg" long />
+                            <Money amount={facility.price} long />
                         </div>
                         <a
                             href={facility.wikipedia_link}
