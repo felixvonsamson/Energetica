@@ -7,6 +7,10 @@
  * - Getting the unread notification count
  * - Deleting individual notifications
  * - Marking all notifications as read
+ * - Marking a single notification as read
+ * - Flagging/unflagging notifications (optimistic update)
+ * - Archiving/unarchiving notifications (optimistic update)
+ * - Fetching and updating notification subscription preferences
  *
  * All types are imported from @/types/notifications to keep
  * notification-related definitions in one place and stay synchronized with the
@@ -18,6 +22,7 @@ import { useMemo } from "react";
 
 import { notificationsApi } from "@/lib/api/notifications";
 import { queryKeys, queryClient } from "@/lib/query-client";
+import type { NotificationListResponse } from "@/types/notifications";
 
 /**
  * Get the list of all notifications for the current user.
@@ -113,6 +118,140 @@ export function useUnreadNotificationsCount() {
     const { data } = useNotifications();
 
     return useMemo(() => {
-        return data?.notifications.filter((n) => !n.read).length ?? 0;
+        return (
+            data?.notifications.filter((n) => !n.read && !n.archived).length ??
+            0
+        );
     }, [data]);
+}
+
+/**
+ * Mark a single notification as read.
+ *
+ * Invalidates the notification list after success.
+ *
+ * @returns Mutation hook for marking a single notification as read
+ */
+export function useMarkNotificationRead() {
+    return useMutation<void, Error, number>({
+        mutationFn: (id: number) =>
+            notificationsApi.patchNotification(id, { read: true }),
+        onMutate: (id) => {
+            queryClient.setQueryData<NotificationListResponse>(
+                queryKeys.notifications.all,
+                (old) => {
+                    if (!old) return old;
+                    return {
+                        ...old,
+                        notifications: old.notifications.map((n) =>
+                            n.id === id ? { ...n, read: true } : n,
+                        ),
+                    };
+                },
+            );
+        },
+        onError: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.notifications.all,
+            });
+        },
+    });
+}
+
+/**
+ * Flag or unflag a notification.
+ *
+ * Uses optimistic updates so the UI reflects the change immediately.
+ *
+ * @returns Mutation hook taking `{ id, flagged: boolean }`
+ */
+export function useFlagNotification() {
+    return useMutation<void, Error, { id: number; flagged: boolean }>({
+        mutationFn: ({ id, flagged }) =>
+            notificationsApi.patchNotification(id, { flagged }),
+        onMutate: ({ id, flagged }) => {
+            queryClient.setQueryData<NotificationListResponse>(
+                queryKeys.notifications.all,
+                (old) => {
+                    if (!old) return old;
+                    return {
+                        ...old,
+                        notifications: old.notifications.map((n) =>
+                            n.id === id ? { ...n, flagged } : n,
+                        ),
+                    };
+                },
+            );
+        },
+        onError: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.notifications.all,
+            });
+        },
+    });
+}
+
+/**
+ * Archive or unarchive a notification.
+ *
+ * Uses optimistic updates so the animation feels instant.
+ *
+ * TODO: Archive UI is deferred — this hook is ready for use when the archived
+ * view is re-introduced to the notification panel.
+ *
+ * @returns Mutation hook taking `{ id, archived: boolean }`
+ */
+export function useArchiveNotification() {
+    return useMutation<void, Error, { id: number; archived: boolean }>({
+        mutationFn: ({ id, archived }) =>
+            notificationsApi.patchNotification(id, { archived }),
+        onMutate: ({ id, archived }) => {
+            queryClient.setQueryData<NotificationListResponse>(
+                queryKeys.notifications.all,
+                (old) => {
+                    if (!old) return old;
+                    return {
+                        ...old,
+                        notifications: old.notifications.map((n) =>
+                            n.id === id ? { ...n, archived } : n,
+                        ),
+                    };
+                },
+            );
+        },
+        onError: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.notifications.all,
+            });
+        },
+    });
+}
+
+/**
+ * Get notification feed subscriptions (server-side opt-in to notification
+ * streams).
+ *
+ * @returns Query result with feed subscriptions
+ */
+export function useNotificationFeedSubscriptions() {
+    return useQuery({
+        queryKey: queryKeys.notifications.feedSubscriptions,
+        queryFn: notificationsApi.getFeedSubscriptions,
+    });
+}
+
+/**
+ * Update notification feed subscriptions.
+ *
+ * @returns Mutation hook for updating feed subscriptions
+ */
+export function useUpdateNotificationFeedSubscriptions() {
+    return useMutation({
+        mutationFn: notificationsApi.patchFeedSubscriptions,
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.notifications.feedSubscriptions,
+            });
+        },
+    });
 }

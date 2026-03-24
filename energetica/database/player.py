@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -12,13 +13,21 @@ from typing import TYPE_CHECKING, Any, Iterable
 
 from pywebpush import WebPushException, webpush
 
-from energetica.config.achievements import achievements, format_energy, format_mass, format_power
+from energetica.config.achievements import achievements
 from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.engine_data.capacity_data import CapacityData
 from energetica.database.engine_data.circular_buffer_player import CircularBufferPlayer
 from energetica.database.engine_data.cumulative_emissions_data import CumulativeEmissionsData
 from energetica.database.messages import Chat, Notification
+from energetica.schemas.notifications import (
+    PersistableNotificationPayload,
+    AchievementMilestoneBasePayload,
+    AchievementMilestoneEnergyStoragePayload,
+    AchievementMilestonePowerConsumptionPayload,
+    AchievementUnlockPayload,
+    NotificationPayload,
+)
 from energetica.database.network_prices import NetworkPrices
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.ongoing_shipment import OngoingShipment
@@ -36,7 +45,7 @@ from energetica.enums import (
     WorkerType,
 )
 from energetica.globals import MAIN_EVENT_LOOP, engine
-from energetica.schemas.achievements import AchievementOut
+from energetica.schemas.achievements import AchievementMilestoneOut, AchievementOut, AchievementUnlockOut
 from energetica.schemas.browser_notifications import Subscription
 from energetica.schemas.electricity_markets import AskType, BidType
 from energetica.technology_effects import (
@@ -140,18 +149,15 @@ class Player(DBModel):
         },
     )
 
-    # Browser notifications & preferences
-    # TODO(mglst): type annotation seems wrong. is it not a dictionary?
-    notification_subscriptions: list[Subscription] = field(default_factory=list)
-    notification_preferences: dict = field(
+    # Browser push notification subscriptions (push subscription objects)
+    push_subscriptions: list[Subscription] = field(default_factory=list)
+    # Server-side feed subscriptions: opt-in to specific notification streams.
+    # Controls whether the backend generates notifications for these events.
+    notification_feed_subscriptions: dict = field(
         default_factory=lambda: {
-            "messages": True,
-            "achievements": True,
-            "projects": True,
-            "decommissioning": True,
-            "resource_market": True,
-            "climate_events": True,
-        },
+            "resource_market_bid": False,
+            "network_join_leave": False,
+        }
     )
     socketio_clients: list[str] = field(default_factory=list)
 
@@ -172,6 +178,15 @@ class Player(DBModel):
             self.production_statuses = {}
         if not hasattr(self, "consumption_statuses"):
             self.consumption_statuses = {}
+        if not hasattr(self, "notification_feed_subscriptions"):
+            self.notification_feed_subscriptions = {
+                "resource_market_bid": False,
+                "network_join_leave": False,
+            }
+        # Migrate old notification_opt_ins field
+        if hasattr(self, "notification_opt_ins"):
+            del self.__dict__["notification_opt_ins"]
+        self.__dict__.pop("notification_preferences", None)
 
     def __hash__(self) -> int:
         """Return the hash of the player's id."""
@@ -392,48 +407,50 @@ class Player(DBModel):
                 }
         return shipment_speeds
 
-    def notify(self, title: str, message: str) -> None:
+    def notify_subscription(self, subscription: Subscription, payload: NotificationPayload) -> None:
+        """Send a push notification to a single subscription without creating a notification object."""
+        notification_data = {
+            "type": payload.type,
+            "payload": payload.model_dump(exclude={"type"}),
+        }
+        parsed = urlparse(subscription.endpoint)
+        audience = f"{parsed.scheme}://{parsed.netloc}"
+        try:
+            webpush(
+                subscription_info=subscription.model_dump(),
+                data=json.dumps(notification_data),
+                vapid_private_key=engine.VAPID_PRIVATE_KEY,
+                vapid_claims={"aud": audience, "sub": "mailto:energetica.game@gmail.com"},
+            )
+        except WebPushException as ex:
+            if ex.response is not None and ex.response.status_code == 410:
+                # Subscription has expired or been revoked — remove it
+                try:
+                    self.push_subscriptions.remove(subscription)
+                except ValueError:
+                    pass
+            else:
+                engine.warn(f"Failed to send notification: {repr(ex)}")
+
+    def notify(self, payload: PersistableNotificationPayload) -> None:
         """
         Create a notification.
 
         This has three effects:
         1. It creates a new notification object in the database.
-        2. It emits the notification over socketio to the player's active web clients.
+        2. It emits a socketio "invalidate" event to the player's active web clients.
         3. It sends the notification using webpush to the player's subscribed browser(s).
         """
-        new_notification = Notification(title=title, content=message, player=self)
-        self.emit(
-            "new_notification",
-            {
-                "id": new_notification.id,
-                "time": str(new_notification.time),
-                "title": new_notification.title,
-                "content": new_notification.content,
-            },
-        )
-        if (
-            len(self.notifications) > 1
-            and new_notification.content == self.notifications[len(self.notifications) - 2].content
-            and new_notification.time == self.notifications[len(self.notifications) - 2].time
-        ):
-            return
-        notification_data = {
-            "title": new_notification.title,
-            "body": new_notification.content,
-        }
-        for subscription in self.notification_subscriptions:
-            audience = "https://fcm.googleapis.com"
-            if "https://updates.push.services.mozilla.com" in subscription.endpoint:
-                audience = "https://updates.push.services.mozilla.com"
-            try:
-                webpush(
-                    subscription_info=subscription.model_dump(),
-                    data=json.dumps(notification_data),
-                    vapid_private_key=engine.VAPID_PRIVATE_KEY,
-                    vapid_claims={"aud": audience, "sub": "mailto:felixvonsamson@gmail.com"},
-                )
-            except WebPushException as ex:
-                engine.warn(f"Failed to send notification: {repr(ex)}")
+        payload_dict = payload.model_dump(exclude={"type"})
+        Notification(type=payload.type, payload=payload_dict, player=self)
+        # Real-time invalidation
+        for sid in self.socketio_clients:
+            asyncio.run_coroutine_threadsafe(
+                engine.socketio.emit("invalidate", {"queries": [["notifications"]]}, to=sid), MAIN_EVENT_LOOP
+            )
+        # Web push
+        for subscription in list(self.push_subscriptions):
+            self.notify_subscription(subscription, payload)
 
     def send_worker_info(self) -> None:
         """Send the number of available construction and lab workers to the player's clients."""
@@ -455,6 +472,29 @@ class Player(DBModel):
         """Return True if the player has discovered the greenhouse gas effect."""
         return bool(self.achievements["GHG_effect"])
 
+    def _notify_milestone(self, achievement_key: str, milestone: dict) -> None:
+        if achievement_key == "power_consumption":
+            payload: NotificationPayload = AchievementMilestonePowerConsumptionPayload(
+                achievement_key="power_consumption",
+                comparison_key=milestone["comparison_key"],
+                threshold=milestone["threshold"],
+                xp=milestone["xp"],
+            )
+        elif achievement_key == "energy_storage":
+            payload = AchievementMilestoneEnergyStoragePayload(
+                achievement_key="energy_storage",
+                comparison_key=milestone["comparison_key"],
+                threshold=milestone["threshold"],
+                xp=milestone["xp"],
+            )
+        else:
+            payload = AchievementMilestoneBasePayload(
+                achievement_key=achievement_key,  # type: ignore[arg-type]
+                threshold=milestone["threshold"],
+                xp=milestone["xp"],
+            )
+        self.notify(payload)
+
     def check_continuous_achievements(self) -> None:
         """Check for player achievements that are linked to values that are updated every tick."""
         for achievement in [
@@ -467,38 +507,13 @@ class Player(DBModel):
         ]:
             current_lvl = self.achievements[achievement]
             achievement_data = achievements[achievement]
-            if (
-                current_lvl < len(achievement_data["milestones"])
-                and self.progression_metrics[achievement_data["metric"]] >= achievement_data["milestones"][current_lvl]
-            ):
+            if current_lvl >= len(achievement_data["milestones"]):
+                continue
+            milestone = achievement_data["milestones"][current_lvl]
+            if self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]:
                 self.achievements[achievement] += 1
-                self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
-                # Determine which format function to use
-                metric = achievement_data["metric"]
-                milestone_value = achievement_data["milestones"][current_lvl]
-                if metric in ("max_power_consumption",):
-                    formatted_value = format_power(milestone_value)
-                elif metric in ("max_energy_stored", "imported_energy", "exported_energy"):
-                    formatted_value = format_energy(milestone_value)
-                elif metric in ("extracted_resources", "sold_resources", "bought_resources"):
-                    formatted_value = format_mass(milestone_value)
-                else:
-                    formatted_value = milestone_value  # fallback for integer values
-
-                if achievement == "network":
-                    message = achievement_data["message"].format(reward=achievement_data["rewards"][current_lvl])
-                elif "comparisons" in achievement_data:
-                    message = achievement_data["message"].format(
-                        value=formatted_value,
-                        comparison=achievement_data.get("comparisons", [""])[current_lvl],
-                        reward=achievement_data["rewards"][current_lvl],
-                    )
-                else:
-                    message = achievement_data["message"].format(
-                        value=formatted_value,
-                        reward=achievement_data["rewards"][current_lvl],
-                    )
-                self.notify("Achievement", message)
+                self.progression_metrics["xp"] += milestone["xp"]
+                self._notify_milestone(achievement, milestone)
                 self.invalidate_queries(["auth", "me"])
 
     def check_construction_achievements(self, construction_name: str) -> None:
@@ -506,27 +521,26 @@ class Player(DBModel):
         for achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
             if not self.achievements[achievement] and construction_name in achievements[achievement]["unlocked_with"]:
                 self.achievements[achievement] = 1
-                self.progression_metrics["xp"] += achievements[achievement]["reward"]
-                message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
-                self.notify("Achievement", message)
+                self.progression_metrics["xp"] += achievements[achievement]["xp"]
+                self.notify(
+                    AchievementUnlockPayload(
+                        achievement_key=achievement,  # type: ignore[arg-type]
+                        xp=achievements[achievement]["xp"],
+                    )
+                )
                 self.invalidate_queries(["auth", "me"])
 
     def check_technology_achievement(self) -> None:
         """Check for technology achievement."""
         current_lvl = self.achievements["technology"]
         achievement_data = achievements["technology"]
-        if (
-            current_lvl < len(achievement_data["milestones"])
-            and self.progression_metrics[achievement_data["metric"]] >= achievement_data["milestones"][current_lvl]
-        ):
+        if current_lvl >= len(achievement_data["milestones"]):
+            return
+        milestone = achievement_data["milestones"][current_lvl]
+        if self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]:
             self.achievements["technology"] += 1
-            self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
-            formatted_value = achievement_data["milestones"][current_lvl]
-            message = achievements["technology"]["message"].format(
-                value=formatted_value,
-                reward=achievements["technology"]["rewards"][current_lvl],
-            )
-            self.notify("Achievement", message)
+            self.progression_metrics["xp"] += milestone["xp"]
+            self._notify_milestone("technology", milestone)
             self.invalidate_queries(["auth", "me"])
 
     def check_trading_achievement(self) -> None:
@@ -534,23 +548,13 @@ class Player(DBModel):
         for achievement in ["trading_export", "trading_import"]:
             current_lvl = self.achievements[achievement]
             achievement_data = achievements[achievement]
-            if (
-                current_lvl < len(achievement_data["milestones"])
-                and self.progression_metrics[achievement_data["metric"]] >= achievement_data["milestones"][current_lvl]
-            ):
+            if current_lvl >= len(achievement_data["milestones"]):
+                continue
+            milestone = achievement_data["milestones"][current_lvl]
+            if self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]:
                 self.achievements[achievement] += 1
-                self.progression_metrics["xp"] += achievement_data["rewards"][current_lvl]
-                metric = achievement_data["metric"]
-                milestone_value = achievement_data["milestones"][current_lvl]
-                if metric in ("sold_resources", "bought_resources"):
-                    formatted_value = format_mass(milestone_value)
-                else:
-                    formatted_value = milestone_value
-                message = achievement_data["message"].format(
-                    value=formatted_value,
-                    reward=achievement_data["rewards"][current_lvl],
-                )
-                self.notify("Achievement", message)
+                self.progression_metrics["xp"] += milestone["xp"]
+                self._notify_milestone(achievement, milestone)
 
     def package_upcoming_achievements(self) -> list[AchievementOut]:
         """Package the progress information for the upcoming achievements."""
@@ -561,10 +565,10 @@ class Player(DBModel):
                 continue
             if achievement_id in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
                 if not self.achievements[achievement_id]:
-                    achievement = AchievementOut(
+                    achievement = AchievementUnlockOut(
+                        type="unlock",
                         id=achievement_id,
-                        name=achievement_data["name"],
-                        reward=achievement_data["reward"],
+                        reward=achievement_data["xp"],
                         objective=1,
                         status=0,
                     )
@@ -572,12 +576,14 @@ class Player(DBModel):
             else:
                 current_lvl = self.achievements[achievement_id]
                 if current_lvl < len(achievement_data["milestones"]):
+                    milestone = achievement_data["milestones"][current_lvl]
                     status = self.progression_metrics[achievement_data["metric"]]
-                    achievement = AchievementOut(
+                    achievement = AchievementMilestoneOut(
+                        type="milestone",
                         id=achievement_id,
-                        name=f"{achievement_data['name']} {current_lvl + 1}",
-                        reward=achievement_data["rewards"][current_lvl],
-                        objective=achievement_data["milestones"][current_lvl],
+                        level=current_lvl + 1,
+                        reward=milestone["xp"],
+                        objective=milestone["threshold"],
                         status=round(status),
                     )
                     upcoming_achievements.append(achievement)
@@ -627,22 +633,25 @@ class Player(DBModel):
     @property
     def power_facilities(self) -> Iterable[ActiveFacility]:
         return ActiveFacility.filter(
-            lambda active_facility: active_facility.player == self
-            and isinstance(active_facility.facility_type, PowerFacilityType),
+            lambda active_facility: (
+                active_facility.player == self and isinstance(active_facility.facility_type, PowerFacilityType)
+            ),
         )
 
     @property
     def storage_facilities(self) -> Iterable[ActiveFacility]:
         return ActiveFacility.filter(
-            lambda active_facility: active_facility.player == self
-            and isinstance(active_facility.facility_type, StorageFacilityType),
+            lambda active_facility: (
+                active_facility.player == self and isinstance(active_facility.facility_type, StorageFacilityType)
+            ),
         )
 
     @property
     def extraction_facilities(self) -> Iterable[ActiveFacility]:
         return ActiveFacility.filter(
-            lambda active_facility: active_facility.player == self
-            and isinstance(active_facility.facility_type, ExtractionFacilityType),
+            lambda active_facility: (
+                active_facility.player == self and isinstance(active_facility.facility_type, ExtractionFacilityType)
+            ),
         )
 
     def package_active_facilities(self) -> dict[str, dict[int, dict[str, Any]]]:

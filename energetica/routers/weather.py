@@ -14,5 +14,5 @@ router = APIRouter(prefix="/weather", tags=["Weather"])
 
 @router.get("")
 def get_current_weather(player: Annotated[Player, Depends(get_settled_player)]) -> WeatherOut:
-    """Get the current weather data including date, irradiance, wind speed, and river discharge."""
+    """Get the current weather data including date, irradiance, wind speed, and river flow speed."""
     return misc.package_weather_data(player)

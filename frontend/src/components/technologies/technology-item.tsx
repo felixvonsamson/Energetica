@@ -57,7 +57,7 @@ export function TechnologyItem({
                     <div className="grow" />
                 </CardTitle>
                 <CardDescription className="flex items-center gap-2">
-                    <Money amount={price} iconSize="sm" long />
+                    <Money amount={price} long />
                     {discount && (
                         <div className="text-success text-xs">
                             <em>(-{Math.round((1 - discount) * 100)}%)</em>

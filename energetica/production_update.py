@@ -33,8 +33,9 @@ from energetica.enums import (
 )
 from energetica.globals import engine
 from energetica.schemas.electricity_markets import AskType
+from energetica.schemas.notifications import CreditLimitExceededPayload
 from energetica.types.facility_statuses import ProductionStatus
-from energetica.utils.misc import calculate_river_discharge, calculate_solar_irradiance, calculate_wind_speed
+from energetica.utils.misc import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
 
 
 def update_electricity() -> None:
@@ -437,13 +438,9 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
 
     # allow a maximum overdraft of the equivalent of the daily income of the industry
     max_overdraft = -player.config["industry"]["income_per_day"]
-    notification_txt = "You exceeded your credit limit, you can't buy electricity on the market any more."
-    do_not_send = len(player.notifications) > 0 and player.notifications[-1].content == notification_txt
+    do_not_send = len(player.notifications) > 0 and player.notifications[-1].type == "credit_limit_exceeded"
     if player.money < max_overdraft and player.network is not None and not do_not_send:
-        player.notify(
-            "Not enough money",
-            notification_txt,
-        )
+        player.notify(CreditLimitExceededPayload())
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
     # are used and replace it with a cached property or something similar that generates a list of all demands and offer types
@@ -635,7 +632,9 @@ def renewables_generation(player: Player, generation: dict) -> None:
     # SOLAR
     solar_generation(player, generation, in_game_seconds_passed)
     # HYDRO
-    power_factor = calculate_river_discharge(in_game_seconds_passed) / 150
+    power_factor = (
+        calculate_river_speed(in_game_seconds_passed) / 2.5
+    )  # max river speed is 2.5 m/s, so this normalizes the power factor between 0 and 1
     for hydro_facility in HydroFacilityType:
         if player.capacities.get(hydro_facility) is not None:
             generation[hydro_facility] = power_factor * player.capacities[hydro_facility]["power"]
@@ -660,7 +659,7 @@ def solar_generation(player: Player, generation: dict, in_game_seconds_passed: i
                     facility.position,
                     in_game_seconds_passed,
                     engine.random_seed,
-                )
+                )[0]
                 max_power = (
                     engine.const_config["assets"][facility_type]["base_power_generation"]
                     * facility.multipliers["power_production_multiplier"]

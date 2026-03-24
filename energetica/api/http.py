@@ -2,7 +2,6 @@
 # TODO(mglst): migrate to `energetica/routers/<xyz>.py`
 
 import pickle
-from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -182,13 +181,6 @@ async def change_graph_view(  # noqa: ANN201
     request_data = await request.json()
     view = Player.NetworkGraphView(request_data["view"])
     player.change_graph_view(view)
-    return {"response": "success"}
-
-
-@todo_router.get("/test_notification")
-def test_notification(player: Annotated[Player, Depends(get_settled_player)]):  # noqa: ANN201
-    """Send a dummy browser notification to the player."""
-    player.notify("Test notification", f"{engine.total_t} ({datetime.now()})")
     return {"response": "success"}
 
 

@@ -1,7 +1,56 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/use-daily-quiz";
+import { HelpCircle } from "lucide-react";
 
-export function DailyQuizSection() {
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { TypographyH2, TypographyLarge } from "@/components/ui/typography";
+import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/use-daily-quiz";
+import { cn } from "@/lib/utils";
+
+export function DailyQuizButton() {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <button
+                    className={cn(
+                        "bg-card hover:bg-tan-hover dark:hover:bg-muted",
+                        "p-6 rounded-lg text-center transition-colors block w-full",
+                        "border border-transparent hover:border-pine dark:hover:border-brand-green",
+                    )}
+                >
+                    <HelpCircle className="w-8 h-8 mx-auto mb-2 text-foreground" />
+                    <TypographyH2 className="text-foreground">
+                        <TypographyLarge>Daily Quiz</TypographyLarge>
+                    </TypographyH2>
+                </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle className="text-center">
+                        <img
+                            src="/static/images/icons/quiz.png"
+                            className="inline w-6 h-6"
+                            alt=""
+                        />
+                        <span className="mx-2">Daily Quiz</span>
+                        <img
+                            src="/static/images/icons/quiz.png"
+                            className="inline w-6 h-6"
+                            alt=""
+                        />
+                    </DialogTitle>
+                </DialogHeader>
+                <DailyQuizSection />
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function DailyQuizSection() {
     // TODO: correctly answering the daily quiz earns the player 1 XP point. This is not communicated in the new UI
     const { data: quizData, isLoading, isError } = useDailyQuiz();
     const { mutate: submitAnswer, isPending } = useSubmitQuizAnswer();
@@ -62,19 +111,19 @@ export function DailyQuizSection() {
 
         if (wasSelected && isCorrect) {
             return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success font-bold">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success font-bold whitespace-nowrap">
                     ✓ Your answer
                 </span>
             );
         } else if (wasSelected && !isCorrect) {
             return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive font-bold">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive font-bold whitespace-nowrap">
                     ✗ Your answer
                 </span>
             );
         } else if (isCorrect) {
             return (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success font-bold">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success font-bold whitespace-nowrap">
                     ✓ Correct
                 </span>
             );
@@ -83,115 +132,74 @@ export function DailyQuizSection() {
     };
 
     return (
-        <div className="flex justify-center">
-            <Card className="max-w-2xl w-full">
-                <CardHeader>
-                    <CardTitle className="text-center mb-4">
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
-                        <span className="mx-2">Daily Quiz</span>
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
-                    </CardTitle>
-                </CardHeader>
+        <div className="space-y-4">
+            {isLoading ? (
+                <div className="text-center text-gray-500">
+                    Loading quiz question...
+                </div>
+            ) : isError ? (
+                <div className="text-center text-alert-red">
+                    Failed to load quiz question
+                </div>
+            ) : quizData ? (
+                <>
+                    {/* Question */}
+                    <p className="text-lg text-center mb-4">
+                        {quizData.question}
+                    </p>
 
-                <CardContent>
-                    <div className="space-y-4">
-                        {isLoading ? (
-                            <div className="text-center text-gray-500">
-                                Loading quiz question...
-                            </div>
-                        ) : isError ? (
-                            <div className="text-center text-alert-red">
-                                Failed to load quiz question
-                            </div>
-                        ) : quizData ? (
-                            <>
-                                {/* Question */}
-                                <p className="text-lg text-center mb-4">
-                                    {quizData.question}
-                                </p>
-
-                                {/* Answer Buttons */}
-                                <div className="space-y-3">
-                                    <button
-                                        onClick={() =>
-                                            handleAnswerClick("answer1")
-                                        }
-                                        disabled={hasAnswered || isPending}
-                                        className={getButtonClass("answer1")}
-                                    >
-                                        <span className="block pr-24">
-                                            {quizData.answer1}
-                                        </span>
-                                        {getAnswerIndicator("answer1")}
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            handleAnswerClick("answer2")
-                                        }
-                                        disabled={hasAnswered || isPending}
-                                        className={getButtonClass("answer2")}
-                                    >
-                                        <span className="block pr-24">
-                                            {quizData.answer2}
-                                        </span>
-                                        {getAnswerIndicator("answer2")}
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            handleAnswerClick("answer3")
-                                        }
-                                        disabled={hasAnswered || isPending}
-                                        className={getButtonClass("answer3")}
-                                    >
-                                        <span className="block pr-24">
-                                            {quizData.answer3}
-                                        </span>
-                                        {getAnswerIndicator("answer3")}
-                                    </button>
-                                </div>
-
-                                {/* Explanation and Learn More (only shown after answering) */}
-                                {hasAnswered && quizData.explanation && (
-                                    <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
-                                        <p className="text-center mb-3">
-                                            {quizData.explanation}
-                                        </p>
-                                        {quizData.learn_more_link && (
-                                            <p className="text-center">
-                                                <a
-                                                    href={
-                                                        quizData.learn_more_link
-                                                    }
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="text-info underline hover:opacity-80"
-                                                >
-                                                    Learn more
-                                                </a>
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Submitting state */}
-                                {isPending && (
-                                    <p className="text-center text-gray-500 text-sm">
-                                        Submitting answer...
-                                    </p>
-                                )}
-                            </>
-                        ) : null}
+                    {/* Answer Buttons */}
+                    <div className="space-y-3">
+                        {(
+                            [
+                                "answer1",
+                                "answer2",
+                                "answer3",
+                            ] as const
+                        ).map((key) => (
+                            <button
+                                key={key}
+                                onClick={() => handleAnswerClick(key)}
+                                disabled={hasAnswered || isPending}
+                                className={getButtonClass(key)}
+                            >
+                                <span className="block text-center px-28">
+                                    {quizData[key]}
+                                </span>
+                                {getAnswerIndicator(key)}
+                            </button>
+                        ))}
                     </div>
-                </CardContent>
-            </Card>
+
+                    {/* Explanation and Learn More (only shown after answering) */}
+                    {hasAnswered && quizData.explanation && (
+                        <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                            <p className="text-center mb-3">
+                                {quizData.explanation}
+                            </p>
+                            {quizData.learn_more_link && (
+                                <p className="text-center">
+                                    <a
+                                        href={quizData.learn_more_link}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-info underline hover:opacity-80"
+                                    >
+                                        Learn more
+                                    </a>
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Submitting state */}
+                    {isPending && (
+                        <p className="text-center text-gray-500 text-sm">
+                            Submitting answer...
+                        </p>
+                    )}
+                </>
+            ) : null}
         </div>
     );
 }

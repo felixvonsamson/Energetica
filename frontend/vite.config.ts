@@ -67,6 +67,15 @@ export default defineConfig(({ mode }) => {
                     changeOrigin: true,
                     ws: true,
                 },
+                // Service worker and manifest must be served from root by the backend
+                "^/service-worker.js$": {
+                    target: backendUrl,
+                    changeOrigin: true,
+                },
+                "^/manifest.json$": {
+                    target: backendUrl,
+                    changeOrigin: true,
+                },
                 // Auth and location routes
                 "^/(logout|location_choice)$": {
                     target: backendUrl,
