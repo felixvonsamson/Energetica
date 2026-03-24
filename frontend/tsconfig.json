@@ -24,5 +24,5 @@
         "paths": { "@/*": ["./src/*"] }
     },
     "include": ["src"],
-    "exclude": ["**/*.mdx"]
+    "exclude": ["**/*.mdx", "src/service-worker.ts"]
 }

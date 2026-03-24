@@ -258,6 +258,7 @@ export const queryKeys = {
     },
     notifications: {
         all: ["notifications"] as const,
+        feedSubscriptions: ["notifications", "feed-subscriptions"] as const,
     },
     game: {
         engine: ["game", "engine"] as const,
@@ -271,6 +272,6 @@ export const queryKeys = {
             ["resource-market", "delivery-time", askId] as const,
     },
     browserNotifications: {
-        vapidKey: ["browser-notifications", "vapid-key"] as const,
+        vapidKey: ["push-subscriptions", "vapid-key"] as const,
     },
 } as const;

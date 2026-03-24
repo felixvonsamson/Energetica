@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
 import {
@@ -28,7 +28,28 @@ import {
     TypographyMuted,
 } from "@/components/ui/typography";
 import { useChangePassword } from "@/hooks/use-auth-queries";
+import { browserNotificationsApi } from "@/lib/api/push-subscriptions";
 import { handleApiError } from "@/lib/error-utils";
+import {
+    getAllPushPrefs,
+    setPushPref,
+    PUSH_NOTIF_CATEGORIES,
+    PUSH_NOTIF_CATEGORY_LABELS,
+} from "@/lib/push-notification-prefs";
+import type { NotificationCategory } from "@/types/notifications";
+
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray.buffer;
+}
 
 function SettingsHelp() {
     return (
@@ -66,36 +87,164 @@ function SettingsContent() {
         useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
+    const [notificationsPermissionDenied, setNotificationsPermissionDenied] =
+        useState(false);
+    const [notificationsError, setNotificationsError] = useState<string | null>(
+        null,
+    );
+    const [pushPrefs, setPushPrefs] = useState<Record<
+        NotificationCategory,
+        boolean
+    > | null>(null);
+
+    // Initialize toggle state from reality on mount
+    useEffect(() => {
+        if (!("serviceWorker" in navigator) || !("PushManager" in window))
+            return;
+        navigator.serviceWorker.ready
+            .then((reg) => reg.pushManager.getSubscription())
+            .then((sub) => {
+                setNotificationsEnabled(!!sub);
+            });
+        getAllPushPrefs().then(setPushPrefs);
+    }, []);
 
     // Handle browser notifications toggle
     const handleNotificationsToggle = async () => {
         setNotificationsLoading(true);
+        setNotificationsError(null);
         try {
-            if ("serviceWorker" in navigator && "Notification" in window) {
-                if (!notificationsEnabled) {
-                    // Request permission and subscribe
-                    const permission = await Notification.requestPermission();
-                    if (permission === "granted") {
-                        setNotificationsEnabled(true);
-                        // TODO: Subscribe to push notifications
-                        // const registration = await navigator.serviceWorker.ready;
-                        // const subscription = await registration.pushManager.subscribe(...);
-                        // Send subscription to backend
-                    }
-                } else {
-                    // Unsubscribe
-                    setNotificationsEnabled(false);
-                    // TODO: Unsubscribe from push notifications
-                    // const registration = await navigator.serviceWorker.ready;
-                    // const subscription = await registration.pushManager.getSubscription();
-                    // if (subscription) subscription.unsubscribe();
+            if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+                const isIOS =
+                    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                    (navigator.platform === "MacIntel" &&
+                        navigator.maxTouchPoints > 1);
+                throw new Error(
+                    isIOS
+                        ? "On iOS, add this site to your Home Screen first (Share → Add to Home Screen), then enable notifications from there."
+                        : "Browser notifications are not supported in this browser.",
+                );
+            }
+
+            if (!notificationsEnabled) {
+                // Enable: request permission, subscribe
+                const permission = await Notification.requestPermission();
+                if (permission !== "granted") {
+                    setNotificationsPermissionDenied(true);
+                    return;
                 }
+                setNotificationsPermissionDenied(false);
+
+                await navigator.serviceWorker.register("/service-worker.js");
+                const registration = await Promise.race([
+                    navigator.serviceWorker.ready,
+                    new Promise<never>((_, reject) =>
+                        setTimeout(
+                            () =>
+                                reject(
+                                    new Error(
+                                        "Service worker took too long to activate. Try reloading the page.",
+                                    ),
+                                ),
+                            10_000,
+                        ),
+                    ),
+                ]);
+
+                const { public_key: vapidKey } =
+                    await browserNotificationsApi.getVapidKey();
+
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(vapidKey),
+                });
+
+                const rawKey = subscription.getKey("p256dh");
+                const rawAuth = subscription.getKey("auth");
+
+                if (!rawKey || !rawAuth) {
+                    throw new Error(
+                        "Failed to retrieve push subscription keys.",
+                    );
+                }
+
+                const p256dh = btoa(
+                    String.fromCharCode(...new Uint8Array(rawKey)),
+                );
+                const auth = btoa(
+                    String.fromCharCode(...new Uint8Array(rawAuth)),
+                );
+
+                await browserNotificationsApi.subscribe({
+                    endpoint: subscription.endpoint,
+                    keys: { p256dh, auth },
+                });
+
+                await browserNotificationsApi.test(subscription.endpoint);
+
+                setNotificationsEnabled(true);
+            } else {
+                // Disable: unsubscribe
+                const registration = await Promise.race([
+                    navigator.serviceWorker.ready,
+                    new Promise<never>((_, reject) =>
+                        setTimeout(
+                            () =>
+                                reject(
+                                    new Error(
+                                        "Service worker took too long to activate. Try reloading the page.",
+                                    ),
+                                ),
+                            10_000,
+                        ),
+                    ),
+                ]);
+                const subscription =
+                    await registration.pushManager.getSubscription();
+
+                if (subscription) {
+                    const rawKey = subscription.getKey("p256dh");
+                    const rawAuth = subscription.getKey("auth");
+
+                    if (rawKey && rawAuth) {
+                        const p256dh = btoa(
+                            String.fromCharCode(...new Uint8Array(rawKey)),
+                        );
+                        const auth = btoa(
+                            String.fromCharCode(...new Uint8Array(rawAuth)),
+                        );
+
+                        await browserNotificationsApi.unsubscribe({
+                            endpoint: subscription.endpoint,
+                            keys: { p256dh, auth },
+                        });
+                    }
+
+                    await subscription.unsubscribe();
+                }
+
+                setNotificationsEnabled(false);
             }
         } catch (error) {
             console.error("Failed to toggle notifications:", error);
+            setNotificationsError(
+                error instanceof Error
+                    ? error.message
+                    : "Something went wrong. Please try again.",
+            );
         } finally {
             setNotificationsLoading(false);
         }
+    };
+
+    const handleCategoryToggle = async (
+        category: NotificationCategory,
+        enabled: boolean,
+    ) => {
+        await setPushPref(category, enabled);
+        setPushPrefs((prev) =>
+            prev ? { ...prev, [category]: enabled } : prev,
+        );
     };
 
     return (
@@ -117,13 +266,56 @@ function SettingsContent() {
                             </TypographyMuted>
                         </div>
 
-                        <Switch
-                            id="notifications-switch"
-                            checked={notificationsEnabled}
-                            onCheckedChange={handleNotificationsToggle}
-                            disabled={notificationsLoading}
-                        />
+                        <div className="flex items-center gap-2">
+                            {notificationsLoading && <Spinner />}
+                            <Switch
+                                id="notifications-switch"
+                                checked={notificationsEnabled}
+                                onCheckedChange={handleNotificationsToggle}
+                                disabled={notificationsLoading}
+                            />
+                        </div>
                     </CardContent>
+                    {notificationsPermissionDenied && (
+                        <CardContent>
+                            <InfoBanner variant="error">
+                                Browser notifications were blocked. Please
+                                enable them in your browser settings and try
+                                again.
+                            </InfoBanner>
+                        </CardContent>
+                    )}
+                    {notificationsError && (
+                        <CardContent>
+                            <InfoBanner variant="error">
+                                {notificationsError}
+                            </InfoBanner>
+                        </CardContent>
+                    )}
+                    {notificationsEnabled && pushPrefs && (
+                        <CardContent className="flex flex-col gap-3 border-t pt-4">
+                            {PUSH_NOTIF_CATEGORIES.map((category) => (
+                                <div
+                                    key={category}
+                                    className="flex items-center justify-between"
+                                >
+                                    <Label htmlFor={`push-pref-${category}`}>
+                                        {PUSH_NOTIF_CATEGORY_LABELS[category]}
+                                    </Label>
+                                    <Switch
+                                        id={`push-pref-${category}`}
+                                        checked={pushPrefs[category]}
+                                        onCheckedChange={(checked) =>
+                                            handleCategoryToggle(
+                                                category,
+                                                checked,
+                                            )
+                                        }
+                                    />
+                                </div>
+                            ))}
+                        </CardContent>
+                    )}
                 </Card>
 
                 <Card>
