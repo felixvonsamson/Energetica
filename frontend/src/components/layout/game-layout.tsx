@@ -3,7 +3,7 @@
  * sidebar navigation, top bar, and content area.
  */
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopBar } from "@/components/layout/top-bar";
@@ -16,6 +16,11 @@ interface GameLayoutProps {
 
 export function GameLayout({ children }: GameLayoutProps) {
     const [scrollPosition, setScrollPosition] = useState(0);
+
+    useEffect(() => {
+        document.body.classList.add("has-topbar");
+        return () => document.body.classList.remove("has-topbar");
+    }, []);
 
     const handleScroll = (e: React.UIEvent<HTMLElement>) => {
         const target = e.target as HTMLElement;

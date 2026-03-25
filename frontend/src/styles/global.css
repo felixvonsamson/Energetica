@@ -330,7 +330,7 @@
         --asset-color-carbon-capture: rgb(153, 161, 169);
 
         /* Map tile colours - same as light mode */
-        --map-selected-tile-hover: var(--color-bone-100);;
+        --map-selected-tile-hover: var(--color-bone-100);
         --map-tile-current-player: hsl(0, 97%, 23%);
         --map-tile-other-player: var(--color-pine-800);
         --map-tile-vacant: var(--color-bone-300);
@@ -480,5 +480,11 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+    body.has-topbar {
+        @apply bg-topbar;
+    }
+    #root {
+        @apply bg-background;
     }
 }
