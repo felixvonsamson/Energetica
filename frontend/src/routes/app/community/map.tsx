@@ -60,7 +60,7 @@ function MapTooltipLayer({
     if (!hoveredTile) return null;
     const { x, y } = getHexPosition(hoveredTile.q, hoveredTile.r, s, w);
     return (
-        <foreignObject x={0} y={0} width="1" height="1" overflow="visible">
+        <foreignObject x={-width / 2} y={-height / 2} width={width} height={height} overflow="visible" style={{ pointerEvents: "none" }}>
             <MapTooltip
                 tile={hoveredTile}
                 username={
