@@ -107,7 +107,7 @@ class GameEngine(object):
         self.env = env
         self.disable_signups = disable_signups
         self.total_t = 0  # Number of simulated game ticks since server start
-        self.start_date = start_date or datetime.datetime.now()  # 0 point of server time
+        self.start_date = start_date or datetime.datetime.now(datetime.timezone.utc)  # 0 point of server time
         self.first_tick_time = self.start_date  # will be set to the correct time later on
         log_entry = InitEngineAction(
             instance_uuid=self.uuid.hex,
@@ -126,7 +126,8 @@ class GameEngine(object):
         self.delta_t = int(rng.integers(0, 72 * 3600 * 24 // self.in_game_seconds_per_tick))
         # transform start_date to a seconds timestamp corresponding to the time of the first tick
         self.start_date = datetime.datetime.fromtimestamp(
-            math.floor(self.start_date.timestamp() / clock_time) * clock_time
+            math.floor(self.start_date.timestamp() / clock_time) * clock_time,
+            tz=datetime.timezone.utc,
         )
 
         # All data for the current day will be stored here :

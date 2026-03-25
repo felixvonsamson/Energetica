@@ -134,10 +134,11 @@ function LoginForm() {
                             <br />
                             This server has restarted on{" "}
                             <strong>
-                                {gameEngineData?.start_date &&
-                                    new Date(
-                                        gameEngineData.start_date,
-                                    ).toLocaleDateString()}
+                                {gameEngineData?.start_date
+                                    ? new Date(
+                                          gameEngineData.start_date,
+                                      ).toLocaleDateString()
+                                    : "a previous date"}
                             </strong>
                             .
                             <br /> All previous user accounts were removed.
