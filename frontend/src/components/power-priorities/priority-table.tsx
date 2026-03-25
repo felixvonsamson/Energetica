@@ -4,6 +4,8 @@
  * All per-item data fetching and display logic lives in the child components.
  */
 
+import { AnimatePresence } from "framer-motion";
+
 import { PriorityItem } from "@/components/power-priorities/priority-item";
 import { RenewablesSection } from "@/components/power-priorities/renewables-section";
 import { Card, CardContent } from "@/components/ui";
@@ -72,19 +74,21 @@ export function PriorityTable() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {power_priorities
-                                    .map((item, originalIndex) => (
-                                        <PriorityItem
-                                            key={getPriorityItemKey(item)}
-                                            item={item}
-                                            canBumpUp={
-                                                originalIndex <
-                                                power_priorities.length - 1
-                                            }
-                                            canBumpDown={originalIndex > 0}
-                                        />
-                                    ))
-                                    .reverse()}
+                                <AnimatePresence initial={false}>
+                                    {power_priorities
+                                        .map((item, originalIndex) => (
+                                            <PriorityItem
+                                                key={getPriorityItemKey(item)}
+                                                item={item}
+                                                canBumpUp={
+                                                    originalIndex <
+                                                    power_priorities.length - 1
+                                                }
+                                                canBumpDown={originalIndex > 0}
+                                            />
+                                        ))
+                                        .reverse()}
+                                </AnimatePresence>
                             </tbody>
                             {renewables.length > 0 && (
                                 <RenewablesSection renewables={renewables} />

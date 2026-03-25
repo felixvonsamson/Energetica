@@ -4,6 +4,7 @@
  * reordering and price editing.
  */
 
+import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useMemo } from "react";
 
@@ -145,7 +146,14 @@ export function PriorityItem({
     );
 
     return (
-        <tr className="h-13">
+        <motion.tr
+            layout
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="h-13"
+        >
             {/* Consumption side cell — bump buttons for bid rows, empty for ask */}
             <td
                 className={cn(
@@ -226,6 +234,6 @@ export function PriorityItem({
             >
                 {isProduction ? bumpButtons : null}
             </td>
-        </tr>
+        </motion.tr>
     );
 }
