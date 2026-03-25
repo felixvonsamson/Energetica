@@ -47,7 +47,7 @@ export function HexTile({
             onMouseEnter={() => handleMouseEnter(tile.id)}
             onMouseLeave={handleMouseLeave}
             onClick={onClick}
-            className="cursor-pointer"
+            className={onClick !== undefined ? "cursor-pointer" : ""}
         >
             <polygon
                 points={points}
