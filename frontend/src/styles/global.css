@@ -19,17 +19,18 @@
     /* ============================================
        Base Color Palette (Source of Truth)
        ============================================ */
-    --color-bone-50: #EEE5CA;
-    --color-bone-100: #e5d9b6;
-    --color-bone-150: #D5C38F;
-    --color-bone-600: #876D22;
-    --color-bone-800: #4B3B0E;
-    --color-pine-100: #b5ca95;
-    --color-pine-200: #a4be7b;
-    --color-pine-500: #5f8d4e;
-    --color-pine-700: #285430;
-    --color-pine-800: #1b3820;
-    --color-pine-900: #0d1f13;
+    --color-bone-50: oklch(92.196% 0.0369 91.711);
+    --color-bone-100: oklch(88.601% 0.04806 91.347);
+    --color-bone-150: oklch(81.97% 0.07119 91.218);
+    --color-bone-300: oklch(70.97% 0.07119 90);
+    --color-bone-600: oklch(54.598% 0.09673 89.132);
+    --color-bone-800: oklch(36.036% 0.06427 88.546);
+    --color-pine-100: oklch(80.969% 0.07509 125.632);
+    --color-pine-200: oklch(76.562% 0.09465 125.832);
+    --color-pine-500: oklch(59.425% 0.1041 137.727);
+    --color-pine-700: oklch(40.389% 0.07737 148.111);
+    --color-pine-800: oklch(31.035% 0.05532 148.148);
+    --color-pine-900: oklch(21.935% 0.03376 153.568);
 
     /* App layout tokens */
     --color-topbar: var(--topbar);
@@ -329,10 +330,10 @@
         --asset-color-carbon-capture: rgb(153, 161, 169);
 
         /* Map tile colours - same as light mode */
-        --map-selected-tile-hover: hsl(0, 0%, 89%);
+        --map-selected-tile-hover: var(--color-bone-100);;
         --map-tile-current-player: hsl(0, 97%, 23%);
         --map-tile-other-player: var(--color-pine-800);
-        --map-tile-vacant: rgb(121, 121, 121);
+        --map-tile-vacant: var(--color-bone-300);
     }
 
     html,
