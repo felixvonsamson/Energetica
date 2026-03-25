@@ -3412,6 +3412,8 @@ export interface components {
          * Game engine configuration and timing data.
          */
         GameEngineOut: {
+            /** Start Date Format: date-time */
+            start_date: string;
             /** Wall Clock Seconds Per Tick */
             wall_clock_seconds_per_tick: number;
             /** Game Seconds Per Tick */
