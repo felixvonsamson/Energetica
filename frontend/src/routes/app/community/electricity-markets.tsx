@@ -42,7 +42,7 @@ export const Route = createFileRoute("/app/community/electricity-markets")({
             isUnlocked: (cap) =>
                 cap.has_network
                     ? { unlocked: true }
-                    : { unlocked: false, reason: "Join a Network to unlock" },
+                    : { unlocked: false, reason: "Unlock the Network achievement to access" },
         },
         infoDialog: {
             contents: <ElectricityMarketsHelp />,

@@ -35,9 +35,10 @@ export function useRouteUnlocked(
     // Note: This hook must be called in a component context
     // For use outside components, use getRouteIsUnlockedFn directly with staticData
     const staticData = useRouteStaticData(to);
-    if (!capabilities) return { unlocked: false, reason: "" };
+    if (!capabilities) return { unlocked: false, reason: "Loading..." };
     if (!staticData) return { unlocked: true };
     const routeConfig = staticData.routeConfig;
-    if (!routeConfig || routeConfig.requiredRole !== "player") return { unlocked: true };
+    if (!routeConfig || routeConfig.requiredRole !== "player")
+        return { unlocked: true };
     return routeConfig.isUnlocked(capabilities);
 }
