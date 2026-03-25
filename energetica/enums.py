@@ -158,6 +158,16 @@ class FunctionalFacilityType(StrEnum):
         return WorkerType.CONSTRUCTION
 
 
+class ClimateEventType(StrEnum):
+    """Enum for climate event types."""
+
+    FLOOD = "flood"
+    HEAT_WAVE = "heat_wave"
+    COLD_WAVE = "cold_wave"
+    HURRICANE = "hurricane"
+    WILDFIRE = "wildfire"
+
+
 class TechnologyType(StrEnum):
     """Enum for technologies."""
 
@@ -219,6 +229,8 @@ power_facility_types: list[PowerFacilityType] = [
     WindFacilityType.OFFSHORE_WIND_TURBINE,
     ControllableFacilityType.NUCLEAR_REACTOR_GEN4,
 ]
+
+FacilityType = PowerFacilityType | StorageFacilityType | ExtractionFacilityType | FunctionalFacilityType
 
 ProjectType = PowerFacilityType | StorageFacilityType | ExtractionFacilityType | FunctionalFacilityType | TechnologyType
 project_types: set[ProjectType] = {

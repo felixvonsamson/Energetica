@@ -1,15 +1,59 @@
-"""Module that contains the classes for the built-in chat."""
+"""Module that contains the classes for the built-in chat and notifications."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from energetica.database import DBModel
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
+
+
+# ---------------------------------------------------------------------------
+# Adding a new notification type? Here is the full checklist:
+#
+# 1. Add the type string to NotificationType below (you are here).
+#
+# 2. In energetica/schemas/notifications.py:
+#    a. Add a new *Payload class with `type: Literal["your_type"]` as its
+#       first field (the Literal is required for Pydantic's discriminator).
+#    b. Add that class to the NotificationPayload union.
+#
+# 3. Run `bun run generate-types` to regenerate the TypeScript types from
+#    the updated OpenAPI schema. This propagates the new type to the frontend.
+#
+# 4. In frontend/src/types/notifications.ts:
+#    Add an entry to NOTIFICATION_CATEGORIES (TypeScript will error if missing).
+#
+# 5. In frontend/src/components/layout/notification-popup.tsx:
+#    Add a case to getNotificationText (TypeScript will error if missing).
+#
+# 6. In frontend/src/service-worker.ts:
+#    Add cases to getNotificationText and getNotificationUrl.
+#    NOTE: these switches have `default` fallbacks, so TypeScript will NOT
+#    catch a missing case — you must add it manually.
+#
+# 7. Add a player.notify(YourTypePayload(...)) call at the relevant backend
+#    event site (utils/, production_update.py, etc.).
+# ---------------------------------------------------------------------------
+
+NotificationType = Literal[
+    "construction_finished",
+    "technology_researched",
+    "facility_decommissioned",
+    "facility_destroyed",
+    "emergency_facility_created",
+    "climate_event",
+    "resource_sold",
+    "shipment_arrived",
+    "credit_limit_exceeded",
+    "achievement_milestone",
+    "achievement_unlock",
+    "push_notification_test",
+]
 
 
 @dataclass
@@ -93,8 +137,10 @@ class Chat(DBModel):
 class Notification(DBModel):
     """Class for storing data about in-game notifications."""
 
-    title: str
-    content: str
+    type: NotificationType
+    payload: dict
     player: Player
     time: datetime = field(default_factory=datetime.now)
     read: bool = False
+    flagged: bool = False
+    archived: bool = False

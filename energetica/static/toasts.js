@@ -107,7 +107,7 @@ function subscribeUserToPush() {
         applicationServerKey: convertedVapidKey
     }).then(function (subscription) {
         // Send subscription to your server
-        fetch('/api/v1/browser-notifications:subscribe', {
+        fetch('/api/v1/push-subscriptions:subscribe', {
             method: 'POST',
             body: JSON.stringify(subscription),
             headers: {
@@ -134,7 +134,7 @@ function unsubscribeUserFromPush() {
         if (subscription) {
             subscription.unsubscribe().then(function () {
                 // notify the server about the unsubscription
-                fetch('/api/v1/browser-notifications:unsubscribe', {
+                fetch('/api/v1/push-subscriptions:unsubscribe', {
                     method: 'POST',
                     body: JSON.stringify(subscription),
                     headers: {

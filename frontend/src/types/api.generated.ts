@@ -126,7 +126,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/browser-notifications/vapid-public-key": {
+    "/api/v1/push-subscriptions/vapid-public-key": {
         parameters: {
             query?: never;
             header?: never;
@@ -138,7 +138,7 @@ export interface paths {
          *
          * Return VAPID public key.
          */
-        get: operations["get_vapid_key_api_v1_browser_notifications_vapid_public_key_get"];
+        get: operations["get_vapid_key_api_v1_push_subscriptions_vapid_public_key_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -147,7 +147,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/browser-notifications:subscribe": {
+    "/api/v1/push-subscriptions:subscribe": {
         parameters: {
             query?: never;
             header?: never;
@@ -161,14 +161,14 @@ export interface paths {
          *
          * Create a new subscription.
          */
-        post: operations["subscribe_api_v1_browser_notifications_subscribe_post"];
+        post: operations["subscribe_api_v1_push_subscriptions_subscribe_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/browser-notifications:unsubscribe": {
+    "/api/v1/push-subscriptions:unsubscribe": {
         parameters: {
             query?: never;
             header?: never;
@@ -182,7 +182,29 @@ export interface paths {
          *
          * Remove a subscription.
          */
-        post: operations["unsubscribe_api_v1_browser_notifications_unsubscribe_post"];
+        post: operations["unsubscribe_api_v1_push_subscriptions_unsubscribe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/push-subscriptions:test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Push Notification
+         *
+         * Send a test push notification. If endpoint is provided, sends only to
+         * that subscription; otherwise broadcasts to all.
+         */
+        post: operations["test_push_notification_api_v1_push_subscriptions_test_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1006,6 +1028,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications/feed-subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Feed Subscriptions
+         *
+         * Get notification feed subscriptions for the current player.
+         */
+        get: operations["get_feed_subscriptions_api_v1_notifications_feed_subscriptions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Patch Feed Subscriptions
+         *
+         * Update notification feed subscriptions for the current player.
+         */
+        patch: operations["patch_feed_subscriptions_api_v1_notifications_feed_subscriptions_patch"];
+        trace?: never;
+    };
     "/api/v1/notifications/{notification_id}": {
         parameters: {
             query?: never;
@@ -1024,7 +1072,12 @@ export interface paths {
         delete: operations["delete_notification_api_v1_notifications__notification_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Patch Notification
+         *
+         * Update read/flagged/archived state of a notification.
+         */
+        patch: operations["patch_notification_api_v1_notifications__notification_id__patch"];
         trace?: never;
     };
     "/api/v1/notifications:markAllRead": {
@@ -2430,27 +2483,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/test_notification": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Test Notification
-         *
-         * Send a dummy browser notification to the player.
-         */
-        get: operations["test_notification_api_test_notification_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/set_notification_preferences": {
         parameters: {
             query?: never;
@@ -2479,20 +2511,163 @@ export interface components {
         /** AchievementListOut */
         AchievementListOut: {
             /** Achievements */
-            achievements: components["schemas"]["AchievementOut"][];
+            achievements: (
+                | components["schemas"]["AchievementMilestoneOut"]
+                | components["schemas"]["AchievementUnlockOut"]
+            )[];
         };
-        /** AchievementOut */
-        AchievementOut: {
+        /**
+         * AchievementMilestoneBasePayload
+         *
+         * Milestone achievement without a real-world comparison.
+         */
+        AchievementMilestoneBasePayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default achievement_milestone
+             */
+            type: "achievement_milestone";
+            /**
+             * Achievement Key
+             *
+             * @enum {string}
+             */
+            achievement_key:
+                | "mineral_extraction"
+                | "network_import"
+                | "network_export"
+                | "network"
+                | "technology"
+                | "trading_export"
+                | "trading_import";
+            /** Threshold */
+            threshold: number;
+            /** Xp */
+            xp: number;
+        };
+        /** AchievementMilestoneEnergyStoragePayload */
+        AchievementMilestoneEnergyStoragePayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default achievement_milestone
+             */
+            type: "achievement_milestone";
+            /**
+             * Achievement Key
+             *
+             * @constant
+             */
+            achievement_key: "energy_storage";
+            /**
+             * Comparison Key
+             *
+             * @enum {string}
+             */
+            comparison_key:
+                | "zurich-for-a-day"
+                | "switzerland-for-a-day"
+                | "switzerland-for-a-month";
+            /** Threshold */
+            threshold: number;
+            /** Xp */
+            xp: number;
+        };
+        /** AchievementMilestoneOut */
+        AchievementMilestoneOut: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "milestone";
             /** Id */
             id: string;
-            /** Name */
-            name: string;
+            /** Level */
+            level: number;
             /** Reward */
             reward: number;
             /** Objective */
             objective: number;
             /** Status */
             status: number;
+        };
+        /** AchievementMilestonePowerConsumptionPayload */
+        AchievementMilestonePowerConsumptionPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default achievement_milestone
+             */
+            type: "achievement_milestone";
+            /**
+             * Achievement Key
+             *
+             * @constant
+             */
+            achievement_key: "power_consumption";
+            /**
+             * Comparison Key
+             *
+             * @enum {string}
+             */
+            comparison_key:
+                | "village-in-europe"
+                | "city-of-basel"
+                | "switzerland"
+                | "japan"
+                | "world-population";
+            /** Threshold */
+            threshold: number;
+            /** Xp */
+            xp: number;
+        };
+        /** AchievementUnlockOut */
+        AchievementUnlockOut: {
+            /**
+             * Discriminator enum property added by openapi-typescript
+             *
+             * @enum {string}
+             */
+            type: "unlock";
+            /** Id */
+            id: string;
+            /** Reward */
+            reward: number;
+            /** Objective */
+            objective: number;
+            /** Status */
+            status: number;
+        };
+        /**
+         * AchievementUnlockPayload
+         *
+         * One-shot achievement unlocked by constructing a specific facility.
+         */
+        AchievementUnlockPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default achievement_unlock
+             */
+            type: "achievement_unlock";
+            /**
+             * Achievement Key
+             *
+             * @enum {string}
+             */
+            achievement_key:
+                | "laboratory"
+                | "warehouse"
+                | "storage_facilities"
+                | "GHG_effect";
+            /** Xp */
+            xp: number;
         };
         /** Ask */
         Ask: {
@@ -2664,6 +2839,22 @@ export interface components {
             /** Unread Chat Count */
             unread_chat_count: number;
         };
+        /** ChatMessagePayload */
+        ChatMessagePayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default chat_message
+             */
+            type: "chat_message";
+            /** Sender Username */
+            sender_username: string;
+            /** Message */
+            message: string;
+            /** Chat Id */
+            chat_id: number;
+        };
         /**
          * ChatOut
          *
@@ -2719,6 +2910,56 @@ export interface components {
                 [key: string]: number[];
             };
         };
+        /** ClimateEventPayload */
+        ClimateEventPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default climate_event
+             */
+            type: "climate_event";
+            event_key: components["schemas"]["ClimateEventType"];
+            /** Duration Days */
+            duration_days: number;
+            /** Cost Per Hour */
+            cost_per_hour: number;
+        };
+        /**
+         * ClimateEventType
+         *
+         * Enum for climate event types.
+         *
+         * @enum {string}
+         */
+        ClimateEventType:
+            | "flood"
+            | "heat_wave"
+            | "cold_wave"
+            | "hurricane"
+            | "wildfire";
+        /** ConstructionFinishedPayload */
+        ConstructionFinishedPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default construction_finished
+             */
+            type: "construction_finished";
+            /** Project Type */
+            project_type:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | components["schemas"]["FunctionalFacilityType"]
+                | components["schemas"]["TechnologyType"];
+            /** Level */
+            level?: number | null;
+        };
         /**
          * ControllableFacilityType
          *
@@ -2733,6 +2974,16 @@ export interface components {
             | "combined_cycle"
             | "nuclear_reactor"
             | "nuclear_reactor_gen4";
+        /** CreditLimitExceededPayload */
+        CreditLimitExceededPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default credit_limit_exceeded
+             */
+            type: "credit_limit_exceeded";
+        };
         /** DailyQuizBase */
         DailyQuizBase: {
             /** Question */
@@ -2822,6 +3073,25 @@ export interface components {
              * Tick when the electricity market was created
              */
             created_tick: number;
+        };
+        /** EmergencyFacilityCreatedPayload */
+        EmergencyFacilityCreatedPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default emergency_facility_created
+             */
+            type: "emergency_facility_created";
+            /** Facility Type */
+            facility_type:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | components["schemas"]["FunctionalFacilityType"];
         };
         /**
          * EmissionsResponse
@@ -2953,6 +3223,49 @@ export interface components {
             storage_facilities: components["schemas"]["StorageFacilityOut"][];
             /** Extraction Facilities */
             extraction_facilities: components["schemas"]["ExtractionFacilityOut"][];
+        };
+        /** FacilityDecommissionedPayload */
+        FacilityDecommissionedPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default facility_decommissioned
+             */
+            type: "facility_decommissioned";
+            /** Facility Type */
+            facility_type:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | components["schemas"]["FunctionalFacilityType"];
+            /** Dismantle Cost */
+            dismantle_cost: number;
+        };
+        /** FacilityDestroyedPayload */
+        FacilityDestroyedPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default facility_destroyed
+             */
+            type: "facility_destroyed";
+            /** Facility Type */
+            facility_type:
+                | components["schemas"]["WindFacilityType"]
+                | components["schemas"]["HydroFacilityType"]
+                | components["schemas"]["SolarFacilityType"]
+                | components["schemas"]["ControllableFacilityType"]
+                | components["schemas"]["StorageFacilityType"]
+                | components["schemas"]["ExtractionFacilityType"]
+                | components["schemas"]["FunctionalFacilityType"];
+            event_key: components["schemas"]["ClimateEventType"];
+            /** Cleanup Cost */
+            cleanup_cost: number;
         };
         /** FacilityStatuses */
         FacilityStatuses: {
@@ -3476,31 +3789,63 @@ export interface components {
          * @enum {string}
          */
         NonFacilityBidType: "construction" | "research" | "transport";
-        /**
-         * NotificationListOut
-         *
-         * Response model for the notification list.
-         */
+        /** NotificationFeedSubscriptionsIn */
+        NotificationFeedSubscriptionsIn: {
+            /** Resource Market Bid */
+            resource_market_bid?: boolean | null;
+            /** Network Join Leave */
+            network_join_leave?: boolean | null;
+        };
+        /** NotificationFeedSubscriptionsOut */
+        NotificationFeedSubscriptionsOut: {
+            /** Resource Market Bid */
+            resource_market_bid: boolean;
+            /** Network Join Leave */
+            network_join_leave: boolean;
+        };
+        /** NotificationListOut */
         NotificationListOut: {
             /** Notifications */
             notifications: components["schemas"]["NotificationOut"][];
         };
-        /**
-         * NotificationOut
-         *
-         * Response model for a notification.
-         */
+        /** NotificationOut */
         NotificationOut: {
             /** Id */
             id: number;
-            /** Title */
-            title: string;
-            /** Content */
-            content: string;
             /** Time Format: date-time */
             time: string;
             /** Read */
             read: boolean;
+            /** Flagged */
+            flagged: boolean;
+            /** Archived */
+            archived: boolean;
+            /** Payload */
+            payload:
+                | components["schemas"]["ChatMessagePayload"]
+                | components["schemas"]["ConstructionFinishedPayload"]
+                | components["schemas"]["TechnologyResearchedPayload"]
+                | components["schemas"]["FacilityDecommissionedPayload"]
+                | components["schemas"]["FacilityDestroyedPayload"]
+                | components["schemas"]["EmergencyFacilityCreatedPayload"]
+                | components["schemas"]["ClimateEventPayload"]
+                | components["schemas"]["ResourceSoldPayload"]
+                | components["schemas"]["ShipmentArrivedPayload"]
+                | components["schemas"]["CreditLimitExceededPayload"]
+                | components["schemas"]["AchievementMilestonePowerConsumptionPayload"]
+                | components["schemas"]["AchievementMilestoneEnergyStoragePayload"]
+                | components["schemas"]["AchievementMilestoneBasePayload"]
+                | components["schemas"]["AchievementUnlockPayload"]
+                | components["schemas"]["PushNotificationTestPayload"];
+        };
+        /** NotificationPatchIn */
+        NotificationPatchIn: {
+            /** Read */
+            read?: boolean | null;
+            /** Flagged */
+            flagged?: boolean | null;
+            /** Archived */
+            archived?: boolean | null;
         };
         /**
          * OpCostsResponse
@@ -3989,6 +4334,21 @@ export interface components {
             quantity?: number | null;
         };
         /**
+         * PushNotificationTestPayload
+         *
+         * Dummy notification used exclusively for end-to-end push notification
+         * testing.
+         */
+        PushNotificationTestPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default push_notification_test
+             */
+            type: "push_notification_test";
+        };
+        /**
          * RequirementOut
          *
          * Represents a requirement for building a facility or researching
@@ -4015,6 +4375,23 @@ export interface components {
             name: components["schemas"]["Fuel"];
             /** Rate */
             rate: number;
+        };
+        /** ResourceSoldPayload */
+        ResourceSoldPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default resource_sold
+             */
+            type: "resource_sold";
+            /** Buyer Username */
+            buyer_username: string;
+            resource: components["schemas"]["Fuel"];
+            /** Quantity Kg */
+            quantity_kg: number;
+            /** Total Price */
+            total_price: number;
         };
         /** ResourceStats */
         ResourceStats: {
@@ -4168,6 +4545,24 @@ export interface components {
         SettleResponse: {
             /** Player Id */
             player_id: number;
+        };
+        /** ShipmentArrivedPayload */
+        ShipmentArrivedPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default shipment_arrived
+             */
+            type: "shipment_arrived";
+            /** Resource */
+            resource: string;
+            /** Quantity Kg */
+            quantity_kg: number;
+            /** Stored Kg */
+            stored_kg: number;
+            /** Warehouse Full */
+            warehouse_full: boolean;
         };
         /** ShipmentListOut */
         ShipmentListOut: {
@@ -4538,6 +4933,19 @@ export interface components {
              */
             nuclear_engineering: number;
         };
+        /** TechnologyResearchedPayload */
+        TechnologyResearchedPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default technology_researched
+             */
+            type: "technology_researched";
+            technology_type: components["schemas"]["TechnologyType"];
+            /** New Level */
+            new_level: number;
+        };
         /**
          * TechnologyType
          *
@@ -4593,6 +5001,11 @@ export interface components {
             series: {
                 [key: string]: number[];
             };
+        };
+        /** TestPushBody */
+        TestPushBody: {
+            /** Endpoint */
+            endpoint?: string | null;
         };
         /**
          * UserOut
@@ -4915,7 +5328,7 @@ export interface operations {
             };
         };
     };
-    get_vapid_key_api_v1_browser_notifications_vapid_public_key_get: {
+    get_vapid_key_api_v1_push_subscriptions_vapid_public_key_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -4935,7 +5348,7 @@ export interface operations {
             };
         };
     };
-    subscribe_api_v1_browser_notifications_subscribe_post: {
+    subscribe_api_v1_push_subscriptions_subscribe_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -4966,7 +5379,7 @@ export interface operations {
             };
         };
     };
-    unsubscribe_api_v1_browser_notifications_unsubscribe_post: {
+    unsubscribe_api_v1_push_subscriptions_unsubscribe_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -4976,6 +5389,37 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["Subscription"];
+            };
+        };
+        responses: {
+            /** Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_push_notification_api_v1_push_subscriptions_test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TestPushBody"];
             };
         };
         responses: {
@@ -6128,6 +6572,57 @@ export interface operations {
             };
         };
     };
+    get_feed_subscriptions_api_v1_notifications_feed_subscriptions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationFeedSubscriptionsOut"];
+                };
+            };
+        };
+    };
+    patch_feed_subscriptions_api_v1_notifications_feed_subscriptions_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationFeedSubscriptionsIn"];
+            };
+        };
+        responses: {
+            /** Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_notification_api_v1_notifications__notification_id__delete: {
         parameters: {
             query?: never;
@@ -6138,6 +6633,39 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_notification_api_v1_notifications__notification_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationPatchIn"];
+            };
+        };
         responses: {
             /** Successful Response */
             204: {
@@ -7855,26 +8383,6 @@ export interface operations {
         };
     };
     change_graph_view_api_change_graph_view_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    test_notification_api_test_notification_get: {
         parameters: {
             query?: never;
             header?: never;

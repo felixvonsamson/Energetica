@@ -9,7 +9,13 @@ import pluginQuery from "@tanstack/eslint-plugin-query";
 
 export default defineConfig([
     {
-        ignores: ["node_modules/", "dist/", "*.config.ts", "*.config.js"],
+        ignores: [
+            "node_modules/",
+            "dist/",
+            "*.config.ts",
+            "*.config.js",
+            "src/service-worker.ts",
+        ],
     },
     { settings: { react: { version: "detect" } } },
     ...tseslint.configs.recommended,

@@ -13,10 +13,11 @@ from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.engine_data.emission_data import calculate_reference_gta, calculate_temperature_deviation
 from energetica.database.map.hex_tile import HexTile
-from energetica.enums import FunctionalFacilityType, Renewable
+from energetica.enums import ClimateEventType, FunctionalFacilityType, Renewable
+from energetica.schemas.notifications import ClimateEventPayload, FacilityDestroyedPayload
 from energetica.globals import engine
 from energetica.utils.facilities import destroy_facility
-from energetica.utils.formatting import display_money
+
 from energetica.utils.hashing import stable_hash
 
 
@@ -40,11 +41,11 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
         player=player,
     )
     player.notify(
-        climate_events[event_name].name,
-        climate_events[event_name].description.format(
-            duration=round(climate_events[event_name].duration / 3600 / 24),
-            cost=display_money(recovery_cost * ticks_per_day / 24) + "/h",
-        ),
+        ClimateEventPayload(
+            event_key=ClimateEventType(event_name),
+            duration_days=round(climate_events[event_name].duration / 3600 / 24),
+            cost_per_hour=recovery_cost * ticks_per_day / 24,
+        )
     )
 
     # check destructions
@@ -52,8 +53,11 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
         player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY] -= 1
         engine.config.update_config_for_user(player)
         player.notify(
-            "Destruction",
-            f"Your industry has been levelled down by 1 due to the {climate_events[event_name].name} event.",
+            FacilityDestroyedPayload(
+                facility_type=FunctionalFacilityType.INDUSTRY,
+                event_key=ClimateEventType(event_name),
+                cleanup_cost=0.0,
+            )
         )
         engine.log(f"{player.username} : Industry levelled down by {climate_events[event_name].name}.")
     facilities_list = climate_events[event_name].destruction_chance.keys()
@@ -62,7 +66,7 @@ def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generato
     )
     for facility in facilities_at_risk:
         if rng.random() < climate_events[event_name].destruction_chance[facility.facility_type]:
-            destroy_facility(player, facility, str(climate_events[event_name].name))
+            destroy_facility(player, facility, event_name)
             # if a water dam is destroyed it will flood downstream tiles
             if facility.facility_type == "small_water_dam":
                 affected_tiles = tile.get_downstream_tiles(3)

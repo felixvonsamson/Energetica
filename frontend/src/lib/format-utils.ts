@@ -567,30 +567,3 @@ export function formatCashFlow(
     return `${formatMoney(rate)}$${suffix}`;
 }
 
-// === Achievement-Specific Formatting ===
-
-/**
- * Format achievement values based on their type. Maps achievement IDs to their
- * appropriate formatting function.
- *
- * @param value - The numeric value
- * @param achievementId - The achievement identifier
- * @returns Formatted string with appropriate units
- */
-export function formatAchievementValue(
-    value: number,
-    achievementId: string,
-): string {
-    const formattingMap: Record<string, (v: number) => string> = {
-        power_consumption: formatPower,
-        energy_storage: formatEnergy,
-        mineral_extraction: formatMass,
-        network_import: formatEnergy,
-        network_export: formatEnergy,
-        trading: formatMass,
-        network: formatPower,
-    };
-
-    const formatter = formattingMap[achievementId];
-    return formatter ? formatter(value) : value.toString();
-}
