@@ -32,13 +32,10 @@ export function useUpdatePowerPriorityBump() {
             type: string;
             direction: "increase" | "decrease";
         }) => powerPrioritiesApi.bump(vars),
-        onMutate: async () => {
-            await queryClient.cancelQueries({
+        onSettled: () => {
+            queryClient.invalidateQueries({
                 queryKey: queryKeys.powerPriorities.all,
             });
-        },
-        onSuccess: (data) => {
-            queryClient.setQueryData(queryKeys.powerPriorities.all, data);
         },
     });
 }

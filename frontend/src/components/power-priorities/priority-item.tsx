@@ -99,8 +99,8 @@ export function PriorityItem({
     /** Moves this item one step toward higher or lower priority. */
     const handleBump = (direction: "up" | "down") => {
         updatePowerPriorityBump.mutate({
-            side: item.side as string,
-            type: item.type as unknown as string,
+            side: item.side,
+            type: String(item.type),
             direction: direction === "down" ? "increase" : "decrease",
         });
     };
