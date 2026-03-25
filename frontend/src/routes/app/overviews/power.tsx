@@ -29,7 +29,7 @@ export const Route = createFileRoute("/app/overviews/power")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: () => true,
+            isUnlocked: () => ({ unlocked: true }),
         },
         infoDialog: {
             contents: <PowerOverviewHelp />,

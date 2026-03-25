@@ -29,7 +29,10 @@ export const Route = createFileRoute("/app/overviews/storage")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: (cap) => cap.has_storage,
+            isUnlocked: (cap) =>
+                cap.has_storage
+                    ? { unlocked: true }
+                    : { unlocked: false, reason: "Build a Storage Facility to unlock" },
         },
         infoDialog: {
             contents: <StorageOverviewHelp />,

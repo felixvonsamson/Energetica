@@ -37,7 +37,7 @@ export const Route = createFileRoute("/app/overviews/cash-flow")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: () => true,
+            isUnlocked: () => ({ unlocked: true }),
         },
         infoDialog: {
             contents: <CashFlowOverviewHelp />,

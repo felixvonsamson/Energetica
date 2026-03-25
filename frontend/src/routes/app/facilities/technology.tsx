@@ -55,7 +55,10 @@ export const Route = createFileRoute("/app/facilities/technology")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: (cap) => cap.has_laboratory,
+            isUnlocked: (cap) =>
+                cap.has_laboratory
+                    ? { unlocked: true }
+                    : { unlocked: false, reason: "Build a Laboratory to unlock" },
         },
         infoDialog: {
             contents: <TechnologiesHelp />,

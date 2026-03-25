@@ -39,7 +39,10 @@ export const Route = createFileRoute("/app/community/electricity-markets")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: (cap) => cap.has_network,
+            isUnlocked: (cap) =>
+                cap.has_network
+                    ? { unlocked: true }
+                    : { unlocked: false, reason: "Join a Network to unlock" },
         },
         infoDialog: {
             contents: <ElectricityMarketsHelp />,

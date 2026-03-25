@@ -28,6 +28,11 @@ import {
     SidebarMenuSubItem,
     SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { TypographyBrand, TypographyH2 } from "@/components/ui/typography";
 import { useCapabilities } from "@/hooks/use-capabilities";
 import { useUnreadChatsCount } from "@/hooks/use-chats";
@@ -164,25 +169,38 @@ function NavLinkItem({ item }: { item: NavLinkConfig }) {
     const capabilities = useCapabilities();
     const location = useLocation();
     const Icon = item.icon;
-    const isUnlocked = useRouteUnlocked(item.to, capabilities);
+    const status = useRouteUnlocked(item.to, capabilities);
 
-    const disabled = !isUnlocked;
+    const disabled = !status.unlocked;
     const itemPath = typeof item.to === "string" ? item.to : String(item.to);
     const isActive = location.pathname === itemPath;
 
+    const button = (
+        <SidebarMenuButton
+            asChild
+            isActive={isActive}
+            disabled={disabled}
+            tooltip={item.label}
+        >
+            <Link to={item.to} params={item.params as LinkProps["params"]}>
+                <Icon className="size-4" />
+                <span>{item.label}</span>
+            </Link>
+        </SidebarMenuButton>
+    );
+
     return (
         <SidebarMenuItem>
-            <SidebarMenuButton
-                asChild
-                isActive={isActive}
-                disabled={disabled}
-                tooltip={item.label}
-            >
-                <Link to={item.to} params={item.params as LinkProps["params"]}>
-                    <Icon className="size-4" />
-                    <span>{item.label}</span>
-                </Link>
-            </SidebarMenuButton>
+            {disabled ? (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span>{button}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{status.reason}</TooltipContent>
+                </Tooltip>
+            ) : (
+                button
+            )}
             {item.to === "/app/community/messages" && <UnreadChatsBadge />}
         </SidebarMenuItem>
     );
@@ -192,27 +210,38 @@ function NavSubLinkItem({ item }: { item: NavLinkConfig }) {
     const capabilities = useCapabilities();
     const location = useLocation();
     const Icon = item.icon;
-    const isUnlocked = useRouteUnlocked(item.to, capabilities);
+    const status = useRouteUnlocked(item.to, capabilities);
 
-    const disabled = !isUnlocked;
+    const disabled = !status.unlocked;
     const itemPath = typeof item.to === "string" ? item.to : String(item.to);
     const isActive = location.pathname === itemPath;
 
+    const button = (
+        <SidebarMenuSubButton
+            asChild
+            isActive={isActive}
+            className={cn(disabled && "pointer-events-none opacity-50")}
+        >
+            <Link to={item.to} params={item.params as LinkProps["params"]}>
+                <Icon className="size-4" />
+                <span>{item.label}</span>
+                {item.to === "/app/community/messages" && <UnreadChatsBadge />}
+            </Link>
+        </SidebarMenuSubButton>
+    );
+
     return (
         <SidebarMenuSubItem>
-            <SidebarMenuSubButton
-                asChild
-                isActive={isActive}
-                className={cn(disabled && "pointer-events-none opacity-50")}
-            >
-                <Link to={item.to} params={item.params as LinkProps["params"]}>
-                    <Icon className="size-4" />
-                    <span>{item.label}</span>
-                    {item.to === "/app/community/messages" && (
-                        <UnreadChatsBadge />
-                    )}
-                </Link>
-            </SidebarMenuSubButton>
+            {disabled ? (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span>{button}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{status.reason}</TooltipContent>
+                </Tooltip>
+            ) : (
+                button
+            )}
         </SidebarMenuSubItem>
     );
 }
