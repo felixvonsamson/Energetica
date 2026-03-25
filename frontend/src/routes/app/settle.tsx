@@ -142,21 +142,24 @@ function SettleContent() {
     return (
         <div className="p-4 flex flex-col lg:h-screen">
             {/* Title with theme toggle */}
-            <div className="flex items-center justify-between gap-3 mb-6 lg:shrink-0">
-                <TypographyH1 className="text-center flex-1">
+            <div className="flex items-center gap-3 mb-6 lg:shrink-0">
+                <div className="flex-1" />
+                <TypographyH1 className="text-center">
                     Location choice
                 </TypographyH1>
-                <ButtonGroup>
-                    <Button
-                        onClick={() => handleShowHelp()}
-                        variant="outline"
-                        size="icon"
-                        aria-label="Show help"
-                    >
-                        <HelpCircle size={20} />
-                    </Button>
-                    <ThemeToggle />
-                </ButtonGroup>
+                <div className="flex-1 flex justify-end">
+                    <ButtonGroup>
+                        <Button
+                            onClick={() => handleShowHelp()}
+                            variant="outline"
+                            size="icon"
+                            aria-label="Show help"
+                        >
+                            <HelpCircle size={20} />
+                        </Button>
+                        <ThemeToggle />
+                    </ButtonGroup>
+                </div>
             </div>
 
             <div className="flex flex-col lg:flex-row gap-4 lg:flex-1 lg:min-h-0">
