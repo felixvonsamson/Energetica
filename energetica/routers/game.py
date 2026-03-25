@@ -12,6 +12,7 @@ router = APIRouter(prefix="/game", tags=["Game"])
 def get_engine_config() -> GameEngineOut:
     """Get game engine configuration including clock time and simulation speed."""
     return GameEngineOut(
+        start_date=engine.start_date,
         wall_clock_seconds_per_tick=engine.clock_time,
         game_seconds_per_tick=engine.in_game_seconds_per_tick,
     )

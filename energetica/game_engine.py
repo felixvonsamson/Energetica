@@ -12,7 +12,7 @@ import random
 import tarfile
 import uuid
 import numpy as np
-from datetime import datetime
+import datetime
 from pathlib import Path
 from threading import RLock
 from typing import TYPE_CHECKING, Any, Callable, Literal
@@ -53,8 +53,8 @@ class GameEngine(object):
         self.random_seed: int = None  # type: ignore[assignment]
         self.disable_signups: bool = False
         self.total_t: int = None  # type: ignore[assignment]
-        self.start_date: datetime = None  # type: ignore[assignment]
-        self.first_tick_time: datetime = None  # type: ignore[assignment]
+        self.start_date: datetime.datetime = None  # type: ignore[assignment]
+        self.first_tick_time: datetime.datetime = None  # type: ignore[assignment]
         self.delta_t: int = None  # type: ignore[assignment]
         self.current_climate_data: EmissionData = None  # type: ignore[assignment]
         self.daily_question: dict = None  # type: ignore[assignment]
@@ -89,7 +89,7 @@ class GameEngine(object):
         env: Literal["dev"] | Literal["prod"],
         game_version: str,
         disable_signups: bool = False,
-        start_date: datetime | None = None,
+        start_date: datetime.datetime | None = None,
         instance_uuid: str | None = None,
     ) -> None:
         """Initialize the instance data / the GameEngine members."""
@@ -107,7 +107,7 @@ class GameEngine(object):
         self.env = env
         self.disable_signups = disable_signups
         self.total_t = 0  # Number of simulated game ticks since server start
-        self.start_date = start_date or datetime.now()  # 0 point of server time
+        self.start_date = start_date or datetime.datetime.now()  # 0 point of server time
         self.first_tick_time = self.start_date  # will be set to the correct time later on
         log_entry = InitEngineAction(
             instance_uuid=self.uuid.hex,
@@ -125,7 +125,9 @@ class GameEngine(object):
         rng = np.random.default_rng(self.random_seed)
         self.delta_t = int(rng.integers(0, 72 * 3600 * 24 // self.in_game_seconds_per_tick))
         # transform start_date to a seconds timestamp corresponding to the time of the first tick
-        self.start_date = datetime.fromtimestamp(math.floor(self.start_date.timestamp() / clock_time) * clock_time)
+        self.start_date = datetime.datetime.fromtimestamp(
+            math.floor(self.start_date.timestamp() / clock_time) * clock_time
+        )
 
         # All data for the current day will be stored here :
         self.current_climate_data = EmissionData(

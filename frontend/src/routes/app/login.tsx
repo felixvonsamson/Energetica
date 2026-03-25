@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { TypographyBrand } from "@/components/ui/typography";
 import { useAuth } from "@/hooks/use-auth";
+import { useGameEngine } from "@/hooks/use-game";
 import { authApi } from "@/lib/api/auth";
 import { handleApiError, isErrorType } from "@/lib/error-utils";
 
@@ -57,8 +58,12 @@ function LoginForm() {
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<
+        "missing_fields" | "user_not_found" | "login_failed" | null
+    >(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    const { data: gameEngineData } = useGameEngine();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,7 +71,7 @@ function LoginForm() {
 
         // Basic validation
         if (!username.trim() || !password) {
-            setError("Please enter both username and password");
+            setError("missing_fields");
             return;
         }
 
@@ -84,20 +89,11 @@ function LoginForm() {
             // Redirect to dashboard
             navigate({ to: "/app/dashboard" });
         } catch (err) {
-            // Special handling for "User not found" to show migration message
             if (isErrorType(err, "User not found")) {
-                setError(
-                    `Username does not exist.<br/>
-                    On the <b>14.10.2025</b>, the server has been migrated to <b><a href="https://energetica.ethz.ch" class="underline hover:opacity-80">energetica.ethz.ch</a></b>.
-                    Apologies for the inconvenience.`,
-                );
+                setError("user_not_found");
             } else {
-                // Use centralized error handling for all other errors
-                const errorMessage = handleApiError(
-                    err,
-                    "Login failed. Please try again.",
-                );
-                setError(errorMessage);
+                handleApiError(err, "Login failed. Please try again.");
+                setError("login_failed");
             }
         } finally {
             setIsLoading(false);
@@ -127,9 +123,29 @@ function LoginForm() {
 
                 <CardContent>
                     {/* Error Banner */}
-                    {error && (
+                    {error === "missing_fields" && (
                         <InfoBanner variant="error" className="mb-6">
-                            <div dangerouslySetInnerHTML={{ __html: error }} />
+                            Please enter both username and password.
+                        </InfoBanner>
+                    )}
+                    {error === "user_not_found" && (
+                        <InfoBanner variant="error" className="mb-6">
+                            Username does not exist.
+                            <br />
+                            This server has restarted on{" "}
+                            <strong>
+                                {gameEngineData?.start_date &&
+                                    new Date(
+                                        gameEngineData.start_date,
+                                    ).toLocaleDateString()}
+                            </strong>
+                            .
+                            <br /> All previous user accounts were removed.
+                        </InfoBanner>
+                    )}
+                    {error === "login_failed" && (
+                        <InfoBanner variant="error" className="mb-6">
+                            Login failed. Please try again.
                         </InfoBanner>
                     )}
 
