@@ -78,10 +78,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
             return;
         }
 
-        console.log(
-            "[Socket.IO] Attempting connection for player",
-            user.is_settled ? "(settled)" : "(unsettled)",
-        );
+        console.log("[Socket.IO] Attempting connection for player");
 
         // Create socket connection
         const newSocket = io();
@@ -138,7 +135,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
                 }
             }, 100);
         };
-    }, [canConnect, isAuthenticated, user?.role, user?.is_settled]);
+    }, [canConnect, isAuthenticated, user?.role]);
 
     const value: SocketContextValue = {
         socket,
