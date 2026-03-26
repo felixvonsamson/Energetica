@@ -112,7 +112,7 @@ export function MessageContainer({
                     <div
                         key={`group-${firstMessage.id}`}
                         className={cn(
-                            "flex flex-col",
+                            "w-full flex flex-col",
                             isOwnMessage ? "items-end" : "items-start",
                         )}
                     >
@@ -129,7 +129,7 @@ export function MessageContainer({
                         {/* Render all messages in the group */}
                         <div
                             className={cn(
-                                "space-y-1 flex flex-col",
+                                "w-full space-y-1 flex flex-col",
                                 isOwnMessage ? "items-end" : "items-start",
                             )}
                         >
