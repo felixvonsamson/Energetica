@@ -3,7 +3,7 @@
  * visualization.
  */
 
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
     TrendingUp,
     Activity,
@@ -214,8 +214,14 @@ function MarketsOverviewContent() {
                 <Card>
                     <CardContent>
                         <p className="text-muted">
-                            You are not currently in an electricity market. Join
-                            or create a market to view market data.
+                            You are not currently in an electricity market.{" "}
+                            <Link
+                                to="/app/community/electricity-markets"
+                                className="underline hover:text-foreground"
+                            >
+                                Join or create a market
+                            </Link>{" "}
+                            to view market data.
                         </p>
                     </CardContent>
                 </Card>
