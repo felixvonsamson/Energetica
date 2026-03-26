@@ -10,10 +10,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from energetica.api.http import todo_router
 from energetica.game_error import GameError
 from energetica.globals import engine
-from energetica.routers.templates import router as templates_router
 from energetica.schemas.common import GameErrorOut
 from energetica.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
 from energetica.utils.auth import get_user
@@ -201,13 +199,12 @@ def setup_routes(app: FastAPI):
     for router in api_routers:
         app.include_router(router, prefix="/api/v1")
     app.include_router(templates_router)
-    app.include_router(todo_router, prefix="/api")
     app.mount("/static", StaticFiles(directory="energetica/static"), name="static")
 
     @app.get("/service-worker.js", include_in_schema=False)
     async def serve_service_worker() -> FileResponse:
         return FileResponse(
-            "energetica/static/service-worker.js",
+            "energetica/static/react/service-worker.js",
             media_type="application/javascript",
         )
 

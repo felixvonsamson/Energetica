@@ -76,25 +76,8 @@ export default defineConfig(({ mode }) => {
                     target: backendUrl,
                     changeOrigin: true,
                 },
-                // Auth and location routes
-                "^/(logout|location_choice)$": {
-                    target: backendUrl,
-                    changeOrigin: true,
-                },
-                // Legacy pages (Jinja templates not yet migrated to React)
-                "^/(landing|home|settings|profile|messages|network|map_view|scoreboard|technology|resource_market|changelog|wiki)($|/)":
-                    {
-                        target: backendUrl,
-                        changeOrigin: true,
-                    },
-                // Facility pages
-                "^/(power_facilities|storage_facilities|extraction_facilities|functional_facilities)($|/)":
-                    {
-                        target: backendUrl,
-                        changeOrigin: true,
-                    },
-                // Overview pages
-                "^/production_overview": {
+                // Auth routes
+                "^/logout$": {
                     target: backendUrl,
                     changeOrigin: true,
                 },
