@@ -15,7 +15,7 @@ def test_server_runs() -> None:
     trials = 0
     while True:
         try:
-            response = requests.get("http://localhost:5011/wiki/introduction", timeout=1)
+            response = requests.get("http://localhost:5011/openapi.json", timeout=1)
         except requests.exceptions.ConnectionError:
             trials += 1
             if trials == 10:
