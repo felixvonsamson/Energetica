@@ -10,6 +10,7 @@ set -e
 #   --yes                Skip confirmation prompt
 #   --skip-backend       Skip git sync and service restart (frontend-only deployment)
 #   --skip-frontend-build Skip building frontend locally (for backend-only changes)
+#   --rm_instance        Remove the instance folder on the server before deploying (DESTRUCTIVE)
 
 REMOTE_HOST="${DEPLOY_HOST:-energetica-game-deploy}"
 REMOTE_USER="${DEPLOY_USER:-deploy}"
@@ -19,6 +20,7 @@ ALLOW_DIRTY=false
 AUTO_CONFIRM=false
 SKIP_BACKEND=false
 SKIP_FRONTEND_BUILD=false
+RM_INSTANCE=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -39,10 +41,14 @@ while [[ $# -gt 0 ]]; do
             SKIP_FRONTEND_BUILD=true
             shift
             ;;
+        --rm_instance)
+            RM_INSTANCE=true
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
             echo "Usage: ./scripts/deploy.sh [OPTIONS]"
-            echo "Options: --force, --yes, --skip-backend, --skip-frontend-build"
+            echo "Options: --force, --yes, --skip-backend, --skip-frontend-build, --rm_instance"
             exit 1
             ;;
     esac
@@ -149,15 +155,36 @@ main() {
     echo ""
     echo "This will:"
     if [ "$SKIP_BACKEND" = false ]; then
+        if [ "$RM_INSTANCE" = true ]; then
+            echo "  0. ⚠  Remove instance folder on the server (rm -r instance)"
+        fi
         echo "  1. Verify commits are pushed to remote"
         echo "  2. Pull latest code on VPS"
         echo "  3. Sync frontend files via rsync"
         echo "  4. Restart the game server (~10-30s downtime)"
     else
+        if [ "$RM_INSTANCE" = true ]; then
+            echo "  0. ⚠  Remove instance folder on the server (rm -r instance)"
+        fi
         echo "  1. Sync frontend files via rsync only"
         echo "     (no git sync, no service restart)"
     fi
     echo ""
+
+    if [ "$RM_INSTANCE" = true ]; then
+        echo -e "${RED}WARNING: --rm_instance will permanently delete the instance folder on the server.${NC}"
+        echo -e "${RED}All game data (saves, databases, logs) will be lost. This cannot be undone.${NC}"
+        echo ""
+        if [ "$AUTO_CONFIRM" = false ]; then
+            read -p "Type \"wipe\" to confirm: " WIPE_CONFIRM
+            echo
+            if [ "$WIPE_CONFIRM" != "wipe" ]; then
+                echo "Not confirmed. Deployment cancelled."
+                exit 0
+            fi
+            echo ""
+        fi
+    fi
 
     if [ "$AUTO_CONFIRM" = false ]; then
         read -p "Continue? (y/n) " -n 1 -r
@@ -191,13 +218,21 @@ main() {
         echo ""
     fi
 
-    # Step 6: Sync frontend files
+    # Step 6 (optional): Remove instance folder
+    if [ "$RM_INSTANCE" = true ]; then
+        log_step "Removing instance folder on server..."
+        ssh "${REMOTE_USER}@${REMOTE_HOST}" "sudo -u www-data rm -r ${REMOTE_PATH}/instance"
+        log_success "Instance folder removed"
+        echo ""
+    fi
+
+    # Step 7: Sync frontend files
     log_step "Syncing frontend files..."
     rsync -avz --delete "$LOCAL_BUILT_FRONTEND/" "${REMOTE_HOST}:${REMOTE_PATH}/energetica/static/react/" > /dev/null 2>&1
     log_success "Frontend synced"
     echo ""
 
-    # Step 7: Restart backend service (skip if skip-backend)
+    # Step 8: Restart backend service (skip if skip-backend)
     if [ "$SKIP_BACKEND" = false ]; then
         log_step "Restarting game server..."
         ssh "${REMOTE_USER}@${REMOTE_HOST}" "sudo systemctl restart energetica"
