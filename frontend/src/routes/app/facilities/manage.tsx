@@ -39,7 +39,7 @@ export const Route = createFileRoute("/app/facilities/manage")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: () => true,
+            isUnlocked: () => ({ unlocked: true }),
         },
         infoDialog: {
             contents: <FacilityManagementHelp />,

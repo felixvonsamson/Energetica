@@ -3,7 +3,7 @@
  * visualization.
  */
 
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
     TrendingUp,
     Activity,
@@ -63,7 +63,10 @@ export const Route = createFileRoute("/app/overviews/electricity-markets")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: (cap) => cap.has_network,
+            isUnlocked: (cap) =>
+                cap.has_network
+                    ? { unlocked: true }
+                    : { unlocked: false, reason: "Unlock the Network achievement to access" },
         },
         infoDialog: {
             contents: <MarketsOverviewHelp />,
@@ -211,8 +214,14 @@ function MarketsOverviewContent() {
                 <Card>
                     <CardContent>
                         <p className="text-muted">
-                            You are not currently in an electricity market. Join
-                            or create a market to view market data.
+                            You are not part of any electricity market.{" "}
+                            <Link
+                                to="/app/community/electricity-markets"
+                                className="underline hover:text-foreground"
+                            >
+                                Join or create a market
+                            </Link>{" "}
+                            to view market data.
                         </p>
                     </CardContent>
                 </Card>

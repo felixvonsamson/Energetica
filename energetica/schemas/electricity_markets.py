@@ -61,12 +61,12 @@ class ChangeElectricityMarketPrices(BaseModel):
 
 class Ask(BaseModel):
     type: AskType
-    price: float = Field(gt=-5)
+    price: float = Field(ge=-4.99)
 
 
 class Bid(BaseModel):
     type: BidType
-    price: float = Field(gt=-5)
+    price: float = Field(ge=-4.99)
 
 
 # TODO(mglst): The following class definitions shouldn't be placed here - this temporarily resolves a circular import
@@ -76,7 +76,7 @@ class Bid(BaseModel):
 class BidItem(BaseModel):
     side: Literal["bid"]
     type: BidType
-    price: float  # Price per MWh
+    price: float = Field(ge=-4.99)  # Price per MWh
 
     class Config:
         frozen = True
@@ -85,7 +85,7 @@ class BidItem(BaseModel):
 class AskItem(BaseModel):
     side: Literal["ask"]
     type: AskType
-    price: float  # Price per MWh
+    price: float = Field(ge=-4.99)  # Price per MWh
 
     class Config:
         frozen = True

@@ -65,7 +65,7 @@ export const Route = createFileRoute("/app/facilities/power")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: () => true,
+            isUnlocked: () => ({ unlocked: true }),
         },
         infoDialog: {
             contents: <PowerFacilitiesHelp />,

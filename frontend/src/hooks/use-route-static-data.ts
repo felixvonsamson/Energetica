@@ -4,6 +4,7 @@ import {
     useRouter,
 } from "@tanstack/react-router";
 
+import type { UnlockStatus } from "@/router";
 import type { Capabilities } from "@/types/players";
 
 /**
@@ -29,14 +30,15 @@ export function useRouteStaticData(
 export function useRouteUnlocked(
     to: LinkProps["to"],
     capabilities: Capabilities | null | undefined,
-): boolean {
+): UnlockStatus {
     // Get the router instance to access the route data
     // Note: This hook must be called in a component context
     // For use outside components, use getRouteIsUnlockedFn directly with staticData
     const staticData = useRouteStaticData(to);
-    if (!capabilities) return false;
-    if (!staticData) return true;
+    if (!capabilities) return { unlocked: false, reason: "Loading..." };
+    if (!staticData) return { unlocked: true };
     const routeConfig = staticData.routeConfig;
-    if (!routeConfig || routeConfig.requiredRole !== "player") return true;
+    if (!routeConfig || routeConfig.requiredRole !== "player")
+        return { unlocked: true };
     return routeConfig.isUnlocked(capabilities);
 }

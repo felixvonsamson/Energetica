@@ -66,7 +66,7 @@ export const Route = createFileRoute("/app/settings")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: () => true,
+            isUnlocked: () => ({ unlocked: true }),
         },
         infoDialog: {
             contents: <SettingsHelp />,

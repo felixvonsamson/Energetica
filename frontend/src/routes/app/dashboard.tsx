@@ -47,7 +47,7 @@ export const Route = createFileRoute("/app/dashboard")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: () => true,
+            isUnlocked: () => ({ unlocked: true }),
         },
         infoDialog: {
             contents: <DashboardHelp />,

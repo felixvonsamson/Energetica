@@ -62,7 +62,7 @@ function RootComponent() {
                 // Check page is unlocked
                 if (!capabilities) return;
                 const routeIsUnlocked = routeConfig.isUnlocked(capabilities);
-                if (!routeIsUnlocked) {
+                if (!routeIsUnlocked.unlocked) {
                     navigate({ to: "/app/dashboard" });
                     return;
                 }
@@ -95,7 +95,7 @@ function RootComponent() {
                     return "Loading...";
                 if (capabilities === null) return "Loading...";
                 const routeIsUnlocked = routeConfig.isUnlocked(capabilities);
-                if (!routeIsUnlocked) return "Loading...";
+                if (!routeIsUnlocked.unlocked) return "Loading...";
                 break;
         }
     }

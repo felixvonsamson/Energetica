@@ -30,7 +30,7 @@ export const Route = createFileRoute("/app/community/leaderboards")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: () => true,
+            isUnlocked: () => ({ unlocked: true }),
         },
         infoDialog: {
             contents: <LeaderboardsHelp />,

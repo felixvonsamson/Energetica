@@ -63,7 +63,7 @@ export const Route = createFileRoute("/app/facilities/storage")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: () => true,
+            isUnlocked: () => ({ unlocked: true }),
         },
         infoDialog: {
             contents: <StorageFacilitiesHelp />,

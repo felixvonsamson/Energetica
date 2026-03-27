@@ -63,7 +63,10 @@ export const Route = createFileRoute("/app/facilities/extraction")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: (cap) => cap.has_warehouse,
+            isUnlocked: (cap) =>
+                cap.has_warehouse
+                    ? { unlocked: true }
+                    : { unlocked: false, reason: "Build a Warehouse to unlock" },
         },
         infoDialog: {
             contents: <ExtractionFacilitiesHelp />,

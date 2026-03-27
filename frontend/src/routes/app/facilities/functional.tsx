@@ -53,7 +53,7 @@ export const Route = createFileRoute("/app/facilities/functional")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: () => true,
+            isUnlocked: () => ({ unlocked: true }),
         },
         infoDialog: {
             contents: <FunctionalFacilitiesHelp />,
