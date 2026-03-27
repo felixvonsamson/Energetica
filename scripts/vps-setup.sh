@@ -106,7 +106,7 @@ else
     # Create sudoers.d entry with minimal, specific permissions
     # Allow: git pull as www-data, and service management
     cat > "$SUDOERS_FILE" << EOF
-    $DEPLOY_USER ALL=(www-data) NOPASSWD: /usr/bin/git -C $APP_PATH pull origin *
+    $DEPLOY_USER ALL=(www-data) NOPASSWD: /usr/bin/git -C $APP_PATH pull origin *, /bin/rm -r $APP_PATH/instance
     $DEPLOY_USER ALL=(ALL) NOPASSWD: /bin/systemctl restart energetica, /bin/systemctl status energetica, /bin/systemctl is-active *, /usr/bin/journalctl -u energetica*
     EOF
     chmod 440 "$SUDOERS_FILE"
