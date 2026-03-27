@@ -112,7 +112,7 @@ export function MessageContainer({
                     <div
                         key={`group-${firstMessage.id}`}
                         className={cn(
-                            "flex flex-col",
+                            "w-full flex flex-col",
                             isOwnMessage ? "items-end" : "items-start",
                         )}
                     >
@@ -129,7 +129,7 @@ export function MessageContainer({
                         {/* Render all messages in the group */}
                         <div
                             className={cn(
-                                "space-y-1 flex flex-col",
+                                "w-full space-y-1 flex flex-col",
                                 isOwnMessage ? "items-end" : "items-start",
                             )}
                         >
@@ -137,7 +137,7 @@ export function MessageContainer({
                                 <div
                                     key={message.id}
                                     className={cn(
-                                        "p-3 rounded-lg wrap-break-word max-w-[70%] whitespace-pre-line",
+                                        "p-3 rounded-lg break-words max-w-[70%] whitespace-pre-line",
                                         isOwnMessage
                                             ? "bg-primary text-primary-foreground rounded-br-none"
                                             : "bg-secondary text-secondary-foreground rounded-bl-none",
