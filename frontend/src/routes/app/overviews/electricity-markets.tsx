@@ -214,7 +214,7 @@ function MarketsOverviewContent() {
                 <Card>
                     <CardContent>
                         <p className="text-muted">
-                            You are not currently in an electricity market.{" "}
+                            You are not part of any electricity market.{" "}
                             <Link
                                 to="/app/community/electricity-markets"
                                 className="underline hover:text-foreground"
