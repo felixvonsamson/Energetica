@@ -145,6 +145,33 @@ class NetworkPrices:
         type_key_price.sort(key=lambda x: x[1])
         return [x[0] for x in type_key_price]
 
+    def shift_facility_priority(
+        self,
+        player: Player,
+        side: Literal["ask", "bid"],
+        item_type: AskType | BidType,
+        delta: Literal[-1, 1],
+    ) -> None:
+        """Shift a single facility one position up (delta=-1) or down (delta=1) in priority order."""
+        priorities = self.get_facility_priorities(player)
+
+        idx = next(
+            (i for i, p in enumerate(priorities) if p.side == side and p.type.value == item_type),
+            None,
+        )
+        if idx is None:
+            raise GameError(GameExceptionType.MALFORMED_REQUEST)
+
+        new_idx = idx + delta
+        if new_idx < 0 or new_idx >= len(priorities):
+            return
+
+        reordered = list(priorities)
+        reordered[idx], reordered[new_idx] = reordered[new_idx], reordered[idx]
+
+        self.change_facility_priority(player, reordered)
+        player.invalidate_queries(["power-priorities"], ["facilities"])
+
     def change_facility_priority(self, player: Player, new_priority: list[PowerPriorityItem]) -> None:
         """
         Reassign the selling prices of the facilities according to the new priority order.

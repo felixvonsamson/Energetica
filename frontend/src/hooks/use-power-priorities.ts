@@ -22,47 +22,30 @@ export function usePowerPriorities() {
     });
 }
 
-/**
- * Hook to update power priorities order (drag mode). Used when player is NOT in
- * a network or using drag handles.
- */
-export function useUpdatePowerPriorities() {
+/** Hook to bump a single power priority item one step up or down. */
+export function useUpdatePowerPriorityBump() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: powerPrioritiesApi.update,
-        onSuccess: () => {
-            // Invalidate power priorities and facilities (priorities affect production)
+        mutationFn: (vars: {
+            side: string;
+            type: string;
+            direction: "increase" | "decrease";
+        }) => powerPrioritiesApi.bump(vars),
+        onSettled: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.powerPriorities.all,
-            });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.facilities.all,
             });
         },
     });
 }
 
 /**
- * Hook to update electricity market prices (price mode). Used when player IS in
- * a network and using price inputs.
+ * Hook to update electricity market prices. The server sends socket.io
+ * invalidation to all clients on success.
  */
 export function useUpdateElectricityPrices() {
-    const queryClient = useQueryClient();
-
     return useMutation({
         mutationFn: electricityMarketsApi.changePrices,
-        onSuccess: () => {
-            // Invalidate electricity markets, power priorities, and facilities
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.electricityMarkets.all,
-            });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.powerPriorities.all,
-            });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.facilities.all,
-            });
-        },
     });
 }

@@ -1,10 +1,11 @@
 /**
  * Renewables section component - displays non-editable renewable energy
- * facilities. These appear at the bottom of the consumption table and cannot be
- * reordered. Uses the same visual style as production items.
+ * facilities. These appear at the bottom of the table and cannot be reordered.
+ * Fetches its own data.
  */
 
 import { Lock } from "lucide-react";
+import { useMemo } from "react";
 
 import { StatusBadge } from "@/components/power-priorities/status-badge";
 import type { RenewableFacilityType } from "@/components/power-priorities/types";
@@ -16,18 +17,13 @@ import {
     TypographyMuted,
     TypographySmall,
 } from "@/components/ui/typography";
+import { useLatestChartDataSlice } from "@/hooks/use-charts";
+import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
 import { formatPower } from "@/lib/format-utils";
-import type { ApiResponse } from "@/types/api-helpers";
 
 interface RenewablesSectionProps {
     /** Array of renewable facility types */
     renewables: RenewableFacilityType[];
-    /** Facility statuses from the API */
-    statuses: ApiResponse<"/api/v1/facilities/statuses", "get">;
-    /** Production power levels by facility type */
-    productionPowerLevels?: Partial<Record<string, number>>;
-    /** Production capacity by facility type */
-    productionCapacityByType?: Record<string, number>;
 }
 
 /**
@@ -35,12 +31,27 @@ interface RenewablesSectionProps {
  * they're always active and cannot be reordered. Renewables have priority over
  * all other facilities. Styled to match production items.
  */
-export function RenewablesSection({
-    renewables,
-    statuses,
-    productionPowerLevels = {},
-    productionCapacityByType = {},
-}: RenewablesSectionProps) {
+export function RenewablesSection({ renewables }: RenewablesSectionProps) {
+    const { data: statusesData } = useFacilityStatuses();
+    const { data: facilitiesData } = useFacilities();
+    const { data: productionPowerLevels } = useLatestChartDataSlice({
+        chartType: "power-sources",
+    });
+
+    const productionCapacityByType = useMemo(() => {
+        if (!facilitiesData) return {};
+        const capacities: Record<string, number> = {};
+        facilitiesData.power_facilities.forEach((f) => {
+            capacities[f.facility] =
+                (capacities[f.facility] ?? 0) + f.max_power_generation;
+        });
+        facilitiesData.storage_facilities.forEach((f) => {
+            capacities[f.facility] =
+                (capacities[f.facility] ?? 0) + f.max_power_generation;
+        });
+        return capacities;
+    }, [facilitiesData]);
+
     if (renewables.length === 0) {
         return null;
     }
@@ -62,10 +73,9 @@ export function RenewablesSection({
                 </td>
             </tr>
             {renewables.map((renewable) => {
-                // Look up status for this renewable, default to "available"
-                const status = statuses.renewables[renewable] || "available";
+                const status = statusesData?.renewables[renewable] ?? "available";
                 const currentPowerMW = productionPowerLevels[renewable];
-                const capacityMW = productionCapacityByType[renewable] || 0;
+                const capacityMW = productionCapacityByType[renewable] ?? 0;
 
                 return (
                     <tr key={renewable}>

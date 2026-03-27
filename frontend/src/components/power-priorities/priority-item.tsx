@@ -1,12 +1,12 @@
 /**
  * Priority item component - displays a single facility in the priority list.
- * Shows facility name, status, and supports drag-and-drop reordering.
+ * Self-contained: fetches its own data, and owns its mutation logic for bump
+ * reordering and price editing.
  */
 
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
-import { GripVertical } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useMemo } from "react";
 
 import { PriceInput } from "@/components/power-priorities/price-input";
 import { StatusBadge } from "@/components/power-priorities/status-badge";
@@ -15,121 +15,155 @@ import type {
     ProductionStatus,
     ConsumptionStatus,
 } from "@/components/power-priorities/types";
-import { Money } from "@/components/ui";
 import { AssetName } from "@/components/ui/asset-name";
+import { Button } from "@/components/ui/button";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
-import { formatPower } from "@/lib/format-utils";
+import { useLatestChartDataSlice } from "@/hooks/use-charts";
+import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
 import {
-    getPriorityItemDisplayName,
-    getPriorityItemKey,
-} from "@/lib/power-priorities-utils";
+    useUpdateElectricityPrices,
+    useUpdatePowerPriorityBump,
+} from "@/hooks/use-power-priorities";
+import { formatPower } from "@/lib/format-utils";
+import { getPriorityItemDisplayName } from "@/lib/power-priorities-utils";
 import { cn } from "@/lib/utils";
-import type { ApiResponse } from "@/types/api-helpers";
 
 interface PriorityItemProps {
-    /** The priority item to display */
     item: PowerPriorityItem;
-    /** Consumption priority (1-based, null if not a consumption item) */
-    consumptionPriority: number | null;
-    /** Production priority (1-based, null if not a production item) */
-    productionPriority: number | null;
-    /** Callback when price changes (price mode only) */
-    onPriceChange: (newPrice: number) => void;
-    /** Whether the item is in edit mode */
-    isEditMode?: boolean;
-    /** Facility statuses from the API */
-    statuses: ApiResponse<"/api/v1/facilities/statuses", "get">;
-    /** Current power level in MW */
-    currentPowerMW?: number;
-    /** Total capacity in MW */
-    capacityMW?: number;
+    canBumpUp: boolean;
+    canBumpDown: boolean;
 }
 
 /**
- * Displays a single facility as a table row in the priority list with its
- * status and priority number. Supports drag-and-drop reordering when in edit
- * mode.
+ * Displays a single facility as a table row.
  *
- * Ghost items are valid drop targets but cannot be dragged (no drag handle).
+ * Bump buttons sit in the side cell that "owns" the row (left for consumption,
+ * right for production). The ↑ button uses variant="ghost" and ↓ uses
+ * variant="secondary" — ↓ is always the "increase priority" action for both
+ * sides, so it gets the visual weight.
  */
 export function PriorityItem({
     item,
-    consumptionPriority,
-    productionPriority,
-    onPriceChange,
-    isEditMode = false,
-    statuses,
-    currentPowerMW = 0,
-    capacityMW = 0,
+    canBumpUp,
+    canBumpDown,
 }: PriorityItemProps) {
-    const suffix = getPriorityItemDisplayName(item);
-    const itemId = getPriorityItemKey(item);
-    const isDraggable = isEditMode;
+    const updatePowerPriorityBump = useUpdatePowerPriorityBump();
+    const updateElectricityPrices = useUpdateElectricityPrices();
 
-    // Look up the status for this facility
-    const status: ProductionStatus | ConsumptionStatus | null | undefined =
-        item.side === "ask"
-            ? statuses.production[item.type]
-            : statuses.consumption[item.type];
-
-    // All items use sortable (including ghosts for drop targets)
-    // Ghost items are disabled for dragging but still registered for drop targeting
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({
-        id: itemId,
-        disabled: !isDraggable,
+    const { data: statusesData } = useFacilityStatuses();
+    const { data: facilitiesData } = useFacilities();
+    const { data: productionPowerLevels } = useLatestChartDataSlice({
+        chartType: "power-sources",
+    });
+    const { data: consumptionPowerLevels } = useLatestChartDataSlice({
+        chartType: "power-sinks",
     });
 
-    // Apply transform and transition styles
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
+    const suffix = getPriorityItemDisplayName(item);
+
+    const status: ProductionStatus | ConsumptionStatus | null | undefined =
+        item.side === "ask"
+            ? statusesData?.production[item.type]
+            : statusesData?.consumption[item.type];
 
     const isConsumption = item.side === "bid";
     const isProduction = item.side === "ask";
 
+    const currentPowerMW =
+        item.side === "ask"
+            ? productionPowerLevels[item.type]
+            : consumptionPowerLevels[item.type];
+
+    const capacityMW = useMemo(() => {
+        if (!facilitiesData) return 0;
+        if (item.side === "ask") {
+            return (
+                facilitiesData.power_facilities
+                    .filter((f) => f.facility === item.type)
+                    .reduce((sum, f) => sum + f.max_power_generation, 0) +
+                facilitiesData.storage_facilities
+                    .filter((f) => f.facility === item.type)
+                    .reduce((sum, f) => sum + f.max_power_generation, 0)
+            );
+        }
+        return (
+            facilitiesData.extraction_facilities
+                .filter((f) => f.facility === item.type)
+                .reduce((sum, f) => sum + f.max_power_use, 0) +
+            facilitiesData.storage_facilities
+                .filter((f) => f.facility === item.type)
+                .reduce((sum, f) => sum + f.max_power_use, 0)
+        );
+    }, [facilitiesData, item.type, item.side]);
+
+    /** Moves this item one step toward higher or lower priority. */
+    const handleBump = (direction: "up" | "down") => {
+        updatePowerPriorityBump.mutate({
+            side: item.side,
+            type: String(item.type),
+            direction: direction === "down" ? "increase" : "decrease",
+        });
+    };
+
+    /** Commits a price edit for this item. */
+    const handlePriceCommit = async (newPrice: number) => {
+        if (item.side === "ask") {
+            await updateElectricityPrices.mutateAsync({
+                asks: [{ type: item.type, price: newPrice }],
+                bids: [],
+            });
+        } else {
+            await updateElectricityPrices.mutateAsync({
+                asks: [],
+                bids: [{ type: item.type, price: newPrice }],
+            });
+        }
+    };
+
+    const bumpButtons = (
+        <div className="inline-flex items-center gap-1">
+            <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => handleBump("up")}
+                disabled={!canBumpUp || updatePowerPriorityBump.isPending}
+                title="Move up (lower priority)"
+                aria-label="Move up"
+            >
+                <ChevronUp className="size-4" />
+            </Button>
+            <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => handleBump("down")}
+                disabled={!canBumpDown || updatePowerPriorityBump.isPending}
+                title="Move down (higher priority)"
+                aria-label="Move down"
+            >
+                <ChevronDown className="size-4" />
+            </Button>
+        </div>
+    );
+
     return (
         <motion.tr
-            ref={setNodeRef}
-            style={style}
-            // Motion props
-            layout={!isDragging}
-            layoutId={isDragging ? undefined : itemId}
-            //
-            className={cn("h-13", isDragging && "opacity-50")}
+            layout
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="h-13"
         >
-            {/* Consumption priority number or drag handle */}
+            {/* Consumption side cell — bump buttons for bid rows, empty for ask */}
             <td
-                {...(isConsumption && isDraggable ? listeners : {})}
-                {...(isConsumption && isDraggable ? attributes : {})}
                 className={cn(
-                    "py-3 px-3 text-center",
+                    "py-3 px-2 text-center",
                     isConsumption
                         ? "bg-secondary rounded-l-lg"
                         : "bg-transparent",
-                    isConsumption &&
-                        isDraggable &&
-                        "cursor-grab active:cursor-grabbing touch-none",
                 )}
             >
-                {isConsumption ? (
-                    isDraggable ? (
-                        <div className="inline-flex">
-                            <GripVertical className="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-                        </div>
-                    ) : (
-                        <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                            #{consumptionPriority}
-                        </span>
-                    )
-                ) : null}
+                {isConsumption ? bumpButtons : null}
             </td>
 
             {/* Facility name */}
@@ -149,11 +183,9 @@ export function PriorityItem({
 
             {/* Current power */}
             <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400 bg-secondary">
-                {
-                    <span className="font-mono">
-                        {formatPower(currentPowerMW)}
-                    </span>
-                }
+                <span className="font-mono">
+                    {formatPower(currentPowerMW ?? 0)}
+                </span>
             </td>
 
             {/* Power gauge (hidden on mobile) */}
@@ -161,11 +193,7 @@ export function PriorityItem({
                 {capacityMW > 0 ? (
                     <FacilityGauge
                         facilityType={item.type}
-                        value={
-                            capacityMW > 0
-                                ? (currentPowerMW / capacityMW) * 100
-                                : 0
-                        }
+                        value={((currentPowerMW ?? 0) / capacityMW) * 100}
                     />
                 ) : (
                     <div className="text-center text-xs text-gray-500 dark:text-gray-400">
@@ -174,23 +202,14 @@ export function PriorityItem({
                 )}
             </td>
 
-            {/* Price display */}
-            {!isEditMode && (
-                <td className="text-right py-3 px-3 bg-secondary">
-                    <Money amount={item.price} />
-                </td>
-            )}
-
-            {/* Price input (only in price mode) */}
-            {isEditMode && (
-                <td className="py-0 px-3 bg-secondary">
-                    <PriceInput
-                        value={item.price}
-                        onChange={(newPrice) => onPriceChange(newPrice)}
-                        disabled={!isEditMode}
-                    />
-                </td>
-            )}
+            {/* Price */}
+            <td className="py-0 px-3 bg-secondary">
+                <PriceInput
+                    value={item.price}
+                    onCommit={handlePriceCommit}
+                    disabled={updateElectricityPrices.isPending}
+                />
+            </td>
 
             {/* Status badge */}
             <td
@@ -204,31 +223,16 @@ export function PriorityItem({
                 </div>
             </td>
 
-            {/* Production priority number or drag handle */}
+            {/* Production side cell — bump buttons for ask rows, empty for bid */}
             <td
-                {...(isProduction && isDraggable ? listeners : {})}
-                {...(isProduction && isDraggable ? attributes : {})}
                 className={cn(
-                    "py-3 px-3 text-center",
+                    "py-3 px-2 text-center",
                     isProduction
                         ? "bg-secondary rounded-r-lg"
                         : "bg-transparent",
-                    isProduction &&
-                        isDraggable &&
-                        "cursor-grab active:cursor-grabbing touch-none",
                 )}
             >
-                {isProduction ? (
-                    isDraggable ? (
-                        <div className="inline-flex">
-                            <GripVertical className="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-                        </div>
-                    ) : (
-                        <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                            #{productionPriority}
-                        </span>
-                    )
-                ) : null}
+                {isProduction ? bumpButtons : null}
             </td>
         </motion.tr>
     );

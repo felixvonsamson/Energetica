@@ -16,4 +16,18 @@ export const powerPrioritiesApi = {
             "/power-priorities",
             data,
         ),
+
+    /** Move a single item one step up (increase-priority) or down (decrease-priority). */
+    bump: ({
+        side,
+        type,
+        direction,
+    }: {
+        side: string;
+        type: string;
+        direction: "increase" | "decrease";
+    }) =>
+        apiClient.post<ApiResponse<"/api/v1/power-priorities", "get">>(
+            `/power-priorities/${side}/${type}:${direction}-priority`,
+        ),
 };
