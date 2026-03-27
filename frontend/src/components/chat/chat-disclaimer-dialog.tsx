@@ -3,6 +3,7 @@ import {
     Dialog,
     DialogClose,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -22,6 +23,9 @@ export function ChatDisclaimerDialog({
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Chat Disclaimer</DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Important information about in-game chat usage.
+                    </DialogDescription>
                 </DialogHeader>
                 <ul className="list-disc pl-5 space-y-1 text-sm">
                     <li>The in-game chat is not censored</li>
