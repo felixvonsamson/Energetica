@@ -7,6 +7,7 @@ __pycache__
 **/node_modules/*
 .eslintcache
 energetica/static/react/*
+energetica/static/service-worker.js
 scripts/openapi-schema.json
 admin_accounts.txt
 *actions_history.log
