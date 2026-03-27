@@ -5,92 +5,38 @@ import { formatMass } from "@/lib/format-utils";
 
 export type ResourceId = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-// Resource types available for filtering
-export const RESOURCES = [
-    { id: 0, name: "Solar", color: 59 },
-    { id: 1, name: "Wind", color: 186 },
-    { id: 2, name: "Hydro", color: 239 },
-    { id: 3, name: "Coal", color: 0 },
-    { id: 4, name: "Gas", color: 275 },
-    { id: 5, name: "Uranium", color: 109 },
-    { id: 6, name: "Climate risk", color: 320 },
-] as const;
+// oklch color: [L (0–1), C (0–0.4), H (0–360)]
+// Exported so resource buttons can reference the same colors.
+export type OklchColor = [number, number, number];
+
+// Resource types available for filtering.
+// `color` is the light-theme oklch value; dark theme uses a darkened variant.
+export const RESOURCES: {
+    id: ResourceId;
+    name: string;
+    color: OklchColor;
+}[] = [
+    { id: 0, name: "Solar", color: [0.9592, 0.2074, 108.5] },
+    { id: 1, name: "Wind", color: [0.8453, 0.1457, 208.99] },
+    { id: 2, name: "Hydro", color: [0.4534, 0.312276, 264.0746] },
+    { id: 3, name: "Coal", color: [0.628, 0.2577, 29.23] },
+    { id: 4, name: "Gas", color: [0.5545, 0.295, 300.59] },
+    { id: 5, name: "Uranium", color: [0.8697, 0.2903, 141.66] },
+    { id: 6, name: "Climate risk", color: [0.6597, 0.2755, 349.7] },
+];
 
 // Max values for each resource (for normalization in colouring)
 export const MAX_VALUES = [
     1, 1, 1, 2_000_000_000, 600_000_000, 8_000_000, 10,
 ] as const;
 
-// Color interpolation helpers
-export function hexToRgb(hex: string): [number, number, number] {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result || !result[1] || !result[2] || !result[3]) {
-        return [0, 0, 0];
-    }
-    return [
-        parseInt(result[1], 16),
-        parseInt(result[2], 16),
-        parseInt(result[3], 16),
-    ];
-}
+// At zero concentration: chroma fades to near-zero, lightness shifts away from the resource color
+const C_MIN = 0.03; // almost no chroma at zero concentration
+const L_ZERO_LIGHT = 0.96; // very light at zero concentration (light theme)
+const L_ZERO_DARK = 0.3; // very dark at zero concentration (dark theme)
 
-export function hslToRgb(
-    h: number,
-    s: number,
-    l: number,
-): [number, number, number] {
-    s /= 100;
-    l /= 100;
-    const c = (1 - Math.abs(2 * l - 1)) * s;
-    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-    const m = l - c / 2;
-    let r = 0,
-        g = 0,
-        b = 0;
-
-    if (h < 60) {
-        r = c;
-        g = x;
-        b = 0;
-    } else if (h < 120) {
-        r = x;
-        g = c;
-        b = 0;
-    } else if (h < 180) {
-        r = 0;
-        g = c;
-        b = x;
-    } else if (h < 240) {
-        r = 0;
-        g = x;
-        b = c;
-    } else if (h < 300) {
-        r = x;
-        g = 0;
-        b = c;
-    } else {
-        r = c;
-        g = 0;
-        b = x;
-    }
-
-    return [
-        Math.round((r + m) * 255),
-        Math.round((g + m) * 255),
-        Math.round((b + m) * 255),
-    ];
-}
-
-export function interpolateRgb(
-    from: [number, number, number],
-    to: [number, number, number],
-    factor: number,
-): [number, number, number] {
-    return [
-        Math.round(from[0] + (to[0] - from[0]) * factor),
-        Math.round(from[1] + (to[1] - from[1]) * factor),
-        Math.round(from[2] + (to[2] - from[2]) * factor),
-    ];
+export function oklchToString([l, c, h]: OklchColor): string {
+    return `oklch(${(l * 100).toFixed(3)}% ${c.toFixed(5)} ${h.toFixed(3)})`;
 }
 
 // Interface for tiles with resource data
@@ -154,38 +100,68 @@ export function formatResourceValue(
  * @param defaultFill - Default fill color when no resource is selected (e.g.,
  *   player territory color)
  */
+export interface TileFill {
+    fill: string;
+    /** Contrast-safe label color for text rendered on top of fill. */
+    labelColor: string;
+}
+
 export function calculateTileFillWithResource(
     tile: TileWithResources,
     activeResourceId: ResourceId | undefined,
     theme: Theme,
     defaultFill: string,
-): string {
+    defaultLabelColor: string,
+): TileFill {
     // When a resource is selected, show heatmap
     if (activeResourceId !== undefined) {
         const resourceValue = getResourceValue(tile, activeResourceId);
         const maxValue = MAX_VALUES[activeResourceId];
         const interpolationFactor = resourceValue / maxValue;
-        const hue = RESOURCES[activeResourceId].color;
 
-        // Get the vacant tile color based on theme
-        const vacantColor =
-            theme === "dark"
-                ? ([121, 121, 121] as [number, number, number])
-                : hexToRgb("#e5d9b6");
+        const [l, c, h] = RESOURCES[activeResourceId]!.color;
+        const baseL = theme === "dark" ? L_ZERO_DARK : L_ZERO_LIGHT;
 
-        // Get the resource color (full saturation and appropriate lightness)
-        const resourceLightness = theme === "dark" ? 50 : 35;
-        const resourceColor = hslToRgb(hue, 100, resourceLightness);
+        const interpolatedL = baseL + (l - baseL) * interpolationFactor;
+        const interpolatedC = C_MIN + (c - C_MIN) * interpolationFactor;
 
-        // Interpolate between vacant and resource color
-        const [r, g, b] = interpolateRgb(
-            vacantColor,
-            resourceColor,
-            interpolationFactor,
-        );
-        return `rgb(${r}, ${g}, ${b})`;
+        // oklch L is perceptually uniform: above ~0.55 use dark text, else white
+        const labelColor = interpolatedL > 0.55 ? "oklch(0.2 0 0)" : "white";
+
+        return {
+            fill: oklchToString([interpolatedL, interpolatedC, h]),
+            labelColor,
+        };
     }
 
-    // Default behavior: use provided fill
-    return defaultFill;
+    return { fill: defaultFill, labelColor: defaultLabelColor };
+}
+
+const MAX_LABEL_SIZE = 14; // 20 * 0.7 — 30% reduction applied here
+
+/**
+ * Calculate the label text and font size for a map tile. Font size scales with
+ * hex size `s` and label length.
+ */
+export function calculateTileLabel(
+    tile: TileWithResources,
+    activeResourceId: ResourceId | undefined,
+    s: number,
+    playerMap: Record<number, string>,
+): { label: string | null; size: number } {
+    if (tile.player_id) {
+        const username = playerMap[tile.player_id];
+        return {
+            label: username ? username.slice(0, 3) : null,
+            size: MAX_LABEL_SIZE,
+        };
+    }
+    if (activeResourceId !== undefined) {
+        const formattedLabel = formatResourceValue(tile, activeResourceId);
+        return {
+            label: formattedLabel,
+            size: Math.min(MAX_LABEL_SIZE, (3 * s) / formattedLabel.length),
+        };
+    }
+    return { label: null, size: MAX_LABEL_SIZE };
 }

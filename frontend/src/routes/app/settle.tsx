@@ -5,9 +5,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { HelpCircle } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
 
-import { HexTile } from "@/components/map/hex-tile";
 import { MapCanvas } from "@/components/map/map-canvas";
 import { MapHoverBorder } from "@/components/map/map-hover-border";
+import { MapTiles } from "@/components/map/map-tiles";
 import { ResourceButton } from "@/components/map/resource-button";
 import { Button, ThemeToggle } from "@/components/ui";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -18,8 +18,6 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { TypographyH1, TypographyH2 } from "@/components/ui/typography";
-import { useMapContext } from "@/contexts/map-context";
-import { useTheme } from "@/contexts/theme-context";
 import { useAuth } from "@/hooks/use-auth";
 import { useMap } from "@/hooks/use-map";
 import { usePlayers } from "@/hooks/use-players";
@@ -29,14 +27,10 @@ import {
     RESOURCES,
     MAX_VALUES,
     ResourceId,
-    calculateTileFillWithResource,
     getResourceValue,
-    formatResourceValue,
+    oklchToString,
 } from "@/lib/map-resources";
-import type { ApiResponse } from "@/types/api-helpers";
 import { HexTileResources } from "@/types/map";
-
-type HexTileData = ApiResponse<"/api/v1/map", "get">[number];
 
 function SettleHelp() {
     return (
@@ -74,82 +68,6 @@ interface TileInfoProps {
     playerMap: Record<number, string>;
 }
 
-function calculateTileLabel(
-    tile: HexTileData,
-    activeResourceId: ResourceId | undefined,
-    s: number,
-    playerMap: Record<number, string>,
-): { label: string | null; size: number; fill: string } {
-    if (tile.player_id) {
-        const username = playerMap[tile.player_id];
-        return {
-            label: username ? username.slice(0, 3) : null,
-            size: 20,
-            fill: "black",
-        };
-    }
-    if (activeResourceId !== undefined) {
-      const formattedLabel = formatResourceValue(tile, activeResourceId);
-        return {
-            label: formattedLabel,
-            size: Math.min(20, 3 * s / formattedLabel.length),
-            fill: "black",
-        };
-    }
-    return { label: null, size: 20, fill: "black" };
-}
-
-/** Settlement tiles component - renders all tiles with resource visualization */
-interface SettleTilesProps {
-    mapData: HexTileData[];
-    activeResourceId: ResourceId | undefined;
-    selectedTileId: number | null;
-    onTileClick: (tile: HexTileData) => void;
-    playerMap: Record<number, string>;
-}
-
-function SettleTiles({
-    mapData,
-    activeResourceId,
-    onTileClick,
-    playerMap,
-}: SettleTilesProps) {
-    const { s } = useMapContext();
-    const { theme } = useTheme();
-
-    return (
-        <>
-            {mapData.map((tile) => {
-                const defaultFill = tile.player_id
-                    ? "var(--map-tile-other-player)"
-                    : "var(--map-tile-vacant)";
-                const fill = calculateTileFillWithResource(
-                    tile,
-                    activeResourceId,
-                    theme,
-                    defaultFill,
-                );
-                const {
-                    label,
-                    size,
-                    fill: labelFill,
-                } = calculateTileLabel(tile, activeResourceId, s, playerMap);
-
-                return (
-                    <HexTile
-                        key={tile.id}
-                        tile={tile}
-                        fill={fill}
-                        label={label}
-                        labelSize={size}
-                        labelFill={labelFill}
-                        onClick={() => onTileClick(tile)}
-                    />
-                );
-            })}
-        </>
-    );
-}
 
 function SettlePage() {
     return <SettleContent />;
@@ -181,7 +99,7 @@ function SettleContent() {
         return mapData.find((t) => t.id === selectedTileId) || null;
     }, [selectedTileId, mapData]);
 
-    const handleTileClick = (tile: HexTileData) => {
+    const handleTileClick = (tile: HexTileResources) => {
         // Can't select occupied tiles
         // if (tile.player_id) return;
 
@@ -224,21 +142,24 @@ function SettleContent() {
     return (
         <div className="p-4 flex flex-col lg:h-screen">
             {/* Title with theme toggle */}
-            <div className="flex items-center justify-between gap-3 mb-6 lg:shrink-0">
-                <TypographyH1 className="text-center flex-1">
+            <div className="flex items-center gap-3 mb-6 lg:shrink-0">
+                <div className="flex-1" />
+                <TypographyH1 className="text-center">
                     Location choice
                 </TypographyH1>
-                <ButtonGroup>
-                    <Button
-                        onClick={() => handleShowHelp()}
-                        variant="outline"
-                        size="icon"
-                        aria-label="Show help"
-                    >
-                        <HelpCircle size={20} />
-                    </Button>
-                    <ThemeToggle />
-                </ButtonGroup>
+                <div className="flex-1 flex justify-end">
+                    <ButtonGroup>
+                        <Button
+                            onClick={() => handleShowHelp()}
+                            variant="outline"
+                            size="icon"
+                            aria-label="Show help"
+                        >
+                            <HelpCircle size={20} />
+                        </Button>
+                        <ThemeToggle />
+                    </ButtonGroup>
+                </div>
             </div>
 
             <div className="flex flex-col lg:flex-row gap-4 lg:flex-1 lg:min-h-0">
@@ -260,10 +181,9 @@ function SettleContent() {
                 {/* Using padding-based aspect ratio for Safari compatibility on mobile */}
                 <div className="w-full relative pt-[86.60%] lg:pt-0 lg:flex-2 lg:h-full">
                     <MapCanvas className="absolute inset-0" mapData={mapData}>
-                        <SettleTiles
+                        <MapTiles
                             mapData={mapData}
                             activeResourceId={activeResourceId}
-                            selectedTileId={selectedTileId}
                             onTileClick={handleTileClick}
                             playerMap={playerMap}
                         />
@@ -377,7 +297,7 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
                                     className="absolute h-full rounded transition-all duration-500 ease-out"
                                     style={{
                                         width: `${barWidth}%`,
-                                        backgroundColor: `hsl(${resource.color}, 95%, 50%)`,
+                                        backgroundColor: oklchToString(resource.color),
                                     }}
                                 />
                             </div>
@@ -419,13 +339,15 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
                         {playerMap[selectedTile.player_id]}!
                     </div>
                 ) : (
-                    <button
+                    <Button
+                        variant="success"
+                        size="lg"
+                        className="mt-6 w-full font-bold"
                         onClick={handleSettleLocation}
                         disabled={isSettling}
-                        className="mt-6 w-full px-6 py-3 bg-brand-green hover:bg-brand-green/90 disabled:bg-gray-400 text-white font-bold rounded transition-all active:scale-95 disabled:cursor-not-allowed"
                     >
                         {isSettling ? "Settling..." : "Choose this location"}
-                    </button>
+                    </Button>
                 )}
             </div>
         </div>

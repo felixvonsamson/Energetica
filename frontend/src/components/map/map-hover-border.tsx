@@ -22,43 +22,33 @@ export function MapHoverBorder({
     enableAnimations: enableTransformAnimations = true,
 }: MapHoverBorderProps) {
     const { s, w } = useMapContext();
-    // Keep track of the last valid tile position for smooth animations
+
+    // Track the last known position; updated during render using the
+    // "derived state from props" pattern (react.dev/learn/you-might-not-need-an-effect)
     const [lastPosition, setLastPosition] = useState<{
         q: number;
         r: number;
     } | null>(null);
+    const [prevTile, setPrevTile] = useState(tile);
 
-    useEffect(() => {
+    if (prevTile !== tile) {
+        setPrevTile(tile);
         if (tile) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLastPosition({ q: tile.q, r: tile.r });
-        } else if (lastPosition) {
-            setLastPosition({
-                q: lastPosition.q,
-                r: lastPosition.r,
-            });
-            (async () => {
-                const sleep = async (milliseconds: number) => {
-                    return new Promise((resolve) => {
-                        setTimeout(() => {
-                            resolve("");
-                        }, milliseconds);
-                    });
-                };
-                await sleep(200);
-                setLastPosition(null);
-            })();
         }
-    }, [tile, lastPosition]);
+    }
+
+    // When tile is removed, keep the border visible for 200ms then hide it
+    useEffect(() => {
+        if (!tile) {
+            const timer = setTimeout(() => setLastPosition(null), 200);
+            return () => clearTimeout(timer);
+        }
+    }, [tile]);
 
     if (!lastPosition) return null;
 
-    const { x: tx, y: ty } = getHexPosition(
-        lastPosition.q,
-        lastPosition.r,
-        s,
-        w,
-    );
+    const { x: tx, y: ty } = getHexPosition(lastPosition.q, lastPosition.r, s, w);
 
     const points = [
         [0, s],
