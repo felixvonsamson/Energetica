@@ -175,7 +175,7 @@ main() {
         echo -e "${RED}WARNING: --rm_instance will permanently delete the instance folder on the server.${NC}"
         echo -e "${RED}All game data (saves, databases, logs) will be lost. This cannot be undone.${NC}"
         echo ""
-        if [ "$AUTO_CONFIRM" = false ]; then
+        if true; then
             read -p "Type \"wipe\" to confirm: " WIPE_CONFIRM
             echo
             if [ "$WIPE_CONFIRM" != "wipe" ]; then
@@ -229,6 +229,7 @@ main() {
     # Step 7: Sync frontend files
     log_step "Syncing frontend files..."
     rsync -avz --delete "$LOCAL_BUILT_FRONTEND/" "${REMOTE_HOST}:${REMOTE_PATH}/energetica/static/react/" > /dev/null 2>&1
+    rsync -avz "./energetica/static/service-worker.js" "${REMOTE_HOST}:${REMOTE_PATH}/energetica/static/service-worker.js" > /dev/null 2>&1
     log_success "Frontend synced"
     echo ""
 
@@ -255,7 +256,7 @@ main() {
         HEALTH_CHECK_DELAY=2
         HEALTH_SUCCESS=false
         for i in $(seq 1 $HEALTH_CHECK_RETRIES); do
-            if ssh "${REMOTE_USER}@${REMOTE_HOST}" "curl -sf http://localhost:8000/api/ > /dev/null" 2>/dev/null; then
+            if ssh "${REMOTE_USER}@${REMOTE_HOST}" "curl -sf http://localhost:8000/openapi.json > /dev/null" 2>/dev/null; then
                 HEALTH_SUCCESS=true
                 break
             fi

@@ -148,6 +148,17 @@
             }
         },
         {
+            "label": "Deploy (reset instance)",
+            "type": "shell",
+            "command": "bash",
+            "args": ["./scripts/deploy.sh", "--force", "--yes", "--rm_instance"],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "focus": true
+            }
+        },
+        {
             "label": "Sync instance from deployment",
             "type": "shell",
             "command": "bash",
