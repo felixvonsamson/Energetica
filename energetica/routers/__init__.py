@@ -204,7 +204,7 @@ def setup_routes(app: FastAPI):
     @app.get("/service-worker.js", include_in_schema=False)
     async def serve_service_worker() -> FileResponse:
         return FileResponse(
-            "energetica/static/react/service-worker.js",
+            "energetica/static/service-worker.js",
             media_type="application/javascript",
         )
 
