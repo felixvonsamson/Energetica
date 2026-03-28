@@ -155,7 +155,7 @@ function StorageFacilitiesContent() {
                             search: { compare: "" },
                         })
                     }
-                    className="px-4 py-2 rounded-lg bg-brand-green text-white font-semibold hover:bg-brand-green/80 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 rounded-lg bg-brand text-white font-semibold hover:bg-brand/80 transition-colors flex items-center gap-2"
                 >
                     <GitCompareArrows className="w-5 h-5" />
                     Compare
@@ -237,7 +237,6 @@ function StorageFacilitiesContent() {
                     />
                 </>
             )}
-
         </div>
     );
 }

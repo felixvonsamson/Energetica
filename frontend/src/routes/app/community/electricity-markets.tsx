@@ -42,7 +42,10 @@ export const Route = createFileRoute("/app/community/electricity-markets")({
             isUnlocked: (cap) =>
                 cap.has_network
                     ? { unlocked: true }
-                    : { unlocked: false, reason: "Unlock the Network achievement to access" },
+                    : {
+                          unlocked: false,
+                          reason: "Unlock the Network achievement to access",
+                      },
         },
         infoDialog: {
             contents: <ElectricityMarketsHelp />,
@@ -238,7 +241,7 @@ function EmptyState() {
             <CardContent>
                 <CardAction>
                     <button
-                        className="inline-flex items-center gap-2 px-6 py-2 bg-pine dark:bg-brand-green text-white rounded-lg hover:opacity-80 transition-opacity"
+                        className="inline-flex items-center gap-2 px-6 py-2 bg-pine dark:bg-brand text-white rounded-lg hover:opacity-80 transition-opacity"
                         onClick={() => {
                             navigate({ search: { createMarket: "" } });
                         }}

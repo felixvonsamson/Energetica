@@ -1,5 +1,5 @@
 /* 1. Import Google font */
-@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Expletus+Sans&family=Chivo+Mono:wght@500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Expletus+Sans&family=Chivo+Mono:wght@500&family=Poppins:wght@600&display=swap");
 
 /* 2. Tailwind layer injection */
 @import "tailwindcss";
@@ -32,13 +32,11 @@
     --color-pine-800: oklch(31.035% 0.05532 148.148);
     --color-pine-900: oklch(21.935% 0.03376 153.568);
 
-    /* App layout tokens */
-    --color-topbar: var(--topbar);
-
-    /* shadcn/ui semantic tokens (for future compatibility) */
+    /* Semantic colors */
     --color-background: var(--background);
-    --color-foreground: var(--foreground);
     --color-card: var(--card);
+    --color-topbar: var(--topbar);
+    --color-foreground: var(--foreground);
     --color-card-foreground: var(--card-foreground);
     --color-popover: var(--popover);
     --color-popover-foreground: var(--popover-foreground);
@@ -53,10 +51,6 @@
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
     --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-
-    /* Status/Alert colors */
     --color-info: var(--info);
     --color-info-foreground: var(--info-foreground);
     --color-warning: var(--warning);
@@ -77,7 +71,43 @@
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
 
+    /* ============================================
+       New Semantic Tokens — Tailwind bridges
+       Use these in components: bg-surface-card,
+       text-fg-muted, bg-brand, border-border-subtle …
+       ============================================ */
+
+    /* Surfaces */
+    --color-surface-page:    var(--surface-page);
+    --color-surface-card:    var(--surface-card);
+    --color-surface-raised:  var(--surface-raised);
+    --color-surface-sunken:  var(--surface-sunken);
+    --color-surface-topbar:  var(--surface-topbar);
+
+    /* Text / foreground */
+    --color-fg-base:         var(--fg-base);
+    --color-fg-muted:        var(--fg-muted);
+    --color-fg-subtle:       var(--fg-subtle);
+    --color-fg-on-brand:     var(--fg-on-brand);
+
+    /* Borders */
+    --color-border-subtle:   var(--border-subtle);
+
+    /* Brand */
+    --color-brand:           var(--brand);
+    --color-brand-secondary:  var(--brand-secondary);
+    --color-brand-fg:        var(--brand-fg);
+
+    /* Feedback (--color-info/warning/success already bridged above; adding new names) */
+    --color-error:           var(--error);
+    --color-error-fg:        var(--error-fg);
+    --color-warning-fg:      var(--warning-fg);
+    --color-success-fg:      var(--success-fg);
+    --color-info-fg:         var(--info-fg);
+
     /* Fonts */
+    --font-main: "Baloo 2", system-ui, sans-serif;
+    --font-titles: "Poppins", system-ui, sans-serif;
     --font-mono: "Chivo Mono", ui-monospace, monospace;
 
     /* Tailwind theme variables */
@@ -112,7 +142,7 @@
         --popover-foreground: var(--color-pine-700);
 
         --primary: var(--color-pine-700);
-        --primary-foreground: var(--color-pine-200);
+        --primary-foreground: var(--color-white);
 
         --secondary: var(--color-pine-200);
         --secondary-foreground: var(--color-black);
@@ -127,8 +157,40 @@
         --destructive-foreground: var(--color-white);
 
         --border: #876d22;
-        --input: var(--color-pine-700);
-        --ring: var(--color-pine-700);
+
+        /* ── New semantic tokens (light mode) ────────────────────────── */
+
+        /* Surfaces — lightest to darkest within the UI stack */
+        --surface-page:   var(--color-pine-200);   /* app background */
+        --surface-card:   var(--color-bone-100);   /* cards, panels */
+        --surface-raised: var(--color-bone-50);    /* popovers, dropdowns (above card) */
+        --surface-sunken: var(--color-bone-150);   /* table rows, inset areas (below card) */
+        --surface-topbar: var(--color-pine-100);   /* top navigation bar */
+
+        /* Text */
+        --fg-base:        var(--color-pine-700);   /* primary body text */
+        --fg-muted:       var(--color-pine-500);   /* secondary text, labels */
+        --fg-subtle:      var(--color-bone-600);   /* disabled, placeholder, tertiary */
+        --fg-on-brand:    #ffffff;                 /* text on brand-coloured backgrounds */
+
+        /* Borders */
+        --border-subtle:  var(--color-bone-300);   /* dividers, subtle separators */
+        /* --border (default) is already defined above */
+
+        /* Brand — the pine-green action colour */
+        --brand:    var(--color-pine-700);
+        --brand-secondary: var(--color-pine-500);
+        --brand-fg: #ffffff;
+
+        /* Feedback */
+        --error:         var(--color-red-500);
+        --error-fg:      #ffffff;
+        --warning:       oklch(65.215% 0.17687 48.246);
+        --warning-fg:    #000000;
+        --success:       rgb(22, 163, 74);
+        --success-fg:    #ffffff;
+        --info:          rgb(37, 99, 235);
+        --info-fg:       #ffffff;
 
         /* Chart colors (light mode) */
         --chart-1: oklch(0.646 0.222 41.116);
@@ -151,7 +213,7 @@
         /* Status/Alert colors (light mode) */
         --info: rgb(37, 99, 235);
         --info-foreground: #ffffff;
-        --warning: var(--color-amber-500);
+        --warning: oklch(65.215% 0.17687 48.246);
         --warning-foreground: #000000;
         --success: rgb(22, 163, 74);
         --success-foreground: #ffffff;
@@ -248,8 +310,40 @@
         --destructive-foreground: #ffffff;
 
         --border: #404040;
-        --input: #606060;
-        --ring: var(--color-pine-500);
+
+        /* ── New semantic tokens (dark mode) ─────────────────────────── */
+
+        /* Surfaces */
+        --surface-page:   #0a0a0a;
+        --surface-card:   #2d2d2d;
+        --surface-raised: #383838;   /* above card: popovers, dropdowns */
+        --surface-sunken: #1e1e1e;   /* below card: table rows, inset areas */
+        --surface-topbar: var(--color-pine-900);
+
+        /* Text */
+        --fg-base:        oklch(100% 0 0);   /* white */
+        --fg-muted:       #b7b7b7;
+        --fg-subtle:      #606060;
+        --fg-on-brand:    #ffffff;
+
+        /* Borders */
+        --border-subtle:  #2a2a2a;
+        /* --border (default) is already defined above */
+
+        /* Brand */
+        --brand:    var(--color-pine-500);
+        --brand-secondary: var(--color-pine-700);
+        --brand-fg: #ffffff;
+
+        /* Feedback */
+        --error:         oklch(52.816% 0.21229 29.916);
+        --error-fg:      #ffffff;
+        --warning:       rgb(251, 191, 36);
+        --warning-fg:    #000000;
+        --success:       rgb(74, 222, 128);
+        --success-fg:    #000000;
+        --info:          rgb(96, 165, 250);
+        --info-fg:       #000000;
 
         /* Chart colors (dark mode) */
         --chart-1: oklch(0.488 0.243 264.376);
@@ -344,7 +438,7 @@
     }
 
     body {
-        font-family: "Baloo 2", system-ui, sans-serif;
+        font-family: var(--font-main);
         color: var(--primary);
         background-color: var(--background);
     }
@@ -353,8 +447,9 @@
         width: 100%;
     }
 
-    h1 {
-        font-weight: 500;
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-titles);
+        font-weight: 600;
     }
 }
 
@@ -476,7 +571,7 @@
 
 @layer base {
     * {
-        @apply border-border outline-ring/50;
+        @apply border-border;
     }
     body {
         @apply bg-background text-foreground;

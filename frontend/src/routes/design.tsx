@@ -178,8 +178,6 @@ function DesignPage() {
                             <Swatch variable="--popover" />
                             <Swatch variable="--popover-foreground" />
                             <Swatch variable="--border" />
-                            <Swatch variable="--input" />
-                            <Swatch variable="--ring" />
                         </Row>
                     </SubSection>
 
@@ -228,7 +226,7 @@ function DesignPage() {
 
                     <SubSection
                         title="Base Palette — Pine (green brand scale)"
-                        todo="Same as bone: palette names are private. Consider adding a --color-brand semantic token (= pine-500) so progress fills, active indicators, and hover borders all use bg-brand instead of bg-pine-500 or the deleted bg-brand-green."
+                        todo="Same as bone: palette names are private. Consider adding a --color-brand semantic token (= pine-500) so progress fills, active indicators, and hover borders all use bg-brand instead of bg-pine-500 or the deleted bg-brand."
                     >
                         <Row>
                             <Swatch variable="--color-pine-100" />
@@ -736,7 +734,7 @@ function DesignPage() {
                 <Section id="progress" title="Progress & Gauges">
                     <SubSection
                         title="Progress Bar"
-                        todo="Uses bg-gray-200/dark:bg-gray-700 for track and bg-brand-green (deleted token) for fill. Replace track with bg-muted, fill with bg-accent (or a new bg-brand token)."
+                        todo="Uses bg-gray-200/dark:bg-gray-700 for track and bg-brand (deleted token) for fill. Replace track with bg-muted, fill with bg-accent (or a new bg-brand token)."
                     >
                         <div className="space-y-4 max-w-md">
                             <ProgressBar
@@ -764,7 +762,7 @@ function DesignPage() {
 
                     <SubSection
                         title="Achievement Progress (inline bar)"
-                        todo="achievement-card.tsx uses bg-gray-200/dark:bg-gray-700 for track and bg-brand-green (deleted token) for fill — same fix as ProgressBar."
+                        todo="achievement-card.tsx uses bg-gray-200/dark:bg-gray-700 for track and bg-brand (deleted token) for fill — same fix as ProgressBar."
                     >
                         {/* Replicates AchievementCard layout without the API dependency */}
                         <div className="space-y-2 max-w-md">
@@ -799,10 +797,10 @@ function DesignPage() {
                                         {a.name}
                                     </div>
                                     {/* TODO: bg-gray-200 dark:bg-gray-700 → bg-muted */}
-                                    {/* TODO: bg-brand-green dark:bg-brand-green → bg-accent (or bg-brand) */}
+                                    {/* TODO: bg-brand dark:bg-brand → bg-accent (or bg-brand) */}
                                     <div className="flex-1 relative h-7 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
                                         <div
-                                            className="absolute inset-0 bg-brand-green dark:bg-brand-green transition-all duration-300"
+                                            className="absolute inset-0 bg-brand-secondary dark:bg-brand-secondary transition-all duration-300"
                                             style={{
                                                 width: `${Math.min(100, (a.value / a.max) * 100)}%`,
                                             }}

@@ -105,7 +105,7 @@ function FacilityActions({
                     <button
                         onClick={() => upgradeMutation.mutate(facility.id)}
                         disabled={upgradeMutation.isPending}
-                        className="bg-brand-green hover:bg-brand-green/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                        className="bg-brand hover:bg-brand/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                     >
                         <Money amount={facility.upgrade_cost} />
                     </button>
@@ -159,7 +159,7 @@ function GroupActions({
                         trigger={
                             <button
                                 disabled={upgradeAllMutation.isPending}
-                                className="bg-brand-green hover:bg-brand-green/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                                className="bg-brand hover:bg-brand/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                             >
                                 Upgrade All
                             </button>

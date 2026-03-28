@@ -51,7 +51,7 @@ export function AchievementCard(achievement: AchievementCardProps) {
             {/* Progress bar */}
             <div className="flex-1 relative h-7 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
                 <div
-                    className="absolute inset-0 bg-brand-green dark:bg-brand-green transition-all duration-300 ease-out"
+                    className="absolute inset-0 bg-brand-secondary dark:bg-brand-secondary transition-all duration-300 ease-out"
                     style={{ width: `${progressPercent}%` }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-foreground z-10 px-2">
