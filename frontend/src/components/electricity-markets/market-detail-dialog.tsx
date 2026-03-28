@@ -83,9 +83,7 @@ function MarketContent(
                     <div
                         className={cn(
                             "w-32 h-32 rounded-full flex items-center justify-center relative",
-                            isCurrentMarket
-                                ? "bg-brand-green/20"
-                                : "bg-muted/50",
+                            isCurrentMarket ? "bg-brand/20" : "bg-muted/50",
                         )}
                     >
                         <Users
@@ -97,7 +95,7 @@ function MarketContent(
                             )}
                         />
                         {isCurrentMarket && (
-                            <div className="absolute top-2 right-2 bg-brand-green text-white rounded-full p-2">
+                            <div className="absolute top-2 right-2 bg-brand text-white rounded-full p-2">
                                 <Check className="w-5 h-5" />
                             </div>
                         )}
@@ -108,7 +106,7 @@ function MarketContent(
                 <div className="text-center">
                     <TypographyH2 className="mb-2">{market.name}</TypographyH2>
                     {isCurrentMarket && (
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-green/10 text-brand-green text-sm font-medium">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 text-brand-green text-sm font-medium">
                             <Check className="w-4 h-4" />
                             Current Market
                         </div>

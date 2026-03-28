@@ -84,7 +84,7 @@ import { cn } from "@/lib/utils";
 <button
     className={cn(
         "px-4 py-2 rounded",
-        isActive && "bg-brand-green text-white",
+        isActive && "bg-brand text-white",
         isDisabled && "opacity-50 cursor-not-allowed"
     )}
 >
@@ -161,15 +161,15 @@ className =
 ```ts
 // Primary button
 className =
-    "bg-brand-green hover:bg-pine text-white px-4 py-2 rounded transition-colors duration-150";
+    "bg-brand hover:bg-pine text-white px-4 py-2 rounded transition-colors duration-150";
 
 // Secondary button
 className =
-    "bg-tan-green hover:bg-brand-green text-white px-4 py-2 rounded transition-colors duration-150";
+    "bg-tan-green hover:bg-brand text-white px-4 py-2 rounded transition-colors duration-150";
 
 // Disabled state
 className =
-    "bg-brand-green text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed";
+    "bg-brand text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed";
 ```
 
 ### Input Fields

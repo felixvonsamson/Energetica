@@ -12,7 +12,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
             onClick={onClick}
             className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                 isSelected
-                    ? "bg-pine dark:bg-brand-green text-white"
+                    ? "bg-pine dark:bg-brand text-white"
                     : "hover:bg-gray-100 dark:hover:bg-muted"
             }`}
         >

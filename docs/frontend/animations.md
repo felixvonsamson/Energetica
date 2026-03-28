@@ -56,7 +56,7 @@ Use consistent timing across the app:
 
 ```ts
 // Buttons, cards, interactive elements
-className = "transition-colors duration-150 hover:bg-brand-green";
+className = "transition-colors duration-150 hover:bg-brand";
 
 // With shadow
 className = "transition-all duration-150 hover:shadow-md hover:scale-[1.02]";
@@ -151,7 +151,7 @@ className="bg-green-50 dark:bg-green-900/20 border-2 border-green-600
 
 ```ts
 // Standard button pattern
-className="bg-tan-green hover:bg-brand-green text-white
+className="bg-tan-green hover:bg-brand text-white
            transition-colors duration-150
            disabled:opacity-50 disabled:cursor-not-allowed"
 ```

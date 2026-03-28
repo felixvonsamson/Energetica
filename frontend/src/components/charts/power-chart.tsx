@@ -334,7 +334,7 @@ export function PowerOverviewTable({
                         <th className="py-3 px-4 text-center font-semibold">
                             <button
                                 onClick={handleToggleAll}
-                                className="px-3 py-1 text-xs font-semibold bg-brand-green hover:bg-brand-green/80 text-white rounded transition-colors"
+                                className="px-3 py-1 text-xs font-semibold bg-brand hover:bg-brand/80 text-white rounded transition-colors"
                             >
                                 {allHidden ? "Show All" : "Hide All"}
                             </button>
@@ -398,7 +398,7 @@ export function PowerOverviewTable({
                                         }
                                         className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                                             isVisible
-                                                ? "bg-brand-green hover:bg-brand-green/80 text-white"
+                                                ? "bg-brand hover:bg-brand/80 text-white"
                                                 : "bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300"
                                         }`}
                                     >

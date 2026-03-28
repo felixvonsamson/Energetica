@@ -36,7 +36,7 @@ export function ProgressBar({
             )}
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
                 <div
-                    className="bg-brand-green h-full rounded-full transition-all duration-300"
+                    className="bg-brand h-full rounded-full transition-all duration-300"
                     style={{ width: `${percentage}%` }}
                 />
             </div>
