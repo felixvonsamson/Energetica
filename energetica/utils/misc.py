@@ -15,7 +15,7 @@ from energetica import technology_effects
 from energetica.config.assets import river_flow_speed_seasonal
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map.hex_tile import HexTile
-from energetica.database.messages import Chat, Message, Notification
+from energetica.database.messages import Chat, Message
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.database.user import User
@@ -197,16 +197,6 @@ def save_past_data() -> None:
 
         with open(f"instance/data/networks/{network.id}/time_series.pck", "wb") as file:
             pickle.dump(past_data, file)
-
-    # remove old notifications
-    for notification in list(
-        Notification.filter(
-            lambda notification: (
-                notification.title != "Tutorial" and notification.time < datetime.now() - timedelta(weeks=2)
-            ),
-        ),
-    ):
-        notification.delete()
 
     engine.log("last 216 data points have been saved to files")
     engine.save()
