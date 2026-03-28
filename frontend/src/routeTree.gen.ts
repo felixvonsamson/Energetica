@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as LearningToolRouteImport } from './routes/learning-tool'
 import { Route as LandingPageRouteImport } from './routes/landing-page'
+import { Route as DesignRouteImport } from './routes/design'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as RouteRouteImport } from './routes/route'
 import { Route as AppIndexRouteImport } from './routes/app/index'
@@ -57,6 +58,11 @@ const LearningToolRoute = LearningToolRouteImport.update({
 const LandingPageRoute = LandingPageRouteImport.update({
   id: '/landing-page',
   path: '/landing-page',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesignRoute = DesignRouteImport.update({
+  id: '/design',
+  path: '/design',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -222,6 +228,7 @@ const AppCommunityElectricityMarketsRoute =
 
 export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
+  '/design': typeof DesignRoute
   '/landing-page': typeof LandingPageRoute
   '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
@@ -257,6 +264,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
+  '/design': typeof DesignRoute
   '/landing-page': typeof LandingPageRoute
   '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof RouteRoute
   '/about': typeof AboutRoute
+  '/design': typeof DesignRoute
   '/landing-page': typeof LandingPageRoute
   '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
@@ -331,6 +340,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/about'
+    | '/design'
     | '/landing-page'
     | '/learning-tool'
     | '/sign-up'
@@ -366,6 +376,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/about'
+    | '/design'
     | '/landing-page'
     | '/learning-tool'
     | '/sign-up'
@@ -402,6 +413,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/design'
     | '/landing-page'
     | '/learning-tool'
     | '/sign-up'
@@ -439,6 +451,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   RouteRoute: typeof RouteRoute
   AboutRoute: typeof AboutRoute
+  DesignRoute: typeof DesignRoute
   LandingPageRoute: typeof LandingPageRoute
   LearningToolRoute: typeof LearningToolRoute
   SignUpRoute: typeof SignUpRoute
@@ -494,6 +507,13 @@ declare module '@tanstack/react-router' {
       path: '/landing-page'
       fullPath: '/landing-page'
       preLoaderRoute: typeof LandingPageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design': {
+      id: '/design'
+      path: '/design'
+      fullPath: '/design'
+      preLoaderRoute: typeof DesignRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -719,6 +739,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   RouteRoute: RouteRoute,
   AboutRoute: AboutRoute,
+  DesignRoute: DesignRoute,
   LandingPageRoute: LandingPageRoute,
   LearningToolRoute: LearningToolRoute,
   SignUpRoute: SignUpRoute,
