@@ -29,9 +29,16 @@ sw.addEventListener("push", (event: PushEvent) => {
 
     event.waitUntil(
         getPushPref(category).then((enabled) => {
-            if (!enabled) return;
+            if (!enabled) {
+                console.log(
+                    `[SW] Push suppressed (category "${category}" disabled):`,
+                    data.type,
+                );
+                return;
+            }
             const { title, body } = getNotificationPushText(payload);
             const path = getNotificationPath(payload);
+            console.log("[SW] Showing notification:", data.type, title);
             return sw.registration.showNotification(title, {
                 body,
                 icon: "/static/images/icon_green.png",

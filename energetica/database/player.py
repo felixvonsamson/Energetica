@@ -183,6 +183,8 @@ class Player(DBModel):
                 "resource_market_bid": False,
                 "network_join_leave": False,
             }
+        if not hasattr(self, "push_subscriptions"):
+            self.push_subscriptions = []
         # Migrate old notification_opt_ins field
         if hasattr(self, "notification_opt_ins"):
             del self.__dict__["notification_opt_ins"]
