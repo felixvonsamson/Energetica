@@ -2,6 +2,7 @@
 // Run `bun run build:sw` to update.
 export type AppRoute =
     | '/about'
+    | '/design'
     | '/landing-page'
     | '/learning-tool'
     | '/sign-up'
