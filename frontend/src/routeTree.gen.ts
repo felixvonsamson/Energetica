@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as LearningToolRouteImport } from './routes/learning-tool'
 import { Route as LandingPageRouteImport } from './routes/landing-page'
-import { Route as DesignRouteImport } from './routes/design'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as RouteRouteImport } from './routes/route'
 import { Route as AppIndexRouteImport } from './routes/app/index'
@@ -32,6 +31,7 @@ import { Route as AppOverviewsElectricityMarketsRouteImport } from './routes/app
 import { Route as AppOverviewsCashFlowRouteImport } from './routes/app/overviews/cash-flow'
 import { Route as AppInternalTypographyRouteImport } from './routes/app/internal/typography'
 import { Route as AppInternalIconsRouteImport } from './routes/app/internal/icons'
+import { Route as AppInternalDesignRouteImport } from './routes/app/internal/design'
 import { Route as AppFacilitiesTechnologyRouteImport } from './routes/app/facilities/technology'
 import { Route as AppFacilitiesStorageRouteImport } from './routes/app/facilities/storage'
 import { Route as AppFacilitiesPowerPrioritiesRouteImport } from './routes/app/facilities/power-priorities'
@@ -58,11 +58,6 @@ const LearningToolRoute = LearningToolRouteImport.update({
 const LandingPageRoute = LandingPageRouteImport.update({
   id: '/landing-page',
   path: '/landing-page',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DesignRoute = DesignRouteImport.update({
-  id: '/design',
-  path: '/design',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -161,6 +156,11 @@ const AppInternalIconsRoute = AppInternalIconsRouteImport.update({
   path: '/app/internal/icons',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppInternalDesignRoute = AppInternalDesignRouteImport.update({
+  id: '/app/internal/design',
+  path: '/app/internal/design',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppFacilitiesTechnologyRoute = AppFacilitiesTechnologyRouteImport.update({
   id: '/app/facilities/technology',
   path: '/app/facilities/technology',
@@ -228,7 +228,6 @@ const AppCommunityElectricityMarketsRoute =
 
 export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
-  '/design': typeof DesignRoute
   '/landing-page': typeof LandingPageRoute
   '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
@@ -251,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/app/facilities/power-priorities': typeof AppFacilitiesPowerPrioritiesRoute
   '/app/facilities/storage': typeof AppFacilitiesStorageRoute
   '/app/facilities/technology': typeof AppFacilitiesTechnologyRoute
+  '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
@@ -264,7 +264,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
-  '/design': typeof DesignRoute
   '/landing-page': typeof LandingPageRoute
   '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
@@ -287,6 +286,7 @@ export interface FileRoutesByTo {
   '/app/facilities/power-priorities': typeof AppFacilitiesPowerPrioritiesRoute
   '/app/facilities/storage': typeof AppFacilitiesStorageRoute
   '/app/facilities/technology': typeof AppFacilitiesTechnologyRoute
+  '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
@@ -302,7 +302,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof RouteRoute
   '/about': typeof AboutRoute
-  '/design': typeof DesignRoute
   '/landing-page': typeof LandingPageRoute
   '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
@@ -325,6 +324,7 @@ export interface FileRoutesById {
   '/app/facilities/power-priorities': typeof AppFacilitiesPowerPrioritiesRoute
   '/app/facilities/storage': typeof AppFacilitiesStorageRoute
   '/app/facilities/technology': typeof AppFacilitiesTechnologyRoute
+  '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
@@ -340,7 +340,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/about'
-    | '/design'
     | '/landing-page'
     | '/learning-tool'
     | '/sign-up'
@@ -363,6 +362,7 @@ export interface FileRouteTypes {
     | '/app/facilities/power-priorities'
     | '/app/facilities/storage'
     | '/app/facilities/technology'
+    | '/app/internal/design'
     | '/app/internal/icons'
     | '/app/internal/typography'
     | '/app/overviews/cash-flow'
@@ -376,7 +376,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/about'
-    | '/design'
     | '/landing-page'
     | '/learning-tool'
     | '/sign-up'
@@ -399,6 +398,7 @@ export interface FileRouteTypes {
     | '/app/facilities/power-priorities'
     | '/app/facilities/storage'
     | '/app/facilities/technology'
+    | '/app/internal/design'
     | '/app/internal/icons'
     | '/app/internal/typography'
     | '/app/overviews/cash-flow'
@@ -413,7 +413,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
-    | '/design'
     | '/landing-page'
     | '/learning-tool'
     | '/sign-up'
@@ -436,6 +435,7 @@ export interface FileRouteTypes {
     | '/app/facilities/power-priorities'
     | '/app/facilities/storage'
     | '/app/facilities/technology'
+    | '/app/internal/design'
     | '/app/internal/icons'
     | '/app/internal/typography'
     | '/app/overviews/cash-flow'
@@ -451,7 +451,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   RouteRoute: typeof RouteRoute
   AboutRoute: typeof AboutRoute
-  DesignRoute: typeof DesignRoute
   LandingPageRoute: typeof LandingPageRoute
   LearningToolRoute: typeof LearningToolRoute
   SignUpRoute: typeof SignUpRoute
@@ -474,6 +473,7 @@ export interface RootRouteChildren {
   AppFacilitiesPowerPrioritiesRoute: typeof AppFacilitiesPowerPrioritiesRoute
   AppFacilitiesStorageRoute: typeof AppFacilitiesStorageRoute
   AppFacilitiesTechnologyRoute: typeof AppFacilitiesTechnologyRoute
+  AppInternalDesignRoute: typeof AppInternalDesignRoute
   AppInternalIconsRoute: typeof AppInternalIconsRoute
   AppInternalTypographyRoute: typeof AppInternalTypographyRoute
   AppOverviewsCashFlowRoute: typeof AppOverviewsCashFlowRoute
@@ -507,13 +507,6 @@ declare module '@tanstack/react-router' {
       path: '/landing-page'
       fullPath: '/landing-page'
       preLoaderRoute: typeof LandingPageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/design': {
-      id: '/design'
-      path: '/design'
-      fullPath: '/design'
-      preLoaderRoute: typeof DesignRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -649,6 +642,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInternalIconsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/internal/design': {
+      id: '/app/internal/design'
+      path: '/app/internal/design'
+      fullPath: '/app/internal/design'
+      preLoaderRoute: typeof AppInternalDesignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/facilities/technology': {
       id: '/app/facilities/technology'
       path: '/app/facilities/technology'
@@ -739,7 +739,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   RouteRoute: RouteRoute,
   AboutRoute: AboutRoute,
-  DesignRoute: DesignRoute,
   LandingPageRoute: LandingPageRoute,
   LearningToolRoute: LearningToolRoute,
   SignUpRoute: SignUpRoute,
@@ -762,6 +761,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppFacilitiesPowerPrioritiesRoute: AppFacilitiesPowerPrioritiesRoute,
   AppFacilitiesStorageRoute: AppFacilitiesStorageRoute,
   AppFacilitiesTechnologyRoute: AppFacilitiesTechnologyRoute,
+  AppInternalDesignRoute: AppInternalDesignRoute,
   AppInternalIconsRoute: AppInternalIconsRoute,
   AppInternalTypographyRoute: AppInternalTypographyRoute,
   AppOverviewsCashFlowRoute: AppOverviewsCashFlowRoute,

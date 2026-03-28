@@ -37,7 +37,7 @@ import {
     TypographySmall,
 } from "@/components/ui/typography";
 
-export const Route = createFileRoute("/design")({
+export const Route = createFileRoute("/app/internal/design")({
     component: DesignPage,
     staticData: {
         title: "Design System",
@@ -119,7 +119,7 @@ function Swatch({
                 {label ?? variable.replace(/^--color-/, "").replace(/^--/, "")}
             </span>
         </div>
-    );
+    )
 }
 
 // ─── Route component ───────────────────────────────────────────────────────────
