@@ -17,8 +17,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { chatsApi } from "@/lib/api/chats";
 import { queryKeys, queryClient } from "@/lib/query-client";
 import type {
+    ChatMessagesResponse,
     CreateChatRequest,
     CreateChatResponse,
+    Message,
     SendMessageRequest,
     OpenChatResponse,
 } from "@/types/chats";
@@ -100,14 +102,53 @@ export function useSendMessage() {
         }: {
             chatId: number;
             data: SendMessageRequest;
+            playerId: number;
         }): ReturnType<typeof chatsApi.sendMessage> =>
             chatsApi.sendMessage(chatId, data),
-        onSuccess: (_response, variables) => {
-            // Invalidate the messages for this chat to refresh
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.chats.messages(variables.chatId),
+        onMutate: async ({ chatId, data, playerId }) => {
+            // Cancel in-flight refetches so they don't overwrite the optimistic update
+            await queryClient.cancelQueries({
+                queryKey: queryKeys.chats.messages(chatId),
             });
-            // Also invalidate the chat list since unread counts may have changed
+
+            const previousMessages =
+                queryClient.getQueryData<ChatMessagesResponse>(
+                    queryKeys.chats.messages(chatId),
+                );
+
+            // Optimistic message — negative ID flags it as pending
+            const optimisticMessage: Message = {
+                id: -Date.now(),
+                player_id: playerId,
+                text: data.new_message,
+                timestamp: new Date().toISOString(),
+            };
+
+            queryClient.setQueryData<ChatMessagesResponse>(
+                queryKeys.chats.messages(chatId),
+                (old) =>
+                    old
+                        ? {
+                              ...old,
+                              messages: [...old.messages, optimisticMessage],
+                          }
+                        : old,
+            );
+
+            return { previousMessages };
+        },
+        onError: (_err, { chatId }, context) => {
+            if (context?.previousMessages !== undefined) {
+                queryClient.setQueryData(
+                    queryKeys.chats.messages(chatId),
+                    context.previousMessages,
+                );
+            }
+        },
+        onSettled: (_response, _err, { chatId }) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.chats.messages(chatId),
+            });
             queryClient.invalidateQueries({
                 queryKey: queryKeys.chats.list,
             });

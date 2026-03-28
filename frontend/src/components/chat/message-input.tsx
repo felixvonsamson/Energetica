@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 import { Button } from "@/components/ui";
+import { useAuth } from "@/hooks/use-auth";
 import { useSendMessage } from "@/hooks/use-chats";
 
 interface MessageInputProps {
@@ -16,7 +17,8 @@ export function MessageInput({
 }: MessageInputProps) {
     const [message, setMessage] = useState("");
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    const { mutate: sendMessage, isPending } = useSendMessage();
+    const { mutate: sendMessage } = useSendMessage();
+    const { user } = useAuth();
 
     // Auto-resize textarea as content changes
     const adjustHeight = useCallback(() => {
@@ -28,22 +30,26 @@ export function MessageInput({
     }, []);
 
     const handleSend = () => {
-        if (!message.trim()) return;
+        if (!message.trim() || !user?.player_id) return;
+        const messageText = message;
+
+        // Clear input immediately (optimistic)
+        setMessage("");
+        if (inputRef.current) {
+            inputRef.current.style.height = "auto";
+            inputRef.current.focus();
+        }
 
         sendMessage(
             {
                 chatId,
-                data: { new_message: message },
+                data: { new_message: messageText },
+                playerId: user!.player_id!,
             },
             {
-                onSuccess: () => {
-                    setMessage("");
-                    // Input is no longer disabled, so we can focus immediately
-                    inputRef.current?.focus();
-                    // Reset height after clearing message
-                    if (inputRef.current) {
-                        inputRef.current.style.height = "auto";
-                    }
+                onError: () => {
+                    // Restore message text if the request fails
+                    setMessage(messageText);
                 },
             },
         );
@@ -52,10 +58,7 @@ export function MessageInput({
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            // Only send if not already pending
-            if (!isPending) {
-                handleSend();
-            }
+            handleSend();
         }
         // Shift+Enter will naturally insert a new line in textarea
     };
@@ -87,7 +90,7 @@ export function MessageInput({
             />
             <Button
                 onClick={handleSend}
-                disabled={isDisabled || isPending || !message.trim()}
+                disabled={isDisabled || !message.trim()}
                 aria-label="Send message"
                 className="max-h-12"
             >
