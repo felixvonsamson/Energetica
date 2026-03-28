@@ -3,17 +3,16 @@
  * cookies and fetches user data from the backend.
  */
 
+import { useQuery } from "@tanstack/react-query";
 import {
     createContext,
-    useState,
-    useEffect,
     useCallback,
     type ReactNode,
 } from "react";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api-client";
-import { queryClient } from "@/lib/query-client";
+import { queryClient, queryKeys } from "@/lib/query-client";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type User = ApiSchema<"UserOut">;
@@ -36,52 +35,44 @@ export interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
-
-    const fetchUser = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            setError(null);
-            const userData = await authApi.me();
-            setUser(userData);
-        } catch (err) {
-            if (err instanceof ApiClientError && err.status === 401) {
-                // Not authenticated - this is expected for logged-out users
-                setUser(null);
-            } else {
-                // Actual error
-                setError(
-                    err instanceof Error
-                        ? err
-                        : new Error("Failed to fetch user"),
-                );
-                setUser(null);
+    const {
+        data: user,
+        isLoading,
+        error,
+        refetch,
+    } = useQuery({
+        queryKey: queryKeys.auth.me,
+        queryFn: async () => {
+            try {
+                return await authApi.me();
+            } catch (err) {
+                if (err instanceof ApiClientError && err.status === 401) {
+                    // Not authenticated - return null instead of throwing
+                    return null;
+                }
+                throw err;
             }
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchUser();
-    }, [fetchUser]);
+        },
+        // Don't auto-refetch on window focus for auth - only refetch on invalidation
+        refetchOnWindowFocus: false,
+        // Keep auth data fresh indefinitely until explicitly invalidated
+        staleTime: Infinity,
+    });
 
     const logout = useCallback(() => {
         // Just clear the frontend state. The API logout is handled by the logout route.
-        setUser(null);
-        setError(null);
         // Clear all cached queries
         queryClient.clear();
     }, []);
 
     const value: AuthContextValue = {
-        user,
-        isAuthenticated: user !== null,
+        user: user ?? null,
+        isAuthenticated: (user ?? null) !== null,
         isLoading,
-        error,
-        refetch: fetchUser,
+        error: error instanceof Error ? error : null,
+        refetch: async () => {
+            await refetch();
+        },
         logout,
     };
 
