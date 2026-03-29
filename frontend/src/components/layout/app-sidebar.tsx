@@ -7,7 +7,6 @@ import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 
 import Logo from "@/assets/icon.svg?react";
-
 import {
     Collapsible,
     CollapsibleContent,

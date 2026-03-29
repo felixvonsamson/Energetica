@@ -1,6 +1,5 @@
 /** Top bar component showing money, resources, workers, and user actions. */
 
-import Logo from "@/assets/icon.svg?react";
 import {
     Link,
     useMatches,
@@ -21,8 +20,8 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import Logo from "@/assets/icon.svg?react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
-import { TypographyBrand } from "@/components/ui/typography";
 import { NotificationPopup } from "@/components/layout/notification-popup";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -45,6 +44,7 @@ import { Money as MoneyComponent } from "@/components/ui/money";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { TypographyBrand } from "@/components/ui/typography";
 import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
 import { useUnreadNotificationsCount } from "@/hooks/use-notifications";
