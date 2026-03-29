@@ -3,10 +3,10 @@
  * navigation groups, and footer links.
  */
 
-import { type RefObject } from "react";
 
 import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
+import { type RefObject } from "react";
 
 import Logo from "@/assets/icon.svg?react";
 import {
