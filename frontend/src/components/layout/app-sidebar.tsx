@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/collapsible";
 import {
     Sidebar,
+    SidebarHeader,
     SidebarContent,
     SidebarGroup,
     SidebarGroupContent,
@@ -32,6 +33,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { TypographyBrand, TypographyH2 } from "@/components/ui/typography";
 import { useCapabilities } from "@/hooks/use-capabilities";
 import { useUnreadChatsCount } from "@/hooks/use-chats";
 import { useRouteUnlocked } from "@/hooks/use-route-static-data";
@@ -67,6 +69,15 @@ export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
             >
                 <Logo className="size-200 fill-bone" />
             </div>
+
+            <SidebarHeader className="relative z-10 flex-row items-center justify-center">
+                <div className="flex aspect-square size-12 items-center justify-center">
+                    <Logo className="size-20 fill-sidebar-foreground" />
+                </div>
+                <TypographyH2>
+                    <TypographyBrand>Energetica</TypographyBrand>
+                </TypographyH2>
+            </SidebarHeader>
 
             <SidebarContent className="relative z-10">
                 <SidebarGroup>
