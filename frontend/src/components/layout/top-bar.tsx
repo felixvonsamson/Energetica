@@ -101,7 +101,7 @@ export function TopBar() {
 
     return (
         <>
-            <header className="shrink-0 z-10 flex h-14 items-center border-b bg-topbar px-4 gap-2">
+            <header className="shrink-0 z-10 flex h-(--topbar-height) items-center border-b bg-topbar px-4 gap-2">
                 {/* Left: Sidebar trigger + Logo + Breadcrumbs */}
                 <div className="flex items-center gap-2 shrink-0">
                     <SidebarTrigger className="-ml-1" />
