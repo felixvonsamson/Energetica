@@ -6,7 +6,7 @@ Play online: **http://energetica.ethz.ch**
 
 ## Contributing
 
-Ready to hack? Read the full guidelines in [CONTRIBUTING.md](CONTRIBUTING.md).
+Read the full guidelines in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Documentation
 
