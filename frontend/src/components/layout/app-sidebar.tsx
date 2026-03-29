@@ -3,6 +3,8 @@
  * navigation groups, and footer links.
  */
 
+import { type RefObject } from "react";
+
 import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 
@@ -45,25 +47,21 @@ import {
 import { cn } from "@/lib/utils";
 
 interface AppSidebarProps {
-    scrollPosition?: number;
+    bgLogoRef: RefObject<HTMLDivElement | null>;
 }
 
-export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
-    // Calculate rotation based on scroll position (1 full rotation every 1000px)
-    const rotation = -(scrollPosition / 10000) * 360;
-
+export function AppSidebar({ bgLogoRef }: AppSidebarProps) {
     return (
         <Sidebar
             side="left"
             collapsible="offcanvas"
             className="overflow-hidden"
         >
-            {/* Large background logo */}
+            {/* Large background logo — rotated directly via ref to avoid React re-renders */}
             <div
-                className="pointer-events-none absolute left-0 top-1/2 z-0 -translate-x-[55%] -translate-y-1/2 opacity-[0.3]  duration-50"
-                style={{
-                    transform: `rotate(${rotation}deg)`,
-                }}
+                ref={bgLogoRef}
+                className="pointer-events-none absolute left-0 top-1/2 z-0 -translate-x-[55%] -translate-y-1/2 opacity-[0.3]"
+                style={{ willChange: "transform" }}
             >
                 <Logo className="size-200 fill-bone" />
             </div>

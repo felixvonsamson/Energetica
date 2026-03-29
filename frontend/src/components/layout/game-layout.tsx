@@ -3,7 +3,7 @@
  * sidebar navigation, top bar, and content area.
  */
 
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopBar } from "@/components/layout/top-bar";
@@ -15,7 +15,7 @@ interface GameLayoutProps {
 }
 
 export function GameLayout({ children }: GameLayoutProps) {
-    const [scrollPosition, setScrollPosition] = useState(0);
+    const bgLogoRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         document.body.classList.add("has-topbar");
@@ -23,8 +23,10 @@ export function GameLayout({ children }: GameLayoutProps) {
     }, []);
 
     const handleScroll = (e: React.UIEvent<HTMLElement>) => {
-        const target = e.target as HTMLElement;
-        setScrollPosition(target.scrollTop);
+        if (!bgLogoRef.current) return;
+        const scrollTop = (e.target as HTMLElement).scrollTop;
+        const rotation = -(scrollTop / 10000) * 360;
+        bgLogoRef.current.style.transform = `rotate(${rotation}deg)`;
     };
 
     return (
@@ -35,7 +37,7 @@ export function GameLayout({ children }: GameLayoutProps) {
 
                 {/* Sidebar + content row */}
                 <div className="flex flex-1 min-h-0">
-                    <AppSidebar scrollPosition={scrollPosition} />
+                    <AppSidebar bgLogoRef={bgLogoRef} />
                     <SidebarInset>
                         <main
                             className="flex-1 overflow-auto 2xl:px-50"
