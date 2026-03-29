@@ -113,8 +113,8 @@ export function TopBar() {
                         to="/app"
                         className="flex items-center gap-1.5 shrink-0"
                     >
-                        <Logo className="size-6 fill-foreground" />
-                        <TypographyBrand className="hidden sm:block text-sm">
+                        <Logo className="size-10 fill-foreground" />
+                        <TypographyBrand className="hidden sm:block text-2xl mr-1">
                             Energetica
                         </TypographyBrand>
                     </Link>
