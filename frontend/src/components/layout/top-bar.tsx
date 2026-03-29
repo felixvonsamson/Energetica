@@ -1,5 +1,6 @@
 /** Top bar component showing money, resources, workers, and user actions. */
 
+import Logo from "@/assets/icon.svg?react";
 import {
     Link,
     useMatches,
@@ -21,6 +22,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { TypographyBrand } from "@/components/ui/typography";
 import { NotificationPopup } from "@/components/layout/notification-popup";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -100,9 +102,22 @@ export function TopBar() {
     return (
         <>
             <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b bg-topbar px-4 gap-2">
-                {/* Left: Sidebar trigger + Breadcrumbs */}
+                {/* Left: Sidebar trigger + Logo + Breadcrumbs */}
                 <div className="flex items-center gap-2 shrink-0">
                     <SidebarTrigger className="-ml-1" />
+                    <Separator
+                        orientation="vertical"
+                        className="data-[orientation=vertical]:h-4"
+                    />
+                    <Link
+                        to="/app"
+                        className="flex items-center gap-1.5 shrink-0"
+                    >
+                        <Logo className="size-6 fill-foreground" />
+                        <TypographyBrand className="hidden sm:block text-sm">
+                            Energetica
+                        </TypographyBrand>
+                    </Link>
 
                     {/* Breadcrumb navigation — hidden on mobile */}
                     <div className="hidden md:flex items-center gap-2">
