@@ -22,7 +22,7 @@ export function QuickLinkCard({
         <Link
             to={to}
             className={cn(
-                "bg-card hover:bg-tan-hover dark:hover:bg-muted",
+                "bg-card hover:bg-muted",
                 "p-6 rounded-lg text-center transition-colors block",
                 "border border-transparent hover:border-pine dark:hover:border-brand-green",
                 className,

@@ -17,7 +17,7 @@ export function DailyQuizButton() {
             <DialogTrigger asChild>
                 <button
                     className={cn(
-                        "bg-card hover:bg-tan-hover dark:hover:bg-muted",
+                        "bg-card hover:bg-muted",
                         "p-6 rounded-lg text-center transition-colors block w-full",
                         "border border-transparent hover:border-pine dark:hover:border-brand-green",
                     )}
@@ -80,7 +80,7 @@ function DailyQuizSection() {
 
         if (!hasAnswered) {
             // Before answering - normal clickable button
-            return `${baseClass} bg-card border-1 border-border hover:border-brand-green dark:hover:border-brand-green hover:shadow-md text-foreground disabled:opacity-50 disabled:cursor-not-allowed`;
+            return `${baseClass} bg-card border-1 border-border hover:bg-muted hover:border-brand hover:shadow-md text-foreground disabled:opacity-50 disabled:cursor-not-allowed`;
         }
 
         // After answering - show feedback
@@ -150,25 +150,21 @@ function DailyQuizSection() {
 
                     {/* Answer Buttons */}
                     <div className="space-y-3">
-                        {(
-                            [
-                                "answer1",
-                                "answer2",
-                                "answer3",
-                            ] as const
-                        ).map((key) => (
-                            <button
-                                key={key}
-                                onClick={() => handleAnswerClick(key)}
-                                disabled={hasAnswered || isPending}
-                                className={getButtonClass(key)}
-                            >
-                                <span className="block text-center px-28">
-                                    {quizData[key]}
-                                </span>
-                                {getAnswerIndicator(key)}
-                            </button>
-                        ))}
+                        {(["answer1", "answer2", "answer3"] as const).map(
+                            (key) => (
+                                <button
+                                    key={key}
+                                    onClick={() => handleAnswerClick(key)}
+                                    disabled={hasAnswered || isPending}
+                                    className={getButtonClass(key)}
+                                >
+                                    <span className="block text-center px-28">
+                                        {quizData[key]}
+                                    </span>
+                                    {getAnswerIndicator(key)}
+                                </button>
+                            ),
+                        )}
                     </div>
 
                     {/* Explanation and Learn More (only shown after answering) */}
