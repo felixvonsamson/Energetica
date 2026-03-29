@@ -29,12 +29,7 @@ import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { WeatherSection } from "@/components/dashboard/weather";
 import { DevelopmentBanner } from "@/components/development-banner";
 import { GameLayout } from "@/components/layout/game-layout";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { useAchievements } from "@/hooks/use-achievements";
 import { useCapabilities, useHasCapability } from "@/hooks/use-capabilities";
 import { useProjects } from "@/hooks/use-projects";
@@ -220,7 +215,7 @@ function DashboardContent() {
                     )}
                     {hasNetwork && (
                         <QuickLinkCard
-                            to="/app/community/electricity-markets"
+                            to="/app/overviews/electricity-markets"
                             icon={TrendingUp}
                             title="Market Prices"
                         />
@@ -255,71 +250,72 @@ function BeginnersGuide() {
             </CardHeader>
             <CardContent>
                 <div className="space-y-4 text-base">
-                <p>Welcome to Energetica!</p>
-                <p>
-                    You begin your journey with <b>1 steam engine</b> and a
-                    small <b>industry</b>, generating revenues. You can monitor
-                    their{" "}
-                    <Link
-                        to="/app/overviews/power"
-                        className="text-info underline hover:opacity-80"
-                    >
-                        power generation and consumption
-                    </Link>{" "}
-                    as well as your{" "}
-                    <Link
-                        to="/app/overviews/cash-flow"
-                        className="text-info underline hover:opacity-80"
-                    >
-                        revenues
-                    </Link>{" "}
-                    under the <i>Production Overview</i> tab in the top menu.
-                </p>
-                <p>
-                    The first thing you will probably want to do is to{" "}
-                    <b>expand your production</b> by investing in{" "}
-                    <Link
-                        to="/app/facilities/power"
-                        className="text-info underline hover:opacity-80"
-                    >
-                        Power Facilities
-                    </Link>{" "}
-                    and upgrading your industry on the{" "}
-                    <Link
-                        to="/app/facilities/functional"
-                        className="text-info underline hover:opacity-80"
-                    >
-                        Functional Facilities
-                    </Link>{" "}
-                    page. You also have access to{" "}
-                    <Link
-                        to="/app/facilities/storage"
-                        className="text-info underline hover:opacity-80"
-                    >
-                        Storage Facilities
-                    </Link>{" "}
-                    to store energy. You will unlock new technologies and more
-                    game mechanics as you progress.
-                </p>
-                <p>
-                    Engage with other players via the <i>Community</i> tab.
-                </p>
-                <p>
-                    If you are lost, click on the{" "}
-                    <HelpCircle className="inline w-4 h-4" /> icon on the right
-                    side of the title, you will find explanations about the
-                    content of the page. For detailed explanations on any game
-                    mechanics, consult the{" "}
-                    <a
-                        href="/wiki/introduction"
-                        className="text-info underline hover:opacity-80"
-                    >
-                        wiki
-                    </a>
-                    .
-                </p>
-                <p>Best of luck in your energy adventure!</p>
-            </div>
+                    <p>Welcome to Energetica!</p>
+                    <p>
+                        You begin your journey with <b>1 steam engine</b> and a
+                        small <b>industry</b>, generating revenues. You can
+                        monitor their{" "}
+                        <Link
+                            to="/app/overviews/power"
+                            className="text-info underline hover:opacity-80"
+                        >
+                            power generation and consumption
+                        </Link>{" "}
+                        as well as your{" "}
+                        <Link
+                            to="/app/overviews/cash-flow"
+                            className="text-info underline hover:opacity-80"
+                        >
+                            revenues
+                        </Link>{" "}
+                        under the <i>Production Overview</i> tab in the top
+                        menu.
+                    </p>
+                    <p>
+                        The first thing you will probably want to do is to{" "}
+                        <b>expand your production</b> by investing in{" "}
+                        <Link
+                            to="/app/facilities/power"
+                            className="text-info underline hover:opacity-80"
+                        >
+                            Power Facilities
+                        </Link>{" "}
+                        and upgrading your industry on the{" "}
+                        <Link
+                            to="/app/facilities/functional"
+                            className="text-info underline hover:opacity-80"
+                        >
+                            Functional Facilities
+                        </Link>{" "}
+                        page. You also have access to{" "}
+                        <Link
+                            to="/app/facilities/storage"
+                            className="text-info underline hover:opacity-80"
+                        >
+                            Storage Facilities
+                        </Link>{" "}
+                        to store energy. You will unlock new technologies and
+                        more game mechanics as you progress.
+                    </p>
+                    <p>
+                        Engage with other players via the <i>Community</i> tab.
+                    </p>
+                    <p>
+                        If you are lost, click on the{" "}
+                        <HelpCircle className="inline w-4 h-4" /> icon on the
+                        right side of the title, you will find explanations
+                        about the content of the page. For detailed explanations
+                        on any game mechanics, consult the{" "}
+                        <a
+                            href="/wiki/introduction"
+                            className="text-info underline hover:opacity-80"
+                        >
+                            wiki
+                        </a>
+                        .
+                    </p>
+                    <p>Best of luck in your energy adventure!</p>
+                </div>
             </CardContent>
         </Card>
     );
