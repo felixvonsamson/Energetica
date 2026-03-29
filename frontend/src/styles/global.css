@@ -575,10 +575,10 @@
     }
     body {
         @apply bg-background text-foreground;
-        overscroll-behavior: none;
     }
     body.has-topbar {
         @apply bg-topbar;
+        overscroll-behavior: none;
     }
     #root {
         @apply bg-background;
