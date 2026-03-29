@@ -1,0 +1,21 @@
+{
+    "name": "energetica",
+    "version": "1.0.0",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "cd frontend && bun run dev",
+        "dev:remote": "cd frontend && VITE_BACKEND_URL=https://energetica-game.org bun run dev",
+        "build": "cd frontend && bun run build",
+        "lint": "cd frontend && bun run lint",
+        "lint:fix": "cd frontend && bun run lint:fix",
+        "typecheck": "cd frontend && bun run typecheck",
+        "typecheck:watch": "cd frontend && bun run typecheck:watch",
+        "format": "cd frontend && bun run format",
+        "generate-types": "cd frontend && bun run generate-types",
+        "ruff:check": ".venv/bin/ruff check energetica/ --fix",
+        "ruff:format": ".venv/bin/ruff format energetica/",
+        "backend-test": ".venv/bin/python main.py --rm_instance --run_init_test_players --env dev",
+        "check-wiki": ".venv/bin/python scripts/check_wiki_links.py"
+    }
+}

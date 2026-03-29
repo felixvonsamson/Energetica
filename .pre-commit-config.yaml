@@ -1,0 +1,30 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.12.10
+    hooks:
+      # Run the linter for python.
+      - id: ruff-check
+        types_or: [python, pyi]
+        args: [--fix]
+        files: ^energetica/
+      # Run the formatter for python.
+      - id: ruff-format
+        types_or: [python, pyi]
+        files: ^energetica/
+
+  - repo: local
+    hooks:
+      # Run lint-staged for incremental linting, formatting, and type checking
+      - id: lint-staged
+        name: lint-staged
+        entry: npx lint-staged
+        language: system
+        files: ^frontend/src/.*\.(ts|tsx)$
+        pass_filenames: false
+      - id: frontend-typecheck
+        name: frontend typecheck
+        entry: bash -c 'cd frontend && bun run typecheck'
+        language: system
+        files: ^frontend/src/.*\.(ts|tsx)$
+        pass_filenames: false

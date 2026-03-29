@@ -1,0 +1,22 @@
+# Storage Facilities
+
+Storage Facilities play a crucial role in storing energy within Energetica. Initially, only the small water dam is
+accessible, but as you research technologies, other storage facilities can be unlocked.
+
+For more information about building storage facilities, see
+[Starting a Project](./projects.mdx#starting-a-project).
+
+Despite working on the same principle, each storage facility possesses unique characteristics:
+
+- **Storage Capacity:** Maximum amount of stored energy.
+- **Max Generation:** Maximum electricity generation and usage for charging. Determines the maximum charge and discharge speed of the storage facilities.
+- **Ramping Speed:** Defines the maximum rate of change for charging and discharging. For further information, refer to the [Controllable Facility Power Generation](./power-facilities.mdx#power-generation-of-controllable-facilities) section. (Currently there is no ramping down constraint for storage facilities during charging, meaning that a storage facility can go from 100% charging rate to 0% instantly)
+- **Efficiency:** Roundtrip efficiency of the storage facility. Efficiency losses occur during both charging and discharging. For instance, if the roundtrip efficiency is 0.81, the charging and discharging efficiencies would be $\sqrt{0.81} = 0.9$ (10% loss during charging and 10% more during discharging). Improvements in efficiency are possible through certain technologies.
+- **Operation cost:** Operational cost of the facility that consist of 100% fixed costs.
+- **Lifespan:** Lifespan of the facility.
+
+For construction details, see the [Starting a Project](./projects.mdx#starting-a-project) section.
+
+When a storage facility is dismantled, destroyed or decommissioned at the end of its lifespan, it enters a decommissioning phase.
+During this phase, if the amount of stored energy doesn't fit into the remaining (if any) storage facilities of the same type, the storage can only be emptied and once the capacity of the facility in the decommissioning phase is not needed any more, it will be dismantled.
+Facilities in the decommissioning phase still have operational costs.

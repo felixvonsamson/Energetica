@@ -1,134 +1,141 @@
-"""This module contains functions for simulating user actions on the server."""
+"""Module for simulating user actions on the server."""
+
+from __future__ import annotations
 
 import cProfile
-import pickle
 import pstats
-import tarfile
 from time import sleep
-from typing import List
+from typing import Any, cast
 
 import requests
-from flask import current_app
 
-import energetica.production_update as production_update
-from energetica.database import db
-from energetica.database.map import Hex
-from energetica.database.ongoing_construction import OngoingConstruction
-from energetica.utils.climate_helpers import climate_event_impact
-from energetica.utils.tick_execution import check_events_completion
+from energetica.database.user import User
+from energetica.globals import engine
+from energetica.schemas.simulate import Action
+from energetica.utils import misc
+from energetica.utils.auth import add_session_cookie_to_session
+from energetica.utils.tick_execution import tick
 
 
-def create_user(user_id, port):
+def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
     """Create a user with the given user_id."""
+    user = misc.signup_playing_user(None, username, pwhash)
     session = requests.Session()
-    data = {"username": f"user{user_id}", "password1": "password", "password2": "password"}
-    session.post(f"http://localhost:{port}/sign-up", data=data)
+    add_session_cookie_to_session(session, user)
     return session
 
 
-def login_user(user_id, port):
+def login_user(user_id: int) -> requests.Session:
     """Login a user with the given user_id."""
+    user = User.getitem(user_id, ValueError(f"Cannot log in user: user with id {user_id} does not exist"))
     session = requests.Session()
-    data = {"username": f"user{user_id}", "password": "password"}
-    session.post(f"http://localhost:{port}/login", data=data)
+    add_session_cookie_to_session(session, user)
     return session
 
 
-def verify(engine):
+def verify() -> None:
     assert True
 
 
-def simulate(*simulate_args, profiling=False, **simulate_kwargs):
+def simulate(*simulate_args: Any, profiling: bool = False, **simulate_kwargs: Any) -> bool:
+    """
+    Wrapper around _simulate. Allows to run profiling if requested.
+
+    Returns true if the simulation was successful, false otherwise.
+    """
     if not profiling:
-        _simulate(*simulate_args, **simulate_kwargs)
+        return _simulate(*simulate_args, **simulate_kwargs)
     else:
         with cProfile.Profile() as profile:
-            _simulate(*simulate_args, **simulate_kwargs)
+            retval = _simulate(*simulate_args, **simulate_kwargs)
             stats = pstats.Stats(profile)
         stats.sort_stats(pstats.SortKey.CUMULATIVE).print_stats(30)
+        return retval
 
 
 def _simulate(
-    app,
-    port,
-    actions,
-    stop_on_mismatch,
-    stop_on_server_error,
-    stop_on_assertion_error,
-    checkpoint_every_k_ticks=10000,
-    checkpoint_ticks: List[int] = None,
-):
-    with app.app_context():
-        trials = 0
-        while True:
-            try:
-                requests.get(f"http://localhost:{port}", timeout=1)
-            except requests.exceptions.ConnectionError:
-                trials += 1
-                if trials == 10:
-                    print("Server is not running.")
-                    exit(1)
-                sleep(1)
-                continue
-            break
-        user_sessions = {}
-        engine = current_app.config["engine"]
+    port: int,
+    actions: list[Action],
+    simulating: bool,
+    stop_on_mismatch: bool,
+    stop_on_server_error: bool,
+    stop_on_assertion_error: bool,
+    checkpoint_every_k_ticks: int = 10000,
+    checkpoint_ticks: list[int] | None = None,
+) -> bool:
+    """Simulate the list of actions. Returns true if the simulation was successful, false otherwise."""
+    base_url = f"http://localhost:{port}"
 
-        for action in actions:
-            print(action)
-            if action["action_type"] == "tick":
-                engine.data["total_t"] += 1
-                engine.log(f"t = {engine.data['total_t']}")
-                production_update.update_electricity(engine=engine)
-                check_events_completion(engine)
-                db.session.commit()
-                if action["total_t"] % checkpoint_every_k_ticks == 0 or action["total_t"] in checkpoint_ticks:
-                    with open("instance/engine_data.pck", "wb") as file:
-                        pickle.dump(engine.data, file)
-                    with tarfile.open(f"checkpoints/simulation/checkpoint_{action['total_t']}.tar.gz", "w:gz") as tar:
-                        tar.add("instance/")
-            elif action["action_type"] == "climate_event_impact":
-                tile = db.session.get(Hex, action["tile_id"])
-                climate_event_impact(engine, tile, action["event"])
-            elif action["action_type"] == "create_user":
-                player_id = action["player_id"]
-                user_sessions[player_id] = create_user(player_id, port)
-            elif action["action_type"] == "request":
-                player_id = action["player_id"]
-                if player_id not in user_sessions:
-                    user_sessions[player_id] = login_user(player_id, port)
-                url = f"http://localhost:{port}{action['request']['endpoint']}"
-                content_type = "json" if action["request"]["content_type"] == "application/json" else "data"
-                response = user_sessions[player_id].post(url, **{content_type: action["request"]["content"]})
-                response = response.history[0] if response.history else response
-                if (
-                    response.headers["Content-Type"] == "application/json"
-                    and response.json()["response"] != action["response"]["content"]["response"]
-                ):
-                    print(
-                        f"""\033[31mResponse {response.json()["response"]} does not match expected response """
-                        f"""{action["response"]["content"]["response"]}.\033[0m"""
-                    )
-                    if stop_on_mismatch:
-                        break
-                if response.status_code != action["response"]["status_code"]:
-                    print(
-                        f"""\033[31mStatus code {response.status_code} does not match expected status code """
-                        f"""{action["response"]["status_code"]}.\033[0m"""
-                    )
-                    if stop_on_mismatch:
-                        break
-                if response.status_code != 200:
-                    print(f"Status code: {response.status_code}")
-                    if response.status_code // 100 == 4:
-                        print("\033[33m" + response.text + "\033[0m")
-                    elif response.status_code // 100 == 5:
-                        print("\033[31mServer error, look at the stack above.\033[0m")
-                        if stop_on_server_error:
-                            break
+    if checkpoint_ticks is None:
+        checkpoint_ticks = []
+
+    # NOTE(mglst): I suspect that with FastAPI there are better ways to handle checking that the server is running
+    trials = 0
+    while True:
+        try:
+            requests.get(base_url, timeout=1)
+        except requests.exceptions.ConnectionError:
+            trials += 1
+            if trials == 10:
+                print("Server is not running.")
+                exit(1)
+            sleep(1)
+            continue
+        break
+    user_sessions: dict[int, requests.Session] = {}
+
+    for action in actions:
+        print(action)
+        if action.action_type == "tick":
+            tick()
+            if (
+                checkpoint_every_k_ticks
+                and action.total_t % checkpoint_every_k_ticks == 0
+                or action.total_t in checkpoint_ticks
+            ):
+                engine.save_checkpoint(f"checkpoints/simulation/checkpoint_{action.total_t}.tar.gz")
+        elif action.action_type == "create_user":
+            user_id = action.user_id
+            user_sessions[user_id] = create_user(user_id, action.username, action.pw_hash)
+        elif action.action_type == "request":
+            user_id = action.user_id
+            if user_id not in user_sessions:
+                user_sessions[user_id] = login_user(user_id)
+            session = cast(requests.Session, user_sessions[user_id])
+            url = f"{base_url}{action.request.endpoint}"
+            content_type = "json" if action.request.content_type == "application/json" else "data"
+            method = action.request.method
             try:
-                verify(engine)
-            except AssertionError:
-                print(print("\033[31m" + "Assertion error.\033[0m"))
-                if stop_on_assertion_error:
+                method_func = getattr(session, method.lower())
+            except AttributeError:
+                raise ValueError(f"Cannot manage the following method: {method}")
+            response = method_func(
+                url,
+                **{content_type: action.request.payload},
+                allow_redirects=False,
+            )
+            if response.status_code != action.response.status_code:
+                print(
+                    f"""\033[31mStatus code {response.status_code} does not match expected status code """
+                    f"""{action.response.status_code}.\033[0m""",
+                )
+                if stop_on_mismatch:
                     break
+            if response.status_code != 200:
+                print(f"Status code: {response.status_code}")
+                if response.status_code // 100 == 4:
+                    print("\033[33m" + response.text + "\033[0m")
+                elif response.status_code // 100 == 5:
+                    print("\033[31mServer error, look at the stack above.\033[0m")
+                    if stop_on_server_error:
+                        break
+        try:
+            # After every tick and action, verify the state of the engine
+            verify()
+        except AssertionError:
+            print("\033[31mAssertion error.\033[0m")
+            if stop_on_assertion_error:
+                break
+    else:
+        return True
+    return False

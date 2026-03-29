@@ -1,0 +1,120 @@
+"""Routes for the resource market."""
+
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from energetica.database.player import Player
+from energetica.database.resource_on_sale import ResourceOnSale
+from energetica.schemas.resource_market import (
+    AskCreate,
+    AskListOut,
+    AskOut,
+    AskPatch,
+    DeliveryCalculationResponse,
+    PurchaseOrderCreate,
+)
+from energetica.utils.auth import get_settled_player
+from energetica.utils.resource_market import (
+    calculate_shipment_duration,
+    create_ask,
+    delete_ask,
+    patch_ask,
+    purchase_resource,
+)
+
+router = APIRouter(prefix="/resource-market", tags=["Resource Market"])
+
+
+@router.get("/asks")
+def get_resource_market_asks() -> AskListOut:
+    """Get the resource market."""
+    return AskListOut(
+        asks=[AskOut.from_resource_on_sale(ask) for ask in ResourceOnSale.all()],
+    )
+
+
+@router.post("/asks", status_code=201)
+def post_resource_market_ask(
+    player: Annotated[Player, Depends(get_settled_player)],
+    request_data: AskCreate,
+) -> AskOut:
+    """Post a resource market bid."""
+    return AskOut.from_resource_on_sale(
+        create_ask(
+            player=player,
+            fuel=request_data.resource_type,
+            quantity=request_data.quantity,
+            unit_price=request_data.unit_price,
+        ),
+    )
+
+
+@router.post("/asks/{ask_id}:purchase")
+def post_resource_market_purchase(
+    player: Annotated[Player, Depends(get_settled_player)],
+    ask_id: int,
+    request_data: PurchaseOrderCreate,
+) -> AskOut | None:
+    """Purchase a resource market ask."""
+    sale = ResourceOnSale.getitem(ask_id, error=HTTPException(status_code=404, detail="Ask not found"))
+    # TODO(mglst): Add the following check in the future
+    # if sale.player == user:
+    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot buy your own ask")
+    quantity = request_data.quantity if request_data.quantity is not None else sale.quantity
+    new_sale = purchase_resource(
+        buyer=player,
+        quantity=quantity,
+        sale=sale,
+    )
+    # TODO(mglst) rethink the return structure of this route.
+    # If None is returned, then the appropriate status code would be 204.
+    # If we still want to return a response body, we could return an empty object or a success message or something.
+    if new_sale is None:
+        return None
+    return AskOut.from_resource_on_sale(new_sale)
+
+
+@router.patch("/asks/{ask_id}")
+def patch_resource_market_ask(
+    player: Annotated[Player, Depends(get_settled_player)],
+    ask_id: int,
+    request_data: AskPatch,
+) -> AskOut:
+    """Patch a resource market ask."""
+    sale = ResourceOnSale.getitem(ask_id, error=HTTPException(status_code=404, detail="Ask not found"))
+    if sale.player != player:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the owner of this ask")
+    return AskOut.from_resource_on_sale(
+        patch_ask(sale, unit_price=request_data.unit_price, quantity=request_data.quantity),
+    )
+
+
+@router.delete("/asks/{ask_id}", status_code=204)
+def delete_resource_market_ask(
+    player: Annotated[Player, Depends(get_settled_player)],
+    ask_id: int,
+) -> None:
+    """Delete a resource market ask."""
+    sale = ResourceOnSale.getitem(
+        ask_id,
+        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ask not found"),
+    )
+    if sale.player != player:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the owner of this ask")
+    delete_ask(sale)
+
+
+@router.post("/asks/{ask_id}:calculate-delivery")
+def calculate_delivery_time(
+    player: Annotated[Player, Depends(get_settled_player)],
+    ask_id: int,
+) -> DeliveryCalculationResponse:
+    """Calculate shipment time for a specific ask for the current player."""
+    ask = ResourceOnSale.getitem(
+        ask_id,
+        error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ask not found"),
+    )
+
+    shipment_time = calculate_shipment_duration(player, ask.player)
+    return DeliveryCalculationResponse(shipment_time=shipment_time)

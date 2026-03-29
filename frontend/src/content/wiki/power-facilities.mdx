@@ -1,0 +1,122 @@
+# Wiki - Power Facilities
+
+Power Facilities are integral for electricity generation within the game. Upon starting, you begin with a single steam engine. Initially, only the steam engine, watermill, and windmill are available. However, researching [technologies](./technologies.mdx) will unlock additional power facilities.
+
+For more information about building power facilities, see [Starting a Project](./projects.mdx#starting-a-project).
+
+Power Facilities within Energetica are classified into five categories, each offering different characteristics and functionalities.
+
+### Fossil Fuel Family
+
+- Steam Engine
+- Coal Burner (Coal)
+- Gas Burner (Gas)
+- Combined Cycle (Gas + Coal)
+- Nuclear Reactor (Uranium)
+- Gen4 Nuclear (Uranium)
+
+These facilities are controllable, emit CO<sub>2</sub>, and require fuel for operation (except for the steam engine).
+
+### Wind Family
+
+- Windmill
+- Onshore Wind Turbine
+- Offshore Wind Turbine
+
+These facilities are non-controllable, do not emit pollutants during operation, and their power output varies based on wind conditions.
+
+### Hydro Family
+
+- Watermill
+- Small Water Dam
+- Large Water Dam
+
+Similar to wind facilities, these are non-controllable, emission-free during operation, and their output varies during the year based on river discharge rates.
+
+### Solar Family
+
+- Concentrated Solar Power
+- Photovoltaics
+
+These facilities are also non-controllable, emission-free during operation, and their output varies based on solar irradiance levels.
+
+## Power Generation of Renewable Facilities
+
+Renewable power generation is non-controllable, meaning their power output is determined by specific calculations, regardless of the demand. Any surplus generation needs to be either stored or dumped.
+
+### Solar Power Generation
+
+The power generation of solar facilities is influenced by the irradiance level at the facilities location. The irradiance is variable in time and space so different instance of a facility might generate different amounts of electricity. The irradiance at the center of the player's tile is visible on the [Dashboard](/app/dashboard). For more information about the weather simulation, see [Solar Irradiance](./time-and-weather.mdx#solar-irradiance).
+
+The formula for total power generation of solar facilities:
+
+$$
+P_s(t) = \sum_{n} \frac{ irr_{n}(t) }{1000W/m²} \times P_{max,n}
+$$
+
+where $irr_{n}$ is the current irradiance at the location of facility $n$ in W/m², $1000 W/m²$ is the maximal irradiance and $P_{max,n}$ is the max power generation of the facility $n$.
+
+### Wind Power Generation
+
+The power production of wind facilities is influenced by the current wind speed at the facility's location. The wind speed is variable in time and space so different instances of a facility might generate different amounts of electricity. The wind speed at the center of the player's tile is visible on the [Dashboard](/app/dashboard). For more information about the weather simulation, see [Wind Speed](./time-and-weather.mdx#wind-speed).
+
+In addition to this, each wind speed instance has an attributed wind speed multiplier that represents the exposure of the location to wind. The more wind facilities a player builds, the less efficient they will be. See [Wind Potential](./map.mdx#wind-potential) for more details.
+
+The power production of a wind facility is calculated using a characteristic function:
+
+<div className="flex justify-center my-8">
+    <img
+        src="/static/images/wiki/char_func_wind.jpg"
+        alt="Characteristic curve of wind turbine"
+    />
+</div>
+
+The formula for the power generation at time t of all wind facilities is:
+
+$$
+P_w(t) = \sum_{n} cf(ws_{n}(t)) \times P_{max,n}
+$$
+
+where $cf()$ is the characteristic function shown in the graph above, $ws_{n}$ the current wind speed for the specific instance $n$ (see [Wind Potential](./map.mdx#wind-potential)) and $P_{max,n}$ is the max power generation of the facility.
+
+### Hydropower Generation
+
+Hydropower generation fluctuates with the change in river discharge rates, following seasonal patterns within the game's timeline.
+
+<div className="flex justify-center my-8">
+    <img
+        src="/static/images/wiki/seasonal_variation_rivers.jpg"
+        alt="Seasonal variations of river discharges"
+        id="seasonal_variation_rivers_graph"
+    />
+</div>
+
+Formula for total power generation of hydropower facility type i:
+
+$$
+P_h(t) = \sum_{n} sv(t) \times P_{max,n}
+$$
+
+where $sv$ is the seasonal variation shown in the graph, $t$ is the in-game date ([1 in-game year = 72 real-time days](./time-and-weather.mdx#game-time)) and $P_{max,n}$ is the max power generation of the facility instance n.
+
+Note that the building and operational costs of hydro facilities increase with each new instance, reflecting the difficulty of constructing in increasingly hard-to-access locations. See [Hydro Potential](./map.mdx#hydro-potential) for more information.
+
+## Power Generation of Controllable Facilities
+
+Controllable facility power generation must adhere to the ramping constraints of each facility from one game tick to the next. The ramping speed, expressed in W/min, applies both to ramping up and down.
+
+For instance, a controllable facility with a ramping speed of 10 kW/min, generating 100 kW, can vary its output between 90 and 110 kW in the following minute ([in-game time](./time-and-weather.mdx#game-time)). Unused minimal power may need to be dumped to satisfy the ramping down constraint.
+
+The order of priority in which the controllable facilities are used can be adjusted by the player. See [Power management](./power-management.mdx) for details.
+
+### Use of Resources
+
+Except for the steam engine, controllable power facilities consume resources (fuel) for operation.
+
+The fuel usage is measured in kg/MWh, indicating that fuel consumption is proportionate to the electricity generated. In cases where a facility lacks sufficient fuel to produce a specific amount of electricity, it will cap its maximal production according to the available fuel stocks.
+
+[Thermodynamics](/app/facilities/technology#thermodynamics) influences facility efficiency, decreasing fuel consumption per unit of energy.
+
+### CO<sub>2</sub> Emissions
+
+CO<sub>2</sub> emissions are calculated based on the fuel usage of a facility and are expressed in kg/MWh. Similar to fuel consumption, CO<sub>2</sub> production correlates with the amount of power generated. CO<sub>2</sub> emissions affect the shared atmosphere among all players, influencing the game's climate. Refer to [Climate Change](./climate-effects.mdx) for more details.

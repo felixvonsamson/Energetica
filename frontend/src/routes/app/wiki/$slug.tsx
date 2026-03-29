@@ -1,0 +1,54 @@
+/** Dynamic route for wiki pages. Loads MDX content based on the slug parameter. */
+
+import { createFileRoute } from "@tanstack/react-router";
+import { JSX } from "react";
+
+import { TypographyH1, TypographyLead } from "@/components/ui/typography";
+import { WikiLayout } from "@/components/wiki/wiki-layout";
+
+// Eagerly import all MDX files (no lazy loading - all bundled together)
+// This adds ~50-100KB to the bundle but eliminates navigation delays
+const wikiModules = import.meta.glob<{ default: () => JSX.Element }>(
+    "@/content/wiki/*.mdx",
+    { eager: true },
+);
+
+// Convert to a simple lookup map
+const wikiPages: Record<string, () => JSX.Element> = Object.fromEntries(
+    Object.entries(wikiModules).map(([path, module]) => {
+        // Extract slug from path: "@/content/wiki/introduction.mdx" -> "introduction"
+        const slug = path.match(/\/([^/]+)\.mdx$/)?.[1] ?? "";
+        return [slug, module.default];
+    }),
+);
+
+export const Route = createFileRoute("/app/wiki/$slug")({
+    component: WikiPage,
+    staticData: {
+        title: "Game Wiki",
+    },
+});
+
+function WikiPage() {
+    const { slug } = Route.useParams();
+    const Content = wikiPages[slug];
+
+    if (!Content) {
+        return (
+            <WikiLayout>
+                <div className="text-center py-12">
+                    <TypographyH1 className="mb-4">Page Not Found</TypographyH1>
+                    <TypographyLead>
+                        The wiki page "{slug}" does not exist.
+                    </TypographyLead>
+                </div>
+            </WikiLayout>
+        );
+    }
+
+    return (
+        <WikiLayout>
+            <Content />
+        </WikiLayout>
+    );
+}

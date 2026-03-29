@@ -1,0 +1,44 @@
+"""Contains the class that stores the resources shipment on their way."""
+
+# TODO(mglst): rename to ongoing_shipment.py
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from energetica.database import DBModel
+from energetica.enums import Fuel
+
+if TYPE_CHECKING:
+    from energetica.database.player import Player
+
+
+@dataclass
+class OngoingShipment(DBModel):
+    """Class that stores the resources shipment on their way."""
+
+    resource: Fuel
+    quantity: float
+    arrival_tick: float  # in game ticks when the shipment will arrive
+    duration: float  # in game ticks
+    power_demand: float
+    player: Player
+
+    speed: float = 1
+    previous_speed: float = 1
+
+    def delay_by(self, ticks: float) -> None:
+        """Delay the shipment by the given number of ticks."""
+        self.arrival_tick += ticks
+        self.speed = 1 - ticks
+
+    def updated_speed(self) -> float | None:
+        """Return the speed of the shipment except if it is 1 and unchanged since last tick."""
+        if self.speed != self.previous_speed or self.speed != 1:
+            return self.speed
+        return None
+
+    def reset_speed(self) -> None:
+        """Reset the speed of the shipment to 1 and stores the previous speed."""
+        self.previous_speed = self.speed
+        self.speed = 1

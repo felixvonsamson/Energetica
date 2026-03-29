@@ -1,17 +1,43 @@
 {
     // General
-    "editor.formatOnSave": true,
+    "files.exclude": {
+        ".git": true,
+        ".venv": true,
+        "**/node_modules": true,
+        "**/__pycache__": true,
+        "**/.ruff_cache": true,
+        "instance": true,
+        "admin_accounts.txt": true
+    },
+    "search.exclude": {
+        ".git": true,
+        ".venv": true,
+        "**/node_modules": true,
+        "**/__pycache__": true,
+        "**/.ruff_cache": true,
+        "instance": true,
+        "admin_accounts.txt": true
+    },
     "files.associations": {
         "*.jinja": "jinja-html",
-        "*.js": "javascript"
+        "*.js": "javascript",
+        "*.css": "tailwindcss",
+        "*.mdx": "mdx"
     },
-    "editor.rulers": [ 80 ],
+    "editor.formatOnSave": true,
+    "editor.rulers": [80],
+    // CSS
+    "css.customData": [".vscode/css-custom-data.json"],
+    // MDX
+    "[mdx]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
     // Jinja
     "[jinja-html]": {
         "editor.defaultFormatter": "monosans.djlint",
-        "editor.rulers": [ 120 ],
+        "editor.rulers": [120],
         "editor.formatOnSave": false,
-        "djlint.enableLinting": true,
+        "djlint.enableLinting": true
         // "djlint.profile": "jinja"
     },
     "djlint.useEditorIndentation": true,
@@ -23,42 +49,89 @@
     "[javascript]": {
         "editor.defaultFormatter": null,
         "editor.wordWrapColumn": 120,
-        "editor.rulers": [ 120 ]
+        "editor.rulers": [120]
+    },
+    // Typescript
+    "typescript.tsdk": "./frontend/node_modules/typescript/lib",
+    "typescript.preferences.importModuleSpecifier": "non-relative",
+    "[typescript][typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": "explicit"
+        }
     },
     // Python
-    "files.exclude": {
-        "**/__pycache__": true
-    },
     "[python]": {
-        "editor.rulers": [ 120 ],
+        "editor.rulers": [120],
         "editor.codeActionsOnSave": {
-            "source.organizeImports": "always"
+            // TODO(mglst): source.organizeImports was causing conflicts. Look
+            // Into renabling it somehow, perhaps explicitly calling Ruff
+            // "source.organizeImports": "always",
+            "source.fixAll": "always"
         },
         "editor.defaultFormatter": "charliermarsh.ruff"
     },
-    "pylint.args": [ "--max-line-length=120" ],
+    "pylint.args": ["--max-line-length=120"],
     "python.analysis.autoImportCompletions": false,
+    // mypy
+    "mypy.extraArguments": [
+        "--ignore-missing-imports"
+        // "--check-untyped-defs",
+        // "--disallow-untyped-defs",
+        // "--disallow-untyped-calls",
+        // "--disallow-incomplete-defs",
+        // "--warn-redundant-casts",
+        // "--warn-unused-ignores",
+        // "--warn-return-any",
+        // "--warn-unreachable",
+        // "--strict",
+    ],
     // JSON
     "json.format.keepLines": true,
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
     // cSpell
+    "cSpell.language": "en-GB",
     "cSpell.words": [
+        ".venv",
+        "a2enmod",
+        "a2ensite",
         "APPROXIMATIVE",
         "apscheduler",
         "arccos",
+        "ASGI",
         "backref",
         "Baloo",
         "Banqiao",
         "bioenergy",
+        "bunx",
+        "certbot",
+        "checkpw",
+        "classmethod",
+        "cmdk",
         "coldwave",
         "coldwaves",
+        "color",
+        "colors",
         "Compr",
+        "configtest",
         "Constrtruct",
         "Controllables",
         "cumsum",
         "cumul",
+        "cutoff",
+        "dataclasses",
         "datapoint",
+        "datapoints",
         "Deepwater",
         "DGRAM",
+        "Dialog",
+        "Dialogs",
+        "dissite",
         "docstrings",
         "dont",
         "Effic",
@@ -69,10 +142,20 @@
         "Energetica",
         "engineio",
         "ensp",
+        "eolt",
+        "ethz",
         "eventlet",
+        "Expletus",
+        "extrabold",
+        "fastapi",
+        "filterwarnings",
         "Fukushima",
+        "fullchain",
         "gameplay",
+        "gensalt",
         "gevent",
+        "hashability",
+        "hashpw",
         "httpauth",
         "Hydrostrg",
         "iloc",
@@ -83,9 +166,19 @@
         "isnot",
         "isort",
         "itertuples",
+        "itsdangerous",
+        "Jinja",
+        "journalctl",
+        "jsonable",
         "jsonify",
+        "Katex",
+        "kwargs",
         "lacunarity",
+        "LCOE",
+        "letsencrypt",
+        "levelised",
         "linalg",
+        "lookback",
         "lvls",
         "mapsize",
         "Météo",
@@ -94,42 +187,70 @@
         "minmax",
         "mult",
         "nbsp",
+        "NOPASSWD",
+        "nosniff",
+        "numpy",
+        "oklch",
         "onclick",
         "oninput",
+        "passlib",
+        "Passwordless",
         "perlin",
         "Photovoltaics",
         "pnoise",
+        "privkey",
+        "proxy_wstunnel",
         "pwhash",
+        "Pydantic",
         "Pylint",
         "pyproject",
+        "pytest",
+        "python3-venv",
         "pywebpush",
         "Rainforest",
+        "redef",
+        "refetched",
+        "refetches",
         "regen",
         "renewables",
+        "Roundtrip",
+        "SAMEORIGIN",
+        "scipy",
         "sessionmaker",
+        "shadcn",
+        "signups",
+        "socketio",
         "solars",
         "sqlalchemy",
+        "strikethrough",
+        "STYLEGUIDE",
         "stylesheet",
         "subarrays",
         "subkey",
+        "testpaths",
         "thinsp",
         "timesteps",
         "tojson",
+        "topbar",
         "Unsubscription",
         "Uran",
         "uselist",
+        "Uvicorn",
+        "vars",
         "vectorize",
+        "venv",
         "visualisation",
+        "Vite",
         "webcredentials",
         "webpush",
-        "werkzeug",
         "wght",
-        "windspeed"
+        "windspeed",
+        "Zürich"
     ],
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
+    "python.testing.pytestArgs": ["tests"],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "js/ts.implicitProjectConfig.checkJs": true
+    "js/ts.implicitProjectConfig.checkJs": true,
+    "editor.detectIndentation": false,
+    "markdown.validate.enabled": true
 }

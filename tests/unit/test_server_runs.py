@@ -1,3 +1,6 @@
+"""Test that the server runs."""
+# TODO(mglst): @yassir-akram should this be a unit test or an integration test?
+
 import os
 import signal
 import subprocess
@@ -6,13 +9,13 @@ from time import sleep
 import requests
 
 
-def test_server_runs():
-    process = subprocess.Popen(["python", "main.py", "--port", "5011"])
+def test_server_runs() -> None:
+    process = subprocess.Popen(["python", "main.py", "--port", "5011", "--rm_instance", "--env", "prod"])
 
     trials = 0
     while True:
         try:
-            response = requests.get("http://localhost:5011/wiki/introduction", timeout=1)
+            response = requests.get("http://localhost:5011/openapi.json", timeout=1)
         except requests.exceptions.ConnectionError:
             trials += 1
             if trials == 10:

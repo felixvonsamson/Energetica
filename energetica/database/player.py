@@ -2,26 +2,52 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import StrEnum
 from functools import cached_property
-from itertools import chain
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Iterable
 
-from flask import current_app
-from flask_login import UserMixin
 from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements
-from energetica.database import db
+from energetica.database import DBModel
 from energetica.database.active_facility import ActiveFacility
-from energetica.database.engine_data import CapacityData, CircularBufferPlayer, CumulativeEmissionsData
-from energetica.database.messages import Chat, Message, Notification, player_chats
-from energetica.database.ongoing_construction import ConstructionStatus, OngoingConstruction
-from energetica.database.shipment import Shipment
+from energetica.database.engine_data.capacity_data import CapacityData
+from energetica.database.engine_data.circular_buffer_player import CircularBufferPlayer
+from energetica.database.engine_data.cumulative_emissions_data import CumulativeEmissionsData
+from energetica.database.messages import Chat, Notification
+from energetica.schemas.notifications import (
+    PersistableNotificationPayload,
+    AchievementMilestoneBasePayload,
+    AchievementMilestoneEnergyStoragePayload,
+    AchievementMilestonePowerConsumptionPayload,
+    AchievementUnlockPayload,
+    NotificationPayload,
+)
+from energetica.database.network_prices import NetworkPrices
+from energetica.database.ongoing_project import OngoingProject
+from energetica.database.ongoing_shipment import OngoingShipment
+from energetica.enums import (
+    ExtractionFacilityType,
+    Fuel,
+    FunctionalFacilityType,
+    PowerFacilityType,
+    ProjectStatus,
+    ProjectType,
+    RenewableFacilityType,
+    StorageFacilityType,
+    TechnologyType,
+    WindFacilityType,
+    WorkerType,
+)
+from energetica.globals import MAIN_EVENT_LOOP, engine
+from energetica.schemas.achievements import AchievementMilestoneOut, AchievementOut, AchievementUnlockOut
+from energetica.schemas.browser_notifications import Subscription
+from energetica.schemas.electricity_markets import AskType, BidType
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -29,80 +55,152 @@ from energetica.technology_effects import (
     package_power_facilities,
     package_storage_facilities,
 )
+from energetica.types.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
 
 if TYPE_CHECKING:
-    from energetica.game_engine import GameEngine
+    from collections.abc import Iterator
+
+    from energetica.database.map.hex_tile import HexTile
+    from energetica.database.network import Network
+    from energetica.database.user import User
 
 
 @dataclass
-class PlayerData:
-    """Dataclass that stores the player data."""
+# TODO (Felix): add @dataclass(eq=False) on all classes
+class Player(DBModel):
+    """Class that stores the users and their data."""
 
+    user: User
+    tile: HexTile
+
+    @property
+    def username(self) -> str:
+        """Return the username of the associated user."""
+        return self.user.username
+
+    # inactive: bool = False  # True if account is inactive
+    show_chat_disclaimer: bool = True
+    last_opened_chat_id: int = field(default_factory=lambda: engine.general_chat.id)
+
+    network: Network | None = None
+
+    # TODO (Felix): Modify the post__init__ of DBModel to store the following objects in engine or in the player
+    projects_by_priority: dict[WorkerType, list[OngoingProject]] = field(
+        default_factory=lambda: {worker_type: [] for worker_type in WorkerType},
+    )
+
+    @property
+    def constructions_by_priority(self) -> list[OngoingProject]:
+        """Return the constructions by priority."""
+        return self.projects_by_priority[WorkerType.CONSTRUCTION]
+
+    @property
+    def researches_by_priority(self) -> list[OngoingProject]:
+        """Return the researches by priority."""
+        return self.projects_by_priority[WorkerType.RESEARCH]
+
+    @property
+    def notifications(self) -> list[Notification]:
+        """Return the notifications of the player."""
+        return list(Notification.filter_by(player=self))
+
+    network_prices: NetworkPrices = field(default_factory=NetworkPrices)
     rolling_history: CircularBufferPlayer = field(default_factory=CircularBufferPlayer)
     capacities: CapacityData = field(default_factory=CapacityData)
     cumul_emissions: CumulativeEmissionsData = field(default_factory=CumulativeEmissionsData)
 
+    # Facility statuses (updated each tick after market resolution)
+    renewable_statuses: dict[RenewableFacilityType, RenewableStatus] = field(default_factory=dict)
+    production_statuses: dict[AskType, ProductionStatus] = field(default_factory=dict)
+    consumption_statuses: dict[BidType, ConsumptionStatus] = field(default_factory=dict)
 
-@dataclass
-class PlayerCache:
-    """Dataclass that stores cached player data."""
+    achievements: dict[str, int] = field(
+        default_factory=lambda: {
+            "power_consumption": 0,
+            "energy_storage": 0,
+            "mineral_extraction": 0,
+            "network_import": 0,
+            "network_export": 0,
+            "technology": 0,
+            "trading_export": 0,
+            "trading_import": 0,
+            "network": 0,
+            "laboratory": 0,
+            "warehouse": 0,
+            "GHG_effect": 0,
+            "storage_facilities": 0,
+        },
+    )
 
-    player_id: int
+    # TODO(mglst): create a custom class for this - some fields are not floats
+    progression_metrics: dict[str, float] = field(
+        default_factory=lambda: {
+            "xp": 0,
+            "average_revenues": 0,
+            "max_power_consumption": 0,
+            "max_energy_stored": 0,
+            "extracted_resources": 0,
+            "bought_resources": 0,
+            "sold_resources": 0,
+            "total_technologies": 0,
+            "imported_energy": 0,
+            "exported_energy": 0,
+            "captured_co2": 0,
+        },
+    )
 
-    @cached_property
-    def power_facilities_data(self) -> list:
-        """Cached property that stores the power facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
-        return package_power_facilities(player)
+    # Browser push notification subscriptions (push subscription objects)
+    push_subscriptions: list[Subscription] = field(default_factory=list)
+    # Server-side feed subscriptions: opt-in to specific notification streams.
+    # Controls whether the backend generates notifications for these events.
+    notification_feed_subscriptions: dict = field(
+        default_factory=lambda: {
+            "resource_market_bid": False,
+            "network_join_leave": False,
+        }
+    )
+    socketio_clients: list[str] = field(default_factory=list)
 
-    @cached_property
-    def storage_facilities_data(self) -> list:
-        """Cached property that stores the storage facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
-        return package_storage_facilities(player)
+    def __post_init__(self) -> None:
+        """Post initialization method for Player."""
+        super().__post_init__()
+        self.network_prices.init_prices_with_randomness(self)
 
-    @cached_property
-    def extraction_facilities_data(self) -> list:
-        """Cached property that stores the extraction facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
-        return package_extraction_facilities(player)
+    def __setstate__(self, state: dict) -> None:
+        """Called when unpickling - handle backward compatibility for new fields."""
+        # Restore the object's state
+        self.__dict__.update(state)
 
-    @cached_property
-    def functional_facilities_data(self) -> list:
-        """Cached property that stores the functional facilities data of a player."""
-        player = db.session.get(Player, self.player_id)
-        return package_functional_facilities(player)
+        # Backward compatibility: Initialize new fields for old Player objects loaded from pickle
+        if not hasattr(self, "renewable_statuses"):
+            self.renewable_statuses = {}
+        if not hasattr(self, "production_statuses"):
+            self.production_statuses = {}
+        if not hasattr(self, "consumption_statuses"):
+            self.consumption_statuses = {}
+        if not hasattr(self, "notification_feed_subscriptions"):
+            self.notification_feed_subscriptions = {
+                "resource_market_bid": False,
+                "network_join_leave": False,
+            }
+        if not hasattr(self, "push_subscriptions"):
+            self.push_subscriptions = []
+        # Migrate old notification_opt_ins field
+        if hasattr(self, "notification_opt_ins"):
+            del self.__dict__["notification_opt_ins"]
+        self.__dict__.pop("notification_preferences", None)
 
-    @cached_property
-    def technologies_data(self) -> list:
-        """Cached property that stores the technologies data of a player."""
-        player = db.session.get(Player, self.player_id)
-        return package_available_technologies(player)
+    def __hash__(self) -> int:
+        """Return the hash of the player's id."""
+        return hash(self.id)
 
-
-class Player(db.Model, UserMixin):
-    """Class that stores the users."""
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    # Authentication :
-    username = db.Column(db.String(25), unique=True)
-    pwhash = db.Column(db.String(50))
-
-    # Position :
-    tile = db.relationship("Hex", uselist=False, backref="player")
-
-    # Chats :
-    show_disclaimer = db.Column(db.Boolean, default=True)
-    chats = db.relationship("Chat", secondary=player_chats, backref="participants")
-    last_opened_chat = db.Column(db.Integer, default=1)
-    messages = db.relationship("Message", backref="player")
-
-    notifications = db.relationship("Notification", backref="players", lazy="dynamic")
-
-    # misc :
-    graph_view = db.Column(db.String(10), default="basic")
-    network_id = db.Column(db.Integer, db.ForeignKey("network.id"), default=None)
+    def get_level(self, functional_facility_or_technology: ProjectType) -> int:
+        """Return the technology or functional facility level of the player."""
+        if isinstance(functional_facility_or_technology, FunctionalFacilityType):
+            return self.functional_facility_lvl[functional_facility_or_technology]
+        if isinstance(functional_facility_or_technology, TechnologyType):
+            return self.technology_lvl[functional_facility_or_technology]
+        assert False, "Wrong requirement name"
 
     class NetworkGraphView(StrEnum):
         """Enum for the network graph view of the player."""
@@ -111,257 +209,95 @@ class Player(db.Model, UserMixin):
         NORMAL = "normal"
         EXPERT = "expert"
 
+    # misc :
+    graph_view: str = NetworkGraphView.BASIC
+
     # resources :
-    money = db.Column(db.Float, default=25000)  # default is 25000
-    coal = db.Column(db.Float, default=0)
-    gas = db.Column(db.Float, default=0)
-    uranium = db.Column(db.Float, default=0)
-    coal_on_sale = db.Column(db.Float, default=0)
-    gas_on_sale = db.Column(db.Float, default=0)
-    uranium_on_sale = db.Column(db.Float, default=0)
+    money: float = 25000
+    resources: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
+    resources_on_sale: dict[Fuel, float] = field(default_factory=lambda: {fuel: 0 for fuel in Fuel})
 
-    # Workers :
-    construction_workers = db.Column(db.Integer, default=1)
-    lab_workers = db.Column(db.Integer, default=0)
+    workers: dict[WorkerType, int] = field(
+        default_factory=lambda: {
+            WorkerType.CONSTRUCTION: 1,
+            WorkerType.RESEARCH: 0,
+        },
+    )
 
-    # Functional facilities :
-    industry = db.Column(db.Integer, default=1)
-    laboratory = db.Column(db.Integer, default=0)
-    warehouse = db.Column(db.Integer, default=0)
-    carbon_capture = db.Column(db.Integer, default=0)
+    functional_facility_lvl: dict[FunctionalFacilityType, int] = field(
+        default_factory=lambda: {
+            FunctionalFacilityType.INDUSTRY: 1,
+            FunctionalFacilityType.LABORATORY: 0,
+            FunctionalFacilityType.WAREHOUSE: 0,
+            FunctionalFacilityType.CARBON_CAPTURE: 0,
+        },
+    )
 
-    # Technology :
-    mathematics = db.Column(db.Integer, default=0)
-    mechanical_engineering = db.Column(db.Integer, default=0)
-    thermodynamics = db.Column(db.Integer, default=0)
-    physics = db.Column(db.Integer, default=0)
-    building_technology = db.Column(db.Integer, default=0)
-    mineral_extraction = db.Column(db.Integer, default=0)
-    transport_technology = db.Column(db.Integer, default=0)
-    materials = db.Column(db.Integer, default=0)
-    civil_engineering = db.Column(db.Integer, default=0)
-    aerodynamics = db.Column(db.Integer, default=0)
-    chemistry = db.Column(db.Integer, default=0)
-    nuclear_engineering = db.Column(db.Integer, default=0)
-
-    # Priority lists
-    self_consumption_priority = db.Column(db.Text, default="")
-    rest_of_priorities = db.Column(db.Text, default="steam_engine")
-    demand_priorities = db.Column(db.Text, default="industry,construction")
-    construction_priorities = db.Column(db.Text, default="")
-    research_priorities = db.Column(db.Text, default="")
-
-    # Production capacity prices [¤/MWh]
-    price_steam_engine = db.Column(db.Float, default=125)
-    price_coal_burner = db.Column(db.Float, default=600)
-    price_gas_burner = db.Column(db.Float, default=500)
-    price_combined_cycle = db.Column(db.Float, default=450)
-    price_nuclear_reactor = db.Column(db.Float, default=275)
-    price_nuclear_reactor_gen4 = db.Column(db.Float, default=375)
-
-    # Storage capacity prices [¤/MWh]
-    price_buy_small_pumped_hydro = db.Column(db.Float, default=210)
-    price_small_pumped_hydro = db.Column(db.Float, default=790)
-    price_buy_molten_salt = db.Column(db.Float, default=190)
-    price_molten_salt = db.Column(db.Float, default=830)
-    price_buy_large_pumped_hydro = db.Column(db.Float, default=200)
-    price_large_pumped_hydro = db.Column(db.Float, default=780)
-    price_buy_hydrogen_storage = db.Column(db.Float, default=230)
-    price_hydrogen_storage = db.Column(db.Float, default=880)
-    price_buy_lithium_ion_batteries = db.Column(db.Float, default=425)
-    price_lithium_ion_batteries = db.Column(db.Float, default=940)
-    price_buy_solid_state_batteries = db.Column(db.Float, default=420)
-    price_solid_state_batteries = db.Column(db.Float, default=900)
-
-    # Demand buying prices
-    price_buy_industry = db.Column(db.Float, default=1000)
-    price_buy_construction = db.Column(db.Float, default=1020)
-    price_buy_research = db.Column(db.Float, default=1200)
-    price_buy_transport = db.Column(db.Float, default=1050)
-    price_buy_coal_mine = db.Column(db.Float, default=960)
-    price_buy_gas_drilling_site = db.Column(db.Float, default=980)
-    price_buy_uranium_mine = db.Column(db.Float, default=990)
-    price_buy_carbon_capture = db.Column(db.Float, default=660)
-
-    # player progression data :
-    xp = db.Column(db.Integer, default=0)
-    average_revenues = db.Column(db.Float, default=0)
-    max_power_consumption = db.Column(db.Float, default=0)
-    max_energy_stored = db.Column(db.Float, default=0)
-    extracted_resources = db.Column(db.Float, default=0)
-    bought_resources = db.Column(db.Float, default=0)
-    sold_resources = db.Column(db.Float, default=0)
-    total_technologies = db.Column(db.Integer, default=0)
-    imported_energy = db.Column(db.Float, default=0)
-    exported_energy = db.Column(db.Float, default=0)
-    captured_co2 = db.Column(db.Float, default=0)
-
-    achievements = db.Column(db.Text, default="")
-
-    under_construction = db.relationship("OngoingConstruction")
-    resource_on_sale = db.relationship("ResourceOnSale", backref="player")
-    shipments = db.relationship("Shipment", backref="player")
-    active_facilities = db.relationship("ActiveFacility", backref="player", lazy="dynamic")
-    climate_events = db.relationship("ClimateEventRecovery", backref="player")
-
-    @property
-    def engine(self) -> GameEngine:
-        """Return the game engine."""
-        return current_app.config["engine"]
+    technology_lvl: dict[TechnologyType, int] = field(
+        default_factory=lambda: {tech: 0 for tech in TechnologyType},
+    )
 
     @property
     def config(self) -> dict:
         """Return the player's configuration."""
-        return current_app.config["engine"].config[self]
-
-    @property
-    def socketio_clients(self) -> list[int]:
-        """Return the player's socketio clients."""
-        return current_app.config["engine"].clients[self.id]
+        return engine.config[self]
 
     @cached_property
-    def data(self) -> PlayerData:
-        """Returns the data for the player."""
-        return current_app.config["engine"].data["by_player"][self.id]
+    def power_facilities_data(self) -> list:
+        """Cached property that stores the power facilities data of a player."""
+        return package_power_facilities(self)
 
     @cached_property
-    def cache(self) -> PlayerCache:
-        """Cached property that stores the player cache."""
-        if self.id not in current_app.config["engine"].buffered["by_player"]:
-            current_app.config["engine"].buffered["by_player"][self.id] = PlayerCache(self.id)
-        return current_app.config["engine"].buffered["by_player"][self.id]
+    def storage_facilities_data(self) -> list:
+        """Cached property that stores the storage facilities data of a player."""
+        return package_storage_facilities(self)
+
+    @cached_property
+    def extraction_facilities_data(self) -> list:
+        """Cached property that stores the extraction facilities data of a player."""
+        return package_extraction_facilities(self)
+
+    @cached_property
+    def functional_facilities_data(self) -> list:
+        """Cached property that stores the functional facilities data of a player."""
+        return package_functional_facilities(self)
+
+    @cached_property
+    def technologies_data(self) -> list:
+        """Cached property that stores the technologies data of a player."""
+        return package_available_technologies(self)
 
     @property
     def is_in_network(self) -> bool:
         """Return True if the player is in a network."""
-        return self.network_id is not None
+        return self.network is not None
 
     def change_graph_view(self, view: NetworkGraphView) -> None:
         """Set the network graph view of the player (basic/normal/expert)."""
         self.graph_view = view
-        db.session.commit()
 
-    def available_workers(self, project_name):
-        """Returns the number of available workers depending on the project type"""
-        engine: GameEngine = current_app.config["engine"]
-        if project_name in engine.technologies:
-            return self.available_lab_workers()
-        else:
-            return self.available_construction_workers()
+    def available_workers(self, worker_type: WorkerType) -> int:
+        """Return the number of available workers depending on the project type."""
+        occupied_workers = OngoingProject.count_when(player=self, worker_type=worker_type, status=ProjectStatus.ONGOING)
+        return self.workers[worker_type] - occupied_workers
 
-    def available_construction_workers(self) -> int:
-        """Return the number of available construction workers."""
-        occupied_workers = (
-            OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
-            .filter(OngoingConstruction.family != "Technologies")
-            .filter(OngoingConstruction.status == ConstructionStatus.ONGOING)
-            .count()
-        )
-        return self.construction_workers - occupied_workers
-
-    def available_lab_workers(self) -> int:
-        """Return the number of available lab workers."""
-        occupied_workers = (
-            OngoingConstruction.query.filter(OngoingConstruction.player_id == self.id)
-            .filter(OngoingConstruction.family == "Technologies")
-            .filter(OngoingConstruction.status == ConstructionStatus.ONGOING)
-            .count()
-        )
-        return self.lab_workers - occupied_workers
-
-    def read_list(self, attr: str) -> list:
-        """Return a list of any player list that is stored as a string."""
-        if getattr(self, attr) == "":
-            return []
-        priority_list = getattr(self, attr).split(",")
-        if attr in ["construction_priorities", "research_priorities"]:
-            return list(map(int, priority_list))
-        return priority_list
-
-    def write_list(self, attr: str, list_data: list) -> None:
-        """Transform a list into a sting and store it in the player database."""
-        setattr(self, attr, ",".join(map(str, list_data)))
-
-    def add_to_list(self, attr: str, value) -> None:
-        """Add an element to a list stored as a string in the player database."""
-        # TODO(mglst): assign the correct type to value, probably str
-        if getattr(self, attr) == "":
-            setattr(self, attr, str(value))
-        else:
-            setattr(self, attr, getattr(self, attr) + f",{value}")
-
-    def remove_from_list(self, attr: str, value) -> None:
-        """Remove an element from a list stored as a string in the player database."""
-        # TODO(mglst): assign the correct type to value, probably str
-        id_list = getattr(self, attr).split(",")
-        id_list.remove(str(value))
-        setattr(self, attr, ",".join(id_list))
-
-    def package_chat_messages(self, chat_id: int) -> list[dict]:
+    def package_chat_messages(self, chat: Chat) -> list[dict]:
         """Package the last 20 messages of a chat."""
-        chat = Chat.query.filter_by(id=chat_id).first()
-        messages = chat.messages.order_by(Message.time.desc()).limit(20).all()
         messages_list = [
             {
-                "time": message.time.isoformat(),
-                "player_id": message.player_id,
+                "time": message.timestamp.isoformat(),
+                "player_id": message.player.id,
                 "text": message.text,
             }
-            for message in reversed(messages)
+            for message in chat.messages[-20:]
         ]
-        self.last_opened_chat = chat.id
-        PlayerUnreadMessages.query.filter(PlayerUnreadMessages.player_id == self.id).filter(
-            PlayerUnreadMessages.message_id.in_(db.session.query(Message.id).filter(Message.chat_id == chat_id))
-        ).delete(synchronize_session=False)
-        db.session.commit()
         return messages_list
 
-    def package_chat_list(self) -> dict:
-        """Package the chats of a player."""
-
-        def chat_name(chat: Chat) -> str:
-            if chat.name is not None:
-                return chat.name
-            for participant in chat.participants:
-                if participant != self:
-                    return participant.username
-            msg = "Chat has no name and no other participant"
-            raise ValueError(msg)
-
-        def find_initials(chat: Chat) -> str:
-            if chat.name is None:
-                for participant in chat.participants:
-                    if participant != self:
-                        return participant.username[0]
-            max_initials_size = 4
-            initials = []
-            for participant in chat.participants:
-                initials.append(participant.username[0])
-                if len(initials) == max_initials_size:
-                    break
-            return initials
-
-        def unread_message_count(chat: Chat) -> int:
-            return (
-                PlayerUnreadMessages.query.join(Message, PlayerUnreadMessages.message_id == Message.id)
-                .filter(PlayerUnreadMessages.player_id == self.id)
-                .filter(Message.chat_id == chat.id)
-                .count()
-            )
-
-        chat_dict = {
-            chat.id: {
-                "name": chat_name(chat),
-                "initials": find_initials(chat),
-                "group_chat": chat.name is not None,
-                "unread_messages": unread_message_count(chat),
-            }
-            for chat in self.chats
-        }
-        return {
-            "chat_list": chat_dict,
-            "last_opened_chat": self.last_opened_chat,
-        }
+    def unread_chat_count(self) -> int:
+        """Return the number of unread chats."""
+        return Chat.count(
+            condition=lambda chat: self in chat.participants and chat.unread_messages_count_for_player(self) > 0,
+        )
 
     def package_chats(self) -> dict:
         """Package chats for the iOS frontend."""
@@ -370,79 +306,83 @@ class Player(db.Model, UserMixin):
             chat.id: {
                 "id": chat.id,
                 "name": chat.name,  # can be None
-                "participants": list(map(lambda player: player.id, chat.participants)),
-                "older_messages_exist": chat.messages.count() > 20,
-                "messages": [
-                    message.package()
-                    for message in reversed(chat.messages.order_by(Message.time.desc()).limit(20).all())
-                ],
+                "participants": [player.id for player in chat.participants],
+                "older_messages_exist": len(chat.messages) > 20,
+                "messages": [message.package() for message in chat.messages[-20:]],
             }
-            for chat in self.chats
+            for chat in Chat.filter(lambda chat: self in chat.participants)
         }
 
-    def delete_notification(self, notification_id: int) -> None:
+    def delete_notification(self, notification: Notification) -> None:
         """Delete a notification."""
-        notification = db.session.get(Notification, notification_id)
-        if notification in self.notifications.all():
-            db.session.delete(notification)
-            db.session.commit()
+        if notification.player == self:
+            notification.delete()
 
     def notifications_read(self) -> None:
         """Mark all notifications as read."""
         for notification in self.unread_notifications():
             notification.read = True
-        db.session.commit()
 
     def unread_notifications(self) -> list[Notification]:
         """Return all unread notifications."""
-        return self.notifications.filter_by(read=False).all()
+        return list(filter(lambda notification: not notification.read, self.notifications))
 
-    def get_lvls(self) -> dict:
+    def get_lvls(self) -> dict[FunctionalFacilityType | TechnologyType, int]:
         """Return the levels of functional facilities and technologies of a player."""
-        engine = current_app.config["engine"]
-        attributes = chain(engine.functional_facilities, engine.technologies)
-        return {attr: getattr(self, attr) for attr in attributes}
+        return self.technology_lvl | self.functional_facility_lvl
 
-    def get_reserves(self) -> dict:
-        """Return natural resources reserves of a player."""
-        reserves = {}
-        for resource in ["coal", "gas", "uranium"]:
-            reserves[resource] = getattr(self.tile, resource)
-        return reserves
-
-    def emit(self, event: str, *args) -> None:
+    def emit(self, event: str, *args: Any) -> None:
         """Emit a socketio event to the player's clients."""
-        engine: GameEngine = current_app.config["engine"]
         for sid in self.socketio_clients:
-            engine.socketio.emit(event, *args, room=sid)
+            asyncio.run_coroutine_threadsafe(engine.socketio.emit(event, *args, to=sid), MAIN_EVENT_LOOP)
 
-    def send_new_data(self, new_values) -> None:
+    def invalidate_queries(self, *query_keys: list[str | int]) -> None:
+        """
+        Invalidate React Query caches on the frontend.
+
+        Tells the frontend that specific query caches are stale and should be refetched.
+        Query keys must match those defined in frontend/src/lib/query-client.ts
+
+        Args:
+            query_keys: One or more query keys to invalidate.
+                       Each key is a list of strings and/or integers.
+
+        Examples:
+            player.invalidate_queries(["chats"])
+            player.invalidate_queries(["resource-market", "asks"])
+            player.invalidate_queries(["chats"], ["chats", chat_id, "messages"])  # With integer ID
+            player.invalidate_queries(["chats"], ["auth", "me"])  # Multiple queries
+        """
+        self.emit("invalidate", {"queries": list(query_keys)})
+
+    def send_new_data(self, new_values: Any) -> None:
         """Send the new data to the player's clients."""
-        engine = current_app.config["engine"]
         construction_updates = self.get_construction_updates()
         shipment_updates = self.get_shipment_updates()
         self.emit(
             "new_values",
             {
-                "total_t": engine.data["total_t"],
+                "total_t": engine.total_t,
                 "chart_values": new_values,
-                "climate_values": engine.data["current_climate_data"].get_last_data(),
-                "cumulative_emissions": self.data.cumul_emissions.get_all(),
+                "climate_values": engine.current_climate_data.get_last_data(),
+                "cumulative_emissions": self.cumul_emissions.get_all(),
                 "money": self.money,
                 "construction_updates": construction_updates,
                 "shipment_updates": shipment_updates,
             },
         )
 
-    def get_construction_updates(self):
+    def get_construction_updates(self) -> dict:
         """
-        This method returns a dictionary of the constructions for which the progress speed has changed. For each of
-        these constructions, the dictionary contains the new speed and the new end_tick.
+        Return a dictionary of the constructions for which the progress speed has changed.
+
+        For each of these constructions, the dictionary contains the new speed and the new end_tick.
         """
-        player_constructions: list[OngoingConstruction] = OngoingConstruction.query.filter_by(
-            player_id=self.id, status=ConstructionStatus.ONGOING
-        ).all()
-        construction_speeds = {}
+        player_constructions: Iterator[OngoingProject] = OngoingProject.filter_by(
+            player=self,
+            status=ProjectStatus.ONGOING,
+        )
+        construction_speeds: dict = {}
         for construction in player_constructions:
             new_speed = construction.updated_speed()
             if new_speed is not None:
@@ -452,13 +392,14 @@ class Player(db.Model, UserMixin):
                 }
         return construction_speeds
 
-    def get_shipment_updates(self):
+    def get_shipment_updates(self) -> dict:
         """
-        This method returns a dictionary of the shipments for which the progress speed has changed. For each of
-        these shipments, the dictionary contains the new speed and the new arrival_tick.
+        Return a dictionary of the shipments for which the progress speed has changed.
+
+        For each of these shipments, the dictionary contains the new speed and the new arrival_tick.
         """
-        player_shipments: list[Shipment] = Shipment.query.filter_by(player_id=self.id).all()
-        shipment_speeds = {}
+        player_shipments: Iterator[OngoingShipment] = OngoingShipment.filter_by(player=self)
+        shipment_speeds: dict = {}
         for shipment in player_shipments:
             new_speed = shipment.updated_speed()
             if new_speed is not None:
@@ -468,73 +409,93 @@ class Player(db.Model, UserMixin):
                 }
         return shipment_speeds
 
-    def notify(self, title: str, message: str) -> None:
-        """Create a new notification and sends it to the player's subscribed browsers."""
-        new_notification = Notification(title=title, content=message, time=datetime.now(), player_id=self.id)
-        db.session.add(new_notification)
-        self.notifications.append(new_notification)
-        self.emit(
-            "new_notification",
-            {
-                "id": new_notification.id,
-                "time": str(new_notification.time),
-                "title": new_notification.title,
-                "content": new_notification.content,
-            },
-        )
-        if (
-            self.notifications.count() > 1
-            and new_notification.content == self.notifications[self.notifications.count() - 2].content
-            and new_notification.time == self.notifications[self.notifications.count() - 2].time
-        ):
-            return
+    def notify_subscription(self, subscription: Subscription, payload: NotificationPayload) -> None:
+        """Send a push notification to a single subscription without creating a notification object."""
         notification_data = {
-            "title": new_notification.title,
-            "body": new_notification.content,
+            "type": payload.type,
+            "payload": payload.model_dump(exclude={"type"}),
         }
-        engine: GameEngine = current_app.config["engine"]
-        for subscription in engine.data["notification_subscriptions"][self.id]:
-            audience = "https://fcm.googleapis.com"
-            if "https://updates.push.services.mozilla.com" in subscription["endpoint"]:
-                audience = "https://updates.push.services.mozilla.com"
-            current_app.config["VAPID_CLAIMS"]["aud"] = audience
-            try:
-                webpush(
-                    subscription_info=subscription,
-                    data=json.dumps(notification_data),
-                    vapid_private_key=current_app.config["VAPID_PRIVATE_KEY"],
-                    vapid_claims=current_app.config["VAPID_CLAIMS"],
-                )
-            except WebPushException as ex:
+        parsed = urlparse(subscription.endpoint)
+        audience = f"{parsed.scheme}://{parsed.netloc}"
+        try:
+            webpush(
+                subscription_info=subscription.model_dump(),
+                data=json.dumps(notification_data),
+                vapid_private_key=engine.VAPID_PRIVATE_KEY,
+                vapid_claims={"aud": audience, "sub": "mailto:energetica.game@gmail.com"},
+            )
+        except WebPushException as ex:
+            if ex.response is not None and ex.response.status_code == 410:
+                # Subscription has expired or been revoked — remove it
+                try:
+                    self.push_subscriptions.remove(subscription)
+                except ValueError:
+                    pass
+            else:
                 engine.warn(f"Failed to send notification: {repr(ex)}")
+
+    def notify(self, payload: PersistableNotificationPayload) -> None:
+        """
+        Create a notification.
+
+        This has three effects:
+        1. It creates a new notification object in the database.
+        2. It emits a socketio "invalidate" event to the player's active web clients.
+        3. It sends the notification using webpush to the player's subscribed browser(s).
+        """
+        payload_dict = payload.model_dump(exclude={"type"})
+        Notification(type=payload.type, payload=payload_dict, player=self)
+        # Real-time invalidation
+        for sid in self.socketio_clients:
+            asyncio.run_coroutine_threadsafe(
+                engine.socketio.emit("invalidate", {"queries": [["notifications"]]}, to=sid), MAIN_EVENT_LOOP
+            )
+        # Web push
+        for subscription in list(self.push_subscriptions):
+            self.notify_subscription(subscription, payload)
 
     def send_worker_info(self) -> None:
         """Send the number of available construction and lab workers to the player's clients."""
-        self.emit(
-            "worker_info",
-            {
-                "construction_workers": {
-                    "available": self.available_construction_workers(),
-                    "total": self.construction_workers,
-                },
-                "lab_workers": {
-                    "available": self.available_lab_workers(),
-                    "total": self.lab_workers,
-                },
-            },
-        )
+        from energetica.schemas.players import WorkersOut
+
+        # Use the same schema as the API endpoint to avoid duplication
+        data = WorkersOut.from_player(self).model_dump()
+        self.emit("worker_info", data)
 
     def calculate_net_emissions(self) -> float:
         """Calculate the net emissions of the player."""
-        cumulative_emissions = self.data.cumul_emissions.get_all()
-        net_emissions = 0
+        cumulative_emissions = self.cumul_emissions.get_all()
+        net_emissions: float = 0
         for value in cumulative_emissions.values():
             net_emissions += value
         return net_emissions
 
     def discovered_greenhouse_gas_effect(self) -> bool:
         """Return True if the player has discovered the greenhouse gas effect."""
-        return "Discover the Greenhouse Effect" in self.achievements
+        return bool(self.achievements["GHG_effect"])
+
+    def _notify_milestone(self, achievement_key: str, milestone: dict) -> None:
+        if achievement_key == "power_consumption":
+            payload: NotificationPayload = AchievementMilestonePowerConsumptionPayload(
+                achievement_key="power_consumption",
+                comparison_key=milestone["comparison_key"],
+                threshold=milestone["threshold"],
+                xp=milestone["xp"],
+            )
+        elif achievement_key == "energy_storage":
+            payload = AchievementMilestoneEnergyStoragePayload(
+                achievement_key="energy_storage",
+                comparison_key=milestone["comparison_key"],
+                threshold=milestone["threshold"],
+                xp=milestone["xp"],
+            )
+        else:
+            payload = AchievementMilestoneBasePayload(
+                achievement_key=achievement_key,  # type: ignore[arg-type]
+                threshold=milestone["threshold"],
+                xp=milestone["xp"],
+            )
+        self.notify(payload)
 
     def check_continuous_achievements(self) -> None:
         """Check for player achievements that are linked to values that are updated every tick."""
@@ -546,104 +507,88 @@ class Player(db.Model, UserMixin):
             "network_export",
             "network",
         ]:
-            for i, value in enumerate(achievements[achievement]["milestones"]):
-                achievement_name = achievements[achievement]["name"]
-                if f"{achievement_name} {i+1}" not in self.achievements:
-                    if getattr(self, achievements[achievement]["metric"]) >= value:
-                        self.add_to_list("achievements", f"{achievement_name} {i+1}")
-                        self.xp += achievements[achievement]["rewards"][i]
-                        message = achievements[achievement]["message"]
-                        if achievement == "network":
-                            message = message.format(reward=achievements[achievement]["rewards"][i])
-                        elif "comparisons" in achievements[achievement]:
-                            message = message.format(
-                                value=value,
-                                reward=achievements[achievement]["rewards"][i],
-                                comparison=achievements[achievement]["comparisons"][i],
-                            )
-                        else:
-                            message = message.format(value=value, reward=achievements[achievement]["rewards"][i])
-                        self.notify("Achievement", message)
-                    break
+            current_lvl = self.achievements[achievement]
+            achievement_data = achievements[achievement]
+            if current_lvl >= len(achievement_data["milestones"]):
+                continue
+            milestone = achievement_data["milestones"][current_lvl]
+            if self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]:
+                self.achievements[achievement] += 1
+                self.progression_metrics["xp"] += milestone["xp"]
+                self._notify_milestone(achievement, milestone)
+                self.invalidate_queries(["auth", "me"])
 
     def check_construction_achievements(self, construction_name: str) -> None:
         """Check for player achievements that may be unlocked by a construction."""
         for achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
-            achievement_name = achievements[achievement]["name"]
-            if (
-                achievement_name not in self.achievements
-                and construction_name in achievements[achievement]["unlocked_with"]
-            ):
-                self.add_to_list("achievements", achievement_name)
-                self.xp += achievements[achievement]["reward"]
-                message = achievements[achievement]["message"].format(reward=achievements[achievement]["reward"])
-                self.notify("Achievement", message)
+            if not self.achievements[achievement] and construction_name in achievements[achievement]["unlocked_with"]:
+                self.achievements[achievement] = 1
+                self.progression_metrics["xp"] += achievements[achievement]["xp"]
+                self.notify(
+                    AchievementUnlockPayload(
+                        achievement_key=achievement,  # type: ignore[arg-type]
+                        xp=achievements[achievement]["xp"],
+                    )
+                )
+                self.invalidate_queries(["auth", "me"])
 
     def check_technology_achievement(self) -> None:
         """Check for technology achievement."""
-        achievement_name = achievements["technology"]["name"]
-        for i, value in enumerate(achievements["technology"]["milestones"]):
-            if (
-                f"{achievement_name} {i+1}" not in self.achievements
-                and getattr(self, achievements["technology"]["metric"]) >= value
-            ):
-                self.add_to_list("achievements", f"{achievement_name} {i+1}")
-                self.xp += achievements["technology"]["rewards"][i]
-                message = achievements["technology"]["message"].format(
-                    value=value,
-                    reward=achievements["technology"]["rewards"][i],
-                )
-                self.notify("Achievement", message)
+        current_lvl = self.achievements["technology"]
+        achievement_data = achievements["technology"]
+        if current_lvl >= len(achievement_data["milestones"]):
+            return
+        milestone = achievement_data["milestones"][current_lvl]
+        if self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]:
+            self.achievements["technology"] += 1
+            self.progression_metrics["xp"] += milestone["xp"]
+            self._notify_milestone("technology", milestone)
+            self.invalidate_queries(["auth", "me"])
 
     def check_trading_achievement(self) -> None:
         """Check for trading achievement."""
-        achievement_name = achievements["trading"]["name"]
-        for i, value in enumerate(achievements["trading"]["milestones"]):
-            if f"{achievement_name} {i+1}" not in self.achievements and (
-                getattr(self, achievements["trading"]["metric"][0])
-                + getattr(self, achievements["trading"]["metric"][1])
-                >= value
-            ):
-                self.add_to_list("achievements", f"{achievement_name} {i+1}")
-                self.xp += achievements["trading"]["rewards"][i]
-                message = achievements["trading"]["message"].format(
-                    value=value,
-                    reward=achievements["trading"]["rewards"][i],
-                )
-                self.notify("Achievement", message)
+        for achievement in ["trading_export", "trading_import"]:
+            current_lvl = self.achievements[achievement]
+            achievement_data = achievements[achievement]
+            if current_lvl >= len(achievement_data["milestones"]):
+                continue
+            milestone = achievement_data["milestones"][current_lvl]
+            if self.progression_metrics[achievement_data["metric"]] >= milestone["threshold"]:
+                self.achievements[achievement] += 1
+                self.progression_metrics["xp"] += milestone["xp"]
+                self._notify_milestone(achievement, milestone)
 
-    def package_upcoming_achievements(self) -> dict:
+    def package_upcoming_achievements(self) -> list[AchievementOut]:
         """Package the progress information for the upcoming achievements."""
-        upcoming_achievements = {}
-        for achievement, achievement_data in achievements.items():
-            requirements_met = all(requirement in self.achievements for requirement in achievement_data["requirements"])
+        upcoming_achievements: list[AchievementOut] = []
+        for achievement_id, achievement_data in achievements.items():
+            requirements_met = all(self.achievements[requirement] for requirement in achievement_data["requirements"])
             if not requirements_met:
                 continue
-            if achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
-                if achievement_data["name"] not in self.achievements:
-                    upcoming_achievements[achievement] = {
-                        "name": achievement_data["name"],
-                        "reward": achievement_data["reward"],
-                        "objective": 1,
-                        "status": 0,
-                    }
+            if achievement_id in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
+                if not self.achievements[achievement_id]:
+                    achievement = AchievementUnlockOut(
+                        type="unlock",
+                        id=achievement_id,
+                        reward=achievement_data["xp"],
+                        objective=1,
+                        status=0,
+                    )
+                    upcoming_achievements.append(achievement)
             else:
-                for i, value in enumerate(achievement_data["milestones"]):
-                    if f"{achievement_data['name']} {i+1}" not in self.achievements:
-                        if achievement == "trading":
-                            status = getattr(self, achievement_data["metric"][0]) + getattr(
-                                self,
-                                achievement_data["metric"][1],
-                            )
-                        else:
-                            status = getattr(self, achievement_data["metric"])
-                        upcoming_achievements[achievement] = {
-                            "name": f"{achievement_data['name']} {i+1}",
-                            "reward": achievement_data["rewards"][i],
-                            "objective": value,
-                            "status": round(status),
-                        }
-                        break
+                current_lvl = self.achievements[achievement_id]
+                if current_lvl < len(achievement_data["milestones"]):
+                    milestone = achievement_data["milestones"][current_lvl]
+                    status = self.progression_metrics[achievement_data["metric"]]
+                    achievement = AchievementMilestoneOut(
+                        type="milestone",
+                        id=achievement_id,
+                        level=current_lvl + 1,
+                        reward=milestone["xp"],
+                        objective=milestone["threshold"],
+                        status=round(status),
+                    )
+                    upcoming_achievements.append(achievement)
         return upcoming_achievements
 
     def __repr__(self) -> str:
@@ -657,55 +602,15 @@ class Player(db.Model, UserMixin):
                 "id": self.id,
                 "username": self.username,
             }
-            | ({"network_id": self.network_id} if self.network_id is not None else {})
-            | ({"cell_id": self.tile.id} if self.tile is not None else {})
+            | ({"network_id": self.network.id} if self.network is not None else {})
+            | ({"cell_id": self.tile.id})
         )
 
+    # TODO(mglst): this method should be deprecated
     @staticmethod
     def package_all() -> dict[int, dict]:
         """Package data for all players."""
-        players: list[Player] = Player.query.all()
-        return {player.id: player.package() for player in players}
-
-    def package_scoreboard(self) -> dict[int, dict]:
-        """Package the scoreboard data for players with a tile."""
-        players = Player.query.filter(Player.tile != None)
-        include_co2_emissions = self.discovered_greenhouse_gas_effect()
-        return {
-            player.id: (
-                {
-                    "username": player.username,
-                    "network_name": player.network.name if player.network else "-",
-                    "average_hourly_revenues": player.average_revenues,
-                    "max_power_consumption": player.max_power_consumption,
-                    "total_technology_levels": player.total_technologies,
-                    "xp": player.xp,
-                }
-                | ({"co2_emissions": player.calculate_net_emissions()} if include_co2_emissions else {})
-            )
-            for player in players
-        }
-
-    def package_constructions(self) -> dict[int, dict]:
-        """Package the player's ongoing constructions."""
-        constructions: list[OngoingConstruction] = self.under_construction
-        return {
-            construction.id: {
-                k: getattr(construction, k)
-                for k in [
-                    "id",
-                    "name",
-                    "family",
-                    "end_tick_or_ticks_passed",
-                    "duration",
-                    "status",
-                ]
-            }
-            | {"display_name": current_app.config["engine"].const_config["assets"][construction.name]["name"]}
-            | ({"level": construction.cache.level} if construction.cache.level is not None else {})
-            | {"speed": construction.data.speed}
-            for construction in constructions
-        }
+        return {player.id: player.package() for player in Player.all()}
 
     def package_shipments(self) -> dict[int, dict]:
         """Package the player's ongoing shipments."""
@@ -720,15 +625,43 @@ class Player(db.Model, UserMixin):
                     "duration",
                 ]
             }
-            for shipment in self.shipments
+            for shipment in OngoingShipment.filter_by(player=self)
         }
 
     def package_construction_queue(self) -> list:
         """Package the player's construction queue (list of construction_ids)."""
-        return self.read_list("construction_priorities")
+        return self.constructions_by_priority
 
-    def package_active_facilities(self) -> dict[str, dict[int, dict[str, any]]]:
-        """Package the player's active facilities."""
+    @property
+    def power_facilities(self) -> Iterable[ActiveFacility]:
+        return ActiveFacility.filter(
+            lambda active_facility: (
+                active_facility.player == self and isinstance(active_facility.facility_type, PowerFacilityType)
+            ),
+        )
+
+    @property
+    def storage_facilities(self) -> Iterable[ActiveFacility]:
+        return ActiveFacility.filter(
+            lambda active_facility: (
+                active_facility.player == self and isinstance(active_facility.facility_type, StorageFacilityType)
+            ),
+        )
+
+    @property
+    def extraction_facilities(self) -> Iterable[ActiveFacility]:
+        return ActiveFacility.filter(
+            lambda active_facility: (
+                active_facility.player == self and isinstance(active_facility.facility_type, ExtractionFacilityType)
+            ),
+        )
+
+    def package_active_facilities(self) -> dict[str, dict[int, dict[str, Any]]]:
+        """
+        Package the player's active facilities.
+
+        This function is deprecated and superseded by PowerFacilityOut in energetica/schemas/facilities.py
+        """
         return {
             "power_facilities": self.package_active_power_facilities(),
             "storage_facilities": self.package_active_storage_facilities(),
@@ -737,40 +670,40 @@ class Player(db.Model, UserMixin):
 
     def package_active_power_facilities(self) -> dict:
         """Package the player's active power facilities."""
-        engine: GameEngine = current_app.config["engine"]
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
-        capacities = self.data.capacities
-        power_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            ActiveFacility.facility.in_(engine.power_facilities),
-        ).all()
+        active_power_facilities = [
+            active_facility
+            for active_facility in ActiveFacility.filter_by(player=self)
+            if isinstance(active_facility.facility_type, PowerFacilityType)
+        ]
         power_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
-        for power_facility in power_facilities:
-            power_facility_groups[power_facility.facility].append(power_facility)
+        for power_facility in active_power_facilities:
+            power_facility_groups[power_facility.facility_type].append(power_facility)
         return {
             "summary": {
                 group_name: {
                     "display_name": engine.const_config["assets"][group_name]["name"],
                     "count": len(group),
-                    "installed_cap": capacities[group_name]["power"],
+                    "installed_cap": self.capacities[group_name]["power"],
                     "usage": sum(f.usage * f.max_power_generation for f in group)
                     / sum(f.max_power_generation for f in group),
-                    "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
-                    "remaining_lifespan": min(f.remaining_lifespan for f in group),
-                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    "hourly_op_cost": self.capacities[group_name]["O&M_cost"] * ticks_per_hour,
+                    "remaining_lifespan": min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable and f.upgrade_cost is not None)
                     if any(f.is_upgradable for f in group)
                     else None,
                     "dismantle_cost": sum(f.dismantle_cost for f in group),
                 }
                 | (
                     {"cut_out_speed_exceeded": any(f.cut_out_speed_exceeded for f in group)}
-                    if group_name in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
+                    if isinstance(group_name, WindFacilityType)
                     else {}
                 )
                 for group_name, group in power_facility_groups.items()
             },
             "detail": {
                 power_facility.id: {
-                    "facility": power_facility.facility,
+                    "facility": power_facility.facility_type,
                     "display_name": power_facility.display_name,
                     "installed_cap": power_facility.max_power_generation,
                     "usage": power_facility.usage,
@@ -781,39 +714,39 @@ class Player(db.Model, UserMixin):
                 }
                 | (
                     {"cut_out_speed_exceeded": power_facility.cut_out_speed_exceeded}
-                    if power_facility.facility in ["windmill", "onshore_wind_turbine", "offshore_wind_turbine"]
+                    if isinstance(power_facility.facility_type, WindFacilityType)
                     else {}
                 )
-                for power_facility in power_facilities
+                for power_facility in active_power_facilities
             },
         }
 
     def package_active_storage_facilities(self) -> dict:
         """Package active storage facilities."""
-        engine: GameEngine = current_app.config["engine"]
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
-        capacities = self.data.capacities
-        storage_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            ActiveFacility.facility.in_(engine.storage_facilities),
-        ).all()
+        capacities = self.capacities
+        active_storage_facilities = [
+            active_facility
+            for active_facility in ActiveFacility.filter_by(player=self)
+            if isinstance(active_facility.facility_type, StorageFacilityType)
+        ]
         storage_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
-        for storage_facility in storage_facilities:
-            storage_facility_groups[storage_facility.facility].append(storage_facility)
+        for storage_facility in active_storage_facilities:
+            storage_facility_groups[storage_facility.facility_type].append(storage_facility)
         return {
             "summary": {
                 group_name: {
                     "display_name": engine.const_config["assets"][group_name]["name"],
                     "count": len(group),
                     "storage_capacity": sum(f.storage_capacity for f in group),
-                    "state_of_charge": sum(f.state_of_charge * f.storage_capacity for f in group)
-                    / sum(f.storage_capacity for f in group),
+                    "state_of_charge": group[0].state_of_charge,
                     "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
                     "efficiency": sum(f.efficiency * f.storage_capacity for f in group)
                     / sum(f.storage_capacity for f in group),
                     "remaining_lifespan": None
                     if all(f.decommissioning for f in group)
-                    else min(f.remaining_lifespan for f in group if not f.decommissioning),
-                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    else min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable and f.upgrade_cost is not None)
                     if any(f.is_upgradable for f in group)
                     else None,
                     "dismantle_cost": None
@@ -824,7 +757,7 @@ class Player(db.Model, UserMixin):
             },
             "detail": {
                 storage_facility.id: {
-                    "facility": storage_facility.facility,
+                    "facility": storage_facility.facility_type,
                     "display_name": storage_facility.display_name,
                     "storage_capacity": storage_facility.storage_capacity,
                     "state_of_charge": storage_facility.state_of_charge,
@@ -834,21 +767,22 @@ class Player(db.Model, UserMixin):
                     "upgrade_cost": None if storage_facility.decommissioning else storage_facility.upgrade_cost,
                     "dismantle_cost": None if storage_facility.decommissioning else storage_facility.dismantle_cost,
                 }
-                for storage_facility in storage_facilities
+                for storage_facility in active_storage_facilities
             },
         }
 
     def package_active_extraction_facilities(self) -> dict:
         """Package active extraction facilities."""
-        engine: GameEngine = current_app.config["engine"]
         ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
-        capacities = self.data.capacities
-        extraction_facilities: list[ActiveFacility] = self.active_facilities.filter(
-            ActiveFacility.facility.in_(engine.extraction_facilities),
-        ).all()
+        capacities = self.capacities
+        active_extraction_facilities: list[ActiveFacility] = [
+            active_facility
+            for active_facility in ActiveFacility.filter_by(player=self)
+            if isinstance(active_facility.facility_type, ExtractionFacilityType)
+        ]
         extraction_facility_groups: dict[str, list[ActiveFacility]] = defaultdict(list)
-        for extraction_facility in extraction_facilities:
-            extraction_facility_groups[extraction_facility.facility].append(extraction_facility)
+        for extraction_facility in active_extraction_facilities:
+            extraction_facility_groups[extraction_facility.facility_type].append(extraction_facility)
         return {
             "summary": {
                 group_name: {
@@ -858,8 +792,8 @@ class Player(db.Model, UserMixin):
                     "usage": sum(f.usage * f.extraction_rate for f in group) / sum(f.extraction_rate for f in group),
                     "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
                     "max_power_use": sum(f.max_power_use for f in group),
-                    "remaining_lifespan": min(f.remaining_lifespan for f in group),
-                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable)
+                    "remaining_lifespan": min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
+                    "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable and f.upgrade_cost is not None)
                     if any(f.is_upgradable for f in group)
                     else None,
                     "dismantle_cost": sum(f.dismantle_cost for f in group),
@@ -868,7 +802,7 @@ class Player(db.Model, UserMixin):
             },
             "detail": {
                 extraction_facility.id: {
-                    "facility": extraction_facility.facility,
+                    "facility": extraction_facility.facility_type,
                     "display_name": extraction_facility.display_name,
                     "extraction_rate": extraction_facility.extraction_rate,
                     "usage": extraction_facility.usage,
@@ -878,7 +812,7 @@ class Player(db.Model, UserMixin):
                     "upgrade_cost": extraction_facility.upgrade_cost,
                     "dismantle_cost": extraction_facility.dismantle_cost,
                 }
-                for extraction_facility in extraction_facilities
+                for extraction_facility in active_extraction_facilities
             },
         }
 
@@ -892,36 +826,26 @@ class Player(db.Model, UserMixin):
         technologies: bool = False,
     ) -> None:
         """Invalidate the facility data for the specified pages and dispatch the new data to the clients."""
-        if power_facilities and "power_facilities_data" in self.cache.__dict__:
-            del self.cache.power_facilities_data
-        if storage_facilities and "storage_facilities_data" in self.cache.__dict__:
-            del self.cache.storage_facilities_data
-        if extraction_facilities and "extraction_facilities_data" in self.cache.__dict__:
-            del self.cache.extraction_facilities_data
-        if functional_facilities and "functional_facilities_data" in self.cache.__dict__:
-            del self.cache.functional_facilities_data
-        if technologies and "technologies_data" in self.cache.__dict__:
-            del self.cache.technologies_data
+        if power_facilities and "power_facilities_data" in self.__dict__:
+            del self.power_facilities_data
+        if storage_facilities and "storage_facilities_data" in self.__dict__:
+            del self.storage_facilities_data
+        if extraction_facilities and "extraction_facilities_data" in self.__dict__:
+            del self.extraction_facilities_data
+        if functional_facilities and "functional_facilities_data" in self.__dict__:
+            del self.functional_facilities_data
+        if technologies and "technologies_data" in self.__dict__:
+            del self.technologies_data
         if self.socketio_clients:
-            # TODO(mglst): update clients over websocket
-            pages_data = {}
+            pages_data: dict = {}
             if power_facilities:
-                pages_data |= {"power_facilities": self.cache.power_facilities_data}
+                pages_data |= {"power_facilities": self.power_facilities_data}
             if storage_facilities:
-                pages_data |= {"storage_facilities": self.cache.storage_facilities_data}
+                pages_data |= {"storage_facilities": self.storage_facilities_data}
             if extraction_facilities:
-                pages_data |= {"extraction_facilities": self.cache.extraction_facilities_data}
+                pages_data |= {"extraction_facilities": self.extraction_facilities_data}
             if functional_facilities:
-                pages_data |= {"functional_facilities": self.cache.functional_facilities_data}
+                pages_data |= {"functional_facilities": self.functional_facilities_data}
             if technologies:
-                pages_data |= {"technologies": self.cache.technologies_data}
+                pages_data |= {"technologies": self.technologies_data}
             self.emit("update_page_data", pages_data)
-
-
-class PlayerUnreadMessages(db.Model):
-    """Association table to store player's last activity in each chat."""
-
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), primary_key=True)
-    message_id = db.Column(db.Integer, db.ForeignKey("message.id"), primary_key=True)
-    player = db.relationship("Player", backref="read_messages")
-    message = db.relationship("Message", backref="read_by_players")

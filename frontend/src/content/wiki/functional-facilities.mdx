@@ -1,0 +1,74 @@
+import { PropertiesTable } from "@/components/wiki/properties-table";
+
+# Wiki - Functional Facilities
+
+Functional Facilities in Energetica are distinct from power, storage, and extraction facilities as they operate on a level-based system. Each upgrade to a higher level incurs increasing costs in terms of construction price, time, and energy.
+
+For more information about building functional facilities, see [Starting a Project](./projects.mdx#starting-a-project).
+
+There are four unique functional facilities:
+
+## The Industry
+
+The Industry serves as a central element in the game, initially starting at level 1. It generates revenue by consuming electricity. With each level upgrade, revenue increase by 33% and electricity demand increases by 40%. It is worth noting that because of these rates, the industries economic efficiency (in ¤/MWh) is decreasing with higher levels of industry. Revenues and power demand gradually increase during the upgrade duration.
+
+The electricity demand of the industry fluctuates daily and yearly (in-game time), following specific cycles represented in the following graphs. Energy demand is calculated based on these factors as follows:
+
+$$
+D = D_{base} \times dv(t) \times sv(t)
+$$
+
+with $D_{base}$ the base demand as indicated on the page [Functional facilities](/app/facilities/functional), $dv()$ the daily variations shown in the following graph, $sv()$ the seasonal variations shown in the following graph and $t$ the in-game date and time ([1 in-game year = 72 real-time days](./time-and-weather.mdx#game-time)).
+
+<div className="flex flex-row flex-wrap justify-center gap-4 py-8">
+    <img
+        className="h-75"
+        src="/static/images/wiki/daily_variation_industry.jpg"
+        alt="Daily variation of the industry demand"
+    />
+    <img
+        className="h-75"
+        src="/static/images/wiki/seasonal_variation_industry.jpg"
+        alt="Seasonal variation of the industry demand"
+    />
+</div>
+
+If the industry's demand isn't met, revenues are proportional to the satisfaction level.
+
+## The Laboratory
+
+The laboratory is needed for researching [technologies](./technologies.mdx). Different technology levels require corresponding laboratory levels. It also enhances research speed by 10% and for every 3rd upgrade, a new lab worker is unlocked.
+
+## The Warehouse
+
+The warehouse is essential for storing natural resources. Each level increment increases the maximum storage capacity by 50% for all resources. The following table defines the initial storage capacities at level 1.
+
+<PropertiesTable
+    headers={{ label: "Resource", value: "Initial capacity" }}
+    properties={[
+        { label: "Coal", value: "3,000 tons" },
+        { label: "Gas", value: "1,000 tons" },
+        { label: "Uranium", value: "5 tons" },
+    ]}
+/>
+
+## Carbon Capture
+
+The carbon capture facility consumes electricity to extract CO<sub>2</sub> from the atmosphere and store it underground. With each level upgrade, CO<sub>2</sub> absorption increase by 55% and power consumption increases by 50%. Contrary to the industry, CO<sub>2</sub> absorption is more efficient with higher carbon capture levels. The absorption rate of CO<sub>2</sub> is proportional to the amount of CO<sub>2</sub> in the atmosphere which makes it harder to absorb CO<sub>2</sub> when its concentration is low. The CO<sub>2</sub> absorption rate and power consumption with carbon capture levels higher than 0 is calculated as follows:
+
+$$
+ar_{CO_2} = ar_{base} \times q_{CO_2,atm} \times 1.55^{CC}
+$$
+
+$$
+P_{CC} = P_{base} \times 1.5^{CC}
+$$
+
+with:
+
+- $ar_{CO_2}$ : CO<sub>2</sub> absorption rate in kg/h
+- $ar_{base}$ : base value for fraction of CO<sub>2</sub> that can be absorbed from the atmosphere : 0.000005/h
+- $q_{CO_2,atm}$ : amount of CO<sub>2</sub> in the atmosphere in kg
+- $CC$ : level of [Carbon Capture](/app/facilities/functional#carbon-capture)
+- $P_{CC}$ : power consumed by carbon capture
+- $P_{base}$ : base power consumption of carbon capture : 10 MW

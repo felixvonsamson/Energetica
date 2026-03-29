@@ -2,11 +2,26 @@ name: Energetica CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, release/*]
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, release/*]
 
 jobs:
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install
+        working-directory: frontend
+      - name: Typecheck
+        run: bun run typecheck
+        working-directory: frontend
+      - name: Lint
+        run: bun run lint
+        working-directory: frontend
+
   unit-tests:
     runs-on: ubuntu-latest
     steps:
@@ -22,4 +37,9 @@ jobs:
           pip install -r requirements.txt
       - name: Run tests
         run: |
-          pytest
+          # Skip slow external link tests on regular branches, include on releases
+          if [[ "${{ github.ref }}" == refs/heads/release/* ]]; then
+            pytest
+          else
+            pytest -m "not external_links"
+          fi

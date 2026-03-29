@@ -1,143 +1,103 @@
 """Initializes the app and the game engine."""
 
-# pylint: disable=wrong-import-order,wrong-import-position
-# ruff: noqa: E402
+__version__ = "0.11.2-rc1"
+__release_date__ = "06/09/2025"
 
-import atexit
-import base64
-import csv
+import asyncio
 import glob
-import json
+import logging
 import os
-import pickle
 import platform
 import secrets
 import shutil
 import socket
 import tarfile
+import uuid
+from contextlib import asynccontextmanager
 from datetime import datetime
+from functools import partial
 from pathlib import Path
+from typing import AsyncGenerator, Literal, cast
 
-from gevent import monkey
+from apscheduler.events import EVENT_JOB_EXECUTED, JobExecutionEvent
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from fastapi import FastAPI
+from pydantic import TypeAdapter
 
-monkey.patch_all(thread=True, time=True)
-
-from ecdsa import NIST256p, SigningKey
-from flask import Flask, jsonify, request, send_file
-from flask_apscheduler import APScheduler
-from flask_login import LoginManager, current_user
-from flask_sock import Sock
-from flask_socketio import SocketIO
-
-from energetica.api.http import http
-from energetica.api.socketio_handlers import add_handlers
-from energetica.api.websocket import add_sock_handlers, websocket_blueprint
-from energetica.auth import auth
-from energetica.database import db
-from energetica.database.map import Hex
-from energetica.database.messages import Chat
-from energetica.database.player import Player
+from energetica import globals
 from energetica.game_engine import GameEngine
+from energetica.schemas.simulate import Action
+from energetica.utils.browser_notifications import load_or_create_vapid_keys
+
+engine = GameEngine()
+
+globals.MAIN_EVENT_LOOP = asyncio.get_event_loop()
+globals.engine = engine
+
+from energetica.api.app_services import register_app_services
 from energetica.init_test_players import init_test_players
+from energetica.routers import setup_routes
 from energetica.simulate import simulate
-from energetica.utils.climate_helpers import data_init_climate
+from energetica.socketio import setup_socketio
 from energetica.utils.tick_execution import state_update
-from energetica.views import changelog, landing, location_choice_views, overviews, views, wiki
-
-
-def get_or_create_flask_secret_key() -> str:
-    """Load or create SECRET_KEY for Flask."""
-    filepath = "instance/flask_secret_key.txt"
-    if os.path.exists(filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    else:
-        secret_key = secrets.token_hex()
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(secret_key)
-        return secret_key
-
-
-def get_or_create_vapid_keys() -> tuple[str, str]:
-    """Load or create VAPID key pair for push notifications."""
-    public_key_filepath = "instance/vapid_public_key.txt"
-    private_key_filepath = "instance/vapid_private_key.txt"
-    if Path(public_key_filepath).exists() and Path(private_key_filepath).exists():
-        public_key = Path(public_key_filepath).read_text(encoding="utf-8").strip()
-        private_key = Path(private_key_filepath).read_text(encoding="utf-8").strip()
-        return public_key, private_key
-    # Generate a new ECDSA key pair
-    private_key_obj = SigningKey.generate(curve=NIST256p)
-    public_key_obj = private_key_obj.get_verifying_key()
-
-    # Encode the keys using URL- and filename-safe base64 without padding
-    private_key = base64.urlsafe_b64encode(private_key_obj.to_string()).rstrip(b"=").decode("utf-8")
-    public_key = base64.urlsafe_b64encode(b"\x04" + public_key_obj.to_string()).rstrip(b"=").decode("utf-8")
-
-    # Write the keys to their respective files
-    Path(public_key_filepath).write_text(public_key, encoding="utf-8")
-    Path(private_key_filepath).write_text(private_key, encoding="utf-8")
-
-    return public_key, private_key
 
 
 def create_app(
-    clock_time=30,
-    in_game_seconds_per_tick=240,
-    run_init_test_players=False,
-    rm_instance=False,
-    random_seed=42,
-    simulate_file=None,
-    simulate_stop_on_mismatch=False,
-    simulate_stop_on_server_error=False,
-    simulate_stop_on_assertion_error=False,
-    simulate_checkpoint_every_k_ticks=10000,
-    simulate_checkpoint_ticks=[],
-    simulate_till=None,
-    simulate_profiling=False,
-    skip_adding_handlers=False,
-    **kwargs,
-):
+    *,
+    port: int = 8000,
+    clock_time: int = 30,
+    in_game_seconds_per_tick: int = 240,
+    run_init_test_players: bool = False,
+    rm_instance: bool = False,
+    load_checkpoint: bool = False,
+    random_seed: int = 42,
+    simulate_file: str | None = None,
+    simulate_stop_on_mismatch: bool = False,
+    simulate_stop_on_server_error: bool = False,
+    simulate_stop_on_assertion_error: bool = False,
+    simulate_checkpoint_every_k_ticks: int = 10000,
+    simulate_checkpoint_ticks: list[int] | None = None,
+    simulate_till: int | None = None,
+    simulate_profiling: bool = False,
+    skip_adding_handlers: bool = False,  # TODO(mglst): revisit if this is still needed, currently unused
+    env: Literal["dev"] | Literal["prod"],
+    disable_signups: bool = False,
+    schema_only: bool = False,
+) -> FastAPI:
     """Set up the app and the game engine."""
+    if schema_only:
+        # Minimal FastAPI app for OpenAPI schema generation only
+        app = FastAPI()
+        setup_routes(app)
+        return app
+
+    print(f"Server is running in {env} mode")
+    if simulate_checkpoint_ticks is None:
+        simulate_checkpoint_ticks = []
     # gets lock to avoid multiple instances
     if platform.system() == "Linux":
         lock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         lock.bind("\0energetica")
 
     # Delete last checkpoint
-    if rm_instance:
-        if not simulate_file:
-            if os.path.exists("checkpoints/last_checkpoint.tar.gz"):
-                os.remove("checkpoints/last_checkpoint.tar.gz")
-                print("checkpoints/last_checkpoint.tar.gz deleted.")
-        else:
-            print("--rm_instance ignored.")
+    if rm_instance or simulate_file:
+        if os.path.exists("instance/"):
+            shutil.rmtree("instance")
+            print("instance folder deleted.")
 
-    # Delete instance folder
-    if os.path.exists("instance"):
-        shutil.rmtree("instance")
-        print("instance folder deleted.")
-
-    # creates the app :
-    app = Flask(__name__)
+    # Create instance and checkpoints folder if they don't exist
     Path("checkpoints").mkdir(exist_ok=True)
     Path("instance").mkdir(exist_ok=True)
-    app.config["SECRET_KEY"] = get_or_create_flask_secret_key()
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
-    app.config["VAPID_PUBLIC_KEY"], app.config["VAPID_PRIVATE_KEY"] = get_or_create_vapid_keys()
-    app.config["VAPID_CLAIMS"] = {"sub": "mailto:dgaf@gmail.com"}
-    db.init_app(app)
+    engine.init_loggers()
 
-    start_date = None
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" and simulate_file:
+    actions = []
+    if simulate_file:
+        # Simulate the game run from a file.
         Path("checkpoints/simulation").mkdir(exist_ok=True)
-        with simulate_file as file:
-            actions = [json.loads(line) for line in file]
-        assert actions[0]["action_type"] == "init_engine"
-        clock_time = actions[0]["clock_time"]
-        in_game_seconds_per_tick = actions[0]["in_game_seconds_per_tick"]
-        random_seed = actions[0]["random_seed"]
-        start_date = datetime.fromisoformat(actions[0]["start_date"])
+        TypeAdapterAction = TypeAdapter(Action)
+        with open(simulate_file, "r", encoding="utf-8") as file:
+            actions = cast(list[Action], [TypeAdapterAction.validate_json(line) for line in file])
+        assert actions[0].action_type == "init_engine"
 
         checkpoints = {
             int(save.split("checkpoint_")[1].rstrip(".tar.gz")): save
@@ -146,179 +106,180 @@ def create_app(
         checkpoints_ids = [
             save_id for save_id in checkpoints.keys() if simulate_till is None or save_id <= simulate_till
         ]
-        loaded_tick = None
         if checkpoints_ids:
+            # Load the last checkpoint.
             loaded_tick = max(checkpoints_ids)
-        action_id_by_tick = {
-            action["total_t"]: action_id for action_id, action in enumerate(actions) if action["action_type"] == "tick"
-        }
-        start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 1
-        last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
-
-    # creates the engine (and loading the save if it exists)
-    engine = GameEngine(clock_time, in_game_seconds_per_tick, random_seed, start_date)
-
-    Path("instance/player_data").mkdir(parents=True, exist_ok=True)
-    if not os.path.isfile("instance/server_data/climate_data.pck"):
-        Path("instance/server_data").mkdir(parents=True, exist_ok=True)
-        with open("instance/server_data/climate_data.pck", "wb") as file:
-            climate_data = data_init_climate(
-                in_game_seconds_per_tick, engine.data["random_seed"], engine.data["delta_t"]
+            with tarfile.open(checkpoints[loaded_tick], "r:gz") as tar:
+                tar.extractall("./")
+            engine.log(f"Loaded checkpoint {loaded_tick}")
+    else:
+        # Normal game run.
+        assert simulate_till is None
+        if load_checkpoint:
+            assert os.path.isfile("last_checkpoint.tar.gz"), "No checkpoint found."
+            saved_history = False
+            if os.path.exists("instance/"):
+                if os.path.isfile("instance/actions_history.log"):
+                    os.rename("instance/actions_history.log", "actions_history.log.bak")
+                    saved_history = True
+                shutil.rmtree("instance")
+            with tarfile.open("last_checkpoint.tar.gz", "r:gz") as tar:
+                tar.extractall("./")
+            if saved_history:
+                os.rename("actions_history.log.bak", "instance/actions_history.log")
+            engine.log("Loaded last checkpoint")
+        if os.path.isfile("instance/actions_history.log"):
+            with open("instance/actions_history.log", "r") as file:
+                actions = cast(list[Action], [TypeAdapter(Action).validate_json(line) for line in file])
+            if actions:
+                assert actions[0].action_type == "init_engine"
+    if os.path.isfile("instance/engine_data.pck"):
+        engine.load()
+        if actions:
+            assert actions[0].action_type == "init_engine"
+            assert uuid.UUID(actions[0].instance_uuid) == engine.uuid
+    else:
+        if actions:
+            assert actions[0].action_type == "init_engine"
+            assert actions[0].game_version == __version__, (
+                "Game version mismatch. This actions history is not compatible with this version of the game."
             )
-            pickle.dump(climate_data, file)
-
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        if not simulate_file:
-            if os.path.isfile("checkpoints/last_checkpoint.tar.gz"):
-                with tarfile.open("checkpoints/last_checkpoint.tar.gz") as file:
-                    file.extractall("./")
-                engine.log("Loaded last checkpoint from disk.")
+            kwargs: dict = actions[0].model_dump()
+            kwargs.pop("action_type")
+            engine.init_instance(**kwargs)
         else:
-            if loaded_tick:
-                with tarfile.open(f"checkpoints/simulation/checkpoint_{loaded_tick}.tar.gz") as file:
-                    file.extractall("./")
-                engine.log(f"Loaded checkpoints/simulation/checkpoint_{loaded_tick}.tar.gz from disk.")
+            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, __version__, disable_signups)
 
-        if os.path.isfile("instance/engine_data.pck"):
-            with open("instance/engine_data.pck", "rb") as file:
-                engine.data = pickle.load(file)
-            engine.log("Loaded engine data from disk.")
+    action_id_by_tick = {
+        action.total_t: action_id for action_id, action in enumerate(actions) if action.action_type == "tick"
+    }
+    loaded_tick = engine.total_t
+    start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 1
+    last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
+    actions_to_simulate = actions[start_action_id : last_action_id + 1]
 
-    app.config["engine"] = engine
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+        # initialize the schedulers and add the recurrent functions :
+        scheduler = AsyncIOScheduler()
 
-    # initialize socketio :
-    socketio = SocketIO(app, cors_allowed_origins="*")  # engineio_logger=True
-    engine.socketio = socketio
-
-    if not skip_adding_handlers:
-        add_handlers(socketio=socketio, engine=engine)
-
-    # initialize sock for WebSockets:
-    sock = Sock(app)
-    engine.sock = sock
-
-    if not skip_adding_handlers:
-        add_sock_handlers(sock=sock, engine=engine)
-
-    # add blueprints (website repositories) :
-    app.register_blueprint(location_choice_views, url_prefix="/")
-    app.register_blueprint(landing, url_prefix="/")
-    app.register_blueprint(views, url_prefix="/")
-    app.register_blueprint(overviews, url_prefix="/production_overview")
-    app.register_blueprint(wiki, url_prefix="/wiki")
-    app.register_blueprint(changelog, url_prefix="/")
-    app.register_blueprint(auth, url_prefix="/")
-    app.register_blueprint(http, url_prefix="/api/")
-    app.register_blueprint(websocket_blueprint, url_prefix="/api/")
-
-    @app.route("/subscribe", methods=["GET", "POST"])
-    def subscribe():
-        """POST: Create a new subscription. GET: Return VAPID public key."""
-        if request.method == "GET":
-            return jsonify({"public_key": app.config["VAPID_PUBLIC_KEY"]})
-        subscription = request.json
-        if "endpoint" not in subscription:
-            return jsonify({"response": "Invalid subscription"})
-        engine.data["notification_subscriptions"][current_user.id].append(subscription)
-        return jsonify({"response": "Subscription successful"})
-
-    @app.route("/unsubscribe", methods=["POST"])
-    def unsubscribe():
-        """POST: remove a subscription."""
-        subscription = request.json
-        if subscription in engine.data["notification_subscriptions"][current_user.id]:
-            engine.data["notification_subscriptions"][current_user.id].remove(subscription)
-        return jsonify({"response": "Unsubscription successful"})
-
-    @app.route("/apple-app-site-association")
-    def apple_app_site_association():
-        """Return the apple-app-site-association JSON data.
-
-        Needed for supporting associated domains needed for shared webcredentials
-        """
-        return send_file("static/apple-app-site-association", as_attachment=True)
-
-    # initialize database :
-    with app.app_context():
-        db.create_all()
-        # if map data not already stored in database, read map.csv and store it in database
-        if Hex.query.count() == 0:
-            with open("energetica/static/data/map.csv", "r") as file:
-                csv_reader = csv.DictReader(file)
-                for row in csv_reader:
-                    hex = Hex(
-                        q=row["q"],
-                        r=row["r"],
-                        solar=float(row["solar"]),
-                        wind=float(row["wind"]),
-                        hydro=float(row["hydro"]),
-                        coal=float(row["coal"]),
-                        gas=float(row["gas"]),
-                        uranium=float(row["uranium"]),
-                        climate_risk=float(row["climate_risk"]),
-                    )
-                    db.session.add(hex)
-
-        # creating general chat
-        if Chat.query.count() == 0:
-            new_chat = Chat(
-                name="General Chat",
-                participants=[],
-            )
-            db.session.add(new_chat)
-
-        db.session.commit()
-
-    # initialize login manager
-    login_manager = LoginManager()
-    login_manager.login_view = "auth.login"
-    login_manager.init_app(app)
-
-    @login_manager.user_loader
-    def load_user(id) -> Player:
-        return db.session.get(Player, int(id))
-
-    # initialize the schedulers and add the recurrent functions :
-    # This function is to run the following only once, TO REMOVE IF DEBUG MODE IS SET TO FALSE
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        scheduler = APScheduler()
-        scheduler.init_app(app)
-
-        if not simulate_file:
-            scheduler.add_job(
-                func=state_update,
-                args=(engine, app),
-                id="state_update",
-                trigger="cron",
-                second=f"*/{clock_time}" if clock_time != 60 else "0",
-                misfire_grace_time=10,
-            )
-        else:
+        add_ticks_clock = partial(
+            scheduler.add_job,
+            func=state_update,
+            id="state_update",
+            trigger="cron",
+            second=f"*/{clock_time}" if clock_time != 60 else "0",
+            misfire_grace_time=10,
+        )
+        if actions_to_simulate:
+            if simulate_file:
+                kwargs = {
+                    "simulating": True,
+                    "profiling": simulate_profiling,
+                    "stop_on_mismatch": simulate_stop_on_mismatch,
+                    "stop_on_server_error": simulate_stop_on_server_error,
+                    "stop_on_assertion_error": simulate_stop_on_assertion_error,
+                    "checkpoint_every_k_ticks": simulate_checkpoint_every_k_ticks,
+                    "checkpoint_ticks": simulate_checkpoint_ticks,
+                }
+            else:
+                engine.action_logger.setLevel(logging.CRITICAL)
+                kwargs = {
+                    "simulating": False,
+                    "profiling": False,
+                    "stop_on_mismatch": simulate_stop_on_mismatch,
+                    "stop_on_server_error": True,
+                    "stop_on_assertion_error": True,
+                    "checkpoint_every_k_ticks": None,
+                    "checkpoint_ticks": None,
+                }
             scheduler.add_job(
                 func=simulate,
                 args=(
-                    app,
-                    kwargs["port"],
-                    actions[start_action_id : last_action_id + 1],
-                    simulate_stop_on_mismatch,
-                    simulate_stop_on_server_error,
-                    simulate_stop_on_assertion_error,
-                    simulate_checkpoint_every_k_ticks,
-                    simulate_checkpoint_ticks,
+                    port,
+                    actions_to_simulate,
                 ),
-                kwargs={"profiling": simulate_profiling},
-                id="simulate",
+                kwargs=kwargs,
+                id="replay",
                 trigger="date",
                 run_date=datetime.now(),
             )
+            if not simulate_file:
+
+                def job_listener(event: JobExecutionEvent) -> None:
+                    """This function allows to restart normal server behavior after re-simulation has finished successfully."""
+                    if event.job_id != "replay" or not event.retval:
+                        # The simulation was not successful, stop here.
+                        return
+                    add_ticks_clock()
+                    engine.serve_local = False
+                    engine.action_logger.setLevel(logging.INFO)
+                    scheduler.remove_listener(job_listener)
+
+                scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED)
+        elif not simulate_file:
+            add_ticks_clock()
+            engine.serve_local = False
 
         scheduler.start()
-        atexit.register(lambda: scheduler.shutdown())
+
+        from energetica.database.user import User
+        from energetica.utils.auth import generate_password_hash
+
+        # Creating the root admin account if it does not exist.
+        if not list(User.filter_by(role="admin")):
+            admin_password = secrets.token_hex(4)
+            hashed_password = generate_password_hash(admin_password)
+            new_admin = User(username="admin", pwhash=hashed_password, role="admin")
+            engine.log(f"Admin account created with username '{new_admin.username}'")
+            # TODO(mglst): I think it would make more sense to move this under the instance/ folder
+            with open("admin_accounts.txt", "w", encoding="utf-8") as file:
+                file.write(f"{new_admin.username},{admin_password}\n")
+
+        if disable_signups:
+            # if sign-ups are disabled, accounts have to be created from a file.
+            with open("players.txt", "r", encoding="utf-8") as file:
+                lines = file.readlines()
+
+            with open("players.txt", "w", encoding="utf-8") as file:
+                for line in lines:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    parts = line.split(",")
+                    if len(parts) > 2:
+                        raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
+                    username = parts[0].strip()
+                    password = parts[1].strip() if len(parts) > 1 else None
+                    existing_player = next(User.filter_by(username=username), None)
+                    if existing_player:
+                        engine.log(f"players.txt: Did not create new player {username}; username already exists.")
+                        continue
+                    if password is None:
+                        password = secrets.token_hex(4)
+                    hashed_password = generate_password_hash(password)
+                    User(username=username, pwhash=hashed_password, role="player")
+                    file.write(f"{username},{password}\n")
+                    engine.log(f"players.txt: Created player {username} with password {password}")
 
         if run_init_test_players:
             engine.log("running init_test_players")
-            with app.app_context():
-                # Temporary automated player creation for testing
-                init_test_players(engine)
+            init_test_players()
 
-    return socketio, app
+        yield
+        scheduler.shutdown()
+        # mglst: See discussion for #302
+        # https://github.com/felixvonsamson/Energetica/issues/302
+        # engine.save()
+
+    app = FastAPI(lifespan=lifespan)
+
+    setup_socketio(app)
+    setup_routes(app)
+    load_or_create_vapid_keys(engine)
+    register_app_services(app)
+
+    ssl_args = {"keyfile": None, "certfile": None}
+    ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
+
+    return app

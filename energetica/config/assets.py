@@ -1,16 +1,19 @@
-"""This file contains all the data needed for the game"""
+"""Contains all the data needed for the game."""
 
 # TODO: it would be better to store the relevant data in a non-code file. Maybe a JSON
 
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+from energetica.enums import Fuel, FunctionalFacilityType, TechnologyType, WorkerType
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
 
-const_config = {
+
+const_config: dict = {
     "assets": {
         "steam_engine": {
             "name": "Steam Engine",
@@ -27,7 +30,6 @@ const_config = {
             "lifespan": timedelta(days=70).total_seconds(),  # [in-game seconds]
             "wikipedia_link": "https://en.wikipedia.org/wiki/Steam_engine",
             "description": "The O&M costs of the steam engine are composed of 20% fixed costs and 80% variable costs.",
-            "danger_description": "Risk of steam explosion",
             "requirements": {},
         },
         "windmill": {
@@ -47,7 +49,6 @@ const_config = {
             "the wind at the facilities location. The capacity factor will decrease with each "
             "additional windmill. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Windmill",
-            "danger_description": "Risk of structural failure in high winds",
             "requirements": {},
         },
         "watermill": {
@@ -67,7 +68,6 @@ const_config = {
             "discharge rate. Each new watermill will have higher building and operational costs. "
             "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Watermill",
-            "danger_description": "Risk of structural failure due to floods",
             "requirements": {},
         },
         "coal_burner": {
@@ -102,16 +102,15 @@ const_config = {
             "lifespan": timedelta(days=140).total_seconds(),
             "description": "The O&M costs of the gas burner are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Gas-fired_power_facility",
-            "danger_description": "Risk of gas leaks",
             "requirements": {"mechanical_engineering": 1, "thermodynamics": 1, "warehouse": 1},
         },
         "small_water_dam": {
             "name": "Small Water Dam",
             "type": "Renewable",
-            "base_price": 45_000,
-            "base_power_generation": 27_500_000,
+            "base_price": 65_000,
+            "base_power_generation": 14_000_000,
             "base_construction_time": timedelta(days=12, hours=12).total_seconds(),
-            "construction_power_factor": 0.3,
+            "construction_power_factor": 0.37,
             "base_construction_pollution": 876_000,
             "O&M_factor_per_day": 0.032,
             "consumed_resource": {"hydropower": 0},
@@ -122,7 +121,6 @@ const_config = {
             "discharge rate. Each new small water dam will have higher building and operational costs. "
             "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
-            "danger_description": "Risk of structural failure due to floods",
             "requirements": {"civil_engineering": 1},
         },
         "onshore_wind_turbine": {
@@ -142,7 +140,6 @@ const_config = {
             "the wind at the facilities location. The capacity factor will decrease with each "
             "additional onshore wind turbine. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
-            "danger_description": "Risk of structural failure in high winds",
             "requirements": {"aerodynamics": 1, "materials": 2, "mechanical_engineering": 3},
         },
         "combined_cycle": {
@@ -160,7 +157,6 @@ const_config = {
             "lifespan": timedelta(days=245).total_seconds(),
             "description": "The O&M costs of the combined cycle are composed of 20% fixed costs and 80% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Combined_cycle_power_facility",
-            "danger_description": "Risk of gas leaks",
             "requirements": {"thermodynamics": 3, "mechanical_engineering": 3, "warehouse": 2},
         },
         "nuclear_reactor": {
@@ -168,26 +164,25 @@ const_config = {
             "type": "Controllable",
             "base_price": 840_000,
             "base_power_generation": 167_000_000,
-            "base_construction_time": timedelta(days=25).total_seconds(),
+            "base_construction_time": timedelta(days=31).total_seconds(),
             "construction_power_factor": 0.08,
             "base_construction_pollution": 6_800_000,
-            "O&M_factor_per_day": 0.144,
+            "O&M_factor_per_day": 0.288,
             "consumed_resource": {"uranium": 0.044},
             "base_pollution": 2,
             "ramping_time": timedelta(hours=13).total_seconds(),
             "lifespan": timedelta(days=350).total_seconds(),
             "description": "The O&M costs of the nuclear reactor are composed of 50% fixed costs and 50% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Nuclear_power_facility",
-            "danger_description": "Risk of reactor meltdown",
             "requirements": {"chemistry": 3, "nuclear_engineering": 1, "warehouse": 3},
         },
         "large_water_dam": {
             "name": "Large Water Dam",
             "type": "Renewable",
-            "base_price": 320_000,
-            "base_power_generation": 410_000_000,
+            "base_price": 520_000,
+            "base_power_generation": 210_000_000,
             "base_construction_time": timedelta(days=17, hours=12).total_seconds(),
-            "construction_power_factor": 0.15,
+            "construction_power_factor": 0.21,
             "base_construction_pollution": 8_760_000,
             "O&M_factor_per_day": 0.024,
             "consumed_resource": {"hydropower": 0},
@@ -198,7 +193,6 @@ const_config = {
             "discharge rate. Each new large water dam will have higher building and operational costs. "
             "(<a href='/wiki/power_facilities#Hydro_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydroelectricity",
-            "danger_description": "Risk of structural failure due to floods",
             "requirements": {"civil_engineering": 4},
         },
         "CSP_solar": {
@@ -222,11 +216,11 @@ const_config = {
         "PV_solar": {
             "name": "Photovoltaics",
             "type": "Renewable",
-            "base_price": 700_000,
+            "base_price": 900_000,
             "base_power_generation": 59_000_000,
             "base_construction_time": timedelta(days=1, hours=21).total_seconds(),
-            "construction_power_factor": 5,
-            "base_construction_pollution": 24_000_000,
+            "construction_power_factor": 3,
+            "base_construction_pollution": 12_000_000,
             "O&M_factor_per_day": 0.028,
             "consumed_resource": {"irradiance": 0},
             "base_pollution": 0,
@@ -254,7 +248,6 @@ const_config = {
             "the wind at the facilities location. The capacity factor will decrease with each "
             "additional offshore wind turbine. (<a href='/wiki/power_facilities#Wind_Power_Generation'>See wiki</a>)",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Wind_turbine",
-            "danger_description": "Risk of structural failure due to storms",
             "requirements": {"aerodynamics": 3, "materials": 4, "mechanical_engineering": 6},
         },
         "nuclear_reactor_gen4": {
@@ -262,34 +255,32 @@ const_config = {
             "type": "Controllable",
             "base_price": 1_800_000,
             "base_power_generation": 335_000_000,
-            "base_construction_time": timedelta(days=30).total_seconds(),
+            "base_construction_time": timedelta(days=37).total_seconds(),
             "construction_power_factor": 0.06,
             "base_construction_pollution": 12_000_000,
-            "O&M_factor_per_day": 0.12,
+            "O&M_factor_per_day": 0.24,
             "consumed_resource": {"uranium": 0.000_57},
             "base_pollution": 3,
             "ramping_time": timedelta(hours=8, minutes=20).total_seconds(),
             "lifespan": timedelta(days=490).total_seconds(),
             "description": "The O&M costs of the 4th generation nuclear reactor are composed of 50% fixed costs and 50% variable costs.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Generation_IV_reactor",
-            "danger_description": "Risk of reactor meltdown",
             "requirements": {"chemistry": 5, "nuclear_engineering": 5, "warehouse": 3},
         },
         "small_pumped_hydro": {
             "name": "Small Pumped Hydro",
             "type": "Storage",
-            "base_price": 19_500,  # [¤]
-            "base_storage_capacity": 260_000_000,  # [Wh]
+            "base_price": 26_500,  # [¤]
+            "base_storage_capacity": 520_000_000,  # [Wh]
             "base_power_generation": 2_600_000,  # [W]
             "base_efficiency": 0.75,
             "base_construction_time": timedelta(days=1, hours=2).total_seconds(),  # [in-game seconds]
             "construction_power_factor": 0.005,  # fraction of capacity demanded during construction
             "base_construction_pollution": 80_000,  # [kg]
-            "O&M_factor_per_day": 0.088,  # [fraction of price per in-game day]
+            "O&M_factor_per_day": 0.068,  # [fraction of price per in-game day]
             "ramping_time": timedelta(minutes=9).total_seconds(),  # [in-game seconds]
             "lifespan": timedelta(days=525).total_seconds(),  # [in-game seconds]
             "image_extension": "png",
-            "initial_efficiency": 0.75,
             "description": "The small pumped hydro storage pumps water to a higher reservoir to store energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
             "requirements": {},
@@ -308,7 +299,6 @@ const_config = {
             "ramping_time": timedelta(hours=1).total_seconds(),
             "lifespan": timedelta(days=105).total_seconds(),
             "image_extension": "jpg",
-            "initial_efficiency": 0.63,
             "description": "The molten salt storage stores energy in the form of high temperature molten salt.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Thermal_energy_storage",
             "requirements": {"mechanical_engineering": 2, "thermodynamics": 3},
@@ -316,18 +306,17 @@ const_config = {
         "large_pumped_hydro": {
             "name": "Large Pumped Hydro",
             "type": "Storage",
-            "base_price": 166_000,
-            "base_storage_capacity": 4_200_000_000,
+            "base_price": 266_000,
+            "base_storage_capacity": 12_600_000_000,
             "base_power_generation": 249_000_000,
             "base_efficiency": 0.8,
             "base_construction_time": timedelta(days=19, hours=9).total_seconds(),
             "construction_power_factor": 0.003,
             "base_construction_pollution": 3_000_000,
-            "O&M_factor_per_day": 0.11,
+            "O&M_factor_per_day": 0.07,
             "ramping_time": timedelta(minutes=16).total_seconds(),
             "lifespan": timedelta(days=630).total_seconds(),
             "image_extension": "jpg",
-            "initial_efficiency": 0.8,
             "description": "The large pumped hydro storage pumps water to a higher reservoir to store large amounts of energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
             "requirements": {"civil_engineering": 3},
@@ -346,7 +335,6 @@ const_config = {
             "ramping_time": timedelta(minutes=8).total_seconds(),
             "lifespan": timedelta(days=315).total_seconds(),
             "image_extension": "jpg",
-            "initial_efficiency": 0.33,
             "description": "The hydrogen storage facility uses electricity to produce hydrogen by electrolysis of water. "
             "This hydrogen can be used to generate electricity in a fuel cell.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydrogen_storage",
@@ -366,7 +354,6 @@ const_config = {
             "ramping_time": timedelta(minutes=3).total_seconds(),
             "lifespan": timedelta(days=112).total_seconds(),
             "image_extension": "jpg",
-            "initial_efficiency": 0.69,
             "description": "The lithium-ion batteries store energy with a high efficiency in the form of chemical energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Lithium-ion_battery",
             "requirements": {"chemistry": 4, "materials": 4},
@@ -385,7 +372,6 @@ const_config = {
             "ramping_time": timedelta(minutes=3).total_seconds(),
             "lifespan": timedelta(days=210).total_seconds(),
             "image_extension": "jpg",
-            "initial_efficiency": 0.79,
             "description": "The solid state batteries store energy with a high efficiency in the form of chemical energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Solid-state_battery",
             "requirements": {"chemistry": 6, "materials": 5, "physics": 6},
@@ -443,7 +429,7 @@ const_config = {
             "base_construction_pollution": 250_000,
             "O&M_factor_per_day": 0.000_49,  # not used for now
             "base_power_consumption": 10_000_000,  # [W]
-            "base_absorption_per_day": 0.000_024,  # [fraction of atmospheric CO2 absorbed per in-game day]
+            "base_absorption_per_day": 0.000_005,  # [fraction of atmospheric CO2 absorbed per in-game day]
             "price_multiplier": 1.5,
             "absorption_factor": 1.55,
             "power_factor": 1.5,
@@ -599,11 +585,11 @@ const_config = {
             "base_construction_time": timedelta(hours=20).total_seconds(),
             "base_construction_energy": 8_000_000,
             "price_multiplier": 1.4,
-            "price_factor": 1.2,
+            "price_factor": 0.27,
             "extract_factor": 0.30,
             "energy_factor": 0.25,
             "pollution_factor": 0.05,
-            "affected_facilities": [
+            "affected_facilities": [  # Note: this list is ignored in the extraction_rate_multiplier function
                 "coal_mine",
                 "gas_drilling_site",
                 "uranium_mine",
@@ -655,10 +641,10 @@ const_config = {
             "base_price": 28_000,
             "base_construction_time": timedelta(hours=20).total_seconds(),
             "base_construction_energy": 16_000_000,
-            "price_multiplier": 1.5,
-            "price_factor": 1.2,
-            "prod_factor": 1.2,
-            "capacity_factor": 1.05,
+            "price_multiplier": 1.25,
+            "price_factor": 1.15,
+            "prod_factor": 1.15,
+            "capacity_factor": 1.10,
             "affected_facilities": [
                 "small_water_dam",
                 "large_water_dam",
@@ -703,7 +689,7 @@ const_config = {
                 "lithium_ion_batteries",
                 "solid_state_batteries",
             ],
-            "description": "Nuclear Engineering is the branch of engineering for nuclear power plants.",
+            "description": "Chemistry is the study of matter and the changes it undergoes.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=174071&",  # cspell:disable-line
             "requirements": {"laboratory": 3, "physics": -1},
@@ -721,7 +707,7 @@ const_config = {
                 "nuclear_reactor",
                 "nuclear_reactor_gen4",
             ],
-            "description": "",
+            "description": "Nuclear Engineering is the branch of engineering for nuclear power plants.",
             "wikipedia_link": "https://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?"  # cspell:disable-line
             "lang=en&semkez=2023W&ansicht=ALLE&lerneinheitId=172874&",  # cspell:disable-line
             "requirements": {"laboratory": 4, "physics": 3, "mechanical_engineering": 3},
@@ -832,7 +818,7 @@ wind_power_curve: list[float] = [
     0,
 ]  # from 0 to 90 km/h
 
-river_discharge_seasonal = [
+river_flow_speed_seasonal = [
     0.252,
     0.245,
     0.238,
@@ -908,36 +894,26 @@ river_discharge_seasonal = [
 ]  # all days of the year
 
 
-def player_lab_workers_for_level(lab_level: int) -> int:
-    """Returns how many lab workers are available for the specified lab level"""
-    return (lab_level + 2) // 3
-
-
-def player_construction_workers_for_level(building_technology_level: int) -> int:
-    """Returns how many construction workers are available for the specified building technology level"""
-    return building_technology_level + 1
-
-
-def warehouse_capacity_for_level(warehouse_level, resource):
-    """Returns how much capacity in kg a player with a warehouse with
-    `warehouse_level` has for the specified `resource`"""
+def warehouse_capacity_for_level(warehouse_level: int, fuel: Fuel) -> float | None:
+    """Return the capacity in kg of the specified resource for a warehouse of a specified level."""
     if warehouse_level == 0:
         return None
     else:
         return (
-            const_config["warehouse_capacities"][resource]
+            const_config["warehouse_capacities"][fuel]
             * const_config["assets"]["warehouse"]["capacity_factor"] ** warehouse_level
         )
 
 
 class Config(object):
-    """Config object that contains the modified data for a specific player considering the technologies he owns"""
+    """Config object that contains the modified data for a specific player considering the technologies he owns."""
 
-    def __init__(self):
-        self.for_player = {}
+    def __init__(self) -> None:
+        """Constructor of the Config object."""
+        self.for_player: dict = {}
 
-    def update_config_for_user(self, player: Player):
-        """This function updates the config values according to the players technology level"""
+    def update_config_for_user(self, player: Player) -> None:
+        """Update the config values according to the players technology level."""
         # TODO: deprecate this method eventually
         self.for_player[player.id] = {
             "industry": {},
@@ -950,11 +926,13 @@ class Config(object):
         # calculating industry energy consumption and income
         assets["industry"]["power_consumption"] = (
             const_config["assets"]["industry"]["base_power_consumption"]
-            * const_config["assets"]["industry"]["power_factor"] ** player.industry
+            * const_config["assets"]["industry"]["power_factor"]
+            ** player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY]
         )
         assets["industry"]["income_per_day"] = (
             const_config["assets"]["industry"]["base_income_per_day"]
-            * const_config["assets"]["industry"]["income_factor"] ** player.industry
+            * const_config["assets"]["industry"]["income_factor"]
+            ** player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY]
         )
         # basic universal income of 540 per in-game day
         assets["industry"]["income_per_day"] += const_config["assets"]["industry"]["universal_income_per_day"]
@@ -962,34 +940,47 @@ class Config(object):
         # calculating carbon capture power consumption and CO2 absorption
         assets["carbon_capture"]["power_consumption"] = (
             const_config["assets"]["carbon_capture"]["base_power_consumption"]
-            * const_config["assets"]["carbon_capture"]["power_factor"] ** player.carbon_capture
+            * const_config["assets"]["carbon_capture"]["power_factor"]
+            ** player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE]
         )
         assets["carbon_capture"]["absorption"] = (
             const_config["assets"]["carbon_capture"]["base_absorption_per_day"]
-            * const_config["assets"]["carbon_capture"]["absorption_factor"] ** player.carbon_capture
+            * const_config["assets"]["carbon_capture"]["absorption_factor"]
+            ** player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE]
         )
 
         # calculating the maximum storage capacity from the warehouse level
         for resource in const_config["warehouse_capacities"]:
-            assets["warehouse_capacities"][resource] = warehouse_capacity_for_level(player.warehouse, resource) or 0.0
+            assets["warehouse_capacities"][resource] = (
+                warehouse_capacity_for_level(player.functional_facility_lvl[FunctionalFacilityType.WAREHOUSE], resource)
+                or 0.0
+            )
 
         # calculating the transport speed and energy consumption from the level of transport technology
         assets["transport"]["time_per_tile"] = (
             const_config["transport"]["time_per_tile"]
-            * const_config["assets"]["transport_technology"]["time_factor"] ** player.transport_technology
+            * const_config["assets"]["transport_technology"]["time_factor"]
+            ** player.technology_lvl[TechnologyType.TRANSPORT_TECHNOLOGY]
         )
         assets["transport"]["power_per_kg"] = (
             const_config["transport"]["energy_per_kg_per_tile"]
-            * const_config["assets"]["transport_technology"]["energy_factor"] ** player.transport_technology
+            * const_config["assets"]["transport_technology"]["energy_factor"]
+            ** player.technology_lvl[TechnologyType.TRANSPORT_TECHNOLOGY]
             * 3600
             / assets["transport"]["time_per_tile"]
         )
 
         # setting the number of workers
-        player.construction_workers = player_construction_workers_for_level(player.building_technology)
-        player.lab_workers = player_lab_workers_for_level(player.laboratory)
+        player.workers = {
+            WorkerType.CONSTRUCTION: WorkerType.construction_workers_for_level(
+                player.technology_lvl[TechnologyType.BUILDING_TECHNOLOGY],
+            ),
+            WorkerType.RESEARCH: WorkerType.lab_workers_for_level(
+                player.functional_facility_lvl[FunctionalFacilityType.LABORATORY],
+            ),
+        }
 
-    def __getitem__(self, player: Player):
+    def __getitem__(self, player: Player) -> Any:
         if player.id not in self.for_player:
             self.update_config_for_user(player)
         return self.for_player[player.id]

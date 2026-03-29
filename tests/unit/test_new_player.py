@@ -1,24 +1,14 @@
-import os
-import sys
-
-sys.path.append(os.getcwd())
-
-from werkzeug.security import generate_password_hash
+"""Unit tests for new player logic."""
 
 from energetica import create_app
-from energetica.database import db
-from energetica.database.map import Hex
-from energetica.database.player import Player
-from energetica.utils.misc import confirm_location
+from energetica.database.map.hex_tile import HexTile
+from energetica.database.user import User
+from energetica.utils.auth import generate_password_hash
+from energetica.utils.map_helpers import confirm_location
 
 
-def test():
-    _, app = create_app(rm_instance=True, skip_adding_handlers=True)
-    engine = app.config["engine"]
-    with app.app_context():
-        player = Player(username="username", pwhash=generate_password_hash("password"))
-        db.session.add(player)
-        db.session.commit()
-        hex_tile = db.session.get(Hex, 1)
-        confirm_location(engine, player, hex_tile)
-        db.session.commit()
+def test() -> None:
+    create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
+    hex_tile = HexTile.getitem(1)
+    confirm_location(user, hex_tile)
