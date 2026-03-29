@@ -195,7 +195,7 @@ export function TypographyBrand({
     ...props
 }: TypographyProps) {
     return (
-        <span className={cn("font-['Expletus_Sans']", className)} {...props}>
+        <span className={cn("font-['Expletus_Sans'] font-bold", className)} {...props}>
             {children}
         </span>
     );

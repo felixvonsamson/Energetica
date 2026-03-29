@@ -29,23 +29,24 @@ export function GameLayout({ children }: GameLayoutProps) {
 
     return (
         <SidebarProvider>
-            <AppSidebar scrollPosition={scrollPosition} />
-            <SidebarInset>
-                <div className="flex h-screen flex-col">
-                    {/* Top bar with resources and notifications */}
-                    <TopBar />
+            <div className="flex h-svh w-full flex-col overflow-hidden">
+                {/* Top bar spans full width above sidebar */}
+                <TopBar />
 
-                    {/* Main content area */}
-                    <main
-                        className="flex-1 overflow-auto 2xl:px-50"
-                        onScroll={handleScroll}
-                    >
-                        {children}
-                    </main>
-
-                    <Toaster position="top-center" richColors />
+                {/* Sidebar + content row */}
+                <div className="flex flex-1 min-h-0">
+                    <AppSidebar scrollPosition={scrollPosition} />
+                    <SidebarInset>
+                        <main
+                            className="flex-1 overflow-auto 2xl:px-50"
+                            onScroll={handleScroll}
+                        >
+                            {children}
+                        </main>
+                        <Toaster position="top-center" richColors />
+                    </SidebarInset>
                 </div>
-            </SidebarInset>
+            </div>
         </SidebarProvider>
     );
 }

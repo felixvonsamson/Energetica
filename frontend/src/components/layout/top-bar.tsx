@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import Logo from "@/assets/icon.svg?react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationPopup } from "@/components/layout/notification-popup";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ import { Money as MoneyComponent } from "@/components/ui/money";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { TypographyBrand } from "@/components/ui/typography";
 import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
 import { useUnreadNotificationsCount } from "@/hooks/use-notifications";
@@ -99,10 +101,23 @@ export function TopBar() {
 
     return (
         <>
-            <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b bg-topbar px-4 gap-2">
-                {/* Left: Sidebar trigger + Breadcrumbs */}
+            <header className="shrink-0 flex h-14 items-center border-b bg-topbar px-4 gap-2">
+                {/* Left: Sidebar trigger + Logo + Breadcrumbs */}
                 <div className="flex items-center gap-2 shrink-0">
                     <SidebarTrigger className="-ml-1" />
+                    <Separator
+                        orientation="vertical"
+                        className="data-[orientation=vertical]:h-4"
+                    />
+                    <Link
+                        to="/app"
+                        className="flex items-center gap-1.5 shrink-0"
+                    >
+                        <Logo className="size-10 fill-foreground" />
+                        <TypographyBrand className="hidden sm:block text-2xl mr-1">
+                            Energetica
+                        </TypographyBrand>
+                    </Link>
 
                     {/* Breadcrumb navigation — hidden on mobile */}
                     <div className="hidden md:flex items-center gap-2">

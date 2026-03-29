@@ -578,8 +578,16 @@
     }
     body.has-topbar {
         @apply bg-topbar;
+        overscroll-behavior: none;
     }
     #root {
         @apply bg-background;
     }
+}
+
+/* Outside any @layer so it takes precedence over Tailwind utilities.
+   Offsets the fixed sidebar-container below the full-width top bar (h-14 = 3.5rem). */
+body.has-topbar [data-slot="sidebar-container"] {
+    top: 3.5rem;
+    height: calc(100svh - 3.5rem);
 }
