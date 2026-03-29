@@ -137,10 +137,11 @@ export function MessageContainer({
                                 <div
                                     key={message.id}
                                     className={cn(
-                                        "p-3 rounded-lg break-words max-w-[70%] whitespace-pre-line",
+                                        "p-3 rounded-lg break-words max-w-[70%] whitespace-pre-line transition-opacity",
                                         isOwnMessage
                                             ? "bg-primary text-primary-foreground rounded-br-none"
                                             : "bg-secondary text-secondary-foreground rounded-bl-none",
+                                        message.id < 0 && "opacity-60",
                                     )}
                                 >
                                     {message.text}
