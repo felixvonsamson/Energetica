@@ -21,9 +21,9 @@ export const ThemeToggle = forwardRef<HTMLButtonElement, ThemeToggleProps>(
 
         const icon =
             theme === "light" ? (
-                <Moon size={20} />
-            ) : theme === "dark" ? (
                 <Sun size={20} />
+            ) : theme === "dark" ? (
+                <Moon size={20} />
             ) : (
                 <SunMoon size={20} />
             );
