@@ -203,7 +203,7 @@
 
         /* Sidebar colors (light mode) */
         --sidebar: var(--color-pine-500);
-        --sidebar-foreground: var(--color-pine-800);
+        --sidebar-foreground: var(--color-pine-900);
         --sidebar-primary: var(--color-pine-200);
         --sidebar-primary-foreground: var(--color-white);
         --sidebar-accent: var(--color-pine-100);

@@ -60,7 +60,7 @@ export function AppSidebar({ bgLogoRef }: AppSidebarProps) {
             {/* Large background logo — rotated directly via ref to avoid React re-renders */}
             <div
                 ref={bgLogoRef}
-                className="pointer-events-none absolute left-0 top-1/2 z-0 -translate-x-[55%] -translate-y-1/2 opacity-[0.3]"
+                className="pointer-events-none absolute left-0 top-1/2 z-0 -translate-x-[55%] -translate-y-1/2 opacity-[0.1]"
                 style={{ willChange: "transform" }}
             >
                 <Logo className="size-200 fill-bone" />
@@ -133,7 +133,7 @@ function NavGroupItem({ item }: { item: NavGroupConfig }) {
                         tooltip={item.label}
                     >
                         <Icon className="size-4" />
-                        <span>{item.label}</span>
+                        <span className="text-base">{item.label}</span>
                         {item.label === "Community" && (
                             <UnreadChatsBadge className="right-7" />
                         )}
@@ -171,7 +171,7 @@ function NavLinkItem({ item }: { item: NavLinkConfig }) {
         >
             <Link to={item.to} params={item.params as LinkProps["params"]}>
                 <Icon className="size-4" />
-                <span>{item.label}</span>
+                <span className="text-base">{item.label}</span>
             </Link>
         </SidebarMenuButton>
     );
@@ -211,7 +211,7 @@ function NavSubLinkItem({ item }: { item: NavLinkConfig }) {
         >
             <Link to={item.to} params={item.params as LinkProps["params"]}>
                 <Icon className="size-4" />
-                <span>{item.label}</span>
+                <span className="text-base">{item.label}</span>
                 {item.to === "/app/community/messages" && <UnreadChatsBadge />}
             </Link>
         </SidebarMenuSubButton>
