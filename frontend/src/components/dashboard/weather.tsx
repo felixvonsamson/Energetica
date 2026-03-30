@@ -105,7 +105,7 @@ export function WeatherSection() {
     const riverLabel = getRiverLabel(weatherData.river_flow_speed);
 
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 justify-around items-center gap-y-3 px-1">
+        <div className="grid grid-cols-2 lg:grid-cols-4 items-center gap-y-3 px-1">
             {/* Month */}
             <WeatherItem
                 icon={Calendar}
