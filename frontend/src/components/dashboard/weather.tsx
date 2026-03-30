@@ -105,36 +105,40 @@ export function WeatherSection() {
     const riverLabel = getRiverLabel(weatherData.river_flow_speed);
 
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 items-center gap-y-3 px-1">
-            {/* Month */}
-            <WeatherItem
-                icon={Calendar}
-                label="Month"
-                value={getShortMonthName(weatherData.month_number)}
-            />
+        <div className="flex flex-wrap justify-around items-center gap-y-4 px-1">
+            <div className="flex justify-around grow">
+                {/* Month */}
+                <WeatherItem
+                    icon={Calendar}
+                    label="Month"
+                    value={getShortMonthName(weatherData.month_number)}
+                />
 
-            {/* Solar irradiance + sky condition */}
-            <WeatherItem
-                icon={SkyIcon}
-                label="Irradiance"
-                value={`${Math.round(weatherData.solar_irradiance)} W/m²`}
-            />
+                {/* Solar irradiance + sky condition */}
+                <WeatherItem
+                    icon={SkyIcon}
+                    label="Irradiance"
+                    value={`${Math.round(weatherData.solar_irradiance)} W/m²`}
+                />
+            </div>
 
-            {/* Wind */}
-            <WeatherItem
-                icon={Wind}
-                label="Wind"
-                value={windLabel}
-                sub={`${Math.round(weatherData.wind_speed)} km/h`}
-            />
+            <div className="flex justify-around grow">
+                {/* Wind */}
+                <WeatherItem
+                    icon={Wind}
+                    label="Wind"
+                    value={windLabel}
+                    sub={`${Math.round(weatherData.wind_speed)} km/h`}
+                />
 
-            {/* River flow */}
-            <WeatherItem
-                icon={Droplets}
-                label="River flow"
-                value={riverLabel}
-                sub={`${weatherData.river_flow_speed.toFixed(1)} m/s`}
-            />
+                {/* River flow */}
+                <WeatherItem
+                    icon={Droplets}
+                    label="River flow"
+                    value={riverLabel}
+                    sub={`${weatherData.river_flow_speed.toFixed(1)} m/s`}
+                />
+            </div>
         </div>
     );
 }
