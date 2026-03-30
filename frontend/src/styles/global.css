@@ -131,6 +131,7 @@
     :root {
         /* shadcn/ui semantic colors (light mode) */
         --topbar: var(--color-pine-100);
+        --topbar-height: 3.5rem;
 
         --background: var(--color-pine-200);
         --foreground: var(--color-pine-700);
@@ -202,7 +203,7 @@
 
         /* Sidebar colors (light mode) */
         --sidebar: var(--color-pine-500);
-        --sidebar-foreground: var(--color-pine-800);
+        --sidebar-foreground: var(--color-pine-900);
         --sidebar-primary: var(--color-pine-200);
         --sidebar-primary-foreground: var(--color-white);
         --sidebar-accent: var(--color-pine-100);
@@ -588,6 +589,6 @@
 /* Outside any @layer so it takes precedence over Tailwind utilities.
    Offsets the fixed sidebar-container below the full-width top bar (h-14 = 3.5rem). */
 body.has-topbar [data-slot="sidebar-container"] {
-    top: 3.5rem;
-    height: calc(100svh - 3.5rem);
+    top: var(--topbar-height);
+    height: calc(100svh - var(--topbar-height));
 }

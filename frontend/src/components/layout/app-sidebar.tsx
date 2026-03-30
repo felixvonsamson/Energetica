@@ -3,8 +3,10 @@
  * navigation groups, and footer links.
  */
 
+
 import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
+import { type RefObject } from "react";
 
 import Logo from "@/assets/icon.svg?react";
 import {
@@ -45,25 +47,21 @@ import {
 import { cn } from "@/lib/utils";
 
 interface AppSidebarProps {
-    scrollPosition?: number;
+    bgLogoRef: RefObject<HTMLDivElement | null>;
 }
 
-export function AppSidebar({ scrollPosition = 0 }: AppSidebarProps) {
-    // Calculate rotation based on scroll position (1 full rotation every 1000px)
-    const rotation = -(scrollPosition / 10000) * 360;
-
+export function AppSidebar({ bgLogoRef }: AppSidebarProps) {
     return (
         <Sidebar
             side="left"
             collapsible="offcanvas"
             className="overflow-hidden"
         >
-            {/* Large background logo */}
+            {/* Large background logo — rotated directly via ref to avoid React re-renders */}
             <div
-                className="pointer-events-none absolute left-0 top-1/2 z-0 -translate-x-[55%] -translate-y-1/2 opacity-[0.3]  duration-50"
-                style={{
-                    transform: `rotate(${rotation}deg)`,
-                }}
+                ref={bgLogoRef}
+                className="pointer-events-none absolute left-0 top-1/2 z-0 -translate-x-[55%] -translate-y-1/2 opacity-[0.1]"
+                style={{ willChange: "transform" }}
             >
                 <Logo className="size-200 fill-bone" />
             </div>
@@ -135,7 +133,7 @@ function NavGroupItem({ item }: { item: NavGroupConfig }) {
                         tooltip={item.label}
                     >
                         <Icon className="size-4" />
-                        <span>{item.label}</span>
+                        <span className="text-base">{item.label}</span>
                         {item.label === "Community" && (
                             <UnreadChatsBadge className="right-7" />
                         )}
@@ -173,7 +171,7 @@ function NavLinkItem({ item }: { item: NavLinkConfig }) {
         >
             <Link to={item.to} params={item.params as LinkProps["params"]}>
                 <Icon className="size-4" />
-                <span>{item.label}</span>
+                <span className="text-base">{item.label}</span>
             </Link>
         </SidebarMenuButton>
     );
@@ -213,7 +211,7 @@ function NavSubLinkItem({ item }: { item: NavLinkConfig }) {
         >
             <Link to={item.to} params={item.params as LinkProps["params"]}>
                 <Icon className="size-4" />
-                <span>{item.label}</span>
+                <span className="text-base">{item.label}</span>
                 {item.to === "/app/community/messages" && <UnreadChatsBadge />}
             </Link>
         </SidebarMenuSubButton>
