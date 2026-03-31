@@ -62,13 +62,17 @@ export function useLogout() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: () => {
-            authApi.logout();
-            return Promise.resolve();
-        },
+        mutationFn: () => authApi.logout(),
         onSuccess: () => {
-            // Clear all queries on logout
-            queryClient.clear();
+            // Explicitly mark as unauthenticated without triggering a refetch.
+            // queryClient.clear() would remove the cache entry and cause the
+            // AuthProvider's active useQuery to immediately refetch /me, which
+            // races against the cookie deletion and can restore auth state.
+            queryClient.setQueryData(queryKeys.auth.me, null);
+            // Clear all other cached user-specific data.
+            queryClient.removeQueries({
+                predicate: (query) => query.queryKey[0] !== "auth",
+            });
         },
         onError: (error) => {
             // Log error for debugging - consuming components handle UI display

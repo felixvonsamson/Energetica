@@ -1,36 +1,26 @@
 /** Logout page - Clears session and redirects to login. */
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
-import { useAuth } from "@/hooks/use-auth";
-import { authApi } from "@/lib/api/auth";
-import { queryClient } from "@/lib/query-client";
+import { useLogout } from "@/hooks/use-auth-queries";
 
 function LogoutComponent() {
     const navigate = useNavigate();
-    const { logout: clearAuthContext } = useAuth();
+    const logout = useLogout();
+    const hasLoggedOut = useRef(false);
 
     useEffect(() => {
-        const performLogout = async () => {
-            try {
-                // Call logout endpoint to clear cookie
-                await authApi.logout();
-            } catch (error) {
-                // Even if logout fails, still clear local cache and redirect
-                console.error("[LogoutComponent] Logout failed:", error);
-            } finally {
-                // Clear all cached data
-                queryClient.clear();
-                // Clear frontend auth state
-                await clearAuthContext();
-                // Redirect to login
-                navigate({ to: "/app/login" });
-            }
-        };
+        // Guard against React StrictMode's double effect invocation.
+        // Refs survive the simulated unmount/remount, so this fires only once.
+        if (hasLoggedOut.current) return;
+        hasLoggedOut.current = true;
 
-        performLogout();
-    }, [navigate, clearAuthContext]);
+        logout.mutateAsync().finally(() => {
+            navigate({ to: "/app/login" });
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return <div>Logging out...</div>;
 }
