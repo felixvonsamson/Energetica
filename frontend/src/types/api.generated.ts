@@ -2384,8 +2384,7 @@ export interface components {
             /**
              * Draining
              *
-             * True if the facility entered a drain phase (storage facility with
-             * remaining energy) and will be removed once empty.
+             * True for storage facilities, that will fist enter a drain phase and will be removed once empty.
              */
             draining: boolean;
         };
