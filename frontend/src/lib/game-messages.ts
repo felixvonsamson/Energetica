@@ -63,7 +63,7 @@ export const GAME_ERROR_MESSAGES: Record<string, string> = {
     CannotIncreasePriorityOfFirstProject:
         "This project is already at the highest priority.",
     requirementsPreventReorder:
-        "This project cannot be reordered because of dependencies.",
+        "This project cannot be reordered because of dependencies. Note that all dependencies need to be finished before the project can be started.",
     CannotSwapPausedProject: "Paused projects cannot be reordered.",
 
     // --- Facilities ---
