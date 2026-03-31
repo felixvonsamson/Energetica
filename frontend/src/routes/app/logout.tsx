@@ -16,10 +16,13 @@ function LogoutComponent() {
         if (hasLoggedOut.current) return;
         hasLoggedOut.current = true;
 
-        logout.mutateAsync().finally(() => {
-            navigate({ to: "/app/login" });
-        });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        logout
+            .mutateAsync()
+            .catch(() => {})
+            .finally(() => {
+                navigate({ to: "/app/login" });
+            });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return <div>Logging out...</div>;
