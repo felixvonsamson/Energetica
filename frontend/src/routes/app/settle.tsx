@@ -1,9 +1,10 @@
 /** Settlement page - allows player to choose their starting location on the map. */
 
 import { Dialog } from "@radix-ui/react-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { HelpCircle } from "lucide-react";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 
 import { MapCanvas } from "@/components/map/map-canvas";
 import { MapHoverBorder } from "@/components/map/map-hover-border";
@@ -30,6 +31,7 @@ import {
     getResourceValue,
     oklchToString,
 } from "@/lib/map-resources";
+import { queryKeys } from "@/lib/query-client";
 import { HexTileResources } from "@/types/map";
 
 function SettleHelp() {
@@ -68,8 +70,19 @@ interface TileInfoProps {
     playerMap: Record<number, string>;
 }
 
-
 function SettlePage() {
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const navigate = useNavigate();
+
+    // Navigate to dashboard reactively once the backend confirms settlement.
+    // Avoids a race between concurrent socket invalidations (map/players) and
+    // an imperative refetchAuth() + navigate() sequence.
+    useEffect(() => {
+        if (!isAuthLoading && user?.is_settled) {
+            navigate({ to: "/app/dashboard" });
+        }
+    }, [user?.is_settled, isAuthLoading, navigate]);
+
     return <SettleContent />;
 }
 
@@ -240,8 +253,7 @@ function SettleContent() {
 }
 
 function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
-    const { refetch: refetchAuth } = useAuth();
-    const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [isSettling, setIsSettling] = useState(false);
 
     const handleSettleLocation = useCallback(async () => {
@@ -250,16 +262,16 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
         setIsSettling(true);
         try {
             await mapApi.settleRegion(selectedTile.id);
-            // Refresh auth cache to get updated settled status
-            await refetchAuth();
-            // Redirect to home page after successful settlement
-            navigate({ to: "/app/dashboard" });
+            // Invalidate auth so SettlePage's useEffect detects is_settled = true
+            // and navigates. Avoids racing concurrent socket invalidations with
+            // an awaited refetch + imperative navigate.
+            queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
         } catch (error) {
             console.error("Error settling location:", error);
             alert("Failed to settle location. Please try again.");
             setIsSettling(false);
         }
-    }, [selectedTile, isSettling, refetchAuth, navigate]);
+    }, [selectedTile, isSettling, queryClient]);
 
     return (
         <div className="lg:flex lg:flex-col lg:h-full animate-fadeIn">
@@ -297,7 +309,9 @@ function TileInfo({ selectedTile, playerMap }: TileInfoProps) {
                                     className="absolute h-full rounded transition-all duration-500 ease-out"
                                     style={{
                                         width: `${barWidth}%`,
-                                        backgroundColor: oklchToString(resource.color),
+                                        backgroundColor: oklchToString(
+                                            resource.color,
+                                        ),
                                     }}
                                 />
                             </div>
