@@ -13,8 +13,10 @@
  */
 
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { chatsApi } from "@/lib/api/chats";
+import { resolveErrorMessage } from "@/lib/game-messages";
 import { queryKeys, queryClient } from "@/lib/query-client";
 import type {
     ChatMessagesResponse,
@@ -137,13 +139,14 @@ export function useSendMessage() {
 
             return { previousMessages };
         },
-        onError: (_err, { chatId }, context) => {
+        onError: (err, { chatId }, context) => {
             if (context?.previousMessages !== undefined) {
                 queryClient.setQueryData(
                     queryKeys.chats.messages(chatId),
                     context.previousMessages,
                 );
             }
+            toast.error(resolveErrorMessage(err));
         },
         onSettled: (_response, _err, { chatId }) => {
             queryClient.invalidateQueries({
@@ -189,6 +192,9 @@ export function useCreateGroupChat() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.chats.list,
             });
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }

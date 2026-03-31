@@ -45,6 +45,23 @@ class MoneyOut(BaseModel):
         return MoneyOut(money=player.money)
 
 
+class DismantleOut(MoneyOut):
+    """Response for a dismantle action.
+
+    Extends MoneyOut with a `draining` flag that is True when the dismantled
+    facility is a storage facility that still holds energy.  In that case the
+    facility enters a drain phase and will be removed once empty rather than
+    being deleted immediately.
+    """
+
+    draining: bool = Field(
+        description=(
+            "True if the facility entered a drain phase (storage facility with "
+            "remaining energy) and will be removed once empty."
+        )
+    )
+
+
 class WorkerInfo(BaseModel):
     """Information about a specific worker type."""
 

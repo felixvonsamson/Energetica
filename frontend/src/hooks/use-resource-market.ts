@@ -1,8 +1,10 @@
 /** Hooks for fetching and managing resource market asks. */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { resourceMarketApi } from "@/lib/api/resource-market";
+import { resolveErrorMessage } from "@/lib/game-messages";
 import { queryKeys } from "@/lib/query-client";
 
 /**
@@ -35,6 +37,10 @@ export function useCreateAsk() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.resources,
             });
+            toast.success("Listing created");
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }
@@ -58,10 +64,15 @@ export function usePurchaseAsk() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.resources,
             });
+            toast.success("Purchase complete");
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }
 
+// TODO : This is never used, frontend currently doesn't allow players to update their asks.
 /** Update an existing ask (change price or quantity). */
 export function useUpdateAsk() {
     const queryClient = useQueryClient();
@@ -77,6 +88,10 @@ export function useUpdateAsk() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.resources,
             });
+            toast.success("Listing updated");
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }
@@ -96,6 +111,10 @@ export function useDeleteAsk() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.resources,
             });
+            toast.success("Listing removed");
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }

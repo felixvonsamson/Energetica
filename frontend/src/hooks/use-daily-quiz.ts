@@ -4,8 +4,10 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { dailyQuizApi } from "@/lib/api/daily-quiz";
+import { resolveErrorMessage } from "@/lib/game-messages";
 import { queryKeys } from "@/lib/query-client";
 
 /**
@@ -37,6 +39,12 @@ export function useSubmitQuizAnswer() {
         onSuccess: (data) => {
             // Update the cache with the new quiz state (now showing results)
             queryClient.setQueryData(queryKeys.dailyQuiz.today, data);
+            if (data.answered_correctly) {
+                toast.success("+1 XP earned!");
+            }
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }

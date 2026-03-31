@@ -1,9 +1,11 @@
 /** React Query hooks for browser notifications. */
 
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { browserNotificationsApi } from "@/lib/api/push-subscriptions";
 import { handleApiError } from "@/lib/error-utils";
+import { resolveErrorMessage } from "@/lib/game-messages";
 import { queryKeys } from "@/lib/query-client";
 import type { ApiRequestBody } from "@/types/api-helpers";
 
@@ -39,7 +41,11 @@ export function useUnsubscribeFromPushNotifications() {
                 "post"
             >,
         ) => browserNotificationsApi.unsubscribe(data),
+        onSuccess: () => {
+            toast.success("Push notifications disabled");
+        },
         onError: (error) => {
+            toast.error(resolveErrorMessage(error));
             handleApiError(error, "Failed to unsubscribe from notifications");
         },
     });

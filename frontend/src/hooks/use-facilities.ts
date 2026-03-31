@@ -1,9 +1,12 @@
 /** React Query hooks for facilities data. */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { useTickQuery } from "@/contexts/game-tick-context";
 import { facilitiesApi } from "@/lib/api/facilities";
+import { getAssetLongName } from "@/lib/assets/asset-names";
+import { resolveErrorMessage } from "@/lib/game-messages";
 import { queryKeys } from "@/lib/query-client";
 
 /**
@@ -50,6 +53,10 @@ export function useUpgradeFacility() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.money,
             });
+            toast.success("Facility upgraded successfully");
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }
@@ -60,7 +67,7 @@ export function useUpgradeAllOfType() {
 
     return useMutation({
         mutationFn: facilitiesApi.upgradeAll,
-        onSuccess: () => {
+        onSuccess: (_data, facilityType) => {
             // Invalidate facilities and money queries after mass upgrade
             queryClient.invalidateQueries({
                 queryKey: queryKeys.facilities.all,
@@ -68,6 +75,12 @@ export function useUpgradeAllOfType() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.money,
             });
+            toast.success(
+                `All ${getAssetLongName(facilityType)} upgraded successfully`,
+            );
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }
@@ -78,7 +91,7 @@ export function useDismantleFacility() {
 
     return useMutation({
         mutationFn: facilitiesApi.dismantle,
-        onSuccess: () => {
+        onSuccess: (data) => {
             // Invalidate facilities and money queries after dismantle
             queryClient.invalidateQueries({
                 queryKey: queryKeys.facilities.all,
@@ -86,6 +99,14 @@ export function useDismantleFacility() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.money,
             });
+            toast.success(
+                data.draining
+                    ? "Storage facility will be dismantled once it is empty"
+                    : "Facility dismantled successfully",
+            );
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }
@@ -96,7 +117,7 @@ export function useDismantleAllOfType() {
 
     return useMutation({
         mutationFn: facilitiesApi.dismantleAll,
-        onSuccess: () => {
+        onSuccess: (data, facilityType) => {
             // Invalidate facilities and money queries after mass dismantle
             queryClient.invalidateQueries({
                 queryKey: queryKeys.facilities.all,
@@ -104,6 +125,14 @@ export function useDismantleAllOfType() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.money,
             });
+            toast.success(
+                data.draining
+                    ? `All ${getAssetLongName(facilityType)} facilities will be dismantled once empty`
+                    : `All ${getAssetLongName(facilityType)} dismantled successfully`,
+            );
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }

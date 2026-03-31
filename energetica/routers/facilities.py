@@ -12,7 +12,7 @@ from energetica.enums import (
     StorageFacilityType,
 )
 from energetica.schemas.facilities import FacilitiesListOut, FacilityStatuses
-from energetica.schemas.players import MoneyOut
+from energetica.schemas.players import DismantleOut, MoneyOut
 from energetica.utils import facilities
 from energetica.utils.auth import get_settled_player
 
@@ -54,23 +54,34 @@ async def upgrade_all_of_type(
 async def dismantle_facility(
     player: Annotated[Player, Depends(get_settled_player)],
     facility_id: int,
-) -> MoneyOut:
-    """Dismantle a facility."""
+) -> DismantleOut:
+    """Dismantle a facility.
+
+    Returns `draining: true` when the facility is a storage facility that still
+    holds energy and has entered a drain phase instead of being removed
+    immediately.
+    """
     facility = ActiveFacility.getitem(facility_id, HTTPException(status_code=status.HTTP_404_NOT_FOUND))
     if facility.player != player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not own this facility")
+    draining = isinstance(facility.facility_type, StorageFacilityType)
     facilities.dismantle_facility(facility)
-    return MoneyOut.from_player(player)
+    return DismantleOut(money=player.money, draining=draining)
 
 
 @router.post(":dismantle-all")
 async def dismantle_all_of_type(
     player: Annotated[Player, Depends(get_settled_player)],
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
-) -> MoneyOut:
-    """Dismantle all facilities of a certain type."""
+) -> DismantleOut:
+    """Dismantle all facilities of a certain type.
+
+    Returns `draining: true` when the facility type is a storage facility
+    (facilities will drain before being removed).
+    """
+    draining = isinstance(facility_type, StorageFacilityType)
     facilities.dismantle_all_facilities(player=player, facility_type=facility_type)
-    return MoneyOut.from_player(player)
+    return DismantleOut(money=player.money, draining=draining)
 
 
 @router.get("/statuses")
