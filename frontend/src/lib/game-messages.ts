@@ -35,9 +35,8 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     NOT_AUTHENTICATED: "Please log in to continue.",
     USER_IS_NOT_A_PLAYER: "Access denied. Player account required.",
     PLAYER_NOT_SET_UP: "Please complete your account setup.",
-    "Sign-ups are disabled.": "Sign-ups are currently disabled.",
-    "Old password is incorrect.":
-        "The current password you entered is incorrect.",
+    SIGNUP_DISABLED: "Sign-ups are currently disabled.",
+    OLD_PASSWORD_INCORRECT: "The current password you entered is incorrect.",
 
     // --- Location / tile ---
     locationOccupied: "This location is already occupied by another player.",

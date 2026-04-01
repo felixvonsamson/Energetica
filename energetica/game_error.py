@@ -35,8 +35,8 @@ class GameExceptionType(StrEnum):
     NOT_AUTHENTICATED = "NOT_AUTHENTICATED"
     USER_IS_NOT_A_PLAYER = "USER_IS_NOT_A_PLAYER"
     PLAYER_NOT_SET_UP = "PLAYER_NOT_SET_UP"
-    SIGNUP_DISABLED = "Sign-ups are disabled."
-    OLD_PASSWORD_INCORRECT = "Old password is incorrect."
+    SIGNUP_DISABLED = "SIGNUP_DISABLED"
+    OLD_PASSWORD_INCORRECT = "OLD_PASSWORD_INCORRECT"
     # Technology effects
     INVALID_MULTIPLIER = "InvalidMultiplier"
     # network prices
