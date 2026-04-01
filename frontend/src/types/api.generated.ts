@@ -895,7 +895,8 @@ export interface paths {
         /**
          * Dismantle Facility
          *
-         * Dismantle a facility.
+         * Dismantle a facility. We allow players to dismantle facilities even
+         * if this will put them in debt to avoid deadlocks.
          *
          *     Returns `draining: true` when the facility is a storage facility that still
          *     holds energy and has entered a drain phase instead of being removed
@@ -920,7 +921,9 @@ export interface paths {
         /**
          * Dismantle All Of Type
          *
-         * Dismantle all facilities of a certain type.
+         * Dismantle all facilities of a certain type. We allow players to
+         * dismantle facilities even if this will put them in debt to avoid
+         * deadlocks.
          *
          *     Returns `draining: true` when the facility type is a storage facility
          *     (facilities will drain before being removed).
@@ -2374,9 +2377,8 @@ export interface components {
          * Response for a dismantle action.
          *
          *     Extends MoneyOut with a `draining` flag that is True when the dismantled
-         *     facility is a storage facility that still holds energy.  In that case the
-         *     facility enters a drain phase and will be removed once empty rather than
-         *     being deleted immediately.
+         *     facility is a storage facility.  In that case the facility enters a drain
+         *     phase and will be removed once empty rather than being deleted immediately.
          */
         DismantleOut: {
             /** Money */
@@ -2384,7 +2386,8 @@ export interface components {
             /**
              * Draining
              *
-             * True for storage facilities, that will fist enter a drain phase and will be removed once empty.
+             * True for storage facilities, that will fist enter a drain phase
+             * and will be removed once empty.
              */
             draining: boolean;
         };
@@ -4525,6 +4528,56 @@ export interface components {
             /** Laboratory/research workers */
             laboratory: components["schemas"]["WorkerInfo"];
         };
+        /**
+         * GameExceptionType
+         *
+         * @enum {string}
+         */
+        GameExceptionType:
+            | "Not enough money"
+            | "TileNotFound"
+            | "noTile"
+            | "noLocation"
+            | "Player has no tile"
+            | "locationOccupied"
+            | "choiceUnmodifiable"
+            | "USERNAME_TAKEN"
+            | "USER_NOT_FOUND"
+            | "INVALID_PASSWORD"
+            | "NOT_AUTHENTICATED"
+            | "USER_IS_NOT_A_PLAYER"
+            | "PLAYER_NOT_SET_UP"
+            | "Sign-ups are disabled."
+            | "Old password is incorrect."
+            | "InvalidMultiplier"
+            | "malformedRequest"
+            | "Project not found"
+            | "CannotDecreasePriorityOfLastProject"
+            | "CannotIncreasePriorityOfFirstProject"
+            | "requirementsPreventReorder"
+            | "cannotPause"
+            | "cannotResume"
+            | "CannotSwapPausedProject"
+            | "PausedPrerequisitePreventUnpause"
+            | "Requirements not satisfied"
+            | "HasDependents"
+            | "Facility not upgradable"
+            | "FacilityIsDecommissioning"
+            | "Facility not found"
+            | "Cannot remove technologies or functional facilities"
+            | "wrongTitleLength"
+            | "chatAlreadyExist"
+            | "notInChat"
+            | "noMessage"
+            | "messageTooLong"
+            | "quizAlreadyAnswered"
+            | "networkNotUnlocked"
+            | "noSuchNetwork"
+            | "playerAlreadyInNetwork"
+            | "nameAlreadyUsed"
+            | "notInNetwork"
+            | "notEnoughResource"
+            | "invalidQuantity";
     };
     responses: never;
     parameters: never;

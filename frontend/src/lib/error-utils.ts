@@ -22,7 +22,7 @@
  */
 
 import { ApiClientError } from "@/lib/api-client";
-import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
+import { GAME_ERROR_MESSAGES, GameExceptionType } from "@/lib/game-messages";
 
 /**
  * Get a user-friendly error message from any error object.
@@ -47,21 +47,11 @@ import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
 export function getUserFriendlyError(error: unknown): string {
     if (error instanceof ApiClientError) {
         const errorMsg = error.getErrorMessage();
-
-        // Check if we have a mapped user-friendly message
-        if (GAME_ERROR_MESSAGES[errorMsg]) {
-            return GAME_ERROR_MESSAGES[errorMsg];
-        }
-
-        // Check for partial matches (e.g., validation errors)
-        for (const [key, value] of Object.entries(GAME_ERROR_MESSAGES)) {
-            if (errorMsg.includes(key)) {
-                return value;
-            }
-        }
-
-        // Return the backend message if no mapping exists
-        return errorMsg || "An error occurred. Please try again.";
+        const mapped = (
+            GAME_ERROR_MESSAGES as Record<string, string | undefined>
+        )[errorMsg];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        return mapped ?? errorMsg ?? "An error occurred. Please try again.";
     }
 
     if (error instanceof Error) {
@@ -131,7 +121,10 @@ export function handleApiError(error: unknown, fallback?: string): string {
  * @param errorType - The error type to check for (from backend)
  * @returns True if the error matches the specified type
  */
-export function isErrorType(error: unknown, errorType: string): boolean {
+export function isErrorType(
+    error: unknown,
+    errorType: GameExceptionType,
+): boolean {
     if (error instanceof ApiClientError) {
         return error.getErrorMessage() === errorType;
     }
