@@ -173,7 +173,9 @@ export function TechnologyDetailDialog<T>({
                             </div>
 
                             {/* Requirements */}
-                            {technology.requirements_status !== "satisfied" && (
+                            {technology.requirements.some(
+                                (r) => r.status !== "satisfied",
+                            ) && (
                                 <CardContent>
                                     <RequirementsDisplay
                                         requirements={technology.requirements}

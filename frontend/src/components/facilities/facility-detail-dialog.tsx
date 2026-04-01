@@ -178,14 +178,15 @@ function FacilityContent<T>(
                 </div>
 
                 {/* Requirements */}
-                {facility.requirements_status !== "satisfied" &&
-                    facility.requirements.length > 0 && (
-                        <CardContent>
-                            <RequirementsDisplay
-                                requirements={facility.requirements}
-                            />
-                        </CardContent>
-                    )}
+                {facility.requirements.some(
+                    (r) => r.status !== "satisfied",
+                ) && (
+                    <CardContent>
+                        <RequirementsDisplay
+                            requirements={facility.requirements}
+                        />
+                    </CardContent>
+                )}
 
                 {/* Construction Info */}
                 <CardContent className="flex justify-around">
