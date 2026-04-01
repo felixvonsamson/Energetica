@@ -16,8 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { TypographyBrand } from "@/components/ui/typography";
 import { useAuth } from "@/hooks/use-auth";
-import { authApi } from "@/lib/api/auth";
-import { handleApiError } from "@/lib/error-utils";
+import { useSignup } from "@/hooks/use-auth-queries";
+import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
 
 export const Route = createFileRoute("/sign-up")({
     component: SignUpPage,
@@ -55,15 +55,18 @@ function SignUpForm() {
     const navigate = useNavigate();
     const { refetch: refetchAuth } = useAuth();
 
+    const signup = useSignup();
+
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [usernameError, setUsernameError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+        setUsernameError(null);
 
         // Validation
         if (!username.trim() || !password || !confirmPassword) {
@@ -86,28 +89,16 @@ function SignUpForm() {
             return;
         }
 
-        setIsLoading(true);
-
         try {
-            await authApi.signup({
-                username: username.trim(),
-                password,
-            });
-
-            // Refetch auth state to update context
+            await signup.mutateAsync({ username: username.trim(), password });
             await refetchAuth();
-
-            // Redirect to settle page or dashboard
             navigate({ to: "/app/settle" });
         } catch (err) {
-            // Use centralized error handling for consistent user-friendly messages
-            const errorMessage = handleApiError(
-                err,
-                "Sign-up failed. Please try again.",
-            );
-            setError(errorMessage);
-        } finally {
-            setIsLoading(false);
+            if (isErrorType(err, "USERNAME_TAKEN")) {
+                setUsernameError(getUserFriendlyError(err));
+            } else {
+                setError(getUserFriendlyError(err));
+            }
         }
     };
 
@@ -153,13 +144,19 @@ function SignUpForm() {
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 placeholder="Choose a username"
-                                disabled={isLoading}
+                                disabled={signup.isPending}
                                 minLength={3}
                                 maxLength={18}
                                 autoComplete="username"
+                                aria-invalid={usernameError ? true : undefined}
                                 // eslint-disable-next-line jsx-a11y/no-autofocus
                                 autoFocus
                             />
+                            {usernameError && (
+                                <p className="mt-1 text-sm text-destructive">
+                                    {usernameError}
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -173,7 +170,7 @@ function SignUpForm() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Choose a password"
-                                disabled={isLoading}
+                                disabled={signup.isPending}
                                 minLength={7}
                                 autoComplete="new-password"
                             />
@@ -192,7 +189,7 @@ function SignUpForm() {
                                     setConfirmPassword(e.target.value)
                                 }
                                 placeholder="Confirm your password"
-                                disabled={isLoading}
+                                disabled={signup.isPending}
                                 minLength={7}
                                 autoComplete="new-password"
                             />
@@ -200,12 +197,12 @@ function SignUpForm() {
 
                         <Button
                             type="submit"
-                            variant={isLoading ? "outline" : "default"}
+                            variant={signup.isPending ? "outline" : "default"}
                             size="lg"
-                            disabled={isLoading}
+                            disabled={signup.isPending}
                             className="w-full flex items-center justify-center gap-2"
                         >
-                            {isLoading ? (
+                            {signup.isPending ? (
                                 <Spinner />
                             ) : (
                                 <UserPlus className="w-5 h-5" />

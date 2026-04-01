@@ -18,18 +18,17 @@ import { getAssetLongName } from "@/lib/assets/asset-names";
 // ---------------------------------------------------------------------------
 
 /**
- * Maps every backend game-error code to a human-readable message shown in
- * error toasts and form error states.
+ * Maps every backend game-error code to a human-readable message shown in error
+ * toasts and form error states.
  *
  * Keys are the exact string values of `GameExceptionType` (plus a handful of
  * plain HTTP `detail` strings used before game errors were introduced).
  */
 export const GAME_ERROR_MESSAGES: Record<string, string> = {
     // --- Authentication ---
-    "username is taken":
-        "This username is already taken. Please choose another.",
-    "User not found": "Username does not exist.",
-    "Invalid password": "Invalid password. Please try again.",
+    USERNAME_TAKEN: "This username is already taken. Please choose another.",
+    USER_NOT_FOUND: "Username does not exist.",
+    INVALID_PASSWORD: "Incorrect password. Please try again.",
     "Not authenticated": "Please log in to continue.",
     "User is not a player": "Access denied. Player account required.",
     "Player not set up": "Please complete your account setup.",

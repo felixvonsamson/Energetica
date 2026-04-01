@@ -18,12 +18,7 @@ export function useLogin() {
     return useMutation({
         mutationFn: (credentials: LoginRequest) => authApi.login(credentials),
         onSuccess: () => {
-            // Invalidate user query to refetch user data
             queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
-        },
-        onError: (error) => {
-            // Log error for debugging - consuming components handle UI display
-            handleApiError(error, "Login failed");
         },
     });
 }
@@ -35,12 +30,7 @@ export function useSignup() {
     return useMutation({
         mutationFn: (data: SignupRequest) => authApi.signup(data),
         onSuccess: () => {
-            // Invalidate user query to refetch user data
             queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
-        },
-        onError: (error) => {
-            // Log error for debugging - consuming components handle UI display
-            handleApiError(error, "Sign-up failed");
         },
     });
 }

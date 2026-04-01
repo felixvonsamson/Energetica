@@ -29,6 +29,9 @@ class GameExceptionType(StrEnum):
     LOCATION_OCCUPIED = "locationOccupied"
     CHOICE_UNMODIFIABLE = "choiceUnmodifiable"
     # Auth related
+    USERNAME_TAKEN = "USERNAME_TAKEN"
+    USER_NOT_FOUND = "USER_NOT_FOUND"
+    INVALID_PASSWORD = "INVALID_PASSWORD"
     SIGNUP_DISABLED = "Sign-ups are disabled."
     OLD_PASSWORD_INCORRECT = "Old password is incorrect."
     # Technology effects

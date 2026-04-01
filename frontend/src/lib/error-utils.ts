@@ -133,33 +133,7 @@ export function handleApiError(error: unknown, fallback?: string): string {
  */
 export function isErrorType(error: unknown, errorType: string): boolean {
     if (error instanceof ApiClientError) {
-        const errorMsg = error.getErrorMessage();
-        return errorMsg === errorType || errorMsg.includes(errorType);
-    }
-    return false;
-}
-
-/**
- * Check if an error is an authentication error.
- *
- * @example
- *     ```typescript
- *     if (isAuthError(error)) {
- *       navigate({ to: '/login' });
- *     }
- *     ```;
- *
- * @param error - The error to check
- * @returns True if the error is authentication-related
- */
-export function isAuthError(error: unknown): boolean {
-    if (error instanceof ApiClientError) {
-        return (
-            error.status === 401 ||
-            isErrorType(error, "Not authenticated") ||
-            isErrorType(error, "User not found") ||
-            isErrorType(error, "Invalid password")
-        );
+        return error.getErrorMessage() === errorType;
     }
     return false;
 }
