@@ -93,14 +93,15 @@ function ResourcesOverviewContent() {
     });
 
     return (
-        <div className="p-4 md:p-8">
-            <Card className="mb-6">
+        <div className="py-4 md:p-8">
+            <Card className="mb-6 rounded-none border-x-0 md:rounded-xl md:border-x">
                 <CardContent>
                     <ResolutionPicker currentTick={currentTick} />
                 </CardContent>
             </Card>
 
             <ChartCard
+                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={Package}
                 iconClassName="text-primary"
                 title="Resource Stocks"

@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 
+import { CoinIcon } from "@/components/ui/coin-icon";
 import { Input } from "@/components/ui/input";
 
 interface PriceInputProps {
@@ -34,10 +35,7 @@ export function PriceInput({ value, onCommit, disabled = false }: PriceInputProp
     };
 
     return (
-        <div className="relative w-28">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400 pointer-events-none">
-                $
-            </span>
+        <div className="relative w-36 mx-auto">
             <Input
                 type="number"
                 value={localValue}
@@ -49,8 +47,11 @@ export function PriceInput({ value, onCommit, disabled = false }: PriceInputProp
                 disabled={disabled}
                 step="0.01"
                 min="-4.99"
-                className="pl-6"
+                className="pr-14 border-border-brand font-mono"
             />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none inline-flex items-center gap-0.5">
+                <CoinIcon className="size-3" />/MWh
+            </span>
         </div>
     );
 }

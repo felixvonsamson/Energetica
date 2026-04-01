@@ -9,14 +9,14 @@ import { useMemo } from "react";
 
 import { StatusBadge } from "@/components/power-priorities/status-badge";
 import type { RenewableFacilityType } from "@/components/power-priorities/types";
-import { Money } from "@/components/ui";
 import { AssetName } from "@/components/ui/asset-name";
+import { CoinIcon } from "@/components/ui/coin-icon";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
 import {
-    TypographyH3,
-    TypographyMuted,
-    TypographySmall,
-} from "@/components/ui/typography";
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useFacilityStatuses, useFacilities } from "@/hooks/use-facilities";
 import { formatPower } from "@/lib/format-utils";
@@ -26,11 +26,6 @@ interface RenewablesSectionProps {
     renewables: RenewableFacilityType[];
 }
 
-/**
- * Displays renewable facilities as table rows with a lock icon to indicate
- * they're always active and cannot be reordered. Renewables have priority over
- * all other facilities. Styled to match production items.
- */
 export function RenewablesSection({ renewables }: RenewablesSectionProps) {
     const { data: statusesData } = useFacilityStatuses();
     const { data: facilitiesData } = useFacilities();
@@ -58,20 +53,6 @@ export function RenewablesSection({ renewables }: RenewablesSectionProps) {
 
     return (
         <tbody>
-            <tr>
-                <td
-                    colSpan={7}
-                    className="pt-4 pb-2 px-3 border-t-2 border-border"
-                >
-                    <TypographyH3>
-                        <TypographyMuted>
-                            <TypographySmall>
-                                Renewables (always active)
-                            </TypographySmall>
-                        </TypographyMuted>
-                    </TypographyH3>
-                </td>
-            </tr>
             {renewables.map((renewable) => {
                 const status = statusesData?.renewables[renewable] ?? "available";
                 const currentPowerMW = productionPowerLevels[renewable];
@@ -79,7 +60,7 @@ export function RenewablesSection({ renewables }: RenewablesSectionProps) {
 
                 return (
                     <tr key={renewable}>
-                        {/* Empty consumption priority column */}
+                        {/* Empty left side cell */}
                         <td className="bg-transparent" />
 
                         {/* Facility name */}
@@ -87,8 +68,35 @@ export function RenewablesSection({ renewables }: RenewablesSectionProps) {
                             <AssetName assetId={renewable} mode="auto" />
                         </td>
 
+                        {/* Status badge */}
+                        <td className="py-3 px-3 text-center bg-secondary">
+                            <div className="inline-flex justify-center">
+                                <StatusBadge
+                                    status={status}
+                                    variant="iconOnly"
+                                />
+                            </div>
+                        </td>
+
+                        {/* Power gauge (hidden on mobile) */}
+                        <td className="py-3 px-3 hidden lg:table-cell bg-secondary">
+                            {capacityMW > 0 ? (
+                                <div className="w-30 mx-auto">
+                                    <FacilityGauge
+                                        facilityType={renewable}
+                                        value={
+                                            (currentPowerMW! / capacityMW) *
+                                            100
+                                        }
+                                    />
+                                </div>
+                            ) : (
+                                <div className="w-30 mx-auto text-center text-xs">—</div>
+                            )}
+                        </td>
+
                         {/* Current power */}
-                        <td className="py-3 px-3 text-right text-xs text-muted-foreground bg-secondary">
+                        <td className="py-3 px-3 text-right text-xs bg-secondary">
                             {currentPowerMW !== undefined ? (
                                 <span className="font-mono">
                                     {formatPower(currentPowerMW)}
@@ -98,43 +106,35 @@ export function RenewablesSection({ renewables }: RenewablesSectionProps) {
                             )}
                         </td>
 
-                        {/* Power gauge (hidden on mobile) */}
-                        <td className="py-3 px-3 hidden lg:table-cell bg-secondary">
-                            {capacityMW > 0 ? (
-                                <FacilityGauge
-                                    facilityType={renewable}
-                                    value={
-                                        capacityMW > 0
-                                            ? (currentPowerMW! / capacityMW) *
-                                              100
-                                            : 0
-                                    }
-                                />
-                            ) : (
-                                <div className="text-xs text-muted-foreground">
-                                    —
-                                </div>
-                            )}
+                        {/* Price (-5, non-modifiable) */}
+                        <td className="py-3 px-3 text-center bg-secondary">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="font-mono text-sm cursor-default inline-flex items-center gap-1">
+                                        -5.00
+                                        <span className="text-muted-foreground text-xs inline-flex items-center gap-0.5">
+                                            <CoinIcon className="size-3" />/MWh
+                                        </span>
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    Renewables are not controllable and their
+                                    price is set to the cost of dumping
+                                </TooltipContent>
+                            </Tooltip>
                         </td>
 
-                        {/* Price */}
-                        <td className="py-3 px-3 text-right bg-secondary">
-                            <Money amount={null} />
-                        </td>
-
-                        {/* Status badge */}
-                        <td className="py-3 px-3 text-right bg-secondary">
-                            <div className="inline-flex justify-end">
-                                <StatusBadge
-                                    status={status}
-                                    variant="iconOnly"
-                                />
-                            </div>
-                        </td>
-
-                        {/* Lock icon instead of priority number */}
+                        {/* Lock icon with tooltip */}
                         <td className="py-3 px-3 text-center bg-secondary rounded-r-lg">
-                            <Lock className="w-4 h-4 shrink-0 inline-block" />
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Lock className="w-4 h-4 shrink-0 inline-block cursor-default" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    Renewables are not controllable. They are
+                                    always active.
+                                </TooltipContent>
+                            </Tooltip>
                         </td>
                     </tr>
                 );

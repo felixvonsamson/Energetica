@@ -45,7 +45,7 @@ export const Route = createFileRoute("/app/facilities/power-priorities")({
 function PowerPrioritiesPage() {
     return (
         <GameLayout>
-            <div className="p-4 md:p-8 space-y-6">
+            <div className="py-4 md:p-8 space-y-6">
                 <PriorityTable />
             </div>
         </GameLayout>

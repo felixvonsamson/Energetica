@@ -111,7 +111,7 @@ function FacilityManagementContent() {
             case "power":
                 return (
                     <section className="mb-8">
-                        <Card>
+                        <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
                             <CardHeader>
                                 <CardTitle className="mb-4">
                                     Power Facilities
@@ -187,7 +187,7 @@ function FacilityManagementContent() {
             case "storage":
                 return (
                     <section className="mb-8">
-                        <Card>
+                        <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
                             <CardHeader>
                                 <CardTitle className="mb-4">
                                     Storage Facilities
@@ -266,7 +266,7 @@ function FacilityManagementContent() {
             case "extraction":
                 return (
                     <section className="mb-8">
-                        <Card>
+                        <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
                             <CardHeader>
                                 <CardTitle className="mb-4">
                                     Extraction Facilities
@@ -343,7 +343,7 @@ function FacilityManagementContent() {
     };
 
     return (
-        <div className="p-4 md:p-8">
+        <div className="py-4 md:p-8">
             {/* Category Filter */}
             {showCategoryUI && (
                 <div className="mb-6 flex flex-wrap gap-2 justify-center">
