@@ -175,8 +175,8 @@ function EmissionsOverviewContent() {
     });
 
     return (
-        <div className="p-4 md:p-8 space-y-6">
-            <Card>
+        <div className="py-4 md:p-8 space-y-6">
+            <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
                 <CardContent>
                     <ResolutionPicker currentTick={currentTick} />
                 </CardContent>
@@ -184,6 +184,7 @@ function EmissionsOverviewContent() {
 
             {/* CO2 in Atmosphere */}
             <ChartCard
+                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={Globe}
                 iconClassName="text-primary"
                 title="CO₂ in the Atmosphere"
@@ -241,6 +242,7 @@ function EmissionsOverviewContent() {
 
             {/* Global Temperature */}
             <ChartCard
+                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={Thermometer}
                 iconClassName="text-primary"
                 title="Global Average Temperature"
@@ -273,6 +275,7 @@ function EmissionsOverviewContent() {
 
             {/* Personal Emissions */}
             <ChartCard
+                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={Cloud}
                 iconClassName="text-primary"
                 title="Your Emissions"

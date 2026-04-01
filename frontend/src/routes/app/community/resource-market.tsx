@@ -203,7 +203,7 @@ function ResourceMarketContent() {
     }
 
     return (
-        <div className="p-4 md:p-8">
+        <div className="py-4 md:p-8">
             {/* Put on sale dialog */}
             <CreateAskDialog
                 isOpen={createAsk === true}
@@ -293,7 +293,7 @@ function ResourceMarketContent() {
             </div>
 
             {/* Market table */}
-            <Card>
+            <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
                 <CardContent className="overflow-x-auto">
                     {filteredAndSortedAsks.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
