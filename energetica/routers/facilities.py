@@ -55,7 +55,7 @@ async def dismantle_facility(
     player: Annotated[Player, Depends(get_settled_player)],
     facility_id: int,
 ) -> DismantleOut:
-    """Dismantle a facility.
+    """Dismantle a facility. We allow players to dismantle facilities even if this will put them in debt to avoid deadlocks.
 
     Returns `draining: true` when the facility is a storage facility that still
     holds energy and has entered a drain phase instead of being removed
@@ -74,7 +74,7 @@ async def dismantle_all_of_type(
     player: Annotated[Player, Depends(get_settled_player)],
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
 ) -> DismantleOut:
-    """Dismantle all facilities of a certain type.
+    """Dismantle all facilities of a certain type. We allow players to dismantle facilities even if this will put them in debt to avoid deadlocks.
 
     Returns `draining: true` when the facility type is a storage facility
     (facilities will drain before being removed).
