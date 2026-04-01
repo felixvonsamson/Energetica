@@ -4,12 +4,12 @@ import { ReactNode } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
 import {
-    TechnologyName,
     TechnologyIcon,
     Money,
     CardContent,
     AssetName,
 } from "@/components/ui";
+import { TypographyH2 } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -18,7 +18,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { TypographyH2 } from "@/components/ui/typography";
 import { useQueueProject } from "@/hooks/use-projects";
 import { getFacilityRoute } from "@/lib/facility-routes";
 import { ProjectType, Requirement } from "@/types/projects";
@@ -74,11 +73,12 @@ export function TechnologyDetailDialog<T>({
                     <>
                         <DialogHeader className="sr-only">
                             <DialogTitle>
-                                <TechnologyName
-                                    technology={technology.name}
-                                    level={technology.level}
+                                <AssetName
+                                    assetId={technology.name}
                                     mode="long"
                                 />
+                                {technology.level !== null &&
+                                    ` Level ${technology.level}`}
                             </DialogTitle>
                             <DialogDescription>
                                 Technology details, requirements, and research
@@ -88,11 +88,11 @@ export function TechnologyDetailDialog<T>({
 
                         <div className="space-y-6">
                             {/* Image */}
-                            <div className="w-full">
+                            <div className="w-full overflow-hidden">
                                 <img
                                     src={imageUrl}
                                     alt={`${technology.name} technology`}
-                                    className="w-full h-64 object-cover rounded-lg"
+                                    className="w-full aspect-[3/1] object-cover rounded-lg"
                                     onError={(e) => {
                                         e.currentTarget.style.display = "none";
                                     }}
@@ -100,58 +100,103 @@ export function TechnologyDetailDialog<T>({
                             </div>
 
                             {/* Header */}
-                            <div className="flex flex-wrap items-center gap-3 justify-between">
-                                <div className="flex items-center gap-3">
-                                    <TypographyH2 className="flex items-center gap-2">
+                            <div className="space-y-1">
+                                <div className="flex flex-wrap items-center justify-center gap-3">
+                                    <TypographyH2 className="flex items-center gap-2 mr-auto">
                                         <TechnologyIcon
                                             technology={technology.name}
                                             size={28}
                                         />
-                                        <TechnologyName
-                                            technology={technology.name}
-                                            level={technology.level}
+                                        <AssetName
+                                            assetId={technology.name}
                                             mode="long"
                                         />
                                     </TypographyH2>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="text-xl font-semibold">
-                                        <Money amount={technology.price} long />
-                                    </div>
-                                    {/* Knowledge spillover discount */}
-                                    {technology.discount && (
-                                        <div className="text-green-500 text-base">
-                                            <em>
-                                                (-
-                                                {Math.round(
-                                                    (1 - technology.discount) *
-                                                        100,
-                                                )}
-                                                %)
-                                            </em>
-                                            {technology.prevalence && (
-                                                <span className="text-xs text-muted-foreground ml-1">
-                                                    ({technology.prevalence}{" "}
-                                                    other player
-                                                    {technology.prevalence > 1
-                                                        ? "s"
-                                                        : ""}
-                                                    )
-                                                </span>
-                                            )}
+                                    <div className="flex items-center gap-3 shrink-0">
+                                        <div className="text-xl font-semibold">
+                                            <Money amount={technology.price} long />
                                         </div>
-                                    )}
-                                    <a
-                                        href={technology.wikipedia_link}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="hover:opacity-80"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <ExternalLink className="w-5 h-5" />
-                                    </a>
+                                        {/* Knowledge spillover discount */}
+                                        {technology.discount && (
+                                            <div className="text-green-500 text-base">
+                                                <em>
+                                                    (-
+                                                    {Math.round(
+                                                        (1 - technology.discount) *
+                                                            100,
+                                                    )}
+                                                    %)
+                                                </em>
+                                                {technology.prevalence && (
+                                                    <span className="text-xs text-muted-foreground ml-1">
+                                                        ({technology.prevalence}{" "}
+                                                        other player
+                                                        {technology.prevalence > 1
+                                                            ? "s"
+                                                            : ""}
+                                                        )
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+                                {technology.level !== null && (
+                                    <p className="text-3xl text-muted-foreground text-center">
+                                        Level {technology.level}
+                                    </p>
+                                )}
                             </div>
+
+                            {/* Action Button */}
+                            <div className="flex justify-center">
+                                <Button
+                                    size="lg"
+                                    onClick={handleResearch}
+                                    disabled={
+                                        technology.requirements_status ===
+                                        "unsatisfied"
+                                    }
+                                    variant={
+                                        technology.requirements_status ===
+                                        "unsatisfied"
+                                            ? "destructive"
+                                            : "default"
+                                    }
+                                    className="px-8 text-lg font-bold"
+                                >
+                                    {technology.requirements_status ===
+                                    "unsatisfied"
+                                        ? "Locked"
+                                        : technology.requirements_status ===
+                                            "queued"
+                                          ? "Queue Research"
+                                          : "Start Research"}
+                                </Button>
+                            </div>
+
+                            {/* Requirements */}
+                            {technology.requirements_status !== "satisfied" && (
+                                <CardContent>
+                                    <RequirementsDisplay
+                                        requirements={technology.requirements}
+                                    />
+                                </CardContent>
+                            )}
+
+                            {/* Research Info */}
+                            <CardContent className="flex justify-around">
+                                <ConstructionInfo
+                                    constructionTime={
+                                        technology.construction_time
+                                    }
+                                    constructionPower={
+                                        technology.construction_power
+                                    }
+                                />
+                            </CardContent>
+
+                            <hr className="border-border" />
 
                             {/* Description & Affected Facilities */}
                             <CardContent>
@@ -167,7 +212,7 @@ export function TechnologyDetailDialog<T>({
                                             <strong>
                                                 Affected facilities:
                                             </strong>{" "}
-                                            <span className="text-blue-400">
+                                            <span className="text-hyperlink">
                                                 {technology.affected_facilities.map(
                                                     (facilityName, idx) => {
                                                         const route =
@@ -192,6 +237,7 @@ export function TechnologyDetailDialog<T>({
                                                                                 facilityName
                                                                             }
                                                                             mode="long"
+                                                                            className="underline"
                                                                         />
                                                                     </Link>
                                                                 ) : (
@@ -218,61 +264,23 @@ export function TechnologyDetailDialog<T>({
                                 </div>
                             </CardContent>
 
-                            {/* Requirements */}
-                            {technology.requirements_status !== "satisfied" && (
-                                <CardContent>
-                                    <RequirementsDisplay
-                                        requirements={technology.requirements}
-                                    />
-                                </CardContent>
-                            )}
-
                             {/* Effects Table */}
                             <CardContent className="flex justify-around">
-                                <div className="w-xl">
-                                    {renderEffectsTable(technology)}
-                                </div>
+                                {renderEffectsTable(technology)}
                             </CardContent>
 
-                            {/* Research Info */}
-                            <CardContent className="flex justify-around">
-                                <div className="w-xl">
-                                    <ConstructionInfo
-                                        constructionTime={
-                                            technology.construction_time
-                                        }
-                                        constructionPower={
-                                            technology.construction_power
-                                        }
-                                    />
-                                </div>
-                            </CardContent>
-
-                            {/* Action Button */}
-                            <div className="flex justify-center pt-4 border-t border-border/50">
-                                <Button
-                                    size="lg"
-                                    onClick={handleResearch}
-                                    disabled={
-                                        technology.requirements_status ===
-                                        "unsatisfied"
-                                    }
-                                    variant={
-                                        technology.requirements_status ===
-                                        "unsatisfied"
-                                            ? "destructive"
-                                            : "default"
-                                    }
-                                    className="px-8 text-lg font-bold"
+                            {/* Learn More */}
+                            <div className="flex justify-center">
+                                <a
+                                    href={technology.wikipedia_link}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground"
+                                    onClick={(e) => e.stopPropagation()}
                                 >
-                                    {technology.requirements_status ===
-                                    "unsatisfied"
-                                        ? "Locked"
-                                        : technology.requirements_status ===
-                                            "queued"
-                                          ? "Queue Research"
-                                          : "Start Research"}
-                                </Button>
+                                    <ExternalLink className="w-4 h-4" />
+                                    Learn more
+                                </a>
                             </div>
                         </div>
                     </>

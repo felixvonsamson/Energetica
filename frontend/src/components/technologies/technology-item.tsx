@@ -6,7 +6,7 @@ import {
     CardHeader,
     CardTitle,
     TechnologyIcon,
-    TechnologyName,
+    AssetName,
     Money,
 } from "@/components/ui";
 import { CardDescription } from "@/components/ui/card";
@@ -47,22 +47,20 @@ export function TechnologyItem({
             onClick={onClick}
         >
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 min-w-0 justify-between">
+                <CardTitle className="flex items-center gap-2 min-w-0">
                     <TechnologyIcon technology={technologyName} size={20} />
-                    <TechnologyName
-                        technology={technologyName}
-                        level={level}
-                        mode="long"
-                    />
-                    <div className="grow" />
+                    <AssetName assetId={technologyName} mode="long" />
                 </CardTitle>
-                <CardDescription className="flex items-center gap-2">
-                    <Money amount={price} long />
-                    {discount && (
-                        <div className="text-success text-xs">
-                            <em>(-{Math.round((1 - discount) * 100)}%)</em>
-                        </div>
-                    )}
+                <CardDescription className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <Money amount={price} long />
+                        {discount && (
+                            <div className="text-success text-xs">
+                                <em>(-{Math.round((1 - discount) * 100)}%)</em>
+                            </div>
+                        )}
+                    </div>
+                    <span>Level {level}</span>
                 </CardDescription>
             </CardHeader>
 
