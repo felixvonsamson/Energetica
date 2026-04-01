@@ -5,7 +5,11 @@ import { toast } from "sonner";
 
 import { useTickQuery } from "@/contexts/game-tick-context";
 import { projectsApi } from "@/lib/api/projects";
-import { getUserFriendlyError } from "@/lib/error-utils";
+import { getAssetLongName } from "@/lib/assets/asset-names";
+import {
+    formatCancelProjectError,
+    resolveErrorMessage,
+} from "@/lib/game-messages";
 import { queryKeys, queryClient } from "@/lib/query-client";
 
 /**
@@ -105,13 +109,17 @@ export function useTechnologiesCatalog() {
 export function useQueueProject() {
     return useMutation({
         mutationFn: projectsApi.queueProject,
-        onSuccess: (data) => {
+        onSuccess: (data, variables) => {
             // Update cache directly with returned list (avoids refetch)
             queryClient.setQueryData(queryKeys.projects.all, data);
             // Invalidate player money since construction costs money
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.money,
             });
+            toast.success(`${getAssetLongName(variables.type)} queued`);
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }
@@ -127,6 +135,10 @@ export function useCancelProject() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.players.money,
             });
+            toast.success("Project cancelled");
+        },
+        onError: (error) => {
+            toast.error(formatCancelProjectError(error));
         },
     });
 }
@@ -139,6 +151,9 @@ export function usePauseProject() {
             // Update cache directly with returned list (avoids refetch)
             queryClient.setQueryData(queryKeys.projects.all, data);
         },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
+        },
     });
 }
 
@@ -149,6 +164,9 @@ export function useResumeProject() {
         onSuccess: (data) => {
             // Update cache directly with returned list (avoids refetch)
             queryClient.setQueryData(queryKeys.projects.all, data);
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }
@@ -162,7 +180,7 @@ export function useDecreaseProjectPriority() {
             queryClient.setQueryData(queryKeys.projects.all, data);
         },
         onError: (error) => {
-            toast.error(getUserFriendlyError(error));
+            toast.error(resolveErrorMessage(error));
         },
     });
 }
@@ -176,7 +194,7 @@ export function useIncreaseProjectPriority() {
             queryClient.setQueryData(queryKeys.projects.all, data);
         },
         onError: (error) => {
-            toast.error(getUserFriendlyError(error));
+            toast.error(resolveErrorMessage(error));
         },
     });
 }

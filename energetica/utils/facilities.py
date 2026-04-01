@@ -53,10 +53,12 @@ def upgrade_all_facilities(
     """Upgrade all facilities of a certain type."""
     facilities = list(
         ActiveFacility.filter(
-            lambda facility: facility.player == player
-            and facility.facility_type == facility_type
-            and facility.upgrade_cost is not None
-            and not facility.decommissioning,
+            lambda facility: (
+                facility.player == player
+                and facility.facility_type == facility_type
+                and facility.upgrade_cost is not None
+                and not facility.decommissioning
+            ),
         ),
     )
     if player.money < sum(map(lambda facility: cast(float, facility.upgrade_cost), facilities)):
@@ -110,7 +112,7 @@ def destroy_facility(player: Player, facility: ActiveFacility, event_key: str) -
 
 
 def dismantle_facility(facility: ActiveFacility) -> None:
-    """Dismantle a facility."""
+    """Dismantle a facility. We allow players to dismantle facilities even if this will put them in debt to avoid deadlocks."""
     dismantle_cost = facility.dismantle_cost
     player = facility.player
     player.money -= dismantle_cost
@@ -131,13 +133,11 @@ def dismantle_all_facilities(
     """Dismantle all facilities of a certain type."""
     facilities = list(
         ActiveFacility.filter(
-            lambda facility: facility.player == player
-            and facility.facility_type == facility_type
-            and not facility.decommissioning,
+            lambda facility: (
+                facility.player == player and facility.facility_type == facility_type and not facility.decommissioning
+            ),
         ),
     )
-    if player.money < sum(map(lambda facility: cast(float, facility.dismantle_cost), facilities)):
-        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
     for facility in facilities:
         dismantle_facility(facility)
 

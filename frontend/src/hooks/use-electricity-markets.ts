@@ -2,9 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { toast } from "sonner";
 
 import { useMyId } from "@/hooks/use-players";
 import { electricityMarketsApi } from "@/lib/api/electricity-markets";
+import { resolveErrorMessage } from "@/lib/game-messages";
 import { queryKeys } from "@/lib/query-client";
 import { ElectricityMarket } from "@/types/electricity-markets";
 
@@ -29,11 +31,15 @@ export function useJoinElectricityMarket() {
 
     return useMutation({
         mutationFn: electricityMarketsApi.join,
-        onSuccess: () => {
+        onSuccess: (data) => {
             // Invalidate the list of electricity markets
             queryClient.invalidateQueries({
                 queryKey: queryKeys.electricityMarkets.all,
             });
+            toast.success(`Joined ${data.name}`);
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }
@@ -49,6 +55,10 @@ export function useLeaveElectricityMarket() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.electricityMarkets.all,
             });
+            toast.success("Left electricity market");
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }
@@ -59,26 +69,15 @@ export function useCreateElectricityMarket() {
 
     return useMutation({
         mutationFn: electricityMarketsApi.create,
-        onSuccess: () => {
+        onSuccess: (data) => {
             // Invalidate the list of electricity markets to show the new market
             queryClient.invalidateQueries({
                 queryKey: queryKeys.electricityMarkets.all,
             });
+            toast.success(`Market "${data.name}" created`);
         },
-    });
-}
-
-/** Update the asking prices and bid prices for the player's electricity market. */
-export function useChangeElectricityMarketPrices() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: electricityMarketsApi.changePrices,
-        onSuccess: () => {
-            // Invalidate the electricity markets list to reflect price changes
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.electricityMarkets.all,
-            });
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
         },
     });
 }

@@ -896,6 +896,10 @@ export interface paths {
          * Dismantle Facility
          *
          * Dismantle a facility.
+         *
+         *     Returns `draining: true` when the facility is a storage facility that still
+         *     holds energy and has entered a drain phase instead of being removed
+         *     immediately.
          */
         post: operations["dismantle_facility_api_v1_facilities__facility_id__dismantle_post"];
         delete?: never;
@@ -917,6 +921,9 @@ export interface paths {
          * Dismantle All Of Type
          *
          * Dismantle all facilities of a certain type.
+         *
+         *     Returns `draining: true` when the facility type is a storage facility
+         *     (facilities will drain before being removed).
          */
         post: operations["dismantle_all_of_type_api_v1_facilities_dismantle_all_post"];
         delete?: never;
@@ -1271,6 +1278,40 @@ export interface paths {
         /** Put Power Priorities */
         put: operations["put_power_priorities_api_v1_power_priorities_put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/power-priorities/{side}/{item_type}:increase-priority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Increase Priority */
+        post: operations["increase_priority_api_v1_power_priorities__side___item_type__increase_priority_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/power-priorities/{side}/{item_type}:decrease-priority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decrease Priority */
+        post: operations["decrease_priority_api_v1_power_priorities__side___item_type__decrease_priority_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2326,6 +2367,26 @@ export interface components {
              * Estimated shipment time in game ticks.
              */
             shipment_time: number;
+        };
+        /**
+         * DismantleOut
+         *
+         * Response for a dismantle action.
+         *
+         *     Extends MoneyOut with a `draining` flag that is True when the dismantled
+         *     facility is a storage facility that still holds energy.  In that case the
+         *     facility enters a drain phase and will be removed once empty rather than
+         *     being deleted immediately.
+         */
+        DismantleOut: {
+            /** Money */
+            money: number;
+            /**
+             * Draining
+             *
+             * True for storage facilities, that will fist enter a drain phase and will be removed once empty.
+             */
+            draining: boolean;
         };
         /** ElectricityMarketCreate */
         ElectricityMarketCreate: {
@@ -5708,7 +5769,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MoneyOut"];
+                    "application/json": components["schemas"]["DismantleOut"];
                 };
             };
             /** Validation Error */
@@ -5745,7 +5806,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MoneyOut"];
+                    "application/json": components["schemas"]["DismantleOut"];
                 };
             };
             /** Validation Error */
@@ -6233,6 +6294,80 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    increase_priority_api_v1_power_priorities__side___item_type__increase_priority_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                side: "ask" | "bid";
+                item_type:
+                    | components["schemas"]["ControllableFacilityType"]
+                    | components["schemas"]["StorageFacilityType"]
+                    | components["schemas"]["NonFacilityBidType"]
+                    | components["schemas"]["ExtractionFacilityType"]
+                    | ("industry" | "carbon_capture");
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PowerPrioritiesListOut"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decrease_priority_api_v1_power_priorities__side___item_type__decrease_priority_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                side: "ask" | "bid";
+                item_type:
+                    | components["schemas"]["ControllableFacilityType"]
+                    | components["schemas"]["StorageFacilityType"]
+                    | components["schemas"]["NonFacilityBidType"]
+                    | components["schemas"]["ExtractionFacilityType"]
+                    | ("industry" | "carbon_capture");
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PowerPrioritiesListOut"];
+                };
             };
             /** Validation Error */
             422: {

@@ -22,73 +22,7 @@
  */
 
 import { ApiClientError } from "@/lib/api-client";
-
-/**
- * Maps backend error messages to user-friendly messages.
- *
- * This centralizes all error message translations in one place, making it
- * easier to maintain consistency and update messages across the app.
- *
- * Add new mappings here as you encounter new backend error messages.
- */
-const ERROR_MESSAGES: Record<string, string> = {
-    // Authentication errors
-    "username is taken":
-        "This username is already taken. Please choose another.",
-    "User not found": "Username does not exist.",
-    "Invalid password": "Invalid password. Please try again.",
-    "Not authenticated": "Please log in to continue.",
-    "User is not a player": "Access denied. Player account required.",
-    "Player not set up": "Please complete your account setup.",
-
-    // Sign-up errors
-    "Sign-ups are disabled.": "Sign-ups are currently disabled.",
-
-    // Location/settlement errors
-    locationOccupied: "This location is already occupied by another player.",
-    choiceUnmodifiable: "Your location choice cannot be changed.",
-    "Player has no tile": "You need to choose a location first.",
-    noLocation: "Please select a valid location.",
-
-    // Financial errors
-    "Not enough money": "You don't have enough money for this action.",
-
-    // Network errors
-    networkNotUnlocked: "This network is not yet unlocked.",
-    playerAlreadyInNetwork: "You are already in this network.",
-    nameAlreadyUsed: "This name is already in use.",
-    notInNetwork: "You are not a member of this network.",
-
-    // Project errors
-    "Project not found": "The requested project could not be found.",
-    "Requirements not satisfied":
-        "You don't meet the requirements for this action.",
-    HasDependents: "This project has dependencies that must be removed first.",
-
-    // Facility errors
-    "Facility not found": "The requested facility could not be found.",
-    "Facility not upgradable": "This facility cannot be upgraded.",
-    FacilityIsDecommissioning:
-        "This facility is currently being decommissioned.",
-    "Cannot remove technologies or functional facilities":
-        "Cannot remove technologies or functional facilities.",
-
-    // Resource market errors
-    notEnoughResource: "You don't have enough of this resource.",
-    invalidQuantity: "Please enter a valid quantity.",
-
-    // Chat errors
-    wrongTitleLength: "Chat title must be between 1 and 50 characters.",
-    chatAlreadyExist: "A chat with this configuration already exists.",
-    notInChat: "You are not a member of this chat.",
-    noMessage: "Please enter a message.",
-    messageTooLong: "Message is too long. Maximum 500 characters.",
-
-    // Validation errors
-    "Field required": "This field is required.",
-    "String should have at least": "This field is too short.",
-    "String should have at most": "This field is too long.",
-};
+import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
 
 /**
  * Get a user-friendly error message from any error object.
@@ -115,12 +49,12 @@ export function getUserFriendlyError(error: unknown): string {
         const errorMsg = error.getErrorMessage();
 
         // Check if we have a mapped user-friendly message
-        if (ERROR_MESSAGES[errorMsg]) {
-            return ERROR_MESSAGES[errorMsg];
+        if (GAME_ERROR_MESSAGES[errorMsg]) {
+            return GAME_ERROR_MESSAGES[errorMsg];
         }
 
         // Check for partial matches (e.g., validation errors)
-        for (const [key, value] of Object.entries(ERROR_MESSAGES)) {
+        for (const [key, value] of Object.entries(GAME_ERROR_MESSAGES)) {
             if (errorMsg.includes(key)) {
                 return value;
             }
