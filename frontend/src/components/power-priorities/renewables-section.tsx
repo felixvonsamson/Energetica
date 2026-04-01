@@ -118,8 +118,7 @@ export function RenewablesSection({ renewables }: RenewablesSectionProps) {
                                     </span>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    Renewables are not controllable and their
-                                    price is set to the cost of dumping
+                                    Price of dumping. Renewables are not controllable.
                                 </TooltipContent>
                             </Tooltip>
                         </td>
@@ -131,8 +130,7 @@ export function RenewablesSection({ renewables }: RenewablesSectionProps) {
                                     <Lock className="w-4 h-4 shrink-0 inline-block cursor-default" />
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    Renewables are not controllable. They are
-                                    always active.
+                                    Always active. Renewables are not controllable
                                 </TooltipContent>
                             </Tooltip>
                         </td>
