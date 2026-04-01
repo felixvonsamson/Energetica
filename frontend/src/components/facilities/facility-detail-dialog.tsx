@@ -1,8 +1,6 @@
 import { ExternalLink, GitCompareArrows } from "lucide-react";
 import { ReactNode } from "react";
 
-import { TypographyH2 } from "@/components/ui/typography";
-
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
 import {
     FacilityName,
@@ -18,6 +16,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { TypographyH2 } from "@/components/ui/typography";
 import { useQueueProject } from "@/hooks/use-projects";
 import { imageExtensionMap } from "@/lib/projects";
 import { ProjectType, Requirement } from "@/types/projects";

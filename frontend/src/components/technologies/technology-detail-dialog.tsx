@@ -9,7 +9,6 @@ import {
     CardContent,
     AssetName,
 } from "@/components/ui";
-import { TypographyH2 } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -18,6 +17,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { TypographyH2 } from "@/components/ui/typography";
 import { useQueueProject } from "@/hooks/use-projects";
 import { getFacilityRoute } from "@/lib/facility-routes";
 import { ProjectType, Requirement } from "@/types/projects";
@@ -77,8 +77,7 @@ export function TechnologyDetailDialog<T>({
                                     assetId={technology.name}
                                     mode="long"
                                 />
-                                {technology.level !== null &&
-                                    ` Level ${technology.level}`}
+                                {` Level ${technology.level}`}
                             </DialogTitle>
                             <DialogDescription>
                                 Technology details, requirements, and research
@@ -141,11 +140,9 @@ export function TechnologyDetailDialog<T>({
                                         )}
                                     </div>
                                 </div>
-                                {technology.level !== null && (
-                                    <p className="text-3xl text-muted-foreground text-center">
-                                        Level {technology.level}
-                                    </p>
-                                )}
+                                <p className="text-3xl text-muted-foreground text-center">
+                                    Level {technology.level}
+                                </p>
                             </div>
 
                             {/* Action Button */}
