@@ -42,14 +42,19 @@ export function AchievementCard(achievement: AchievementCardProps) {
     }
 
     return (
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             {/* Achievement name */}
-            <div className="font-medium text-sm text-foreground min-w-35">
+            <div className="font-medium text-sm text-foreground min-w-35 grow sm:grow-0">
                 {name}
             </div>
 
+            {/* XP reward — shown inline with name on small screens */}
+            <div className="font-medium text-sm text-foreground text-center min-w-15 sm:hidden">
+                +{reward} XP
+            </div>
+
             {/* Progress bar */}
-            <div className="flex-1 relative h-7 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
+            <div className="w-full sm:w-auto sm:flex-1 relative h-5 sm:h-7 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
                 <div
                     className="absolute inset-0 bg-brand-secondary dark:bg-brand-secondary transition-all duration-300 ease-out"
                     style={{ width: `${progressPercent}%` }}
@@ -59,8 +64,8 @@ export function AchievementCard(achievement: AchievementCardProps) {
                 </div>
             </div>
 
-            {/* XP reward */}
-            <div className="font-medium text-sm text-foreground text-center min-w-15">
+            {/* XP reward — hidden on small screens (shown above progress bar) */}
+            <div className="hidden sm:block font-medium text-sm text-foreground text-center min-w-15">
                 +{reward} XP
             </div>
         </div>
