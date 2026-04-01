@@ -34,14 +34,6 @@ interface PriorityItemProps {
     canBumpDown: boolean;
 }
 
-/**
- * Displays a single facility as a table row.
- *
- * Bump buttons sit in the side cell that "owns" the row (left for consumption,
- * right for production). The ↑ button uses variant="ghost" and ↓ uses
- * variant="secondary" — ↓ is always the "increase priority" action for both
- * sides, so it gets the visual weight.
- */
 export function PriorityItem({
     item,
     canBumpUp,
@@ -96,7 +88,6 @@ export function PriorityItem({
         );
     }, [facilitiesData, item.type, item.side]);
 
-    /** Moves this item one step toward higher or lower priority. */
     const handleBump = (direction: "up" | "down") => {
         updatePowerPriorityBump.mutate({
             side: item.side,
@@ -105,7 +96,6 @@ export function PriorityItem({
         });
     };
 
-    /** Commits a price edit for this item. */
     const handlePriceCommit = async (newPrice: number) => {
         if (item.side === "ask") {
             await updateElectricityPrices.mutateAsync({
@@ -121,10 +111,11 @@ export function PriorityItem({
     };
 
     const bumpButtons = (
-        <div className="inline-flex items-center gap-1">
+        <div className="inline-flex flex-col items-center">
             <Button
                 variant="ghost"
                 size="icon-sm"
+                className="size-6"
                 onClick={() => handleBump("up")}
                 disabled={!canBumpUp || updatePowerPriorityBump.isPending}
                 title="Move up (lower priority)"
@@ -135,6 +126,7 @@ export function PriorityItem({
             <Button
                 variant="ghost"
                 size="icon-sm"
+                className="size-6"
                 onClick={() => handleBump("down")}
                 disabled={!canBumpDown || updatePowerPriorityBump.isPending}
                 title="Move down (higher priority)"
@@ -157,7 +149,7 @@ export function PriorityItem({
             {/* Consumption side cell — bump buttons for bid rows, empty for ask */}
             <td
                 className={cn(
-                    "py-3 px-2 text-center",
+                    "py-1 px-2 text-center",
                     isConsumption
                         ? "bg-secondary rounded-l-lg"
                         : "bg-transparent",
@@ -173,37 +165,51 @@ export function PriorityItem({
                     isProduction && "rounded-l-lg",
                 )}
             >
-                <AssetName assetId={item.type} mode="short" />
-                {suffix && (
-                    <span className="text-gray-600 dark:text-gray-400">
-                        {suffix}
-                    </span>
-                )}
+                <div className="flex flex-col lg:flex-row lg:items-baseline lg:gap-1">
+                    <AssetName assetId={item.type} mode="short" />
+                    {suffix && (
+                        <span className="text-muted-foreground">
+                            {suffix}
+                        </span>
+                    )}
+                </div>
             </td>
 
-            {/* Current power */}
-            <td className="py-3 px-3 text-right text-xs text-gray-600 dark:text-gray-400 bg-secondary">
-                <span className="font-mono">
-                    {formatPower(currentPowerMW ?? 0)}
-                </span>
+            {/* Status badge */}
+            <td className="py-2 px-3 text-center bg-secondary">
+                <div className="inline-flex justify-center">
+                    <StatusBadge status={status} variant={"iconOnly"} />
+                </div>
             </td>
 
             {/* Power gauge (hidden on mobile) */}
             <td className="py-3 px-3 hidden lg:table-cell bg-secondary">
                 {capacityMW > 0 ? (
-                    <FacilityGauge
-                        facilityType={item.type}
-                        value={((currentPowerMW ?? 0) / capacityMW) * 100}
-                    />
-                ) : (
-                    <div className="text-center text-xs text-gray-500 dark:text-gray-400">
-                        —
+                    <div className="w-30 mx-auto">
+                        <FacilityGauge
+                            facilityType={item.type}
+                            value={((currentPowerMW ?? 0) / capacityMW) * 100}
+                        />
                     </div>
+                ) : (
+                    <div className="w-30 mx-auto text-center text-xs">—</div>
                 )}
             </td>
 
+            {/* Current power */}
+            <td className="py-3 px-3 text-right text-xs bg-secondary">
+                <span className="font-mono">
+                    {formatPower(currentPowerMW ?? 0)}
+                </span>
+            </td>
+
             {/* Price */}
-            <td className="py-0 px-3 bg-secondary">
+            <td
+                className={cn(
+                    "py-0 px-3 text-center bg-secondary",
+                    isConsumption && "rounded-r-lg",
+                )}
+            >
                 <PriceInput
                     value={item.price}
                     onCommit={handlePriceCommit}
@@ -211,22 +217,10 @@ export function PriorityItem({
                 />
             </td>
 
-            {/* Status badge */}
-            <td
-                className={cn(
-                    "py-2 px-3 text-right bg-secondary",
-                    isConsumption && "rounded-r-lg",
-                )}
-            >
-                <div className="inline-flex justify-end">
-                    <StatusBadge status={status} variant={"iconOnly"} />
-                </div>
-            </td>
-
             {/* Production side cell — bump buttons for ask rows, empty for bid */}
             <td
                 className={cn(
-                    "py-3 px-2 text-center",
+                    "py-1 px-2 text-center",
                     isProduction
                         ? "bg-secondary rounded-r-lg"
                         : "bg-transparent",

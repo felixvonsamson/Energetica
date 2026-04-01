@@ -73,7 +73,7 @@ export function AssetName({
     }
 
     return (
-        <Component className={cn("flex gap-1", className)}>
+        <Component className={cn("inline-flex gap-1", className)}>
             {displayText}
             <div className="text-muted-foreground">{suffix}</div>
         </Component>

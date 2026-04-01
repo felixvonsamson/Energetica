@@ -210,8 +210,8 @@ function MarketsOverviewContent() {
     // Show message if player is not in a market and none selected
     if (!selectedMarketId) {
         return (
-            <div className="p-4 md:p-8">
-                <Card>
+            <div className="py-4 md:p-8">
+                <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
                     <CardContent>
                         <p className="text-muted">
                             You are not part of any electricity market.{" "}
@@ -230,8 +230,8 @@ function MarketsOverviewContent() {
     }
 
     return (
-        <div className="p-4 md:p-8 flex flex-col gap-6">
-            <Card>
+        <div className="py-4 md:p-8 flex flex-col gap-6">
+            <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
                 <CardContent>
                     <div className="space-y-4">
                         <MarketSelector
@@ -248,7 +248,7 @@ function MarketsOverviewContent() {
             </Card>
 
             {/* Latest Values Display */}
-            <Card>
+            <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <NetworkIcon className="w-6 h-6 text-primary" />
@@ -289,6 +289,7 @@ function MarketsOverviewContent() {
 
             {/* Price Chart */}
             <ChartCard
+                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={TrendingUp}
                 iconClassName="text-primary"
                 title="Market Price"
@@ -301,7 +302,7 @@ function MarketsOverviewContent() {
             </ChartCard>
 
             {/* Breakdown Section */}
-            <Card>
+            <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
                 <CardContent>
                     <div className="flex flex-row gap-10 justify-between">
                         <div className="flex flex-row gap-4 items-center">
@@ -373,6 +374,7 @@ function MarketsOverviewContent() {
             </Card>
 
             <ChartCard
+                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={
                     !breakdownEnabled
                         ? Activity
@@ -411,6 +413,7 @@ function MarketsOverviewContent() {
             {currentTick !== undefined && (
                 <>
                     <ChartCard
+                        className="rounded-none border-x-0 md:rounded-xl md:border-x"
                         icon={TrendingUp}
                         iconClassName="text-primary"
                         title="Supply & Demand Curves"
@@ -448,6 +451,7 @@ function MarketsOverviewContent() {
                         />
                     </ChartCard>
                     <ChartCard
+                        className="rounded-none border-x-0 md:rounded-xl md:border-x"
                         icon={BookOpenText}
                         iconClassName="text-primary"
                         title="Order Book Depth Chart"

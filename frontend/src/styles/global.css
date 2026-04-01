@@ -89,9 +89,11 @@
     --color-fg-muted:        var(--fg-muted);
     --color-fg-subtle:       var(--fg-subtle);
     --color-fg-on-brand:     var(--fg-on-brand);
+    --color-hyperlink:       var(--hyperlink);
 
     /* Borders */
     --color-border-subtle:   var(--border-subtle);
+    --color-border-brand:    var(--border-brand);
 
     /* Brand */
     --color-brand:           var(--brand);
@@ -173,9 +175,11 @@
         --fg-muted:       var(--color-pine-500);   /* secondary text, labels */
         --fg-subtle:      var(--color-bone-600);   /* disabled, placeholder, tertiary */
         --fg-on-brand:    #ffffff;                 /* text on brand-coloured backgrounds */
+        --hyperlink:      var(--color-blue-600);        /* links */
 
         /* Borders */
         --border-subtle:  var(--color-bone-300);   /* dividers, subtle separators */
+        --border-brand:   var(--color-pine-800);   /* brand-coloured input/widget borders */
         /* --border (default) is already defined above */
 
         /* Brand — the pine-green action colour */
@@ -326,9 +330,11 @@
         --fg-muted:       #b7b7b7;
         --fg-subtle:      #606060;
         --fg-on-brand:    #ffffff;
+        --hyperlink:      var(--color-blue-400);        /* links */
 
         /* Borders */
         --border-subtle:  #2a2a2a;
+        --border-brand:   var(--color-pine-500);   /* brand-coloured input/widget borders */
         /* --border (default) is already defined above */
 
         /* Brand */

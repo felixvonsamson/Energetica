@@ -4,15 +4,11 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import {
-    createContext,
-    useCallback,
-    type ReactNode,
-} from "react";
+import { createContext, type ReactNode } from "react";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api-client";
-import { queryClient, queryKeys } from "@/lib/query-client";
+import { queryKeys } from "@/lib/query-client";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type User = ApiSchema<"UserOut">;
@@ -23,7 +19,6 @@ interface AuthContextValue {
     isLoading: boolean;
     error: Error | null;
     refetch: () => Promise<void>;
-    logout: () => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(
@@ -59,12 +54,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         staleTime: Infinity,
     });
 
-    const logout = useCallback(() => {
-        // Just clear the frontend state. The API logout is handled by the logout route.
-        // Clear all cached queries
-        queryClient.clear();
-    }, []);
-
     const value: AuthContextValue = {
         user: user ?? null,
         isAuthenticated: (user ?? null) !== null,
@@ -73,7 +62,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         refetch: async () => {
             await refetch();
         },
-        logout,
     };
 
     return (

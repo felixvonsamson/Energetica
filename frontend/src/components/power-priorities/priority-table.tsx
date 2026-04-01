@@ -5,6 +5,7 @@
  */
 
 import { AnimatePresence } from "framer-motion";
+import { Plug, Zap } from "lucide-react";
 
 import { PriorityItem } from "@/components/power-priorities/priority-item";
 import { RenewablesSection } from "@/components/power-priorities/renewables-section";
@@ -41,35 +42,36 @@ export function PriorityTable() {
     const { renewables, power_priorities } = prioritiesData;
 
     return (
-        <Card>
-            <CardContent>
+        <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
+            <CardContent className="overflow-x-auto">
                 {power_priorities.length === 0 ? (
-                    <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                    <p className="text-center py-8">
                         No facilities available
                     </p>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-170 border-separate border-spacing-y-2">
+                    <table className="w-full min-w-170 border-separate border-spacing-y-2">
                             <thead>
-                                <tr className="text-xs font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                                    <th className="text-center py-2 px-2 w-16">
-                                        Cons
+                                <tr className="text-sm font-normal text-muted-foreground border-b border-gray-200 dark:border-gray-700">
+                                    <th className="text-center py-2 px-2 w-px">
+                                        <Plug className="size-4 inline-block" />
                                     </th>
-                                    <th className="text-left py-2 px-3">
+                                    <th className="text-left py-2 px-3 w-px">
                                         Facility
                                     </th>
-                                    <th className="text-right py-2 px-3 w-30">
-                                        Power
-                                    </th>
-                                    <th className="py-2 px-3 w-40 hidden lg:table-cell">
-                                        Usage
-                                    </th>
-                                    <th className="py-2 px-3 w-36">Price</th>
-                                    <th className="text-right py-2 px-3 w-10">
+                                    <th className="text-center py-2 px-3 w-px">
                                         Status
                                     </th>
-                                    <th className="text-center py-2 px-2 w-16">
-                                        Prod
+                                    <th className="text-center py-2 px-3 w-px hidden lg:table-cell">
+                                        Usage
+                                    </th>
+                                    <th className="text-right py-2 px-3 w-px">
+                                        Power
+                                    </th>
+                                    <th className="text-center py-2 px-3 w-px">
+                                        Price
+                                    </th>
+                                    <th className="text-center py-2 px-2 w-px">
+                                        <Zap className="size-4 inline-block" />
                                     </th>
                                 </tr>
                             </thead>
@@ -94,7 +96,6 @@ export function PriorityTable() {
                                 <RenewablesSection renewables={renewables} />
                             )}
                         </table>
-                    </div>
                 )}
             </CardContent>
         </Card>

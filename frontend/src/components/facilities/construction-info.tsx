@@ -35,11 +35,9 @@ export function ConstructionInfo({
             {constructionPollution !== undefined &&
                 constructionPollution !== null && (
                     <div className="flex items-center gap-2">
-                        <Cloud className="w-4 h-4" />
+                        <span className="text-foreground">Emissions:</span>
                         <strong>{formatMass(constructionPollution)} CO₂</strong>
-                        <span className="text-xs text-gray-500">
-                            (Emissions)
-                        </span>
+                        <Cloud className="w-4 h-4" />
                     </div>
                 )}
         </div>
