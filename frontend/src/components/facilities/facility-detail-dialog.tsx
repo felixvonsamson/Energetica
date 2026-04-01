@@ -13,7 +13,6 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
@@ -121,17 +120,17 @@ function FacilityContent<T>(
             </DialogHeader>
             <div className="space-y-6">
                 {/* Image */}
-                <div className="w-auto">
+                <div className="w-full overflow-hidden">
                     <img
                         src={imageUrl}
                         alt={`${facility.name} ${facilityType} facility`}
-                        className="w-full aspect-3/2 object-cover rounded-lg"
+                        className="w-full aspect-[3/1] object-cover rounded-lg"
                     />
                 </div>
 
                 {/* Header */}
-                <div className="flex flex-wrap items-center gap-3 justify-between">
-                    <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                    <div className="flex items-center gap-2 mr-auto">
                         <TypographyH2 className="flex items-center gap-2">
                             <FacilityIcon facility={facility.name} size={28} />
                             <FacilityName
@@ -141,21 +140,66 @@ function FacilityContent<T>(
                         </TypographyH2>
                         {extraHeaderContent && extraHeaderContent(facility)}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                         <div className="text-xl font-semibold">
                             <Money amount={facility.price} long />
                         </div>
-                        <a
-                            href={facility.wikipedia_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="hover:opacity-80"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <ExternalLink className="w-5 h-5" />
-                        </a>
                     </div>
                 </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-center gap-3">
+                    {onCompare && (
+                        <Button
+                            size="lg"
+                            variant="secondary"
+                            onClick={() => onCompare(facility)}
+                            className="px-6 text-lg font-semibold"
+                        >
+                            <GitCompareArrows className="w-5 h-5 mr-2" />
+                            Compare
+                        </Button>
+                    )}
+                    <Button
+                        size="lg"
+                        onClick={handleConstruction}
+                        disabled={facility.requirements_status === "unsatisfied"}
+                        variant={
+                            facility.requirements_status === "unsatisfied"
+                                ? "destructive"
+                                : "default"
+                        }
+                        className="px-8 text-lg font-bold"
+                    >
+                        {facility.requirements_status === "unsatisfied"
+                            ? "Locked"
+                            : "Start Construction"}
+                    </Button>
+                </div>
+
+                {/* Requirements */}
+                {facility.requirements.some(
+                    (r) => r.status !== "satisfied",
+                ) && (
+                    <CardContent>
+                        <RequirementsDisplay
+                            requirements={facility.requirements}
+                        />
+                    </CardContent>
+                )}
+
+                {/* Construction Info */}
+                <CardContent className="flex justify-around">
+                    <ConstructionInfo
+                        constructionTime={facility.construction_time}
+                        constructionPower={facility.construction_power}
+                        constructionPollution={
+                            facility.construction_pollution ?? undefined
+                        }
+                    />
+                </CardContent>
+
+                <hr className="border-border" />
 
                 {/* Description */}
                 <CardContent>
@@ -170,61 +214,27 @@ function FacilityContent<T>(
                     )}
                 </CardContent>
 
-                {/* Requirements */}
-                {facility.requirements_status !== "satisfied" &&
-                    facility.requirements.length > 0 && (
-                        <CardContent>
-                            <RequirementsDisplay
-                                requirements={facility.requirements}
-                            />
-                        </CardContent>
-                    )}
-
                 {/* Stats Table */}
                 <CardContent className="flex justify-around">
                     {renderStatsTable(facility)}
                 </CardContent>
 
-                {/* Construction Info */}
-                <CardContent className="flex justify-around">
-                    <ConstructionInfo
-                        constructionTime={facility.construction_time}
-                        constructionPower={facility.construction_power}
-                        constructionPollution={
-                            facility.construction_pollution ?? undefined
-                        }
-                    />
-                </CardContent>
-            </div>
-            <DialogFooter>
-                {/* Action Buttons */}
-                {onCompare && (
-                    <Button
-                        size="lg"
-                        variant="secondary"
-                        onClick={() => onCompare(facility)}
-                        className="px-6 text-lg font-semibold"
-                    >
-                        <GitCompareArrows className="w-5 h-5 mr-2" />
-                        Compare
-                    </Button>
+                {/* Learn More */}
+                {facilityType !== "functional" && (
+                    <div className="flex justify-center">
+                        <a
+                            href={facility.wikipedia_link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <ExternalLink className="w-4 h-4" />
+                            Learn more
+                        </a>
+                    </div>
                 )}
-                <Button
-                    size="lg"
-                    onClick={handleConstruction}
-                    disabled={facility.requirements_status === "unsatisfied"}
-                    variant={
-                        facility.requirements_status === "unsatisfied"
-                            ? "destructive"
-                            : "default"
-                    }
-                    className="px-8 text-lg font-bold"
-                >
-                    {facility.requirements_status === "unsatisfied"
-                        ? "Locked"
-                        : "Start Construction"}
-                </Button>
-            </DialogFooter>
+            </div>
         </>
     );
 }
