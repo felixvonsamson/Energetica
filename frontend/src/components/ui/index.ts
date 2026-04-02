@@ -1,4 +1,5 @@
 export { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+export { PageCard } from "@/components/ui/page-card";
 export { Button } from "@/components/ui/button";
 export { CatalogGrid } from "@/components/ui/catalog-grid";
 export { InfoBanner } from "@/components/ui/info-banner";

@@ -2,7 +2,7 @@ import { type LucideIcon } from "lucide-react";
 import { type ReactNode } from "react";
 
 import {
-    Card,
+    PageCard,
     CardTitle,
     CardContent,
     EmptyState,
@@ -24,7 +24,7 @@ export function DashboardSection({
     emptyMessage,
 }: DashboardSectionProps) {
     return (
-        <Card>
+        <PageCard>
             <CardHeader>
                 <CardTitle>{title}</CardTitle>
             </CardHeader>
@@ -36,6 +36,6 @@ export function DashboardSection({
                     />
                 )}
             </CardContent>
-        </Card>
+        </PageCard>
     );
 }

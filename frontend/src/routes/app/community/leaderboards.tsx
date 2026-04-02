@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent, CashFlow } from "@/components/ui";
+import { PageCard, CardContent, CashFlow } from "@/components/ui";
 import { useHasCapability } from "@/hooks/use-capabilities";
 import { useLeaderboards } from "@/hooks/use-leaderboards";
 import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
@@ -738,9 +738,9 @@ function LeaderboardsContent() {
     };
 
     return (
-        <div className="p-4 md:p-8">
+        <div className="py-4 md:p-8 flex flex-col gap-6">
             {/* Category Filter */}
-            <div className="mb-6 flex flex-wrap gap-2 justify-center">
+            <div className="px-4 md:px-0 flex flex-wrap gap-2 justify-center">
                 {(
                     [
                         "general",
@@ -775,7 +775,7 @@ function LeaderboardsContent() {
             </div>
 
             {/* Leaderboards Table */}
-            <Card>
+            <PageCard>
                 <CardContent className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
@@ -795,7 +795,7 @@ function LeaderboardsContent() {
                         </tbody>
                     </table>
                 </CardContent>
-            </Card>
+            </PageCard>
         </div>
     );
 }

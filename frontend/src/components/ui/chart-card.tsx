@@ -3,7 +3,8 @@
 import { type LucideIcon } from "lucide-react";
 import { type ReactNode } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageCard } from "@/components/ui/page-card";
 import { cn } from "@/lib/utils";
 
 export interface ChartCardProps {
@@ -42,7 +43,7 @@ export function ChartCard({
     headerContent,
 }: ChartCardProps) {
     return (
-        <Card className={cn(className)}>
+        <PageCard className={cn(className)}>
             {(Icon || title || headerContent) && (
                 <CardHeader>
                     <div className="flex items-center gap-2">
@@ -64,6 +65,6 @@ export function ChartCard({
             <CardContent className="flex flex-col gap-6">
                 {children}
             </CardContent>
-        </Card>
+        </PageCard>
     );
 }

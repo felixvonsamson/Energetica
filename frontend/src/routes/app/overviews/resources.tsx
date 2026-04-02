@@ -5,7 +5,7 @@ import { Package, TrendingUp, Warehouse } from "lucide-react";
 
 import { ResourcesChart } from "@/components/charts/resources-chart";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent } from "@/components/ui";
+import { CardContent, PageCard } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
 import { useTimeMode } from "@/contexts/time-mode-context";
@@ -93,15 +93,14 @@ function ResourcesOverviewContent() {
     });
 
     return (
-        <div className="py-4 md:p-8">
-            <Card className="mb-6 rounded-none border-x-0 md:rounded-xl md:border-x">
+        <div className="py-4 md:p-8 space-y-6">
+            <PageCard>
                 <CardContent>
                     <ResolutionPicker currentTick={currentTick} />
                 </CardContent>
-            </Card>
+            </PageCard>
 
             <ChartCard
-                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={Package}
                 iconClassName="text-primary"
                 title="Resource Stocks"
