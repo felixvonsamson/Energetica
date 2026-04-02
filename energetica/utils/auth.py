@@ -11,6 +11,7 @@ from itsdangerous import URLSafeTimedSerializer
 
 from energetica.database.player import Player
 from energetica.database.user import User
+from energetica.game_error import GameExceptionType
 
 
 def get_or_create_secret_key() -> str:
@@ -61,18 +62,18 @@ def get_user(request: Request) -> User | None:
 def get_playing_user(request: Request) -> User:
     user = get_user(request)
     if user is None or user.role != "player":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not a player")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.USER_IS_NOT_A_PLAYER)
     return user
 
 
 def get_settled_player(request: Request) -> Player:
     user = get_user(request)
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=GameExceptionType.NOT_AUTHENTICATED)
     if user.role != "player":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not a player")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.USER_IS_NOT_A_PLAYER)
     if user.player is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Player not set up")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=GameExceptionType.PLAYER_NOT_SET_UP)
     return user.player
 
 

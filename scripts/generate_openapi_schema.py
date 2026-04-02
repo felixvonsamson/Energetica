@@ -9,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from energetica import create_app
+from energetica.game_error import GameExceptionType
 
 
 def generate_schema() -> None:
@@ -21,6 +22,17 @@ def generate_schema() -> None:
 
     if not openapi_spec:
         raise RuntimeError("Failed to generate OpenAPI spec")
+
+    # Inject GameExceptionType as a schema component.
+    # The global GameError exception handler never appears in route response models,
+    # so it won't be picked up automatically — we add it explicitly so the frontend
+    # can use the generated type to constrain error-handling call sites.
+    openapi_spec.setdefault("components", {}).setdefault("schemas", {})
+    openapi_spec["components"]["schemas"]["GameExceptionType"] = {
+        "type": "string",
+        "enum": [e.value for e in GameExceptionType],
+        "title": "GameExceptionType",
+    }
 
     # Write to file in scripts/
     output_path = Path(__file__).parent / "openapi-schema.json"

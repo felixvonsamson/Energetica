@@ -22,7 +22,7 @@
  */
 
 import { ApiClientError } from "@/lib/api-client";
-import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
+import { GAME_ERROR_MESSAGES, GameExceptionType } from "@/lib/game-messages";
 
 /**
  * Get a user-friendly error message from any error object.
@@ -47,21 +47,10 @@ import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
 export function getUserFriendlyError(error: unknown): string {
     if (error instanceof ApiClientError) {
         const errorMsg = error.getErrorMessage();
-
-        // Check if we have a mapped user-friendly message
-        if (GAME_ERROR_MESSAGES[errorMsg]) {
-            return GAME_ERROR_MESSAGES[errorMsg];
-        }
-
-        // Check for partial matches (e.g., validation errors)
-        for (const [key, value] of Object.entries(GAME_ERROR_MESSAGES)) {
-            if (errorMsg.includes(key)) {
-                return value;
-            }
-        }
-
-        // Return the backend message if no mapping exists
-        return errorMsg || "An error occurred. Please try again.";
+        const mapped = (
+            GAME_ERROR_MESSAGES as Record<string, string | undefined>
+        )[errorMsg];
+        return mapped ?? errorMsg;
     }
 
     if (error instanceof Error) {
@@ -131,35 +120,12 @@ export function handleApiError(error: unknown, fallback?: string): string {
  * @param errorType - The error type to check for (from backend)
  * @returns True if the error matches the specified type
  */
-export function isErrorType(error: unknown, errorType: string): boolean {
+export function isErrorType(
+    error: unknown,
+    errorType: GameExceptionType,
+): boolean {
     if (error instanceof ApiClientError) {
-        const errorMsg = error.getErrorMessage();
-        return errorMsg === errorType || errorMsg.includes(errorType);
-    }
-    return false;
-}
-
-/**
- * Check if an error is an authentication error.
- *
- * @example
- *     ```typescript
- *     if (isAuthError(error)) {
- *       navigate({ to: '/login' });
- *     }
- *     ```;
- *
- * @param error - The error to check
- * @returns True if the error is authentication-related
- */
-export function isAuthError(error: unknown): boolean {
-    if (error instanceof ApiClientError) {
-        return (
-            error.status === 401 ||
-            isErrorType(error, "Not authenticated") ||
-            isErrorType(error, "User not found") ||
-            isErrorType(error, "Invalid password")
-        );
+        return error.getErrorMessage() === errorType;
     }
     return false;
 }

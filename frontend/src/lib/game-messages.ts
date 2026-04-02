@@ -12,30 +12,31 @@
 
 import { ApiClientError, isGameError } from "@/lib/api-client";
 import { getAssetLongName } from "@/lib/assets/asset-names";
+import type { ApiSchema } from "@/types/api-helpers";
+
+export type GameExceptionType = ApiSchema<"GameExceptionType">;
 
 // ---------------------------------------------------------------------------
 // Error message map
 // ---------------------------------------------------------------------------
 
 /**
- * Maps every backend game-error code to a human-readable message shown in
- * error toasts and form error states.
+ * Maps every backend game-error code to a human-readable message shown in error
+ * toasts and form error states.
  *
  * Keys are the exact string values of `GameExceptionType` (plus a handful of
  * plain HTTP `detail` strings used before game errors were introduced).
  */
-export const GAME_ERROR_MESSAGES: Record<string, string> = {
+export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     // --- Authentication ---
-    "username is taken":
-        "This username is already taken. Please choose another.",
-    "User not found": "Username does not exist.",
-    "Invalid password": "Invalid password. Please try again.",
-    "Not authenticated": "Please log in to continue.",
-    "User is not a player": "Access denied. Player account required.",
-    "Player not set up": "Please complete your account setup.",
-    "Sign-ups are disabled.": "Sign-ups are currently disabled.",
-    "Old password is incorrect.":
-        "The current password you entered is incorrect.",
+    USERNAME_TAKEN: "This username is already taken. Please choose another.",
+    USER_NOT_FOUND: "Username does not exist.",
+    INVALID_PASSWORD: "Incorrect password. Please try again.",
+    NOT_AUTHENTICATED: "Please log in to continue.",
+    USER_IS_NOT_A_PLAYER: "Access denied. Player account required.",
+    PLAYER_NOT_SET_UP: "Please complete your account setup.",
+    SIGNUP_DISABLED: "Sign-ups are currently disabled.",
+    OLD_PASSWORD_INCORRECT: "The current password you entered is incorrect.",
 
     // --- Location / tile ---
     locationOccupied: "This location is already occupied by another player.",
@@ -97,11 +98,20 @@ export const GAME_ERROR_MESSAGES: Record<string, string> = {
     // --- Daily quiz ---
     quizAlreadyAnswered: "You have already answered today's quiz.",
 
-    // --- Validation ---
+    InvalidMultiplier: "Invalid value provided.",
+};
+
+// ---------------------------------------------------------------------------
+// Pydantic validation message prefixes (partial-match, not game error codes)
+// ---------------------------------------------------------------------------
+
+// Pydantic validation errors contain the message as a prefix (e.g. "String
+// should have at least 3 characters"), so we match by prefix rather than
+// exact code. These are framework-level errors, not GameExceptionType values.
+const PYDANTIC_VALIDATION_MESSAGES: Record<string, string> = {
     "Field required": "This field is required.",
     "String should have at least": "This field is too short.",
     "String should have at most": "This field is too long.",
-    InvalidMultiplier: "Invalid value provided.",
 };
 
 // ---------------------------------------------------------------------------
@@ -116,10 +126,14 @@ export const GAME_ERROR_MESSAGES: Record<string, string> = {
 export function resolveErrorMessage(error: unknown): string {
     if (error instanceof ApiClientError) {
         const code = error.getErrorMessage();
-        if (GAME_ERROR_MESSAGES[code]) return GAME_ERROR_MESSAGES[code];
-        // Partial match (e.g. validation messages that include a prefix)
-        for (const [key, value] of Object.entries(GAME_ERROR_MESSAGES)) {
-            if (code.includes(key)) return value;
+        const gameMessage = (GAME_ERROR_MESSAGES as Record<string, string>)[
+            code
+        ];
+        if (gameMessage) return gameMessage;
+        for (const [prefix, message] of Object.entries(
+            PYDANTIC_VALIDATION_MESSAGES,
+        )) {
+            if (code.includes(prefix)) return message;
         }
         return code || "An error occurred. Please try again.";
     }

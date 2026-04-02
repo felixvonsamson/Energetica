@@ -29,8 +29,14 @@ class GameExceptionType(StrEnum):
     LOCATION_OCCUPIED = "locationOccupied"
     CHOICE_UNMODIFIABLE = "choiceUnmodifiable"
     # Auth related
-    SIGNUP_DISABLED = "Sign-ups are disabled."
-    OLD_PASSWORD_INCORRECT = "Old password is incorrect."
+    USERNAME_TAKEN = "USERNAME_TAKEN"
+    USER_NOT_FOUND = "USER_NOT_FOUND"
+    INVALID_PASSWORD = "INVALID_PASSWORD"
+    NOT_AUTHENTICATED = "NOT_AUTHENTICATED"
+    USER_IS_NOT_A_PLAYER = "USER_IS_NOT_A_PLAYER"
+    PLAYER_NOT_SET_UP = "PLAYER_NOT_SET_UP"
+    SIGNUP_DISABLED = "SIGNUP_DISABLED"
+    OLD_PASSWORD_INCORRECT = "OLD_PASSWORD_INCORRECT"
     # Technology effects
     INVALID_MULTIPLIER = "InvalidMultiplier"
     # network prices

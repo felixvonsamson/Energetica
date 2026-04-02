@@ -16,9 +16,9 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { TypographyBrand } from "@/components/ui/typography";
 import { useAuth } from "@/hooks/use-auth";
+import { useLogin } from "@/hooks/use-auth-queries";
 import { useGameEngine } from "@/hooks/use-game";
-import { authApi } from "@/lib/api/auth";
-import { handleApiError, isErrorType } from "@/lib/error-utils";
+import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
 
 export const Route = createFileRoute("/app/login")({
     component: LoginPage,
@@ -56,47 +56,39 @@ function LoginForm() {
     const navigate = useNavigate();
     const { refetch: refetchAuth } = useAuth();
 
+    const login = useLogin();
+
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState<
-        "missing_fields" | "user_not_found" | "login_failed" | null
-    >(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [usernameNotFound, setUsernameNotFound] = useState(false);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+    const [generalError, setGeneralError] = useState<string | null>(null);
 
     const { data: gameEngineData } = useGameEngine();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
+        setUsernameNotFound(false);
+        setPasswordError(null);
+        setGeneralError(null);
 
-        // Basic validation
         if (!username.trim() || !password) {
-            setError("missing_fields");
+            setGeneralError("Please enter both username and password.");
             return;
         }
 
-        setIsLoading(true);
-
         try {
-            await authApi.login({
-                username: username.trim(),
-                password,
-            });
-
-            // Refetch auth state to update context
+            await login.mutateAsync({ username: username.trim(), password });
             await refetchAuth();
-
-            // Redirect to dashboard
             navigate({ to: "/app/dashboard" });
         } catch (err) {
-            if (isErrorType(err, "User not found")) {
-                setError("user_not_found");
+            if (isErrorType(err, "USER_NOT_FOUND")) {
+                setUsernameNotFound(true);
+            } else if (isErrorType(err, "INVALID_PASSWORD")) {
+                setPasswordError(getUserFriendlyError(err));
             } else {
-                handleApiError(err, "Login failed. Please try again.");
-                setError("login_failed");
+                setGeneralError(getUserFriendlyError(err));
             }
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -122,13 +114,15 @@ function LoginForm() {
                 </CardHeader>
 
                 <CardContent>
-                    {/* Error Banner */}
-                    {error === "missing_fields" && (
+                    {/* General error banner */}
+                    {generalError && (
                         <InfoBanner variant="error" className="mb-6">
-                            Please enter both username and password.
+                            {generalError}
                         </InfoBanner>
                     )}
-                    {error === "user_not_found" && (
+
+                    {/* Username not found — shown as banner because it includes game context */}
+                    {usernameNotFound && (
                         <InfoBanner variant="error" className="mb-6">
                             Username does not exist.
                             <br />
@@ -142,11 +136,6 @@ function LoginForm() {
                             </strong>
                             .
                             <br /> All previous user accounts were removed.
-                        </InfoBanner>
-                    )}
-                    {error === "login_failed" && (
-                        <InfoBanner variant="error" className="mb-6">
-                            Login failed. Please try again.
                         </InfoBanner>
                     )}
 
@@ -163,8 +152,9 @@ function LoginForm() {
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 placeholder="Enter username"
-                                disabled={isLoading}
+                                disabled={login.isPending}
                                 autoComplete="username"
+                                aria-invalid={usernameNotFound ? true : undefined}
                                 // eslint-disable-next-line jsx-a11y/no-autofocus
                                 autoFocus
                             />
@@ -181,19 +171,25 @@ function LoginForm() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Enter password"
-                                disabled={isLoading}
+                                disabled={login.isPending}
                                 autoComplete="current-password"
+                                aria-invalid={passwordError ? true : undefined}
                             />
+                            {passwordError && (
+                                <p className="mt-1 text-sm text-destructive">
+                                    {passwordError}
+                                </p>
+                            )}
                         </div>
 
                         <Button
                             type="submit"
-                            variant={isLoading ? "outline" : "default"}
+                            variant={login.isPending ? "outline" : "default"}
                             size="lg"
-                            disabled={isLoading}
+                            disabled={login.isPending}
                             className="w-full flex items-center justify-center gap-2"
                         >
-                            {isLoading ? (
+                            {login.isPending ? (
                                 <Spinner />
                             ) : (
                                 <LogIn className="w-5 h-5" />

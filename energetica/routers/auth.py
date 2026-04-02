@@ -39,7 +39,7 @@ def get_current_user(user: Annotated[User | None, Depends(get_user)]) -> UserOut
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
+            detail=GameExceptionType.NOT_AUTHENTICATED,
         )
 
     # Get capabilities if user is a settled player
@@ -67,12 +67,12 @@ def login(request: Request, request_data: LoginRequest) -> Response:
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            detail=GameExceptionType.USER_NOT_FOUND,
             headers={"release-date": __release_date__, "version": __version__},
         )
 
     if not check_password_hash(plain_password=password, hashed_password=user.pwhash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=GameExceptionType.INVALID_PASSWORD)
 
     engine.log(f"{username} logged in")
 
@@ -89,7 +89,7 @@ def signup(request: Request, request_data: SignupRequest) -> Response:
     password = request_data.password
     existing_user = next(User.filter_by(username=username), None)
     if existing_user:
-        raise HTTPException(status.HTTP_409_CONFLICT, "username is taken")
+        raise HTTPException(status.HTTP_409_CONFLICT, GameExceptionType.USERNAME_TAKEN)
     pwhash = generate_password_hash(password)
     user = misc.signup_playing_user(request, username, pwhash)
     return add_session_cookie_to_response(
@@ -104,7 +104,7 @@ def change_password(  # noqa: ANN201
 ):
     """Change the password for the current user."""
     if user is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User not authenticated")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
     old_password = request_data.old_password
     new_password = request_data.new_password
     if not check_password_hash(plain_password=old_password, hashed_password=user.pwhash):
@@ -117,7 +117,7 @@ def change_password(  # noqa: ANN201
 def logout(user: Annotated[User | None, Depends(get_user)]) -> Response:
     """Logout the current user."""
     if user is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User not authenticated")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
 
     engine.log(f"{user.username} logged out")
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
