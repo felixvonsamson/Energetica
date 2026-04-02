@@ -40,10 +40,6 @@ export function useChangePassword() {
     return useMutation({
         mutationFn: (data: ChangePasswordRequest) =>
             authApi.changePassword(data),
-        onError: (error) => {
-            // Log error for debugging - consuming components handle UI display
-            handleApiError(error, "Failed to change password");
-        },
     });
 }
 
