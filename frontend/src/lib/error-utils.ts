@@ -50,8 +50,7 @@ export function getUserFriendlyError(error: unknown): string {
         const mapped = (
             GAME_ERROR_MESSAGES as Record<string, string | undefined>
         )[errorMsg];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        return mapped ?? errorMsg ?? "An error occurred. Please try again.";
+        return mapped ?? errorMsg;
     }
 
     if (error instanceof Error) {
