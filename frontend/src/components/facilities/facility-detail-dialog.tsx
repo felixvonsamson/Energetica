@@ -68,7 +68,7 @@ export function FacilityDetailDialog<T>({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent>
+            <DialogContent className="flex flex-col p-0 gap-0 overflow-hidden">
                 {facility !== null &&
                     FacilityContent(
                         facility,
@@ -106,6 +106,7 @@ function FacilityContent<T>(
 ) {
     const imageExtension = imageExtensionMap[facility.name] ?? "jpg";
     const imageUrl = `/static/images/${facilityType}_facilities/${facility.name}.${imageExtension}`;
+    const isLocked = facility.requirements_status === "unsatisfied";
 
     return (
         <>
@@ -118,7 +119,9 @@ function FacilityContent<T>(
                     information.
                 </DialogDescription>
             </DialogHeader>
-            <div className="space-y-6">
+
+            {/* Scrollable body */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
                 {/* Image */}
                 <div className="w-full overflow-hidden">
                     <img
@@ -129,53 +132,58 @@ function FacilityContent<T>(
                 </div>
 
                 {/* Header */}
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                    <div className="flex items-center gap-2 mr-auto">
-                        <TypographyH2 className="flex items-center gap-2">
-                            <FacilityIcon facility={facility.name} size={28} />
-                            <FacilityName
-                                facility={facility.name}
-                                mode="long"
-                            />
-                        </TypographyH2>
-                        {extraHeaderContent && extraHeaderContent(facility)}
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-xl font-semibold">
-                            <Money amount={facility.price} long />
-                        </div>
-                    </div>
+                <div className="flex flex-wrap items-center gap-3">
+                    <TypographyH2 className="flex items-center gap-2 mr-auto">
+                        <FacilityIcon facility={facility.name} size={28} />
+                        <FacilityName facility={facility.name} mode="long" />
+                    </TypographyH2>
+                    {extraHeaderContent && extraHeaderContent(facility)}
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex justify-center gap-3">
-                    {onCompare && (
-                        <Button
-                            size="lg"
-                            variant="secondary"
-                            onClick={() => onCompare(facility)}
-                            className="px-6 text-lg font-semibold"
-                        >
-                            <GitCompareArrows className="w-5 h-5 mr-2" />
-                            Compare
-                        </Button>
+                {/* Description + Learn More */}
+                <CardContent>
+                    {renderDescription ? (
+                        <div className="space-y-1.5">
+                            {renderDescription(facility)}
+                            {facilityType !== "functional" && (
+                                <a
+                                    href={facility.wikipedia_link}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground w-fit"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <ExternalLink className="w-3 h-3" />
+                                    Learn more
+                                </a>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="[&_p:last-of-type]:inline">
+                            <div
+                                className="contents"
+                                dangerouslySetInnerHTML={{
+                                    __html: facility.description,
+                                }}
+                            />
+                            {facilityType !== "functional" && (
+                                <>
+                                    {" "}
+                                    <a
+                                        href={facility.wikipedia_link}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <ExternalLink className="w-3 h-3" />
+                                        Learn more
+                                    </a>
+                                </>
+                            )}
+                        </div>
                     )}
-                    <Button
-                        size="lg"
-                        onClick={handleConstruction}
-                        disabled={facility.requirements_status === "unsatisfied"}
-                        variant={
-                            facility.requirements_status === "unsatisfied"
-                                ? "destructive"
-                                : "default"
-                        }
-                        className="px-8 text-lg font-bold"
-                    >
-                        {facility.requirements_status === "unsatisfied"
-                            ? "Locked"
-                            : "Start Construction"}
-                    </Button>
-                </div>
+                </CardContent>
 
                 {/* Requirements */}
                 {facility.requirements.some(
@@ -188,52 +196,56 @@ function FacilityContent<T>(
                     </CardContent>
                 )}
 
-                {/* Construction Info */}
-                <CardContent className="flex justify-around">
-                    <ConstructionInfo
-                        constructionTime={facility.construction_time}
-                        constructionPower={facility.construction_power}
-                        constructionPollution={
-                            facility.construction_pollution ?? undefined
-                        }
-                    />
-                </CardContent>
-
-                <hr className="border-border" />
-
-                {/* Description */}
+                {/* Stats Table + Compare */}
                 <CardContent>
-                    {renderDescription ? (
-                        renderDescription(facility)
-                    ) : (
-                        <div
-                            dangerouslySetInnerHTML={{
-                                __html: facility.description,
-                            }}
-                        />
-                    )}
-                </CardContent>
-
-                {/* Stats Table */}
-                <CardContent className="flex justify-around">
-                    {renderStatsTable(facility)}
-                </CardContent>
-
-                {/* Learn More */}
-                {facilityType !== "functional" && (
                     <div className="flex justify-center">
-                        <a
-                            href={facility.wikipedia_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <ExternalLink className="w-4 h-4" />
-                            Learn more
-                        </a>
+                        <div className="flex flex-col gap-3">
+                            {renderStatsTable(facility)}
+                            {onCompare && (
+                                <div className="flex justify-end">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => onCompare(facility)}
+                                    >
+                                        <GitCompareArrows className="w-4 h-4" />
+                                        Compare
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                )}
+                </CardContent>
+            </div>
+
+            {/* Footer — always visible */}
+            <div className="shrink-0 border-t border-border bg-background px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+                <ConstructionInfo
+                    constructionTime={facility.construction_time}
+                    constructionPower={facility.construction_power}
+                    constructionPollution={
+                        facility.construction_pollution ?? undefined
+                    }
+                />
+                <Button
+                    size="lg"
+                    onClick={handleConstruction}
+                    disabled={isLocked}
+                    variant={isLocked ? "destructive" : "default"}
+                    className="px-8 text-base font-bold"
+                >
+                    {isLocked ? (
+                        "Locked"
+                    ) : (
+                        <span className="flex items-center gap-2">
+                            Start Construction
+                            <span className="opacity-70 font-normal">·</span>
+                            <span className="font-normal">
+                                <Money amount={facility.price} long />
+                            </span>
+                        </span>
+                    )}
+                </Button>
             </div>
         </>
     );

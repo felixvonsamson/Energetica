@@ -52,7 +52,7 @@ export function RequirementsDisplay({
                                     to={route}
                                     className="underline hover:opacity-80"
                                 >
-                                    <AssetName assetId={req.name} mode="long" />{" "}
+                                    <AssetName assetId={req.name} mode="long" className="underline" />{" "}
                                     lvl {req.level}
                                 </Link>
                             ) : (
