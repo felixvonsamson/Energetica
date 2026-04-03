@@ -45,6 +45,7 @@ class CircularBufferPlayer:
                 "dumping": deque([0.0] * 360, maxlen=360),  # + storage and extraction facilities
             },
             "storage": {},  # + storage facilities
+            "soc": {},  # + storage facilities (state of charge, 0-1 ratio)
             "resources": {},  # + all resources when warehouse is built
             "emissions": {
                 "construction": deque([0.0] * 360, maxlen=360),  # + controllable facilities
@@ -86,7 +87,7 @@ class CircularBufferPlayer:
         for category, subcategories in self._data.items():
             result[category] = {}
             for subcategory, buffer in subcategories.items():
-                if category in ["storage", "resources"]:
+                if category in ["storage", "soc", "resources"]:
                     result[category][subcategory] = buffer[-1]
                 else:
                     result[category][subcategory] = 0.0
