@@ -51,7 +51,7 @@ export function ProjectList({ projectCategory }: ProjectListProps) {
 
     return (
         <div className="flex flex-col gap-2">
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
                 {projects.map((project) => (
                     <motion.div
                         key={project.id}
@@ -307,9 +307,11 @@ function ProgressCard({
             {/* Header row: Badge, Title, Actions */}
             <div className="flex items-center justify-between gap-2 mb-1.5">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {!(status === "ongoing" && speed !== undefined && speed === 0) && (
-                        <StatusBadge status={status} size="sm" />
-                    )}
+                    {!(
+                        status === "ongoing" &&
+                        speed !== undefined &&
+                        speed === 0
+                    ) && <StatusBadge status={status} size="sm" />}
                     {speed !== undefined && speed < 1.0 && (
                         <StatusBadge
                             status={speed > 0 ? "slowed" : "stopped"}
