@@ -3,7 +3,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { authApi } from "@/lib/api/auth";
-import { handleApiError } from "@/lib/error-utils";
 import { queryKeys } from "@/lib/query-client";
 import type {
     LoginRequest,
@@ -59,10 +58,6 @@ export function useLogout() {
             queryClient.removeQueries({
                 predicate: (query) => query.queryKey[0] !== "auth",
             });
-        },
-        onError: (error) => {
-            // Log error for debugging - consuming components handle UI display
-            handleApiError(error, "Failed to logout");
         },
     });
 }
