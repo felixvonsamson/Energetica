@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 /** Full-width card that collapses borders on mobile and becomes a rounded card on md+. */
 function PageCard({ className, ...props }: React.ComponentProps<"div">) {
