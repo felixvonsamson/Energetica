@@ -386,7 +386,7 @@ function ChangePasswordDialog({ isOpen, onClose }: ChangePasswordDialogProps) {
         onClose();
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const errors: typeof fieldErrors = {};
 
