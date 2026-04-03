@@ -49,6 +49,9 @@ class CircularBufferPlayer:
             "emissions": {
                 "construction": deque([0.0] * 360, maxlen=360),  # + controllable facilities
             },
+            "money": {
+                "balance": deque([0.0] * 360, maxlen=360),
+            },
         }
 
     def append_value(self, new_value: dict) -> None:
@@ -56,6 +59,10 @@ class CircularBufferPlayer:
         for category, subcategories in new_value.items():
             for subcategory, value in subcategories.items():
                 self._data[category][subcategory].append(float(value))
+
+    def append_money(self, money: float) -> None:
+        """Record the player's current money balance for this tick."""
+        self._data["money"]["balance"].append(money)
 
     def add_subcategory(self, category: str, subcategory: str) -> None:
         """Add a new subcategory to the data."""
@@ -84,6 +91,9 @@ class CircularBufferPlayer:
         """
         result: dict[str, Any] = {}
         for category, subcategories in self._data.items():
+            if category == "money":
+                # money is appended separately via append_money(), not via append_value()
+                continue
             result[category] = {}
             for subcategory, buffer in subcategories.items():
                 if category in ["storage", "resources"]:

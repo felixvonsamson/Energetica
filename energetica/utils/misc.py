@@ -111,6 +111,9 @@ def empty_player_data() -> dict:
             "steam_engine": init_array(),
             "construction": init_array(),
         },
+        "money": {
+            "balance": init_array(),
+        },
     }
 
 

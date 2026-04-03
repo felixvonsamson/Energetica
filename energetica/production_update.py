@@ -116,6 +116,7 @@ def update_electricity() -> None:
         player.rolling_history.append_value(new_values[player.id])
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
+        player.rolling_history.append_money(player.money)
         update_player_progress_values(player, new_values)
         # send new data to clients
         player.send_new_data(new_values[player.id])
