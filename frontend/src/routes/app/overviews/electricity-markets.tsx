@@ -25,11 +25,11 @@ import { MarketPriceChart } from "@/components/charts/market-price-chart";
 import { SupplyDemandChart } from "@/components/charts/supply-demand-chart";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
-    Card,
     CardContent,
     CardHeader,
     CardTitle,
     Money,
+    PageCard,
 } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { Label } from "@/components/ui/label";
@@ -211,7 +211,7 @@ function MarketsOverviewContent() {
     if (!selectedMarketId) {
         return (
             <div className="py-4 md:p-8">
-                <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
+                <PageCard>
                     <CardContent>
                         <p className="text-muted">
                             You are not part of any electricity market.{" "}
@@ -224,14 +224,14 @@ function MarketsOverviewContent() {
                             to view market data.
                         </p>
                     </CardContent>
-                </Card>
+                </PageCard>
             </div>
         );
     }
 
     return (
         <div className="py-4 md:p-8 flex flex-col gap-6">
-            <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
+            <PageCard>
                 <CardContent>
                     <div className="space-y-4">
                         <MarketSelector
@@ -245,10 +245,10 @@ function MarketsOverviewContent() {
                         />
                     </div>
                 </CardContent>
-            </Card>
+            </PageCard>
 
             {/* Latest Values Display */}
-            <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
+            <PageCard>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <NetworkIcon className="w-6 h-6 text-primary" />
@@ -285,11 +285,10 @@ function MarketsOverviewContent() {
                         </div>
                     </div>
                 </CardContent>
-            </Card>
+            </PageCard>
 
             {/* Price Chart */}
             <ChartCard
-                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={TrendingUp}
                 iconClassName="text-primary"
                 title="Market Price"
@@ -302,7 +301,7 @@ function MarketsOverviewContent() {
             </ChartCard>
 
             {/* Breakdown Section */}
-            <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
+            <PageCard>
                 <CardContent>
                     <div className="flex flex-row gap-10 justify-between">
                         <div className="flex flex-row gap-4 items-center">
@@ -371,10 +370,9 @@ function MarketsOverviewContent() {
                         )}
                     </div>
                 </CardContent>
-            </Card>
+            </PageCard>
 
             <ChartCard
-                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={
                     !breakdownEnabled
                         ? Activity
@@ -413,7 +411,6 @@ function MarketsOverviewContent() {
             {currentTick !== undefined && (
                 <>
                     <ChartCard
-                        className="rounded-none border-x-0 md:rounded-xl md:border-x"
                         icon={TrendingUp}
                         iconClassName="text-primary"
                         title="Supply & Demand Curves"
@@ -451,7 +448,6 @@ function MarketsOverviewContent() {
                         />
                     </ChartCard>
                     <ChartCard
-                        className="rounded-none border-x-0 md:rounded-xl md:border-x"
                         icon={BookOpenText}
                         iconClassName="text-primary"
                         title="Order Book Depth Chart"

@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { FacilityGroupTable } from "@/components/facilities/facility-group-table";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { CardContent, CardHeader, CardTitle, PageCard } from "@/components/ui";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { dummyFacilities } from "@/data/dummyFacilities";
 import { useHasCapability } from "@/hooks/use-capabilities";
@@ -111,7 +111,7 @@ function FacilityManagementContent() {
             case "power":
                 return (
                     <section className="mb-8">
-                        <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
+                        <PageCard>
                             <CardHeader>
                                 <CardTitle className="mb-4">
                                     Power Facilities
@@ -181,13 +181,13 @@ function FacilityManagementContent() {
                                     emptyMessage="No power facilities built yet"
                                 />
                             </CardContent>
-                        </Card>
+                        </PageCard>
                     </section>
                 );
             case "storage":
                 return (
                     <section className="mb-8">
-                        <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
+                        <PageCard>
                             <CardHeader>
                                 <CardTitle className="mb-4">
                                     Storage Facilities
@@ -260,13 +260,13 @@ function FacilityManagementContent() {
                                     emptyMessage="No storage facilities built yet"
                                 />
                             </CardContent>
-                        </Card>
+                        </PageCard>
                     </section>
                 );
             case "extraction":
                 return (
                     <section className="mb-8">
-                        <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
+                        <PageCard>
                             <CardHeader>
                                 <CardTitle className="mb-4">
                                     Extraction Facilities
@@ -336,7 +336,7 @@ function FacilityManagementContent() {
                                     emptyMessage="No extraction facilities built yet"
                                 />
                             </CardContent>
-                        </Card>
+                        </PageCard>
                     </section>
                 );
         }
