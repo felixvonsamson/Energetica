@@ -48,8 +48,7 @@ export function StorageChart({
             Object.keys(dataPoint).forEach((key) => {
                 if (key === "tick") return;
                 const val = dataPoint[key];
-                result[key] =
-                    typeof val === "number" ? val * 100 : 0;
+                result[key] = typeof val === "number" ? val * 100 : 0;
             });
             return result;
         });
@@ -57,7 +56,7 @@ export function StorageChart({
 
     const chartConfig: TimeSeriesChartConfig = useMemo(
         () => ({
-            chartType: "storage-level",
+            chartType: viewMode === "normal" ? "storage-level" : "storage-soc",
             chartVariant: viewMode === "normal" ? "area" : "smoothLine",
             stacked: viewMode === "normal",
             showBrush: true,
