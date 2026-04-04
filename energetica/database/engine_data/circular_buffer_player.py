@@ -58,11 +58,6 @@ class CircularBufferPlayer:
             for subcategory, value in subcategories.items():
                 self._data[category][subcategory].append(float(value))
 
-    def append_storage_soc(self, soc_values: dict) -> None:
-        """Record state of charge (0-1 fraction) for each storage facility type for this tick."""
-        for facility_type, soc in soc_values.items():
-            self._data["storage_soc"][facility_type].append(float(soc))
-
     def add_subcategory(self, category: str, subcategory: str) -> None:
         """Add a new subcategory to the data."""
         if subcategory not in self._data[category]:

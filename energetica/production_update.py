@@ -122,7 +122,7 @@ def update_electricity() -> None:
             )
             for facility, energy in new_values[player.id]["storage"].items()
         }
-        player.rolling_history.append_storage_soc(soc_values)
+        player.rolling_history.append_value({"storage_soc": soc_values})
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
         update_player_progress_values(player, new_values)
