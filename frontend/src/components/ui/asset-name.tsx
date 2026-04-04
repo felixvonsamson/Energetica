@@ -66,16 +66,14 @@ export function AssetName({
     if (mode === "auto" && assetName.long !== assetName.short) {
         return (
             <Component className={className} title={assetName.long}>
-                {assetName.short}
-                <div className="text-muted-foreground">{suffix}</div>
+                {assetName.short} {suffix}
             </Component>
         );
     }
 
     return (
         <Component className={cn("inline-flex gap-1", className)}>
-            {displayText}
-            <div className="text-muted-foreground">{suffix}</div>
+            {displayText} {suffix}
         </Component>
     );
 }
