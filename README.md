@@ -14,6 +14,6 @@ Read the [**project documentation**](./docs/README.md).
 
 ## License
 
-Copyright (c) 2025 Felix von Samson, Maximilien Tirard, Yassir Akram.
+Copyright (c) 2023-2026 Felix von Samson, Maximilien Tirard, Yassir Akram.
 
 Licensed under the GNU Affero General Public License (AGPL) – see [LICENSE](LICENSE).
