@@ -118,7 +118,7 @@ class StorageSocResponse(ChartDataResponse[StorageFacilityType]):
     """Response model for storage state of charge time series."""
 
     series: dict[StorageFacilityType, list[float]] = Field(
-        description="Time series data for each storage facility type, with state of charge as a ratio (0-1)",
+        description="Time series data for each storage facility type, as a fraction (0-1) of total capacity",
     )
 
 

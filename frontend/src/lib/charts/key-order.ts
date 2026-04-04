@@ -57,6 +57,8 @@ export const STORAGE_LEVEL_KEYS = [
     "hydrogen_storage",
 ] as const;
 
+export const STORAGE_SOC_KEYS = STORAGE_LEVEL_KEYS;
+
 export const REVENUES_KEYS = [
     "industry",
     "exports",
@@ -161,6 +163,7 @@ export type ChartDataKeys = {
     "power-sources": (typeof POWER_GENERATION_KEYS)[number];
     "power-sinks": (typeof POWER_CONSUMPTION_KEYS)[number];
     "storage-level": (typeof STORAGE_LEVEL_KEYS)[number];
+    "storage-soc": (typeof STORAGE_SOC_KEYS)[number];
     revenues: (typeof REVENUES_KEYS)[number];
     "op-costs": (typeof OP_COSTS_KEYS)[number];
     emissions: (typeof EMISSIONS_KEYS)[number];
@@ -191,6 +194,7 @@ export const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {
     "power-sources": POWER_GENERATION_KEYS,
     "power-sinks": POWER_CONSUMPTION_KEYS,
     "storage-level": STORAGE_LEVEL_KEYS,
+    "storage-soc": STORAGE_SOC_KEYS,
     revenues: REVENUES_KEYS,
     "op-costs": OP_COSTS_KEYS,
     emissions: EMISSIONS_KEYS,

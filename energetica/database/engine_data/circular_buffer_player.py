@@ -45,11 +45,12 @@ class CircularBufferPlayer:
                 "dumping": deque([0.0] * 360, maxlen=360),  # + storage and extraction facilities
             },
             "storage": {},  # + storage facilities
-            "soc": {},  # + storage facilities (state of charge, 0-1 ratio)
+            "storage_soc": {},  # + storage facilities (state of charge, 0-1 ratio)
             "resources": {},  # + all resources when warehouse is built
             "emissions": {
                 "construction": deque([0.0] * 360, maxlen=360),  # + controllable facilities
             },
+            "storage_soc": {},  # + storage facilities (state of charge, 0-1 fraction)
         }
 
     def append_value(self, new_value: dict) -> None:
@@ -58,10 +59,17 @@ class CircularBufferPlayer:
             for subcategory, value in subcategories.items():
                 self._data[category][subcategory].append(float(value))
 
+    def append_storage_soc(self, soc_values: dict) -> None:
+        """Record state of charge (0-1 fraction) for each storage facility type for this tick."""
+        for facility_type, soc in soc_values.items():
+            self._data["storage_soc"][facility_type].append(float(soc))
+
     def add_subcategory(self, category: str, subcategory: str) -> None:
         """Add a new subcategory to the data."""
         if subcategory not in self._data[category]:
             self._data[category][subcategory] = deque([0.0] * 360, maxlen=360)
+        if category == "storage" and subcategory not in self._data["storage_soc"]:
+            self._data["storage_soc"][subcategory] = deque([0.0] * 360, maxlen=360)
 
     def get_data(self, t: int = 216) -> dict[str, dict[str, list[float]]]:
         """Return the last t ticks of the data."""
@@ -85,9 +93,12 @@ class CircularBufferPlayer:
         """
         result: dict[str, Any] = {}
         for category, subcategories in self._data.items():
+            if category in ["money", "storage_soc"]:
+                # appended separately, not via append_value()
+                continue
             result[category] = {}
             for subcategory, buffer in subcategories.items():
-                if category in ["storage", "soc", "resources"]:
+                if category in ["storage", "storage_soc", "resources"]:
                     result[category][subcategory] = buffer[-1]
                 else:
                     result[category][subcategory] = 0.0

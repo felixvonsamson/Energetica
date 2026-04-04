@@ -50,7 +50,9 @@ from energetica.utils.auth import get_settled_player
 router = APIRouter(prefix="/charts", tags=["Charts"])
 
 Resolution = Literal["1", "6", "36", "216", "1296"]
-PickleChartKey = Literal["revenues", "op_costs", "generation", "demand", "storage", "soc", "resources", "emissions"]
+PickleChartKey = Literal[
+    "revenues", "op_costs", "generation", "demand", "storage", "storage_soc", "resources", "emissions", "money"
+]
 ClimatePickleKey = Literal["emissions", "temperature"]
 PickleNetworkKey = Literal["network_data", "exports", "imports", "generation", "consumption"]
 
@@ -404,8 +406,10 @@ def get_storage_soc(
         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
         start_tick: First tick to include (must be aligned to resolution)
         count: Number of datapoints to retrieve
+
+    Returns values as a fraction (0-1) of the facility's total capacity at the time of recording.
     """
-    data = _get_chart_data(player, start_tick, count, "soc", resolution)
+    data = _get_chart_data(player, start_tick, count, "storage_soc", resolution)
     return StorageSocResponse(resolution=resolution, **data)
 
 

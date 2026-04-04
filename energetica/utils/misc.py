@@ -106,7 +106,7 @@ def empty_player_data() -> dict:
             "dumping": init_array(),
         },
         "storage": {},
-        "soc": {},
+        "storage_soc": {},
         "resources": {},
         "emissions": {
             "steam_engine": init_array(),
