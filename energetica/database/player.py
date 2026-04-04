@@ -315,8 +315,9 @@ class Player(DBModel):
 
     def delete_notification(self, notification: Notification) -> None:
         """Delete a notification."""
-        if notification.player == self:
-            notification.delete()
+        if notification.player != self:
+            return
+        notification.delete()
         # TODO(mglst): see TODO below for `notifications_read`
         self.invalidate_queries(["notifications"])
 
