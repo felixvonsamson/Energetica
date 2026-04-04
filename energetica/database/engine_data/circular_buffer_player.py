@@ -87,9 +87,6 @@ class CircularBufferPlayer:
         """
         result: dict[str, Any] = {}
         for category, subcategories in self._data.items():
-            if category == "storage_soc":
-                # appended separately, not via append_value()
-                continue
             result[category] = {}
             for subcategory, buffer in subcategories.items():
                 if category in ["storage", "resources"]:
