@@ -7,6 +7,7 @@ import { useState } from "react";
 import {
     PowerChart,
     PowerOverviewTable,
+    type PowerChartViewMode,
 } from "@/components/charts/power-chart";
 import { GameLayout } from "@/components/layout/game-layout";
 import { Card, CardContent } from "@/components/ui";
@@ -87,11 +88,17 @@ const CHART_TYPE_OPTIONS = [
     { value: "power-sinks", label: "Consumption (Sinks)" },
 ] as const;
 
+const VIEW_MODE_OPTIONS = [
+    { value: "absolute", label: "Absolute" },
+    { value: "percent", label: "Percentage" },
+] as const;
+
 function PowerOverviewContent() {
     const { currentTick } = useGameTick();
     const [chartType, setChartType] = useState<"power-sources" | "power-sinks">(
         "power-sources",
     );
+    const [viewMode, setViewMode] = useState<PowerChartViewMode>("absolute");
     const [hiddenSources, toggleSource] = useToggleSet<string>();
     const [hiddenSinks, toggleSink] = useToggleSet<string>();
 
@@ -133,6 +140,22 @@ function PowerOverviewContent() {
                                 ))}
                             </SegmentedPicker>
                         </div>
+                        <div>
+                            <Label className="mb-2">Display Mode</Label>
+                            <SegmentedPicker
+                                value={viewMode}
+                                onValueChange={(value) => setViewMode(value)}
+                            >
+                                {VIEW_MODE_OPTIONS.map((option) => (
+                                    <SegmentedPickerOption
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </SegmentedPickerOption>
+                                ))}
+                            </SegmentedPicker>
+                        </div>
                         <ResolutionPicker currentTick={currentTick} />
                     </div>
                 </CardContent>
@@ -154,6 +177,7 @@ function PowerOverviewContent() {
                     isLoading={isChartLoading}
                     isError={isError}
                     hiddenFacilities={hiddenFacilities}
+                    viewMode={viewMode}
                 />
 
                 <PowerOverviewTable

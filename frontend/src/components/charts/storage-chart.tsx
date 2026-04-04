@@ -8,9 +8,9 @@ import { useMemo, useState } from "react";
  */
 
 import {
-    TimeSeriesChart,
-    TimeSeriesChartConfig,
-} from "@/components/charts/time-series-chart";
+    EChartsTimeSeries,
+    EChartsTimeSeriesConfig,
+} from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
@@ -79,12 +79,11 @@ export function StorageChart({
         });
     }, [chartData, facilities, viewMode]);
 
-    const chartConfig: TimeSeriesChartConfig = useMemo(
+    const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
             chartType: "storage-level",
             chartVariant: viewMode === "normal" ? "area" : "smoothLine",
             stacked: viewMode === "normal" ? true : false,
-            showBrush: true,
             getColor,
             filterDataKeys,
             formatValue:
@@ -98,7 +97,7 @@ export function StorageChart({
     );
 
     return (
-        <TimeSeriesChart
+        <EChartsTimeSeries
             data={transformedData}
             config={chartConfig}
             isLoading={isLoading}

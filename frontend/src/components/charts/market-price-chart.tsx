@@ -1,10 +1,9 @@
 import { useMemo } from "react";
-import { ReferenceLine } from "recharts";
 
 import {
-    TimeSeriesChart,
-    TimeSeriesChartConfig,
-} from "@/components/charts/time-series-chart";
+    EChartsTimeSeries,
+    EChartsTimeSeriesConfig,
+} from "@/components/charts/echarts-time-series";
 import { useChartData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
 import { ResolutionOption } from "@/types/charts";
@@ -44,42 +43,29 @@ export function MarketPriceChart({
         );
     }, [chartData, market]);
 
-    const chartConfig: TimeSeriesChartConfig = useMemo(
+    const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
             chartType: "market-clearing",
             chartVariant: "steppedLine",
             stacked: false,
-            showBrush: true,
             getColor: () => "var(--chart-2)",
             filterDataKeys: [],
             formatValue: (value: number) => `$${value.toFixed(6)}`,
             formatYAxis: (value: number) => `$${value.toFixed(6)}`,
             hideZeroValues: false,
+            referenceLines: market
+                ? [{ x: market.created_tick, label: "Market Creation" }]
+                : [],
         }),
-        [],
+        [market],
     );
 
     return (
-        <TimeSeriesChart
+        <EChartsTimeSeries
             data={priceData}
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}
-        >
-            {market && (
-                <ReferenceLine
-                    x={market.created_tick}
-                    stroke="var(--primary)"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    label={{
-                        value: "Market Creation",
-                        position: "insideTopLeft",
-                        fill: "var(--muted-foreground)",
-                        fontSize: 12,
-                    }}
-                />
-            )}
-        </TimeSeriesChart>
+        />
     );
 }

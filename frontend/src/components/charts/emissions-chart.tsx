@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 
 import {
-    TimeSeriesChart,
-    TimeSeriesChartConfig,
-} from "@/components/charts/time-series-chart";
+    EChartsTimeSeries,
+    EChartsTimeSeriesConfig,
+} from "@/components/charts/echarts-time-series";
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { AssetName } from "@/components/ui/asset-name";
 import { Label } from "@/components/ui/label";
@@ -120,13 +120,12 @@ export function EmissionsChart({
         [viewMode],
     );
 
-    const chartConfig: TimeSeriesChartConfig = useMemo(
+    const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
             chartType: "emissions",
             chartVariant: "area",
             stacked: true,
             height: 400,
-            showBrush: true,
             getColor,
             filterDataKeys,
             formatValue,
@@ -135,7 +134,7 @@ export function EmissionsChart({
     );
 
     return (
-        <TimeSeriesChart
+        <EChartsTimeSeries
             data={transformedData}
             config={chartConfig}
             isLoading={isLoading}

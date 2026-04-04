@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 
 import {
-    TimeSeriesChart,
-    TimeSeriesChartConfig,
-} from "@/components/charts/time-series-chart";
+    EChartsTimeSeries,
+    EChartsTimeSeriesConfig,
+} from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
 import { CashFlow } from "@/components/ui/cash-flow";
@@ -110,7 +110,7 @@ export function CashFlowChart({
         [isShowingPercent],
     );
 
-    const chartConfig: TimeSeriesChartConfig | undefined = useMemo(() => {
+    const chartConfig: EChartsTimeSeriesConfig | undefined = useMemo(() => {
         if (!gameEngineConfig) return undefined;
 
         const isBreakdownMode =
@@ -130,7 +130,6 @@ export function CashFlowChart({
             chartType,
             chartVariant: "area",
             stacked: true,
-            showBrush: true,
             getColor: isBreakdownMode ? getBreakdownColor : getColor,
             filterDataKeys,
             formatValue,
@@ -156,7 +155,7 @@ export function CashFlowChart({
     if (!chartConfig) return <></>;
 
     return (
-        <TimeSeriesChart
+        <EChartsTimeSeries
             data={transformedData}
             config={chartConfig}
             isLoading={isLoading}
