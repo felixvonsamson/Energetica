@@ -45,12 +45,11 @@ class CircularBufferPlayer:
                 "dumping": deque([0.0] * 360, maxlen=360),  # + storage and extraction facilities
             },
             "storage": {},  # + storage facilities
-            "storage_soc": {},  # + storage facilities (state of charge, 0-1 ratio)
+            "storage_soc": {},  # + storage facilities (state of charge, 0-1 fraction)
             "resources": {},  # + all resources when warehouse is built
             "emissions": {
                 "construction": deque([0.0] * 360, maxlen=360),  # + controllable facilities
             },
-            "storage_soc": {},  # + storage facilities (state of charge, 0-1 fraction)
         }
 
     def append_value(self, new_value: dict) -> None:
@@ -93,12 +92,12 @@ class CircularBufferPlayer:
         """
         result: dict[str, Any] = {}
         for category, subcategories in self._data.items():
-            if category in ["money", "storage_soc"]:
+            if category == "storage_soc":
                 # appended separately, not via append_value()
                 continue
             result[category] = {}
             for subcategory, buffer in subcategories.items():
-                if category in ["storage", "storage_soc", "resources"]:
+                if category in ["storage", "resources"]:
                     result[category][subcategory] = buffer[-1]
                 else:
                     result[category][subcategory] = 0.0

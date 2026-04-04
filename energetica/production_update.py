@@ -212,7 +212,6 @@ def update_storage_lvls(new_values: dict, player: Player) -> None:
     generation = new_values["generation"]
     demand = new_values["demand"]
     storage = new_values["storage"]
-    soc = new_values["storage_soc"]
     for facility in StorageFacilityType:
         if player.capacities.get(facility) is not None:
             # the energy is converted from Wt to Wh
@@ -227,8 +226,6 @@ def update_storage_lvls(new_values: dict, player: Player) -> None:
                 * engine.in_game_seconds_per_tick
                 * (player.capacities[facility]["efficiency"] ** 0.5)
             )
-            capacity = player.capacities[facility]["capacity"]
-            soc[facility] = storage[facility] / capacity if capacity > 0 else 0.0
 
 
 def calculate_net_import(new_values: dict) -> None:
