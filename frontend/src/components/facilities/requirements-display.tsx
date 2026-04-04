@@ -5,12 +5,13 @@
 
 import { Link } from "@tanstack/react-router";
 
-import { AssetName } from "@/components/ui/asset-name";
+import { TechnologyName } from "@/components/ui/asset-name";
 import {
     getTechnologyRoute,
     getFacilityRoute,
     isTechnology,
 } from "@/lib/facility-routes";
+import { cn } from "@/lib/utils";
 
 interface Requirement {
     name: string;
@@ -34,6 +35,16 @@ export function RequirementsDisplay({
                     const route = isTech
                         ? getTechnologyRoute(req.name)
                         : getFacilityRoute(req.name);
+                    const requirementComponent = (
+                        <TechnologyName
+                            technology={req.name}
+                            level={req.level}
+                            mode="long"
+                            className={cn(
+                                route && "underline hover:opacity-80",
+                            )}
+                        />
+                    );
 
                     return (
                         <li
@@ -48,18 +59,9 @@ export function RequirementsDisplay({
                         >
                             -{" "}
                             {route ? (
-                                <Link
-                                    to={route}
-                                    className="underline hover:opacity-80"
-                                >
-                                    <AssetName assetId={req.name} mode="long" className="underline" />{" "}
-                                    lvl {req.level}
-                                </Link>
+                                <Link to={route}>{requirementComponent}</Link>
                             ) : (
-                                <>
-                                    <AssetName assetId={req.name} mode="long" />{" "}
-                                    lvl {req.level}
-                                </>
+                                requirementComponent
                             )}
                         </li>
                     );
