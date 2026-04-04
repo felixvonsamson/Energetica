@@ -4,6 +4,7 @@ export type ChartType =
     | "power-sources"
     | "power-sinks"
     | "storage-level"
+    | "storage-soc"
     | "revenues"
     | "op-costs"
     | "emissions"
