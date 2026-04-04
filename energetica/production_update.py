@@ -114,15 +114,6 @@ def update_electricity() -> None:
         update_storage_lvls(new_values[player.id], player)
         resources_and_pollution(new_values[player.id], player)
         player.rolling_history.append_value(new_values[player.id])
-        soc_values = {
-            facility: (
-                energy / player.capacities[facility]["capacity"]
-                if facility in player.capacities and player.capacities[facility]["capacity"] > 0
-                else 0.0
-            )
-            for facility, energy in new_values[player.id]["storage"].items()
-        }
-        player.rolling_history.append_value({"storage_soc": soc_values})
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
         update_player_progress_values(player, new_values)
@@ -212,6 +203,7 @@ def update_storage_lvls(new_values: dict, player: Player) -> None:
     generation = new_values["generation"]
     demand = new_values["demand"]
     storage = new_values["storage"]
+    storage_soc = new_values["storage_soc"]
     for facility in StorageFacilityType:
         if player.capacities.get(facility) is not None:
             # the energy is converted from Wt to Wh
@@ -225,6 +217,11 @@ def update_storage_lvls(new_values: dict, player: Player) -> None:
                 / 3600
                 * engine.in_game_seconds_per_tick
                 * (player.capacities[facility]["efficiency"] ** 0.5)
+            )
+            storage_soc[facility] = (
+                storage[facility] / player.capacities[facility]["capacity"]
+                if facility in player.capacities and player.capacities[facility]["capacity"] > 0
+                else 0.0
             )
 
 
