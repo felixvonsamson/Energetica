@@ -333,7 +333,6 @@ def complete_project(project: OngoingProject, *, skip_notifications: bool = Fals
             player.rolling_history.add_subcategory("demand", project.project_type)
         if isinstance(project.project_type, StorageFacilityType):
             player.rolling_history.add_subcategory("storage", project.project_type)
-            player.rolling_history.add_subcategory("storage_soc", project.project_type)
         if isinstance(project.project_type, ControllableFacilityType | ExtractionFacilityType):
             player.rolling_history.add_subcategory("emissions", project.project_type)
             player.cumul_emissions.add_category(project.project_type)
