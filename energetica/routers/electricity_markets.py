@@ -87,8 +87,6 @@ async def change_electricity_market_prices(
     """Update the asking prices and bid prices for a player on their electricity market."""
     if not player.achievements["network"]:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=UNLOCK_NETWORK_MESSAGE)
-    if player.network is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     player.network_prices.update(
         updated_asks={ask.type: ask.price for ask in prices_change_request.asks},
         updated_bids={bid.type: bid.price for bid in prices_change_request.bids},
