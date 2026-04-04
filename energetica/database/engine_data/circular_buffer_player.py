@@ -21,6 +21,7 @@ class CircularBufferPlayer:
             "storage": defaultdict(create_deque),
             "resources": defaultdict(create_deque),
             "emissions": defaultdict(create_deque),
+            "money": defaultdict(create_deque),
         }
         """
         # TODO (Yassir): Change to defaultdict
@@ -59,10 +60,6 @@ class CircularBufferPlayer:
         for category, subcategories in new_value.items():
             for subcategory, value in subcategories.items():
                 self._data[category][subcategory].append(float(value))
-
-    def append_money(self, money: float) -> None:
-        """Record the player's current money balance for this tick."""
-        self._data["money"]["balance"].append(money)
 
     def add_subcategory(self, category: str, subcategory: str) -> None:
         """Add a new subcategory to the data."""
