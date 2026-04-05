@@ -46,7 +46,6 @@ def update_electricity() -> None:
 
     # --- Initialization ---
     players: list[Player] = list(Player.all())
-    networks = Network.all()
     new_values = {player.id: player.rolling_history.init_new_data() for player in players}
 
     # --- Resetting speeds of ongoing projects and shipments---
@@ -58,7 +57,7 @@ def update_electricity() -> None:
         os.reset_speed()
 
     # --- Expel bankrupt players from their networks ---
-    for network in Network.all():
+    for network in list(Network.all()):
         for player in list(network.members):
             max_overdraft = -player.config["industry"]["income_per_day"]
             if player.money < max_overdraft:
@@ -67,7 +66,7 @@ def update_electricity() -> None:
                 player.notify(NetworkExpelledPayload(network_name=network_name))
                 engine.log(f"{player.username} was expelled from {network_name} due to insufficient funds")
 
-    for network in networks:
+    for network in Network.all():
         # --- Market resolution ---
         market = init_market()
         for player in network.members:
