@@ -113,9 +113,10 @@ def update_electricity() -> None:
         calculate_net_import(new_values[player.id])
         update_storage_lvls(new_values[player.id], player)
         resources_and_pollution(new_values[player.id], player)
-        player.rolling_history.append_value(new_values[player.id])
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
+        money_balance(new_values[player.id], player)
+        player.rolling_history.append_value(new_values[player.id])
         update_player_progress_values(player, new_values)
         # send new data to clients
         player.send_new_data(new_values[player.id])
@@ -906,6 +907,10 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
                 operational_cost = operational_cost * (fc + (1 - fc) * capacity)
             player.money -= operational_cost
             op_costs[facility] -= operational_cost
+
+
+def money_balance(new_values: dict, player: Player) -> None:
+    new_values["money"]["balance"] = player.money
 
 
 def construction_emissions(new_values: dict, player: Player) -> None:

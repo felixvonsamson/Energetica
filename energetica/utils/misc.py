@@ -111,6 +111,9 @@ def empty_player_data() -> dict:
             "steam_engine": init_array(),
             "construction": init_array(),
         },
+        "money": {
+            "balance": init_array(),
+        },
     }
 
 
@@ -155,6 +158,9 @@ def save_past_data() -> None:
             past_data = pickle.load(file)
         new_data = player.rolling_history.get_data()
         for category in new_data:
+            if category not in past_data:
+                # if category didn't exist in past data (e.g. new category added in a deploy), initialize it
+                past_data[category] = {}
             for element in new_data[category]:
                 new_el_data = new_data[category][element]
                 if element not in past_data[category]:
