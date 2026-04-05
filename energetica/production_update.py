@@ -113,10 +113,10 @@ def update_electricity() -> None:
         calculate_net_import(new_values[player.id])
         update_storage_lvls(new_values[player.id], player)
         resources_and_pollution(new_values[player.id], player)
-        player.rolling_history.append_value(new_values[player.id])
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
         money_balance(new_values[player.id], player)
+        player.rolling_history.append_value(new_values[player.id])
         update_player_progress_values(player, new_values)
         # send new data to clients
         player.send_new_data(new_values[player.id])
