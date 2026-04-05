@@ -220,7 +220,7 @@ def update_storage_lvls(new_values: dict, player: Player) -> None:
             )
             storage_soc[facility] = (
                 storage[facility] / player.capacities[facility]["capacity"]
-                if facility in player.capacities and player.capacities[facility]["capacity"] > 0
+                if player.capacities[facility]["capacity"] > 0
                 else 0.0
             )
 
