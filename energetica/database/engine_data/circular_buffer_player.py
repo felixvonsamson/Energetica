@@ -46,6 +46,7 @@ class CircularBufferPlayer:
                 "dumping": deque([0.0] * 360, maxlen=360),  # + storage and extraction facilities
             },
             "storage": {},  # + storage facilities
+            "storage_soc": {},  # + storage facilities (state of charge, 0-1 fraction)
             "resources": {},  # + all resources when warehouse is built
             "emissions": {
                 "construction": deque([0.0] * 360, maxlen=360),  # + controllable facilities
@@ -65,6 +66,8 @@ class CircularBufferPlayer:
         """Add a new subcategory to the data."""
         if subcategory not in self._data[category]:
             self._data[category][subcategory] = deque([0.0] * 360, maxlen=360)
+        if category == "storage" and subcategory not in self._data["storage_soc"]:
+            self._data["storage_soc"][subcategory] = deque([0.0] * 360, maxlen=360)
 
     def get_data(self, t: int = 216) -> dict[str, dict[str, list[float]]]:
         """Return the last t ticks of the data."""

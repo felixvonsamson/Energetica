@@ -101,11 +101,11 @@ function StorageOverviewContent() {
 
     const { selectedResolution } = useTimeMode();
 
-    // Fetch chart data to share between chart and table
+    // Fetch absolute energy levels for the table (always needed)
     const {
-        chartData,
-        isLoading: isChartLoading,
-        isError,
+        chartData: storageLevelData,
+        isLoading: isLevelLoading,
+        isError: isLevelError,
     } = useChartData({
         config: {
             chartType: "storage-level",
@@ -113,6 +113,25 @@ function StorageOverviewContent() {
         },
         maxDatapoints: selectedResolution.datapoints,
     });
+
+    // Fetch server-computed SoC (0-1 fraction) for the percent view
+    const {
+        chartData: storageSocData,
+        isLoading: isSocLoading,
+        isError: isSocError,
+    } = useChartData({
+        config: {
+            chartType: "storage-soc",
+            resolution: selectedResolution.resolution,
+        },
+        maxDatapoints: selectedResolution.datapoints,
+    });
+
+    const chartData =
+        viewMode === "percent" ? storageSocData : storageLevelData;
+    const isChartLoading =
+        viewMode === "percent" ? isSocLoading : isLevelLoading;
+    const isError = viewMode === "percent" ? isSocError : isLevelError;
 
     return (
         <div className="py-4 md:p-8 space-y-6">
@@ -156,7 +175,7 @@ function StorageOverviewContent() {
                 />
 
                 <StorageOverviewTable
-                    chartData={chartData}
+                    chartData={storageLevelData}
                     hiddenFacilities={hiddenFacilities}
                     onToggleFacility={toggleFacility}
                 />
