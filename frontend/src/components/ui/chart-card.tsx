@@ -3,8 +3,12 @@
 import { type LucideIcon } from "lucide-react";
 import { type ReactNode } from "react";
 
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageCard } from "@/components/ui/page-card";
+import {
+    CardContent,
+    PageCard,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export interface ChartCardProps {
