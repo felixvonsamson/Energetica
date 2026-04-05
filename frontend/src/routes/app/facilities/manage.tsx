@@ -5,11 +5,12 @@ import { useState } from "react";
 
 import { FacilityGroupTable } from "@/components/facilities/facility-group-table";
 import { GameLayout } from "@/components/layout/game-layout";
+import { StatusBadge } from "@/components/power-priorities/status-badge";
 import { CardContent, CardHeader, CardTitle, PageCard } from "@/components/ui";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { dummyFacilities } from "@/data/dummyFacilities";
 import { useHasCapability } from "@/hooks/use-capabilities";
-import { useFacilities } from "@/hooks/use-facilities";
+import { useFacilities, useFacilityStatuses } from "@/hooks/use-facilities";
 import { formatPower, formatEnergy, formatMassRate } from "@/lib/format-utils";
 
 type FacilityCategory = "power" | "storage" | "extraction";
@@ -63,6 +64,7 @@ function FacilityManagementContent() {
         isLoading: facilitiesLoading,
         error: facilitiesError,
     } = useFacilities();
+    const { data: statusesData } = useFacilityStatuses();
     const hasStorage = useHasCapability("has_storage");
     const hasWarehouse = useHasCapability("has_warehouse");
 
@@ -123,6 +125,51 @@ function FacilityManagementContent() {
                                         displayFacilities.power_facilities
                                     }
                                     columns={[
+                                        {
+                                            header: "Status",
+                                            className: "text-center",
+                                            render: (f) => {
+                                                const renewableStatus =
+                                                    statusesData?.renewables[
+                                                        f.facility
+                                                    ];
+                                                if (!renewableStatus)
+                                                    return null;
+                                                return (
+                                                    <div className="inline-flex justify-center">
+                                                        <StatusBadge
+                                                            status={
+                                                                renewableStatus
+                                                            }
+                                                            variant="iconOnly"
+                                                        />
+                                                    </div>
+                                                );
+                                            },
+                                            renderSummary: (facilities) => {
+                                                const facilityType =
+                                                    facilities[0]?.facility;
+                                                const renewableStatus =
+                                                    facilityType
+                                                        ? statusesData
+                                                              ?.renewables[
+                                                              facilityType
+                                                          ]
+                                                        : undefined;
+                                                if (!renewableStatus)
+                                                    return null;
+                                                return (
+                                                    <div className="inline-flex justify-center">
+                                                        <StatusBadge
+                                                            status={
+                                                                renewableStatus
+                                                            }
+                                                            variant="iconOnly"
+                                                        />
+                                                    </div>
+                                                );
+                                            },
+                                        },
                                         {
                                             header: "Max Power",
                                             className: "text-right",
