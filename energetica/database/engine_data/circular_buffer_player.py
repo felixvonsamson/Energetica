@@ -56,6 +56,14 @@ class CircularBufferPlayer:
             },
         }
 
+    def __setstate__(self, state: dict) -> None:
+        """Migrate old pickle data by adding missing keys introduced in newer versions."""
+        self.__dict__.update(state)
+        if "storage_soc" not in self._data:
+            self._data["storage_soc"] = {
+                facility: deque([0.0] * 360, maxlen=360) for facility in self._data.get("storage", {})
+            }
+
     def append_value(self, new_value: dict) -> None:
         """Add one new tick of data to the buffer."""
         for category, subcategories in new_value.items():
