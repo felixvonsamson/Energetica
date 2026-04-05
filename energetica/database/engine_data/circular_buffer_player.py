@@ -63,6 +63,10 @@ class CircularBufferPlayer:
         for key, default_subcategories in fresh._data.items():
             if key not in self._data:
                 self._data[key] = {sub: deque([0.0] * 360, maxlen=360) for sub in default_subcategories}
+            else:
+                for sub in default_subcategories:
+                    if sub not in self._data[key]:
+                        self._data[key][sub] = deque([0.0] * 360, maxlen=360)
         # storage_soc mirrors storage facilities, not just the defaults
         for facility in self._data.get("storage", {}):
             if facility not in self._data["storage_soc"]:
