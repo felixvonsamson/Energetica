@@ -3,12 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { ReactNode } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
-import {
-    TechnologyIcon,
-    Money,
-    CardContent,
-    AssetName,
-} from "@/components/ui";
+import { TechnologyIcon, Money, CardContent, AssetName } from "@/components/ui";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -105,8 +100,8 @@ export function TechnologyDetailDialog<T>({
                             </div>
 
                             {/* Header */}
-                            <div className="space-y-1">
-                                <TypographyH2 className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                                <TypographyH2 className="flex items-center gap-2 mr-auto">
                                     <TechnologyIcon
                                         technology={technology.name}
                                         size={28}
@@ -130,18 +125,17 @@ export function TechnologyDetailDialog<T>({
                                             __html: technology.description,
                                         }}
                                     />
-                                    {" "}
-                                    <a
-                                        href={technology.wikipedia_link}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <ExternalLink className="w-3 h-3" />
-                                        Learn more
-                                    </a>
                                 </div>
+                                <a
+                                    href={technology.wikipedia_link}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground w-fit"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <ExternalLink className="w-3 h-3" />
+                                    Learn more
+                                </a>
                                 {/* Affected Facilities */}
                                 {technology.affected_facilities.length > 0 && (
                                     <div>
@@ -192,17 +186,6 @@ export function TechnologyDetailDialog<T>({
                                 )}
                             </CardContent>
 
-                            {/* Requirements */}
-                            {technology.requirements.some(
-                                (r) => r.status !== "satisfied",
-                            ) && (
-                                <CardContent>
-                                    <RequirementsDisplay
-                                        requirements={technology.requirements}
-                                    />
-                                </CardContent>
-                            )}
-
                             {/* Effects Table */}
                             <CardContent className="flex justify-around">
                                 {renderEffectsTable(technology)}
@@ -210,33 +193,65 @@ export function TechnologyDetailDialog<T>({
                         </div>
 
                         {/* Footer — always visible */}
-                        <div className="shrink-0 border-t border-border bg-background px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+                        <div className="shrink-0 border-t border-border bg-background px-6 py-4 flex flex-col gap-3">
+                            {/* Construction info */}
                             <ConstructionInfo
                                 constructionTime={technology.construction_time}
-                                constructionPower={technology.construction_power}
+                                constructionPower={
+                                    technology.construction_power
+                                }
+                                className="w-full justify-evenly"
                             />
-                            <div className="flex items-center gap-3">
-                                {/* Knowledge spillover badge */}
-                                {technology.discount && (
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span className="inline-flex items-center rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2.5 py-1 text-sm font-semibold cursor-help select-none">
-                                                −
-                                                {Math.round(
-                                                    (1 - technology.discount) *
-                                                        100,
-                                                )}
-                                                %
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-56 text-center leading-snug">
-                                            Knowledge spillover
-                                            {technology.prevalence
-                                                ? ` — ${technology.prevalence} other player${technology.prevalence > 1 ? "s have" : " has"} already researched this, reducing your cost.`
-                                                : " reduces your research cost."}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                )}
+
+                            {/* Unlock requirements */}
+                            {technology.requirements.some(
+                                (r) => r.status !== "satisfied",
+                            ) && (
+                                <RequirementsDisplay
+                                    requirements={technology.requirements}
+                                />
+                            )}
+
+                            {/* Price + Action button */}
+                            <div className="flex items-center justify-around">
+                                <div className="flex items-center gap-2">
+                                    <Money
+                                        amount={Math.round(
+                                            technology.price *
+                                                (technology.discount ?? 1),
+                                        )}
+                                        long
+                                        className="text-lg font-semibold"
+                                    />
+                                    {/* Knowledge spillover badge */}
+                                    {technology.discount && (
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <span className="inline-flex items-center rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2.5 py-1 text-sm font-semibold cursor-help select-none">
+                                                    −
+                                                    {Math.round(
+                                                        (1 -
+                                                            technology.discount) *
+                                                            100,
+                                                    )}
+                                                    %
+                                                </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-56 text-center leading-snug">
+                                                <Link
+                                                    to="/app/wiki/$slug"
+                                                    params={{
+                                                        slug: "technologies",
+                                                    }}
+                                                    hash="knowledge-spillover"
+                                                    className="underline hover:opacity-80"
+                                                >
+                                                    Knowledge spillover
+                                                </Link>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    )}
+                                </div>
                                 <Button
                                     size="lg"
                                     onClick={handleResearch}
@@ -253,29 +268,12 @@ export function TechnologyDetailDialog<T>({
                                     className="px-8 text-base font-bold"
                                 >
                                     {technology.requirements_status ===
-                                    "unsatisfied" ? (
-                                        "Locked"
-                                    ) : (
-                                        <span className="flex items-center gap-2">
-                                            {technology.requirements_status ===
+                                    "unsatisfied"
+                                        ? "Locked"
+                                        : technology.requirements_status ===
                                             "queued"
-                                                ? "Queue Research"
-                                                : "Start Research"}
-                                            <span className="opacity-70 font-normal">
-                                                ·
-                                            </span>
-                                            <span className="font-normal">
-                                                <Money
-                                                    amount={Math.round(
-                                                        technology.price *
-                                                            (technology.discount ??
-                                                                1),
-                                                    )}
-                                                    long
-                                                />
-                                            </span>
-                                        </span>
-                                    )}
+                                          ? "Queue Research"
+                                          : "Start Research"}
                                 </Button>
                             </div>
                         </div>

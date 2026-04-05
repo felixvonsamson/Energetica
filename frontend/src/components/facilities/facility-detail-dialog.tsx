@@ -38,7 +38,7 @@ interface FacilityDetailDialogProps<T> {
           })
         | null;
     facilityType: "power" | "storage" | "extraction" | "functional";
-    renderDescription?: (facility: T) => ReactNode;
+    renderDescription?: (facility: T, learnMore?: ReactNode) => ReactNode;
     renderStatsTable: (facility: T) => ReactNode;
     extraHeaderContent?: (facility: T) => ReactNode;
     onCompare?: (facility: T) => void;
@@ -99,7 +99,9 @@ function FacilityContent<T>(
     },
     facilityType: string,
     extraHeaderContent: ((facility: T) => ReactNode) | undefined,
-    renderDescription: ((facility: T) => ReactNode) | undefined,
+    renderDescription:
+        | ((facility: T, learnMore?: ReactNode) => ReactNode)
+        | undefined,
     renderStatsTable: (facility: T) => ReactNode,
     onCompare: ((facility: T) => void) | undefined,
     handleConstruction: () => void,
@@ -107,6 +109,23 @@ function FacilityContent<T>(
     const imageExtension = imageExtensionMap[facility.name] ?? "jpg";
     const imageUrl = `/static/images/${facilityType}_facilities/${facility.name}.${imageExtension}`;
     const isLocked = facility.requirements_status === "unsatisfied";
+    const hasUnsatisfiedRequirements = facility.requirements.some(
+        (r) => r.status !== "satisfied",
+    );
+
+    const learnMoreLink =
+        facilityType !== "functional" ? (
+            <a
+                href={facility.wikipedia_link}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground w-fit"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <ExternalLink className="w-3 h-3" />
+                Learn more
+            </a>
+        ) : undefined;
 
     return (
         <>
@@ -140,24 +159,10 @@ function FacilityContent<T>(
                     {extraHeaderContent && extraHeaderContent(facility)}
                 </div>
 
-                {/* Description + Learn More */}
+                {/* Description */}
                 <CardContent>
                     {renderDescription ? (
-                        <div className="space-y-1.5">
-                            {renderDescription(facility)}
-                            {facilityType !== "functional" && (
-                                <a
-                                    href={facility.wikipedia_link}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground w-fit"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <ExternalLink className="w-3 h-3" />
-                                    Learn more
-                                </a>
-                            )}
-                        </div>
+                        renderDescription(facility, learnMoreLink)
                     ) : (
                         <div className="[&_p:last-of-type]:inline">
                             <div
@@ -185,24 +190,13 @@ function FacilityContent<T>(
                     )}
                 </CardContent>
 
-                {/* Requirements */}
-                {facility.requirements.some(
-                    (r) => r.status !== "satisfied",
-                ) && (
-                    <CardContent>
-                        <RequirementsDisplay
-                            requirements={facility.requirements}
-                        />
-                    </CardContent>
-                )}
-
                 {/* Stats Table + Compare */}
                 <CardContent>
                     <div className="flex justify-center">
                         <div className="flex flex-col gap-3">
                             {renderStatsTable(facility)}
                             {onCompare && (
-                                <div className="flex justify-end">
+                                <div className="flex justify-center">
                                     <Button
                                         size="sm"
                                         variant="outline"
@@ -219,33 +213,39 @@ function FacilityContent<T>(
             </div>
 
             {/* Footer — always visible */}
-            <div className="shrink-0 border-t border-border bg-background px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+            <div className="shrink-0 border-t border-border bg-background px-6 py-4 flex flex-col gap-3">
+                {/* Construction info */}
                 <ConstructionInfo
                     constructionTime={facility.construction_time}
                     constructionPower={facility.construction_power}
                     constructionPollution={
                         facility.construction_pollution ?? undefined
                     }
+                    className="w-full justify-evenly"
                 />
-                <Button
-                    size="lg"
-                    onClick={handleConstruction}
-                    disabled={isLocked}
-                    variant={isLocked ? "destructive" : "default"}
-                    className="px-8 text-base font-bold"
-                >
-                    {isLocked ? (
-                        "Locked"
-                    ) : (
-                        <span className="flex items-center gap-2">
-                            Start Construction
-                            <span className="opacity-70 font-normal">·</span>
-                            <span className="font-normal">
-                                <Money amount={facility.price} long />
-                            </span>
-                        </span>
-                    )}
-                </Button>
+
+                {/* Unlock requirements */}
+                {hasUnsatisfiedRequirements && (
+                    <RequirementsDisplay requirements={facility.requirements} />
+                )}
+
+                {/* Price + Action button */}
+                <div className="flex items-center justify-around">
+                    <Money
+                        amount={facility.price}
+                        long
+                        className="text-lg font-semibold"
+                    />
+                    <Button
+                        size="lg"
+                        onClick={handleConstruction}
+                        disabled={isLocked}
+                        variant={isLocked ? "destructive" : "default"}
+                        className="px-8 text-base font-bold"
+                    >
+                        {isLocked ? "Locked" : "Start Construction"}
+                    </Button>
+                </div>
             </div>
         </>
     );

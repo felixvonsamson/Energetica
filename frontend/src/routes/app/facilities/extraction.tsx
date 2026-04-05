@@ -12,12 +12,7 @@ import {
 } from "@/components/dashboard/projects-panel";
 import { FacilityItem, FacilityDetailDialog } from "@/components/facilities";
 import { GameLayout } from "@/components/layout/game-layout";
-import {
-    ResourceName,
-    CashFlow,
-    Duration,
-    CatalogGrid,
-} from "@/components/ui";
+import { ResourceName, CashFlow, Duration, CatalogGrid } from "@/components/ui";
 import { usePlayerResources } from "@/hooks/use-player-resources";
 import {
     useExtractionFacilitiesCatalog,
@@ -66,7 +61,10 @@ export const Route = createFileRoute("/app/facilities/extraction")({
             isUnlocked: (cap) =>
                 cap.has_warehouse
                     ? { unlocked: true }
-                    : { unlocked: false, reason: "Build a Warehouse to unlock" },
+                    : {
+                          unlocked: false,
+                          reason: "Build a Warehouse to unlock",
+                      },
         },
         infoDialog: {
             contents: <ExtractionFacilitiesHelp />,
@@ -178,14 +176,14 @@ function ExtractionFacilitiesContent() {
                         onClose={() => navigate({ search: {} })}
                         facility={selectedFacility}
                         facilityType="extraction"
-                        renderDescription={(facility) => (
+                        renderDescription={(facility, learnMore) => (
                             <div>
                                 <div
-                                    className="mb-2"
                                     dangerouslySetInnerHTML={{
                                         __html: facility.description,
                                     }}
                                 />
+                                {learnMore}
 
                                 {/* Underground reserves indicator */}
                                 {resourcesData && (
@@ -220,7 +218,6 @@ function ExtractionFacilitiesContent() {
                     />
                 </>
             )}
-
         </div>
     );
 }
