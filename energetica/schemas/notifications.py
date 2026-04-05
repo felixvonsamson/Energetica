@@ -85,8 +85,9 @@ class ShipmentArrivedPayload(BaseModel):
     warehouse_full: bool
 
 
-class CreditLimitExceededPayload(BaseModel):
-    type: Literal["credit_limit_exceeded"] = "credit_limit_exceeded"
+class NetworkExpelledPayload(BaseModel):
+    type: Literal["network_expelled"] = "network_expelled"
+    network_name: str
 
 
 class AchievementUnlockPayload(BaseModel):
@@ -184,7 +185,7 @@ PersistableNotificationPayload = Union[
     ClimateEventPayload,
     ResourceSoldPayload,
     ShipmentArrivedPayload,
-    CreditLimitExceededPayload,
+    NetworkExpelledPayload,
     AchievementMilestonePowerConsumptionPayload,
     AchievementMilestoneEnergyStoragePayload,
     AchievementMilestoneBasePayload,

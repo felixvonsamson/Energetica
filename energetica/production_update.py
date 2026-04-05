@@ -33,7 +33,8 @@ from energetica.enums import (
 )
 from energetica.globals import engine
 from energetica.schemas.electricity_markets import AskType
-from energetica.schemas.notifications import CreditLimitExceededPayload
+from energetica.schemas.notifications import NetworkExpelledPayload
+from energetica.utils import network_helpers
 from energetica.types.facility_statuses import ProductionStatus
 from energetica.utils.misc import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
 
@@ -45,7 +46,6 @@ def update_electricity() -> None:
 
     # --- Initialization ---
     players: list[Player] = list(Player.all())
-    networks = Network.all()
     new_values = {player.id: player.rolling_history.init_new_data() for player in players}
 
     # --- Resetting speeds of ongoing projects and shipments---
@@ -56,7 +56,17 @@ def update_electricity() -> None:
     for os in ongoing_shipments:
         os.reset_speed()
 
-    for network in networks:
+    # --- Expel bankrupt players from their networks ---
+    for network in list(Network.all()):
+        for player in list(network.members):
+            max_overdraft = -player.config["industry"]["income_per_day"]
+            if player.money < max_overdraft:
+                network_name = network.name
+                network_helpers.leave_network(player)
+                player.notify(NetworkExpelledPayload(network_name=network_name))
+                engine.log(f"{player.username} was expelled from {network_name} due to insufficient funds")
+
+    for network in Network.all():
         # --- Market resolution ---
         market = init_market()
         for player in network.members:
@@ -443,22 +453,14 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
         if player.capacities.get(facility) is not None:
             market = place_bid(market, player.id, generation[facility], -5, facility)
 
-    # allow a maximum overdraft of the equivalent of the daily income of the industry
-    max_overdraft = -player.config["industry"]["income_per_day"]
-    do_not_send = len(player.notifications) > 0 and player.notifications[-1].type == "credit_limit_exceeded"
-    if player.money < max_overdraft and player.network is not None and not do_not_send:
-        player.notify(CreditLimitExceededPayload())
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
     # are used and replace it with a cached property or something similar that generates a list of all demands and offer types
     for demand_type in player.network_prices.bid_prices.keys():
         if demand_type in demand:
-            if player.money < max_overdraft and player.network is not None:
-                reduce_demand(new_values, demand_type, player.id, 0.0)
-            else:
-                bid_q = demand[demand_type]
-                price = player.network_prices.bid_prices[demand_type]
-                market = place_ask(market, player.id, bid_q, price, demand_type)
+            bid_q = demand[demand_type]
+            price = player.network_prices.bid_prices[demand_type]
+            market = place_ask(market, player.id, bid_q, price, demand_type)
 
     resource_reservations = reset_resource_reservations()
     # offer capacities of remaining facilities on the market

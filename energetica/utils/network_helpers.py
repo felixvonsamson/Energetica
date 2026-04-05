@@ -15,6 +15,8 @@ def join_network(player: Player, network: Network | None) -> Network:
         # TODO(mglst): this logic should be handled by the router so that it can return a relevant HTTP error code such
         # as HTTP_404_NOT_FOUND
         raise GameError(GameExceptionType.NO_SUCH_NETWORK)
+    if player.money <= 0:
+        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
     if player.network is not None:
         leave_network(player)
     player.network = network
@@ -38,6 +40,8 @@ def create_network(player: Player, name: str) -> Network:
         raise GameError(GameExceptionType.NETWORK_NOT_UNLOCKED)
     if len(list(Network.filter_by(name=name))):
         raise GameError(GameExceptionType.NAME_ALREADY_USED)
+    if player.money <= 0:
+        raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
     if player.network is not None:
         leave_network(player)
     new_network = Network(name=name, members=[player], created_tick=engine.total_t)
