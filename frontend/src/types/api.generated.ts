@@ -456,6 +456,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/charts/money/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Money
+         *
+         * Get player money balance time series at the specified resolution.
+         *
+         *     Parameters:
+         *     resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *     start_tick: First tick to include (must be aligned to resolution)
+         *     count: Number of datapoints to retrieve
+         */
+        get: operations["get_money_api_v1_charts_money__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/charts/resources/{resolution}": {
         parameters: {
             query?: never;
@@ -3174,6 +3200,41 @@ export interface components {
             money: number;
         };
         /**
+         * MoneyResponse
+         *
+         * Response model for player money balance time series.
+         */
+        MoneyResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for player money balance, with currency values
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
          * NonFacilityBidType
          *
          * Enum for special asks on the market that are not storage, extraction,
@@ -5213,6 +5274,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TemperatureDataResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_money_api_v1_charts_money__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoneyResponse"];
                 };
             };
             /** Validation Error */

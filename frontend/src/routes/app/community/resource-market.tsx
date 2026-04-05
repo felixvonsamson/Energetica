@@ -12,7 +12,7 @@ import { IncomingShipmentsDialog } from "@/components/dashboard/incoming-shipmen
 import { GameLayout } from "@/components/layout/game-layout";
 import { CreateAskDialog } from "@/components/resource-market/create-ask-dialog";
 import { PurchaseDialog } from "@/components/resource-market/purchase-dialog";
-import { Button, Card, CardContent, Money } from "@/components/ui";
+import { Button, CardContent, Money, PageCard } from "@/components/ui";
 import { useCurrentPlayer } from "@/hooks/use-current-player";
 import { usePlayerResources } from "@/hooks/use-player-resources";
 import {
@@ -293,7 +293,7 @@ function ResourceMarketContent() {
             </div>
 
             {/* Market table */}
-            <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
+            <PageCard>
                 <CardContent className="overflow-x-auto">
                     {filteredAndSortedAsks.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
@@ -364,7 +364,7 @@ function ResourceMarketContent() {
                         </table>
                     )}
                 </CardContent>
-            </Card>
+            </PageCard>
 
             {/* Purchase dialog - rendered outside the table to avoid nesting violations */}
             <PurchaseDialog

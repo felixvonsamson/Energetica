@@ -36,6 +36,7 @@ from energetica.schemas.charts import (
     MarketExportsResponse,
     MarketGenerationResponse,
     MarketImportsResponse,
+    MoneyResponse,
     OpCostsResponse,
     PowerSinksResponse,
     PowerSourcesResponse,
@@ -510,6 +511,25 @@ def get_temperature_data(
     """
     data = _get_climate_data(start_tick, count, "temperature", resolution)
     return TemperatureDataResponse(resolution=resolution, **data)
+
+
+@router.get("/money/{resolution}")
+def get_money(
+    player: Annotated[Player, Depends(get_settled_player)],
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> MoneyResponse:
+    """
+    Get player money balance time series at the specified resolution.
+
+    Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_chart_data(player, start_tick, count, "money", resolution)
+    return MoneyResponse(resolution=resolution, **data)
 
 
 @router.get("/resources/{resolution}")

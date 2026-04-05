@@ -21,6 +21,7 @@ class CircularBufferPlayer:
             "storage": defaultdict(create_deque),
             "resources": defaultdict(create_deque),
             "emissions": defaultdict(create_deque),
+            "money": defaultdict(create_deque),
         }
         """
         # TODO (Yassir): Change to defaultdict
@@ -49,6 +50,9 @@ class CircularBufferPlayer:
             "resources": {},  # + all resources when warehouse is built
             "emissions": {
                 "construction": deque([0.0] * 360, maxlen=360),  # + controllable facilities
+            },
+            "money": {
+                "balance": deque([0.0] * 360, maxlen=360),
             },
         }
 

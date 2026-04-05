@@ -180,6 +180,17 @@ class ResourcesResponse(ChartDataResponse[ResourcesKey]):
     )
 
 
+MoneyKey = Literal["balance"]
+
+
+class MoneyResponse(ChartDataResponse[MoneyKey]):
+    """Response model for player money balance time series."""
+
+    series: dict[MoneyKey, list[float]] = Field(
+        description="Time series data for player money balance, with currency values",
+    )
+
+
 # Market data responses (market-specific, not player-specific)
 MarketDataKey = Literal["price", "quantity"]
 
