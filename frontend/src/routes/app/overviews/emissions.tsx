@@ -11,7 +11,7 @@ import {
 } from "@/components/charts/emissions-chart";
 import { TemperatureChart } from "@/components/charts/temperature-chart";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent } from "@/components/ui";
+import { CardContent, PageCard } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
 import {
@@ -176,15 +176,14 @@ function EmissionsOverviewContent() {
 
     return (
         <div className="py-4 md:p-8 space-y-6">
-            <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
+            <PageCard>
                 <CardContent>
                     <ResolutionPicker currentTick={currentTick} />
                 </CardContent>
-            </Card>
+            </PageCard>
 
             {/* CO2 in Atmosphere */}
             <ChartCard
-                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={Globe}
                 iconClassName="text-primary"
                 title="CO₂ in the Atmosphere"
@@ -242,7 +241,6 @@ function EmissionsOverviewContent() {
 
             {/* Global Temperature */}
             <ChartCard
-                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={Thermometer}
                 iconClassName="text-primary"
                 title="Global Average Temperature"
@@ -275,7 +273,6 @@ function EmissionsOverviewContent() {
 
             {/* Personal Emissions */}
             <ChartCard
-                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={Cloud}
                 iconClassName="text-primary"
                 title="Your Emissions"

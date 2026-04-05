@@ -29,7 +29,7 @@ import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { WeatherSection } from "@/components/dashboard/weather";
 import { DevelopmentBanner } from "@/components/development-banner";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { PageCard, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { useAchievements } from "@/hooks/use-achievements";
 import { useCapabilities, useHasCapability } from "@/hooks/use-capabilities";
 import { useProjects } from "@/hooks/use-projects";
@@ -129,12 +129,18 @@ function DashboardContent() {
     const hasShipments = (shipmentsData?.shipments.length ?? 0) > 0;
 
     return (
-        <div className="p-4 md:p-8 flex flex-col gap-6">
+        <div className="py-4 md:p-8 flex flex-col gap-6">
             {/* Development info banner */}
-            <DevelopmentBanner />
+            <div className="px-4 md:px-0">
+                <DevelopmentBanner />
+            </div>
 
             {/* Weather section */}
-            <WeatherSection />
+            <PageCard>
+                <CardContent>
+                    <WeatherSection />
+                </CardContent>
+            </PageCard>
 
             {/* Construction - only show if there are any construction projects */}
             {hasConstructionProjects && (
@@ -187,7 +193,7 @@ function DashboardContent() {
             {!capabilities?.has_network && <BeginnersGuide />}
 
             {/* Quick links grid */}
-            <section>
+            <section className="px-4 md:px-0">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <QuickLinkCard
                         to="/app/overviews/cash-flow"
@@ -244,7 +250,7 @@ function DashboardContent() {
 
 function BeginnersGuide() {
     return (
-        <Card>
+        <PageCard>
             <CardHeader>
                 <CardTitle>Beginners guide</CardTitle>
             </CardHeader>
@@ -317,7 +323,7 @@ function BeginnersGuide() {
                     <p>Best of luck in your energy adventure!</p>
                 </div>
             </CardContent>
-        </Card>
+        </PageCard>
     );
 }
 
@@ -325,7 +331,7 @@ function AchievementSection() {
     const { data: achievementsData, isLoading, isError } = useAchievements();
 
     return (
-        <Card>
+        <PageCard>
             <CardHeader>
                 <CardTitle className="mb-4">
                     <Trophy className="inline w-6 h-6 mr-2" />
@@ -357,6 +363,6 @@ function AchievementSection() {
                     </div>
                 )}
             </CardContent>
-        </Card>
+        </PageCard>
     );
 }

@@ -9,7 +9,7 @@ import { Plug, Zap } from "lucide-react";
 
 import { PriorityItem } from "@/components/power-priorities/priority-item";
 import { RenewablesSection } from "@/components/power-priorities/renewables-section";
-import { Card, CardContent } from "@/components/ui";
+import { CardContent, PageCard } from "@/components/ui";
 import { usePowerPriorities } from "@/hooks/use-power-priorities";
 import { getPriorityItemKey } from "@/lib/power-priorities-utils";
 
@@ -42,7 +42,7 @@ export function PriorityTable() {
     const { renewables, power_priorities } = prioritiesData;
 
     return (
-        <Card className="rounded-none border-x-0 md:rounded-xl md:border-x">
+        <PageCard>
             <CardContent className="overflow-x-auto">
                 {power_priorities.length === 0 ? (
                     <p className="text-center py-8">
@@ -98,6 +98,6 @@ export function PriorityTable() {
                         </table>
                 )}
             </CardContent>
-        </Card>
+        </PageCard>
     );
 }

@@ -101,13 +101,13 @@ export function TopBar() {
 
     return (
         <>
-            <header className="shrink-0 z-10 flex h-(--topbar-height) items-center border-b bg-topbar px-4 gap-2">
+            <header className="shrink-0 z-10 flex h-(--topbar-height) items-center border-b border-border-brand bg-topbar px-4 gap-2">
                 {/* Left: Sidebar trigger + Logo + Breadcrumbs */}
                 <div className="flex items-center gap-2 shrink-0">
                     <SidebarTrigger className="-ml-1" />
                     <Separator
                         orientation="vertical"
-                        className="data-[orientation=vertical]:h-4"
+                        className="bg-border-brand data-[orientation=vertical]:h-4"
                     />
                     <Link
                         to="/app"
@@ -123,7 +123,7 @@ export function TopBar() {
                     <div className="hidden md:flex items-center gap-2">
                         <Separator
                             orientation="vertical"
-                            className="data-[orientation=vertical]:h-4"
+                            className="bg-border-brand data-[orientation=vertical]:h-4"
                         />
                         <Breadcrumbs />
                     </div>
