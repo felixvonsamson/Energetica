@@ -17,6 +17,7 @@ import {
     useElectricityMarkets,
     useElectricityMarket,
 } from "@/hooks/use-electricity-markets";
+import { usePlayerMoney } from "@/hooks/use-player-money";
 import { useMyId } from "@/hooks/use-players";
 
 interface JoinMarketDialogProps {
@@ -34,6 +35,8 @@ export function JoinMarketDialog({
     const { mutate: joinMarket, isPending } = useJoinElectricityMarket();
     const { data: marketsData } = useElectricityMarkets();
     const myId = useMyId();
+    const { data: moneyData } = usePlayerMoney();
+    const hasInsufficientFunds = (moneyData?.money ?? 1) <= 0;
 
     const market = useElectricityMarket(marketId);
     const marketName = market?.name ?? null;
@@ -119,6 +122,22 @@ export function JoinMarketDialog({
                             </InfoBanner>
                         )}
 
+                        {/* Insufficient funds warning */}
+                        {hasInsufficientFunds && (
+                            <InfoBanner variant="error">
+                                <div>
+                                    <p className="font-semibold mb-1">
+                                        Insufficient funds
+                                    </p>
+                                    <p className="text-sm">
+                                        Your balance must be positive to join a
+                                        network. Recover your finances before
+                                        rejoining.
+                                    </p>
+                                </div>
+                            </InfoBanner>
+                        )}
+
                         {/* Info about what joining entails - for new players */}
                         {!isAlreadyInMarket && (
                             <InfoBanner variant="info">
@@ -197,7 +216,7 @@ export function JoinMarketDialog({
                             type="submit"
                             form="join-market-form"
                             variant={isPending ? "outline" : "default"}
-                            disabled={isPending}
+                            disabled={isPending || hasInsufficientFunds}
                             className="flex items-center gap-2"
                         >
                             {isPending && <Spinner />}

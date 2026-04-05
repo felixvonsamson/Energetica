@@ -121,6 +121,13 @@ const NOTIFICATION_CONFIG = {
         pushBody: () => "Not enough money for market participation.",
         inGameBody: () => "Not enough money for market participation.",
     },
+    network_expelled: {
+        category: "market",
+        path: () => "/app/community/electricity-markets",
+        title: "Expelled from network",
+        pushBody: (p) => `You have been expelled from ${p.network_name} due to insufficient funds. Recover a positive balance to rejoin.`,
+        inGameBody: (p) => `You have been expelled from ${p.network_name} due to insufficient funds. Recover a positive balance to rejoin.`,
+    },
     achievement_milestone: {
         category: "achievements",
         // TODO: redirect to a dedicated achievements page when it exists

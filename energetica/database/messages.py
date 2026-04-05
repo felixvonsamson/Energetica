@@ -50,6 +50,7 @@ NotificationType = Literal[
     "resource_sold",
     "shipment_arrived",
     "credit_limit_exceeded",
+    "network_expelled",
     "achievement_milestone",
     "achievement_unlock",
     "push_notification_test",
