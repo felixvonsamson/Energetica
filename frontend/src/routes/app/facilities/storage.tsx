@@ -287,7 +287,9 @@ function StorageFacilityStatsTable({
 
                     {/* Efficiency */}
                     <tr className="border-b border-border/30">
-                        <td className="py-2 px-4 font-semibold">Efficiency</td>
+                        <td className="py-2 px-4 font-semibold">
+                            Round-trip efficiency
+                        </td>
                         <td className="py-2 px-4 text-center font-mono">
                             {Math.round(facility.efficiency)}%
                         </td>
@@ -393,7 +395,7 @@ function StorageFacilityComparisonRows({
             {/* Efficiency */}
             <tr className="border-b border-border/30">
                 <td className="py-2 px-4 font-semibold bg-muted/30 sticky left-0">
-                    Efficiency
+                    Round-trip efficiency
                 </td>
                 {facilities.map((facility) => (
                     <td

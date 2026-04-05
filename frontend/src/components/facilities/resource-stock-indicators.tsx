@@ -49,7 +49,7 @@ export function ResourceStockIndicators({
     const isHydroFacility = hydroFacilities.includes(facilityName);
 
     return (
-        <>
+        <div className="mt-2">
             {/* Wind Potential */}
             {isWindFacility &&
                 windPotential !== undefined &&
@@ -135,6 +135,6 @@ export function ResourceStockIndicators({
                         return null;
                     },
                 )}
-        </>
+        </div>
     );
 }

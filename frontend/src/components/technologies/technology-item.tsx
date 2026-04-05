@@ -55,9 +55,9 @@ export function TechnologyItem({
                     <div className="flex items-center gap-2">
                         <Money amount={price} long />
                         {discount && (
-                            <div className="text-success text-xs">
-                                <em>(-{Math.round((1 - discount) * 100)}%)</em>
-                            </div>
+                            <span className="inline-flex items-center rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 text-xs font-semibold select-none">
+                                −{Math.round((1 - discount) * 100)}%
+                            </span>
                         )}
                     </div>
                     <span>Level {level}</span>
