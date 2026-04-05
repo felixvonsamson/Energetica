@@ -139,7 +139,7 @@ export function TechnologyDetailDialog<T>({
                                 {/* Affected Facilities */}
                                 {technology.affected_facilities.length > 0 && (
                                     <div>
-                                        <strong>Affected facilities:</strong>{" "}
+                                        <strong>Affects:</strong>{" "}
                                         <span className="text-hyperlink">
                                             {technology.affected_facilities.map(
                                                 (facilityName, idx) => {
