@@ -111,7 +111,7 @@ export function TechnologyDetailDialog<T>({
                                         mode="long"
                                     />
                                 </TypographyH2>
-                                <p className="text-2xl text-muted-foreground">
+                                <p className="text-3xl text-muted-foreground">
                                     Level {technology.level}
                                 </p>
                             </div>
