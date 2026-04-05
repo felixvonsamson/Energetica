@@ -66,7 +66,10 @@ def _load_pickle_data(
         return defaultdict(lambda: defaultdict(list))
     try:
         with open(file_path, "rb") as file:
-            return pickle.load(file)
+            data = pickle.load(file)
+        result: dict = defaultdict(lambda: defaultdict(list))
+        result.update(data)
+        return result
     except Exception:
         # Return empty structure if pickle is corrupted
         return defaultdict(lambda: defaultdict(list))
