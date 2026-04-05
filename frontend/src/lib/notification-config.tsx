@@ -114,19 +114,14 @@ const NOTIFICATION_CONFIG = {
                 ? `Your shipment of ${p.resource} has arrived, but only ${formatMass(p.stored_kg)} of ${formatMass(p.quantity_kg)} were stored, since your warehouse ran out of storage capacity.`
                 : `Your ${formatMass(p.quantity_kg)} shipment of ${p.resource} has arrived.`,
     },
-    credit_limit_exceeded: {
-        category: "market",
-        path: () => "/app/overviews/cash-flow",
-        title: "Credit limit exceeded",
-        pushBody: () => "Not enough money for market participation.",
-        inGameBody: () => "Not enough money for market participation.",
-    },
     network_expelled: {
         category: "market",
         path: () => "/app/community/electricity-markets",
         title: "Expelled from network",
-        pushBody: (p) => `You have been expelled from ${p.network_name} due to insufficient funds. Recover a positive balance to rejoin.`,
-        inGameBody: (p) => `You have been expelled from ${p.network_name} due to insufficient funds. Recover a positive balance to rejoin.`,
+        pushBody: (p) =>
+            `You have been expelled from ${p.network_name} due to insufficient funds. Recover a positive balance to rejoin.`,
+        inGameBody: (p) =>
+            `You have been expelled from ${p.network_name} due to insufficient funds. Recover a positive balance to rejoin.`,
     },
     achievement_milestone: {
         category: "achievements",

@@ -2316,16 +2316,6 @@ export interface components {
             | "combined_cycle"
             | "nuclear_reactor"
             | "nuclear_reactor_gen4";
-        /** CreditLimitExceededPayload */
-        CreditLimitExceededPayload: {
-            /**
-             * Type
-             *
-             * @constant
-             * @default credit_limit_exceeded
-             */
-            type: "credit_limit_exceeded";
-        };
         /** DailyQuizBase */
         DailyQuizBase: {
             /** Question */
@@ -3207,7 +3197,6 @@ export interface components {
                 | components["schemas"]["ClimateEventPayload"]
                 | components["schemas"]["ResourceSoldPayload"]
                 | components["schemas"]["ShipmentArrivedPayload"]
-                | components["schemas"]["CreditLimitExceededPayload"]
                 | components["schemas"]["NetworkExpelledPayload"]
                 | components["schemas"]["AchievementMilestonePowerConsumptionPayload"]
                 | components["schemas"]["AchievementMilestoneEnergyStoragePayload"]
