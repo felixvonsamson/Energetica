@@ -101,6 +101,8 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     InvalidMultiplier: "Invalid value provided.",
 };
 
+// TODO: these should probably live elsewhere
+
 // ---------------------------------------------------------------------------
 // Pydantic validation message prefixes (partial-match, not game error codes)
 // ---------------------------------------------------------------------------

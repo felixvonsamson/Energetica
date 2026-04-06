@@ -9,7 +9,7 @@ import {
     StorageOverviewTable,
 } from "@/components/charts/storage-chart";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent } from "@/components/ui";
+import { CardContent, PageCard } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { Label } from "@/components/ui/label";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
@@ -101,11 +101,11 @@ function StorageOverviewContent() {
 
     const { selectedResolution } = useTimeMode();
 
-    // Fetch chart data to share between chart and table
+    // Fetch absolute energy levels for the table (always needed)
     const {
-        chartData,
-        isLoading: isChartLoading,
-        isError,
+        chartData: storageLevelData,
+        isLoading: isLevelLoading,
+        isError: isLevelError,
     } = useChartData({
         config: {
             chartType: "storage-level",
@@ -114,9 +114,28 @@ function StorageOverviewContent() {
         maxDatapoints: selectedResolution.datapoints,
     });
 
+    // Fetch server-computed SoC (0-1 fraction) for the percent view
+    const {
+        chartData: storageSocData,
+        isLoading: isSocLoading,
+        isError: isSocError,
+    } = useChartData({
+        config: {
+            chartType: "storage-soc",
+            resolution: selectedResolution.resolution,
+        },
+        maxDatapoints: selectedResolution.datapoints,
+    });
+
+    const chartData =
+        viewMode === "percent" ? storageSocData : storageLevelData;
+    const isChartLoading =
+        viewMode === "percent" ? isSocLoading : isLevelLoading;
+    const isError = viewMode === "percent" ? isSocError : isLevelError;
+
     return (
-        <div className="py-4 md:p-8">
-            <Card className="mb-6 rounded-none border-x-0 md:rounded-xl md:border-x">
+        <div className="py-4 md:p-8 space-y-6">
+            <PageCard>
                 <CardContent>
                     <div className="space-y-4">
                         <div>
@@ -140,10 +159,9 @@ function StorageOverviewContent() {
                         <ResolutionPicker currentTick={currentTick} />
                     </div>
                 </CardContent>
-            </Card>
+            </PageCard>
 
             <ChartCard
-                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={Battery}
                 iconClassName="text-primary"
                 title="Stored Energy"
@@ -157,7 +175,7 @@ function StorageOverviewContent() {
                 />
 
                 <StorageOverviewTable
-                    chartData={chartData}
+                    chartData={storageLevelData}
                     hiddenFacilities={hiddenFacilities}
                     onToggleFacility={toggleFacility}
                 />

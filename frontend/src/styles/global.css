@@ -179,7 +179,7 @@
 
         /* Borders */
         --border-subtle:  var(--color-bone-300);   /* dividers, subtle separators */
-        --border-brand:   var(--color-pine-800);   /* brand-coloured input/widget borders */
+        --border-brand:   var(--color-pine-700);   /* brand-coloured input/widget borders */
         /* --border (default) is already defined above */
 
         /* Brand — the pine-green action colour */
@@ -334,7 +334,7 @@
 
         /* Borders */
         --border-subtle:  #2a2a2a;
-        --border-brand:   var(--color-pine-500);   /* brand-coloured input/widget borders */
+        --border-brand:   var(--color-pine-700);   /* brand-coloured input/widget borders */
         /* --border (default) is already defined above */
 
         /* Brand */

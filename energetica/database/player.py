@@ -315,13 +315,20 @@ class Player(DBModel):
 
     def delete_notification(self, notification: Notification) -> None:
         """Delete a notification."""
-        if notification.player == self:
-            notification.delete()
+        if notification.player != self:
+            return
+        notification.delete()
+        # TODO(mglst): see TODO below for `notifications_read`
+        self.invalidate_queries(["notifications"])
 
     def notifications_read(self) -> None:
         """Mark all notifications as read."""
         for notification in self.unread_notifications():
             notification.read = True
+        # TODO(mglst): note that this forces _all_ notification data to be sent. We could do this more strategically,
+        # and only invalidate notifications that were unread, since they're the only ones for which data has changed.
+        # This would require implementing a GET for individual notification IDs, which currently does not exist
+        self.invalidate_queries(["notifications"])
 
     def unread_notifications(self) -> list[Notification]:
         """Return all unread notifications."""

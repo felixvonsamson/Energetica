@@ -89,7 +89,6 @@ export interface EChartsTimeSeriesConfig {
     gradientKeys?: string[];
     /** Whether to hide zero values in tooltip (default true) */
     hideZeroValues?: boolean;
-    /** Extra reference lines beyond the automatic Game Start line at x=0 */
     referenceLines?: Array<{ x: number; label?: string }>;
     /** Y-axis minimum (default: auto) */
     yAxisMin?: number;
@@ -299,6 +298,15 @@ export function EChartsTimeSeries({
         config.stacked,
     ]);
 
+    // Forward wheel events to the page so trackpad/mouse scroll works normally
+    useEffect(() => {
+        const el = chartRef.current;
+        if (!el) return;
+        const handler = (e: WheelEvent) => window.scrollBy(0, e.deltaY);
+        el.addEventListener("wheel", handler, { capture: true, passive: true });
+        return () => el.removeEventListener("wheel", handler, { capture: true });
+    }, []);
+
     // ── ECharts option ────────────────────────────────────────────────────────
 
     const option = useMemo((): ECOption => {
@@ -335,10 +343,7 @@ export function EChartsTimeSeries({
             else gradientOffsets[key] = dataMax / (dataMax - dataMin);
         }
 
-        const allRefLines = [
-            { x: 0, label: "Game Start" },
-            ...(config.referenceLines ?? []),
-        ];
+        const allRefLines = [...(config.referenceLines ?? [])];
 
         const series: ECOption["series"] = visibleKeys.map((key) => {
             const rawColor = config.getColor?.(key) ?? "#888";

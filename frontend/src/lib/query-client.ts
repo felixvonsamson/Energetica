@@ -41,7 +41,9 @@
  * file.
  */
 
-import { QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryClient } from "@tanstack/react-query";
+
+import { handleApiError } from "@/lib/error-utils";
 
 export const queryClient = new QueryClient({
     defaultOptions: {
@@ -80,6 +82,10 @@ export const queryClient = new QueryClient({
             networkMode: "online",
         },
     },
+    mutationCache: new MutationCache({
+        // fires for every mutation
+        onError: (error) => handleApiError(error),
+    }),
 });
 
 /** Query keys for consistent cache management. Organized by domain/feature. */

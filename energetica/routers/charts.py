@@ -36,12 +36,14 @@ from energetica.schemas.charts import (
     MarketExportsResponse,
     MarketGenerationResponse,
     MarketImportsResponse,
+    MoneyResponse,
     OpCostsResponse,
     PowerSinksResponse,
     PowerSourcesResponse,
     ResourcesResponse,
     RevenuesResponse,
     StorageLevelResponse,
+    StorageSocResponse,
     TemperatureDataResponse,
 )
 from energetica.utils.auth import get_settled_player
@@ -49,7 +51,9 @@ from energetica.utils.auth import get_settled_player
 router = APIRouter(prefix="/charts", tags=["Charts"])
 
 Resolution = Literal["1", "6", "36", "216", "1296"]
-PickleChartKey = Literal["revenues", "op_costs", "generation", "demand", "storage", "resources", "emissions"]
+PickleChartKey = Literal[
+    "revenues", "op_costs", "generation", "demand", "storage", "storage_soc", "resources", "emissions", "money"
+]
 ClimatePickleKey = Literal["emissions", "temperature"]
 PickleNetworkKey = Literal["network_data", "exports", "imports", "generation", "consumption"]
 
@@ -389,6 +393,27 @@ def get_storage_level(
     return StorageLevelResponse(resolution=resolution, **data)
 
 
+@router.get("/storage-soc/{resolution}")
+def get_storage_soc(
+    player: Annotated[Player, Depends(get_settled_player)],
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> StorageSocResponse:
+    """
+    Get storage state of charge time series by facility type at the specified resolution.
+
+    Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+
+    Returns values as a fraction (0-1) of the facility's total capacity at the time of recording.
+    """
+    data = _get_chart_data(player, start_tick, count, "storage_soc", resolution)
+    return StorageSocResponse(resolution=resolution, **data)
+
+
 @router.get("/revenues/{resolution}")
 def get_revenues(
     player: Annotated[Player, Depends(get_settled_player)],
@@ -486,6 +511,25 @@ def get_temperature_data(
     """
     data = _get_climate_data(start_tick, count, "temperature", resolution)
     return TemperatureDataResponse(resolution=resolution, **data)
+
+
+@router.get("/money/{resolution}")
+def get_money(
+    player: Annotated[Player, Depends(get_settled_player)],
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> MoneyResponse:
+    """
+    Get player money balance time series at the specified resolution.
+
+    Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+    """
+    data = _get_chart_data(player, start_tick, count, "money", resolution)
+    return MoneyResponse(resolution=resolution, **data)
 
 
 @router.get("/resources/{resolution}")

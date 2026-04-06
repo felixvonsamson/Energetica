@@ -40,10 +40,12 @@ export function GameLayout({ children }: GameLayoutProps) {
                     <AppSidebar bgLogoRef={bgLogoRef} />
                     <SidebarInset>
                         <main
-                            className="flex-1 overflow-auto 2xl:px-50"
+                            className="flex-1 overflow-auto min-w-0"
                             onScroll={handleScroll}
                         >
-                            {children}
+                            <div className="max-w-[1400px] mx-auto">
+                                {children}
+                            </div>
                         </main>
                         <Toaster position="top-center" richColors />
                     </SidebarInset>

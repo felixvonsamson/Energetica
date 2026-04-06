@@ -228,14 +228,14 @@ function PowerFacilitiesContent() {
                                     },
                                 })
                             }
-                            renderDescription={(facility) => (
+                            renderDescription={(facility, learnMore) => (
                                 <div>
                                     <div
-                                        className="mb-2"
                                         dangerouslySetInnerHTML={{
                                             __html: facility.description,
                                         }}
                                     />
+                                    {learnMore}
                                     <ResourceStockIndicators
                                         facilityName={facility.name}
                                         windPotential={facility.wind_potential}

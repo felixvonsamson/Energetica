@@ -35,53 +35,28 @@ export function StorageChart({
     viewMode,
 }: StorageChartProps) {
     const getColor = useAssetColorGetter();
-    const { data: facilities } = useFacilities();
     const filterDataKeys = useChartFilters(hiddenFacilities);
 
-    // Transform data for percent view if needed
-    const transformedData: Array<Record<string, unknown>> = useMemo(() => {
+    // In percent mode, chartData already contains server-computed SoC (0-1 fraction).
+    // Scale to 0-100 for display.
+    const displayData: Array<Record<string, unknown>> = useMemo(() => {
         if (viewMode === "normal" || chartData.length === 0) {
             return chartData;
         }
-
-        // For percent view, we need to calculate the percentage of capacity for each facility
-        // This requires knowing the max capacity for each facility
-        // For now, we'll calculate percentage based on the max value in the series
         return chartData.map((dataPoint) => {
-            const dp = dataPoint as Record<string, unknown>;
-            const result: Record<string, unknown> = {
-                tick: typeof dp.tick === "number" ? dp.tick : 0,
-            };
-
-            if (!facilities) return result;
-
-            Object.keys(dp).forEach((key) => {
+            const result: Record<string, unknown> = { tick: dataPoint.tick };
+            Object.keys(dataPoint).forEach((key) => {
                 if (key === "tick") return;
-
-                const maxValue = facilities.storage_facilities.reduce(
-                    (runningMax, facility) =>
-                        facility.facility === key
-                            ? runningMax + facility.storage_capacity
-                            : runningMax,
-                    0,
-                );
-
-                const currentVal = typeof dp[key] === "number" ? dp[key] : 0;
-                if (maxValue > 0) {
-                    result[key] =
-                        (((currentVal as number) || 0) / maxValue) * 100;
-                } else {
-                    result[key] = 0;
-                }
+                const val = dataPoint[key];
+                result[key] = typeof val === "number" ? val * 100 : 0;
             });
-
             return result;
         });
-    }, [chartData, facilities, viewMode]);
+    }, [chartData, viewMode]);
 
     const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
-            chartType: "storage-level",
+            chartType: viewMode === "normal" ? "storage-level" : "storage-soc",
             chartVariant: viewMode === "normal" ? "area" : "smoothLine",
             stacked: viewMode === "normal" ? true : false,
             getColor,
@@ -98,7 +73,7 @@ export function StorageChart({
 
     return (
         <EChartsTimeSeries
-            data={transformedData}
+            data={displayData}
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}

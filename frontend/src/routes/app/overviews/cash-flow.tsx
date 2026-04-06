@@ -17,7 +17,7 @@ import {
     CashFlowOverviewTable,
 } from "@/components/charts/cash-flow-chart";
 import { GameLayout } from "@/components/layout/game-layout";
-import { Card, CardContent } from "@/components/ui";
+import { CardContent, PageCard } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { Label } from "@/components/ui/label";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
@@ -273,8 +273,8 @@ function RevenuesOverviewContent() {
     }, [revenuesData, opCostsData, revenueType, netProfitViewMode]);
 
     return (
-        <div className="py-4 md:p-8">
-            <Card className="mb-6 rounded-none border-x-0 md:rounded-xl md:border-x">
+        <div className="py-4 md:p-8 space-y-6">
+            <PageCard>
                 <CardContent>
                     <div className="space-y-4">
                         <div>
@@ -343,10 +343,9 @@ function RevenuesOverviewContent() {
                         <ResolutionPicker currentTick={currentTick} />
                     </div>
                 </CardContent>
-            </Card>
+            </PageCard>
 
             <ChartCard
-                className="rounded-none border-x-0 md:rounded-xl md:border-x"
                 icon={DollarSign}
                 iconClassName="text-primary"
                 title={

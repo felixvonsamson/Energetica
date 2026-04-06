@@ -291,6 +291,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/charts/storage-soc/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Storage Soc
+         *
+         * Get storage state of charge time series by facility type at the
+         * specified resolution.
+         *
+         *     Parameters:
+         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *         start_tick: First tick to include (must be aligned to resolution)
+         *         count: Number of datapoints to retrieve
+         *
+         *     Returns values as a fraction (0-1) of the facility's total capacity at the time of recording.
+         */
+        get: operations["get_storage_soc_api_v1_charts_storage_soc__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/charts/revenues/{resolution}": {
         parameters: {
             query?: never;
@@ -419,6 +448,32 @@ export interface paths {
          *         count: Number of datapoints to retrieve
          */
         get: operations["get_temperature_data_api_v1_charts_temperature__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/charts/money/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Money
+         *
+         * Get player money balance time series at the specified resolution.
+         *
+         *     Parameters:
+         *     resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *     start_tick: First tick to include (must be aligned to resolution)
+         *     count: Number of datapoints to retrieve
+         */
+        get: operations["get_money_api_v1_charts_money__resolution__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2316,16 +2371,6 @@ export interface components {
             | "combined_cycle"
             | "nuclear_reactor"
             | "nuclear_reactor_gen4";
-        /** CreditLimitExceededPayload */
-        CreditLimitExceededPayload: {
-            /**
-             * Type
-             *
-             * @constant
-             * @default credit_limit_exceeded
-             */
-            type: "credit_limit_exceeded";
-        };
         /** DailyQuizBase */
         DailyQuizBase: {
             /** Question */
@@ -3144,6 +3189,53 @@ export interface components {
             /** Money */
             money: number;
         };
+        /** NetworkExpelledPayload */
+        NetworkExpelledPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default network_expelled
+             */
+            type: "network_expelled";
+            /** Network Name */
+            network_name: string;
+        };
+        /**
+         * MoneyResponse
+         *
+         * Response model for player money balance time series.
+         */
+        MoneyResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for player money balance, with currency values
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
         /**
          * NonFacilityBidType
          *
@@ -3195,7 +3287,7 @@ export interface components {
                 | components["schemas"]["ClimateEventPayload"]
                 | components["schemas"]["ResourceSoldPayload"]
                 | components["schemas"]["ShipmentArrivedPayload"]
-                | components["schemas"]["CreditLimitExceededPayload"]
+                | components["schemas"]["NetworkExpelledPayload"]
                 | components["schemas"]["AchievementMilestonePowerConsumptionPayload"]
                 | components["schemas"]["AchievementMilestoneEnergyStoragePayload"]
                 | components["schemas"]["AchievementMilestoneBasePayload"]
@@ -4098,6 +4190,42 @@ export interface components {
                 [key: string]: number[];
             };
         };
+        /**
+         * StorageSocResponse
+         *
+         * Response model for storage state of charge time series.
+         */
+        StorageSocResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for each storage facility type, as a fraction
+             * (0-1) of total capacity
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
         /** Subscription */
         Subscription: {
             /** Endpoint */
@@ -4957,6 +5085,40 @@ export interface operations {
             };
         };
     };
+    get_storage_soc_api_v1_charts_storage_soc__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageSocResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_revenues_api_v1_charts_revenues__resolution__get: {
         parameters: {
             query: {
@@ -5114,6 +5276,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TemperatureDataResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_money_api_v1_charts_money__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoneyResponse"];
                 };
             };
             /** Validation Error */

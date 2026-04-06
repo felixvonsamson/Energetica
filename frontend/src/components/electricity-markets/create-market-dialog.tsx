@@ -18,6 +18,7 @@ import {
     useCreateElectricityMarket,
     useElectricityMarketForPlayer,
 } from "@/hooks/use-electricity-markets";
+import { usePlayerMoney } from "@/hooks/use-player-money";
 import { useMe } from "@/hooks/use-players";
 
 interface CreateMarketDialogProps {
@@ -34,6 +35,8 @@ export function CreateMarketDialog({
     const { mutate: createMarket, isPending } = useCreateElectricityMarket();
     const me = useMe();
     const currentMarket = useElectricityMarketForPlayer(me?.id);
+    const { data: moneyData } = usePlayerMoney();
+    const hasInsufficientFunds = (moneyData?.money ?? 1) <= 0;
 
     // Reset state when dialog closes
     const handleClose = () => {
@@ -115,6 +118,21 @@ export function CreateMarketDialog({
                             <InfoBanner variant="error">{error}</InfoBanner>
                         )}
 
+                        {hasInsufficientFunds && (
+                            <InfoBanner variant="error">
+                                <div>
+                                    <p className="font-semibold mb-1">
+                                        Insufficient funds
+                                    </p>
+                                    <p className="text-sm">
+                                        Your balance must be positive to create
+                                        or join a network. Recover your finances
+                                        first.
+                                    </p>
+                                </div>
+                            </InfoBanner>
+                        )}
+
                         <div className="grid gap-3">
                             <Label htmlFor="market-name">
                                 Market name
@@ -191,7 +209,7 @@ export function CreateMarketDialog({
                             form="create-market-form"
                             variant={isPending ? "outline" : "default"}
                             disabled={
-                                isPending || isNameMissing || hasNameError
+                                isPending || isNameMissing || hasNameError || hasInsufficientFunds
                             }
                             className="flex items-center gap-2"
                         >

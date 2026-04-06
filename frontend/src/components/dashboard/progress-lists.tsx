@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp, Pause, Play, Trash2 } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -49,10 +50,21 @@ export function ProjectList({ projectCategory }: ProjectListProps) {
     }
 
     return (
-        <div className="space-y-2">
-            {projects.map((project) => (
-                <ProjectItem key={project.id} project={project} />
-            ))}
+        <div className="flex flex-col gap-2">
+            <AnimatePresence initial={false}>
+                {projects.map((project) => (
+                    <motion.div
+                        key={project.id}
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <ProjectItem project={project} />
+                    </motion.div>
+                ))}
+            </AnimatePresence>
         </div>
     );
 }
@@ -295,14 +307,13 @@ function ProgressCard({
             {/* Header row: Badge, Title, Actions */}
             <div className="flex items-center justify-between gap-2 mb-1.5">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {!(status === "ongoing" && speed !== undefined && speed === 0) && (
-                        <StatusBadge status={status} size="sm" />
-                    )}
-                    {speed !== undefined && speed < 1.0 && (
+                    {speed !== undefined && speed < 1.0 ? (
                         <StatusBadge
                             status={speed > 0 ? "slowed" : "stopped"}
                             size="sm"
                         />
+                    ) : (
+                        <StatusBadge status={status} size="sm" />
                     )}
                     {label}
                 </div>
