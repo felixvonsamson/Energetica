@@ -25,7 +25,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         }
 
         // Default to auto mode
-        return "auto";
+        return "light";
     });
 
     const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() => {
