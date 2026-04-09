@@ -24,7 +24,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
             return stored;
         }
 
-        // Default to auto mode
+        // Default to light mode
         return "light";
     });
 
