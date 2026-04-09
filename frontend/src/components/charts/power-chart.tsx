@@ -3,8 +3,8 @@
  * absolute/percentage display modes.
  */
 
-import { LineChart as ELineChart } from "echarts/charts";
-import type { LineSeriesOption } from "echarts/charts";
+import { BarChart as EBarChart } from "echarts/charts";
+import type { BarSeriesOption } from "echarts/charts";
 import {
     DataZoomComponent,
     GridComponent,
@@ -37,7 +37,7 @@ import type { ChartType } from "@/types/charts";
 
 // Register ECharts components once at module level (tree-shaking)
 echarts.use([
-    ELineChart,
+    EBarChart,
     GridComponent,
     TooltipComponent,
     DataZoomComponent,
@@ -46,7 +46,7 @@ echarts.use([
 ]);
 
 type ECOption = ComposeOption<
-    | LineSeriesOption
+    | BarSeriesOption
     | GridComponentOption
     | TooltipComponentOption
     | DataZoomComponentOption
@@ -63,6 +63,12 @@ interface TooltipItem {
     value: number;
 }
 
+interface Circle {
+    clientX: number;
+    clientY: number;
+    color: string;
+}
+
 interface TooltipState {
     tick: number;
     /** Non-zero items, topmost series first (reversed stack order). */
@@ -71,14 +77,16 @@ interface TooltipState {
     viewMode: PowerChartViewMode;
     clientX: number;
     clientY: number;
+    /** Dots on the axis pointer line, one per visible non-zero series. */
+    circles: Circle[];
 }
 
 /**
- * Floating tooltip rendered as a React component, positioned with
- * `position: fixed` so it escapes any `overflow: hidden` containers.
+ * Floating tooltip rendered as a React component, positioned with `position:
+ * fixed` so it escapes any `overflow: hidden` containers.
  *
- * Uses the same hooks / components as the rest of the UI so it picks up
- * theming and facility icons automatically.
+ * Uses the same hooks / components as the rest of the UI so it picks up theming
+ * and facility icons automatically.
  */
 function PowerTooltip({ tooltip }: { tooltip: TooltipState }) {
     const { currentTick } = useGameTick();
@@ -91,9 +99,7 @@ function PowerTooltip({ tooltip }: { tooltip: TooltipState }) {
             : "--";
 
     const formatVal = (v: number) =>
-        tooltip.viewMode === "percent"
-            ? `${v.toFixed(1)}%`
-            : formatPower(v);
+        tooltip.viewMode === "percent" ? `${v.toFixed(1)}%` : formatPower(v);
 
     const totalVal =
         tooltip.viewMode === "percent" ? "100%" : formatPower(tooltip.total);
@@ -178,9 +184,12 @@ export function PowerChart({
     const chartRef = useRef<HTMLDivElement>(null);
     const instanceRef = useRef<echarts.ECharts | null>(null);
     const dataKeyRef = useRef<string>("");
+    const structuralKeyRef = useRef<string>("");
 
     const [isZoomed, setIsZoomed] = useState(false);
     const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+    const [containerWidth, setContainerWidth] = useState(0);
+    const [zoomRange, setZoomRange] = useState({ start: 0, end: 100 });
 
     const getColor = useAssetColorGetter();
     const { mode: timeMode } = useTimeMode();
@@ -199,7 +208,9 @@ export function PowerChart({
     // excluding hidden and all-zero series.
     const visibleKeys = useMemo(() => {
         if (!chartData.length) return [];
-        const keyOrder = KEY_ORDER_BY_CHART_TYPE[chartType] as readonly string[];
+        const keyOrder = KEY_ORDER_BY_CHART_TYPE[
+            chartType
+        ] as readonly string[];
         return keyOrder.filter(
             (key) =>
                 !hiddenFacilities.has(key) &&
@@ -220,17 +231,22 @@ export function PowerChart({
             const row: Record<string, unknown> = { tick: dataPoint.tick };
             visibleKeys.forEach((k) => {
                 row[k] =
-                    total > 0
-                        ? (Number(dataPoint[k] ?? 0) / total) * 100
-                        : 0;
+                    total > 0 ? (Number(dataPoint[k] ?? 0) / total) * 100 : 0;
             });
             return row;
         });
     }, [chartData, visibleKeys, viewMode]);
 
-    // A stable string that identifies the dataset; used to decide whether to
-    // fully reset the zoom (on resolution / chart-type change) or just
-    // replace series while preserving the current zoom window.
+    // Structural key: changes only when chart type or data length changes (e.g.
+    // resolution switch). Triggers a full zoom reset. Pure data updates (new
+    // tick arriving, same length) do NOT change this key so the zoom is kept.
+    const structuralKey = useMemo(
+        () => `${chartData.length}`,
+        [chartData.length],
+    );
+
+    // Full data key: changes on every new tick. Used as an effect dep so the
+    // series are re-rendered when fresh data arrives, even without a zoom reset.
     const dataKey = useMemo(() => {
         const first = chartData[0]?.tick;
         const last = chartData[chartData.length - 1]?.tick;
@@ -260,11 +276,13 @@ export function PowerChart({
     const option = useMemo((): ECOption => {
         const ticks = chartData.map((d) => d.tick as number);
 
-        // X-axis label: relative in-game time ("5h", "3d 2h", …).
-        // Uses currentTickRef so changes to currentTick don't trigger a full
-        // option recompute (and zoom reset).
+        // X-axis label: "now" for the most recent data point, relative in-game
+        // time for all others. Uses currentTickRef so changes to currentTick
+        // don't trigger a full option recompute (and zoom reset).
+        const lastTick = ticks[ticks.length - 1] ?? -1;
         const formatXTick = (value: string | number): string => {
             const t = Number(value);
+            if (t === lastTick) return "now";
             const ct = currentTickRef.current;
             if (!gameEngine || ct === undefined) return "--";
             return formatDuration(ct - t - 1, timeMode, gameEngine);
@@ -275,23 +293,57 @@ export function PowerChart({
                 ? (v: number) => `${v.toFixed(0)}%`
                 : (v: number) => formatPower(v);
 
-        // Aim for ~7 evenly spaced labels regardless of data density.
-        const tickInterval = Math.max(0, Math.round(ticks.length / 7) - 1);
+        // Visible tick count based on current zoom window (used for both bar
+        // width and label interval selection).
+        const plotWidth = 1.005 * Math.max(1, containerWidth - 90); // grid left:70 + right:20
+        const visibleFraction = (zoomRange.end - zoomRange.start) / 100;
+        const visibleTickCount = Math.max(
+            1,
+            Math.ceil(ticks.length * visibleFraction),
+        );
 
-        // Stacked stepped areas — zero-gap, no visible bar seams.
+        // Choose a round label interval that gives ~6 labels across the visible
+        // range. We pick the closest "nice" duration from a fixed list, then
+        // convert it to a data-point count. Falls back to ticks/7 when
+        // game engine data isn't available yet.
+        const NICE_INTERVALS_S = [
+            60, 300, 600, 1800, 3600, 7200, 14400, 21600, 43200, 86400, 172800,
+            432000, 604800, 1209600, 2592000,
+        ];
+        const tickResolution =
+            ticks.length >= 2
+                ? ((ticks[ticks.length - 1] ?? 0) - (ticks[0] ?? 0)) /
+                  (ticks.length - 1)
+                : 1;
+        const secondsPerDataPoint = gameEngine
+            ? tickResolution * gameEngine.game_seconds_per_tick
+            : 0;
+        const tickInterval = (() => {
+            if (!secondsPerDataPoint)
+                return Math.max(0, Math.round(ticks.length / 7) - 1);
+            const visibleSeconds = visibleTickCount * secondsPerDataPoint;
+            const targetSeconds = visibleSeconds / 6;
+            const niceSeconds = NICE_INTERVALS_S.reduce((a, b) =>
+                Math.abs(b - targetSeconds) < Math.abs(a - targetSeconds)
+                    ? b
+                    : a,
+            );
+            return Math.max(1, Math.round(niceSeconds / secondsPerDataPoint));
+        })();
+
+        // Stacked bars — zero-gap, no visible seams, 0-value series invisible.
+        // barWidth is ceil(plotWidth / visibleTicks) so adjacent bars overlap
+        // by 1px, closing sub-pixel rounding gaps without any visible artefact.
+        const barWidth =
+            ticks.length > 0 ? Math.ceil(plotWidth / visibleTickCount) : 1;
         const series: ECOption["series"] = visibleKeys.map((key) => ({
             name: key,
-            type: "line",
-            step: "end",
-            symbol: "none",
-            smooth: true,
-            areaStyle: { opacity: 1 },
-            // Width 0 hides the step line itself; only the filled area is shown.
-            lineStyle: { width: 0, opacity: 0},
+            type: "bar",
             stack: "total",
+            barWidth,
             emphasis: { disabled: true },
             data: displayData.map((d) => Number(d[key] ?? 0)),
-            itemStyle: { color: getColor(key) },
+            itemStyle: { color: getColor(key), borderWidth: 0 },
             animation: false,
         }));
 
@@ -304,13 +356,18 @@ export function PowerChart({
                 axisLabel: {
                     formatter: formatXTick,
                     fontSize: 11,
-                    interval: tickInterval,
+                    // Anchor labels from the right so they fall at round
+                    // intervals counting back from "now". The rightmost index
+                    // always gets a label ("now"); every tickInterval steps left
+                    // gets another one. ECharts won't render labels that fall
+                    // outside the visible zoom window, so "now" disappears
+                    // naturally when the user zooms into older data.
+                    interval: (index: number) =>
+                        (ticks.length - 1 - index) % tickInterval === 0,
                     hideOverlap: true,
                 },
                 axisTick: { show: false },
                 splitLine: { show: false },
-                // boundaryGap: false so the area fills all the way to both edges.
-                boundaryGap: false,
             },
             yAxis: {
                 type: "value",
@@ -325,10 +382,10 @@ export function PowerChart({
                 {
                     type: "inside",
                     xAxisIndex: 0,
-                    start: 0,
-                    end: 100,
-                    // Wheel/pan disabled — drag-to-select via toolbox is the
-                    // only zoom interaction.
+                    // start/end omitted — setOption merges only specified props,
+                    // so the live zoom window is preserved on every barWidth update.
+                    // Initial start:0/end:100 is set via the first notMerge setOption.
+                    zoomLock: true,
                     zoomOnMouseWheel: false,
                     moveOnMouseMove: false,
                     moveOnMouseWheel: false,
@@ -377,6 +434,8 @@ export function PowerChart({
         viewMode,
         timeMode,
         gameEngine,
+        containerWidth,
+        zoomRange,
         // currentTick intentionally omitted — accessed via currentTickRef to
         // avoid resetting the zoom on every game tick.
     ]);
@@ -403,7 +462,10 @@ export function PowerChart({
             const dz = Array.isArray(opt.dataZoom) ? opt.dataZoom[0] : null;
             if (dz) {
                 const { start, end } = dz as { start?: number; end?: number };
-                setIsZoomed((start ?? 0) > 0.5 || (end ?? 100) < 99.5);
+                const s = start ?? 0;
+                const e = end ?? 100;
+                setIsZoomed(s > 0.5 || e < 99.5);
+                setZoomRange({ start: s, end: e });
             }
         });
 
@@ -458,6 +520,38 @@ export function PowerChart({
                     return;
                 }
 
+                // Circles on the axis pointer line: one dot at the top of each
+                // stacked segment. We convert cumulative data values → canvas
+                // pixels, then add the chart div's client rect offset.
+                const rect = chartRef.current?.getBoundingClientRect();
+                const barPixelX = chart.convertToPixel(
+                    { xAxisIndex: 0 },
+                    dataIndex,
+                ) as number;
+                const barClientX = rect
+                    ? rect.left + barPixelX
+                    : nativeEvent.clientX;
+
+                let cumulative = 0;
+                const circles: Circle[] = vk.flatMap((key) => {
+                    const val = Number(dd[dataIndex]?.[key] ?? 0);
+                    cumulative += val;
+                    if (val <= 0) return [];
+                    const pixelY = chart.convertToPixel(
+                        { yAxisIndex: 0 },
+                        cumulative,
+                    ) as number;
+                    return [
+                        {
+                            clientX: barClientX,
+                            clientY: rect
+                                ? rect.top + pixelY
+                                : nativeEvent.clientY,
+                            color: gc(key),
+                        },
+                    ];
+                });
+
                 setTooltip({
                     tick,
                     items,
@@ -465,6 +559,7 @@ export function PowerChart({
                     viewMode: vm,
                     clientX: nativeEvent.clientX,
                     clientY: nativeEvent.clientY,
+                    circles,
                 });
             },
         );
@@ -481,18 +576,24 @@ export function PowerChart({
     }, []);
 
     // Apply option updates with the right merge strategy:
-    //   • notMerge: true  when the underlying dataset changes → resets zoom.
-    //   • replaceMerge: ['series'] for visibility / mode changes → zoom preserved.
+    //   • notMerge: true  on structural changes (type / resolution) → resets zoom.
+    //   • replaceMerge: ['series'] otherwise → zoom window preserved.
+    //     This includes new-tick arrivals so the view just shifts left.
     useEffect(() => {
         const inst = instanceRef.current;
         if (!inst) return;
 
-        const isDataReset = dataKey !== dataKeyRef.current;
         dataKeyRef.current = dataKey;
 
-        if (isDataReset) {
+        const isStructuralChange = structuralKey !== structuralKeyRef.current;
+        structuralKeyRef.current = structuralKey;
+
+        if (isStructuralChange) {
             inst.setOption(option, { notMerge: true });
-            queueMicrotask(() => setIsZoomed(false));
+            queueMicrotask(() => {
+                setIsZoomed(false);
+                setZoomRange({ start: 0, end: 100 });
+            });
         } else {
             inst.setOption(option, { replaceMerge: ["series"] });
         }
@@ -504,7 +605,7 @@ export function PowerChart({
             key: "dataZoomSelect",
             dataZoomSelectActive: true,
         });
-    }, [option, dataKey]);
+    }, [option, dataKey, structuralKey]);
 
     // Respond to container resize.
     useEffect(() => {
@@ -512,8 +613,10 @@ export function PowerChart({
         if (!el) return;
         const observer = new ResizeObserver(() => {
             instanceRef.current?.resize();
+            setContainerWidth(el.offsetWidth);
         });
         observer.observe(el);
+        setContainerWidth(el.offsetWidth);
         return () => observer.disconnect();
     }, []);
 
@@ -522,6 +625,7 @@ export function PowerChart({
         if (!inst) return;
         inst.dispatchAction({ type: "dataZoom", start: 0, end: 100 });
         setIsZoomed(false);
+        setZoomRange({ start: 0, end: 100 });
         inst.dispatchAction({
             type: "takeGlobalCursor",
             key: "dataZoomSelect",
@@ -544,9 +648,7 @@ export function PowerChart({
             {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80">
                     <RefreshCw className="w-5 h-5 animate-spin mr-2 text-muted-foreground" />
-                    <span className="text-muted-foreground">
-                        Loading data…
-                    </span>
+                    <span className="text-muted-foreground">Loading data…</span>
                 </div>
             )}
 
@@ -569,7 +671,28 @@ export function PowerChart({
                 </button>
             )}
 
-            {tooltip && !isLoading && <PowerTooltip tooltip={tooltip} />}
+            {tooltip && !isLoading && (
+                <>
+                    {tooltip.circles.map((c, i) => (
+                        <div
+                            key={i}
+                            style={{
+                                position: "fixed",
+                                left: c.clientX - 5,
+                                top: c.clientY - 5,
+                                width: 10,
+                                height: 10,
+                                borderRadius: "50%",
+                                backgroundColor: c.color,
+                                border: "2px solid white",
+                                pointerEvents: "none",
+                                zIndex: 9998,
+                            }}
+                        />
+                    ))}
+                    <PowerTooltip tooltip={tooltip} />
+                </>
+            )}
         </div>
     );
 }

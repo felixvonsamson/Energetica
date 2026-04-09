@@ -1,10 +1,17 @@
 /**
  * Generic ECharts time-series chart replacing the old Recharts TimeSeriesChart.
  *
- * Supports area (stacked stepped), steppedLine, and smoothLine variants with
- * drag-to-zoom, React tooltip overlay, and configurable reference lines.
+ * "area" variant renders as zero-gap stacked bars (like PowerChart).
+ * "steppedLine" and "smoothLine" render as line series.
+ *
+ * Features shared across all variants:
+ *  - Right-anchored "now" tick label with adaptive round intervals
+ *  - Drag-to-zoom with zoom preservation on new data
+ *  - React tooltip overlay with colored circles on the axis pointer
  */
 
+import { BarChart as EBarChart } from "echarts/charts";
+import type { BarSeriesOption } from "echarts/charts";
 import { LineChart as ELineChart } from "echarts/charts";
 import type { LineSeriesOption } from "echarts/charts";
 import {
@@ -44,8 +51,9 @@ import {
 import { formatDuration } from "@/lib/format-utils";
 import type { ChartType } from "@/types/charts";
 
-// Register ECharts components (tree-shaking; safe to call multiple times)
+// Register ECharts components once at module level (tree-shaking)
 echarts.use([
+    EBarChart,
     ELineChart,
     GridComponent,
     TooltipComponent,
@@ -56,6 +64,7 @@ echarts.use([
 ]);
 
 type ECOption = ComposeOption<
+    | BarSeriesOption
     | LineSeriesOption
     | GridComponentOption
     | TooltipComponentOption
@@ -69,7 +78,7 @@ export type ChartVariant = "area" | "steppedLine" | "smoothLine";
 export interface EChartsTimeSeriesConfig {
     /** Chart type for key ordering */
     chartType?: ChartType;
-    /** Visual variant */
+    /** Visual variant ("area" = stacked bars, "steppedLine" / "smoothLine" = lines) */
     chartVariant: ChartVariant;
     /** Whether to stack multiple series */
     stacked?: boolean;
@@ -85,7 +94,11 @@ export interface EChartsTimeSeriesConfig {
     formatValue: (value: number) => ReactNode;
     /** Tooltip label formatter (default: getAssetLongName or raw key) */
     formatLabel?: (key: string) => ReactNode;
-    /** Keys to fill with profit/loss gradient (success above 0, destructive below) */
+    /**
+     * Keys whose bars are colored green when positive, red when negative.
+     * For "area" variant bars this replaces the old linear gradient.
+     * For line variants a green/red linear gradient fill is still used.
+     */
     gradientKeys?: string[];
     /** Whether to hide zero values in tooltip (default true) */
     hideZeroValues?: boolean;
@@ -105,22 +118,15 @@ export interface EChartsTimeSeriesProps {
 
 // ── CSS variable resolver ─────────────────────────────────────────────────────
 
-/**
- * Resolves a CSS variable name (e.g. "--primary") to its computed color value,
- * following one level of var() indirection. Used to translate CSS custom
- * properties into concrete color strings for the ECharts Canvas renderer.
- */
 function resolveCSSVar(varName: string): string {
     if (typeof document === "undefined") return "#888";
     const root = document.documentElement;
     let val = getComputedStyle(root).getPropertyValue(varName).trim();
-    // Follow one level of var() reference
     const m = val.match(/^var\(([^,)]+)/);
     if (m?.[1]) val = getComputedStyle(root).getPropertyValue(m[1]).trim();
     return val || "#888";
 }
 
-/** Resolves "var(--foo)" strings to concrete color values. */
 function resolveColor(color: string): string {
     if (!color.startsWith("var(")) return color;
     const varName = color.match(/^var\(([^,)]+)/)?.[1];
@@ -129,6 +135,12 @@ function resolveColor(color: string): string {
 }
 
 // ── Tooltip overlay ───────────────────────────────────────────────────────────
+
+interface Circle {
+    clientX: number;
+    clientY: number;
+    color: string;
+}
 
 interface TooltipEntry {
     key: string;
@@ -143,6 +155,7 @@ interface TSTooltipState {
     tick: number;
     entries: TooltipEntry[];
     stacked: boolean;
+    circles: Circle[];
 }
 
 function TSTooltip({
@@ -216,6 +229,13 @@ function TSTooltip({
     );
 }
 
+// ── Nice tick intervals (game-seconds) ───────────────────────────────────────
+
+const NICE_INTERVALS_S = [
+    60, 300, 600, 1800, 3600, 7200, 14400, 21600, 43200, 86400, 172800,
+    432000, 604800, 1209600, 2592000,
+];
+
 // ── EChartsTimeSeries ─────────────────────────────────────────────────────────
 
 /**
@@ -232,14 +252,20 @@ export function EChartsTimeSeries({
     const chartRef = useRef<HTMLDivElement>(null);
     const instanceRef = useRef<echarts.ECharts | null>(null);
     const dataKeyRef = useRef<string>("");
+    const structuralKeyRef = useRef<string>("");
 
     const [isZoomed, setIsZoomed] = useState(false);
     const [tooltip, setTooltip] = useState<TSTooltipState | null>(null);
+    const [containerWidth, setContainerWidth] = useState(0);
+    const [zoomRange, setZoomRange] = useState({ start: 0, end: 100 });
 
     const { mode: timeMode } = useTimeMode();
     const { data: gameEngine } = useGameEngine();
     const { currentTick } = useGameTick();
 
+    // Keep currentTick in a ref so axis/tooltip formatters stay fresh without
+    // triggering full option recomputation (and consequent zoom reset) on
+    // every game tick.
     const currentTickRef = useRef(currentTick);
     useEffect(() => {
         currentTickRef.current = currentTick;
@@ -264,14 +290,25 @@ export function EChartsTimeSeries({
         );
     }, [processedData, config.filterDataKeys]);
 
-    // Stable string identifying the current dataset (triggers zoom reset when changed)
+    // Structural key: triggers a full zoom reset when chart identity or
+    // resolution changes. New ticks arriving with the same data length
+    // keep the same key so the current zoom window is preserved.
+    const structuralKey = useMemo(
+        () =>
+            `${config.chartType}:${config.chartVariant}:${config.stacked}:${data.length}`,
+        [data.length, config.chartType, config.chartVariant, config.stacked],
+    );
+
+    // Full data key: changes on every new tick arrival. Used as effect dep so
+    // series are re-rendered on fresh data even without a zoom reset.
     const dataKey = useMemo(() => {
         const first = data[0]?.tick;
         const last = data[data.length - 1]?.tick;
         return `${config.chartType}:${config.chartVariant}:${config.stacked}:${data.length}:${first}:${last}`;
     }, [data, config.chartType, config.chartVariant, config.stacked]);
 
-    // Live ref used inside ZRender event handlers to avoid stale closures
+    // Live ref keeps tooltip/circle handlers fresh without rebinding ZRender
+    // listeners or triggering option recomputation.
     const liveDataRef = useRef({
         processedData,
         visibleKeys,
@@ -298,7 +335,8 @@ export function EChartsTimeSeries({
         config.stacked,
     ]);
 
-    // Forward wheel events to the page so trackpad/mouse scroll works normally
+    // Forward wheel events to the page so trackpad/mouse scroll works normally.
+    // ECharts' ZRender calls stopPropagation(), so we need capture phase.
     useEffect(() => {
         const el = chartRef.current;
         if (!el) return;
@@ -311,14 +349,57 @@ export function EChartsTimeSeries({
 
     const option = useMemo((): ECOption => {
         const ticks = processedData.map((d) => d.tick as number);
-        const tickInterval = Math.max(0, Math.round(ticks.length / 7) - 1);
+        const isBar = config.chartVariant === "area";
 
+        // "now" label for the rightmost data point; relative in-game time for
+        // all others. Uses currentTickRef so currentTick changes don't trigger
+        // a full option recompute (and zoom reset) on every game tick.
+        const lastTick = ticks[ticks.length - 1] ?? -1;
         const formatXTick = (value: string | number): string => {
             const t = Number(value);
+            if (t === lastTick) return "now";
             const ct = currentTickRef.current;
             if (!gameEngine || ct === undefined) return "--";
             return formatDuration(ct - t - 1, timeMode, gameEngine);
         };
+
+        // Visible tick count based on current zoom window — drives both barWidth
+        // (bars only) and tick label interval selection (all variants).
+        const visibleFraction = (zoomRange.end - zoomRange.start) / 100;
+        const visibleTickCount = Math.max(
+            1,
+            Math.ceil(ticks.length * visibleFraction),
+        );
+
+        // Choose a round label interval giving ~6 labels across the visible
+        // range. Falls back to ticks/7 when game engine data isn't available yet.
+        const tickResolution =
+            ticks.length >= 2
+                ? ((ticks[ticks.length - 1] ?? 0) - (ticks[0] ?? 0)) /
+                  (ticks.length - 1)
+                : 1;
+        const secondsPerDataPoint = gameEngine
+            ? tickResolution * gameEngine.game_seconds_per_tick
+            : 0;
+        const tickInterval = (() => {
+            if (!secondsPerDataPoint)
+                return Math.max(0, Math.round(ticks.length / 7) - 1);
+            const visibleSeconds = visibleTickCount * secondsPerDataPoint;
+            const targetSeconds = visibleSeconds / 6;
+            const niceSeconds = NICE_INTERVALS_S.reduce((a, b) =>
+                Math.abs(b - targetSeconds) < Math.abs(a - targetSeconds)
+                    ? b
+                    : a,
+            );
+            return Math.max(1, Math.round(niceSeconds / secondsPerDataPoint));
+        })();
+
+        // Stacked bar width: ceil so adjacent bars overlap by 1px, closing
+        // sub-pixel rounding gaps. plotWidth mirrors the grid margins (l:70, r:20).
+        const plotWidth = 1.005 * Math.max(1, containerWidth - 90);
+        const barWidth = ticks.length > 0
+            ? Math.ceil(plotWidth / visibleTickCount)
+            : 1;
 
         // Resolve CSS variables for canvas renderer
         const primaryColor = resolveCSSVar("--primary");
@@ -326,21 +407,26 @@ export function EChartsTimeSeries({
         const successColor = resolveCSSVar("--success");
         const destructiveColor = resolveCSSVar("--destructive");
 
-        // Compute gradient offsets for gradient-filled series
+        // Gradient offsets for line-variant gradient fills
         const gradientOffsets: Record<string, number> = {};
-        for (const key of config.gradientKeys ?? []) {
-            const values = processedData
-                .map((d) =>
-                    typeof d[key] === "number" ? (d[key] as number) : 0,
+        if (!isBar) {
+            for (const key of config.gradientKeys ?? []) {
+                const values = processedData
+                    .map((d) =>
+                        typeof d[key] === "number" ? (d[key] as number) : 0,
+                    )
+                    .filter((v) => !isNaN(v));
+                if (values.length === 0) continue;
+                const dataMax = Math.max(...values);
+                const dataMin = Math.min(...values);
+                if (dataMax <= 0) gradientOffsets[key] = 0;
+                else if (
+                    dataMin >= 0 ||
+                    Math.abs(dataMin) < (dataMax - dataMin) * 0.01
                 )
-                .filter((v) => !isNaN(v));
-            if (values.length === 0) continue;
-            const dataMax = Math.max(...values);
-            const dataMin = Math.min(...values);
-            if (dataMax <= 0) gradientOffsets[key] = 0;
-            else if (dataMin >= 0 || Math.abs(dataMin) < (dataMax - dataMin) * 0.01)
-                gradientOffsets[key] = 1;
-            else gradientOffsets[key] = dataMax / (dataMax - dataMin);
+                    gradientOffsets[key] = 1;
+                else gradientOffsets[key] = dataMax / (dataMax - dataMin);
+            }
         }
 
         const allRefLines = [...(config.referenceLines ?? [])];
@@ -349,17 +435,31 @@ export function EChartsTimeSeries({
             const rawColor = config.getColor?.(key) ?? "#888";
             const color = resolveColor(rawColor);
             const useGradient = (config.gradientKeys ?? []).includes(key);
-            const gradientOffset = gradientOffsets[key] ?? 0.5;
 
-            const areaColor = useGradient
-                ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                      { offset: 0, color: successColor },
-                      { offset: gradientOffset, color: successColor },
-                      { offset: gradientOffset, color: destructiveColor },
-                      { offset: 1, color: destructiveColor },
-                  ])
-                : color;
+            if (isBar) {
+                // "area" → stacked bars, 0-gap, 1px overlap to seal sub-pixel seams.
+                // Gradient keys: color each bar green (≥0) or red (<0) by value.
+                return {
+                    name: key,
+                    type: "bar",
+                    stack: config.stacked ? "total" : undefined,
+                    barWidth,
+                    emphasis: { disabled: true },
+                    data: processedData.map((d) => Number(d[key] ?? 0)),
+                    itemStyle: {
+                        borderWidth: 0,
+                        color: useGradient
+                            ? (params: { value: unknown }) =>
+                                  Number(params.value) >= 0
+                                      ? successColor
+                                      : destructiveColor
+                            : color,
+                    },
+                    animation: false,
+                } satisfies BarSeriesOption;
+            }
 
+            // Line variants
             const base: LineSeriesOption = {
                 name: key,
                 type: "line",
@@ -372,30 +472,57 @@ export function EChartsTimeSeries({
             };
 
             if (config.chartVariant === "smoothLine") {
+                const areaColor = useGradient
+                    ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                          { offset: 0, color: successColor },
+                          {
+                              offset: gradientOffsets[key] ?? 0.5,
+                              color: successColor,
+                          },
+                          {
+                              offset: gradientOffsets[key] ?? 0.5,
+                              color: destructiveColor,
+                          },
+                          { offset: 1, color: destructiveColor },
+                      ])
+                    : undefined;
                 return {
                     ...base,
                     smooth: true,
                     lineStyle: { width: 2, color },
+                    ...(areaColor
+                        ? { areaStyle: { opacity: 0.3, color: areaColor } }
+                        : {}),
                 };
             }
-            if (config.chartVariant === "steppedLine") {
-                return {
-                    ...base,
-                    step: "end",
-                    lineStyle: { width: 2, color },
-                };
-            }
-            // "area" variant: stepped filled area, no visible line
+
+            // steppedLine
+            const areaColor = useGradient
+                ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                      { offset: 0, color: successColor },
+                      {
+                          offset: gradientOffsets[key] ?? 0.5,
+                          color: successColor,
+                      },
+                      {
+                          offset: gradientOffsets[key] ?? 0.5,
+                          color: destructiveColor,
+                      },
+                      { offset: 1, color: destructiveColor },
+                  ])
+                : undefined;
             return {
                 ...base,
                 step: "end",
-                areaStyle: { opacity: 1, color: areaColor },
-                lineStyle: { width: 0, opacity: 0 },
+                lineStyle: { width: 2, color },
+                ...(areaColor
+                    ? { areaStyle: { opacity: 0.3, color: areaColor } }
+                    : {}),
             };
         });
 
         // Attach reference lines to the first visible series via markLine
-        if (series.length > 0) {
+        if (series.length > 0 && allRefLines.length > 0) {
             (series[0] as LineSeriesOption).markLine = {
                 silent: true,
                 symbol: ["none", "none"],
@@ -419,15 +546,21 @@ export function EChartsTimeSeries({
             xAxis: {
                 type: "category",
                 data: ticks,
+                // boundaryGap: true (default) for bars so first bar isn't cut;
+                // false for lines so the series starts at the left edge.
+                boundaryGap: isBar,
                 axisLabel: {
                     formatter: formatXTick,
                     fontSize: 11,
-                    interval: tickInterval,
+                    // Right-anchored interval: the rightmost data point always
+                    // gets the "now" label; every tickInterval steps leftward
+                    // gets another label at a round duration.
+                    interval: (index: number) =>
+                        (ticks.length - 1 - index) % tickInterval === 0,
                     hideOverlap: true,
                 },
                 axisTick: { show: false },
                 splitLine: { show: false },
-                boundaryGap: false,
             },
             yAxis: {
                 type: "value",
@@ -442,8 +575,10 @@ export function EChartsTimeSeries({
                 {
                     type: "inside",
                     xAxisIndex: 0,
-                    start: 0,
-                    end: 100,
+                    // start/end omitted — preserves live zoom window across
+                    // every setOption call. Initial 0/100 is set by the first
+                    // notMerge call in the apply-options effect.
+                    zoomLock: true,
                     zoomOnMouseWheel: false,
                     moveOnMouseMove: false,
                     moveOnMouseWheel: false,
@@ -461,11 +596,15 @@ export function EChartsTimeSeries({
                         },
                     },
                 },
+                // Icons hidden; zoom mode permanently activated via
+                // takeGlobalCursor dispatch.
                 iconStyle: { opacity: 0 },
                 emphasis: { iconStyle: { opacity: 0 } },
                 right: 80,
                 bottom: 8,
             },
+            // showContent: false keeps the vertical axis pointer visible but
+            // suppresses ECharts' own popup — our React overlay handles display.
             tooltip: {
                 trigger: "axis",
                 showContent: false,
@@ -486,7 +625,10 @@ export function EChartsTimeSeries({
         config,
         timeMode,
         gameEngine,
-        // currentTick intentionally omitted — accessed via currentTickRef
+        containerWidth,
+        zoomRange,
+        // currentTick intentionally omitted — accessed via currentTickRef to
+        // avoid resetting the zoom on every game tick.
     ]);
 
     // ── Chart lifecycle ───────────────────────────────────────────────────────
@@ -498,21 +640,28 @@ export function EChartsTimeSeries({
         });
         instanceRef.current = chart;
 
+        // Put the chart into permanent drag-to-select zoom mode.
         chart.dispatchAction({
             type: "takeGlobalCursor",
             key: "dataZoomSelect",
             dataZoomSelectActive: true,
         });
 
+        // Track whether a zoom window is currently applied.
         chart.on("datazoom", () => {
             const opt = chart.getOption();
             const dz = Array.isArray(opt.dataZoom) ? opt.dataZoom[0] : null;
             if (dz) {
                 const { start, end } = dz as { start?: number; end?: number };
-                setIsZoomed((start ?? 0) > 0.5 || (end ?? 100) < 99.5);
+                const s = start ?? 0;
+                const e = end ?? 100;
+                setIsZoomed(s > 0.5 || e < 99.5);
+                setZoomRange({ start: s, end: e });
             }
         });
 
+        // React tooltip: listen at the ZRender level to receive every
+        // mousemove over the canvas, even when no series is directly hit.
         const zr = chart.getZr();
 
         zr.on(
@@ -548,7 +697,7 @@ export function EChartsTimeSeries({
                 );
                 const tick = pd[dataIndex]?.tick as number;
 
-                // Stacked charts: topmost series first; others: natural order
+                // Stacked charts: topmost series first in tooltip; others: natural order
                 const orderedKeys = st ? [...vk].reverse() : vk;
 
                 const entries: TooltipEntry[] = orderedKeys
@@ -568,12 +717,62 @@ export function EChartsTimeSeries({
                     return;
                 }
 
+                // Circles on the axis pointer line: one dot per visible non-zero series.
+                // For stacked charts: at the cumulative top of each segment.
+                // For non-stacked: at each series' own value.
+                const rect = chartRef.current?.getBoundingClientRect();
+                const pixelX = chart.convertToPixel(
+                    { xAxisIndex: 0 },
+                    dataIndex,
+                ) as number;
+                const lineClientX = rect
+                    ? rect.left + pixelX
+                    : nativeEvent.clientX;
+
+                const circles: Circle[] = [];
+                if (st) {
+                    let cumulative = 0;
+                    for (const key of vk) {
+                        const val = Number(pd[dataIndex]?.[key] ?? 0);
+                        cumulative += val;
+                        if (val <= 0) continue;
+                        const pixelY = chart.convertToPixel(
+                            { yAxisIndex: 0 },
+                            cumulative,
+                        ) as number;
+                        circles.push({
+                            clientX: lineClientX,
+                            clientY: rect
+                                ? rect.top + pixelY
+                                : nativeEvent.clientY,
+                            color: resolveColor(gc?.(key) ?? "#888"),
+                        });
+                    }
+                } else {
+                    for (const key of vk) {
+                        const val = Number(pd[dataIndex]?.[key] ?? 0);
+                        if (val === 0 && hzv) continue;
+                        const pixelY = chart.convertToPixel(
+                            { yAxisIndex: 0 },
+                            val,
+                        ) as number;
+                        circles.push({
+                            clientX: lineClientX,
+                            clientY: rect
+                                ? rect.top + pixelY
+                                : nativeEvent.clientY,
+                            color: resolveColor(gc?.(key) ?? "#888"),
+                        });
+                    }
+                }
+
                 setTooltip({
                     clientX: nativeEvent.clientX,
                     clientY: nativeEvent.clientY,
                     tick,
                     entries,
                     stacked: st,
+                    circles,
                 });
             },
         );
@@ -589,36 +788,49 @@ export function EChartsTimeSeries({
         };
     }, []);
 
-    // Apply option with zoom-preserving or zoom-resetting merge strategy
+    // Apply option updates with the right merge strategy:
+    //   • notMerge: true  on structural changes (type / resolution) → resets zoom.
+    //   • replaceMerge: ['series'] otherwise → zoom window preserved.
+    //     This includes new-tick arrivals so the view just shifts left.
     useEffect(() => {
         const inst = instanceRef.current;
         if (!inst) return;
 
-        const isDataReset = dataKey !== dataKeyRef.current;
         dataKeyRef.current = dataKey;
 
-        if (isDataReset) {
+        const isStructuralChange = structuralKey !== structuralKeyRef.current;
+        structuralKeyRef.current = structuralKey;
+
+        if (isStructuralChange) {
             inst.setOption(option, { notMerge: true });
-            queueMicrotask(() => setIsZoomed(false));
+            queueMicrotask(() => {
+                setIsZoomed(false);
+                setZoomRange({ start: 0, end: 100 });
+            });
         } else {
             inst.setOption(option, { replaceMerge: ["series"] });
         }
 
+        // Re-activate drag-to-zoom after each setOption because notMerge
+        // resets the toolbox cursor state.
         inst.dispatchAction({
             type: "takeGlobalCursor",
             key: "dataZoomSelect",
             dataZoomSelectActive: true,
         });
-    }, [option, dataKey]);
+    }, [option, dataKey, structuralKey]);
 
-    // Respond to container resize
+    // Respond to container resize — also updates containerWidth so barWidth
+    // recomputes on the next option useMemo run.
     useEffect(() => {
         const el = chartRef.current;
         if (!el) return;
         const observer = new ResizeObserver(() => {
             instanceRef.current?.resize();
+            setContainerWidth(el.offsetWidth);
         });
         observer.observe(el);
+        setContainerWidth(el.offsetWidth);
         return () => observer.disconnect();
     }, []);
 
@@ -627,6 +839,7 @@ export function EChartsTimeSeries({
         if (!inst) return;
         inst.dispatchAction({ type: "dataZoom", start: 0, end: 100 });
         setIsZoomed(false);
+        setZoomRange({ start: 0, end: 100 });
         inst.dispatchAction({
             type: "takeGlobalCursor",
             key: "dataZoomSelect",
@@ -676,10 +889,29 @@ export function EChartsTimeSeries({
             )}
 
             {tooltip && !isLoading && (
-                <TSTooltip
-                    tooltip={tooltip}
-                    formatValue={config.formatValue}
-                />
+                <>
+                    {tooltip.circles.map((c, i) => (
+                        <div
+                            key={i}
+                            style={{
+                                position: "fixed",
+                                left: c.clientX - 5,
+                                top: c.clientY - 5,
+                                width: 10,
+                                height: 10,
+                                borderRadius: "50%",
+                                backgroundColor: c.color,
+                                border: "2px solid white",
+                                pointerEvents: "none",
+                                zIndex: 9998,
+                            }}
+                        />
+                    ))}
+                    <TSTooltip
+                        tooltip={tooltip}
+                        formatValue={config.formatValue}
+                    />
+                </>
             )}
         </div>
     );
