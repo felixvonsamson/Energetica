@@ -136,7 +136,7 @@ export function CashFlowChart({
             formatYAxis: (value: number) =>
                 isShowingPercent
                     ? `${value}%`
-                    : formatCashFlow(value, "h", gameEngineConfig, timeMode),
+                    : formatCashFlow(value, "h", gameEngineConfig, timeMode).replace("$", ""),
             // Use gradient fill for the "net-profit" series only in net mode
             gradientKeys: isNetMode ? ["net-profit"] : [],
         };

@@ -40,9 +40,12 @@ import {
     useState,
 } from "react";
 
+import { FacilityIcon } from "@/components/ui/asset-icon";
+import { FacilityName } from "@/components/ui/asset-name";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
+import { getAssetIcon } from "@/lib/assets/asset-icons";
 import { getAssetLongName } from "@/lib/assets/asset-names";
 import {
     KEY_ORDER_BY_CHART_TYPE,
@@ -705,9 +708,19 @@ export function EChartsTimeSeries({
                         const rawColor = gc?.(key) ?? "#888";
                         const color = resolveColor(rawColor);
                         const value = Number(pd[dataIndex]?.[key] ?? 0);
-                        const label: ReactNode = fl
-                            ? fl(key)
-                            : getAssetLongName(key);
+                        // Show facility icon + name when the key maps to a known
+                        // asset; fall back to text for synthetic keys (e.g.
+                        // "temperature", "CO2", "net-profit").
+                        const label: ReactNode = fl ? (
+                            fl(key)
+                        ) : getAssetIcon(key) ? (
+                            <div className="flex items-center gap-1">
+                                <FacilityIcon facility={key} size={14} />
+                                <FacilityName facility={key} mode="long" />
+                            </div>
+                        ) : (
+                            getAssetLongName(key)
+                        );
                         return { key, color, value, label };
                     })
                     .filter((e) => !hzv || e.value !== 0);
