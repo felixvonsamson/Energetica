@@ -489,6 +489,7 @@ function MeritOrderChartInner({
                         {
                             yAxis: marketData?.market_price ?? 0,
                             name: `Price: ${formatMoney(marketData?.market_price ?? 0)}/MWh`,
+                            label: { position: "insideStartTop" },
                         },
                     ],
                     lineStyle: {
@@ -498,7 +499,6 @@ function MeritOrderChartInner({
                     },
                     label: {
                         formatter: "{b}",
-                        color: mutedColor,
                         fontSize: 11,
                     },
                 },
