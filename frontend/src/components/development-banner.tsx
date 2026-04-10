@@ -18,10 +18,17 @@ export function DevelopmentBanner() {
                     </li>
                     <li>
                         <a
+                            href="https://forms.gle/GJqaK9KCNkGF8G7b7"
+                            className="underline font-medium hover:opacity-70"
+                        >
+                            Report bugs
+                        </a>{" "}
+                        and follow development on{" "}
+                        <a
                             href="https://github.com/felixvonsamson/Energetica"
                             className="underline font-medium hover:opacity-70"
                         >
-                            Report bugs and follow development on GitHub
+                            GitHub
                         </a>
                     </li>
                     <li>
