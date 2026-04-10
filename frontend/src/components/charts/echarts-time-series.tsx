@@ -11,10 +11,8 @@
  * - React tooltip overlay with colored circles on the axis pointer
  */
 
-import { BarChart as EBarChart } from "echarts/charts";
-import type { BarSeriesOption } from "echarts/charts";
-import { LineChart as ELineChart } from "echarts/charts";
-import type { LineSeriesOption } from "echarts/charts";
+import { BarChart as EBarChart, LineChart as ELineChart } from "echarts/charts";
+import type { BarSeriesOption, LineSeriesOption } from "echarts/charts";
 import {
     DataZoomComponent,
     GridComponent,
@@ -902,9 +900,9 @@ export function EChartsTimeSeries({
 
             {tooltip && !isLoading && (
                 <>
-                    {tooltip.circles.map((c, i) => (
+                    {tooltip.circles.map((c) => (
                         <div
-                            key={i}
+                            key={c.color}
                             style={{
                                 position: "fixed",
                                 left: c.clientX - 5,

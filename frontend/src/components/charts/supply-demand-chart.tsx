@@ -46,13 +46,13 @@ import { useElectricityMarket } from "@/hooks/use-electricity-markets";
 import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { usePlayerMap } from "@/hooks/use-players";
+import { getAssetLongName } from "@/lib/assets/asset-names";
 import { getHashBasedChartColor } from "@/lib/charts/color-utils";
 import {
     createSteppedCurve,
     interpolateAtX,
 } from "@/lib/charts/ui-utils";
 import { formatDuration, formatMoney, formatPower } from "@/lib/format-utils";
-import { getAssetLongName } from "@/lib/assets/asset-names";
 
 echarts.use([
     ELineChart,
