@@ -47,7 +47,7 @@ export function GameLayout({ children }: GameLayoutProps) {
                                 {children}
                             </div>
                         </main>
-                        <Toaster position="top-center" richColors />
+                        <Toaster position="top-center" richColors offset="calc(var(--topbar-height) + 0.5rem)" />
                     </SidebarInset>
                 </div>
             </div>
