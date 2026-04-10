@@ -46,8 +46,8 @@ export function EmissionsChart({
             const cumulativeData: Array<Record<string, unknown>> = [];
             const cumulative: Record<string, number> = {};
 
-            // Process in reverse order (oldest to newest)
-            for (let i = chartData.length - 1; i >= 0; i--) {
+            // Process from oldest to newest (data is sorted by tick ascending)
+            for (let i = 0; i < chartData.length; i++) {
                 const dp = chartData[i] as Record<string, unknown>;
                 const result: Record<string, unknown> = {
                     tick: typeof dp.tick === "number" ? dp.tick : 0,
@@ -66,7 +66,7 @@ export function EmissionsChart({
                     result[key] = cumulative[key];
                 });
 
-                cumulativeData.unshift(result);
+                cumulativeData.push(result);
             }
 
             processedData = cumulativeData;
