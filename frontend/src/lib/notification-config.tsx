@@ -164,6 +164,10 @@ const INBOX_NOTIFICATION_CONFIG = {
 
 // Push-only types are not in the generated API types since they don't appear
 // in the inbox API. We define their payload shapes manually here.
+// ⚠ Keep in sync with the corresponding Python classes in
+//   energetica/schemas/notifications.py — generate-types won't catch drift.
+
+/** Mirror of ChatMessagePayload (energetica/schemas/notifications.py) */
 type ChatMessagePushPayload = {
     type: "chat_message";
     sender_username: string;
@@ -171,6 +175,7 @@ type ChatMessagePushPayload = {
     chat_id: number;
 };
 
+/** Mirror of PushNotificationTestPayload (energetica/schemas/notifications.py) */
 type PushNotificationTestPushPayload = {
     type: "push_notification_test";
 };

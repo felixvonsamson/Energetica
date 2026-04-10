@@ -24,9 +24,11 @@ sw.addEventListener("push", (event: PushEvent) => {
     const payload = { type: data.type, ...data.payload } as AnyPushPayload;
     const category = getPushCategory(data.type);
 
+    const alwaysShow = data.type === "push_notification_test";
+
     event.waitUntil(
         getPushPref(category).then((enabled) => {
-            if (!enabled) {
+            if (!enabled && !alwaysShow) {
                 console.log(
                     `[SW] Push suppressed (category "${category}" disabled):`,
                     data.type,
