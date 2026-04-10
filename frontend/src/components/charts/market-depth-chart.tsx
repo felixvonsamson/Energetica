@@ -27,6 +27,7 @@ import {
 
 import { Money } from "@/components/ui/money";
 import { useMarketData } from "@/hooks/use-charts";
+import { resolveColor, resolveCSSVar } from "@/lib/charts/color-utils";
 import { formatMoney, formatPower } from "@/lib/format-utils";
 
 echarts.use([
@@ -43,24 +44,6 @@ type ECOption = ComposeOption<
     | TooltipComponentOption
     | MarkLineComponentOption
 >;
-
-// ── CSS variable resolver ─────────────────────────────────────────────────────
-
-function resolveCSSVar(varName: string): string {
-    if (typeof document === "undefined") return "#888";
-    const root = document.documentElement;
-    let val = getComputedStyle(root).getPropertyValue(varName).trim();
-    const m = val.match(/^var\(([^,)]+)/);
-    if (m?.[1]) val = getComputedStyle(root).getPropertyValue(m[1]).trim();
-    return val || "#888";
-}
-
-function resolveColor(color: string): string {
-    if (!color.startsWith("var(")) return color;
-    const varName = color.match(/^var\(([^,)]+)/)?.[1];
-    if (!varName) return color;
-    return resolveCSSVar(varName);
-}
 
 // ── Tooltip ───────────────────────────────────────────────────────────────────
 

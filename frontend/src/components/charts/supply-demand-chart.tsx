@@ -47,7 +47,11 @@ import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { usePlayerMap } from "@/hooks/use-players";
 import { getAssetLongName } from "@/lib/assets/asset-names";
-import { getHashBasedChartColor } from "@/lib/charts/color-utils";
+import {
+    getHashBasedChartColor,
+    resolveColor,
+    resolveCSSVar,
+} from "@/lib/charts/color-utils";
 import {
     createSteppedCurve,
     interpolateAtX,
@@ -79,24 +83,6 @@ type ECOption = ComposeOption<
 
 export type ActiveMode = "supply" | "demand";
 export type ColorMode = "player" | "type";
-
-// ── CSS variable resolver ─────────────────────────────────────────────────────
-
-function resolveCSSVar(varName: string): string {
-    if (typeof document === "undefined") return "#888";
-    const root = document.documentElement;
-    let val = getComputedStyle(root).getPropertyValue(varName).trim();
-    const m = val.match(/^var\(([^,)]+)/);
-    if (m?.[1]) val = getComputedStyle(root).getPropertyValue(m[1]).trim();
-    return val || "#888";
-}
-
-function resolveColor(color: string): string {
-    if (!color.startsWith("var(")) return color;
-    const varName = color.match(/^var\(([^,)]+)/)?.[1];
-    if (!varName) return color;
-    return resolveCSSVar(varName);
-}
 
 // ── Tooltip ───────────────────────────────────────────────────────────────────
 
@@ -745,6 +731,7 @@ function MeritOrderChartInner({
     const handleResetZoom = useCallback(() => {
         const inst = instanceRef.current;
         if (!inst) return;
+        inst.dispatchAction({ type: "dataZoom", start: 0, end: 100 });
         setIsZoomed(false);
         setZoomRange({ start: 0, end: 100 });
         inst.dispatchAction({

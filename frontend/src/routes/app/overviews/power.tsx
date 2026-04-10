@@ -144,7 +144,7 @@ function PowerOverviewContent() {
                             <Label className="mb-2">Display Mode</Label>
                             <SegmentedPicker
                                 value={viewMode}
-                                onValueChange={(value) => setViewMode(value)}
+                                onValueChange={(value) => setViewMode(value as PowerChartViewMode)}
                             >
                                 {VIEW_MODE_OPTIONS.map((option) => (
                                     <SegmentedPickerOption

@@ -46,6 +46,7 @@ import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { getAssetIcon } from "@/lib/assets/asset-icons";
 import { getAssetLongName } from "@/lib/assets/asset-names";
+import { resolveColor, resolveCSSVar } from "@/lib/charts/color-utils";
 import {
     KEY_ORDER_BY_CHART_TYPE,
     reorderObjectKeys,
@@ -123,21 +124,6 @@ export interface EChartsTimeSeriesProps {
 
 // ── CSS variable resolver ─────────────────────────────────────────────────────
 
-function resolveCSSVar(varName: string): string {
-    if (typeof document === "undefined") return "#888";
-    const root = document.documentElement;
-    let val = getComputedStyle(root).getPropertyValue(varName).trim();
-    const m = val.match(/^var\(([^,)]+)/);
-    if (m?.[1]) val = getComputedStyle(root).getPropertyValue(m[1]).trim();
-    return val || "#888";
-}
-
-function resolveColor(color: string): string {
-    if (!color.startsWith("var(")) return color;
-    const varName = color.match(/^var\(([^,)]+)/)?.[1];
-    if (!varName) return color;
-    return resolveCSSVar(varName);
-}
 
 // ── Tooltip overlay ───────────────────────────────────────────────────────────
 
