@@ -25,6 +25,7 @@ import {
 } from "@/hooks/use-resource-market";
 import { useShipments } from "@/hooks/use-shipments";
 import { formatMass } from "@/lib/format-utils";
+import { Player } from "@/types/players";
 import {
     ResourceType,
     RESOURCE_TYPES,
@@ -399,7 +400,7 @@ interface AskRowProps {
         seller_id: number;
     };
     currentPlayerId?: number;
-    playerMap?: Record<number, { username: string }>;
+    playerMap?: Record<number, Player>;
     onPurchaseClick: (ask: {
         id: number;
         resource_type: string;
@@ -422,7 +423,6 @@ function AskRow({
 
     return (
         <motion.tr
-            layout
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
