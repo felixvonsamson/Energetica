@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 
 import {
-    TimeSeriesChart,
-    TimeSeriesChartConfig,
-} from "@/components/charts/time-series-chart";
+    EChartsTimeSeries,
+    EChartsTimeSeriesConfig,
+} from "@/components/charts/echarts-time-series";
 
 // Temperature Chart Component
 interface TemperatureChartProps {
@@ -50,12 +50,11 @@ export function TemperatureChart({
         return `${value.toFixed(2)}°C`;
     };
 
-    const chartConfig: TimeSeriesChartConfig = useMemo(
+    const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
             chartVariant: "smoothLine",
             stacked: false,
             height: 400,
-            showBrush: true,
             getColor: (key: string) =>
                 key === "temperature" ? "#f59e0b" : "#9ca3af",
             filterDataKeys: [],
@@ -65,7 +64,7 @@ export function TemperatureChart({
     );
 
     return (
-        <TimeSeriesChart
+        <EChartsTimeSeries
             data={transformedData}
             config={chartConfig}
             isLoading={isLoading}

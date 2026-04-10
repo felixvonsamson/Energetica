@@ -1,18 +1,30 @@
+/**
+ * Power chart: stacked bar chart of facility production per tick.
+ *
+ * This is a thin wrapper around EChartsTimeSeries that handles the
+ * power-chart-specific concerns:
+ *  - Deriving visible keys from the canonical facility order (hidden + zero filtering)
+ *  - Percent-mode normalization of the data
+ *  - Facility icon + name labels in the tooltip
+ */
+
 import { useMemo, useState } from "react";
 
 import {
-    TimeSeriesChart,
-    TimeSeriesChartConfig,
-} from "@/components/charts/time-series-chart";
+    EChartsTimeSeries,
+    type EChartsTimeSeriesConfig,
+} from "@/components/charts/echarts-time-series";
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
-import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useFacilities } from "@/hooks/use-facilities";
 import { useGameEngine } from "@/hooks/use-game";
-import { formatPower, formatEnergy } from "@/lib/format-utils";
+import { KEY_ORDER_BY_CHART_TYPE } from "@/lib/charts/key-order";
+import { formatEnergy, formatPower } from "@/lib/format-utils";
 import type { ChartType } from "@/types/charts";
+
+export type PowerChartViewMode = "absolute" | "percent";
 
 interface PowerChartProps {
     chartType: ChartType;
@@ -20,6 +32,18 @@ interface PowerChartProps {
     isLoading: boolean;
     isError: boolean;
     hiddenFacilities: Set<string>;
+    viewMode: PowerChartViewMode;
+}
+
+// Stable label renderer — defined outside the component so it never causes
+// unnecessary config re-memos.
+function formatLabel(key: string) {
+    return (
+        <div className="flex items-center gap-1">
+            <FacilityIcon facility={key} size={14} />
+            <FacilityName facility={key} mode="long" />
+        </div>
+    );
 }
 
 export function PowerChart({
@@ -28,55 +52,85 @@ export function PowerChart({
     isLoading,
     isError,
     hiddenFacilities,
+    viewMode,
 }: PowerChartProps) {
     const getColor = useAssetColorGetter();
-    const filterDataKeys = useChartFilters(hiddenFacilities);
 
-    const chartConfig: TimeSeriesChartConfig = useMemo(
-        () => ({
+    // Derive visible keys in canonical stack order, excluding hidden facilities
+    // and series that are all-zero across the entire data set.
+    const visibleKeys = useMemo(() => {
+        if (!chartData.length) return [];
+        const keyOrder = KEY_ORDER_BY_CHART_TYPE[chartType] as readonly string[];
+        return keyOrder.filter(
+            (key) =>
+                !hiddenFacilities.has(key) &&
+                chartData.some((d) => Number(d[key] ?? 0) > 0),
+        );
+    }, [chartData, chartType, hiddenFacilities]);
+
+    // Build display data containing only visible keys, optionally normalized
+    // to percentages. Pre-filtering here means EChartsTimeSeries sees exactly
+    // the series it should render — no filterDataKeys needed.
+    const displayData = useMemo(() => {
+        return chartData.map((dataPoint) => {
+            const total =
+                viewMode === "percent"
+                    ? visibleKeys.reduce(
+                          (s, k) => s + Number(dataPoint[k] ?? 0),
+                          0,
+                      )
+                    : 0;
+            const row: Record<string, unknown> = { tick: dataPoint.tick };
+            for (const k of visibleKeys) {
+                const v = Number(dataPoint[k] ?? 0);
+                row[k] =
+                    viewMode === "percent" && total > 0
+                        ? (v / total) * 100
+                        : v;
+            }
+            return row;
+        });
+    }, [chartData, visibleKeys, viewMode]);
+
+    const config = useMemo(
+        (): EChartsTimeSeriesConfig => ({
             chartType,
             chartVariant: "area",
             stacked: true,
-            showBrush: true,
             getColor,
-            filterDataKeys,
-            formatTooltip: (value: number, name: string) => [
-                formatPower(value),
-                name,
-            ],
-            formatValue: formatPower,
-            formatYAxis: (value: number) => formatPower(value),
+            formatLabel,
+            formatValue: (v) =>
+                viewMode === "percent"
+                    ? `${v.toFixed(1)}%`
+                    : formatPower(v),
+            formatYAxis:
+                viewMode === "percent"
+                    ? (v: number) => `${v.toFixed(0)}%`
+                    : formatPower,
+            yAxisMin: 0,
+            yAxisMax: viewMode === "percent" ? 100 : undefined,
+            hideZeroValues: true,
         }),
-        [chartType, getColor, filterDataKeys],
+        [chartType, getColor, viewMode],
     );
 
     return (
-        <TimeSeriesChart
-            data={chartData}
-            config={chartConfig}
+        <EChartsTimeSeries
+            data={displayData}
+            config={config}
             isLoading={isLoading}
             isError={isError}
         />
     );
 }
-/**
- * Power overview table component that displays aggregated generation or
- * consumption data by facility type.
- *
- * Shows total energy generated/consumed over the selected period, installed
- * capacity, and used capacity for generation view.
- */
+
+// ── PowerOverviewTable ────────────────────────────────────────────────────────
 
 interface PowerOverviewTableProps {
-    /** Chart type determining if we show generation or consumption table */
     chartType: ChartType;
-    /** Chart data with time series for each facility type */
     chartData: Array<Record<string, number>>;
-    /** Resolution in ticks per datapoint */
     resolution: number;
-    /** Set of hidden facility types */
     hiddenFacilities: Set<string>;
-    /** Callback when a facility visibility is toggled */
     onToggleFacility: (facilityType: string) => void;
 }
 
@@ -90,21 +144,6 @@ interface FacilityRow {
 type SortKey = "facility" | "energy" | "capacity" | "used";
 type SortDirection = "asc" | "desc";
 
-/**
- * Power overview table showing aggregated generation or consumption data.
- *
- * For generation mode:
- *
- * - Facility name
- * - Total generated energy over the period
- * - Installed capacity
- * - Used capacity (percentage)
- *
- * For consumption mode:
- *
- * - Facility name
- * - Total consumed energy over the period
- */
 export function PowerOverviewTable({
     chartType,
     chartData,
@@ -119,15 +158,12 @@ export function PowerOverviewTable({
     const { data: gameEngine } = useGameEngine();
     const isGeneration = chartType === "power-sources";
 
-    // Check if all facilities are hidden
     const allHidden = useMemo(() => {
         if (chartData.length === 0) return false;
         const facilityTypes = new Set<string>();
         chartData.forEach((dataPoint) => {
             Object.keys(dataPoint).forEach((key) => {
-                if (key !== "tick") {
-                    facilityTypes.add(key);
-                }
+                if (key !== "tick") facilityTypes.add(key);
             });
         });
         return (
@@ -143,82 +179,49 @@ export function PowerOverviewTable({
         const facilityTypes = new Set<string>();
         chartData.forEach((dataPoint) => {
             Object.keys(dataPoint).forEach((key) => {
-                if (key !== "tick") {
-                    facilityTypes.add(key);
-                }
+                if (key !== "tick") facilityTypes.add(key);
             });
         });
-
-        // If all are hidden, show all. Otherwise, hide all.
         if (allHidden) {
-            // Show all - remove all from hidden set
             facilityTypes.forEach((type) => {
-                if (hiddenFacilities.has(type)) {
-                    onToggleFacility(type);
-                }
+                if (hiddenFacilities.has(type)) onToggleFacility(type);
             });
         } else {
-            // Hide all - add all to hidden set
             facilityTypes.forEach((type) => {
-                if (!hiddenFacilities.has(type)) {
-                    onToggleFacility(type);
-                }
+                if (!hiddenFacilities.has(type)) onToggleFacility(type);
             });
         }
     };
 
-    // Calculate aggregated data for each facility type
     const facilityRows = useMemo(() => {
-        if (chartData.length === 0) return [];
-        if (!gameEngine) return [];
-
-        // Get all facility types from the chart data
+        if (chartData.length === 0 || !gameEngine) return [];
         const facilityTypes = new Set<string>();
         chartData.forEach((dataPoint) => {
             Object.keys(dataPoint).forEach((key) => {
-                if (key !== "tick") {
-                    facilityTypes.add(key);
-                }
+                if (key !== "tick") facilityTypes.add(key);
             });
         });
 
-        // Calculate totals for each facility type
         const rows: FacilityRow[] = Array.from(facilityTypes).map(
             (facilityType) => {
-                // Sum all power values and multiply by resolution to get total energy
+                const timeInHours =
+                    (resolution * gameEngine.game_seconds_per_tick) / 3600;
                 const totalEnergy = chartData.reduce((sum, dataPoint) => {
-                    const power = dataPoint[facilityType] || 0;
-                    // Energy = Power × Time
-                    // resolution is ticks per datapoint, game_seconds_per_tick is game seconds per tick
-                    // Energy (Wh) = Power (W) × Time (hours)
-                    const timeInHours =
-                        (resolution * gameEngine.game_seconds_per_tick) / 3600;
-                    return sum + power * timeInHours;
+                    return sum + (dataPoint[facilityType] ?? 0) * timeInHours;
                 }, 0);
 
-                const row: FacilityRow = {
-                    facilityType,
-                    totalEnergy,
-                };
+                const row: FacilityRow = { facilityType, totalEnergy };
 
-                // For generation view, calculate installed capacity and usage
                 if (isGeneration && facilitiesData) {
                     const facilities = facilitiesData.power_facilities.filter(
                         (f) => f.facility === facilityType,
                     );
-
                     if (facilities.length > 0) {
                         const installedCapacity = facilities.reduce(
                             (sum, f) => sum + f.max_power_generation,
                             0,
                         );
                         row.installedCapacity = installedCapacity;
-
-                        // Calculate used capacity as percentage
-                        // Average power over the period / installed capacity
-                        const timeInHours =
-                            (resolution * gameEngine.game_seconds_per_tick) /
-                            3600;
                         const avgPower =
                             totalEnergy / (chartData.length * timeInHours);
                         row.usedCapacity =
@@ -227,22 +230,16 @@ export function PowerOverviewTable({
                                 : 0;
                     }
                 }
-
                 return row;
             },
         );
-
-        // Filter out rows with zero energy
         return rows.filter((row) => row.totalEnergy > 0);
     }, [chartData, resolution, isGeneration, facilitiesData, gameEngine]);
 
-    // Sort facility rows
     const sortedRows = useMemo(() => {
-        const sorted = [...facilityRows];
-        sorted.sort((a, b) => {
+        return [...facilityRows].sort((a, b) => {
             let aVal: number | string;
             let bVal: number | string;
-
             switch (sortKey) {
                 case "facility":
                     aVal = a.facilityType;
@@ -263,18 +260,14 @@ export function PowerOverviewTable({
                 default:
                     return 0;
             }
-
             if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
             if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
             return 0;
         });
-
-        return sorted;
     }, [facilityRows, sortKey, sortDirection]);
 
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
-            // Toggle direction
             setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
         } else {
             setSortKey(key);
@@ -282,10 +275,8 @@ export function PowerOverviewTable({
         }
     };
 
-    const getSortIndicator = (key: SortKey) => {
-        if (sortKey !== key) return null;
-        return sortDirection === "asc" ? " ▲" : " ▼";
-    };
+    const getSortIndicator = (key: SortKey) =>
+        sortKey === key ? (sortDirection === "asc" ? " ▲" : " ▼") : null;
 
     if (sortedRows.length === 0) {
         return (

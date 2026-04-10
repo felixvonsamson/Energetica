@@ -1,31 +1,80 @@
 /** Market depth / order book depth chart for electricity markets */
 
-import { scaleLinear } from "d3-scale";
+import { LineChart as ELineChart } from "echarts/charts";
+import type { LineSeriesOption } from "echarts/charts";
+import {
+    GridComponent,
+    MarkLineComponent,
+    TooltipComponent,
+} from "echarts/components";
+import type {
+    GridComponentOption,
+    MarkLineComponentOption,
+    TooltipComponentOption,
+} from "echarts/components";
+import type { ComposeOption } from "echarts/core";
+import * as echarts from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
 import { RefreshCw } from "lucide-react";
 import {
-    useMemo,
-    useState,
-    useRef,
-    useCallback,
     memo,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
     type ReactNode,
-    type MouseEvent,
 } from "react";
-import {
-    Area,
-    AreaChart,
-    CartesianGrid,
-    ReferenceLine,
-    ResponsiveContainer,
-    XAxis,
-    YAxis,
-} from "recharts";
 
 import { Money } from "@/components/ui/money";
 import { useMarketData } from "@/hooks/use-charts";
-import { useRechartsChartArea } from "@/hooks/use-recharts-chart-area";
-import { generateNiceTicks } from "@/lib/charts/ui-utils";
+import { resolveColor, resolveCSSVar } from "@/lib/charts/color-utils";
 import { formatMoney, formatPower } from "@/lib/format-utils";
+
+echarts.use([
+    ELineChart,
+    GridComponent,
+    TooltipComponent,
+    MarkLineComponent,
+    CanvasRenderer,
+]);
+
+type ECOption = ComposeOption<
+    | LineSeriesOption
+    | GridComponentOption
+    | TooltipComponentOption
+    | MarkLineComponentOption
+>;
+
+// ── Tooltip ───────────────────────────────────────────────────────────────────
+
+interface DepthTooltipProps {
+    price: number;
+    supplyVolume: number | null;
+    demandVolume: number | null;
+}
+
+const DepthTooltip = memo(function DepthTooltip({
+    price,
+    supplyVolume,
+    demandVolume,
+}: DepthTooltipProps): ReactNode {
+    return (
+        <div className="bg-card border border-border p-2 rounded shadow-md pointer-events-none text-sm">
+            <p className="font-semibold">
+                <Money amount={price} />
+                /MWh
+            </p>
+            {supplyVolume !== null && (
+                <p>Supply: {formatPower(supplyVolume)}</p>
+            )}
+            {demandVolume !== null && (
+                <p>Demand: {formatPower(demandVolume)}</p>
+            )}
+        </div>
+    );
+});
+
+// ── MarketDepthChart ──────────────────────────────────────────────────────────
 
 interface MarketDepthChartProps {
     marketId: number;
@@ -33,39 +82,6 @@ interface MarketDepthChartProps {
     height?: number;
 }
 
-interface CustomTooltipProps {
-    price: number;
-    supplyVolume: number | null;
-    demandVolume: number | null;
-}
-
-// Memoized tooltip to prevent re-rendering when position changes
-const CustomTooltip = memo(function CustomTooltip({
-    price,
-    supplyVolume,
-    demandVolume,
-}: CustomTooltipProps): ReactNode {
-    return (
-        <div className="bg-card border border-border p-2 rounded shadow-md pointer-events-none">
-            <p className="text-sm font-semibold">
-                <Money amount={price} />
-                /MWh
-            </p>
-            {supplyVolume !== null && (
-                <p className="text-sm">Supply: {formatPower(supplyVolume)}</p>
-            )}
-            {demandVolume !== null && (
-                <p className="text-sm">Demand: {formatPower(demandVolume)}</p>
-            )}
-        </div>
-    );
-});
-
-/**
- * Market depth chart showing cumulative order book depth. Displays volume
- * (y-axis) vs price (x-axis) for both supply (asks) and demand (bids), with
- * market clearing price.
- */
 function MarketDepthChartInner({
     marketId,
     tick,
@@ -75,67 +91,45 @@ function MarketDepthChartInner({
         data: marketData,
         isLoading,
         isError,
-    } = useMarketData({
-        marketId,
-        tick,
-    });
+    } = useMarketData({ marketId, tick });
 
-    // State for tooltip content
-    const [tooltipContent, setTooltipContent] = useState<{
+    const chartRef = useRef<HTMLDivElement>(null);
+    const instanceRef = useRef<echarts.ECharts | null>(null);
+
+    const [tooltipState, setTooltipState] = useState<{
+        clientX: number;
+        clientY: number;
         price: number;
         supplyVolume: number | null;
         demandVolume: number | null;
     } | null>(null);
 
-    // Ref to the container for coordinate calculations
-    const containerRef = useRef<HTMLDivElement>(null);
+    // ── Data transformation ───────────────────────────────────────────────────
 
-    // Ref to tooltip div for direct style manipulation
-    const tooltipRef = useRef<HTMLDivElement>(null);
-
-    // Throttle mouse move updates
-    const lastUpdateTime = useRef<number>(0);
-    const THROTTLE_MS = 16; // ~60fps
-
-    // Transform data into market depth curves
     const {
-        chartData,
+        supplyData,
+        demandData,
         priceDomain,
         volumeDomain,
-        priceTicks,
-        volumeTicks,
         clearingPrice,
     } = useMemo(() => {
         if (!marketData) {
             return {
-                chartData: [],
+                supplyData: [] as [number, number][],
+                demandData: [] as [number, number][],
                 priceDomain: [0, 1] as [number, number],
                 volumeDomain: [0, 1] as [number, number],
-                priceTicks: [0, 1],
-                volumeTicks: [0, 1],
                 clearingPrice: 0,
             };
         }
 
         const clearingVolume = marketData.market_quantity;
         const clearingPrice = marketData.market_price;
-
-        /**
-         * MarketData.capacities and marketData.demands are objects containing
-         * lists of numbers. Capacities are asks and demands are bids. The keys
-         * for these two objects are: player_id, capacity, cumul_capacity,
-         * price, and facility (exceptionally a string.) Note these lists are
-         * uniform and should be thought of as lists of objects. For both,
-         * objects are given in order such that cumul_capacity is increasing.
-         * That is, asks are increasing in price and bids are decreasing in
-         * price.
-         */
         const bids = marketData.demands;
         const asks = marketData.capacities;
-        const asksCount = asks.price.length; // can use any key, not just price
+        const asksCount = asks.price.length;
         const bidsCount = bids.price.length;
 
-        // Calculate price bounds from original market data
         const minBidPrice = Math.min(
             bids.price[bidsCount - 1] ?? clearingPrice,
             clearingPrice,
@@ -145,74 +139,38 @@ function MarketDepthChartInner({
             clearingPrice,
         );
 
-        // Add 10% margin on each side for visual clarity
         const priceRange = maxAskPrice - minBidPrice;
         const margin = priceRange > 0 ? priceRange * 0.1 : 0.01;
         const minPrice = minBidPrice - margin;
         const maxPrice = maxAskPrice + margin;
 
-        /**
-         * After filtering, the asks and bids now need to be in order of
-         * increasing price. This then amounts to ordering each order as they
-         * will appear on screen from left to right. In this regard, asks
-         * already appear in the correct order, with some asks at the start
-         * having been omitted. Bids appear in the opposite order. In their
-         * original order, some of bids are omitted. When viewed after reversal,
-         * items at the end are omitted.
-         */
-
-        // Merge sorted price arrays and build depth data in one pass
-        const depthData: Array<{
-            price: number;
-            supplyVolume: number | null;
-            demandVolume: number | null;
-        }> = [];
-
-        let askIdx = 0;
-        let bidIdx = bidsCount - 1; // Reverse iteration (demandDepth sorted descending)
-
-        // Three-way merge: supply (ascending), demand (descending), special prices
-        while (askIdx < asksCount || bidIdx >= 0) {
-            // Get next candidate price from each source
-            const askPrice = asks.price[askIdx] ?? Infinity;
-            const bidPrice = bids.price[bidIdx] ?? Infinity;
-
-            if (bidIdx < 0 || (askIdx < asksCount && askPrice < bidPrice)) {
-                const askVol = asks.cumul_capacities[askIdx]! - clearingVolume;
-                if (askVol > 0) {
-                    depthData.push({
-                        price: askPrice,
-                        supplyVolume: askVol,
-                        demandVolume: null,
-                    });
-                    if (askIdx >= asksCount - 1)
-                        depthData.push({
-                            price: maxPrice,
-                            supplyVolume: askVol,
-                            demandVolume: null,
-                        });
+        // Build supply series: ascending price, cumulative volume above clearing
+        const supplyData: [number, number][] = [];
+        for (let i = 0; i < asksCount; i++) {
+            const askVol = asks.cumul_capacities[i]! - clearingVolume;
+            if (askVol > 0) {
+                supplyData.push([asks.price[i]!, askVol]);
+                if (i === asksCount - 1) {
+                    supplyData.push([maxPrice, askVol]);
                 }
-                askIdx++;
-            } else {
-                const bidVol = bids.cumul_capacities[bidIdx]! - clearingVolume;
-                if (bidVol > 0) {
-                    if (depthData.length === 0)
-                        depthData.push({
-                            price: minPrice,
-                            supplyVolume: null,
-                            demandVolume: bidVol,
-                        });
-                    depthData.push({
-                        price: bidPrice,
-                        supplyVolume: null,
-                        demandVolume: bidVol,
-                    });
-                }
-                bidIdx--;
             }
         }
 
-        // Calculate volume domain
+        // Build demand series: bids in ascending price order (reversed from original)
+        // Original bids are descending in price, so we reverse to get ascending
+        const demandData: [number, number][] = [];
+        let firstDemand = true;
+        for (let i = bidsCount - 1; i >= 0; i--) {
+            const bidVol = bids.cumul_capacities[i]! - clearingVolume;
+            if (bidVol > 0) {
+                if (firstDemand) {
+                    demandData.push([minPrice, bidVol]);
+                    firstDemand = false;
+                }
+                demandData.push([bids.price[i]!, bidVol]);
+            }
+        }
+
         const maxSupplyVolume =
             asksCount > 0 ? asks.cumul_capacities[asksCount - 1]! : 0;
         const maxDemandVolume =
@@ -220,129 +178,197 @@ function MarketDepthChartInner({
         const maxVolume =
             Math.max(maxSupplyVolume, maxDemandVolume) - clearingVolume;
 
-        const priceDomain = [minPrice, maxPrice] as const;
-        const volumeDomain = [0, maxVolume] as const;
-
-        const priceTicks = generateNiceTicks(minPrice, maxPrice, 6);
-        const volumeTicks = generateNiceTicks(0, maxVolume, 6);
-
+        const priceDomain: [number, number] = [minPrice, maxPrice];
+        const volumeDomain: [number, number] = [0, maxVolume];
         return {
-            chartData: depthData,
+            supplyData,
+            demandData,
             priceDomain,
             volumeDomain,
-            priceTicks,
-            volumeTicks,
             clearingPrice,
         };
     }, [marketData]);
 
-    // Create d3 scale for coordinate conversions
-    const xScale = useMemo(() => {
-        return scaleLinear().domain(priceDomain).range([0, 1]);
-    }, [priceDomain]);
+    // ── ECharts option ────────────────────────────────────────────────────────
 
-    // Measure the actual chart plotting area from Recharts internals
-    const maxPriceTick = priceTicks[priceTicks.length - 1];
-    const maxVolumeTick = volumeTicks[volumeTicks.length - 1];
-    const chartArea = useRechartsChartArea(containerRef, [
-        maxPriceTick,
-        maxVolumeTick,
-    ]);
+    const option = useMemo((): ECOption => {
+        const chart1Color = resolveColor("var(--chart-1)");
+        const chart2Color = resolveColor("var(--chart-2)");
+        const primaryColor = resolveCSSVar("--primary");
+        const mutedColor = resolveCSSVar("--muted-foreground");
 
-    // Mouse move handler for tooltip
-    const handleMouseMove = useCallback(
-        (event: MouseEvent<HTMLDivElement>) => {
-            const now = performance.now();
-            if (now - lastUpdateTime.current < THROTTLE_MS) {
-                return;
-            }
-            lastUpdateTime.current = now;
+        const demandSeries: LineSeriesOption = {
+            name: "demand",
+            type: "line",
+            step: "start",
+            symbol: "none",
+            data: demandData,
+            areaStyle: { opacity: 0.3, color: chart2Color },
+            lineStyle: { color: chart2Color, width: 2 },
+            itemStyle: { color: chart2Color },
+            animation: false,
+        };
 
-            if (!containerRef.current || !chartArea || chartData.length === 0)
-                return;
+        const supplySeries: LineSeriesOption = {
+            name: "supply",
+            type: "line",
+            step: "end",
+            symbol: "none",
+            data: supplyData,
+            areaStyle: { opacity: 0.3, color: chart1Color },
+            lineStyle: { color: chart1Color, width: 2 },
+            itemStyle: { color: chart1Color },
+            animation: false,
+            markLine: {
+                silent: true,
+                symbol: ["none", "none"],
+                data: [{ xAxis: clearingPrice, name: `Clearing: $${formatMoney(clearingPrice)}/MWh` }],
+                lineStyle: { color: primaryColor, type: "dashed", width: 2 },
+                label: {
+                    formatter: "{b}",
+                    position: "insideStartTop",
+                    color: mutedColor,
+                    fontSize: 12,
+                },
+            },
+        };
 
-            const rect = containerRef.current.getBoundingClientRect();
-            const mouseX = event.clientX - rect.left;
-            const mouseY = event.clientY - rect.top;
+        return {
+            animation: false,
+            grid: { left: 80, right: 20, top: 15, bottom: 55 },
+            xAxis: {
+                type: "value",
+                min: priceDomain[0],
+                max: priceDomain[1],
+                name: "Price ($/MWh)",
+                nameLocation: "middle",
+                nameGap: 30,
+                axisLabel: {
+                    formatter: (value: number) => `$${formatMoney(value)}`,
+                    fontSize: 11,
+                },
+                splitLine: { lineStyle: { color: "rgba(128,128,128,0.15)" } },
+            },
+            yAxis: {
+                type: "value",
+                min: volumeDomain[0],
+                max: volumeDomain[1],
+                name: "Cumulative Volume",
+                nameLocation: "middle",
+                nameGap: 60,
+                axisLabel: {
+                    formatter: (value: number) => formatPower(value),
+                    fontSize: 11,
+                },
+                splitLine: { lineStyle: { color: "rgba(128,128,128,0.15)" } },
+            },
+            tooltip: { trigger: "none", showContent: false },
+            series: [demandSeries, supplySeries],
+        };
+    }, [supplyData, demandData, priceDomain, volumeDomain, clearingPrice]);
 
-            const chartLeft = chartArea.left;
-            const chartRight = chartArea.left + chartArea.width;
-            const chartTop = chartArea.top;
-            const chartBottom = chartArea.top + chartArea.height;
-            const chartWidth = chartArea.width;
+    // ── Chart lifecycle ───────────────────────────────────────────────────────
 
-            // Check if mouse is within chart bounds
-            if (
-                mouseX < chartLeft ||
-                mouseX > chartRight ||
-                mouseY < chartTop ||
-                mouseY > chartBottom
-            ) {
-                setTooltipContent(null);
-                return;
-            }
+    useEffect(() => {
+        if (!chartRef.current) return;
+        const chart = echarts.init(chartRef.current, undefined, {
+            renderer: "canvas",
+        });
+        instanceRef.current = chart;
 
-            // Convert mouse X position to price value
-            const normalizedX = (mouseX - chartLeft) / chartWidth;
-            const [minP, maxP] = xScale.domain();
-            const price = minP! + normalizedX * (maxP! - minP!);
+        const zr = chart.getZr();
 
-            // Find closest data point and interpolate volumes
-            let supplyVolume: number | null = null;
-            let demandVolume: number | null = null;
+        zr.on(
+            "mousemove",
+            (e: { offsetX: number; offsetY: number; event: Event }) => {
+                const { offsetX, offsetY } = e;
+                const nativeEvent = e.event as MouseEvent;
 
-            // Find supply volume at this price (highest price at or below)
-            for (let i = chartData.length - 1; i >= 0; i--) {
-                const point = chartData[i];
-                if (
-                    point &&
-                    point.price <= price &&
-                    point.supplyVolume !== null
-                ) {
-                    supplyVolume = point.supplyVolume;
-                    break;
+                if (!chart.containPixel("grid", [offsetX, offsetY])) {
+                    setTooltipState(null);
+                    return;
                 }
-            }
 
-            // Find demand volume at this price (highest price at or below)
-            // For stepAfter, we want the volume from the step we're currently on
-            for (let i = chartData.length - 1; i >= 0; i--) {
-                const point = chartData[i];
-                if (
-                    point &&
-                    point.price <= price &&
-                    point.demandVolume !== null
-                ) {
-                    demandVolume = point.demandVolume;
-                    break;
+                // Convert pixel to data coordinates
+                const price = chart.convertFromPixel(
+                    { xAxisIndex: 0 },
+                    offsetX,
+                ) as number;
+
+                // Interpolate volumes at this price from the raw chart data
+                // We use the chart's series data directly
+                const opt = chart.getOption() as ECOption;
+                const seriesArr = Array.isArray(opt.series) ? opt.series : [];
+
+                let supplyVolume: number | null = null;
+                let demandVolume: number | null = null;
+
+                // supply series is step='end', so we want highest price <= cursor
+                const supplyRaw = (
+                    seriesArr[1] as LineSeriesOption | undefined
+                )?.data as [number, number][] | undefined;
+                if (supplyRaw) {
+                    for (let i = supplyRaw.length - 1; i >= 0; i--) {
+                        if (supplyRaw[i]![0] <= price) {
+                            supplyVolume = supplyRaw[i]![1];
+                            break;
+                        }
+                    }
                 }
-            }
 
-            // Update tooltip position
-            if (tooltipRef.current) {
-                tooltipRef.current.style.left = `${mouseX + 10}px`;
-                tooltipRef.current.style.top = `${mouseY - 50}px`;
-            }
-
-            // Update tooltip content
-            setTooltipContent((prev) => {
-                if (
-                    !prev ||
-                    prev.price !== price ||
-                    prev.supplyVolume !== supplyVolume ||
-                    prev.demandVolume !== demandVolume
-                ) {
-                    return { price, supplyVolume, demandVolume };
+                // demand series is step='start', so we want highest price <= cursor
+                const demandRaw = (
+                    seriesArr[0] as LineSeriesOption | undefined
+                )?.data as [number, number][] | undefined;
+                if (demandRaw) {
+                    for (let i = demandRaw.length - 1; i >= 0; i--) {
+                        if (demandRaw[i]![0] <= price) {
+                            demandVolume = demandRaw[i]![1];
+                            break;
+                        }
+                    }
                 }
-                return prev;
-            });
-        },
-        [chartArea, xScale, chartData],
-    );
 
-    const handleMouseLeave = useCallback(() => {
-        setTooltipContent(null);
+                if (supplyVolume === null && demandVolume === null) {
+                    setTooltipState(null);
+                    return;
+                }
+
+                setTooltipState({
+                    clientX: nativeEvent.clientX,
+                    clientY: nativeEvent.clientY,
+                    price,
+                    supplyVolume,
+                    demandVolume,
+                });
+            },
+        );
+
+        zr.on("mouseout", () => setTooltipState(null));
+
+        return () => {
+            chart.getZr().off("mousemove");
+            chart.getZr().off("mouseout");
+            chart.dispose();
+            instanceRef.current = null;
+        };
     }, []);
+
+    useEffect(() => {
+        instanceRef.current?.setOption(option, { notMerge: true });
+    }, [option]);
+
+    useEffect(() => {
+        const el = chartRef.current;
+        if (!el) return;
+        const observer = new ResizeObserver(() =>
+            instanceRef.current?.resize(),
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
+    // ── Render ────────────────────────────────────────────────────────────────
 
     if (isLoading) {
         return (
@@ -365,101 +391,22 @@ function MarketDepthChartInner({
     }
 
     return (
-        <div
-            ref={containerRef}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            style={{
-                position: "relative",
-                width: "100%",
-                height: `${height}px`,
-            }}
-        >
-            <ResponsiveContainer width="100%" height={height}>
-                <AreaChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                        dataKey="price"
-                        type="number"
-                        domain={priceDomain}
-                        ticks={priceTicks}
-                        tick={{ fontSize: 12 }}
-                        tickFormatter={(value: number) =>
-                            `$${formatMoney(value)}`
-                        }
-                        label={{
-                            value: "Price ($/MWh)",
-                            position: "insideBottom",
-                            offset: -5,
-                        }}
-                    />
-                    <YAxis
-                        domain={volumeDomain}
-                        ticks={volumeTicks}
-                        tick={{ fontSize: 12 }}
-                        tickFormatter={(value: number) => formatPower(value)}
-                        label={{
-                            value: "Cumulative Volume",
-                            angle: -90,
-                            position: "insideLeft",
-                        }}
-                    />
-
-                    {/* Demand area (bids) - shown on left side */}
-                    <Area
-                        type="stepBefore"
-                        dataKey="demandVolume"
-                        stroke="var(--chart-2)"
-                        fill="var(--chart-2)"
-                        fillOpacity={0.3}
-                        strokeWidth={2}
-                        isAnimationActive={false}
-                        connectNulls={false}
-                    />
-
-                    {/* Supply area (asks) - shown on right side */}
-                    <Area
-                        type="stepAfter"
-                        dataKey="supplyVolume"
-                        stroke="var(--chart-1)"
-                        fill="var(--chart-1)"
-                        fillOpacity={0.3}
-                        strokeWidth={2}
-                        isAnimationActive={false}
-                        connectNulls={false}
-                    />
-
-                    {/* Clearing price line */}
-                    <ReferenceLine
-                        x={clearingPrice}
-                        stroke="var(--primary)"
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        label={{
-                            value: `Clearing: $${formatMoney(clearingPrice)}/MWh`,
-                            position: "insideTop",
-                            fill: "var(--muted-foreground)",
-                            fontSize: 12,
-                        }}
-                    />
-                </AreaChart>
-            </ResponsiveContainer>
-
-            {/* Custom tooltip */}
-            {tooltipContent && (
+        <div className="relative" style={{ height: `${height}px` }}>
+            <div ref={chartRef} className="w-full h-full" />
+            {tooltipState && (
                 <div
-                    ref={tooltipRef}
                     style={{
-                        position: "absolute",
-                        zIndex: 50,
-                        left: 0,
-                        top: 0,
+                        position: "fixed",
+                        left: tooltipState.clientX + 12,
+                        top: tooltipState.clientY - 50,
+                        pointerEvents: "none",
+                        zIndex: 9999,
                     }}
                 >
-                    <CustomTooltip
-                        price={tooltipContent.price}
-                        supplyVolume={tooltipContent.supplyVolume}
-                        demandVolume={tooltipContent.demandVolume}
+                    <DepthTooltip
+                        price={tooltipState.price}
+                        supplyVolume={tooltipState.supplyVolume}
+                        demandVolume={tooltipState.demandVolume}
                     />
                 </div>
             )}
@@ -467,5 +414,4 @@ function MarketDepthChartInner({
     );
 }
 
-// Memoize component to prevent re-renders
 export const MarketDepthChart = memo(MarketDepthChartInner);

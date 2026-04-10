@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
-import { ReferenceLine } from "recharts";
 
 import {
-    TimeSeriesChart,
-    TimeSeriesChartConfig,
-} from "@/components/charts/time-series-chart";
+    EChartsTimeSeries,
+    EChartsTimeSeriesConfig,
+} from "@/components/charts/echarts-time-series";
 import { FacilityName } from "@/components/ui/asset-name";
 import { Button } from "@/components/ui/button";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
@@ -103,12 +102,11 @@ export function MarketClearingVolumeChart({
         breakdownMode,
     );
 
-    const chartConfig: TimeSeriesChartConfig = useMemo(
+    const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
             chartType,
             chartVariant: "area",
             stacked: breakdownEnabled,
-            showBrush: true,
             getColor: !breakdownEnabled
                 ? () => "var(--chart-2)"
                 : breakdownMode === "type"
@@ -125,6 +123,9 @@ export function MarketClearingVolumeChart({
                           playerMap?.[parseInt(key)]?.username ?? key
                     : undefined,
             hideZeroValues: false,
+            referenceLines: market
+                ? [{ x: market.created_tick, label: "Market Creation" }]
+                : [],
         }),
         [
             chartType,
@@ -134,31 +135,17 @@ export function MarketClearingVolumeChart({
             breakdownFilter,
             quantityFilter,
             playerMap,
+            market,
         ],
     );
 
     return (
-        <TimeSeriesChart
+        <EChartsTimeSeries
             data={chartData}
             config={chartConfig}
             isLoading={isLoading}
             isError={isError}
-        >
-            {market && (
-                <ReferenceLine
-                    x={market.created_tick}
-                    stroke="var(--primary)"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    label={{
-                        value: "Market Creation",
-                        position: "insideTopLeft",
-                        fill: "var(--muted-foreground)",
-                        fontSize: 12,
-                    }}
-                />
-            )}
-        </TimeSeriesChart>
+        />
     );
 }
 

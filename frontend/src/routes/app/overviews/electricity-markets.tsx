@@ -10,9 +10,9 @@ import {
     Network as NetworkIcon,
     Users,
     Layers,
-    BookOpenText,
+    BarChart2,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
     BreakdownMode,
@@ -20,9 +20,8 @@ import {
     MarketClearingTable,
     MarketClearingVolumeChart,
 } from "@/components/charts/market-clearing-volume-chart";
-import { MarketDepthChart } from "@/components/charts/market-depth-chart";
 import { MarketPriceChart } from "@/components/charts/market-price-chart";
-import { SupplyDemandChart } from "@/components/charts/supply-demand-chart";
+import { MeritOrderChart } from "@/components/charts/supply-demand-chart";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
     CardContent,
@@ -38,7 +37,6 @@ import {
     SegmentedPicker,
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
-import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useTimeMode } from "@/contexts/time-mode-context";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
@@ -51,6 +49,7 @@ import {
 import { useGameTick } from "@/hooks/use-game-tick";
 import { useToggleSet } from "@/hooks/use-toggle-set";
 import { formatPower } from "@/lib/format-utils";
+
 
 interface MarketsSearchParams {
     marketId?: number;
@@ -160,28 +159,6 @@ function MarketsOverviewContent() {
 
     const latestPrice = latestData.price ?? 0;
     const latestQuantity = latestData.quantity ?? 0;
-
-    // Historical tick selection state
-    // Initialize to current tick - 1 (most recent market clearing)
-    const [selectedTick, setSelectedTick] = useState<number>(
-        currentTick !== undefined ? currentTick - 1 : 0,
-    );
-
-    // Update selectedTick when currentTick changes (keep it at the latest by default)
-    React.useEffect(() => {
-        if (currentTick !== undefined) {
-            setSelectedTick(currentTick - 1);
-        }
-    }, [currentTick]);
-
-    // Calculate tick bounds for the slider
-    // Lower bound: max of market creation tick and (currentTick - 1440) to respect 1440 tick data retention
-    // Upper bound: currentTick - 1 (most recent market clearing)
-    const minTick =
-        currentTick !== undefined && marketDetails
-            ? Math.max(marketDetails.created_tick, currentTick - 1440)
-            : 0;
-    const maxTick = currentTick !== undefined ? currentTick - 1 : 0;
 
     // Breakdown state
     const [breakdownEnabled, setBreakdownEnabled] = useState<boolean>(false);
@@ -407,85 +384,14 @@ function MarketsOverviewContent() {
                 )}
             </ChartCard>
 
-            {/* Supply/Demand Curves */}
-            {currentTick !== undefined && (
-                <>
-                    <ChartCard
-                        icon={TrendingUp}
-                        iconClassName="text-primary"
-                        title="Supply & Demand Curves"
-                    >
-                        <div className="space-y-4 mb-4">
-                            <div className="flex items-center justify-between gap-4">
-                                <Label className="text-sm font-medium shrink-0">
-                                    Historical Tick: {selectedTick}
-                                </Label>
-                                <div className="flex-1">
-                                    <Slider
-                                        min={minTick}
-                                        max={maxTick}
-                                        step={1}
-                                        value={[selectedTick]}
-                                        onValueChange={(values) =>
-                                            setSelectedTick(
-                                                values[0] ?? minTick,
-                                            )
-                                        }
-                                        disabled={minTick >= maxTick}
-                                    />
-                                </div>
-                                <div className="text-sm text-muted-foreground shrink-0">
-                                    {minTick} - {maxTick}
-                                </div>
-                            </div>
-                        </div>
-                        <SupplyDemandChart
-                            marketId={selectedMarketId}
-                            tick={selectedTick}
-                            breakdownEnabled={breakdownEnabled}
-                            breakdownMode={breakdownMode}
-                            breakdownType={breakdownType}
-                        />
-                    </ChartCard>
-                    <ChartCard
-                        icon={BookOpenText}
-                        iconClassName="text-primary"
-                        title="Order Book Depth Chart"
-                    >
-                        <div className="space-y-4 mb-4">
-                            <div className="flex items-center justify-between gap-4">
-                                <Label className="text-sm font-medium shrink-0">
-                                    Historical Tick: {selectedTick}
-                                </Label>
-                                <div className="flex-1">
-                                    <Slider
-                                        min={minTick}
-                                        max={maxTick}
-                                        step={1}
-                                        value={[selectedTick]}
-                                        onValueChange={(values) =>
-                                            setSelectedTick(
-                                                values[0] ?? minTick,
-                                            )
-                                        }
-                                        disabled={minTick >= maxTick}
-                                    />
-                                </div>
-                                <div className="text-sm text-muted-foreground shrink-0">
-                                    {minTick} - {maxTick}
-                                </div>
-                            </div>
-                        </div>
-                        <MarketDepthChart
-                            marketId={selectedMarketId}
-                            tick={selectedTick}
-                            // breakdownEnabled={breakdownEnabled}
-                            // breakdownMode={breakdownMode}
-                            // breakdownType={breakdownType}
-                        />
-                    </ChartCard>
-                </>
-            )}
+            {/* Merit Order & Market Clearing */}
+            <ChartCard
+                icon={BarChart2}
+                iconClassName="text-primary"
+                title="Merit Order & Market Clearing"
+            >
+                <MeritOrderChart marketId={selectedMarketId} />
+            </ChartCard>
         </div>
     );
 }

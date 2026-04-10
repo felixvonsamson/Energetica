@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 
 import {
-    TimeSeriesChart,
-    TimeSeriesChartConfig,
-} from "@/components/charts/time-series-chart";
+    EChartsTimeSeries,
+    EChartsTimeSeriesConfig,
+} from "@/components/charts/echarts-time-series";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { filterNonZeroSeries } from "@/lib/charts/filter-utils";
 import { formatMass } from "@/lib/format-utils";
@@ -21,12 +21,11 @@ export function ResourcesChart({
 }: ResourcesChartProps) {
     const getColor = useAssetColorGetter();
 
-    const chartConfig: TimeSeriesChartConfig = useMemo(
+    const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
             chartType: "resources",
             chartVariant: "area",
             stacked: false,
-            showBrush: true,
             getColor,
             filterDataKeys: [filterNonZeroSeries],
             formatValue: formatMass,
@@ -36,7 +35,7 @@ export function ResourcesChart({
     );
 
     return (
-        <TimeSeriesChart
+        <EChartsTimeSeries
             data={chartData as Array<Record<string, unknown>>}
             config={chartConfig}
             isLoading={isLoading}

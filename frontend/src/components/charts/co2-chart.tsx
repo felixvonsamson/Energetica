@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from "react";
 
 import {
-    TimeSeriesChart,
-    TimeSeriesChartConfig,
-} from "@/components/charts/time-series-chart";
+    EChartsTimeSeries,
+    EChartsTimeSeriesConfig,
+} from "@/components/charts/echarts-time-series";
 
 // CO2 Chart Component
 interface CO2ChartProps {
@@ -87,11 +87,10 @@ export function CO2Chart({
         [unitMode],
     );
 
-    const chartConfig: TimeSeriesChartConfig = useMemo(
+    const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
             chartVariant: "smoothLine",
             stacked: false,
-            showBrush: true,
             getColor: (key: string) => (key === "CO2" ? "#ef4444" : "#9ca3af"),
             filterDataKeys: [],
             formatValue,
@@ -100,7 +99,7 @@ export function CO2Chart({
     );
 
     return (
-        <TimeSeriesChart
+        <EChartsTimeSeries
             data={transformedData}
             config={chartConfig}
             isLoading={isLoading}
