@@ -180,7 +180,15 @@ type PushNotificationTestPushPayload = {
     type: "push_notification_test";
 };
 
-type PushOnlyPayload = ChatMessagePushPayload | PushNotificationTestPushPayload;
+/** Mirror of QuizReminderPayload (energetica/schemas/notifications.py) */
+type QuizReminderPushPayload = {
+    type: "quiz_reminder";
+};
+
+type PushOnlyPayload =
+    | ChatMessagePushPayload
+    | PushNotificationTestPushPayload
+    | QuizReminderPushPayload;
 
 // All payloads the service worker may receive.
 export type AnyPushPayload = NotificationPayload | PushOnlyPayload;
@@ -207,6 +215,12 @@ const PUSH_ONLY_CONFIG = {
         title: "Push notification test",
         pushBody: () =>
             "If you see this, browser push notifications are working.",
+    },
+    quiz_reminder: {
+        pushCategory: "quiz",
+        path: () => "/app/dashboard",
+        title: "Daily Quiz",
+        pushBody: () => "A new daily quiz question is available!",
     },
 } satisfies Record<string, PushNotificationDef<never>>;
 
