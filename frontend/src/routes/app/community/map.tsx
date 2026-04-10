@@ -130,7 +130,7 @@ function MapContent() {
     }
 
     return (
-        <div className="p-4 flex flex-col h-full">
+        <div className="p-4 flex flex-col h-[calc(100svh-var(--topbar-height))]">
             <div className="flex flex-col lg:flex-row gap-4 lg:flex-1 lg:min-h-0">
                 {/* Left sidebar - Resource filters */}
                 <div className="grid grid-cols-3 md:grid-cols-7 lg:grid-cols-1 gap-2 lg:w-32 lg:shrink-0 lg:self-center">
