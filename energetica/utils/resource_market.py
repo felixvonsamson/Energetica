@@ -64,7 +64,6 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
         buyer.money -= total_price
         sale.player.money += total_price
         sale.player.resources[sale.resource] -= quantity
-        buyer.resources[sale.resource] += quantity
         sale.player.resources_on_sale[sale.resource] -= quantity
         buyer.progression_metrics["bought_resources"] += quantity
         sale.player.progression_metrics["sold_resources"] += quantity
