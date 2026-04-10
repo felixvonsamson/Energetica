@@ -238,6 +238,7 @@ export function TechnologyDetailDialog<T>({
                                                 </span>
                                             </TooltipTrigger>
                                             <TooltipContent className="max-w-56 text-center leading-snug">
+                                                Knowledge spillover.{" "}
                                                 <Link
                                                     to="/app/wiki/$slug"
                                                     params={{
@@ -246,7 +247,7 @@ export function TechnologyDetailDialog<T>({
                                                     hash="knowledge-spillover"
                                                     className="underline hover:opacity-80"
                                                 >
-                                                    Knowledge spillover
+                                                    Learn more
                                                 </Link>
                                             </TooltipContent>
                                         </Tooltip>

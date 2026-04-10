@@ -27,7 +27,7 @@ export function ConstructionInfo({
             <div className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4 shrink-0" />
                 <strong>
-                    <DualDuration ticks={constructionTime} />
+                    <DualDuration ticks={constructionTime} compact />
                 </strong>
             </div>
             <div className="flex items-center gap-1.5">

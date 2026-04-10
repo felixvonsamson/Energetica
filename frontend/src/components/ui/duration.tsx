@@ -3,9 +3,17 @@
  *
  * - Duration: always shows game-time
  * - DualDuration: shows game-time with wall-clock in brackets, for
- *   countdown/progression items where knowing real-world wait time is useful
+ *   countdown/progression items where knowing real-world wait time is useful.
+ *   Both parts have explanatory tooltips linking to the wiki.
  */
 
+import { Link } from "@tanstack/react-router";
+
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useGameEngine } from "@/hooks/use-game";
 import { formatDuration, formatDurationDual } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
@@ -64,8 +72,39 @@ export function DualDuration({
 
     return (
         <span className={cn("inline-flex items-center gap-1", className)}>
-            {gameTime}
-            <span className="text-muted-foreground">({wallClock})</span>
+            <TimeTooltip label="In-game time">
+                <span className="text-foreground cursor-help">{gameTime}</span>
+            </TimeTooltip>
+            <TimeTooltip label="Real time">
+                <span className="text-muted-foreground cursor-help">
+                    ({wallClock})
+                </span>
+            </TimeTooltip>
         </span>
+    );
+}
+
+function TimeTooltip({
+    label,
+    children,
+}: {
+    label: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>{children}</TooltipTrigger>
+            <TooltipContent className="max-w-48 text-center leading-snug">
+                {label}.{" "}
+                <Link
+                    to="/app/wiki/$slug"
+                    params={{ slug: "time-and-weather" }}
+                    hash="game-time"
+                    className="underline hover:opacity-80"
+                >
+                    Learn more
+                </Link>
+            </TooltipContent>
+        </Tooltip>
     );
 }

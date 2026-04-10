@@ -1,5 +1,11 @@
+import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { formatDurationDual } from "@/lib/format-utils";
@@ -44,8 +50,39 @@ export function Countdown({
 
     return (
         <span className="inline-flex items-center gap-1">
-            {gameTime}
-            <span className="text-muted-foreground">({wallClock})</span>
+            <TimeTooltip label="In-game time">
+                <span className="text-foreground cursor-help">{gameTime}</span>
+            </TimeTooltip>
+            <TimeTooltip label="Real time">
+                <span className="text-muted-foreground cursor-help">
+                    ({wallClock})
+                </span>
+            </TimeTooltip>
         </span>
+    );
+}
+
+function TimeTooltip({
+    label,
+    children,
+}: {
+    label: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>{children}</TooltipTrigger>
+            <TooltipContent className="max-w-48 text-center leading-snug">
+                {label}.{" "}
+                <Link
+                    to="/app/wiki/$slug"
+                    params={{ slug: "time-and-weather" }}
+                    hash="game-time"
+                    className="underline hover:opacity-80"
+                >
+                    Learn more
+                </Link>
+            </TooltipContent>
+        </Tooltip>
     );
 }
