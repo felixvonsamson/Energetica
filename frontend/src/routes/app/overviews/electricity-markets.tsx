@@ -38,7 +38,7 @@ import {
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
 import { Switch } from "@/components/ui/switch";
-import { useTimeMode } from "@/contexts/time-mode-context";
+import { useResolution } from "@/contexts/resolution-context";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useCurrentPlayer } from "@/hooks/use-current-player";
 import {
@@ -145,7 +145,7 @@ function MarketsOverviewContent() {
         );
     }, [marketsData, selectedMarketId]);
 
-    const { selectedResolution } = useTimeMode();
+    const { selectedResolution } = useResolution();
 
     // Get market details for tick bounds
     const marketDetails = useElectricityMarket(selectedMarketId ?? 0);

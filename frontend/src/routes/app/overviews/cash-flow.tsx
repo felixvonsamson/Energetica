@@ -25,7 +25,7 @@ import {
     SegmentedPicker,
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
-import { useTimeMode } from "@/contexts/time-mode-context";
+import { useResolution } from "@/contexts/resolution-context";
 import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { useToggleSet } from "@/hooks/use-toggle-set";
@@ -120,7 +120,7 @@ function RevenuesOverviewContent() {
         useState<NetProfitViewMode>("net");
     const [revenueType, setRevenueType] = useState<CashFlowType>("revenues");
     const [hiddenFacilities, toggleFacility] = useToggleSet<string>();
-    const { selectedResolution } = useTimeMode();
+    const { selectedResolution } = useResolution();
 
     // Fetch both revenue and op-costs chart data
     const {

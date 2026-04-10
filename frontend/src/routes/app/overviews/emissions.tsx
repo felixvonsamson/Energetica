@@ -18,7 +18,7 @@ import {
     SegmentedPicker,
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
-import { useTimeMode } from "@/contexts/time-mode-context";
+import { useResolution } from "@/contexts/resolution-context";
 import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { useToggleSet } from "@/hooks/use-toggle-set";
@@ -133,7 +133,7 @@ function EmissionsOverviewContent() {
         "rates" | "cumulative"
     >("rates");
 
-    const { selectedResolution } = useTimeMode();
+    const { selectedResolution } = useResolution();
 
     // Fetch emissions chart data (player-specific)
     const {

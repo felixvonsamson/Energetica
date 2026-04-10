@@ -8,7 +8,7 @@ import { GameLayout } from "@/components/layout/game-layout";
 import { CardContent, PageCard } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
-import { useTimeMode } from "@/contexts/time-mode-context";
+import { useResolution } from "@/contexts/resolution-context";
 import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
 
@@ -77,7 +77,7 @@ function ResourcesOverviewPage() {
 
 function ResourcesOverviewContent() {
     const { currentTick } = useGameTick();
-    const { selectedResolution } = useTimeMode();
+    const { selectedResolution } = useResolution();
 
     // Fetch resources chart data
     const {

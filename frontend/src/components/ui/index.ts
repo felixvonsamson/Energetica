@@ -14,11 +14,7 @@ export { FacilityGauge } from "@/components/ui/facility-gauge";
 export { ThemeToggle } from "@/components/ui/theme-toggle";
 export { Money } from "@/components/ui/money";
 export { CashFlow } from "@/components/ui/cash-flow";
-export {
-    TogglingDuration,
-    Duration,
-    TimeModeToggle,
-} from "@/components/ui/duration";
+export { Duration, DualDuration } from "@/components/ui/duration";
 export { ConfirmDialog } from "@/components/ui/confirm-dialog";
 export {
     AssetName,

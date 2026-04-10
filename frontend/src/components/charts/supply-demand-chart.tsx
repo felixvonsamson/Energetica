@@ -39,7 +39,6 @@ import {
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
 import { Slider } from "@/components/ui/slider";
-import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useMarketData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
@@ -172,7 +171,6 @@ function MeritOrderChartInner({
 }: MeritOrderChartProps) {
     const { currentTick } = useGameTick();
     const { data: gameEngine } = useGameEngine();
-    const { mode: timeMode } = useTimeMode();
     const getColor = useAssetColorGetter();
     const playerMap = usePlayerMap();
     const marketDetails = useElectricityMarket(marketId);
@@ -747,8 +745,8 @@ function MeritOrderChartInner({
         if (!currentTick || !gameEngine) return `Tick ${selectedTick}`;
         const ticksAgo = currentTick - selectedTick;
         if (ticksAgo <= 0) return "Current";
-        return `${formatDuration(ticksAgo, timeMode, gameEngine, true)} ago`;
-    }, [selectedTick, currentTick, gameEngine, timeMode]);
+        return `${formatDuration(ticksAgo, gameEngine, true)} ago`;
+    }, [selectedTick, currentTick, gameEngine]);
 
     // ── Render ────────────────────────────────────────────────────────────────
 

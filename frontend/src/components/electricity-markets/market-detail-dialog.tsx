@@ -8,7 +8,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { TogglingDuration } from "@/components/ui/duration";
+import { Duration } from "@/components/ui/duration";
 import { TypographyH2, TypographyH3 } from "@/components/ui/typography";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useMyMarket } from "@/hooks/use-electricity-markets";
@@ -158,11 +158,9 @@ function MarketContent(
                             </div>
                             <div className="text-xl font-semibold">
                                 {marketAge !== undefined ? (
-                                    <TogglingDuration
+                                    <Duration
                                         ticks={marketAge}
                                         compact
-                                        showIcon={false}
-                                        className="justify-center"
                                     />
                                 ) : (
                                     <span className="text-muted-foreground">

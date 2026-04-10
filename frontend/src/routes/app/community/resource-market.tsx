@@ -14,7 +14,7 @@ import { GameLayout } from "@/components/layout/game-layout";
 import { CreateAskDialog } from "@/components/resource-market/create-ask-dialog";
 import { PurchaseDialog } from "@/components/resource-market/purchase-dialog";
 import { Button, CardContent, Money, PageCard } from "@/components/ui";
-import { TogglingDuration } from "@/components/ui/duration";
+import { DualDuration } from "@/components/ui/duration";
 import { useCurrentPlayer } from "@/hooks/use-current-player";
 import { usePlayerResources } from "@/hooks/use-player-resources";
 import { usePlayerMap } from "@/hooks/use-players";
@@ -447,7 +447,7 @@ function AskRow({
                 {isOwnAsk ? (
                     <span className="pr-10">—</span>
                 ) : shippingTime !== undefined ? (
-                    <TogglingDuration ticks={Math.ceil(shippingTime)} compact />
+                    <DualDuration ticks={Math.ceil(shippingTime)} compact />
                 ) : (
                     "—"
                 )}

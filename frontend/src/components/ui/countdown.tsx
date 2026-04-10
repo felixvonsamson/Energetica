@@ -1,12 +1,9 @@
-import { Clock, CalendarClock } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useTimeMode } from "@/contexts/time-mode-context";
 import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
-import { formatDuration } from "@/lib/format-utils";
+import { formatDurationDual } from "@/lib/format-utils";
 import { interpolateEffectiveTick } from "@/lib/progress-utils";
-import { cn } from "@/lib/utils";
 
 export function Countdown({
     endTick,
@@ -17,7 +14,6 @@ export function Countdown({
 }) {
     const { currentTick, lastTickTimestamp } = useGameTick();
     const { data: engine } = useGameEngine();
-    const { mode, toggleMode } = useTimeMode();
     const [, setNow] = useState(() => Date.now());
 
     useEffect(() => {
@@ -40,32 +36,16 @@ export function Countdown({
             : currentTick;
 
     const ticksLeft = Math.max(0, endTick - effectiveTick);
-    const otherMode = mode === "game-time" ? "wall-clock" : "game-time";
-    const Icon = mode === "game-time" ? Clock : CalendarClock;
+    const { gameTime, wallClock } = formatDurationDual(
+        ticksLeft,
+        engine,
+        true,
+    );
 
     return (
-        <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-                e.stopPropagation();
-                toggleMode();
-            }}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleMode();
-                }
-            }}
-            className={cn(
-                "inline-flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer transition-colors",
-                "hover:bg-pine/10 dark:hover:bg-white/10",
-            )}
-            title={`Click to switch to ${otherMode}`}
-        >
-            {formatDuration(ticksLeft, mode, engine, true)}
-            <Icon className="w-4 h-4" strokeWidth={2} aria-label={mode} />
+        <span className="inline-flex items-center gap-1">
+            {gameTime}
+            <span className="text-muted-foreground">({wallClock})</span>
         </span>
     );
 }

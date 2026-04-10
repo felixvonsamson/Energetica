@@ -5,9 +5,9 @@ import ReactDOM from "react-dom/client";
 
 import { AuthProvider } from "@/contexts/auth-context";
 import { GameTickProvider } from "@/contexts/game-tick-context";
+import { ResolutionProvider } from "@/contexts/resolution-context";
 import { SocketProvider } from "@/contexts/socket-context";
 import { ThemeProvider } from "@/contexts/theme-context";
-import { TimeModeProvider } from "@/contexts/time-mode-context";
 import { clearAssetColorCache } from "@/lib/assets/asset-colors";
 import { queryClient } from "@/lib/query-client";
 
@@ -66,7 +66,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
             <ThemeProvider>
-                <TimeModeProvider>
+                <ResolutionProvider>
                     <AuthProvider>
                         <SocketProvider>
                             <GameTickProvider>
@@ -74,7 +74,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                             </GameTickProvider>
                         </SocketProvider>
                     </AuthProvider>
-                </TimeModeProvider>
+                </ResolutionProvider>
             </ThemeProvider>
         </QueryClientProvider>
     </StrictMode>,

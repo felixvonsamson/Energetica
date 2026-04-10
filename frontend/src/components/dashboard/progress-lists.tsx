@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp, Pause, Play, Trash2 } from "lucide-react";
 import { ReactNode } from "react";
 
-import { Money, TogglingDuration } from "@/components/ui";
+import { Money, Duration } from "@/components/ui";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -332,7 +332,7 @@ function ProgressCard({
                     <TypographyP>
                         {status === "paused" || status === "waiting" ? (
                             remainingTicks !== undefined ? (
-                                <TogglingDuration ticks={remainingTicks} />
+                                <Duration ticks={remainingTicks} />
                             ) : null
                         ) : (
                             <Countdown endTick={endTick} speed={speed} />

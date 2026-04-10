@@ -8,7 +8,6 @@ import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
 import { CashFlow } from "@/components/ui/cash-flow";
 import { Money } from "@/components/ui/money";
-import { useTimeMode } from "@/contexts/time-mode-context";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useGameEngine } from "@/hooks/use-game";
@@ -37,7 +36,6 @@ export function CashFlowChart({
     netProfitViewMode,
 }: CashFlowChartProps) {
     const { data: gameEngineConfig } = useGameEngine();
-    const { mode: timeMode } = useTimeMode();
     const getColor = useAssetColorGetter();
 
     // Custom color getter for breakdown mode
@@ -136,7 +134,7 @@ export function CashFlowChart({
             formatYAxis: (value: number) =>
                 isShowingPercent
                     ? `${value}%`
-                    : formatCashFlow(value, "h", gameEngineConfig, timeMode).replace("$", ""),
+                    : formatCashFlow(value, "h", gameEngineConfig).replace("$", ""),
             // Use gradient fill for the "net-profit" series only in net mode
             gradientKeys: isNetMode ? ["net-profit"] : [],
         };
@@ -149,7 +147,6 @@ export function CashFlowChart({
         filterDataKeys,
         formatValue,
         isShowingPercent,
-        timeMode,
     ]);
 
     if (!chartConfig) return <></>;

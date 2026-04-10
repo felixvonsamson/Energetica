@@ -7,8 +7,6 @@
  * display.
  */
 
-import type { TimeMode } from "@/contexts/time-mode-context";
-
 // Unit definitions
 const POWER_UNITS = [" W", " kW", " MW", " GW", " TW"];
 const ENERGY_UNITS = [" Wh", " kWh", " MWh", " GWh", " TWh"];
@@ -398,29 +396,41 @@ function ticksToWallClockSeconds(
 
 export function formatDuration(
     ticks: number,
-    mode: TimeMode,
     config: GameEngineConfig,
     compact: boolean = false,
 ): string {
-    let formatted;
-    switch (mode) {
-        case "game-time":
-            formatted = formatGameTimeDuration(
-                ticksToGameSeconds(ticks, config),
-            );
-            break;
-        case "wall-clock":
-            formatted = formatWallClockDuration(
-                ticksToWallClockSeconds(ticks, config),
-            );
-            break;
-        default:
-            mode satisfies never;
-            throw new Error(`Invalid time mode: ${mode}`);
-    }
+    const formatted = formatGameTimeDuration(
+        ticksToGameSeconds(ticks, config),
+    );
     if (!compact) return formatted;
     const parts = formatted.split(" ");
     return parts.slice(0, 2).join(" ");
+}
+
+/**
+ * Format duration in both game-time and wall-clock for dual display.
+ * Returns both representations for components showing "game-time (wall-clock)".
+ */
+export function formatDurationDual(
+    ticks: number,
+    config: GameEngineConfig,
+    compact: boolean = false,
+): { gameTime: string; wallClock: string } {
+    const gameFormatted = formatGameTimeDuration(
+        ticksToGameSeconds(ticks, config),
+    );
+    const wallFormatted = formatWallClockDuration(
+        ticksToWallClockSeconds(ticks, config),
+    );
+
+    if (!compact) return { gameTime: gameFormatted, wallClock: wallFormatted };
+
+    const gameParts = gameFormatted.split(" ");
+    const wallParts = wallFormatted.split(" ");
+    return {
+        gameTime: gameParts.slice(0, 2).join(" "),
+        wallClock: wallParts.slice(0, 2).join(" "),
+    };
 }
 
 /**
@@ -461,7 +471,6 @@ export function formatTicksRemaining(
 /** Time unit constants for cash flow calculations. */
 const SECONDS_PER_HOUR = 3600;
 const SECONDS_PER_DAY = 86400;
-const SECONDS_PER_WALL_CLOCK_YEAR = 31_536_000; // 365 days
 const SECONDS_PER_GAME_YEAR = 6_220_800; // 72 days
 
 /**
@@ -472,19 +481,14 @@ const SECONDS_PER_GAME_YEAR = 6_220_800; // 72 days
  * @param mode - The time mode (game-time or wall-clock)
  * @returns Number of seconds in the specified unit
  */
-export function getSecondsPerUnit(
-    unit: "h" | "day" | "year",
-    mode: TimeMode,
-): number {
+export function getSecondsPerUnit(unit: "h" | "day" | "year"): number {
     switch (unit) {
         case "h":
             return SECONDS_PER_HOUR;
         case "day":
             return SECONDS_PER_DAY;
         case "year":
-            return mode === "game-time"
-                ? SECONDS_PER_GAME_YEAR
-                : SECONDS_PER_WALL_CLOCK_YEAR;
+            return SECONDS_PER_GAME_YEAR;
     }
 }
 
@@ -527,19 +531,12 @@ export function amountPerTickToCashFlowRate(
     amountPerTick: number,
     unit: "h" | "day" | "year",
     config: GameEngineConfig,
-    mode: TimeMode,
 ): number {
-    // Determine seconds per tick based on mode
-    const secondsPerTick =
-        mode === "game-time"
-            ? config.game_seconds_per_tick
-            : config.wall_clock_seconds_per_tick;
-
-    // Convert from money per tick to money per second
-    const amountPerSecond = amountPerTick / secondsPerTick;
+    // Convert from money per tick to money per second (game-time)
+    const amountPerSecond = amountPerTick / config.game_seconds_per_tick;
 
     // Convert to the desired time unit
-    const secondsPerUnit = getSecondsPerUnit(unit, mode);
+    const secondsPerUnit = getSecondsPerUnit(unit);
     return amountPerSecond * secondsPerUnit;
 }
 
@@ -560,9 +557,8 @@ export function formatCashFlow(
     amountPerTick: number,
     unit: "h" | "day" | "year",
     config: GameEngineConfig,
-    mode: TimeMode,
 ): string {
-    const rate = amountPerTickToCashFlowRate(amountPerTick, unit, config, mode);
+    const rate = amountPerTickToCashFlowRate(amountPerTick, unit, config);
     const suffix = getUnitSuffix(unit);
     return `${formatMoney(rate)}$${suffix}`;
 }

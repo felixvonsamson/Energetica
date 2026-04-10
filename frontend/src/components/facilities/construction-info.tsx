@@ -5,7 +5,7 @@
 
 import { Clock, Zap, Cloud } from "lucide-react";
 
-import { TogglingDuration } from "@/components/ui";
+import { DualDuration } from "@/components/ui";
 import { formatPower, formatMass } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +27,7 @@ export function ConstructionInfo({
             <div className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4 shrink-0" />
                 <strong>
-                    <TogglingDuration ticks={constructionTime} />
+                    <DualDuration ticks={constructionTime} />
                 </strong>
             </div>
             <div className="flex items-center gap-1.5">
