@@ -176,6 +176,7 @@ AchievementMilestonePayload = Annotated[
 # it will never be reachable; no error will be raised.
 # ---------------------------------------------------------------------------
 
+# Payloads that create a persistent Notification record (the in-game inbox).
 PersistableNotificationPayload = Union[
     ConstructionFinishedPayload,
     TechnologyResearchedPayload,
@@ -190,12 +191,19 @@ PersistableNotificationPayload = Union[
     AchievementMilestoneEnergyStoragePayload,
     AchievementMilestoneBasePayload,
     AchievementUnlockPayload,
+]
+
+# Payloads that only trigger a browser push — no inbox entry.
+PushOnlyPayload = Union[
+    ChatMessagePayload,
     PushNotificationTestPayload,
 ]
 
-NotificationPayload = Union[ChatMessagePayload, PersistableNotificationPayload]
+# Full union — used by the service worker / push text generation.
+NotificationPayload = Union[PersistableNotificationPayload, PushOnlyPayload]
 
 _payload_adapter = TypeAdapter(NotificationPayload)
+_persistable_payload_adapter = TypeAdapter(PersistableNotificationPayload)
 
 
 # ---------------------------------------------------------------------------
@@ -209,7 +217,7 @@ class NotificationOut(BaseModel):
     read: bool
     flagged: bool
     archived: bool
-    payload: NotificationPayload
+    payload: PersistableNotificationPayload
 
     @classmethod
     def from_notification(cls, n: Notification) -> NotificationOut | None:
@@ -222,7 +230,7 @@ class NotificationOut(BaseModel):
         one malformed notification does not block the rest.
         """
         try:
-            payload = _payload_adapter.validate_python({**n.payload, "type": n.type})
+            payload = _persistable_payload_adapter.validate_python({**n.payload, "type": n.type})
         except ValidationError:
             return None
         return cls(

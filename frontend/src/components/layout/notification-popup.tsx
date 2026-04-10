@@ -29,9 +29,9 @@ import {
 } from "@/hooks/use-notifications";
 import { getNotificationCategory, getNotificationContent } from "@/lib/notification-config";
 import { cn } from "@/lib/utils";
-import { CATEGORY_LABELS, type NotificationCategory } from "@/types/notifications";
+import { INBOX_CATEGORY_LABELS, type InboxCategory } from "@/types/notifications";
 
-const CATEGORIES = Object.keys(CATEGORY_LABELS) as NotificationCategory[];
+const CATEGORIES = Object.keys(INBOX_CATEGORY_LABELS) as InboxCategory[];
 
 interface NotificationPopupProps {
     isOpen: boolean;
@@ -47,7 +47,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
     const { mutate: flagNotification } = useFlagNotification();
 
     const [activeCategory, setActiveCategory] = useState<
-        NotificationCategory | "all"
+        InboxCategory | "all"
     >("all");
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
@@ -185,7 +185,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                             : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
                                     )}
                                 >
-                                    {CATEGORY_LABELS[cat]}
+                                    {INBOX_CATEGORY_LABELS[cat]}
                                 </button>
                             ))}
                         </div>

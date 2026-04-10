@@ -1,6 +1,5 @@
 /**
- * Browser push notification preferences — per notification category, per
- * device.
+ * Browser push notification preferences — per push category, per device.
  *
  * Stored in IndexedDB so the service worker can read them before deciding
  * whether to show a notification. (localStorage is not accessible from service
@@ -9,20 +8,11 @@
  * Defaults to enabled for all categories.
  */
 
-import type { NotificationCategory } from "@/types/notifications";
+import { PUSH_CATEGORY_LABELS, type PushCategory } from "@/types/notifications";
 
-export const PUSH_NOTIF_CATEGORY_LABELS: Record<NotificationCategory, string> =
-    {
-        messages: "Messages",
-        projects: "Projects",
-        market: "Market",
-        events: "Events",
-        achievements: "Achievements",
-    };
-
-export const PUSH_NOTIF_CATEGORIES = Object.keys(
-    PUSH_NOTIF_CATEGORY_LABELS,
-) as NotificationCategory[];
+export const PUSH_CATEGORIES = Object.keys(
+    PUSH_CATEGORY_LABELS,
+) as PushCategory[];
 
 const DB_NAME = "energetica";
 const DB_VERSION = 1;
@@ -43,7 +33,7 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 export async function getPushPref(
-    category: NotificationCategory,
+    category: PushCategory,
 ): Promise<boolean> {
     const db = await openDB();
     return new Promise((resolve) => {
@@ -56,7 +46,7 @@ export async function getPushPref(
 }
 
 export async function setPushPref(
-    category: NotificationCategory,
+    category: PushCategory,
     enabled: boolean,
 ): Promise<void> {
     const db = await openDB();
@@ -69,12 +59,12 @@ export async function setPushPref(
 }
 
 export async function getAllPushPrefs(): Promise<
-    Record<NotificationCategory, boolean>
+    Record<PushCategory, boolean>
 > {
     const entries = await Promise.all(
-        PUSH_NOTIF_CATEGORIES.map(
+        PUSH_CATEGORIES.map(
             async (cat) => [cat, await getPushPref(cat)] as const,
         ),
     );
-    return Object.fromEntries(entries) as Record<NotificationCategory, boolean>;
+    return Object.fromEntries(entries) as Record<PushCategory, boolean>;
 }

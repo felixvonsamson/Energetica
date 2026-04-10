@@ -22,6 +22,7 @@ from energetica.database.engine_data.cumulative_emissions_data import Cumulative
 from energetica.database.messages import Chat, Notification
 from energetica.schemas.notifications import (
     PersistableNotificationPayload,
+    PushOnlyPayload,
     AchievementMilestoneBasePayload,
     AchievementMilestoneEnergyStoragePayload,
     AchievementMilestonePowerConsumptionPayload,
@@ -458,6 +459,11 @@ class Player(DBModel):
                 engine.socketio.emit("invalidate", {"queries": [["notifications"]]}, to=sid), MAIN_EVENT_LOOP
             )
         # Web push
+        for subscription in list(self.push_subscriptions):
+            self.notify_subscription(subscription, payload)
+
+    def push_only(self, payload: PushOnlyPayload) -> None:
+        """Send a browser push notification without creating an inbox entry."""
         for subscription in list(self.push_subscriptions):
             self.notify_subscription(subscription, payload)
 

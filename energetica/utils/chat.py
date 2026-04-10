@@ -79,8 +79,7 @@ def add_message(player: Player, message_text: str, chat: Chat) -> Message:
         # Ensure the "unread chats" is updated
         if participant != player:
             participant.invalidate_queries(["chats"])
-            for subscription in list(participant.push_subscriptions):
-                participant.notify_subscription(subscription, payload)
+            participant.push_only(payload)
 
         participant.invalidate_queries(
             ["chats"],
