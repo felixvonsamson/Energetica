@@ -10,6 +10,7 @@ from energetica.enums import (
 from energetica.init_test_players import add_asset
 from energetica.utils.auth import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
+from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.utils.resource_market import create_ask, purchase_resource, store_import
 
 
@@ -54,7 +55,13 @@ def test_purchase_resource() -> None:
     player2.money = 200_000
     assert player2.resources[Fuel.COAL] == 0
     remaining_sale = purchase_resource(player2, 100_000, sale)
-    assert player2.resources[Fuel.COAL] == 100_000
+    # Resources are not credited immediately — they arrive via shipment
+    assert player2.resources[Fuel.COAL] == 0
     assert player2.money == 100_000
+    # Verify an OngoingShipment was created for the buyer
+    shipments = list(OngoingShipment.filter(lambda s: s.player == player2))
+    assert len(shipments) == 1
+    assert shipments[0].resource == Fuel.COAL
+    assert shipments[0].quantity == 100_000
     assert player1.resources[Fuel.COAL] == 150_000
     assert player1.money == 100_000
