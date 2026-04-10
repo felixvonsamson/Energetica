@@ -5,9 +5,10 @@
  * "steppedLine" and "smoothLine" render as line series.
  *
  * Features shared across all variants:
- *  - Right-anchored "now" tick label with adaptive round intervals
- *  - Drag-to-zoom with zoom preservation on new data
- *  - React tooltip overlay with colored circles on the axis pointer
+ *
+ * - Right-anchored "now" tick label with adaptive round intervals
+ * - Drag-to-zoom with zoom preservation on new data
+ * - React tooltip overlay with colored circles on the axis pointer
  */
 
 import { BarChart as EBarChart } from "echarts/charts";
@@ -81,7 +82,10 @@ export type ChartVariant = "area" | "steppedLine" | "smoothLine";
 export interface EChartsTimeSeriesConfig {
     /** Chart type for key ordering */
     chartType?: ChartType;
-    /** Visual variant ("area" = stacked bars, "steppedLine" / "smoothLine" = lines) */
+    /**
+     * Visual variant ("area" = stacked bars, "steppedLine" / "smoothLine" =
+     * lines)
+     */
     chartVariant: ChartVariant;
     /** Whether to stack multiple series */
     stacked?: boolean;
@@ -98,9 +102,9 @@ export interface EChartsTimeSeriesConfig {
     /** Tooltip label formatter (default: getAssetLongName or raw key) */
     formatLabel?: (key: string) => ReactNode;
     /**
-     * Keys whose bars are colored green when positive, red when negative.
-     * For "area" variant bars this replaces the old linear gradient.
-     * For line variants a green/red linear gradient fill is still used.
+     * Keys whose bars are colored green when positive, red when negative. For
+     * "area" variant bars this replaces the old linear gradient. For line
+     * variants a green/red linear gradient fill is still used.
      */
     gradientKeys?: string[];
     /** Whether to hide zero values in tooltip (default true) */
@@ -235,8 +239,8 @@ function TSTooltip({
 // ── Nice tick intervals (game-seconds) ───────────────────────────────────────
 
 const NICE_INTERVALS_S = [
-    60, 300, 600, 1800, 3600, 7200, 14400, 21600, 43200, 86400, 172800,
-    432000, 604800, 1209600, 2592000,
+    60, 300, 600, 1800, 3600, 7200, 14400, 21600, 43200, 86400, 172800, 432000,
+    604800, 1209600, 2592000,
 ];
 
 // ── EChartsTimeSeries ─────────────────────────────────────────────────────────
@@ -345,7 +349,8 @@ export function EChartsTimeSeries({
         if (!el) return;
         const handler = (e: WheelEvent) => window.scrollBy(0, e.deltaY);
         el.addEventListener("wheel", handler, { capture: true, passive: true });
-        return () => el.removeEventListener("wheel", handler, { capture: true });
+        return () =>
+            el.removeEventListener("wheel", handler, { capture: true });
     }, []);
 
     // ── ECharts option ────────────────────────────────────────────────────────
@@ -400,9 +405,8 @@ export function EChartsTimeSeries({
         // Stacked bar width: ceil so adjacent bars overlap by 1px, closing
         // sub-pixel rounding gaps. plotWidth mirrors the grid margins (l:70, r:20).
         const plotWidth = 1.005 * Math.max(1, containerWidth - 90);
-        const barWidth = ticks.length > 0
-            ? Math.ceil(plotWidth / visibleTickCount)
-            : 1;
+        const barWidth =
+            ticks.length > 0 ? Math.ceil(plotWidth / visibleTickCount) : 1;
 
         // Resolve CSS variables for canvas renderer
         const primaryColor = resolveCSSVar("--primary");
@@ -582,9 +586,6 @@ export function EChartsTimeSeries({
                     // every setOption call. Initial 0/100 is set by the first
                     // notMerge call in the apply-options effect.
                     zoomLock: true,
-                    zoomOnMouseWheel: false,
-                    moveOnMouseMove: false,
-                    moveOnMouseWheel: false,
                 },
             ],
             toolbox: {
@@ -876,9 +877,7 @@ export function EChartsTimeSeries({
 
             {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                    <span className="text-muted-foreground">
-                        Loading data…
-                    </span>
+                    <span className="text-muted-foreground">Loading data…</span>
                 </div>
             )}
 
