@@ -5,6 +5,7 @@ import {
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
+import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Trash2, Eye, EyeOff, Truck } from "lucide-react";
 import { useState, useMemo } from "react";
 
@@ -13,8 +14,10 @@ import { GameLayout } from "@/components/layout/game-layout";
 import { CreateAskDialog } from "@/components/resource-market/create-ask-dialog";
 import { PurchaseDialog } from "@/components/resource-market/purchase-dialog";
 import { Button, CardContent, Money, PageCard } from "@/components/ui";
+import { TogglingDuration } from "@/components/ui/duration";
 import { useCurrentPlayer } from "@/hooks/use-current-player";
 import { usePlayerResources } from "@/hooks/use-player-resources";
+import { usePlayerMap } from "@/hooks/use-players";
 import {
     useResourceMarketAsks,
     useDeleteAsk,
@@ -53,7 +56,10 @@ export const Route = createFileRoute("/app/community/resource-market")({
             isUnlocked: (cap) =>
                 cap.has_warehouse
                     ? { unlocked: true }
-                    : { unlocked: false, reason: "Build a Warehouse to unlock" },
+                    : {
+                          unlocked: false,
+                          reason: "Build a Warehouse to unlock",
+                      },
         },
         infoDialog: {
             contents: <ResourceMarketHelp />,
@@ -78,7 +84,7 @@ export const Route = createFileRoute("/app/community/resource-market")({
     }),
 });
 
-type SortKey = "resource_type" | "quantity" | "unit_price" | "total_price";
+type SortKey = "resource_type" | "quantity" | "unit_price";
 type SortDirection = "asc" | "desc";
 
 function ResourceMarketPage() {
@@ -107,6 +113,7 @@ function ResourceMarketContent() {
     const { data: resources } = usePlayerResources();
     const { playerId: currentPlayerId } = useCurrentPlayer();
     const { data: shipmentsData } = useShipments();
+    const playerMap = usePlayerMap();
 
     // Find the selected ask from the current asks
     const selectedAskForPurchase = useMemo(
@@ -154,10 +161,6 @@ function ResourceMarketContent() {
                 case "unit_price":
                     aVal = a.unit_price;
                     bVal = b.unit_price;
-                    break;
-                case "total_price":
-                    aVal = a.quantity * a.unit_price;
-                    bVal = b.quantity * b.unit_price;
                     break;
             }
 
@@ -252,18 +255,13 @@ function ResourceMarketContent() {
                     variant={hideOwnAsks ? "default" : "outline"}
                     onClick={() => setHideOwnAsks(!hideOwnAsks)}
                     className="flex items-center gap-2"
-                    title={
-                        hideOwnAsks
-                            ? "Showing others' asks"
-                            : "Showing all asks"
-                    }
                 >
                     {hideOwnAsks ? (
-                        <EyeOff className="w-4 h-4" />
-                    ) : (
                         <Eye className="w-4 h-4" />
+                    ) : (
+                        <EyeOff className="w-4 h-4" />
                     )}
-                    {hideOwnAsks ? "Hide Own" : "Show All"}
+                    {hideOwnAsks ? "Show mine" : "Hide mine"}
                 </Button>
 
                 {/* Resource filter */}
@@ -314,6 +312,9 @@ function ResourceMarketContent() {
                                         Resource
                                         {getSortIndicator("resource_type")}
                                     </th>
+                                    <th className="py-3 px-4 text-left font-semibold">
+                                        Seller
+                                    </th>
                                     <th
                                         className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                                         onClick={() => handleSort("quantity")}
@@ -327,15 +328,6 @@ function ResourceMarketContent() {
                                         Price per kg
                                         {getSortIndicator("unit_price")}
                                     </th>
-                                    <th
-                                        className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
-                                        onClick={() =>
-                                            handleSort("total_price")
-                                        }
-                                    >
-                                        Total Price
-                                        {getSortIndicator("total_price")}
-                                    </th>
                                     <th className="py-3 px-4 text-right font-semibold">
                                         Shipping Time
                                     </th>
@@ -345,21 +337,24 @@ function ResourceMarketContent() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredAndSortedAsks.map((ask) => (
-                                    <AskRow
-                                        key={ask.id}
-                                        ask={ask}
-                                        currentPlayerId={currentPlayerId}
-                                        onPurchaseClick={(ask) =>
-                                            navigate({
-                                                search: {
-                                                    askId: ask.id,
-                                                    createAsk: undefined,
-                                                },
-                                            })
-                                        }
-                                    />
-                                ))}
+                                <AnimatePresence initial={false}>
+                                    {filteredAndSortedAsks.map((ask) => (
+                                        <AskRow
+                                            key={ask.id}
+                                            ask={ask}
+                                            currentPlayerId={currentPlayerId}
+                                            playerMap={playerMap}
+                                            onPurchaseClick={(ask) =>
+                                                navigate({
+                                                    search: {
+                                                        askId: ask.id,
+                                                        createAsk: undefined,
+                                                    },
+                                                })
+                                            }
+                                        />
+                                    ))}
+                                </AnimatePresence>
                             </tbody>
                         </table>
                     )}
@@ -395,6 +390,7 @@ interface AskRowProps {
         seller_id: number;
     };
     currentPlayerId?: number;
+    playerMap?: Record<number, { username: string }>;
     onPurchaseClick: (ask: {
         id: number;
         resource_type: string;
@@ -403,19 +399,33 @@ interface AskRowProps {
     }) => void;
 }
 
-function AskRow({ ask, currentPlayerId, onPurchaseClick }: AskRowProps) {
+function AskRow({
+    ask,
+    currentPlayerId,
+    playerMap,
+    onPurchaseClick,
+}: AskRowProps) {
     const deleteMutation = useDeleteAsk();
     const { data: deliveryData } = useCalculateDeliveryTime(ask.id);
 
-    const totalPrice = ask.quantity * ask.unit_price;
     const isOwnAsk = currentPlayerId === ask.seller_id;
     const shippingTime = deliveryData?.shipment_time;
 
     return (
-        <tr className="border-b border-border/30 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors">
+        <motion.tr
+            layout
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="border-b border-border/30 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors"
+        >
             <td className="py-3 px-4 font-medium capitalize">
                 {RESOURCE_LABELS[ask.resource_type as ResourceType] ||
                     ask.resource_type}
+            </td>
+            <td className="py-3 px-4 text-left">
+                {playerMap?.[ask.seller_id]?.username ?? "—"}
             </td>
             <td className="py-3 px-4 text-right font-mono">
                 {formatMass(ask.quantity)}
@@ -425,13 +435,10 @@ function AskRow({ ask, currentPlayerId, onPurchaseClick }: AskRowProps) {
                 /t
             </td>
             <td className="py-3 px-4 text-right">
-                <Money amount={totalPrice} />
-            </td>
-            <td className="py-3 px-4 text-right font-mono text-sm">
                 {isOwnAsk ? (
-                    <span className="text-gray-400">Your listing</span>
+                    <span className="pr-10">—</span>
                 ) : shippingTime !== undefined ? (
-                    <>{Math.ceil(shippingTime)} ticks</>
+                    <TogglingDuration ticks={Math.ceil(shippingTime)} compact />
                 ) : (
                     "—"
                 )}
@@ -470,6 +477,6 @@ function AskRow({ ask, currentPlayerId, onPurchaseClick }: AskRowProps) {
                     )}
                 </div>
             </td>
-        </tr>
+        </motion.tr>
     );
 }
