@@ -1,12 +1,12 @@
 /** Resolution picker component for time series charts. */
 
-import { Duration, TimeModeToggle } from "@/components/ui";
+import { Duration } from "@/components/ui";
 import { Label } from "@/components/ui/label";
 import {
     SegmentedPicker,
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
-import { useTimeMode } from "@/contexts/time-mode-context";
+import { useResolution } from "@/contexts/resolution-context";
 import { resolutions } from "@/types/charts";
 
 interface ResolutionPickerProps {
@@ -26,7 +26,7 @@ export function ResolutionPicker({
     minDatapoints = 60,
     minTick,
 }: ResolutionPickerProps) {
-    const { selectedResolution, setResolution } = useTimeMode();
+    const { selectedResolution, setResolution } = useResolution();
 
     const availableResolutions = currentTick
         ? resolutions.filter((res) => {
@@ -61,7 +61,6 @@ export function ResolutionPicker({
                         ))}
                     </SegmentedPicker>
                 )}
-                <TimeModeToggle />
             </div>
         </div>
     );

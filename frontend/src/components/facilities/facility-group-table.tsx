@@ -10,7 +10,7 @@ import {
     CashFlow,
     FacilityName,
     InfoBanner,
-    TogglingDuration,
+    Duration,
 } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -479,7 +479,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                     {hasInfiniteLifespan ? (
                                         "∞"
                                     ) : (
-                                        <TogglingDuration
+                                        <Duration
                                             ticks={avgLifespan}
                                             compact
                                         />
@@ -522,7 +522,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                         </td>
                                         <td className="py-3 px-4 text-right font-mono">
                                             {facility.remaining_lifespan ? (
-                                                <TogglingDuration
+                                                <Duration
                                                     ticks={
                                                         facility.remaining_lifespan
                                                     }

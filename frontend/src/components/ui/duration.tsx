@@ -1,24 +1,15 @@
 /**
- * Duration component for displaying time durations with wall-clock and
- * game-time toggle.
+ * Duration components for displaying time durations.
  *
- * Accepts duration in ticks and converts to the appropriate time representation
- * based on the current TimeMode. Uses the game engine configuration to compute
- * the actual durations in seconds.
- *
- * This component is necessary (rather than a pure function) because:
- *
- * - It fetches game engine configuration from the API via useGameEngine hook
- * - Uses React Query to cache the game configuration
- * - Accesses TimeMode context to determine which format to display
- * - Handles loading and error states
+ * - Duration: always shows game-time
+ * - DualDuration: shows game-time with wall-clock in brackets, for
+ *   countdown/progression items where knowing real-world wait time is useful.
+ *   Both parts have explanatory tooltips linking to the wiki.
  */
 
-import { Clock, CalendarClock } from "lucide-react";
-
-import { useTimeMode } from "@/contexts/time-mode-context";
+import { TimeTooltip } from "@/components/ui/time-tooltip";
 import { useGameEngine } from "@/hooks/use-game";
-import { formatDuration } from "@/lib/format-utils";
+import { formatDuration, formatDurationDual } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 
 interface DurationProps {
@@ -29,118 +20,61 @@ interface DurationProps {
 }
 
 export function Duration({ ticks, compact = false }: DurationProps) {
-    const { mode } = useTimeMode();
     const { data: gameEngine, isLoading } = useGameEngine();
 
-    // Show placeholder while loading
     if (isLoading || !gameEngine) {
         return <span className={"text-muted-foreground"}>--</span>;
     }
 
-    return <>{formatDuration(ticks, mode, gameEngine, compact)}</>;
+    return <>{formatDuration(ticks, gameEngine, compact)}</>;
 }
 
-interface TogglingDurationProps {
+interface DualDurationProps {
     /** Duration in ticks (source of truth) */
     ticks: number;
     /** Show compact format (e.g., "69d 8h" instead of "69d 8h 56m") */
     compact?: boolean;
-    /** Show icon indicating current time mode */
-    showIcon?: boolean;
     /** Additional CSS classes */
     className?: string;
 }
 
 /**
- * Displays a duration with the ability to toggle between game-time and
- * wall-clock formats. Accepts ticks as input and handles all conversions using
- * the game engine configuration. Click the duration to toggle between display
- * modes.
+ * Displays a duration in game-time with wall-clock time in brackets.
+ * Used for progression items (construction, research, shipping) where
+ * players want to know the real-world wait time.
  *
  * @example
- *     <Duration ticks={1000} /> // Shows toggle-able duration based on ticks
- *     <Duration ticks={1000} compact showIcon /> // With compact format and icon on the right
+ *     <DualDuration ticks={1000} /> // "3d 12h (45m)"
+ *     <DualDuration ticks={1000} compact /> // "3d 12h (45m)"
  */
-export function TogglingDuration({
+export function DualDuration({
     ticks,
     compact = false,
-    showIcon = true,
     className,
-}: TogglingDurationProps) {
-    const { mode, toggleMode } = useTimeMode();
+}: DualDurationProps) {
+    const { data: gameEngine, isLoading } = useGameEngine();
 
-    const otherMode = mode === "game-time" ? "wall-clock" : "game-time";
-    const tooltipText = `Click to switch to ${otherMode}`;
+    if (isLoading || !gameEngine) {
+        return <span className={"text-muted-foreground"}>--</span>;
+    }
+
+    const { gameTime, wallClock } = formatDurationDual(
+        ticks,
+        gameEngine,
+        compact,
+    );
 
     return (
-        <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-                e.stopPropagation();
-                toggleMode();
-            }}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleMode();
-                }
-            }}
-            className={cn(
-                "inline-flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer transition-colors",
-                "hover:bg-pine/10 dark:hover:bg-white/10",
-                className,
-            )}
-            title={tooltipText}
-        >
-            <Duration ticks={ticks} compact={compact} />
-            {showIcon && <TimeModeIcon />}
+        <span className={cn("inline-flex items-center gap-1", className)}>
+            <TimeTooltip label="In-game time">
+                <span className="text-foreground cursor-help">{gameTime}</span>
+            </TimeTooltip>
+            <TimeTooltip label="Real time">
+                <span className="text-muted-foreground cursor-help">
+                    ({wallClock})
+                </span>
+            </TimeTooltip>
         </span>
     );
 }
 
-interface TimeModeToggleProps {
-    /** Additional CSS classes */
-    className?: string;
-}
-
-export function TimeModeToggle({ className }: TimeModeToggleProps) {
-    const { mode, toggleMode } = useTimeMode();
-
-    const otherMode = mode === "game-time" ? "wall-clock" : "game-time";
-    const tooltipText = `Click to switch to ${otherMode}`;
-
-    return (
-        <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-                e.stopPropagation();
-                toggleMode();
-            }}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleMode();
-                }
-            }}
-            className={cn(
-                "inline-flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer transition-colors",
-                "hover:bg-pine/10 dark:hover:bg-white/10",
-                className,
-            )}
-            title={tooltipText}
-        >
-            {mode}
-            <TimeModeIcon />
-        </span>
-    );
-}
-
-function TimeModeIcon() {
-    const { mode } = useTimeMode();
-    const Icon = mode === "game-time" ? Clock : CalendarClock;
-    return <Icon className="w-4 h-4" strokeWidth={2} aria-label={mode} />;
-}

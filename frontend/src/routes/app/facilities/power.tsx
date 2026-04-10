@@ -19,7 +19,8 @@ import {
 import { GameLayout } from "@/components/layout/game-layout";
 import {
     CashFlow,
-    TogglingDuration,
+    Duration,
+    DualDuration,
     CatalogGrid,
     Money,
     Button,
@@ -390,7 +391,7 @@ function PowerFacilityStatsTable({ facility }: PowerFacilityStatsTableProps) {
                     <tr>
                         <td className="py-2 px-4 font-semibold">Lifespan</td>
                         <td className="py-2 px-4 text-center font-mono">
-                            <TogglingDuration ticks={facility.lifespan} />
+                            <Duration ticks={facility.lifespan} />
                         </td>
                     </tr>
                 </tbody>
@@ -574,7 +575,7 @@ function PowerFacilityComparisonRows({
                         key={facility.name}
                         className="py-2 px-4 text-center font-mono bg-muted/30"
                     >
-                        <TogglingDuration ticks={facility.construction_time} />
+                        <DualDuration ticks={facility.construction_time} />
                     </td>
                 ))}
             </tr>
@@ -604,7 +605,7 @@ function PowerFacilityComparisonRows({
                         key={facility.name}
                         className="py-2 px-4 text-center font-mono bg-muted/30"
                     >
-                        <TogglingDuration ticks={facility.lifespan} />
+                        <Duration ticks={facility.lifespan} />
                     </td>
                 ))}
             </tr>

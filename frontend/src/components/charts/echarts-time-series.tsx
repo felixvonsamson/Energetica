@@ -41,7 +41,6 @@ import {
 
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
-import { useTimeMode } from "@/contexts/time-mode-context";
 import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { getAssetIcon } from "@/lib/assets/asset-icons";
@@ -157,12 +156,11 @@ function TSTooltip({
     formatValue: (v: number) => ReactNode;
 }) {
     const { currentTick } = useGameTick();
-    const { mode: timeMode } = useTimeMode();
     const { data: gameEngine } = useGameEngine();
 
     const timestamp =
         gameEngine && currentTick !== undefined
-            ? `${formatDuration(currentTick - tooltip.tick - 1, timeMode, gameEngine)} ago`
+            ? `${formatDuration(currentTick - tooltip.tick - 1, gameEngine)} ago`
             : "--";
 
     const total = tooltip.stacked
@@ -250,7 +248,6 @@ export function EChartsTimeSeries({
     const [containerWidth, setContainerWidth] = useState(0);
     const [zoomRange, setZoomRange] = useState({ start: 0, end: 100 });
 
-    const { mode: timeMode } = useTimeMode();
     const { data: gameEngine } = useGameEngine();
     const { currentTick } = useGameTick();
 
@@ -352,7 +349,7 @@ export function EChartsTimeSeries({
             if (t === lastTick) return "now";
             const ct = currentTickRef.current;
             if (!gameEngine || ct === undefined) return "--";
-            return formatDuration(ct - t - 1, timeMode, gameEngine);
+            return formatDuration(ct - t - 1, gameEngine);
         };
 
         // Visible tick count based on current zoom window — drives both barWidth
@@ -611,7 +608,6 @@ export function EChartsTimeSeries({
         processedData,
         visibleKeys,
         config,
-        timeMode,
         gameEngine,
         containerWidth,
         zoomRange,
