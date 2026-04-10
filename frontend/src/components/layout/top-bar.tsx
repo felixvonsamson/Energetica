@@ -203,7 +203,7 @@ export function TopBar() {
                                 <DropdownMenuItem asChild>
                                     <a
                                         href={
-                                            "https://github.com/felixvonsamson/Energetica/issues/new"
+                                            "https://forms.gle/GJqaK9KCNkGF8G7b7"
                                         }
                                         target="_blank"
                                         rel="noreferrer"
@@ -276,7 +276,7 @@ export function TopBar() {
                                 <DropdownMenuItem asChild>
                                     <a
                                         href={
-                                            "https://github.com/felixvonsamson/Energetica/issues/new"
+                                            "https://forms.gle/GJqaK9KCNkGF8G7b7"
                                         }
                                         target="_blank"
                                         rel="noreferrer"
