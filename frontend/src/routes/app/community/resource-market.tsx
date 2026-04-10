@@ -84,7 +84,7 @@ export const Route = createFileRoute("/app/community/resource-market")({
     }),
 });
 
-type SortKey = "resource_type" | "quantity" | "unit_price";
+type SortKey = "resource_type" | "seller" | "quantity" | "unit_price";
 type SortDirection = "asc" | "desc";
 
 function ResourceMarketPage() {
@@ -154,6 +154,10 @@ function ResourceMarketContent() {
                     aVal = a.resource_type;
                     bVal = b.resource_type;
                     break;
+                case "seller":
+                    aVal = playerMap?.[a.seller_id]?.username ?? "";
+                    bVal = playerMap?.[b.seller_id]?.username ?? "";
+                    break;
                 case "quantity":
                     aVal = a.quantity;
                     bVal = b.quantity;
@@ -181,6 +185,7 @@ function ResourceMarketContent() {
         sortDirection,
         hideOwnAsks,
         currentPlayerId,
+        playerMap,
     ]);
 
     const handleSort = (key: SortKey) => {
@@ -312,8 +317,12 @@ function ResourceMarketContent() {
                                         Resource
                                         {getSortIndicator("resource_type")}
                                     </th>
-                                    <th className="py-3 px-4 text-left font-semibold">
+                                    <th
+                                        className="py-3 px-4 text-left font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
+                                        onClick={() => handleSort("seller")}
+                                    >
                                         Seller
+                                        {getSortIndicator("seller")}
                                     </th>
                                     <th
                                         className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
