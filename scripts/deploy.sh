@@ -211,9 +211,9 @@ main() {
         log_success "Code is pushed to remote"
         echo ""
 
-        # Step 5: Pull latest code on remote
-        log_step "Pulling latest code on remote..."
-        ssh "${REMOTE_USER}@${REMOTE_HOST}" "sudo -u www-data git -C ${REMOTE_PATH} pull origin ${CURRENT_BRANCH}" > /dev/null
+        # Step 5: Sync code on remote (fetch + reset to match origin exactly)
+        log_step "Syncing code on remote..."
+        ssh "${REMOTE_USER}@${REMOTE_HOST}" "sudo -u www-data git -C ${REMOTE_PATH} fetch origin ${CURRENT_BRANCH} && sudo -u www-data git -C ${REMOTE_PATH} reset --hard origin/${CURRENT_BRANCH}" > /dev/null
         log_success "Code updated on VPS"
         echo ""
     fi
