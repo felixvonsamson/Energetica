@@ -474,11 +474,11 @@ const SECONDS_PER_DAY = 86400;
 const SECONDS_PER_GAME_YEAR = 6_220_800; // 72 days
 
 /**
- * Get the number of seconds in a time unit, accounting for the difference
- * between game-time and wall-clock years.
+ * Get the number of seconds in a time unit.
+ * Uses game-time constants (hours and days are wall-clock equivalent;
+ * "year" is one game year = 72 days).
  *
  * @param unit - The time unit ("h", "day", or "year")
- * @param mode - The time mode (game-time or wall-clock)
  * @returns Number of seconds in the specified unit
  */
 export function getSecondsPerUnit(unit: "h" | "day" | "year"): number {
@@ -513,18 +513,12 @@ export function getUnitSuffix(unit: "h" | "day" | "year"): string {
  * Convert cash flow from money per tick to money per time unit.
  *
  * @example
- *     const rate = amountPerTickToCashFlowRate(
- *         100,
- *         "h",
- *         gameEngine,
- *         "game-time",
- *     );
+ *     const rate = amountPerTickToCashFlowRate(100, "h", gameEngine);
  *     // Returns hourly cash flow rate in game time
  *
  * @param amountPerTick - Cash flow in money per tick
  * @param unit - Target time unit ("h", "day", or "year")
  * @param config - GameEngineConfig containing timing information
- * @param mode - Time mode (game-time or wall-clock)
  * @returns Cash flow rate in money per specified time unit
  */
 export function amountPerTickToCashFlowRate(
@@ -544,13 +538,12 @@ export function amountPerTickToCashFlowRate(
  * Format cash flow as a string with appropriate units.
  *
  * @example
- *     formatCashFlow(100, "h", gameEngine, "game-time");
+ *     formatCashFlow(100, "h", gameEngine);
  *     // Returns "15k$/h" (formatted with Money scaling)
  *
  * @param amountPerTick - Cash flow in money per tick
  * @param unit - Target time unit ("h", "day", or "year")
  * @param config - GameEngineConfig containing timing information
- * @param mode - Time mode (game-time or wall-clock)
  * @returns Formatted cash flow string with units
  */
 export function formatCashFlow(
