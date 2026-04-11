@@ -111,6 +111,12 @@ class PushNotificationTestPayload(BaseModel):
     type: Literal["push_notification_test"] = "push_notification_test"
 
 
+class QuizReminderPayload(BaseModel):
+    """Push-only reminder that a new daily quiz is available."""
+
+    type: Literal["quiz_reminder"] = "quiz_reminder"
+
+
 # ---------------------------------------------------------------------------
 # Achievement milestone payload — discriminated union on achievement_key.
 # All variants share type: Literal["achievement_milestone"].
@@ -197,6 +203,7 @@ PersistableNotificationPayload = Union[
 PushOnlyPayload = Union[
     ChatMessagePayload,
     PushNotificationTestPayload,
+    QuizReminderPayload,
 ]
 
 # Full union — used by the service worker / push text generation.

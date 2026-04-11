@@ -1,4 +1,6 @@
-import { HelpCircle } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Bell, HelpCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
     Dialog,
@@ -7,8 +9,11 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { TypographyH2, TypographyLarge } from "@/components/ui/typography";
 import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/use-daily-quiz";
+import { getPushPref, setPushPref } from "@/lib/push-notification-prefs";
 import { cn } from "@/lib/utils";
 
 export function DailyQuizButton() {
@@ -47,6 +52,69 @@ export function DailyQuizButton() {
                 <DailyQuizSection />
             </DialogContent>
         </Dialog>
+    );
+}
+
+function QuizPushToggle() {
+    const [pushEnabled, setPushEnabled] = useState<boolean | null>(null);
+    const [globalPushActive, setGlobalPushActive] = useState<boolean | null>(
+        null,
+    );
+
+    useEffect(() => {
+        // Check if browser push is globally enabled
+        if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+            // No push support — resolved in the next microtask to satisfy lint
+            void Promise.resolve().then(() => setGlobalPushActive(false));
+            return;
+        }
+        navigator.serviceWorker.ready
+            .then((reg) => reg.pushManager.getSubscription())
+            .then((sub) => {
+                setGlobalPushActive(!!sub);
+                if (sub) {
+                    getPushPref("quiz").then(setPushEnabled);
+                }
+            });
+    }, []);
+
+    if (globalPushActive === null) return null;
+
+    if (!globalPushActive) {
+        return (
+            <div className="mt-4 pt-4 border-t border-border flex items-center gap-2 text-sm text-muted-foreground">
+                <Bell className="w-4 h-4 shrink-0" />
+                <span>
+                    Want a reminder when the quiz resets?{" "}
+                    <Link
+                        to="/app/settings"
+                        className="underline hover:text-foreground transition-colors"
+                    >
+                        Enable browser notifications
+                    </Link>
+                </span>
+            </div>
+        );
+    }
+
+    return (
+        <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+            <Label
+                htmlFor="quiz-push-toggle"
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+            >
+                <Bell className="w-4 h-4 shrink-0" />
+                Push notification when quiz resets
+            </Label>
+            <Switch
+                id="quiz-push-toggle"
+                checked={pushEnabled ?? true}
+                onCheckedChange={(checked) => {
+                    setPushEnabled(checked);
+                    setPushPref("quiz", checked);
+                }}
+            />
+        </div>
     );
 }
 
@@ -196,6 +264,8 @@ function DailyQuizSection() {
                     )}
                 </>
             ) : null}
+
+            <QuizPushToggle />
         </div>
     );
 }
