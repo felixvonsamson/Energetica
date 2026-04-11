@@ -2236,22 +2236,6 @@ export interface components {
             /** Unread Chat Count */
             unread_chat_count: number;
         };
-        /** ChatMessagePayload */
-        ChatMessagePayload: {
-            /**
-             * Type
-             *
-             * @constant
-             * @default chat_message
-             */
-            type: "chat_message";
-            /** Sender Username */
-            sender_username: string;
-            /** Message */
-            message: string;
-            /** Chat Id */
-            chat_id: number;
-        };
         /**
          * ChatOut
          *
@@ -3189,18 +3173,6 @@ export interface components {
             /** Money */
             money: number;
         };
-        /** NetworkExpelledPayload */
-        NetworkExpelledPayload: {
-            /**
-             * Type
-             *
-             * @constant
-             * @default network_expelled
-             */
-            type: "network_expelled";
-            /** Network Name */
-            network_name: string;
-        };
         /**
          * MoneyResponse
          *
@@ -3235,6 +3207,18 @@ export interface components {
             series: {
                 [key: string]: number[];
             };
+        };
+        /** NetworkExpelledPayload */
+        NetworkExpelledPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default network_expelled
+             */
+            type: "network_expelled";
+            /** Network Name */
+            network_name: string;
         };
         /**
          * NonFacilityBidType
@@ -3278,7 +3262,6 @@ export interface components {
             archived: boolean;
             /** Payload */
             payload:
-                | components["schemas"]["ChatMessagePayload"]
                 | components["schemas"]["ConstructionFinishedPayload"]
                 | components["schemas"]["TechnologyResearchedPayload"]
                 | components["schemas"]["FacilityDecommissionedPayload"]
@@ -3291,8 +3274,7 @@ export interface components {
                 | components["schemas"]["AchievementMilestonePowerConsumptionPayload"]
                 | components["schemas"]["AchievementMilestoneEnergyStoragePayload"]
                 | components["schemas"]["AchievementMilestoneBasePayload"]
-                | components["schemas"]["AchievementUnlockPayload"]
-                | components["schemas"]["PushNotificationTestPayload"];
+                | components["schemas"]["AchievementUnlockPayload"];
         };
         /** NotificationPatchIn */
         NotificationPatchIn: {
@@ -3788,21 +3770,6 @@ export interface components {
              * available quantity.
              */
             quantity?: number | null;
-        };
-        /**
-         * PushNotificationTestPayload
-         *
-         * Dummy notification used exclusively for end-to-end push notification
-         * testing.
-         */
-        PushNotificationTestPayload: {
-            /**
-             * Type
-             *
-             * @constant
-             * @default push_notification_test
-             */
-            type: "push_notification_test";
         };
         /**
          * RequirementOut

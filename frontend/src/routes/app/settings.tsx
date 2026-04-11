@@ -34,10 +34,9 @@ import { handleApiError } from "@/lib/error-utils";
 import {
     getAllPushPrefs,
     setPushPref,
-    PUSH_NOTIF_CATEGORIES,
-    PUSH_NOTIF_CATEGORY_LABELS,
+    PUSH_CATEGORIES,
 } from "@/lib/push-notification-prefs";
-import type { NotificationCategory } from "@/types/notifications";
+import { PUSH_CATEGORY_LABELS, type PushCategory } from "@/types/notifications";
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -94,7 +93,7 @@ function SettingsContent() {
         null,
     );
     const [pushPrefs, setPushPrefs] = useState<Record<
-        NotificationCategory,
+        PushCategory,
         boolean
     > | null>(null);
 
@@ -239,7 +238,7 @@ function SettingsContent() {
     };
 
     const handleCategoryToggle = async (
-        category: NotificationCategory,
+        category: PushCategory,
         enabled: boolean,
     ) => {
         await setPushPref(category, enabled);
@@ -295,13 +294,13 @@ function SettingsContent() {
                     )}
                     {notificationsEnabled && pushPrefs && (
                         <CardContent className="flex flex-col gap-3 border-t pt-4">
-                            {PUSH_NOTIF_CATEGORIES.map((category) => (
+                            {PUSH_CATEGORIES.map((category) => (
                                 <div
                                     key={category}
                                     className="flex items-center justify-between"
                                 >
                                     <Label htmlFor={`push-pref-${category}`}>
-                                        {PUSH_NOTIF_CATEGORY_LABELS[category]}
+                                        {PUSH_CATEGORY_LABELS[category]}
                                     </Label>
                                     <Switch
                                         id={`push-pref-${category}`}
