@@ -11,15 +11,33 @@ export type NotificationPayloadOf<T extends NotificationType> = Extract<
     { type: T }
 >;
 
-export type NotificationCategory =
+// ---------------------------------------------------------------------------
+// Inbox categories — used for filtering the in-game notification inbox.
+// These only include types that create persistent Notification records.
+// ---------------------------------------------------------------------------
+
+export type InboxCategory =
     | "projects"
     | "market"
     | "events"
-    | "achievements"
-    | "messages";
+    | "achievements";
 
-export const CATEGORY_LABELS: Record<NotificationCategory, string> = {
-    messages: "Messages",
+export const INBOX_CATEGORY_LABELS: Record<InboxCategory, string> = {
+    projects: "Projects",
+    market: "Market",
+    events: "Events",
+    achievements: "Achievements",
+};
+
+// ---------------------------------------------------------------------------
+// Push categories — used for browser push notification opt-in/opt-out.
+// Superset of inbox categories, plus push-only categories like chat.
+// ---------------------------------------------------------------------------
+
+export type PushCategory = InboxCategory | "chat";
+
+export const PUSH_CATEGORY_LABELS: Record<PushCategory, string> = {
+    chat: "Chat messages",
     projects: "Projects",
     market: "Market",
     events: "Events",

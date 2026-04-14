@@ -9,30 +9,29 @@ import { CLIMATE_EVENT_CONFIG } from "@/lib/climate-event-config";
 import { formatMass, formatMoney } from "@/lib/format-utils";
 import type { AppRoute } from "@/types/app-routes";
 import type {
-    NotificationCategory,
+    InboxCategory,
     NotificationPayload,
     NotificationPayloadOf,
     NotificationType,
+    PushCategory,
 } from "@/types/notifications";
 
 type AppPath = AppRoute | `${AppRoute}?${string}`;
 
-type NotificationDef<T extends NotificationType> = {
-    category: NotificationCategory;
+// ---------------------------------------------------------------------------
+// Inbox notification config — only types that create persistent records.
+// Used by the notification popup to render inbox items.
+// ---------------------------------------------------------------------------
+
+type InboxNotificationDef<T extends NotificationType> = {
+    category: InboxCategory;
     path: (payload: NotificationPayloadOf<T>) => AppPath;
     title: string;
     pushBody: (payload: NotificationPayloadOf<T>) => string;
     inGameBody: (payload: NotificationPayloadOf<T>) => ReactNode;
 };
 
-const NOTIFICATION_CONFIG = {
-    chat_message: {
-        category: "messages",
-        path: (p) => `/app/community/messages?selectedChatId=${p.chat_id}`,
-        title: "New message",
-        pushBody: (p) => `${p.sender_username}: ${p.message}`,
-        inGameBody: (p) => `${p.sender_username}: ${p.message}`,
-    },
+const INBOX_NOTIFICATION_CONFIG = {
     construction_finished: {
         category: "projects",
         path: () => "/app/facilities/manage",
@@ -156,58 +155,142 @@ const NOTIFICATION_CONFIG = {
         inGameBody: (p) =>
             `${ACHIEVEMENT_UNLOCK_CONFIG[p.achievement_key].body} (+${p.xp} XP)`,
     },
+} satisfies { [T in NotificationType]: InboxNotificationDef<T> };
+
+// ---------------------------------------------------------------------------
+// Push notification config — all types that can trigger a browser push,
+// including push-only types (chat, test) that have no inbox entry.
+// ---------------------------------------------------------------------------
+
+// Push-only types are not in the generated API types since they don't appear
+// in the inbox API. We define their payload shapes manually here.
+// ⚠ Keep in sync with the corresponding Python classes in
+//   energetica/schemas/notifications.py — generate-types won't catch drift.
+
+/** Mirror of ChatMessagePayload (energetica/schemas/notifications.py) */
+type ChatMessagePushPayload = {
+    type: "chat_message";
+    sender_username: string;
+    message: string;
+    chat_id: number;
+};
+
+/** Mirror of PushNotificationTestPayload (energetica/schemas/notifications.py) */
+type PushNotificationTestPushPayload = {
+    type: "push_notification_test";
+};
+
+type PushOnlyPayload = ChatMessagePushPayload | PushNotificationTestPushPayload;
+
+// All payloads the service worker may receive.
+export type AnyPushPayload = NotificationPayload | PushOnlyPayload;
+
+type PushNotificationDef<P> = {
+    pushCategory: PushCategory;
+    path: (payload: P) => string;
+    title: string;
+    pushBody: (payload: P) => string;
+};
+
+const PUSH_ONLY_CONFIG = {
+    chat_message: {
+        pushCategory: "chat",
+        path: (p: ChatMessagePushPayload) =>
+            `/app/community/messages?selectedChatId=${p.chat_id}`,
+        title: "New message",
+        pushBody: (p: ChatMessagePushPayload) =>
+            `${p.sender_username}: ${p.message}`,
+    },
     push_notification_test: {
-        category: "events",
+        pushCategory: "events",
         path: () => "/app/dashboard",
         title: "Push notification test",
         pushBody: () =>
             "If you see this, browser push notifications are working.",
-        inGameBody: () =>
-            "If you see this, browser push notifications are working.",
     },
-} satisfies { [T in NotificationType]: NotificationDef<T> };
+} satisfies Record<string, PushNotificationDef<never>>;
+
+// Build a merged lookup for the service worker.
+// Inbox types inherit their push config from the inbox config.
+const PUSH_CONFIG_FROM_INBOX: Record<
+    string,
+    PushNotificationDef<never>
+> = Object.fromEntries(
+    Object.entries(INBOX_NOTIFICATION_CONFIG).map(([type, def]) => [
+        type,
+        {
+            pushCategory: def.category,
+            path: def.path,
+            title: def.title,
+            pushBody: def.pushBody,
+        } as PushNotificationDef<never>,
+    ]),
+);
+
+const FULL_PUSH_CONFIG: Record<string, PushNotificationDef<never>> = {
+    ...PUSH_CONFIG_FROM_INBOX,
+    ...PUSH_ONLY_CONFIG,
+};
+
+// ---------------------------------------------------------------------------
+// Public API — used by the notification popup (inbox) and service worker (push).
+// ---------------------------------------------------------------------------
 
 // Widen the payload-specific function signatures so callers can pass any NotificationPayload.
-// Safe because the discriminant on NotificationPayload guarantees the right variant is passed.
-type AnyNotificationDef = {
-    category: NotificationCategory;
+type AnyInboxDef = {
+    category: InboxCategory;
     path: (payload: NotificationPayload) => AppPath;
     title: string;
     pushBody: (payload: NotificationPayload) => string;
     inGameBody: (payload: NotificationPayload) => ReactNode;
 };
-const getDef = (type: NotificationType) =>
-    NOTIFICATION_CONFIG[type] as unknown as AnyNotificationDef;
+const getInboxDef = (type: NotificationType) =>
+    INBOX_NOTIFICATION_CONFIG[type] as unknown as AnyInboxDef;
 
-export function getNotificationPushText(payload: NotificationPayload): {
-    title: string;
-    body: string;
-} {
-    const def = getDef(payload.type);
-    return { title: def.title, body: def.pushBody(payload) };
-}
-
-export function getNotificationPath(payload: NotificationPayload): string {
-    return getDef(payload.type).path(payload);
-}
-
+/** Get the inbox category for a notification type (inbox items only). */
 export function getNotificationCategory(
     type: NotificationType,
-): NotificationCategory {
-    return NOTIFICATION_CONFIG[type].category;
+): InboxCategory {
+    return INBOX_NOTIFICATION_CONFIG[type].category;
 }
 
-export const NOTIFICATION_TYPE_TO_CATEGORY = Object.fromEntries(
-    Object.entries(NOTIFICATION_CONFIG).map(([type, def]) => [
-        type,
-        def.category,
-    ]),
-) as Record<NotificationType, NotificationCategory>;
-
+/** Get the title and body for rendering an inbox notification. */
 export function getNotificationContent(payload: NotificationPayload): {
     title: string;
     body: ReactNode;
 } {
-    const def = getDef(payload.type);
+    const def = getInboxDef(payload.type);
     return { title: def.title, body: def.inGameBody(payload) };
 }
+
+/** Get the push category for any push payload (inbox or push-only). */
+export function getPushCategory(type: string): PushCategory {
+    return (FULL_PUSH_CONFIG[type]?.pushCategory ?? "events") as PushCategory;
+}
+
+/** Get push notification title and body for any push payload. */
+export function getPushText(payload: AnyPushPayload): {
+    title: string;
+    body: string;
+} {
+    const def = FULL_PUSH_CONFIG[payload.type];
+    if (!def) return { title: "Energetica", body: "" };
+    const pushBody = def.pushBody as (payload: AnyPushPayload) => string;
+    return { title: def.title, body: pushBody(payload) };
+}
+
+/** Get the navigation path for any push payload. */
+export function getPushPath(payload: AnyPushPayload): string {
+    const def = FULL_PUSH_CONFIG[payload.type];
+    if (!def) return "/app/dashboard";
+    const path = def.path as (payload: AnyPushPayload) => string;
+    return path(payload);
+}
+
+/** Map from inbox notification type to its inbox category. */
+export const INBOX_TYPE_TO_CATEGORY = Object.fromEntries(
+    Object.entries(INBOX_NOTIFICATION_CONFIG).map(([type, def]) => [
+        type,
+        def.category,
+    ]),
+) as Record<NotificationType, InboxCategory>;
