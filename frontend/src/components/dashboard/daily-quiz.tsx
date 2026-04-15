@@ -2,13 +2,6 @@ import { Link } from "@tanstack/react-router";
 import { Bell, HelpCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { TypographyH2, TypographyLarge } from "@/components/ui/typography";
@@ -18,40 +11,19 @@ import { cn } from "@/lib/utils";
 
 export function DailyQuizButton() {
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <button
-                    className={cn(
-                        "bg-card hover:bg-muted",
-                        "p-6 rounded-lg text-center transition-colors block w-full",
-                        "border border-transparent hover:border-pine dark:hover:border-brand-green",
-                    )}
-                >
-                    <HelpCircle className="w-8 h-8 mx-auto mb-2 text-foreground" />
-                    <TypographyH2 className="text-foreground">
-                        <TypographyLarge>Daily Quiz</TypographyLarge>
-                    </TypographyH2>
-                </button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                    <DialogTitle className="text-center">
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
-                        <span className="mx-2">Daily Quiz</span>
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
-                    </DialogTitle>
-                </DialogHeader>
-                <DailyQuizSection />
-            </DialogContent>
-        </Dialog>
+        <Link
+            to="/app/dashboard/quiz"
+            className={cn(
+                "bg-card hover:bg-muted",
+                "p-6 rounded-lg text-center transition-colors block w-full",
+                "border border-transparent hover:border-pine dark:hover:border-brand-green",
+            )}
+        >
+            <HelpCircle className="w-8 h-8 mx-auto mb-2 text-foreground" />
+            <TypographyH2 className="text-foreground">
+                <TypographyLarge>Daily Quiz</TypographyLarge>
+            </TypographyH2>
+        </Link>
     );
 }
 
@@ -120,7 +92,7 @@ function QuizPushToggle() {
     );
 }
 
-function DailyQuizSection() {
+export function DailyQuizSection() {
     // TODO: correctly answering the daily quiz earns the player 1 XP point. This is not communicated in the new UI
     const { data: quizData, isLoading, isError } = useDailyQuiz();
     const { mutate: submitAnswer, isPending } = useSubmitQuizAnswer();

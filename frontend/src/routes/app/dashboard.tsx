@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import {
     Construction,
     FlaskConical,
@@ -104,6 +104,7 @@ function DashboardPage() {
     return (
         <GameLayout>
             <DashboardContent />
+            <Outlet />
         </GameLayout>
     );
 }

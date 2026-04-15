@@ -218,7 +218,7 @@ const PUSH_ONLY_CONFIG = {
     },
     quiz_reminder: {
         pushCategory: "quiz",
-        path: () => "/app/dashboard",
+        path: () => "/app/dashboard/quiz",
         title: "Daily Quiz",
         pushBody: () => "A new daily quiz question is available!",
     },
