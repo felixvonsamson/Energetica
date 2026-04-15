@@ -41,6 +41,7 @@ from energetica.schemas.charts import (
     PowerSinksResponse,
     PowerSourcesResponse,
     ResourcesResponse,
+    ResourcesSocResponse,
     RevenuesResponse,
     StorageLevelResponse,
     StorageSocResponse,
@@ -52,7 +53,16 @@ router = APIRouter(prefix="/charts", tags=["Charts"])
 
 Resolution = Literal["1", "6", "36", "216", "1296"]
 PickleChartKey = Literal[
-    "revenues", "op_costs", "generation", "demand", "storage", "storage_soc", "resources", "emissions", "money"
+    "revenues",
+    "op_costs",
+    "generation",
+    "demand",
+    "storage",
+    "storage_soc",
+    "resources",
+    "resources_soc",
+    "emissions",
+    "money",
 ]
 ClimatePickleKey = Literal["emissions", "temperature"]
 PickleNetworkKey = Literal["network_data", "exports", "imports", "generation", "consumption"]
@@ -549,6 +559,27 @@ def get_resources(
     """
     data = _get_chart_data(player, start_tick, count, "resources", resolution)
     return ResourcesResponse(resolution=resolution, **data)
+
+
+@router.get("/resources-soc/{resolution}")
+def get_resources_soc(
+    player: Annotated[Player, Depends(get_settled_player)],
+    resolution: Resolution,
+    start_tick: int,
+    count: int,
+) -> ResourcesSocResponse:
+    """
+    Get resource stocks as fraction of warehouse capacity at the specified resolution.
+
+    Parameters:
+        resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+        start_tick: First tick to include (must be aligned to resolution)
+        count: Number of datapoints to retrieve
+
+    Returns values as a fraction (0-1) of the warehouse's capacity at the time of recording.
+    """
+    data = _get_chart_data(player, start_tick, count, "resources_soc", resolution)
+    return ResourcesSocResponse(resolution=resolution, **data)
 
 
 @router.get("/markets/{market_id}/clearing/{resolution}")

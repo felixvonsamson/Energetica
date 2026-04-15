@@ -48,6 +48,7 @@ class CircularBufferPlayer:
             "storage": {},  # + storage facilities
             "storage_soc": {},  # + storage facilities (state of charge, 0-1 fraction)
             "resources": {},  # + all resources when warehouse is built
+            "resources_soc": {},  # + all resources (fraction of warehouse capacity, 0-1)
             "emissions": {
                 "construction": deque([0.0] * 360, maxlen=360),  # + controllable facilities
             },
@@ -68,6 +69,8 @@ class CircularBufferPlayer:
             self._data[category][subcategory] = deque([0.0] * 360, maxlen=360)
         if category == "storage" and subcategory not in self._data["storage_soc"]:
             self._data["storage_soc"][subcategory] = deque([0.0] * 360, maxlen=360)
+        if category == "resources" and subcategory not in self._data["resources_soc"]:
+            self._data["resources_soc"][subcategory] = deque([0.0] * 360, maxlen=360)
 
     def get_data(self, t: int = 216) -> dict[str, dict[str, list[float]]]:
         """Return the last t ticks of the data."""
@@ -93,7 +96,7 @@ class CircularBufferPlayer:
         for category, subcategories in self._data.items():
             result[category] = {}
             for subcategory, buffer in subcategories.items():
-                if category in ["storage", "resources"]:
+                if category in ["storage", "resources", "resources_soc"]:
                     result[category][subcategory] = buffer[-1]
                 else:
                     result[category][subcategory] = 0.0

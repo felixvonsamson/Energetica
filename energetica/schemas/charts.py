@@ -180,6 +180,14 @@ class ResourcesResponse(ChartDataResponse[ResourcesKey]):
     )
 
 
+class ResourcesSocResponse(ChartDataResponse[ResourcesKey]):
+    """Response model for resource stocks as fraction of warehouse capacity."""
+
+    series: dict[ResourcesKey, list[float]] = Field(
+        description="Time series data for resource stocks, as a fraction (0-1) of warehouse capacity",
+    )
+
+
 MoneyKey = Literal["balance"]
 
 

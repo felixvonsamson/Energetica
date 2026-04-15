@@ -30,44 +30,27 @@ export function ResourcesChart({
 }: ResourcesChartProps) {
     const getColor = useAssetColorGetter();
     const filterDataKeys = useChartFilters(hiddenResources);
-    const { data: resourcesData } = usePlayerResources();
 
-    // In percent mode, convert absolute kg values to % of warehouse capacity.
-    // If resourcesData hasn't loaded yet, return empty to avoid showing raw kg
-    // values with % formatting.
+    // In percent mode, chartData already contains server-computed SoC (0-1 fraction).
+    // Scale to 0-100 for display.
     const displayData: Array<Record<string, unknown>> = useMemo(() => {
         if (viewMode === "normal" || chartData.length === 0) {
             return chartData;
         }
-        if (!resourcesData) {
-            return [];
-        }
-
-        const capacities: Record<string, number> = {
-            coal: resourcesData.coal.capacity,
-            gas: resourcesData.gas.capacity,
-            uranium: resourcesData.uranium.capacity,
-        };
-
         return chartData.map((dataPoint) => {
             const result: Record<string, unknown> = { tick: dataPoint.tick };
             Object.keys(dataPoint).forEach((key) => {
                 if (key === "tick") return;
                 const val = dataPoint[key];
-                const cap = capacities[key];
-                if (typeof val === "number" && cap && cap > 0) {
-                    result[key] = (val / cap) * 100;
-                } else {
-                    result[key] = 0;
-                }
+                result[key] = typeof val === "number" ? val * 100 : 0;
             });
             return result;
         });
-    }, [chartData, viewMode, resourcesData]);
+    }, [chartData, viewMode]);
 
     const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
-            chartType: "resources",
+            chartType: viewMode === "normal" ? "resources" : "resources-soc",
             chartVariant: viewMode === "normal" ? "area" : "smoothLine",
             stacked: false,
             getColor,

@@ -11,6 +11,7 @@ export type ChartType =
     | "climate"
     | "temperature"
     | "resources"
+    | "resources-soc"
     | "market-clearing"
     | "market-exports"
     | "market-imports"

@@ -882,6 +882,9 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
                     emissions,
                 )
             new_values["resources"][fuel] = player.resources[fuel]
+            new_values["resources_soc"][fuel] = (
+                player.resources[fuel] / warehouse_caps[fuel] if warehouse_caps[fuel] > 0 else 0.0
+            )
 
     # Carbon capture CO2 absorption
     if player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE] > 0:

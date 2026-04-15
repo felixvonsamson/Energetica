@@ -110,7 +110,7 @@ function ResourcesOverviewContent() {
     const [hiddenResources, toggleResource] = useToggleSet<string>();
     const { selectedResolution } = useResolution();
 
-    // Fetch resources chart data
+    // Fetch absolute resource stocks for the table (always needed)
     const {
         chartData: resourcesData,
         isLoading: isResourcesLoading,
@@ -122,6 +122,25 @@ function ResourcesOverviewContent() {
         },
         maxDatapoints: selectedResolution.datapoints,
     });
+
+    // Fetch server-computed SoC (0-1 fraction) for the percent view
+    const {
+        chartData: resourcesSocData,
+        isLoading: isSocLoading,
+        isError: isSocError,
+    } = useChartData({
+        config: {
+            chartType: "resources-soc",
+            resolution: selectedResolution.resolution,
+        },
+        maxDatapoints: selectedResolution.datapoints,
+    });
+
+    const chartData =
+        viewMode === "percent" ? resourcesSocData : resourcesData;
+    const isChartLoading =
+        viewMode === "percent" ? isSocLoading : isResourcesLoading;
+    const isError = viewMode === "percent" ? isSocError : isResourcesError;
 
     return (
         <div className="py-4 md:p-8 space-y-6">
@@ -157,9 +176,9 @@ function ResourcesOverviewContent() {
                 title="Resource Stocks"
             >
                 <ResourcesChart
-                    chartData={resourcesData}
-                    isLoading={isResourcesLoading}
-                    isError={isResourcesError}
+                    chartData={chartData}
+                    isLoading={isChartLoading}
+                    isError={isError}
                     hiddenResources={hiddenResources}
                     viewMode={viewMode}
                 />

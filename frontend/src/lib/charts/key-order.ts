@@ -119,6 +119,8 @@ export const TEMPERATURE_KEYS = ["deviation", "reference"] as const;
 
 export const RESOURCES_KEYS = ["coal", "gas", "uranium"] as const;
 
+export const RESOURCES_SOC_KEYS = RESOURCES_KEYS;
+
 export const MARKET_CLEARING_DATA_KEYS = ["price", "quantity"] as const;
 
 // Market exports/imports have dynamic player IDs, so no fixed order
@@ -170,6 +172,7 @@ export type ChartDataKeys = {
     climate: (typeof CLIMATE_KEYS)[number];
     temperature: (typeof TEMPERATURE_KEYS)[number];
     resources: (typeof RESOURCES_KEYS)[number];
+    "resources-soc": (typeof RESOURCES_SOC_KEYS)[number];
     "market-clearing": (typeof MARKET_CLEARING_DATA_KEYS)[number];
     "market-exports": string; // Dynamic player IDs
     "market-imports": string; // Dynamic player IDs
@@ -201,6 +204,7 @@ export const KEY_ORDER_BY_CHART_TYPE: Record<ChartType, readonly string[]> = {
     climate: CLIMATE_KEYS,
     temperature: TEMPERATURE_KEYS,
     resources: RESOURCES_KEYS,
+    "resources-soc": RESOURCES_SOC_KEYS,
     "market-clearing": MARKET_CLEARING_DATA_KEYS,
     "market-exports": MARKET_EXPORTS_KEYS,
     "market-imports": MARKET_IMPORTS_KEYS,
