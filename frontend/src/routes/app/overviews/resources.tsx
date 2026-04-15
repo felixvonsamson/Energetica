@@ -1,16 +1,26 @@
 /** Resources overview page - Resource stocks visualization. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { Package, TrendingUp, Warehouse } from "lucide-react";
+import { Package, TrendingUp, Warehouse, BarChart3, Funnel } from "lucide-react";
+import { useState } from "react";
 
-import { ResourcesChart } from "@/components/charts/resources-chart";
+import {
+    ResourcesChart,
+    ResourcesOverviewTable,
+} from "@/components/charts/resources-chart";
 import { GameLayout } from "@/components/layout/game-layout";
 import { CardContent, PageCard } from "@/components/ui";
 import { ChartCard } from "@/components/ui/chart-card";
+import { Label } from "@/components/ui/label";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
+import {
+    SegmentedPicker,
+    SegmentedPickerOption,
+} from "@/components/ui/segmented-picker";
 import { useResolution } from "@/contexts/resolution-context";
 import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
+import { useToggleSet } from "@/hooks/use-toggle-set";
 
 export const Route = createFileRoute("/app/overviews/resources")({
     component: ResourcesOverviewPage,
@@ -58,6 +68,20 @@ function ResourcesOverviewHelp() {
                         resource market
                     </span>
                 </li>
+                <li className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 shrink-0" />
+                    <span>
+                        Toggle between absolute view and percent of warehouse
+                        capacity
+                    </span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <Funnel className="w-4 h-4 shrink-0" />
+                    <span>
+                        Use the table to toggle individual resources on/off in
+                        the chart to focus on specific resources
+                    </span>
+                </li>
             </ul>
             <p>
                 Resources are consumed by certain power facilities and can be
@@ -75,8 +99,15 @@ function ResourcesOverviewPage() {
     );
 }
 
+const VIEW_MODE_OPTIONS = [
+    { value: "percent", label: "% of Capacity" },
+    { value: "normal", label: "Absolute" },
+] as const;
+
 function ResourcesOverviewContent() {
     const { currentTick } = useGameTick();
+    const [viewMode, setViewMode] = useState<"normal" | "percent">("percent");
+    const [hiddenResources, toggleResource] = useToggleSet<string>();
     const { selectedResolution } = useResolution();
 
     // Fetch resources chart data
@@ -96,7 +127,27 @@ function ResourcesOverviewContent() {
         <div className="py-4 md:p-8 space-y-6">
             <PageCard>
                 <CardContent>
-                    <ResolutionPicker currentTick={currentTick} />
+                    <div className="space-y-4">
+                        <div>
+                            <Label className="mb-2">View Mode</Label>
+                            <SegmentedPicker
+                                value={viewMode}
+                                onValueChange={(value) =>
+                                    setViewMode(value as "normal" | "percent")
+                                }
+                            >
+                                {VIEW_MODE_OPTIONS.map((option) => (
+                                    <SegmentedPickerOption
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </SegmentedPickerOption>
+                                ))}
+                            </SegmentedPicker>
+                        </div>
+                        <ResolutionPicker currentTick={currentTick} />
+                    </div>
                 </CardContent>
             </PageCard>
 
@@ -109,6 +160,14 @@ function ResourcesOverviewContent() {
                     chartData={resourcesData}
                     isLoading={isResourcesLoading}
                     isError={isResourcesError}
+                    hiddenResources={hiddenResources}
+                    viewMode={viewMode}
+                />
+
+                <ResourcesOverviewTable
+                    chartData={resourcesData}
+                    hiddenResources={hiddenResources}
+                    onToggleResource={toggleResource}
                 />
             </ChartCard>
         </div>
