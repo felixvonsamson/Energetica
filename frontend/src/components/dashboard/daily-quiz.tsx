@@ -106,7 +106,7 @@ function QuizPushToggle() {
                 className="flex items-center gap-2 text-sm text-muted-foreground"
             >
                 <Bell className="w-4 h-4 shrink-0" />
-                Push notification when quiz resets
+                Daily quiz reminder
             </Label>
             <Switch
                 id="quiz-push-toggle"

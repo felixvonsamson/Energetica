@@ -1,7 +1,7 @@
 """Utility functions relating to the GameEngine class."""
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 from energetica import production_update
 from energetica.database.active_facility import ActiveFacility
@@ -40,6 +40,8 @@ def tick() -> None:
         save_past_data()
     if (engine.total_t + engine.delta_t) % (24 * 60 * 60 / engine.clock_time) == 0:
         engine.new_daily_question()
+    if engine.quiz_push_pending and datetime.now(timezone.utc).hour == 9:
+        engine.send_quiz_push()
     check_events_completion()
     production_update.update_electricity()
     check_climate_events()  # climate events should happen after electricity production because destruction of storage facilities will write directly into player's circular buffer, and this should write should happen on the new tick's data since values for old ticks should be considered read-only, since they represent the past, and we shouldn't rewrite the past retroactively.

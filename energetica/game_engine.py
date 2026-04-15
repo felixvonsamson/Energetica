@@ -138,6 +138,7 @@ class GameEngine(object):
         )
         self.daily_question = {}
         self.question_order = None  # type: ignore
+        self.quiz_push_pending = False
         self.new_daily_question()
 
         # stored the levels of technology of the server
@@ -230,6 +231,7 @@ class GameEngine(object):
             "env",
             "disable_signups",
             "general_chat_id",
+            "quiz_push_pending",
         ]
         data = {member: getattr(self, member) for member in members_to_save}
         with open("instance/engine_data.pck", "wb") as file:
@@ -249,6 +251,9 @@ class GameEngine(object):
             data = pickle.load(file)
             for member, member_data in data.items():
                 setattr(self, member, member_data)
+        # Default for saves that predate this field
+        if not hasattr(self, "quiz_push_pending"):
+            self.quiz_push_pending = False
 
     def save_checkpoint(self, destination_filename: str = "checkpoints/last_checkpoint.tar.gz") -> None:
         self.save()
@@ -275,9 +280,6 @@ class GameEngine(object):
 
     def new_daily_question(self) -> None:
         """Load a new daily question from the csv file."""
-        from energetica.database.player import Player
-        from energetica.schemas.notifications import QuizReminderPayload
-
         with open("energetica/static/data/daily_quiz_questions.csv", "r", encoding="utf-8") as file:
             csv_reader = list(csv.DictReader(file))
         if self.question_order is None:
@@ -290,9 +292,17 @@ class GameEngine(object):
         self.daily_question["index"] = question_index
         self.daily_question["player_answers"] = {}
 
+        self.quiz_push_pending = True
+
+    def send_quiz_push(self) -> None:
+        """Send quiz reminder push notifications to all players."""
+        from energetica.database.player import Player
+        from energetica.schemas.notifications import QuizReminderPayload
+
         payload = QuizReminderPayload()
         for player in Player.all():
             player.push_only(payload)
+        self.quiz_push_pending = False
 
     @property
     def general_chat(self) -> Chat:
