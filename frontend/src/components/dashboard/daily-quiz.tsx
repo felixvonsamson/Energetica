@@ -97,6 +97,8 @@ function QuizPushToggle() {
         );
     }
 
+    if (pushEnabled === null) return null; // still loading pref
+
     return (
         <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
             <Label
@@ -108,10 +110,10 @@ function QuizPushToggle() {
             </Label>
             <Switch
                 id="quiz-push-toggle"
-                checked={pushEnabled ?? true}
+                checked={pushEnabled}
                 onCheckedChange={(checked) => {
                     setPushEnabled(checked);
-                    setPushPref("quiz", checked);
+                    void setPushPref("quiz", checked);
                 }}
             />
         </div>
