@@ -32,10 +32,15 @@ export function ResourcesChart({
     const filterDataKeys = useChartFilters(hiddenResources);
     const { data: resourcesData } = usePlayerResources();
 
-    // In percent mode, convert absolute kg values to % of warehouse capacity
+    // In percent mode, convert absolute kg values to % of warehouse capacity.
+    // If resourcesData hasn't loaded yet, return empty to avoid showing raw kg
+    // values with % formatting.
     const displayData: Array<Record<string, unknown>> = useMemo(() => {
-        if (viewMode === "normal" || chartData.length === 0 || !resourcesData) {
+        if (viewMode === "normal" || chartData.length === 0) {
             return chartData;
+        }
+        if (!resourcesData) {
+            return [];
         }
 
         const capacities: Record<string, number> = {
