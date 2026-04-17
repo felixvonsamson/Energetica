@@ -848,7 +848,7 @@ export function EChartsTimeSeries({
     // Chart div always rendered to keep the ECharts instance stable.
     // Loading and error states are overlaid so the chart never unmounts.
     return (
-        <div className="relative">
+        <div className="relative min-w-0 overflow-hidden">
             <div
                 ref={chartRef}
                 className="w-full"
