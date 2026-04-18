@@ -19,6 +19,7 @@ interface FacilityItemProps {
     facilityType: "power" | "storage" | "extraction" | "functional";
     price: number;
     isLocked: boolean;
+    level?: number;
     // imageExtension?: "png" | "jpg";
     onClick: () => void;
 }
@@ -32,6 +33,7 @@ export function FacilityItem({
     facilityType,
     price,
     isLocked,
+    level,
     // imageExtension = "jpg",
     onClick,
 }: FacilityItemProps) {
@@ -55,8 +57,9 @@ export function FacilityItem({
                     <FacilityName facility={facilityName} mode="long" />
                     <div className="grow" />
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="flex items-center justify-between gap-2">
                     <Money amount={price} long />
+                    {level !== undefined && <span>Level {level}</span>}
                 </CardDescription>
             </CardHeader>
             {/* Image with lock overlay */}
