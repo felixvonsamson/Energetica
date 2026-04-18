@@ -54,6 +54,7 @@ NotificationType = Literal[
     "network_expelled",
     "achievement_milestone",
     "achievement_unlock",
+    "tutorial_push_notifications",
 ]
 
 

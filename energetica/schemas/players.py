@@ -165,6 +165,7 @@ class ProgressionMetrics(BaseModel):
     bought_resources: float = Field(description="Total bought resources in kg")
     sold_resources: float = Field(description="Total sold resources in kg")
     total_technologies: int = Field(description="Total number of technologies researched")
+    total_projects: int = Field(description="Total number of projects completed")
     xp: float = Field(description="Player experience points")
     captured_co2: float = Field(description="Total captured CO2 in kg")
     net_emissions: float = Field(description="Net CO2 emissions in kg")
@@ -221,6 +222,7 @@ class ProfileOut(BaseModel):
             bought_resources=metrics.get("bought_resources", 0),
             sold_resources=metrics.get("sold_resources", 0),
             total_technologies=int(metrics.get("total_technologies", 0)),
+            total_projects=int(metrics.get("total_projects", 0)),
             xp=metrics.get("xp", 0),
             captured_co2=metrics.get("captured_co2", 0),
             net_emissions=player.calculate_net_emissions(),

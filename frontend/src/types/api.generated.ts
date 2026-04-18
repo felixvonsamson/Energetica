@@ -508,6 +508,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/charts/resources-soc/{resolution}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Resources Soc
+         *
+         * Get resource stocks as fraction of warehouse capacity at the
+         * specified resolution.
+         *
+         *     Parameters:
+         *         resolution: Aggregation level (1/6/36/216/1296 ticks per datapoint)
+         *         start_tick: First tick to include (must be aligned to resolution)
+         *         count: Number of datapoints to retrieve
+         *
+         *     Returns values as a fraction (0-1) of the warehouse's capacity at the time of recording.
+         */
+        get: operations["get_resources_soc_api_v1_charts_resources_soc__resolution__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/charts/markets/{market_id}/clearing/{resolution}": {
         parameters: {
             query?: never;
@@ -2835,6 +2864,8 @@ export interface components {
             xp: number;
             /** Total Technologies */
             total_technologies: number;
+            /** Total Projects */
+            total_projects: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -3274,7 +3305,8 @@ export interface components {
                 | components["schemas"]["AchievementMilestonePowerConsumptionPayload"]
                 | components["schemas"]["AchievementMilestoneEnergyStoragePayload"]
                 | components["schemas"]["AchievementMilestoneBasePayload"]
-                | components["schemas"]["AchievementUnlockPayload"];
+                | components["schemas"]["AchievementUnlockPayload"]
+                | components["schemas"]["TutorialPushNotificationsPayload"];
         };
         /** NotificationPatchIn */
         NotificationPatchIn: {
@@ -3661,6 +3693,12 @@ export interface components {
              */
             total_technologies: number;
             /**
+             * Total Projects
+             *
+             * Total number of projects completed
+             */
+            total_projects: number;
+            /**
              * Xp
              *
              * Player experience points
@@ -3893,6 +3931,42 @@ export interface components {
              * Series
              *
              * Time series data for resource stocks, with quantities in tons
+             */
+            series: {
+                [key: string]: number[];
+            };
+        };
+        /**
+         * ResourcesSocResponse
+         *
+         * Response model for resource stocks as fraction of warehouse capacity.
+         */
+        ResourcesSocResponse: {
+            /**
+             * Start Tick
+             *
+             * The starting tick (timestamp) of the data series
+             */
+            start_tick: number;
+            /**
+             * Count
+             *
+             * Number of data points in the series
+             */
+            count: number;
+            /**
+             * Resolution
+             *
+             * Time resolution between data points in ticks
+             *
+             * @enum {string}
+             */
+            resolution: "1" | "6" | "36" | "216" | "1296";
+            /**
+             * Series
+             *
+             * Time series data for resource stocks, as a fraction (0-1) of
+             * warehouse capacity
              */
             series: {
                 [key: string]: number[];
@@ -4465,6 +4539,21 @@ export interface components {
         TestPushBody: {
             /** Endpoint */
             endpoint?: string | null;
+        };
+        /**
+         * TutorialPushNotificationsPayload
+         *
+         * Tutorial notification encouraging the player to enable browser push
+         * notifications.
+         */
+        TutorialPushNotificationsPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default tutorial_push_notifications
+             */
+            type: "tutorial_push_notifications";
         };
         /**
          * UserOut
@@ -5311,6 +5400,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResourcesResponse"];
+                };
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_resources_soc_api_v1_charts_resources_soc__resolution__get: {
+        parameters: {
+            query: {
+                start_tick: number;
+                count: number;
+            };
+            header?: never;
+            path: {
+                resolution: "1" | "6" | "36" | "216" | "1296";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResourcesSocResponse"];
                 };
             };
             /** Validation Error */

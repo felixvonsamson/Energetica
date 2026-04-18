@@ -155,6 +155,15 @@ const INBOX_NOTIFICATION_CONFIG = {
         inGameBody: (p) =>
             `${ACHIEVEMENT_UNLOCK_CONFIG[p.achievement_key].body} (+${p.xp} XP)`,
     },
+    tutorial_push_notifications: {
+        category: "tutorials",
+        path: () => "/app/settings",
+        title: "Tip: Enable push notifications",
+        pushBody: () =>
+            "Stay on top of your energy empire! Enable browser notifications in Settings to get updates on construction, market activity, and more — even when the game is closed.",
+        inGameBody: () =>
+            "Stay on top of your energy empire! Enable browser notifications in Settings to get updates on construction, market activity, and more — even when the game is closed.",
+    },
 } satisfies { [T in NotificationType]: InboxNotificationDef<T> };
 
 // ---------------------------------------------------------------------------

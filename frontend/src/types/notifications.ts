@@ -20,13 +20,15 @@ export type InboxCategory =
     | "projects"
     | "market"
     | "events"
-    | "achievements";
+    | "achievements"
+    | "tutorials";
 
 export const INBOX_CATEGORY_LABELS: Record<InboxCategory, string> = {
     projects: "Projects",
     market: "Market",
     events: "Events",
     achievements: "Achievements",
+    tutorials: "Tutorials",
 };
 
 // ---------------------------------------------------------------------------
@@ -43,4 +45,5 @@ export const PUSH_CATEGORY_LABELS: Record<PushCategory, string> = {
     market: "Market",
     events: "Events",
     achievements: "Achievements",
+    tutorials: "Tutorials",
 };

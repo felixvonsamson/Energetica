@@ -206,6 +206,15 @@ function LeaderboardsContent() {
                         <th
                             className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
+                                handleSort("general.total_projects")
+                            }
+                        >
+                            Projects
+                            {getSortIndicator("general.total_projects")}
+                        </th>
+                        <th
+                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
+                            onClick={() =>
                                 handleSort("general.total_technologies")
                             }
                         >
@@ -609,6 +618,9 @@ function LeaderboardsContent() {
                         </td>
                         <td className="py-3 px-4 text-right font-mono">
                             {formatPower(row.general.max_power_consumption)}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                            {row.general.total_projects}
                         </td>
                         <td className="py-3 px-4 text-right">
                             {row.general.total_technologies}
