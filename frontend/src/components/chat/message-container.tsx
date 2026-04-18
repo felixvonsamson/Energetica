@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 
+import { PlayerName } from "@/components/ui/player-name";
 import { useAuth } from "@/hooks/use-auth";
 import { usePlayerMap } from "@/hooks/use-players";
 import { formatTimestamp } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
-import { PlayerName } from "@/components/ui/player-name";
 import type { Message } from "@/types/chats";
 
 interface MessageContainerProps {

@@ -1,7 +1,6 @@
 import { Users, Check } from "lucide-react";
 
 import { CardContent, Button, Money } from "@/components/ui";
-import { PlayerName } from "@/components/ui/player-name";
 import {
     Dialog,
     DialogContent,
@@ -10,6 +9,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Duration } from "@/components/ui/duration";
+import { PlayerName } from "@/components/ui/player-name";
 import { TypographyH2, TypographyH3 } from "@/components/ui/typography";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useMyMarket } from "@/hooks/use-electricity-markets";
