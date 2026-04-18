@@ -104,9 +104,9 @@ function FunctionalFacilitiesContent() {
 
     const extraHeaderContent = useCallback(
         (facility: FunctionalFacility) => (
-            <span className="text-lg">
-                lvl. <em className="text-xl">{facility.level}</em>
-            </span>
+            <p className="text-3xl text-muted-foreground">
+                Level {facility.level}
+            </p>
         ),
         [],
     );
@@ -159,6 +159,7 @@ function FunctionalFacilitiesContent() {
                                     facility.requirements_status ===
                                     "unsatisfied"
                                 }
+                                level={facility.level}
                                 onClick={() =>
                                     navigate({
                                         search: { facility: facility.name },

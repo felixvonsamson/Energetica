@@ -151,7 +151,7 @@ function FacilityContent<T>(
                 </div>
 
                 {/* Header */}
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                     <TypographyH2 className="flex items-center gap-2 mr-auto">
                         <FacilityIcon facility={facility.name} size={28} />
                         <FacilityName facility={facility.name} mode="long" />
