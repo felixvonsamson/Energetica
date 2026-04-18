@@ -821,7 +821,7 @@ function MeritOrderChartInner({
             </div>
 
             {/* Chart */}
-            <div className="relative" style={{ height: `${height}px` }}>
+            <div className="relative min-w-0 overflow-hidden" style={{ height: `${height}px` }}>
                 <div ref={chartRef} className="w-full h-full" />
 
                 {/* Full-height highlight band for the hovered block column */}

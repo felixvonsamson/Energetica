@@ -38,7 +38,7 @@ export function GameLayout({ children }: GameLayoutProps) {
                 {/* Sidebar + content row */}
                 <div className="flex flex-1 min-h-0">
                     <AppSidebar bgLogoRef={bgLogoRef} />
-                    <SidebarInset>
+                    <SidebarInset className="min-w-0">
                         <main
                             className="flex-1 overflow-auto min-w-0"
                             onScroll={handleScroll}
