@@ -34,10 +34,11 @@ export const INBOX_CATEGORY_LABELS: Record<InboxCategory, string> = {
 // Superset of inbox categories, plus push-only categories like chat.
 // ---------------------------------------------------------------------------
 
-export type PushCategory = InboxCategory | "chat";
+export type PushCategory = InboxCategory | "chat" | "quiz";
 
 export const PUSH_CATEGORY_LABELS: Record<PushCategory, string> = {
     chat: "Chat messages",
+    quiz: "Daily quiz",
     projects: "Projects",
     market: "Market",
     events: "Events",

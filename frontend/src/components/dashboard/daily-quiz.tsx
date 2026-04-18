@@ -1,56 +1,98 @@
-import { HelpCircle } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Bell, HelpCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { TypographyH2, TypographyLarge } from "@/components/ui/typography";
 import { useDailyQuiz, useSubmitQuizAnswer } from "@/hooks/use-daily-quiz";
+import { getPushPref, setPushPref } from "@/lib/push-notification-prefs";
 import { cn } from "@/lib/utils";
 
 export function DailyQuizButton() {
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <button
-                    className={cn(
-                        "bg-card hover:bg-muted",
-                        "p-6 rounded-lg text-center transition-colors block w-full",
-                        "border border-transparent hover:border-pine dark:hover:border-brand-green",
-                    )}
-                >
-                    <HelpCircle className="w-8 h-8 mx-auto mb-2 text-foreground" />
-                    <TypographyH2 className="text-foreground">
-                        <TypographyLarge>Daily Quiz</TypographyLarge>
-                    </TypographyH2>
-                </button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                    <DialogTitle className="text-center">
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
-                        <span className="mx-2">Daily Quiz</span>
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
-                    </DialogTitle>
-                </DialogHeader>
-                <DailyQuizSection />
-            </DialogContent>
-        </Dialog>
+        <Link
+            to="/app/dashboard/quiz"
+            className={cn(
+                "bg-card hover:bg-muted",
+                "p-6 rounded-lg text-center transition-colors block w-full",
+                "border border-transparent hover:border-pine dark:hover:border-brand-green",
+            )}
+        >
+            <HelpCircle className="w-8 h-8 mx-auto mb-2 text-foreground" />
+            <TypographyH2 className="text-foreground">
+                <TypographyLarge>Daily Quiz</TypographyLarge>
+            </TypographyH2>
+        </Link>
     );
 }
 
-function DailyQuizSection() {
+function QuizPushToggle() {
+    const [pushEnabled, setPushEnabled] = useState<boolean | null>(null);
+    const [globalPushActive, setGlobalPushActive] = useState<boolean | null>(
+        null,
+    );
+
+    useEffect(() => {
+        // Check if browser push is globally enabled
+        if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+            // No push support — resolved in the next microtask to satisfy lint
+            void Promise.resolve().then(() => setGlobalPushActive(false));
+            return;
+        }
+        navigator.serviceWorker.ready
+            .then((reg) => reg.pushManager.getSubscription())
+            .then((sub) => {
+                setGlobalPushActive(!!sub);
+                if (sub) {
+                    getPushPref("quiz").then(setPushEnabled);
+                }
+            });
+    }, []);
+
+    if (globalPushActive === null) return null;
+
+    if (!globalPushActive) {
+        return (
+            <div className="mt-4 pt-4 border-t border-border flex items-center gap-2 text-sm text-muted-foreground">
+                <Bell className="w-4 h-4 shrink-0" />
+                <span>
+                    Want a reminder when the quiz resets?{" "}
+                    <Link
+                        to="/app/settings"
+                        className="underline hover:text-foreground transition-colors"
+                    >
+                        Enable browser notifications
+                    </Link>
+                </span>
+            </div>
+        );
+    }
+
+    if (pushEnabled === null) return null; // still loading pref
+
+    return (
+        <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+            <Label
+                htmlFor="quiz-push-toggle"
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+            >
+                <Bell className="w-4 h-4 shrink-0" />
+                Daily quiz reminder
+            </Label>
+            <Switch
+                id="quiz-push-toggle"
+                checked={pushEnabled}
+                onCheckedChange={(checked) => {
+                    setPushEnabled(checked);
+                    void setPushPref("quiz", checked);
+                }}
+            />
+        </div>
+    );
+}
+
+export function DailyQuizSection() {
     // TODO: correctly answering the daily quiz earns the player 1 XP point. This is not communicated in the new UI
     const { data: quizData, isLoading, isError } = useDailyQuiz();
     const { mutate: submitAnswer, isPending } = useSubmitQuizAnswer();
@@ -196,6 +238,8 @@ function DailyQuizSection() {
                     )}
                 </>
             ) : null}
+
+            <QuizPushToggle />
         </div>
     );
 }

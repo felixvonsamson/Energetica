@@ -39,6 +39,7 @@ import { Route as AppFacilitiesPowerRouteImport } from './routes/app/facilities/
 import { Route as AppFacilitiesManageRouteImport } from './routes/app/facilities/manage'
 import { Route as AppFacilitiesFunctionalRouteImport } from './routes/app/facilities/functional'
 import { Route as AppFacilitiesExtractionRouteImport } from './routes/app/facilities/extraction'
+import { Route as AppDashboardQuizRouteImport } from './routes/app/dashboard/quiz'
 import { Route as AppCommunityResourceMarketRouteImport } from './routes/app/community/resource-market'
 import { Route as AppCommunityMessagesRouteImport } from './routes/app/community/messages'
 import { Route as AppCommunityMapRouteImport } from './routes/app/community/map'
@@ -197,6 +198,11 @@ const AppFacilitiesExtractionRoute = AppFacilitiesExtractionRouteImport.update({
   path: '/app/facilities/extraction',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppDashboardQuizRoute = AppDashboardQuizRouteImport.update({
+  id: '/quiz',
+  path: '/quiz',
+  getParentRoute: () => AppDashboardRoute,
+} as any)
 const AppCommunityResourceMarketRoute =
   AppCommunityResourceMarketRouteImport.update({
     id: '/app/community/resource-market',
@@ -232,7 +238,7 @@ export interface FileRoutesByFullPath {
   '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
   '/app/changelog': typeof AppChangelogRoute
-  '/app/dashboard': typeof AppDashboardRoute
+  '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/login': typeof AppLoginRoute
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
@@ -243,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/app/community/map': typeof AppCommunityMapRoute
   '/app/community/messages': typeof AppCommunityMessagesRoute
   '/app/community/resource-market': typeof AppCommunityResourceMarketRoute
+  '/app/dashboard/quiz': typeof AppDashboardQuizRoute
   '/app/facilities/extraction': typeof AppFacilitiesExtractionRoute
   '/app/facilities/functional': typeof AppFacilitiesFunctionalRoute
   '/app/facilities/manage': typeof AppFacilitiesManageRoute
@@ -268,7 +275,7 @@ export interface FileRoutesByTo {
   '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
   '/app/changelog': typeof AppChangelogRoute
-  '/app/dashboard': typeof AppDashboardRoute
+  '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/login': typeof AppLoginRoute
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
@@ -279,6 +286,7 @@ export interface FileRoutesByTo {
   '/app/community/map': typeof AppCommunityMapRoute
   '/app/community/messages': typeof AppCommunityMessagesRoute
   '/app/community/resource-market': typeof AppCommunityResourceMarketRoute
+  '/app/dashboard/quiz': typeof AppDashboardQuizRoute
   '/app/facilities/extraction': typeof AppFacilitiesExtractionRoute
   '/app/facilities/functional': typeof AppFacilitiesFunctionalRoute
   '/app/facilities/manage': typeof AppFacilitiesManageRoute
@@ -306,7 +314,7 @@ export interface FileRoutesById {
   '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
   '/app/changelog': typeof AppChangelogRoute
-  '/app/dashboard': typeof AppDashboardRoute
+  '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/login': typeof AppLoginRoute
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
@@ -317,6 +325,7 @@ export interface FileRoutesById {
   '/app/community/map': typeof AppCommunityMapRoute
   '/app/community/messages': typeof AppCommunityMessagesRoute
   '/app/community/resource-market': typeof AppCommunityResourceMarketRoute
+  '/app/dashboard/quiz': typeof AppDashboardQuizRoute
   '/app/facilities/extraction': typeof AppFacilitiesExtractionRoute
   '/app/facilities/functional': typeof AppFacilitiesFunctionalRoute
   '/app/facilities/manage': typeof AppFacilitiesManageRoute
@@ -355,6 +364,7 @@ export interface FileRouteTypes {
     | '/app/community/map'
     | '/app/community/messages'
     | '/app/community/resource-market'
+    | '/app/dashboard/quiz'
     | '/app/facilities/extraction'
     | '/app/facilities/functional'
     | '/app/facilities/manage'
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/app/community/map'
     | '/app/community/messages'
     | '/app/community/resource-market'
+    | '/app/dashboard/quiz'
     | '/app/facilities/extraction'
     | '/app/facilities/functional'
     | '/app/facilities/manage'
@@ -428,6 +439,7 @@ export interface FileRouteTypes {
     | '/app/community/map'
     | '/app/community/messages'
     | '/app/community/resource-market'
+    | '/app/dashboard/quiz'
     | '/app/facilities/extraction'
     | '/app/facilities/functional'
     | '/app/facilities/manage'
@@ -455,7 +467,7 @@ export interface RootRouteChildren {
   LearningToolRoute: typeof LearningToolRoute
   SignUpRoute: typeof SignUpRoute
   AppChangelogRoute: typeof AppChangelogRoute
-  AppDashboardRoute: typeof AppDashboardRoute
+  AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppLoginRoute: typeof AppLoginRoute
   AppLogoutRoute: typeof AppLogoutRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -698,6 +710,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFacilitiesExtractionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/dashboard/quiz': {
+      id: '/app/dashboard/quiz'
+      path: '/quiz'
+      fullPath: '/app/dashboard/quiz'
+      preLoaderRoute: typeof AppDashboardQuizRouteImport
+      parentRoute: typeof AppDashboardRoute
+    }
     '/app/community/resource-market': {
       id: '/app/community/resource-market'
       path: '/app/community/resource-market'
@@ -736,6 +755,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppDashboardRouteChildren {
+  AppDashboardQuizRoute: typeof AppDashboardQuizRoute
+}
+
+const AppDashboardRouteChildren: AppDashboardRouteChildren = {
+  AppDashboardQuizRoute: AppDashboardQuizRoute,
+}
+
+const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
+  AppDashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   RouteRoute: RouteRoute,
   AboutRoute: AboutRoute,
@@ -743,7 +774,7 @@ const rootRouteChildren: RootRouteChildren = {
   LearningToolRoute: LearningToolRoute,
   SignUpRoute: SignUpRoute,
   AppChangelogRoute: AppChangelogRoute,
-  AppDashboardRoute: AppDashboardRoute,
+  AppDashboardRoute: AppDashboardRouteWithChildren,
   AppLoginRoute: AppLoginRoute,
   AppLogoutRoute: AppLogoutRoute,
   AppSettingsRoute: AppSettingsRoute,

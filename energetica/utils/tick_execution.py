@@ -38,7 +38,7 @@ def tick() -> None:
     engine.log(f"t = {engine.total_t}")
     if engine.total_t % 216 == 0:
         save_past_data()
-    if (engine.total_t + engine.delta_t) % (24 * 60 * 60 / engine.clock_time) == 0:
+    if (engine.total_t * engine.clock_time + int(engine.start_date.timestamp())) % 86400 == 9 * 3600:
         engine.new_daily_question()
     check_events_completion()
     production_update.update_electricity()

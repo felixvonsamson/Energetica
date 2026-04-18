@@ -275,6 +275,9 @@ class GameEngine(object):
 
     def new_daily_question(self) -> None:
         """Load a new daily question from the csv file."""
+        from energetica.database.player import Player
+        from energetica.schemas.notifications import QuizReminderPayload
+
         with open("energetica/static/data/daily_quiz_questions.csv", "r", encoding="utf-8") as file:
             csv_reader = list(csv.DictReader(file))
         if self.question_order is None:
@@ -286,6 +289,10 @@ class GameEngine(object):
         self.daily_question = csv_reader[self.question_order[question_index]]
         self.daily_question["index"] = question_index
         self.daily_question["player_answers"] = {}
+
+        payload = QuizReminderPayload()
+        for player in Player.all():
+            player.push_only(payload)
 
     @property
     def general_chat(self) -> Chat:
