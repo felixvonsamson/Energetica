@@ -90,6 +90,12 @@ class NetworkExpelledPayload(BaseModel):
     network_name: str
 
 
+class NetworkOverdraftWarningPayload(BaseModel):
+    type: Literal["network_overdraft_warning"] = "network_overdraft_warning"
+    network_name: str
+    overdraft_pct: float  # current money as a percentage of max overdraft (e.g. 0.6 = 60%)
+
+
 class AchievementUnlockPayload(BaseModel):
     """One-shot achievement unlocked by constructing a specific facility."""
 
@@ -187,6 +193,7 @@ PersistableNotificationPayload = Union[
     ResourceSoldPayload,
     ShipmentArrivedPayload,
     NetworkExpelledPayload,
+    NetworkOverdraftWarningPayload,
     AchievementMilestonePowerConsumptionPayload,
     AchievementMilestoneEnergyStoragePayload,
     AchievementMilestoneBasePayload,

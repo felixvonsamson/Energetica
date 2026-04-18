@@ -52,6 +52,7 @@ NotificationType = Literal[
     "resource_sold",
     "shipment_arrived",
     "network_expelled",
+    "network_overdraft_warning",
     "achievement_milestone",
     "achievement_unlock",
 ]

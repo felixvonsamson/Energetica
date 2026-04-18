@@ -150,6 +150,10 @@ class Player(DBModel):
         },
     )
 
+    # True while player money is below 50% of their max overdraft (within a network).
+    # Reset when they recover or leave the network, so each new dip triggers one warning.
+    overdraft_warning_sent: bool = False
+
     # Browser push notification subscriptions (push subscription objects)
     push_subscriptions: list[Subscription] = field(default_factory=list)
     # Server-side feed subscriptions: opt-in to specific notification streams.
@@ -186,6 +190,8 @@ class Player(DBModel):
             }
         if not hasattr(self, "push_subscriptions"):
             self.push_subscriptions = []
+        if not hasattr(self, "overdraft_warning_sent"):
+            self.overdraft_warning_sent = False
         # Migrate old notification_opt_ins field
         if hasattr(self, "notification_opt_ins"):
             del self.__dict__["notification_opt_ins"]

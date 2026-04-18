@@ -33,7 +33,7 @@ from energetica.enums import (
 )
 from energetica.globals import engine
 from energetica.schemas.electricity_markets import AskType
-from energetica.schemas.notifications import NetworkExpelledPayload
+from energetica.schemas.notifications import NetworkExpelledPayload, NetworkOverdraftWarningPayload
 from energetica.utils import network_helpers
 from energetica.types.facility_statuses import ProductionStatus
 from energetica.utils.misc import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
@@ -126,6 +126,21 @@ def update_electricity() -> None:
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
         money_balance(new_values[player.id], player)
+        # --- Overdraft warning ---
+        if player.network is not None:
+            max_overdraft = -player.config["industry"]["income_per_day"]
+            if player.money < max_overdraft * 0.5:
+                if not player.overdraft_warning_sent:
+                    player.overdraft_warning_sent = True
+                    overdraft_pct = player.money / max_overdraft
+                    player.notify(
+                        NetworkOverdraftWarningPayload(
+                            network_name=player.network.name,
+                            overdraft_pct=round(overdraft_pct, 2),
+                        )
+                    )
+            elif player.overdraft_warning_sent:
+                player.overdraft_warning_sent = False
         player.rolling_history.append_value(new_values[player.id])
         update_player_progress_values(player, new_values)
         # send new data to clients
