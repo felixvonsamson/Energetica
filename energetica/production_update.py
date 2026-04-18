@@ -56,15 +56,6 @@ def update_electricity() -> None:
     for os in ongoing_shipments:
         os.reset_speed()
 
-    # --- Expel bankrupt players from their networks ---
-    for network in list(Network.all()):
-        for player in list(network.members):
-            max_overdraft = -player.config["industry"]["income_per_day"]
-            if player.money < max_overdraft:
-                network_name = network.name
-                network_helpers.leave_network(player)
-                player.notify(NetworkExpelledPayload(network_name=network_name))
-                engine.log(f"{player.username} was expelled from {network_name} due to insufficient funds")
 
     for network in Network.all():
         # --- Market resolution ---
@@ -126,17 +117,21 @@ def update_electricity() -> None:
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
         money_balance(new_values[player.id], player)
-        # --- Overdraft warning ---
+        # --- Expel bankrupt players and warn those nearing their overdraft limit ---
         if player.network is not None:
             max_overdraft = -player.config["industry"]["income_per_day"]
-            if player.money < max_overdraft * 0.5:
+            if player.money < max_overdraft:
+                network_name = player.network.name
+                network_helpers.leave_network(player)
+                player.notify(NetworkExpelledPayload(network_name=network_name))
+                engine.log(f"{player.username} was expelled from {network_name} due to insufficient funds")
+            elif player.money < max_overdraft * 0.5:
                 if not player.overdraft_warning_sent:
                     player.overdraft_warning_sent = True
-                    overdraft_pct = player.money / max_overdraft
                     player.notify(
                         NetworkOverdraftWarningPayload(
                             network_name=player.network.name,
-                            overdraft_pct=round(overdraft_pct, 2),
+                            overdraft_pct=round(player.money / max_overdraft, 2),
                         )
                     )
             elif player.overdraft_warning_sent:
