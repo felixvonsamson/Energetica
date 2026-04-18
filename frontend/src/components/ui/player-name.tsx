@@ -4,29 +4,29 @@ import { usePlayer } from "@/hooks/use-players";
 import { cn } from "@/lib/utils";
 import type { Player } from "@/types/players";
 
-type ActivityStatus = "online" | "away" | "offline";
+type ActivityStatus = "active" | "away" | "inactive";
 
-const ONLINE_THRESHOLD_MS = 15 * 60 * 1000;
-const AWAY_THRESHOLD_MS = 24 * 60 * 60 * 1000;
+const ACTIVE_THRESHOLD_MS = 12 * 60 * 60 * 1000; // 12 hours
+const AWAY_THRESHOLD_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
 
 function getActivityStatus(lastConnection: string | null): ActivityStatus {
-    if (!lastConnection) return "offline";
+    if (!lastConnection) return "inactive";
     const elapsed = Date.now() - new Date(lastConnection).getTime();
-    if (elapsed < ONLINE_THRESHOLD_MS) return "online";
+    if (elapsed < ACTIVE_THRESHOLD_MS) return "active";
     if (elapsed < AWAY_THRESHOLD_MS) return "away";
-    return "offline";
+    return "inactive";
 }
 
 const statusStyles: Record<ActivityStatus, string> = {
-    online: "text-green-500",
-    away: "text-yellow-500",
-    offline: "text-muted-foreground/40",
+    active: "text-green-500",
+    away: "text-orange-500",
+    inactive: "text-muted-foreground/40",
 };
 
 const statusLabels: Record<ActivityStatus, string> = {
-    online: "Online",
-    away: "Recently active",
-    offline: "Offline",
+    active: "Active",
+    away: "Away",
+    inactive: "Inactive",
 };
 
 interface ActivityDotProps {

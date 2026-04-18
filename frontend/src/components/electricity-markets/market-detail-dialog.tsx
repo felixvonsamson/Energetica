@@ -1,6 +1,7 @@
 import { Users, Check } from "lucide-react";
 
 import { CardContent, Button, Money } from "@/components/ui";
+import { PlayerName } from "@/components/ui/player-name";
 import {
     Dialog,
     DialogContent,
@@ -183,8 +184,11 @@ function MarketContent(
                                 key={memberId}
                                 className="px-3 py-2 bg-muted/30 rounded text-sm"
                             >
-                                {playerMap[memberId]?.username ||
-                                    `Player ${memberId}`}
+                                {playerMap[memberId] ? (
+                                    <PlayerName player={playerMap[memberId]} />
+                                ) : (
+                                    `Player ${memberId}`
+                                )}
                             </div>
                         ))}
                     </div>

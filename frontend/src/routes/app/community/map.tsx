@@ -11,7 +11,7 @@ import { ResourceButton } from "@/components/map/resource-button";
 import { useMapContext } from "@/contexts/map-context";
 import { useAuth } from "@/hooks/use-auth";
 import { useMap } from "@/hooks/use-map";
-import { usePlayers } from "@/hooks/use-players";
+import { usePlayerMap, usePlayers } from "@/hooks/use-players";
 import { getHexPosition } from "@/lib/hex-utils";
 import { RESOURCES, ResourceId } from "@/lib/map-resources";
 
@@ -50,21 +50,20 @@ export const Route = createFileRoute("/app/community/map")({
 
 /** Renders the hovered-tile tooltip; must be inside a MapCanvas (uses context). */
 function MapTooltipLayer({
-    playerMap,
     calculateDistance,
 }: {
-    playerMap: Record<number, string>;
     calculateDistance: (tileId: number) => number;
 }) {
     const { width, height, s, w, hoveredTile } = useMapContext();
+    const playerMap = usePlayerMap();
     if (!hoveredTile) return null;
     const { x, y } = getHexPosition(hoveredTile.q, hoveredTile.r, s, w);
     return (
         <foreignObject x={-width / 2} y={-height / 2} width={width} height={height} overflow="visible" style={{ pointerEvents: "none" }}>
             <MapTooltip
                 tile={hoveredTile}
-                username={
-                    hoveredTile.player_id
+                player={
+                    hoveredTile.player_id && playerMap
                         ? (playerMap[hoveredTile.player_id] ?? null)
                         : null
                 }
@@ -87,7 +86,7 @@ function MapContent() {
     const { data: playersData, isLoading: isPlayersLoading } = usePlayers();
     const { user } = useAuth();
 
-    const playerMap = useMemo(() => {
+    const playerUsernameMap = useMemo(() => {
         const map: Record<number, string> = {};
         playersData?.forEach((p) => { map[p.id] = p.username; });
         return map;
@@ -151,12 +150,11 @@ function MapContent() {
                     <MapCanvas className="absolute inset-0" mapData={mapData}>
                         <MapTiles
                             mapData={mapData}
-                            playerMap={playerMap}
+                            playerMap={playerUsernameMap}
                             activeResourceId={activeResourceId}
                             currentPlayerId={user?.player_id}
                         />
                         <MapTooltipLayer
-                            playerMap={playerMap}
                             calculateDistance={calculateDistance}
                         />
                     </MapCanvas>

@@ -3,13 +3,15 @@
  * tile.
  */
 
+import { PlayerName } from "@/components/ui/player-name";
 import type { ApiResponse } from "@/types/api-helpers";
+import type { Player } from "@/types/players";
 
 type HexTileData = ApiResponse<"/api/v1/map", "get">[number];
 
 interface MapTooltipProps {
     tile: HexTileData;
-    username: string | null;
+    player: Player | null;
     distance: number;
     x: number;
     y: number;
@@ -30,7 +32,7 @@ const TOOLTIP_HEIGHT = 360;
 
 export function MapTooltip({
     tile,
-    username,
+    player,
     distance,
     x,
     y,
@@ -118,8 +120,8 @@ export function MapTooltip({
             <div className="bg-card border border-border px-6 py-3 rounded shadow-lg">
                 {/* Title */}
                 <div className="text-center text-xl mb-3">
-                    {username ? (
-                        <span className="text-foreground">{username}</span>
+                    {player ? (
+                        <PlayerName player={player} className="justify-center" />
                     ) : (
                         <span className="text-brand-green dark:text-gray-100">
                             Vacant tile
