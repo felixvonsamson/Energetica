@@ -127,9 +127,9 @@ const INBOX_NOTIFICATION_CONFIG = {
         path: () => "/app/community/electricity-markets",
         title: "Overdraft warning",
         pushBody: (p) =>
-            `Your balance in ${p.network_name} has reached ${Math.round(p.overdraft_pct * 100)}% of your maximum overdraft. Recover funds to avoid being expelled.`,
+            `Your balance has reached ${Math.round(p.overdraft_pct * 100)}% of your maximum overdraft. Recover funds to avoid being expelled from ${p.network_name}.`,
         inGameBody: (p) =>
-            `Your balance in ${p.network_name} has reached ${Math.round(p.overdraft_pct * 100)}% of your maximum overdraft. Recover funds to avoid being expelled.`,
+            `Your balance has reached ${Math.round(p.overdraft_pct * 100)}% of your maximum overdraft. Recover funds to avoid being expelled from ${p.network_name}.`,
     },
     achievement_milestone: {
         category: "achievements",
@@ -257,9 +257,7 @@ const getInboxDef = (type: NotificationType) =>
     INBOX_NOTIFICATION_CONFIG[type] as unknown as AnyInboxDef;
 
 /** Get the inbox category for a notification type (inbox items only). */
-export function getNotificationCategory(
-    type: NotificationType,
-): InboxCategory {
+export function getNotificationCategory(type: NotificationType): InboxCategory {
     return INBOX_NOTIFICATION_CONFIG[type].category;
 }
 
