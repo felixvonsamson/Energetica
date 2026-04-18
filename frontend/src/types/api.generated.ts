@@ -3375,6 +3375,12 @@ export interface components {
              * Username of the player
              */
             username: string;
+            /**
+             * Last Connection
+             *
+             * Timestamp of the player's last activity
+             */
+            last_connection?: string | null;
         };
         /** PowerAndEnergyStats */
         PowerAndEnergyStats: {

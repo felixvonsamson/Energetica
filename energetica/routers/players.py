@@ -34,6 +34,7 @@ def get_me(user: Player = Depends(get_settled_player)) -> PlayerOut:
     return PlayerOut(
         id=user.id,
         username=user.username,
+        last_connection=user.last_connection,
     )
 
 
@@ -45,6 +46,7 @@ def get_all_players() -> list[PlayerOut]:
         PlayerOut(
             id=player.id,
             username=player.username,
+            last_connection=player.last_connection,
         )
         for player in all_players
     ]

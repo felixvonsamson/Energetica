@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
@@ -15,6 +16,7 @@ class PlayerOut(BaseModel):
 
     id: int = Field(description="ID of the player")
     username: str = Field(description="Username of the player")
+    last_connection: datetime | None = Field(None, description="Timestamp of the player's last activity")
 
 
 class SettingsOut(BaseModel):

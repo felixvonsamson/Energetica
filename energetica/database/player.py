@@ -7,6 +7,7 @@ import json
 from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import StrEnum
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Iterable
@@ -78,6 +79,8 @@ class Player(DBModel):
     def username(self) -> str:
         """Return the username of the associated user."""
         return self.user.username
+
+    last_connection: datetime | None = None
 
     # inactive: bool = False  # True if account is inactive
     show_chat_disclaimer: bool = True
@@ -173,6 +176,8 @@ class Player(DBModel):
         self.__dict__.update(state)
 
         # Backward compatibility: Initialize new fields for old Player objects loaded from pickle
+        if not hasattr(self, "last_connection"):
+            self.last_connection = None
         if not hasattr(self, "renewable_statuses"):
             self.renewable_statuses = {}
         if not hasattr(self, "production_statuses"):
