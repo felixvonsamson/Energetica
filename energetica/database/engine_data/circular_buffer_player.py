@@ -96,7 +96,7 @@ class CircularBufferPlayer:
         for category, subcategories in self._data.items():
             result[category] = {}
             for subcategory, buffer in subcategories.items():
-                if category in ["storage", "resources", "resources_soc"]:
+                if category in ["storage", "resources"]:
                     result[category][subcategory] = buffer[-1]
                 else:
                     result[category][subcategory] = 0.0

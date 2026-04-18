@@ -18,7 +18,7 @@ interface ResourcesChartProps {
     isLoading: boolean;
     isError: boolean;
     hiddenResources: Set<string>;
-    viewMode: "normal" | "percent";
+    viewMode: "mass" | "percent";
 }
 
 export function ResourcesChart({
@@ -34,7 +34,7 @@ export function ResourcesChart({
     // In percent mode, chartData already contains server-computed SoC (0-1 fraction).
     // Scale to 0-100 for display.
     const displayData: Array<Record<string, unknown>> = useMemo(() => {
-        if (viewMode === "normal" || chartData.length === 0) {
+        if (viewMode === "mass" || chartData.length === 0) {
             return chartData;
         }
         return chartData.map((dataPoint) => {
@@ -50,17 +50,17 @@ export function ResourcesChart({
 
     const chartConfig: EChartsTimeSeriesConfig = useMemo(
         () => ({
-            chartType: viewMode === "normal" ? "resources" : "resources-soc",
-            chartVariant: viewMode === "normal" ? "area" : "smoothLine",
+            chartType: viewMode === "mass" ? "resources" : "resources-soc",
+            chartVariant: viewMode === "mass" ? "area" : "smoothLine",
             stacked: false,
             getColor,
             filterDataKeys,
             formatValue:
-                viewMode === "normal"
+                viewMode === "mass"
                     ? formatMass
                     : (value: number) => `${value.toFixed(1)}%`,
             formatYAxis: (value: number) =>
-                viewMode === "normal" ? formatMass(value) : `${value}%`,
+                viewMode === "mass" ? formatMass(value) : `${value}%`,
         }),
         [viewMode, getColor, filterDataKeys],
     );
@@ -84,11 +84,10 @@ interface ResourcesOverviewTableProps {
 interface ResourceRow {
     resource: string;
     currentStock: number;
-    capacity: number;
     percentFull: number;
 }
 
-type SortKey = "resource" | "stock" | "capacity" | "percent";
+type SortKey = "resource" | "stock" | "percent";
 type SortDirection = "asc" | "desc";
 
 export function ResourcesOverviewTable({
@@ -110,9 +109,7 @@ export function ResourcesOverviewTable({
         });
         return (
             resourceTypes.size > 0 &&
-            Array.from(resourceTypes).every((type) =>
-                hiddenResources.has(type),
-            )
+            Array.from(resourceTypes).every((type) => hiddenResources.has(type))
         );
     }, [chartData, hiddenResources]);
 
@@ -159,7 +156,7 @@ export function ResourcesOverviewTable({
             const percentFull =
                 capacity > 0 ? (currentStock / capacity) * 100 : 0;
 
-            return { resource, currentStock, capacity, percentFull };
+            return { resource, currentStock, percentFull };
         });
     }, [chartData, resourcesData]);
 
@@ -177,10 +174,6 @@ export function ResourcesOverviewTable({
                 case "stock":
                     aVal = a.currentStock;
                     bVal = b.currentStock;
-                    break;
-                case "capacity":
-                    aVal = a.capacity;
-                    bVal = b.capacity;
                     break;
                 case "percent":
                     aVal = a.percentFull;
@@ -237,12 +230,6 @@ export function ResourcesOverviewTable({
                             Current Stock{getSortIndicator("stock")}
                         </th>
                         <th
-                            className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
-                            onClick={() => handleSort("capacity")}
-                        >
-                            Warehouse Capacity{getSortIndicator("capacity")}
-                        </th>
-                        <th
                             className="py-3 px-4 text-center font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors min-w-37.5"
                             onClick={() => handleSort("percent")}
                         >
@@ -280,9 +267,6 @@ export function ResourcesOverviewTable({
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono">
                                     {formatMass(row.currentStock)}
-                                </td>
-                                <td className="py-3 px-4 text-right font-mono">
-                                    {formatMass(row.capacity)}
                                 </td>
                                 <td className="py-3 px-4 text-center min-w-37.5">
                                     <FacilityGauge

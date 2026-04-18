@@ -1,7 +1,13 @@
 /** Resources overview page - Resource stocks visualization. */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { Package, TrendingUp, Warehouse, BarChart3, Funnel } from "lucide-react";
+import {
+    Package,
+    TrendingUp,
+    Warehouse,
+    BarChart3,
+    Funnel,
+} from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -32,7 +38,10 @@ export const Route = createFileRoute("/app/overviews/resources")({
             isUnlocked: (cap) =>
                 cap.has_warehouse
                     ? { unlocked: true }
-                    : { unlocked: false, reason: "Build a Warehouse to unlock" },
+                    : {
+                          unlocked: false,
+                          reason: "Build a Warehouse to unlock",
+                      },
         },
         infoDialog: {
             contents: <ResourcesOverviewHelp />,
@@ -100,13 +109,13 @@ function ResourcesOverviewPage() {
 }
 
 const VIEW_MODE_OPTIONS = [
-    { value: "percent", label: "% of Capacity" },
-    { value: "normal", label: "Absolute" },
+    { value: "percent", label: "%" },
+    { value: "mass", label: "t" },
 ] as const;
 
 function ResourcesOverviewContent() {
     const { currentTick } = useGameTick();
-    const [viewMode, setViewMode] = useState<"normal" | "percent">("percent");
+    const [viewMode, setViewMode] = useState<"mass" | "percent">("percent");
     const [hiddenResources, toggleResource] = useToggleSet<string>();
     const { selectedResolution } = useResolution();
 
@@ -136,8 +145,7 @@ function ResourcesOverviewContent() {
         maxDatapoints: selectedResolution.datapoints,
     });
 
-    const chartData =
-        viewMode === "percent" ? resourcesSocData : resourcesData;
+    const chartData = viewMode === "percent" ? resourcesSocData : resourcesData;
     const isChartLoading =
         viewMode === "percent" ? isSocLoading : isResourcesLoading;
     const isError = viewMode === "percent" ? isSocError : isResourcesError;
@@ -152,7 +160,7 @@ function ResourcesOverviewContent() {
                             <SegmentedPicker
                                 value={viewMode}
                                 onValueChange={(value) =>
-                                    setViewMode(value as "normal" | "percent")
+                                    setViewMode(value as "mass" | "percent")
                                 }
                             >
                                 {VIEW_MODE_OPTIONS.map((option) => (
