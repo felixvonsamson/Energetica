@@ -56,8 +56,7 @@ def update_electricity() -> None:
     for os in ongoing_shipments:
         os.reset_speed()
 
-
-    for network in Network.all():
+    for network in list(Network.all()):
         # --- Market resolution ---
         market = init_market()
         for player in network.members:
