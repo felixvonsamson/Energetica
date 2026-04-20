@@ -18,6 +18,7 @@ import { TypographyBrand } from "@/components/ui/typography";
 import { useAuth } from "@/hooks/use-auth";
 import { useLogin } from "@/hooks/use-auth-queries";
 import { useGameEngine } from "@/hooks/use-game";
+import { authApi } from "@/lib/api/auth";
 import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
 
 export const Route = createFileRoute("/app/login")({
@@ -29,14 +30,14 @@ export const Route = createFileRoute("/app/login")({
 
 function LoginPage() {
     const navigate = useNavigate();
-    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
     // Redirect if already authenticated
     useEffect(() => {
         if (isAuthenticated && !isAuthLoading) {
-            navigate({ to: "/app/dashboard" });
+            navigate({ to: user?.role === "admin" ? "/admin-dashboard" : "/app/dashboard" });
         }
-    }, [isAuthenticated, isAuthLoading, navigate]);
+    }, [isAuthenticated, isAuthLoading, user?.role, navigate]);
 
     // Don't render the form if already authenticated
     if (isAuthenticated) {
@@ -79,8 +80,9 @@ function LoginForm() {
 
         try {
             await login.mutateAsync({ username: username.trim(), password });
+            const freshUser = await authApi.me();
             await refetchAuth();
-            navigate({ to: "/app/dashboard" });
+            navigate({ to: freshUser.role === "admin" ? "/admin-dashboard" : "/app/dashboard" });
         } catch (err) {
             if (isErrorType(err, "USER_NOT_FOUND")) {
                 setUsernameNotFound(true);

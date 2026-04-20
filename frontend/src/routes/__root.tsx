@@ -32,7 +32,6 @@ function computeRedirect(
 
     const requiredRole = routeConfig.requiredRole;
     switch (requiredRole) {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         case "player":
             if (routeConfig.requiresSettledTile && !user.is_settled)
                 return "/app/settle";
@@ -40,6 +39,8 @@ function computeRedirect(
                 return "/app/dashboard";
             if (!capabilities || !routeConfig.isUnlocked(capabilities).unlocked)
                 return "/app/dashboard";
+            return null;
+        case "admin":
             return null;
         default:
             throw requiredRole satisfies never;

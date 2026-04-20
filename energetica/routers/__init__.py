@@ -16,6 +16,7 @@ from energetica.schemas.common import GameErrorOut
 from energetica.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
 from energetica.utils.auth import get_user
 
+from .admin_actions import router as admin_router
 from .achievements import router as achievements_router
 from .auth import router as auth_router
 from .browser_notifications import router as browser_notifications_router
@@ -39,6 +40,7 @@ from .weather import router as weather_router
 __all__ = ["templates_router"]
 
 api_routers = [
+    admin_router,
     achievements_router,
     auth_router,
     browser_notifications_router,

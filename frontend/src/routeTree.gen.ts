@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as LearningToolRouteImport } from './routes/learning-tool'
 import { Route as LandingPageRouteImport } from './routes/landing-page'
+import { Route as AdminDashboardRouteImport } from './routes/admin-dashboard'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as RouteRouteImport } from './routes/route'
 import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as AdminDashboardIndexRouteImport } from './routes/admin-dashboard/index'
 import { Route as AppSettleRouteImport } from './routes/app/settle'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppLogoutRouteImport } from './routes/app/logout'
@@ -61,6 +63,11 @@ const LandingPageRoute = LandingPageRouteImport.update({
   path: '/landing-page',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/admin-dashboard',
+  path: '/admin-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -75,6 +82,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/app/',
   path: '/app/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDashboardIndexRoute = AdminDashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminDashboardRoute,
 } as any)
 const AppSettleRoute = AppSettleRouteImport.update({
   id: '/app/settle',
@@ -234,6 +246,7 @@ const AppCommunityElectricityMarketsRoute =
 
 export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
+  '/admin-dashboard': typeof AdminDashboardRouteWithChildren
   '/landing-page': typeof LandingPageRoute
   '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
@@ -243,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
+  '/admin-dashboard/': typeof AdminDashboardIndexRoute
   '/app': typeof AppIndexRoute
   '/app/community/electricity-markets': typeof AppCommunityElectricityMarketsRoute
   '/app/community/leaderboards': typeof AppCommunityLeaderboardsRoute
@@ -280,6 +294,7 @@ export interface FileRoutesByTo {
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
+  '/admin-dashboard': typeof AdminDashboardIndexRoute
   '/app': typeof AppIndexRoute
   '/app/community/electricity-markets': typeof AppCommunityElectricityMarketsRoute
   '/app/community/leaderboards': typeof AppCommunityLeaderboardsRoute
@@ -310,6 +325,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof RouteRoute
   '/about': typeof AboutRoute
+  '/admin-dashboard': typeof AdminDashboardRouteWithChildren
   '/landing-page': typeof LandingPageRoute
   '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
@@ -319,6 +335,7 @@ export interface FileRoutesById {
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
+  '/admin-dashboard/': typeof AdminDashboardIndexRoute
   '/app/': typeof AppIndexRoute
   '/app/community/electricity-markets': typeof AppCommunityElectricityMarketsRoute
   '/app/community/leaderboards': typeof AppCommunityLeaderboardsRoute
@@ -349,6 +366,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/about'
+    | '/admin-dashboard'
     | '/landing-page'
     | '/learning-tool'
     | '/sign-up'
@@ -358,6 +376,7 @@ export interface FileRouteTypes {
     | '/app/logout'
     | '/app/settings'
     | '/app/settle'
+    | '/admin-dashboard/'
     | '/app'
     | '/app/community/electricity-markets'
     | '/app/community/leaderboards'
@@ -395,6 +414,7 @@ export interface FileRouteTypes {
     | '/app/logout'
     | '/app/settings'
     | '/app/settle'
+    | '/admin-dashboard'
     | '/app'
     | '/app/community/electricity-markets'
     | '/app/community/leaderboards'
@@ -424,6 +444,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/admin-dashboard'
     | '/landing-page'
     | '/learning-tool'
     | '/sign-up'
@@ -433,6 +454,7 @@ export interface FileRouteTypes {
     | '/app/logout'
     | '/app/settings'
     | '/app/settle'
+    | '/admin-dashboard/'
     | '/app/'
     | '/app/community/electricity-markets'
     | '/app/community/leaderboards'
@@ -463,6 +485,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   RouteRoute: typeof RouteRoute
   AboutRoute: typeof AboutRoute
+  AdminDashboardRoute: typeof AdminDashboardRouteWithChildren
   LandingPageRoute: typeof LandingPageRoute
   LearningToolRoute: typeof LearningToolRoute
   SignUpRoute: typeof SignUpRoute
@@ -521,6 +544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LandingPageRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-dashboard': {
+      id: '/admin-dashboard'
+      path: '/admin-dashboard'
+      fullPath: '/admin-dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -541,6 +571,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin-dashboard/': {
+      id: '/admin-dashboard/'
+      path: '/'
+      fullPath: '/admin-dashboard/'
+      preLoaderRoute: typeof AdminDashboardIndexRouteImport
+      parentRoute: typeof AdminDashboardRoute
     }
     '/app/settle': {
       id: '/app/settle'
@@ -755,6 +792,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminDashboardRouteChildren {
+  AdminDashboardIndexRoute: typeof AdminDashboardIndexRoute
+}
+
+const AdminDashboardRouteChildren: AdminDashboardRouteChildren = {
+  AdminDashboardIndexRoute: AdminDashboardIndexRoute,
+}
+
+const AdminDashboardRouteWithChildren = AdminDashboardRoute._addFileChildren(
+  AdminDashboardRouteChildren,
+)
+
 interface AppDashboardRouteChildren {
   AppDashboardQuizRoute: typeof AppDashboardQuizRoute
 }
@@ -770,6 +819,7 @@ const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   RouteRoute: RouteRoute,
   AboutRoute: AboutRoute,
+  AdminDashboardRoute: AdminDashboardRouteWithChildren,
   LandingPageRoute: LandingPageRoute,
   LearningToolRoute: LearningToolRoute,
   SignUpRoute: SignUpRoute,

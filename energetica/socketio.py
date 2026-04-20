@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from socketio.exceptions import ConnectionRefusedError
 
 from energetica.database.player import Player
+from energetica.database.user import User
 from energetica.globals import engine
 from energetica.utils.auth import get_user_from_token
 
@@ -22,7 +23,8 @@ def setup_socketio(app: FastAPI) -> None:
     engine.socketio = sio
     app.mount("/socket.io", socketio.ASGIApp(engine.socketio))
 
-    connected_users_by_sid: dict[str, Player | None] = {}
+    connected_players_by_sid: dict[str, Player | None] = {}
+    connected_admins_by_sid: dict[str, User] = {}
 
     @sio.event
     def connect(sid: str, environ: dict[str, Any], auth: Any) -> None:
@@ -38,21 +40,29 @@ def setup_socketio(app: FastAPI) -> None:
         user = get_user_from_token(cast(str, session_token.value))
         if user is None:
             raise ConnectionRefusedError("authentication failed: invalid token")
+
+        if user.role == "admin":
+            connected_admins_by_sid[sid] = user
+            return
+
         if user.role != "player":
-            raise ConnectionRefusedError("authentication failed: not a player")
+            raise ConnectionRefusedError("authentication failed: unknown role")
 
         # Allow unsettled players to connect so they can receive broadcasts (e.g., map updates)
         # Only track socketio_clients if player exists (for targeted player.emit())
         if user.player is not None:
             user.player.socketio_clients.append(sid)
-            connected_users_by_sid[sid] = user.player
+            connected_players_by_sid[sid] = user.player
         else:
             # Track unsettled users with None so we can clean up on disconnect
-            connected_users_by_sid[sid] = None
+            connected_players_by_sid[sid] = None
 
     @sio.event
     def disconnect(sid: str) -> None:
         """Clean up user on disconnect."""
-        player = connected_users_by_sid.pop(sid, None)
+        if sid in connected_admins_by_sid:
+            del connected_admins_by_sid[sid]
+            return
+        player = connected_players_by_sid.pop(sid, None)
         if player is not None:
             player.socketio_clients.remove(sid)

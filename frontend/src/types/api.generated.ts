@@ -4,6 +4,27 @@
  */
 
 export interface paths {
+    "/api/v1/admin/players": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Players
+         *
+         * Get all players for the admin dashboard.
+         */
+        get: operations["list_players_api_v1_admin_players_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/achievements": {
         parameters: {
             query?: never;
@@ -2094,6 +2115,25 @@ export interface components {
                 | "GHG_effect";
             /** Xp */
             xp: number;
+        };
+        /**
+         * AdminPlayerOut
+         *
+         * Player summary for the admin dashboard.
+         */
+        AdminPlayerOut: {
+            /**
+             * Id
+             *
+             * ID of the player
+             */
+            id: number;
+            /**
+             * Username
+             *
+             * Username of the player
+             */
+            username: string;
         };
         /** Ask */
         Ask: {
@@ -4771,6 +4811,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_players_api_v1_admin_players_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminPlayerOut"][];
+                };
+            };
+        };
+    };
     get_upcoming_achievements_api_v1_achievements_get: {
         parameters: {
             query?: never;

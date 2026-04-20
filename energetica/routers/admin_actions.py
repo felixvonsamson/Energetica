@@ -1,18 +1,22 @@
-"""routes for admin actions."""
+"""Routes for admin actions. All endpoints require admin authentication."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from typing import Annotated
 
-from energetica.api.http import get_chart_data
+from fastapi import APIRouter, Depends
+
 from energetica.database.player import Player
+from energetica.database.user import User
+from energetica.schemas.admin import AdminPlayerOut
+from energetica.utils.auth import get_admin
 
-router = APIRouter(prefix="/admin-actions", tags=["Admin Actions"])
+router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
-# ensure the actions on this router are only accessible by admins
-@router.get("/chart-data/{player_id}")
-def chart_data(player_id: int):  # noqa: ANN201
-    """Get chart data for the admin dashboard."""
-    player = Player.getitem(player_id)
-    return get_chart_data(player)
+@router.get("/players")
+def list_players(
+    _admin: Annotated[User, Depends(get_admin)],
+) -> list[AdminPlayerOut]:
+    """Get all players for the admin dashboard."""
+    return [AdminPlayerOut(id=player.id, username=player.username) for player in Player.all()]

@@ -66,6 +66,15 @@ def get_playing_user(request: Request) -> User:
     return user
 
 
+def get_admin(request: Request) -> User:
+    user = get_user(request)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=GameExceptionType.NOT_AUTHENTICATED)
+    if user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return user
+
+
 def get_settled_player(request: Request) -> Player:
     user = get_user(request)
     if user is None:
