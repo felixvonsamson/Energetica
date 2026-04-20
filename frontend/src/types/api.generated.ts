@@ -3376,11 +3376,13 @@ export interface components {
              */
             username: string;
             /**
-             * Last Connection
+             * Activity Status
              *
-             * Timestamp of the player's last activity
+             * Player's activity status based on last connection time
+             *
+             * @enum {string}
              */
-            last_connection?: string | null;
+            activity_status: "active" | "away" | "inactive";
         };
         /** PowerAndEnergyStats */
         PowerAndEnergyStats: {
