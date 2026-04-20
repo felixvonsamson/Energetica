@@ -842,6 +842,7 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
     generation = new_values["generation"]
     op_costs = new_values["op_costs"]
     demand = new_values["demand"]
+    warehouse_caps = player.config["warehouse_capacities"]
     # Calculate resource consumption and pollution of generation facilities
     for facility in ControllableFacilityType:
         if player.capacities.get(facility) is not None:
