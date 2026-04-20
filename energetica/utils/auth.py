@@ -74,7 +74,8 @@ def get_settled_player(request: Request) -> Player:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.USER_IS_NOT_A_PLAYER)
     if user.player is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=GameExceptionType.PLAYER_NOT_SET_UP)
-    user.player.last_connection = datetime.now(timezone.utc)
+    if user.player.last_connection is None or (datetime.now(timezone.utc) - user.player.last_connection).total_seconds() > 300:
+        user.player.last_connection = datetime.now(timezone.utc)
     return user.player
 
 
