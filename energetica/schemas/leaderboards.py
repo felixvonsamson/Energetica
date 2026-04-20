@@ -19,7 +19,7 @@ class LeaderboardsOut(BaseModel):
 class GeneralStats(BaseModel):
     network_name: Optional[str]
     max_power_consumption: float
-    average_revenues: float
+    gross_earnings: float
     xp: float
     total_technologies: int
     total_projects: int
@@ -85,7 +85,7 @@ class PlayerDetailStats(BaseModel):
         general = GeneralStats(
             network_name=player.network.name if player.network else None,
             max_power_consumption=metrics.get("max_power_consumption", 0),
-            average_revenues=metrics.get("average_revenues", 0),
+            gross_earnings=metrics.get("gross_earnings", 0),
             xp=metrics.get("xp", 0),
             total_technologies=int(metrics.get("total_technologies", 0)),
             total_projects=int(metrics.get("total_projects", 0)),
