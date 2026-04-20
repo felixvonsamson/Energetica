@@ -98,6 +98,12 @@ class AchievementUnlockPayload(BaseModel):
     xp: int
 
 
+class TutorialPushNotificationsPayload(BaseModel):
+    """Tutorial notification encouraging the player to enable browser push notifications."""
+
+    type: Literal["tutorial_push_notifications"] = "tutorial_push_notifications"
+
+
 class ChatMessagePayload(BaseModel):
     type: Literal["chat_message"] = "chat_message"
     sender_username: str
@@ -197,6 +203,7 @@ PersistableNotificationPayload = Union[
     AchievementMilestoneEnergyStoragePayload,
     AchievementMilestoneBasePayload,
     AchievementUnlockPayload,
+    TutorialPushNotificationsPayload,
 ]
 
 # Payloads that only trigger a browser push — no inbox entry.

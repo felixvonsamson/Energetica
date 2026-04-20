@@ -21,7 +21,7 @@ from energetica.enums import (
 )
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
-from energetica.schemas.notifications import ConstructionFinishedPayload, TechnologyResearchedPayload
+from energetica.schemas.notifications import ConstructionFinishedPayload, TechnologyResearchedPayload, TutorialPushNotificationsPayload
 from energetica.schemas.projects import ProjectListOut
 from energetica.utils.workers import deploy_available_workers
 from energetica.utils.hashing import stable_hash
@@ -339,6 +339,9 @@ def complete_project(project: OngoingProject, *, skip_notifications: bool = Fals
 
     player.check_construction_achievements(project.project_type)
 
+    total_projects = player.progression_metrics.get("total_projects", 0) + 1
+    player.progression_metrics["total_projects"] = total_projects
+
     project.delete()
 
     worker_type = project.project_type.worker_type
@@ -374,6 +377,9 @@ def complete_project(project: OngoingProject, *, skip_notifications: bool = Fals
                 )
             )
             engine.log(f"{player.username} : + 1 {project_name}")
+
+        if total_projects == 3 and not player.push_subscriptions:
+            player.notify(TutorialPushNotificationsPayload())
     if isinstance(project.project_type, PowerFacilityType | StorageFacilityType | ExtractionFacilityType):
         eol = engine.total_t + math.ceil(
             engine.const_config["assets"][project.project_type]["lifespan"] / engine.in_game_seconds_per_tick,

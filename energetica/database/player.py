@@ -144,6 +144,7 @@ class Player(DBModel):
             "bought_resources": 0,
             "sold_resources": 0,
             "total_technologies": 0,
+            "total_projects": 0,
             "imported_energy": 0,
             "exported_energy": 0,
             "captured_co2": 0,

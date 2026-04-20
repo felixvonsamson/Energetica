@@ -22,6 +22,7 @@ class GeneralStats(BaseModel):
     average_revenues: float
     xp: float
     total_technologies: int
+    total_projects: int
 
 
 class PowerAndEnergyStats(BaseModel):
@@ -87,6 +88,7 @@ class PlayerDetailStats(BaseModel):
             average_revenues=metrics.get("average_revenues", 0),
             xp=metrics.get("xp", 0),
             total_technologies=int(metrics.get("total_technologies", 0)),
+            total_projects=int(metrics.get("total_projects", 0)),
         )
 
         power_and_energy = PowerAndEnergyStats(

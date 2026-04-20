@@ -155,6 +155,15 @@ const INBOX_NOTIFICATION_CONFIG = {
         inGameBody: (p) =>
             `${ACHIEVEMENT_UNLOCK_CONFIG[p.achievement_key].body} (+${p.xp} XP)`,
     },
+    tutorial_push_notifications: {
+        category: "tutorials",
+        path: () => "/app/settings",
+        title: "Tip: Enable push notifications",
+        pushBody: () =>
+            "Enable browser notifications in Settings to get updates on construction, market activity, and more, even when the game is closed.",
+        inGameBody: () =>
+            "Enable browser notifications in Settings to get updates on construction, market activity, and more, even when the game is closed.",
+    },
 } satisfies { [T in NotificationType]: InboxNotificationDef<T> };
 
 // ---------------------------------------------------------------------------
@@ -262,9 +271,7 @@ const getInboxDef = (type: NotificationType) =>
     INBOX_NOTIFICATION_CONFIG[type] as unknown as AnyInboxDef;
 
 /** Get the inbox category for a notification type (inbox items only). */
-export function getNotificationCategory(
-    type: NotificationType,
-): InboxCategory {
+export function getNotificationCategory(type: NotificationType): InboxCategory {
     return INBOX_NOTIFICATION_CONFIG[type].category;
 }
 
