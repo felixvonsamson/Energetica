@@ -169,7 +169,7 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
 def update_player_progress_values(player: Player, new_values: dict) -> None:
     # TODO (Felix): Should be moved somewhere else, e.g. player.py ?
     """Update the player progress values and checks for new unlocks and achievements."""
-    player.progression_metrics["gross_earnings"] += sum(
+    player.progression_metrics["operating_income"] += sum(
         new_values[player.id]["revenues"].values()
     ) + sum(new_values[player.id]["op_costs"].values())
     # update max power consumption

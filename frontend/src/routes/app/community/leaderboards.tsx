@@ -188,11 +188,11 @@ function LeaderboardsContent() {
                         <th
                             className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
-                                handleSort("general.gross_earnings")
+                                handleSort("general.operating_income")
                             }
                         >
-                            Gross Earnings
-                            {getSortIndicator("general.gross_earnings")}
+                            Operating Income
+                            {getSortIndicator("general.operating_income")}
                         </th>
                         <th
                             className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
@@ -612,7 +612,7 @@ function LeaderboardsContent() {
                     <>
                         {commonCells}
                         <td className="py-3 px-4 text-right">
-                            <Money amount={row.general.gross_earnings} />
+                            <Money amount={row.general.operating_income} />
                         </td>
                         <td className="py-3 px-4 text-right font-mono">
                             {formatPower(row.general.max_power_consumption)}

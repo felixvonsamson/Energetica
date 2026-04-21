@@ -2858,8 +2858,8 @@ export interface components {
             network_name: string | null;
             /** Max Power Consumption */
             max_power_consumption: number;
-            /** Gross Earnings */
-            gross_earnings: number;
+            /** Operating Income */
+            operating_income: number;
             /** Xp */
             xp: number;
             /** Total Technologies */
@@ -3639,11 +3639,11 @@ export interface components {
          */
         ProgressionMetrics: {
             /**
-             * Gross Earnings
+             * Operating Income
              *
-             * Lifetime cumulated revenues
+             * Lifetime cumulated operating income
              */
-            gross_earnings: number;
+            operating_income: number;
             /**
              * Max Power Consumption
              *
