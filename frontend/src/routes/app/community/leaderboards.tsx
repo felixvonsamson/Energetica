@@ -4,12 +4,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
-<<<<<<< feat/683-change-revenues-to-cumulated-revenues
 import { PageCard, CardContent, Money } from "@/components/ui";
-=======
-import { PageCard, CardContent, CashFlow } from "@/components/ui";
 import { PlayerName } from "@/components/ui/player-name";
->>>>>>> main
 import { useHasCapability } from "@/hooks/use-capabilities";
 import { useLeaderboards } from "@/hooks/use-leaderboards";
 import { usePlayerMap } from "@/hooks/use-players";
