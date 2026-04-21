@@ -3251,6 +3251,20 @@ export interface components {
             /** Network Name */
             network_name: string;
         };
+        /** NetworkOverdraftWarningPayload */
+        NetworkOverdraftWarningPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default network_overdraft_warning
+             */
+            type: "network_overdraft_warning";
+            /** Network Name */
+            network_name: string;
+            /** Overdraft Pct */
+            overdraft_pct: number;
+        };
         /**
          * NonFacilityBidType
          *
@@ -3302,6 +3316,7 @@ export interface components {
                 | components["schemas"]["ResourceSoldPayload"]
                 | components["schemas"]["ShipmentArrivedPayload"]
                 | components["schemas"]["NetworkExpelledPayload"]
+                | components["schemas"]["NetworkOverdraftWarningPayload"]
                 | components["schemas"]["AchievementMilestonePowerConsumptionPayload"]
                 | components["schemas"]["AchievementMilestoneEnergyStoragePayload"]
                 | components["schemas"]["AchievementMilestoneBasePayload"]
@@ -3407,6 +3422,14 @@ export interface components {
              * Username of the player
              */
             username: string;
+            /**
+             * Activity Status
+             *
+             * Player's activity status based on last connection time
+             *
+             * @enum {string}
+             */
+            activity_status: "active" | "away" | "inactive";
         };
         /** PowerAndEnergyStats */
         PowerAndEnergyStats: {

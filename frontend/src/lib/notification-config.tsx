@@ -122,6 +122,15 @@ const INBOX_NOTIFICATION_CONFIG = {
         inGameBody: (p) =>
             `You have been expelled from ${p.network_name} due to insufficient funds. Recover a positive balance to rejoin.`,
     },
+    network_overdraft_warning: {
+        category: "market",
+        path: () => "/app/community/electricity-markets",
+        title: "Overdraft warning",
+        pushBody: (p) =>
+            `Your balance has reached ${Math.round(p.overdraft_pct * 100)}% of your maximum overdraft. Recover funds to avoid being expelled from ${p.network_name}.`,
+        inGameBody: (p) =>
+            `Your balance has reached ${Math.round(p.overdraft_pct * 100)}% of your maximum overdraft. Recover funds to avoid being expelled from ${p.network_name}.`,
+    },
     achievement_milestone: {
         category: "achievements",
         // TODO: redirect to a dedicated achievements page when it exists

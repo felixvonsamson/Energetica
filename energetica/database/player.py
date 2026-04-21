@@ -7,6 +7,7 @@ import json
 from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import StrEnum
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Iterable
@@ -78,6 +79,8 @@ class Player(DBModel):
     def username(self) -> str:
         """Return the username of the associated user."""
         return self.user.username
+
+    last_connection: datetime | None = None
 
     # inactive: bool = False  # True if account is inactive
     show_chat_disclaimer: bool = True
@@ -151,6 +154,10 @@ class Player(DBModel):
         },
     )
 
+    # True while player money is below 50% of their max overdraft (within a network).
+    # Reset when they recover or leave the network, so each new dip triggers one warning.
+    overdraft_warning_sent: bool = False
+
     # Browser push notification subscriptions (push subscription objects)
     push_subscriptions: list[Subscription] = field(default_factory=list)
     # Server-side feed subscriptions: opt-in to specific notification streams.
@@ -174,6 +181,8 @@ class Player(DBModel):
         self.__dict__.update(state)
 
         # Backward compatibility: Initialize new fields for old Player objects loaded from pickle
+        if not hasattr(self, "last_connection"):
+            self.last_connection = None
         if not hasattr(self, "renewable_statuses"):
             self.renewable_statuses = {}
         if not hasattr(self, "production_statuses"):
@@ -187,6 +196,8 @@ class Player(DBModel):
             }
         if not hasattr(self, "push_subscriptions"):
             self.push_subscriptions = []
+        if not hasattr(self, "overdraft_warning_sent"):
+            self.overdraft_warning_sent = False
         # Migrate old notification_opt_ins field
         if hasattr(self, "notification_opt_ins"):
             del self.__dict__["notification_opt_ins"]

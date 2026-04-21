@@ -60,6 +60,7 @@ def leave_network(player: Player) -> Network | None:
     if network is None:
         raise GameError(GameExceptionType.NOT_IN_NETWORK)
     player.network = None
+    player.overdraft_warning_sent = False
     network.members.remove(player)
     engine.log(f"{player.username} left the network {network.name}")
 

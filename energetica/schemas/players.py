@@ -2,12 +2,29 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
+
+ActivityStatus = Literal["active", "away", "inactive"]
+
+_ACTIVE_THRESHOLD_S = 12 * 60 * 60  # 12 hours
+_AWAY_THRESHOLD_S = 3 * 24 * 60 * 60  # 3 days
+
+
+def _compute_activity_status(last_connection: datetime | None) -> ActivityStatus:
+    if last_connection is None:
+        return "inactive"
+    elapsed = (datetime.now(timezone.utc) - last_connection).total_seconds()
+    if elapsed < _ACTIVE_THRESHOLD_S:
+        return "active"
+    if elapsed < _AWAY_THRESHOLD_S:
+        return "away"
+    return "inactive"
 
 
 class PlayerOut(BaseModel):
@@ -15,6 +32,15 @@ class PlayerOut(BaseModel):
 
     id: int = Field(description="ID of the player")
     username: str = Field(description="Username of the player")
+    activity_status: ActivityStatus = Field(description="Player's activity status based on last connection time")
+
+    @classmethod
+    def from_player(cls, player: Player) -> PlayerOut:
+        return cls(
+            id=player.id,
+            username=player.username,
+            activity_status=_compute_activity_status(player.last_connection),
+        )
 
 
 class SettingsOut(BaseModel):

@@ -33,7 +33,7 @@ from energetica.enums import (
 )
 from energetica.globals import engine
 from energetica.schemas.electricity_markets import AskType
-from energetica.schemas.notifications import NetworkExpelledPayload
+from energetica.schemas.notifications import NetworkExpelledPayload, NetworkOverdraftWarningPayload
 from energetica.utils import network_helpers
 from energetica.types.facility_statuses import ProductionStatus
 from energetica.utils.misc import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
@@ -56,17 +56,7 @@ def update_electricity() -> None:
     for os in ongoing_shipments:
         os.reset_speed()
 
-    # --- Expel bankrupt players from their networks ---
     for network in list(Network.all()):
-        for player in list(network.members):
-            max_overdraft = -player.config["industry"]["income_per_day"]
-            if player.money < max_overdraft:
-                network_name = network.name
-                network_helpers.leave_network(player)
-                player.notify(NetworkExpelledPayload(network_name=network_name))
-                engine.log(f"{player.username} was expelled from {network_name} due to insufficient funds")
-
-    for network in Network.all():
         # --- Market resolution ---
         market = init_market()
         for player in network.members:
@@ -126,6 +116,25 @@ def update_electricity() -> None:
         # add industry revenues to player money
         player.money += new_values[player.id]["revenues"]["industry"]
         money_balance(new_values[player.id], player)
+        # --- Expel bankrupt players and warn those nearing their overdraft limit ---
+        if player.network is not None:
+            max_overdraft = -player.config["industry"]["income_per_day"]
+            if player.money < max_overdraft:
+                network_name = player.network.name
+                network_helpers.leave_network(player)
+                player.notify(NetworkExpelledPayload(network_name=network_name))
+                engine.log(f"{player.username} was expelled from {network_name} due to insufficient funds")
+            elif player.money < max_overdraft * 0.5:
+                if not player.overdraft_warning_sent:
+                    player.overdraft_warning_sent = True
+                    player.notify(
+                        NetworkOverdraftWarningPayload(
+                            network_name=player.network.name,
+                            overdraft_pct=round(player.money / max_overdraft, 2),
+                        )
+                    )
+            elif player.overdraft_warning_sent:
+                player.overdraft_warning_sent = False
         player.rolling_history.append_value(new_values[player.id])
         update_player_progress_values(player, new_values)
         # send new data to clients

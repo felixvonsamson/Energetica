@@ -31,23 +31,13 @@ def get_game_state() -> GameStateOut:
 @router.get("/me")
 def get_me(user: Player = Depends(get_settled_player)) -> PlayerOut:
     """Get the current user's information."""
-    return PlayerOut(
-        id=user.id,
-        username=user.username,
-    )
+    return PlayerOut.from_player(user)
 
 
 @router.get("")
 def get_all_players() -> list[PlayerOut]:
     """Get all user ids and usernames, excluding admins."""
-    all_players = Player.all()
-    return [
-        PlayerOut(
-            id=player.id,
-            username=player.username,
-        )
-        for player in all_players
-    ]
+    return [PlayerOut.from_player(player) for player in Player.all()]
 
 
 @router.get("/me/settings")

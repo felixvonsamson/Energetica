@@ -4,9 +4,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
+<<<<<<< feat/683-change-revenues-to-cumulated-revenues
 import { PageCard, CardContent, Money } from "@/components/ui";
+=======
+import { PageCard, CardContent, CashFlow } from "@/components/ui";
+import { PlayerName } from "@/components/ui/player-name";
+>>>>>>> main
 import { useHasCapability } from "@/hooks/use-capabilities";
 import { useLeaderboards } from "@/hooks/use-leaderboards";
+import { usePlayerMap } from "@/hooks/use-players";
 import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
 import type { PlayerDetailStats } from "@/types/leaderboards";
 
@@ -65,6 +71,7 @@ function LeaderboardsContent() {
     const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
     const { data: leaderboards, isLoading, error } = useLeaderboards();
+    const playerMap = usePlayerMap();
     const hasGreenhouseGasEffect = useHasCapability(
         "has_greenhouse_gas_effect",
     );
@@ -599,9 +606,12 @@ function LeaderboardsContent() {
     };
 
     const renderTableRow = (row: PlayerDetailStats) => {
+        const player = playerMap?.[row.player_id];
         const commonCells = (
             <>
-                <td className="py-3 px-4">{row.username}</td>
+                <td className="py-3 px-4">
+                    {player ? <PlayerName player={player} /> : row.username}
+                </td>
                 <td className="py-3 px-4">{row.general.network_name || "-"}</td>
             </>
         );
@@ -668,7 +678,9 @@ function LeaderboardsContent() {
             case "technologies":
                 return (
                     <>
-                        <td className="py-3 px-4">{row.username}</td>
+                        <td className="py-3 px-4">
+                            {player ? <PlayerName player={player} /> : row.username}
+                        </td>
                         <td className="py-3 px-4 text-right">
                             {row.technologies.total_technologies}
                         </td>
