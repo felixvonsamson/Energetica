@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import { PlayerName } from "@/components/ui/player-name";
 import { useAuth } from "@/hooks/use-auth";
 import { usePlayerMap } from "@/hooks/use-players";
 import { formatTimestamp } from "@/lib/format-utils";
@@ -118,9 +119,9 @@ export function MessageContainer({
                     >
                         {/* Show player name and timestamp only for the first message in the group */}
                         {group.showTimestamp && (
-                            <div className="text-sm text-muted-foreground mb-1 px-1">
+                            <div className="text-sm text-muted-foreground mb-1 px-1 inline-flex items-center gap-1">
                                 {showPlayerName && player && (
-                                    <>{player.username} • </>
+                                    <><PlayerName player={player} /> •</>
                                 )}
                                 {formatTimestamp(firstMessage.timestamp)}
                             </div>

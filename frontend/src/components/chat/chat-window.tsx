@@ -2,7 +2,9 @@ import { ArrowLeft } from "lucide-react";
 
 import { MessageContainer } from "@/components/chat/message-container";
 import { MessageInput } from "@/components/chat/message-input";
+import { PlayerName } from "@/components/ui/player-name";
 import { TypographyH2 } from "@/components/ui/typography";
+import { useMyId, usePlayerMap } from "@/hooks/use-players";
 import type { Message, Chat } from "@/types/chats";
 
 interface ChatWindowProps {
@@ -24,6 +26,15 @@ export function ChatWindow({
     onBackClick,
     showBackButton,
 }: ChatWindowProps) {
+    const myId = useMyId();
+    const playerMap = usePlayerMap();
+    const otherPlayer =
+        selectedChat && !selectedChat.is_group && myId && playerMap
+            ? (playerMap[
+                  selectedChat.participant_ids.find((id) => id !== myId) ?? -1
+              ] ?? null)
+            : null;
+
     return (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <div className="flex-1 flex flex-col overflow-hidden bg-card rounded-lg text-foreground">
@@ -39,10 +50,14 @@ export function ChatWindow({
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
                         )}
-                        <TypographyH2 className="text-center flex-1">
-                            {selectedChat
-                                ? selectedChat.display_name
-                                : "Select a chat"}
+                        <TypographyH2 className="text-center flex-1 flex items-center justify-center">
+                            {otherPlayer ? (
+                                <PlayerName player={otherPlayer} />
+                            ) : selectedChat ? (
+                                selectedChat.display_name
+                            ) : (
+                                "Select a chat"
+                            )}
                         </TypographyH2>
                     </div>
                 </div>

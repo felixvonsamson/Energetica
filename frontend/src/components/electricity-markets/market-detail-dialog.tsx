@@ -9,6 +9,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Duration } from "@/components/ui/duration";
+import { PlayerName } from "@/components/ui/player-name";
 import { TypographyH2, TypographyH3 } from "@/components/ui/typography";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useMyMarket } from "@/hooks/use-electricity-markets";
@@ -183,8 +184,11 @@ function MarketContent(
                                 key={memberId}
                                 className="px-3 py-2 bg-muted/30 rounded text-sm"
                             >
-                                {playerMap[memberId]?.username ||
-                                    `Player ${memberId}`}
+                                {playerMap[memberId] ? (
+                                    <PlayerName player={playerMap[memberId]} />
+                                ) : (
+                                    `Player ${memberId}`
+                                )}
                             </div>
                         ))}
                     </div>

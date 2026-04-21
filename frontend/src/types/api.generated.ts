@@ -3407,6 +3407,14 @@ export interface components {
              * Username of the player
              */
             username: string;
+            /**
+             * Activity Status
+             *
+             * Player's activity status based on last connection time
+             *
+             * @enum {string}
+             */
+            activity_status: "active" | "away" | "inactive";
         };
         /** PowerAndEnergyStats */
         PowerAndEnergyStats: {
