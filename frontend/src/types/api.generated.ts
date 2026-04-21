@@ -25,6 +25,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/players/{player_id}/ban": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ban
+         *
+         * Permanently ban a player: delete their account and all game data.
+         */
+        post: operations["ban_api_v1_admin_players__player_id__ban_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/achievements": {
         parameters: {
             query?: never;
@@ -2115,25 +2136,6 @@ export interface components {
                 | "GHG_effect";
             /** Xp */
             xp: number;
-        };
-        /**
-         * AdminPlayerOut
-         *
-         * Player summary for the admin dashboard.
-         */
-        AdminPlayerOut: {
-            /**
-             * Id
-             *
-             * ID of the player
-             */
-            id: number;
-            /**
-             * Username
-             *
-             * Username of the player
-             */
-            username: string;
         };
         /** Ask */
         Ask: {
@@ -4770,6 +4772,7 @@ export interface components {
             | "INVALID_PASSWORD"
             | "NOT_AUTHENTICATED"
             | "USER_IS_NOT_A_PLAYER"
+            | "USER_IS_NOT_AN_ADMIN"
             | "PLAYER_NOT_SET_UP"
             | "SIGNUP_DISABLED"
             | "OLD_PASSWORD_INCORRECT"
@@ -4826,7 +4829,36 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminPlayerOut"][];
+                    "application/json": components["schemas"]["PlayerOut"][];
+                };
+            };
+        };
+    };
+    ban_api_v1_admin_players__player_id__ban_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

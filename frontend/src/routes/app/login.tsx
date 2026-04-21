@@ -18,8 +18,9 @@ import { TypographyBrand } from "@/components/ui/typography";
 import { useAuth } from "@/hooks/use-auth";
 import { useLogin } from "@/hooks/use-auth-queries";
 import { useGameEngine } from "@/hooks/use-game";
-import { authApi } from "@/lib/api/auth";
 import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
+import { queryClient, queryKeys } from "@/lib/query-client";
+import type { ApiSchema } from "@/types/api-helpers";
 
 export const Route = createFileRoute("/app/login")({
     component: LoginPage,
@@ -28,14 +29,17 @@ export const Route = createFileRoute("/app/login")({
     },
 });
 
+function homeForRole(role: ApiSchema<"UserOut">["role"] | undefined) {
+    return role === "admin" ? "/admin-dashboard" : "/app/dashboard";
+}
+
 function LoginPage() {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
-    // Redirect if already authenticated
     useEffect(() => {
         if (isAuthenticated && !isAuthLoading) {
-            navigate({ to: user?.role === "admin" ? "/admin-dashboard" : "/app/dashboard" });
+            navigate({ to: homeForRole(user?.role) });
         }
     }, [isAuthenticated, isAuthLoading, user?.role, navigate]);
 
@@ -80,9 +84,9 @@ function LoginForm() {
 
         try {
             await login.mutateAsync({ username: username.trim(), password });
-            const freshUser = await authApi.me();
             await refetchAuth();
-            navigate({ to: freshUser.role === "admin" ? "/admin-dashboard" : "/app/dashboard" });
+            const freshUser = queryClient.getQueryData<ApiSchema<"UserOut">>(queryKeys.auth.me);
+            navigate({ to: homeForRole(freshUser?.role) });
         } catch (err) {
             if (isErrorType(err, "USER_NOT_FOUND")) {
                 setUsernameNotFound(true);
@@ -196,7 +200,7 @@ function LoginForm() {
                             ) : (
                                 <LogIn className="w-5 h-5" />
                             )}
-                            <>Login</>
+                            Login
                         </Button>
                     </form>
 

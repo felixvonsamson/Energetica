@@ -41,7 +41,7 @@ def setup_socketio(app: FastAPI) -> None:
         if user is None:
             raise ConnectionRefusedError("authentication failed: invalid token")
 
-        if user.role == "admin":
+        if user.is_admin:
             connected_admins_by_sid[sid] = user
             return
 

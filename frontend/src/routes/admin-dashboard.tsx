@@ -20,7 +20,6 @@ function AdminDashboardLayout() {
 
     return (
         <div className="flex h-svh w-full">
-            {/* Sidebar */}
             <aside className="w-56 shrink-0 border-r flex flex-col gap-2 p-4">
                 <div className="flex items-center gap-2 mb-4">
                     <Logo className="size-6" />
@@ -54,7 +53,6 @@ function AdminDashboardLayout() {
                 </div>
             </aside>
 
-            {/* Main content */}
             <main className="flex-1 overflow-auto">
                 <Outlet />
             </main>

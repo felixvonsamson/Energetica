@@ -24,6 +24,7 @@ from energetica.enums import Fuel, Renewable
 from energetica.schemas.simulate import Action, InitEngineAction
 
 if TYPE_CHECKING:
+    from energetica.database.banned_record import BannedRecord
     from energetica.database.messages import Chat
 
 
@@ -64,6 +65,7 @@ class GameEngine(object):
         self.VAPID_PUBLIC_KEY: str = None  # type: ignore[assignment]
         self.VAPID_PRIVATE_KEY: str = None  # type: ignore[assignment]
         self.general_chat_id: int = None  # type: ignore[assignment]
+        self.banned_records: dict[int, BannedRecord] = {}
 
         with open("energetica/static/data/industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations
@@ -230,6 +232,7 @@ class GameEngine(object):
             "env",
             "disable_signups",
             "general_chat_id",
+            "banned_records",
         ]
         data = {member: getattr(self, member) for member in members_to_save}
         with open("instance/engine_data.pck", "wb") as file:

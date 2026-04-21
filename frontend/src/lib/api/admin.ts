@@ -9,4 +9,8 @@ export const adminApi = {
         apiClient.get<ApiResponse<"/api/v1/admin/players", "get">>(
             "/admin/players",
         ),
+
+    /** Permanently ban a player by ID. */
+    banPlayer: (playerId: number) =>
+        apiClient.post<void>(`/admin/players/${playerId}/ban`),
 };
