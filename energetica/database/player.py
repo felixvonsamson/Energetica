@@ -140,7 +140,7 @@ class Player(DBModel):
     progression_metrics: dict[str, float] = field(
         default_factory=lambda: {
             "xp": 0,
-            "average_revenues": 0,
+            "operating_income": 0,
             "max_power_consumption": 0,
             "max_energy_stored": 0,
             "extracted_resources": 0,

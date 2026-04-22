@@ -178,17 +178,9 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
 def update_player_progress_values(player: Player, new_values: dict) -> None:
     # TODO (Felix): Should be moved somewhere else, e.g. player.py ?
     """Update the player progress values and checks for new unlocks and achievements."""
-    # calculate moving average revenue TODO (Felix): Separate function ?
-    player.progression_metrics["average_revenues"] = (
-        player.progression_metrics["average_revenues"]
-        + 3600
-        / engine.in_game_seconds_per_tick
-        * 0.03
-        * sum(
-            [new_values[player.id]["revenues"][rev] for rev in new_values[player.id]["revenues"]]
-            + [new_values[player.id]["op_costs"][rev] for rev in new_values[player.id]["op_costs"]],
-        )
-    ) / 1.03
+    player.progression_metrics["operating_income"] += sum(
+        new_values[player.id]["revenues"].values()
+    ) + sum(new_values[player.id]["op_costs"].values())
     # update max power consumption
     total_demand = sum([new_values[player.id]["demand"][demand] for demand in new_values[player.id]["demand"]])
     if total_demand > player.progression_metrics["max_power_consumption"]:

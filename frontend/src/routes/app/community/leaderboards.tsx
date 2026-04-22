@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { GameLayout } from "@/components/layout/game-layout";
-import { PageCard, CardContent, CashFlow } from "@/components/ui";
+import { PageCard, CardContent, Money } from "@/components/ui";
 import { PlayerName } from "@/components/ui/player-name";
 import { useHasCapability } from "@/hooks/use-capabilities";
 import { useLeaderboards } from "@/hooks/use-leaderboards";
@@ -191,11 +191,11 @@ function LeaderboardsContent() {
                         <th
                             className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
                             onClick={() =>
-                                handleSort("general.average_revenues")
+                                handleSort("general.operating_income")
                             }
                         >
-                            Revenues/h
-                            {getSortIndicator("general.average_revenues")}
+                            Operating Income
+                            {getSortIndicator("general.operating_income")}
                         </th>
                         <th
                             className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
@@ -618,9 +618,7 @@ function LeaderboardsContent() {
                     <>
                         {commonCells}
                         <td className="py-3 px-4 text-right">
-                            <CashFlow
-                                amountPerTick={row.general.average_revenues}
-                            />
+                            <Money amount={row.general.operating_income} />
                         </td>
                         <td className="py-3 px-4 text-right font-mono">
                             {formatPower(row.general.max_power_consumption)}

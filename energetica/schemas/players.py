@@ -182,7 +182,7 @@ class TechnologyLevels(BaseModel):
 class ProgressionMetrics(BaseModel):
     """Player progression metrics and statistics."""
 
-    average_revenues: float = Field(description="Average revenues per hour")
+    operating_income: float = Field(description="Lifetime cumulated operating income")
     max_power_consumption: float = Field(description="Maximum power consumption in W")
     max_energy_stored: float = Field(description="Maximum energy stored in J")
     imported_energy: float = Field(description="Total imported energy in J")
@@ -239,7 +239,7 @@ class ProfileOut(BaseModel):
 
         # Always include emissions data (frontend will hide based on capabilities)
         progression_metrics = ProgressionMetrics(
-            average_revenues=metrics.get("average_revenues", 0),
+            operating_income=metrics.get("operating_income", 0),
             max_power_consumption=metrics.get("max_power_consumption", 0),
             max_energy_stored=metrics.get("max_energy_stored", 0),
             imported_energy=metrics.get("imported_energy", 0),
