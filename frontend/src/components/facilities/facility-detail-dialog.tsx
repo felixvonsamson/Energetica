@@ -144,7 +144,7 @@ function FacilityContent<T>(
                     <img
                         src={imageUrl}
                         alt={`${facility.name} ${facilityType} facility`}
-                        className="w-full aspect-[3/1] object-cover rounded-lg"
+                        className="w-full aspect-[5/2] [@media(min-height:900px)]:aspect-[16/9] object-cover rounded-lg"
                     />
                 </div>
 
