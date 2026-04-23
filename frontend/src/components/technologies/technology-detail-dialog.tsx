@@ -64,7 +64,7 @@ export function TechnologyDetailDialog<T>({
         onClose();
     };
 
-    const imageUrl = `/static/images/technologies/${technology?.name}.jpg`;
+    const imageUrl = `/static/images/technologies/${technology?.name}.png`;
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
