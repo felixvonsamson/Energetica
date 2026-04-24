@@ -64,7 +64,7 @@ export function TechnologyDetailDialog<T>({
         onClose();
     };
 
-    const imageUrl = `/static/images/technologies/${technology?.name}.jpg`;
+    const imageUrl = `/static/images/technologies/${technology?.name}.png`;
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -92,7 +92,7 @@ export function TechnologyDetailDialog<T>({
                                 <img
                                     src={imageUrl}
                                     alt={`${technology.name} technology`}
-                                    className="w-full aspect-[3/1] object-cover rounded-lg"
+                                    className="w-full aspect-[5/2] [@media(min-height:900px)]:aspect-[16/9] object-cover rounded-lg"
                                     onError={(e) => {
                                         e.currentTarget.style.display = "none";
                                     }}

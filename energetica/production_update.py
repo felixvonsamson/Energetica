@@ -178,9 +178,9 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
 def update_player_progress_values(player: Player, new_values: dict) -> None:
     # TODO (Felix): Should be moved somewhere else, e.g. player.py ?
     """Update the player progress values and checks for new unlocks and achievements."""
-    player.progression_metrics["operating_income"] += sum(
-        new_values[player.id]["revenues"].values()
-    ) + sum(new_values[player.id]["op_costs"].values())
+    player.progression_metrics["operating_income"] += sum(new_values[player.id]["revenues"].values()) + sum(
+        new_values[player.id]["op_costs"].values()
+    )
     # update max power consumption
     total_demand = sum([new_values[player.id]["demand"][demand] for demand in new_values[player.id]["demand"]])
     if total_demand > player.progression_metrics["max_power_consumption"]:
@@ -843,6 +843,7 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
     generation = new_values["generation"]
     op_costs = new_values["op_costs"]
     demand = new_values["demand"]
+    warehouse_caps = player.config["warehouse_capacities"]
     # Calculate resource consumption and pollution of generation facilities
     for facility in ControllableFacilityType:
         if player.capacities.get(facility) is not None:

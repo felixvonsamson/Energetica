@@ -34,7 +34,7 @@ export function TechnologyItem({
     level,
     onClick,
 }: TechnologyItemProps) {
-    const imageUrl = `/static/images/technologies/${technologyName}.jpg`;
+    const imageUrl = `/static/images/technologies/${technologyName}.png`;
 
     return (
         <Card

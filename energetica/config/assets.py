@@ -280,7 +280,6 @@ const_config: dict = {
             "O&M_factor_per_day": 0.068,  # [fraction of price per in-game day]
             "ramping_time": timedelta(minutes=9).total_seconds(),  # [in-game seconds]
             "lifespan": timedelta(days=525).total_seconds(),  # [in-game seconds]
-            "image_extension": "png",
             "description": "The small pumped hydro storage pumps water to a higher reservoir to store energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
             "requirements": {},
@@ -298,7 +297,6 @@ const_config: dict = {
             "O&M_factor_per_day": 0.24,
             "ramping_time": timedelta(hours=1).total_seconds(),
             "lifespan": timedelta(days=105).total_seconds(),
-            "image_extension": "jpg",
             "description": "The molten salt storage stores energy in the form of high temperature molten salt.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Thermal_energy_storage",
             "requirements": {"mechanical_engineering": 2, "thermodynamics": 3},
@@ -316,7 +314,6 @@ const_config: dict = {
             "O&M_factor_per_day": 0.07,
             "ramping_time": timedelta(minutes=16).total_seconds(),
             "lifespan": timedelta(days=630).total_seconds(),
-            "image_extension": "jpg",
             "description": "The large pumped hydro storage pumps water to a higher reservoir to store large amounts of energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Pumped-storage_hydroelectricity",
             "requirements": {"civil_engineering": 3},
@@ -334,7 +331,6 @@ const_config: dict = {
             "O&M_factor_per_day": 0.028,
             "ramping_time": timedelta(minutes=8).total_seconds(),
             "lifespan": timedelta(days=315).total_seconds(),
-            "image_extension": "jpg",
             "description": "The hydrogen storage facility uses electricity to produce hydrogen by electrolysis of water. "
             "This hydrogen can be used to generate electricity in a fuel cell.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Hydrogen_storage",
@@ -353,7 +349,6 @@ const_config: dict = {
             "O&M_factor_per_day": 0.002_8,
             "ramping_time": timedelta(minutes=3).total_seconds(),
             "lifespan": timedelta(days=112).total_seconds(),
-            "image_extension": "jpg",
             "description": "The lithium-ion batteries store energy with a high efficiency in the form of chemical energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Lithium-ion_battery",
             "requirements": {"chemistry": 4, "materials": 4},
@@ -371,7 +366,6 @@ const_config: dict = {
             "O&M_factor_per_day": 0.002,
             "ramping_time": timedelta(minutes=3).total_seconds(),
             "lifespan": timedelta(days=210).total_seconds(),
-            "image_extension": "jpg",
             "description": "The solid state batteries store energy with a high efficiency in the form of chemical energy.",
             "wikipedia_link": "https://en.wikipedia.org/wiki/Solid-state_battery",
             "requirements": {"chemistry": 6, "materials": 5, "physics": 6},

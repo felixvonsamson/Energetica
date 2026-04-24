@@ -10,7 +10,6 @@ import {
     Money,
 } from "@/components/ui";
 import { CardDescription } from "@/components/ui/card";
-import { imageExtensionMap } from "@/lib/projects";
 import { cn } from "@/lib/utils";
 import { ProjectType } from "@/types/projects";
 
@@ -20,7 +19,6 @@ interface FacilityItemProps {
     price: number;
     isLocked: boolean;
     level?: number;
-    // imageExtension?: "png" | "jpg";
     onClick: () => void;
 }
 
@@ -34,12 +32,9 @@ export function FacilityItem({
     price,
     isLocked,
     level,
-    // imageExtension = "jpg",
     onClick,
 }: FacilityItemProps) {
-    //  as keyof typeof imageExtensionMap
-    const imageExtension = imageExtensionMap[facilityName] ?? "jpg";
-    const imageUrl = `/static/images/${facilityType}_facilities/${facilityName}.${imageExtension}`;
+    const imageUrl = `/static/images/${facilityType}_facilities/${facilityName}.png`;
 
     return (
         <Card

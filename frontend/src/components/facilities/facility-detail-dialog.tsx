@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { TypographyH2 } from "@/components/ui/typography";
 import { useQueueProject } from "@/hooks/use-projects";
-import { imageExtensionMap } from "@/lib/projects";
 import { ProjectType, Requirement } from "@/types/projects";
 
 interface FacilityDetailDialogProps<T> {
@@ -106,8 +105,7 @@ function FacilityContent<T>(
     onCompare: ((facility: T) => void) | undefined,
     handleConstruction: () => void,
 ) {
-    const imageExtension = imageExtensionMap[facility.name] ?? "jpg";
-    const imageUrl = `/static/images/${facilityType}_facilities/${facility.name}.${imageExtension}`;
+    const imageUrl = `/static/images/${facilityType}_facilities/${facility.name}.png`;
     const isLocked = facility.requirements_status === "unsatisfied";
     const hasUnsatisfiedRequirements = facility.requirements.some(
         (r) => r.status !== "satisfied",
@@ -146,7 +144,7 @@ function FacilityContent<T>(
                     <img
                         src={imageUrl}
                         alt={`${facility.name} ${facilityType} facility`}
-                        className="w-full aspect-[3/1] object-cover rounded-lg"
+                        className="w-full aspect-[5/2] [@media(min-height:900px)]:aspect-[16/9] object-cover rounded-lg"
                     />
                 </div>
 
