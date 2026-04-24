@@ -11,10 +11,16 @@ set -e
 #   --skip-backend       Skip git sync and service restart (frontend-only deployment)
 #   --skip-frontend-build Skip building frontend locally (for backend-only changes)
 #   --rm_instance        Remove the instance folder on the server before deploying (DESTRUCTIVE)
+#
+# Environment variables (skip interactive prompts):
+#   DEPLOY_HOST          SSH host alias (default: energetica-game-deploy)
+#   DEPLOY_USER          SSH user (default: deploy)
+#   DEPLOY_DOMAIN        Domain name (e.g. energetica-game.org)
 
 REMOTE_HOST="${DEPLOY_HOST:-energetica-game-deploy}"
 REMOTE_USER="${DEPLOY_USER:-deploy}"
 REMOTE_PATH="/var/www/energetica"
+DOMAIN="${DEPLOY_DOMAIN:-}"
 LOCAL_BUILT_FRONTEND="./energetica/static/react"
 ALLOW_DIRTY=false
 AUTO_CONFIRM=false
@@ -77,6 +83,15 @@ log_error() {
 log_info() {
     echo -e "${BLUE}ℹ $1${NC}"
 }
+
+# Prompt for domain if not set via environment variable
+if [ -z "$DOMAIN" ]; then
+    read -r -p "Enter the domain name for this server (e.g. energetica-game.org): " DOMAIN
+    if [ -z "$DOMAIN" ]; then
+        echo -e "${RED}ERROR: Domain name is required${NC}"
+        exit 1
+    fi
+fi
 
 # Verify SSH host is reachable
 if ! ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new "${REMOTE_USER}@${REMOTE_HOST}" "exit" 2>/dev/null; then
@@ -150,7 +165,7 @@ main() {
     # Step 3: Confirm deployment
     log_step "Deployment summary:"
     echo "  Repository:    ${CURRENT_BRANCH} (${CURRENT_COMMIT})"
-    echo "  Domain:        https://energetica-game.org"
+    echo "  Domain:        https://$DOMAIN"
     echo "  Remote:        ${REMOTE_HOST}:${REMOTE_PATH}"
     echo ""
     echo "This will:"
@@ -279,7 +294,7 @@ main() {
     echo -e "${GREEN}║   ✓ Deployment Complete!               ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo ""
-    log_info "Site: https://energetica-game.org"
+    log_info "Site: https://$DOMAIN"
     log_info "Logs: ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo journalctl -u energetica -f'"
     log_info "To rollback: ./scripts/rollback.sh"
     echo ""

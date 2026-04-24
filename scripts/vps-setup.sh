@@ -3,10 +3,9 @@ set -e
 
 # Energetica VPS One-Time Setup Script
 # Run this on your VPS to set up Apache, Let's Encrypt, and the FastAPI backend
-# Usage: bash vps-setup.sh
+# Usage: sudo bash vps-setup.sh
 
 # Configuration
-DOMAIN="energetica-game.org"
 APP_PATH="/var/www/energetica"
 DEPLOY_USER="deploy"
 APP_USER="www-data"
@@ -26,6 +25,10 @@ log_success() {
     echo -e "${GREEN}✓ $1${NC}"
 }
 
+log_error() {
+    echo -e "${RED}✗ $1${NC}"
+}
+
 log_section() {
     echo ""
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -40,6 +43,14 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 log_section "ENERGETICA VPS SETUP"
+
+# Prompt for domain
+read -p "Enter the domain name for this server (e.g. energetica-game.org): " DOMAIN
+if [ -z "$DOMAIN" ]; then
+    echo -e "${RED}ERROR: Domain name is required${NC}"
+    exit 1
+fi
+log_success "Domain set to: $DOMAIN"
 
 # Step 1: Update system
 log_step "Updating system packages..."
@@ -96,28 +107,42 @@ else
 fi
 
 log_step "Configuring passwordless sudo for deploy user..."
-# Use sudoers.d for cleaner, safer configuration
 SUDOERS_FILE="/etc/sudoers.d/energetica-deploy"
 
-# Check if already configured
 if [ -f "$SUDOERS_FILE" ]; then
     log_success "Sudo configuration already exists"
 else
-    # Create sudoers.d entry with minimal, specific permissions
-    # Allow: git pull as www-data, and service management
     cat > "$SUDOERS_FILE" << EOF
-    $DEPLOY_USER ALL=(www-data) NOPASSWD: /usr/bin/git -C $APP_PATH pull origin *, /bin/rm -r $APP_PATH/instance
-    $DEPLOY_USER ALL=(ALL) NOPASSWD: /bin/systemctl restart energetica, /bin/systemctl status energetica, /bin/systemctl is-active *, /usr/bin/journalctl -u energetica*
-    EOF
+$DEPLOY_USER ALL=(www-data) NOPASSWD: /usr/bin/git -C $APP_PATH fetch origin *, /usr/bin/git -C $APP_PATH reset --hard origin/*, /bin/rm -r $APP_PATH/instance
+$DEPLOY_USER ALL=(ALL) NOPASSWD: /bin/systemctl restart energetica, /bin/systemctl status energetica, /bin/systemctl is-active *, /usr/bin/journalctl -u energetica*
+EOF
     chmod 440 "$SUDOERS_FILE"
 
-    # Validate sudoers syntax
     if visudo -c -f "$SUDOERS_FILE" 2>/dev/null; then
         log_success "Passwordless sudo configured (git as www-data, service restart)"
     else
         log_error "Failed to configure sudoers - invalid syntax"
         exit 1
     fi
+fi
+
+# Step 4b: Set up SSH access for deploy user
+log_section "SETTING UP SSH ACCESS FOR DEPLOY USER"
+
+DEPLOY_HOME=$(getent passwd "$DEPLOY_USER" | cut -d: -f6)
+mkdir -p "$DEPLOY_HOME/.ssh"
+chmod 700 "$DEPLOY_HOME/.ssh"
+chown "$DEPLOY_USER:$DEPLOY_USER" "$DEPLOY_HOME/.ssh"
+
+log_step "Adding SSH public key for deploy user..."
+read -r -p "Paste your public SSH key for the deploy user (or press Enter to skip): " SSH_PUBLIC_KEY
+if [ -n "$SSH_PUBLIC_KEY" ]; then
+    echo "$SSH_PUBLIC_KEY" >> "$DEPLOY_HOME/.ssh/authorized_keys"
+    chmod 600 "$DEPLOY_HOME/.ssh/authorized_keys"
+    chown "$DEPLOY_USER:$DEPLOY_USER" "$DEPLOY_HOME/.ssh/authorized_keys"
+    log_success "SSH key added for deploy user"
+else
+    log_success "Skipped — add manually: echo 'your-key' >> $DEPLOY_HOME/.ssh/authorized_keys"
 fi
 
 # Step 5: Set up application directory
@@ -230,10 +255,23 @@ if ! systemctl is-active --quiet energetica; then
     exit 1
 fi
 
-# Step 8: Set up SSL with Let's Encrypt
+# Step 8: Create initial Apache Virtual Host (HTTP only, needed for certbot verification)
+log_section "SETTING UP APACHE VIRTUAL HOST"
+
+log_step "Creating temporary HTTP vhost for domain verification..."
+cat > /etc/apache2/sites-available/energetica.conf << EOF
+<VirtualHost *:80>
+    ServerName $DOMAIN
+    DocumentRoot /var/www/html
+</VirtualHost>
+EOF
+a2ensite energetica 2>/dev/null || true
+systemctl reload apache2
+log_success "HTTP vhost active"
+
+# Step 9: Set up SSL with Let's Encrypt
 log_section "SETTING UP SSL WITH LET'S ENCRYPT"
 
-# Check if certificate already exists
 if [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
     log_success "SSL certificate already exists for $DOMAIN - skipping setup"
 else
@@ -242,18 +280,18 @@ else
     read -p "Is $DOMAIN pointing to this server? (y/n) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Please configure your DNS first, then run: sudo certbot --apache -d $DOMAIN"
+        echo "Please configure your DNS first, then run: sudo certbot certonly --webroot -w /var/www/html -d $DOMAIN"
         exit 1
     fi
 
-    certbot --apache -d "$DOMAIN"
+    certbot certonly --webroot -w /var/www/html -d "$DOMAIN"
     log_success "SSL certificate obtained"
 fi
 
-# Step 9: Create Apache Virtual Host
-log_section "SETTING UP APACHE VIRTUAL HOST"
+# Step 10: Update Apache Virtual Host with full HTTPS configuration
+log_section "CONFIGURING APACHE VIRTUAL HOST WITH SSL"
 
-log_step "Creating Apache configuration..."
+log_step "Creating full Apache configuration..."
 cat > /etc/apache2/sites-available/energetica.conf << EOF
 <VirtualHost *:80>
     ServerName $DOMAIN
@@ -267,7 +305,7 @@ cat > /etc/apache2/sites-available/energetica.conf << EOF
 <VirtualHost *:443>
     ServerName $DOMAIN
 
-    # SSL Configuration (auto-managed by certbot)
+    # SSL Configuration (managed by certbot)
     SSLEngine on
     SSLCertificateFile /etc/letsencrypt/live/$DOMAIN/fullchain.pem
     SSLCertificateKeyFile /etc/letsencrypt/live/$DOMAIN/privkey.pem
@@ -318,12 +356,10 @@ cat > /etc/apache2/sites-available/energetica.conf << EOF
 </VirtualHost>
 EOF
 
-log_success "Apache configuration created"
-
 log_step "Enabling site and testing configuration..."
 a2ensite energetica 2>/dev/null || true
 
-# Disable the auto-generated Let's Encrypt default config to avoid conflicts
+# Disable any auto-generated Let's Encrypt config to avoid conflicts
 log_step "Disabling default Let's Encrypt config..."
 a2dissite 000-default-le-ssl 2>/dev/null || true
 
@@ -331,7 +367,7 @@ apache2ctl configtest
 systemctl reload apache2
 log_success "Apache configuration applied"
 
-# Step 10: Set up Firewall
+# Step 11: Set up Firewall
 log_section "SETTING UP FIREWALL"
 
 log_step "Configuring firewall..."
@@ -343,7 +379,7 @@ ufw allow 80/tcp      # HTTP
 ufw allow 443/tcp     # HTTPS
 log_success "Firewall configured"
 
-# Step 11: Set up directory permissions
+# Step 12: Set up directory permissions
 log_section "SETTING UP DIRECTORY PERMISSIONS"
 
 log_step "Setting www-data as owner with www-data group, deploy as member..."
@@ -353,7 +389,7 @@ find "$APP_PATH" -type d -exec chmod 2770 {} \;
 find "$APP_PATH" -type f -exec chmod 660 {} \;
 log_success "Ownership and permissions configured (www-data owner, group write enabled for deploy user)"
 
-# Step 12: Verify setup
+# Step 13: Verify setup
 log_section "VERIFYING SETUP"
 
 log_step "Checking services..."
@@ -378,7 +414,7 @@ echo ""
 echo "Your Energetica server is now configured!"
 echo ""
 echo "Next steps:"
-echo "1. From your local machine, build the frontend: cd frontend && npm run build"
+echo "1. From your local machine, build the frontend: cd frontend && bun run build"
 echo "2. Deploy with: ./scripts/deploy.sh"
 echo ""
 echo "Useful commands:"
