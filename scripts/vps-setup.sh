@@ -238,6 +238,12 @@ EOF
 
 log_success "Systemd service file created"
 
+log_step "Creating instance directory..."
+mkdir -p "$APP_PATH/instance"
+chown "$APP_USER:$APP_USER" "$APP_PATH/instance"
+chmod 770 "$APP_PATH/instance"
+log_success "Instance directory created"
+
 log_step "Enabling and starting service..."
 systemctl daemon-reload
 systemctl enable energetica
