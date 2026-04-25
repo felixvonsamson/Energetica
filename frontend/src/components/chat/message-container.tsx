@@ -27,13 +27,46 @@ export function MessageContainer({
     isGroupChat,
 }: MessageContainerProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const isNearBottomRef = useRef(true);
+    const prevChatIdRef = useRef<number | null>(selectedChatId);
+    const initialScrollDoneRef = useRef(false);
     const playerMap = usePlayerMap();
     const { user } = useAuth();
 
-    // Auto-scroll to bottom when messages change
+    const handleScroll = () => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        isNearBottomRef.current =
+            el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    };
+
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+        const chatChanged = selectedChatId !== prevChatIdRef.current;
+        prevChatIdRef.current = selectedChatId;
+
+        if (chatChanged) {
+            isNearBottomRef.current = true;
+            initialScrollDoneRef.current = false;
+            const el = scrollContainerRef.current;
+            if (el) el.scrollTop = el.scrollHeight;
+            return;
+        }
+
+        if (!initialScrollDoneRef.current && messages.length > 0) {
+            initialScrollDoneRef.current = true;
+            const el = scrollContainerRef.current;
+            if (el) el.scrollTop = el.scrollHeight;
+            return;
+        }
+
+        const lastMessage = messages[messages.length - 1];
+        const isOwnMessage = lastMessage?.player_id === user?.player_id;
+
+        if (isNearBottomRef.current || isOwnMessage) {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages, selectedChatId, user?.player_id]);
 
     // Group messages by sender and time proximity (5 minutes threshold)
     const groupMessages = (messages: Message[]): MessageGroup[] => {
@@ -97,7 +130,11 @@ export function MessageContainer({
     }
 
     return (
-        <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
+        <div
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2"
+            onScroll={handleScroll}
+        >
             {messageGroups.map((group) => {
                 const isOwnMessage = group.playerId === user?.player_id;
                 const showPlayerName = isGroupChat && !isOwnMessage;
