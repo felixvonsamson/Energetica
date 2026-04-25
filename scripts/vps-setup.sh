@@ -45,7 +45,7 @@ fi
 log_section "ENERGETICA VPS SETUP"
 
 # Prompt for domain
-read -p "Enter the domain name for this server (e.g. energetica-game.org): " DOMAIN
+read -r -p "Enter the domain name for this server (e.g. energetica-game.org): " DOMAIN
 if [ -z "$DOMAIN" ]; then
     echo -e "${RED}ERROR: Domain name is required${NC}"
     exit 1
