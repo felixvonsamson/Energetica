@@ -17,6 +17,7 @@ export type AppRoute =
     | '/app/community/map'
     | '/app/community/messages'
     | '/app/community/resource-market'
+    | '/app/dashboard/quiz'
     | '/app/facilities/extraction'
     | '/app/facilities/functional'
     | '/app/facilities/manage'

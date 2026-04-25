@@ -11,10 +11,16 @@ set -e
 #   --skip-backend       Skip git sync and service restart (frontend-only deployment)
 #   --skip-frontend-build Skip building frontend locally (for backend-only changes)
 #   --rm_instance        Remove the instance folder on the server before deploying (DESTRUCTIVE)
+#
+# Environment variables (skip interactive prompts):
+#   DEPLOY_HOST          SSH host alias (e.g. energetica-game or energetica-edu)
+#   DEPLOY_USER          SSH user (default: deploy)
+#   DEPLOY_DOMAIN        Domain name (e.g. energetica-game.org)
 
-REMOTE_HOST="${DEPLOY_HOST:-energetica-game-deploy}"
+REMOTE_HOST="${DEPLOY_HOST:-}"
 REMOTE_USER="${DEPLOY_USER:-deploy}"
 REMOTE_PATH="/var/www/energetica"
+DOMAIN="${DEPLOY_DOMAIN:-}"
 LOCAL_BUILT_FRONTEND="./energetica/static/react"
 ALLOW_DIRTY=false
 AUTO_CONFIRM=false
@@ -78,6 +84,25 @@ log_info() {
     echo -e "${BLUE}ℹ $1${NC}"
 }
 
+# Select target server if not provided via environment variables
+if [ -z "$REMOTE_HOST" ] || [ -z "$DOMAIN" ]; then
+    echo ""
+    echo -e "${BLUE}Select deployment target:${NC}"
+    echo ""
+    PS3="Target: "
+    select CHOICE in \
+        "energetica-game  →  energetica-game.org" \
+        "energetica-edu   →  energetica-edu.org"; do
+        case $REPLY in
+            1) REMOTE_HOST="${DEPLOY_HOST:-energetica-game}"; DOMAIN="${DEPLOY_DOMAIN:-energetica-game.org}"; break ;;
+            2) REMOTE_HOST="${DEPLOY_HOST:-energetica-edu}";  DOMAIN="${DEPLOY_DOMAIN:-energetica-edu.org}";  break ;;
+            *) echo -e "${RED}Invalid selection. Please try again.${NC}" ;;
+        esac
+    done
+    echo ""
+    log_success "Target: $REMOTE_HOST ($DOMAIN)"
+fi
+
 # Verify SSH host is reachable
 if ! ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new "${REMOTE_USER}@${REMOTE_HOST}" "exit" 2>/dev/null; then
     log_error "Cannot connect to ${REMOTE_HOST}"
@@ -105,7 +130,7 @@ main() {
     if [ "$SKIP_FRONTEND_BUILD" = false ]; then
         log_step "Building frontend..."
         cd frontend
-        npm run build
+        bun run build
         BUILD_EXIT_CODE=$?
         cd ..
 
@@ -150,7 +175,7 @@ main() {
     # Step 3: Confirm deployment
     log_step "Deployment summary:"
     echo "  Repository:    ${CURRENT_BRANCH} (${CURRENT_COMMIT})"
-    echo "  Domain:        https://energetica-game.org"
+    echo "  Domain:        https://$DOMAIN"
     echo "  Remote:        ${REMOTE_HOST}:${REMOTE_PATH}"
     echo ""
     echo "This will:"
@@ -279,7 +304,7 @@ main() {
     echo -e "${GREEN}║   ✓ Deployment Complete!               ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo ""
-    log_info "Site: https://energetica-game.org"
+    log_info "Site: https://$DOMAIN"
     log_info "Logs: ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo journalctl -u energetica -f'"
     log_info "To rollback: ./scripts/rollback.sh"
     echo ""
