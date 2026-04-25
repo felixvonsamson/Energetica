@@ -132,7 +132,9 @@ chown "$DEPLOY_USER:$DEPLOY_USER" "$DEPLOY_HOME/.ssh"
 log_step "Adding SSH public key for deploy user..."
 read -r -p "Paste your public SSH key for the deploy user (or press Enter to skip): " SSH_PUBLIC_KEY
 if [ -n "$SSH_PUBLIC_KEY" ]; then
-    echo "$SSH_PUBLIC_KEY" >> "$DEPLOY_HOME/.ssh/authorized_keys"
+    if ! grep -qF "$SSH_PUBLIC_KEY" "$DEPLOY_HOME/.ssh/authorized_keys" 2>/dev/null; then
+        echo "$SSH_PUBLIC_KEY" >> "$DEPLOY_HOME/.ssh/authorized_keys"
+    fi
     chmod 600 "$DEPLOY_HOME/.ssh/authorized_keys"
     chown "$DEPLOY_USER:$DEPLOY_USER" "$DEPLOY_HOME/.ssh/authorized_keys"
     log_success "SSH key added for deploy user"
