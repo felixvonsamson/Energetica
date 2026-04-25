@@ -120,7 +120,7 @@ main() {
     if [ "$SKIP_FRONTEND_BUILD" = false ]; then
         log_step "Building frontend..."
         cd frontend
-        npm run build
+        bun run build
         BUILD_EXIT_CODE=$?
         cd ..
 
