@@ -13,11 +13,11 @@ set -e
 #   --rm_instance        Remove the instance folder on the server before deploying (DESTRUCTIVE)
 #
 # Environment variables (skip interactive prompts):
-#   DEPLOY_HOST          SSH host alias (default: energetica-game-deploy)
+#   DEPLOY_HOST          SSH host alias (e.g. energetica-game or energetica-edu)
 #   DEPLOY_USER          SSH user (default: deploy)
 #   DEPLOY_DOMAIN        Domain name (e.g. energetica-game.org)
 
-REMOTE_HOST="${DEPLOY_HOST:-energetica-game-deploy}"
+REMOTE_HOST="${DEPLOY_HOST:-}"
 REMOTE_USER="${DEPLOY_USER:-deploy}"
 REMOTE_PATH="/var/www/energetica"
 DOMAIN="${DEPLOY_DOMAIN:-}"
@@ -84,13 +84,23 @@ log_info() {
     echo -e "${BLUE}ℹ $1${NC}"
 }
 
-# Prompt for domain if not set via environment variable
-if [ -z "$DOMAIN" ]; then
-    read -r -p "Enter the domain name for this server (e.g. energetica-game.org): " DOMAIN
-    if [ -z "$DOMAIN" ]; then
-        echo -e "${RED}ERROR: Domain name is required${NC}"
-        exit 1
-    fi
+# Select target server if not provided via environment variables
+if [ -z "$REMOTE_HOST" ] || [ -z "$DOMAIN" ]; then
+    echo ""
+    echo -e "${BLUE}Select deployment target:${NC}"
+    echo ""
+    PS3="Target: "
+    select CHOICE in \
+        "energetica-game  →  energetica-game.org" \
+        "energetica-edu   →  energetica-edu.org"; do
+        case $REPLY in
+            1) REMOTE_HOST="${DEPLOY_HOST:-energetica-game}"; DOMAIN="${DEPLOY_DOMAIN:-energetica-game.org}"; break ;;
+            2) REMOTE_HOST="${DEPLOY_HOST:-energetica-edu}";  DOMAIN="${DEPLOY_DOMAIN:-energetica-edu.org}";  break ;;
+            *) echo -e "${RED}Invalid selection. Please try again.${NC}" ;;
+        esac
+    done
+    echo ""
+    log_success "Target: $REMOTE_HOST ($DOMAIN)"
 fi
 
 # Verify SSH host is reachable
