@@ -287,6 +287,7 @@ else
         exit 1
     fi
 
+    mkdir -p /var/www/html
     certbot certonly --webroot -w /var/www/html -d "$DOMAIN"
     log_success "SSL certificate obtained"
 fi
