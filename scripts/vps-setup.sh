@@ -69,11 +69,6 @@ log_step "Installing Python and build tools..."
 apt install -y python3 python3-venv python3-dev build-essential
 log_success "Python dependencies installed"
 
-log_step "Installing Node.js (for rollback frontend rebuilds)..."
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt install -y nodejs
-log_success "Node.js installed"
-
 log_step "Installing certbot and Let's Encrypt..."
 apt install -y certbot python3-certbot-apache
 log_success "Certbot installed"
