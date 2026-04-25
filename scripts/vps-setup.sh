@@ -291,9 +291,17 @@ cat > /etc/apache2/sites-available/energetica.conf << EOF
 <VirtualHost *:80>
     ServerName $DOMAIN
 
-    # Redirect all HTTP to HTTPS
+    # Serve certbot renewal challenges directly — must not be redirected
+    Alias /.well-known/acme-challenge/ /var/www/html/.well-known/acme-challenge/
+    <Directory "/var/www/html/.well-known/acme-challenge/">
+        Options None
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    # Redirect all other HTTP to HTTPS
     RewriteEngine On
-    RewriteCond %{HTTPS} off
+    RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
     RewriteRule ^(.*)$ https://%{HTTP_HOST}\$1 [R=301,L]
 </VirtualHost>
 
