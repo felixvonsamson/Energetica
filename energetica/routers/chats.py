@@ -30,7 +30,7 @@ def get_chat_messages(
     player: Annotated[Player, Depends(get_settled_player)],
     chat_id: int,
     before: int | None = Query(None),
-    limit: int = Query(50),
+    limit: int = Query(50, ge=1, le=200),
 ) -> MessageListOut:
     """Get the messages for a chat, newest `limit` messages or those before `before` message id."""
     chat = Chat.getitem(chat_id, error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"))

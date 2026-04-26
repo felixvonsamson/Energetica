@@ -41,14 +41,25 @@ export function useChatMessages(chatId: number | null) {
             setHasMore(false);
             return;
         }
+        let cancelled = false;
         setIsLoading(true);
         chatsApi
             .getChatMessages(chatId)
             .then((data) => {
-                setMessages(data.messages);
-                setHasMore(data.has_more);
+                if (!cancelled) {
+                    setMessages(data.messages);
+                    setHasMore(data.has_more);
+                }
             })
-            .finally(() => setIsLoading(false));
+            .catch(() => {
+                if (!cancelled) toast.error("Failed to load messages");
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
     }, [chatId]);
 
     const loadMore = useCallback(async () => {
@@ -60,6 +71,8 @@ export function useChatMessages(chatId: number | null) {
             const data = await chatsApi.getChatMessages(chatId, oldestId);
             setMessages((prev) => [...data.messages, ...prev]);
             setHasMore(data.has_more);
+        } catch {
+            toast.error("Failed to load older messages");
         } finally {
             setIsLoadingMore(false);
         }
