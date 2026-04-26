@@ -8,10 +8,11 @@ export const chatsApi = {
     getChatList: () =>
         apiClient.get<ApiResponse<"/api/v1/chats", "get">>("/chats"),
 
-    /** Get all messages in a specific chat. */
-    getChatMessages: (chatId: number) =>
+    /** Get messages for a chat. Fetches the latest 50, or 50 before `before` message id. */
+    getChatMessages: (chatId: number, before?: number) =>
         apiClient.get<ApiResponse<"/api/v1/chats/{chat_id}/messages", "get">>(
             `/chats/${chatId}/messages`,
+            before !== undefined ? { params: { before } } : undefined,
         ),
 
     /** Send a new message to a chat. */

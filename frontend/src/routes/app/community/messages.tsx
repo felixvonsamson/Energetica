@@ -96,8 +96,12 @@ function MessagesContent() {
         setShowGroupChatDialog,
         isChatListLoading,
         isChatMessagesLoading,
+        isLoadingMore,
         chatListData,
-        chatMessagesData,
+        messages,
+        hasMore,
+        loadMore,
+        sendMessage,
         selectedChat,
         openChat,
     } = useMessagesPage();
@@ -160,7 +164,11 @@ function MessagesContent() {
                         selectedChat={selectedChat}
                         selectedChatId={selectedChatId}
                         isMessagesLoading={isChatMessagesLoading}
-                        messages={chatMessagesData?.messages || []}
+                        messages={messages}
+                        hasMore={hasMore}
+                        isLoadingMore={isLoadingMore}
+                        onLoadMore={loadMore}
+                        onSend={sendMessage}
                         isDialogOpen={showNewChatDialog || showGroupChatDialog}
                         onBackClick={handleBackToList}
                         showBackButton={showMobileChatView && isMobile}

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { PlayerName } from "@/components/ui/player-name";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,6 +12,9 @@ interface MessageContainerProps {
     messages: Message[];
     selectedChatId: number | null;
     isGroupChat: boolean;
+    hasMore: boolean;
+    isLoadingMore: boolean;
+    onLoadMore: () => void;
 }
 
 interface MessageGroup {
@@ -25,12 +28,17 @@ export function MessageContainer({
     messages,
     selectedChatId,
     isGroupChat,
+    hasMore,
+    isLoadingMore,
+    onLoadMore,
 }: MessageContainerProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const isNearBottomRef = useRef(true);
     const prevChatIdRef = useRef<number | null>(selectedChatId);
     const initialScrollDoneRef = useRef(false);
+    // Scroll height before "load more" prepend — used to restore scroll position
+    const prevScrollHeightRef = useRef(0);
     const playerMap = usePlayerMap();
     const { user } = useAuth();
 
@@ -40,6 +48,19 @@ export function MessageContainer({
         isNearBottomRef.current =
             el.scrollHeight - el.scrollTop - el.clientHeight < 100;
     };
+
+    // Capture scroll height before messages are prepended (when isLoadingMore goes true)
+    // then restore position after the new messages land in the DOM.
+    useLayoutEffect(() => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        if (isLoadingMore) {
+            prevScrollHeightRef.current = el.scrollHeight;
+        } else if (prevScrollHeightRef.current > 0) {
+            el.scrollTop += el.scrollHeight - prevScrollHeightRef.current;
+            prevScrollHeightRef.current = 0;
+        }
+    }, [isLoadingMore]);
 
     useEffect(() => {
         const chatChanged = selectedChatId !== prevChatIdRef.current;
@@ -68,14 +89,13 @@ export function MessageContainer({
         }
     }, [messages, selectedChatId, user?.player_id]);
 
-    // Group messages by sender and time proximity (5 minutes threshold)
     const groupMessages = (messages: Message[]): MessageGroup[] => {
         const groups: MessageGroup[] = [];
-        const TIME_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+        const TIME_THRESHOLD_MS = 5 * 60 * 1000;
 
         for (let i = 0; i < messages.length; i++) {
             const currentMessage = messages[i];
-            if (!currentMessage) continue; // Skip if undefined (shouldn't happen)
+            if (!currentMessage) continue;
 
             const previousMessage = i > 0 ? messages[i - 1] : null;
 
@@ -103,8 +123,6 @@ export function MessageContainer({
         return groups;
     };
 
-    const messageGroups = groupMessages(messages);
-
     if (!selectedChatId) {
         return (
             <div className="flex-1 flex items-center justify-center text-muted-foreground">
@@ -129,22 +147,34 @@ export function MessageContainer({
         );
     }
 
+    const messageGroups = groupMessages(messages);
+
     return (
         <div
             ref={scrollContainerRef}
             className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2"
             onScroll={handleScroll}
         >
+            {/* Load more button */}
+            {hasMore && (
+                <div className="flex justify-center pt-2 pb-1">
+                    <button
+                        onClick={onLoadMore}
+                        disabled={isLoadingMore}
+                        className="text-sm text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors"
+                    >
+                        {isLoadingMore ? "Loading…" : "Load older messages"}
+                    </button>
+                </div>
+            )}
+
             {messageGroups.map((group) => {
                 const isOwnMessage = group.playerId === user?.player_id;
                 const showPlayerName = isGroupChat && !isOwnMessage;
                 const firstMessage = group.messages[0];
                 const player = playerMap[group.playerId];
 
-                // Skip groups without messages (shouldn't happen but type-safety)
-                if (!firstMessage) {
-                    return null;
-                }
+                if (!firstMessage) return null;
 
                 return (
                     <div
@@ -154,7 +184,6 @@ export function MessageContainer({
                             isOwnMessage ? "items-end" : "items-start",
                         )}
                     >
-                        {/* Show player name and timestamp only for the first message in the group */}
                         {group.showTimestamp && (
                             <div className="text-sm text-muted-foreground mb-1 px-1 inline-flex items-center gap-1">
                                 {showPlayerName && player && (
@@ -164,7 +193,6 @@ export function MessageContainer({
                             </div>
                         )}
 
-                        {/* Render all messages in the group */}
                         <div
                             className={cn(
                                 "w-full space-y-1 flex flex-col",
