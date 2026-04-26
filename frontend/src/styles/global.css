@@ -81,6 +81,7 @@
     --color-surface-page:    var(--surface-page);
     --color-surface-card:    var(--surface-card);
     --color-surface-raised:  var(--surface-raised);
+    --color-surface-overlay: var(--surface-overlay);
     --color-surface-sunken:  var(--surface-sunken);
     --color-surface-topbar:  var(--surface-topbar);
 
@@ -167,6 +168,7 @@
         --surface-page:   var(--color-pine-200);   /* app background */
         --surface-card:   var(--color-bone-100);   /* cards, panels */
         --surface-raised: var(--color-bone-50);    /* popovers, dropdowns (above card) */
+        --surface-overlay: var(--color-bone-50);   /* lightest bone surface, interactive elements */
         --surface-sunken: var(--color-bone-150);   /* table rows, inset areas (below card) */
         --surface-topbar: var(--color-pine-100);   /* top navigation bar */
 
@@ -322,6 +324,7 @@
         --surface-page:   #0a0a0a;
         --surface-card:   #2d2d2d;
         --surface-raised: #383838;   /* above card: popovers, dropdowns */
+        --surface-overlay: #454545;  /* lightest surface, interactive elements */
         --surface-sunken: #1e1e1e;   /* below card: table rows, inset areas */
         --surface-topbar: var(--color-pine-900);
 
@@ -333,7 +336,7 @@
         --hyperlink:      var(--color-blue-400);        /* links */
 
         /* Borders */
-        --border-subtle:  #2a2a2a;
+        --border-subtle:  #525252;
         --border-brand:   var(--color-pine-700);   /* brand-coloured input/widget borders */
         /* --border (default) is already defined above */
 

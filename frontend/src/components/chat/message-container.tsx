@@ -161,7 +161,7 @@ export function MessageContainer({
                     <button
                         onClick={onLoadMore}
                         disabled={isLoadingMore}
-                        className="text-sm text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors"
+                        className="text-sm px-3 py-1 rounded-full border border-border-subtle bg-surface-overlay text-fg-base hover:bg-surface-sunken disabled:opacity-50 transition-colors cursor-pointer"
                     >
                         {isLoadingMore ? "Loading…" : "Load older messages"}
                     </button>
