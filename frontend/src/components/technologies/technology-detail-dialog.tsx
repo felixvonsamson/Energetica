@@ -216,10 +216,7 @@ export function TechnologyDetailDialog<T>({
                             <div className="flex items-center justify-around">
                                 <div className="flex items-center gap-2">
                                     <Money
-                                        amount={Math.round(
-                                            technology.price *
-                                                (technology.discount ?? 1),
-                                        )}
+                                        amount={Math.round(technology.price)}
                                         long
                                         className="text-lg font-semibold"
                                     />
