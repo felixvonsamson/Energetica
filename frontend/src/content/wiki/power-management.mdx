@@ -10,11 +10,18 @@ Otherwise, if a player is not part of a Network, generation and consumption prio
 
 The list operates in two directions. Energy generation is prioritized from top to bottom, meaning facilities at the top have higher priority for power generation. Conversely, power consumption is prioritized from bottom to top, with components at the bottom having higher satisfaction priority. Additionally, a generation facility in the list only provides power to consumption components listed below it, and vice versa for consumption components, that only accept power form facilities listed above them. Renewable facilities remain fixed in the list as their output is non-controllable and must be used with the highest priority.
 
-<div className="flex justify-center my-8">
+<div className="flex justify-center">
     <img
-        src="/static/images/wiki/prioritization_example.png"
+        src="/static/images/wiki/light-prioritization_example.png"
         alt="Example of prioritization of facilities"
-        style={{ width: "600px" }}
+        className="dark:hidden"
+        style={{ width: "1000px" }}
+    />
+    <img
+        src="/static/images/wiki/dark-prioritization_example.png"
+        alt="Example of prioritization of facilities"
+        className="hidden dark:block"
+        style={{ width: "1000px" }}
     />
 </div>
 
