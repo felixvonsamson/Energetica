@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { chatsApi } from "@/lib/api/chats";

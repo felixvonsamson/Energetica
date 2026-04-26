@@ -2,8 +2,8 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useRef, useEffect, useCallback, useState } from "react";
 
 import { useSocketEvent } from "@/contexts/socket-context";
-import { useChatList, useChatMessages, useOpenChat } from "@/hooks/use-chats";
 import { useAuth } from "@/hooks/use-auth";
+import { useChatList, useChatMessages, useOpenChat } from "@/hooks/use-chats";
 import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
 import type { Message } from "@/types/chats";
 
