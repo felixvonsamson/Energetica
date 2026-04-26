@@ -392,9 +392,8 @@ def construction_time(player: Player, project_type: ProjectType) -> float:
             project_type=project_type,
         ) + player.get_level(project_type)
         duration *= const_config[project_type]["price_multiplier"] ** (0.6 * level_with_constructions)
-        # knowledge spillover and laboratory time reduction
+        # laboratory time reduction
         if isinstance(project_type, TechnologyType):
-            duration *= 0.92 ** research_prevalence(project_type, next_level(player, project_type))
             duration *= (
                 const_config["laboratory"]["time_factor"]
                 ** player.functional_facility_lvl[FunctionalFacilityType.LABORATORY]
