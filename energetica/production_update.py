@@ -8,7 +8,6 @@ import pickle
 from typing import Any, Literal
 
 import numpy as np
-import pandas as pd
 
 from energetica.config.assets import wind_power_curve
 from energetica.database.active_facility import ActiveFacility
@@ -96,7 +95,26 @@ def update_electricity() -> None:
                 },
             )
         with open(f"instance/data/networks/{network.id}/charts/market_t{engine.total_t}.pck", "wb") as file:
-            pickle.dump(market, file)
+            pickle.dump(
+                {
+                    **market,
+                    "capacities": {
+                        "player_id": [e.player_id for e in market["capacities"]],
+                        "capacity": [e.capacity for e in market["capacities"]],
+                        "price": [e.price for e in market["capacities"]],
+                        "facility": [e.facility for e in market["capacities"]],
+                        "cumul_capacities": [e.cumul_capacities for e in market["capacities"]],
+                    },
+                    "demands": {
+                        "player_id": [e.player_id for e in market["demands"]],
+                        "capacity": [e.capacity for e in market["demands"]],
+                        "price": [e.price for e in market["demands"]],
+                        "facility": [e.facility for e in market["demands"]],
+                        "cumul_capacities": [e.cumul_capacities for e in market["demands"]],
+                    },
+                },
+                file,
+            )
 
     for player in players:
         if player.network is None:
@@ -200,12 +218,23 @@ def update_player_progress_values(player: Player, new_values: dict) -> None:
     player.check_continuous_achievements()
 
 
-def init_market() -> dict[str, pd.DataFrame]:
+class _MarketEntry:
+    __slots__ = ("player_id", "capacity", "price", "facility", "cumul_capacities")
+
+    def __init__(self, player_id: int, capacity: float, price: float, facility: str) -> None:
+        self.player_id = player_id
+        self.capacity = capacity
+        self.price = price
+        self.facility = facility
+        self.cumul_capacities = 0.0
+
+
+def init_market() -> dict:
     # TODO (Felix): should be moved somewhere else, e.g. create a Market class in market.py (new) ?
     """Initialize an empty market."""
     return {
-        "capacities": pd.DataFrame({"player_id": [], "capacity": [], "price": [], "facility": []}),
-        "demands": pd.DataFrame({"player_id": [], "capacity": [], "price": [], "facility": []}),
+        "capacities": [],
+        "demands": [],
     }
 
 
@@ -544,20 +573,24 @@ def market_logic(new_values: dict, market: dict) -> None:
     market["generation"] = {}
     market["consumption"] = {}
 
-    offers = market["capacities"]
-    offers = offers.sort_values("price").reset_index(drop=True)
-    offers["cumul_capacities"] = offers["capacity"].cumsum()
+    offers = sorted(market["capacities"], key=lambda e: e.price)
+    cumul = 0.0
+    for entry in offers:
+        cumul += entry.capacity
+        entry.cumul_capacities = cumul
 
-    demands = market["demands"]
-    demands = demands.sort_values(by="price", ascending=False).reset_index(drop=True)
-    demands["cumul_capacities"] = demands["capacity"].cumsum()
+    demands = sorted(market["demands"], key=lambda e: e.price, reverse=True)
+    cumul = 0.0
+    for entry in demands:
+        cumul += entry.capacity
+        entry.cumul_capacities = cumul
 
     market["capacities"] = offers
     market["demands"] = demands
 
     market_price, market_quantity = market_optimum(offers, demands)
     # sell all capacities under market price
-    for row in offers.itertuples(index=False):
+    for row in offers:
         if row.cumul_capacities > market_quantity:
             sold_cap = row.capacity - row.cumul_capacities + market_quantity
             if sold_cap > 0.1:
@@ -578,7 +611,7 @@ def market_logic(new_values: dict, market: dict) -> None:
             break
         sell(row, market_price)
     # buy all demands over market price
-    for row in demands.itertuples(index=False):
+    for row in demands:
         if row.cumul_capacities > market_quantity:
             bought_cap = row.capacity - row.cumul_capacities + market_quantity
             if bought_cap > 0.1:
@@ -596,40 +629,38 @@ def market_logic(new_values: dict, market: dict) -> None:
     market["market_quantity"] = market_quantity
 
 
-def market_optimum(offers_og: Any, demands_og: Any) -> tuple[float, float]:
+def market_optimum(offers: list[_MarketEntry], demands: list[_MarketEntry]) -> tuple[float, float]:
     # TODO (Felix) : Move to market.py (new)
     """Find market price and quantity by finding the intersection of demand and supply."""
-    offers = offers_og.copy()
-    demands = demands_og.copy()
-
-    if len(demands) == 0 or len(offers) == 0:
+    if not demands or not offers:
         return 0, 0
 
-    price_d = demands.loc[0, "price"]
-    price_o = offers.loc[0, "price"]
+    price_d = demands[0].price
+    price_o = offers[0].price
 
     if price_o > price_d:
         return price_d, 0
 
-    offers["index_offer"] = range(len(offers))
-    offers["price"] = offers["price"].shift(-1)
-    offers.loc[len(offers) - 1, "price"] = np.inf
-    demands["price"] = demands["price"].shift(-1)
-    demands.loc[len(demands) - 1, "price"] = -6
+    # Build merged event list: (cumul_capacity, is_offer, next_step_price)
+    # For offers (sorted ascending): next step price is the price of the next row (or +inf for last)
+    # For demands (sorted descending): next step price is the price of the next row (or -6 for last)
+    events: list[tuple[float, bool, float]] = []
+    for i, entry in enumerate(offers):
+        next_price = offers[i + 1].price if i + 1 < len(offers) else math.inf
+        events.append((entry.cumul_capacities, True, next_price))
+    for i, entry in enumerate(demands):
+        next_price = demands[i + 1].price if i + 1 < len(demands) else -6.0
+        events.append((entry.cumul_capacities, False, next_price))
 
-    merged_table = pd.concat([offers, demands], ignore_index=True)
-    merged_table = merged_table.sort_values(by="cumul_capacities")
+    events.sort(key=lambda e: e[0])
 
-    for row in merged_table.itertuples():
-        if np.isnan(row.index_offer):  # type: ignore
-            price_d = row.price
+    for cumul, is_offer, next_price in events:
+        if is_offer:
+            price_o = next_price
         else:
-            price_o = row.price
-        if price_d < price_o:  # type: ignore
-            price = price_d
-            if np.isnan(row.index_offer):  # type: ignore
-                price = price_o
-            return price, row.cumul_capacities  # type: ignore
+            price_d = next_price
+        if price_d < price_o:
+            return (price_d if is_offer else price_o), cumul
     raise ValueError("No market optimum found.")
 
 
@@ -809,15 +840,7 @@ def place_bid(market: dict, player_id: int, capacity: float, price: float, facil
     # TODO (Felix): should be moved somewhere else, e.g. market.py (new) ?
     """Make an bid (offer, supply) on the market."""
     if capacity > 0:
-        new_row = pd.DataFrame(
-            {
-                "player_id": [player_id],
-                "capacity": [capacity],
-                "price": [price],
-                "facility": [facility],
-            },
-        )
-        market["capacities"] = pd.concat([market["capacities"], new_row], ignore_index=True)
+        market["capacities"].append(_MarketEntry(player_id, capacity, price, facility))
     return market
 
 
@@ -825,15 +848,7 @@ def place_ask(market: dict, player_id: int, demand: float, price: float, facilit
     # TODO (Felix): should be moved somewhere else, e.g. market.py (new) ?
     """Make an ask (demand) on the market."""
     if demand > 0:
-        new_row = pd.DataFrame(
-            {
-                "player_id": [player_id],
-                "capacity": [demand],
-                "price": [price],
-                "facility": [facility],
-            },
-        )
-        market["demands"] = pd.concat([market["demands"], new_row], ignore_index=True)
+        market["demands"].append(_MarketEntry(player_id, demand, price, facility))
     return market
 
 
