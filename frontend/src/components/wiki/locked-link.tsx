@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, type LinkProps } from "@tanstack/react-router";
 import { type ReactNode } from "react";
 
 import { useHasCapability } from "@/hooks/use-capabilities";
@@ -6,10 +6,9 @@ import type { PlayerCapabilities } from "@/types/capabilities";
 
 interface LockedLinkProps {
     children: ReactNode;
-    to: string;
+    to: LinkProps["to"];
     capability: keyof PlayerCapabilities;
 }
-
 export function LockedLink({ children, to, capability }: LockedLinkProps) {
     const hasCapability = useHasCapability(capability);
 
