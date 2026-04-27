@@ -337,8 +337,7 @@
 
         /* Borders */
         --border-subtle:  #525252;
-        --border-brand:   var(--color-pine-700);   /* brand-coloured input/widget borders */
-        /* --border (default) is already defined above */
+        --border-brand:   var(--color-pine-500);   /* brand-coloured input/widget borders */
 
         /* Brand */
         --brand:    var(--color-pine-500);
@@ -470,6 +469,8 @@
     --tw-prose-links: rgb(37, 99, 235);
     --tw-prose-bold: var(--foreground);
     --tw-prose-code: var(--foreground);
+    --tw-prose-bullets: var(--foreground);
+    --tw-prose-counters: var(--foreground);
     --tw-prose-pre-bg: var(--color-bone-100);
     /* --tw-prose-th-borders: #d1d5db; */
     /* --tw-prose-td-borders: #d1d5db; */

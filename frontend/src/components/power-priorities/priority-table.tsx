@@ -42,7 +42,7 @@ export function PriorityTable() {
     const { renewables, power_priorities } = prioritiesData;
 
     return (
-        <PageCard>
+        <PageCard className="pt-0 pb-4">
             <CardContent className="overflow-x-auto">
                 {power_priorities.length === 0 ? (
                     <p className="text-center py-8">
