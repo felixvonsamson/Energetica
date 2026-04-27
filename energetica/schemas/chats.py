@@ -58,6 +58,7 @@ class MessageListOut(BaseModel):
     """Response model for the message list."""
 
     messages: list[MessageOut]
+    has_more: bool
 
 
 class MessageCreate(BaseModel):

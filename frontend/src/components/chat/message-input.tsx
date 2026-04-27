@@ -1,26 +1,21 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui";
 import { useAuth } from "@/hooks/use-auth";
-import { useSendMessage } from "@/hooks/use-chats";
+import { resolveErrorMessage } from "@/lib/game-messages";
 
 interface MessageInputProps {
-    chatId: number;
+    onSend: (text: string, playerId: number) => Promise<void>;
     isDisabled: boolean;
     isDialogOpen: boolean;
 }
 
-export function MessageInput({
-    chatId,
-    isDisabled,
-    isDialogOpen,
-}: MessageInputProps) {
+export function MessageInput({ onSend, isDisabled, isDialogOpen }: MessageInputProps) {
     const [message, setMessage] = useState("");
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    const { mutate: sendMessage } = useSendMessage();
     const { user } = useAuth();
 
-    // Auto-resize textarea as content changes
     const adjustHeight = useCallback(() => {
         const textarea = inputRef.current;
         if (textarea) {
@@ -29,38 +24,27 @@ export function MessageInput({
         }
     }, []);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!message.trim() || !user?.player_id) return;
         const messageText = message;
-
-        // Clear input immediately (optimistic)
         setMessage("");
         if (inputRef.current) {
             inputRef.current.style.height = "auto";
             inputRef.current.focus();
         }
-
-        sendMessage(
-            {
-                chatId,
-                data: { new_message: messageText },
-                playerId: user!.player_id!,
-            },
-            {
-                onError: () => {
-                    // Restore message text if the request fails
-                    setMessage(messageText);
-                },
-            },
-        );
+        try {
+            await onSend(messageText, user.player_id);
+        } catch (err) {
+            setMessage(messageText);
+            toast.error(resolveErrorMessage(err));
+        }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            handleSend();
+            void handleSend();
         }
-        // Shift+Enter will naturally insert a new line in textarea
     };
 
     useEffect(() => {
@@ -89,7 +73,7 @@ export function MessageInput({
                 className="flex-1 px-3 py-2 rounded-lg border border-input bg-card focus:outline-none focus:ring-2 focus:ring-inset focus:ring-pine dark:focus:ring-brand-green disabled:opacity-50 min-w-0 resize-none max-h-32 overflow-y-auto"
             />
             <Button
-                onClick={handleSend}
+                onClick={() => void handleSend()}
                 disabled={isDisabled || !message.trim()}
                 aria-label="Send message"
                 className="max-h-12"

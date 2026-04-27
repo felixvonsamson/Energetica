@@ -751,7 +751,8 @@ export interface paths {
         /**
          * Get Chat Messages
          *
-         * Get the messages for a chat.
+         * Get the messages for a chat, newest `limit` messages or those before
+         * `before` message id.
          */
         get: operations["get_chat_messages_api_v1_chats__chat_id__messages_get"];
         put?: never;
@@ -3179,6 +3180,8 @@ export interface components {
         MessageListOut: {
             /** Messages */
             messages: components["schemas"]["MessageOut"][];
+            /** Has More */
+            has_more: boolean;
         };
         /**
          * MessageOut
@@ -5732,7 +5735,10 @@ export interface operations {
     };
     get_chat_messages_api_v1_chats__chat_id__messages_get: {
         parameters: {
-            query?: never;
+            query?: {
+                before?: number | null;
+                limit?: number;
+            };
             header?: never;
             path: {
                 chat_id: number;

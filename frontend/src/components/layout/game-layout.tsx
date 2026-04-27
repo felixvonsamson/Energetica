@@ -44,7 +44,7 @@ export function GameLayout({ children, sidebar }: GameLayoutProps) {
                             className="flex-1 overflow-auto min-w-0"
                             onScroll={handleScroll}
                         >
-                            <div className="max-w-[1400px] mx-auto">
+                            <div className="max-w-[1400px] mx-auto h-full">
                                 {children}
                             </div>
                         </main>
