@@ -2,11 +2,12 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useRef, useEffect, useCallback, useState } from "react";
 
 import { useSocketEvent } from "@/contexts/socket-context";
+import { useAuth } from "@/hooks/use-auth";
 import { useChatList, useChatMessages, useOpenChat } from "@/hooks/use-chats";
 import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
+import type { Message } from "@/types/chats";
 
 export function useMessagesPage() {
-    // Get URL search parameters
     const { selectedChatId, showDisclaimer } = useSearch({
         from: "/app/community/messages",
     });
@@ -14,27 +15,33 @@ export function useMessagesPage() {
         from: "/app/community/messages",
     });
 
-    // Local state for dialogs
     const [showNewChatDialog, setShowNewChatDialog] = useState(false);
     const [showGroupChatDialog, setShowGroupChatDialog] = useState(false);
 
     const selectedChatIdRef = useRef<number | null>(selectedChatId ?? null);
 
     const { data: chatListData, isLoading: isChatListLoading } = useChatList();
-    const { data: chatMessagesData, isLoading: isChatMessagesLoading } =
-        useChatMessages(selectedChatId ?? null);
+    const {
+        messages,
+        hasMore,
+        isLoading: isChatMessagesLoading,
+        isLoadingMore,
+        loadMore,
+        addMessage,
+        sendMessage,
+    } = useChatMessages(selectedChatId ?? null);
     const { data: settingsData } = useSettings();
     const { mutate: updateSettings } = useUpdateSettings();
     const { mutate: openChat } = useOpenChat();
+    const { user } = useAuth();
 
-    // Keep ref in sync with selected chat ID
     useEffect(() => {
         selectedChatIdRef.current = selectedChatId ?? null;
     }, [selectedChatId]);
 
-    // When a message is received, mark the chat as opened if it's the selected chat
     const handleNewMessage = useCallback(
         (data: {
+            id: number;
             time: string;
             player_id: number;
             text: string;
@@ -42,14 +49,22 @@ export function useMessagesPage() {
         }) => {
             if (data.chat_id === selectedChatIdRef.current) {
                 openChat(data.chat_id);
+                // Own messages are already handled by the optimistic send flow
+                if (data.player_id !== user?.player_id) {
+                    addMessage({
+                        id: data.id,
+                        player_id: data.player_id,
+                        text: data.text,
+                        timestamp: data.time,
+                    } satisfies Message);
+                }
             }
         },
-        [openChat],
+        [openChat, addMessage, user?.player_id],
     );
 
     useSocketEvent("display_new_message", handleNewMessage);
 
-    // Auto-select first chat if available and mark it as opened
     useEffect(() => {
         if (
             !selectedChatId &&
@@ -71,7 +86,6 @@ export function useMessagesPage() {
         (chat) => chat.id === selectedChatId,
     );
 
-    // Determine if disclaimer should be shown
     const shouldShowDisclaimer =
         showDisclaimer === false
             ? false
@@ -100,8 +114,12 @@ export function useMessagesPage() {
         setShowGroupChatDialog,
         isChatListLoading,
         isChatMessagesLoading,
+        isLoadingMore,
         chatListData,
-        chatMessagesData,
+        messages,
+        hasMore,
+        loadMore,
+        sendMessage,
         selectedChat,
         openChat,
     };

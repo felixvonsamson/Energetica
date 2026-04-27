@@ -12,6 +12,10 @@ interface ChatWindowProps {
     selectedChatId: number | null;
     isMessagesLoading: boolean;
     messages: Message[];
+    hasMore: boolean;
+    isLoadingMore: boolean;
+    onLoadMore: () => void;
+    onSend: (text: string, playerId: number) => Promise<void>;
     isDialogOpen: boolean;
     onBackClick?: () => void;
     showBackButton?: boolean;
@@ -22,6 +26,10 @@ export function ChatWindow({
     selectedChatId,
     isMessagesLoading,
     messages,
+    hasMore,
+    isLoadingMore,
+    onLoadMore,
+    onSend,
     isDialogOpen,
     onBackClick,
     showBackButton,
@@ -38,7 +46,7 @@ export function ChatWindow({
     return (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <div className="flex-1 flex flex-col overflow-hidden bg-card rounded-lg text-foreground">
-                {/* Chat Header - sticky to stay visible when scrolling */}
+                {/* Chat Header */}
                 <div className="shrink-0 border-b border-border pb-4 mb-4 px-6 pt-6">
                     <div className="flex items-center gap-3">
                         {showBackButton && (
@@ -64,18 +72,19 @@ export function ChatWindow({
 
                 {/* Scrollable content area */}
                 <div className="flex-1 flex flex-col min-h-0 overflow-hidden px-6 pb-6">
-                    {/* Messages Container */}
                     <MessageContainer
                         isLoading={isMessagesLoading}
                         messages={messages}
                         selectedChatId={selectedChatId}
                         isGroupChat={selectedChat?.is_group ?? false}
+                        hasMore={hasMore}
+                        isLoadingMore={isLoadingMore}
+                        onLoadMore={onLoadMore}
                     />
 
-                    {/* Message Input - stays at bottom */}
                     {selectedChatId && (
                         <MessageInput
-                            chatId={selectedChatId}
+                            onSend={onSend}
                             isDisabled={!selectedChat}
                             isDialogOpen={isDialogOpen}
                         />
