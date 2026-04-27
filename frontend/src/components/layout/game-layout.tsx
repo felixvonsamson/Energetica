@@ -12,9 +12,10 @@ import { Toaster } from "@/components/ui/sonner";
 
 interface GameLayoutProps {
     children: ReactNode;
+    sidebar?: ReactNode;
 }
 
-export function GameLayout({ children }: GameLayoutProps) {
+export function GameLayout({ children, sidebar }: GameLayoutProps) {
     const bgLogoRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -37,7 +38,7 @@ export function GameLayout({ children }: GameLayoutProps) {
 
                 {/* Sidebar + content row */}
                 <div className="flex flex-1 min-h-0">
-                    <AppSidebar bgLogoRef={bgLogoRef} />
+                    {sidebar ?? <AppSidebar bgLogoRef={bgLogoRef} />}
                     <SidebarInset className="min-w-0">
                         <main
                             className="flex-1 overflow-auto min-w-0"

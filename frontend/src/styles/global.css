@@ -467,6 +467,8 @@
     --tw-prose-links: rgb(37, 99, 235);
     --tw-prose-bold: var(--foreground);
     --tw-prose-code: var(--foreground);
+    --tw-prose-bullets: var(--foreground);
+    --tw-prose-counters: var(--foreground);
     --tw-prose-pre-bg: var(--color-bone-100);
     /* --tw-prose-th-borders: #d1d5db; */
     /* --tw-prose-td-borders: #d1d5db; */
