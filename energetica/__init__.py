@@ -1,7 +1,7 @@
 """Initializes the app and the game engine."""
 
-__version__ = "0.11.2-rc1"
-__release_date__ = "06/09/2025"
+__version__ = "0.11.3-beta"
+__release_date__ = "27/04/2026"
 
 import asyncio
 import glob
