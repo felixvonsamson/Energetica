@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link , useParams } from "@tanstack/react-router";
 import {
     ArrowLeft,
     BatteryFull,
@@ -14,7 +14,6 @@ import {
     Gem,
     Hammer,
 } from "lucide-react";
-import { useParams } from "@tanstack/react-router";
 
 import {
     Sidebar,
