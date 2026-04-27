@@ -453,7 +453,21 @@ export function useMarketData({
     const query = useQuery<MarketOrdersDataResponse>({
         queryKey: queryKeys.charts.marketOrderData(marketId, tick),
         queryFn: () => chartsApi.getMarketData(marketId, tick),
-        staleTime: Infinity, // Historical market data never changes
+        // On the happy path this query always resolves with real order data and
+        // Infinity is correct — historical ticks are immutable.
+        //
+        // Workaround: the backend returns an empty payload when the game engine
+        // hasn't written the per-tick pickle file yet (race condition) or for
+        // ticks predating market creation. Those responses must not be cached
+        // forever, so we use a short staleTime to allow a retry after a brief
+        // window rather than treating them as permanent.
+        staleTime: (query) => {
+            const data = query.state.data as MarketOrdersDataResponse | undefined;
+            if (!data || data.capacities.price.length === 0) {
+                return 30_000;
+            }
+            return Infinity;
+        },
     });
 
     // If data is loading, try to find the closest cached tick

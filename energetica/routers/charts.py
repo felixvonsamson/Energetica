@@ -724,9 +724,13 @@ def get_market_data(
     # Load market data from pickle file
     market_file_path = Path(f"instance/data/networks/{market_id}/charts/market_t{tick}.pck")
     if not market_file_path.is_file():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Market data not found for tick {tick}",
+        empty_orders = MarketOrderData(player_id=[], capacity=[], price=[], facility=[], cumul_capacities=[])
+        return MarketOrdersDataResponse(
+            tick=tick,
+            capacities=empty_orders,
+            demands=empty_orders,
+            market_price=0.0,
+            market_quantity=0.0,
         )
 
     try:
