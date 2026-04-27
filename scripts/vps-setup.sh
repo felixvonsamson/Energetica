@@ -290,6 +290,15 @@ else
     mkdir -p /var/www/html
     certbot certonly --webroot -w /var/www/html -d "$DOMAIN"
     log_success "SSL certificate obtained"
+
+    # Ensure Apache is reloaded after every future auto-renewal
+    mkdir -p /etc/letsencrypt/renewal-hooks/deploy
+    cat > /etc/letsencrypt/renewal-hooks/deploy/reload-apache.sh << 'HOOK'
+#!/bin/bash
+systemctl reload apache2
+HOOK
+    chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-apache.sh
+    log_success "Certbot deploy hook installed"
 fi
 
 # Step 10: Update Apache Virtual Host with full HTTPS configuration
