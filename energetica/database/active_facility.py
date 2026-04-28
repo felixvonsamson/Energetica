@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from energetica import technology_effects
 from energetica.config.assets import const_config
@@ -12,12 +12,17 @@ from energetica.enums import ExtractionFacilityType, HydroFacilityType, PowerFac
 from energetica.globals import engine
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from energetica.database.player import Player
 
 
 @dataclass
 class ActiveFacility(DBModel):
     """Class that stores the facilities on the server and their end of life time."""
+
+    # index: player_id → facility_type → list[ActiveFacility]
+    _player_type_index: ClassVar[dict[int, dict[Any, list[ActiveFacility]]]] = {}
 
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType
     player: Player
@@ -31,6 +36,45 @@ class ActiveFacility(DBModel):
     usage: float = 0.0
 
     cut_out_speed_exceeded: bool = False
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        ActiveFacility._player_type_index.setdefault(self.player.id, {}).setdefault(self.facility_type, []).append(self)
+
+    def delete(self) -> None:
+        player_dict = ActiveFacility._player_type_index.get(self.player.id, {})
+        type_list = player_dict.get(self.facility_type, [])
+        try:
+            type_list.remove(self)
+        except ValueError:
+            pass
+        else:
+            if not type_list:
+                player_dict.pop(self.facility_type, None)
+            if not player_dict:
+                ActiveFacility._player_type_index.pop(self.player.id, None)
+        super().delete()
+
+    @classmethod
+    def filter_by(cls, **conditions: Any) -> Iterator[ActiveFacility]:  # type: ignore[override]
+        player = conditions.get("player")
+        facility_type = conditions.get("facility_type")
+        if player is not None:
+            if facility_type is not None and len(conditions) == 2:
+                return iter(cls._player_type_index.get(player.id, {}).get(facility_type, []))
+            if len(conditions) == 1:
+                return (
+                    af
+                    for facility_list in cls._player_type_index.get(player.id, {}).values()
+                    for af in facility_list
+                )
+        return super().filter_by(**conditions)
+
+    @classmethod
+    def rebuild_index(cls) -> None:
+        cls._player_type_index = {}
+        for af in cls.all():
+            cls._player_type_index.setdefault(af.player.id, {}).setdefault(af.facility_type, []).append(af)
 
     @property
     def decommissioning(self) -> bool:

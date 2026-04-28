@@ -742,14 +742,10 @@ def get_market_data(
             detail=f"Failed to load market data: {str(e)}",
         )
 
-    # Convert DataFrames to dict format
-    capacities_dict = market_data["capacities"].to_dict(orient="list")
-    demands_dict = market_data["demands"].to_dict(orient="list")
-
     return MarketOrdersDataResponse(
         tick=tick,
-        capacities=MarketOrderData(**capacities_dict),
-        demands=MarketOrderData(**demands_dict),
+        capacities=MarketOrderData(**market_data["capacities"]),
+        demands=MarketOrderData(**market_data["demands"]),
         market_price=market_data["market_price"],
         market_quantity=market_data["market_quantity"],
     )
