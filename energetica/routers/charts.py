@@ -738,20 +738,10 @@ def get_market_data(
             detail=f"Failed to load market data: {str(e)}",
         )
 
-    # Convert to dict format (new files store dicts; old files stored DataFrames)
-    capacities_raw = market_data["capacities"]
-    demands_raw = market_data["demands"]
-    if hasattr(capacities_raw, "to_dict"):
-        capacities_dict = capacities_raw.to_dict(orient="list")
-        demands_dict = demands_raw.to_dict(orient="list")
-    else:
-        capacities_dict = capacities_raw
-        demands_dict = demands_raw
-
     return MarketOrdersDataResponse(
         tick=tick,
-        capacities=MarketOrderData(**capacities_dict),
-        demands=MarketOrderData(**demands_dict),
+        capacities=MarketOrderData(**market_data["capacities"]),
+        demands=MarketOrderData(**market_data["demands"]),
         market_price=market_data["market_price"],
         market_quantity=market_data["market_quantity"],
     )
