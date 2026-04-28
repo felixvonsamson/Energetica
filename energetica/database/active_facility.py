@@ -48,6 +48,11 @@ class ActiveFacility(DBModel):
             type_list.remove(self)
         except ValueError:
             pass
+        else:
+            if not type_list:
+                player_dict.pop(self.facility_type, None)
+            if not player_dict:
+                ActiveFacility._player_type_index.pop(self.player.id, None)
         super().delete()
 
     @classmethod
@@ -60,8 +65,8 @@ class ActiveFacility(DBModel):
             if len(conditions) == 1:
                 return (
                     af
-                    for type_dict in cls._player_type_index.get(player.id, {}).values()
-                    for af in type_dict
+                    for facility_list in cls._player_type_index.get(player.id, {}).values()
+                    for af in facility_list
                 )
         return super().filter_by(**conditions)
 
