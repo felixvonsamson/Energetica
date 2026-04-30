@@ -210,7 +210,6 @@ function MarketsOverviewContent() {
         );
     }
 
-    // selectedMarketId is always defined here (at minimum first available market)
     if (!selectedMarketId) return null;
 
     return (
