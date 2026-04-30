@@ -319,6 +319,12 @@ function MeritOrderChartInner({
         };
     }, [marketData]);
 
+    // Reset zoom when the viewed market changes
+    useEffect(() => {
+        setIsZoomed(false);
+        setZoomRange({ start: 0, end: 100 });
+    }, [marketId]);
+
     // Keep live ref updated
     useEffect(() => {
         liveRef.current = { supplyBlocks, demandBlocks, activeMode };
@@ -538,7 +544,7 @@ function MeritOrderChartInner({
             yAxis: {
                 type: "value",
                 min: priceDomain[0],
-                max: priceDomain[1],
+                max: Math.min(priceDomain[1], 2000),
                 name: "Price (coins/MWh)",
                 nameLocation: "middle",
                 nameGap: 70,
