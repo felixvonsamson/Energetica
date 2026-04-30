@@ -7,7 +7,7 @@ function formatFrontendFiles(filenames) {
   const relativePaths = filenames.map(f => f.replace(/^.*\/frontend\//, ''));
 
   return [
-    `cd frontend && npx eslint --max-warnings 0 --fix --cache ${relativePaths.join(' ')}`,
+    `cd frontend && npx eslint --max-warnings 0 --fix ${relativePaths.join(' ')}`,
     `cd frontend && npx prettier --write ${relativePaths.join(' ')}`,
   ];
 }
