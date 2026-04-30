@@ -5,7 +5,9 @@
     "private": true,
     "scripts": {
         "dev": "cd frontend && bun run dev",
-        "dev:remote": "cd frontend && VITE_BACKEND_URL=https://energetica-game.org bun run dev",
+        "dev:edu": "cd frontend && bun run dev:edu",
+        "dev:game": "cd frontend && bun run dev:game",
+        "dev:ethz": "cd frontend && bun run dev:ethz",
         "build": "cd frontend && bun run build",
         "lint": "cd frontend && bun run lint",
         "lint:fix": "cd frontend && bun run lint:fix",

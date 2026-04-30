@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
@@ -10,9 +10,11 @@ import rehypeSlug from "rehype-slug";
 import svgr from "vite-plugin-svgr";
 import path from "path";
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
+    const env = loadEnv(mode, process.cwd(), "");
     // Backend URL from environment variable, fallback to local development server
-    const backendUrl = process.env.VITE_BACKEND_URL || "http://localhost:8000";
+    const backendUrl = env.VITE_BACKEND_URL || "http://localhost:8000";
+    const wsUrl = backendUrl.replace(/^http/, "ws");
 
     return {
         plugins: [
@@ -48,7 +50,7 @@ export default defineConfig(({ mode }) => {
         resolve: {
             alias: { "@": path.resolve(__dirname, "./src") },
         },
-        base: mode === "development" ? "/" : "/static/react/",
+        base: command === "serve" ? "/" : "/static/react/",
         server: {
             proxy: {
                 // API endpoints
@@ -63,7 +65,7 @@ export default defineConfig(({ mode }) => {
                 },
                 // WebSocket connection
                 "^/socket.io": {
-                    target: backendUrl,
+                    target: wsUrl,
                     changeOrigin: true,
                     ws: true,
                 },

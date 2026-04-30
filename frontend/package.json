@@ -2,6 +2,9 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
+        "dev:edu": "vite --mode edu",
+        "dev:game": "vite --mode game",
+        "dev:ethz": "vite --mode ethz",
         "build": "vite build && bun run build:sw",
         "build:sw": "bun ../scripts/generate-sw-routes.ts && bun build src/service-worker.ts --outfile ../energetica/static/service-worker.js --target browser && { printf '// AUTO-GENERATED — do not edit. Run `bun run build:sw` in frontend/ to regenerate.\\n'; cat ../energetica/static/service-worker.js; } > /tmp/sw.js && mv /tmp/sw.js ../energetica/static/service-worker.js",
         "dev:sw": "bun build src/service-worker.ts --outfile ../energetica/static/service-worker.js --target browser --watch",
