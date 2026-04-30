@@ -417,6 +417,59 @@ export function EChartsTimeSeries({
             }
         }
 
+        // Compute the visible data slice from the current zoom window so the
+        // Y-axis scales to the visible range rather than the full dataset.
+        const startIdx = Math.floor(processedData.length * zoomRange.start / 100);
+        const endIdx = Math.min(
+            Math.ceil(processedData.length * zoomRange.end / 100),
+            processedData.length,
+        );
+        const visibleSlice = processedData.slice(startIdx, endIdx);
+        const hasVisible = visibleSlice.length > 0 && visibleKeys.length > 0;
+
+        // Y min: honor explicit config; otherwise ensure 0 is always in frame,
+        // and go below if the data requires it.
+        const yMin: number | undefined = (() => {
+            if (config.yAxisMin !== undefined) return config.yAxisMin;
+            if (!hasVisible) return 0;
+            let min = 0;
+            for (const d of visibleSlice)
+                for (const k of visibleKeys) {
+                    const v = Number(d[k] ?? 0);
+                    if (Number.isFinite(v) && v < min) min = v;
+                }
+            return min;
+        })();
+
+        // Y max: scale to the maximum visible value.
+        // For stacked charts, sum positive series values per tick.
+        // An explicit yAxisMax acts as a hard upper cap.
+        const yMax: number | undefined = (() => {
+            if (!hasVisible) return config.yAxisMax;
+            let rawMax = 0;
+            if (config.stacked) {
+                for (const d of visibleSlice) {
+                    let sum = 0;
+                    for (const k of visibleKeys) {
+                        const v = Number(d[k] ?? 0);
+                        if (Number.isFinite(v) && v > 0) sum += v;
+                    }
+                    if (sum > rawMax) rawMax = sum;
+                }
+            } else {
+                for (const d of visibleSlice)
+                    for (const k of visibleKeys) {
+                        const v = Number(d[k] ?? 0);
+                        if (Number.isFinite(v) && v > rawMax) rawMax = v;
+                    }
+            }
+            const capped =
+                config.yAxisMax !== undefined
+                    ? Math.min(rawMax, config.yAxisMax)
+                    : rawMax;
+            return capped > 0 ? capped : config.yAxisMax;
+        })();
+
         const allRefLines = [...(config.referenceLines ?? [])];
 
         const series: ECOption["series"] = visibleKeys.map((key) => {
@@ -553,8 +606,8 @@ export function EChartsTimeSeries({
             yAxis: {
                 type: "value",
                 axisLabel: { formatter: config.formatYAxis, fontSize: 11 },
-                min: config.yAxisMin,
-                max: config.yAxisMax,
+                min: yMin,
+                max: yMax,
                 splitLine: {
                     lineStyle: { color: "rgba(128,128,128,0.15)" },
                 },
