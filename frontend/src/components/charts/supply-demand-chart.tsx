@@ -319,12 +319,6 @@ function MeritOrderChartInner({
         };
     }, [marketData]);
 
-    // Reset zoom when the viewed market changes
-    useEffect(() => {
-        setIsZoomed(false);
-        setZoomRange({ start: 0, end: 100 });
-    }, [marketId]);
-
     // Keep live ref updated
     useEffect(() => {
         liveRef.current = { supplyBlocks, demandBlocks, activeMode };

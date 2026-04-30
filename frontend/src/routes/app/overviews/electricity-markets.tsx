@@ -219,7 +219,7 @@ function MarketsOverviewContent() {
                 <CardContent>
                     <div className="space-y-4">
                         <MarketSelector
-                            markets={marketsData?.electricity_markets ?? []}
+                            markets={marketsData.electricity_markets}
                             marketId={selectedMarketId}
                             onMarketIdChange={handleMarketChange}
                         />
@@ -397,7 +397,7 @@ function MarketsOverviewContent() {
                 iconClassName="text-primary"
                 title="Merit Order & Market Clearing"
             >
-                <MeritOrderChart marketId={selectedMarketId} />
+                <MeritOrderChart key={selectedMarketId} marketId={selectedMarketId} />
             </ChartCard>
         </div>
     );
