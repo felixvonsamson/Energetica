@@ -68,6 +68,26 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
         );
     }, [notifications, activeCategory]);
 
+    const categoriesWithNotifications = useMemo(
+        () =>
+            CATEGORIES.filter((cat) =>
+                notifications.some(
+                    (n) => getNotificationCategory(n.payload.type) === cat,
+                ),
+            ),
+        [notifications],
+    );
+
+    // Reset to "all" if the active category becomes empty
+    useEffect(() => {
+        if (
+            activeCategory !== "all" &&
+            !categoriesWithNotifications.includes(activeCategory)
+        ) {
+            setActiveCategory("all");
+        }
+    }, [activeCategory, categoriesWithNotifications]);
+
     const unreadCount = useMemo(
         () => filteredNotifications.filter((n) => !n.read).length,
         [filteredNotifications],
@@ -159,14 +179,14 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex flex-col max-h-[60vh]">
+                <div className="flex flex-col h-[60vh]">
                     {/* Category filter tabs + actions row */}
                     <div className="flex items-center justify-between mb-3 gap-2">
-                        <div className="flex gap-1 flex-wrap">
+                        <div className="flex gap-1 overflow-x-auto shrink min-w-0">
                             <button
                                 onClick={() => setActiveCategory("all")}
                                 className={cn(
-                                    "px-3 py-1 rounded text-sm transition-colors",
+                                    "px-3 py-1 rounded text-sm transition-colors shrink-0",
                                     activeCategory === "all"
                                         ? "bg-primary text-primary-foreground"
                                         : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
@@ -174,12 +194,12 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                             >
                                 All
                             </button>
-                            {CATEGORIES.map((cat) => (
+                            {categoriesWithNotifications.map((cat) => (
                                 <button
                                     key={cat}
                                     onClick={() => setActiveCategory(cat)}
                                     className={cn(
-                                        "px-3 py-1 rounded text-sm transition-colors",
+                                        "px-3 py-1 rounded text-sm transition-colors shrink-0",
                                         activeCategory === cat
                                             ? "bg-primary text-primary-foreground"
                                             : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
