@@ -134,8 +134,9 @@ function MarketsOverviewContent() {
     const playerMarket = useElectricityMarketForPlayer(playerId);
     const { data: marketsData } = useElectricityMarkets();
 
-    // Determine which market to show
-    const selectedMarketId = searchMarketId ?? playerMarket?.id;
+    // Determine which market to show: URL param > player's market > first available market
+    const selectedMarketId =
+        searchMarketId ?? playerMarket?.id ?? marketsData?.electricity_markets[0]?.id;
 
     // Find the selected market name
     const selectedMarket = useMemo(() => {
@@ -184,27 +185,33 @@ function MarketsOverviewContent() {
               }`
     }`;
 
-    // Show message if player is not in a market and none selected
-    if (!selectedMarketId) {
+    // Still loading
+    if (!marketsData) return null;
+
+    // No markets exist yet
+    if (!marketsData.electricity_markets.length) {
         return (
             <div className="py-4 md:p-8">
                 <PageCard>
                     <CardContent>
-                        <p className="text-muted">
-                            You are not part of any electricity market.{" "}
+                        <p>
+                            No electricity markets exist yet.{" "}
                             <Link
                                 to="/app/community/electricity-markets"
                                 className="underline hover:text-foreground"
                             >
-                                Join or create a market
+                                Create a market
                             </Link>{" "}
-                            to view market data.
+                            to get started.
                         </p>
                     </CardContent>
                 </PageCard>
             </div>
         );
     }
+
+    // selectedMarketId is always defined here (at minimum first available market)
+    if (!selectedMarketId) return null;
 
     return (
         <div className="py-4 md:p-8 flex flex-col gap-6">
