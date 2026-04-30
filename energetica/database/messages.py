@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Literal
 
 from energetica.database import DBModel
@@ -67,7 +67,7 @@ class Message:
     text: str
     chat: Chat
     player: Player
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def package(self) -> dict:
         """Package this message's data into a dictionary."""
@@ -143,7 +143,7 @@ class Notification(DBModel):
     type: NotificationType
     payload: dict
     player: Player
-    time: datetime = field(default_factory=datetime.now)
+    time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     read: bool = False
     flagged: bool = False
     archived: bool = False
