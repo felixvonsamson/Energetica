@@ -61,12 +61,31 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
             );
     }, [data]);
 
+    const categoriesWithNotifications = useMemo(
+        () =>
+            CATEGORIES.filter((cat) =>
+                notifications.some(
+                    (n) => getNotificationCategory(n.payload.type) === cat,
+                ),
+            ),
+        [notifications],
+    );
+
+    const effectiveCategory = useMemo<InboxCategory | "all">(
+        () =>
+            activeCategory !== "all" &&
+            !categoriesWithNotifications.includes(activeCategory)
+                ? "all"
+                : activeCategory,
+        [activeCategory, categoriesWithNotifications],
+    );
+
     const filteredNotifications = useMemo(() => {
-        if (activeCategory === "all") return notifications;
+        if (effectiveCategory === "all") return notifications;
         return notifications.filter(
-            (n) => getNotificationCategory(n.payload.type) === activeCategory,
+            (n) => getNotificationCategory(n.payload.type) === effectiveCategory,
         );
-    }, [notifications, activeCategory]);
+    }, [notifications, effectiveCategory]);
 
     const unreadCount = useMemo(
         () => filteredNotifications.filter((n) => !n.read).length,
@@ -159,28 +178,28 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex flex-col max-h-[60vh]">
+                <div className="flex flex-col h-[60vh]">
                     {/* Category filter tabs + actions row */}
                     <div className="flex items-center justify-between mb-3 gap-2">
-                        <div className="flex gap-1 flex-wrap">
+                        <div className="flex gap-1 overflow-x-auto shrink min-w-0">
                             <button
                                 onClick={() => setActiveCategory("all")}
                                 className={cn(
-                                    "px-3 py-1 rounded text-sm transition-colors",
-                                    activeCategory === "all"
+                                    "px-3 py-1 rounded text-sm transition-colors shrink-0",
+                                    effectiveCategory === "all"
                                         ? "bg-primary text-primary-foreground"
                                         : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
                                 )}
                             >
                                 All
                             </button>
-                            {CATEGORIES.map((cat) => (
+                            {categoriesWithNotifications.map((cat) => (
                                 <button
                                     key={cat}
                                     onClick={() => setActiveCategory(cat)}
                                     className={cn(
-                                        "px-3 py-1 rounded text-sm transition-colors",
-                                        activeCategory === cat
+                                        "px-3 py-1 rounded text-sm transition-colors shrink-0",
+                                        effectiveCategory === cat
                                             ? "bg-primary text-primary-foreground"
                                             : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
                                     )}
@@ -217,7 +236,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                             </div>
                         ) : filteredNotifications.length === 0 ? (
                             <div className="text-center text-muted-foreground py-8">
-                                {activeCategory === "all"
+                                {effectiveCategory === "all"
                                     ? "No notifications"
                                     : "No notifications in this category"}
                             </div>
