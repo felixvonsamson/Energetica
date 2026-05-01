@@ -61,13 +61,6 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
             );
     }, [data]);
 
-    const filteredNotifications = useMemo(() => {
-        if (activeCategory === "all") return notifications;
-        return notifications.filter(
-            (n) => getNotificationCategory(n.payload.type) === activeCategory,
-        );
-    }, [notifications, activeCategory]);
-
     const categoriesWithNotifications = useMemo(
         () =>
             CATEGORIES.filter((cat) =>
@@ -78,15 +71,21 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
         [notifications],
     );
 
-    // Reset to "all" if the active category becomes empty
-    useEffect(() => {
-        if (
+    const effectiveCategory = useMemo<InboxCategory | "all">(
+        () =>
             activeCategory !== "all" &&
             !categoriesWithNotifications.includes(activeCategory)
-        ) {
-            setActiveCategory("all");
-        }
-    }, [activeCategory, categoriesWithNotifications]);
+                ? "all"
+                : activeCategory,
+        [activeCategory, categoriesWithNotifications],
+    );
+
+    const filteredNotifications = useMemo(() => {
+        if (effectiveCategory === "all") return notifications;
+        return notifications.filter(
+            (n) => getNotificationCategory(n.payload.type) === effectiveCategory,
+        );
+    }, [notifications, effectiveCategory]);
 
     const unreadCount = useMemo(
         () => filteredNotifications.filter((n) => !n.read).length,
@@ -187,7 +186,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                 onClick={() => setActiveCategory("all")}
                                 className={cn(
                                     "px-3 py-1 rounded text-sm transition-colors shrink-0",
-                                    activeCategory === "all"
+                                    effectiveCategory === "all"
                                         ? "bg-primary text-primary-foreground"
                                         : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
                                 )}
@@ -200,7 +199,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                                     onClick={() => setActiveCategory(cat)}
                                     className={cn(
                                         "px-3 py-1 rounded text-sm transition-colors shrink-0",
-                                        activeCategory === cat
+                                        effectiveCategory === cat
                                             ? "bg-primary text-primary-foreground"
                                             : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
                                     )}
@@ -237,7 +236,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                             </div>
                         ) : filteredNotifications.length === 0 ? (
                             <div className="text-center text-muted-foreground py-8">
-                                {activeCategory === "all"
+                                {effectiveCategory === "all"
                                     ? "No notifications"
                                     : "No notifications in this category"}
                             </div>
