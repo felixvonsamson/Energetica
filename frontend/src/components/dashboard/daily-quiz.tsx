@@ -10,15 +10,22 @@ import { getPushPref, setPushPref } from "@/lib/push-notification-prefs";
 import { cn } from "@/lib/utils";
 
 export function DailyQuizButton() {
+    const { data } = useDailyQuiz();
+    const answered = data != null && data.player_answer != null;
+    const showDot = data != null && !answered;
+
     return (
         <Link
             to="/app/dashboard/quiz"
             className={cn(
-                "bg-card hover:bg-muted",
+                "relative bg-card hover:bg-muted",
                 "p-6 rounded-lg text-center transition-colors block w-full",
                 "border border-transparent hover:border-pine dark:hover:border-brand-green",
             )}
         >
+            {showDot && (
+                <span className="absolute top-2 right-2 w-3 h-3 rounded-full bg-red-500" />
+            )}
             <HelpCircle className="w-8 h-8 mx-auto mb-2 text-foreground" />
             <TypographyH2 className="text-foreground">
                 <TypographyLarge>Daily Quiz</TypographyLarge>
