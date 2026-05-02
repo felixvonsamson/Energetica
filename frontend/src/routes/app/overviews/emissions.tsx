@@ -2,7 +2,6 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Cloud, Thermometer, Globe, Leaf } from "lucide-react";
-import { useState } from "react";
 
 import { CO2Chart } from "@/components/charts/co2-chart";
 import {
@@ -21,6 +20,7 @@ import {
 import { useResolution } from "@/contexts/resolution-context";
 import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
 
 export const Route = createFileRoute("/app/overviews/emissions")({
@@ -112,22 +112,30 @@ const EMISSIONS_CUMULATIVE_OPTIONS = [
 
 function EmissionsOverviewContent() {
     const { currentTick } = useGameTick();
-    const [hiddenSources, toggleSource] = useToggleSet<string>();
-    const [co2ViewMode, setCo2ViewMode] = useState<"absolute" | "relative">(
+    const [hiddenSources, toggleSource] = useToggleSet<string>(
+        undefined,
+        "energetica:chart:emissions:hiddenSources",
+    );
+    const [co2ViewMode, setCo2ViewMode] = useLocalStorage<"absolute" | "relative">(
+        "energetica:chart:emissions:co2ViewMode",
         "absolute",
     );
-    const [co2UnitMode, setCo2UnitMode] = useState<
-        "concentration" | "quantity"
-    >("concentration");
-    const [tempViewMode, setTempViewMode] = useState<"absolute" | "relative">(
+    const [co2UnitMode, setCo2UnitMode] = useLocalStorage<"concentration" | "quantity">(
+        "energetica:chart:emissions:co2UnitMode",
+        "concentration",
+    );
+    const [tempViewMode, setTempViewMode] = useLocalStorage<"absolute" | "relative">(
+        "energetica:chart:emissions:tempViewMode",
         "absolute",
     );
-    const [emissionsViewMode, setEmissionsViewMode] = useState<
-        "normal" | "percent"
-    >("normal");
-    const [emissionsCumulativeMode, setEmissionsCumulativeMode] = useState<
-        "rates" | "cumulative"
-    >("rates");
+    const [emissionsViewMode, setEmissionsViewMode] = useLocalStorage<"normal" | "percent">(
+        "energetica:chart:emissions:viewMode",
+        "normal",
+    );
+    const [emissionsCumulativeMode, setEmissionsCumulativeMode] = useLocalStorage<"rates" | "cumulative">(
+        "energetica:chart:emissions:cumulativeMode",
+        "rates",
+    );
 
     const { selectedResolution } = useResolution();
 

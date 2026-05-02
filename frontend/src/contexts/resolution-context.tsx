@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { ResolutionOption, resolutions } from "@/types/charts";
 
 interface ResolutionContextValue {
@@ -12,7 +13,10 @@ const ResolutionContext = createContext<ResolutionContextValue | undefined>(
 );
 
 export function ResolutionProvider({ children }: { children: ReactNode }) {
-    const [selectedResolutionIndex, setResolution] = useState(0);
+    const [selectedResolutionIndex, setResolution] = useLocalStorage(
+        "energetica:chart:resolutionIndex",
+        0,
+    );
     const selectedResolution =
         resolutions[selectedResolutionIndex] ?? resolutions[0]!;
 

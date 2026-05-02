@@ -2,7 +2,6 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Zap, TrendingUp, TrendingDown, Funnel } from "lucide-react";
-import { useState } from "react";
 
 import {
     PowerChart,
@@ -21,6 +20,7 @@ import {
 import { useResolution } from "@/contexts/resolution-context";
 import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
 
 export const Route = createFileRoute("/app/overviews/power")({
@@ -95,12 +95,22 @@ const VIEW_MODE_OPTIONS = [
 
 function PowerOverviewContent() {
     const { currentTick } = useGameTick();
-    const [chartType, setChartType] = useState<"power-sources" | "power-sinks">(
+    const [chartType, setChartType] = useLocalStorage<"power-sources" | "power-sinks">(
+        "energetica:chart:power:chartType",
         "power-sources",
     );
-    const [viewMode, setViewMode] = useState<PowerChartViewMode>("absolute");
-    const [hiddenSources, toggleSource] = useToggleSet<string>();
-    const [hiddenSinks, toggleSink] = useToggleSet<string>();
+    const [viewMode, setViewMode] = useLocalStorage<PowerChartViewMode>(
+        "energetica:chart:power:viewMode",
+        "absolute",
+    );
+    const [hiddenSources, toggleSource] = useToggleSet<string>(
+        undefined,
+        "energetica:chart:power:hiddenSources",
+    );
+    const [hiddenSinks, toggleSink] = useToggleSet<string>(
+        undefined,
+        "energetica:chart:power:hiddenSinks",
+    );
 
     const { selectedResolution } = useResolution();
     // Fetch chart data to share between chart and table
