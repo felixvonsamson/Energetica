@@ -280,13 +280,12 @@ function FunctionalFacilityStatsTable({
                             <td className="py-2 px-4 font-semibold">
                                 Revenue generation
                             </td>
-                            <td className="py-2 px-4 text-center">
-                                {/* TODO: Create formatUpgradeMoney when Money component supports upgrade display */}
+                            <td className="py-2 px-4 text-center font-mono">
                                 <Money
-                                    amount={
-                                        facility.revenue_generation.upgraded ??
-                                        0
-                                    }
+                                    amount={facility.revenue_generation.current ?? 0}
+                                />
+                                /h → <Money
+                                    amount={facility.revenue_generation.upgraded ?? 0}
                                 />
                                 /h
                             </td>

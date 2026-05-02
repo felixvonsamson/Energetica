@@ -240,20 +240,6 @@ export function formatMoney(amount: number, long: boolean = false): string {
     return unitIndex > 0 ? `${formatted}${units[unitIndex]}` : formatted;
 }
 
-// export function formatUpgradeMoney(
-//     value1: number | null,
-//     value2: number,
-// ): string {
-//     const coinIcon =
-//         "<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>";
-//     const moneyUnits = [
-//         " " + coinIcon + "/h",
-//         "k " + coinIcon + "/h",
-//         "M " + coinIcon + "/h",
-//     ];
-//     return generalUpgradeFormat(value1, value2, moneyUnits);
-// }
-
 // === Temperature Formatting ===
 
 /**
