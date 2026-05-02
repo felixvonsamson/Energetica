@@ -26,16 +26,23 @@ export function MessageInput({ onSend, isDisabled, isDialogOpen, chatId }: Messa
         }
     }, []);
 
-    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const value = e.target.value;
-        setMessage(value);
-        if (value) {
-            localStorage.setItem(draftKey, value);
-        } else {
-            localStorage.removeItem(draftKey);
-        }
-        adjustHeight();
-    };
+    const handleChange = useCallback(
+        (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+            const value = e.target.value;
+            setMessage(value);
+            try {
+                if (value) {
+                    localStorage.setItem(draftKey, value);
+                } else {
+                    localStorage.removeItem(draftKey);
+                }
+            } catch {
+                // ignore QuotaExceededError
+            }
+            adjustHeight();
+        },
+        [draftKey, adjustHeight],
+    );
 
     const handleSend = async () => {
         if (!message.trim() || !user?.player_id) return;
@@ -50,7 +57,11 @@ export function MessageInput({ onSend, isDisabled, isDialogOpen, chatId }: Messa
             await onSend(messageText, user.player_id);
         } catch (err) {
             setMessage(messageText);
-            localStorage.setItem(draftKey, messageText);
+            try {
+                localStorage.setItem(draftKey, messageText);
+            } catch {
+                // ignore QuotaExceededError
+            }
             toast.error(resolveErrorMessage(err));
         }
     };
