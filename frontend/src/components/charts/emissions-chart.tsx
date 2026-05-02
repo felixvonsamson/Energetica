@@ -129,8 +129,13 @@ export function EmissionsChart({
             getColor,
             filterDataKeys,
             formatValue,
+            formatYAxis:
+                viewMode === "percent"
+                    ? (v: number) => `${v.toFixed(0)}%`
+                    : (v: number) => formatEmissions(v),
+            yAxisMax: viewMode === "percent" ? 100 : undefined,
         }),
-        [getColor, filterDataKeys, formatValue],
+        [getColor, filterDataKeys, formatValue, viewMode],
     );
 
     return (

@@ -10,7 +10,7 @@
 // Unit definitions
 const POWER_UNITS = [" W", " kW", " MW", " GW", " TW"];
 const ENERGY_UNITS = [" Wh", " kWh", " MWh", " GWh", " TWh"];
-const MASS_UNITS = [" kg", " t", " kt", " Mt"];
+const MASS_UNITS = [" kg", " t", " kt", " Mt", " Gt", " Tt"];
 const MASS_RATE_UNITS = [" g/h", " kg/h", " t/h", " kt/h"]; // Starts at g/h
 const CONCENTRATION_UNITS = [" ppb", " ppm", " ‰"];
 
@@ -145,27 +145,17 @@ export function formatUpgradeMass(
 }
 
 /**
- * Format emissions/large mass values using scientific metric prefixes (kg, t,
- * Mt, Gt, Tt). Uses absolute thresholds and displays decimals.
+ * Format emissions/large mass values (kg, t, kt, Mt, Gt, Tt).
+ *
+ * Uses a threshold of 1,000 so that Gt and Tt are reachable.
  *
  * @example
- *     formatEmissions(500); // "500.00 kg"
- *     formatEmissions(15000); // "15.00 t"
- *     formatEmissions(1500000000); // "1.50 Gt"
+ *     formatEmissions(500); // "500 kg"
+ *     formatEmissions(15000); // "15 t"
+ *     formatEmissions(1500000000000); // "1500 Mt"
  */
 export function formatEmissions(value: number): string {
-    const abs = Math.abs(value);
-    if (abs >= 1e12) {
-        return `${(value / 1e12).toFixed(2)} Tt`;
-    } else if (abs >= 1e9) {
-        return `${(value / 1e9).toFixed(2)} Gt`;
-    } else if (abs >= 1e6) {
-        return `${(value / 1e6).toFixed(2)} Mt`;
-    } else if (abs >= 1e3) {
-        return `${(value / 1e3).toFixed(2)} t`;
-    } else {
-        return `${value.toFixed(2)} kg`;
-    }
+    return generalFormat(value, MASS_UNITS);
 }
 
 // === Mass Rate Formatting ===

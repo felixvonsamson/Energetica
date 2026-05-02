@@ -59,6 +59,7 @@ export function TemperatureChart({
                 key === "temperature" ? "#f59e0b" : "#9ca3af",
             filterDataKeys: [],
             formatValue,
+            formatYAxis: (v: number) => `${parseFloat(v.toFixed(2))}°C`,
         }),
         [],
     );
