@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 
 import {
     EChartsTimeSeries,
@@ -9,6 +9,16 @@ import { useChartData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
 import { formatMoney } from "@/lib/format-utils";
 import { ResolutionOption } from "@/types/charts";
+
+function formatMarketPriceValue(value: number): ReactNode {
+    return (
+        <span className="inline-flex items-center gap-1">
+            {formatMoney(value)}
+            <CoinIcon className="w-3 h-3" />
+            /MWh
+        </span>
+    );
+}
 
 interface MarketPriceChartProps {
     selectedResolution: ResolutionOption;
@@ -52,18 +62,12 @@ export function MarketPriceChart({
             stacked: false,
             getColor: () => "var(--chart-2)",
             filterDataKeys: [],
-            formatValue: (value: number) => (
-                <span className="inline-flex items-center gap-1">
-                    {formatMoney(value)}
-                    <CoinIcon className="w-3 h-3" />
-                    /MWh
-                </span>
-            ),
+            formatValue: formatMarketPriceValue,
             formatYAxis: (value: number) => formatMoney(value),
             yAxisLabel: "Price (coins/MWh)",
             hideZeroValues: false,
         }),
-        [market],
+        [],
     );
 
     return (

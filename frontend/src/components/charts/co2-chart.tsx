@@ -58,17 +58,7 @@ export function CO2Chart({
         });
     }, [chartData, viewMode, unitMode]);
 
-    const formatValue = useCallback(
-        (value: number): string => {
-            if (unitMode === "concentration") {
-                return formatConcentration(value);
-            }
-            return formatEmissions(value);
-        },
-        [unitMode],
-    );
-
-    const formatYAxis = useCallback(
+    const formatCO2Value = useCallback(
         (value: number): string => {
             if (unitMode === "concentration") {
                 return formatConcentration(value);
@@ -84,10 +74,10 @@ export function CO2Chart({
             stacked: false,
             getColor: (key: string) => (key === "CO2" ? "#ef4444" : "#9ca3af"),
             filterDataKeys: [],
-            formatValue,
-            formatYAxis,
+            formatValue: formatCO2Value,
+            formatYAxis: formatCO2Value,
         }),
-        [formatValue, formatYAxis],
+        [formatCO2Value],
     );
 
     return (

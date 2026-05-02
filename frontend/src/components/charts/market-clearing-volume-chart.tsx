@@ -86,7 +86,6 @@ export function MarketClearingVolumeChart({
     breakdownMode,
     breakdownType,
 }: MarketClearingChartProps) {
-    const market = useElectricityMarket(marketId);
     const getColor = useAssetColorGetter();
     const playerMap = usePlayerMap();
 
@@ -132,7 +131,6 @@ export function MarketClearingVolumeChart({
             breakdownFilter,
             quantityFilter,
             playerMap,
-            market,
         ],
     );
 
