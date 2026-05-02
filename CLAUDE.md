@@ -16,6 +16,7 @@ Deprecated Frontend: Deprecated Jinja `energetica/templates/`
 - `bun run typecheck`
 - `bun run lint`
 - `bun run generate-types`
+- `bun run format`
 
 ## Python env
 
