@@ -4,23 +4,26 @@ export function Footer() {
     return (
         <footer className="bg-card h-20 shadow-xl flex flex-row items-center justify-center gap-5 mt-12">
             <Link
-                to={"/landing-page"}
-                className="text-foreground hover:opacity-80"
+                to="/landing-page"
+                className="text-foreground hover:opacity-70 transition-opacity"
             >
                 The Game
             </Link>
             <Link
-                to={"/learning-tool"}
-                className="text-foreground hover:opacity-80"
+                to="/for-educators"
+                className="text-foreground hover:opacity-70 transition-opacity"
             >
-                Learning Through Play
+                For Educators
             </Link>
-            <Link to={"/about"} className="text-foreground hover:opacity-80">
-                About
+            <Link
+                to="/about"
+                className="text-foreground hover:opacity-70 transition-opacity"
+            >
+                The Project
             </Link>
             <a
                 href="https://github.com/felixvonsamson/Energetica"
-                className="text-foreground hover:opacity-80"
+                className="text-foreground hover:opacity-70 transition-opacity"
             >
                 Github
             </a>
