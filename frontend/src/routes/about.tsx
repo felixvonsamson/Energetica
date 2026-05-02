@@ -20,18 +20,18 @@ function RouteComponent() {
     const team = [
         {
             name: "Felix",
-            role: "Game Designer & Project Lead",
-            bio: "Leads the overall vision for Energetica — game mechanics, educational design, and the balance between realism and playability.",
+            background: "ETH Zürich, Energy Science and Technology",
+            bio: "I came up with the original idea for Energetica and started the project as a personal challenge. I cannot believe how much it has grown since then, and I'm excited to keep building and improving it.",
         },
         {
-            name: "Max",
-            role: "Lead Developer",
-            bio: "Builds and maintains the simulation engine, backend, and everything that makes the game tick in real time.",
+            name: "Maximilien",
+            background: "Oxford University, Mathematics & Computer Science",
+            bio: "[...]",
         },
         {
             name: "Yassir",
-            role: "Developer",
-            bio: "Contributes to frontend development and gameplay features.",
+            background: "École Polytechnique, Computer Science",
+            bio: "[...]",
         },
     ];
 
@@ -42,9 +42,9 @@ function RouteComponent() {
                 <section className="flex flex-col gap-4 max-w-3xl">
                     <TypographyH1>About Energetica</TypographyH1>
                     <TypographyLead>
-                        We believe that playing a game can change how people
-                        understand energy systems — and why the transition
-                        matters.
+                        We believe interactive play can make complex problems genuinely understandable, 
+                        in a way that lectures and reports rarely achieve. Energetica applies that 
+                        belief to one of the most important challenges of our time: the energy transition.
                     </TypographyLead>
                 </section>
 
@@ -57,10 +57,10 @@ function RouteComponent() {
                         <TypographyP>
                             Energetica started as a semester project at{" "}
                             <strong>ETH Zürich</strong>. The premise was
-                            simple: what if you could learn about the energy
-                            transition not by reading about it, but by living
+                            simple: what if you could learn about energy
+                            systems not by reading about it, but by living
                             through it as a player? Early playtests showed
-                            something surprising — people who had never thought
+                            something surprising: people who had never thought
                             about capacity markets or CO₂ pricing were suddenly
                             arguing about them after thirty minutes of play.
                         </TypographyP>
@@ -82,18 +82,18 @@ function RouteComponent() {
                     <TypographyP>
                         Energetica is not a casual game. It is a simulation
                         that takes the real physics and economics of energy
-                        systems seriously — realistic weather patterns,
-                        levelised cost calculations, merit-order dispatch,
-                        resource depletion, and collective climate outcomes.
+                        systems seriously. Realistic weather patterns,
+                        levelised cost calculations, realistic market mechanisms,
+                        resource depletion, and collective climate consequences.
                         The goal is to give players a genuine mental model of
-                        how these systems work, and why the choices are hard.
+                        how energy systems work, and why the choices are hard.
                     </TypographyP>
                     <TypographyP>
                         The game is open source and freely available. We think
                         that tools for energy and climate literacy should be
                         accessible, transparent, and improvable by the
                         community. Energetica is actively developed and new
-                        features are added regularly — informed by feedback
+                        features are added regularly, informed by feedback
                         from players and educators.
                     </TypographyP>
                 </section>
@@ -113,7 +113,7 @@ function RouteComponent() {
                                     {member.name}
                                 </TypographyH3>
                                 <p className="text-sm font-semibold text-muted-foreground">
-                                    {member.role}
+                                    {member.background}
                                 </p>
                                 <TypographyP>{member.bio}</TypographyP>
                             </div>

@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { Link } from "@tanstack/react-router";
 import {
     BarChart3,
@@ -7,9 +9,16 @@ import {
     Package,
     Sun,
     TrendingUp,
+    ZoomIn,
 } from "lucide-react";
 
 import { HomeLayout } from "@/components/home-layout";
+import {
+    Dialog,
+    DialogContent,
+    DialogOverlay,
+    DialogPortal,
+} from "@/components/ui/dialog";
 import {
     TypographyH1,
     TypographyH2,
@@ -19,7 +28,7 @@ import {
 } from "@/components/ui/typography";
 
 type ImageTile =
-    | { type: "real"; src: string; alt: string }
+    | { type: "real"; src: string; alt: string; shadow?: boolean }
     | { type: "placeholder"; text: string };
 
 const gameElements: {
@@ -40,8 +49,9 @@ const gameElements: {
         ),
         icon: <TrendingUp />,
         image: {
-            type: "placeholder",
-            text: "SCREENSHOT: technology research tree / LCOE comparison",
+            type: "real",
+            src: "/static/images/landing_page/investment_strategies.png",
+            alt: "Investment strategies: technology research tree and LCOE comparison",
         },
     },
     {
@@ -57,8 +67,8 @@ const gameElements: {
         icon: <Package />,
         image: {
             type: "real",
-            src: "/static/images/landing/network_graph.png",
-            alt: "Network graph showing resource and energy flows",
+            src: "/static/images/landing_page/resources_management.png",
+            alt: "Resources management: network graph showing resource and energy flows",
         },
     },
     {
@@ -73,8 +83,10 @@ const gameElements: {
         ),
         icon: <BarChart3 />,
         image: {
-            type: "placeholder",
-            text: "SCREENSHOT: merit order chart / electricity market",
+            type: "real",
+            src: "/static/images/landing_page/dynamic_energy_markets2.png",
+            alt: "Dynamic energy markets: merit order chart and electricity market",
+            shadow: true,
         },
     },
     {
@@ -90,8 +102,10 @@ const gameElements: {
         ),
         icon: <Sun />,
         image: {
-            type: "placeholder",
-            text: "SCREENSHOT: wind & solar production graph / weather model",
+            type: "real",
+            src: "/static/images/landing_page/renewable_intermittency.png",
+            alt: "Renewable intermittency: wind and solar production graph with weather model",
+            shadow: true,
         },
     },
     {
@@ -107,8 +121,9 @@ const gameElements: {
         icon: <Handshake />,
         image: {
             type: "real",
-            src: "/static/images/landing/global_average_temperatures_graph.png",
-            alt: "Global average temperatures graph showing climate change",
+            src: "/static/images/landing_page/collective_action.png",
+            alt: "Collective action: global average temperatures graph showing climate change",
+            shadow: true,
         },
     },
     {
@@ -122,22 +137,70 @@ const gameElements: {
         ),
         icon: <BookOpen />,
         image: {
-            type: "placeholder",
-            text: "SCREENSHOT: daily quiz interface",
+            type: "real",
+            src: "/static/images/landing_page/daily_knowledge_boost.png",
+            alt: "Daily knowledge boost: daily quiz interface",
         },
     },
 ];
 
+function ImageLightbox({
+    src,
+    alt,
+    open,
+    onOpenChange,
+}: {
+    src: string;
+    alt: string;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogPortal>
+                <DialogOverlay />
+                <DialogContent
+                    className="max-w-[90vw] xl:max-w-5xl p-2 bg-background/95 border-border"
+                    showCloseButton={true}
+                >
+                    <img
+                        src={src}
+                        alt={alt}
+                        className="w-full h-auto rounded-2xl object-contain max-h-[80vh]"
+                    />
+                </DialogContent>
+            </DialogPortal>
+        </Dialog>
+    );
+}
+
 function ImageTileComponent({ image }: { image: ImageTile }) {
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+
     if (image.type === "real") {
         return (
-            <div className="overflow-hidden rounded-4xl shadow-md h-full">
-                <img
+            <>
+                <button
+                    onClick={() => setLightboxOpen(true)}
+                    className={`group overflow-hidden rounded-4xl h-full relative cursor-zoom-in w-full text-left${image.shadow ? " shadow-md" : ""}`}
+                    aria-label={`Enlarge image: ${image.alt}`}
+                >
+                    <img
+                        src={image.src}
+                        alt={image.alt}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 rounded-4xl flex items-center justify-center">
+                        <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 size-8 drop-shadow-lg" />
+                    </div>
+                </button>
+                <ImageLightbox
                     src={image.src}
                     alt={image.alt}
-                    className="w-full h-full object-cover"
+                    open={lightboxOpen}
+                    onOpenChange={setLightboxOpen}
                 />
-            </div>
+            </>
         );
     }
     return (
@@ -185,16 +248,12 @@ export function LandingPage() {
                                     · Open source
                                 </p>
                             </div>
-                            {/* Screenshot placeholder */}
-                            <div className="mt-10 mx-auto max-w-4xl rounded-3xl border-2 border-dashed border-primary-foreground/30 bg-primary-foreground/10 h-72 flex flex-col items-center justify-center gap-2 text-primary-foreground/60">
-                                <p className="text-sm font-semibold uppercase tracking-widest">
-                                    Screenshot placeholder
-                                </p>
-                                <p className="text-xs text-center max-w-xs">
-                                    [SCREENSHOT: e.g. merit order chart / power
-                                    production graph / map view / facility
-                                    management UI]
-                                </p>
+                            <div className="mt-10 mx-auto max-w-6xl overflow-hidden rounded-3xl shadow-lg">
+                                <img
+                                    src="/static/images/landing_page/energetica_landing_banner.png"
+                                    alt="Energetica game interface showing power grid management"
+                                    className="w-full h-auto"
+                                />
                             </div>
                         </div>
                     </div>
@@ -220,21 +279,11 @@ export function LandingPage() {
                     </div>
                 </section>
 
-                {/* Section intro */}
-                <section className="px-6 max-w-5xl mx-auto text-center">
-                    <TypographyH2 className="mb-6 text-primary">
-                        What You'll Experience
-                    </TypographyH2>
-                    <TypographyLead className="max-w-3xl text-primary">
-                        Climate change and the energy transition are defining
-                        challenges. Energetica lets you experience the
-                        trade-offs, strategies, and cooperation needed to build
-                        a sustainable future.
-                    </TypographyLead>
-                </section>
-
                 {/* Game element cards — one image per card, alternating layout */}
                 <section className="max-w-6xl mx-auto w-full flex flex-col gap-8">
+                    <TypographyH2 className="mb-6 text-primary text-center">
+                        What You'll Experience
+                    </TypographyH2>
                     {gameElements.map((el, index) => {
                         const card = (
                             <div className="flex flex-col gap-4 p-6 bg-card rounded-4xl shadow-md h-full">

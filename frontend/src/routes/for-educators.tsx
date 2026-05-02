@@ -112,20 +112,27 @@ function RouteComponent() {
                     </div>
                 </section>
 
-                {/* Testimonial placeholder */}
+                {/* Testimonials */}
                 <section className="max-w-6xl mx-auto w-full">
                     <TypographyH2 className="text-primary mb-8">
                         What Educators Say
                     </TypographyH2>
-                    <div className="border-2 border-dashed border-muted-foreground/40 rounded-4xl p-8 flex flex-col gap-4 bg-muted/30">
-                        <p className="text-muted-foreground text-sm font-medium uppercase tracking-wider">
-                            Placeholder — testimonial pending
-                        </p>
-                        <blockquote className="text-xl italic text-muted-foreground leading-relaxed">
-                            "[PLACEHOLDER TESTIMONIAL — Nicolas Stocker, ZHAW]"
+                    <div className="rounded-4xl p-8 flex flex-col gap-4 bg-card shadow-md">
+                        <blockquote className="text-xl italic text-foreground leading-relaxed">
+                            "Energetica was a valuable addition to our 'Energy
+                            and Climate' module at ZHAW. Students who are
+                            usually passive became genuinely engaged. They were
+                            debating market strategies and investment trade-offs
+                            with each other without being prompted. What struck
+                            me most was how naturally the game illustrated
+                            concepts like price formation and the challenges
+                            linked to renewable intermittency that are otherwise
+                            hard to convey in a lecture. I would recommend it to
+                            any educator working on energy, climate, or
+                            economics topics."
                         </blockquote>
                         <p className="text-muted-foreground font-semibold">
-                            — Nicolas Stocker, Professor, ZHAW
+                            — Nicolas Stocker, Lecturer, ZHAW
                         </p>
                     </div>
                 </section>
@@ -135,7 +142,7 @@ function RouteComponent() {
                     <TypographyH2 className="text-primary">
                         What We Offer
                     </TypographyH2>
-                    <div className="divide-y divide-border">
+                    <div className="divide-y divide-border-brand">
                         {[
                             {
                                 icon: <Code2 className="size-5" />,
