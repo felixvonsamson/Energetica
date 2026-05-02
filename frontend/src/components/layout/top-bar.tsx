@@ -53,6 +53,7 @@ import { usePlayerMoney } from "@/hooks/use-player-money";
 import { usePlayerWorkers } from "@/hooks/use-player-workers";
 import { cn } from "@/lib/utils";
 import { Money } from "@/types/money";
+import { Capabilities } from "@/types/players";
 import { Workers } from "@/types/workers";
 
 export function TopBar() {
@@ -344,13 +345,7 @@ function WorkersDisplay(
     isWorkersError: boolean,
     isWorkersLoading: boolean,
     workersData: Workers | undefined,
-    capabilities: {
-        has_laboratory: boolean;
-        has_warehouse: boolean;
-        has_storage: boolean;
-        has_network: boolean;
-        has_greenhouse_gas_effect: boolean;
-    } | null,
+    capabilities: Capabilities | null,
 ) {
     return (
         <>

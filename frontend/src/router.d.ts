@@ -15,7 +15,7 @@ type RouteConfig =
           // Routes that require a user with a "player" role
           requiredRole: "player";
           requiresSettledTile: boolean;
-          isUnlocked: (capabilities: Capabilities) => UnlockStatus;
+          isUnlocked?: (capabilities: Capabilities) => UnlockStatus;
       };
 
 declare module "@tanstack/react-router" {

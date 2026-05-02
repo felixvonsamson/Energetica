@@ -117,12 +117,6 @@ achievements: dict = {
         "xp": 1,
         "requirements": [],
     },
-    "GHG_effect": {
-        "name": "Discover the Greenhouse Effect",
-        "unlocked_with": ["chemistry"],
-        "xp": 5,
-        "requirements": ["laboratory"],
-    },
 }
 
 # Taken an adapted from display_functions.js

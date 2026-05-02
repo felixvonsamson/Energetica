@@ -100,7 +100,7 @@ class AchievementUnlockPayload(BaseModel):
     """One-shot achievement unlocked by constructing a specific facility."""
 
     type: Literal["achievement_unlock"] = "achievement_unlock"
-    achievement_key: Literal["laboratory", "warehouse", "storage_facilities", "GHG_effect"]
+    achievement_key: Literal["laboratory", "warehouse", "storage_facilities"]
     xp: int
 
 

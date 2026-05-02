@@ -2088,11 +2088,7 @@ export interface components {
              *
              * @enum {string}
              */
-            achievement_key:
-                | "laboratory"
-                | "warehouse"
-                | "storage_facilities"
-                | "GHG_effect";
+            achievement_key: "laboratory" | "warehouse" | "storage_facilities";
             /** Xp */
             xp: number;
         };
@@ -3391,8 +3387,6 @@ export interface components {
             has_storage: boolean;
             /** Has Network */
             has_network: boolean;
-            /** Has Greenhouse Gas Effect */
-            has_greenhouse_gas_effect: boolean;
         };
         /** PlayerDetailStats */
         PlayerDetailStats: {
@@ -3405,7 +3399,7 @@ export interface components {
             resources: components["schemas"]["ResourceStats"];
             technologies: components["schemas"]["TechnologiesStats"];
             functional_facilities: components["schemas"]["FunctionalFacilitiesStats"];
-            emissions?: components["schemas"]["EmissionsStats"] | null;
+            emissions: components["schemas"]["EmissionsStats"];
         };
         /**
          * PlayerOut

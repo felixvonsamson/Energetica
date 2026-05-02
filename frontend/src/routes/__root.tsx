@@ -38,7 +38,7 @@ function computeRedirect(
                 return "/app/settle";
             if (!routeConfig.requiresSettledTile && user.is_settled)
                 return "/app/dashboard";
-            if (!capabilities || !routeConfig.isUnlocked(capabilities).unlocked)
+            if (!capabilities || (routeConfig.isUnlocked && !routeConfig.isUnlocked(capabilities).unlocked))
                 return "/app/dashboard";
             return null;
         default:
