@@ -11,6 +11,7 @@ import {
     Users,
     Layers,
     BarChart2,
+    UserPlus,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -24,12 +25,14 @@ import { MarketPriceChart } from "@/components/charts/market-price-chart";
 import { MeritOrderChart } from "@/components/charts/supply-demand-chart";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
+    Button,
     CardContent,
     CardHeader,
     CardTitle,
     Money,
     PageCard,
 } from "@/components/ui";
+import { CardAction } from "@/components/ui/card";
 import { ChartCard } from "@/components/ui/chart-card";
 import { Label } from "@/components/ui/label";
 import { ResolutionPicker } from "@/components/ui/resolution-picker";
@@ -134,9 +137,8 @@ function MarketsOverviewContent() {
     const playerMarket = useElectricityMarketForPlayer(playerId);
     const { data: marketsData } = useElectricityMarkets();
 
-    // Determine which market to show: URL param > player's market > first available market
-    const selectedMarketId =
-        searchMarketId ?? playerMarket?.id ?? marketsData?.electricity_markets[0]?.id;
+    // Determine which market to show: URL param > player's market > no selection
+    const selectedMarketId = searchMarketId ?? playerMarket?.id;
 
     // Find the selected market name
     const selectedMarket = useMemo(() => {
@@ -168,10 +170,10 @@ function MarketsOverviewContent() {
     const [hiddenBreakdownItems, toggleBreakdownItem] = useToggleSet<string>();
 
     // Handle market selection change
-    const handleMarketChange = (marketId: number) => {
+    const handleMarketChange = (marketId: number | undefined) => {
         navigate({
             to: "/app/overviews/electricity-markets",
-            search: { marketId: marketId },
+            search: marketId !== undefined ? { marketId } : {},
         });
     };
 
@@ -210,7 +212,22 @@ function MarketsOverviewContent() {
         );
     }
 
-    if (!selectedMarketId) return null;
+    if (!selectedMarketId) {
+        return (
+            <div className="py-4 md:p-8">
+                <PageCard>
+                    <CardContent>
+                        <MarketSelector
+                            markets={marketsData.electricity_markets}
+                            marketId={undefined}
+                            playerMarketId={playerMarket?.id}
+                            onMarketIdChange={handleMarketChange}
+                        />
+                    </CardContent>
+                </PageCard>
+            </div>
+        );
+    }
 
     return (
         <div className="py-4 md:p-8 flex flex-col gap-6">
@@ -220,6 +237,7 @@ function MarketsOverviewContent() {
                         <MarketSelector
                             markets={marketsData.electricity_markets}
                             marketId={selectedMarketId}
+                            playerMarketId={playerMarket?.id}
                             onMarketIdChange={handleMarketChange}
                         />
                         <ResolutionPicker
@@ -237,6 +255,20 @@ function MarketsOverviewContent() {
                         <NetworkIcon className="w-6 h-6 text-primary" />
                         {selectedMarket?.name ?? "Market"} - Current Values
                     </CardTitle>
+                    {playerMarket !== undefined &&
+                        playerMarket?.id !== selectedMarketId && (
+                            <CardAction>
+                                <Link
+                                    to="/app/community/electricity-markets"
+                                    search={{ market: selectedMarketId }}
+                                >
+                                    <Button variant="outline" size="sm">
+                                        <UserPlus className="w-4 h-4" />
+                                        Join Market
+                                    </Button>
+                                </Link>
+                            </CardAction>
+                        )}
                 </CardHeader>
 
                 <CardContent>
@@ -404,27 +436,36 @@ function MarketsOverviewContent() {
 
 interface MarketSelectorProps {
     markets: Array<{ id: number; name: string }>;
-    marketId: number;
-    onMarketIdChange: (marketId: number) => void;
+    marketId: number | undefined;
+    playerMarketId: number | undefined;
+    onMarketIdChange: (marketId: number | undefined) => void;
 }
 
 // TODO: use shadcn selectors
 function MarketSelector({
     markets,
     marketId,
+    playerMarketId,
     onMarketIdChange,
 }: MarketSelectorProps) {
     return (
         <div>
             <Label className="mb-2">Market</Label>
             <select
-                value={marketId}
-                onChange={(e) => onMarketIdChange(Number(e.target.value))}
+                value={marketId ?? ""}
+                onChange={(e) => {
+                    const val = e.target.value;
+                    onMarketIdChange(val !== "" ? Number(val) : undefined);
+                }}
                 className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
+                {marketId === undefined && (
+                    <option value="">--- Select Network ---</option>
+                )}
                 {markets.map((market) => (
                     <option key={market.id} value={market.id}>
                         {market.name}
+                        {market.id === playerMarketId ? " (member)" : ""}
                     </option>
                 ))}
             </select>
