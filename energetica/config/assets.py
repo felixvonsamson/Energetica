@@ -427,7 +427,7 @@ const_config: dict = {
             "price_multiplier": 1.5,
             "absorption_factor": 1.55,
             "power_factor": 1.5,
-            "description": "Carbon Capture consumes energy to absorb and store CO2 underground.",
+            "description": "Direct air carbon Capture consumes energy to absorb CO2 from the atmosphere and store it underground.",
             "wikipedia_link": "",
             "requirements": {"mathematics": 3, "physics": 3, "chemistry": 3},
         },
