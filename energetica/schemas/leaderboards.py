@@ -74,10 +74,10 @@ class PlayerDetailStats(BaseModel):
     resources: ResourceStats
     technologies: TechnologiesStats
     functional_facilities: FunctionalFacilitiesStats
-    emissions: Optional[EmissionsStats] = None
+    emissions: EmissionsStats
 
     @classmethod
-    def from_player(cls, player: Player, include_emissions: bool) -> PlayerDetailStats:
+    def from_player(cls, player: Player) -> PlayerDetailStats:
         from energetica.enums import FunctionalFacilityType, TechnologyType
 
         metrics = player.progression_metrics
@@ -127,12 +127,10 @@ class PlayerDetailStats(BaseModel):
             carbon_capture=player.functional_facility_lvl[FunctionalFacilityType.CARBON_CAPTURE],
         )
 
-        emissions = None
-        if include_emissions:
-            emissions = EmissionsStats(
-                net_emissions=player.calculate_net_emissions(),
-                captured_co2=metrics.get("captured_co2", 0),
-            )
+        emissions = EmissionsStats(
+            net_emissions=player.calculate_net_emissions(),
+            captured_co2=metrics.get("captured_co2", 0),
+        )
 
         return PlayerDetailStats(
             player_id=player.id,

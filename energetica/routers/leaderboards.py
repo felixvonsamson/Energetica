@@ -17,6 +17,5 @@ def get_leaderboards(
 ) -> LeaderboardsOut:
     """Get the leaderboards data."""
     players = Player.all()
-    include_co2_emissions = player.discovered_greenhouse_gas_effect()
-    rows = [PlayerDetailStats.from_player(player, include_co2_emissions) for player in players]
+    rows = [PlayerDetailStats.from_player(player) for player in players]
     return LeaderboardsOut(rows=rows)

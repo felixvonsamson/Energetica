@@ -6,7 +6,6 @@ import { useState } from "react";
 import { GameLayout } from "@/components/layout/game-layout";
 import { PageCard, CardContent, Money } from "@/components/ui";
 import { PlayerName } from "@/components/ui/player-name";
-import { useHasCapability } from "@/hooks/use-capabilities";
 import { useLeaderboards } from "@/hooks/use-leaderboards";
 import { usePlayerMap } from "@/hooks/use-players";
 import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
@@ -68,10 +67,6 @@ function LeaderboardsContent() {
 
     const { data: leaderboards, isLoading, error } = useLeaderboards();
     const playerMap = usePlayerMap();
-    const hasGreenhouseGasEffect = useHasCapability(
-        "has_greenhouse_gas_effect",
-    );
-
     if (isLoading) {
         return (
             <div className="p-4 md:p-8 text-center">
@@ -741,14 +736,10 @@ function LeaderboardsContent() {
                     <>
                         {commonCells}
                         <td className="py-3 px-4 text-right font-mono">
-                            {row.emissions
-                                ? formatMass(row.emissions.net_emissions)
-                                : "-"}
+                            {formatMass(row.emissions.net_emissions)}
                         </td>
                         <td className="py-3 px-4 text-right font-mono">
-                            {row.emissions
-                                ? formatMass(row.emissions.captured_co2)
-                                : "-"}
+                            {formatMass(row.emissions.captured_co2)}
                         </td>
                     </>
                 );
@@ -769,10 +760,6 @@ function LeaderboardsContent() {
                         "emissions",
                     ] as const
                 ).map((category) => {
-                    // Only show emissions if capability is enabled
-                    if (category === "emissions" && !hasGreenhouseGasEffect) {
-                        return null;
-                    }
                     return (
                         <button
                             key={category}

@@ -114,9 +114,6 @@ function DashboardContent() {
     const { data: projectsData } = useProjects();
     const { data: shipmentsData } = useShipments();
 
-    const hasDiscoveredGreenhouse = useHasCapability(
-        "has_greenhouse_gas_effect",
-    );
     const hasNetwork = useHasCapability("has_network");
 
     // Check if there are any construction projects
@@ -213,13 +210,11 @@ function DashboardContent() {
                             title="Stored Energy"
                         />
                     )}
-                    {hasDiscoveredGreenhouse && (
-                        <QuickLinkCard
-                            to="/app/overviews/emissions"
-                            icon={Leaf}
-                            title="Emissions"
-                        />
-                    )}
+                    <QuickLinkCard
+                        to="/app/overviews/emissions"
+                        icon={Leaf}
+                        title="Emissions"
+                    />
                     {hasNetwork && (
                         <QuickLinkCard
                             to="/app/overviews/electricity-markets"

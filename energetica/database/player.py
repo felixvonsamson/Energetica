@@ -131,7 +131,6 @@ class Player(DBModel):
             "network": 0,
             "laboratory": 0,
             "warehouse": 0,
-            "GHG_effect": 0,
             "storage_facilities": 0,
         },
     )
@@ -495,10 +494,6 @@ class Player(DBModel):
             net_emissions += value
         return net_emissions
 
-    def discovered_greenhouse_gas_effect(self) -> bool:
-        """Return True if the player has discovered the greenhouse gas effect."""
-        return bool(self.achievements["GHG_effect"])
-
     def _notify_milestone(self, achievement_key: str, milestone: dict) -> None:
         if achievement_key == "power_consumption":
             payload: NotificationPayload = AchievementMilestonePowerConsumptionPayload(
@@ -545,7 +540,7 @@ class Player(DBModel):
 
     def check_construction_achievements(self, construction_name: str) -> None:
         """Check for player achievements that may be unlocked by a construction."""
-        for achievement in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
+        for achievement in ["laboratory", "warehouse", "storage_facilities"]:
             if not self.achievements[achievement] and construction_name in achievements[achievement]["unlocked_with"]:
                 self.achievements[achievement] = 1
                 self.progression_metrics["xp"] += achievements[achievement]["xp"]
@@ -590,7 +585,7 @@ class Player(DBModel):
             requirements_met = all(self.achievements[requirement] for requirement in achievement_data["requirements"])
             if not requirements_met:
                 continue
-            if achievement_id in ["laboratory", "warehouse", "GHG_effect", "storage_facilities"]:
+            if achievement_id in ["laboratory", "warehouse", "storage_facilities"]:
                 if not self.achievements[achievement_id]:
                     achievement = AchievementUnlockOut(
                         type="unlock",

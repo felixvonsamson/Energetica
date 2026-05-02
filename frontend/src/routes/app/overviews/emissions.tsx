@@ -30,10 +30,6 @@ export const Route = createFileRoute("/app/overviews/emissions")({
         routeConfig: {
             requiredRole: "player",
             requiresSettledTile: true,
-            isUnlocked: (cap) =>
-                cap.has_greenhouse_gas_effect
-                    ? { unlocked: true }
-                    : { unlocked: false, reason: "Research Chemistry lvl 1 to unlock" },
         },
         infoDialog: {
             contents: <EmissionsOverviewHelp />,

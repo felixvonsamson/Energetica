@@ -666,11 +666,8 @@ def _package_power_storage_extraction_facility_base(player: Player, facility_typ
         * const_config_assets[facility_type]["O&M_factor_per_day"]
         / 24,
         "lifespan": const_config_assets[facility_type]["lifespan"] / engine.in_game_seconds_per_tick,
-    } | (
-        {"construction_pollution": const_config_assets[facility_type]["base_construction_pollution"]}
-        if player.discovered_greenhouse_gas_effect()
-        else {}
-    )
+        "construction_pollution": const_config_assets[facility_type]["base_construction_pollution"],
+    }
 
 
 def package_power_facilities(player: Player) -> list[dict]:
@@ -769,15 +766,6 @@ def package_extraction_facilities(player: Player) -> list[dict]:
         }
         for extraction_facility in ExtractionFacilityType
     ]
-
-
-def project_is_hidden(player: Player, project_type: ProjectType) -> bool:
-    """
-    Return true if the facility is hidden to the player due to lack of achievements.
-
-    Such facilities should not be shown on the frontend.
-    """
-    return project_type == FunctionalFacilityType.CARBON_CAPTURE and not player.discovered_greenhouse_gas_effect()
 
 
 def next_level(player: Player, facility_or_technology: ProjectType) -> int:
@@ -898,18 +886,13 @@ def package_functional_facilities(player: Player) -> list[dict]:
     }
     return [
         _package_project_base(player, functional_facility)
-        | (
-            {
-                "construction_pollution": const_config_assets[functional_facility]["base_construction_pollution"]
-                * const_config_assets[functional_facility]["price_multiplier"]
-                ** player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY],
-            }
-            if player.discovered_greenhouse_gas_effect()
-            else {}
-        )
+        | {
+            "construction_pollution": const_config_assets[functional_facility]["base_construction_pollution"]
+            * const_config_assets[functional_facility]["price_multiplier"]
+            ** player.functional_facility_lvl[FunctionalFacilityType.INDUSTRY],
+        }
         | special_keys[functional_facility]
         for functional_facility in FunctionalFacilityType
-        if not project_is_hidden(player, functional_facility)  # Hide carbon capture if not discovered
     ]
 
 

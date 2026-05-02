@@ -155,8 +155,4 @@ export const ACHIEVEMENT_UNLOCK_CONFIG: Record<UnlockAchievementKey, UnlockConfi
         name: "First Storage Facility",
         body: "You have built your first storage facility, you can monitor the stored energy in the energy storage overview.",
     },
-    GHG_effect: {
-        name: "Discover the Greenhouse Effect",
-        body: "Scientists have discovered the greenhouse effect and have shown that climate change is caused by human activities and increases the risk of extreme weather events. You can now monitor your CO2 emissions and the climate anomalies in the emissions overview.",
-    },
 };
