@@ -39,7 +39,7 @@ export function Header() {
                         to="/about"
                         className="text-md font-semibold text-foreground hover:opacity-70 transition-opacity"
                     >
-                        About
+                        The Project
                     </Link>
                 </div>
                 <div className="flex flex-1 justify-end gap-3 items-center">

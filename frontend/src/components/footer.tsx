@@ -19,7 +19,7 @@ export function Footer() {
                 to="/about"
                 className="text-foreground hover:opacity-70 transition-opacity"
             >
-                About
+                The Project
             </Link>
             <a
                 href="https://github.com/felixvonsamson/Energetica"
