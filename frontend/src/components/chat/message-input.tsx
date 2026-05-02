@@ -9,10 +9,12 @@ interface MessageInputProps {
     onSend: (text: string, playerId: number) => Promise<void>;
     isDisabled: boolean;
     isDialogOpen: boolean;
+    chatId: number;
 }
 
-export function MessageInput({ onSend, isDisabled, isDialogOpen }: MessageInputProps) {
-    const [message, setMessage] = useState("");
+export function MessageInput({ onSend, isDisabled, isDialogOpen, chatId }: MessageInputProps) {
+    const draftKey = `chat-draft-${chatId}`;
+    const [message, setMessage] = useState(() => localStorage.getItem(`chat-draft-${chatId}`) ?? "");
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const { user } = useAuth();
 
@@ -24,10 +26,29 @@ export function MessageInput({ onSend, isDisabled, isDialogOpen }: MessageInputP
         }
     }, []);
 
+    const handleChange = useCallback(
+        (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+            const value = e.target.value;
+            setMessage(value);
+            try {
+                if (value) {
+                    localStorage.setItem(draftKey, value);
+                } else {
+                    localStorage.removeItem(draftKey);
+                }
+            } catch {
+                // ignore QuotaExceededError
+            }
+            adjustHeight();
+        },
+        [draftKey, adjustHeight],
+    );
+
     const handleSend = async () => {
         if (!message.trim() || !user?.player_id) return;
         const messageText = message;
         setMessage("");
+        localStorage.removeItem(draftKey);
         if (inputRef.current) {
             inputRef.current.style.height = "auto";
             inputRef.current.focus();
@@ -36,6 +57,11 @@ export function MessageInput({ onSend, isDisabled, isDialogOpen }: MessageInputP
             await onSend(messageText, user.player_id);
         } catch (err) {
             setMessage(messageText);
+            try {
+                localStorage.setItem(draftKey, messageText);
+            } catch {
+                // ignore QuotaExceededError
+            }
             toast.error(resolveErrorMessage(err));
         }
     };
@@ -62,10 +88,7 @@ export function MessageInput({ onSend, isDisabled, isDialogOpen }: MessageInputP
             <textarea
                 ref={inputRef}
                 value={message}
-                onChange={(e) => {
-                    setMessage(e.target.value);
-                    adjustHeight();
-                }}
+                onChange={handleChange}
                 onKeyDown={handleKeyDown}
                 placeholder="Type your message..."
                 disabled={isDisabled}

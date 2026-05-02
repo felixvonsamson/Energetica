@@ -84,9 +84,11 @@ export function ChatWindow({
 
                     {selectedChatId && (
                         <MessageInput
+                            key={selectedChatId}
                             onSend={onSend}
                             isDisabled={!selectedChat}
                             isDialogOpen={isDialogOpen}
+                            chatId={selectedChatId}
                         />
                     )}
                 </div>
