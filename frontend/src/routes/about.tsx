@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { HomeLayout } from "@/components/home-layout";
 import {
-    TypographyH1,
     TypographyH2,
     TypographyH3,
     TypographyLead,
