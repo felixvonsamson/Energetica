@@ -26,7 +26,7 @@ class PowerFacilityOut(BaseModel):
     facility: PowerFacilityType
     max_power_generation: float
     usage: float
-    hourly_op_cost: float
+    op_cost_per_tick: float
     remaining_lifespan: float | None
     upgrade_cost: float | None
     dismantle_cost: float | None
@@ -41,7 +41,7 @@ class PowerFacilityOut(BaseModel):
             facility=power_facility.facility_type,
             max_power_generation=power_facility.max_power_generation,
             usage=power_facility.usage,
-            hourly_op_cost=power_facility.hourly_op_cost,
+            op_cost_per_tick=power_facility.op_cost_per_tick,
             remaining_lifespan=power_facility.remaining_lifespan,
             upgrade_cost=None if power_facility.decommissioning else power_facility.upgrade_cost,
             dismantle_cost=None if power_facility.decommissioning else power_facility.dismantle_cost,
@@ -60,7 +60,7 @@ class StorageFacilityOut(BaseModel):
     state_of_charge: float
     max_power_generation: float
     max_power_use: float
-    hourly_op_cost: float
+    op_cost_per_tick: float
     efficiency: float
     remaining_lifespan: float | None
     upgrade_cost: float | None
@@ -77,7 +77,7 @@ class StorageFacilityOut(BaseModel):
             state_of_charge=storage_facility.state_of_charge,
             max_power_generation=storage_facility.max_power_generation,
             max_power_use=storage_facility.max_power_use,
-            hourly_op_cost=storage_facility.hourly_op_cost,
+            op_cost_per_tick=storage_facility.op_cost_per_tick,
             efficiency=storage_facility.efficiency,
             remaining_lifespan=storage_facility.remaining_lifespan,
             upgrade_cost=None if storage_facility.decommissioning else storage_facility.upgrade_cost,
@@ -90,7 +90,7 @@ class ExtractionFacilityOut(BaseModel):
     facility: ExtractionFacilityType
     extraction_rate: float
     usage: float
-    hourly_op_cost: float
+    op_cost_per_tick: float
     max_power_use: float
     remaining_lifespan: float | None
     upgrade_cost: float | None
@@ -105,7 +105,7 @@ class ExtractionFacilityOut(BaseModel):
             facility=storage_facility.facility_type,
             extraction_rate=storage_facility.extraction_rate,
             usage=storage_facility.usage,
-            hourly_op_cost=storage_facility.hourly_op_cost,
+            op_cost_per_tick=storage_facility.op_cost_per_tick,
             max_power_use=storage_facility.max_power_use,
             remaining_lifespan=storage_facility.remaining_lifespan,
             upgrade_cost=None if storage_facility.decommissioning else storage_facility.upgrade_cost,
