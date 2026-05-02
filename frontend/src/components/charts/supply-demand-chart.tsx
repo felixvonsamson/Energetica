@@ -165,6 +165,8 @@ interface TooltipState {
     block: OrderBlock;
 }
 
+const PRICE_CAP = 2000;
+
 function MeritOrderChartInner({
     marketId,
     height = 500,
@@ -471,7 +473,7 @@ function MeritOrderChartInner({
                             name: `Clearing: ${formatPower(marketData?.market_quantity ?? 0)}`,
                         },
                         {
-                            yAxis: marketData?.market_price ?? 0,
+                            yAxis: Math.min(marketData?.market_price ?? 0, PRICE_CAP),
                             name: `Price: ${formatMoney(marketData?.market_price ?? 0)}/MWh`,
                             label: { position: "insideStartTop" },
                         },
@@ -492,7 +494,7 @@ function MeritOrderChartInner({
                             name: "clearing",
                             coord: [
                                 marketData?.market_quantity ?? 0,
-                                marketData?.market_price ?? 0,
+                                Math.min(marketData?.market_price ?? 0, PRICE_CAP),
                             ],
                             symbol: "circle",
                             symbolSize: 10,
@@ -538,7 +540,7 @@ function MeritOrderChartInner({
             yAxis: {
                 type: "value",
                 min: priceDomain[0],
-                max: priceDomain[1],
+                max: Math.min(priceDomain[1], PRICE_CAP),
                 name: "Price (coins/MWh)",
                 nameLocation: "middle",
                 nameGap: 50,
