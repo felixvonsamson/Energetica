@@ -83,12 +83,15 @@ export function ChatWindow({
                         {selectedChat && (
                             <button
                                 onClick={handleMuteToggle}
+                                disabled={
+                                    muteChat.isPending || unmuteChat.isPending
+                                }
                                 aria-label={
                                     selectedChat.is_muted
                                         ? "Unmute notifications"
                                         : "Mute notifications"
                                 }
-                                className="shrink-0 p-2 hover:bg-gray-100 dark:hover:bg-muted rounded-lg transition-colors text-muted-foreground"
+                                className="shrink-0 p-2 hover:bg-gray-100 dark:hover:bg-muted rounded-lg transition-colors text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {selectedChat.is_muted ? (
                                     <BellOff className="w-5 h-5" />
