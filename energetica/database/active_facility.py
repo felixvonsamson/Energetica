@@ -144,9 +144,9 @@ class ActiveFacility(DBModel):
         return self.total_cost * self.const_config["O&M_factor_per_day"]
 
     @property
-    def hourly_op_cost(self) -> float:
-        """Cost to operate the facility per in-game hour."""
-        return self.daily_op_cost / 24
+    def op_cost_per_tick(self) -> float:
+        """Cost to operate the facility per game tick."""
+        return self.daily_op_cost * engine.in_game_seconds_per_tick / 86400
 
     @property
     def max_power_use(self) -> float:

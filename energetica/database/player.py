@@ -690,7 +690,6 @@ class Player(DBModel):
 
     def package_active_power_facilities(self) -> dict:
         """Package the player's active power facilities."""
-        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         active_power_facilities = [
             active_facility
             for active_facility in ActiveFacility.filter_by(player=self)
@@ -707,7 +706,7 @@ class Player(DBModel):
                     "installed_cap": self.capacities[group_name]["power"],
                     "usage": sum(f.usage * f.max_power_generation for f in group)
                     / sum(f.max_power_generation for f in group),
-                    "hourly_op_cost": self.capacities[group_name]["O&M_cost"] * ticks_per_hour,
+                    "op_cost_per_tick": self.capacities[group_name]["O&M_cost"],
                     "remaining_lifespan": min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
                     "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable and f.upgrade_cost is not None)
                     if any(f.is_upgradable for f in group)
@@ -727,7 +726,7 @@ class Player(DBModel):
                     "display_name": power_facility.display_name,
                     "installed_cap": power_facility.max_power_generation,
                     "usage": power_facility.usage,
-                    "hourly_op_cost": power_facility.hourly_op_cost,
+                    "op_cost_per_tick": power_facility.op_cost_per_tick,
                     "remaining_lifespan": power_facility.remaining_lifespan,
                     "upgrade_cost": power_facility.upgrade_cost,
                     "dismantle_cost": power_facility.dismantle_cost,
@@ -743,7 +742,6 @@ class Player(DBModel):
 
     def package_active_storage_facilities(self) -> dict:
         """Package active storage facilities."""
-        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
         active_storage_facilities = [
             active_facility
@@ -760,7 +758,7 @@ class Player(DBModel):
                     "count": len(group),
                     "storage_capacity": sum(f.storage_capacity for f in group),
                     "state_of_charge": group[0].state_of_charge,
-                    "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
+                    "op_cost_per_tick": capacities[group_name]["O&M_cost"],
                     "efficiency": sum(f.efficiency * f.storage_capacity for f in group)
                     / sum(f.storage_capacity for f in group),
                     "remaining_lifespan": None
@@ -781,7 +779,7 @@ class Player(DBModel):
                     "display_name": storage_facility.display_name,
                     "storage_capacity": storage_facility.storage_capacity,
                     "state_of_charge": storage_facility.state_of_charge,
-                    "hourly_op_cost": storage_facility.hourly_op_cost,
+                    "op_cost_per_tick": storage_facility.op_cost_per_tick,
                     "efficiency": storage_facility.efficiency,
                     "remaining_lifespan": storage_facility.remaining_lifespan,
                     "upgrade_cost": None if storage_facility.decommissioning else storage_facility.upgrade_cost,
@@ -793,7 +791,6 @@ class Player(DBModel):
 
     def package_active_extraction_facilities(self) -> dict:
         """Package active extraction facilities."""
-        ticks_per_hour = 3600 / engine.in_game_seconds_per_tick
         capacities = self.capacities
         active_extraction_facilities: list[ActiveFacility] = [
             active_facility
@@ -810,7 +807,7 @@ class Player(DBModel):
                     "count": len(group),
                     "extraction_rate": sum(f.extraction_rate for f in group),
                     "usage": sum(f.usage * f.extraction_rate for f in group) / sum(f.extraction_rate for f in group),
-                    "hourly_op_cost": capacities[group_name]["O&M_cost"] * ticks_per_hour,
+                    "op_cost_per_tick": capacities[group_name]["O&M_cost"],
                     "max_power_use": sum(f.max_power_use for f in group),
                     "remaining_lifespan": min(f.remaining_lifespan for f in group if f.remaining_lifespan is not None),
                     "upgrade_cost": sum(f.upgrade_cost for f in group if f.is_upgradable and f.upgrade_cost is not None)
@@ -826,7 +823,7 @@ class Player(DBModel):
                     "display_name": extraction_facility.display_name,
                     "extraction_rate": extraction_facility.extraction_rate,
                     "usage": extraction_facility.usage,
-                    "hourly_op_cost": extraction_facility.hourly_op_cost,
+                    "op_cost_per_tick": extraction_facility.op_cost_per_tick,
                     "max_power_use": extraction_facility.max_power_use,
                     "remaining_lifespan": extraction_facility.remaining_lifespan,
                     "upgrade_cost": extraction_facility.upgrade_cost,

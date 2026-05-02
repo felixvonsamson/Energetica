@@ -664,7 +664,9 @@ def _package_power_storage_extraction_facility_base(player: Player, facility_typ
         * price_multiplier(player, facility_type)
         * (hydro_price_multiplier(player, facility_type) if isinstance(facility_type, HydroFacilityType) else 1.0)
         * const_config_assets[facility_type]["O&M_factor_per_day"]
-        / 24,
+        * engine.in_game_seconds_per_tick
+        / 24
+        / 3600,  # value in currency per tick
         "lifespan": const_config_assets[facility_type]["lifespan"] / engine.in_game_seconds_per_tick,
         "construction_pollution": const_config_assets[facility_type]["base_construction_pollution"],
     }
@@ -775,8 +777,9 @@ def next_level(player: Player, facility_or_technology: ProjectType) -> int:
         + len(
             list(
                 OngoingProject.filter(
-                    lambda construction: construction.player == player
-                    and construction.project_type == facility_or_technology,
+                    lambda construction: (
+                        construction.player == player and construction.project_type == facility_or_technology
+                    ),
                 ),
             ),
         )

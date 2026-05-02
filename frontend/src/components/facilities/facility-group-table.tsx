@@ -23,7 +23,7 @@ import {
 interface FacilityBase {
     id: number;
     facility: string;
-    hourly_op_cost: number;
+    op_cost_per_tick: number;
     remaining_lifespan: number | null;
     upgrade_cost: number | null;
     dismantle_cost: number | null;
@@ -45,7 +45,7 @@ interface FacilityGroupTableProps<T extends FacilityBase> {
 }
 
 type SortConfig<T> = {
-    key: keyof T | "facility" | "hourly_op_cost" | "remaining_lifespan";
+    key: keyof T | "facility" | "op_cost_per_tick" | "remaining_lifespan";
     direction: "asc" | "desc";
 } | null;
 
@@ -289,14 +289,14 @@ export function FacilityGroupTable<T extends FacilityBase>({
                 // Sort by facility name
                 aVal = nameA;
                 bVal = nameB;
-            } else if (sortConfig.key === "hourly_op_cost") {
+            } else if (sortConfig.key === "op_cost_per_tick") {
                 // Sort by total O&M cost
                 aVal = facilitiesA.reduce(
-                    (sum, f) => sum + f.hourly_op_cost,
+                    (sum, f) => sum + f.op_cost_per_tick,
                     0,
                 );
                 bVal = facilitiesB.reduce(
-                    (sum, f) => sum + f.hourly_op_cost,
+                    (sum, f) => sum + f.op_cost_per_tick,
                     0,
                 );
             } else if (sortConfig.key === "remaining_lifespan") {
@@ -347,7 +347,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
     };
 
     const handleSort = (
-        key: keyof T | "facility" | "hourly_op_cost" | "remaining_lifespan",
+        key: keyof T | "facility" | "op_cost_per_tick" | "remaining_lifespan",
     ) => {
         setSortConfig((current) => {
             if (current?.key === key) {
@@ -398,9 +398,9 @@ export function FacilityGroupTable<T extends FacilityBase>({
                     ))}
                     <th
                         className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
-                        onClick={() => handleSort("hourly_op_cost")}
+                        onClick={() => handleSort("op_cost_per_tick")}
                     >
-                        O&M Cost{getSortIndicator("hourly_op_cost")}
+                        O&M Cost{getSortIndicator("op_cost_per_tick")}
                     </th>
                     <th
                         className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
@@ -423,7 +423,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
 
                     // Calculate summary values
                     const totalOpCost = facilityGroup.reduce(
-                        (sum, f) => sum + f.hourly_op_cost,
+                        (sum, f) => sum + f.op_cost_per_tick,
                         0,
                     );
                     const avgLifespan =
@@ -515,10 +515,9 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                             </td>
                                         ))}
                                         <td className="py-3 px-4 text-right">
-                                            <Money
-                                                amount={facility.hourly_op_cost}
+                                            <CashFlow
+                                                amountPerTick={facility.op_cost_per_tick}
                                             />
-                                            /h
                                         </td>
                                         <td className="py-3 px-4 text-right font-mono">
                                             {facility.remaining_lifespan ? (

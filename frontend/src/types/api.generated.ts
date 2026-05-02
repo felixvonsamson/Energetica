@@ -2610,8 +2610,8 @@ export interface components {
             extraction_rate: number;
             /** Usage */
             usage: number;
-            /** Hourly Op Cost */
-            hourly_op_cost: number;
+            /** Op Cost Per Tick */
+            op_cost_per_tick: number;
             /** Max Power Use */
             max_power_use: number;
             /** Remaining Lifespan */
@@ -3523,8 +3523,8 @@ export interface components {
             max_power_generation: number;
             /** Usage */
             usage: number;
-            /** Hourly Op Cost */
-            hourly_op_cost: number;
+            /** Op Cost Per Tick */
+            op_cost_per_tick: number;
             /** Remaining Lifespan */
             remaining_lifespan: number | null;
             /** Upgrade Cost */
@@ -4190,8 +4190,8 @@ export interface components {
             max_power_generation: number;
             /** Max Power Use */
             max_power_use: number;
-            /** Hourly Op Cost */
-            hourly_op_cost: number;
+            /** Op Cost Per Tick */
+            op_cost_per_tick: number;
             /** Efficiency */
             efficiency: number;
             /** Remaining Lifespan */
