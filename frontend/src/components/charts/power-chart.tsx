@@ -106,7 +106,7 @@ export function PowerChart({
             formatYAxis:
                 viewMode === "percent"
                     ? (v: number) => `${v.toFixed(0)}%`
-                    : formatPower,
+                    : (v: number) => formatPower(v),
             yAxisMin: 0,
             yAxisMax: viewMode === "percent" ? 100 : undefined,
             hideZeroValues: true,
