@@ -1,6 +1,6 @@
 /** Hook for managing a Set of toggled items (e.g., hidden chart series) */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 export function useToggleSet<T>(
     initialState?: Set<T>,
@@ -20,27 +20,30 @@ export function useToggleSet<T>(
         return initialState ?? new Set();
     });
 
+    // Keep a ref in sync so toggle can read current items without being
+    // listed as a dependency (avoids the toggle function changing on every render).
+    const itemsRef = useRef(items);
+    itemsRef.current = items;
+
     const toggle = useCallback(
         (item: T) => {
-            setItems((prev) => {
-                const next = new Set(prev);
-                if (next.has(item)) {
-                    next.delete(item);
-                } else {
-                    next.add(item);
+            const next = new Set(itemsRef.current);
+            if (next.has(item)) {
+                next.delete(item);
+            } else {
+                next.add(item);
+            }
+            setItems(next);
+            if (storageKey) {
+                try {
+                    localStorage.setItem(
+                        storageKey,
+                        JSON.stringify(Array.from(next)),
+                    );
+                } catch {
+                    // ignore
                 }
-                if (storageKey) {
-                    try {
-                        localStorage.setItem(
-                            storageKey,
-                            JSON.stringify(Array.from(next)),
-                        );
-                    } catch {
-                        // ignore
-                    }
-                }
-                return next;
-            });
+            }
         },
         [storageKey],
     );
