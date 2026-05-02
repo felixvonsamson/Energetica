@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { Link } from "@tanstack/react-router";
 import {
     BarChart3,
@@ -11,6 +9,7 @@ import {
     TrendingUp,
     ZoomIn,
 } from "lucide-react";
+import { useState } from "react";
 
 import { HomeLayout } from "@/components/home-layout";
 import {
