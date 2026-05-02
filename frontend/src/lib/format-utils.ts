@@ -147,8 +147,6 @@ export function formatUpgradeMass(
 /**
  * Format emissions/large mass values (kg, t, kt, Mt, Gt, Tt).
  *
- * Uses a threshold of 1,000 so that Gt and Tt are reachable.
- *
  * @example
  *     formatEmissions(500); // "500 kg"
  *     formatEmissions(15000); // "15 t"
