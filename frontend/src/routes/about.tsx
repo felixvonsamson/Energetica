@@ -25,7 +25,7 @@ function RouteComponent() {
         {
             name: "Maximilien",
             background: "Oxford University, Mathematics & Computer Science",
-            bio: "[...]",
+            bio: "I played an early prototype and saw the potential straight away. I've been helping to build it out since, both on the technical side and on game design too.",
         },
         {
             name: "Yassir",
@@ -41,10 +41,12 @@ function RouteComponent() {
                 <section className="flex flex-col gap-4 max-w-3xl">
                     <TypographyH2>Mission</TypographyH2>
                     <TypographyLead className="text-foreground">
-                        Energetica is a passion project by a small team. We believe interactive play
-                        can make complex problems genuinely understandable, in a way that lectures
-                        and reports rarely achieve. We apply that belief to one of the most
-                        important challenges of our time: the energy transition.
+                        Energetica is a passion project by a small team. We
+                        believe interactive play can make complex problems
+                        genuinely understandable, in a way that lectures and
+                        reports rarely achieve. We apply that belief to one of
+                        the most important challenges of our time: the energy
+                        transition.
                     </TypographyLead>
                 </section>
 
@@ -56,13 +58,13 @@ function RouteComponent() {
                     <div>
                         <TypographyP>
                             Energetica started as a semester project at{" "}
-                            <strong>ETH Zürich</strong>. The premise was
-                            simple: what if you could learn about energy
-                            systems not by reading about it, but by living
-                            through it as a player? Early playtests showed
-                            something surprising: people who had never thought
-                            about capacity markets or CO₂ pricing were suddenly
-                            arguing about them after thirty minutes of play.
+                            <strong>ETH Zürich</strong>. The premise was simple:
+                            what if you could learn about energy systems not by
+                            reading about it, but by living through it as a
+                            player? Early playtests showed something surprising:
+                            people who had never thought about capacity markets
+                            or CO₂ pricing were suddenly arguing about them
+                            after thirty minutes of play.
                         </TypographyP>
                         <TypographyP>
                             That reaction convinced us it was worth developing
@@ -104,9 +106,8 @@ function RouteComponent() {
                             Open Source
                         </TypographyH2>
                         <TypographyLead className="text-primary-foreground max-w-xl">
-                            Energetica is open source and developed in the
-                            open. Contributions, feedback, and forks are
-                            welcome.
+                            Energetica is open source and developed in the open.
+                            Contributions, feedback, and forks are welcome.
                         </TypographyLead>
                         <a
                             href="https://github.com/felixvonsamson/Energetica"
