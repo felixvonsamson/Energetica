@@ -8,7 +8,7 @@ import {
     PieChart,
     Funnel,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 
 import {
     NetProfitViewMode,
@@ -28,6 +28,7 @@ import {
 import { useResolution } from "@/contexts/resolution-context";
 import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
 
 export const Route = createFileRoute("/app/overviews/cash-flow")({
@@ -115,11 +116,23 @@ const NET_PROFIT_VIEW_MODE_OPTIONS = [
 
 function RevenuesOverviewContent() {
     const { currentTick } = useGameTick();
-    const [viewMode, setViewMode] = useState<"normal" | "percent">("normal");
+    const [viewMode, setViewMode] = useLocalStorage<"normal" | "percent">(
+        "energetica:chart:cashflow:viewMode",
+        "normal",
+    );
     const [netProfitViewMode, setNetProfitViewMode] =
-        useState<NetProfitViewMode>("net");
-    const [revenueType, setRevenueType] = useState<CashFlowType>("revenues");
-    const [hiddenFacilities, toggleFacility] = useToggleSet<string>();
+        useLocalStorage<NetProfitViewMode>(
+            "energetica:chart:cashflow:netProfitViewMode",
+            "net",
+        );
+    const [revenueType, setRevenueType] = useLocalStorage<CashFlowType>(
+        "energetica:chart:cashflow:revenueType",
+        "revenues",
+    );
+    const [hiddenFacilities, toggleFacility] = useToggleSet<string>(
+        undefined,
+        "energetica:chart:cashflow:hiddenFacilities",
+    );
     const { selectedResolution } = useResolution();
 
     // Fetch both revenue and op-costs chart data

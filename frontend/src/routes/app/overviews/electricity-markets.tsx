@@ -13,7 +13,7 @@ import {
     BarChart2,
     UserPlus,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import {
     BreakdownMode,
@@ -50,6 +50,7 @@ import {
     useElectricityMarket,
 } from "@/hooks/use-electricity-markets";
 import { useGameTick } from "@/hooks/use-game-tick";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
 import { formatPower } from "@/lib/format-utils";
 
@@ -164,10 +165,22 @@ function MarketsOverviewContent() {
     const latestQuantity = latestData.quantity ?? 0;
 
     // Breakdown state
-    const [breakdownEnabled, setBreakdownEnabled] = useState<boolean>(false);
-    const [breakdownType, setBreakdownType] = useState<BreakdownType>("supply");
-    const [breakdownMode, setBreakdownMode] = useState<BreakdownMode>("player");
-    const [hiddenBreakdownItems, toggleBreakdownItem] = useToggleSet<string>();
+    const [breakdownEnabled, setBreakdownEnabled] = useLocalStorage<boolean>(
+        "energetica:chart:markets:breakdownEnabled",
+        false,
+    );
+    const [breakdownType, setBreakdownType] = useLocalStorage<BreakdownType>(
+        "energetica:chart:markets:breakdownType",
+        "supply",
+    );
+    const [breakdownMode, setBreakdownMode] = useLocalStorage<BreakdownMode>(
+        "energetica:chart:markets:breakdownMode",
+        "player",
+    );
+    const [hiddenBreakdownItems, toggleBreakdownItem] = useToggleSet<string>(
+        undefined,
+        "energetica:chart:markets:hiddenBreakdownItems",
+    );
 
     // Handle market selection change
     const handleMarketChange = (marketId: number | undefined) => {
