@@ -11,6 +11,7 @@
  * - React tooltip overlay with colored circles on the axis pointer
  */
 
+import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import { BarChart as EBarChart, LineChart as ELineChart } from "echarts/charts";
 import type { BarSeriesOption, LineSeriesOption } from "echarts/charts";
 import {
@@ -33,6 +34,7 @@ import {
     type ReactNode,
     useCallback,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useRef,
     useState,
@@ -158,6 +160,42 @@ function TSTooltip({
     const { currentTick } = useGameTick();
     const { data: gameEngine } = useGameEngine();
 
+    const divRef = useRef<HTMLDivElement>(null);
+
+    // Reposition the tooltip before each paint using Floating UI so it never
+    // bleeds off the viewport edge. computePosition resolves as a microtask
+    // (sync middleware), which still runs before the browser paints.
+    useLayoutEffect(() => {
+        const el = divRef.current;
+        if (!el) return;
+        const virtualEl = {
+            getBoundingClientRect() {
+                return {
+                    x: tooltip.clientX,
+                    y: tooltip.clientY,
+                    width: 0,
+                    height: 0,
+                    top: tooltip.clientY,
+                    left: tooltip.clientX,
+                    right: tooltip.clientX,
+                    bottom: tooltip.clientY,
+                };
+            },
+        };
+        computePosition(virtualEl, el, {
+            placement: "right-start",
+            strategy: "fixed",
+            middleware: [
+                offset({ mainAxis: 14, crossAxis: 8 }),
+                flip(),
+                shift({ padding: 8 }),
+            ],
+        }).then(({ x, y }) => {
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+        });
+    }, [tooltip]);
+
     const timestamp =
         gameEngine && currentTick !== undefined
             ? `${formatDuration(currentTick - tooltip.tick - 1, gameEngine)} ago`
@@ -169,6 +207,7 @@ function TSTooltip({
 
     return (
         <div
+            ref={divRef}
             style={{
                 position: "fixed",
                 left: tooltip.clientX + 14,
