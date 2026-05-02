@@ -12,7 +12,7 @@ import {
 export const Route = createFileRoute("/about")({
     component: RouteComponent,
     staticData: {
-        title: "About",
+        title: "The Project",
     },
 });
 
@@ -40,11 +40,12 @@ function RouteComponent() {
             <div className="flex flex-col gap-16 px-6 lg:px-8">
                 {/* Title and subtitle */}
                 <section className="flex flex-col gap-4 max-w-3xl">
-                    <TypographyH1>About Energetica</TypographyH1>
-                    <TypographyLead>
-                        We believe interactive play can make complex problems genuinely understandable, 
-                        in a way that lectures and reports rarely achieve. Energetica applies that 
-                        belief to one of the most important challenges of our time: the energy transition.
+                    <TypographyH2>Mission</TypographyH2>
+                    <TypographyLead className="text-foreground">
+                        Energetica is a passion project by a small team. We believe interactive play
+                        can make complex problems genuinely understandable, in a way that lectures
+                        and reports rarely achieve. We apply that belief to one of the most
+                        important challenges of our time: the energy transition.
                     </TypographyLead>
                 </section>
 
@@ -72,30 +73,6 @@ function RouteComponent() {
                             <strong>ZHAW</strong>, and continues to evolve.
                         </TypographyP>
                     </div>
-                </section>
-
-                {/* Mission */}
-                <section className="flex flex-col gap-6 max-w-3xl">
-                    <TypographyH2 className="text-primary">
-                        What We're Building
-                    </TypographyH2>
-                    <TypographyP>
-                        Energetica is not a casual game. It is a simulation
-                        that takes the real physics and economics of energy
-                        systems seriously. Realistic weather patterns,
-                        levelised cost calculations, realistic market mechanisms,
-                        resource depletion, and collective climate consequences.
-                        The goal is to give players a genuine mental model of
-                        how energy systems work, and why the choices are hard.
-                    </TypographyP>
-                    <TypographyP>
-                        The game is open source and freely available. We think
-                        that tools for energy and climate literacy should be
-                        accessible, transparent, and improvable by the
-                        community. Energetica is actively developed and new
-                        features are added regularly, informed by feedback
-                        from players and educators.
-                    </TypographyP>
                 </section>
 
                 {/* Our Team */}

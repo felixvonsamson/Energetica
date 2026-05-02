@@ -227,7 +227,7 @@ export function LandingPage() {
                                     <br />
                                     Trade Electricity.
                                     <br />
-                                    Save the Climate.
+                                    Face the Consequences.
                                 </TypographyH1>
                                 <TypographyLead className="text-primary-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
                                     Energetica is a multiplayer strategy game
@@ -235,17 +235,9 @@ export function LandingPage() {
                                     electricity markets, and face the collective
                                     consequences of CO₂ emissions.
                                 </TypographyLead>
-                                <p className="text-primary-foreground/70 text-sm font-medium mt-2">
-                                    Used in courses at{" "}
-                                    <span className="text-primary-foreground font-semibold">
-                                        ETH Zürich
-                                    </span>{" "}
-                                    and{" "}
-                                    <span className="text-primary-foreground font-semibold">
-                                        ZHAW
-                                    </span>{" "}
-                                    · Open source
-                                </p>
+                                <TypographyLead className="text-primary-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
+                                    A powerful tool for understanding real energy trade-offs, already used in courses at <b>ETH Zürich</b> and <b>ZHAW</b>.
+                                </TypographyLead>
                             </div>
                             <div className="mt-10 mx-auto max-w-6xl overflow-hidden rounded-3xl shadow-lg">
                                 <img
@@ -264,7 +256,7 @@ export function LandingPage() {
                             className="md:col-span-2 bg-primary text-primary-foreground p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-primary/90 hover:shadow-xl active:scale-[0.99] transition-all"
                         >
                             <p className="text-xl font-semibold">
-                                Play now — it's free
+                                Play now
                             </p>
                             <ChevronRight />
                         </Link>

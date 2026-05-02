@@ -5,6 +5,7 @@ import {
     GitFork,
     GraduationCap,
     LifeBuoy,
+    MousePointerClick,
     Sparkles,
     Users,
 } from "lucide-react";
@@ -30,7 +31,7 @@ function RouteComponent() {
         {
             title: "Systems Thinking",
             description:
-                "Players must manage a power grid as a system — generation, storage, markets, and climate are all interconnected. Changing one variable ripples through everything else, building intuition for complex systems.",
+                "Generation, storage, markets, and climate are all interconnected. Changing one variable ripples through everything else. There is no single right answer: what works depends on context and what others decide.",
             icon: <GitFork />,
         },
         {
@@ -40,16 +41,16 @@ function RouteComponent() {
             icon: <BookOpen />,
         },
         {
-            title: "No Single Right Strategy",
-            description:
-                "Unlike textbook exercises, Energetica has no optimal answer. Students discover that different strategies can all work — or fail — depending on what others do. This mirrors how real energy transitions unfold.",
-            icon: <GraduationCap />,
-        },
-        {
             title: "Collective Action Problem",
             description:
-                "CO₂ emissions accumulate across all players, triggering shared climate events. Students viscerally experience why collective action on climate is so hard — and why it matters.",
+                "CO₂ emissions accumulate across all players, triggering shared climate events. Students viscerally experience why collective action on climate is so hard and why it matters.",
             icon: <Users />,
+        },
+        {
+            title: "Learning by Doing",
+            description:
+                "Students don't just read about energy concepts, they live them. Managing a power grid, making investment calls, and facing market forces builds genuine intuition that lectures alone rarely achieve.",
+            icon: <MousePointerClick />,
         },
     ];
 
@@ -61,7 +62,7 @@ function RouteComponent() {
                     <div className="max-w-6xl mx-auto flex flex-col gap-12">
                         <div className="w-full">
                             <img
-                                src="/static/images/landing/live_demo_photo.jpg"
+                                src="/static/images/landing_page/live_demo_photo.jpg"
                                 alt="Students playing Energetica in a classroom"
                                 className="w-full rounded-4xl shadow-lg object-cover max-h-144"
                             />
@@ -72,7 +73,7 @@ function RouteComponent() {
                 {/* Header */}
                 <section className="flex flex-col gap-6 max-w-3xl">
                     <TypographyH1>Energetica in the Classroom</TypographyH1>
-                    <TypographyLead>
+                    <TypographyLead className="text-foreground">
                         An open-source simulation game that makes energy
                         systems, electricity markets, and climate trade-offs
                         tangible — through play.
@@ -142,6 +143,12 @@ function RouteComponent() {
                     <TypographyH2 className="text-primary">
                         What We Offer
                     </TypographyH2>
+                    <TypographyP>
+                        Energetica is designed to be used as a complement to a
+                        university course, a game played throughout the
+                        semester that provides a hands-on backdrop for
+                        introducing and reinforcing concepts covered in class.
+                    </TypographyP>
                     <div className="divide-y divide-border-brand">
                         {[
                             {
