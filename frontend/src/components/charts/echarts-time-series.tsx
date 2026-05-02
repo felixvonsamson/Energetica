@@ -126,6 +126,7 @@ export interface EChartsTimeSeriesProps {
 // ── Tooltip overlay ───────────────────────────────────────────────────────────
 
 interface Circle {
+    seriesKey: string;
     clientX: number;
     clientY: number;
     color: string;
@@ -286,6 +287,12 @@ export function EChartsTimeSeries({
         [data.length, config.chartType, config.chartVariant, config.stacked],
     );
 
+    // Lags behind structuralKey during the post-setOption microtask window so
+    // stale circles are suppressed at render time rather than after a deferred
+    // setState fires.
+    const [appliedStructuralKey, setAppliedStructuralKey] =
+        useState(structuralKey);
+
     // Full data key: changes on every new tick arrival. Used as effect dep so
     // series are re-rendered on fresh data even without a zoom reset.
     const dataKey = useMemo(() => {
@@ -331,6 +338,15 @@ export function EChartsTimeSeries({
         el.addEventListener("wheel", handler, { capture: true, passive: true });
         return () =>
             el.removeEventListener("wheel", handler, { capture: true });
+    }, []);
+
+    // When the page scrolls, the fixed-position circles drift out of alignment
+    // with the chart. ZRender doesn't fire mouseout on scroll (the mouse didn't
+    // move), so we clear the tooltip explicitly.
+    useEffect(() => {
+        const clear = () => setTooltip(null);
+        window.addEventListener("scroll", clear, { capture: true, passive: true });
+        return () => window.removeEventListener("scroll", clear, { capture: true });
     }, []);
 
     // ── ECharts option ────────────────────────────────────────────────────────
@@ -719,6 +735,7 @@ export function EChartsTimeSeries({
                             cumulative,
                         ) as number;
                         circles.push({
+                            seriesKey: key,
                             clientX: lineClientX,
                             clientY: rect
                                 ? rect.top + pixelY
@@ -735,6 +752,7 @@ export function EChartsTimeSeries({
                             val,
                         ) as number;
                         circles.push({
+                            seriesKey: key,
                             clientX: lineClientX,
                             clientY: rect
                                 ? rect.top + pixelY
@@ -782,6 +800,8 @@ export function EChartsTimeSeries({
         if (isStructuralChange) {
             inst.setOption(option, { notMerge: true });
             queueMicrotask(() => {
+                setAppliedStructuralKey(structuralKey);
+                setTooltip(null);
                 setIsZoomed(false);
                 setZoomRange({ start: 0, end: 100 });
             });
@@ -864,11 +884,11 @@ export function EChartsTimeSeries({
                 </button>
             )}
 
-            {tooltip && !isLoading && (
+            {tooltip && !isLoading && appliedStructuralKey === structuralKey && (
                 <>
                     {tooltip.circles.map((c) => (
                         <div
-                            key={c.color}
+                            key={c.seriesKey}
                             style={{
                                 position: "fixed",
                                 left: c.clientX - 5,
