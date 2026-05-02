@@ -123,9 +123,6 @@ export function MarketClearingVolumeChart({
                           playerMap?.[parseInt(key)]?.username ?? key
                     : undefined,
             hideZeroValues: false,
-            referenceLines: market
-                ? [{ x: market.created_tick, label: "Market Creation" }]
-                : [],
         }),
         [
             chartType,
