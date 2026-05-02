@@ -18,10 +18,6 @@ export function MessageInput({ onSend, isDisabled, isDialogOpen, chatId }: Messa
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const { user } = useAuth();
 
-    useEffect(() => {
-        setMessage(localStorage.getItem(`chat-draft-${chatId}`) ?? "");
-    }, [chatId]);
-
     const adjustHeight = useCallback(() => {
         const textarea = inputRef.current;
         if (textarea) {
