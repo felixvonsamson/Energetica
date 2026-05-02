@@ -1,9 +1,10 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Bell, BellOff } from "lucide-react";
 
 import { MessageContainer } from "@/components/chat/message-container";
 import { MessageInput } from "@/components/chat/message-input";
 import { PlayerName } from "@/components/ui/player-name";
 import { TypographyH2 } from "@/components/ui/typography";
+import { useMuteChat, useUnmuteChat } from "@/hooks/use-chats";
 import { useMyId, usePlayerMap } from "@/hooks/use-players";
 import type { Message, Chat } from "@/types/chats";
 
@@ -36,12 +37,24 @@ export function ChatWindow({
 }: ChatWindowProps) {
     const myId = useMyId();
     const playerMap = usePlayerMap();
+    const muteChat = useMuteChat();
+    const unmuteChat = useUnmuteChat();
+
     const otherPlayer =
         selectedChat && !selectedChat.is_group && myId && playerMap
             ? (playerMap[
                   selectedChat.participant_ids.find((id) => id !== myId) ?? -1
               ] ?? null)
             : null;
+
+    const handleMuteToggle = () => {
+        if (!selectedChatId || !selectedChat) return;
+        if (selectedChat.is_muted) {
+            unmuteChat.mutate(selectedChatId);
+        } else {
+            muteChat.mutate(selectedChatId);
+        }
+    };
 
     return (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -67,6 +80,23 @@ export function ChatWindow({
                                 "Select a chat"
                             )}
                         </TypographyH2>
+                        {selectedChat && (
+                            <button
+                                onClick={handleMuteToggle}
+                                aria-label={
+                                    selectedChat.is_muted
+                                        ? "Unmute notifications"
+                                        : "Mute notifications"
+                                }
+                                className="shrink-0 p-2 hover:bg-gray-100 dark:hover:bg-muted rounded-lg transition-colors text-muted-foreground"
+                            >
+                                {selectedChat.is_muted ? (
+                                    <BellOff className="w-5 h-5" />
+                                ) : (
+                                    <Bell className="w-5 h-5" />
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
 

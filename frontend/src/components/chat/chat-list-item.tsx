@@ -1,3 +1,5 @@
+import { BellOff } from "lucide-react";
+
 import { PlayerName } from "@/components/ui/player-name";
 import { useMyId, usePlayerMap } from "@/hooks/use-players";
 import type { Chat } from "@/types/chats";
@@ -35,11 +37,16 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                         chat.display_name
                     )}
                 </span>
-                {chat.unread_messages_count > 0 && (
-                    <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full shrink-0">
-                        {chat.unread_messages_count}
-                    </span>
-                )}
+                <div className="flex items-center gap-1 shrink-0">
+                    {chat.is_muted && (
+                        <BellOff className="w-3.5 h-3.5 text-muted-foreground" />
+                    )}
+                    {chat.unread_messages_count > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                            {chat.unread_messages_count}
+                        </span>
+                    )}
+                </div>
             </div>
         </button>
     );

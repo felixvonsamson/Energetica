@@ -85,6 +85,7 @@ class Player(DBModel):
     # inactive: bool = False  # True if account is inactive
     show_chat_disclaimer: bool = True
     last_opened_chat_id: int = field(default_factory=lambda: engine.general_chat.id)
+    muted_chat_ids: set[int] = field(default_factory=lambda: {engine.general_chat_id})
 
     network: Network | None = None
 
@@ -195,6 +196,8 @@ class Player(DBModel):
             }
         if not hasattr(self, "push_subscriptions"):
             self.push_subscriptions = []
+        if not hasattr(self, "muted_chat_ids"):
+            self.muted_chat_ids = {engine.general_chat_id}
         if not hasattr(self, "overdraft_warning_sent"):
             self.overdraft_warning_sent = False
         # Migrate old notification_opt_ins field
