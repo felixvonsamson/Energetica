@@ -1,12 +1,24 @@
-import { useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 
 import {
     EChartsTimeSeries,
     EChartsTimeSeriesConfig,
 } from "@/components/charts/echarts-time-series";
+import { CoinIcon } from "@/components/ui/coin-icon";
 import { useChartData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
+import { formatMoney } from "@/lib/format-utils";
 import { ResolutionOption } from "@/types/charts";
+
+function formatMarketPriceValue(value: number): ReactNode {
+    return (
+        <span className="inline-flex items-center gap-1">
+            {formatMoney(value)}
+            <CoinIcon className="w-3 h-3" />
+            /MWh
+        </span>
+    );
+}
 
 interface MarketPriceChartProps {
     selectedResolution: ResolutionOption;
@@ -50,14 +62,12 @@ export function MarketPriceChart({
             stacked: false,
             getColor: () => "var(--chart-2)",
             filterDataKeys: [],
-            formatValue: (value: number) => `$${value.toFixed(6)}`,
-            formatYAxis: (value: number) => `$${value.toFixed(6)}`,
+            formatValue: formatMarketPriceValue,
+            formatYAxis: (value: number) => formatMoney(value),
+            yAxisLabel: "Price (coins/MWh)",
             hideZeroValues: false,
-            referenceLines: market
-                ? [{ x: market.created_tick, label: "Market Creation" }]
-                : [],
         }),
-        [market],
+        [],
     );
 
     return (

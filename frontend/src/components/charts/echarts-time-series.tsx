@@ -16,7 +16,6 @@ import type { BarSeriesOption, LineSeriesOption } from "echarts/charts";
 import {
     DataZoomComponent,
     GridComponent,
-    MarkLineComponent,
     ToolboxComponent,
     TooltipComponent,
 } from "echarts/components";
@@ -61,7 +60,6 @@ echarts.use([
     TooltipComponent,
     DataZoomComponent,
     ToolboxComponent,
-    MarkLineComponent,
     CanvasRenderer,
 ]);
 
@@ -107,11 +105,12 @@ export interface EChartsTimeSeriesConfig {
     gradientKeys?: string[];
     /** Whether to hide zero values in tooltip (default true) */
     hideZeroValues?: boolean;
-    referenceLines?: Array<{ x: number; label?: string }>;
     /** Y-axis minimum (default: auto) */
     yAxisMin?: number;
     /** Y-axis maximum (default: auto) */
     yAxisMax?: number;
+    /** Y-axis title label (e.g. "Price (coins/MWh)") */
+    yAxisLabel?: string;
 }
 
 export interface EChartsTimeSeriesProps {
@@ -390,8 +389,6 @@ export function EChartsTimeSeries({
             ticks.length > 0 ? Math.ceil(plotWidth / visibleTickCount) : 1;
 
         // Resolve CSS variables for canvas renderer
-        const primaryColor = resolveCSSVar("--primary");
-        const mutedColor = resolveCSSVar("--muted-foreground");
         const successColor = resolveCSSVar("--success");
         const destructiveColor = resolveCSSVar("--destructive");
 
@@ -416,8 +413,6 @@ export function EChartsTimeSeries({
                 else gradientOffsets[key] = dataMax / (dataMax - dataMin);
             }
         }
-
-        const allRefLines = [...(config.referenceLines ?? [])];
 
         const series: ECOption["series"] = visibleKeys.map((key) => {
             const rawColor = config.getColor?.(key) ?? "#888";
@@ -509,24 +504,6 @@ export function EChartsTimeSeries({
             };
         });
 
-        // Attach reference lines to the first visible series via markLine
-        if (series.length > 0 && allRefLines.length > 0) {
-            (series[0] as LineSeriesOption).markLine = {
-                silent: true,
-                symbol: ["none", "none"],
-                data: allRefLines.map((rl) => ({
-                    xAxis: rl.x,
-                    name: rl.label ?? "",
-                })),
-                lineStyle: { color: primaryColor, type: "dashed", width: 2 },
-                label: {
-                    formatter: "{b}",
-                    position: "insideStartTop",
-                    color: mutedColor,
-                    fontSize: 12,
-                },
-            };
-        }
 
         return {
             animation: false,
@@ -555,6 +532,13 @@ export function EChartsTimeSeries({
                 axisLabel: { formatter: config.formatYAxis, fontSize: 11 },
                 min: config.yAxisMin,
                 max: config.yAxisMax,
+                ...(config.yAxisLabel
+                    ? {
+                          name: config.yAxisLabel,
+                          nameLocation: "middle" as const,
+                          nameGap: 50,
+                      }
+                    : {}),
                 splitLine: {
                     lineStyle: { color: "rgba(128,128,128,0.15)" },
                 },

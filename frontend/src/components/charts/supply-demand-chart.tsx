@@ -519,7 +519,7 @@ function MeritOrderChartInner({
 
         return {
             animation: false,
-            grid: { left: 90, right: 20, top: 20, bottom: 55 },
+            grid: { left: 70, right: 20, top: 20, bottom: 55 },
             xAxis: {
                 type: "value",
                 min: quantityDomain[0],
@@ -541,7 +541,7 @@ function MeritOrderChartInner({
                 max: priceDomain[1],
                 name: "Price (coins/MWh)",
                 nameLocation: "middle",
-                nameGap: 70,
+                nameGap: 50,
                 axisLabel: {
                     formatter: (value: number) => formatMoney(value),
                     fontSize: 11,

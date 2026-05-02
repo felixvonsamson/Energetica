@@ -86,7 +86,6 @@ export function MarketClearingVolumeChart({
     breakdownMode,
     breakdownType,
 }: MarketClearingChartProps) {
-    const market = useElectricityMarket(marketId);
     const getColor = useAssetColorGetter();
     const playerMap = usePlayerMap();
 
@@ -123,9 +122,6 @@ export function MarketClearingVolumeChart({
                           playerMap?.[parseInt(key)]?.username ?? key
                     : undefined,
             hideZeroValues: false,
-            referenceLines: market
-                ? [{ x: market.created_tick, label: "Market Creation" }]
-                : [],
         }),
         [
             chartType,
@@ -135,7 +131,6 @@ export function MarketClearingVolumeChart({
             breakdownFilter,
             quantityFilter,
             playerMap,
-            market,
         ],
     );
 

@@ -101,8 +101,8 @@ const CO2_UNIT_OPTIONS = [
 ] as const;
 
 const EMISSIONS_VIEW_OPTIONS = [
-    { value: "normal", label: "Normal" },
-    { value: "percent", label: "Percent" },
+    { value: "normal", label: "t" },
+    { value: "percent", label: "%" },
 ] as const;
 
 const EMISSIONS_CUMULATIVE_OPTIONS = [
