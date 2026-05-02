@@ -789,6 +789,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/chats/{chat_id}:mute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mute Chat
+         *
+         * Mute push notifications for a chat.
+         */
+        post: operations["mute_chat_api_v1_chats__chat_id__mute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chats/{chat_id}:unmute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unmute Chat
+         *
+         * Unmute push notifications for a chat.
+         */
+        post: operations["unmute_chat_api_v1_chats__chat_id__unmute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/daily-quiz": {
         parameters: {
             query?: never;
@@ -2280,6 +2322,8 @@ export interface components {
             unread_messages_count: number;
             /** Participant Ids */
             participant_ids: number[];
+            /** Is Muted */
+            is_muted: boolean;
         };
         /**
          * ClimateDataResponse
@@ -5797,6 +5841,64 @@ export interface operations {
         };
     };
     open_chat_api_v1_chats__chat_id__open_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chat_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mute_chat_api_v1_chats__chat_id__mute_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chat_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unmute_chat_api_v1_chats__chat_id__unmute_post: {
         parameters: {
             query?: never;
             header?: never;

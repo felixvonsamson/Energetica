@@ -250,7 +250,14 @@ class GameEngine(object):
             for member, member_data in data.items():
                 setattr(self, member, member_data)
         from energetica.database.active_facility import ActiveFacility  # late import to avoid circular dependency
+        from energetica.database.player import Player  # late import to avoid circular dependency
+
         ActiveFacility.rebuild_index()
+        # Migrate muted_chat_ids here rather than in Player.__setstate__ because
+        # engine.general_chat_id is still None when __setstate__ runs during pickle.load().
+        for player in Player.all():
+            if not hasattr(player, "muted_chat_ids"):
+                player.muted_chat_ids = {self.general_chat_id}
 
     def save_checkpoint(self, destination_filename: str = "checkpoints/last_checkpoint.tar.gz") -> None:
         self.save()
