@@ -31,7 +31,7 @@ export interface PurchaseDialogProps {
 export function PurchaseDialog({ isOpen, onClose, ask }: PurchaseDialogProps) {
     const [buyAll, setBuyAll] = useState(true);
     const [quantity, setQuantity] = useState(
-        (ask?.quantity ?? 0 / 1000).toString(),
+        (((ask?.quantity ?? 0) / 1000).toString()),
     );
 
     const purchaseMutation = usePurchaseAsk();
@@ -50,7 +50,7 @@ export function PurchaseDialog({ isOpen, onClose, ask }: PurchaseDialogProps) {
         }
     };
 
-    const maxQuantityTons = ask?.quantity ?? 0 / 1000;
+    const maxQuantityTons = (ask?.quantity ?? 0) / 1000;
     const purchaseQuantityTons = buyAll
         ? maxQuantityTons
         : parseFloat(quantity || "0");
