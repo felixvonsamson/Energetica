@@ -196,8 +196,6 @@ class Player(DBModel):
             }
         if not hasattr(self, "push_subscriptions"):
             self.push_subscriptions = []
-        if not hasattr(self, "muted_chat_ids"):
-            self.muted_chat_ids = {engine.general_chat_id}
         if not hasattr(self, "overdraft_warning_sent"):
             self.overdraft_warning_sent = False
         # Migrate old notification_opt_ins field
