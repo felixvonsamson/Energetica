@@ -106,6 +106,8 @@ function MessagesContent() {
         openChat,
     } = useMessagesPage();
 
+    const isPushEnabled = chatListData?.has_push_subscription ?? false;
+
     const handleChatSelect = (chatId: number) => {
         setSelectedChatId(chatId);
         openChat(chatId);
@@ -155,6 +157,7 @@ function MessagesContent() {
                         onChatSelect={handleChatSelect}
                         onNewChatClick={() => setShowNewChatDialog(true)}
                         onNewGroupChatClick={() => setShowGroupChatDialog(true)}
+                        isPushEnabled={isPushEnabled}
                     />
                 )}
 
@@ -172,6 +175,7 @@ function MessagesContent() {
                         isDialogOpen={showNewChatDialog || showGroupChatDialog}
                         onBackClick={handleBackToList}
                         showBackButton={showMobileChatView && isMobile}
+                        isPushEnabled={isPushEnabled}
                     />
                 )}
             </div>

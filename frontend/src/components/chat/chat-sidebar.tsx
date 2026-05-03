@@ -18,6 +18,7 @@ interface ChatSidebarProps {
     onChatSelect: (chatId: number) => void;
     onNewChatClick: () => void;
     onNewGroupChatClick: () => void;
+    isPushEnabled: boolean;
 }
 
 export function ChatSidebar({
@@ -27,6 +28,7 @@ export function ChatSidebar({
     onChatSelect,
     onNewChatClick,
     onNewGroupChatClick,
+    isPushEnabled,
 }: ChatSidebarProps) {
     return (
         <div className="w-full lg:w-72 flex flex-col gap-4">
@@ -56,6 +58,7 @@ export function ChatSidebar({
                                     chat={chat}
                                     isSelected={selectedChatId === chat.id}
                                     onClick={() => onChatSelect(chat.id)}
+                                    isPushEnabled={isPushEnabled}
                                 />
                             ))
                         )}

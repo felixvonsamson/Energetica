@@ -63,7 +63,8 @@ export function useChatMessages(chatId: number | null) {
     }, [chatId]);
 
     const loadMore = useCallback(async () => {
-        if (!chatId || !hasMore || isLoadingMore || messages.length === 0) return;
+        if (!chatId || !hasMore || isLoadingMore || messages.length === 0)
+            return;
         const oldestId = messages[0]?.id;
         if (oldestId === undefined) return;
         setIsLoadingMore(true);
@@ -82,7 +83,10 @@ export function useChatMessages(chatId: number | null) {
         setMessages((prev) => [...prev, message]);
     }, []);
 
-    /** Send a message with optimistic UI. Throws on error so the caller can restore input. */
+    /**
+     * Send a message with optimistic UI. Throws on error so the caller can
+     * restore input.
+     */
     const sendMessage = useCallback(
         async (text: string, playerId: number): Promise<void> => {
             if (!chatId) return;
@@ -103,7 +107,9 @@ export function useChatMessages(chatId: number | null) {
                 setMessages((prev) =>
                     prev.map((m) => (m.id === tempId ? realMessage : m)),
                 );
-                queryClient.invalidateQueries({ queryKey: queryKeys.chats.list });
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.chats.list,
+                });
             } catch (err) {
                 setMessages((prev) => prev.filter((m) => m.id !== tempId));
                 throw err;
@@ -112,7 +118,15 @@ export function useChatMessages(chatId: number | null) {
         [chatId],
     );
 
-    return { messages, hasMore, isLoading, isLoadingMore, loadMore, addMessage, sendMessage };
+    return {
+        messages,
+        hasMore,
+        isLoading,
+        isLoadingMore,
+        loadMore,
+        addMessage,
+        sendMessage,
+    };
 }
 
 export function useCreateGroupChat() {
@@ -133,6 +147,30 @@ export function useOpenChat() {
             chatsApi.openChat(chatId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.chats.list });
+        },
+    });
+}
+
+export function useMuteChat() {
+    return useMutation<void, Error, number>({
+        mutationFn: chatsApi.muteChat,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.chats.list });
+        },
+        onError: () => {
+            toast.error("Failed to mute chat");
+        },
+    });
+}
+
+export function useUnmuteChat() {
+    return useMutation<void, Error, number>({
+        mutationFn: chatsApi.unmuteChat,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.chats.list });
+        },
+        onError: () => {
+            toast.error("Failed to unmute chat");
         },
     });
 }
