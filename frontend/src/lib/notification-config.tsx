@@ -180,7 +180,7 @@ const INBOX_NOTIFICATION_CONFIG = {
         pushBody: () =>
             "Answer a new question every day to earn XP and test your knowledge about energy systems and climate change.",
         inGameBody: () =>
-            "Answer a new question every day to earn XP and test your energy knowledge.",
+            "Answer a new question every day to earn XP and test your knowledge about energy systems and climate change.",
     },
     tutorial_quiz_push_notifications: {
         category: "tutorials",
