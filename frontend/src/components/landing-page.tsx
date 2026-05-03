@@ -12,12 +12,7 @@ import {
 import { useState } from "react";
 
 import { HomeLayout } from "@/components/home-layout";
-import {
-    Dialog,
-    DialogContent,
-    DialogOverlay,
-    DialogPortal,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
     TypographyH1,
     TypographyH2,
@@ -75,9 +70,8 @@ const gameElements: {
         description: (
             <>
                 A realistic energy market reacts to supply and demand, creating
-                fluctuating prices. Players explore how storage technologies
-                and strategic pricing can stabilize the grid and generate
-                profit.
+                fluctuating prices. Players explore how storage technologies and
+                strategic pricing can stabilize the grid and generate profit.
             </>
         ),
         icon: <BarChart3 />,
@@ -93,10 +87,9 @@ const gameElements: {
         description: (
             <>
                 Wind and solar power are clean but variable and unreliable. A
-                realistic weather model drives the simulation, making the
-                player experience the challenge of balancing this variability
-                and the role of storage in creating a fully renewable energy
-                system.
+                realistic weather model drives the simulation, making the player
+                experience the challenge of balancing this variability and the
+                role of storage in creating a fully renewable energy system.
             </>
         ),
         icon: <Sun />,
@@ -233,7 +226,9 @@ export function LandingPage() {
                                     consequences of CO₂ emissions.
                                 </TypographyLead>
                                 <TypographyLead className="text-primary-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
-                                    A powerful tool for understanding real energy trade-offs, already used in courses at <b>ETH Zürich</b> and <b>ZHAW</b>.
+                                    A powerful tool for understanding real
+                                    energy trade-offs, already used in courses
+                                    at <b>ETH Zürich</b> and <b>ZHAW</b>.
                                 </TypographyLead>
                             </div>
                             <div className="mt-10 mx-auto max-w-6xl overflow-hidden rounded-3xl shadow-lg">
@@ -252,9 +247,7 @@ export function LandingPage() {
                             to="/app/login"
                             className="md:col-span-2 bg-primary text-primary-foreground p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-primary/90 hover:shadow-xl active:scale-[0.99] transition-all"
                         >
-                            <p className="text-xl font-semibold">
-                                Play now
-                            </p>
+                            <p className="text-xl font-semibold">Play now</p>
                             <ChevronRight />
                         </Link>
                         <Link
@@ -286,9 +279,7 @@ export function LandingPage() {
                                 <TypographyP>{el.description}</TypographyP>
                             </div>
                         );
-                        const image = (
-                            <ImageTileComponent image={el.image} />
-                        );
+                        const image = <ImageTileComponent image={el.image} />;
                         return (
                             <div
                                 key={el.title}
