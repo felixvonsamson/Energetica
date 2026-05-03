@@ -27,6 +27,84 @@ export const Route = createFileRoute("/for-educators")({
 });
 
 function RouteComponent() {
+    const concepts = [
+        {
+            term: "Merit Order",
+            description:
+                "Electricity prices are set by the most expensive generator needed to meet demand, mirroring real wholesale markets.",
+        },
+        {
+            term: "Marginal Cost",
+            description:
+                "Players calculate variable production costs to place competitive bids in the electricity market.",
+        },
+        {
+            term: "LCOE",
+            description:
+                "Levelized Cost of Electricity becomes the key metric for comparing long-term investment options across technologies.",
+        },
+        {
+            term: "Supply–Demand Balance",
+            description:
+                "Generation must match demand in real time; shortfalls and surpluses trigger penalties.",
+        },
+        {
+            term: "Ramping Speed",
+            description:
+                "Each plant has a ramp rate that limits how quickly players can respond to sudden demand swings.",
+        },
+        {
+            term: "Capacity Factor",
+            description:
+                "Renewables operate with realistic capacity factors, distinguishing nameplate capacity from actual output.",
+        },
+        {
+            term: "Storage Arbitrage",
+            description:
+                "Energy storage technologies let players shift electricity over time, buying cheap and selling during price peaks.",
+        },
+        {
+            term: "Fixed & Variable Costs",
+            description:
+                "Each plant carries fixed and variable operating costs.",
+        },
+        {
+            term: "Seasonal Variation",
+            description:
+                "Electricity demand follow realistic daily and seasonal patterns.",
+        },
+        {
+            term: "Weather-Dependent Generation",
+            description:
+                "Renewable energy sources have variable output based on weather conditions and seasonal patterns.",
+        },
+        {
+            term: "Carbon Externalities",
+            description:
+                "CO₂ accumulates in a shared atmospheric pool, triggering climate events that affect all players.",
+        },
+        {
+            term: "Tragedy of the Commons",
+            description:
+                "The shared emissions pool makes individually rational choices collectively damaging.",
+        },
+        {
+            term: "Carbon Capture",
+            description:
+                "Players can invest in carbon capture, confronting the economic trade-off between mitigation and adaptation.",
+        },
+        {
+            term: "Knowledge Spillover",
+            description:
+                "Research costs for a technology fall as more players have already developed it.",
+        },
+        {
+            term: "Resource Geography",
+            description:
+                "Map tiles carry different resource endowments, making location a central factor in energy strategy.",
+        },
+    ];
+
     const pedagogicalValues = [
         {
             title: "Systems Thinking",
@@ -76,14 +154,12 @@ function RouteComponent() {
                     <TypographyLead className="text-foreground">
                         An open-source simulation game that makes energy
                         systems, electricity markets, and climate trade-offs
-                        tangible — through play.
+                        tangible through play.
                     </TypographyLead>
-                    <p className="text-sm text-muted-foreground font-medium">
-                        Already used in courses at{" "}
-                        <strong className="text-foreground">ETH Zürich</strong>{" "}
-                        and{" "}
-                        <strong className="text-foreground">ZHAW</strong>.
-                    </p>
+                    <TypographyLead className="text-foreground">
+                        Already used in courses at <b>ETH Zürich</b> and{" "}
+                        <b>ZHAW</b>.
+                    </TypographyLead>
                 </section>
 
                 {/* Why it works */}
@@ -107,6 +183,32 @@ function RouteComponent() {
                                         </TypographyH3>
                                     </div>
                                     <TypographyP>{v.description}</TypographyP>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Concepts in Gameplay */}
+                <section>
+                    <div className="max-w-6xl mx-auto flex flex-col gap-10">
+                        <div className="flex flex-col gap-3">
+                            <TypographyH2 className="text-primary">
+                                Concepts You Teach, Mechanics They Play
+                            </TypographyH2>
+                        </div>
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {concepts.map((c) => (
+                                <div
+                                    key={c.term}
+                                    className="flex flex-col gap-2 p-5 bg-card rounded-3xl shadow-sm"
+                                >
+                                    <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full w-fit">
+                                        {c.term}
+                                    </span>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        {c.description}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -145,9 +247,9 @@ function RouteComponent() {
                     </TypographyH2>
                     <TypographyP>
                         Energetica is designed to be used as a complement to a
-                        university course, a game played throughout the
-                        semester that provides a hands-on backdrop for
-                        introducing and reinforcing concepts covered in class.
+                        university course, a game played throughout the semester
+                        that provides a hands-on backdrop for introducing and
+                        reinforcing concepts covered in class.
                     </TypographyP>
                     <div className="divide-y divide-border-brand">
                         {[
@@ -186,7 +288,7 @@ function RouteComponent() {
                                         {item.title}
                                     </TypographyH3>
                                 </div>
-                                <TypographyP className="flex-1 text-muted-foreground mt-0!">
+                                <TypographyP className="flex-1 mt-0!">
                                     {item.description}
                                 </TypographyP>
                             </div>
@@ -201,8 +303,8 @@ function RouteComponent() {
                             Interested in Using Energetica in Your Course?
                         </TypographyH2>
                         <TypographyLead className="text-primary-foreground max-w-xl">
-                            We'd love to help. Reach out and we'll get back to
-                            you to discuss how it could fit your course.
+                            We'd love to collaborate. Reach out and we'll get
+                            back to you to discuss how it could fit your course.
                         </TypographyLead>
                         <a
                             href="mailto:energetica.game@gmail.com"

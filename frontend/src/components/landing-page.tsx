@@ -217,7 +217,7 @@ export function LandingPage() {
                                     <br />
                                     Trade Electricity.
                                     <br />
-                                    Face the Consequences.
+                                    Drive the Transition.
                                 </TypographyH1>
                                 <TypographyLead className="text-primary-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
                                     Energetica is a multiplayer strategy game
