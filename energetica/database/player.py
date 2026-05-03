@@ -7,7 +7,7 @@ import json
 from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Iterable
@@ -81,6 +81,7 @@ class Player(DBModel):
         return self.user.username
 
     last_connection: datetime | None = None
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     # inactive: bool = False  # True if account is inactive
     show_chat_disclaimer: bool = True
@@ -150,6 +151,7 @@ class Player(DBModel):
             "imported_energy": 0,
             "exported_energy": 0,
             "captured_co2": 0,
+            "quiz_answers_total": 0,
         },
     )
 
@@ -167,6 +169,7 @@ class Player(DBModel):
             "network_join_leave": False,
         }
     )
+    dispatched_tutorials: list[str] = field(default_factory=list)
     socketio_clients: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -197,6 +200,11 @@ class Player(DBModel):
             self.push_subscriptions = []
         if not hasattr(self, "overdraft_warning_sent"):
             self.overdraft_warning_sent = False
+        if not hasattr(self, "created_at"):
+            self.created_at = datetime.now(timezone.utc) - timedelta(days=365)
+        if not hasattr(self, "dispatched_tutorials"):
+            self.dispatched_tutorials = []
+        self.progression_metrics.setdefault("quiz_answers_total", 0)
         # Migrate old notification_opt_ins field
         if hasattr(self, "notification_opt_ins"):
             del self.__dict__["notification_opt_ins"]

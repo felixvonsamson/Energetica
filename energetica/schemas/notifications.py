@@ -110,6 +110,18 @@ class TutorialPushNotificationsPayload(BaseModel):
     type: Literal["tutorial_push_notifications"] = "tutorial_push_notifications"
 
 
+class TutorialDailyQuizPayload(BaseModel):
+    """Tutorial notification informing the player that a daily quiz exists."""
+
+    type: Literal["tutorial_daily_quiz"] = "tutorial_daily_quiz"
+
+
+class TutorialQuizPushNotificationsPayload(BaseModel):
+    """Tutorial notification encouraging the player to enable push notifications for the quiz."""
+
+    type: Literal["tutorial_quiz_push_notifications"] = "tutorial_quiz_push_notifications"
+
+
 class ChatMessagePayload(BaseModel):
     type: Literal["chat_message"] = "chat_message"
     sender_username: str
@@ -211,6 +223,8 @@ PersistableNotificationPayload = Union[
     AchievementMilestoneBasePayload,
     AchievementUnlockPayload,
     TutorialPushNotificationsPayload,
+    TutorialDailyQuizPayload,
+    TutorialQuizPushNotificationsPayload,
 ]
 
 # Payloads that only trigger a browser push — no inbox entry.
