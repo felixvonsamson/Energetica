@@ -65,17 +65,20 @@ function ConfirmationContent({
         <div className="space-y-3">
             <p>
                 Are you sure you want to{" "}
-                {isDismantling ? "dismantle" : "upgrade"} all{" "}
+                {isDismantling ? "dismantle" : "upgrade"}{" "}
+                {count > 1 ? "all " : "this "}
                 <FacilityName facility={facilityName} as="strong" mode="long" />{" "}
-                facilities?
+                {count > 1 ? "facilities" : "facility"}?
             </p>
             <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                {count > 1 && (
+                    <div className="flex justify-between">
+                        <span className="font-semibold">Number of facilities:</span>
+                        <span>{count}</span>
+                    </div>
+                )}
                 <div className="flex justify-between">
-                    <span className="font-semibold">Number of facilities:</span>
-                    <span>{count}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="font-semibold">Total cost:</span>
+                    <span className="font-semibold">{count > 1 ? "Total cost" : "Cost"}:</span>
                     <Money amount={totalCost} />
                 </div>
             </div>
@@ -113,15 +116,31 @@ function FacilityActions({
                     <span className="text-gray-400">-</span>
                 )}
             </td>
-            <td className="py-3 px-4 text-center">
+            <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                 {facility.dismantle_cost !== null ? (
-                    <button
-                        onClick={() => dismantleMutation.mutate(facility.id)}
-                        disabled={dismantleMutation.isPending}
-                        className="bg-destructive hover:bg-destructive/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                    >
-                        <Money amount={facility.dismantle_cost} />
-                    </button>
+                    <ConfirmDialog
+                        trigger={
+                            <button
+                                disabled={dismantleMutation.isPending}
+                                className="bg-destructive hover:bg-destructive/80 disabled:opacity-50 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                            >
+                                <Money amount={facility.dismantle_cost} />
+                            </button>
+                        }
+                        title="Confirm Dismantle"
+                        description={
+                            <ConfirmationContent
+                                facilityName={facility.facility}
+                                count={1}
+                                totalCost={facility.dismantle_cost}
+                                isDismantling={true}
+                            />
+                        }
+                        confirmLabel="Dismantle"
+                        variant="danger"
+                        onConfirm={() => dismantleMutation.mutate(facility.id)}
+                        isPending={dismantleMutation.isPending}
+                    />
                 ) : (
                     <span className="text-gray-400">-</span>
                 )}
