@@ -1,6 +1,11 @@
 import { BellOff } from "lucide-react";
 
 import { PlayerName } from "@/components/ui/player-name";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useMyId, usePlayerMap } from "@/hooks/use-players";
 import type { Chat } from "@/types/chats";
 
@@ -45,7 +50,14 @@ export function ChatListItem({
                 </span>
                 <div className="flex items-center gap-1 shrink-0">
                     {isPushEnabled && chat.is_muted && (
-                        <BellOff className="w-3.5 h-3.5 opacity-60" />
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <BellOff className="w-3.5 h-3.5 opacity-60" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                Notifications muted
+                            </TooltipContent>
+                        </Tooltip>
                     )}
                     {chat.unread_messages_count > 0 && (
                         <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
