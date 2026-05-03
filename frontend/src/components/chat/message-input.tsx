@@ -14,7 +14,7 @@ interface MessageInputProps {
 
 export function MessageInput({ onSend, isDisabled, isDialogOpen, chatId }: MessageInputProps) {
     const draftKey = `chat-draft-${chatId}`;
-    const [message, setMessage] = useState(() => localStorage.getItem(`chat-draft-${chatId}`) ?? "");
+    const [message, setMessage] = useState(() => localStorage.getItem(draftKey) ?? "");
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const { user } = useAuth();
 
