@@ -16,6 +16,7 @@ class ChatListOut(BaseModel):
     chats: list[ChatOut]
     last_opened_chat_id: int
     unread_chat_count: int
+    has_push_subscription: bool
 
 
 class ChatOut(BaseModel):

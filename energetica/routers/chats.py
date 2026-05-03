@@ -22,6 +22,7 @@ def get_chat_list(player: Annotated[Player, Depends(get_settled_player)]) -> Cha
         chats=[ChatOut.from_chat(player, chat) for chat in Chat.filter(lambda chat: player in chat.participants)],
         last_opened_chat_id=player.last_opened_chat_id,
         unread_chat_count=player.unread_chat_count(),
+        has_push_subscription=bool(player.push_subscriptions),
     )
 
 

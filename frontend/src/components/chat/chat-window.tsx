@@ -21,6 +21,7 @@ interface ChatWindowProps {
     isDialogOpen: boolean;
     onBackClick?: () => void;
     showBackButton?: boolean;
+    isPushEnabled: boolean;
 }
 
 export function ChatWindow({
@@ -35,6 +36,7 @@ export function ChatWindow({
     isDialogOpen,
     onBackClick,
     showBackButton,
+    isPushEnabled,
 }: ChatWindowProps) {
     const myId = useMyId();
     const playerMap = usePlayerMap();
@@ -81,7 +83,7 @@ export function ChatWindow({
                                 "Select a chat"
                             )}
                         </TypographyH2>
-                        {selectedChat && (
+                        {isPushEnabled && selectedChat && (
                             <Button
                                 onClick={handleMuteToggle}
                                 disabled={
@@ -120,6 +122,7 @@ export function ChatWindow({
 
                     {selectedChatId && (
                         <MessageInput
+                            key={selectedChatId}
                             onSend={onSend}
                             isDisabled={!selectedChat}
                             isDialogOpen={isDialogOpen}

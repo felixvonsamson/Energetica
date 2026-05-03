@@ -8,9 +8,15 @@ interface ChatListItemProps {
     chat: Chat;
     isSelected: boolean;
     onClick: () => void;
+    isPushEnabled: boolean;
 }
 
-export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
+export function ChatListItem({
+    chat,
+    isSelected,
+    onClick,
+    isPushEnabled,
+}: ChatListItemProps) {
     const myId = useMyId();
     const playerMap = usePlayerMap();
     const otherPlayer =
@@ -38,7 +44,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                     )}
                 </span>
                 <div className="flex items-center gap-1 shrink-0">
-                    {chat.is_muted && (
+                    {isPushEnabled && chat.is_muted && (
                         <BellOff className="w-3.5 h-3.5 opacity-60" />
                     )}
                     {chat.unread_messages_count > 0 && (

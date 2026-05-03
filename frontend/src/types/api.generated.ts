@@ -2303,6 +2303,8 @@ export interface components {
             last_opened_chat_id: number;
             /** Unread Chat Count */
             unread_chat_count: number;
+            /** Has Push Subscription */
+            has_push_subscription: boolean;
         };
         /**
          * ChatOut
