@@ -311,16 +311,16 @@ class GameEngine(object):
                 and player.progression_metrics["quiz_answers_total"] == 0
                 and "tutorial_daily_quiz" not in player.dispatched_tutorials
             ):
-                player.notify(tutorial_daily_quiz)
                 player.dispatched_tutorials.append("tutorial_daily_quiz")
+                player.notify(tutorial_daily_quiz)
 
             if (
                 player.progression_metrics["quiz_answers_total"] >= 3
                 and not player.push_subscriptions
                 and "tutorial_quiz_push_notifications" not in player.dispatched_tutorials
             ):
-                player.notify(tutorial_quiz_push)
                 player.dispatched_tutorials.append("tutorial_quiz_push_notifications")
+                player.notify(tutorial_quiz_push)
 
     @property
     def general_chat(self) -> Chat:

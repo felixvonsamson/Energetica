@@ -7,7 +7,7 @@ import json
 from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Iterable
@@ -201,8 +201,6 @@ class Player(DBModel):
         if not hasattr(self, "overdraft_warning_sent"):
             self.overdraft_warning_sent = False
         if not hasattr(self, "created_at"):
-            from datetime import timedelta
-
             self.created_at = datetime.now(timezone.utc) - timedelta(days=365)
         if not hasattr(self, "dispatched_tutorials"):
             self.dispatched_tutorials = []
