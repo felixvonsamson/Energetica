@@ -156,19 +156,16 @@ function ImageLightbox({
 }) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPortal>
-                <DialogOverlay />
-                <DialogContent
-                    className="max-w-[90vw] xl:max-w-5xl p-2 bg-background/95 border-border"
-                    showCloseButton={true}
-                >
-                    <img
-                        src={src}
-                        alt={alt}
-                        className="w-full h-auto rounded-2xl object-contain max-h-[80vh]"
-                    />
-                </DialogContent>
-            </DialogPortal>
+            <DialogContent
+                className="max-w-[90vw] xl:max-w-5xl p-2 bg-background/95 border-border"
+                showCloseButton={true}
+            >
+                <img
+                    src={src}
+                    alt={alt}
+                    className="w-full h-auto rounded-2xl object-contain max-h-[80vh]"
+                />
+            </DialogContent>
         </Dialog>
     );
 }
