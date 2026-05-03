@@ -101,8 +101,8 @@ export function ChatWindow({
                                         size="icon"
                                         aria-label={
                                             selectedChat.is_muted
-                                                ? "Unmute notifications"
-                                                : "Mute notifications"
+                                                ? "Unmute push notifications for this chat"
+                                                : "Mute push notifications for this chat"
                                         }
                                         className="shrink-0"
                                     >
@@ -115,8 +115,8 @@ export function ChatWindow({
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     {selectedChat.is_muted
-                                        ? "Unmute notifications"
-                                        : "Mute notifications"}
+                                        ? "Unmute push notifications for this chat"
+                                        : "Mute push notifications for this chat"}
                                 </TooltipContent>
                             </Tooltip>
                         )}

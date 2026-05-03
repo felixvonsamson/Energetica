@@ -55,7 +55,7 @@ export function ChatListItem({
                                 <BellOff className="w-3.5 h-3.5 opacity-60" />
                             </TooltipTrigger>
                             <TooltipContent>
-                                Notifications muted
+                                Push notifications muted
                             </TooltipContent>
                         </Tooltip>
                     )}
