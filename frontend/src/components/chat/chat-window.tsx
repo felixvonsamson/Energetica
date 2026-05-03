@@ -141,6 +141,7 @@ export function ChatWindow({
                             onSend={onSend}
                             isDisabled={!selectedChat}
                             isDialogOpen={isDialogOpen}
+                            chatId={selectedChatId}
                         />
                     )}
                 </div>

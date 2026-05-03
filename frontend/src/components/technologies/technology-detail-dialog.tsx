@@ -18,6 +18,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TypographyH2 } from "@/components/ui/typography";
+import { useLastDefined } from "@/hooks/use-last-defined";
 import { useQueueProject } from "@/hooks/use-projects";
 import { getFacilityRoute } from "@/lib/facility-routes";
 import { ProjectType, Requirement } from "@/types/projects";
@@ -44,16 +45,13 @@ interface TechnologyDetailModalProps<T> {
     renderEffectsTable: (technology: T) => ReactNode;
 }
 
-/**
- * Modal displaying detailed technology information. Shows full specs,
- * requirements, research info, and action buttons.
- */
 export function TechnologyDetailDialog<T>({
     isOpen,
     onClose,
     technology,
     renderEffectsTable,
 }: TechnologyDetailModalProps<T>) {
+    const displayedTechnology = useLastDefined(technology);
     const queueProjectMutation = useQueueProject();
 
     const handleResearch = () => {
@@ -64,20 +62,20 @@ export function TechnologyDetailDialog<T>({
         onClose();
     };
 
-    const imageUrl = `/static/images/technologies/${technology?.name}.png`;
+    const imageUrl = `/static/images/technologies/${displayedTechnology?.name}.png`;
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="flex flex-col p-0 gap-0 overflow-hidden max-w-4xl">
-                {technology === null ? null : (
+                {displayedTechnology !== null && (
                     <>
                         <DialogHeader className="sr-only">
                             <DialogTitle>
                                 <AssetName
-                                    assetId={technology.name}
+                                    assetId={displayedTechnology.name}
                                     mode="long"
                                 />
-                                {` Level ${technology.level}`}
+                                {` Level ${displayedTechnology.level}`}
                             </DialogTitle>
                             <DialogDescription>
                                 Technology details, requirements, and research
@@ -91,7 +89,7 @@ export function TechnologyDetailDialog<T>({
                             <div className="w-full overflow-hidden">
                                 <img
                                     src={imageUrl}
-                                    alt={`${technology.name} technology`}
+                                    alt={`${displayedTechnology.name} technology`}
                                     className="w-full aspect-[5/2] [@media(min-height:900px)]:aspect-[16/9] object-cover rounded-lg"
                                     onError={(e) => {
                                         e.currentTarget.style.display = "none";
@@ -103,16 +101,16 @@ export function TechnologyDetailDialog<T>({
                             <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                                 <TypographyH2 className="flex items-center gap-2 mr-auto">
                                     <TechnologyIcon
-                                        technology={technology.name}
+                                        technology={displayedTechnology.name}
                                         size={28}
                                     />
                                     <AssetName
-                                        assetId={technology.name}
+                                        assetId={displayedTechnology.name}
                                         mode="long"
                                     />
                                 </TypographyH2>
                                 <p className="text-3xl text-muted-foreground">
-                                    Level {technology.level}
+                                    Level {displayedTechnology.level}
                                 </p>
                             </div>
 
@@ -122,12 +120,12 @@ export function TechnologyDetailDialog<T>({
                                     <div
                                         className="contents"
                                         dangerouslySetInnerHTML={{
-                                            __html: technology.description,
+                                            __html: displayedTechnology.description,
                                         }}
                                     />
                                 </div>
                                 <a
-                                    href={technology.wikipedia_link}
+                                    href={displayedTechnology.wikipedia_link}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground w-fit"
@@ -137,11 +135,11 @@ export function TechnologyDetailDialog<T>({
                                     Learn more
                                 </a>
                                 {/* Affected Facilities */}
-                                {technology.affected_facilities.length > 0 && (
+                                {displayedTechnology.affected_facilities.length > 0 && (
                                     <div>
                                         <strong>Affects:</strong>{" "}
                                         <span className="text-hyperlink">
-                                            {technology.affected_facilities.map(
+                                            {displayedTechnology.affected_facilities.map(
                                                 (facilityName, idx) => {
                                                     const route =
                                                         getFacilityRoute(
@@ -173,8 +171,7 @@ export function TechnologyDetailDialog<T>({
                                                                 />
                                                             )}
                                                             {idx <
-                                                                technology
-                                                                    .affected_facilities
+                                                                displayedTechnology.affected_facilities
                                                                     .length -
                                                                     1 && ", "}
                                                         </span>
@@ -188,7 +185,7 @@ export function TechnologyDetailDialog<T>({
 
                             {/* Effects Table */}
                             <CardContent className="flex justify-around">
-                                {renderEffectsTable(technology)}
+                                {renderEffectsTable(displayedTechnology)}
                             </CardContent>
                         </div>
 
@@ -196,19 +193,19 @@ export function TechnologyDetailDialog<T>({
                         <div className="shrink-0 border-t border-border bg-background px-6 py-4 flex flex-col gap-3">
                             {/* Construction info */}
                             <ConstructionInfo
-                                constructionTime={technology.construction_time}
+                                constructionTime={displayedTechnology.construction_time}
                                 constructionPower={
-                                    technology.construction_power
+                                    displayedTechnology.construction_power
                                 }
                                 className="w-full justify-evenly"
                             />
 
                             {/* Unlock requirements */}
-                            {technology.requirements.some(
+                            {displayedTechnology.requirements.some(
                                 (r) => r.status !== "satisfied",
                             ) && (
                                 <RequirementsDisplay
-                                    requirements={technology.requirements}
+                                    requirements={displayedTechnology.requirements}
                                 />
                             )}
 
@@ -216,19 +213,19 @@ export function TechnologyDetailDialog<T>({
                             <div className="flex items-center justify-around">
                                 <div className="flex items-center gap-2">
                                     <Money
-                                        amount={Math.round(technology.price)}
+                                        amount={Math.round(displayedTechnology.price)}
                                         long
                                         className="text-lg font-semibold"
                                     />
                                     {/* Knowledge spillover badge */}
-                                    {technology.discount && (
+                                    {displayedTechnology.discount && (
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <span className="inline-flex items-center rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2.5 py-1 text-sm font-semibold cursor-help select-none">
                                                     −
                                                     {Math.round(
                                                         (1 -
-                                                            technology.discount) *
+                                                            displayedTechnology.discount) *
                                                             100,
                                                     )}
                                                     %
@@ -254,21 +251,21 @@ export function TechnologyDetailDialog<T>({
                                     size="lg"
                                     onClick={handleResearch}
                                     disabled={
-                                        technology.requirements_status ===
+                                        displayedTechnology.requirements_status ===
                                         "unsatisfied"
                                     }
                                     variant={
-                                        technology.requirements_status ===
+                                        displayedTechnology.requirements_status ===
                                         "unsatisfied"
                                             ? "destructive"
                                             : "default"
                                     }
                                     className="px-8 text-base font-bold"
                                 >
-                                    {technology.requirements_status ===
+                                    {displayedTechnology.requirements_status ===
                                     "unsatisfied"
                                         ? "Locked"
-                                        : technology.requirements_status ===
+                                        : displayedTechnology.requirements_status ===
                                             "queued"
                                           ? "Queue Research"
                                           : "Start Research"}

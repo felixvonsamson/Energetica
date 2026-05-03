@@ -17,6 +17,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { TypographyH2 } from "@/components/ui/typography";
+import { useLastDefined } from "@/hooks/use-last-defined";
 import { useQueueProject } from "@/hooks/use-projects";
 import { ProjectType, Requirement } from "@/types/projects";
 
@@ -43,10 +44,6 @@ interface FacilityDetailDialogProps<T> {
     onCompare?: (facility: T) => void;
 }
 
-/**
- * Dialog displaying detailed facility information. Shows full specs,
- * requirements, construction info, and action buttons.
- */
 export function FacilityDetailDialog<T>({
     isOpen,
     onClose,
@@ -57,6 +54,7 @@ export function FacilityDetailDialog<T>({
     extraHeaderContent,
     onCompare,
 }: FacilityDetailDialogProps<T>) {
+    const displayedFacility = useLastDefined(facility);
     const queueProjectMutation = useQueueProject();
 
     const handleConstruction = () => {
@@ -68,9 +66,9 @@ export function FacilityDetailDialog<T>({
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="flex flex-col p-0 gap-0 overflow-hidden">
-                {facility !== null &&
+                {displayedFacility !== null &&
                     FacilityContent(
-                        facility,
+                        displayedFacility,
                         facilityType,
                         extraHeaderContent,
                         renderDescription,

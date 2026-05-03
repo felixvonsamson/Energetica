@@ -173,6 +173,24 @@ const INBOX_NOTIFICATION_CONFIG = {
         inGameBody: () =>
             "Enable browser notifications in Settings to get updates on construction, market activity, and more, even when the game is closed.",
     },
+    tutorial_daily_quiz: {
+        category: "tutorials",
+        path: () => "/app/dashboard/quiz",
+        title: "Tip: Take the daily quiz",
+        pushBody: () =>
+            "Answer a new question every day to earn XP and test your knowledge about energy systems and climate change.",
+        inGameBody: () =>
+            "Answer a new question every day to earn XP and test your knowledge about energy systems and climate change.",
+    },
+    tutorial_quiz_push_notifications: {
+        category: "tutorials",
+        path: () => "/app/dashboard/quiz",
+        title: "Tip: Enable quiz notifications",
+        pushBody: () =>
+            "Enable browser notifications in Settings to get a daily reminder when a new quiz question is available.",
+        inGameBody: () =>
+            "Enable browser notifications in Settings to get a daily reminder when a new quiz question is available.",
+    },
 } satisfies { [T in NotificationType]: InboxNotificationDef<T> };
 
 // ---------------------------------------------------------------------------

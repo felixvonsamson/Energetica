@@ -1,4 +1,5 @@
-import { Users, Check } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Users, Check, BarChart2 } from "lucide-react";
 
 import { CardContent, Button, Money } from "@/components/ui";
 import {
@@ -14,6 +15,7 @@ import { TypographyH2, TypographyH3 } from "@/components/ui/typography";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
 import { useMyMarket } from "@/hooks/use-electricity-markets";
 import { useGameTick } from "@/hooks/use-game-tick";
+import { useLastDefined } from "@/hooks/use-last-defined";
 import { usePlayerMap } from "@/hooks/use-players";
 import { formatPower } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
@@ -27,10 +29,6 @@ interface MarketDetailDialogProps {
     onLeave: (market: ElectricityMarket) => void;
 }
 
-/**
- * Dialog displaying detailed market information. Shows members, price, volume,
- * and action buttons.
- */
 export function MarketDetailDialog({
     isOpen,
     market,
@@ -38,21 +36,31 @@ export function MarketDetailDialog({
     onJoin,
     onLeave,
 }: MarketDetailDialogProps) {
+    const displayedMarket = useLastDefined(market);
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                {market !== null && MarketContent(market, onLeave, onJoin)}
+                {displayedMarket !== null && (
+                    <MarketContent
+                        market={displayedMarket}
+                        onLeave={onLeave}
+                        onJoin={onJoin}
+                    />
+                )}
             </DialogContent>
         </Dialog>
     );
 }
 
-// Content for MarketDetailDialog
-function MarketContent(
-    market: ElectricityMarket,
-    onLeave: (market: ElectricityMarket) => void,
-    onJoin: (market: ElectricityMarket) => void,
-) {
+function MarketContent({
+    market,
+    onLeave,
+    onJoin,
+}: {
+    market: ElectricityMarket;
+    onLeave: (market: ElectricityMarket) => void;
+    onJoin: (market: ElectricityMarket) => void;
+}) {
     const currentMarket = useMyMarket();
     const { currentTick } = useGameTick();
     const { data: marketData } = useLatestChartDataSlice({
@@ -196,6 +204,15 @@ function MarketContent(
 
                 {/* Action Buttons */}
                 <div className="flex justify-center gap-3 pt-4 border-t border-border/50">
+                    <Link
+                        to="/app/overviews/electricity-markets"
+                        search={{ marketId: market.id }}
+                    >
+                        <Button variant="outline" size="lg">
+                            <BarChart2 className="w-4 h-4" />
+                            View Charts
+                        </Button>
+                    </Link>
                     {isCurrentMarket ? (
                         <Button
                             variant="destructive"

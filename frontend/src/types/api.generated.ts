@@ -3366,7 +3366,9 @@ export interface components {
                 | components["schemas"]["AchievementMilestoneEnergyStoragePayload"]
                 | components["schemas"]["AchievementMilestoneBasePayload"]
                 | components["schemas"]["AchievementUnlockPayload"]
-                | components["schemas"]["TutorialPushNotificationsPayload"];
+                | components["schemas"]["TutorialPushNotificationsPayload"]
+                | components["schemas"]["TutorialDailyQuizPayload"]
+                | components["schemas"]["TutorialQuizPushNotificationsPayload"];
         };
         /** NotificationPatchIn */
         NotificationPatchIn: {
@@ -4607,6 +4609,20 @@ export interface components {
             endpoint?: string | null;
         };
         /**
+         * TutorialDailyQuizPayload
+         *
+         * Tutorial notification informing the player that a daily quiz exists.
+         */
+        TutorialDailyQuizPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default tutorial_daily_quiz
+             */
+            type: "tutorial_daily_quiz";
+        };
+        /**
          * TutorialPushNotificationsPayload
          *
          * Tutorial notification encouraging the player to enable browser push
@@ -4620,6 +4636,21 @@ export interface components {
              * @default tutorial_push_notifications
              */
             type: "tutorial_push_notifications";
+        };
+        /**
+         * TutorialQuizPushNotificationsPayload
+         *
+         * Tutorial notification encouraging the player to enable push
+         * notifications for the quiz.
+         */
+        TutorialQuizPushNotificationsPayload: {
+            /**
+             * Type
+             *
+             * @constant
+             * @default tutorial_quiz_push_notifications
+             */
+            type: "tutorial_quiz_push_notifications";
         };
         /**
          * UserOut

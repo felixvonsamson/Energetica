@@ -284,8 +284,14 @@ class GameEngine(object):
 
     def new_daily_question(self) -> None:
         """Load a new daily question from the csv file."""
+        from datetime import datetime, timedelta, timezone
+
         from energetica.database.player import Player
-        from energetica.schemas.notifications import QuizReminderPayload
+        from energetica.schemas.notifications import (
+            QuizReminderPayload,
+            TutorialDailyQuizPayload,
+            TutorialQuizPushNotificationsPayload,
+        )
 
         with open("energetica/static/data/daily_quiz_questions.csv", "r", encoding="utf-8") as file:
             csv_reader = list(csv.DictReader(file))
@@ -299,9 +305,28 @@ class GameEngine(object):
         self.daily_question["index"] = question_index
         self.daily_question["player_answers"] = {}
 
-        payload = QuizReminderPayload()
+        quiz_reminder = QuizReminderPayload()
+        tutorial_daily_quiz = TutorialDailyQuizPayload()
+        tutorial_quiz_push = TutorialQuizPushNotificationsPayload()
+        now = datetime.now(timezone.utc)
         for player in Player.all():
-            player.push_only(payload)
+            player.push_only(quiz_reminder)
+
+            if (
+                now - player.created_at >= timedelta(days=3)
+                and player.progression_metrics["quiz_answers_total"] == 0
+                and "tutorial_daily_quiz" not in player.dispatched_tutorials
+            ):
+                player.dispatched_tutorials.append("tutorial_daily_quiz")
+                player.notify(tutorial_daily_quiz)
+
+            if (
+                player.progression_metrics["quiz_answers_total"] >= 3
+                and not player.push_subscriptions
+                and "tutorial_quiz_push_notifications" not in player.dispatched_tutorials
+            ):
+                player.dispatched_tutorials.append("tutorial_quiz_push_notifications")
+                player.notify(tutorial_quiz_push)
 
     @property
     def general_chat(self) -> Chat:
