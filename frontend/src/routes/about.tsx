@@ -29,8 +29,8 @@ function RouteComponent() {
         },
         {
             name: "Yassir",
-            background: "École Polytechnique, Computer Science",
-            bio: "[...]",
+            background: "École Polytechnique, Mathematics & Computer Science",
+            bio: "I've always thought games could teach us things textbooks can't, and the energy transition is exactly the kind of challenge that needs that. That's why I believed in Energetica from day one and why I've been helping build it ever since.",
         },
     ];
 
