@@ -29,7 +29,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                     : "hover:bg-gray-100 dark:hover:bg-muted"
             }`}
         >
-            <div className="flex justify-between items-start gap-2">
+            <div className="flex justify-between items-center gap-2">
                 <span className="font-medium truncate flex-1">
                     {otherPlayer ? (
                         <PlayerName player={otherPlayer} />
@@ -39,7 +39,7 @@ export function ChatListItem({ chat, isSelected, onClick }: ChatListItemProps) {
                 </span>
                 <div className="flex items-center gap-1 shrink-0">
                     {chat.is_muted && (
-                        <BellOff className="w-3.5 h-3.5 text-muted-foreground" />
+                        <BellOff className="w-3.5 h-3.5 opacity-60" />
                     )}
                     {chat.unread_messages_count > 0 && (
                         <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">

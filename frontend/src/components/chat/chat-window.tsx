@@ -2,6 +2,7 @@ import { ArrowLeft, Bell, BellOff } from "lucide-react";
 
 import { MessageContainer } from "@/components/chat/message-container";
 import { MessageInput } from "@/components/chat/message-input";
+import { Button } from "@/components/ui/button";
 import { PlayerName } from "@/components/ui/player-name";
 import { TypographyH2 } from "@/components/ui/typography";
 import { useMuteChat, useUnmuteChat } from "@/hooks/use-chats";
@@ -81,24 +82,26 @@ export function ChatWindow({
                             )}
                         </TypographyH2>
                         {selectedChat && (
-                            <button
+                            <Button
                                 onClick={handleMuteToggle}
                                 disabled={
                                     muteChat.isPending || unmuteChat.isPending
                                 }
+                                variant="outline"
+                                size="icon"
                                 aria-label={
                                     selectedChat.is_muted
                                         ? "Unmute notifications"
                                         : "Mute notifications"
                                 }
-                                className="shrink-0 p-2 hover:bg-gray-100 dark:hover:bg-muted rounded-lg transition-colors text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="shrink-0"
                             >
                                 {selectedChat.is_muted ? (
                                     <BellOff className="w-5 h-5" />
                                 ) : (
                                     <Bell className="w-5 h-5" />
                                 )}
-                            </button>
+                            </Button>
                         )}
                     </div>
                 </div>
