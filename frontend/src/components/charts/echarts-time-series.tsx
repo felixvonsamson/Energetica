@@ -11,6 +11,7 @@
  * - React tooltip overlay with colored circles on the axis pointer
  */
 
+import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import { BarChart as EBarChart, LineChart as ELineChart } from "echarts/charts";
 import type { BarSeriesOption, LineSeriesOption } from "echarts/charts";
 import {
@@ -33,6 +34,7 @@ import {
     type ReactNode,
     useCallback,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useRef,
     useState,
@@ -126,6 +128,7 @@ export interface EChartsTimeSeriesProps {
 // ── Tooltip overlay ───────────────────────────────────────────────────────────
 
 interface Circle {
+    seriesKey: string;
     clientX: number;
     clientY: number;
     color: string;
@@ -157,6 +160,42 @@ function TSTooltip({
     const { currentTick } = useGameTick();
     const { data: gameEngine } = useGameEngine();
 
+    const divRef = useRef<HTMLDivElement>(null);
+
+    // Reposition the tooltip before each paint using Floating UI so it never
+    // bleeds off the viewport edge. computePosition resolves as a microtask
+    // (sync middleware), which still runs before the browser paints.
+    useLayoutEffect(() => {
+        const el = divRef.current;
+        if (!el) return;
+        const virtualEl = {
+            getBoundingClientRect() {
+                return {
+                    x: tooltip.clientX,
+                    y: tooltip.clientY,
+                    width: 0,
+                    height: 0,
+                    top: tooltip.clientY,
+                    left: tooltip.clientX,
+                    right: tooltip.clientX,
+                    bottom: tooltip.clientY,
+                };
+            },
+        };
+        computePosition(virtualEl, el, {
+            placement: "right-start",
+            strategy: "fixed",
+            middleware: [
+                offset({ mainAxis: 14, crossAxis: 8 }),
+                flip(),
+                shift({ padding: 8 }),
+            ],
+        }).then(({ x, y }) => {
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+        });
+    }, [tooltip]);
+
     const timestamp =
         gameEngine && currentTick !== undefined
             ? `${formatDuration(currentTick - tooltip.tick - 1, gameEngine)} ago`
@@ -168,6 +207,7 @@ function TSTooltip({
 
     return (
         <div
+            ref={divRef}
             style={{
                 position: "fixed",
                 left: tooltip.clientX + 14,
@@ -286,6 +326,12 @@ export function EChartsTimeSeries({
         [data.length, config.chartType, config.chartVariant, config.stacked],
     );
 
+    // Lags behind structuralKey during the post-setOption microtask window so
+    // stale circles are suppressed at render time rather than after a deferred
+    // setState fires.
+    const [appliedStructuralKey, setAppliedStructuralKey] =
+        useState(structuralKey);
+
     // Full data key: changes on every new tick arrival. Used as effect dep so
     // series are re-rendered on fresh data even without a zoom reset.
     const dataKey = useMemo(() => {
@@ -331,6 +377,15 @@ export function EChartsTimeSeries({
         el.addEventListener("wheel", handler, { capture: true, passive: true });
         return () =>
             el.removeEventListener("wheel", handler, { capture: true });
+    }, []);
+
+    // When the page scrolls, the fixed-position circles drift out of alignment
+    // with the chart. ZRender doesn't fire mouseout on scroll (the mouse didn't
+    // move), so we clear the tooltip explicitly.
+    useEffect(() => {
+        const clear = () => setTooltip(null);
+        window.addEventListener("scroll", clear, { capture: true, passive: true });
+        return () => window.removeEventListener("scroll", clear, { capture: true });
     }, []);
 
     // ── ECharts option ────────────────────────────────────────────────────────
@@ -719,6 +774,7 @@ export function EChartsTimeSeries({
                             cumulative,
                         ) as number;
                         circles.push({
+                            seriesKey: key,
                             clientX: lineClientX,
                             clientY: rect
                                 ? rect.top + pixelY
@@ -735,6 +791,7 @@ export function EChartsTimeSeries({
                             val,
                         ) as number;
                         circles.push({
+                            seriesKey: key,
                             clientX: lineClientX,
                             clientY: rect
                                 ? rect.top + pixelY
@@ -782,6 +839,8 @@ export function EChartsTimeSeries({
         if (isStructuralChange) {
             inst.setOption(option, { notMerge: true });
             queueMicrotask(() => {
+                setAppliedStructuralKey(structuralKey);
+                setTooltip(null);
                 setIsZoomed(false);
                 setZoomRange({ start: 0, end: 100 });
             });
@@ -864,11 +923,11 @@ export function EChartsTimeSeries({
                 </button>
             )}
 
-            {tooltip && !isLoading && (
+            {tooltip && !isLoading && appliedStructuralKey === structuralKey && (
                 <>
                     {tooltip.circles.map((c) => (
                         <div
-                            key={c.color}
+                            key={c.seriesKey}
                             style={{
                                 position: "fixed",
                                 left: c.clientX - 5,
