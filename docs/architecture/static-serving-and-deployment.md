@@ -159,15 +159,15 @@ scripts/
 
 ### `deploy-instance.sh` flow
 
-> **Note:** The exact mechanism for deploying Python backend code is an open question — see [Open Questions](#open-questions--deferred). The steps below describe the current pragmatic approach; CI/CD would replace steps 1–6.
-
 1. Build app bundle (`bun run build`)
-2. Confirm deployment summary
+2. Confirm deployment summary (skipped with `--yes`)
 3. `rsync` Python backend code to server (excluding `.venv`, `instance/`, build artifacts)
 4. `rsync` app bundle to server
 5. `pip install -r requirements.txt` on server if dependencies changed
 6. `systemctl restart energetica-{instance}`
 7. Health check
+
+Scripts accept all inputs via arguments or env vars and support `--yes` to suppress confirmation prompts, making them callable from a CI job without modification. No commitment to a CI platform is made here.
 
 ### `deploy-landing.sh` flow
 
@@ -194,30 +194,11 @@ The existing `energetica-game.org` instance continues running during migration:
 
 ---
 
-## Open Questions
-
-### CI/CD and deployment strategy
-
-The current deploy flow (rsync from a developer's local machine) has two problems:
-- It requires a working local build environment on every developer's machine
-- Deployments are not reproducible across machines
-
-Options under consideration:
-
-| Approach | Description | Tradeoff |
-|----------|-------------|----------|
-| **Local rsync** (current) | Developer builds locally, rsyncs to server | Simple; not reproducible |
-| **GitHub Actions** | Push to `main` → CI builds + rsyncs to server | Reproducible; requires CI secrets for SSH/rsync |
-| **Artifact-based** | CI builds a tarball, server pulls and extracts | Atomic; more infra overhead |
-
-Using `git pull` on the production server (previous approach) is intentionally avoided — it couples deployment to git history, exposes `.git` on the server, and makes dependency updates error-prone.
-
-This decision is deferred; the scripts should be written so the rsync steps are easily replaceable by a CI job.
-
 ---
 
 ## Deferred / Out of Scope
 
+- **CI/CD** — deployment is via local scripts for now. Scripts are CI-compatible by design (all inputs via args/env vars, `--yes` flag, deterministic exit codes). Wiring to GitHub Actions or equivalent is a future decision.
 - **Admin dashboard** — currently stubbed. The server-side role gate in `templates.py` will be dropped along with all other `FileResponse` handlers. A proper frontend route guard and admin UI are a separate workstream.
 - **Landing images on multi-server** — landing pages reference images at `/static/images/`. On a server with no game instance (pure landing server), these paths would break. To be addressed when a second server deployment is made.
 - **Service worker on multiple instances** — currently scoped to `/`. Per-instance scoping implications (e.g. `autumn-2025.energetica-game.org/service-worker.js`) are not an architectural concern but should be tested when the first subdomain instance goes live.
