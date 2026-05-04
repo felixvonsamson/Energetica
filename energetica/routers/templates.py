@@ -48,5 +48,7 @@ def render_admin_dashboard(
 
 
 @router.get("/landing-page", name="views.landing-page")
-def render_landing_page() -> FileResponse:
+@router.get("/about", name="views.about")
+@router.get("/for-educators", name="views.for-educators")
+def render_landing_pages() -> FileResponse:
     return FileResponse("energetica/static/react/index.html")
