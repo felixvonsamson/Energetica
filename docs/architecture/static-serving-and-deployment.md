@@ -54,16 +54,18 @@ autumn-2025.energetica-game.org
 ├── /static/data/      → Apache serves energetica/static/data/
 ├── /service-worker.js → Apache serves energetica/static/service-worker.js
 ├── /manifest.json     → Apache serves energetica/static/app/manifest.json  (PWA, per-instance)
+├── /                  → RedirectMatch ^/$ → /app/   (bare root → React router takes over)
 └── /app/*             → FallbackResource → energetica/static/app/index.html
 ```
 
 `manifest.json` is part of the app bundle output and must be served at the root path (PWA requirement). Apache aliases it explicitly. It is per-instance because the PWA manifest may eventually carry instance-specific metadata (name, scope, icons).
 
 ```
-energetica-game.org  (landing — no game backend)
-├── /static/landing/ → Apache serves /var/www/energetica-landing/static/landing/
-└── /*               → FallbackResource → /var/www/energetica-landing/index.html
+energetica-game.org  (landing — DocumentRoot /var/www/energetica-landing/, no game backend)
+└── /*  → FallbackResource → index.html  (SPA routing for /landing-page, /about, /for-educators)
 ```
+
+The landing vhost uses `DocumentRoot /var/www/energetica-landing/`. With `base: "/"`, Vite emits assets at `/assets/index-abc123.js`; Apache serves them directly from DocumentRoot. No Alias needed.
 
 ### What FastAPI keeps
 
