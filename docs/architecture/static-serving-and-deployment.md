@@ -182,17 +182,25 @@ No service restart — landing is pure static.
 
 ## Migration Steps (single current instance)
 
-The existing `energetica-game.org` instance continues running during migration:
+The existing `energetica-game.org` instance continues running during migration. Steps are ordered to avoid any static-file outage: Apache must be serving files directly **before** FastAPI stops serving them.
 
+**Code changes (no deployment yet):**
 1. Update `.gitignore`: replace `energetica/static/react/*` → `energetica/static/app/*`, add `frontend/dist-landing/`
-2. Rename build output: `energetica/static/react/` → `energetica/static/app/`
-3. Implement split frontend (routes, Vite configs, entry points)
-4. Move `/sign-up` → `/app/sign-up`, update all internal links
-5. Remove `StaticFiles` mount and all `FileResponse` handlers from FastAPI (`templates.py`)
-6. Delete `energetica/static/apple-app-site-association`
-7. Extract `scripts/infra/` configs, update Apache vhost on server, reload Apache
+2. Implement split frontend (routes, Vite configs, entry points)
+3. Move `/sign-up` → `/app/sign-up`, update all internal links
+4. Build app bundle → output lands in `energetica/static/app/`
+
+**Cutover (order is critical):**
+
+5. `rsync` app bundle to server (`energetica/static/app/` now exists on server)
+6. Update Apache vhost on server, reload Apache — Apache now serves `/static/app/`, `/static/images/`, `/manifest.json`, etc. directly from the filesystem. FastAPI's `StaticFiles` mount is now redundant but still active; no outage.
+7. Remove `StaticFiles` mount and all `FileResponse` page handlers from FastAPI (`templates.py`), deploy and restart service — Apache is already covering static files, so this causes no gap.
+
+**Cleanup:**
+
 8. Deploy landing build to `/var/www/energetica-landing/` on server
-9. Remove old `scripts/vps-setup.sh`
+9. Delete `energetica/static/apple-app-site-association`
+10. Extract `scripts/infra/` configs, remove old `scripts/vps-setup.sh`
 
 ---
 
