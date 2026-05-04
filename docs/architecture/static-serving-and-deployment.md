@@ -46,15 +46,18 @@ Canonical source of truth is systemd: `systemctl list-units 'energetica-*.servic
 
 ```
 autumn-2025.energetica-game.org
-├── /api/*          → ProxyPass → uvicorn :8001
-├── /socket.io      → ProxyPass → uvicorn :8001  (+ WS upgrade)
-├── /logout         → ProxyPass → uvicorn :8001
-├── /static/app/    → Apache serves /var/www/energetica-autumn-2025/energetica/static/app/
-├── /static/images/ → Apache serves /var/www/energetica-autumn-2025/energetica/static/images/
-├── /static/data/   → Apache serves /var/www/energetica-autumn-2025/energetica/static/data/
-├── /service-worker.js → Apache serves from static/
-└── /app/*          → FallbackResource → static/app/index.html
+├── /api/*             → ProxyPass → uvicorn :8001
+├── /socket.io         → ProxyPass → uvicorn :8001  (+ WS upgrade)
+├── /logout            → ProxyPass → uvicorn :8001
+├── /static/app/       → Apache serves energetica/static/app/
+├── /static/images/    → Apache serves energetica/static/images/
+├── /static/data/      → Apache serves energetica/static/data/
+├── /service-worker.js → Apache serves energetica/static/service-worker.js
+├── /manifest.json     → Apache serves energetica/static/app/manifest.json  (PWA, per-instance)
+└── /app/*             → FallbackResource → energetica/static/app/index.html
 ```
+
+`manifest.json` is part of the app bundle output and must be served at the root path (PWA requirement). Apache aliases it explicitly. It is per-instance because the PWA manifest may eventually carry instance-specific metadata (name, scope, icons).
 
 ```
 energetica-game.org  (landing — no game backend)
@@ -69,6 +72,8 @@ energetica-game.org  (landing — no game backend)
 - `/logout` — deletes session cookie, redirects to `/app/login`
 
 Everything else (`StaticFiles` mount, all `FileResponse` page handlers) is removed from FastAPI.
+
+`energetica/static/apple-app-site-association` is also removed — it is legacy and no longer used.
 
 ---
 
