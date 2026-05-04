@@ -116,7 +116,14 @@ Two separate config files:
 | `vite.config.ts` | app | `/static/app/` | `energetica/static/app/` |
 | `vite.config.landing.ts` | landing | `/` | `frontend/dist-landing/` |
 
-The app build output lives **inside the instance directory** (committed to git, deployed via rsync alongside the backend). The landing build output lives in `frontend/dist-landing/` (gitignored, deployed separately to `/var/www/energetica-landing/`).
+Both build outputs are **gitignored** and deployed via rsync:
+
+| Bundle | Output dir | Gitignored | Deployed to |
+|--------|-----------|------------|-------------|
+| app | `energetica/static/app/` | yes | `server:/var/www/energetica-{instance}/energetica/static/app/` |
+| landing | `frontend/dist-landing/` | yes | `server:/var/www/energetica-landing/` |
+
+`.gitignore` must be updated: replace `energetica/static/react/*` with `energetica/static/app/*` and add `frontend/dist-landing/`.
 
 ### `package.json` scripts
 
@@ -152,14 +159,15 @@ scripts/
 
 ### `deploy-instance.sh` flow
 
+> **Note:** The exact mechanism for deploying Python backend code is an open question — see [Open Questions](#open-questions--deferred). The steps below describe the current pragmatic approach; CI/CD would replace steps 1–6.
+
 1. Build app bundle (`bun run build`)
-2. Validate git is clean (unless `--force`)
-3. Confirm deployment summary
-4. Verify commits are pushed
-5. `git pull` on server (backend code)
-6. `rsync` app bundle to server
-7. `systemctl restart energetica-{instance}`
-8. Health check
+2. Confirm deployment summary
+3. `rsync` Python backend code to server (excluding `.venv`, `instance/`, build artifacts)
+4. `rsync` app bundle to server
+5. `pip install -r requirements.txt` on server if dependencies changed
+6. `systemctl restart energetica-{instance}`
+7. Health check
 
 ### `deploy-landing.sh` flow
 
@@ -174,13 +182,37 @@ No service restart — landing is pure static.
 
 The existing `energetica-game.org` instance continues running during migration:
 
-1. Rename build output: `energetica/static/react/` → `energetica/static/app/`
-2. Implement split frontend (routes, Vite configs, entry points)
-3. Move `/sign-up` → `/app/sign-up`, update all internal links
-4. Remove `StaticFiles` mount and all `FileResponse` handlers from FastAPI (`templates.py`)
-5. Extract `scripts/infra/` configs, update Apache vhost on server, reload Apache
-6. Deploy landing build to `/var/www/energetica-landing/` on server
-7. Remove old `scripts/vps-setup.sh`
+1. Update `.gitignore`: replace `energetica/static/react/*` → `energetica/static/app/*`, add `frontend/dist-landing/`
+2. Rename build output: `energetica/static/react/` → `energetica/static/app/`
+3. Implement split frontend (routes, Vite configs, entry points)
+4. Move `/sign-up` → `/app/sign-up`, update all internal links
+5. Remove `StaticFiles` mount and all `FileResponse` handlers from FastAPI (`templates.py`)
+6. Delete `energetica/static/apple-app-site-association`
+7. Extract `scripts/infra/` configs, update Apache vhost on server, reload Apache
+8. Deploy landing build to `/var/www/energetica-landing/` on server
+9. Remove old `scripts/vps-setup.sh`
+
+---
+
+## Open Questions
+
+### CI/CD and deployment strategy
+
+The current deploy flow (rsync from a developer's local machine) has two problems:
+- It requires a working local build environment on every developer's machine
+- Deployments are not reproducible across machines
+
+Options under consideration:
+
+| Approach | Description | Tradeoff |
+|----------|-------------|----------|
+| **Local rsync** (current) | Developer builds locally, rsyncs to server | Simple; not reproducible |
+| **GitHub Actions** | Push to `main` → CI builds + rsyncs to server | Reproducible; requires CI secrets for SSH/rsync |
+| **Artifact-based** | CI builds a tarball, server pulls and extracts | Atomic; more infra overhead |
+
+Using `git pull` on the production server (previous approach) is intentionally avoided — it couples deployment to git history, exposes `.git` on the server, and makes dependency updates error-prone.
+
+This decision is deferred; the scripts should be written so the rsync steps are easily replaceable by a CI job.
 
 ---
 
