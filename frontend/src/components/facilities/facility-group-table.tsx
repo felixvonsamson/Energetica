@@ -55,30 +55,33 @@ function ConfirmationContent({
     count,
     totalCost,
     isDismantling,
+    bulk = false,
 }: {
     facilityName: string;
     count: number;
     totalCost: number;
     isDismantling: boolean;
+    bulk?: boolean;
 }) {
+    const plural = bulk || count > 1;
     return (
         <div className="space-y-3">
             <p>
                 Are you sure you want to{" "}
                 {isDismantling ? "dismantle" : "upgrade"}{" "}
-                {count > 1 ? "all " : "this "}
+                {plural ? "all " : "this "}
                 <FacilityName facility={facilityName} as="strong" mode="long" />{" "}
-                {count > 1 ? "facilities" : "facility"}?
+                {plural ? "facilities" : "facility"}?
             </p>
             <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                {count > 1 && (
+                {plural && (
                     <div className="flex justify-between">
                         <span className="font-semibold">Number of facilities:</span>
                         <span>{count}</span>
                     </div>
                 )}
                 <div className="flex justify-between">
-                    <span className="font-semibold">{count > 1 ? "Total cost" : "Cost"}:</span>
+                    <span className="font-semibold">{plural ? "Total cost" : "Cost"}:</span>
                     <Money amount={totalCost} />
                 </div>
             </div>
@@ -190,6 +193,7 @@ function GroupActions({
                                 count={count}
                                 totalCost={totalUpgradeCost}
                                 isDismantling={false}
+                                bulk={true}
                             />
                         }
                         confirmLabel="Upgrade All"
@@ -222,6 +226,7 @@ function GroupActions({
                             count={count}
                             totalCost={totalDismantleCost}
                             isDismantling={true}
+                            bulk={true}
                         />
                     }
                     confirmLabel="Dismantle All"
