@@ -867,11 +867,9 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
                 quantity = amount * generation[facility] / player.capacities[facility]["power"]
                 player.resources[fuel] -= quantity
             facility_emissions = (
-                engine.const_config["assets"][facility]["base_pollution"]
+                player.capacities[facility]["pollution"]
                 * generation[facility]
-                / 3600
-                * engine.in_game_seconds_per_tick
-                / 1_000_000
+                / player.capacities[facility]["power"]
             )
             add_emissions(new_values, player, facility, facility_emissions)
 

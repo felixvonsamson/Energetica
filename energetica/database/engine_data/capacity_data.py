@@ -76,6 +76,15 @@ class CapacityData:
                         / 3600
                         / 1_000_000
                     )
+                if base_data["base_pollution"] > 0:
+                    effective_values["pollution"] += (
+                        base_data["base_pollution"]
+                        / facility.multipliers["efficiency_multiplier"]
+                        * power_gen
+                        * engine.in_game_seconds_per_tick
+                        / 3600
+                        / 1_000_000
+                    )
             elif isinstance(facility.facility_type, StorageFacilityType):
                 power_gen = facility.max_power_generation
                 # mean efficiency
@@ -115,7 +124,7 @@ class CapacityData:
         """Initialize the capacity data of a facility."""
         const_config = engine.const_config["assets"]
         if isinstance(facility, PowerFacilityType):
-            self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
+            self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}, "pollution": 0.0}
             for resource in const_config[facility]["consumed_resource"]:
                 if const_config[facility]["consumed_resource"][resource] > 0:
                     self._data[facility]["fuel_use"][resource] = 0.0
