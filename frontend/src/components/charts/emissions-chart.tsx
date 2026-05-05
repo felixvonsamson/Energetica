@@ -49,7 +49,7 @@ export function EmissionsChart({
                 const result: Record<string, unknown> = { tick: dp.tick };
                 Object.keys(dp).forEach((key) => {
                     if (key !== "tick") {
-                        result[key] = ((dp[key] as number) ?? 0) * rateMultiplier;
+                        result[key] = (dp[key] as number) * rateMultiplier;
                     }
                 });
                 return result;
