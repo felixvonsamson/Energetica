@@ -24,11 +24,12 @@ class CapacityData:
             "fuel_use": {
                 "resource":     [kg/tick]                       # Controllable facilities
             }
+            "pollution":        [kg CO2/tick at full capacity]  # Controllable facilities
             "capacity":         [Wh]                            # Storage Facilities
             "efficiency": (effective efficiency from 0 to 1),   # Storage Facilities
             "extraction_rate_per_day": [kg/tick]                # Extraction Facilities
             "power_use":        [W]                             # Extraction Facilities
-            "pollution":        [kg/tick]                       # Extraction Facilities
+            "pollution":        [kg CO2/kg extracted]            # Extraction Facilities
         }
     }
     """
@@ -76,6 +77,15 @@ class CapacityData:
                         / 3600
                         / 1_000_000
                     )
+                if base_data["base_pollution"] > 0:
+                    effective_values["pollution"] += (
+                        base_data["base_pollution"]
+                        / facility.multipliers["efficiency_multiplier"]
+                        * power_gen
+                        * engine.in_game_seconds_per_tick
+                        / 3600
+                        / 1_000_000
+                    )
             elif isinstance(facility.facility_type, StorageFacilityType):
                 power_gen = facility.max_power_generation
                 # mean efficiency
@@ -87,14 +97,24 @@ class CapacityData:
                 if facility.end_of_life > 0:
                     effective_values["capacity"] += facility.storage_capacity
             elif isinstance(facility.facility_type, ExtractionFacilityType):
-                effective_values["extraction_rate_per_day"] += (
+                new_extraction_rate = (
                     base_data["base_extraction_rate_per_day"] * facility.multipliers["extraction_rate_multiplier"]
                 )
+                new_pollution_per_kg = (
+                    base_data["base_pollution"] * facility.multipliers["extraction_emissions_multiplier"]
+                )
+                old_total_rate = effective_values["extraction_rate_per_day"]
+                new_total_rate = old_total_rate + new_extraction_rate
+                # pollution is a per-kg rate — use extraction-rate-weighted average, not a sum
+                effective_values["pollution"] = (
+                    (old_total_rate * effective_values["pollution"] + new_extraction_rate * new_pollution_per_kg)
+                    / new_total_rate
+                    if new_total_rate > 0
+                    else new_pollution_per_kg
+                )
+                effective_values["extraction_rate_per_day"] = new_total_rate
                 effective_values["power_use"] += (
                     base_data["base_power_consumption"] * facility.multipliers["power_consumption_multiplier"]
-                )
-                effective_values["pollution"] += (
-                    base_data["base_pollution"] * facility.multipliers["extraction_emissions_multiplier"]
                 )
 
         if player.network is not None:
@@ -115,7 +135,7 @@ class CapacityData:
         """Initialize the capacity data of a facility."""
         const_config = engine.const_config["assets"]
         if isinstance(facility, PowerFacilityType):
-            self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}}
+            self._data[facility] = {"O&M_cost": 0.0, "power": 0.0, "fuel_use": {}, "pollution": 0.0}
             for resource in const_config[facility]["consumed_resource"]:
                 if const_config[facility]["consumed_resource"][resource] > 0:
                     self._data[facility]["fuel_use"][resource] = 0.0

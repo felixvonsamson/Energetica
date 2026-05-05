@@ -258,6 +258,7 @@ class GameEngine(object):
         for player in Player.all():
             if not hasattr(player, "muted_chat_ids"):
                 player.muted_chat_ids = {self.general_chat_id}
+            player.capacities.update(player, None)
 
     def save_checkpoint(self, destination_filename: str = "checkpoints/last_checkpoint.tar.gz") -> None:
         self.save()

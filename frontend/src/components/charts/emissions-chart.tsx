@@ -9,7 +9,8 @@ import { AssetName } from "@/components/ui/asset-name";
 import { Label } from "@/components/ui/label";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useChartFilters } from "@/hooks/use-chart-filters";
-import { formatEmissions } from "@/lib/format-utils";
+import { useGameEngine } from "@/hooks/use-game";
+import { formatEmissions, formatMassRate } from "@/lib/format-utils";
 
 // Emissions Chart Component
 interface EmissionsChartProps {
@@ -31,6 +32,7 @@ export function EmissionsChart({
 }: EmissionsChartProps) {
     const getColor = useAssetColorGetter();
     const filterDataKeys = useChartFilters(hiddenSources);
+    const { data: gameEngine } = useGameEngine();
 
     // Transform data for cumulative and percent view
     const transformedData: Array<Record<string, unknown>> = useMemo(() => {
@@ -39,6 +41,20 @@ export function EmissionsChart({
         }
 
         let processedData = chartData;
+
+        // Convert per-tick rates to per-hour rates for the rates view
+        if (cumulativeMode === "rates" && gameEngine) {
+            const rateMultiplier = 3600 / gameEngine.game_seconds_per_tick;
+            processedData = processedData.map((dp) => {
+                const result: Record<string, unknown> = { tick: dp.tick };
+                Object.keys(dp).forEach((key) => {
+                    if (key !== "tick") {
+                        result[key] = (dp[key] as number) * rateMultiplier;
+                    }
+                });
+                return result;
+            });
+        }
 
         // Apply cumulative transformation first if needed
         if (cumulativeMode === "cumulative") {
@@ -108,16 +124,19 @@ export function EmissionsChart({
         }
 
         return processedData;
-    }, [chartData, viewMode, cumulativeMode]);
+    }, [chartData, viewMode, cumulativeMode, gameEngine]);
 
     const formatValue = useCallback(
         (value: number): string => {
             if (viewMode === "percent") {
                 return `${value.toFixed(1)}%`;
             }
+            if (cumulativeMode === "rates") {
+                return formatMassRate(value);
+            }
             return formatEmissions(value);
         },
-        [viewMode],
+        [viewMode, cumulativeMode],
     );
 
     const chartConfig: EChartsTimeSeriesConfig = useMemo(
@@ -132,10 +151,12 @@ export function EmissionsChart({
             formatYAxis:
                 viewMode === "percent"
                     ? (v: number) => `${v.toFixed(0)}%`
-                    : (v: number) => formatEmissions(v),
+                    : cumulativeMode === "rates"
+                      ? (v: number) => formatMassRate(v)
+                      : (v: number) => formatEmissions(v),
             yAxisMax: viewMode === "percent" ? 100 : undefined,
         }),
-        [getColor, filterDataKeys, formatValue, viewMode],
+        [getColor, filterDataKeys, formatValue, viewMode, cumulativeMode],
     );
 
     return (
