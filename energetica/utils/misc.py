@@ -272,6 +272,7 @@ def submit_quiz_answer(player: Player, player_answer: str) -> bool:
     if player.id in quiz_data["player_answers"]:
         raise GameError(GameExceptionType.QUIZ_ALREADY_ANSWERED)
     quiz_data["player_answers"][player.id] = player_answer
+    player.progression_metrics["quiz_answers_total"] += 1
     if player_answer == quiz_data["answer"] or quiz_data["answer"] == "all correct":
         player.progression_metrics["xp"] += 1
         engine.log(f"{player.username} answered the quiz correctly")

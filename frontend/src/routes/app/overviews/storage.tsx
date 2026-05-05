@@ -2,7 +2,6 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { Battery, TrendingUp, BarChart3, Funnel } from "lucide-react";
-import { useState } from "react";
 
 import {
     StorageChart,
@@ -20,6 +19,7 @@ import {
 import { useResolution } from "@/contexts/resolution-context";
 import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
 
 export const Route = createFileRoute("/app/overviews/storage")({
@@ -96,8 +96,14 @@ const VIEW_MODE_OPTIONS = [
 
 function StorageOverviewContent() {
     const { currentTick } = useGameTick();
-    const [viewMode, setViewMode] = useState<"normal" | "percent">("normal");
-    const [hiddenFacilities, toggleFacility] = useToggleSet<string>();
+    const [viewMode, setViewMode] = useLocalStorage<"normal" | "percent">(
+        "energetica:chart:storage:viewMode",
+        "normal",
+    );
+    const [hiddenFacilities, toggleFacility] = useToggleSet<string>(
+        undefined,
+        "energetica:chart:storage:hiddenFacilities",
+    );
 
     const { selectedResolution } = useResolution();
 

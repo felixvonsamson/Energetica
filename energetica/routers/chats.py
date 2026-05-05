@@ -22,6 +22,7 @@ def get_chat_list(player: Annotated[Player, Depends(get_settled_player)]) -> Cha
         chats=[ChatOut.from_chat(player, chat) for chat in Chat.filter(lambda chat: player in chat.participants)],
         last_opened_chat_id=player.last_opened_chat_id,
         unread_chat_count=player.unread_chat_count(),
+        has_push_subscription=bool(player.push_subscriptions),
     )
 
 
@@ -73,6 +74,30 @@ def open_chat(  # noqa: ANN201
     if player not in chat.participants:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a participant in this chat")
     chat.open_for_player(player)
+
+
+@router.post("/{chat_id}:mute", status_code=status.HTTP_204_NO_CONTENT)
+def mute_chat(  # noqa: ANN201
+    player: Annotated[Player, Depends(get_settled_player)],
+    chat_id: int,
+):
+    """Mute push notifications for a chat."""
+    chat = Chat.getitem(chat_id, error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"))
+    if player not in chat.participants:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a participant in this chat")
+    player.muted_chat_ids.add(chat_id)
+
+
+@router.post("/{chat_id}:unmute", status_code=status.HTTP_204_NO_CONTENT)
+def unmute_chat(  # noqa: ANN201
+    player: Annotated[Player, Depends(get_settled_player)],
+    chat_id: int,
+):
+    """Unmute push notifications for a chat."""
+    chat = Chat.getitem(chat_id, error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"))
+    if player not in chat.participants:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a participant in this chat")
+    player.muted_chat_ids.discard(chat_id)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)

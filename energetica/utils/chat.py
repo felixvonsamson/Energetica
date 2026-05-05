@@ -79,7 +79,8 @@ def add_message(player: Player, message_text: str, chat: Chat) -> Message:
         # Ensure the "unread chats" is updated
         if participant != player:
             participant.invalidate_queries(["chats"])
-            participant.push_only(payload)
+            if chat.id not in participant.muted_chat_ids:
+                participant.push_only(payload)
 
         participant.invalidate_queries(
             ["chats"],

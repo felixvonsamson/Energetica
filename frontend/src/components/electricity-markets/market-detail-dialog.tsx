@@ -1,4 +1,5 @@
-import { Users, Check } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Users, Check, BarChart2 } from "lucide-react";
 
 import { CardContent, Button, Money } from "@/components/ui";
 import {
@@ -203,6 +204,15 @@ function MarketContent({
 
                 {/* Action Buttons */}
                 <div className="flex justify-center gap-3 pt-4 border-t border-border/50">
+                    <Link
+                        to="/app/overviews/electricity-markets"
+                        search={{ marketId: market.id }}
+                    >
+                        <Button variant="outline" size="lg">
+                            <BarChart2 className="w-4 h-4" />
+                            View Charts
+                        </Button>
+                    </Link>
                     {isCurrentMarket ? (
                         <Button
                             variant="destructive"

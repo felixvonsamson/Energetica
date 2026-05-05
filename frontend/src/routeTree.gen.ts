@@ -10,8 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignUpRouteImport } from './routes/sign-up'
-import { Route as LearningToolRouteImport } from './routes/learning-tool'
 import { Route as LandingPageRouteImport } from './routes/landing-page'
+import { Route as ForEducatorsRouteImport } from './routes/for-educators'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as RouteRouteImport } from './routes/route'
 import { Route as AppIndexRouteImport } from './routes/app/index'
@@ -51,14 +51,14 @@ const SignUpRoute = SignUpRouteImport.update({
   path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LearningToolRoute = LearningToolRouteImport.update({
-  id: '/learning-tool',
-  path: '/learning-tool',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LandingPageRoute = LandingPageRouteImport.update({
   id: '/landing-page',
   path: '/landing-page',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForEducatorsRoute = ForEducatorsRouteImport.update({
+  id: '/for-educators',
+  path: '/for-educators',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -234,8 +234,8 @@ const AppCommunityElectricityMarketsRoute =
 
 export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
+  '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
-  '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
@@ -271,8 +271,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
+  '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
-  '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
@@ -310,8 +310,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof RouteRoute
   '/about': typeof AboutRoute
+  '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
-  '/learning-tool': typeof LearningToolRoute
   '/sign-up': typeof SignUpRoute
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
@@ -349,8 +349,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/about'
+    | '/for-educators'
     | '/landing-page'
-    | '/learning-tool'
     | '/sign-up'
     | '/app/changelog'
     | '/app/dashboard'
@@ -386,8 +386,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/about'
+    | '/for-educators'
     | '/landing-page'
-    | '/learning-tool'
     | '/sign-up'
     | '/app/changelog'
     | '/app/dashboard'
@@ -424,8 +424,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/for-educators'
     | '/landing-page'
-    | '/learning-tool'
     | '/sign-up'
     | '/app/changelog'
     | '/app/dashboard'
@@ -463,8 +463,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   RouteRoute: typeof RouteRoute
   AboutRoute: typeof AboutRoute
+  ForEducatorsRoute: typeof ForEducatorsRoute
   LandingPageRoute: typeof LandingPageRoute
-  LearningToolRoute: typeof LearningToolRoute
   SignUpRoute: typeof SignUpRoute
   AppChangelogRoute: typeof AppChangelogRoute
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
@@ -507,18 +507,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/learning-tool': {
-      id: '/learning-tool'
-      path: '/learning-tool'
-      fullPath: '/learning-tool'
-      preLoaderRoute: typeof LearningToolRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/landing-page': {
       id: '/landing-page'
       path: '/landing-page'
       fullPath: '/landing-page'
       preLoaderRoute: typeof LandingPageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-educators': {
+      id: '/for-educators'
+      path: '/for-educators'
+      fullPath: '/for-educators'
+      preLoaderRoute: typeof ForEducatorsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -770,8 +770,8 @@ const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   RouteRoute: RouteRoute,
   AboutRoute: AboutRoute,
+  ForEducatorsRoute: ForEducatorsRoute,
   LandingPageRoute: LandingPageRoute,
-  LearningToolRoute: LearningToolRoute,
   SignUpRoute: SignUpRoute,
   AppChangelogRoute: AppChangelogRoute,
   AppDashboardRoute: AppDashboardRouteWithChildren,

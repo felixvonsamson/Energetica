@@ -8,7 +8,6 @@ import {
     BarChart3,
     Funnel,
 } from "lucide-react";
-import { useState } from "react";
 
 import {
     ResourcesChart,
@@ -26,6 +25,7 @@ import {
 import { useResolution } from "@/contexts/resolution-context";
 import { useChartData } from "@/hooks/use-charts";
 import { useGameTick } from "@/hooks/use-game-tick";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
 
 export const Route = createFileRoute("/app/overviews/resources")({
@@ -115,8 +115,14 @@ const VIEW_MODE_OPTIONS = [
 
 function ResourcesOverviewContent() {
     const { currentTick } = useGameTick();
-    const [viewMode, setViewMode] = useState<"mass" | "percent">("percent");
-    const [hiddenResources, toggleResource] = useToggleSet<string>();
+    const [viewMode, setViewMode] = useLocalStorage<"mass" | "percent">(
+        "energetica:chart:resources:viewMode",
+        "percent",
+    );
+    const [hiddenResources, toggleResource] = useToggleSet<string>(
+        undefined,
+        "energetica:chart:resources:hiddenResources",
+    );
     const { selectedResolution } = useResolution();
 
     // Fetch absolute resource stocks for the table (always needed)

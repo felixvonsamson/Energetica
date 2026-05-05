@@ -56,6 +56,8 @@ NotificationType = Literal[
     "achievement_milestone",
     "achievement_unlock",
     "tutorial_push_notifications",
+    "tutorial_daily_quiz",
+    "tutorial_quiz_push_notifications",
 ]
 
 

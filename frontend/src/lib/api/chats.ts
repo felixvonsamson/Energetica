@@ -8,7 +8,10 @@ export const chatsApi = {
     getChatList: () =>
         apiClient.get<ApiResponse<"/api/v1/chats", "get">>("/chats"),
 
-    /** Get messages for a chat. Fetches the latest 50, or 50 before `before` message id. */
+    /**
+     * Get messages for a chat. Fetches the latest 50, or 50 before `before`
+     * message id.
+     */
     getChatMessages: (chatId: number, before?: number) =>
         apiClient.get<ApiResponse<"/api/v1/chats/{chat_id}/messages", "get">>(
             `/chats/${chatId}/messages`,
@@ -33,5 +36,17 @@ export const chatsApi = {
     openChat: (chatId: number) =>
         apiClient.post<ApiResponse<"/api/v1/chats/{chat_id}:open", "post">>(
             `/chats/${chatId}:open`,
+        ),
+
+    /** Mute push notifications for a chat. */
+    muteChat: (chatId: number) =>
+        apiClient.post<ApiResponse<"/api/v1/chats/{chat_id}:mute", "post">>(
+            `/chats/${chatId}:mute`,
+        ),
+
+    /** Unmute push notifications for a chat. */
+    unmuteChat: (chatId: number) =>
+        apiClient.post<ApiResponse<"/api/v1/chats/{chat_id}:unmute", "post">>(
+            `/chats/${chatId}:unmute`,
         ),
 };
