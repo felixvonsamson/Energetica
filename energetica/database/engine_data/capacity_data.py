@@ -24,6 +24,7 @@ class CapacityData:
             "fuel_use": {
                 "resource":     [kg/tick]                       # Controllable facilities
             }
+            "pollution":        [kg CO2/tick at full capacity]  # Controllable facilities
             "capacity":         [Wh]                            # Storage Facilities
             "efficiency": (effective efficiency from 0 to 1),   # Storage Facilities
             "extraction_rate_per_day": [kg/tick]                # Extraction Facilities
