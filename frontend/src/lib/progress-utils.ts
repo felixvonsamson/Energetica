@@ -114,9 +114,10 @@ export function useClimateEventRecoveryProgress(
     const [, setNow] = useState(() => Date.now());
 
     useEffect(() => {
+        if (currentTick === undefined) return;
         const id = setInterval(() => setNow(Date.now()), 500);
         return () => clearInterval(id);
-    }, []);
+    }, [currentTick]);
 
     if (currentTick === undefined) return 0;
 

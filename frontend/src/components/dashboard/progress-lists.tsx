@@ -270,18 +270,7 @@ function ProjectItem({ project }: ProjectItemProps) {
 
 export function ClimateEventRecoveryList() {
     const { data } = useClimateEventRecoveries();
-
-    if (data === undefined) {
-        return (
-            <div className="text-center text-muted-foreground">
-                Loading climate events...
-            </div>
-        );
-    }
-
-    const recoveries = data.recoveries;
-
-    if (recoveries.length === 0) return null;
+    const recoveries = data?.recoveries ?? [];
 
     return (
         <div className="space-y-2">
