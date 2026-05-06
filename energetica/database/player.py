@@ -461,6 +461,12 @@ class Player(DBModel):
                     pass
             else:
                 engine.warn(f"Failed to send notification: {repr(ex)}")
+        except Exception as ex:  # noqa: BLE001
+            # Push delivery is best-effort: any transport/library failure (DNS, TCP, TLS, library
+            # bug, ...) must not abort the caller, since notify() is invoked from inside
+            # complete_project and a raise here leaves the player's state half-finished
+            # (project deleted, ActiveFacility never created). See issue #753.
+            engine.warn(f"Failed to send notification: {repr(ex)}")
 
     def notify(self, payload: PersistableNotificationPayload) -> None:
         """
