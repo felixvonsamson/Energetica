@@ -53,16 +53,19 @@ export function FacilityGauge({
             />
             {/* Label over the unfilled (track) portion. */}
             <span
-                className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800 dark:text-white"
+                className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800 dark:text-white transition-all"
                 style={{ clipPath: `inset(0 0 0 ${value}%)` }}
             >
                 {percentage}%
             </span>
-            {/* Label over the filled (asset color) portion. */}
+            {/* Label over the filled (asset color) portion. The two clip-paths
+               must share the same transition so they stay in sync — otherwise
+               an animating fill leaves a gap where neither span covers the
+               centred text. */}
             <span
                 className="absolute inset-0 flex items-center justify-center text-xs font-semibold transition-all"
                 style={{
-                    color: `var(${fgVar})`,
+                    color: `var(${fgVar}, var(--foreground))`,
                     clipPath: `inset(0 ${100 - value}% 0 0)`,
                 }}
                 aria-hidden="true"
