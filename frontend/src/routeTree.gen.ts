@@ -22,6 +22,7 @@ import { Route as AppLoginRouteImport } from './routes/app/login'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppChangelogRouteImport } from './routes/app/changelog'
 import { Route as AppWikiIndexRouteImport } from './routes/app/wiki/index'
+import { Route as AppInternalIndexRouteImport } from './routes/app/internal/index'
 import { Route as AppWikiSlugRouteImport } from './routes/app/wiki/$slug'
 import { Route as AppOverviewsStorageRouteImport } from './routes/app/overviews/storage'
 import { Route as AppOverviewsResourcesRouteImport } from './routes/app/overviews/resources'
@@ -32,6 +33,7 @@ import { Route as AppOverviewsCashFlowRouteImport } from './routes/app/overviews
 import { Route as AppInternalTypographyRouteImport } from './routes/app/internal/typography'
 import { Route as AppInternalIconsRouteImport } from './routes/app/internal/icons'
 import { Route as AppInternalDesignRouteImport } from './routes/app/internal/design'
+import { Route as AppInternalColorsRouteImport } from './routes/app/internal/colors'
 import { Route as AppFacilitiesTechnologyRouteImport } from './routes/app/facilities/technology'
 import { Route as AppFacilitiesStorageRouteImport } from './routes/app/facilities/storage'
 import { Route as AppFacilitiesPowerPrioritiesRouteImport } from './routes/app/facilities/power-priorities'
@@ -111,6 +113,11 @@ const AppWikiIndexRoute = AppWikiIndexRouteImport.update({
   path: '/app/wiki/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppInternalIndexRoute = AppInternalIndexRouteImport.update({
+  id: '/app/internal/',
+  path: '/app/internal/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppWikiSlugRoute = AppWikiSlugRouteImport.update({
   id: '/app/wiki/$slug',
   path: '/app/wiki/$slug',
@@ -160,6 +167,11 @@ const AppInternalIconsRoute = AppInternalIconsRouteImport.update({
 const AppInternalDesignRoute = AppInternalDesignRouteImport.update({
   id: '/app/internal/design',
   path: '/app/internal/design',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppInternalColorsRoute = AppInternalColorsRouteImport.update({
+  id: '/app/internal/colors',
+  path: '/app/internal/colors',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppFacilitiesTechnologyRoute = AppFacilitiesTechnologyRouteImport.update({
@@ -257,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/app/facilities/power-priorities': typeof AppFacilitiesPowerPrioritiesRoute
   '/app/facilities/storage': typeof AppFacilitiesStorageRoute
   '/app/facilities/technology': typeof AppFacilitiesTechnologyRoute
+  '/app/internal/colors': typeof AppInternalColorsRoute
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
@@ -267,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
 }
 export interface FileRoutesByTo {
@@ -294,6 +308,7 @@ export interface FileRoutesByTo {
   '/app/facilities/power-priorities': typeof AppFacilitiesPowerPrioritiesRoute
   '/app/facilities/storage': typeof AppFacilitiesStorageRoute
   '/app/facilities/technology': typeof AppFacilitiesTechnologyRoute
+  '/app/internal/colors': typeof AppInternalColorsRoute
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
@@ -304,6 +319,7 @@ export interface FileRoutesByTo {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
 }
 export interface FileRoutesById {
@@ -333,6 +349,7 @@ export interface FileRoutesById {
   '/app/facilities/power-priorities': typeof AppFacilitiesPowerPrioritiesRoute
   '/app/facilities/storage': typeof AppFacilitiesStorageRoute
   '/app/facilities/technology': typeof AppFacilitiesTechnologyRoute
+  '/app/internal/colors': typeof AppInternalColorsRoute
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
@@ -343,6 +360,7 @@ export interface FileRoutesById {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/internal/': typeof AppInternalIndexRoute
   '/app/wiki/': typeof AppWikiIndexRoute
 }
 export interface FileRouteTypes {
@@ -372,6 +390,7 @@ export interface FileRouteTypes {
     | '/app/facilities/power-priorities'
     | '/app/facilities/storage'
     | '/app/facilities/technology'
+    | '/app/internal/colors'
     | '/app/internal/design'
     | '/app/internal/icons'
     | '/app/internal/typography'
@@ -382,6 +401,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/internal'
     | '/app/wiki'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -409,6 +429,7 @@ export interface FileRouteTypes {
     | '/app/facilities/power-priorities'
     | '/app/facilities/storage'
     | '/app/facilities/technology'
+    | '/app/internal/colors'
     | '/app/internal/design'
     | '/app/internal/icons'
     | '/app/internal/typography'
@@ -419,6 +440,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/internal'
     | '/app/wiki'
   id:
     | '__root__'
@@ -447,6 +469,7 @@ export interface FileRouteTypes {
     | '/app/facilities/power-priorities'
     | '/app/facilities/storage'
     | '/app/facilities/technology'
+    | '/app/internal/colors'
     | '/app/internal/design'
     | '/app/internal/icons'
     | '/app/internal/typography'
@@ -457,6 +480,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/internal/'
     | '/app/wiki/'
   fileRoutesById: FileRoutesById
 }
@@ -485,6 +509,7 @@ export interface RootRouteChildren {
   AppFacilitiesPowerPrioritiesRoute: typeof AppFacilitiesPowerPrioritiesRoute
   AppFacilitiesStorageRoute: typeof AppFacilitiesStorageRoute
   AppFacilitiesTechnologyRoute: typeof AppFacilitiesTechnologyRoute
+  AppInternalColorsRoute: typeof AppInternalColorsRoute
   AppInternalDesignRoute: typeof AppInternalDesignRoute
   AppInternalIconsRoute: typeof AppInternalIconsRoute
   AppInternalTypographyRoute: typeof AppInternalTypographyRoute
@@ -495,6 +520,7 @@ export interface RootRouteChildren {
   AppOverviewsResourcesRoute: typeof AppOverviewsResourcesRoute
   AppOverviewsStorageRoute: typeof AppOverviewsStorageRoute
   AppWikiSlugRoute: typeof AppWikiSlugRoute
+  AppInternalIndexRoute: typeof AppInternalIndexRoute
   AppWikiIndexRoute: typeof AppWikiIndexRoute
 }
 
@@ -591,6 +617,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWikiIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/internal/': {
+      id: '/app/internal/'
+      path: '/app/internal'
+      fullPath: '/app/internal'
+      preLoaderRoute: typeof AppInternalIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/wiki/$slug': {
       id: '/app/wiki/$slug'
       path: '/app/wiki/$slug'
@@ -659,6 +692,13 @@ declare module '@tanstack/react-router' {
       path: '/app/internal/design'
       fullPath: '/app/internal/design'
       preLoaderRoute: typeof AppInternalDesignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/internal/colors': {
+      id: '/app/internal/colors'
+      path: '/app/internal/colors'
+      fullPath: '/app/internal/colors'
+      preLoaderRoute: typeof AppInternalColorsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/facilities/technology': {
@@ -792,6 +832,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppFacilitiesPowerPrioritiesRoute: AppFacilitiesPowerPrioritiesRoute,
   AppFacilitiesStorageRoute: AppFacilitiesStorageRoute,
   AppFacilitiesTechnologyRoute: AppFacilitiesTechnologyRoute,
+  AppInternalColorsRoute: AppInternalColorsRoute,
   AppInternalDesignRoute: AppInternalDesignRoute,
   AppInternalIconsRoute: AppInternalIconsRoute,
   AppInternalTypographyRoute: AppInternalTypographyRoute,
@@ -802,6 +843,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppOverviewsResourcesRoute: AppOverviewsResourcesRoute,
   AppOverviewsStorageRoute: AppOverviewsStorageRoute,
   AppWikiSlugRoute: AppWikiSlugRoute,
+  AppInternalIndexRoute: AppInternalIndexRoute,
   AppWikiIndexRoute: AppWikiIndexRoute,
 }
 export const routeTree = rootRouteImport

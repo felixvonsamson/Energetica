@@ -277,6 +277,50 @@
         --asset-color-transport: rgb(106, 0, 244);
         --asset-color-carbon-capture: rgb(173, 181, 189);
 
+        /* Asset foreground tokens
+           Theme-agnostic constants — each asset's *-fg picks one of these two
+           based on the luminance of its fill color. Used by FacilityGauge to
+           keep labels legible on the filled portion of the bar. */
+        --asset-fg-on-light: #000000;
+        --asset-fg-on-dark:  #ffffff;
+
+        /* Asset colour foregrounds (light mode) — picked from the asset's
+           light-mode fill colour. */
+        --asset-color-watermill-fg:               var(--asset-fg-on-light);
+        --asset-color-small-water-dam-fg:         var(--asset-fg-on-dark);
+        --asset-color-large-water-dam-fg:         var(--asset-fg-on-dark);
+        --asset-color-nuclear-reactor-fg:         var(--asset-fg-on-light);
+        --asset-color-nuclear-reactor-gen4-fg:    var(--asset-fg-on-light);
+        --asset-color-steam-engine-fg:            var(--asset-fg-on-dark);
+        --asset-color-coal-burner-fg:             var(--asset-fg-on-dark);
+        --asset-color-gas-burner-fg:              var(--asset-fg-on-light);
+        --asset-color-combined-cycle-fg:          var(--asset-fg-on-dark);
+        --asset-color-windmill-fg:                var(--asset-fg-on-light);
+        --asset-color-onshore-wind-turbine-fg:    var(--asset-fg-on-dark);
+        --asset-color-offshore-wind-turbine-fg:   var(--asset-fg-on-dark);
+        --asset-color-csp-solar-fg:               var(--asset-fg-on-light);
+        --asset-color-pv-solar-fg:                var(--asset-fg-on-light);
+        --asset-color-small-pumped-hydro-fg:      var(--asset-fg-on-dark);
+        --asset-color-large-pumped-hydro-fg:      var(--asset-fg-on-dark);
+        --asset-color-lithium-ion-batteries-fg:   var(--asset-fg-on-dark);
+        --asset-color-solid-state-batteries-fg:   var(--asset-fg-on-dark);
+        --asset-color-molten-salt-fg:             var(--asset-fg-on-dark);
+        --asset-color-hydrogen-storage-fg:        var(--asset-fg-on-light);
+        --asset-color-coal-mine-fg:               var(--asset-fg-on-dark);
+        --asset-color-gas-drilling-site-fg:       var(--asset-fg-on-light);
+        --asset-color-uranium-mine-fg:            var(--asset-fg-on-light);
+        --asset-color-coal-fg:                    var(--asset-fg-on-dark);
+        --asset-color-gas-fg:                     var(--asset-fg-on-light);
+        --asset-color-uranium-fg:                 var(--asset-fg-on-light);
+        --asset-color-imports-fg:                 var(--asset-fg-on-dark);
+        --asset-color-exports-fg:                 var(--asset-fg-on-light);
+        --asset-color-dumping-fg:                 var(--asset-fg-on-dark);
+        --asset-color-industry-fg:                var(--asset-fg-on-dark);
+        --asset-color-research-fg:                var(--asset-fg-on-light);
+        --asset-color-construction-fg:            var(--asset-fg-on-dark);
+        --asset-color-transport-fg:               var(--asset-fg-on-dark);
+        --asset-color-carbon-capture-fg:          var(--asset-fg-on-light);
+
         /* Map tile colours */
         --map-selected-tile-hover: var(--color-pine-800);
         --map-tile-current-player: hsl(0, 64%, 47%);
@@ -431,6 +475,44 @@
         --asset-color-construction: rgb(255, 163, 60);
         --asset-color-transport: rgb(156, 80, 255);
         --asset-color-carbon-capture: rgb(153, 161, 169);
+
+        /* Asset colour foregrounds (dark mode) — picked from the asset's
+           dark-mode fill colour. --asset-fg-on-light/-on-dark are inherited
+           from :root. */
+        --asset-color-watermill-fg:               var(--asset-fg-on-light);
+        --asset-color-small-water-dam-fg:         var(--asset-fg-on-dark);
+        --asset-color-large-water-dam-fg:         var(--asset-fg-on-dark);
+        --asset-color-nuclear-reactor-fg:         var(--asset-fg-on-light);
+        --asset-color-nuclear-reactor-gen4-fg:    var(--asset-fg-on-light);
+        --asset-color-steam-engine-fg:            var(--asset-fg-on-dark);
+        --asset-color-coal-burner-fg:             var(--asset-fg-on-dark);
+        --asset-color-gas-burner-fg:              var(--asset-fg-on-dark);
+        --asset-color-combined-cycle-fg:          var(--asset-fg-on-dark);
+        --asset-color-windmill-fg:                var(--asset-fg-on-light);
+        --asset-color-onshore-wind-turbine-fg:    var(--asset-fg-on-dark);
+        --asset-color-offshore-wind-turbine-fg:   var(--asset-fg-on-dark);
+        --asset-color-csp-solar-fg:               var(--asset-fg-on-light);
+        --asset-color-pv-solar-fg:                var(--asset-fg-on-light);
+        --asset-color-small-pumped-hydro-fg:      var(--asset-fg-on-dark);
+        --asset-color-large-pumped-hydro-fg:      var(--asset-fg-on-dark);
+        --asset-color-lithium-ion-batteries-fg:   var(--asset-fg-on-dark);
+        --asset-color-solid-state-batteries-fg:   var(--asset-fg-on-dark);
+        --asset-color-molten-salt-fg:             var(--asset-fg-on-dark);
+        --asset-color-hydrogen-storage-fg:        var(--asset-fg-on-light);
+        --asset-color-coal-mine-fg:               var(--asset-fg-on-dark);
+        --asset-color-gas-drilling-site-fg:       var(--asset-fg-on-light);
+        --asset-color-uranium-mine-fg:            var(--asset-fg-on-light);
+        --asset-color-coal-fg:                    var(--asset-fg-on-dark);
+        --asset-color-gas-fg:                     var(--asset-fg-on-dark);
+        --asset-color-uranium-fg:                 var(--asset-fg-on-light);
+        --asset-color-imports-fg:                 var(--asset-fg-on-dark);
+        --asset-color-exports-fg:                 var(--asset-fg-on-light);
+        --asset-color-dumping-fg:                 var(--asset-fg-on-dark);
+        --asset-color-industry-fg:                var(--asset-fg-on-dark);
+        --asset-color-research-fg:                var(--asset-fg-on-light);
+        --asset-color-construction-fg:            var(--asset-fg-on-dark);
+        --asset-color-transport-fg:               var(--asset-fg-on-dark);
+        --asset-color-carbon-capture-fg:          var(--asset-fg-on-dark);
 
         /* Map tile colours - same as light mode */
         --map-selected-tile-hover: var(--color-bone-100);
