@@ -213,9 +213,10 @@ export function PowerOverviewTable({
                 const row: FacilityRow = { facilityType, totalEnergy };
 
                 if (isGeneration && facilitiesData) {
-                    const facilities = facilitiesData.power_facilities.filter(
-                        (f) => f.facility === facilityType,
-                    );
+                    const facilities = [
+                        ...facilitiesData.power_facilities,
+                        ...facilitiesData.storage_facilities,
+                    ].filter((f) => f.facility === facilityType);
                     if (facilities.length > 0) {
                         const installedCapacity = facilities.reduce(
                             (sum, f) => sum + f.max_power_generation,
@@ -317,7 +318,7 @@ export function PowerOverviewTable({
                                     className="py-3 px-4 text-center font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors min-w-37.5"
                                     onClick={() => handleSort("used")}
                                 >
-                                    Used Capacity
+                                    Capacity Factor
                                     {getSortIndicator("used")}
                                 </th>
                             </>
