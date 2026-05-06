@@ -51,8 +51,9 @@ export function interpolateAtX(
  * Transforms order data into a stepped curve for visualization. Creates points
  * for a ragged supply or demand curve from discrete orders.
  *
- * The resulting curve starts at (0,0), then for each order creates a vertical
- * step (price change) followed by a horizontal step (quantity change).
+ * The resulting curve starts at (0, firstPrice) so it does not include a
+ * vertical segment at x=0 rising from zero — a useful property for demand
+ * curves whose first order sits at the highest price.
  *
  * @param prices - Price for each order
  * @param cumulCapacities - Cumulative quantity at each order
@@ -68,9 +69,6 @@ export function createSteppedCurve(
     if (prices.length === 0) return [];
 
     const points: CurvePoint[] = [];
-
-    // Start at origin
-    points.push({ quantity: 0, price: 0 });
 
     for (let i = 0; i < prices.length; i++) {
         const prevCumul = i === 0 ? 0 : (cumulCapacities[i - 1] ?? 0);
