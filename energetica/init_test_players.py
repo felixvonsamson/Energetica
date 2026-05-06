@@ -1,5 +1,7 @@
 """Module to initialize the database with test players and networks."""
 
+from energetica.config.climate_events import climate_events
+from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.network import Network
 from energetica.database.ongoing_shipment import OngoingShipment
@@ -186,6 +188,27 @@ def init_test_players() -> None:
     add_asset(player2, FunctionalFacilityType.INDUSTRY, 11)
 
     OngoingShipment(resource=Fuel.COAL, quantity=10, arrival_tick=100, duration=200, power_demand=10, player=player1)
+
+    # Seed a few climate event recoveries to visualise the progress bars.
+    # Each has a different fraction-remaining so the bars show varied progress.
+    def add_recovery(player: Player, event_name: str, fraction_remaining: float) -> None:
+        ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
+        duration_ticks = climate_events[event_name].duration / engine.in_game_seconds_per_tick
+        recovery_cost = (
+            climate_events[event_name].cost_fraction * player.config["industry"]["income_per_day"] / ticks_per_day
+        )
+        ClimateEventRecovery(
+            name=event_name,
+            end_tick=engine.total_t + duration_ticks * fraction_remaining,
+            duration=duration_ticks,
+            recovery_cost=recovery_cost,
+            player=player,
+        )
+
+    add_recovery(player1, "flood", 0.9)
+    add_recovery(player1, "heat_wave", 0.5)
+    add_recovery(player1, "wildfire", 0.2)
+    add_recovery(player2, "hurricane", 0.75)
 
     # Player 3
     # add_asset(player3, TechnologyType.MATHEMATICS, 1)

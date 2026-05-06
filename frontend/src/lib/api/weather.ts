@@ -10,4 +10,10 @@ export const weatherApi = {
      */
     getCurrent: () =>
         apiClient.get<ApiResponse<"/api/v1/weather", "get">>("/weather"),
+
+    /** Get the player's active climate event recoveries with progress info. */
+    getClimateEventRecoveries: () =>
+        apiClient.get<
+            ApiResponse<"/api/v1/weather/climate-event-recoveries", "get">
+        >("/weather/climate-event-recoveries"),
 };

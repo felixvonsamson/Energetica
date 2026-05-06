@@ -1855,6 +1855,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/weather/climate-event-recoveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Climate Event Recoveries
+         *
+         * Get the player's active climate event recoveries with progress
+         * information.
+         */
+        get: operations["get_climate_event_recoveries_api_v1_weather_climate_event_recoveries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -2377,6 +2399,39 @@ export interface components {
             duration_days: number;
             /** Cost Per Hour */
             cost_per_hour: number;
+        };
+        /** ClimateEventRecoveryListOut */
+        ClimateEventRecoveryListOut: {
+            /**
+             * Recoveries
+             *
+             * List of active climate event recoveries
+             */
+            recoveries: components["schemas"]["ClimateEventRecoveryOut"][];
+        };
+        /** ClimateEventRecoveryOut */
+        ClimateEventRecoveryOut: {
+            /** Id */
+            id: number;
+            event_key: components["schemas"]["ClimateEventType"];
+            /**
+             * End Tick
+             *
+             * Tick at which the recovery completes
+             */
+            end_tick: number;
+            /**
+             * Duration
+             *
+             * Total recovery duration in ticks
+             */
+            duration: number;
+            /**
+             * Recovery Cost
+             *
+             * Recovery cost per tick in ¤/tick
+             */
+            recovery_cost: number;
         };
         /**
          * ClimateEventType
@@ -7424,6 +7479,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WeatherOut"];
+                };
+            };
+        };
+    };
+    get_climate_event_recoveries_api_v1_weather_climate_event_recoveries_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClimateEventRecoveryListOut"];
                 };
             };
         };

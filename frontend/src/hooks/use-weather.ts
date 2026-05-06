@@ -25,3 +25,19 @@ export function useWeather() {
         refetchOnWindowFocus: true,
     });
 }
+
+/**
+ * Get the player's active climate event recoveries. Updates every tick so the
+ * countdown stays accurate.
+ */
+export function useClimateEventRecoveries() {
+    useTickQuery(queryKeys.weather.climateEventRecoveries);
+
+    return useQuery({
+        queryKey: queryKeys.weather.climateEventRecoveries,
+        queryFn: weatherApi.getClimateEventRecoveries,
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: true,
+    });
+}

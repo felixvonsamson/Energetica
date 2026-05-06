@@ -216,6 +216,10 @@ export const queryKeys = {
     },
     weather: {
         current: ["weather", "current"] as const,
+        climateEventRecoveries: [
+            "weather",
+            "climate-event-recoveries",
+        ] as const,
     },
     dailyQuiz: {
         today: ["daily-quiz", "today"] as const,
