@@ -19,40 +19,52 @@ This happens when the process is killed mid-save (OOM kill, SIGKILL, power loss)
 ## Recovery procedure
 
 ```bash
-ssh deploy@energetica-edu
+ssh root@energetica-edu
 cd /var/www/energetica
-sudo systemctl stop energetica
+systemctl stop energetica
 ```
 
 **Step 1 — back up the current instance folder:**
 
 ```bash
-sudo -u www-data cp -r instance/ instance.bak.$(date +%Y%m%d_%H%M%S)/
+cp -r instance/ instance.bak.$(date +%Y%m%d_%H%M%S)/
 ```
 
 **Step 2 — preserve the actions log:**
 
 ```bash
-sudo -u www-data cp instance/actions_history.log /tmp/actions_history.log.bak
+cp instance/actions_history.log /tmp/actions_history.log.bak
 ```
 
-**Step 3 — restore the checkpoint** (this overwrites `instance/` with a consistent snapshot):
+**Step 3 — remove the current instance folder** (prevents stale files with newer mtimes from surviving into the restored state):
 
 ```bash
-sudo -u www-data tar -xzf checkpoints/last_checkpoint.tar.gz
+rm -r instance/
 ```
 
-**Step 4 — put the actions log back** (so the engine can replay all actions since the checkpoint):
+**Step 4 — restore the checkpoint:**
 
 ```bash
-sudo -u www-data cp /tmp/actions_history.log.bak instance/actions_history.log
+tar -xzf checkpoints/last_checkpoint.tar.gz
 ```
 
-**Step 5 — start the service:**
+**Step 5 — put the actions log back** (so the engine can replay all actions since the checkpoint):
 
 ```bash
-sudo systemctl start energetica
-sudo journalctl -u energetica -f
+cp /tmp/actions_history.log.bak instance/actions_history.log
+```
+
+**Step 6 — touch `engine_data.pck`** (ensures its mtime is newer than all data files, preventing the integrity check from firing):
+
+```bash
+touch instance/engine_data.pck
+```
+
+**Step 7 — start the service:**
+
+```bash
+systemctl start energetica
+journalctl -u energetica -f
 ```
 
 Watch the logs. You should see the engine replaying ticks rapidly until it catches up to the present, then resume normal 30-second ticks.
