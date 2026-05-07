@@ -2,6 +2,7 @@
 
 import time
 from datetime import datetime
+from pathlib import Path
 
 from energetica import production_update
 from energetica.database.active_facility import ActiveFacility
@@ -38,6 +39,7 @@ def tick() -> None:
     engine.log(f"t = {engine.total_t}")
     if engine.total_t % 216 == 0:
         save_past_data()
+        Path("instance/engine_data.pck").touch()
     if (engine.total_t * engine.clock_time + int(engine.start_date.timestamp())) % 86400 == 9 * 3600:
         engine.new_daily_question()
     check_events_completion()
