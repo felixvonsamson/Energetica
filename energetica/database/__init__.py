@@ -81,9 +81,9 @@ class DBModel:
             raise error
 
     @classmethod
-    def all(cls: type[T]) -> Iterator[T]:
+    def all(cls: type[T]) -> list[T]:
         """Get all instances of this class."""
-        return (v for v in cls.instances().values())
+        return list(cls.instances().values())
 
     @classmethod
     def count(cls: type[T], *, condition: Callable[[T], bool] | None = None) -> int:

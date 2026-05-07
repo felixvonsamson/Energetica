@@ -22,6 +22,7 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 
 - [**Game Engine Startup**](backend/game-engine-startup.md) - Bootstrap process, scheduler setup, initialization
 - [**Game Loop**](backend/game-loop.md) - Tick execution, state updates, climate events
+- [**Incident Recovery**](backend/incident-recovery.md) - Recovering from corrupted saves, OOM kills, crash loops
 - [**Style Guide**](backend/style-guide.md) - Python conventions, naming, type hints, docstrings
 
 ### Frontend
