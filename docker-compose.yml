@@ -34,7 +34,9 @@ services:
   frontend:
     image: oven/bun:1
     working_dir: /app/frontend
-    command: sh -c "bun install && bun run dev --host"
+    # Use Node.js to run Vite (not Bun's runtime) — Bun doesn't implement
+    # socket.destroySoon(), which Vite's proxy requires for WebSocket teardown.
+    command: sh -c "bun install && node node_modules/.bin/vite --host"
     volumes:
       # Bind-mount entire repo so vite.config.ts can resolve paths correctly
       - .:/app
