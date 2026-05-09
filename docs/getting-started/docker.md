@@ -25,6 +25,8 @@ docker compose up
 
 The frontend proxies `/api`, `/socket.io`, and `/static` to the backend automatically.
 
+> **Note on first build time:** The dev backend image is built from the same multi-stage `Dockerfile` as production (stopping at the `runtime` stage). This means the Bun frontend build runs during `docker compose build` even though its output is immediately overwritten by the source bind-mount. This is harmless — the Vite dev server on `:5173` serves the frontend in dev, not the pre-built assets — but the first build will take longer than expected. Subsequent runs use Docker's layer cache and are fast.
+
 ### Seed test players
 
 To start with pre-made player accounts instead of an empty game:
