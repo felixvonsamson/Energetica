@@ -9,6 +9,7 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 ### Getting Started
 
 - [**Overview**](getting-started/installation.md) - Installation & Quick Reference
+- [**Docker**](getting-started/docker.md) - Running with Docker (dev + production)
 
 ### Architecture
 

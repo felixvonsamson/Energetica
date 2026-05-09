@@ -1,0 +1,54 @@
+# docker-compose.yml — development environment
+#
+# Usage:
+#   docker compose up          # start backend + frontend (with HMR)
+#   docker compose up backend  # backend only
+#
+# Frontend is available at http://localhost:5173 (proxies /api and /socket.io to backend)
+# Backend API is available at http://localhost:8000
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime   # use the runtime stage image directly
+    volumes:
+      # Bind-mount source for live reload
+      - .:/app
+      # Persist game state across restarts
+      - instance:/app/instance
+      - checkpoints:/app/checkpoints
+    ports:
+      - "8000:8000"
+    environment:
+      ENV: dev
+      INIT_TEST_PLAYERS: ${INIT_TEST_PLAYERS:-false}
+      CLOCK_TIME: ${CLOCK_TIME:-30}
+      IN_GAME_SECONDS_PER_TICK: ${IN_GAME_SECONDS_PER_TICK:-240}
+      DISABLE_SIGNUPS: ${DISABLE_SIGNUPS:-false}
+    env_file:
+      - path: .env
+        required: false
+
+  frontend:
+    image: oven/bun:1
+    working_dir: /app/frontend
+    command: bun run dev --host
+    volumes:
+      # Bind-mount entire repo so vite.config.ts can resolve paths correctly
+      - .:/app
+      # Use a named volume for node_modules to avoid host/container conflicts
+      - frontend_node_modules:/app/frontend/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      # Point Vite's proxy to the backend container
+      VITE_BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
+
+volumes:
+  instance:
+  checkpoints:
+  frontend_node_modules:

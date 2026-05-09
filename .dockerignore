@@ -1,0 +1,41 @@
+# Runtime state — never bake into the image
+instance/
+checkpoints/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+.eslintcache
+frontend/.eslintcache
+
+# Built assets (generated at build time inside Docker)
+energetica/static/react/
+energetica/static/service-worker.js
+scripts/openapi-schema.json
+
+# Git
+.git/
+.gitignore
+
+# Editor / OS
+.DS_Store
+.vscode/
+*.swp
+
+# Secrets / env
+.env
+frontend/.env
+admin_accounts.txt
+
+# Docs (not needed at runtime)
+docs/

@@ -1,0 +1,71 @@
+# docker-compose.prod.yml — production overlay with Traefik reverse proxy
+#
+# Usage (from repo root):
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Prerequisites:
+#   1. Copy .env.example to .env and fill in DOMAIN and LETSENCRYPT_EMAIL
+#   2. Build the image: docker build -t energetica .
+#   3. Create the external 'web' network once: docker network create web
+#
+# Traefik dashboard:  http://<host>:8080  (disable in production if not needed)
+# App:                https://<DOMAIN>
+
+services:
+  traefik:
+    image: traefik:v3
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"   # Traefik dashboard — restrict or remove in production
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    networks:
+      - web
+
+  backend:
+    image: energetica:latest
+    restart: unless-stopped
+    volumes:
+      - instance:/app/instance
+      - checkpoints:/app/checkpoints
+    environment:
+      ENV: prod
+      INIT_TEST_PLAYERS: ${INIT_TEST_PLAYERS:-false}
+      CLOCK_TIME: ${CLOCK_TIME:-30}
+      IN_GAME_SECONDS_PER_TICK: ${IN_GAME_SECONDS_PER_TICK:-240}
+      DISABLE_SIGNUPS: ${DISABLE_SIGNUPS:-false}
+    env_file:
+      - path: .env
+        required: false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.energetica.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.energetica.entrypoints=websecure"
+      - "traefik.http.routers.energetica.tls.certresolver=letsencrypt"
+      - "traefik.http.services.energetica.loadbalancer.server.port=8000"
+      # WebSocket support (Socket.IO)
+      - "traefik.http.middlewares.sio.headers.customrequestheaders.X-Forwarded-Proto=https"
+    networks:
+      - web
+
+volumes:
+  instance:
+  checkpoints:
+  letsencrypt:
+
+networks:
+  web:
+    external: true
