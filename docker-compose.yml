@@ -34,7 +34,7 @@ services:
   frontend:
     image: oven/bun:1
     working_dir: /app/frontend
-    command: bun run dev --host
+    command: sh -c "bun install && bun run dev --host"
     volumes:
       # Bind-mount entire repo so vite.config.ts can resolve paths correctly
       - .:/app
