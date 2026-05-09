@@ -63,7 +63,7 @@ Target versions: 3.11 or 3.12 (ruff target currently 3.12). Use a virtual enviro
 ```
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 (Optional) Use `conda` if preferred.
@@ -225,7 +225,7 @@ See [Backend Style Guide](./docs/backend/style-guide.md) and [Frontend Style Gui
 
 -   Justify the need (size, maintenance, security)
 -   Prefer widely used, actively maintained libraries
--   Update `requirements.txt` and pin if reproducibility becomes an issue (currently unpinned)
+-   Update `requirements.txt` (prod) or `requirements-dev.txt` (dev-only tools like pytest and pre-commit) and pin if reproducibility becomes an issue (currently unpinned)
 -   Avoid heavy frameworks for small utilities
 
 ## Getting Help

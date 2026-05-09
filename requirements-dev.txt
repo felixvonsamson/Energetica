@@ -1,0 +1,4 @@
+# Dev-only dependencies (not installed in the production Docker image)
+-r requirements.txt
+pytest
+pre-commit

@@ -24,6 +24,11 @@ FROM python:3.12-slim AS runtime
 
 WORKDIR /app
 
+# Install build tools needed for C extensions (e.g. noise), then clean up
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install Python dependencies first (layer-cached until requirements change)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

@@ -7,8 +7,6 @@ requests
 pandas
 pywebpush
 noise
-pytest
 fastapi[standard]
 python-socketio[asgi]
 itsdangerous
-pre-commit
