@@ -14,7 +14,7 @@ cd "$WORKTREE_ROOT/frontend"
 bun install
 
 # Python venv — symlink from main repo to avoid a redundant install
-if [ ! -e "$WORKTREE_ROOT/.venv" ]; then
+if [ ! -e "$WORKTREE_ROOT/.venv" ] && [ ! -L "$WORKTREE_ROOT/.venv" ]; then
     echo "→ Symlinking .venv from main repo..."
     ln -s "$MAIN_REPO/.venv" "$WORKTREE_ROOT/.venv"
 fi
