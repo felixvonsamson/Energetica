@@ -376,9 +376,9 @@ function ProgressCard({
                             status={speed > 0 ? "slowed" : "stopped"}
                             size="sm"
                         />
-                    ) : (
+                    ) : status !== "recovering" ? (
                         <StatusBadge status={status} size="sm" />
-                    )}
+                    ) : null}
                     {label}
                 </div>
                 {/* Action buttons */}

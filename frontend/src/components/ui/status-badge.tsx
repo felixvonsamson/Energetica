@@ -1,5 +1,4 @@
 import {
-    AlertTriangle,
     Clock,
     Pause,
     PlayCircle,
@@ -15,7 +14,6 @@ interface StatusBadgeProps {
         | "waiting"
         | "ongoing"
         | "in-transit"
-        | "recovering"
         | "slowed"
         | "stopped";
     size?: "sm" | "md";
@@ -65,11 +63,6 @@ export function StatusBadge({
             icon: <Truck size={iconSize} />,
             label: "In Transit",
             styles: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-        },
-        recovering: {
-            icon: <AlertTriangle size={iconSize} />,
-            label: "Recovering",
-            styles: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
         },
         slowed: {
             icon: <ZapOff size={iconSize} />,
