@@ -187,7 +187,7 @@ scripts/
 2. Clone repo (or symlink shared code — TBD)
 3. Create and enable Apache vhost from `apache-season.conf` template
 4. Reload Apache (HTTP only at this point)
-5. Obtain TLS certificate: `certbot certonly --webroot -w /var/www/html -d {season}.{domain}`
+5. Obtain TLS certificate: `certbot certonly --webroot -w /var/www/energetica-{season}/ -d {season}.{domain}` — the season directory (created in step 1) is already the Apache DocumentRoot, so ACME challenge files are reachable there
 6. Update vhost with SSL directives, reload Apache
 7. Install certbot deploy hook to reload Apache on certificate renewal
 8. Create and enable `energetica-{season}.service` systemd unit
