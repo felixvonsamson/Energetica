@@ -26,6 +26,8 @@ from energetica.schemas.simulate import Action, InitEngineAction
 if TYPE_CHECKING:
     from energetica.database.messages import Chat
 
+_DATA_DIR = Path(__file__).parent / "static" / "data"
+
 
 # This is the engine object
 class GameEngine(object):
@@ -65,10 +67,10 @@ class GameEngine(object):
         self.VAPID_PRIVATE_KEY: str = None  # type: ignore[assignment]
         self.general_chat_id: int = None  # type: ignore[assignment]
 
-        with open("energetica/static/data/industry_demand.pck", "rb") as file:
+        with open(_DATA_DIR / "industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations
             self.industry_demand = pickle.load(file)
-        with open("energetica/static/data/industry_demand_year.pck", "rb") as file:
+        with open(_DATA_DIR / "industry_demand_year.pck", "rb") as file:
             # array of length 51 of normalized yearly industry demand variations
             self.industry_seasonal = pickle.load(file)
 
@@ -159,7 +161,7 @@ class GameEngine(object):
 
         self.clear_db()
 
-        with open("energetica/static/data/map.csv", "r", encoding="utf-8") as file:
+        with open(_DATA_DIR / "map.csv", "r", encoding="utf-8") as file:
             csv_reader = csv.DictReader(file)
             for row in csv_reader:
                 tile = HexTile(coordinates=(int(row["q"]), int(row["r"])), climate_risk=int(row["climate_risk"]))
@@ -293,7 +295,7 @@ class GameEngine(object):
             TutorialQuizPushNotificationsPayload,
         )
 
-        with open("energetica/static/data/daily_quiz_questions.csv", "r", encoding="utf-8") as file:
+        with open(_DATA_DIR / "daily_quiz_questions.csv", "r", encoding="utf-8") as file:
             csv_reader = list(csv.DictReader(file))
         if self.question_order is None:
             self.question_order = list(range(len(csv_reader)))

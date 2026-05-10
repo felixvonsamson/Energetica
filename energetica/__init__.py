@@ -29,6 +29,8 @@ from energetica.game_engine import GameEngine
 from energetica.schemas.simulate import Action
 from energetica.utils.browser_notifications import load_or_create_vapid_keys
 
+_REPO_ROOT = Path(__file__).parent.parent
+
 engine = GameEngine()
 
 globals.MAIN_EVENT_LOOP = asyncio.get_event_loop()
@@ -233,15 +235,15 @@ def create_app(
             new_admin = User(username="admin", pwhash=hashed_password, role="admin")
             engine.log(f"Admin account created with username '{new_admin.username}'")
             # TODO(mglst): I think it would make more sense to move this under the instance/ folder
-            with open("admin_accounts.txt", "w", encoding="utf-8") as file:
+            with open(_REPO_ROOT / "admin_accounts.txt", "w", encoding="utf-8") as file:
                 file.write(f"{new_admin.username},{admin_password}\n")
 
         if disable_signups:
             # if sign-ups are disabled, accounts have to be created from a file.
-            with open("players.txt", "r", encoding="utf-8") as file:
+            with open(_REPO_ROOT / "players.txt", "r", encoding="utf-8") as file:
                 lines = file.readlines()
 
-            with open("players.txt", "w", encoding="utf-8") as file:
+            with open(_REPO_ROOT / "players.txt", "w", encoding="utf-8") as file:
                 for line in lines:
                     line = line.strip()
                     if not line:
