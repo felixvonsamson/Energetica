@@ -18,7 +18,13 @@ interface FacilityGaugeProps {
  * Displays a coloured gauge bar with percentage overlay.
  *
  * The gauge uses CSS variables for facility-specific colors:
- * `--asset-color-{facility-type}` where underscores are replaced with hyphens.
+ * `--asset-color-{facility-type}` for the fill, and
+ * `--asset-color-{facility-type}-fg` for the label colour over that fill.
+ *
+ * The label is rendered twice and clipped at the fill boundary so each side
+ * gets its own foreground colour: the asset-specific FG over the filled
+ * portion, and the default track FG over the unfilled portion. This keeps
+ * the percentage legible regardless of fill colour or theme.
  *
  * @example
  *     <FacilityGauge facilityType="coal_burner" value={75.5} />;
@@ -29,7 +35,9 @@ export function FacilityGauge({
     value,
     className = "",
 }: FacilityGaugeProps) {
-    const colorVar = `--asset-color-${facilityType.toLowerCase().replace(/_/g, "-")}`;
+    const slug = facilityType.toLowerCase().replace(/_/g, "-");
+    const colorVar = `--asset-color-${slug}`;
+    const fgVar = `--asset-color-${slug}-fg`;
     const percentage = Math.round(value);
 
     return (
@@ -43,7 +51,25 @@ export function FacilityGauge({
                     backgroundColor: `var(${colorVar})`,
                 }}
             />
-            <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800 dark:text-white">
+            {/* Label over the unfilled (track) portion. */}
+            <span
+                className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800 dark:text-white transition-all"
+                style={{ clipPath: `inset(0 0 0 ${value}%)` }}
+            >
+                {percentage}%
+            </span>
+            {/* Label over the filled (asset color) portion. The two clip-paths
+               must share the same transition so they stay in sync — otherwise
+               an animating fill leaves a gap where neither span covers the
+               centred text. */}
+            <span
+                className="absolute inset-0 flex items-center justify-center text-xs font-semibold transition-all"
+                style={{
+                    color: `var(${fgVar}, var(--foreground))`,
+                    clipPath: `inset(0 ${100 - value}% 0 0)`,
+                }}
+                aria-hidden="true"
+            >
                 {percentage}%
             </span>
         </div>
