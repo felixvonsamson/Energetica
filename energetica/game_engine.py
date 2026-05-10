@@ -77,9 +77,11 @@ class GameEngine(object):
     def clear_db(self) -> None:
         """Clear all the data in the database."""
         from energetica.database import DBModel
+        from energetica.database.active_facility import ActiveFacility
 
         for db in DBModel.__subclasses__():
             db.instances().reset()
+        ActiveFacility.rebuild_index()
 
     def init_instance(
         self,

@@ -4244,6 +4244,8 @@ export interface components {
             efficiency: number;
             /** Remaining Lifespan */
             remaining_lifespan: number | null;
+            /** Decommissioning */
+            decommissioning: boolean;
             /** Upgrade Cost */
             upgrade_cost: number | null;
             /** Dismantle Cost */

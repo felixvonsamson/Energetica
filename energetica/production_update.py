@@ -179,11 +179,15 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
     for storage_facility in StorageFacilityType:
         # TODO/COMMENT (Felix): Storage facilities have a SOC and a generation/consumption usage that can be defined as the current power produced/consumed divided by the max power. Currently, we only show the SOC as usage, but it would be interesting to show both values in the frontend.
         if storage_facility in player.capacities:
-            if player.capacities[storage_facility]["capacity"] == 0:
-                usage = np.inf  # TODO (Felix): update frontend to show "draining..."
+            all_afs = list(ActiveFacility.filter_by(player=player, facility_type=storage_facility))
+            active_capacity = player.capacities[storage_facility]["capacity"]
+            if active_capacity == 0:
+                # All facilities of this type are decommissioning; use their own capacities for SoC
+                total_capacity = sum(af.storage_capacity for af in all_afs)
+                usage = new_values["storage"][storage_facility] / total_capacity if total_capacity > 0 else 0.0
             else:
-                usage = new_values["storage"][storage_facility] / player.capacities[storage_facility]["capacity"]
-            for af in ActiveFacility.filter_by(player=player, facility_type=storage_facility):
+                usage = new_values["storage"][storage_facility] / active_capacity
+            for af in all_afs:
                 af.usage = usage  # type: ignore
 
     for extraction_facility in ExtractionFacilityType:
@@ -259,11 +263,14 @@ def update_storage_lvls(new_values: dict, player: Player) -> None:
                 * engine.in_game_seconds_per_tick
                 * (player.capacities[facility]["efficiency"] ** 0.5)
             )
-            storage_soc[facility] = (
-                storage[facility] / player.capacities[facility]["capacity"]
-                if player.capacities[facility]["capacity"] > 0
-                else 0.0
-            )
+            active_capacity = player.capacities[facility]["capacity"]
+            if active_capacity > 0:
+                storage_soc[facility] = storage[facility] / active_capacity
+            else:
+                total_capacity = sum(
+                    af.storage_capacity for af in ActiveFacility.filter_by(player=player, facility_type=facility)
+                )
+                storage_soc[facility] = storage[facility] / total_capacity if total_capacity > 0 else 0.0
 
 
 def calculate_net_import(new_values: dict) -> None:
@@ -867,9 +874,7 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
                 quantity = amount * generation[facility] / player.capacities[facility]["power"]
                 player.resources[fuel] -= quantity
             facility_emissions = (
-                player.capacities[facility]["pollution"]
-                * generation[facility]
-                / player.capacities[facility]["power"]
+                player.capacities[facility]["pollution"] * generation[facility] / player.capacities[facility]["power"]
             )
             add_emissions(new_values, player, facility, facility_emissions)
 

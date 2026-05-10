@@ -103,7 +103,7 @@ def check_events_completion() -> None:
         player = facility.player
         stored_energy = player.rolling_history.get_last_data("storage", facility.facility_type)
         available_capacity = player.capacities[facility.facility_type]["capacity"]
-        if stored_energy < available_capacity:
+        if stored_energy <= available_capacity:
             remove_facility(facility)
 
     # check end of climate events

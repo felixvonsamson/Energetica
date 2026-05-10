@@ -63,6 +63,7 @@ class StorageFacilityOut(BaseModel):
     op_cost_per_tick: float
     efficiency: float
     remaining_lifespan: float | None
+    decommissioning: bool
     upgrade_cost: float | None
     dismantle_cost: float | None
 
@@ -80,6 +81,7 @@ class StorageFacilityOut(BaseModel):
             op_cost_per_tick=storage_facility.op_cost_per_tick,
             efficiency=storage_facility.efficiency,
             remaining_lifespan=storage_facility.remaining_lifespan,
+            decommissioning=storage_facility.decommissioning,
             upgrade_cost=None if storage_facility.decommissioning else storage_facility.upgrade_cost,
             dismantle_cost=None if storage_facility.decommissioning else storage_facility.dismantle_cost,
         )

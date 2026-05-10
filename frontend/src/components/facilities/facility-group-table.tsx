@@ -25,6 +25,7 @@ interface FacilityBase {
     facility: string;
     op_cost_per_tick: number;
     remaining_lifespan: number | null;
+    decommissioning?: boolean;
     upgrade_cost: number | null;
     dismantle_cost: number | null;
 }
@@ -455,9 +456,14 @@ export function FacilityGroupTable<T extends FacilityBase>({
                             (sum, f) => sum + (f.remaining_lifespan || 0),
                             0,
                         ) / count;
-                    const hasInfiniteLifespan = facilityGroup.some(
-                        (f) => f.remaining_lifespan === null,
+                    const hasDecommissioning = facilityGroup.some(
+                        (f) => f.decommissioning,
                     );
+                    const hasInfiniteLifespan =
+                        !hasDecommissioning &&
+                        facilityGroup.some(
+                            (f) => f.remaining_lifespan === null,
+                        );
                     const hasUpgrades = facilityGroup.some(
                         (f) => f.upgrade_cost !== null,
                     );
@@ -500,7 +506,11 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                     <CashFlow amountPerTick={totalOpCost} />
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono">
-                                    {hasInfiniteLifespan ? (
+                                    {hasDecommissioning ? (
+                                        <span className="text-amber-600 dark:text-amber-400 text-xs font-semibold">
+                                            Decommissioning
+                                        </span>
+                                    ) : hasInfiniteLifespan ? (
                                         "∞"
                                     ) : (
                                         <Duration
@@ -544,7 +554,11 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                             />
                                         </td>
                                         <td className="py-3 px-4 text-right font-mono">
-                                            {facility.remaining_lifespan ? (
+                                            {facility.decommissioning ? (
+                                                <span className="text-amber-600 dark:text-amber-400 text-xs font-semibold">
+                                                    Decommissioning
+                                                </span>
+                                            ) : facility.remaining_lifespan ? (
                                                 <Duration
                                                     ticks={
                                                         facility.remaining_lifespan
