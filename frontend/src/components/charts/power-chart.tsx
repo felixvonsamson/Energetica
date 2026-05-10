@@ -17,6 +17,11 @@ import {
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useFacilities } from "@/hooks/use-facilities";
 import { useGameEngine } from "@/hooks/use-game";
@@ -318,7 +323,18 @@ export function PowerOverviewTable({
                                     className="py-3 px-4 text-center font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors min-w-37.5"
                                     onClick={() => handleSort("used")}
                                 >
-                                    Capacity Factor
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="underline decoration-dotted cursor-help">
+                                                Capacity Factor
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            Avg. power output over the
+                                            displayed time range ÷ installed
+                                            capacity
+                                        </TooltipContent>
+                                    </Tooltip>
                                     {getSortIndicator("used")}
                                 </th>
                             </>
