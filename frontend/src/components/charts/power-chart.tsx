@@ -8,6 +8,7 @@
  *  - Facility icon + name labels in the tooltip
  */
 
+import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import {
@@ -329,10 +330,19 @@ export function PowerOverviewTable({
                                                 Capacity Factor
                                             </span>
                                         </TooltipTrigger>
-                                        <TooltipContent>
-                                            Avg. power output over the
-                                            displayed time range ÷ installed
-                                            capacity
+                                        <TooltipContent className="max-w-52 text-center leading-snug">
+                                            Average power output over the
+                                            displayed time range divided by
+                                            installed capacity.{" "}
+                                            <Link
+                                                to="/app/wiki/$slug"
+                                                params={{
+                                                    slug: "power-facilities",
+                                                }}
+                                                className="underline hover:opacity-80"
+                                            >
+                                                Learn more
+                                            </Link>
                                         </TooltipContent>
                                     </Tooltip>
                                     {getSortIndicator("used")}
