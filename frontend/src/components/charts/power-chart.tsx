@@ -8,6 +8,7 @@
  *  - Facility icon + name labels in the tooltip
  */
 
+import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import {
@@ -17,6 +18,11 @@ import {
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useFacilities } from "@/hooks/use-facilities";
 import { useGameEngine } from "@/hooks/use-game";
@@ -213,9 +219,10 @@ export function PowerOverviewTable({
                 const row: FacilityRow = { facilityType, totalEnergy };
 
                 if (isGeneration && facilitiesData) {
-                    const facilities = facilitiesData.power_facilities.filter(
-                        (f) => f.facility === facilityType,
-                    );
+                    const facilities = [
+                        ...facilitiesData.power_facilities,
+                        ...facilitiesData.storage_facilities,
+                    ].filter((f) => f.facility === facilityType);
                     if (facilities.length > 0) {
                         const installedCapacity = facilities.reduce(
                             (sum, f) => sum + f.max_power_generation,
@@ -317,7 +324,27 @@ export function PowerOverviewTable({
                                     className="py-3 px-4 text-center font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors min-w-37.5"
                                     onClick={() => handleSort("used")}
                                 >
-                                    Used Capacity
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="underline decoration-dotted cursor-help">
+                                                Capacity Factor
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-52 text-center leading-snug">
+                                            Average power output over the
+                                            displayed time range divided by
+                                            installed capacity.{" "}
+                                            <Link
+                                                to="/app/wiki/$slug"
+                                                params={{
+                                                    slug: "power-facilities",
+                                                }}
+                                                className="underline hover:opacity-80"
+                                            >
+                                                Learn more
+                                            </Link>
+                                        </TooltipContent>
+                                    </Tooltip>
                                     {getSortIndicator("used")}
                                 </th>
                             </>
