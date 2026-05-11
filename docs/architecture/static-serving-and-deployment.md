@@ -181,15 +181,30 @@ scripts/
 
 `scripts/vps-setup.sh` is superseded by the three `infra/setup-*.sh` scripts and will be removed.
 
+### `setup-season.sh` flow
+
+1. Create `/var/www/energetica-{season}/` directory structure
+2. Clone repo (or symlink shared code — TBD)
+3. Create and enable Apache vhost from `apache-season.conf` template
+4. Reload Apache (HTTP only at this point)
+5. Obtain TLS certificate: `certbot certonly --webroot -w /var/www/energetica-{season}/ -d {season}.{domain}` — the season directory (created in step 1) is already the Apache DocumentRoot, so ACME challenge files are reachable there
+6. Update vhost with SSL directives, reload Apache
+7. Install certbot deploy hook to reload Apache on certificate renewal
+8. Create and enable `energetica-{season}.service` systemd unit
+9. `pip install -r requirements.txt`, start service
+
+TLS provisioning (steps 5–7) requires the DNS record for `{season}.{domain}` to already resolve to the server before running.
+
 ### `deploy-season.sh` flow
 
 1. Build app bundle (`bun run build`)
 2. Confirm deployment summary (skipped with `--yes`)
 3. `rsync` Python backend code to server (excluding `.venv`, `season/`, build artifacts)
-4. `rsync` app bundle to server
-5. `pip install -r requirements.txt` on server if dependencies changed
-6. `systemctl restart energetica-{season}`
-7. Health check
+4. `rsync` app bundle to server (`energetica/static/app/`)
+5. `rsync` service worker to server (`energetica/static/service-worker.js` — built separately by `build:sw`, lives outside the app bundle directory)
+6. `pip install -r requirements.txt` on server if dependencies changed
+7. `systemctl restart energetica-{season}`
+8. Health check
 
 Scripts accept all inputs via arguments or env vars and support `--yes` to suppress confirmation prompts, making them callable from a CI job without modification. No commitment to a CI platform is made here.
 
