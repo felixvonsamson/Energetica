@@ -1,4 +1,10 @@
-import { Clock, Pause, PlayCircle, Truck, ZapOff } from "lucide-react";
+import {
+    Clock,
+    Pause,
+    PlayCircle,
+    Truck,
+    ZapOff,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 

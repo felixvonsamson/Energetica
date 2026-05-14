@@ -1015,21 +1015,12 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
         return
 
     if demand_type == "transport":
-        # TODO (Felix): This should be updated and use a similar logic as above.
-        # Note(mglst): The below uses filter to get an iterable, which the sorted function then converts to a list,
-        # which is then converted back to an iterable by iter, which next then gets the first element of, or None.
-        last_shipment = next(
-            iter(
-                sorted(
-                    OngoingShipment.filter_by(player=player),
-                    key=lambda shipment: shipment.arrival_tick,
-                    reverse=True,
-                ),
-            ),
-            None,
-        )
-        if last_shipment:
-            last_shipment.delay_by(1 - satisfaction / last_shipment.power_demand)
+        cumul_demand = 0.0
+        for shipment in sorted(OngoingShipment.filter_by(player=player), key=lambda s: s.arrival_tick):
+            cumul_demand += shipment.power_demand
+            if cumul_demand > satisfaction:
+                speed_factor = max(0.0, 1 + (satisfaction - cumul_demand) / shipment.power_demand)
+                shipment.delay_by(1 - speed_factor)
         return
 
 

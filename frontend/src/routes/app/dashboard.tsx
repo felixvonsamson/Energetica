@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import {
+    AlertTriangle,
     Construction,
     FlaskConical,
     Truck,
@@ -22,6 +23,7 @@ import { AchievementCard } from "@/components/dashboard/achievement-card";
 import { DailyQuizButton } from "@/components/dashboard/daily-quiz";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import {
+    ClimateEventRecoveryList,
     ProjectList,
     ShipmentList,
 } from "@/components/dashboard/progress-lists";
@@ -34,6 +36,7 @@ import { useAchievements } from "@/hooks/use-achievements";
 import { useCapabilities, useHasCapability } from "@/hooks/use-capabilities";
 import { useProjects } from "@/hooks/use-projects";
 import { useShipments } from "@/hooks/use-shipments";
+import { useClimateEventRecoveries } from "@/hooks/use-weather";
 
 export const Route = createFileRoute("/app/dashboard")({
     component: DashboardPage,
@@ -72,6 +75,10 @@ function DashboardHelp() {
                 <li className="flex items-center gap-2">
                     <Truck className="w-4 h-4 shrink-0" />
                     <span>Ongoing shipments</span>
+                </li>
+                <li className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>Recovery progress for active climate events</span>
                 </li>
                 <li className="flex items-center gap-2">
                     <Link2 className="w-4 h-4 shrink-0" />
@@ -113,6 +120,7 @@ function DashboardContent() {
     const capabilities = useCapabilities();
     const { data: projectsData } = useProjects();
     const { data: shipmentsData } = useShipments();
+    const { data: climateRecoveriesData } = useClimateEventRecoveries();
 
     const hasNetwork = useHasCapability("has_network");
 
@@ -125,6 +133,10 @@ function DashboardContent() {
 
     // Check if there are any shipments
     const hasShipments = (shipmentsData?.shipments.length ?? 0) > 0;
+
+    // Check if there are any active climate event recoveries
+    const hasClimateRecoveries =
+        (climateRecoveriesData?.recoveries.length ?? 0) > 0;
 
     return (
         <div className="py-4 md:p-8 flex flex-col gap-6">
@@ -139,6 +151,20 @@ function DashboardContent() {
                     <WeatherSection />
                 </CardContent>
             </PageCard>
+
+            {/* Climate event recoveries - only show if any are active */}
+            {hasClimateRecoveries && (
+                <DashboardSection
+                    title={
+                        <>
+                            <AlertTriangle className="inline w-4 h-4" /> Climate
+                            Event Recovery
+                        </>
+                    }
+                >
+                    <ClimateEventRecoveryList />
+                </DashboardSection>
+            )}
 
             {/* Construction - only show if there are any construction projects */}
             {hasConstructionProjects && (

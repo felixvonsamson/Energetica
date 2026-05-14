@@ -7,8 +7,8 @@ import { useGameTick } from "@/hooks/use-game-tick";
 import { ProjectStatus } from "@/types/projects";
 
 /**
- * Interpolate the effective game tick between server ticks using wall-clock time.
- * The fraction is clamped to [0, 1] to guard against clock skew.
+ * Interpolate the effective game tick between server ticks using wall-clock
+ * time. The fraction is clamped to [0, 1] to guard against clock skew.
  */
 export function interpolateEffectiveTick(
     currentTick: number,
@@ -105,6 +105,39 @@ export function calculateProjectProgress(
     return 0;
 }
 
+export function useClimateEventRecoveryProgress(
+    duration: number,
+    endTick: number,
+): number {
+    const { currentTick, lastTickTimestamp } = useGameTick();
+    const { data: engine } = useGameEngine();
+    const [, setNow] = useState(() => Date.now());
+
+    useEffect(() => {
+        if (currentTick === undefined) return;
+        const id = setInterval(() => setNow(Date.now()), 500);
+        return () => clearInterval(id);
+    }, [currentTick]);
+
+    if (currentTick === undefined) return 0;
+
+    const tickDurationMs = engine
+        ? engine.wall_clock_seconds_per_tick * 1000
+        : 60_000;
+    const effectiveTick =
+        lastTickTimestamp !== undefined
+            ? interpolateEffectiveTick(
+                  currentTick,
+                  lastTickTimestamp,
+                  tickDurationMs,
+              )
+            : currentTick;
+
+    const ticksRemaining = Math.max(0, endTick - effectiveTick);
+    const ticksCompleted = duration - ticksRemaining;
+    return Math.min(100, Math.max(0, (ticksCompleted / duration) * 100));
+}
+
 export function useShipmentProgress(
     duration: number,
     arrivalTick: number,
@@ -125,7 +158,11 @@ export function useShipmentProgress(
         : 60_000;
     const effectiveTick =
         lastTickTimestamp !== undefined
-            ? interpolateEffectiveTick(currentTick, lastTickTimestamp, tickDurationMs)
+            ? interpolateEffectiveTick(
+                  currentTick,
+                  lastTickTimestamp,
+                  tickDurationMs,
+              )
             : currentTick;
 
     return calculateShipmentProgress(duration, arrivalTick, effectiveTick);

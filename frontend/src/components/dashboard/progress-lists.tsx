@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TechnologyName, ResourceName } from "@/components/ui/asset-name";
 import { Button } from "@/components/ui/button";
+import { CashFlow } from "@/components/ui/cash-flow";
 import { Countdown } from "@/components/ui/countdown";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -28,11 +29,20 @@ import {
     useResumeProject,
 } from "@/hooks/use-projects";
 import { useShipments } from "@/hooks/use-shipments";
+import { useClimateEventRecoveries } from "@/hooks/use-weather";
+import { CLIMATE_EVENT_CONFIG } from "@/lib/climate-event-config";
 import { formatMass } from "@/lib/format-utils";
-import { useProjectProgress, useShipmentProgress } from "@/lib/progress-utils";
+import {
+    useClimateEventRecoveryProgress,
+    useProjectProgress,
+    useShipmentProgress,
+} from "@/lib/progress-utils";
 import { useProjectQueue } from "@/lib/project-utils";
+import type { components } from "@/types/api.generated";
 import { Project, ProjectCategory, ProjectStatus } from "@/types/projects";
 import { Shipment } from "@/types/shipments";
+
+type ClimateEventRecovery = components["schemas"]["ClimateEventRecoveryOut"];
 
 type ProjectListProps = {
     projectCategory: ProjectCategory;
@@ -258,6 +268,57 @@ function ProjectItem({ project }: ProjectItemProps) {
     );
 }
 
+export function ClimateEventRecoveryList() {
+    const { data } = useClimateEventRecoveries();
+    const recoveries = data?.recoveries ?? [];
+
+    return (
+        <div className="space-y-2">
+            <AnimatePresence initial={false}>
+                {recoveries.map((recovery) => (
+                    <motion.div
+                        key={recovery.id}
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <ClimateEventRecoveryItem recovery={recovery} />
+                    </motion.div>
+                ))}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+function ClimateEventRecoveryItem({
+    recovery,
+}: {
+    recovery: ClimateEventRecovery;
+}) {
+    const progress = useClimateEventRecoveryProgress(
+        recovery.duration,
+        recovery.end_tick,
+    );
+    const name = CLIMATE_EVENT_CONFIG[recovery.event_key].name;
+    return (
+        <ProgressCard
+            status="recovering"
+            progress={progress}
+            label={
+                <span className="font-semibold text-sm text-foreground">
+                    {name}
+                </span>
+            }
+            speed={undefined}
+            endTick={recovery.end_tick}
+            actions={<></>}
+            info={<CashFlow amountPerTick={-recovery.recovery_cost} />}
+        />
+    );
+}
+
 function ShipmentItem({ shipment }: { shipment: Shipment }) {
     const progress = useShipmentProgress(
         shipment.duration,
@@ -283,7 +344,7 @@ function ShipmentItem({ shipment }: { shipment: Shipment }) {
 }
 
 interface ProgressCardProps {
-    status: ProjectStatus | "in-transit";
+    status: ProjectStatus | "in-transit" | "recovering";
     progress: number;
     speed: number | undefined;
     endTick: number | null;
@@ -291,6 +352,8 @@ interface ProgressCardProps {
     remainingTicks?: number;
     label: ReactNode;
     actions: ReactNode;
+    /** Optional extra info shown next to the countdown (e.g. cost rate). */
+    info?: ReactNode;
 }
 
 function ProgressCard({
@@ -301,6 +364,7 @@ function ProgressCard({
     remainingTicks,
     label,
     actions,
+    info,
 }: ProgressCardProps) {
     return (
         <div className="px-3 pt-2 pb-1 rounded-lg bg-muted/30">
@@ -312,9 +376,9 @@ function ProgressCard({
                             status={speed > 0 ? "slowed" : "stopped"}
                             size="sm"
                         />
-                    ) : (
+                    ) : status !== "recovering" ? (
                         <StatusBadge status={status} size="sm" />
-                    )}
+                    ) : null}
                     {label}
                 </div>
                 {/* Action buttons */}
@@ -341,6 +405,7 @@ function ProgressCard({
                     {speed !== undefined && speed < 1.0 && (
                         <>×{speed.toFixed(1)} speed</>
                     )}
+                    {info}
                 </div>
                 <span className="font-medium">{progress.toFixed(0)}%</span>
             </div>
