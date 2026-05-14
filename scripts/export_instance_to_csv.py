@@ -162,7 +162,11 @@ def export_market_last(base, out, eng, id_to_username):
         charts_dir = f"{base}/data/networks/{net_id}/charts"
         if not os.path.exists(charts_dir):
             continue
-        last_file = sorted(os.listdir(charts_dir))[-1]
+        files = [f for f in os.listdir(charts_dir) if re.search(r"market_t(\d+)", f)]
+        if not files:
+            print(f"  Warning: no chart files found in {charts_dir}, skipping network {net_id}")
+            continue
+        last_file = max(files, key=lambda f: int(re.search(r"market_t(\d+)", f).group(1)))
         tick_num = int(re.search(r"market_t(\d+)", last_file).group(1))
 
         with open(f"{charts_dir}/{last_file}", "rb") as f:
@@ -196,7 +200,11 @@ def export_climate(base, out, eng):
     clock_time = eng["clock_time"]
     start_date = eng["start_date"]
 
-    with open(f"{base}/data/servers/climate_data.pck", "rb") as f:
+    climate_path = f"{base}/data/servers/climate_data.pck"
+    if not os.path.exists(climate_path):
+        print(f"Warning: {climate_path} not found, skipping climate export.", file=sys.stderr)
+        return
+    with open(climate_path, "rb") as f:
         climate = pickle.load(f)
 
     for res_idx, factor, name in RESOLUTIONS:
