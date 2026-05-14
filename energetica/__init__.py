@@ -116,14 +116,14 @@ def create_app(
         # Normal game run.
         assert simulate_till is None
         if load_checkpoint:
-            assert os.path.isfile("last_checkpoint.tar.gz"), "No checkpoint found."
+            assert os.path.isfile("checkpoints/last_checkpoint.tar.gz"), "No checkpoint found."
             saved_history = False
             if os.path.exists("instance/"):
                 if os.path.isfile("instance/actions_history.log"):
                     os.rename("instance/actions_history.log", "actions_history.log.bak")
                     saved_history = True
                 shutil.rmtree("instance")
-            with tarfile.open("last_checkpoint.tar.gz", "r:gz") as tar:
+            with tarfile.open("checkpoints/last_checkpoint.tar.gz", "r:gz") as tar:
                 tar.extractall("./")
             if saved_history:
                 os.rename("actions_history.log.bak", "instance/actions_history.log")

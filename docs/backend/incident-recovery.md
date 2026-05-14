@@ -30,44 +30,22 @@ systemctl stop energetica
 cp -r instance/ instance.bak.$(date +%Y%m%d_%H%M%S)/
 ```
 
-**Step 2 — preserve the actions log:**
+**Step 2 — restore from checkpoint and replay:**
+
+The `--load_checkpoint` flag handles everything: it preserves the actions log, removes the stale `instance/` folder, extracts `checkpoints/last_checkpoint.tar.gz`, puts the log back, and replays all recorded actions before resuming normal operation.
 
 ```bash
-cp instance/actions_history.log /tmp/actions_history.log.bak
+python main.py --env prod --no-reload --load_checkpoint
 ```
 
-**Step 3 — remove the current instance folder** (prevents stale files with newer mtimes from surviving into the restored state):
+Pass the same SSL and port flags used by the production service. Watch for rapid tick replays (`t = XXXX`). Once the ticks slow to the normal 30-second cadence, recovery is complete. Stop the process with Ctrl+C.
 
-```bash
-rm -r instance/
-```
-
-**Step 4 — restore the checkpoint:**
-
-```bash
-tar -xzf checkpoints/last_checkpoint.tar.gz
-```
-
-**Step 5 — put the actions log back** (so the engine can replay all actions since the checkpoint):
-
-```bash
-cp /tmp/actions_history.log.bak instance/actions_history.log
-```
-
-**Step 6 — touch `engine_data.pck`** (ensures its mtime is newer than all data files, preventing the integrity check from firing):
-
-```bash
-touch instance/engine_data.pck
-```
-
-**Step 7 — start the service:**
+**Step 3 — start the service:**
 
 ```bash
 systemctl start energetica
 journalctl -u energetica -f
 ```
-
-Watch the logs. You should see the engine replaying ticks rapidly until it catches up to the present, then resume normal 30-second ticks.
 
 ## Verifying recovery
 
