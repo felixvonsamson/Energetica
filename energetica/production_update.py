@@ -177,13 +177,12 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
                 af.usage = usage
 
     for storage_facility in StorageFacilityType:
-        # TODO/COMMENT (Felix): Storage facilities have a SOC and a generation/consumption usage that can be defined as the current power produced/consumed divided by the max power. Currently, we only show the SOC as usage, but it would be interesting to show both values in the frontend.
         if storage_facility in player.capacities:
-            all_afs = list(ActiveFacility.filter_by(player=player, facility_type=storage_facility))
-            total_capacity = sum(af.storage_capacity for af in all_afs)
-            usage = new_values["storage"][storage_facility] / total_capacity if total_capacity > 0 else 0.0
-            for af in all_afs:
-                af.usage = usage  # type: ignore
+            power_capacity = player.capacities[storage_facility]["power"]
+            net_power = new_values["generation"][storage_facility] - new_values["demand"][storage_facility]
+            usage = net_power / power_capacity if power_capacity > 0 else 0.0
+            for af in ActiveFacility.filter_by(player=player, facility_type=storage_facility):
+                af.usage = usage
 
     for extraction_facility in ExtractionFacilityType:
         if extraction_facility in player.capacities:

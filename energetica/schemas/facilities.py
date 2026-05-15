@@ -58,6 +58,7 @@ class StorageFacilityOut(BaseModel):
     facility: StorageFacilityType
     storage_capacity: float
     state_of_charge: float
+    usage: float
     max_power_generation: float
     max_power_use: float
     op_cost_per_tick: float
@@ -76,6 +77,7 @@ class StorageFacilityOut(BaseModel):
             facility=storage_facility.facility_type,
             storage_capacity=storage_facility.storage_capacity,
             state_of_charge=storage_facility.state_of_charge,
+            usage=storage_facility.usage,
             max_power_generation=storage_facility.max_power_generation,
             max_power_use=storage_facility.max_power_use,
             op_cost_per_tick=storage_facility.op_cost_per_tick,
