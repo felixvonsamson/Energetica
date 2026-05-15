@@ -1130,9 +1130,14 @@ def initialize_consumption_statuses(player: Player, new_values: dict) -> None:
     epsilon = 0.1  # MW tolerance
 
     for facility_type in player.network_prices.bid_prices.keys():
-        # Check if demand is zero for this facility
         if demand.get(facility_type, 0.0) < epsilon:
-            player.consumption_statuses[facility_type] = "no_demand"
+            if isinstance(facility_type, StorageFacilityType) and any(
+                af.decommissioning
+                for af in ActiveFacility.filter_by(player=player, facility_type=facility_type)
+            ):
+                player.consumption_statuses[facility_type] = "draining_for_decommissioning"
+            else:
+                player.consumption_statuses[facility_type] = "no_demand"
         else:
             player.consumption_statuses[facility_type] = "fully_satisfied"
 

@@ -41,6 +41,7 @@ ConsumptionStatus = Literal[
     "partially_satisfied",
     "fully_satisfied",
     "no_demand",
+    "draining_for_decommissioning",
 ]
 """
 Status for power consumption facilities (demand and storage charge).
@@ -49,4 +50,5 @@ Status for power consumption facilities (demand and storage charge).
 - partially_satisfied: Some power allocated but less than requested
 - fully_satisfied: Full demand satisfied
 - no_demand: No demand for this facility (demand is zero)
+- draining_for_decommissioning: Storage facility is blocked from charging while a unit drains for decommissioning
 """

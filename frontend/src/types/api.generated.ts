@@ -2754,7 +2754,8 @@ export interface components {
                     | "not_satisfied"
                     | "partially_satisfied"
                     | "fully_satisfied"
-                    | "no_demand";
+                    | "no_demand"
+                    | "draining_for_decommissioning";
             };
         };
         /**
