@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 interface PriceInputProps {
     /** Current price value from server */
     value: number;
-    /** Called with the committed price on blur / Enter */
-    onCommit: (newPrice: number) => void;
+    /** Called with the committed price on blur / Enter; should reject on failure */
+    onCommit: (newPrice: number) => Promise<void>;
     /** Disable interaction while a mutation is in flight */
     disabled?: boolean;
 }
@@ -25,10 +25,14 @@ export function PriceInput({ value, onCommit, disabled = false }: PriceInputProp
         setLocalValue(value.toFixed(2));
     }, [value]);
 
-    const commit = () => {
+    const commit = async () => {
         const parsed = parseFloat(localValue);
         if (!isNaN(parsed)) {
-            onCommit(parsed);
+            try {
+                await onCommit(parsed);
+            } catch {
+                setLocalValue(value.toFixed(2));
+            }
         } else {
             setLocalValue(value.toFixed(2)); // reset on invalid input
         }

@@ -97,6 +97,12 @@ class NetworkPrices:
         updated_bids: dict[BidType, float],
     ) -> None:
         """Update the prices of the player for each facility type."""
+        merged_asks = {**self.ask_prices, **updated_asks}
+        merged_bids = {**self.bid_prices, **updated_bids}
+        for storage_type in StorageFacilityType:
+            if storage_type in merged_asks and storage_type in merged_bids:
+                if merged_asks[storage_type] < merged_bids[storage_type]:
+                    raise GameError(GameExceptionType.STORAGE_PRICE_INVERSION)
         self.bid_prices |= updated_bids
         self.ask_prices |= updated_asks
 
@@ -173,12 +179,7 @@ class NetworkPrices:
         player.invalidate_queries(["power-priorities"], ["facilities"])
 
     def change_facility_priority(self, player: Player, new_priority: list[PowerPriorityItem]) -> None:
-        """
-        Reassign the selling prices of the facilities according to the new priority order.
-
-        Executed when the facilities priority is changed by changing the order in the interactive table for players
-        that are not in a network.
-        """
+        """Reassign the selling prices of the facilities according to the new priority order."""
         # Check if the new priority list is valid, i.e. contains the same elements as the old one
         old_priority = self.get_facility_priorities(player)
         if set(old_priority) != set(new_priority):

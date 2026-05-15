@@ -4887,6 +4887,7 @@ export interface components {
             | "OLD_PASSWORD_INCORRECT"
             | "InvalidMultiplier"
             | "malformedRequest"
+            | "storagePriceInversion"
             | "Project not found"
             | "CannotDecreasePriorityOfLastProject"
             | "CannotIncreasePriorityOfFirstProject"

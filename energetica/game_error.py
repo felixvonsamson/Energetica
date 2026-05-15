@@ -41,6 +41,7 @@ class GameExceptionType(StrEnum):
     INVALID_MULTIPLIER = "InvalidMultiplier"
     # network prices
     MALFORMED_REQUEST = "malformedRequest"
+    STORAGE_PRICE_INVERSION = "storagePriceInversion"
     # Project
     PROJECT_NOT_FOUND = "Project not found"
     CANNOT_DECREASE_PRIORITY_OF_LAST_PROJECT = "CannotDecreasePriorityOfLastProject"
