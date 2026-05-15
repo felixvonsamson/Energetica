@@ -84,7 +84,7 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     noSuchNetwork: "This electricity market does not exist.",
     malformedRequest: "Invalid request. Please check your input.",
     storagePriceInversion:
-        "Invalid reorder: a storage facility's discharge price must be higher than its charge price.",
+        "Invalid order: a storage facility's discharge price must be higher than its charge price.",
 
     // --- Resource market ---
     notEnoughResource: "You don't have enough of this resource.",
