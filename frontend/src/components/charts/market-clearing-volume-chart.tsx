@@ -52,8 +52,19 @@ function useMarketClearingData(
 
     const filteredChartData = useMemo(() => {
         if (!market) return [];
+        const staticKeys = KEY_ORDER_BY_CHART_TYPE[chartType];
+        const dataKeys =
+            staticKeys.length > 0
+                ? staticKeys
+                : Array.from(
+                      new Set(
+                          chartData.flatMap((dp) =>
+                              Object.keys(dp).filter((k) => k !== "tick"),
+                          ),
+                      ),
+                  );
         const emptyDatapoint = Object.fromEntries(
-            KEY_ORDER_BY_CHART_TYPE[chartType].map((key) => [key, null]),
+            dataKeys.map((key) => [key, null]),
         );
         return chartData.map((dataPoint) =>
             dataPoint.tick <= market.created_tick
