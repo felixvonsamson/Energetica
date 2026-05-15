@@ -459,11 +459,6 @@ export function FacilityGroupTable<T extends FacilityBase>({
                     const hasDecommissioning = facilityGroup.some(
                         (f) => f.decommissioning,
                     );
-                    const hasInfiniteLifespan =
-                        !hasDecommissioning &&
-                        facilityGroup.some(
-                            (f) => f.remaining_lifespan === null,
-                        );
                     const hasUpgrades = facilityGroup.some(
                         (f) => f.upgrade_cost !== null,
                     );
@@ -508,10 +503,8 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                 <td className="py-3 px-4 text-right font-mono">
                                     {hasDecommissioning ? (
                                         <span className="text-amber-600 dark:text-amber-400 text-xs font-semibold">
-                                            Decommissioning
+                                            Draining...
                                         </span>
-                                    ) : hasInfiniteLifespan ? (
-                                        "∞"
                                     ) : (
                                         <Duration
                                             ticks={avgLifespan}
@@ -556,7 +549,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                         <td className="py-3 px-4 text-right font-mono">
                                             {facility.decommissioning ? (
                                                 <span className="text-amber-600 dark:text-amber-400 text-xs font-semibold">
-                                                    Decommissioning
+                                                    Draining...
                                                 </span>
                                             ) : facility.remaining_lifespan ? (
                                                 <Duration
