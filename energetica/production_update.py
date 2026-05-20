@@ -44,7 +44,7 @@ def update_electricity() -> None:
     engine.current_climate_data.init_new_value()
 
     # --- Initialization ---
-    players: list[Player] = list(Player.all())
+    players: list[Player] = Player.all()
     new_values = {player.id: player.rolling_history.init_new_data() for player in players}
 
     # --- Resetting speeds of ongoing projects and shipments---
@@ -55,7 +55,7 @@ def update_electricity() -> None:
     for os in ongoing_shipments:
         os.reset_speed()
 
-    for network in list(Network.all()):
+    for network in Network.all():
         # --- Market resolution ---
         market = init_market()
         for player in network.members:
