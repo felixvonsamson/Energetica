@@ -13,36 +13,6 @@ const STORAGE_FACILITY_TYPES = [
 ] as const;
 
 /**
- * Validates that battery discharge (ask) is not placed below battery charge
- * (bid) in the unified priority list.
- *
- * @param priorities - The unified priority array
- * @returns True if valid, false if any battery has discharge below charge
- */
-export function validateBatteryOrder(priorities: PowerPriorityItem[]): boolean {
-    for (const storageType of STORAGE_FACILITY_TYPES) {
-        const dischargeIdx = priorities.findIndex(
-            (p) => p.type === storageType && p.side === "ask",
-        );
-        const chargeIdx = priorities.findIndex(
-            (p) => p.type === storageType && p.side === "bid",
-        );
-
-        // Invalid: discharge (ask) must not be AFTER charge (bid) in priority list
-        // Lower index = higher priority
-        if (
-            dischargeIdx !== -1 &&
-            chargeIdx !== -1 &&
-            dischargeIdx > chargeIdx
-        ) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-/**
  * Gets the display name for a power priority item. Handles special cases like
  * transport/construction/research and storage suffixes.
  *
