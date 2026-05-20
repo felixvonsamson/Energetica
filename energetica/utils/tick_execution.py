@@ -39,6 +39,9 @@ def tick() -> None:
     engine.log(f"t = {engine.total_t}")
     if engine.total_t % 216 == 0:
         save_past_data()
+        # save_past_data() ends with engine.save(), but on coarse-mtime filesystems the
+        # pickle could share a timestamp with the last data file written; touch ensures
+        # engine_data.pck is strictly newest so engine.load()'s mtime check doesn't raise.
         Path("instance/engine_data.pck").touch()
     if (engine.total_t * engine.clock_time + int(engine.start_date.timestamp())) % 86400 == 9 * 3600:
         engine.new_daily_question()
