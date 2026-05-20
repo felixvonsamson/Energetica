@@ -131,7 +131,7 @@ class ActiveFacility(DBModel):
     @property
     def state_of_charge(self) -> float:
         """Current charge of the facility as a percentage of maximum."""
-        return min(1, self.usage)
+        return self.player.rolling_history.get_last_data("storage_soc", self.facility_type)
 
     @property
     def efficiency(self) -> float:

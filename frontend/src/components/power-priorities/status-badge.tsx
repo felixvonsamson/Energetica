@@ -124,6 +124,11 @@ export function StatusBadge({ status, variant }: StatusBadgeProps) {
             label: "No Demand",
             variant: "neutral",
         },
+        draining_for_decommissioning: {
+            icon: <BatteryWarning />,
+            label: "Draining for Decommissioning",
+            variant: "warning",
+        },
 
         // Renewable statuses
         high_wind_cutoff: {

@@ -58,11 +58,13 @@ class StorageFacilityOut(BaseModel):
     facility: StorageFacilityType
     storage_capacity: float
     state_of_charge: float
+    usage: float
     max_power_generation: float
     max_power_use: float
     op_cost_per_tick: float
     efficiency: float
     remaining_lifespan: float | None
+    decommissioning: bool
     upgrade_cost: float | None
     dismantle_cost: float | None
 
@@ -75,11 +77,13 @@ class StorageFacilityOut(BaseModel):
             facility=storage_facility.facility_type,
             storage_capacity=storage_facility.storage_capacity,
             state_of_charge=storage_facility.state_of_charge,
+            usage=storage_facility.usage,
             max_power_generation=storage_facility.max_power_generation,
             max_power_use=storage_facility.max_power_use,
             op_cost_per_tick=storage_facility.op_cost_per_tick,
             efficiency=storage_facility.efficiency,
             remaining_lifespan=storage_facility.remaining_lifespan,
+            decommissioning=storage_facility.decommissioning,
             upgrade_cost=None if storage_facility.decommissioning else storage_facility.upgrade_cost,
             dismantle_cost=None if storage_facility.decommissioning else storage_facility.dismantle_cost,
         )

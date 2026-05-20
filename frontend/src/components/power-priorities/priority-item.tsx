@@ -66,25 +66,21 @@ export function PriorityItem({
             ? productionPowerLevels[item.type]
             : consumptionPowerLevels[item.type];
 
-    const capacityMW = useMemo(() => {
-        if (!facilitiesData) return 0;
-        if (item.side === "ask") {
-            return (
-                facilitiesData.power_facilities
-                    .filter((f) => f.facility === item.type)
-                    .reduce((sum, f) => sum + f.max_power_generation, 0) +
-                facilitiesData.storage_facilities
-                    .filter((f) => f.facility === item.type)
-                    .reduce((sum, f) => sum + f.max_power_generation, 0)
-            );
+    const facilityUsage = useMemo(() => {
+        if (!facilitiesData) return null;
+        const storage = facilitiesData.storage_facilities.find(
+            (f) => f.facility === item.type,
+        );
+        if (storage) {
+            return item.side === "ask"
+                ? Math.max(0, storage.usage)
+                : Math.max(0, -storage.usage);
         }
         return (
-            facilitiesData.extraction_facilities
-                .filter((f) => f.facility === item.type)
-                .reduce((sum, f) => sum + f.max_power_use, 0) +
-            facilitiesData.storage_facilities
-                .filter((f) => f.facility === item.type)
-                .reduce((sum, f) => sum + f.max_power_use, 0)
+            [
+                ...facilitiesData.power_facilities,
+                ...facilitiesData.extraction_facilities,
+            ].find((f) => f.facility === item.type)?.usage ?? null
         );
     }, [facilitiesData, item.type, item.side]);
 
@@ -184,11 +180,11 @@ export function PriorityItem({
 
             {/* Power gauge (hidden on mobile) */}
             <td className="py-3 px-3 hidden lg:table-cell bg-secondary">
-                {capacityMW > 0 ? (
+                {facilityUsage !== null ? (
                     <div className="w-30 mx-auto">
                         <FacilityGauge
                             facilityType={item.type}
-                            value={((currentPowerMW ?? 0) / capacityMW) * 100}
+                            value={facilityUsage * 100}
                         />
                     </div>
                 ) : (

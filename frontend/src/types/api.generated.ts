@@ -2809,7 +2809,8 @@ export interface components {
                     | "not_satisfied"
                     | "partially_satisfied"
                     | "fully_satisfied"
-                    | "no_demand";
+                    | "no_demand"
+                    | "draining_for_decommissioning";
             };
         };
         /**
@@ -4289,6 +4290,8 @@ export interface components {
             storage_capacity: number;
             /** State Of Charge */
             state_of_charge: number;
+            /** Usage */
+            usage: number;
             /** Max Power Generation */
             max_power_generation: number;
             /** Max Power Use */
@@ -4299,6 +4302,8 @@ export interface components {
             efficiency: number;
             /** Remaining Lifespan */
             remaining_lifespan: number | null;
+            /** Decommissioning */
+            decommissioning: boolean;
             /** Upgrade Cost */
             upgrade_cost: number | null;
             /** Dismantle Cost */
