@@ -293,7 +293,7 @@ Both build outputs are **gitignored** and deployed via rsync:
 ```
 scripts/
   infra/
-    setup-base.sh             ← run once per server; installs Apache, Python, certbot, firewall, modules;
+    setup-base.sh             ← run once per server; installs Apache, Python, certbot, firewall, modules, jq;
                                 creates /var/lib/energetica/ and accounts.db; creates `energetica` group
     setup-landing.sh          ← run once per server; creates /var/www/energetica-landing/, main domain vhost;
                                 creates /var/www/energetica-landing/seasons/ with setgid `energetica`
