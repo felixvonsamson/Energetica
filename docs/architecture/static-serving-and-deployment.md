@@ -367,15 +367,18 @@ No service restart — landing is pure static. `seasons.json` and `seasons/` are
 
 ### `migrate-to-server-accounts.py` flow
 
-Run once per VPS, before the first deploy that ships server-wide accounts. Idempotent guard: skips any `User` row that already carries an `account_id` (per-user check, not a whole-DB check), so a partial failure can be recovered by simply re-running the script.
+Run once per VPS, before the first deploy that ships server-wide accounts. Safely re-runnable: a partial failure (e.g. crash after some SQLite inserts but before the pickle is saved) is recovered by re-running the script.
 
 1. Stop the season service (`systemctl stop energetica-{season}`) to prevent concurrent pickle mutation
 2. Load the existing engine pickle (`/var/www/energetica-{season}/instance/engine_data.pck`)
-3. For each `User` in the engine's user table:
-   - Insert a row into `accounts.db`: `(username, pwhash, NULL, now())` → returns `account_id`
+3. For each `User` in the engine's user table whose `account_id` is unset:
+   - `INSERT OR IGNORE INTO accounts (username, pwhash, email, created_at) VALUES (?, ?, NULL, ?)` — `OR IGNORE` so an already-inserted row from a previous partial run is not treated as an error
+   - `SELECT account_id FROM accounts WHERE username = ?` — retrieves the `account_id` whether the row was just inserted or already existed
    - Write `account_id` back into the pickle `User`
 4. Save the modified pickle
 5. Restart the season service
+
+The combination of (in-memory) per-user `account_id` guard and (on-disk) `INSERT OR IGNORE` + `SELECT` covers both failure modes: an interrupted run that didn't save the pickle, and an interrupted run that did. In both cases, re-running reaches the same end state.
 
 Today there is exactly one season per VPS, so no cross-season username collisions are possible during migration. If multiple seasons ever exist before this migration runs (e.g. on a new server that bootstrapped multi-season before accounts were unified), the script must be re-thought.
 
