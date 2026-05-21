@@ -322,7 +322,8 @@ scripts/
     season.json.tmpl          ← initial per-season config; default policy is public, advertised true
   deploy-landing.sh           ← build:landing → rsync dist-landing/ → server:/var/www/energetica-landing/
   deploy-season.sh            ← usage: --server <server> --season <season>;
-                                rsyncs season.json if changed; restart triggers fragment + aggregation rewrite
+                                does not touch /etc/energetica/{season}/season.json (admin-owned);
+                                restart triggers fragment + aggregation rewrite
   list-seasons.sh             ← usage: --server <server>; queries systemd, prints name/port/status table
   migrate-to-server-accounts.py  ← one-time per VPS; backfills accounts.db from the existing season's pickle
                                    and writes account_id into each pickle User row
