@@ -350,7 +350,7 @@ No service restart — landing is pure static. `seasons.json` and `seasons/` are
 
 ### `migrate-to-server-accounts.py` flow
 
-Run once per VPS, before the first deploy that ships server-wide accounts. Idempotent guard: skips servers whose `accounts.db` is already populated.
+Run once per VPS, before the first deploy that ships server-wide accounts. Idempotent guard: skips any `User` row that already carries an `account_id` (per-user check, not a whole-DB check), so a partial failure can be recovered by simply re-running the script.
 
 1. Stop the season service (`systemctl stop energetica-{season}`) to prevent concurrent pickle mutation
 2. Load the existing engine pickle (`/var/www/energetica-{season}/instance/engine_data.pck`)
