@@ -112,7 +112,7 @@ Everything else (`StaticFiles` mount, all `FileResponse` page handlers) is remov
 ### What FastAPI gains
 
 - Reads `/var/lib/energetica/accounts.db` (shared SQLite) on signup, login, and password change.
-- Reads its own `/var/www/energetica-{season}/season.json` on every login attempt for access-policy enforcement (no in-memory cache — admin edits take effect on the next login).
+- Reads its own `/etc/energetica/{season}/season.json` on every login attempt for access-policy enforcement (no in-memory cache — admin edits take effect on the next login). The file lives **outside the vhost DocumentRoot** so Apache cannot serve it as static — see [Season Visibility & Access](#season-visibility--access) for rationale.
 - Writes its own sanitised fragment to `/var/www/energetica-landing/seasons/{slug}.json` on process start and whenever `season.json` is reloaded (see [Season Visibility & Access](#season-visibility--access)). Writes are atomic (write-to-tmp + rename).
 
 ---
@@ -141,7 +141,7 @@ SQLite is opened by every season backend with WAL mode (concurrent readers, seri
 
 ### Flows
 
-**Signup.** Only available on season subdomains, never on the apex. The landing's signup CTA links to the latest advertised season's `/app/sign-up` (selection rule: filename-sorted first entry in `seasons.json`; revisited when a richer picker UI lands — see [Deferred / Out of Scope](#deferred--out-of-scope)). Signup writes one row to SQLite `accounts` and one row to that season's pickle `User`, in a single logical transaction (SQLite first; on failure of the pickle write, the SQLite row is rolled back).
+**Signup.** Only available on season subdomains, never on the apex. The landing's signup CTA links to the latest advertised season's `/app/sign-up`. Selection rule: `seasons.json` is already sorted by `starts_at` descending (see [Publication to the landing](#publication-to-the-landing)), so the CTA target is the first entry with `advertised: true`. Revisited when a richer picker UI lands — see [Deferred / Out of Scope](#deferred--out-of-scope). Signup writes one row to SQLite `accounts` and one row to that season's pickle `User`, in a single logical transaction (SQLite first; on failure of the pickle write, the SQLite row is rolled back).
 
 **Login on the original signup season.** Backend looks up `accounts` by `username`, verifies `pwhash`. On success, finds the matching pickle `User` by `account_id` and sets the session cookie.
 
@@ -149,7 +149,7 @@ SQLite is opened by every season backend with WAL mode (concurrent readers, seri
 
 **Logout.** Unchanged; clears the session cookie for the current subdomain only.
 
-**Password change.** Writes the new `pwhash` to SQLite. Other seasons see the change on their next login attempt automatically (they read SQLite, not their pickle, for credentials).
+**Password change.** Writes the new `pwhash` to SQLite. Other seasons see the change on their next login attempt automatically (they read SQLite, not their pickle, for credentials). **Known limitation:** existing session cookies on other season subdomains remain valid until they expire or the user explicitly logs out — `itsdangerous`-signed session tokens carry no reference to the current `pwhash`. If a password is changed as a security response (suspected compromise), the user must log out of each season manually. Cross-season session invalidation is listed under [Deferred / Out of Scope](#deferred--out-of-scope).
 
 ### Why credentials shared but sessions not
 
@@ -167,19 +167,30 @@ Two independent axes per season:
 Both axes are declared per-season in a single file the season backend owns:
 
 ```
-/var/www/energetica-{slug}/season.json
+/etc/energetica/{slug}/season.json
 
   Public + advertised:
-    { "name": "Autumn 2025", "advertised": true,  "access": { "policy": "public" } }
+    { "name": "Autumn 2025",
+      "advertised": true,
+      "starts_at": "2025-09-15T00:00:00Z",
+      "access": { "policy": "public" } }
 
   Private (allowlist-gated) + unadvertised:
-    { "name": "ETHZ Spring 2026", "advertised": false,
+    { "name": "ETHZ Spring 2026",
+      "advertised": false,
+      "starts_at": "2026-03-01T00:00:00Z",
       "access": { "policy": "private", "allowed_usernames": ["alice", "bob"] } }
 ```
 
-`slug` is **not** stored in the file — it is the deploy directory name (canonical per [Season discovery](#season-discovery)). Subdomain is **not** stored either — the landing composes `${slug}.${apex}` at render time, where `apex` is a Vite build-time constant.
+`slug` is **not** stored in the file — it is the directory name under `/etc/energetica/`, mirroring the canonical slug from [Season discovery](#season-discovery). Subdomain is **not** stored either — the landing composes `${slug}.${apex}` at render time, where `apex` is a Vite build-time constant.
+
+`starts_at` is the season's real start time (ISO-8601 UTC), exposed to players as "running since X" and used by the landing to sort the season list.
 
 The file is re-read on every login attempt. There is no in-memory cache. Admin edits take effect on the next login with no restart and no SIGHUP.
+
+### Why outside the vhost DocumentRoot
+
+`season.json` carries `allowed_usernames` for private seasons. The vhost DocumentRoot is `/var/www/energetica-{slug}/`, and Apache has no catch-all deny rule for unlisted files — placing `season.json` there would let a plain `GET https://{slug}.{apex}/season.json` return the allowlist to anyone who guesses the URL. Moving the file to `/etc/energetica/{slug}/season.json` makes that class of exposure structurally impossible: the file is not under any DocumentRoot, so no vhost configuration error can leak it.
 
 ### Publication to the landing
 
@@ -188,17 +199,21 @@ Each season process, on start and whenever it reloads `season.json`, writes a **
 ```
 /var/www/energetica-landing/seasons/{slug}.json
 
-  { "slug": "autumn-2025", "name": "Autumn 2025", "advertised": true }
+  { "slug": "autumn-2025",
+    "name": "Autumn 2025",
+    "advertised": true,
+    "starts_at": "2025-09-15T00:00:00Z" }
 ```
 
-The `access` block (including `allowed_usernames`) is **stripped before write** — the landing dir is served statically by Apache, and any allowlist that reached it would leak to the internet.
+The `access` block (including `allowed_usernames`) is **stripped before write** — the landing dir is served statically by Apache, and any allowlist that reached it would leak to the internet. `starts_at` is preserved (it is public information).
 
 Writes are atomic: write to `{slug}.json.tmp` then `rename(2)` over the target. No locking required across season processes since each writes to a unique filename.
 
-After writing its fragment, the season process runs the inline aggregation step:
+After writing its fragment, the season process runs the inline aggregation step, sorting by `starts_at` descending so the most recent season appears first:
 
 ```bash
-jq -s '{seasons: .}' /var/www/energetica-landing/seasons/*.json \
+jq -s 'sort_by(.starts_at) | reverse | {seasons: .}' \
+  /var/www/energetica-landing/seasons/*.json \
   > /var/www/energetica-landing/seasons.json.tmp \
   && mv /var/www/energetica-landing/seasons.json.tmp \
         /var/www/energetica-landing/seasons.json
@@ -215,8 +230,9 @@ Unadvertised seasons that are public are reachable by direct URL — a user who 
 ### Operational notes
 
 - The landing's `seasons/` subdirectory must be writable by every season's systemd unit. Cleanest: create a shared group `energetica`, `chmod g+ws /var/www/energetica-landing/seasons/`, and run each `energetica-{slug}.service` as a user in that group. Setgid ensures new fragment files inherit group ownership.
+- `/etc/energetica/{slug}/` is admin-owned (root:energetica, mode `0750`) so the season unit can read but not modify its own policy. Admins edit `season.json` via `sudo`.
 - A season going down does not currently remove its fragment. If permanent removal is desired, `teardown-season.sh` deletes the fragment and re-runs the aggregation. Stale fragments for stopped-but-not-removed seasons are tolerated — the landing UI can surface `status` later (deferred per [7a](#deferred--out-of-scope)).
-- No cross-season reads. Each season reads only its own `season.json`. The aggregation step reads only files inside the landing-owned `seasons/` dir.
+- No cross-season reads. Each season reads only its own `season.json` under `/etc/energetica/{own-slug}/`. The aggregation step reads only files inside the landing-owned `seasons/` dir.
 
 ---
 
@@ -294,11 +310,12 @@ Both build outputs are **gitignored** and deployed via rsync:
 scripts/
   infra/
     setup-base.sh             ← run once per server; installs Apache, Python, certbot, firewall, modules, jq;
-                                creates /var/lib/energetica/ and accounts.db; creates `energetica` group
+                                creates /var/lib/energetica/ and accounts.db; creates /etc/energetica/;
+                                creates `energetica` group
     setup-landing.sh          ← run once per server; creates /var/www/energetica-landing/, main domain vhost;
                                 creates /var/www/energetica-landing/seasons/ with setgid `energetica`
     setup-season.sh           ← run per season; usage: setup-season.sh <season> <port>;
-                                also writes initial season.json
+                                creates /etc/energetica/{season}/ and writes initial season.json there
     apache-main.conf          ← main domain vhost template (static landing, no proxy)
     apache-season.conf        ← season vhost template (app static + API proxy)
     energetica.service        ← systemd service template (runs as user in `energetica` group)
@@ -317,7 +334,7 @@ scripts/
 
 1. Create `/var/www/energetica-{season}/` directory structure
 2. Clone repo (or symlink shared code — TBD)
-3. Render `season.json.tmpl` into `/var/www/energetica-{season}/season.json` (defaults: `name = {slug titlecased}`, `advertised = true`, `access.policy = "public"` — admin edits before going live for private seasons)
+3. Create `/etc/energetica/{season}/` (mode `0750`, owned by `root:energetica`) and render `season.json.tmpl` into `/etc/energetica/{season}/season.json` (defaults: `name = {slug titlecased}`, `advertised = true`, `starts_at = now (UTC)`, `access.policy = "public"` — admin edits before going live for private seasons)
 4. Create and enable Apache vhost from `apache-season.conf` template
 5. Reload Apache (HTTP only at this point)
 6. Obtain TLS certificate: `certbot certonly --webroot -w /var/www/energetica-{season}/ -d {season}.{domain}` — the season directory (created in step 1) is already the Apache DocumentRoot, so ACME challenge files are reachable there
@@ -332,7 +349,7 @@ TLS provisioning (steps 6–8) requires the DNS record for `{season}.{domain}` t
 
 1. Build app bundle (`bun run build`)
 2. Confirm deployment summary (skipped with `--yes`)
-3. `rsync` Python backend code to server (excluding `.venv`, `season/`, build artifacts, and `season.json` — that file is admin-owned on the server and must not be overwritten by deploys)
+3. `rsync` Python backend code to server (excluding `.venv`, `season/`, build artifacts). `season.json` lives outside the deploy dir (`/etc/energetica/{season}/`) and is admin-owned, so it is never touched by deploys.
 4. `rsync` app bundle to server (`energetica/static/app/`)
 5. `rsync` service worker to server (`energetica/static/service-worker.js` — built separately by `build:sw`, lives outside the app bundle directory)
 6. `pip install -r requirements.txt` on server if dependencies changed
@@ -370,8 +387,9 @@ Today there is exactly one season per VPS, so no cross-season username collision
 - **Admin dashboard** — currently stubbed. The server-side role gate in `templates.py` will be dropped along with all other `FileResponse` handlers. A proper frontend route guard and admin UI are a separate workstream.
 - **Landing images on multi-server** — landing pages reference images at `/static/images/`. On a server with no game instance (pure landing server), these paths would break. To be addressed when a second server deployment is made.
 - **Service worker on multiple seasons** — currently scoped to `/`. Per-season scoping implications (e.g. `autumn-2025.energetica-game.org/service-worker.js`) are not an architectural concern but should be tested when the first subdomain season goes live.
-- **`seasons.json` schema expansion** — current minimum is `{slug, name, advertised}`. Fields like `description`, `status`, `starts_at`, `ends_at`, `thumbnail` will be added when a season-picker UI needs them (YAGNI until then).
-- **Season-picker UI** — landing currently sends the signup CTA to the latest advertised season. Lateral navigation between active seasons (a picker page or persistent header element — UI form factor TBD) is a frontend workstream that consumes the existing `seasons.json` data and may motivate schema additions above.
+- **`seasons.json` schema expansion** — current schema is `{slug, name, advertised, starts_at}`. Fields like `description`, `status`, `ends_at`, `thumbnail` will be added when a season-picker UI needs them (YAGNI until then).
+- **Season-picker UI** — landing currently sends the signup CTA to the most recent advertised season (`seasons.json` is sorted by `starts_at` desc; first `advertised: true` entry wins). Lateral navigation between active seasons (a picker page or persistent header element — UI form factor TBD) is a frontend workstream that consumes the existing `seasons.json` data and may motivate schema additions above.
 - **Password reset via email** — `accounts.email` is in the SQLite schema (nullable, unique) but not yet collected at signup. Adding the signup field and the reset-by-email flow (which requires an SMTP/transactional-mail dependency the project does not yet have) is a follow-up.
+- **Cross-season session invalidation on password change** — changing the password updates `pwhash` in SQLite but does not invalidate session cookies already issued by other season subdomains (see [Password change](#flows) flow). Fixing this would require either a `session_version` column on `accounts` (bumped on password change, checked on every request) or a short server-issued session-validity window combined with a periodic re-check against SQLite. Deferred until there is a concrete security-response use case driving the cost.
 - **`teardown-season.sh`** — removing a season cleanly (delete vhost, disable service, delete fragment, re-aggregate, optionally archive pickle) is not yet scripted. Stale fragments for stopped seasons are tolerated until then.
 - **Cross-server accounts** — accounts are scoped to a single VPS. The same username on `energetica-game` and `energetica-edu` are unrelated. Unifying identity across servers would require either a remote auth service or replication and is explicitly out of scope.
