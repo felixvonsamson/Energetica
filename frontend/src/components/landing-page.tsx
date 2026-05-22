@@ -243,13 +243,14 @@ export function LandingPage() {
 
                     {/* CTAs */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Link
-                            to="/app/login"
+                        {/* Cross-bundle: see note in components/header.tsx. */}
+                        <a
+                            href="/app/login"
                             className="md:col-span-2 bg-primary text-primary-foreground p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-primary/90 hover:shadow-xl active:scale-[0.99] transition-all"
                         >
                             <p className="text-xl font-semibold">Play now</p>
                             <ChevronRight />
-                        </Link>
+                        </a>
                         <Link
                             to="/for-educators"
                             className="bg-card text-foreground border border-border p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-muted hover:shadow-lg active:scale-[0.99] transition-all"
@@ -304,21 +305,21 @@ export function LandingPage() {
                 {/* Bottom CTAs */}
                 <section className="max-w-6xl mx-auto w-full">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Link
-                            to="/app/login"
+                        {/* Cross-bundle: see note in components/header.tsx. */}
+                        <a
+                            href="/app/login"
                             className="md:col-span-2 bg-primary text-primary-foreground p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-primary/90 hover:shadow-xl active:scale-[0.99] transition-all"
                         >
                             <p className="text-xl font-semibold">Play now</p>
                             <ChevronRight />
-                        </Link>
-                        <Link
-                            to="/app/wiki/$slug"
-                            params={{ slug: "introduction" }}
+                        </a>
+                        <a
+                            href="/app/wiki/introduction"
                             className="bg-card text-foreground border border-border p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-muted hover:shadow-lg active:scale-[0.99] transition-all"
                         >
                             <p className="text-lg">Explore the Wiki</p>
                             <ChevronRight />
-                        </Link>
+                        </a>
                     </div>
                 </section>
             </div>
