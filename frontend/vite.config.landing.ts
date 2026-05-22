@@ -49,7 +49,7 @@ export default defineConfig(() => {
         },
         base: "/",
         build: {
-            outDir: "../frontend/dist-landing",
+            outDir: "dist-landing",
             emptyOutDir: true,
             rollupOptions: {
                 input: path.resolve(__dirname, "./index.landing.html"),
