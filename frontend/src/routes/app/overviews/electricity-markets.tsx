@@ -11,9 +11,10 @@ import {
     Users,
     Layers,
     BarChart2,
+    GitBranch,
     UserPlus,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import {
     BreakdownMode,
@@ -21,8 +22,12 @@ import {
     MarketClearingTable,
     MarketClearingVolumeChart,
 } from "@/components/charts/market-clearing-volume-chart";
+import { MarketFlowSankey } from "@/components/charts/market-flow-sankey";
 import { MarketPriceChart } from "@/components/charts/market-price-chart";
-import { MeritOrderChart } from "@/components/charts/supply-demand-chart";
+import {
+    ColorMode,
+    MeritOrderChart,
+} from "@/components/charts/supply-demand-chart";
 import { GameLayout } from "@/components/layout/game-layout";
 import {
     Button,
@@ -40,6 +45,7 @@ import {
     SegmentedPicker,
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
+import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useResolution } from "@/contexts/resolution-context";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
@@ -49,11 +55,11 @@ import {
     useElectricityMarketForPlayer,
     useElectricityMarket,
 } from "@/hooks/use-electricity-markets";
+import { useGameEngine } from "@/hooks/use-game";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
-import { formatPower } from "@/lib/format-utils";
-
+import { formatDuration, formatPower } from "@/lib/format-utils";
 
 interface MarketsSearchParams {
     marketId?: number;
@@ -69,7 +75,10 @@ export const Route = createFileRoute("/app/overviews/electricity-markets")({
             isUnlocked: (cap) =>
                 cap.has_network
                     ? { unlocked: true }
-                    : { unlocked: false, reason: "Unlock the Network achievement to access" },
+                    : {
+                          unlocked: false,
+                          reason: "Unlock the Network achievement to access",
+                      },
         },
         infoDialog: {
             contents: <MarketsOverviewHelp />,
@@ -181,6 +190,42 @@ function MarketsOverviewContent() {
         undefined,
         "energetica:chart:markets:hiddenBreakdownItems",
     );
+
+    // Snapshot controls shared by Merit Order chart and Market Flows Sankey.
+    // ticksBack=0 always shows the latest tick; increases as the slider moves left.
+    const [ticksBack, setTicksBack] = useState(0);
+    const [snapshotColorMode, setSnapshotColorMode] =
+        useLocalStorage<ColorMode>(
+            "energetica:chart:markets:snapshotColorMode",
+            "player",
+        );
+
+    // Reset the snapshot slider whenever the user switches markets so we don't
+    // carry over a tick offset that's meaningless in the new market's range.
+    // Using the "store-previous-prop" render-time reset pattern per React docs:
+    // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+    const [prevSelectedMarketId, setPrevSelectedMarketId] =
+        useState(selectedMarketId);
+    if (prevSelectedMarketId !== selectedMarketId) {
+        setPrevSelectedMarketId(selectedMarketId);
+        setTicksBack(0);
+    }
+
+    const snapshotMaxTick = currentTick !== undefined ? currentTick - 1 : 0;
+    const snapshotMinTick = useMemo(() => {
+        if (!currentTick) return 0;
+        const marketStart = marketDetails?.created_tick ?? 0;
+        return Math.max(marketStart, currentTick - 360);
+    }, [currentTick, marketDetails]);
+    const selectedTick = Math.max(snapshotMinTick, snapshotMaxTick - ticksBack);
+
+    const { data: gameEngine } = useGameEngine();
+    const sliderLabel = useMemo(() => {
+        if (!currentTick || !gameEngine) return `Tick ${selectedTick}`;
+        const ticksAgo = currentTick - selectedTick;
+        if (ticksAgo <= 0) return "Current";
+        return `${formatDuration(ticksAgo, gameEngine, true)} ago`;
+    }, [selectedTick, currentTick, gameEngine]);
 
     // Handle market selection change
     const handleMarketChange = (marketId: number | undefined) => {
@@ -435,14 +480,90 @@ function MarketsOverviewContent() {
                 )}
             </ChartCard>
 
-            {/* Merit Order & Market Clearing */}
-            <ChartCard
-                icon={BarChart2}
-                iconClassName="text-primary"
-                title="Merit Order & Market Clearing"
-            >
-                <MeritOrderChart key={selectedMarketId} marketId={selectedMarketId} />
-            </ChartCard>
+            {/*
+              * Snapshot section: controls + Merit Order + Sankey. Wrapped so
+              * the controls card's `sticky top-0` is scoped to this section —
+              * it pins as you scroll between the two snapshot charts, then
+              * releases once you scroll past the section.
+              */}
+            <div className="flex flex-col gap-6">
+                {/* Snapshot controls — shared by Merit Order chart and Market Flows Sankey */}
+                <PageCard className="sticky top-0 z-10">
+                    <CardContent>
+                        <div className="space-y-4">
+                            <div className="flex flex-wrap items-center gap-6">
+                                <div className="flex items-center gap-3">
+                                    <Label className="text-sm font-medium shrink-0">
+                                        Color by
+                                    </Label>
+                                    <SegmentedPicker
+                                        value={snapshotColorMode}
+                                        onValueChange={(v) =>
+                                            setSnapshotColorMode(v as ColorMode)
+                                        }
+                                    >
+                                        <SegmentedPickerOption value="player">
+                                            Player
+                                        </SegmentedPickerOption>
+                                        <SegmentedPickerOption value="type">
+                                            Technology
+                                        </SegmentedPickerOption>
+                                    </SegmentedPicker>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <Label className="text-sm font-medium shrink-0 w-28 text-right">
+                                    {sliderLabel}
+                                </Label>
+                                <div className="flex-1">
+                                    <Slider
+                                        min={snapshotMinTick}
+                                        max={snapshotMaxTick}
+                                        step={1}
+                                        value={[selectedTick]}
+                                        onValueChange={(values) =>
+                                            setTicksBack(
+                                                snapshotMaxTick -
+                                                    (values[0] ??
+                                                        snapshotMaxTick),
+                                            )
+                                        }
+                                        disabled={
+                                            snapshotMinTick >= snapshotMaxTick
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </PageCard>
+
+                {/* Merit Order & Market Clearing */}
+                <ChartCard
+                    icon={BarChart2}
+                    iconClassName="text-primary"
+                    title="Merit Order & Market Clearing"
+                >
+                    <MeritOrderChart
+                        marketId={selectedMarketId}
+                        selectedTick={selectedTick}
+                        colorMode={snapshotColorMode}
+                    />
+                </ChartCard>
+
+                {/* Market Flows (Sankey) */}
+                <ChartCard
+                    icon={GitBranch}
+                    iconClassName="text-primary"
+                    title="Market Flows"
+                >
+                    <MarketFlowSankey
+                        marketId={selectedMarketId}
+                        selectedTick={selectedTick}
+                        colorMode={snapshotColorMode}
+                    />
+                </ChartCard>
+            </div>
         </div>
     );
 }

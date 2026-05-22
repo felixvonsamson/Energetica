@@ -38,12 +38,8 @@ import {
     SegmentedPicker,
     SegmentedPickerOption,
 } from "@/components/ui/segmented-picker";
-import { Slider } from "@/components/ui/slider";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useMarketData } from "@/hooks/use-charts";
-import { useElectricityMarket } from "@/hooks/use-electricity-markets";
-import { useGameEngine } from "@/hooks/use-game";
-import { useGameTick } from "@/hooks/use-game-tick";
 import { usePlayerMap } from "@/hooks/use-players";
 import { getAssetLongName } from "@/lib/assets/asset-names";
 import {
@@ -51,11 +47,8 @@ import {
     resolveColor,
     resolveCSSVar,
 } from "@/lib/charts/color-utils";
-import {
-    createSteppedCurve,
-    interpolateAtX,
-} from "@/lib/charts/ui-utils";
-import { formatDuration, formatMoney, formatPower } from "@/lib/format-utils";
+import { createSteppedCurve, interpolateAtX } from "@/lib/charts/ui-utils";
+import { formatMoney, formatPower } from "@/lib/format-utils";
 
 echarts.use([
     ELineChart,
@@ -145,6 +138,8 @@ function BlockTooltip({
 
 export interface MeritOrderChartProps {
     marketId: number;
+    selectedTick: number;
+    colorMode: ColorMode;
     height?: number;
 }
 
@@ -169,27 +164,14 @@ const PRICE_CAP = 2000;
 
 function MeritOrderChartInner({
     marketId,
+    selectedTick,
+    colorMode,
     height = 500,
 }: MeritOrderChartProps) {
-    const { currentTick } = useGameTick();
-    const { data: gameEngine } = useGameEngine();
     const getColor = useAssetColorGetter();
     const playerMap = usePlayerMap();
-    const marketDetails = useElectricityMarket(marketId);
-
-    // Tick selection (last 360 ticks).
-    // ticksBack=0 always shows the latest tick; increases as the slider moves left.
-    const [ticksBack, setTicksBack] = useState(0);
-    const maxTick = currentTick !== undefined ? currentTick - 1 : 0;
-    const minTick = useMemo(() => {
-        if (!currentTick) return 0;
-        const marketStart = marketDetails?.created_tick ?? 0;
-        return Math.max(marketStart, currentTick - 360);
-    }, [currentTick, marketDetails]);
-    const selectedTick = Math.max(minTick, maxTick - ticksBack);
 
     const [activeMode, setActiveMode] = useState<ActiveMode>("supply");
-    const [colorMode, setColorMode] = useState<ColorMode>("player");
 
     const {
         data: marketData,
@@ -342,10 +324,8 @@ function MeritOrderChartInner({
         // are dropped. The liveRef still holds the original blocks for the
         // tooltip/highlight so their labels remain correct.
         const span = quantityDomain[1] - quantityDomain[0];
-        const visXMin =
-            quantityDomain[0] + span * (zoomRange.start / 100);
-        const visXMax =
-            quantityDomain[0] + span * (zoomRange.end / 100);
+        const visXMin = quantityDomain[0] + span * (zoomRange.start / 100);
+        const visXMax = quantityDomain[0] + span * (zoomRange.end / 100);
         const visibleBlocks = activeBlocks
             .filter((b) => b.x2 > visXMin && b.x1 < visXMax)
             .map((b) => ({
@@ -443,8 +423,7 @@ function MeritOrderChartInner({
                             x: clippedLeft,
                             y: topLeft[1] ?? 0,
                             width: clippedRight - clippedLeft,
-                            height:
-                                (bottomRight[1] ?? 0) - (topLeft[1] ?? 0),
+                            height: (bottomRight[1] ?? 0) - (topLeft[1] ?? 0),
                         },
                         style: api.style(),
                     };
@@ -473,7 +452,10 @@ function MeritOrderChartInner({
                             name: `Clearing: ${formatPower(marketData?.market_quantity ?? 0)}`,
                         },
                         {
-                            yAxis: Math.min(marketData?.market_price ?? 0, PRICE_CAP),
+                            yAxis: Math.min(
+                                marketData?.market_price ?? 0,
+                                PRICE_CAP,
+                            ),
                             name: `Price: ${formatMoney(marketData?.market_price ?? 0)}/MWh`,
                             label: { position: "insideStartTop" },
                         },
@@ -494,7 +476,10 @@ function MeritOrderChartInner({
                             name: "clearing",
                             coord: [
                                 marketData?.market_quantity ?? 0,
-                                Math.min(marketData?.market_price ?? 0, PRICE_CAP),
+                                Math.min(
+                                    marketData?.market_price ?? 0,
+                                    PRICE_CAP,
+                                ),
                             ],
                             symbol: "circle",
                             symbolSize: 10,
@@ -741,18 +726,7 @@ function MeritOrderChartInner({
         });
     }, []);
 
-    // ── Slider label ──────────────────────────────────────────────────────────
-
-    const sliderLabel = useMemo(() => {
-        if (!currentTick || !gameEngine) return `Tick ${selectedTick}`;
-        const ticksAgo = currentTick - selectedTick;
-        if (ticksAgo <= 0) return "Current";
-        return `${formatDuration(ticksAgo, gameEngine, true)} ago`;
-    }, [selectedTick, currentTick, gameEngine]);
-
     // ── Render ────────────────────────────────────────────────────────────────
-
-    if (!currentTick) return null;
 
     const tooltipBlock = tooltipState?.block;
     const tooltipPlayerName = tooltipBlock
@@ -785,45 +759,13 @@ function MeritOrderChartInner({
                         </SegmentedPickerOption>
                     </SegmentedPicker>
                 </div>
-                <div className="flex items-center gap-3">
-                    <Label className="text-sm font-medium shrink-0">
-                        Color by
-                    </Label>
-                    <SegmentedPicker
-                        value={colorMode}
-                        onValueChange={(v) => setColorMode(v as ColorMode)}
-                    >
-                        <SegmentedPickerOption value="player">
-                            Player
-                        </SegmentedPickerOption>
-                        <SegmentedPickerOption value="type">
-                            Technology
-                        </SegmentedPickerOption>
-                    </SegmentedPicker>
-                </div>
-            </div>
-
-            {/* Tick slider */}
-            <div className="flex items-center gap-4">
-                <Label className="text-sm font-medium shrink-0 w-28 text-right">
-                    {sliderLabel}
-                </Label>
-                <div className="flex-1">
-                    <Slider
-                        min={minTick}
-                        max={maxTick}
-                        step={1}
-                        value={[selectedTick]}
-                        onValueChange={(values) =>
-                            setTicksBack(maxTick - (values[0] ?? maxTick))
-                        }
-                        disabled={minTick >= maxTick}
-                    />
-                </div>
             </div>
 
             {/* Chart */}
-            <div className="relative min-w-0 overflow-hidden" style={{ height: `${height}px` }}>
+            <div
+                className="relative min-w-0 overflow-hidden"
+                style={{ height: `${height}px` }}
+            >
                 <div ref={chartRef} className="w-full h-full" />
 
                 {/* Full-height highlight band for the hovered block column */}
