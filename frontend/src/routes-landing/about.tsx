@@ -4,7 +4,5 @@ import { AboutPage } from "@/components/about-page";
 
 export const Route = createFileRoute("/about")({
     component: AboutPage,
-    staticData: {
-        title: "The Project",
-    },
+    staticData: { title: "The Project" },
 });

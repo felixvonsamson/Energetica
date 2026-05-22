@@ -211,6 +211,6 @@ def setup_routes(app: FastAPI):
     @app.get("/manifest.json", include_in_schema=False)
     async def serve_manifest() -> FileResponse:
         return FileResponse(
-            "energetica/static/react/manifest.json",
+            "energetica/static/app/manifest.json",
             media_type="application/json",
         )

@@ -9,12 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as LandingPageRouteImport } from './routes/landing-page'
 import { Route as ForEducatorsRouteImport } from './routes/for-educators'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as RouteRouteImport } from './routes/route'
 import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as AppSignUpRouteImport } from './routes/app/sign-up'
 import { Route as AppSettleRouteImport } from './routes/app/settle'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppLogoutRouteImport } from './routes/app/logout'
@@ -48,11 +48,6 @@ import { Route as AppCommunityMapRouteImport } from './routes/app/community/map'
 import { Route as AppCommunityLeaderboardsRouteImport } from './routes/app/community/leaderboards'
 import { Route as AppCommunityElectricityMarketsRouteImport } from './routes/app/community/electricity-markets'
 
-const SignUpRoute = SignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LandingPageRoute = LandingPageRouteImport.update({
   id: '/landing-page',
   path: '/landing-page',
@@ -76,6 +71,11 @@ const RouteRoute = RouteRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/app/',
   path: '/app/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppSignUpRoute = AppSignUpRouteImport.update({
+  id: '/app/sign-up',
+  path: '/app/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppSettleRoute = AppSettleRouteImport.update({
@@ -248,13 +248,13 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
-  '/sign-up': typeof SignUpRoute
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/login': typeof AppLoginRoute
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
+  '/app/sign-up': typeof AppSignUpRoute
   '/app': typeof AppIndexRoute
   '/app/community/electricity-markets': typeof AppCommunityElectricityMarketsRoute
   '/app/community/leaderboards': typeof AppCommunityLeaderboardsRoute
@@ -287,13 +287,13 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
-  '/sign-up': typeof SignUpRoute
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/login': typeof AppLoginRoute
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
+  '/app/sign-up': typeof AppSignUpRoute
   '/app': typeof AppIndexRoute
   '/app/community/electricity-markets': typeof AppCommunityElectricityMarketsRoute
   '/app/community/leaderboards': typeof AppCommunityLeaderboardsRoute
@@ -328,13 +328,13 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/for-educators': typeof ForEducatorsRoute
   '/landing-page': typeof LandingPageRoute
-  '/sign-up': typeof SignUpRoute
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/login': typeof AppLoginRoute
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
+  '/app/sign-up': typeof AppSignUpRoute
   '/app/': typeof AppIndexRoute
   '/app/community/electricity-markets': typeof AppCommunityElectricityMarketsRoute
   '/app/community/leaderboards': typeof AppCommunityLeaderboardsRoute
@@ -369,13 +369,13 @@ export interface FileRouteTypes {
     | '/about'
     | '/for-educators'
     | '/landing-page'
-    | '/sign-up'
     | '/app/changelog'
     | '/app/dashboard'
     | '/app/login'
     | '/app/logout'
     | '/app/settings'
     | '/app/settle'
+    | '/app/sign-up'
     | '/app'
     | '/app/community/electricity-markets'
     | '/app/community/leaderboards'
@@ -408,13 +408,13 @@ export interface FileRouteTypes {
     | '/about'
     | '/for-educators'
     | '/landing-page'
-    | '/sign-up'
     | '/app/changelog'
     | '/app/dashboard'
     | '/app/login'
     | '/app/logout'
     | '/app/settings'
     | '/app/settle'
+    | '/app/sign-up'
     | '/app'
     | '/app/community/electricity-markets'
     | '/app/community/leaderboards'
@@ -448,13 +448,13 @@ export interface FileRouteTypes {
     | '/about'
     | '/for-educators'
     | '/landing-page'
-    | '/sign-up'
     | '/app/changelog'
     | '/app/dashboard'
     | '/app/login'
     | '/app/logout'
     | '/app/settings'
     | '/app/settle'
+    | '/app/sign-up'
     | '/app/'
     | '/app/community/electricity-markets'
     | '/app/community/leaderboards'
@@ -489,13 +489,13 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ForEducatorsRoute: typeof ForEducatorsRoute
   LandingPageRoute: typeof LandingPageRoute
-  SignUpRoute: typeof SignUpRoute
   AppChangelogRoute: typeof AppChangelogRoute
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppLoginRoute: typeof AppLoginRoute
   AppLogoutRoute: typeof AppLogoutRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSettleRoute: typeof AppSettleRoute
+  AppSignUpRoute: typeof AppSignUpRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCommunityElectricityMarketsRoute: typeof AppCommunityElectricityMarketsRoute
   AppCommunityLeaderboardsRoute: typeof AppCommunityLeaderboardsRoute
@@ -526,13 +526,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/landing-page': {
       id: '/landing-page'
       path: '/landing-page'
@@ -566,6 +559,13 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/sign-up': {
+      id: '/app/sign-up'
+      path: '/app/sign-up'
+      fullPath: '/app/sign-up'
+      preLoaderRoute: typeof AppSignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/settle': {
@@ -812,13 +812,13 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ForEducatorsRoute: ForEducatorsRoute,
   LandingPageRoute: LandingPageRoute,
-  SignUpRoute: SignUpRoute,
   AppChangelogRoute: AppChangelogRoute,
   AppDashboardRoute: AppDashboardRouteWithChildren,
   AppLoginRoute: AppLoginRoute,
   AppLogoutRoute: AppLogoutRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSettleRoute: AppSettleRoute,
+  AppSignUpRoute: AppSignUpRoute,
   AppIndexRoute: AppIndexRoute,
   AppCommunityElectricityMarketsRoute: AppCommunityElectricityMarketsRoute,
   AppCommunityLeaderboardsRoute: AppCommunityLeaderboardsRoute,

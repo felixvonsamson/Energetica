@@ -21,7 +21,7 @@ REMOTE_HOST="${DEPLOY_HOST:-}"
 REMOTE_USER="${DEPLOY_USER:-deploy}"
 REMOTE_PATH="/var/www/energetica"
 DOMAIN="${DEPLOY_DOMAIN:-}"
-LOCAL_BUILT_FRONTEND="./energetica/static/react"
+LOCAL_BUILT_FRONTEND="./energetica/static/app"
 ALLOW_DIRTY=false
 AUTO_CONFIRM=false
 SKIP_BACKEND=false
@@ -253,7 +253,7 @@ main() {
 
     # Step 7: Sync frontend files
     log_step "Syncing frontend files..."
-    rsync -avz --delete "$LOCAL_BUILT_FRONTEND/" "${REMOTE_HOST}:${REMOTE_PATH}/energetica/static/react/" > /dev/null 2>&1
+    rsync -avz --delete "$LOCAL_BUILT_FRONTEND/" "${REMOTE_HOST}:${REMOTE_PATH}/energetica/static/app/" > /dev/null 2>&1
     rsync -avz "./energetica/static/service-worker.js" "${REMOTE_HOST}:${REMOTE_PATH}/energetica/static/service-worker.js" > /dev/null 2>&1
     log_success "Frontend synced"
     echo ""
