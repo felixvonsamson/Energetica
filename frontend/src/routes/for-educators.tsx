@@ -222,20 +222,35 @@ function RouteComponent() {
                     </TypographyH2>
                     <div className="rounded-4xl p-8 flex flex-col gap-4 bg-card shadow-md">
                         <blockquote className="text-xl italic text-foreground leading-relaxed">
-                            "Energetica was a valuable addition to our 'Energy
-                            and Climate' module at ZHAW. Students who are
-                            usually passive became genuinely engaged. They were
-                            debating market strategies and investment trade-offs
-                            with each other without being prompted. What struck
-                            me most was how naturally the game illustrated
-                            concepts like price formation and the challenges
-                            linked to renewable intermittency that are otherwise
-                            hard to convey in a lecture. I would recommend it to
-                            any educator working on energy, climate, or
-                            economics topics."
+                            "Energetica has been a valuable addition to our 
+                            'Energy and Climate' module at ZHAW and was very 
+                            well received by our students. The game complements 
+                            the lectures effectively, integrating numerous 
+                            theoretical concepts and revealing the interactions 
+                            between elements previously considered in isolation, 
+                            such as price formation and the challenge of 
+                            balancing supply and demand in a power system. 
+                            Students experience first-hand that energy systems 
+                            and markets are more than the sum of their parts: 
+                            while the individual components can be conveyed 
+                            through theory, the resulting emergent behaviour 
+                            and complexity cannot. We frequently observed 
+                            students engaging with the game and discussing it 
+                            well beyond the scope of the lectures. I would 
+                            recommend Energetica to any educator working on 
+                            energy, climate, or economics topics."
                         </blockquote>
                         <p className="text-muted-foreground font-semibold">
-                            — Nicolas Stocker, Lecturer, ZHAW
+                            —{" "}
+                            <a
+                                href="https://www.zhaw.ch/en/about-us/person/stkk"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline hover:text-foreground transition-colors"
+                            >
+                                Nicolas Stocker
+                            </a>
+                            , Lecturer, ZHAW
                         </p>
                     </div>
                 </section>
