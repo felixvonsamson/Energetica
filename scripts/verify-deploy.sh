@@ -202,10 +202,10 @@ fi
 
 # --- 8. Tick advancement — the honest "is the game alive" check ---------------
 note "Polling total_t for 30s (must increment — replay-job-died canary)"
-T_START=$(echo "$HEALTHZ_BODY" | jq -r '.engine.total_t // 0')
+T_START=$(echo "$HEALTHZ_BODY" | jq -r '.engine.total_t // 0' 2>/dev/null || echo 0)
 sleep 30
 HEALTHZ_BODY_2=$(curl -fsS --max-time 10 "${BASE}/healthz" || true)
-T_END=$(echo "$HEALTHZ_BODY_2" | jq -r '.engine.total_t // 0')
+T_END=$(echo "$HEALTHZ_BODY_2" | jq -r '.engine.total_t // 0' 2>/dev/null || echo 0)
 if [ "$T_END" -gt "$T_START" ]; then
     pass "total_t advanced ${T_START} → ${T_END} over 30s"
 else

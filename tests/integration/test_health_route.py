@@ -2,10 +2,26 @@
 
 import datetime
 
+import pytest
 from fastapi.testclient import TestClient
 
 from energetica import create_app
 from energetica.globals import engine
+
+
+@pytest.fixture(autouse=True)
+def _reset_engine_health_state() -> None:
+    """Reset module-level engine health fields so tests don't bleed into each other.
+
+    create_app() / init_instance() reset the pickled engine fields, but the
+    health-check additions (last_tick_at, scheduler_exception_count, …) are
+    only initialized in GameEngine.__init__, which runs once per process.
+    """
+    engine.last_tick_at = None
+    engine.recent_tick_timestamps.clear()
+    engine.resim_start_tick = None
+    engine.resim_target_tick = None
+    engine.scheduler_exception_count = 0
 
 
 def _make_client() -> TestClient:
