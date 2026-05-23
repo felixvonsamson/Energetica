@@ -17,3 +17,8 @@ def test_app_assets_path_returns_404_not_html_shell() -> None:
 
     response = client.get("/app/assets/does-not-exist.js")
     assert response.status_code == 404
+
+    # The bare /app/assets (no trailing slash, no filename) must also 404 —
+    # the guard should be symmetric across the assets boundary.
+    response = client.get("/app/assets")
+    assert response.status_code == 404

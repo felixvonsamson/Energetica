@@ -33,7 +33,7 @@ def render_react_app(full_path: str) -> FileResponse:
     """Serve React SPA for /app/* routes."""
     # Built assets live under /static/app/assets/ — never serve the HTML shell
     # for /app/assets/* or browsers will try to execute HTML as JS/CSS.
-    if full_path.startswith("assets/"):
+    if full_path == "assets" or full_path.startswith("assets/"):
         raise HTTPException(status_code=404)
     return FileResponse("energetica/static/app/index.html")
 
