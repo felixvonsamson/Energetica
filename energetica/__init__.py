@@ -11,6 +11,7 @@ import platform
 import secrets
 import shutil
 import socket
+import subprocess
 import tarfile
 import uuid
 from contextlib import asynccontextmanager
@@ -19,7 +20,7 @@ from functools import partial
 from pathlib import Path
 from typing import AsyncGenerator, Literal, cast
 
-from apscheduler.events import EVENT_JOB_EXECUTED, JobExecutionEvent
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED, JobExecutionEvent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from pydantic import TypeAdapter
@@ -72,6 +73,13 @@ def create_app(
         app = FastAPI()
         setup_routes(app)
         return app
+
+    try:
+        engine.git_sha = (
+            subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        engine.git_sha = None
 
     print(f"Server is running in {env} mode")
     if simulate_checkpoint_ticks is None:
@@ -160,10 +168,21 @@ def create_app(
     last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
     actions_to_simulate = actions[start_action_id : last_action_id + 1]
 
+    replay_tick_targets = [action.total_t for action in actions_to_simulate if action.action_type == "tick"]
+    if replay_tick_targets:
+        engine.resim_start_tick = engine.total_t
+        engine.resim_target_tick = max(replay_tick_targets)
+
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # initialize the schedulers and add the recurrent functions :
         scheduler = AsyncIOScheduler()
+
+        def error_listener(event: JobExecutionEvent) -> None:
+            """Track scheduler job errors so /healthz can surface them as 'degraded'."""
+            engine.scheduler_exception_count += 1
+
+        scheduler.add_listener(error_listener, EVENT_JOB_ERROR)
 
         add_ticks_clock = partial(
             scheduler.add_job,

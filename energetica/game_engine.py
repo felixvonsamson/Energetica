@@ -11,6 +11,7 @@ import pickle
 import random
 import tarfile
 import uuid
+from collections import deque
 import numpy as np
 import datetime
 from pathlib import Path
@@ -66,6 +67,15 @@ class GameEngine(object):
         self.VAPID_PUBLIC_KEY: str = None  # type: ignore[assignment]
         self.VAPID_PRIVATE_KEY: str = None  # type: ignore[assignment]
         self.general_chat_id: int = None  # type: ignore[assignment]
+
+        # Health-check state. Not pickled — populated at runtime by lifespan / tick().
+        self.server_start_time: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
+        self.last_tick_at: datetime.datetime | None = None
+        self.recent_tick_timestamps: deque[float] = deque(maxlen=600)
+        self.resim_start_tick: int | None = None
+        self.resim_target_tick: int | None = None
+        self.scheduler_exception_count: int = 0
+        self.git_sha: str | None = None
 
         with open(_DATA_DIR / "industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations

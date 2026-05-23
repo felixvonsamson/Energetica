@@ -33,6 +33,7 @@ from .projects import router as projects_router
 from .resource_market import router as resource_market_router
 from .leaderboards import router as leaderboards_router
 from .shipments import router as shipments_router
+from .health import router as health_router
 from .templates import router as templates_router
 from .weather import router as weather_router
 
@@ -198,6 +199,7 @@ def setup_routes(app: FastAPI):
 
     for router in api_routers:
         app.include_router(router, prefix="/api/v1")
+    app.include_router(health_router)
     app.include_router(templates_router)
     app.mount("/static", StaticFiles(directory="energetica/static"), name="static")
 
