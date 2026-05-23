@@ -44,12 +44,15 @@ export function Header() {
                 </div>
                 <div className="flex flex-1 justify-end gap-3 items-center">
                     <ThemeToggle />
-                    <Link
-                        to="/app/login"
+                    {/* Cross-bundle navigation: landing → app. Uses <a href> so
+                        TanStack Router (which has no /app/* routes in the landing
+                        bundle) doesn't intercept the click. */}
+                    <a
+                        href="/app/login"
                         className="bg-primary text-primary-foreground px-6 py-2 rounded-4xl text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all shadow-md hover:shadow-lg"
                     >
                         Log In
-                    </Link>
+                    </a>
                 </div>
             </nav>
         </header>

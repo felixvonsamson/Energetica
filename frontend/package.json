@@ -5,14 +5,17 @@
         "dev:edu": "vite --mode edu",
         "dev:game": "vite --mode game",
         "dev:ethz": "vite --mode ethz",
+        "dev:landing": "vite --config vite.config.landing.ts",
         "build": "vite build && bun run build:sw",
+        "build:landing": "vite build --config vite.config.landing.ts && mv dist-landing/index.landing.html dist-landing/index.html",
+        "build:all": "bun run build && bun run build:landing",
         "build:sw": "bun ../scripts/generate-sw-routes.ts && bun build src/service-worker.ts --outfile ../energetica/static/service-worker.js --target browser && { printf '// AUTO-GENERATED — do not edit. Run `bun run build:sw` in frontend/ to regenerate.\\n'; cat ../energetica/static/service-worker.js; } > /tmp/sw.js && mv /tmp/sw.js ../energetica/static/service-worker.js",
         "dev:sw": "bun build src/service-worker.ts --outfile ../energetica/static/service-worker.js --target browser --watch",
         "generate-types": "bash ../scripts/generate-types.sh",
         "lint": "eslint . --max-warnings 0 --cache",
         "lint:fix": "eslint . --fix --cache",
         "format": "prettier --write \"./**/*.{ts,tsx}\"",
-        "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.sw.json",
+        "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.landing.json && tsc --noEmit --project tsconfig.sw.json",
         "typecheck:watch": "tsc --noEmit --watch"
     },
     "dependencies": {

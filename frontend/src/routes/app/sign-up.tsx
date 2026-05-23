@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSignup } from "@/hooks/use-auth-queries";
 import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
 
-export const Route = createFileRoute("/sign-up")({
+export const Route = createFileRoute("/app/sign-up")({
     component: SignUpPage,
     staticData: {
         title: "Sign Up",

@@ -22,5 +22,13 @@
         "paths": { "@/*": ["./src/*"] }
     },
     "include": ["src"],
-    "exclude": ["**/*.mdx", "src/service-worker.ts"]
+    "exclude": [
+        "**/*.mdx",
+        "src/service-worker.ts",
+        "src/main-landing.tsx",
+        "src/routes-landing",
+        "src/routeTree.landing.gen.ts",
+        "src/components/wiki/wiki-layout-public.tsx",
+        "src/components/wiki/wiki-sidebar-public.tsx"
+    ]
 }

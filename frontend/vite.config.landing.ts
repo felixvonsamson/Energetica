@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
@@ -10,18 +10,15 @@ import rehypeSlug from "rehype-slug";
 import svgr from "vite-plugin-svgr";
 import path from "path";
 
-export default defineConfig(({ mode, command }) => {
-    const env = loadEnv(mode, process.cwd(), "");
-    // Backend URL from environment variable, fallback to local development server
-    const backendUrl = env.VITE_BACKEND_URL || "http://localhost:8000";
-    const wsUrl = backendUrl.replace(/^http/, "ws");
-
+export default defineConfig(() => {
     return {
         plugins: [
             // Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'
             tanstackRouter({
                 target: "react",
                 autoCodeSplitting: true,
+                routesDirectory: "./src/routes-landing",
+                generatedRouteTree: "./src/routeTree.landing.gen.ts",
             }),
             mdx({
                 remarkPlugins: [remarkGfm, remarkMath],
@@ -50,44 +47,13 @@ export default defineConfig(({ mode, command }) => {
         resolve: {
             alias: { "@": path.resolve(__dirname, "./src") },
         },
-        base: command === "serve" ? "/" : "/static/app/",
-        server: {
-            proxy: {
-                // API endpoints
-                "^/api": {
-                    target: backendUrl,
-                    changeOrigin: true,
-                },
-                // Static assets
-                "^/static": {
-                    target: backendUrl,
-                    changeOrigin: true,
-                },
-                // WebSocket connection
-                "^/socket.io": {
-                    target: wsUrl,
-                    changeOrigin: true,
-                    ws: true,
-                },
-                // Service worker and manifest must be served from root by the backend
-                "^/service-worker.js$": {
-                    target: backendUrl,
-                    changeOrigin: true,
-                },
-                "^/manifest.json$": {
-                    target: backendUrl,
-                    changeOrigin: true,
-                },
-                // Auth routes
-                "^/logout$": {
-                    target: backendUrl,
-                    changeOrigin: true,
-                },
-            },
-        },
+        base: "/",
         build: {
-            outDir: "../energetica/static/app",
+            outDir: "dist-landing",
             emptyOutDir: true,
+            rollupOptions: {
+                input: path.resolve(__dirname, "./index.landing.html"),
+            },
         },
     };
 });

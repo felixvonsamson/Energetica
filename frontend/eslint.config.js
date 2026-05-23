@@ -12,6 +12,7 @@ export default defineConfig([
         ignores: [
             "node_modules/",
             "dist/",
+            "dist-landing/",
             "*.config.ts",
             "*.config.js",
             "src/service-worker.ts",
@@ -30,7 +31,7 @@ export default defineConfig([
                 ecmaFeatures: {
                     jsx: true,
                 },
-                project: "./tsconfig.json",
+                project: ["./tsconfig.json", "./tsconfig.landing.json"],
             },
             globals: {
                 // Browser globals
@@ -54,7 +55,7 @@ export default defineConfig([
             "import/resolver": {
                 typescript: {
                     alwaysTryTypes: true,
-                    project: "./tsconfig.json",
+                    project: ["./tsconfig.json", "./tsconfig.landing.json"],
                 },
                 node: true,
             },

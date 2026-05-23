@@ -154,7 +154,9 @@ function LoginForm() {
                                 placeholder="Enter username"
                                 disabled={login.isPending}
                                 autoComplete="username"
-                                aria-invalid={usernameNotFound ? true : undefined}
+                                aria-invalid={
+                                    usernameNotFound ? true : undefined
+                                }
                                 // eslint-disable-next-line jsx-a11y/no-autofocus
                                 autoFocus
                             />
@@ -203,7 +205,7 @@ function LoginForm() {
                         <div className="text-center text-sm text-primary mb-3">
                             - OR -
                         </div>
-                        <Link to="/sign-up">
+                        <Link to="/app/sign-up">
                             <Button
                                 variant="secondary"
                                 size="lg"

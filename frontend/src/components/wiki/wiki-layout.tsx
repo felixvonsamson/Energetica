@@ -27,15 +27,15 @@ export function WikiLayout({ children }: WikiLayoutProps) {
         );
     }
 
+    // Unauthenticated path inside the app bundle: keep `/app/wiki/$slug` links via
+    // WikiSidebar. The landing bundle's wiki uses WikiLayoutPublic + WikiSidebarPublic.
     return (
         <SidebarProvider>
             <div className="flex h-screen w-full bg-background text-foreground">
                 <WikiSidebar />
                 <SidebarInset>
                     <main className="flex-1 overflow-auto">
-                        <div className="max-w-[1400px] mx-auto">
-                            {content}
-                        </div>
+                        <div className="max-w-[1400px] mx-auto">{content}</div>
                     </main>
                 </SidebarInset>
             </div>

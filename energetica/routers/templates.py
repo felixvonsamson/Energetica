@@ -15,7 +15,7 @@ router = APIRouter(prefix="", tags=["Pages"])
 @router.get("/")
 def render_root() -> FileResponse:
     """Serve React SPA on the root route."""
-    return FileResponse("energetica/static/react/index.html")
+    return FileResponse("energetica/static/app/index.html")
 
 
 @router.get("/logout", name="auth.logout")
@@ -31,22 +31,15 @@ def logout(user: Annotated[User | None, Depends(get_user)]) -> RedirectResponse:
 @router.get("/app/{full_path:path}", name="views.react_app")
 def render_react_app(full_path: str) -> FileResponse:
     """Serve React SPA for /app/* routes."""
-    return FileResponse("energetica/static/react/index.html")
+    return FileResponse("energetica/static/app/index.html")
 
 
-@router.get("/admin-dashboard", name="views.admin_dashboard", response_model=None)
-@router.get("/admin-dashboard/{full_path:path}", response_model=None)
-def render_admin_dashboard(
-    user: Annotated[User | None, Depends(get_user)],
-) -> FileResponse | RedirectResponse:
-    """Serve React SPA for admin dashboard routes."""
-    if user is None:
-        return RedirectResponse("/app/login")
-    if user.role != "admin":
-        return RedirectResponse("/")
-    return FileResponse("energetica/static/react/index.html")
+@router.get("/sign-up", name="views.sign_up_redirect")
+def redirect_sign_up() -> RedirectResponse:
+    # Permanent redirect for stale links from before sign-up moved under /app.
+    return RedirectResponse("/app/sign-up", status_code=301)
 
 
 @router.get("/landing-page", name="views.landing-page")
 def render_landing_page() -> FileResponse:
-    return FileResponse("energetica/static/react/index.html")
+    return FileResponse("energetica/static/app/index.html")
