@@ -7,7 +7,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
     TrendingUp,
     Activity,
-    Network as NetworkIcon,
+    PlugZap,
     Users,
     Layers,
     BarChart2,
@@ -103,7 +103,7 @@ function MarketsOverviewHelp() {
                     </span>
                 </li>
                 <li className="flex items-center gap-2">
-                    <NetworkIcon className="w-4 h-4 shrink-0" />
+                    <PlugZap className="w-4 h-4 shrink-0" />
                     <span>
                         Use the market selector to view different electricity
                         markets
@@ -265,8 +265,8 @@ function MarketsOverviewContent() {
             <PageCard>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <NetworkIcon className="w-6 h-6 text-primary" />
-                        {selectedMarket?.name ?? "Market"} - Current Values
+                        <PlugZap className="w-6 h-6 text-primary" />
+                        {selectedMarket?.name ?? "Market"} - Overview
                     </CardTitle>
                     {playerMarket !== undefined &&
                         playerMarket?.id !== selectedMarketId && (
@@ -286,7 +286,7 @@ function MarketsOverviewContent() {
 
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-muted text-muted-foreground p-4 rounded-lg border border-border">
+                        <div className="bg-muted text-muted-foreground p-4 rounded-lg border border-border text-center">
                             <div className="text-sm mb-1">Market Price</div>
                             <div className="text-2xl font-bold">
                                 {isLatestLoading ? (
@@ -299,7 +299,7 @@ function MarketsOverviewContent() {
                                 )}
                             </div>
                         </div>
-                        <div className="bg-muted text-muted-foreground p-4 rounded-lg border border-border">
+                        <div className="bg-muted text-muted-foreground p-4 rounded-lg border border-border text-center">
                             <div className="text-sm mb-1">Clearing Volume</div>
                             <div className="text-2xl font-bold">
                                 {isLatestLoading ? (
@@ -311,6 +311,17 @@ function MarketsOverviewContent() {
                                 )}
                             </div>
                         </div>
+                    </div>
+                    <div className="flex justify-center mt-4">
+                        <Link
+                            to="/app/community/electricity-markets"
+                            search={{ market: selectedMarketId }}
+                        >
+                            <Button variant="outline">
+                                <PlugZap className="w-4 h-4" />
+                                Electricity Market Page
+                            </Button>
+                        </Link>
                     </div>
                 </CardContent>
             </PageCard>
