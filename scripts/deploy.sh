@@ -314,7 +314,7 @@ main() {
 
         # Step 10: Full post-deploy verification (tick advancement is the honest check).
         log_step "Running scripts/verify-deploy.sh ${DOMAIN}..."
-        if ! ./scripts/verify-deploy.sh "${DOMAIN}" --ssh-host "${REMOTE_HOST}"; then
+        if ! ./scripts/verify-deploy.sh "${DOMAIN}" --ssh-host "${REMOTE_USER}@${REMOTE_HOST}"; then
             log_error "Post-deploy verification failed"
             exit 1
         fi
