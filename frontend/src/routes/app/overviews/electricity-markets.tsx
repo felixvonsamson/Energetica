@@ -12,6 +12,7 @@ import {
     Layers,
     BarChart2,
     UserPlus,
+    LogOut,
 } from "lucide-react";
 import { useMemo } from "react";
 
@@ -268,20 +269,26 @@ function MarketsOverviewContent() {
                         <PlugZap className="w-6 h-6 text-primary" />
                         {selectedMarket?.name ?? "Market"} - Overview
                     </CardTitle>
-                    {playerMarket !== undefined &&
-                        playerMarket?.id !== selectedMarketId && (
-                            <CardAction>
-                                <Link
-                                    to="/app/community/electricity-markets"
-                                    search={{ market: selectedMarketId }}
-                                >
-                                    <Button variant="outline" size="sm">
+                    <CardAction>
+                        <Link
+                            to="/app/community/electricity-markets"
+                            search={{ market: selectedMarketId }}
+                        >
+                            <Button variant="outline" size="sm">
+                                {playerMarket?.id === selectedMarketId ? (
+                                    <>
+                                        <LogOut className="w-4 h-4" />
+                                        Leave Market
+                                    </>
+                                ) : (
+                                    <>
                                         <UserPlus className="w-4 h-4" />
                                         Join Market
-                                    </Button>
-                                </Link>
-                            </CardAction>
-                        )}
+                                    </>
+                                )}
+                            </Button>
+                        </Link>
+                    </CardAction>
                 </CardHeader>
 
                 <CardContent>
@@ -312,17 +319,7 @@ function MarketsOverviewContent() {
                             </div>
                         </div>
                     </div>
-                    <div className="flex justify-center mt-4">
-                        <Link
-                            to="/app/community/electricity-markets"
-                            search={{ market: selectedMarketId }}
-                        >
-                            <Button variant="outline">
-                                <PlugZap className="w-4 h-4" />
-                                Electricity Market Page
-                            </Button>
-                        </Link>
-                    </div>
+
                 </CardContent>
             </PageCard>
 
