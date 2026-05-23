@@ -215,11 +215,19 @@ fi
 # --- 9. Scheduler exceptions in journalctl (only if we can SSH) ---------------
 if [ -n "$SSH_HOST" ]; then
     note "Checking journalctl on ${SSH_HOST} for scheduler exceptions over last 5 minutes"
-    JOURNAL_ERRS=$(ssh "$SSH_HOST" "sudo journalctl -u energetica --since '5 minutes ago' 2>/dev/null | grep -cE 'Traceback|Error in job|apscheduler.*error'" || echo "0")
-    if [ "$JOURNAL_ERRS" = "0" ]; then
-        pass "no scheduler exceptions in journalctl (last 5m)"
+    # Separate ssh exit code from grep's "no matches → exit 1" so an SSH
+    # failure (unreachable host, bad creds) doesn't masquerade as zero errors.
+    JOURNAL_OUTPUT=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "$SSH_HOST" "sudo journalctl -u energetica --since '5 minutes ago' 2>/dev/null")
+    SSH_EXIT=$?
+    if [ $SSH_EXIT -ne 0 ]; then
+        fail "journalctl check could not run: ssh ${SSH_HOST} exited ${SSH_EXIT}"
     else
-        fail "${JOURNAL_ERRS} scheduler exception(s) in journalctl (last 5m) — ssh ${SSH_HOST} 'sudo journalctl -u energetica -n 100'"
+        JOURNAL_ERRS=$(echo "$JOURNAL_OUTPUT" | grep -cE 'Traceback|Error in job|apscheduler.*error' || true)
+        if [ "$JOURNAL_ERRS" = "0" ]; then
+            pass "no scheduler exceptions in journalctl (last 5m)"
+        else
+            fail "${JOURNAL_ERRS} scheduler exception(s) in journalctl (last 5m) — ssh ${SSH_HOST} 'sudo journalctl -u energetica -n 100'"
+        fi
     fi
 fi
 
