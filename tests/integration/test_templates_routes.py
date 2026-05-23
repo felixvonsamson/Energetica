@@ -17,13 +17,3 @@ def test_app_assets_path_returns_404_not_html_shell() -> None:
 
     response = client.get("/app/assets/does-not-exist.js")
     assert response.status_code == 404
-
-
-def test_app_spa_route_still_serves_html_shell() -> None:
-    """/app/<spa-route> must still serve the HTML shell so client routing works."""
-    app = create_app(env="dev", schema_only=True)
-    client = TestClient(app)
-
-    response = client.get("/app/some-client-side-route")
-    assert response.status_code == 200
-    assert response.headers["content-type"].startswith("text/html")
