@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 
 from energetica.globals import engine
@@ -31,6 +31,10 @@ def logout(user: Annotated[User | None, Depends(get_user)]) -> RedirectResponse:
 @router.get("/app/{full_path:path}", name="views.react_app")
 def render_react_app(full_path: str) -> FileResponse:
     """Serve React SPA for /app/* routes."""
+    # Built assets live under /static/app/assets/ — never serve the HTML shell
+    # for /app/assets/* or browsers will try to execute HTML as JS/CSS.
+    if full_path.startswith("assets/"):
+        raise HTTPException(status_code=404)
     return FileResponse("energetica/static/app/index.html")
 
 
