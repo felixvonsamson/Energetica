@@ -270,7 +270,7 @@ export function CashFlowOverviewTable({
             .filter((row) => row.totalRevenues > 0);
 
         return rows;
-    }, [chartData]);
+    }, [chartData, resolution]);
 
     // Sort facility rows
     const sortedRows = useMemo(() => {
