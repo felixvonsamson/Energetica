@@ -13,7 +13,6 @@ import { type LucideIcon } from "lucide-react";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { ProjectList } from "@/components/dashboard/progress-lists";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { ProjectCategory } from "@/types/projects";
 
 interface ProjectsPanelProps {
@@ -56,7 +55,7 @@ interface ProjectsPanelToggleProps {
     onToggle: () => void;
 }
 
-/** Toggle button with count badge. Renders nothing when count is 0. */
+/** Toggle button with inline count. Renders nothing when count is 0. */
 export function ProjectsPanelToggle({
     count,
     icon: Icon,
@@ -67,26 +66,13 @@ export function ProjectsPanelToggle({
     if (count === 0) return null;
 
     return (
-        <div className="relative inline-flex">
-            <Button
-                variant="outline"
-                onClick={onToggle}
-                className="flex items-center gap-2"
-            >
-                <Icon className="w-5 h-5" />
-                {isOpen ? "Hide" : "Show"} {buttonLabel}
-            </Button>
-            <span
-                className={cn(
-                    "absolute -top-2 -right-2",
-                    "min-w-5 h-5 px-1 rounded-full",
-                    "bg-destructive text-destructive-foreground",
-                    "text-xs font-bold leading-none",
-                    "flex items-center justify-center",
-                )}
-            >
-                {count}
-            </span>
-        </div>
+        <Button
+            variant="outline"
+            onClick={onToggle}
+            className="flex items-center gap-2"
+        >
+            <Icon className="w-5 h-5" />
+            {isOpen ? `Hide ${buttonLabel}` : `Show ${buttonLabel} (${count})`}
+        </Button>
     );
 }
