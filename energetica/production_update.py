@@ -172,7 +172,8 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
     """
     for controllable_facility in ControllableFacilityType:
         if controllable_facility in player.capacities:
-            usage = new_values["generation"][controllable_facility] / player.capacities[controllable_facility]["power"]
+            power = player.capacities[controllable_facility]["power"]
+            usage = new_values["generation"][controllable_facility] / power if power > 0 else 0.0
             for af in ActiveFacility.filter_by(player=player, facility_type=controllable_facility):
                 af.usage = usage
 
@@ -186,7 +187,8 @@ def set_facilities_usage(new_values: dict, player: Player) -> None:
 
     for extraction_facility in ExtractionFacilityType:
         if extraction_facility in player.capacities:
-            usage = new_values["demand"][extraction_facility] / player.capacities[extraction_facility]["power_use"]
+            power_use = player.capacities[extraction_facility]["power_use"]
+            usage = new_values["demand"][extraction_facility] / power_use if power_use > 0 else 0.0
             for af in ActiveFacility.filter_by(player=player, facility_type=extraction_facility):
                 af.usage = usage
 
