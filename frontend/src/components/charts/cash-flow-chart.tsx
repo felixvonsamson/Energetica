@@ -164,6 +164,8 @@ export function CashFlowChart({
 interface CashFlowOverviewTableProps {
     /** Chart data with time series for each facility type */
     chartData: Array<Record<string, number>>;
+    /** Number of ticks per data point (chart resolution) */
+    resolution: number;
     /** Type of revenue to display */
     revenueType: CashFlowType;
     /** Set of hidden facility types */
@@ -181,6 +183,7 @@ type SortDirection = "asc" | "desc";
 
 export function CashFlowOverviewTable({
     chartData,
+    resolution,
     revenueType,
     hiddenFacilities,
     onToggleFacility,
@@ -255,7 +258,7 @@ export function CashFlowOverviewTable({
             .map((facilityType) => {
                 // Sum all revenue values
                 const totalRevenues = chartData.reduce((sum, dataPoint) => {
-                    return sum + (dataPoint[facilityType] || 0);
+                    return sum + (dataPoint[facilityType] || 0) * resolution;
                 }, 0);
 
                 return {
@@ -267,7 +270,7 @@ export function CashFlowOverviewTable({
             .filter((row) => row.totalRevenues > 0);
 
         return rows;
-    }, [chartData]);
+    }, [chartData, resolution]);
 
     // Sort facility rows
     const sortedRows = useMemo(() => {

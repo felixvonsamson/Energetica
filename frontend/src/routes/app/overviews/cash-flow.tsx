@@ -381,6 +381,7 @@ function RevenuesOverviewContent() {
 
                 <CashFlowOverviewTable
                     chartData={filteredChartData}
+                    resolution={selectedResolution.resolution}
                     revenueType={revenueType}
                     hiddenFacilities={hiddenFacilities}
                     onToggleFacility={toggleFacility}
