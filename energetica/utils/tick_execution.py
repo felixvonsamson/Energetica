@@ -1,7 +1,7 @@
 """Utility functions relating to the GameEngine class."""
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from energetica import production_update
@@ -36,6 +36,8 @@ def tick() -> None:
         engine.first_tick_time = datetime.now()
         engine.save()
     engine.total_t += 1
+    engine.last_tick_at = datetime.now(timezone.utc)
+    engine.recent_tick_timestamps.append(time.time())
     engine.log(f"t = {engine.total_t}")
     if engine.total_t % 216 == 0:
         save_past_data()

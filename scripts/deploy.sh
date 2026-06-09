@@ -275,27 +275,50 @@ main() {
         log_success "Service is running"
         echo ""
 
-        # Step 9: Health check
-        log_step "Performing health check..."
-        HEALTH_CHECK_RETRIES=10
-        HEALTH_CHECK_DELAY=2
-        HEALTH_SUCCESS=false
-        for i in $(seq 1 $HEALTH_CHECK_RETRIES); do
-            if ssh "${REMOTE_USER}@${REMOTE_HOST}" "curl -sf http://localhost:8000/openapi.json > /dev/null" 2>/dev/null; then
-                HEALTH_SUCCESS=true
-                break
+        # Step 9: Wait for /healthz to be reachable and report status=ok.
+        # During cold start the actions-history parse blocks port bind for minutes,
+        # and the replay job can run for minutes more before serve_local flips false.
+        # Keep polling until status=ok, scheduler errors >0, or we hit the deadline.
+        log_step "Waiting for /healthz status=ok on https://${DOMAIN}..."
+        HEALTH_TIMEOUT_SECONDS=600
+        HEALTH_POLL_INTERVAL=5
+        HEALTH_DEADLINE=$(( $(date +%s) + HEALTH_TIMEOUT_SECONDS ))
+        HEALTH_OK=false
+        while [ "$(date +%s)" -lt "$HEALTH_DEADLINE" ]; do
+            HZ=$(curl -fsS --max-time 5 "https://${DOMAIN}/healthz" 2>/dev/null || true)
+            if [ -n "$HZ" ]; then
+                STATUS=$(echo "$HZ" | jq -r .status 2>/dev/null || echo "")
+                SCHED_ERRS=$(echo "$HZ" | jq -r '.engine.scheduler_exception_count // 0' 2>/dev/null || echo 0)
+                if [ "$STATUS" = "ok" ] && [ "$SCHED_ERRS" = "0" ]; then
+                    HEALTH_OK=true
+                    break
+                elif [ "$SCHED_ERRS" != "0" ]; then
+                    log_error "Scheduler exception detected on server (count=${SCHED_ERRS})"
+                    echo "Check logs: ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo journalctl -u energetica -n 200'"
+                    exit 1
+                elif [ "$STATUS" = "resimulating" ]; then
+                    PROGRESS=$(echo "$HZ" | jq -c .resim_progress 2>/dev/null || echo "")
+                    echo "  …replay in progress: ${PROGRESS}"
+                fi
             fi
-            if [ $i -lt $HEALTH_CHECK_RETRIES ]; then
-                sleep $HEALTH_CHECK_DELAY
-            fi
+            sleep $HEALTH_POLL_INTERVAL
         done
 
-        if [ "$HEALTH_SUCCESS" = false ]; then
-            log_error "Health check failed after ${HEALTH_CHECK_RETRIES} attempts"
+        if [ "$HEALTH_OK" = false ]; then
+            log_error "/healthz did not reach status=ok within ${HEALTH_TIMEOUT_SECONDS}s"
             echo "Check logs: ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo journalctl -u energetica -f'"
             exit 1
         fi
-        log_success "Service is responding to requests"
+        log_success "/healthz status=ok"
+        echo ""
+
+        # Step 10: Full post-deploy verification (tick advancement is the honest check).
+        log_step "Running scripts/verify-deploy.sh ${DOMAIN}..."
+        if ! ./scripts/verify-deploy.sh "${DOMAIN}" --ssh-host "${REMOTE_USER}@${REMOTE_HOST}"; then
+            log_error "Post-deploy verification failed"
+            exit 1
+        fi
+        log_success "Post-deploy verification passed"
         echo ""
     fi
 
