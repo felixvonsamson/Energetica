@@ -73,13 +73,17 @@ def main() -> int:
         if existing not in (None, 0):
             skipped += 1
             continue
+        if args.dry_run:
+            migrated += 1
+            print(f"  [dry-run] would migrate user {user.username!r}")
+            continue
         account_id = accounts.get_or_create_account_id(username=user.username, pwhash=user.pwhash)
         user.account_id = account_id
         migrated += 1
         print(f"  user {user.username!r} -> account_id={account_id}")
 
     if args.dry_run:
-        print(f"DRY RUN: would migrate {migrated} users, skip {skipped}. Pickle NOT saved.")
+        print(f"DRY RUN: would migrate {migrated} users, skip {skipped}. No changes written.")
         return 0
 
     if migrated > 0:

@@ -73,6 +73,17 @@ def init_db() -> None:
         pass
 
 
+def _reset_initialised_paths() -> None:
+    """Forget which DB paths have been schema-bootstrapped. For test teardown only.
+
+    Schema creation is cached per path in ``_initialised_paths``. If a test reuses a path
+    after its backing file has been deleted, the cache would skip schema creation and the
+    next query would fail with an opaque "no such table". Clearing the cache between tests
+    keeps lazy bootstrap honest.
+    """
+    _initialised_paths.clear()
+
+
 def create_account(*, username: str, pwhash: str, email: str | None = None) -> int:
     """Insert a new account row and return its account_id."""
     created_at = datetime.now(timezone.utc).isoformat()
