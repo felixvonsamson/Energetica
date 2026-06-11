@@ -891,8 +891,7 @@ def package_functional_facilities(player: Player) -> list[dict]:
         _package_project_base(player, functional_facility)
         | {
             "construction_pollution": const_config_assets[functional_facility]["base_construction_pollution"]
-            * const_config_assets[functional_facility]["price_multiplier"]
-            ** player.get_level(functional_facility),
+            * const_config_assets[functional_facility]["price_multiplier"] ** player.get_level(functional_facility),
         }
         | special_keys[functional_facility]
         for functional_facility in FunctionalFacilityType

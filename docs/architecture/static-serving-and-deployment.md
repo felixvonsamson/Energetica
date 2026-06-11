@@ -16,7 +16,13 @@ Shipping in phased PRs. Each phase leaves the app deployable on its own.
   - Moved `/sign-up` → `/app/sign-up`; updated in-app `Link to="/sign-up"`
   - Dropped dead `/admin-dashboard` FastAPI route and legacy `apple-app-site-association`
   - **Side-by-side decision:** landing routes still live in `routes/` (duplicated as thin shells) during the interim. The app bundle still serves them via FastAPI; Phase 5 deletes them when Apache takes over.
-- ⬜ **Phase 2 — Server-wide accounts.** SQLite schema, `account_id` on pickle `User`, refactor signup/login/password-change to read SQLite, `migrate-to-server-accounts.py`.
+- ✅ **Phase 2 — Server-wide accounts.**
+  - Added `energetica/accounts/` package (SQLite store, WAL, lazy schema bootstrap, `ENERGETICA_ACCOUNTS_DB_PATH` env var, default `/var/lib/energetica/accounts.db`)
+  - Added `account_id: int` (required) to pickle `User`; `__setstate__` raises a clear error if missing on unpickle (forces the migration script to run before the new code starts)
+  - Refactored signup/login/change-password (`energetica/routers/auth.py`, `energetica/utils/misc.py`): credentials are written to and read from SQLite as the source of truth; the pickle `pwhash` is kept in sync as a non-load-bearing mirror
+  - Signup uses SQLite-row-first + pickle-row-second with rollback (`accounts.delete_account`) if the pickle write fails
+  - Login auto-provisions a pickle `User(account_id, role="player", player=None)` on first visit to an instance — full access-policy gating lands in Phase 3 (current behaviour: treat every instance as `public`)
+  - `scripts/migrate-to-server-accounts.py` (idempotent via `INSERT OR IGNORE` + `SELECT`)
 - ⬜ **Phase 3 — Instance visibility & access policy.** Read `/etc/energetica/{slug}/instance.json` on every login; write sanitised fragment to landing dir; aggregate `instances.json`.
 - ⬜ **Phase 4 — Apache configs + infra scripts.** `apache-main.conf`, `apache-instance.conf`, `energetica.service`, `setup-base.sh`, `setup-landing.sh`, `setup-instance.sh`, `deploy-landing.sh`, `deploy-instance.sh`, `list-instances.sh`.
 - ⬜ **Phase 5 — FastAPI cleanup + production cutover.** Coordinated PR. Drop `StaticFiles` mount, all `FileResponse` handlers in `templates.py` (keep `/logout`), delete duplicated landing routes from `routes/`, delete `vps-setup.sh` and old `deploy.sh`. Must ship together with the Apache vhost rollout.
@@ -29,6 +35,20 @@ Shipping in phased PRs. Each phase leaves the app deployable on its own.
 - Service worker does not precache anything under the renamed path; client caches recover on next page load.
 - External bookmarks to top-level `/sign-up` 404 after Phase 1. Consider a temporary 301 redirect in `templates.py` (`/sign-up` → `/app/sign-up`) if old links are in the wild.
 - `dist-landing/` is built but not deployed by `deploy.sh` yet — landing files only ship in Phase 5.
+
+### Phase 2 deployment notes
+
+Unlike Phase 1, Phase 2 changes the **auth path** and the **pickle shape**. The migration script must run on the VPS *before* the new code starts. Order:
+
+1. **Stop the instance service** — `sudo systemctl stop energetica-{instance}` — so the pickle is not mutated concurrently with the migration.
+2. **Create the accounts dir + DB** if it does not exist yet: `sudo mkdir -p /var/lib/energetica && sudo chown energetica:energetica /var/lib/energetica`. The script creates `accounts.db` on first connect; permissions on the file must allow the service user to read and write. (`scripts/vps-setup.sh` is slated for replacement in Phase 4; for now adjust manually.)
+3. **Run the migration** as the service user (or root, then `chown` the resulting file): `sudo -u energetica .venv/bin/python scripts/migrate-to-server-accounts.py --pickle /var/www/energetica-{instance}/instance/engine_data.pck`. The script is idempotent — re-running after a partial failure is safe. Use `--dry-run` first to verify the expected user count.
+4. **Deploy the new code** (`scripts/deploy.sh`) — this is what installs the auth refactor.
+5. **Start the service** — `sudo systemctl start energetica-{instance}`.
+
+If steps 3 and 4 are reversed (new code lands first), every login attempt will raise `RuntimeError: Pickle User is missing account_id — run scripts/migrate-to-server-accounts.py before starting the new code.` from `User.__setstate__`. Recovery: stop service, run migration, restart service.
+
+`accounts.db` is a single point of failure for every instance on the VPS — back it up alongside the pickle. SQLite WAL mode means concurrent readers don't block; writers serialise. With one instance per VPS today and writes only on signup/password-change, contention is irrelevant in practice.
 
 ---
 

@@ -244,14 +244,18 @@ def create_app(
 
         scheduler.start()
 
+        from energetica import accounts
         from energetica.database.user import User
         from energetica.utils.auth import generate_password_hash
+
+        accounts.init_db()
 
         # Creating the root admin account if it does not exist.
         if not list(User.filter_by(role="admin")):
             admin_password = secrets.token_hex(4)
             hashed_password = generate_password_hash(admin_password)
-            new_admin = User(username="admin", pwhash=hashed_password, role="admin")
+            admin_account_id = accounts.get_or_create_account_id(username="admin", pwhash=hashed_password)
+            new_admin = User(username="admin", pwhash=hashed_password, role="admin", account_id=admin_account_id)
             engine.log(f"Admin account created with username '{new_admin.username}'")
             # TODO(mglst): I think it would make more sense to move this under the instance/ folder
             with open(_REPO_ROOT / "admin_accounts.txt", "w", encoding="utf-8") as file:
@@ -279,7 +283,8 @@ def create_app(
                     if password is None:
                         password = secrets.token_hex(4)
                     hashed_password = generate_password_hash(password)
-                    User(username=username, pwhash=hashed_password, role="player")
+                    account_id = accounts.get_or_create_account_id(username=username, pwhash=hashed_password)
+                    User(username=username, pwhash=hashed_password, role="player", account_id=account_id)
                     file.write(f"{username},{password}\n")
                     engine.log(f"players.txt: Created player {username} with password {password}")
 

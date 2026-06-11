@@ -22,7 +22,7 @@ def test_upgrading_active_facilities() -> None:
     See https://github.com/felixvonsamson/Energetica/issues/371
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    user1 = User(username="username", pwhash=generate_password_hash("password"), role="player")
+    user1 = User(username="username", pwhash=generate_password_hash("password"), role="player", account_id=1)
     hex_tile = HexTile.getitem(1)
     player1 = confirm_location(user1, hex_tile)
 

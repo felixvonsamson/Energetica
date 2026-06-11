@@ -17,7 +17,7 @@ from energetica.utils.resource_market import create_ask, purchase_resource, stor
 def test_store_import() -> None:
     """Test upgrading active facilities."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    user1 = User(username="username", pwhash=generate_password_hash("password"), role="player")
+    user1 = User(username="username", pwhash=generate_password_hash("password"), role="player", account_id=1)
     hex_tile = HexTile.getitem(1)
     player1 = confirm_location(user1, hex_tile)
 
@@ -43,8 +43,8 @@ def test_store_import() -> None:
 def test_purchase_resource() -> None:
     """Test purchasing a resource off the resource market."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    user1 = User(username="user1", pwhash=generate_password_hash("password"), role="player")
-    user2 = User(username="user2", pwhash=generate_password_hash("password"), role="player")
+    user1 = User(username="user1", pwhash=generate_password_hash("password"), role="player", account_id=1)
+    user2 = User(username="user2", pwhash=generate_password_hash("password"), role="player", account_id=2)
     player1 = confirm_location(user1, HexTile.getitem(1))
     player2 = confirm_location(user2, HexTile.getitem(2))
     add_asset(player1, FunctionalFacilityType.WAREHOUSE, 1)

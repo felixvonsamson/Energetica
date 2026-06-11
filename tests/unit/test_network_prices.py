@@ -16,8 +16,8 @@ from energetica.utils.map_helpers import confirm_location
 def test_price_randomization() -> None:
     """Test that the prices are randomized."""
     engine.random_seed = 0
-    user_a = User("player1", "pwhash", role="player")
-    user_b = User("player2", "pwhash", role="player")
+    user_a = User("player1", "pwhash", role="player", account_id=1)
+    user_b = User("player2", "pwhash", role="player", account_id=2)
     player_a = confirm_location(user_a, HexTile.getitem(1))
     player_b = confirm_location(user_b, HexTile.getitem(2))
     assert (
