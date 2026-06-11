@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Users, Check, BarChart2 } from "lucide-react";
+import { PlugZap, Check, BarChart2 } from "lucide-react";
 
 import { CardContent, Button, Money } from "@/components/ui";
 import {
@@ -95,7 +95,7 @@ function MarketContent({
                             isCurrentMarket ? "bg-brand/20" : "bg-muted/50",
                         )}
                     >
-                        <Users
+                        <PlugZap
                             className={cn(
                                 "w-16 h-16",
                                 isCurrentMarket
@@ -129,7 +129,7 @@ function MarketContent({
                             <div className="text-sm text-muted-foreground mb-1">
                                 Members
                             </div>
-                            <div className="text-xl font-semibold">
+                            <div className="text-xl font-semibold font-mono">
                                 {market.member_ids.length}
                             </div>
                         </div>
@@ -152,8 +152,8 @@ function MarketContent({
                                 Volume
                             </div>
                             <div className="text-xl font-semibold font-mono">
-                                {marketData.volume !== undefined ? (
-                                    formatPower(marketData.volume)
+                                {marketData.quantity !== undefined ? (
+                                    formatPower(marketData.quantity)
                                 ) : (
                                     <span className="text-muted-foreground">
                                         N/A
@@ -190,7 +190,7 @@ function MarketContent({
                         {market.member_ids.map((memberId) => (
                             <div
                                 key={memberId}
-                                className="px-3 py-2 bg-muted/30 rounded text-sm"
+                                className="px-3 py-2 bg-card rounded text-sm"
                             >
                                 {playerMap[memberId] ? (
                                     <PlayerName player={playerMap[memberId]} />

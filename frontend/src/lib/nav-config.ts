@@ -121,7 +121,7 @@ export const navConfig: NavItemConfig[] = [
     {
         type: "dropdown",
         label: "Community",
-        icon: lucideReact.Globe,
+        icon: lucideReact.Users,
         children: [
             {
                 type: "link",

@@ -1,4 +1,4 @@
-import { Users, Check } from "lucide-react";
+import { PlugZap, Check } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { useMyMarket } from "@/hooks/use-electricity-markets";
@@ -24,7 +24,7 @@ export function MarketItem({ market, onClick }: MarketItemProps) {
                 "cursor-pointer transition-all duration-200",
                 "hover:border-brand-green hover:scale-105",
                 "flex flex-col h-full relative",
-                isCurrentMarket && "border-brand-green bg-brand/5",
+                isCurrentMarket && "border-brand-green bg-muted",
             )}
             onClick={onClick}
         >
@@ -43,7 +43,7 @@ export function MarketItem({ market, onClick }: MarketItemProps) {
                         isCurrentMarket ? "bg-brand/20" : "bg-muted/50",
                     )}
                 >
-                    <Users
+                    <PlugZap
                         className={cn(
                             "w-10 h-10",
                             isCurrentMarket
@@ -58,7 +58,7 @@ export function MarketItem({ market, onClick }: MarketItemProps) {
             <CardHeader className="text-center">
                 <CardTitle className="text-base">{market.name}</CardTitle>
                 <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
-                    <Users className="w-4 h-4" />
+                    <PlugZap className="w-4 h-4" />
                     <span>
                         {market.member_ids.length}{" "}
                         {market.member_ids.length === 1 ? "member" : "members"}

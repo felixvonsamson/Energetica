@@ -3,7 +3,7 @@ import {
     useNavigate,
     useSearch,
 } from "@tanstack/react-router";
-import { Plus, Users } from "lucide-react";
+import { Plus, PlugZap } from "lucide-react";
 import { useCallback } from "react";
 
 import { CreateMarketDialog } from "@/components/electricity-markets/create-market-dialog";
@@ -70,7 +70,7 @@ function ElectricityMarketsHelp() {
             </p>
             <ul className="list-none space-y-1 ml-4">
                 <li className="flex items-center gap-2">
-                    <Users className="w-4 h-4 shrink-0" />
+                    <PlugZap className="w-4 h-4 shrink-0" />
                     <span>
                         <b>Join a Market:</b> Click "Join" to participate in an
                         existing market and trade with its members
