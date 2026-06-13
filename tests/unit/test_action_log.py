@@ -71,8 +71,11 @@ def test_returns_actions_strictly_after_loaded_tick(tmp_path: Path) -> None:
     tail = stream_actions_after_tick(log, loaded_tick=2)
 
     assert [a.action_type for a in tail] == ["request", "tick"]
-    assert tail[0].user_id == 7
-    assert tail[1].total_t == 3
+    request_action, tick_action = tail
+    assert isinstance(request_action, ApiAction)
+    assert isinstance(tick_action, TickAction)
+    assert request_action.user_id == 7
+    assert tick_action.total_t == 3
 
 
 def test_forged_tick_in_request_payload_does_not_fool_boundary(tmp_path: Path) -> None:
@@ -93,8 +96,11 @@ def test_forged_tick_in_request_payload_does_not_fool_boundary(tmp_path: Path) -
     tail = stream_actions_after_tick(log, loaded_tick=5)
 
     assert [a.action_type for a in tail] == ["request", "tick"]
-    assert tail[0].user_id == 9
-    assert tail[1].total_t == 6
+    request_action, tick_action = tail
+    assert isinstance(request_action, ApiAction)
+    assert isinstance(tick_action, TickAction)
+    assert request_action.user_id == 9
+    assert tick_action.total_t == 6
 
 
 def test_non_validating_prefix_line_is_skipped_not_parsed(tmp_path: Path) -> None:
@@ -117,7 +123,9 @@ def test_non_validating_prefix_line_is_skipped_not_parsed(tmp_path: Path) -> Non
     tail = stream_actions_after_tick(log, loaded_tick=2)
 
     assert [a.action_type for a in tail] == ["request"]
-    assert tail[0].user_id == 9
+    (request_action,) = tail
+    assert isinstance(request_action, ApiAction)
+    assert request_action.user_id == 9
 
 
 def test_missing_boundary_tick_raises(tmp_path: Path) -> None:

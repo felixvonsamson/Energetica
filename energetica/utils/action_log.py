@@ -48,6 +48,10 @@ def stream_actions_after_tick(log_path: str | Path, loaded_tick: int) -> list[Ac
     is everything after line 0 (``init_engine``).
     """
     tail: list[Action] = []
+    # A falsy loaded_tick means a fresh engine with no prior saved state: there is no
+    # boundary tick to find, so collect everything after line 0 (init_engine) and skip
+    # the boundary search. The "if not collecting: raise" guard below is intentionally
+    # bypassed in this case — it only fires when a real loaded_tick is never matched.
     collecting = not loaded_tick
     with open(log_path, encoding="utf-8") as file:
         for line_no, line in enumerate(file):
