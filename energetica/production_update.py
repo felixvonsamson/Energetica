@@ -1123,8 +1123,7 @@ def initialize_consumption_statuses(player: Player, new_values: dict) -> None:
     for facility_type in player.network_prices.bid_prices.keys():
         if demand.get(facility_type, 0.0) < epsilon:
             if isinstance(facility_type, StorageFacilityType) and any(
-                af.decommissioning
-                for af in ActiveFacility.filter_by(player=player, facility_type=facility_type)
+                af.decommissioning for af in ActiveFacility.filter_by(player=player, facility_type=facility_type)
             ):
                 player.consumption_statuses[facility_type] = "draining_for_decommissioning"
             else:

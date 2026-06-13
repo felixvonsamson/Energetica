@@ -10,7 +10,7 @@ from energetica.utils.map_helpers import confirm_location
 def test_player_creation_and_location_confirmation() -> None:
     """Test the creation of a player and the confirmation of a location."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
-    player = User(username="username", pwhash=generate_password_hash("password"), role="player")
+    player = User(username="username", pwhash=generate_password_hash("password"), role="player", account_id=1)
     hex_tile = HexTile.getitem(1)
     confirm_location(player, hex_tile)
 
@@ -23,7 +23,7 @@ def test_player_hashable() -> None:
     This is the case for Chat's participants attribute, which is a set of Player instances.
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
-    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player", account_id=1)
     hex_tile = HexTile.getitem(1)
     player = confirm_location(user, hex_tile)
     assert hash(player)

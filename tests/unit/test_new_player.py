@@ -9,6 +9,6 @@ from energetica.utils.map_helpers import confirm_location
 
 def test() -> None:
     create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
-    user = User(username="username", pwhash=generate_password_hash("password"), role="player")
+    user = User(username="username", pwhash=generate_password_hash("password"), role="player", account_id=1)
     hex_tile = HexTile.getitem(1)
     confirm_location(user, hex_tile)

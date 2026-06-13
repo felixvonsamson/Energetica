@@ -64,9 +64,7 @@ class ActiveFacility(DBModel):
                 return iter(cls._player_type_index.get(player.id, {}).get(facility_type, []))
             if len(conditions) == 1:
                 return (
-                    af
-                    for facility_list in cls._player_type_index.get(player.id, {}).values()
-                    for af in facility_list
+                    af for facility_list in cls._player_type_index.get(player.id, {}).values() for af in facility_list
                 )
         return super().filter_by(**conditions)
 

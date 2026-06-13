@@ -11,7 +11,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 
-from energetica import __release_date__, __version__
+from energetica import __release_date__, __version__, accounts
 from energetica.database.user import User
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
@@ -62,17 +62,23 @@ def login(request: Request, request_data: LoginRequest) -> Response:
     username = request_data.username
     password = request_data.password
 
-    user = next(User.filter_by(username=username), None)
-
-    if user is None:
+    account = accounts.get_account_by_username(username)
+    if account is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=GameExceptionType.USER_NOT_FOUND,
             headers={"release-date": __release_date__, "version": __version__},
         )
 
-    if not check_password_hash(plain_password=password, hashed_password=user.pwhash):
+    if not check_password_hash(plain_password=password, hashed_password=account.pwhash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=GameExceptionType.INVALID_PASSWORD)
+
+    user = next(User.filter_by(account_id=account.account_id), None)
+    if user is None:
+        # First visit to this instance: provision a pickle User for the server-wide account.
+        # Player creation still happens at the settle page.
+        user = User(username=account.username, pwhash=account.pwhash, role="player", account_id=account.account_id)
+        engine.log(f"{username} auto-provisioned on this instance from server-wide account")
 
     engine.log(f"{username} logged in")
 
@@ -87,11 +93,11 @@ def signup(request: Request, request_data: SignupRequest) -> Response:
         raise GameError(GameExceptionType.SIGNUP_DISABLED)
     username = request_data.username
     password = request_data.password
-    existing_user = next(User.filter_by(username=username), None)
-    if existing_user:
-        raise HTTPException(status.HTTP_409_CONFLICT, GameExceptionType.USERNAME_TAKEN)
     pwhash = generate_password_hash(password)
-    user = misc.signup_playing_user(request, username, pwhash)
+    try:
+        user = misc.signup_playing_user(request, username, pwhash)
+    except accounts.UsernameTakenError:
+        raise HTTPException(status.HTTP_409_CONFLICT, GameExceptionType.USERNAME_TAKEN)
     return add_session_cookie_to_response(
         JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED), user, request
     )
@@ -102,14 +108,21 @@ def change_password(  # noqa: ANN201
     request_data: ChangePasswordRequest,
     user: Annotated[User | None, Depends(get_user)],
 ):
-    """Change the password for the current user."""
+    """Change the password for the current user. The new hash is written to the server-wide
+    SQLite accounts store; the pickle ``pwhash`` is kept in sync as a non-load-bearing mirror.
+    """
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
     old_password = request_data.old_password
     new_password = request_data.new_password
-    if not check_password_hash(plain_password=old_password, hashed_password=user.pwhash):
+
+    account = accounts.get_account_by_username(user.username)
+    if account is None or not check_password_hash(plain_password=old_password, hashed_password=account.pwhash):
         raise GameError(GameExceptionType.OLD_PASSWORD_INCORRECT)
-    user.pwhash = generate_password_hash(new_password)
+
+    new_pwhash = generate_password_hash(new_password)
+    accounts.update_password(username=user.username, new_pwhash=new_pwhash)
+    user.pwhash = new_pwhash
     engine.log(f"{user.username} changed their password")
 
 

@@ -21,7 +21,11 @@ from energetica.enums import (
 )
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
-from energetica.schemas.notifications import ConstructionFinishedPayload, TechnologyResearchedPayload, TutorialPushNotificationsPayload
+from energetica.schemas.notifications import (
+    ConstructionFinishedPayload,
+    TechnologyResearchedPayload,
+    TutorialPushNotificationsPayload,
+)
 from energetica.schemas.projects import ProjectListOut
 from energetica.utils.workers import deploy_available_workers
 from energetica.utils.hashing import stable_hash

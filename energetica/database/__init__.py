@@ -113,6 +113,7 @@ class DBModel:
         status: ProjectStatus
         # User
         role: Literal["player", "admin"]
+        account_id: int
 
     @classmethod
     def count_when(cls: type[T], **conditions: Unpack[WhitelistedConditions]) -> int:

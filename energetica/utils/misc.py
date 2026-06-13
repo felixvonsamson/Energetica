@@ -11,7 +11,7 @@ from fastapi import Request
 from noise import pnoise3
 from scipy.stats import norm
 
-from energetica import technology_effects
+from energetica import accounts, technology_effects
 from energetica.config.assets import river_flow_speed_seasonal
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map.hex_tile import HexTile
@@ -36,10 +36,19 @@ def signup_playing_user(request: Request | None, username: str, pwhash: str) -> 
     """
     Sign up a User with the player role.
 
+    Writes the credentials to the server-wide SQLite accounts store first, then creates the
+    pickle User. If pickle creation fails, the SQLite row is rolled back so re-attempts with
+    the same username are not blocked by a stale account row.
+
     Calling with request set to null is reserved for simulation - when APIs call this function, they must pass the
     corresponding request object.
     """
-    new_user = User(username=username, pwhash=pwhash, role="player")
+    account_id = accounts.create_account(username=username, pwhash=pwhash)
+    try:
+        new_user = User(username=username, pwhash=pwhash, role="player", account_id=account_id)
+    except Exception:
+        accounts.delete_account(account_id=account_id)
+        raise
 
     log_entry = CreateUserAction(
         timestamp=datetime.now(),

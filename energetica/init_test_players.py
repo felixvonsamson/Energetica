@@ -1,5 +1,6 @@
 """Module to initialize the database with test players and networks."""
 
+from energetica import accounts
 from energetica.config.climate_events import climate_events
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.map.hex_tile import HexTile
@@ -50,7 +51,9 @@ def init_test_players() -> None:
         if player:
             engine.log(f"create_player: player {username} already exists")
             return player
-        user = User(username=username, pwhash=generate_password_hash(password), role="player")
+        pwhash = generate_password_hash(password)
+        account_id = accounts.get_or_create_account_id(username=username, pwhash=pwhash)
+        user = User(username=username, pwhash=pwhash, role="player", account_id=account_id)
         # If tile_id is None, find any tile that isn't assigned to a player
         hex_tile = HexTile.get(tile_id) if tile_id else next(HexTile.filter_by(player=None))
         if not hex_tile:
