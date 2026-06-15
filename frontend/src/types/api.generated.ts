@@ -96,7 +96,9 @@ export interface paths {
         /**
          * Change Password
          *
-         * Change the password for the current user.
+         * Change the password for the current user. The new hash is written to
+         * the server-wide SQLite accounts store; the pickle `pwhash` is kept in
+         * sync as a non-load-bearing mirror.
          */
         post: operations["change_password_api_v1_auth_change_password_post"];
         delete?: never;
@@ -1936,40 +1938,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin-dashboard/{full_path}": {
+    "/sign-up": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * Render Admin Dashboard
-         *
-         * Serve React SPA for admin dashboard routes.
-         */
-        get: operations["render_admin_dashboard_admin_dashboard__full_path__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin-dashboard": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Views.Admin Dashboard
-         *
-         * Serve React SPA for admin dashboard routes.
-         */
-        get: operations["views_admin_dashboard_admin_dashboard_get"];
+        /** Views.Sign Up Redirect */
+        get: operations["views_sign_up_redirect_sign_up_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4890,6 +4867,7 @@ export interface components {
             | "PLAYER_NOT_SET_UP"
             | "SIGNUP_DISABLED"
             | "OLD_PASSWORD_INCORRECT"
+            | "INSTANCE_ACCESS_DENIED"
             | "InvalidMultiplier"
             | "malformedRequest"
             | "storagePriceInversion"
@@ -7580,27 +7558,7 @@ export interface operations {
             };
         };
     };
-    render_admin_dashboard_admin_dashboard__full_path__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    views_admin_dashboard_admin_dashboard_get: {
+    views_sign_up_redirect_sign_up_get: {
         parameters: {
             query?: never;
             header?: never;

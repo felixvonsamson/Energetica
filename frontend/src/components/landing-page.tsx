@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import { AdvertisedRuns } from "@/components/advertised-runs";
 import { HomeLayout } from "@/components/home-layout";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -260,6 +261,9 @@ export function LandingPage() {
                         </Link>
                     </div>
                 </section>
+
+                {/* Advertised runs — rendered only once a manifest is served (see AdvertisedRuns). */}
+                <AdvertisedRuns />
 
                 {/* Game element cards — one image per card, alternating layout */}
                 <section className="max-w-6xl mx-auto w-full flex flex-col gap-8">
