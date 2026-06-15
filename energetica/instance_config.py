@@ -155,18 +155,29 @@ def _atomic_write_json(target: Path, payload: str) -> None:
     """
     target.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f"{target.name}.", suffix=".tmp")
+    fd_open = True  # mkstemp's raw fd is ours until os.fdopen takes ownership of it
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as tmp_file:
+            fd_open = False  # fdopen owns the fd now; the context manager will close it
             tmp_file.write(payload)
         os.replace(tmp_name, target)
     except BaseException:
+        # Close the fd only if fdopen never took ownership (else the `with` already closed it;
+        # blindly re-closing would risk a thread-unsafe double-close on a recycled fd).
+        if fd_open:
+            os.close(fd)
         Path(tmp_name).unlink(missing_ok=True)
         raise
 
 
 def aggregate_instances() -> None:
-    """Aggregate every ``instances/*.json`` fragment into ``instances.json``, sorted by
-    ``starts_at`` descending so the most recent instance is first.
+    """Aggregate the **advertised** ``instances/*.json`` fragments into ``instances.json``, sorted
+    by ``starts_at`` descending so the most recent instance is first.
+
+    Only advertised instances are emitted: ``instances.json`` is world-readable and a slug *is* a
+    subdomain, so listing an unadvertised instance here would let anyone enumerate and target an
+    otherwise-hidden instance. Unadvertised instances keep their on-disk fragment (reachable only
+    by already knowing the slug) but never appear in the public manifest.
 
     Pure-Python equivalent of the RFC's ``jq`` one-liner — same output shape, no subprocess
     or runtime ``jq`` dependency. Last-writer-wins across concurrent aggregations is harmless:
@@ -176,10 +187,13 @@ def aggregate_instances() -> None:
     fragments: list[InstanceFragment] = []
     for fragment_path in fragments_dir.glob("*.json"):
         try:
-            fragments.append(InstanceFragment.model_validate_json(fragment_path.read_text(encoding="utf-8")))
+            fragment = InstanceFragment.model_validate_json(fragment_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             # A malformed sibling fragment must not poison the whole manifest. Skip and warn.
             logger.warning("skipping unreadable instance fragment %s", fragment_path)
+            continue
+        if fragment.advertised:
+            fragments.append(fragment)
     fragments.sort(key=lambda fragment: fragment.starts_at, reverse=True)
     manifest = {"instances": [json.loads(fragment.model_dump_json()) for fragment in fragments]}
     _atomic_write_json(_landing_dir() / "instances.json", json.dumps(manifest))

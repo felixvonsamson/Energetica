@@ -212,3 +212,23 @@ def test_publish_noop_when_slug_unset(tmp_path: Path, monkeypatch: pytest.Monkey
     instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
 
     assert not (tmp_path / "landing").exists()
+
+
+def test_aggregate_excludes_unadvertised_instances(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """An unadvertised instance keeps its on-disk fragment but must not appear in the world-readable
+    instances.json — its slug is a subdomain and listing it would defeat 'unadvertised'.
+    """
+    landing_dir = tmp_path / "landing"
+    monkeypatch.setenv("ENERGETICA_LANDING_DIR", str(landing_dir))
+
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "public-run")
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "hidden-run")
+    instance_config.publish(InstanceConfig.model_validate({**PRIVATE_JSON, "advertised": False}))
+
+    # Both fragments exist on disk...
+    assert (landing_dir / "instances" / "public-run.json").exists()
+    assert (landing_dir / "instances" / "hidden-run.json").exists()
+    # ...but only the advertised one is in the public manifest.
+    manifest = json.loads((landing_dir / "instances.json").read_text())
+    assert [entry["slug"] for entry in manifest["instances"]] == ["public-run"]
