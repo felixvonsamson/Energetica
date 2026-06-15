@@ -71,26 +71,27 @@ def test_expired_subscription_is_removed(monkeypatch: pytest.MonkeyPatch) -> Non
     from pywebpush import WebPushException
 
     player = _make_player()
-    player.push_subscriptions.append(_subscription())
 
-    done = threading.Event()
+    # Signal exactly when the background worker calls remove(), so the assertion is deterministic
+    # rather than polling: waiting on the webpush call itself would race the subsequent removal.
+    removed = threading.Event()
+
+    class _SignalingList(list):  # type: ignore[type-arg]
+        def remove(self, value: object) -> None:
+            super().remove(value)
+            removed.set()
+
+    player.push_subscriptions = _SignalingList([_subscription()])
 
     class _Resp:
         status_code = 410
 
     def gone_webpush(**_kwargs: object) -> None:
-        try:
-            raise WebPushException("gone", response=_Resp())
-        finally:
-            done.set()
+        raise WebPushException("gone", response=_Resp())
 
     monkeypatch.setattr(player_module, "webpush", gone_webpush)
 
     player.push_only(ChatMessagePayload(sender_username="alice", message="hi", chat_id=1))
 
-    assert done.wait(timeout=3), "background webpush never ran"
-    # Give the worker thread a moment to perform the removal after raising.
-    deadline = time.perf_counter() + 2
-    while player.push_subscriptions and time.perf_counter() < deadline:
-        time.sleep(0.01)
-    assert player.push_subscriptions == [], "expired (410) subscription was not pruned"
+    assert removed.wait(timeout=3), "expired (410) subscription was not pruned"
+    assert player.push_subscriptions == []
