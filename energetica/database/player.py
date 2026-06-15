@@ -473,7 +473,14 @@ class Player(DBModel):
             )
         except WebPushException as ex:
             if ex.response is not None and ex.response.status_code == 410:
-                # Subscription has expired or been revoked — remove it
+                # Subscription has expired or been revoked — remove it.
+                # Thread-safety: this runs on a background worker, while the subscription router
+                # (browser_notifications.py) appends/removes on the same list from request threads.
+                # All mutations are single, individually-atomic list ops (remove guarded by the
+                # except below; the router uses bare append / remove+except), so they are safe
+                # under the GIL with no lock. push_subscriptions is part of the pickled Player
+                # state, so a per-instance Lock is not an option. If a non-atomic check-then-mutate
+                # sequence on this list is ever introduced, it must be synchronised explicitly.
                 try:
                     self.push_subscriptions.remove(subscription)
                 except ValueError:
