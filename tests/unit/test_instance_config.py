@@ -170,6 +170,21 @@ def test_publish_strips_access_block(configured: Path) -> None:
     }
 
 
+def test_publish_files_are_group_readable(configured: Path) -> None:
+    """Published files must be group-readable: Apache (www-data, group energetica) serves the
+    landing dir statically and is not the file owner, so the mkstemp-default 0o600 would 403.
+    0o640 (not 0o644) keeps the on-disk file from being world-readable.
+    """
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+
+    landing_dir = Path(configured).parent / "landing"
+    fragment_path = landing_dir / "instances" / f"{SLUG}.json"
+    manifest_path = landing_dir / "instances.json"
+
+    assert fragment_path.stat().st_mode & 0o777 == 0o640
+    assert manifest_path.stat().st_mode & 0o777 == 0o640
+
+
 def test_publish_aggregates_sorted_by_starts_at_desc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """instances.json lists fragments most-recent-first, regardless of write order."""
     landing_dir = tmp_path / "landing"

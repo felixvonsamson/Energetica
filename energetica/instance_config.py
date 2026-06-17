@@ -152,6 +152,13 @@ def _atomic_write_json(target: Path, payload: str) -> None:
     two instance processes aggregating into the same ``instances.json`` concurrently cannot
     clobber a shared tmp file mid-write. The ``.tmp`` suffix keeps tmp files out of the
     ``*.json`` glob the aggregator reads.
+
+    The published file is made group-readable (``0o640``): ``mkstemp`` forces ``0o600`` and
+    ``os.replace`` preserves that mode, but Apache (running as ``www-data``, a member of the
+    shared ``energetica`` group) must read these files to serve the landing manifest. ``0o640``
+    rather than ``0o644`` keeps the on-disk file from being world-readable — the HTTP exposure is
+    intentional, the filesystem one need not be. The ``chmod`` is inside the ``try`` so a failure
+    routes through the cleanup path below and no ``0o600`` tmp file is renamed into place.
     """
     target.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f"{target.name}.", suffix=".tmp")
@@ -160,6 +167,7 @@ def _atomic_write_json(target: Path, payload: str) -> None:
         with os.fdopen(fd, "w", encoding="utf-8") as tmp_file:
             fd_open = False  # fdopen owns the fd now; the context manager will close it
             tmp_file.write(payload)
+        os.chmod(tmp_name, 0o640)
         os.replace(tmp_name, target)
     except BaseException:
         # Close the fd only if fdopen never took ownership (else the `with` already closed it;
