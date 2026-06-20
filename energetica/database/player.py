@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -58,6 +59,14 @@ from energetica.technology_effects import (
     package_storage_facilities,
 )
 from energetica.types.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
+
+# Web push delivery is a blocking network round-trip. It must never sit on a request handler or
+# game-tick critical path, so the actual webpush() calls are dispatched to this background pool
+# (fire-and-forget, best-effort). See issue #763. The per-request timeout below bounds how long a
+# single hung push service can occupy a worker (and bounds interpreter shutdown, since the pool is
+# joined at exit).
+_PUSH_TIMEOUT_SECONDS = 5
+_PUSH_EXECUTOR = ThreadPoolExecutor(max_workers=16, thread_name_prefix="webpush")
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -438,23 +447,40 @@ class Player(DBModel):
         return shipment_speeds
 
     def notify_subscription(self, subscription: Subscription, payload: NotificationPayload) -> None:
-        """Send a push notification to a single subscription without creating a notification object."""
+        """Queue a push notification to a single subscription for background delivery.
+
+        The blocking webpush() round-trip is dispatched to a background thread pool so it never
+        delays the caller (request handler or game tick). Delivery is fire-and-forget and
+        best-effort. See issue #763.
+        """
         notification_data = {
             "type": payload.type,
             "payload": payload.model_dump(exclude={"type"}),
         }
         parsed = urlparse(subscription.endpoint)
         audience = f"{parsed.scheme}://{parsed.netloc}"
+        _PUSH_EXECUTOR.submit(self._deliver_push, subscription, notification_data, audience)
+
+    def _deliver_push(self, subscription: Subscription, notification_data: dict[str, Any], audience: str) -> None:
+        """Perform the blocking webpush delivery. Runs in a background thread; best-effort."""
         try:
             webpush(
                 subscription_info=subscription.model_dump(),
                 data=json.dumps(notification_data),
                 vapid_private_key=engine.VAPID_PRIVATE_KEY,
                 vapid_claims={"aud": audience, "sub": "mailto:energetica.game@gmail.com"},
+                timeout=_PUSH_TIMEOUT_SECONDS,
             )
         except WebPushException as ex:
             if ex.response is not None and ex.response.status_code == 410:
-                # Subscription has expired or been revoked — remove it
+                # Subscription has expired or been revoked — remove it.
+                # Thread-safety: this runs on a background worker, while the subscription router
+                # (browser_notifications.py) appends/removes on the same list from request threads.
+                # All mutations are single, individually-atomic list ops (remove guarded by the
+                # except below; the router uses bare append / remove+except), so they are safe
+                # under the GIL with no lock. push_subscriptions is part of the pickled Player
+                # state, so a per-instance Lock is not an option. If a non-atomic check-then-mutate
+                # sequence on this list is ever introduced, it must be synchronised explicitly.
                 try:
                     self.push_subscriptions.remove(subscription)
                 except ValueError:
@@ -462,10 +488,10 @@ class Player(DBModel):
             else:
                 engine.warn(f"Failed to send notification: {repr(ex)}")
         except Exception as ex:  # noqa: BLE001
-            # Push delivery is best-effort: any transport/library failure (DNS, TCP, TLS, library
-            # bug, ...) must not abort the caller, since notify() is invoked from inside
-            # complete_project and a raise here leaves the player's state half-finished
-            # (project deleted, ActiveFacility never created). See issue #753.
+            # Push delivery is best-effort: any transport/library failure (DNS, TCP, TLS, timeout,
+            # library bug, ...) must not surface. notify() runs from inside game logic such as
+            # complete_project, where a raise would leave player state half-finished (project
+            # deleted, ActiveFacility never created). See issues #753 and #763.
             engine.warn(f"Failed to send notification: {repr(ex)}")
 
     def notify(self, payload: PersistableNotificationPayload) -> None:
