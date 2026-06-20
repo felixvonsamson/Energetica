@@ -33,7 +33,9 @@ log_error()   { echo -e "${RED}✗ $1${NC}"; }
 [ -n "$REMOTE_HOST" ] || { log_error "--server is required (or set DEPLOY_HOST)"; exit 1; }
 SSH="${REMOTE_USER}@${REMOTE_HOST}"
 
-if ! ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new "$SSH" exit 2>/dev/null; then
+# No StrictHostKeyChecking override: SSH's default surfaces an unexpected/first-seen host key
+# instead of silently trusting it (CI pre-populates known_hosts).
+if ! ssh -o ConnectTimeout=5 "$SSH" exit 2>/dev/null; then
     log_error "Cannot SSH to $SSH"; exit 1
 fi
 

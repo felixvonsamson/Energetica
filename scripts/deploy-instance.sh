@@ -56,7 +56,10 @@ REMOTE_PATH="/var/www/energetica-$INSTANCE"
 FQDN="$INSTANCE.$DOMAIN"
 SSH="${REMOTE_USER}@${REMOTE_HOST}"
 
-if ! ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new "$SSH" exit 2>/dev/null; then
+# No StrictHostKeyChecking override: SSH's default surfaces an unexpected/first-seen host key
+# instead of silently trusting it. A host the operator already configured connects without a
+# prompt; CI pre-populates known_hosts.
+if ! ssh -o ConnectTimeout=5 "$SSH" exit 2>/dev/null; then
     log_error "Cannot SSH to $SSH"
     exit 1
 fi
@@ -121,7 +124,8 @@ if ! ssh "$SSH" "sudo systemctl restart energetica-$INSTANCE"; then
     echo "Logs: ssh $SSH 'sudo journalctl -u energetica-$INSTANCE -n 50'"
     exit 1
 fi
-if ! ssh "$SSH" "sudo systemctl is-active --quiet energetica-$INSTANCE"; then
+# `is-active` is a read-only query — no sudo needed (and so not granted in the deploy sudoers).
+if ! ssh "$SSH" "systemctl is-active --quiet energetica-$INSTANCE"; then
     log_error "Service failed to start"
     echo "Logs: ssh $SSH 'sudo journalctl -u energetica-$INSTANCE -n 50'"
     exit 1

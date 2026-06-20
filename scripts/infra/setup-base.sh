@@ -90,16 +90,19 @@ if id "$DEPLOY_USER" &>/dev/null; then
     usermod -aG energetica "$DEPLOY_USER"
     log_success "Added $DEPLOY_USER to group 'energetica'"
 
-    # deploy-instance.sh runs `sudo -u energetica pip install` (into the per-instance venv)
-    # and `sudo systemctl restart energetica-*` over SSH, so grant exactly those rights.
-    # Acting as `energetica` is no more privilege than deploy already has (it writes the
-    # code that user runs); the systemctl scope is limited to energetica-* units + reads.
+    # deploy-instance.sh runs `sudo -u energetica <instance>/.venv/bin/pip install …` (into the
+    # per-instance venv) and `sudo systemctl restart energetica-*` over SSH, so grant exactly
+    # those. The (energetica) rule is scoped to the per-instance pip binary — NOT `ALL` — so the
+    # deploy user can't use the service account to read accounts.db or overwrite game state. The
+    # `*` in the pathname matches only the slug segment (sudoers wildcards do not cross `/` in a
+    # pathname); the trailing `*` permits pip's arguments. `systemctl is-active` is a read-only
+    # query that needs no root (deploy-instance.sh calls it without sudo), so it is not granted
+    # here. status/journalctl are scoped to energetica-* for the operator hint commands. Both
+    # /usr/bin and /bin path variants cover merged-/usr and non-merged layouts.
     SUDOERS_FILE=/etc/sudoers.d/energetica-deploy
-    # Both path variants cover merged-/usr (most modern distros) and non-merged layouts;
-    # sudoers matches the absolute path sudo resolves, so list both.
     cat > "$SUDOERS_FILE" <<EOF
-$DEPLOY_USER ALL=(energetica) NOPASSWD: ALL
-$DEPLOY_USER ALL=(root) NOPASSWD: /usr/bin/systemctl restart energetica-*, /bin/systemctl restart energetica-*, /usr/bin/systemctl is-active *, /bin/systemctl is-active *, /usr/bin/systemctl status energetica-*, /bin/systemctl status energetica-*, /usr/bin/journalctl -u energetica-*, /bin/journalctl -u energetica-*
+$DEPLOY_USER ALL=(energetica) NOPASSWD: /var/www/energetica-*/.venv/bin/pip *
+$DEPLOY_USER ALL=(root) NOPASSWD: /usr/bin/systemctl restart energetica-*, /bin/systemctl restart energetica-*, /usr/bin/systemctl status energetica-*, /bin/systemctl status energetica-*, /usr/bin/journalctl -u energetica-*, /bin/journalctl -u energetica-*
 EOF
     chmod 440 "$SUDOERS_FILE"
     if visudo -cf "$SUDOERS_FILE" >/dev/null; then

@@ -108,6 +108,12 @@ if [ -x "$APP_DIR/.venv/bin/python" ]; then
     log_success "venv already present at $APP_DIR/.venv"
 else
     log_step "Creating venv (populated by first deploy)..."
+    # $APP_DIR is deploy-owned and only group-readable by energetica, so energetica cannot
+    # mkdir .venv inside it. Pre-create .venv owned by energetica (the service user that runs
+    # `sudo -u energetica pip install` during deploys and must write here); `python3 -m venv`
+    # then populates a directory it already owns. Keeps the code dir deploy-owned (least
+    # privilege) without giving energetica write on the whole instance tree.
+    install -d -o energetica -g energetica -m 0750 "$APP_DIR/.venv"
     sudo -u energetica python3 -m venv "$APP_DIR/.venv"
     log_success "venv at $APP_DIR/.venv"
 fi
@@ -149,8 +155,6 @@ else
     certbot certonly --webroot -w "$APP_DIR" -d "$FQDN" --non-interactive --agree-tos --register-unsafely-without-email
     log_success "Certificate obtained"
 fi
-# Apache reload-on-renewal hook was installed once by setup-base.sh; nothing to do here.
-
 # --- 7. Full vhost --------------------------------------------------------------
 log_section "INSTANCE VHOST"
 sed -e "s/@INSTANCE@/$INSTANCE/g" \
@@ -161,6 +165,8 @@ a2ensite "energetica-$INSTANCE" >/dev/null
 apache2ctl configtest
 systemctl reload apache2
 log_success "Vhost active: https://$FQDN"
+
+# --- 8. Certbot reload-on-renewal hook: installed once per server by setup-base.sh (no-op here).
 
 # --- 9. systemd unit (enabled, not started — no code yet) ----------------------
 log_section "SYSTEMD UNIT"
