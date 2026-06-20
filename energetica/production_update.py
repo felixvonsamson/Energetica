@@ -861,21 +861,23 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
     # Calculate resource consumption and pollution of generation facilities
     for facility in ControllableFacilityType:
         if player.capacities.get(facility) is not None:
-            for fuel, amount in player.capacities[facility]["fuel_use"].items():
-                fuel = Fuel(fuel)
-                quantity = amount * generation[facility] / player.capacities[facility]["power"]
-                player.resources[fuel] -= quantity
-            facility_emissions = (
-                player.capacities[facility]["pollution"] * generation[facility] / player.capacities[facility]["power"]
-            )
-            add_emissions(new_values, player, facility, facility_emissions)
+            power = player.capacities[facility]["power"]
+            if power > 0:
+                for fuel, amount in player.capacities[facility]["fuel_use"].items():
+                    fuel = Fuel(fuel)
+                    quantity = amount * generation[facility] / power
+                    player.resources[fuel] -= quantity
+                facility_emissions = (
+                    player.capacities[facility]["pollution"] * generation[facility] / power
+                )
+                add_emissions(new_values, player, facility, facility_emissions)
 
     if player.functional_facility_lvl[FunctionalFacilityType.WAREHOUSE] > 0:
         for extraction_facility in ExtractionFacilityType:
             fuel = extraction_facility.associated_fuel
             if player.capacities.get(extraction_facility) is not None:
                 max_demand = player.capacities[extraction_facility]["power_use"]
-                production_factor = demand[extraction_facility] / max_demand
+                production_factor = demand[extraction_facility] / max_demand if max_demand > 0 else 0.0
                 extracted_quantity = (
                     production_factor
                     * player.capacities[extraction_facility]["extraction_rate_per_day"]
