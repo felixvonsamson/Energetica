@@ -11,7 +11,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 
-from energetica import __release_date__, __version__, accounts
+from energetica import __release_date__, __version__, accounts, instance_config
 from energetica.database.user import User
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
@@ -31,6 +31,24 @@ from energetica.utils.auth import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+def _enforce_instance_access(username: str) -> None:
+    """Gate login/signup on this instance's access policy.
+
+    Reads ``instance.json`` fresh (no cache) so admin edits take effect on the next attempt.
+    An unconfigured instance (no slug / no file) is treated as ``public``. A present-but-broken
+    config fails closed. On a successful, allowed read, the public-facing fragment is re-published
+    if its fields have changed since this process last wrote them.
+    """
+    try:
+        config = instance_config.load_instance_config()
+    except instance_config.InstanceConfigError as exc:
+        engine.log(f"login/signup blocked: {exc}")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, GameExceptionType.INSTANCE_ACCESS_DENIED) from exc
+    if config is not None and not instance_config.is_access_allowed(config, username):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, GameExceptionType.INSTANCE_ACCESS_DENIED)
+    instance_config.publish(config)
 
 
 @router.get("/me")
@@ -73,6 +91,11 @@ def login(request: Request, request_data: LoginRequest) -> Response:
     if not check_password_hash(plain_password=password, hashed_password=account.pwhash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=GameExceptionType.INVALID_PASSWORD)
 
+    # Credentials are valid server-wide; this instance's access policy decides whether they may
+    # log in here. Enforced for existing and first-time users alike (private instances may have
+    # been locked down after a user was provisioned).
+    _enforce_instance_access(username)
+
     user = next(User.filter_by(account_id=account.account_id), None)
     if user is None:
         # First visit to this instance: provision a pickle User for the server-wide account.
@@ -93,6 +116,8 @@ def signup(request: Request, request_data: SignupRequest) -> Response:
         raise GameError(GameExceptionType.SIGNUP_DISABLED)
     username = request_data.username
     password = request_data.password
+    # A private instance must not let an unlisted username create a (server-wide) account here.
+    _enforce_instance_access(username)
     pwhash = generate_password_hash(password)
     try:
         user = misc.signup_playing_user(request, username, pwhash)

@@ -37,6 +37,7 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     PLAYER_NOT_SET_UP: "Please complete your account setup.",
     SIGNUP_DISABLED: "Sign-ups are currently disabled.",
     OLD_PASSWORD_INCORRECT: "The current password you entered is incorrect.",
+    INSTANCE_ACCESS_DENIED: "Your account is not allowed on this instance.",
 
     // --- Location / tile ---
     locationOccupied: "This location is already occupied by another player.",

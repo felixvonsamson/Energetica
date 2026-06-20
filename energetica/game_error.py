@@ -37,6 +37,7 @@ class GameExceptionType(StrEnum):
     PLAYER_NOT_SET_UP = "PLAYER_NOT_SET_UP"
     SIGNUP_DISABLED = "SIGNUP_DISABLED"
     OLD_PASSWORD_INCORRECT = "OLD_PASSWORD_INCORRECT"
+    INSTANCE_ACCESS_DENIED = "INSTANCE_ACCESS_DENIED"
     # Technology effects
     INVALID_MULTIPLIER = "InvalidMultiplier"
     # network prices

@@ -300,6 +300,13 @@ def create_app(
             engine.log("running init_test_players")
             init_test_players()
 
+        # Publish this instance's sanitised fragment to the landing dir and re-aggregate the
+        # public manifest. Best-effort: unconfigured/dev deployments and an unwritable landing
+        # dir are tolerated (logged, not fatal).
+        from energetica import instance_config
+
+        instance_config.publish_on_startup()
+
         yield
         scheduler.shutdown()
         # mglst: See discussion for #302
