@@ -27,7 +27,8 @@ from pydantic import TypeAdapter
 
 from energetica import globals
 from energetica.game_engine import GameEngine
-from energetica.schemas.simulate import Action
+from energetica.schemas.simulate import Action, InitEngineAction
+from energetica.utils.action_log import read_init_action, stream_actions_after_tick
 from energetica.utils.browser_notifications import load_or_create_vapid_keys
 
 _REPO_ROOT = Path(__file__).parent.parent
@@ -100,14 +101,17 @@ def create_app(
     Path("instance").mkdir(exist_ok=True)
     engine.init_loggers()
 
-    actions = []
+    actions: list[Action] = []
+    init_action: InitEngineAction | None = None
     if simulate_file:
-        # Simulate the game run from a file.
+        # Simulate the game run from a file. This dev/CI path replays an arbitrary, dev-chosen
+        # file and still parses it in full — it carries no production crash-loop exposure.
         Path("checkpoints/simulation").mkdir(exist_ok=True)
         TypeAdapterAction = TypeAdapter(Action)
         with open(simulate_file, "r", encoding="utf-8") as file:
             actions = cast(list[Action], [TypeAdapterAction.validate_json(line) for line in file])
         assert actions[0].action_type == "init_engine"
+        init_action = cast(InitEngineAction, actions[0])
 
         checkpoints = {
             int(save.split("checkpoint_")[1].rstrip(".tar.gz")): save
@@ -138,35 +142,39 @@ def create_app(
             if saved_history:
                 os.rename("actions_history.log.bak", "instance/actions_history.log")
             engine.log("Loaded last checkpoint")
+        # The action log is the authoritative event source, but only line 0 (init_engine) and
+        # the actions after the loaded tick are ever needed. Read line 0 now and stream the tail
+        # below, rather than deserialising the whole (multi-hundred-MB) log into Pydantic objects
+        # on every startup, which spiked RSS to ~1.3 GB and OOM-killed the box (issue #766).
         if os.path.isfile("instance/actions_history.log"):
-            with open("instance/actions_history.log", "r") as file:
-                actions = cast(list[Action], [TypeAdapter(Action).validate_json(line) for line in file])
-            if actions:
-                assert actions[0].action_type == "init_engine"
+            init_action = read_init_action("instance/actions_history.log")
     if os.path.isfile("instance/engine_data.pck"):
         engine.load()
-        if actions:
-            assert actions[0].action_type == "init_engine"
-            assert uuid.UUID(actions[0].instance_uuid) == engine.uuid
+        if init_action is not None:
+            assert uuid.UUID(init_action.instance_uuid) == engine.uuid
     else:
-        if actions:
-            assert actions[0].action_type == "init_engine"
-            assert actions[0].game_version == __version__, (
+        if init_action is not None:
+            assert init_action.game_version == __version__, (
                 "Game version mismatch. This actions history is not compatible with this version of the game."
             )
-            kwargs: dict = actions[0].model_dump()
+            kwargs: dict = init_action.model_dump()
             kwargs.pop("action_type")
             engine.init_instance(**kwargs)
         else:
             engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, __version__, disable_signups)
 
-    action_id_by_tick = {
-        action.total_t: action_id for action_id, action in enumerate(actions) if action.action_type == "tick"
-    }
     loaded_tick = engine.total_t
-    start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 1
-    last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
-    actions_to_simulate = actions[start_action_id : last_action_id + 1]
+    if simulate_file:
+        action_id_by_tick = {
+            action.total_t: action_id for action_id, action in enumerate(actions) if action.action_type == "tick"
+        }
+        start_action_id = action_id_by_tick[loaded_tick] + 1 if loaded_tick else 1
+        last_action_id = action_id_by_tick[simulate_till] if simulate_till else len(actions) - 1
+        actions_to_simulate = actions[start_action_id : last_action_id + 1]
+    elif os.path.isfile("instance/actions_history.log"):
+        actions_to_simulate = stream_actions_after_tick("instance/actions_history.log", loaded_tick)
+    else:
+        actions_to_simulate = []
 
     replay_tick_targets = [action.total_t for action in actions_to_simulate if action.action_type == "tick"]
     if replay_tick_targets:

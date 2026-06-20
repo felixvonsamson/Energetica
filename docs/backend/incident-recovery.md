@@ -34,11 +34,19 @@ cp -r instance/ instance.bak.$(date +%Y%m%d_%H%M%S)/
 
 The `--load_checkpoint` flag handles everything: it preserves the actions log, removes the stale `instance/` folder, extracts `checkpoints/last_checkpoint.tar.gz`, puts the log back, and replays all recorded actions before resuming normal operation.
 
+> ⚠️ **Run the replay as `www-data`, not `root`.** The systemd service runs as `www-data`. If you run the replay as `root`, every file it writes under `instance/` becomes root-owned, and the next live tick fails with `PermissionError` — putting you straight into another crash loop. Use `sudo -u www-data`:
+
 ```bash
-python main.py --env prod --no-reload --load_checkpoint
+sudo -u www-data python main.py --env prod --no-reload --load_checkpoint
 ```
 
 Pass the same SSL and port flags used by the production service. Watch for rapid tick replays (`t = XXXX`). Once the ticks slow to the normal 30-second cadence, recovery is complete. Stop the process with Ctrl+C.
+
+If you did run anything as `root` by mistake, fix ownership before starting the service:
+
+```bash
+chown -R www-data:www-data instance/ checkpoints/
+```
 
 **Step 3 — start the service:**
 
@@ -75,6 +83,9 @@ followed by rapid tick replays (`t = XXXX`). If the engine logs an error instead
 
 ## Checkpoints
 
-Checkpoints are saved to `checkpoints/last_checkpoint.tar.gz` by `save_checkpoint()` in `game_engine.py`. They are a tarball of the entire `instance/` directory including `engine_data.pck` and all data files at a consistent point in time.
+Persistence runs at two cadences (see `utils/tick_execution.py`):
 
-The checkpoint on `energetica-edu` is saved roughly every hour (check `ls -la checkpoints/` to see its age).
+- **`engine.save()` — every 10 minutes.** Writes only `instance/engine_data.pck` (the in-memory engine state). This is what `engine.load()` reads on a normal restart, so the **loaded tick** is usually at most ~10 minutes old.
+- **`save_checkpoint()` — every 6 hours.** Writes `checkpoints/last_checkpoint.tar.gz`, a tarball of the entire `instance/` directory (including a fresh `engine_data.pck` and all data files) at a consistent point in time. This is the unit of disaster recovery.
+
+Check `ls -la checkpoints/` to see the current checkpoint's age. Because the checkpoint is only every 6 h, recovery relies on replaying the actions log forward from the checkpoint tick — which is why the log must never be truncated below a tick you might need to restore from (see `docs/adr/0001-action-log-stays-complete-fix-oom-on-read.md`).
