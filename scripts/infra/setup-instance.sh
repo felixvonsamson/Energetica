@@ -51,6 +51,12 @@ PORT="${POSITIONAL[1]}"
 
 # --- Validation -----------------------------------------------------------------
 [ -n "$DOMAIN" ] || { log_error "--domain is required"; exit 1; }
+# Restrict to a real hostname: guarantees no sed-metachar reaches the vhost substitution, and
+# rejects typos that would otherwise only surface as a certbot/Apache failure later.
+if ! [[ "$DOMAIN" =~ ^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$ ]]; then
+    log_error "Invalid domain: '$DOMAIN' (expected a hostname like energetica-game.org)"
+    exit 1
+fi
 if ! [[ "$INSTANCE" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
     log_error "Instance slug must be lowercase kebab-case ([a-z0-9][a-z0-9-]*[a-z0-9]): '$INSTANCE'"
     exit 1

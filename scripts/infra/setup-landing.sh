@@ -34,6 +34,12 @@ log_section() { echo; echo -e "${BLUE}━━━ $1 ━━━${NC}"; }
 
 [ "$EUID" -eq 0 ] || { log_error "Must run as root"; exit 1; }
 [ -n "$DOMAIN" ] || { log_error "--domain is required"; exit 1; }
+# Restrict to a real hostname: guarantees no sed-metachar reaches the vhost substitution, and
+# rejects typos that would otherwise only surface as a certbot/Apache failure later.
+if ! [[ "$DOMAIN" =~ ^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$ ]]; then
+    log_error "Invalid domain: '$DOMAIN' (expected a hostname like energetica-game.org)"
+    exit 1
+fi
 getent group energetica >/dev/null || { log_error "group 'energetica' missing — run setup-base.sh first"; exit 1; }
 
 log_section "ENERGETICA LANDING SETUP ($DOMAIN)"

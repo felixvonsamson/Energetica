@@ -52,6 +52,11 @@ if ! [[ "$INSTANCE" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]] || [ "$INSTANCE" = "la
     exit 1
 fi
 
+# jq is used locally to parse /healthz. If it is missing the parse would silently yield empty
+# output and the health-check loop would burn its full timeout before falsely reporting failure
+# on an otherwise-successful deploy — so fail fast and loud here instead.
+command -v jq >/dev/null || { log_error "jq is required on this machine (used to parse /healthz). Install it (e.g. 'brew install jq')."; exit 1; }
+
 REMOTE_PATH="/var/www/energetica-$INSTANCE"
 FQDN="$INSTANCE.$DOMAIN"
 SSH="${REMOTE_USER}@${REMOTE_HOST}"
