@@ -1,19 +1,39 @@
 # Deployment Guide
 
-## Initial Setup (One-Time)
+> **Migrating to multi-instance.** The legacy single-instance `vps-setup.sh` has been
+> replaced by the `scripts/infra/` setup scripts (RFC Phase 4). The legacy `deploy.sh`
+> single-instance flow documented below remains the production path until the Phase 5
+> cutover; the new per-instance flow lives alongside it.
 
-Run this on your VPS:
+## Initial Setup (One-Time) — multi-instance (`scripts/infra/`)
+
+Server-side code delivery uses **rsync, not git** — there is no git checkout on the server.
+On the VPS, as root:
 
 ```bash
-sudo bash scripts/vps-setup.sh
+sudo bash scripts/infra/setup-base.sh --deploy-user deploy   # Apache, Python, certbot, firewall,
+                                                             # `energetica` group/user, shared dirs
+sudo bash scripts/infra/setup-landing.sh --domain energetica-game.org   # apex vhost + TLS
+sudo bash scripts/infra/setup-instance.sh autumn-2025 8001 --domain energetica-game.org  # vhost+TLS+unit
 ```
 
-The script will prompt you for:
+`setup-instance.sh` provisions the box but ships no code and does **not** start the service.
+From your local machine, the first deploy ships the backend and starts it:
 
-- Git repository branch to deploy
-- Confirmation that your domain points to the VPS
+```bash
+./scripts/deploy-instance.sh --server energetica-game --instance autumn-2025 --domain energetica-game.org
+./scripts/deploy-landing.sh  --server energetica-game
+./scripts/list-instances.sh  --server energetica-game
+```
 
-It handles: Apache, Python venv, Node.js, SSL (Let's Encrypt), systemd service, firewall.
+DNS for the apex and each `{instance}.{domain}` subdomain must resolve to the server before
+running the setup scripts (certbot uses the webroot challenge). For a private/unadvertised
+instance, `sudo`-edit `/etc/energetica/{instance}/instance.json` before first login.
+
+## Legacy Initial Setup (One-Time) — single instance
+
+The legacy single-instance VPS layout (one `/var/www/energetica`, git-synced) is still served
+by `deploy.sh` until Phase 5. New setups should use the multi-instance flow above.
 
 ## SSH Configuration
 

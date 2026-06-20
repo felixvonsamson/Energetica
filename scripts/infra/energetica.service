@@ -1,0 +1,37 @@
+# systemd unit template for a single game instance.
+#
+# Rendered by scripts/infra/setup-instance.sh into
+# /etc/systemd/system/energetica-@INSTANCE@.service, substituting @INSTANCE@ and @PORT@.
+#
+# The Environment= lines below are load-bearing — they are the contract between the
+# deployment and energetica/instance_config.py + energetica/accounts/db.py:
+#   * ENERGETICA_INSTANCE_SLUG is MANDATORY. Without it instance_slug() returns None, the
+#     instance treats itself as public (never reads its own instance.json) and never
+#     publishes a landing fragment.
+#   * The other three match the code defaults, but are set explicitly so the unit is the
+#     single source of truth for where this instance reads/writes shared state.
+# See docs/architecture/static-serving-and-deployment.md § What FastAPI gains.
+
+[Unit]
+Description=Energetica game instance (@INSTANCE@)
+After=network.target
+
+[Service]
+Type=simple
+# Runs as a member of the shared `energetica` group so it can write its sanitised
+# fragment into the setgid landing dir /var/www/energetica-landing/instances/.
+User=energetica
+Group=energetica
+WorkingDirectory=/var/www/energetica-@INSTANCE@
+
+Environment=ENERGETICA_INSTANCE_SLUG=@INSTANCE@
+Environment=ENERGETICA_INSTANCE_CONFIG_DIR=/etc/energetica
+Environment=ENERGETICA_LANDING_DIR=/var/www/energetica-landing
+Environment=ENERGETICA_ACCOUNTS_DB_PATH=/var/lib/energetica/accounts.db
+
+ExecStart=/var/www/energetica-@INSTANCE@/.venv/bin/python main.py --env prod --port @PORT@ --no-reload --fastapi-log-level warning
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
