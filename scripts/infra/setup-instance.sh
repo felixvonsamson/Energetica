@@ -76,12 +76,16 @@ getent group energetica >/dev/null || { log_error "group 'energetica' missing â€
 [ -n "$NAME" ] || NAME="$(echo "$INSTANCE" | awk -F- 'BEGIN{OFS=" "}{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1)) substr($i,2)}}1')"
 [ -n "$STARTS_AT" ] || STARTS_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-# instance.json is JSON rendered from the template via sed. A display name containing a
-# double-quote or backslash would break the JSON; the sed replacement metacharacters
-# (& / \) would corrupt the substitution itself. Reject the JSON-breakers (auto defaults
-# never contain them) and escape the sed-special chars for both interpolated values.
+# instance.json is JSON rendered from the template via sed. A value containing a double-quote
+# or backslash would break the JSON; the sed replacement metacharacters (& / \) would corrupt
+# the substitution itself. Reject the JSON-breakers (auto defaults never contain them) and
+# escape the sed-special chars â€” for both interpolated values, since --starts-at is interpolated
+# into a JSON string too.
 case "$NAME" in
     *[\"\\]*) log_error "--name must not contain double-quotes or backslashes"; exit 1 ;;
+esac
+case "$STARTS_AT" in
+    *[\"\\]*) log_error "--starts-at must not contain double-quotes or backslashes"; exit 1 ;;
 esac
 sed_escape() { printf '%s' "$1" | sed -e 's/[&/\]/\\&/g'; }
 
