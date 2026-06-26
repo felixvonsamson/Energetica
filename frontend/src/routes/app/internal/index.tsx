@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Gauge, Palette, Shapes, Type } from "lucide-react";
 
-import { HomeLayout } from "@/components/home-layout";
+import { AppShell } from "@/components/layout/app-shell";
 import {
     Card,
     CardDescription,
@@ -54,7 +54,7 @@ const pages = [
 
 function InternalIndexPage() {
     return (
-        <HomeLayout>
+        <AppShell>
             <div className="flex flex-col gap-8 px-6 lg:px-8 max-w-5xl mx-auto py-8">
                 <section className="flex flex-col gap-2">
                     <TypographyH1>Internal</TypographyH1>
@@ -84,6 +84,6 @@ function InternalIndexPage() {
                     ))}
                 </section>
             </div>
-        </HomeLayout>
+        </AppShell>
     );
 }

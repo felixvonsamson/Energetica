@@ -3,7 +3,8 @@ set -euo pipefail
 
 # Energetica — deploy the apex landing site (pure static, no service restart).
 #
-#   ./scripts/deploy-landing.sh --server <ssh-host> [--user <ssh-user>] [--yes] [--skip-build]
+#   ./scripts/deploy-landing.sh --server <ssh-host> --domain <apex> \
+#        [--user <ssh-user>] [--yes] [--skip-build]
 #
 # Builds the landing bundle locally and rsyncs it to /var/www/energetica-landing/.
 # instances.json and instances/ are owned and written by the instance backends — they are
@@ -11,6 +12,7 @@ set -euo pipefail
 
 REMOTE_HOST="${DEPLOY_HOST:-}"
 REMOTE_USER="${DEPLOY_USER:-deploy}"
+DOMAIN="${DEPLOY_DOMAIN:-}"
 AUTO_CONFIRM=false
 SKIP_BUILD=false
 LANDING_DIR=/var/www/energetica-landing
@@ -18,6 +20,7 @@ LANDING_DIR=/var/www/energetica-landing
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --server) REMOTE_HOST="$2"; shift 2 ;;
+        --domain) DOMAIN="$2"; shift 2 ;;
         --user) REMOTE_USER="$2"; shift 2 ;;
         --yes) AUTO_CONFIRM=true; shift ;;
         --skip-build) SKIP_BUILD=true; shift ;;
@@ -31,6 +34,7 @@ log_success() { echo -e "${GREEN}✓ $1${NC}"; }
 log_error()   { echo -e "${RED}✗ $1${NC}"; }
 
 [ -n "$REMOTE_HOST" ] || { log_error "--server is required (or set DEPLOY_HOST)"; exit 1; }
+[ -n "$DOMAIN" ]      || { log_error "--domain is required (or set DEPLOY_DOMAIN)"; exit 1; }
 SSH="${REMOTE_USER}@${REMOTE_HOST}"
 
 # No StrictHostKeyChecking override: SSH's default surfaces an unexpected/first-seen host key
@@ -41,7 +45,11 @@ fi
 
 if [ "$SKIP_BUILD" = false ]; then
     log_step "Building landing bundle..."
-    ( cd frontend && bun run build:landing )
+    # VITE_APEX_DOMAIN bakes the apex into the bundle so instanceSignupHref() emits
+    # absolute https://{slug}.$DOMAIN/app/sign-up links to each instance subdomain.
+    # Without it the CTA falls back to a same-origin /app/sign-up, which 404s on the
+    # pure-static apex vhost.
+    ( cd frontend && VITE_APEX_DOMAIN="$DOMAIN" bun run build:landing )
     log_success "Landing bundle built"
 fi
 

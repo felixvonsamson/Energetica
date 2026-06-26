@@ -9,10 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LandingPageRouteImport } from './routes/landing-page'
-import { Route as ForEducatorsRouteImport } from './routes/for-educators'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as RouteRouteImport } from './routes/route'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppSignUpRouteImport } from './routes/app/sign-up'
 import { Route as AppSettleRouteImport } from './routes/app/settle'
@@ -48,26 +44,6 @@ import { Route as AppCommunityMapRouteImport } from './routes/app/community/map'
 import { Route as AppCommunityLeaderboardsRouteImport } from './routes/app/community/leaderboards'
 import { Route as AppCommunityElectricityMarketsRouteImport } from './routes/app/community/electricity-markets'
 
-const LandingPageRoute = LandingPageRouteImport.update({
-  id: '/landing-page',
-  path: '/landing-page',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForEducatorsRoute = ForEducatorsRouteImport.update({
-  id: '/for-educators',
-  path: '/for-educators',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RouteRoute = RouteRouteImport.update({
-  id: '/',
-  path: '',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/app/',
   path: '/app/',
@@ -245,9 +221,6 @@ const AppCommunityElectricityMarketsRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/about': typeof AboutRoute
-  '/for-educators': typeof ForEducatorsRoute
-  '/landing-page': typeof LandingPageRoute
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/login': typeof AppLoginRoute
@@ -284,9 +257,6 @@ export interface FileRoutesByFullPath {
   '/app/wiki': typeof AppWikiIndexRoute
 }
 export interface FileRoutesByTo {
-  '/about': typeof AboutRoute
-  '/for-educators': typeof ForEducatorsRoute
-  '/landing-page': typeof LandingPageRoute
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/login': typeof AppLoginRoute
@@ -324,10 +294,6 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof RouteRoute
-  '/about': typeof AboutRoute
-  '/for-educators': typeof ForEducatorsRoute
-  '/landing-page': typeof LandingPageRoute
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
   '/app/login': typeof AppLoginRoute
@@ -366,9 +332,6 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/about'
-    | '/for-educators'
-    | '/landing-page'
     | '/app/changelog'
     | '/app/dashboard'
     | '/app/login'
@@ -405,9 +368,6 @@ export interface FileRouteTypes {
     | '/app/wiki'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/about'
-    | '/for-educators'
-    | '/landing-page'
     | '/app/changelog'
     | '/app/dashboard'
     | '/app/login'
@@ -444,10 +404,6 @@ export interface FileRouteTypes {
     | '/app/wiki'
   id:
     | '__root__'
-    | '/'
-    | '/about'
-    | '/for-educators'
-    | '/landing-page'
     | '/app/changelog'
     | '/app/dashboard'
     | '/app/login'
@@ -485,10 +441,6 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  RouteRoute: typeof RouteRoute
-  AboutRoute: typeof AboutRoute
-  ForEducatorsRoute: typeof ForEducatorsRoute
-  LandingPageRoute: typeof LandingPageRoute
   AppChangelogRoute: typeof AppChangelogRoute
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppLoginRoute: typeof AppLoginRoute
@@ -526,34 +478,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/landing-page': {
-      id: '/landing-page'
-      path: '/landing-page'
-      fullPath: '/landing-page'
-      preLoaderRoute: typeof LandingPageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/for-educators': {
-      id: '/for-educators'
-      path: '/for-educators'
-      fullPath: '/for-educators'
-      preLoaderRoute: typeof ForEducatorsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof RouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app/': {
       id: '/app/'
       path: '/app'
@@ -808,10 +732,6 @@ const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  RouteRoute: RouteRoute,
-  AboutRoute: AboutRoute,
-  ForEducatorsRoute: ForEducatorsRoute,
-  LandingPageRoute: LandingPageRoute,
   AppChangelogRoute: AppChangelogRoute,
   AppDashboardRoute: AppDashboardRouteWithChildren,
   AppLoginRoute: AppLoginRoute,

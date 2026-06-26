@@ -1,6 +1,6 @@
 # RFC: Apache Static Serving, Split Build & Multi-Instance Deployment
 
-**Status:** In progress (Phase 1 landed; terminology decided — `instance` internally, `run`/`instance` player-facing)
+**Status:** In progress (Phases 1–5 landed; only Phase 6 — live multi-instance validation — remains)
 **Branch:** `rfc/static-serving-split-build`
 
 ---
@@ -42,7 +42,12 @@ Shipping in phased PRs. Each phase leaves the app deployable on its own.
   - `instance.json.tmpl` renders the exact `InstanceConfig` schema (`name` titlecased slug, `advertised=true`, `starts_at`=now UTC `…Z`, `access.policy="public"`); the `--name`/`--starts-at` values are sed-metachar-escaped and JSON-breaking chars rejected so the rendered file always validates. Admins edit it under `sudo` for private/unadvertised instances. `list-instances.sh` discovers instances via `systemctl list-unit-files 'energetica-*.service'` (never filesystem globbing), reading the port from each unit's `ExecStart`
   - `setup-base.sh` also installs a scoped `sudoers` drop-in so the deploy user can run `sudo -u energetica pip …` and `sudo systemctl restart energetica-*` non-interactively (required by `deploy-instance.sh`)
   - **Validation:** `bash -n` clean on all six scripts. `shellcheck`/`apache2ctl`/`certbot` are unavailable in the dev sandbox, and end-to-end validation (real subdomain, cookie isolation, fragment round-trip) is **Phase 6**; live-checking the confs on a server is part of that
-- ⬜ **Phase 5 — FastAPI cleanup + production cutover.** Coordinated PR. Drop `StaticFiles` mount, all `FileResponse` handlers in `templates.py` (keep `/logout`), delete duplicated landing routes from `routes/`, delete `vps-setup.sh` and old `deploy.sh`. Must ship together with the Apache vhost rollout.
+- ✅ **Phase 5 — FastAPI cleanup + production cutover.**
+  - `templates.py` reduced to `/logout` only; `render_root` (`/`), `render_react_app` (`/app/*`), `render_landing_page` (`/landing-page`) and the `/sign-up` 301 removed. `__init__.py` drops the `StaticFiles` mount and the `serve_service_worker` (`/service-worker.js`) + `serve_manifest` (`/manifest.json`) `FileResponse` handlers — Apache now serves all three. FastAPI keeps only `/api`, `/socket.io`, `/logout` (plus `/healthz`)
+  - **Frontend landing/app split completed.** Deleted the app-bundle landing duplicates `routes/{route.tsx (`/`), landing-page.tsx, about.tsx, for-educators.tsx}`. The app's non-game pages (login, sign-up, unauthenticated changelog, `internal/*`) moved off the shared marketing `HomeLayout` onto a new `components/layout/app-shell.tsx` (logo + theme toggle, no marketing nav). The marketing `header.tsx`/`footer.tsx`/`home-layout.tsx`/`landing-page.tsx`/`about-page.tsx`/`for-educators-page.tsx` are now **landing-only** and excluded from the app `tsconfig.json` (mirroring the existing `wiki-*-public` exclusions), so their `Link to="/landing-page"` keeps type-checking under the landing's loose router types while the app tree no longer carries those routes
+  - **Cross-origin links.** Added `landingHref()` (`lib/instances.ts`), the mirror of `instanceSignupHref()`: app→landing links (the two "Learn more about Energetica" links) become `<a href>` to `https://${apex}/landing-page` in production, same-origin relative in dev. `deploy-instance.sh` and `deploy-landing.sh` now bake `VITE_APEX_DOMAIN="$DOMAIN"` into their builds (the latter gained a required `--domain`); without it both `landingHref` and `instanceSignupHref` would emit same-origin paths that 404 across the apex/subdomain boundary
+  - **Scripts.** Deleted the legacy single-instance `deploy.sh` and `verify-deploy.sh` (superseded by `deploy-instance.sh` + its `/healthz` poll). `download-instance.sh` is now instance-aware (`--server`/`--instance`, backs up `/var/www/energetica-{slug}/instance/`). `apache-instance.conf` gains `RedirectMatch ^/sign-up/?$ /app/sign-up` as an instance-local convenience (the FastAPI 301 is gone); preserving legacy *apex* `/sign-up` bookmarks needs instance selection and is deferred to #810. `DEPLOYMENT.md` drops the legacy single-instance flow
+  - **The cutover is a coordinated deploy, not just a merge.** Removing the FastAPI static handlers means the app is only reachable once the Apache vhosts are serving. The production deploy must run `setup-landing.sh`/`setup-instance.sh` on the box and deploy both bundles in lockstep with merging this PR — see `scripts/DEPLOYMENT.md`. `bash -n` clean on all touched scripts; live `apache2ctl -t`/`certbot` checks are deferred to Phase 6
 - ⬜ **Phase 6 — Multi-instance validation.** Stand up a second subdomain on the same VPS; verify cookie isolation, server-wide login, manifest per-instance, fragment + aggregation round-trip.
 
 ### Phase 1 deployment notes
@@ -50,7 +55,7 @@ Shipping in phased PRs. Each phase leaves the app deployable on its own.
 - `scripts/deploy.sh` already targets the new `static/app/` path. No special migration needed.
 - After the first deploy, the old `/var/www/.../energetica/static/react/` directory on the VPS becomes orphaned (rsync's `--delete` only operates inside the new target). Clean up once with `ssh <host> 'sudo rm -rf /var/www/energetica/energetica/static/react'`.
 - Service worker does not precache anything under the renamed path; client caches recover on next page load.
-- External bookmarks to top-level `/sign-up` 404 after Phase 1. Consider a temporary 301 redirect in `templates.py` (`/sign-up` → `/app/sign-up`) if old links are in the wild.
+- External bookmarks to top-level `/sign-up` 404 after Phase 1. (Resolved differently in Phase 5: the FastAPI 301 was dropped; `apache-instance.conf` now redirects `/sign-up` on instance subdomains. Stale bookmarks to the *apex* `/sign-up` remain deferred to the instance-picker work, #810 — do not re-add a `templates.py` handler.)
 - `dist-landing/` is built but not deployed by `deploy.sh` yet — landing files only ship in Phase 5.
 
 ### Phase 2 deployment notes

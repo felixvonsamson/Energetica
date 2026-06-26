@@ -2,7 +2,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 
-import { HomeLayout } from "@/components/home-layout";
+import { AppShell } from "@/components/layout/app-shell";
 import { GameLayout } from "@/components/layout/game-layout";
 import { MdxContent } from "@/components/mdx-content";
 import ChangelogContent from "@/content/changelog.mdx";
@@ -27,6 +27,6 @@ function ChangelogPage() {
     return isAuthenticated ? (
         <GameLayout>{content}</GameLayout>
     ) : (
-        <HomeLayout>{content}</HomeLayout>
+        <AppShell>{content}</AppShell>
     );
 }

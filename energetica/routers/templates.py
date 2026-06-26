@@ -1,21 +1,21 @@
-"""Routes for serving React SPA pages."""
+"""Root-level dynamic routes kept on FastAPI after the Apache static cutover.
+
+All SPA/page serving (`/`, `/app/*`, `/landing-page`) and the `/static` mount
+moved to Apache in RFC Phase 5 (see
+docs/architecture/static-serving-and-deployment.md). Only `/logout` remains here:
+it mutates server state (clears the session cookie) and so must stay on uvicorn.
+"""
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi import APIRouter, Depends
+from fastapi.responses import RedirectResponse
 
 from energetica.globals import engine
 from energetica.database.user import User
 from energetica.utils.auth import get_user
 
 router = APIRouter(prefix="", tags=["Pages"])
-
-
-@router.get("/")
-def render_root() -> FileResponse:
-    """Serve React SPA on the root route."""
-    return FileResponse("energetica/static/app/index.html")
 
 
 @router.get("/logout", name="auth.logout")
@@ -26,24 +26,3 @@ def logout(user: Annotated[User | None, Depends(get_user)]) -> RedirectResponse:
     response = RedirectResponse("/app/login")
     response.delete_cookie("session", path="/")
     return response
-
-
-@router.get("/app/{full_path:path}", name="views.react_app")
-def render_react_app(full_path: str) -> FileResponse:
-    """Serve React SPA for /app/* routes."""
-    # Built assets live under /static/app/assets/ — never serve the HTML shell
-    # for /app/assets/* or browsers will try to execute HTML as JS/CSS.
-    if full_path == "assets" or full_path.startswith("assets/"):
-        raise HTTPException(status_code=404)
-    return FileResponse("energetica/static/app/index.html")
-
-
-@router.get("/sign-up", name="views.sign_up_redirect")
-def redirect_sign_up() -> RedirectResponse:
-    # Permanent redirect for stale links from before sign-up moved under /app.
-    return RedirectResponse("/app/sign-up", status_code=301)
-
-
-@router.get("/landing-page", name="views.landing-page")
-def render_landing_page() -> FileResponse:
-    return FileResponse("energetica/static/app/index.html")

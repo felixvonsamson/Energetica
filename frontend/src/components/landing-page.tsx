@@ -21,6 +21,8 @@ import {
     TypographyLead,
     TypographyP,
 } from "@/components/ui/typography";
+import { useAdvertisedInstances } from "@/hooks/use-instances";
+import { primaryInstanceAppHref } from "@/lib/instances";
 
 type ImageTile =
     | { type: "real"; src: string; alt: string; shadow?: boolean }
@@ -204,6 +206,7 @@ function ImageTileComponent({ image }: { image: ImageTile }) {
 }
 
 export function LandingPage() {
+    const { instances } = useAdvertisedInstances();
     return (
         <HomeLayout>
             <div className="flex flex-col gap-20 px-6 lg:px-8">
@@ -246,7 +249,10 @@ export function LandingPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Cross-bundle: see note in components/header.tsx. */}
                         <a
-                            href="/app/login"
+                            href={primaryInstanceAppHref(
+                                instances,
+                                "/app/login",
+                            )}
                             className="md:col-span-2 bg-primary text-primary-foreground p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-primary/90 hover:shadow-xl active:scale-[0.99] transition-all"
                         >
                             <p className="text-xl font-semibold">Play now</p>
@@ -311,19 +317,24 @@ export function LandingPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Cross-bundle: see note in components/header.tsx. */}
                         <a
-                            href="/app/login"
+                            href={primaryInstanceAppHref(
+                                instances,
+                                "/app/login",
+                            )}
                             className="md:col-span-2 bg-primary text-primary-foreground p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-primary/90 hover:shadow-xl active:scale-[0.99] transition-all"
                         >
                             <p className="text-xl font-semibold">Play now</p>
                             <ChevronRight />
                         </a>
-                        <a
-                            href="/app/wiki/introduction"
+                        {/* The landing has its own public wiki bundle — same-origin
+                            TanStack route, not the app's auth-gated /app/wiki. */}
+                        <Link
+                            to="/wiki/introduction"
                             className="bg-card text-foreground border border-border p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-muted hover:shadow-lg active:scale-[0.99] transition-all"
                         >
                             <p className="text-lg">Explore the Wiki</p>
                             <ChevronRight />
-                        </a>
+                        </Link>
                     </div>
                 </section>
             </div>

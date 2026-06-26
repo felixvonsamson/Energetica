@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { UserPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 
-import { HomeLayout } from "@/components/home-layout";
+import { AppShell } from "@/components/layout/app-shell";
 import {
     Card,
     CardContent,
@@ -18,6 +18,7 @@ import { TypographyBrand } from "@/components/ui/typography";
 import { useAuth } from "@/hooks/use-auth";
 import { useSignup } from "@/hooks/use-auth-queries";
 import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
+import { landingHref } from "@/lib/instances";
 
 export const Route = createFileRoute("/app/sign-up")({
     component: SignUpPage,
@@ -43,11 +44,11 @@ function SignUpPage() {
     }
 
     return (
-        <HomeLayout>
-            <div className="flex items-center justify-center min-h-[calc(100vh-200px)] px-4 py-12">
+        <AppShell>
+            <div className="flex items-center justify-center min-h-[calc(100vh-160px)] px-4 py-12">
                 <SignUpForm />
             </div>
-        </HomeLayout>
+        </AppShell>
     );
 }
 
@@ -109,12 +110,12 @@ function SignUpForm() {
                 <TypographyBrand className="text-5xl text-primary mb-4 block">
                     Energetica
                 </TypographyBrand>
-                <Link
-                    to="/landing-page"
+                <a
+                    href={landingHref("/landing-page")}
                     className="text-base text-primary hover:opacity-80 transition-opacity underline"
                 >
                     Learn more about Energetica
-                </Link>
+                </a>
             </div>
 
             {/* Sign Up Card */}
