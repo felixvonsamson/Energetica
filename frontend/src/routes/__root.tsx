@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect } from "react";
 
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -38,7 +39,11 @@ function computeRedirect(
                 return "/app/settle";
             if (!routeConfig.requiresSettledTile && user.is_settled)
                 return "/app/dashboard";
-            if (!capabilities || (routeConfig.isUnlocked && !routeConfig.isUnlocked(capabilities).unlocked))
+            if (
+                !capabilities ||
+                (routeConfig.isUnlocked &&
+                    !routeConfig.isUnlocked(capabilities).unlocked)
+            )
                 return "/app/dashboard";
             return null;
         default:
@@ -76,9 +81,16 @@ function RootComponent() {
         if (redirectTo) void navigate({ to: redirectTo });
     }, [redirectTo, navigate]);
 
+    // While auth or capabilities are still resolving, show a centred spinner rather than
+    // leaking debug placeholders to users (these returns previously rendered raw strings).
+    if (isLoading || capabilities === undefined) {
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <Spinner />
+            </div>
+        );
+    }
     if (staticData === undefined) return "Unknown page";
-    if (isLoading) return "isLoading (useAuth())";
-    if (capabilities === undefined) return "capabilities === undefined";
     // Block rendering until the redirect from the effect fires.
     if (redirectTo) return null;
 

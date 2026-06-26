@@ -63,10 +63,21 @@ if [ "$AUTO_CONFIRM" = false ]; then
 fi
 
 log_step "Syncing landing files..."
-# --delete prunes stale assets, but the two excludes are honoured for deletion too, so the
-# instance-owned manifest and fragment dir survive.
+# --delete prunes stale assets, but the excludes are honoured for deletion too, so the
+# instance-owned manifest/fragment dir and the separately-synced static/ tree survive.
 rsync -az --delete \
     --exclude='instances.json' \
     --exclude='instances/' \
+    --exclude='static/' \
     ./frontend/dist-landing/ "$SSH:$LANDING_DIR/" >/dev/null
-log_success "Landing deployed"
+log_success "Landing bundle deployed"
+
+# The landing + wiki pages reference /static/images/... (e.g. landing_page banners, wiki
+# figures). The apex is pure-static, so unlike the game vhost (which Aliases /static/images
+# into the instance code dir) these must be shipped into the landing DocumentRoot itself.
+log_step "Syncing landing static images..."
+# The landing bundle ships no static/ tree, so pre-create the target path (old client-side
+# rsync, e.g. macOS, lacks --mkpath). The deploy user owns $LANDING_DIR (setgid energetica).
+ssh "$SSH" "mkdir -p '$LANDING_DIR/static/images'"
+rsync -az --delete ./energetica/static/images/ "$SSH:$LANDING_DIR/static/images/" >/dev/null
+log_success "Static images deployed"
