@@ -34,7 +34,6 @@ log_success() { echo -e "${GREEN}✓ $1${NC}"; }
 log_error()   { echo -e "${RED}✗ $1${NC}"; }
 
 [ -n "$REMOTE_HOST" ] || { log_error "--server is required (or set DEPLOY_HOST)"; exit 1; }
-[ -n "$DOMAIN" ]      || { log_error "--domain is required (or set DEPLOY_DOMAIN)"; exit 1; }
 SSH="${REMOTE_USER}@${REMOTE_HOST}"
 
 # No StrictHostKeyChecking override: SSH's default surfaces an unexpected/first-seen host key
@@ -44,6 +43,9 @@ if ! ssh -o ConnectTimeout=5 "$SSH" exit 2>/dev/null; then
 fi
 
 if [ "$SKIP_BUILD" = false ]; then
+    # --domain is only needed to bake VITE_APEX_DOMAIN into the build; a --skip-build
+    # rsync-only deploy doesn't require it.
+    [ -n "$DOMAIN" ] || { log_error "--domain is required for the build (or set DEPLOY_DOMAIN; or pass --skip-build)"; exit 1; }
     log_step "Building landing bundle..."
     # VITE_APEX_DOMAIN bakes the apex into the bundle so instanceSignupHref() emits
     # absolute https://{slug}.$DOMAIN/app/sign-up links to each instance subdomain.
