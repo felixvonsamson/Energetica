@@ -265,16 +265,20 @@ def create_app(
             admin_account_id = accounts.get_or_create_account_id(username="admin", pwhash=hashed_password)
             new_admin = User(username="admin", pwhash=hashed_password, role="admin", account_id=admin_account_id)
             engine.log(f"Admin account created with username '{new_admin.username}'")
-            # TODO(mglst): I think it would make more sense to move this under the instance/ folder
-            with open(_REPO_ROOT / "admin_accounts.txt", "w", encoding="utf-8") as file:
+            # Written under instance/ (the per-instance, service-writable state dir): the code
+            # dir is deploy-owned and read-only to the service user in the multi-instance layout,
+            # so writing the repo root here would PermissionError on startup.
+            with open(_REPO_ROOT / "instance" / "admin_accounts.txt", "w", encoding="utf-8") as file:
                 file.write(f"{new_admin.username},{admin_password}\n")
 
         if disable_signups:
-            # if sign-ups are disabled, accounts have to be created from a file.
-            with open(_REPO_ROOT / "players.txt", "r", encoding="utf-8") as file:
+            # if sign-ups are disabled, accounts have to be created from a file. Lives under
+            # instance/ (service-writable) — the code dir is read-only to the service user, and
+            # this file is rewritten below with generated passwords, so it must be writable.
+            with open(_REPO_ROOT / "instance" / "players.txt", "r", encoding="utf-8") as file:
                 lines = file.readlines()
 
-            with open(_REPO_ROOT / "players.txt", "w", encoding="utf-8") as file:
+            with open(_REPO_ROOT / "instance" / "players.txt", "w", encoding="utf-8") as file:
                 for line in lines:
                     line = line.strip()
                     if not line:
