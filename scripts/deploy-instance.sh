@@ -72,7 +72,11 @@ fi
 # --- 1. Build -------------------------------------------------------------------
 if [ "$SKIP_BUILD" = false ]; then
     log_step "Building app bundle (vite build + service worker)..."
-    ( cd frontend && bun run build )
+    # VITE_APEX_DOMAIN bakes the apex into the bundle so cross-origin links resolve:
+    # the app's "Learn more" links point back to https://$DOMAIN (the Apache landing),
+    # not the instance subdomain. Without it landingHref() falls back to a same-origin
+    # relative path, which 404s on the instance vhost (it only serves /app/*).
+    ( cd frontend && VITE_APEX_DOMAIN="$DOMAIN" bun run build )
     log_success "App bundle built"
 else
     log_info "Skipping build (--skip-build)"

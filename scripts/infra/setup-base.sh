@@ -79,10 +79,15 @@ else
     log_success "Service user 'energetica' already exists"
 fi
 
-# Apache must read group-readable fragments / instance.json files.
+# Apache must read group-readable fragments / instance.json files, and traverse the 2750
+# per-instance code dirs to serve the static bundle + ACME challenges. www-data picks up the
+# new supplementary group only via initgroups at a FULL restart — a graceful reload keeps the
+# master's existing group set, so the group would silently not apply and Apache would 403 the
+# instance vhost. Restart here so every later setup-landing/instance reload inherits it.
 if id www-data &>/dev/null; then
     usermod -aG energetica www-data
-    log_success "Added www-data to group 'energetica' (reload Apache to apply)"
+    systemctl restart apache2
+    log_success "Added www-data to group 'energetica' and restarted Apache"
 fi
 
 # Deploy user rsyncs code into instance dirs (group-owned by energetica via setgid).

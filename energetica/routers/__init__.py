@@ -7,8 +7,7 @@ from typing import Awaitable, Callable, cast
 from fastapi import FastAPI, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -201,18 +200,7 @@ def setup_routes(app: FastAPI):
         app.include_router(router, prefix="/api/v1")
     app.include_router(health_router)
     app.include_router(templates_router)
-    app.mount("/static", StaticFiles(directory="energetica/static"), name="static")
-
-    @app.get("/service-worker.js", include_in_schema=False)
-    async def serve_service_worker() -> FileResponse:
-        return FileResponse(
-            "energetica/static/service-worker.js",
-            media_type="application/javascript",
-        )
-
-    @app.get("/manifest.json", include_in_schema=False)
-    async def serve_manifest() -> FileResponse:
-        return FileResponse(
-            "energetica/static/app/manifest.json",
-            media_type="application/json",
-        )
+    # Static assets (/static/*, /service-worker.js, /manifest.json) are served
+    # directly by Apache from disk after the RFC Phase 5 cutover — see
+    # docs/architecture/static-serving-and-deployment.md § Request routing.
+    # FastAPI keeps only /api, /socket.io and /logout.

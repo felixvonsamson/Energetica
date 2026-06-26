@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { HomeLayout } from "@/components/home-layout";
+import { AppShell } from "@/components/layout/app-shell";
 import { Money } from "@/components/ui/money";
 import {
     DataValue,
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/app/internal/typography")({
 
 function RouteComponent() {
     return (
-        <HomeLayout>
+        <AppShell>
             <div className="flex flex-col gap-12 px-6 lg:px-8 max-w-5xl mx-auto">
                 {/* Header */}
                 <section className="flex flex-col gap-2">
@@ -425,6 +425,6 @@ function RouteComponent() {
                     </TypographyMuted>
                 </section>
             </div>
-        </HomeLayout>
+        </AppShell>
     );
 }

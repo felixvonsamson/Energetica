@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { type LucideIcon } from "lucide-react";
 import { createElement } from "react";
 
-import { HomeLayout } from "@/components/home-layout";
+import { AppShell } from "@/components/layout/app-shell";
 import {
     TypographyH1,
     TypographyH2,
@@ -141,7 +141,7 @@ function RouteComponent() {
     const customIconsNeeded = reusedIcons.length;
 
     return (
-        <HomeLayout>
+        <AppShell>
             <div className="flex flex-col gap-8 px-6 lg:px-8">
                 {/* Header */}
                 <section className="flex flex-col gap-2">
@@ -362,6 +362,6 @@ function RouteComponent() {
                     </p>
                 </section>
             </div>
-        </HomeLayout>
+        </AppShell>
     );
 }

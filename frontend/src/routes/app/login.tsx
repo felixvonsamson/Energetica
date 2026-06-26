@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { LogIn } from "lucide-react";
 import { useState, useEffect } from "react";
 
-import { HomeLayout } from "@/components/home-layout";
+import { AppShell } from "@/components/layout/app-shell";
 import {
     Card,
     CardContent,
@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLogin } from "@/hooks/use-auth-queries";
 import { useGameEngine } from "@/hooks/use-game";
 import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
+import { landingHref } from "@/lib/instances";
 
 export const Route = createFileRoute("/app/login")({
     component: LoginPage,
@@ -44,11 +45,11 @@ function LoginPage() {
     }
 
     return (
-        <HomeLayout>
-            <div className="flex items-center justify-center min-h-[calc(100vh-200px)] px-4 py-12">
+        <AppShell>
+            <div className="flex items-center justify-center min-h-[calc(100vh-160px)] px-4 py-12">
                 <LoginForm />
             </div>
-        </HomeLayout>
+        </AppShell>
     );
 }
 
@@ -99,12 +100,12 @@ function LoginForm() {
                 <TypographyBrand className="text-5xl text-primary mb-4 block">
                     Energetica
                 </TypographyBrand>
-                <Link
-                    to="/landing-page"
+                <a
+                    href={landingHref("/landing-page")}
                     className="text-base text-primary hover:opacity-80 transition-opacity underline"
                 >
                     Learn more about Energetica
-                </Link>
+                </a>
             </div>
 
             {/* Login Card */}

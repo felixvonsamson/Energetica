@@ -1,9 +1,6 @@
 // Auto-generated from routeTree.gen.ts — do not edit manually.
 // Run `bun run build:sw` to update.
 export type AppRoute =
-    | '/about'
-    | '/for-educators'
-    | '/landing-page'
     | '/app/changelog'
     | '/app/dashboard'
     | '/app/login'

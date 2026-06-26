@@ -48,7 +48,13 @@ def main() -> int:
     if args.accounts_db is not None:
         os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = str(args.accounts_db)
 
-    # Import lazily so the env var above takes effect.
+    # This is the one tool that must read a pre-migration pickle, whose User objects have no
+    # account_id yet. User.__setstate__ hard-fails on that by default (to stop the backend ever
+    # starting un-migrated); this flag lets it load here so we can backfill. Must be set before
+    # pickle.load runs __setstate__.
+    os.environ["ENERGETICA_ALLOW_UNMIGRATED_USERS"] = "1"
+
+    # Import lazily so the env vars above take effect.
     from energetica import accounts
 
     if not args.pickle.exists():
@@ -59,8 +65,9 @@ def main() -> int:
     with args.pickle.open("rb") as f:
         engine_state = pickle.load(f)
 
-    # engine.db_model_instances["User"] is an AutoIDDict[User]
-    user_table = engine_state.db_model_instances.get("User")
+    # Engine.save() pickles a plain dict of members (see game_engine.py), so engine_state is a
+    # dict, not the Engine object. db_model_instances["User"] is an AutoIDDict[User].
+    user_table = engine_state.get("db_model_instances", {}).get("User")
     if user_table is None:
         print("No User table found in pickle — nothing to migrate.")
         return 0

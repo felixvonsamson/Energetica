@@ -29,6 +29,12 @@
         "src/routes-landing",
         "src/routeTree.landing.gen.ts",
         "src/components/wiki/wiki-layout-public.tsx",
-        "src/components/wiki/wiki-sidebar-public.tsx"
+        "src/components/wiki/wiki-sidebar-public.tsx",
+        "src/components/home-layout.tsx",
+        "src/components/header.tsx",
+        "src/components/footer.tsx",
+        "src/components/landing-page.tsx",
+        "src/components/about-page.tsx",
+        "src/components/for-educators-page.tsx"
     ]
 }

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { HomeLayout } from "@/components/home-layout";
+import { AppShell } from "@/components/layout/app-shell";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -180,7 +180,7 @@ function FillLevelHeader() {
 
 function ColorsPage() {
     return (
-        <HomeLayout>
+        <AppShell>
             <div className="flex flex-col gap-10 px-6 lg:px-8 max-w-5xl mx-auto py-8">
                 <section className="flex items-start justify-between gap-4">
                     <div className="flex flex-col gap-2">
@@ -308,6 +308,6 @@ function ColorsPage() {
                     </div>
                 </section>
             </div>
-        </HomeLayout>
+        </AppShell>
     );
 }
