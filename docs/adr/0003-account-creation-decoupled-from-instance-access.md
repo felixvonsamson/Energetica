@@ -19,8 +19,18 @@ by design. So the bundling has to break.
 
 **Lobby signup creates an Account only** — one row in the server-wide accounts store, no
 `User`, no `Player`, no instance. An account may exist with zero run memberships. Account
-creation is gated only by the existing **global** `disable_signups` / `players.txt`
-mechanism, **not** by any per-instance access policy.
+creation is gated by a **server-wide signup toggle**, **not** by any per-instance access
+policy.
+
+The existing `disable_signups` flag and `players.txt` are **per-instance** (an engine flag
+set at instance init and checked in `routers/auth.py`; a file under that instance's
+`instance/` read at startup), so the lobby — which has no engine, no slug, no `instance/` —
+cannot reuse them. They are replaced server-wide: a `signups_enabled` flag in a new
+`/etc/energetica/server.json` (read fresh by the lobby, mirroring how each instance reads
+its `instance.json`) gates open signup, and closed-enrollment deployments seed accounts
+directly into `accounts.db` via an admin bootstrap (`accounts.get_or_create_account_id`)
+instead of `players.txt`. The per-instance `disable_signups` no longer governs account
+creation (signup is no longer per-instance).
 
 **Joining a run is a separate, later act:** pick a run → enter it → settle. The per-instance
 access policy (`_enforce_instance_access`) is enforced at **entry** (User auto-provision)
@@ -42,3 +52,6 @@ and settle, exactly where it was — not at signup.
   (`_enforce_instance_access`) as before; only the signup-time check is dropped.
 - `misc.signup_playing_user` splits: lobby-side account creation vs. instance-side
   join/settle. Settling is what writes `instance_membership` (see ADR-0002 / CONTEXT.md).
+- A new server-wide config surface (`/etc/energetica/server.json`) is introduced for the
+  signup toggle; `players.txt`'s closed-enrollment role becomes a direct-to-`accounts.db`
+  admin bootstrap. Designing and landing these belongs to the lobby's Phase B (#816).

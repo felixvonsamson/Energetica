@@ -54,9 +54,16 @@ with the shared secret and auto-provisions a local `User` on first authenticated
   usable on all. The leak is only *exploitable* when (1) ≥2 concurrently-live public
   instances exist — **already true** — and (2) a stored-XSS vector exists. Today all UGC
   (chat, names) renders as React-escaped text, so **(2) is the sole remaining defense.**
-- **A CI guard is therefore part of shipping A1, not optional:** a test/lint forbidding
-  `dangerouslySetInnerHTML` / `rehype-raw` / raw-HTML rendering in `components/chat/` (and
-  any UGC surface). The day chat renders rich content, the cross-instance leak goes live.
+- **A CI guard is therefore part of shipping A1, not optional.** A repo-wide frontend
+  lint/test forbidding `dangerouslySetInnerHTML` and `rehype-raw`, with a small **explicit
+  allowlist** for developer-authored game content (today: the technology/facility
+  description renders in `components/technologies/`, `components/facilities/`, and
+  `routes/app/facilities/`). The rule must cover **every user-controlled string rendered to
+  other players** — chat, player/team/tile names, and any future rich field — not just
+  `components/chat/`. New raw-HTML renders are denied by default; adding one requires
+  amending the allowlist, which forces a reviewer to confirm the input is not
+  user-controlled. The day any UGC surface renders raw HTML, the cross-instance leak goes
+  live.
 - **A2 is the committed hardening path** (#813), to land before any UGC surface gains a
   rich-content renderer (backstop re-evaluation: 2026-12). Reversing A1 later means a
   cookie/secret migration across every instance — hence recording it here.

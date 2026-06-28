@@ -94,7 +94,8 @@ is that all UGC renders as escaped text — guarded by a CI tripwire (see Securi
 
 | Concern | Owner |
 |---------|-------|
-| Signup, login, change-password, logout, my-runs | **Lobby** |
+| Signup, login, change-password, logout | **Lobby** |
+| `my-runs` (read `instance_membership` for the authed account) | **Both** — the lobby (for the picker) *and* every instance (for the in-run switcher). Identical read logic, deployed in each service and served from its own origin so neither frontend makes a cross-origin call (no CORS). |
 | Session-cookie *validation* (shared secret) | Every instance |
 | Entry gate: auto-provision local `User` (access-policy-gated) | Instance |
 | Settle (`Player` creation) + `instance_membership` write | Instance |
@@ -142,8 +143,12 @@ CREATE TABLE IF NOT EXISTS instance_membership (
 ## Flows
 
 **Signup (lobby, account-only — ADR-0003).** Creates one `accounts` row. No instance, no
-`User`, no `Player`. Gated only by the global `disable_signups` / `players.txt`, never by a
-per-instance allowlist. An account may exist with zero memberships.
+`User`, no `Player`. An account may exist with zero memberships. Gated by a **server-wide
+signup toggle** — a `signups_enabled` flag in a new `/etc/energetica/server.json`, read
+fresh by the lobby (the server-wide analog of the per-instance `disable_signups`), never by
+a per-instance allowlist. Closed-enrollment deployments seed accounts directly into
+`accounts.db` via an admin bootstrap (`accounts.get_or_create_account_id`), replacing the
+per-instance `players.txt` for account creation. See ADR-0003.
 
 **Login (lobby).** Verify credentials against `accounts.db`; set the `domain=.{apex}`
 session cookie (shared secret). Redirect to the picker, or to `?return=` if present.
@@ -190,7 +195,8 @@ subdomains are not invalidated — see RFC limitation; unchanged.)
 
 ## Infrastructure
 
-- `setup-base.sh` — also create the shared `/var/lib/energetica/secret_key.txt`.
+- `setup-base.sh` — also create the shared `/var/lib/energetica/secret_key.txt` and an
+  initial `/etc/energetica/server.json` (`{"signups_enabled": true}`).
 - `infra/setup-lobby.sh`, `infra/apache-lobby.conf`, `infra/energetica-lobby.service`,
   `deploy-lobby.sh` — mirror the landing/instance scripts; DNS for `lobby.{apex}`.
 - `setup-instance.sh` / `DEPLOYMENT.md` — repoint the instance-local `/sign-up` redirect at
@@ -202,9 +208,12 @@ subdomains are not invalidated — see RFC limitation; unchanged.)
 
 - **Cookie isolation given up (A1).** A session is valid on every instance subdomain;
   `SameSite=Lax` does not help (same registrable site). Mitigation: A2 (#813) is the
-  committed hardening path; meanwhile a **CI guard** forbids raw-HTML rendering
-  (`dangerouslySetInnerHTML` / `rehype-raw`) in `components/chat/` and other UGC surfaces —
-  the sole live defence, so it ships *with* A1.
+  committed hardening path; meanwhile a **CI guard** — a repo-wide frontend lint forbidding
+  `dangerouslySetInnerHTML` / `rehype-raw`, with a small explicit allowlist for
+  developer-authored game content (the technology/facility description renders) — ensures no
+  *user-controlled* string (chat, player/team/tile names, any future rich field) can render
+  as raw HTML. This is the sole live defence, so it ships *with* A1. See ADR-0002 for the
+  exact rule scope.
 - **Open-redirect prevention.** The lobby `?return=` must resolve to a known
   `{slug}.{apex}` from the live instance list.
 - **my-runs scoping.** The endpoint serves only the cookie-authenticated account's
