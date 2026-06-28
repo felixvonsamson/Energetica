@@ -253,3 +253,10 @@ and the lobby shows them **zero runs with no error**, silently breaking the core
 - **Membership cleanup on run teardown** — stale rows tolerated until `teardown-instance.sh`
   exists.
 - **Cross-server identity** — accounts stay per-VPS (RFC).
+- **Per-instance `disable_signups` is obsolete** — its two jobs split into the server-wide
+  signup toggle (`server.json`) and the `accounts.db` admin bootstrap. Remove it during
+  Phase B/C cleanup rather than keep a second, overlapping signup knob.
+- **Personalized / invited run visibility** ("advertise a run to *specific accounts* only")
+  — distinct from `advertised` (all-or-nothing picker visibility) and from private+allowlist
+  (which gates *entry*, not visibility). A new invitation feature; deferred. ("Advertise or
+  not" itself is just the existing `advertised` flag — nothing to build.)
