@@ -225,13 +225,19 @@ subdomains are not invalidated — see RFC limitation; unchanged.)
 
 ## Phasing
 
-Developable A‖B; **C is a coordinated flag-day deploy** (like the Phase-5 cutover).
+**Code** can be developed A‖B in parallel. **Deploy order is strict: A before B.** Phase A's
+backfill migration must have run on the box *before* the lobby serves "your runs" —
+otherwise existing players (who settled before `instance_membership` existed) have no rows
+and the lobby shows them **zero runs with no error**, silently breaking the core feature.
+**C is a coordinated flag-day deploy** (like the Phase-5 cutover).
 
 - **Phase A — backend foundations (invisible).** `instance_membership` table + write-on-
   settle; the `my-runs` read; a backfill migration for existing `Player`s; shared-secret
   *support* (read shared if present, else per-instance) without flipping the cookie.
 - **Phase B — lobby stands up alongside untouched instances.** Lobby backend + frontend
-  bundle + infra + DNS. No instance behaviour changes yet.
+  bundle + infra + DNS. No instance behaviour changes yet. **Deploy precondition:** Phase A
+  (incl. the backfill migration) is live on the box first — `deploy-lobby.sh` should refuse
+  to run, or the lobby should log loudly, if the `instance_membership` table is absent.
 - **Phase C — cutover (flag day).** Flip instances to shared secret + parent-domain cookie
   + entry-gate auto-provision; retire instance login/signup → redirect to lobby; in-run
   switcher; landing CTAs → lobby + remove `AdvertisedRuns`; land the #813 CI guard.
