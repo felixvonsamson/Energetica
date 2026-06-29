@@ -326,6 +326,8 @@
         --map-tile-current-player: hsl(0, 64%, 47%);
         --map-tile-other-player: var(--color-pine-500);
         --map-tile-vacant: var(--color-bone-100);
+
+        --player-self-color: hsl(0, 64%, 38%);
     }
 
     /* ============================================
@@ -519,6 +521,8 @@
         --map-tile-current-player: hsl(0, 97%, 23%);
         --map-tile-other-player: var(--color-pine-800);
         --map-tile-vacant: var(--color-bone-300);
+
+        --player-self-color: hsl(0, 70%, 62%);
     }
 
     html,

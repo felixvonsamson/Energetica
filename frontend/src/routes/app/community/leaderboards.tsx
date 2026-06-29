@@ -6,6 +6,7 @@ import { useState } from "react";
 import { GameLayout } from "@/components/layout/game-layout";
 import { PageCard, CardContent, Money } from "@/components/ui";
 import { PlayerName } from "@/components/ui/player-name";
+import { useCurrentPlayer } from "@/hooks/use-current-player";
 import { useLeaderboards } from "@/hooks/use-leaderboards";
 import { usePlayerMap } from "@/hooks/use-players";
 import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
@@ -67,6 +68,7 @@ function LeaderboardsContent() {
 
     const { data: leaderboards, isLoading, error } = useLeaderboards();
     const playerMap = usePlayerMap();
+    const { playerId: currentPlayerId } = useCurrentPlayer();
     if (isLoading) {
         return (
             <div className="p-4 md:p-8 text-center">
@@ -598,10 +600,11 @@ function LeaderboardsContent() {
 
     const renderTableRow = (row: PlayerDetailStats) => {
         const player = playerMap?.[row.player_id];
+        const isSelf = row.player_id === currentPlayerId;
         const commonCells = (
             <>
                 <td className="py-3 px-4">
-                    {player ? <PlayerName player={player} /> : row.username}
+                    {player ? <PlayerName player={player} isSelf={isSelf} /> : row.username}
                 </td>
                 <td className="py-3 px-4">{row.general.network_name || "-"}</td>
             </>
@@ -670,7 +673,7 @@ function LeaderboardsContent() {
                 return (
                     <>
                         <td className="py-3 px-4">
-                            {player ? <PlayerName player={player} /> : row.username}
+                            {player ? <PlayerName player={player} isSelf={isSelf} /> : row.username}
                         </td>
                         <td className="py-3 px-4 text-right">
                             {row.technologies.total_technologies}

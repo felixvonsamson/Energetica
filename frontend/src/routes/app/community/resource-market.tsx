@@ -15,6 +15,7 @@ import { CreateAskDialog } from "@/components/resource-market/create-ask-dialog"
 import { PurchaseDialog } from "@/components/resource-market/purchase-dialog";
 import { Button, CardContent, Money, PageCard } from "@/components/ui";
 import { DualDuration } from "@/components/ui/duration";
+import { PlayerName } from "@/components/ui/player-name";
 import { useCurrentPlayer } from "@/hooks/use-current-player";
 import { usePlayerResources } from "@/hooks/use-player-resources";
 import { usePlayerMap } from "@/hooks/use-players";
@@ -434,7 +435,9 @@ function AskRow({
                     ask.resource_type}
             </td>
             <td className="py-3 px-4 text-left">
-                {playerMap?.[ask.seller_id]?.username ?? "—"}
+                {playerMap?.[ask.seller_id] ? (
+                    <PlayerName player={playerMap[ask.seller_id]!} isSelf={isOwnAsk} />
+                ) : "—"}
             </td>
             <td className="py-3 px-4 text-right font-mono">
                 {formatMass(ask.quantity)}
