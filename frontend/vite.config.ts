@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type Plugin, type ProxyOptions } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
@@ -73,6 +73,45 @@ async function resolveBackendUrl(
     return "http://localhost:8000";
 }
 
+/**
+ * Dev-only: mirror production's Apache `RedirectMatch ^/$ → /app/`. The app bundle only routes
+ * `/app/*` (there is no `/` route), so without this the bare root 404s in dev — in prod Apache
+ * handles it. `apply: "serve"` keeps it out of builds.
+ */
+const devRootRedirect: Plugin = {
+    name: "dev-root-redirect",
+    apply: "serve",
+    configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+            if (req.url === "/") {
+                res.writeHead(302, { Location: "/app/" });
+                res.end();
+                return;
+            }
+            next();
+        });
+    },
+};
+
+/**
+ * Strip `Secure` and `Domain` from `Set-Cookie` on proxied responses so a session cookie minted
+ * by an HTTPS backend round-trips through the `http://localhost` dev origin. Without this, the
+ * browser won't persist the fresh `Secure` cookie over plain-HTTP localhost (so a stale,
+ * foreign-signed cookie lingers and every authed request 401s), and a future parent-domain
+ * (`Domain=.{apex}`) cookie wouldn't match `localhost` at all. No-op for the local backend, which
+ * sets neither attribute.
+ */
+const rewriteSetCookieForLocalhost: NonNullable<ProxyOptions["configure"]> = (proxy) => {
+    proxy.on("proxyRes", (proxyRes) => {
+        const setCookie = proxyRes.headers["set-cookie"];
+        if (setCookie) {
+            proxyRes.headers["set-cookie"] = setCookie.map((cookie) =>
+                cookie.replace(/;\s*Secure/gi, "").replace(/;\s*Domain=[^;]*/gi, ""),
+            );
+        }
+    });
+};
+
 export default defineConfig(async ({ mode, command }) => {
     const env = loadEnv(mode, process.cwd(), "");
     // Backend the dev server proxies to: explicit override, else slug discovered from the
@@ -82,6 +121,7 @@ export default defineConfig(async ({ mode, command }) => {
 
     return {
         plugins: [
+            devRootRedirect,
             // Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'
             tanstackRouter({
                 target: "react",
@@ -121,6 +161,7 @@ export default defineConfig(async ({ mode, command }) => {
                 "^/api": {
                     target: backendUrl,
                     changeOrigin: true,
+                    configure: rewriteSetCookieForLocalhost,
                 },
                 // Static assets
                 "^/static": {
@@ -146,6 +187,7 @@ export default defineConfig(async ({ mode, command }) => {
                 "^/logout$": {
                     target: backendUrl,
                     changeOrigin: true,
+                    configure: rewriteSetCookieForLocalhost,
                 },
             },
         },
