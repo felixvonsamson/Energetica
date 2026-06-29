@@ -2,7 +2,8 @@
 
 The autouse `_isolated_accounts_db` fixture redirects the server-wide accounts SQLite store to a
 per-test temp file. Without it, any test that calls ``create_app`` (or otherwise touches
-``energetica.accounts``) would try to write to the production path ``/var/lib/energetica/accounts.db``.
+``energetica.accounts``) would write to the dev default ``instance/accounts.db`` in the repo,
+leaking state across tests and into the developer's working tree.
 """
 
 from __future__ import annotations

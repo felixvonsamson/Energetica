@@ -7,7 +7,7 @@ from typing import Awaitable, Callable, cast
 from fastapi import FastAPI, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse
 
 from energetica.game_error import GameError
 from energetica.globals import engine
@@ -112,8 +112,6 @@ def setup_routes(app: FastAPI):
                 print(f"{request.method} {request.url.path}")
                 print(f"content-type: {request.headers.get('content-type')}")
                 raise e
-            if get_request and response.status_code == status.HTTP_401_UNAUTHORIZED and "/auth/me" not in path:
-                return RedirectResponse(url="/app/login", status_code=status.HTTP_303_SEE_OTHER)
             return response
 
         start = datetime.now()

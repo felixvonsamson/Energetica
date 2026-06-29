@@ -196,6 +196,20 @@ python main.py --env dev --run_init_test_players
 python main.py --env dev --rm_instance
 ```
 
+#### Local State & Resetting
+
+A dev instance keeps all of its state under `instance/` (gitignored): the engine pickle
+(`engine_data.pck`), the session signing key (`secret_key.txt`), and the server-wide accounts
+store (`accounts.db`). In production these paths are set explicitly via the systemd unit (e.g.
+`ENERGETICA_ACCOUNTS_DB_PATH=/var/lib/energetica/accounts.db`); locally the code defaults to
+`instance/` so `python main.py --env dev` runs with **zero host configuration**.
+
+`--rm_instance` wipes the whole `instance/` folder, so the pickle and `accounts.db` are reset
+together (the freshly-printed `instance/admin_accounts.txt` password stays in sync). **If your
+local instance predates server-wide accounts** (a pickle whose `User`s have no `account_id`,
+which raises a `RuntimeError` on startup), reset it with `--rm_instance` — the production
+`scripts/migrate-to-server-accounts.py` is not needed for disposable local data.
+
 ## Next Steps
 
 Places to get started with in the documentation:

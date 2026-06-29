@@ -12,7 +12,13 @@ from typing import Iterator
 
 from energetica.utils.auth import check_password_hash
 
-_DEFAULT_DB_PATH = "/var/lib/energetica/accounts.db"
+# The default targets local dev: a repo-relative path under instance/ (the per-instance
+# working dir, alongside engine_data.pck and secret_key.txt), so `python main.py --env dev`
+# runs with zero host configuration and `--rm_instance` wipes credentials and pickle in
+# lockstep. Production never hits this default — the systemd unit sets
+# ENERGETICA_ACCOUNTS_DB_PATH=/var/lib/energetica/accounts.db explicitly
+# (scripts/infra/energetica.service). Keep the default dev-friendly; let prod be explicit.
+_DEFAULT_DB_PATH = "instance/accounts.db"
 _ENV_VAR = "ENERGETICA_ACCOUNTS_DB_PATH"
 
 _initialised_paths: set[Path] = set()
