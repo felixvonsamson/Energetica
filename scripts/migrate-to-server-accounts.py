@@ -20,8 +20,9 @@ The combination of INSERT OR IGNORE + SELECT guarantees recovery from both parti
 Usage:
     python scripts/migrate-to-server-accounts.py --pickle <path> [--accounts-db <path>]
 
-If --accounts-db is omitted, defaults to /var/lib/energetica/accounts.db (matching the production
-path read by the running backend via ENERGETICA_ACCOUNTS_DB_PATH).
+If --accounts-db is omitted, defaults to the production path /var/lib/energetica/accounts.db.
+This is a production-only tool, so it pins the prod path explicitly rather than inheriting the
+library default in energetica/accounts/db.py (which targets local dev, instance/accounts.db).
 """
 
 from __future__ import annotations
@@ -39,14 +40,15 @@ def main() -> int:
     parser.add_argument(
         "--accounts-db",
         type=Path,
-        default=None,
-        help="Path to accounts.db (default: /var/lib/energetica/accounts.db or $ENERGETICA_ACCOUNTS_DB_PATH)",
+        default=Path("/var/lib/energetica/accounts.db"),
+        help="Path to accounts.db (default: the production path /var/lib/energetica/accounts.db).",
     )
     parser.add_argument("--dry-run", action="store_true", help="Report what would change without writing.")
     args = parser.parse_args()
 
-    if args.accounts_db is not None:
-        os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = str(args.accounts_db)
+    # Pin the resolved path into the env the accounts library reads, so this prod tool never
+    # inherits db.py's dev-oriented default.
+    os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = str(args.accounts_db)
 
     # This is the one tool that must read a pre-migration pickle, whose User objects have no
     # account_id yet. User.__setstate__ hard-fails on that by default (to stop the backend ever

@@ -55,7 +55,7 @@ To authenticate via API:
 
 **Middleware:** `energetica/routers/__init__.py`
 
--   Unauthenticated GET requests that return 401 are redirected to `/app/login`
+-   The API only ever speaks JSON — it never issues browser redirects. An unauthenticated request returns a `401` (JSON) from the endpoint; the SPA owns the redirect to `/app/login` client-side (`frontend/src/routes/__root.tsx`, driven by `/auth/me`). After the Phase 5 cutover FastAPI serves no HTML, so a server-side redirect could only land a `fetch` client on Apache's (or, in dev, Vite's) `index.html` — the `Unexpected token '<', "<!DOCTYPE"...` break.
 -   POST/PUT/PATCH/DELETE requests require authentication (enforced per-endpoint)
 
 **Authentication enforcement:** Endpoints use FastAPI `Depends()` to require authentication:

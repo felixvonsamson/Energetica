@@ -24,16 +24,22 @@ source .venv/bin/activate && python main.py --env dev
 
 ### Run the Frontend
 
-Use existing backend:
+Against the live production game backend (auto-discovers the current instance — see below):
 
 ```bash
-VITE_BACKEND_URL=https://energetica-game.org bun dev
+bun run dev:game
 ```
 
-Use http://localhost:8000 as backend:
+Against a local backend (`http://localhost:8000`):
 
 ```bash
 bun dev
+```
+
+Against one specific backend, overriding everything:
+
+```bash
+VITE_BACKEND_URL=https://mar-27-2026.energetica-game.org bun dev
 ```
 
 Or configure `/frontend/.env.example`.
@@ -152,9 +158,26 @@ cd frontend
 # Connect to local backend (default)
 bun dev
 
-# OR connect to production backend
-VITE_BACKEND_URL=https://energetica-game.org bun dev
+# OR connect to the live production game (dev:edu / dev:ethz for those deployments)
+bun run dev:game
 ```
+
+#### How `dev:game` finds the backend
+
+`dev:game` / `dev:edu` / `dev:ethz` run `vite --mode {game,edu,ethz}`, which loads
+`frontend/.env.{mode}`. After the multi-instance cutover the **apex** (`energetica-game.org`)
+serves only the static landing — the game backend lives on a per-season instance **subdomain**
+(`{slug}.energetica-game.org`) that is created and deleted over time. Pointing a dev mode at the
+apex would proxy `/api` into the landing's `index.html` and break with
+`Unexpected token '<', "<!DOCTYPE"...`.
+
+So each `.env.{mode}` sets only the **stable apex** (`VITE_APEX_DOMAIN=energetica-game.org`), and
+`vite.config.ts` discovers the current instance at startup by fetching the apex's public
+`instances.json` manifest and taking the newest advertised slug — the same ordering the landing's
+picker uses. No slug is ever hardcoded; it self-updates when the season's instance turns over. To
+target a specific instance (or a local backend) instead, set `VITE_BACKEND_URL` explicitly — it
+overrides the apex discovery. If the manifest is empty or unreachable, the dev server fails with an
+actionable message rather than silently falling back.
 
 ## Quick Reference
 
@@ -195,6 +218,20 @@ python main.py --env dev --run_init_test_players
 # Remove instance folder (reset database)
 python main.py --env dev --rm_instance
 ```
+
+#### Local State & Resetting
+
+A dev instance keeps all of its state under `instance/` (gitignored): the engine pickle
+(`engine_data.pck`), the session signing key (`secret_key.txt`), and the server-wide accounts
+store (`accounts.db`). In production these paths are set explicitly via the systemd unit (e.g.
+`ENERGETICA_ACCOUNTS_DB_PATH=/var/lib/energetica/accounts.db`); locally the code defaults to
+`instance/` so `python main.py --env dev` runs with **zero host configuration**.
+
+`--rm_instance` wipes the whole `instance/` folder, so the pickle and `accounts.db` are reset
+together (the freshly-printed `instance/admin_accounts.txt` password stays in sync). **If your
+local instance predates server-wide accounts** (a pickle whose `User`s have no `account_id`,
+which raises a `RuntimeError` on startup), reset it with `--rm_instance` — the production
+`scripts/migrate-to-server-accounts.py` is not needed for disposable local data.
 
 ## Next Steps
 
