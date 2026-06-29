@@ -11,7 +11,7 @@ that all sound like "saving") unambiguous.
   on startup. _Documented below._
 - **Electricity-market simulation** — production, markets, climate events, the tick
   loop. _Not yet documented._
-- **Accounts & users** — players, server-wide accounts, auth. _Not yet documented._
+- **Accounts & users** — players, server-wide accounts, auth, the lobby. _Documented below._
 - **Real-time sync** — socket.io state propagation to the frontend. _Not yet documented._
 - **Frontend** — TSX/Tailwind app and the generated API type bridge. _Not yet documented._
 
@@ -81,3 +81,41 @@ arbitrary user-controlled JSON payloads.
   ~10 min of actions, not ~6 h. Resolved: use **loaded tick** for the replay boundary.
 - "the log" meant both the **action log** (file) and the console logger in code.
   Resolved: **action log** is always the persisted event source.
+
+---
+
+## Accounts & users
+
+The core identity terms — **Server**, **Instance** (player-facing: **Run**), **Account**,
+**User**, **Player** — are defined in the Terminology table of
+`docs/architecture/static-serving-and-deployment.md`. Pinned below are the terms this
+project's lobby / instance-picker work adds or sharpens.
+
+### Language
+
+**Lobby**:
+The server-wide front door: where a player signs up, logs in (once, server-wide), and
+picks which **run** to enter or rejoin. Lives on its own subdomain (`lobby.{apex}`) with a
+small backend, separate from any run, and **outlives** individual runs (runs are created
+and deleted; the lobby is not). Owns the server-wide session.
+_Avoid_: landing (the **landing** is the pure-static marketing site on the apex; the lobby
+is the authenticated identity surface — distinct origins, distinct purposes).
+
+**Joined a run** / **started a run**:
+An **account** that has settled on a tile in a run — i.e. has a **Player** in that run's
+engine, not merely an auto-provisioned **User**. The lobby's "your runs" view is keyed on
+this. See the flagged ambiguity below.
+
+**Server-wide session**:
+The single authenticated session a player gets from the lobby, carried to every run on the
+server. Distinct from the per-run **User**/**Player** state it unlocks.
+
+### Flagged ambiguities
+
+- **User vs Player as "membership".** A login auto-provisions a **User** on a run before
+  the player has done anything there; a **Player** exists only after **settling**. "Runs
+  I'm in" was therefore ambiguous — provisioned-but-not-settled vs actually-playing.
+  Resolved: **membership = settled (has a Player)**. The lobby's "your runs" is keyed on
+  Player, recorded in an `instance_membership` table in the server-wide accounts store,
+  written by the run when a Player is created. A merely-provisioned **User** (silent SSO
+  entry) does **not** count as membership.
