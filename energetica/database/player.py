@@ -452,7 +452,13 @@ class Player(DBModel):
         The blocking webpush() round-trip is dispatched to a background thread pool so it never
         delays the caller (request handler or game tick). Delivery is fire-and-forget and
         best-effort. See issue #763.
+
+        During replay/re-simulation (engine.serve_local) there is no live client to receive the
+        push, and the stored subscriptions belong to a different VAPID keypair, so every send would
+        fail with a credentials mismatch and flood the console. Skip delivery entirely. See #701.
         """
+        if engine.serve_local:
+            return
         notification_data = {
             "type": payload.type,
             "payload": payload.model_dump(exclude={"type"}),
