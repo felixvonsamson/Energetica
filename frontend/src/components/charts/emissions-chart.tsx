@@ -7,6 +7,7 @@ import {
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { AssetName } from "@/components/ui/asset-name";
 import { Label } from "@/components/ui/label";
+import { MagnitudeBar } from "@/components/ui/magnitude-bar";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useGameEngine } from "@/hooks/use-game";
@@ -213,6 +214,7 @@ export function EmissionsOverviewTable({
 }: EmissionsOverviewTableProps) {
     const [sortKey, setSortKey] = useState<SortKey>("emissions");
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+    const getColor = useAssetColorGetter();
 
     // Check if all sources are hidden
     const allHidden = useMemo(() => {
@@ -311,6 +313,17 @@ export function EmissionsOverviewTable({
         return sorted;
     }, [rows, sortKey, sortDirection]);
 
+    // Largest source normalises the magnitude bars (uses absolute emissions,
+    // so carbon-capture removals are ranked by size like any other source).
+    const maxEmissions = useMemo(
+        () =>
+            rows.reduce(
+                (m, row) => Math.max(m, Math.abs(row.totalEmissions)),
+                0,
+            ),
+        [rows],
+    );
+
     const getSortIcon = (key: SortKey) => {
         if (sortKey !== key) return null;
         return sortDirection === "asc" ? "↑" : "↓";
@@ -366,8 +379,14 @@ export function EmissionsOverviewTable({
                                     <AssetName assetId={row.sourceType} />
                                 </div>
                             </td>
-                            <td className="py-2 px-4 text-right font-mono">
-                                {formatMass(row.totalEmissions)}
+                            <td className="py-2 px-4">
+                                <MagnitudeBar
+                                    value={row.totalEmissions}
+                                    max={maxEmissions}
+                                    color={getColor(row.sourceType)}
+                                    label={formatMass(row.totalEmissions)}
+                                    dimmed={hiddenSources.has(row.sourceType)}
+                                />
                             </td>
                             <td className="py-2 px-4 text-center">
                                 <Label className="inline-flex items-center cursor-pointer">

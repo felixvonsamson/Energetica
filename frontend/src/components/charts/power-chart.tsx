@@ -3,9 +3,11 @@
  *
  * This is a thin wrapper around EChartsTimeSeries that handles the
  * power-chart-specific concerns:
- *  - Deriving visible keys from the canonical facility order (hidden + zero filtering)
- *  - Percent-mode normalization of the data
- *  - Facility icon + name labels in the tooltip
+ *
+ * - Deriving visible keys from the canonical facility order (hidden + zero
+ *   filtering)
+ * - Percent-mode normalization of the data
+ * - Facility icon + name labels in the tooltip
  */
 
 import { Link } from "@tanstack/react-router";
@@ -18,6 +20,7 @@ import {
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
+import { MagnitudeBar } from "@/components/ui/magnitude-bar";
 import {
     Tooltip,
     TooltipContent,
@@ -66,7 +69,9 @@ export function PowerChart({
     // and series that are all-zero across the entire data set.
     const visibleKeys = useMemo(() => {
         if (!chartData.length) return [];
-        const keyOrder = KEY_ORDER_BY_CHART_TYPE[chartType] as readonly string[];
+        const keyOrder = KEY_ORDER_BY_CHART_TYPE[
+            chartType
+        ] as readonly string[];
         return keyOrder.filter(
             (key) =>
                 !hiddenFacilities.has(key) &&
@@ -90,9 +95,7 @@ export function PowerChart({
             for (const k of visibleKeys) {
                 const v = Number(dataPoint[k] ?? 0);
                 row[k] =
-                    viewMode === "percent" && total > 0
-                        ? (v / total) * 100
-                        : v;
+                    viewMode === "percent" && total > 0 ? (v / total) * 100 : v;
             }
             return row;
         });
@@ -106,9 +109,7 @@ export function PowerChart({
             getColor,
             formatLabel,
             formatValue: (v) =>
-                viewMode === "percent"
-                    ? `${v.toFixed(1)}%`
-                    : formatPower(v),
+                viewMode === "percent" ? `${v.toFixed(1)}%` : formatPower(v),
             formatYAxis:
                 viewMode === "percent"
                     ? (v: number) => `${v.toFixed(0)}%`
@@ -162,6 +163,7 @@ export function PowerOverviewTable({
 
     const { data: facilitiesData } = useFacilities();
     const { data: gameEngine } = useGameEngine();
+    const getColor = useAssetColorGetter();
     const isGeneration = chartType === "power-sources";
 
     const allHidden = useMemo(() => {
@@ -273,6 +275,14 @@ export function PowerOverviewTable({
         });
     }, [facilityRows, sortKey, sortDirection]);
 
+    // Largest total normalises the consumption magnitude bars. Generation
+    // rows keep the plain number — their capacity-factor gauge already carries
+    // the color, and two bars per row would be noise.
+    const maxEnergy = useMemo(
+        () => facilityRows.reduce((m, row) => Math.max(m, row.totalEnergy), 0),
+        [facilityRows],
+    );
+
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
             setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -381,8 +391,22 @@ export function PowerOverviewTable({
                                         />
                                     </div>
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono">
-                                    {formatEnergy(row.totalEnergy)}
+                                <td className="py-3 px-4">
+                                    {isGeneration ? (
+                                        <span className="block text-right font-mono">
+                                            {formatEnergy(row.totalEnergy)}
+                                        </span>
+                                    ) : (
+                                        <MagnitudeBar
+                                            value={row.totalEnergy}
+                                            max={maxEnergy}
+                                            color={getColor(row.facilityType)}
+                                            label={formatEnergy(
+                                                row.totalEnergy,
+                                            )}
+                                            dimmed={!isVisible}
+                                        />
+                                    )}
                                 </td>
                                 {isGeneration && (
                                     <>

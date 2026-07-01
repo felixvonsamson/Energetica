@@ -16,6 +16,70 @@ export function resolveColor(color: string): string {
     return resolveCSSVar(varName);
 }
 
+const contrastCache = new Map<string, string>();
+let probeCanvas: HTMLCanvasElement | null = null;
+
+/**
+ * Rasterize any CSS color to sRGB bytes via a 1×1 canvas, or `null` if the
+ * color is invalid or no canvas is available (SSR).
+ *
+ * Going through the canvas means we don't hand-parse each color space: the
+ * browser converts `oklch()`, `hsl()`, named colors and every hex length to
+ * sRGB for us — which matters here because the design tokens resolve to
+ * `oklch()`.
+ */
+function colorToRgb(color: string): [number, number, number] | null {
+    if (typeof document === "undefined") return null;
+    if (!probeCanvas) {
+        probeCanvas = document.createElement("canvas");
+        probeCanvas.width = probeCanvas.height = 1;
+    }
+    const ctx = probeCanvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return null;
+
+    // Validity probe: the fillStyle setter ignores an unparseable color, so it
+    // reads back differently depending on the two known-different priors.
+    ctx.fillStyle = "#000";
+    ctx.fillStyle = color;
+    const fromBlack = ctx.fillStyle;
+    ctx.fillStyle = "#fff";
+    ctx.fillStyle = color;
+    if (ctx.fillStyle !== fromBlack) return null;
+
+    ctx.fillRect(0, 0, 1, 1);
+    const d = ctx.getImageData(0, 0, 1, 1).data;
+    return [d[0] ?? 0, d[1] ?? 0, d[2] ?? 0];
+}
+
+/**
+ * Pick black or white text for legibility over an arbitrary fill `color`.
+ *
+ * Accepts any CSS color or a `var(--…)` reference (resolved first). Falls back
+ * to the theme foreground only when the color can't be rasterized at all.
+ * Results are cached by resolved value, so a theme switch (which changes what a
+ * `var()` resolves to) naturally recomputes under a new key. Used by
+ * {@link MagnitudeBar} so labels stay readable over facility colors and
+ * hash-assigned player colors alike, without a per-asset `-fg` CSS variable.
+ */
+export function readableTextColor(color: string): string {
+    const resolved = resolveColor(color);
+    const cached = contrastCache.get(resolved);
+    if (cached) return cached;
+
+    const rgb = colorToRgb(resolved);
+    let result: string;
+    if (rgb === null) {
+        result = "var(--foreground)";
+    } else {
+        // Perceived luminance (sRGB weights). Bias slightly toward black text.
+        const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+        result = luminance > 0.6 ? "#000" : "#fff";
+    }
+
+    contrastCache.set(resolved, result);
+    return result;
+}
+
 /** Chart color palette using semantic CSS variables. */
 
 export const CHART_COLORS = [
