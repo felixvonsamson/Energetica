@@ -36,29 +36,70 @@ export function ActivityDot({ status, className }: ActivityDotProps) {
 
 interface PlayerNameProps {
     player: Player;
+    isSelf?: boolean;
     className?: string;
     dotClassName?: string;
 }
 
-export function PlayerName({ player, className, dotClassName }: PlayerNameProps) {
+export function PlayerName({
+    player,
+    isSelf,
+    className,
+    dotClassName,
+}: PlayerNameProps) {
     return (
         <span className={cn("inline-flex items-center gap-1.5", className)}>
-            <ActivityDot status={player.activity_status} className={dotClassName} />
+            <ActivityDot
+                status={player.activity_status}
+                className={dotClassName}
+            />
             {player.username}
+            {isSelf && <SelfBadge />}
+        </span>
+    );
+}
+
+/**
+ * "You" tag shown after the current player's name. The red outline matches the
+ * map tile / row-rail hue so identity reads the same across the app.
+ */
+function SelfBadge() {
+    return (
+        <span
+            className="rounded-full border px-1.5 py-0.5 text-[10px] font-medium uppercase leading-none tracking-wide"
+            style={{
+                color: "var(--player-self-color)",
+                borderColor: "var(--player-self-color)",
+            }}
+        >
+            You
         </span>
     );
 }
 
 interface PlayerNameByIdProps {
     playerId: number;
+    isSelf?: boolean;
     className?: string;
     dotClassName?: string;
 }
 
-export function PlayerNameById({ playerId, className, dotClassName }: PlayerNameByIdProps) {
+export function PlayerNameById({
+    playerId,
+    isSelf,
+    className,
+    dotClassName,
+}: PlayerNameByIdProps) {
     const player = usePlayer(playerId);
 
     if (!player) return null;
 
-    return <PlayerName player={player} className={className} dotClassName={dotClassName} />;
+    return (
+        <PlayerName
+            player={player}
+            isSelf={isSelf}
+            className={className}
+            dotClassName={dotClassName}
+        />
+    );
 }
