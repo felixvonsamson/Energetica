@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
 import { ReactNode } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
@@ -31,7 +30,6 @@ interface TechnologyDetailModalProps<T> {
               name: ProjectType;
               price: number;
               description: string;
-              wikipedia_link: string;
               requirements_status: string;
               requirements: Requirement[];
               construction_time: number;
@@ -114,7 +112,7 @@ export function TechnologyDetailDialog<T>({
                                 </p>
                             </div>
 
-                            {/* Description & Learn More */}
+                            {/* Description */}
                             <CardContent className="space-y-2">
                                 <div className="[&_p:last-of-type]:inline">
                                     <div
@@ -124,16 +122,6 @@ export function TechnologyDetailDialog<T>({
                                         }}
                                     />
                                 </div>
-                                <a
-                                    href={displayedTechnology.wikipedia_link}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground w-fit"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <ExternalLink className="w-3 h-3" />
-                                    Learn more
-                                </a>
                                 {/* Affected Facilities */}
                                 {displayedTechnology.affected_facilities.length > 0 && (
                                     <div>
