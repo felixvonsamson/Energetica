@@ -6,13 +6,14 @@ import {
 } from "@/components/charts/echarts-time-series";
 import { FacilityName } from "@/components/ui/asset-name";
 import { Button } from "@/components/ui/button";
+import { MagnitudeBar } from "@/components/ui/magnitude-bar";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useChartData } from "@/hooks/use-charts";
 import { useElectricityMarket } from "@/hooks/use-electricity-markets";
 import { useGameEngine } from "@/hooks/use-game";
 import { usePlayerMap } from "@/hooks/use-players";
-import { getHashBasedChartColor } from "@/lib/charts/color-utils";
+import { getHashBasedChartColor, resolveColor } from "@/lib/charts/color-utils";
 import { createIncludeKeysFilter } from "@/lib/charts/filter-utils";
 import { KEY_ORDER_BY_CHART_TYPE } from "@/lib/charts/key-order";
 import { formatEnergy, formatPower } from "@/lib/format-utils";
@@ -187,6 +188,7 @@ export function MarketClearingTable({
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
     const { data: gameEngine } = useGameEngine();
     const playerMap = usePlayerMap();
+    const getColor = useAssetColorGetter();
 
     // Calculate aggregated data for each item
     const rows = useMemo(() => {
@@ -232,6 +234,12 @@ export function MarketClearingTable({
         });
         return sorted;
     }, [rows, sortKey, sortDirection]);
+
+    // Largest total normalises the magnitude bars into a ranked micro-chart.
+    const maxEnergy = useMemo(
+        () => rows.reduce((m, row) => Math.max(m, row.totalEnergy), 0),
+        [rows],
+    );
 
     const handleSort = (key: "name" | "energy") => {
         if (sortKey === key) {
@@ -330,8 +338,30 @@ export function MarketClearingTable({
                                             ?.username ?? row.name)
                                     )}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono">
-                                    {formatEnergy(row.totalEnergy)}
+                                <td className="py-3 px-4">
+                                    {breakdownEnabled ? (
+                                        <MagnitudeBar
+                                            value={row.totalEnergy}
+                                            max={maxEnergy}
+                                            color={
+                                                breakdownMode === "type"
+                                                    ? getColor(row.name)
+                                                    : resolveColor(
+                                                          getHashBasedChartColor(
+                                                              row.name,
+                                                          ),
+                                                      )
+                                            }
+                                            label={formatEnergy(
+                                                row.totalEnergy,
+                                            )}
+                                            dimmed={!isVisible}
+                                        />
+                                    ) : (
+                                        <span className="block text-right font-mono">
+                                            {formatEnergy(row.totalEnergy)}
+                                        </span>
+                                    )}
                                 </td>
                                 <td className="py-3 px-4 text-center">
                                     <Button

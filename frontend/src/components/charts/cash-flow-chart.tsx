@@ -7,14 +7,36 @@ import {
 import { FacilityIcon } from "@/components/ui/asset-icon";
 import { FacilityName } from "@/components/ui/asset-name";
 import { CashFlow } from "@/components/ui/cash-flow";
-import { Money } from "@/components/ui/money";
+import { MagnitudeBar } from "@/components/ui/magnitude-bar";
 import { useAssetColorGetter } from "@/hooks/use-asset-color-getter";
 import { useChartFilters } from "@/hooks/use-chart-filters";
 import { useGameEngine } from "@/hooks/use-game";
-import { formatCashFlow } from "@/lib/format-utils";
+import { formatCashFlow, formatMoney } from "@/lib/format-utils";
 
 export type CashFlowType = "revenues" | "expenses" | "net-profit";
 export type NetProfitViewMode = "net" | "breakdown";
+
+/**
+ * Color for a cash-flow series by key.
+ *
+ * Net-profit mode uses synthetic keys (`profit`/`loss`/`baseline`) that have no
+ * entry in the asset color system, so they resolve here instead. Returns `null`
+ * for real facility keys — callers fall back to the asset color getter. Shared
+ * by the chart and the overview table so both stay in sync.
+ */
+export function cashFlowSeriesColor(key: string): string | null {
+    switch (key) {
+        case "baseline":
+            return "var(--muted)";
+        case "profit":
+        case "net-profit":
+            return "var(--success)";
+        case "loss":
+            return "var(--destructive)";
+        default:
+            return null;
+    }
+}
 
 interface CashFlowChartProps {
     chartData: Array<Record<string, unknown>>;
@@ -38,13 +60,12 @@ export function CashFlowChart({
     const { data: gameEngineConfig } = useGameEngine();
     const getColor = useAssetColorGetter();
 
-    // Custom color getter for breakdown mode
-    const getBreakdownColor = useCallback((key: string) => {
-        if (key === "baseline") return "hsl(var(--muted-foreground) / 0.5)";
-        if (key === "profit") return "var(--success)";
-        if (key === "loss") return "var(--destructive)";
-        return "var(--foreground)";
-    }, []);
+    // Breakdown mode uses synthetic series keys (profit/loss/baseline) that the
+    // asset color system doesn't know about; cashFlowSeriesColor resolves them.
+    const getBreakdownColor = useCallback(
+        (key: string) => cashFlowSeriesColor(key) ?? "var(--foreground)",
+        [],
+    );
 
     // Create filters - don't filter non-zero for net-profit view
     const filterDataKeys = useChartFilters(
@@ -134,7 +155,10 @@ export function CashFlowChart({
             formatYAxis: (value: number) =>
                 isShowingPercent
                     ? `${value}%`
-                    : formatCashFlow(value, "h", gameEngineConfig).replace("$", ""),
+                    : formatCashFlow(value, "h", gameEngineConfig).replace(
+                          "$",
+                          "",
+                      ),
             // Use gradient fill for the "net-profit" series only in net mode
             gradientKeys: isNetMode ? ["net-profit"] : [],
         };
@@ -190,6 +214,7 @@ export function CashFlowOverviewTable({
 }: CashFlowOverviewTableProps) {
     const [sortKey, setSortKey] = useState<SortKey>("revenues");
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+    const getColor = useAssetColorGetter();
 
     // Check if all facilities are hidden
     const allHidden = useMemo(() => {
@@ -300,6 +325,13 @@ export function CashFlowOverviewTable({
         return sorted;
     }, [facilityRows, sortKey, sortDirection]);
 
+    // Largest total normalises the magnitude bars into a ranked micro-chart.
+    const maxRevenues = useMemo(
+        () =>
+            facilityRows.reduce((m, row) => Math.max(m, row.totalRevenues), 0),
+        [facilityRows],
+    );
+
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
             // Toggle direction
@@ -379,8 +411,18 @@ export function CashFlowOverviewTable({
                                         />
                                     </div>
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono">
-                                    <Money amount={row.totalRevenues} />
+                                <td className="py-3 px-4">
+                                    <MagnitudeBar
+                                        value={row.totalRevenues}
+                                        max={maxRevenues}
+                                        color={
+                                            cashFlowSeriesColor(
+                                                row.facilityType,
+                                            ) ?? getColor(row.facilityType)
+                                        }
+                                        label={formatMoney(row.totalRevenues)}
+                                        dimmed={!isVisible}
+                                    />
                                 </td>
                                 <td className="py-3 px-4 text-center">
                                     <button
