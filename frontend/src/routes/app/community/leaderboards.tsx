@@ -10,6 +10,7 @@ import { useCurrentPlayer } from "@/hooks/use-current-player";
 import { useLeaderboards } from "@/hooks/use-leaderboards";
 import { usePlayerMap } from "@/hooks/use-players";
 import { formatPower, formatEnergy, formatMass } from "@/lib/format-utils";
+import { cn } from "@/lib/utils";
 import type { PlayerDetailStats } from "@/types/leaderboards";
 
 function LeaderboardsHelp() {
@@ -205,9 +206,7 @@ function LeaderboardsContent() {
                         </th>
                         <th
                             className="py-3 px-4 text-right font-semibold cursor-pointer hover:bg-tan-green/80 dark:hover:bg-card transition-colors"
-                            onClick={() =>
-                                handleSort("general.total_projects")
-                            }
+                            onClick={() => handleSort("general.total_projects")}
                         >
                             Projects
                             {getSortIndicator("general.total_projects")}
@@ -604,7 +603,11 @@ function LeaderboardsContent() {
         const commonCells = (
             <>
                 <td className="py-3 px-4">
-                    {player ? <PlayerName player={player} isSelf={isSelf} /> : row.username}
+                    {player ? (
+                        <PlayerName player={player} isSelf={isSelf} />
+                    ) : (
+                        row.username
+                    )}
                 </td>
                 <td className="py-3 px-4">{row.general.network_name || "-"}</td>
             </>
@@ -673,7 +676,11 @@ function LeaderboardsContent() {
                 return (
                     <>
                         <td className="py-3 px-4">
-                            {player ? <PlayerName player={player} isSelf={isSelf} /> : row.username}
+                            {player ? (
+                                <PlayerName player={player} isSelf={isSelf} />
+                            ) : (
+                                row.username
+                            )}
                         </td>
                         <td className="py-3 px-4 text-right">
                             {row.technologies.total_technologies}
@@ -795,7 +802,12 @@ function LeaderboardsContent() {
                             {sortedRows.map((row) => (
                                 <tr
                                     key={row.player_id}
-                                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors"
+                                    className={cn(
+                                        "border-b border-gray-200 dark:border-gray-700 transition-colors",
+                                        row.player_id === currentPlayerId
+                                            ? "player-self-row"
+                                            : "hover:bg-tan-green/20 dark:hover:bg-muted/30",
+                                    )}
                                 >
                                     {renderTableRow(row)}
                                 </tr>

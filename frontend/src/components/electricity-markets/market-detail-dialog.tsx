@@ -192,7 +192,12 @@ function MarketContent({
                         {market.member_ids.map((memberId) => (
                             <div
                                 key={memberId}
-                                className="px-3 py-2 bg-card rounded text-sm"
+                                className={cn(
+                                    "px-3 py-2 rounded text-sm",
+                                    memberId === currentPlayerId
+                                        ? "player-self-card"
+                                        : "bg-card",
+                                )}
                             >
                                 {playerMap[memberId] ? (
                                     <PlayerName
