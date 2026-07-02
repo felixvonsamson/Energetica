@@ -1,4 +1,4 @@
-import { PlugZap, Check } from "lucide-react";
+import { PlugZap, Check, Lock } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { useMyMarket } from "@/hooks/use-electricity-markets";
@@ -17,13 +17,18 @@ interface MarketItemProps {
 export function MarketItem({ market, onClick }: MarketItemProps) {
     const currentMarket = useMyMarket();
     const isCurrentMarket = currentMarket?.id === market.id;
+    const isFull =
+        !isCurrentMarket &&
+        market.member_ids.length >= market.member_limit;
 
     return (
         <Card
             className={cn(
                 "cursor-pointer transition-all duration-200",
-                "hover:border-brand-green hover:scale-105",
                 "flex flex-col h-full relative",
+                isFull
+                    ? "opacity-60"
+                    : "hover:border-brand-green hover:scale-105",
                 isCurrentMarket && "border-brand-green bg-muted",
             )}
             onClick={onClick}
@@ -32,6 +37,13 @@ export function MarketItem({ market, onClick }: MarketItemProps) {
             {isCurrentMarket && (
                 <div className="absolute top-2 right-2 bg-brand text-white rounded-full p-1">
                     <Check className="w-4 h-4" />
+                </div>
+            )}
+
+            {/* Full badge */}
+            {isFull && (
+                <div className="absolute top-2 right-2 bg-muted-foreground text-background rounded-full p-1">
+                    <Lock className="w-4 h-4" />
                 </div>
             )}
 
@@ -60,7 +72,7 @@ export function MarketItem({ market, onClick }: MarketItemProps) {
                 <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
                     <PlugZap className="w-4 h-4" />
                     <span>
-                        {market.member_ids.length}{" "}
+                        {market.member_ids.length}/{market.member_limit}{" "}
                         {market.member_ids.length === 1 ? "member" : "members"}
                     </span>
                 </div>

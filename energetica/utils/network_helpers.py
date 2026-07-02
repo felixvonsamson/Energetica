@@ -1,5 +1,6 @@
 """Utility functions relating to electricity market networks."""
 
+from energetica.config.constants import NETWORK_MEMBER_LIMIT
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.game_error import GameError, GameExceptionType
@@ -17,6 +18,8 @@ def join_network(player: Player, network: Network | None) -> Network:
         raise GameError(GameExceptionType.NO_SUCH_NETWORK)
     if player.money <= 0:
         raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
+    if len(network.members) >= NETWORK_MEMBER_LIMIT:
+        raise GameError(GameExceptionType.NETWORK_FULL)
     if player.network is not None:
         leave_network(player)
     player.network = network

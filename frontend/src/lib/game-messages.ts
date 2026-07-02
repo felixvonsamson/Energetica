@@ -83,6 +83,7 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     nameAlreadyUsed: "This market name is already in use.",
     notInNetwork: "You are not a member of this market.",
     noSuchNetwork: "This electricity market does not exist.",
+    networkFull: "This market has reached its maximum number of members.",
     malformedRequest: "Invalid request. Please check your input.",
     storagePriceInversion:
         "Invalid order: a storage facility's discharge price must be higher than its charge price.",
