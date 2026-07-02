@@ -108,7 +108,7 @@ def destroy_facility(player: Player, facility: ActiveFacility, event_key: str) -
             cleanup_cost=float(cleanup_cost),
         )
     )
-    engine.log(f"{player.username} : {facility.facility_type} destroyed by {event_name}.")
+    engine.log(f"{player.username} : {facility.facility_type} destroyed by {event_key}.")
 
 
 def dismantle_facility(facility: ActiveFacility) -> None:

@@ -8,6 +8,7 @@ pandas
 pywebpush
 noise
 pytest
+pyright==1.1.407
 fastapi[standard]
 python-socketio[asgi]
 itsdangerous

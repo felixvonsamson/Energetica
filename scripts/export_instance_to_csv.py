@@ -162,12 +162,11 @@ def export_market_last(base, out, eng, id_to_username):
         charts_dir = f"{base}/data/networks/{net_id}/charts"
         if not os.path.exists(charts_dir):
             continue
-        files = [f for f in os.listdir(charts_dir) if re.search(r"market_t(\d+)", f)]
-        if not files:
+        matched = [(int(m.group(1)), f) for f in os.listdir(charts_dir) if (m := re.search(r"market_t(\d+)", f))]
+        if not matched:
             print(f"  Warning: no chart files found in {charts_dir}, skipping network {net_id}")
             continue
-        last_file = max(files, key=lambda f: int(re.search(r"market_t(\d+)", f).group(1)))
-        tick_num = int(re.search(r"market_t(\d+)", last_file).group(1))
+        tick_num, last_file = max(matched)
 
         with open(f"{charts_dir}/{last_file}", "rb") as f:
             chart = pickle.load(f)

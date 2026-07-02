@@ -12,6 +12,7 @@
         "lint": "cd frontend && bun run lint",
         "lint:fix": "cd frontend && bun run lint:fix",
         "typecheck": "cd frontend && bun run typecheck",
+        "typecheck:py": ".venv/bin/pyright --pythonpath \"$(pwd)/.venv/bin/python\"",
         "typecheck:watch": "cd frontend && bun run typecheck:watch",
         "format": "cd frontend && bun run format",
         "format:check": "cd frontend && bun run format:check",

@@ -26,6 +26,11 @@ lint.ignore = [
     "COM812",
 ]
 
+[tool.pyright]
+include = ["energetica", "tests", "scripts", "main.py"]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+
 [tool.pytest.ini_options]
 testpaths = [ "tests" ]
 filterwarnings = ["ignore::DeprecationWarning"]

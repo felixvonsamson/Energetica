@@ -25,6 +25,24 @@ jobs:
         run: bun run lint
         working-directory: frontend
 
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Pyright
+        # Point pyright at the interpreter that has the deps installed; bare
+        # pyright resolves against its own bundled env and floods reportMissingImports.
+        run: pyright --pythonpath "$(which python)"
+
   unit-tests:
     runs-on: ubuntu-latest
     steps:
