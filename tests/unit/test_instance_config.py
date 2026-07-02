@@ -247,3 +247,41 @@ def test_aggregate_excludes_unadvertised_instances(tmp_path: Path, monkeypatch: 
     # ...but only the advertised one is in the public manifest.
     manifest = json.loads((landing_dir / "instances.json").read_text())
     assert [entry["slug"] for entry in manifest["instances"]] == ["public-run"]
+
+
+# --- load_fragment --------------------------------------------------------------------------
+
+
+def test_load_fragment_reads_a_published_fragment(configured: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """load_fragment reads back a fragment written by publish, including its name and starts_at."""
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+
+    fragment = instance_config.load_fragment(SLUG)
+
+    assert fragment is not None
+    assert fragment.slug == SLUG
+    assert fragment.name == "Autumn 2025"
+
+
+def test_load_fragment_reads_unadvertised_fragment(configured: Path) -> None:
+    """An unadvertised run keeps its on-disk fragment; load_fragment must surface it so an account
+    can see its own hidden runs (the public manifest can't).
+    """
+    monkeypatch_slug = "hidden-run"
+    (Path(instance_config._landing_dir()) / "instances").mkdir(parents=True, exist_ok=True)
+    (Path(instance_config._landing_dir()) / "instances" / f"{monkeypatch_slug}.json").write_text(
+        json.dumps(
+            {"slug": monkeypatch_slug, "name": "Hidden", "advertised": False, "starts_at": "2026-03-01T00:00:00Z"}
+        ),
+        encoding="utf-8",
+    )
+
+    fragment = instance_config.load_fragment(monkeypatch_slug)
+
+    assert fragment is not None
+    assert fragment.advertised is False
+    assert fragment.name == "Hidden"
+
+
+def test_load_fragment_returns_none_when_absent(configured: Path) -> None:
+    assert instance_config.load_fragment("no-such-run") is None

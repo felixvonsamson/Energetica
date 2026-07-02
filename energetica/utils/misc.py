@@ -11,7 +11,7 @@ from fastapi import Request
 from noise import pnoise3
 from scipy.stats import norm
 
-from energetica import accounts, technology_effects
+from energetica import accounts, instance_config, technology_effects
 from energetica.config.assets import river_flow_speed_seasonal
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map.hex_tile import HexTile
@@ -269,6 +269,12 @@ def initialize_player(user: User, tile: HexTile) -> Player:
     player.rolling_history.add_subcategory("op_costs", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
+
+    # Settling is what makes this run appear under the account's "your runs" in the lobby and the
+    # in-run switcher. No-op without a slug (dev / unconfigured), where there is no lobby anyway.
+    slug = instance_config.instance_slug()
+    if slug is not None:
+        accounts.record_membership(account_id=user.account_id, slug=slug, settled_at=player.created_at.isoformat())
 
     engine.log(f"{player.username} chose the location {tile.id}")
     return player

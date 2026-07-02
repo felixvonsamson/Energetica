@@ -15,16 +15,32 @@ from energetica.game_error import GameExceptionType
 
 
 def get_or_create_secret_key() -> str:
-    """Load or create SECRET_KEY for signing cookies."""
-    filepath = "instance/secret_key.txt"
-    if os.path.exists(filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
+    """Load the cookie-signing SECRET_KEY, preferring the server-wide shared secret.
+
+    Resolution order (lobby Phase A — shared-secret *support*, cookie scope unchanged):
+
+    1. The server-wide shared secret ``/var/lib/energetica/secret_key.txt`` if present. It is
+       provisioned by ``setup-base.sh`` and shared across every instance so a session minted by
+       the lobby validates everywhere. Read-only here — the instance never creates it.
+    2. Otherwise the per-instance ``instance/secret_key.txt`` (the pre-lobby behaviour),
+       creating it on first run.
+
+    Both paths are env-overridable for tests.
+    """
+    shared_path = os.environ.get("ENERGETICA_SHARED_SECRET_PATH", "/var/lib/energetica/secret_key.txt")
+    if os.path.exists(shared_path):
+        with open(shared_path, "r", encoding="utf-8") as f:
             return f.read().strip()
-    else:
-        secret_key = secrets.token_hex()
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(secret_key)
-        return secret_key
+
+    instance_path = os.environ.get("ENERGETICA_INSTANCE_SECRET_PATH", "instance/secret_key.txt")
+    if os.path.exists(instance_path):
+        with open(instance_path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+
+    secret_key = secrets.token_hex()
+    with open(instance_path, "w", encoding="utf-8") as f:
+        f.write(secret_key)
+    return secret_key
 
 
 SECRET_KEY = get_or_create_secret_key()
