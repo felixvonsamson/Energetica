@@ -410,7 +410,7 @@ const_config: dict = {
             "power_factor": 1.4,
             "income_factor": 1.33,
             "description": "The industry generates revenue from energy. The Power consumption of the Industry varies "
-            "daily and seasonally. (<a href='/wiki/functional_facilities#The_Industry'>See wiki</a>)",
+            "daily and seasonally. (<a href='/app/wiki/functional-facilities#the-industry'>See wiki</a>)",
             "wikipedia_link": "",
             "requirements": {},
         },
