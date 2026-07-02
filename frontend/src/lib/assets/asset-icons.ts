@@ -146,6 +146,9 @@ export const specialIcons: Record<string, LucideIcon> = {
     temperature: Thermometer,
     baseline: SquareDashedBottom,
     profit: DollarSignSquare,
+    // Same icon as profit: color (success/destructive) carries the direction,
+    // and a tick is only ever profit or loss, never both at once.
+    loss: DollarSignSquare,
 };
 
 /** Combined registry of all asset icons. */
