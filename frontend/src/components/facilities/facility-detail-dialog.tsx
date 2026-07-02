@@ -1,5 +1,6 @@
+import { Link } from "@tanstack/react-router";
 import { ExternalLink, GitCompareArrows } from "lucide-react";
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 
 import { RequirementsDisplay, ConstructionInfo } from "@/components/facilities";
 import {
@@ -7,6 +8,7 @@ import {
     FacilityIcon,
     Money,
     CardContent,
+    AssetName,
 } from "@/components/ui";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { TypographyH2 } from "@/components/ui/typography";
 import { useLastDefined } from "@/hooks/use-last-defined";
-import { useQueueProject } from "@/hooks/use-projects";
+import { useQueueProject, useTechnologiesCatalog } from "@/hooks/use-projects";
+import { getTechnologyRoute } from "@/lib/facility-routes";
 import { ProjectType, Requirement } from "@/types/projects";
 
 interface FacilityDetailDialogProps<T> {
@@ -56,6 +59,21 @@ export function FacilityDetailDialog<T>({
 }: FacilityDetailDialogProps<T>) {
     const displayedFacility = useLastDefined(facility);
     const queueProjectMutation = useQueueProject();
+    const { data: technologiesData } = useTechnologiesCatalog();
+
+    // Reverse of each technology's `affected_facilities`: the technologies that
+    // affect the displayed facility. Derived from the same catalog that drives
+    // the forward "Affects:" list in the technology dialog, so the two
+    // directions stay consistent by construction.
+    const affectingTechnologies = useMemo(() => {
+        const name = displayedFacility?.name;
+        if (!name) return [];
+        return (technologiesData?.technologies ?? [])
+            .filter((technology) =>
+                technology.affected_facilities.includes(name),
+            )
+            .map((technology) => technology.name);
+    }, [technologiesData?.technologies, displayedFacility?.name]);
 
     const handleConstruction = () => {
         if (!facility) return;
@@ -75,6 +93,7 @@ export function FacilityDetailDialog<T>({
                         renderStatsTable,
                         onCompare,
                         handleConstruction,
+                        affectingTechnologies,
                     )}
             </DialogContent>
         </Dialog>
@@ -102,6 +121,7 @@ function FacilityContent<T>(
     renderStatsTable: (facility: T) => ReactNode,
     onCompare: ((facility: T) => void) | undefined,
     handleConstruction: () => void,
+    affectingTechnologies: string[],
 ) {
     const imageUrl = `/static/images/${facilityType}_facilities/${facility.name}.png`;
     const isLocked = facility.requirements_status === "unsatisfied";
@@ -185,6 +205,36 @@ function FacilityContent<T>(
                         </div>
                     )}
                 </CardContent>
+
+                {/* Affecting Technologies */}
+                {affectingTechnologies.length > 0 && (
+                    <CardContent>
+                        <strong>Affected by:</strong>{" "}
+                        <span className="text-hyperlink">
+                            {affectingTechnologies.map(
+                                (technologyName, idx) => (
+                                    <span key={technologyName}>
+                                        <Link
+                                            to={getTechnologyRoute(
+                                                technologyName,
+                                            )}
+                                            className="underline hover:opacity-80"
+                                        >
+                                            <AssetName
+                                                assetId={technologyName}
+                                                mode="long"
+                                                className="underline"
+                                            />
+                                        </Link>
+                                        {idx <
+                                            affectingTechnologies.length - 1 &&
+                                            ", "}
+                                    </span>
+                                ),
+                            )}
+                        </span>
+                    </CardContent>
+                )}
 
                 {/* Stats Table + Compare */}
                 <CardContent>
