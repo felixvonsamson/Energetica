@@ -60,7 +60,9 @@ export function MdxContent({
         // Scroll to hash after render. Re-runs whenever the hash changes so
         // wiki-to-wiki navigation (same MdxContent instance, new hash) works.
         setTimeout(() => {
-            document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
+            document
+                .getElementById(hash)
+                ?.scrollIntoView({ behavior: "smooth" });
         }, 0);
     }, [enableHashScroll, hash]);
 

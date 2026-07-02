@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/tooltip";
 
 /**
- * Tooltip wrapper for time displays. Shows a label and a "Learn more" link
- * to the wiki's time-and-weather page.
+ * Tooltip wrapper for time displays. Shows a label and a "Learn more" link to
+ * the wiki's time-and-weather page.
  */
 export function TimeTooltip({
     label,

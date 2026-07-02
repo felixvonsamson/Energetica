@@ -2,7 +2,8 @@
  * CashFlow component for displaying cash flow rates in game-time.
  *
  * Accepts cash flow in money per tick and converts to the appropriate rate
- * representation. Uses the game engine configuration to compute the actual rates.
+ * representation. Uses the game engine configuration to compute the actual
+ * rates.
  */
 
 import { Money } from "@/components/ui/money";

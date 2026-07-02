@@ -119,7 +119,7 @@ function Swatch({
                 {label ?? variable.replace(/^--color-/, "").replace(/^--/, "")}
             </span>
         </div>
-    )
+    );
 }
 
 // ─── Route component ───────────────────────────────────────────────────────────

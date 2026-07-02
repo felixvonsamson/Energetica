@@ -48,7 +48,12 @@ export function MapHoverBorder({
 
     if (!lastPosition) return null;
 
-    const { x: tx, y: ty } = getHexPosition(lastPosition.q, lastPosition.r, s, w);
+    const { x: tx, y: ty } = getHexPosition(
+        lastPosition.q,
+        lastPosition.r,
+        s,
+        w,
+    );
 
     const points = [
         [0, s],

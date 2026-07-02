@@ -14,6 +14,7 @@
         "typecheck": "cd frontend && bun run typecheck",
         "typecheck:watch": "cd frontend && bun run typecheck:watch",
         "format": "cd frontend && bun run format",
+        "format:check": "cd frontend && bun run format:check",
         "generate-types": "cd frontend && bun run generate-types",
         "ruff:check": ".venv/bin/ruff check energetica/ --fix",
         "ruff:format": ".venv/bin/ruff format energetica/",

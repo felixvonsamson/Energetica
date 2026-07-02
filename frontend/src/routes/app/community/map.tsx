@@ -59,7 +59,14 @@ function MapTooltipLayer({
     if (!hoveredTile) return null;
     const { x, y } = getHexPosition(hoveredTile.q, hoveredTile.r, s, w);
     return (
-        <foreignObject x={-width / 2} y={-height / 2} width={width} height={height} overflow="visible" style={{ pointerEvents: "none" }}>
+        <foreignObject
+            x={-width / 2}
+            y={-height / 2}
+            width={width}
+            height={height}
+            overflow="visible"
+            style={{ pointerEvents: "none" }}
+        >
             <MapTooltip
                 tile={hoveredTile}
                 player={
@@ -88,7 +95,9 @@ function MapContent() {
 
     const playerUsernameMap = useMemo(() => {
         const map: Record<number, string> = {};
-        playersData?.forEach((p) => { map[p.id] = p.username; });
+        playersData?.forEach((p) => {
+            map[p.id] = p.username;
+        });
         return map;
     }, [playersData]);
 

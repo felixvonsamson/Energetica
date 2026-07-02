@@ -462,7 +462,9 @@ export function useMarketData({
         // forever, so we use a short staleTime to allow a retry after a brief
         // window rather than treating them as permanent.
         staleTime: (query) => {
-            const data = query.state.data as MarketOrdersDataResponse | undefined;
+            const data = query.state.data as
+                | MarketOrdersDataResponse
+                | undefined;
             if (!data || data.capacities.price.length === 0) {
                 return 30_000;
             }

@@ -4,9 +4,10 @@
  * colouring and contrast-safe labels.
  *
  * Props:
- *  - currentPlayerId  highlight the current player's tile; omit on pages where
- *                     the player has no tile yet (e.g. the settle page)
- *  - onTileClick      make tiles clickable; omit for read-only maps
+ *
+ * - CurrentPlayerId highlight the current player's tile; omit on pages where the
+ *   player has no tile yet (e.g. the settle page)
+ * - OnTileClick make tiles clickable; omit for read-only maps
  */
 
 import { HexTile } from "@/components/map/hex-tile";

@@ -8,10 +8,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import {
-    TypographyH1,
-    TypographyLead,
-} from "@/components/ui/typography";
+import { TypographyH1, TypographyLead } from "@/components/ui/typography";
 
 export const Route = createFileRoute("/app/internal/")({
     component: InternalIndexPage,

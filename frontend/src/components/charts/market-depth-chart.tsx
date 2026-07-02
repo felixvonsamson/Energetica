@@ -106,88 +106,83 @@ function MarketDepthChartInner({
 
     // ── Data transformation ───────────────────────────────────────────────────
 
-    const {
-        supplyData,
-        demandData,
-        priceDomain,
-        volumeDomain,
-        clearingPrice,
-    } = useMemo(() => {
-        if (!marketData) {
+    const { supplyData, demandData, priceDomain, volumeDomain, clearingPrice } =
+        useMemo(() => {
+            if (!marketData) {
+                return {
+                    supplyData: [] as [number, number][],
+                    demandData: [] as [number, number][],
+                    priceDomain: [0, 1] as [number, number],
+                    volumeDomain: [0, 1] as [number, number],
+                    clearingPrice: 0,
+                };
+            }
+
+            const clearingVolume = marketData.market_quantity;
+            const clearingPrice = marketData.market_price;
+            const bids = marketData.demands;
+            const asks = marketData.capacities;
+            const asksCount = asks.price.length;
+            const bidsCount = bids.price.length;
+
+            const minBidPrice = Math.min(
+                bids.price[bidsCount - 1] ?? clearingPrice,
+                clearingPrice,
+            );
+            const maxAskPrice = Math.max(
+                asks.price[asksCount - 1] ?? clearingPrice,
+                clearingPrice,
+            );
+
+            const priceRange = maxAskPrice - minBidPrice;
+            const margin = priceRange > 0 ? priceRange * 0.1 : 0.01;
+            const minPrice = minBidPrice - margin;
+            const maxPrice = maxAskPrice + margin;
+
+            // Build supply series: ascending price, cumulative volume above clearing
+            const supplyData: [number, number][] = [];
+            for (let i = 0; i < asksCount; i++) {
+                const askVol = asks.cumul_capacities[i]! - clearingVolume;
+                if (askVol > 0) {
+                    supplyData.push([asks.price[i]!, askVol]);
+                    if (i === asksCount - 1) {
+                        supplyData.push([maxPrice, askVol]);
+                    }
+                }
+            }
+
+            // Build demand series: bids in ascending price order (reversed from original)
+            // Original bids are descending in price, so we reverse to get ascending
+            const demandData: [number, number][] = [];
+            let firstDemand = true;
+            for (let i = bidsCount - 1; i >= 0; i--) {
+                const bidVol = bids.cumul_capacities[i]! - clearingVolume;
+                if (bidVol > 0) {
+                    if (firstDemand) {
+                        demandData.push([minPrice, bidVol]);
+                        firstDemand = false;
+                    }
+                    demandData.push([bids.price[i]!, bidVol]);
+                }
+            }
+
+            const maxSupplyVolume =
+                asksCount > 0 ? asks.cumul_capacities[asksCount - 1]! : 0;
+            const maxDemandVolume =
+                bidsCount > 0 ? bids.cumul_capacities[bidsCount - 1]! : 0;
+            const maxVolume =
+                Math.max(maxSupplyVolume, maxDemandVolume) - clearingVolume;
+
+            const priceDomain: [number, number] = [minPrice, maxPrice];
+            const volumeDomain: [number, number] = [0, maxVolume];
             return {
-                supplyData: [] as [number, number][],
-                demandData: [] as [number, number][],
-                priceDomain: [0, 1] as [number, number],
-                volumeDomain: [0, 1] as [number, number],
-                clearingPrice: 0,
+                supplyData,
+                demandData,
+                priceDomain,
+                volumeDomain,
+                clearingPrice,
             };
-        }
-
-        const clearingVolume = marketData.market_quantity;
-        const clearingPrice = marketData.market_price;
-        const bids = marketData.demands;
-        const asks = marketData.capacities;
-        const asksCount = asks.price.length;
-        const bidsCount = bids.price.length;
-
-        const minBidPrice = Math.min(
-            bids.price[bidsCount - 1] ?? clearingPrice,
-            clearingPrice,
-        );
-        const maxAskPrice = Math.max(
-            asks.price[asksCount - 1] ?? clearingPrice,
-            clearingPrice,
-        );
-
-        const priceRange = maxAskPrice - minBidPrice;
-        const margin = priceRange > 0 ? priceRange * 0.1 : 0.01;
-        const minPrice = minBidPrice - margin;
-        const maxPrice = maxAskPrice + margin;
-
-        // Build supply series: ascending price, cumulative volume above clearing
-        const supplyData: [number, number][] = [];
-        for (let i = 0; i < asksCount; i++) {
-            const askVol = asks.cumul_capacities[i]! - clearingVolume;
-            if (askVol > 0) {
-                supplyData.push([asks.price[i]!, askVol]);
-                if (i === asksCount - 1) {
-                    supplyData.push([maxPrice, askVol]);
-                }
-            }
-        }
-
-        // Build demand series: bids in ascending price order (reversed from original)
-        // Original bids are descending in price, so we reverse to get ascending
-        const demandData: [number, number][] = [];
-        let firstDemand = true;
-        for (let i = bidsCount - 1; i >= 0; i--) {
-            const bidVol = bids.cumul_capacities[i]! - clearingVolume;
-            if (bidVol > 0) {
-                if (firstDemand) {
-                    demandData.push([minPrice, bidVol]);
-                    firstDemand = false;
-                }
-                demandData.push([bids.price[i]!, bidVol]);
-            }
-        }
-
-        const maxSupplyVolume =
-            asksCount > 0 ? asks.cumul_capacities[asksCount - 1]! : 0;
-        const maxDemandVolume =
-            bidsCount > 0 ? bids.cumul_capacities[bidsCount - 1]! : 0;
-        const maxVolume =
-            Math.max(maxSupplyVolume, maxDemandVolume) - clearingVolume;
-
-        const priceDomain: [number, number] = [minPrice, maxPrice];
-        const volumeDomain: [number, number] = [0, maxVolume];
-        return {
-            supplyData,
-            demandData,
-            priceDomain,
-            volumeDomain,
-            clearingPrice,
-        };
-    }, [marketData]);
+        }, [marketData]);
 
     // ── ECharts option ────────────────────────────────────────────────────────
 
@@ -222,7 +217,12 @@ function MarketDepthChartInner({
             markLine: {
                 silent: true,
                 symbol: ["none", "none"],
-                data: [{ xAxis: clearingPrice, name: `Clearing: $${formatMoney(clearingPrice)}/MWh` }],
+                data: [
+                    {
+                        xAxis: clearingPrice,
+                        name: `Clearing: $${formatMoney(clearingPrice)}/MWh`,
+                    },
+                ],
                 lineStyle: { color: primaryColor, type: "dashed", width: 2 },
                 label: {
                     formatter: "{b}",
@@ -304,9 +304,8 @@ function MarketDepthChartInner({
                 let demandVolume: number | null = null;
 
                 // supply series is step='end', so we want highest price <= cursor
-                const supplyRaw = (
-                    seriesArr[1] as LineSeriesOption | undefined
-                )?.data as [number, number][] | undefined;
+                const supplyRaw = (seriesArr[1] as LineSeriesOption | undefined)
+                    ?.data as [number, number][] | undefined;
                 if (supplyRaw) {
                     for (let i = supplyRaw.length - 1; i >= 0; i--) {
                         if (supplyRaw[i]![0] <= price) {
@@ -317,9 +316,8 @@ function MarketDepthChartInner({
                 }
 
                 // demand series is step='start', so we want highest price <= cursor
-                const demandRaw = (
-                    seriesArr[0] as LineSeriesOption | undefined
-                )?.data as [number, number][] | undefined;
+                const demandRaw = (seriesArr[0] as LineSeriesOption | undefined)
+                    ?.data as [number, number][] | undefined;
                 if (demandRaw) {
                     for (let i = demandRaw.length - 1; i >= 0; i--) {
                         if (demandRaw[i]![0] <= price) {
@@ -391,7 +389,10 @@ function MarketDepthChartInner({
     }
 
     return (
-        <div className="relative min-w-0 overflow-hidden" style={{ height: `${height}px` }}>
+        <div
+            className="relative min-w-0 overflow-hidden"
+            style={{ height: `${height}px` }}
+        >
             <div ref={chartRef} className="w-full h-full" />
             {tooltipState && (
                 <div

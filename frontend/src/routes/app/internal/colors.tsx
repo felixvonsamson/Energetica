@@ -153,7 +153,10 @@ const FOCUS_CASES = [
 function GaugeRow({ type, label }: { type: string; label: string }) {
     return (
         <div className="grid grid-cols-[10rem_1fr] items-center gap-3">
-            <code className="text-xs text-muted-foreground truncate" title={type}>
+            <code
+                className="text-xs text-muted-foreground truncate"
+                title={type}
+            >
                 {label}
             </code>
             <div className="grid grid-cols-5 gap-2">
@@ -184,10 +187,12 @@ function ColorsPage() {
             <div className="flex flex-col gap-10 px-6 lg:px-8 max-w-5xl mx-auto py-8">
                 <section className="flex items-start justify-between gap-4">
                     <div className="flex flex-col gap-2">
-                        <TypographyH1>Color &amp; Gauge Legibility</TypographyH1>
+                        <TypographyH1>
+                            Color &amp; Gauge Legibility
+                        </TypographyH1>
                         <TypographyLead>
-                            Visual regression sheet for asset colors as
-                            rendered by{" "}
+                            Visual regression sheet for asset colors as rendered
+                            by{" "}
                             <code className="font-mono text-base">
                                 FacilityGauge
                             </code>
@@ -206,7 +211,9 @@ function ColorsPage() {
 
                 {/* ── Focus cases ───────────────────────────────────────── */}
                 <section className="flex flex-col gap-4">
-                    <TypographyH2>Contrast hot-spots (regression check)</TypographyH2>
+                    <TypographyH2>
+                        Contrast hot-spots (regression check)
+                    </TypographyH2>
                     <TypographyP>
                         These gauges previously had legibility problems on the
                         filled side. The label is now split at the fill
@@ -215,8 +222,8 @@ function ColorsPage() {
                         <code className="font-mono">
                             --asset-color-&#123;asset&#125;-fg
                         </code>
-                        . Eyeball each one in both themes — the
-                        &quot;47%&quot; column should read end-to-end.
+                        . Eyeball each one in both themes — the &quot;47%&quot;
+                        column should read end-to-end.
                     </TypographyP>
                     <div className="rounded-xl border border-border bg-card p-5 flex flex-col gap-4">
                         <FillLevelHeader />

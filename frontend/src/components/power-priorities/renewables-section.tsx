@@ -54,7 +54,8 @@ export function RenewablesSection({ renewables }: RenewablesSectionProps) {
     return (
         <tbody>
             {renewables.map((renewable) => {
-                const status = statusesData?.renewables[renewable] ?? "available";
+                const status =
+                    statusesData?.renewables[renewable] ?? "available";
                 const currentPowerMW = productionPowerLevels[renewable];
                 const capacityMW = productionCapacityByType[renewable] ?? 0;
 
@@ -85,13 +86,14 @@ export function RenewablesSection({ renewables }: RenewablesSectionProps) {
                                     <FacilityGauge
                                         facilityType={renewable}
                                         value={
-                                            (currentPowerMW! / capacityMW) *
-                                            100
+                                            (currentPowerMW! / capacityMW) * 100
                                         }
                                     />
                                 </div>
                             ) : (
-                                <div className="w-30 mx-auto text-center text-xs">—</div>
+                                <div className="w-30 mx-auto text-center text-xs">
+                                    —
+                                </div>
                             )}
                         </td>
 
@@ -113,12 +115,14 @@ export function RenewablesSection({ renewables }: RenewablesSectionProps) {
                                     <span className="font-mono text-sm cursor-default inline-flex items-center gap-1">
                                         -5.00
                                         <span className="text-muted-foreground text-xs inline-flex items-center gap-0.5">
-                                            <CoinIcon className="size-3" />/MWh
+                                            <CoinIcon className="size-3" />
+                                            /MWh
                                         </span>
                                     </span>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    Price of dumping. Renewables are not controllable.
+                                    Price of dumping. Renewables are not
+                                    controllable.
                                 </TooltipContent>
                             </Tooltip>
                         </td>
@@ -130,7 +134,8 @@ export function RenewablesSection({ renewables }: RenewablesSectionProps) {
                                     <Lock className="w-4 h-4 shrink-0 inline-block cursor-default" />
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    Always active. Renewables are not controllable
+                                    Always active. Renewables are not
+                                    controllable
                                 </TooltipContent>
                             </Tooltip>
                         </td>

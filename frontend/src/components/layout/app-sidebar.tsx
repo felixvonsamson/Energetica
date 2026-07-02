@@ -3,7 +3,6 @@
  * navigation groups, and footer links.
  */
 
-
 import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { type RefObject } from "react";
@@ -183,7 +182,9 @@ function NavLinkItem({ item }: { item: NavLinkConfig }) {
                     <TooltipTrigger asChild>
                         <span>{button}</span>
                     </TooltipTrigger>
-                    <TooltipContent side="right">{status.reason}</TooltipContent>
+                    <TooltipContent side="right">
+                        {status.reason}
+                    </TooltipContent>
                 </Tooltip>
             ) : (
                 button
@@ -224,7 +225,9 @@ function NavSubLinkItem({ item }: { item: NavLinkConfig }) {
                     <TooltipTrigger asChild>
                         <span>{button}</span>
                     </TooltipTrigger>
-                    <TooltipContent side="right">{status.reason}</TooltipContent>
+                    <TooltipContent side="right">
+                        {status.reason}
+                    </TooltipContent>
                 </Tooltip>
             ) : (
                 button

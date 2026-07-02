@@ -121,7 +121,10 @@ export function MapTooltip({
                 {/* Title */}
                 <div className="text-center text-xl mb-3">
                     {player ? (
-                        <PlayerName player={player} className="justify-center" />
+                        <PlayerName
+                            player={player}
+                            className="justify-center"
+                        />
                     ) : (
                         <span className="text-brand-green dark:text-gray-100">
                             Vacant tile

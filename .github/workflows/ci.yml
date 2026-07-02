@@ -15,6 +15,9 @@ jobs:
       - name: Install dependencies
         run: bun install
         working-directory: frontend
+      - name: Format check
+        run: bun run format:check
+        working-directory: frontend
       - name: Typecheck
         run: bun run typecheck
         working-directory: frontend

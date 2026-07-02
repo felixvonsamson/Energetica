@@ -55,7 +55,6 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useToggleSet } from "@/hooks/use-toggle-set";
 import { formatPower } from "@/lib/format-utils";
 
-
 interface MarketsSearchParams {
     marketId?: number;
 }
@@ -70,7 +69,10 @@ export const Route = createFileRoute("/app/overviews/electricity-markets")({
             isUnlocked: (cap) =>
                 cap.has_network
                     ? { unlocked: true }
-                    : { unlocked: false, reason: "Unlock the Network achievement to access" },
+                    : {
+                          unlocked: false,
+                          reason: "Unlock the Network achievement to access",
+                      },
         },
         infoDialog: {
             contents: <MarketsOverviewHelp />,
@@ -319,7 +321,6 @@ function MarketsOverviewContent() {
                             </div>
                         </div>
                     </div>
-
                 </CardContent>
             </PageCard>
 
@@ -449,7 +450,10 @@ function MarketsOverviewContent() {
                 iconClassName="text-primary"
                 title="Merit Order & Market Clearing"
             >
-                <MeritOrderChart key={selectedMarketId} marketId={selectedMarketId} />
+                <MeritOrderChart
+                    key={selectedMarketId}
+                    marketId={selectedMarketId}
+                />
             </ChartCard>
         </div>
     );

@@ -51,10 +51,7 @@ import {
     resolveColor,
     resolveCSSVar,
 } from "@/lib/charts/color-utils";
-import {
-    createSteppedCurve,
-    interpolateAtX,
-} from "@/lib/charts/ui-utils";
+import { createSteppedCurve, interpolateAtX } from "@/lib/charts/ui-utils";
 import { formatDuration, formatMoney, formatPower } from "@/lib/format-utils";
 
 echarts.use([
@@ -342,10 +339,8 @@ function MeritOrderChartInner({
         // are dropped. The liveRef still holds the original blocks for the
         // tooltip/highlight so their labels remain correct.
         const span = quantityDomain[1] - quantityDomain[0];
-        const visXMin =
-            quantityDomain[0] + span * (zoomRange.start / 100);
-        const visXMax =
-            quantityDomain[0] + span * (zoomRange.end / 100);
+        const visXMin = quantityDomain[0] + span * (zoomRange.start / 100);
+        const visXMax = quantityDomain[0] + span * (zoomRange.end / 100);
         const visibleBlocks = activeBlocks
             .filter((b) => b.x2 > visXMin && b.x1 < visXMax)
             .map((b) => ({
@@ -443,8 +438,7 @@ function MeritOrderChartInner({
                             x: clippedLeft,
                             y: topLeft[1] ?? 0,
                             width: clippedRight - clippedLeft,
-                            height:
-                                (bottomRight[1] ?? 0) - (topLeft[1] ?? 0),
+                            height: (bottomRight[1] ?? 0) - (topLeft[1] ?? 0),
                         },
                         style: api.style(),
                     };
@@ -473,7 +467,10 @@ function MeritOrderChartInner({
                             name: `Clearing: ${formatPower(marketData?.market_quantity ?? 0)}`,
                         },
                         {
-                            yAxis: Math.min(marketData?.market_price ?? 0, PRICE_CAP),
+                            yAxis: Math.min(
+                                marketData?.market_price ?? 0,
+                                PRICE_CAP,
+                            ),
                             name: `Price: ${formatMoney(marketData?.market_price ?? 0)}/MWh`,
                             label: { position: "insideStartTop" },
                         },
@@ -494,7 +491,10 @@ function MeritOrderChartInner({
                             name: "clearing",
                             coord: [
                                 marketData?.market_quantity ?? 0,
-                                Math.min(marketData?.market_price ?? 0, PRICE_CAP),
+                                Math.min(
+                                    marketData?.market_price ?? 0,
+                                    PRICE_CAP,
+                                ),
                             ],
                             symbol: "circle",
                             symbolSize: 10,
@@ -823,7 +823,10 @@ function MeritOrderChartInner({
             </div>
 
             {/* Chart */}
-            <div className="relative min-w-0 overflow-hidden" style={{ height: `${height}px` }}>
+            <div
+                className="relative min-w-0 overflow-hidden"
+                style={{ height: `${height}px` }}
+            >
                 <div ref={chartRef} className="w-full h-full" />
 
                 {/* Full-height highlight band for the hovered block column */}

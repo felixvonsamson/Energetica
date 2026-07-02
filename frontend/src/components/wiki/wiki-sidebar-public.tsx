@@ -42,7 +42,11 @@ const wikiLinks = [
         icon: Warehouse,
     },
     { slug: "technologies", label: "Technology", icon: FlaskConical },
-    { slug: "power-management", label: "Power Management", icon: SlidersVertical },
+    {
+        slug: "power-management",
+        label: "Power Management",
+        icon: SlidersVertical,
+    },
     { slug: "network", label: "Network", icon: Network },
     { slug: "time-and-weather", label: "Time & Weather", icon: Clock },
     { slug: "climate-effects", label: "Climate Change", icon: Leaf },
@@ -53,7 +57,11 @@ export function WikiSidebarPublic() {
     const currentSlug = params.slug;
 
     return (
-        <Sidebar side="left" collapsible="offcanvas" className="overflow-hidden">
+        <Sidebar
+            side="left"
+            collapsible="offcanvas"
+            className="overflow-hidden"
+        >
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarGroupContent>

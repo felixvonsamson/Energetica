@@ -72,7 +72,8 @@ export function readableTextColor(color: string): string {
         result = "var(--foreground)";
     } else {
         // Perceived luminance (sRGB weights). Bias slightly toward black text.
-        const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+        const luminance =
+            (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
         result = luminance > 0.6 ? "#000" : "#fff";
     }
 

@@ -17,7 +17,11 @@ interface PriceInputProps {
     disabled?: boolean;
 }
 
-export function PriceInput({ value, onCommit, disabled = false }: PriceInputProps) {
+export function PriceInput({
+    value,
+    onCommit,
+    disabled = false,
+}: PriceInputProps) {
     const [localValue, setLocalValue] = useState(value.toFixed(2));
 
     // Sync from server when value prop changes (e.g. after mutation settles)
@@ -54,7 +58,8 @@ export function PriceInput({ value, onCommit, disabled = false }: PriceInputProp
                 className="pr-14 border-border-brand font-mono"
             />
             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none inline-flex items-center gap-0.5">
-                <CoinIcon className="size-3" />/MWh
+                <CoinIcon className="size-3" />
+                /MWh
             </span>
         </div>
     );

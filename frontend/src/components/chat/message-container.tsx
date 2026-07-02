@@ -187,7 +187,9 @@ export function MessageContainer({
                         {group.showTimestamp && (
                             <div className="text-sm text-muted-foreground mb-1 px-1 inline-flex items-center gap-1">
                                 {showPlayerName && player && (
-                                    <><PlayerName player={player} /> •</>
+                                    <>
+                                        <PlayerName player={player} /> •
+                                    </>
                                 )}
                                 {formatTimestamp(firstMessage.timestamp)}
                             </div>

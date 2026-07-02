@@ -116,26 +116,23 @@ function EmissionsOverviewContent() {
         undefined,
         "energetica:chart:emissions:hiddenSources",
     );
-    const [co2ViewMode, setCo2ViewMode] = useLocalStorage<"absolute" | "relative">(
-        "energetica:chart:emissions:co2ViewMode",
-        "absolute",
-    );
-    const [co2UnitMode, setCo2UnitMode] = useLocalStorage<"concentration" | "quantity">(
-        "energetica:chart:emissions:co2UnitMode",
-        "concentration",
-    );
-    const [tempViewMode, setTempViewMode] = useLocalStorage<"absolute" | "relative">(
-        "energetica:chart:emissions:tempViewMode",
-        "absolute",
-    );
-    const [emissionsViewMode, setEmissionsViewMode] = useLocalStorage<"normal" | "percent">(
-        "energetica:chart:emissions:viewMode",
-        "normal",
-    );
-    const [emissionsCumulativeMode, setEmissionsCumulativeMode] = useLocalStorage<"rates" | "cumulative">(
-        "energetica:chart:emissions:cumulativeMode",
-        "rates",
-    );
+    const [co2ViewMode, setCo2ViewMode] = useLocalStorage<
+        "absolute" | "relative"
+    >("energetica:chart:emissions:co2ViewMode", "absolute");
+    const [co2UnitMode, setCo2UnitMode] = useLocalStorage<
+        "concentration" | "quantity"
+    >("energetica:chart:emissions:co2UnitMode", "concentration");
+    const [tempViewMode, setTempViewMode] = useLocalStorage<
+        "absolute" | "relative"
+    >("energetica:chart:emissions:tempViewMode", "absolute");
+    const [emissionsViewMode, setEmissionsViewMode] = useLocalStorage<
+        "normal" | "percent"
+    >("energetica:chart:emissions:viewMode", "normal");
+    const [emissionsCumulativeMode, setEmissionsCumulativeMode] =
+        useLocalStorage<"rates" | "cumulative">(
+            "energetica:chart:emissions:cumulativeMode",
+            "rates",
+        );
 
     const { selectedResolution } = useResolution();
 

@@ -373,17 +373,15 @@ export function formatDuration(
     config: GameEngineConfig,
     compact: boolean = false,
 ): string {
-    const formatted = formatGameTimeDuration(
-        ticksToGameSeconds(ticks, config),
-    );
+    const formatted = formatGameTimeDuration(ticksToGameSeconds(ticks, config));
     if (!compact) return formatted;
     const parts = formatted.split(" ");
     return parts.slice(0, 2).join(" ");
 }
 
 /**
- * Format duration in both game-time and wall-clock for dual display.
- * Returns both representations for components showing "game-time (wall-clock)".
+ * Format duration in both game-time and wall-clock for dual display. Returns
+ * both representations for components showing "game-time (wall-clock)".
  */
 export function formatDurationDual(
     ticks: number,
@@ -448,9 +446,8 @@ const SECONDS_PER_DAY = 86400;
 const SECONDS_PER_GAME_YEAR = 6_220_800; // 72 days
 
 /**
- * Get the number of seconds in a time unit.
- * Uses game-time constants (hours and days are wall-clock equivalent;
- * "year" is one game year = 72 days).
+ * Get the number of seconds in a time unit. Uses game-time constants (hours and
+ * days are wall-clock equivalent; "year" is one game year = 72 days).
  *
  * @param unit - The time unit ("h", "day", or "year")
  * @returns Number of seconds in the specified unit
@@ -529,4 +526,3 @@ export function formatCashFlow(
     const suffix = getUnitSuffix(unit);
     return `${formatMoney(rate)}$${suffix}`;
 }
-

@@ -23,8 +23,8 @@ interface FacilityGaugeProps {
  *
  * The label is rendered twice and clipped at the fill boundary so each side
  * gets its own foreground colour: the asset-specific FG over the filled
- * portion, and the default track FG over the unfilled portion. This keeps
- * the percentage legible regardless of fill colour or theme.
+ * portion, and the default track FG over the unfilled portion. This keeps the
+ * percentage legible regardless of fill colour or theme.
  *
  * @example
  *     <FacilityGauge facilityType="coal_burner" value={75.5} />;
