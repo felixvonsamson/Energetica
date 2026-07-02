@@ -123,7 +123,8 @@ export function TechnologyDetailDialog<T>({
                                     />
                                 </div>
                                 {/* Affected Facilities */}
-                                {displayedTechnology.affected_facilities.length > 0 && (
+                                {displayedTechnology.affected_facilities
+                                    .length > 0 && (
                                     <div>
                                         <strong>Affects:</strong>{" "}
                                         <span className="text-hyperlink">
@@ -159,7 +160,8 @@ export function TechnologyDetailDialog<T>({
                                                                 />
                                                             )}
                                                             {idx <
-                                                                displayedTechnology.affected_facilities
+                                                                displayedTechnology
+                                                                    .affected_facilities
                                                                     .length -
                                                                     1 && ", "}
                                                         </span>
@@ -181,7 +183,9 @@ export function TechnologyDetailDialog<T>({
                         <div className="shrink-0 border-t border-border bg-background px-6 py-4 flex flex-col gap-3">
                             {/* Construction info */}
                             <ConstructionInfo
-                                constructionTime={displayedTechnology.construction_time}
+                                constructionTime={
+                                    displayedTechnology.construction_time
+                                }
                                 constructionPower={
                                     displayedTechnology.construction_power
                                 }
@@ -193,7 +197,9 @@ export function TechnologyDetailDialog<T>({
                                 (r) => r.status !== "satisfied",
                             ) && (
                                 <RequirementsDisplay
-                                    requirements={displayedTechnology.requirements}
+                                    requirements={
+                                        displayedTechnology.requirements
+                                    }
                                 />
                             )}
 
@@ -201,7 +207,9 @@ export function TechnologyDetailDialog<T>({
                             <div className="flex items-center justify-around">
                                 <div className="flex items-center gap-2">
                                     <Money
-                                        amount={Math.round(displayedTechnology.price)}
+                                        amount={Math.round(
+                                            displayedTechnology.price,
+                                        )}
                                         long
                                         className="text-lg font-semibold"
                                     />

@@ -40,5 +40,7 @@ export function useRouteUnlocked(
     const routeConfig = staticData.routeConfig;
     if (!routeConfig || routeConfig.requiredRole !== "player")
         return { unlocked: true };
-    return routeConfig.isUnlocked ? routeConfig.isUnlocked(capabilities) : { unlocked: true };
+    return routeConfig.isUnlocked
+        ? routeConfig.isUnlocked(capabilities)
+        : { unlocked: true };
 }

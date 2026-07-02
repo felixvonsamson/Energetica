@@ -124,7 +124,6 @@ export interface EChartsTimeSeriesProps {
 
 // ── CSS variable resolver ─────────────────────────────────────────────────────
 
-
 // ── Tooltip overlay ───────────────────────────────────────────────────────────
 
 interface Circle {
@@ -384,8 +383,12 @@ export function EChartsTimeSeries({
     // move), so we clear the tooltip explicitly.
     useEffect(() => {
         const clear = () => setTooltip(null);
-        window.addEventListener("scroll", clear, { capture: true, passive: true });
-        return () => window.removeEventListener("scroll", clear, { capture: true });
+        window.addEventListener("scroll", clear, {
+            capture: true,
+            passive: true,
+        });
+        return () =>
+            window.removeEventListener("scroll", clear, { capture: true });
     }, []);
 
     // ── ECharts option ────────────────────────────────────────────────────────
@@ -558,7 +561,6 @@ export function EChartsTimeSeries({
                     : {}),
             };
         });
-
 
         return {
             animation: false,
@@ -923,31 +925,33 @@ export function EChartsTimeSeries({
                 </button>
             )}
 
-            {tooltip && !isLoading && appliedStructuralKey === structuralKey && (
-                <>
-                    {tooltip.circles.map((c) => (
-                        <div
-                            key={c.seriesKey}
-                            style={{
-                                position: "fixed",
-                                left: c.clientX - 5,
-                                top: c.clientY - 5,
-                                width: 10,
-                                height: 10,
-                                borderRadius: "50%",
-                                backgroundColor: c.color,
-                                border: "2px solid white",
-                                pointerEvents: "none",
-                                zIndex: 9998,
-                            }}
+            {tooltip &&
+                !isLoading &&
+                appliedStructuralKey === structuralKey && (
+                    <>
+                        {tooltip.circles.map((c) => (
+                            <div
+                                key={c.seriesKey}
+                                style={{
+                                    position: "fixed",
+                                    left: c.clientX - 5,
+                                    top: c.clientY - 5,
+                                    width: 10,
+                                    height: 10,
+                                    borderRadius: "50%",
+                                    backgroundColor: c.color,
+                                    border: "2px solid white",
+                                    pointerEvents: "none",
+                                    zIndex: 9998,
+                                }}
+                            />
+                        ))}
+                        <TSTooltip
+                            tooltip={tooltip}
+                            formatValue={config.formatValue}
                         />
-                    ))}
-                    <TSTooltip
-                        tooltip={tooltip}
-                        formatValue={config.formatValue}
-                    />
-                </>
-            )}
+                    </>
+                )}
         </div>
     );
 }

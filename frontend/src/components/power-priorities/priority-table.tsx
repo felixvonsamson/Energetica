@@ -1,7 +1,8 @@
 /**
  * Priority table component - fetches the ordered priority list, handles
- * loading/error states, and renders PriorityItem rows and the RenewablesSection.
- * All per-item data fetching and display logic lives in the child components.
+ * loading/error states, and renders PriorityItem rows and the
+ * RenewablesSection. All per-item data fetching and display logic lives in the
+ * child components.
  */
 
 import { AnimatePresence } from "framer-motion";
@@ -45,57 +46,55 @@ export function PriorityTable() {
         <PageCard className="pt-0 pb-4">
             <CardContent className="overflow-x-auto">
                 {power_priorities.length === 0 ? (
-                    <p className="text-center py-8">
-                        No facilities available
-                    </p>
+                    <p className="text-center py-8">No facilities available</p>
                 ) : (
                     <table className="w-full min-w-170 border-separate border-spacing-y-2">
-                            <thead>
-                                <tr className="text-sm font-normal text-muted-foreground border-b border-gray-200 dark:border-gray-700">
-                                    <th className="text-center py-2 px-2 w-px">
-                                        <Plug className="size-4 inline-block" />
-                                    </th>
-                                    <th className="text-left py-2 px-3 w-px">
-                                        Facility
-                                    </th>
-                                    <th className="text-center py-2 px-3 w-px">
-                                        Status
-                                    </th>
-                                    <th className="text-center py-2 px-3 w-px hidden lg:table-cell">
-                                        Usage
-                                    </th>
-                                    <th className="text-right py-2 px-3 w-px">
-                                        Power
-                                    </th>
-                                    <th className="text-center py-2 px-3 w-px">
-                                        Price
-                                    </th>
-                                    <th className="text-center py-2 px-2 w-px">
-                                        <Zap className="size-4 inline-block" />
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <AnimatePresence initial={false}>
-                                    {power_priorities
-                                        .map((item, originalIndex) => (
-                                            <PriorityItem
-                                                key={getPriorityItemKey(item)}
-                                                item={item}
-                                                canBumpUp={
-                                                    originalIndex <
-                                                    power_priorities.length - 1
-                                                }
-                                                canBumpDown={originalIndex > 0}
-                                            />
-                                        ))
-                                        .reverse()}
-                                </AnimatePresence>
-                            </tbody>
-                            {renewables.length > 0 && (
-                                <RenewablesSection renewables={renewables} />
-                            )}
-                        </table>
+                        <thead>
+                            <tr className="text-sm font-normal text-muted-foreground border-b border-gray-200 dark:border-gray-700">
+                                <th className="text-center py-2 px-2 w-px">
+                                    <Plug className="size-4 inline-block" />
+                                </th>
+                                <th className="text-left py-2 px-3 w-px">
+                                    Facility
+                                </th>
+                                <th className="text-center py-2 px-3 w-px">
+                                    Status
+                                </th>
+                                <th className="text-center py-2 px-3 w-px hidden lg:table-cell">
+                                    Usage
+                                </th>
+                                <th className="text-right py-2 px-3 w-px">
+                                    Power
+                                </th>
+                                <th className="text-center py-2 px-3 w-px">
+                                    Price
+                                </th>
+                                <th className="text-center py-2 px-2 w-px">
+                                    <Zap className="size-4 inline-block" />
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <AnimatePresence initial={false}>
+                                {power_priorities
+                                    .map((item, originalIndex) => (
+                                        <PriorityItem
+                                            key={getPriorityItemKey(item)}
+                                            item={item}
+                                            canBumpUp={
+                                                originalIndex <
+                                                power_priorities.length - 1
+                                            }
+                                            canBumpDown={originalIndex > 0}
+                                        />
+                                    ))
+                                    .reverse()}
+                            </AnimatePresence>
+                        </tbody>
+                        {renewables.length > 0 && (
+                            <RenewablesSection renewables={renewables} />
+                        )}
+                    </table>
                 )}
             </CardContent>
         </PageCard>

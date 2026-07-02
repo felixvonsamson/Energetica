@@ -2,10 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 
-export function useToggleSet<T>(
-    initialState?: Set<T>,
-    storageKey?: string,
-) {
+export function useToggleSet<T>(initialState?: Set<T>, storageKey?: string) {
     const [items, setItems] = useState<Set<T>>(() => {
         if (storageKey) {
             try {

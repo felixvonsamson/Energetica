@@ -17,7 +17,10 @@ export const powerPrioritiesApi = {
             data,
         ),
 
-    /** Move a single item one step up (increase-priority) or down (decrease-priority). */
+    /**
+     * Move a single item one step up (increase-priority) or down
+     * (decrease-priority).
+     */
     bump: ({
         side,
         type,

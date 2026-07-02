@@ -32,9 +32,7 @@ function openDB(): Promise<IDBDatabase> {
     });
 }
 
-export async function getPushPref(
-    category: PushCategory,
-): Promise<boolean> {
+export async function getPushPref(category: PushCategory): Promise<boolean> {
     const db = await openDB();
     return new Promise((resolve) => {
         const tx = db.transaction(STORE_NAME, "readonly");

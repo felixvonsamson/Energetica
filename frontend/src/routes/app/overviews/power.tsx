@@ -95,10 +95,9 @@ const VIEW_MODE_OPTIONS = [
 
 function PowerOverviewContent() {
     const { currentTick } = useGameTick();
-    const [chartType, setChartType] = useLocalStorage<"power-sources" | "power-sinks">(
-        "energetica:chart:power:chartType",
-        "power-sources",
-    );
+    const [chartType, setChartType] = useLocalStorage<
+        "power-sources" | "power-sinks"
+    >("energetica:chart:power:chartType", "power-sources");
     const [viewMode, setViewMode] = useLocalStorage<PowerChartViewMode>(
         "energetica:chart:power:viewMode",
         "absolute",
@@ -154,7 +153,9 @@ function PowerOverviewContent() {
                             <Label className="mb-2">Display Mode</Label>
                             <SegmentedPicker
                                 value={viewMode}
-                                onValueChange={(value) => setViewMode(value as PowerChartViewMode)}
+                                onValueChange={(value) =>
+                                    setViewMode(value as PowerChartViewMode)
+                                }
                             >
                                 {VIEW_MODE_OPTIONS.map((option) => (
                                     <SegmentedPickerOption

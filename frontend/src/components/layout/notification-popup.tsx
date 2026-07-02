@@ -1,8 +1,8 @@
 /**
  * Notification popup dialog. Shows all notifications with ability to filter by
- * category, flag, delete, and mark all as read.
- * Notifications are selectable via click or arrow keys; selection marks as read.
- * Delete key removes the selected notification.
+ * category, flag, delete, and mark all as read. Notifications are selectable
+ * via click or arrow keys; selection marks as read. Delete key removes the
+ * selected notification.
  */
 
 import { Link } from "@tanstack/react-router";
@@ -27,9 +27,15 @@ import {
     useMarkNotificationRead,
     useFlagNotification,
 } from "@/hooks/use-notifications";
-import { getNotificationCategory, getNotificationContent } from "@/lib/notification-config";
+import {
+    getNotificationCategory,
+    getNotificationContent,
+} from "@/lib/notification-config";
 import { cn } from "@/lib/utils";
-import { INBOX_CATEGORY_LABELS, type InboxCategory } from "@/types/notifications";
+import {
+    INBOX_CATEGORY_LABELS,
+    type InboxCategory,
+} from "@/types/notifications";
 
 const CATEGORIES = Object.keys(INBOX_CATEGORY_LABELS) as InboxCategory[];
 
@@ -46,9 +52,9 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
     const { mutate: markRead } = useMarkNotificationRead();
     const { mutate: flagNotification } = useFlagNotification();
 
-    const [activeCategory, setActiveCategory] = useState<
-        InboxCategory | "all"
-    >("all");
+    const [activeCategory, setActiveCategory] = useState<InboxCategory | "all">(
+        "all",
+    );
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
     const notifications = useMemo(() => {
@@ -83,7 +89,8 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
     const filteredNotifications = useMemo(() => {
         if (effectiveCategory === "all") return notifications;
         return notifications.filter(
-            (n) => getNotificationCategory(n.payload.type) === effectiveCategory,
+            (n) =>
+                getNotificationCategory(n.payload.type) === effectiveCategory,
         );
     }, [notifications, effectiveCategory]);
 
@@ -223,9 +230,7 @@ export function NotificationPopup({ isOpen, onClose }: NotificationPopupProps) {
                     </div>
 
                     {/* Notifications list */}
-                    <div
-                        className="flex-1 overflow-y-auto -mx-6 px-6"
-                    >
+                    <div className="flex-1 overflow-y-auto -mx-6 px-6">
                         {isLoading ? (
                             <div className="text-center text-muted-foreground py-8">
                                 Loading notifications...

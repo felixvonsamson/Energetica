@@ -209,7 +209,10 @@ export function CreateMarketDialog({
                             form="create-market-form"
                             variant={isPending ? "outline" : "default"}
                             disabled={
-                                isPending || isNameMissing || hasNameError || hasInsufficientFunds
+                                isPending ||
+                                isNameMissing ||
+                                hasNameError ||
+                                hasInsufficientFunds
                             }
                             className="flex items-center gap-2"
                         >

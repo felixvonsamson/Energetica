@@ -39,9 +39,9 @@ interface DualDurationProps {
 }
 
 /**
- * Displays a duration in game-time with wall-clock time in brackets.
- * Used for progression items (construction, research, shipping) where
- * players want to know the real-world wait time.
+ * Displays a duration in game-time with wall-clock time in brackets. Used for
+ * progression items (construction, research, shipping) where players want to
+ * know the real-world wait time.
  *
  * @example
  *     <DualDuration ticks={1000} /> // "3d 12h (45m)"
@@ -77,4 +77,3 @@ export function DualDuration({
         </span>
     );
 }
-

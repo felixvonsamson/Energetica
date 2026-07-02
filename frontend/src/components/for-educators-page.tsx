@@ -225,12 +225,12 @@ export function ForEducatorsPage() {
                             Students experience first-hand that energy systems
                             and markets are more than the sum of their parts:
                             while the individual components can be conveyed
-                            through theory, the resulting emergent behaviour
-                            and complexity cannot. We frequently observed
-                            students engaging with the game and discussing it
-                            well beyond the scope of the lectures. I would
-                            recommend Energetica to any educator working on
-                            energy, climate, or economics topics."
+                            through theory, the resulting emergent behaviour and
+                            complexity cannot. We frequently observed students
+                            engaging with the game and discussing it well beyond
+                            the scope of the lectures. I would recommend
+                            Energetica to any educator working on energy,
+                            climate, or economics topics."
                         </blockquote>
                         <p className="text-muted-foreground font-semibold">
                             —{" "}

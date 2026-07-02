@@ -5,8 +5,14 @@ import type { NotificationPayload } from "@/types/notifications";
 // Payload type aliases
 // ---------------------------------------------------------------------------
 
-type MilestonePayload = Extract<NotificationPayload, { type: "achievement_milestone" }>;
-type UnlockPayload = Extract<NotificationPayload, { type: "achievement_unlock" }>;
+type MilestonePayload = Extract<
+    NotificationPayload,
+    { type: "achievement_milestone" }
+>;
+type UnlockPayload = Extract<
+    NotificationPayload,
+    { type: "achievement_unlock" }
+>;
 
 export type MilestoneAchievementKey = MilestonePayload["achievement_key"];
 export type UnlockAchievementKey = UnlockPayload["achievement_key"];
@@ -25,7 +31,10 @@ export type EnergyStorageComparisonKey = Extract<
     { achievement_key: "energy_storage" }
 >["comparison_key"];
 
-export const POWER_CONSUMPTION_COMPARISON_LABELS: Record<PowerConsumptionComparisonKey, string> = {
+export const POWER_CONSUMPTION_COMPARISON_LABELS: Record<
+    PowerConsumptionComparisonKey,
+    string
+> = {
     "village-in-europe": "a village in Europe",
     "city-of-basel": "the city of Basel",
     switzerland: "Switzerland",
@@ -33,7 +42,10 @@ export const POWER_CONSUMPTION_COMPARISON_LABELS: Record<PowerConsumptionCompari
     "world-population": "the entire world population",
 };
 
-export const ENERGY_STORAGE_COMPARISON_LABELS: Record<EnergyStorageComparisonKey, string> = {
+export const ENERGY_STORAGE_COMPARISON_LABELS: Record<
+    EnergyStorageComparisonKey,
+    string
+> = {
     "zurich-for-a-day": "Zurich for a day",
     "switzerland-for-a-day": "Switzerland for a day",
     "switzerland-for-a-month": "Switzerland for a month",
@@ -44,31 +56,48 @@ export const ENERGY_STORAGE_COMPARISON_LABELS: Record<EnergyStorageComparisonKey
 // ---------------------------------------------------------------------------
 
 type MilestoneConfig<K extends MilestoneAchievementKey> = {
-    /** Display name for the achievement. Used in:
-     *  - AchievementCard: progress card on the dashboard, with the 1-based
-     *    milestone level appended (e.g. "Power Consumption 2") */
+    /**
+     * Display name for the achievement. Used in:
+     *
+     * - AchievementCard: progress card on the dashboard, with the 1-based
+     *   milestone level appended (e.g. "Power Consumption 2")
+     */
     name: string;
-    /** Formats the achievement's numeric values (status, objective, threshold)
-     *  into a human-readable string with units. Used in:
-     *  - AchievementCard: progress bar label (e.g. "12 GWh / 50 GWh")
-     *  - body: called directly to format the threshold in notification text */
+    /**
+     * Formats the achievement's numeric values (status, objective, threshold)
+     * into a human-readable string with units. Used in:
+     *
+     * - AchievementCard: progress bar label (e.g. "12 GWh / 50 GWh")
+     * - Body: called directly to format the threshold in notification text
+     */
     format: (v: number) => string;
-    /** Generates the notification body text for a milestone event. Used in:
-     *  - notification-config.tsx pushBody: browser push notification (service worker)
-     *  - notification-config.tsx inGameBody: in-game notification panel
-     *  Currently returns a plain string; could become a ReactNode in the future
-     *  to enable richer in-game formatting (links, highlights, etc.). */
+    /**
+     * Generates the notification body text for a milestone event. Used in:
+     *
+     * - Notification-config.tsx pushBody: browser push notification (service
+     *   worker)
+     * - Notification-config.tsx inGameBody: in-game notification panel Currently
+     *   returns a plain string; could become a ReactNode in the future to
+     *   enable richer in-game formatting (links, highlights, etc.).
+     */
     body: (p: Extract<MilestonePayload, { achievement_key: K }>) => string;
 };
 
 type UnlockConfig = {
-    /** Display name for the achievement. Used in:
-     *  - AchievementCard: progress card on the dashboard */
+    /**
+     * Display name for the achievement. Used in:
+     *
+     * - AchievementCard: progress card on the dashboard
+     */
     name: string;
-    /** Notification body text for when the unlock is triggered. Used in:
-     *  - notification-config.tsx pushBody: browser push notification (service worker)
-     *  - notification-config.tsx inGameBody: in-game notification panel
-     *  Static string (no payload needed). Could become a ReactNode in the future. */
+    /**
+     * Notification body text for when the unlock is triggered. Used in:
+     *
+     * - Notification-config.tsx pushBody: browser push notification (service
+     *   worker)
+     * - Notification-config.tsx inGameBody: in-game notification panel Static
+     *   string (no payload needed). Could become a ReactNode in the future.
+     */
     body: string;
 };
 
@@ -77,8 +106,14 @@ type UnlockConfig = {
 // TypeScript will error if any key is missing or has the wrong payload type.
 // ---------------------------------------------------------------------------
 
-type PCPayload = Extract<MilestonePayload, { achievement_key: "power_consumption" }>;
-type ESPayload = Extract<MilestonePayload, { achievement_key: "energy_storage" }>;
+type PCPayload = Extract<
+    MilestonePayload,
+    { achievement_key: "power_consumption" }
+>;
+type ESPayload = Extract<
+    MilestonePayload,
+    { achievement_key: "energy_storage" }
+>;
 type BasePayload = Exclude<MilestonePayload, { comparison_key: string }>;
 
 export const ACHIEVEMENT_MILESTONE_CONFIG = {
@@ -142,7 +177,10 @@ export const ACHIEVEMENT_MILESTONE_CONFIG = {
 // Unlock achievement config — one entry per achievement_key.
 // ---------------------------------------------------------------------------
 
-export const ACHIEVEMENT_UNLOCK_CONFIG: Record<UnlockAchievementKey, UnlockConfig> = {
+export const ACHIEVEMENT_UNLOCK_CONFIG: Record<
+    UnlockAchievementKey,
+    UnlockConfig
+> = {
     laboratory: {
         name: "Unlock Technologies",
         body: "You have built a laboratory, you can now research technologies to unlock new facilities or improve existing ones.",

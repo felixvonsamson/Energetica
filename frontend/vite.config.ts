@@ -74,9 +74,10 @@ async function resolveBackendUrl(
 }
 
 /**
- * Dev-only: mirror production's Apache `RedirectMatch ^/$ → /app/`. The app bundle only routes
- * `/app/*` (there is no `/` route), so without this the bare root 404s in dev — in prod Apache
- * handles it. `apply: "serve"` keeps it out of builds.
+ * Dev-only: mirror production's Apache `RedirectMatch ^/$ → /app/`. The app
+ * bundle only routes `/app/*` (there is no `/` route), so without this the bare
+ * root 404s in dev — in prod Apache handles it. `apply: "serve"` keeps it out
+ * of builds.
  */
 const devRootRedirect: Plugin = {
     name: "dev-root-redirect",
@@ -94,19 +95,24 @@ const devRootRedirect: Plugin = {
 };
 
 /**
- * Strip `Secure` and `Domain` from `Set-Cookie` on proxied responses so a session cookie minted
- * by an HTTPS backend round-trips through the `http://localhost` dev origin. Without this, the
- * browser won't persist the fresh `Secure` cookie over plain-HTTP localhost (so a stale,
- * foreign-signed cookie lingers and every authed request 401s), and a future parent-domain
- * (`Domain=.{apex}`) cookie wouldn't match `localhost` at all. No-op for the local backend, which
- * sets neither attribute.
+ * Strip `Secure` and `Domain` from `Set-Cookie` on proxied responses so a
+ * session cookie minted by an HTTPS backend round-trips through the
+ * `http://localhost` dev origin. Without this, the browser won't persist the
+ * fresh `Secure` cookie over plain-HTTP localhost (so a stale, foreign-signed
+ * cookie lingers and every authed request 401s), and a future parent-domain
+ * (`Domain=.{apex}`) cookie wouldn't match `localhost` at all. No-op for the
+ * local backend, which sets neither attribute.
  */
-const rewriteSetCookieForLocalhost: NonNullable<ProxyOptions["configure"]> = (proxy) => {
+const rewriteSetCookieForLocalhost: NonNullable<ProxyOptions["configure"]> = (
+    proxy,
+) => {
     proxy.on("proxyRes", (proxyRes) => {
         const setCookie = proxyRes.headers["set-cookie"];
         if (setCookie) {
             proxyRes.headers["set-cookie"] = setCookie.map((cookie) =>
-                cookie.replace(/;\s*Secure/gi, "").replace(/;\s*Domain=[^;]*/gi, ""),
+                cookie
+                    .replace(/;\s*Secure/gi, "")
+                    .replace(/;\s*Domain=[^;]*/gi, ""),
             );
         }
     });

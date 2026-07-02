@@ -71,18 +71,26 @@ function ConfirmationContent({
                 Are you sure you want to{" "}
                 {isDismantling ? "dismantle" : "upgrade"}{" "}
                 {plural ? "all " : "this "}
-                <FacilityName facility={facilityName} as="strong" mode="long" />{" "}
+                <FacilityName
+                    facility={facilityName}
+                    as="strong"
+                    mode="long"
+                />{" "}
                 {plural ? "facilities" : "facility"}?
             </p>
             <div className="bg-muted/50 p-4 rounded-lg space-y-2">
                 {plural && (
                     <div className="flex justify-between">
-                        <span className="font-semibold">Number of facilities:</span>
+                        <span className="font-semibold">
+                            Number of facilities:
+                        </span>
                         <span>{count}</span>
                     </div>
                 )}
                 <div className="flex justify-between">
-                    <span className="font-semibold">{plural ? "Total cost" : "Cost"}:</span>
+                    <span className="font-semibold">
+                        {plural ? "Total cost" : "Cost"}:
+                    </span>
                     <Money amount={totalCost} />
                 </div>
             </div>
@@ -120,7 +128,10 @@ function FacilityActions({
                     <span className="text-gray-400">-</span>
                 )}
             </td>
-            <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+            <td
+                className="py-3 px-4 text-center"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {facility.dismantle_cost !== null ? (
                     <ConfirmDialog
                         trigger={
@@ -506,10 +517,7 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                             Draining...
                                         </span>
                                     ) : (
-                                        <Duration
-                                            ticks={avgLifespan}
-                                            compact
-                                        />
+                                        <Duration ticks={avgLifespan} compact />
                                     )}
                                 </td>
                                 <GroupActions
@@ -543,7 +551,9 @@ export function FacilityGroupTable<T extends FacilityBase>({
                                         ))}
                                         <td className="py-3 px-4 text-right">
                                             <CashFlow
-                                                amountPerTick={facility.op_cost_per_tick}
+                                                amountPerTick={
+                                                    facility.op_cost_per_tick
+                                                }
                                             />
                                         </td>
                                         <td className="py-3 px-4 text-right font-mono">

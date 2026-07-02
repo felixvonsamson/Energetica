@@ -13,8 +13,8 @@ function PowerPrioritiesHelp() {
                 the order in which they will be used to satisfy your demand.
             </p>
             <p>
-                Use the ↑ / ↓ buttons on each row to change its priority.
-                Higher priority facilities will be used first.
+                Use the ↑ / ↓ buttons on each row to change its priority. Higher
+                priority facilities will be used first.
             </p>
             <p>
                 When you are in a network, you can also set prices for buying
@@ -34,7 +34,10 @@ export const Route = createFileRoute("/app/facilities/power-priorities")({
             isUnlocked: (cap) =>
                 cap.has_network
                     ? { unlocked: true }
-                    : { unlocked: false, reason: "Unlock the Network achievement to access" },
+                    : {
+                          unlocked: false,
+                          reason: "Unlock the Network achievement to access",
+                      },
         },
         infoDialog: {
             contents: <PowerPrioritiesHelp />,

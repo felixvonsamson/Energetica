@@ -58,7 +58,10 @@ export const Route = createFileRoute("/app/facilities/technology")({
             isUnlocked: (cap) =>
                 cap.has_laboratory
                     ? { unlocked: true }
-                    : { unlocked: false, reason: "Build a Laboratory to unlock" },
+                    : {
+                          unlocked: false,
+                          reason: "Build a Laboratory to unlock",
+                      },
         },
         infoDialog: {
             contents: <TechnologiesHelp />,
@@ -174,7 +177,6 @@ function TechnologyContent() {
                     />
                 </>
             )}
-
         </div>
     );
 }

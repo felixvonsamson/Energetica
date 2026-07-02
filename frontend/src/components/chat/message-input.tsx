@@ -12,9 +12,16 @@ interface MessageInputProps {
     chatId: number;
 }
 
-export function MessageInput({ onSend, isDisabled, isDialogOpen, chatId }: MessageInputProps) {
+export function MessageInput({
+    onSend,
+    isDisabled,
+    isDialogOpen,
+    chatId,
+}: MessageInputProps) {
     const draftKey = `chat-draft-${chatId}`;
-    const [message, setMessage] = useState(() => localStorage.getItem(draftKey) ?? "");
+    const [message, setMessage] = useState(
+        () => localStorage.getItem(draftKey) ?? "",
+    );
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const { user } = useAuth();
 

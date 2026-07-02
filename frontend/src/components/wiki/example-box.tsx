@@ -10,7 +10,9 @@ export function ExampleBox({ children }: ExampleBoxProps) {
             <span className="inline-block text-xs font-bold uppercase tracking-widest px-5">
                 Example
             </span>
-            <div className="overflow-hidden rounded-xl bg-surface-topbar px-5">{children}</div>
+            <div className="overflow-hidden rounded-xl bg-surface-topbar px-5">
+                {children}
+            </div>
         </>
     );
 }

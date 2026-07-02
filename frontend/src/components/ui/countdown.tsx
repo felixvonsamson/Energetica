@@ -37,11 +37,7 @@ export function Countdown({
             : currentTick;
 
     const ticksLeft = Math.max(0, endTick - effectiveTick);
-    const { gameTime, wallClock } = formatDurationDual(
-        ticksLeft,
-        engine,
-        true,
-    );
+    const { gameTime, wallClock } = formatDurationDual(ticksLeft, engine, true);
 
     return (
         <span className="inline-flex items-center gap-1">

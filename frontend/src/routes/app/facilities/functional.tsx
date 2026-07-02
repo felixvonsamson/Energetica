@@ -227,7 +227,6 @@ function FunctionalFacilitiesContent() {
                     />
                 </>
             )}
-
         </div>
     );
 }
@@ -282,10 +281,16 @@ function FunctionalFacilityStatsTable({
                             </td>
                             <td className="py-2 px-4 text-center font-mono">
                                 <Money
-                                    amount={facility.revenue_generation.current ?? 0}
+                                    amount={
+                                        facility.revenue_generation.current ?? 0
+                                    }
                                 />
-                                /h → <Money
-                                    amount={facility.revenue_generation.upgraded ?? 0}
+                                /h →{" "}
+                                <Money
+                                    amount={
+                                        facility.revenue_generation.upgraded ??
+                                        0
+                                    }
                                 />
                                 /h
                             </td>

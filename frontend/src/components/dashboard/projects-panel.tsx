@@ -3,9 +3,9 @@
  * Renders the same DashboardSection as the dashboard, at the very top of the
  * page.
  *
- * Usage: manage `isOpen` state in the parent page, render `<ProjectsPanel>`
- * at the top of the content area, and place `<ProjectsPanelToggle>` wherever
- * the toggle button should appear (e.g. alongside the Compare button).
+ * Usage: manage `isOpen` state in the parent page, render `<ProjectsPanel>` at
+ * the top of the content area, and place `<ProjectsPanelToggle>` wherever the
+ * toggle button should appear (e.g. alongside the Compare button).
  */
 
 import { type LucideIcon } from "lucide-react";

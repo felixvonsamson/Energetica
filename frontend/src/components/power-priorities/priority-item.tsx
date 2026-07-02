@@ -164,9 +164,7 @@ export function PriorityItem({
                 <div className="flex flex-col lg:flex-row lg:items-baseline lg:gap-1">
                     <AssetName assetId={item.type} mode="short" />
                     {suffix && (
-                        <span className="text-muted-foreground">
-                            {suffix}
-                        </span>
+                        <span className="text-muted-foreground">{suffix}</span>
                     )}
                 </div>
             </td>

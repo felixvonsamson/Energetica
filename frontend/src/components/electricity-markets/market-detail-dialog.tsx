@@ -169,10 +169,7 @@ function MarketContent({
                             </div>
                             <div className="text-xl font-semibold">
                                 {marketAge !== undefined ? (
-                                    <Duration
-                                        ticks={marketAge}
-                                        compact
-                                    />
+                                    <Duration ticks={marketAge} compact />
                                 ) : (
                                     <span className="text-muted-foreground">
                                         N/A
