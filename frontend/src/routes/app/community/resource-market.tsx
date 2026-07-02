@@ -15,6 +15,7 @@ import { CreateAskDialog } from "@/components/resource-market/create-ask-dialog"
 import { PurchaseDialog } from "@/components/resource-market/purchase-dialog";
 import { Button, CardContent, Money, PageCard } from "@/components/ui";
 import { DualDuration } from "@/components/ui/duration";
+import { PlayerName } from "@/components/ui/player-name";
 import { useCurrentPlayer } from "@/hooks/use-current-player";
 import { usePlayerResources } from "@/hooks/use-player-resources";
 import { usePlayerMap } from "@/hooks/use-players";
@@ -25,6 +26,7 @@ import {
 } from "@/hooks/use-resource-market";
 import { useShipments } from "@/hooks/use-shipments";
 import { formatMass } from "@/lib/format-utils";
+import { cn } from "@/lib/utils";
 import { Player } from "@/types/players";
 import {
     ResourceType,
@@ -427,14 +429,26 @@ function AskRow({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-b border-border/30 hover:bg-tan-green/20 dark:hover:bg-muted/30 transition-colors"
+            className={cn(
+                "border-b border-border/30 transition-colors",
+                isOwnAsk
+                    ? "player-self-row"
+                    : "hover:bg-tan-green/20 dark:hover:bg-muted/30",
+            )}
         >
             <td className="py-3 px-4 font-medium capitalize">
                 {RESOURCE_LABELS[ask.resource_type as ResourceType] ||
                     ask.resource_type}
             </td>
             <td className="py-3 px-4 text-left">
-                {playerMap?.[ask.seller_id]?.username ?? "—"}
+                {playerMap?.[ask.seller_id] ? (
+                    <PlayerName
+                        player={playerMap[ask.seller_id]!}
+                        isSelf={isOwnAsk}
+                    />
+                ) : (
+                    "—"
+                )}
             </td>
             <td className="py-3 px-4 text-right font-mono">
                 {formatMass(ask.quantity)}

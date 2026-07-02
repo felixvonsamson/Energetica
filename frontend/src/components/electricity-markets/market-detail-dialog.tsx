@@ -13,6 +13,7 @@ import { Duration } from "@/components/ui/duration";
 import { PlayerName } from "@/components/ui/player-name";
 import { TypographyH2, TypographyH3 } from "@/components/ui/typography";
 import { useLatestChartDataSlice } from "@/hooks/use-charts";
+import { useCurrentPlayer } from "@/hooks/use-current-player";
 import { useMyMarket } from "@/hooks/use-electricity-markets";
 import { useGameTick } from "@/hooks/use-game-tick";
 import { useLastDefined } from "@/hooks/use-last-defined";
@@ -62,6 +63,7 @@ function MarketContent({
     onJoin: (market: ElectricityMarket) => void;
 }) {
     const currentMarket = useMyMarket();
+    const { playerId: currentPlayerId } = useCurrentPlayer();
     const { currentTick } = useGameTick();
     const { data: marketData } = useLatestChartDataSlice({
         chartType: "market-clearing",
@@ -190,10 +192,18 @@ function MarketContent({
                         {market.member_ids.map((memberId) => (
                             <div
                                 key={memberId}
-                                className="px-3 py-2 bg-card rounded text-sm"
+                                className={cn(
+                                    "px-3 py-2 rounded text-sm",
+                                    memberId === currentPlayerId
+                                        ? "player-self-card"
+                                        : "bg-card",
+                                )}
                             >
                                 {playerMap[memberId] ? (
-                                    <PlayerName player={playerMap[memberId]} />
+                                    <PlayerName
+                                        player={playerMap[memberId]}
+                                        isSelf={memberId === currentPlayerId}
+                                    />
                                 ) : (
                                     `Player ${memberId}`
                                 )}
