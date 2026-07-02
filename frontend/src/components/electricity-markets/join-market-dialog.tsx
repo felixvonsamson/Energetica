@@ -19,7 +19,6 @@ import {
 } from "@/hooks/use-electricity-markets";
 import { usePlayerMoney } from "@/hooks/use-player-money";
 import { useMyId } from "@/hooks/use-players";
-import { NETWORK_MEMBER_LIMIT } from "@/lib/network-constants";
 
 interface JoinMarketDialogProps {
     isOpen: boolean;
@@ -54,7 +53,8 @@ export function JoinMarketDialog({
     const willDeleteCurrentNetwork =
         isAlreadyInMarket && currentMarketMemberCount === 1;
     const isMarketFull =
-        market != null && market.member_ids.length >= NETWORK_MEMBER_LIMIT;
+        market != null &&
+        market.member_ids.length >= market.member_limit;
 
     // Reset state when dialog closes
     const handleClose = () => {
@@ -134,7 +134,7 @@ export function JoinMarketDialog({
                                     </p>
                                     <p className="text-sm">
                                         This market has reached its limit of{" "}
-                                        {NETWORK_MEMBER_LIMIT} members and is
+                                        {market!.member_limit} members and is
                                         not accepting new players.
                                     </p>
                                 </div>

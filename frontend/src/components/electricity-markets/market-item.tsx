@@ -2,7 +2,6 @@ import { PlugZap, Check, Lock } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { useMyMarket } from "@/hooks/use-electricity-markets";
-import { NETWORK_MEMBER_LIMIT } from "@/lib/network-constants";
 import { cn } from "@/lib/utils";
 import { ElectricityMarket } from "@/types/electricity-markets";
 
@@ -19,7 +18,8 @@ export function MarketItem({ market, onClick }: MarketItemProps) {
     const currentMarket = useMyMarket();
     const isCurrentMarket = currentMarket?.id === market.id;
     const isFull =
-        !isCurrentMarket && market.member_ids.length >= NETWORK_MEMBER_LIMIT;
+        !isCurrentMarket &&
+        market.member_ids.length >= market.member_limit;
 
     return (
         <Card
@@ -72,7 +72,7 @@ export function MarketItem({ market, onClick }: MarketItemProps) {
                 <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
                     <PlugZap className="w-4 h-4" />
                     <span>
-                        {market.member_ids.length}/{NETWORK_MEMBER_LIMIT}{" "}
+                        {market.member_ids.length}/{market.member_limit}{" "}
                         {market.member_ids.length === 1 ? "member" : "members"}
                     </span>
                 </div>

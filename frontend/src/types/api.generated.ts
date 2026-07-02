@@ -2487,6 +2487,12 @@ export interface components {
              */
             member_ids: number[];
             /**
+             * Member Limit
+             *
+             * Maximum number of members allowed in this market
+             */
+            member_limit: number;
+            /**
              * Created Tick
              *
              * Tick when the electricity market was created
@@ -4820,6 +4826,7 @@ export interface components {
             | "playerAlreadyInNetwork"
             | "nameAlreadyUsed"
             | "notInNetwork"
+            | "networkFull"
             | "notEnoughResource"
             | "invalidQuantity";
     };

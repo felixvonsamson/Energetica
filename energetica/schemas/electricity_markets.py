@@ -17,6 +17,8 @@ from energetica.enums import (
 if TYPE_CHECKING:
     from energetica.database.network import Network
 
+from energetica.config.constants import NETWORK_MEMBER_LIMIT
+
 
 class ElectricityMarketBase(BaseModel):
     name: str = Field(min_length=3, max_length=40, description="Name of the electricity market")
@@ -25,6 +27,7 @@ class ElectricityMarketBase(BaseModel):
 class ElectricityMarketOut(ElectricityMarketBase):
     id: int = Field(description="ID of the electricity market")
     member_ids: list[int] = Field(description="List of player IDs in the electricity market")
+    member_limit: int = Field(description="Maximum number of members allowed in this market")
     created_tick: int = Field(description="Tick when the electricity market was created")
 
     @classmethod
@@ -33,6 +36,7 @@ class ElectricityMarketOut(ElectricityMarketBase):
             id=network.id,
             name=network.name,
             member_ids=[member.id for member in network.members],
+            member_limit=NETWORK_MEMBER_LIMIT,
             created_tick=network.created_tick,
         )
 
