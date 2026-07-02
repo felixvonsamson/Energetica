@@ -176,7 +176,7 @@ function MarketsOverviewContent() {
     );
     const [breakdownMode, setBreakdownMode] = useLocalStorage<BreakdownMode>(
         "energetica:chart:markets:breakdownMode",
-        "player",
+        "type",
     );
     const [hiddenBreakdownItems, toggleBreakdownItem] = useToggleSet<string>(
         undefined,
