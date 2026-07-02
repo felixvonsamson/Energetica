@@ -53,8 +53,7 @@ export function JoinMarketDialog({
     const willDeleteCurrentNetwork =
         isAlreadyInMarket && currentMarketMemberCount === 1;
     const isMarketFull =
-        market != null &&
-        market.member_ids.length >= market.member_limit;
+        market != null && market.member_ids.length >= market.member_limit;
 
     // Reset state when dialog closes
     const handleClose = () => {
