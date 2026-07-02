@@ -18,8 +18,7 @@ export function MarketItem({ market, onClick }: MarketItemProps) {
     const currentMarket = useMyMarket();
     const isCurrentMarket = currentMarket?.id === market.id;
     const isFull =
-        !isCurrentMarket &&
-        market.member_ids.length >= market.member_limit;
+        !isCurrentMarket && market.member_ids.length >= market.member_limit;
 
     return (
         <Card

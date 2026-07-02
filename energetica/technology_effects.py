@@ -77,7 +77,7 @@ def knowledge_spillover_discount(times_researched: int) -> float:
     :param times_researched: the number of players that have researched the technology
     :return: the discount factor. 1.0 means no discount, 0.8 means a 20% discount
     """
-    return 0.92**times_researched
+    return 0.98**times_researched
 
 
 def price_multiplier(player: Player, project_type: ProjectType) -> float:
@@ -398,6 +398,9 @@ def construction_time(player: Player, project_type: ProjectType) -> float:
                 const_config["laboratory"]["time_factor"]
                 ** player.functional_facility_lvl[FunctionalFacilityType.LABORATORY]
             )
+            duration *= knowledge_spillover_discount(
+                research_prevalence(project_type, next_level(player, project_type))
+            )
     # building technology time reduction
     if isinstance(
         project_type,
@@ -460,6 +463,10 @@ def construction_power(player: Player, project_type: ProjectType) -> float:
     if isinstance(project_type, FunctionalFacilityType | TechnologyType):
         facility_next_level = next_level(player, project_type)
         power *= const_config[project_type]["price_multiplier"] ** (facility_next_level - 1)
+        if isinstance(project_type, TechnologyType):
+            # knowledge spillover reduces total energy: since construction_time already applies the
+            # discount, multiplying power by it again keeps power constant and reduces total energy
+            power *= knowledge_spillover_discount(research_prevalence(project_type, facility_next_level))
     return power
 
 

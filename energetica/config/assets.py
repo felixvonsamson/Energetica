@@ -483,7 +483,7 @@ const_config: dict = {
         "mathematics": {
             "name": "Mathematics",
             "type": "Technology",
-            "base_price": 36_000,  # [¤]
+            "base_price": 39_600,  # [¤]
             "base_construction_time": timedelta(days=1, hours=1).total_seconds(),  # [in-game seconds]
             "base_construction_energy": 5_000_000,  # [Wh]
             "price_multiplier": 1.3,
@@ -496,7 +496,7 @@ const_config: dict = {
         "mechanical_engineering": {
             "name": "Mechanical Engineering",
             "type": "Technology",
-            "base_price": 36_000,
+            "base_price": 39_600,
             "base_construction_time": timedelta(days=1, hours=1).total_seconds(),
             "base_construction_energy": 5_000_000,
             "price_multiplier": 1.3,
@@ -518,7 +518,7 @@ const_config: dict = {
         "thermodynamics": {
             "name": "Thermodynamics",
             "type": "Technology",
-            "base_price": 36_000,
+            "base_price": 39_600,
             "base_construction_time": timedelta(days=1, hours=1).total_seconds(),
             "base_construction_energy": 5_000_000,
             "price_multiplier": 1.3,
@@ -540,7 +540,7 @@ const_config: dict = {
         "physics": {
             "name": "Physics",
             "type": "Technology",
-            "base_price": 36_000,
+            "base_price": 39_600,
             "base_construction_time": timedelta(days=1, hours=1).total_seconds(),
             "base_construction_energy": 5_000_000,
             "price_multiplier": 1.3,
@@ -561,7 +561,7 @@ const_config: dict = {
         "building_technology": {
             "name": "Building Technology",
             "type": "Technology",
-            "base_price": 56_000,
+            "base_price": 61_600,
             "base_construction_time": timedelta(days=1, hours=16).total_seconds(),
             "base_construction_energy": 16_000_000,
             "price_multiplier": 1.3,
@@ -575,7 +575,7 @@ const_config: dict = {
         "mineral_extraction": {
             "name": "Mineral Extraction",
             "type": "Technology",
-            "base_price": 32_000,
+            "base_price": 35_200,
             "base_construction_time": timedelta(hours=20).total_seconds(),
             "base_construction_energy": 8_000_000,
             "price_multiplier": 1.4,
@@ -596,7 +596,7 @@ const_config: dict = {
         "transport_technology": {
             "name": "Transport Technology",
             "type": "Technology",
-            "base_price": 56_000,
+            "base_price": 61_600,
             "base_construction_time": timedelta(days=1, hours=16).total_seconds(),
             "base_construction_energy": 24_000_000,
             "price_multiplier": 1.4,
@@ -611,7 +611,7 @@ const_config: dict = {
         "materials": {
             "name": "Materials",
             "type": "Technology",
-            "base_price": 84_000,
+            "base_price": 92_400,
             "base_construction_time": timedelta(days=2, hours=12).total_seconds(),
             "base_construction_energy": 48_000_000,
             "price_multiplier": 1.4,
@@ -632,7 +632,7 @@ const_config: dict = {
         "civil_engineering": {
             "name": "Civil Engineering",
             "type": "Technology",
-            "base_price": 28_000,
+            "base_price": 30_800,
             "base_construction_time": timedelta(hours=20).total_seconds(),
             "base_construction_energy": 16_000_000,
             "price_multiplier": 1.25,
@@ -653,7 +653,7 @@ const_config: dict = {
         "aerodynamics": {
             "name": "Aerodynamics",
             "type": "Technology",
-            "base_price": 84_000,
+            "base_price": 92_400,
             "base_construction_time": timedelta(days=2, hours=12).total_seconds(),
             "base_construction_energy": 60_000_000,
             "price_multiplier": 1.5,
@@ -672,7 +672,7 @@ const_config: dict = {
         "chemistry": {
             "name": "Chemistry",
             "type": "Technology",
-            "base_price": 60_000,
+            "base_price": 66_000,
             "base_construction_time": timedelta(days=1, hours=16).total_seconds(),
             "base_construction_energy": 40_000_000,
             "price_multiplier": 1.4,
@@ -691,7 +691,7 @@ const_config: dict = {
         "nuclear_engineering": {
             "name": "Nuclear Engineering",
             "type": "Technology",
-            "base_price": 140_000,
+            "base_price": 154_000,
             "base_construction_time": timedelta(days=3, hours=18).total_seconds(),
             "base_construction_energy": 108_000_000,
             "price_multiplier": 1.5,
