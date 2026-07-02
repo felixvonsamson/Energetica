@@ -19,6 +19,7 @@ import {
 } from "@/hooks/use-electricity-markets";
 import { usePlayerMoney } from "@/hooks/use-player-money";
 import { useMyId } from "@/hooks/use-players";
+import { NETWORK_MEMBER_LIMIT } from "@/lib/network-constants";
 
 interface JoinMarketDialogProps {
     isOpen: boolean;
@@ -52,6 +53,8 @@ export function JoinMarketDialog({
     const isAlreadyInMarket = currentMarketId !== null;
     const willDeleteCurrentNetwork =
         isAlreadyInMarket && currentMarketMemberCount === 1;
+    const isMarketFull =
+        market != null && market.member_ids.length >= NETWORK_MEMBER_LIMIT;
 
     // Reset state when dialog closes
     const handleClose = () => {
@@ -119,6 +122,22 @@ export function JoinMarketDialog({
                         {error && (
                             <InfoBanner variant="error" className="text-sm">
                                 {error}
+                            </InfoBanner>
+                        )}
+
+                        {/* Market full warning */}
+                        {isMarketFull && (
+                            <InfoBanner variant="error">
+                                <div>
+                                    <p className="font-semibold mb-1">
+                                        Market is full
+                                    </p>
+                                    <p className="text-sm">
+                                        This market has reached its limit of{" "}
+                                        {NETWORK_MEMBER_LIMIT} members and is
+                                        not accepting new players.
+                                    </p>
+                                </div>
                             </InfoBanner>
                         )}
 
@@ -216,7 +235,11 @@ export function JoinMarketDialog({
                             type="submit"
                             form="join-market-form"
                             variant={isPending ? "outline" : "default"}
-                            disabled={isPending || hasInsufficientFunds}
+                            disabled={
+                                isPending ||
+                                hasInsufficientFunds ||
+                                isMarketFull
+                            }
                             className="flex items-center gap-2"
                         >
                             {isPending && <Spinner />}

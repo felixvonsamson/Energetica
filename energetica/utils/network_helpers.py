@@ -5,6 +5,8 @@ from energetica.database.player import Player
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 
+NETWORK_MEMBER_LIMIT = 15
+
 
 # TODO (Felix): Move this to a method in Player
 def join_network(player: Player, network: Network | None) -> Network:
@@ -17,6 +19,8 @@ def join_network(player: Player, network: Network | None) -> Network:
         raise GameError(GameExceptionType.NO_SUCH_NETWORK)
     if player.money <= 0:
         raise GameError(GameExceptionType.NOT_ENOUGH_MONEY)
+    if len(network.members) >= NETWORK_MEMBER_LIMIT:
+        raise GameError(GameExceptionType.NETWORK_FULL)
     if player.network is not None:
         leave_network(player)
     player.network = network

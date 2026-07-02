@@ -73,6 +73,7 @@ class GameExceptionType(StrEnum):
     PLAYER_ALREADY_IN_NETWORK = "playerAlreadyInNetwork"
     NAME_ALREADY_USED = "nameAlreadyUsed"
     NOT_IN_NETWORK = "notInNetwork"
+    NETWORK_FULL = "networkFull"
     # Resource market
     NOT_ENOUGH_RESOURCE = "notEnoughResource"
     INVALID_QUANTITY = "invalidQuantity"
