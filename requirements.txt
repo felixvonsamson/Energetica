@@ -9,7 +9,10 @@ pywebpush
 noise
 pytest
 pyright==1.1.407
-fastapi[standard]
+# Pinned: these determine the generated OpenAPI schema, so the api-types
+# freshness check (CI) is only reproducible if their versions are fixed.
+pydantic==2.11.5
+fastapi[standard]==0.115.12
 python-socketio[asgi]
 itsdangerous
 pre-commit
