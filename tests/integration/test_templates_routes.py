@@ -47,3 +47,17 @@ def test_static_and_page_routes_are_gone(client: TestClient, path: str) -> None:
     """All static/SPA serving moved to Apache — FastAPI returns 404 for them."""
     response = client.get(path, follow_redirects=False)
     assert response.status_code == 404
+
+
+def test_unauthenticated_protected_get_returns_json_401_not_spa_redirect(client: TestClient) -> None:
+    """An unauthenticated GET to a protected API endpoint returns a JSON 401 — never a 303
+    redirect to /app/login.
+
+    FastAPI serves no SPA shell after Phase 5, so a redirect can only dump a fetch client onto
+    Apache's (or, in dev, Vite's) index.html, which `response.json()` then chokes on with
+    "Unexpected token '<', "<!DOCTYPE"...". The SPA owns the redirect to /app/login client-side
+    (routes/__root.tsx), driven by /auth/me; the API only ever speaks JSON.
+    """
+    response = client.get("/api/v1/achievements", follow_redirects=False)
+    assert response.status_code == 401
+    assert "application/json" in response.headers["content-type"]
