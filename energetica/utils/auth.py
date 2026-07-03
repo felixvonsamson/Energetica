@@ -25,22 +25,31 @@ def get_or_create_secret_key() -> str:
     2. Otherwise the per-instance ``instance/secret_key.txt`` (the pre-lobby behaviour),
        creating it on first run.
 
-    Both paths are env-overridable for tests.
+    Both paths are env-overridable for tests. An existing-but-empty file fails loud rather than
+    signing cookies with a zero-entropy key (which ``URLSafeTimedSerializer`` would accept) — a
+    truncated write or a cleared file must not silently make every session cookie forgeable.
     """
     shared_path = os.environ.get("ENERGETICA_SHARED_SECRET_PATH", "/var/lib/energetica/secret_key.txt")
     if os.path.exists(shared_path):
-        with open(shared_path, "r", encoding="utf-8") as f:
-            return f.read().strip()
+        return _read_nonempty_secret(shared_path)
 
     instance_path = os.environ.get("ENERGETICA_INSTANCE_SECRET_PATH", "instance/secret_key.txt")
     if os.path.exists(instance_path):
-        with open(instance_path, "r", encoding="utf-8") as f:
-            return f.read().strip()
+        return _read_nonempty_secret(instance_path)
 
     secret_key = secrets.token_hex()
     with open(instance_path, "w", encoding="utf-8") as f:
         f.write(secret_key)
     return secret_key
+
+
+def _read_nonempty_secret(path: str) -> str:
+    """Read a secret-key file, raising if it exists but is empty (guessable zero-entropy key)."""
+    with open(path, "r", encoding="utf-8") as f:
+        key = f.read().strip()
+    if not key:
+        raise RuntimeError(f"secret key file at {path} is empty — refusing to sign cookies with an empty key")
+    return key
 
 
 SECRET_KEY = get_or_create_secret_key()

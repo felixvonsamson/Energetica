@@ -191,7 +191,16 @@ def record_membership(*, account_id: int, slug: str, settled_at: str) -> None:
     Written by the instance when a Player is created (settle). Re-settling is impossible, but
     the write is on the settle path so it must never raise on a duplicate; INSERT OR IGNORE also
     means a re-run of the backfill migration leaves the original ``settled_at`` untouched.
+
+    ``settled_at`` is normalised to a canonical UTC ISO-8601 string at this single write site so
+    that ``get_memberships``' ``ORDER BY settled_at`` (a lexicographic sort on a TEXT column) is
+    always chronological — regardless of the offset or ``Z``/``+00:00`` spelling a caller passes.
+    A naive (tz-less) timestamp is a bug and fails loud rather than sorting unpredictably.
     """
+    parsed = datetime.fromisoformat(settled_at)
+    if parsed.tzinfo is None:
+        raise ValueError(f"settled_at must be timezone-aware, got naive {settled_at!r}")
+    settled_at = parsed.astimezone(timezone.utc).isoformat()
     with _connect() as conn:
         conn.execute(
             "INSERT OR IGNORE INTO instance_membership (account_id, slug, settled_at) VALUES (?, ?, ?)",

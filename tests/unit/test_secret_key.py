@@ -43,6 +43,25 @@ def test_falls_back_to_instance_secret_when_shared_absent(_secret_paths: tuple[P
     assert get_or_create_secret_key() == "per-instance-secret"
 
 
+def test_empty_shared_secret_fails_loud(_secret_paths: tuple[Path, Path]) -> None:
+    """An existing-but-empty shared secret must raise, not sign cookies with a zero-entropy key."""
+    shared, _instance = _secret_paths
+    shared.parent.mkdir(parents=True)
+    shared.write_text("   \n", encoding="utf-8")  # whitespace only → empty after strip
+
+    with pytest.raises(RuntimeError, match="empty"):
+        get_or_create_secret_key()
+
+
+def test_empty_instance_secret_fails_loud(_secret_paths: tuple[Path, Path]) -> None:
+    """Same guard on the per-instance fallback path."""
+    _shared, instance = _secret_paths
+    instance.write_text("", encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="empty"):
+        get_or_create_secret_key()
+
+
 def test_creates_instance_secret_when_neither_exists(_secret_paths: tuple[Path, Path]) -> None:
     """Pre-lobby behaviour is preserved: with no shared secret, the instance mints its own. It must
     never create the shared file — that belongs to setup-base.sh.
