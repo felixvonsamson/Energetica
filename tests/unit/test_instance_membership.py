@@ -106,6 +106,33 @@ def test_settling_records_membership_for_this_instance(monkeypatch: pytest.Monke
     assert memberships[0].settled_at == player.created_at.isoformat()
 
 
+def test_settle_survives_a_membership_write_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A failed membership write (e.g. SQLITE_BUSY on the shared accounts.db) must not break an
+    otherwise-successful settle: the player is created in-memory regardless, and the row is
+    recoverable via the backfill script. Best-effort, like instance_config.publish.
+    """
+    import sqlite3
+
+    from energetica import create_app
+    from energetica.database.map.hex_tile import HexTile
+    from energetica.database.user import User
+    from energetica.utils.auth import generate_password_hash
+    from energetica.utils.map_helpers import confirm_location
+
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "spring-2026")
+    create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
+
+    def boom(**_kwargs: object) -> None:
+        raise sqlite3.OperationalError("database is locked")
+
+    monkeypatch.setattr(accounts, "record_membership", boom)
+    user = User(username="carol", pwhash=generate_password_hash("pw"), role="player", account_id=9)
+
+    player = confirm_location(user, HexTile.getitem(1))  # must not raise
+
+    assert user.player is player  # settle completed in-memory despite the DB failure
+
+
 def test_settling_records_no_membership_when_slug_unset(monkeypatch: pytest.MonkeyPatch) -> None:
     """In dev / unconfigured deployments there is no slug and no lobby; settle must not crash and
     writes no membership row (mirrors instance_config.publish's no-op-without-slug behaviour).

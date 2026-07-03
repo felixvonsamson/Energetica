@@ -3,6 +3,7 @@
 import math
 import os
 import pickle
+import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -272,9 +273,16 @@ def initialize_player(user: User, tile: HexTile) -> Player:
 
     # Settling is what makes this run appear under the account's "your runs" in the lobby and the
     # in-run switcher. No-op without a slug (dev / unconfigured), where there is no lobby anyway.
+    # Best-effort, like instance_config.publish: this runs after the irreversible in-memory settle
+    # above, so a DB failure (e.g. SQLITE_BUSY on the shared accounts.db) must never propagate and
+    # fail an otherwise-successful settle — that would leave the player wedged (settled in-engine
+    # but the request 500s). A missing row is recoverable via scripts/backfill-instance-membership.py.
     slug = instance_config.instance_slug()
     if slug is not None:
-        accounts.record_membership(account_id=user.account_id, slug=slug, settled_at=player.created_at.isoformat())
+        try:
+            accounts.record_membership(account_id=user.account_id, slug=slug, settled_at=player.created_at.isoformat())
+        except (OSError, sqlite3.Error) as exc:
+            engine.log(f"could not record membership for {player.username} in run {slug}: {exc}")
 
     engine.log(f"{player.username} chose the location {tile.id}")
     return player
