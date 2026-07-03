@@ -1040,6 +1040,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/lobby/my-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get My Runs
+         * @description The authenticated account's settled runs, joined against on-disk fragments for name /
+         *     starts_at, most recently settled first. Stale memberships (run since deleted → no fragment)
+         *     are filtered out.
+         */
+        get: operations["get_my_runs_api_v1_lobby_my_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/map": {
         parameters: {
             query?: never;
@@ -2904,6 +2926,42 @@ export interface components {
             series: {
                 [key: string]: number[];
             };
+        };
+        /**
+         * MyRun
+         * @description One run the authenticated account has settled in, joined with its on-disk fragment.
+         */
+        MyRun: {
+            /**
+             * Slug
+             * @description Subdomain slug of the run
+             */
+            slug: string;
+            /**
+             * Name
+             * @description Human-readable run name, from the instance fragment
+             */
+            name: string;
+            /**
+             * Starts At
+             * Format: date-time
+             * @description When the run starts, from the instance fragment
+             */
+            starts_at: string;
+            /**
+             * Settled At
+             * Format: date-time
+             * @description When this account settled in the run
+             */
+            settled_at: string;
+        };
+        /**
+         * MyRunsResponse
+         * @description The account's settled runs, most recently settled first.
+         */
+        MyRunsResponse: {
+            /** Runs */
+            runs: components["schemas"]["MyRun"][];
         };
         /** NetworkExpelledPayload */
         NetworkExpelledPayload: {
@@ -5673,6 +5731,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GameEngineOut"];
+                };
+            };
+        };
+    };
+    get_my_runs_api_v1_lobby_my_runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyRunsResponse"];
                 };
             };
         };

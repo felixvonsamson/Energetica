@@ -137,6 +137,25 @@ def load_instance_config() -> InstanceConfig | None:
         raise InstanceConfigError(f"invalid instance.json at {path}: {exc}") from exc
 
 
+def load_fragment(slug: str) -> InstanceFragment | None:
+    """Read a single on-disk instance fragment by slug, or ``None`` if it is absent or unreadable.
+
+    Fragments are the public projection published to the landing dir (``name`` / ``advertised`` /
+    ``starts_at``), and exist for **unadvertised** runs too — so this is how an account discovers
+    its own hidden runs when joining ``instance_membership`` against on-disk metadata. A stale
+    membership (run since deleted → fragment gone) or a malformed fragment reads as ``None``, and
+    the caller filters it out.
+    """
+    fragment_path = _landing_dir() / "instances" / f"{slug}.json"
+    if not fragment_path.exists():
+        return None
+    try:
+        return InstanceFragment.model_validate_json(fragment_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        logger.warning("skipping unreadable instance fragment %s", fragment_path)
+        return None
+
+
 def is_access_allowed(config: InstanceConfig, username: str) -> bool:
     """Whether ``username`` may log in / sign up on this instance under ``config``'s policy."""
     if isinstance(config.access, PublicAccess):

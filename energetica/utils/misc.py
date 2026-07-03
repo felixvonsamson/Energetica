@@ -3,6 +3,7 @@
 import math
 import os
 import pickle
+import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -11,7 +12,7 @@ from fastapi import Request
 from noise import pnoise3
 from scipy.stats import norm
 
-from energetica import accounts, technology_effects
+from energetica import accounts, instance_config, technology_effects
 from energetica.config.assets import river_flow_speed_seasonal
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map.hex_tile import HexTile
@@ -269,6 +270,19 @@ def initialize_player(user: User, tile: HexTile) -> Player:
     player.rolling_history.add_subcategory("op_costs", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
+
+    # Settling is what makes this run appear under the account's "your runs" in the lobby and the
+    # in-run switcher. No-op without a slug (dev / unconfigured), where there is no lobby anyway.
+    # Best-effort, like instance_config.publish: this runs after the irreversible in-memory settle
+    # above, so a DB failure (e.g. SQLITE_BUSY on the shared accounts.db) must never propagate and
+    # fail an otherwise-successful settle — that would leave the player wedged (settled in-engine
+    # but the request 500s). A missing row is recoverable via scripts/backfill-instance-membership.py.
+    slug = instance_config.instance_slug()
+    if slug is not None:
+        try:
+            accounts.record_membership(account_id=user.account_id, slug=slug, settled_at=player.created_at.isoformat())
+        except (OSError, sqlite3.Error) as exc:
+            engine.log(f"could not record membership for {player.username} in run {slug}: {exc}")
 
     engine.log(f"{player.username} chose the location {tile.id}")
     return player

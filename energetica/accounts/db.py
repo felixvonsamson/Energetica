@@ -33,6 +33,15 @@ class Account:
     created_at: str
 
 
+@dataclass(frozen=True)
+class Membership:
+    """An account that has settled (has a Player) in a run — one row of the 'your runs' set."""
+
+    account_id: int
+    slug: str
+    settled_at: str
+
+
 class UsernameTakenError(Exception):
     """Raised when a signup or rename collides with an existing username."""
 
@@ -67,6 +76,16 @@ def _create_schema(conn: sqlite3.Connection) -> None:
             email      TEXT             UNIQUE,
             pwhash     TEXT    NOT NULL,
             created_at TEXT    NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS instance_membership (
+            account_id INTEGER NOT NULL,
+            slug       TEXT    NOT NULL,
+            settled_at TEXT    NOT NULL,            -- ISO-8601 UTC
+            PRIMARY KEY (account_id, slug)
         )
         """
     )
@@ -164,3 +183,42 @@ def get_account_by_username(username: str) -> Account | None:
         email=row["email"],
         created_at=row["created_at"],
     )
+
+
+def record_membership(*, account_id: int, slug: str, settled_at: str) -> None:
+    """Record that ``account_id`` has settled in run ``slug``. Idempotent (INSERT OR IGNORE).
+
+    Written by the instance when a Player is created (settle). Re-settling is impossible, but
+    the write is on the settle path so it must never raise on a duplicate; INSERT OR IGNORE also
+    means a re-run of the backfill migration leaves the original ``settled_at`` untouched.
+
+    ``settled_at`` is normalised to a canonical UTC ISO-8601 string at this single write site so
+    that ``get_memberships``' ``ORDER BY settled_at`` (a lexicographic sort on a TEXT column) is
+    always chronological — regardless of the offset or ``Z``/``+00:00`` spelling a caller passes.
+    A naive (tz-less) timestamp is a bug and fails loud rather than sorting unpredictably.
+    """
+    parsed = datetime.fromisoformat(settled_at)
+    if parsed.tzinfo is None:
+        raise ValueError(f"settled_at must be timezone-aware, got naive {settled_at!r}")
+    settled_at = parsed.astimezone(timezone.utc).isoformat()
+    with _connect() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO instance_membership (account_id, slug, settled_at) VALUES (?, ?, ?)",
+            (account_id, slug, settled_at),
+        )
+        conn.commit()
+
+
+def get_memberships(*, account_id: int) -> list[Membership]:
+    """Return the runs ``account_id`` has settled in, most recently settled first.
+
+    Rows for runs later deleted are tolerated here (stale rows) — the caller filters them against
+    the on-disk fragments, matching the RFC's stale-fragment stance.
+    """
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT account_id, slug, settled_at FROM instance_membership "
+            "WHERE account_id = ? ORDER BY settled_at DESC",
+            (account_id,),
+        ).fetchall()
+    return [Membership(account_id=row["account_id"], slug=row["slug"], settled_at=row["settled_at"]) for row in rows]

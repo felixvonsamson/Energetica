@@ -9,24 +9,30 @@ from __future__ import annotations
 
 from energetica.accounts.db import (
     Account,
+    Membership,
     UsernameTakenError,
     create_account,
     delete_account,
     get_account_by_username,
+    get_memberships,
     get_or_create_account_id,
     init_db,
+    record_membership,
     update_password,
     verify_password,
 )
 
 __all__ = [
     "Account",
+    "Membership",
     "UsernameTakenError",
     "create_account",
     "delete_account",
     "get_account_by_username",
+    "get_memberships",
     "get_or_create_account_id",
     "init_db",
+    "record_membership",
     "update_password",
     "verify_password",
 ]

@@ -31,6 +31,7 @@ from .power_priorities import router as power_priorities
 from .projects import router as projects_router
 from .resource_market import router as resource_market_router
 from .leaderboards import router as leaderboards_router
+from .lobby import router as lobby_router
 from .shipments import router as shipments_router
 from .health import router as health_router
 from .templates import router as templates_router
@@ -48,6 +49,7 @@ api_routers = [
     electricity_markets_router,
     facilities_router,
     game_router,
+    lobby_router,
     map_router,
     notifications_router,
     player_router,

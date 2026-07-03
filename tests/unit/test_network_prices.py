@@ -6,6 +6,7 @@ import subprocess
 import sys
 import textwrap
 
+from energetica import create_app
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.user import User
 from energetica.enums import ControllableFacilityType
@@ -15,6 +16,9 @@ from energetica.utils.map_helpers import confirm_location
 
 def test_price_randomization() -> None:
     """Test that the prices are randomized."""
+    # Initialise a fresh engine + map so this test does not depend on state left by whichever
+    # test ran before it (it settles tiles 1 & 2, which a prior test may have already occupied).
+    create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
     engine.random_seed = 0
     user_a = User("player1", "pwhash", role="player", account_id=1)
     user_b = User("player2", "pwhash", role="player", account_id=2)
