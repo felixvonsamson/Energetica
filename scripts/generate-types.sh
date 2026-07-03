@@ -11,9 +11,15 @@ OUTPUT_FILE="$PROJECT_ROOT/frontend/src/types/api.generated.ts"
 
 echo "🔧 Generating API types..."
 
-# Generate OpenAPI schema from FastAPI app
+# Generate OpenAPI schema from FastAPI app.
+# Activate the local .venv when present; in CI there is no .venv and deps are
+# installed against the `python` already on PATH, so fall back to that.
 echo "📋 Generating OpenAPI schema from backend..."
-(cd "$PROJECT_ROOT" && source .venv/bin/activate && python scripts/generate_openapi_schema.py) || {
+(
+    cd "$PROJECT_ROOT"
+    [ -f .venv/bin/activate ] && source .venv/bin/activate
+    python scripts/generate_openapi_schema.py
+) || {
     echo "❌ Failed to generate OpenAPI schema"
     exit 1
 }

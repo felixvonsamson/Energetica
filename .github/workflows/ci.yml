@@ -64,3 +64,32 @@ jobs:
           else
             pytest -m "not external_links"
           fi
+
+  api-types-freshness:
+    # Regenerate frontend/src/types/api.generated.ts and fail if it drifts from
+    # what's committed. Generation boots the FastAPI app to emit the OpenAPI
+    # schema (needs Python + deps) then runs openapi-typescript + prettier (needs bun).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Install frontend dependencies
+        run: bun install
+        working-directory: frontend
+      - name: Regenerate API types
+        run: bun run generate-types
+      - name: Fail on drift
+        run: |
+          if ! git diff --exit-code frontend/src/types/api.generated.ts; then
+            echo "::error::api.generated.ts is stale. Run 'bun run generate-types' and commit the result."
+            exit 1
+          fi
