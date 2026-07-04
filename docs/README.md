@@ -47,7 +47,6 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 ## Game Logic
 
 - [**Electricity Markets**](game-logic/electricity-markets.md) - Logic & vocabulary for electricity markets
-- [**Workshop Mode**](game-logic/workshop-mode.md) - Design for a moderated, market-focused 2-4 hour game format
 
 ### Additional Resources
 
