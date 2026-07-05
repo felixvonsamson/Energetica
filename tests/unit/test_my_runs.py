@@ -9,6 +9,8 @@ store and the fragment reader — no game engine.
 from __future__ import annotations
 
 import json
+import os
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -73,3 +75,41 @@ def test_filters_stale_membership_without_fragment(stores: Path) -> None:
 def test_empty_when_no_memberships(stores: Path) -> None:
     account_id = accounts.create_account(username="alice", pwhash="h")
     assert resolve_my_runs(account_id).runs == []
+
+
+def _raw_membership(account_id: int, slug: str, settled_at: str) -> None:
+    """Insert a membership row directly, bypassing record_membership's aware-UTC normalisation, to
+    simulate a legacy/restored/hand-edited row.
+    """
+    conn = sqlite3.connect(os.environ["ENERGETICA_ACCOUNTS_DB_PATH"])
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO instance_membership (account_id, slug, settled_at) VALUES (?, ?, ?)",
+            (account_id, slug, settled_at),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def test_naive_settled_at_recovered_as_utc(stores: Path) -> None:
+    """A legacy naive timestamp must not 500 the endpoint; it is recovered as UTC and the run shows."""
+    account_id = accounts.create_account(username="alice", pwhash="h")
+    _fragment(stores, slug="legacy", name="Legacy", starts_at="2026-01-01T00:00:00Z")
+    _raw_membership(account_id, "legacy", "2026-01-02T00:00:00")  # naive — no timezone
+
+    runs = resolve_my_runs(account_id).runs
+
+    assert [run.slug for run in runs] == ["legacy"]
+    assert runs[0].settled_at.tzinfo is not None
+
+
+def test_unparseable_settled_at_skipped_not_fatal(stores: Path) -> None:
+    """One corrupt row is skipped rather than hiding every run for the account."""
+    account_id = accounts.create_account(username="alice", pwhash="h")
+    _fragment(stores, slug="good", name="Good", starts_at="2026-01-01T00:00:00Z")
+    _fragment(stores, slug="corrupt", name="Corrupt", starts_at="2026-02-01T00:00:00Z")
+    accounts.record_membership(account_id=account_id, slug="good", settled_at="2026-01-02T00:00:00+00:00")
+    _raw_membership(account_id, "corrupt", "not-a-timestamp")
+
+    assert [run.slug for run in resolve_my_runs(account_id).runs] == ["good"]
