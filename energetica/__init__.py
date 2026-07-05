@@ -27,23 +27,20 @@ from pydantic import TypeAdapter
 
 from energetica import globals
 from energetica.game_engine import GameEngine
-from energetica.schemas.simulate import Action, InitEngineAction
-from energetica.utils.action_log import read_init_action, stream_actions_after_tick
-from energetica.utils.browser_notifications import load_or_create_vapid_keys
 
 _REPO_ROOT = Path(__file__).parent.parent
 
+# The engine object is light (config + a couple of pickles, no game domain, no I/O beyond a
+# mkdir) and is constructed at import so the DBModel registry (populated at model class-definition
+# time) always has an engine to bind to. The *heavy* game graph — routers, socketio, the tick
+# loop, the domain models — is imported lazily inside create_app instead, so importing the
+# server-wide identity layer (``energetica.accounts`` / ``instance_config``) or the
+# instance-independent lobby does not pull in the game domain or its running services (ADR-0002,
+# lobby Phase B). The final severing of this dormant object is the follow-up identity-package
+# extraction.
 engine = GameEngine()
-
-globals.MAIN_EVENT_LOOP = asyncio.get_event_loop()
 globals.engine = engine
-
-from energetica.api.app_services import register_app_services
-from energetica.init_test_players import init_test_players
-from energetica.routers import setup_routes
-from energetica.simulate import simulate
-from energetica.socketio import setup_socketio
-from energetica.utils.tick_execution import state_update
+globals.MAIN_EVENT_LOOP = asyncio.get_event_loop()
 
 
 def create_app(
@@ -69,6 +66,20 @@ def create_app(
     schema_only: bool = False,
 ) -> FastAPI:
     """Set up the app and the game engine."""
+    # The game graph is imported here, not at module scope, so importing the identity layer / the
+    # lobby stays free of the game domain, routers and socketio (ADR-0002, lobby Phase B). The
+    # engine object itself is constructed at module scope above (it is light and the ORM needs it
+    # at model-import time).
+    from energetica.api.app_services import register_app_services
+    from energetica.init_test_players import init_test_players
+    from energetica.routers import setup_routes
+    from energetica.schemas.simulate import Action, InitEngineAction
+    from energetica.simulate import simulate
+    from energetica.socketio import setup_socketio
+    from energetica.utils.action_log import read_init_action, stream_actions_after_tick
+    from energetica.utils.browser_notifications import load_or_create_vapid_keys
+    from energetica.utils.tick_execution import state_update
+
     if schema_only:
         # Minimal FastAPI app for OpenAPI schema generation only
         app = FastAPI()

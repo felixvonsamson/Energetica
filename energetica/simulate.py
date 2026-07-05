@@ -21,7 +21,7 @@ def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
     """Create a user with the given user_id."""
     user = misc.signup_playing_user(None, username, pwhash)
     session = requests.Session()
-    add_session_cookie_to_session(session, user)
+    add_session_cookie_to_session(session, user.username)
     return session
 
 
@@ -29,7 +29,7 @@ def login_user(user_id: int) -> requests.Session:
     """Login a user with the given user_id."""
     user = User.getitem(user_id, ValueError(f"Cannot log in user: user with id {user_id} does not exist"))
     session = requests.Session()
-    add_session_cookie_to_session(session, user)
+    add_session_cookie_to_session(session, user.username)
     return session
 
 
