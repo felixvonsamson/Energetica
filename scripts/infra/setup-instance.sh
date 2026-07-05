@@ -65,6 +65,10 @@ if [ "$INSTANCE" = "landing" ]; then
     log_error "'landing' is reserved for the apex landing site"
     exit 1
 fi
+if [ "$INSTANCE" = "lobby" ]; then
+    log_error "'lobby' is reserved for the lobby service (setup-lobby.sh)"
+    exit 1
+fi
 if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1024 ] || [ "$PORT" -gt 65535 ]; then
     log_error "Port must be an integer 1024-65535: '$PORT'"
     exit 1

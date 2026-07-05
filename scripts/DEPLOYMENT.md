@@ -15,9 +15,11 @@ On the VPS, as root:
 
 ```bash
 sudo bash scripts/infra/setup-base.sh --deploy-user deploy   # Apache, Python, certbot, firewall,
-                                                             # `energetica` group/user, shared dirs
+                                                             # `energetica` group/user, shared dirs,
+                                                             # shared secret + server.json
 sudo bash scripts/infra/setup-landing.sh --domain energetica-game.org   # apex vhost + TLS
-sudo bash scripts/infra/setup-instance.sh autumn-2025 8001 --domain energetica-game.org  # vhost+TLS+unit
+sudo bash scripts/infra/setup-lobby.sh --domain energetica-game.org     # lobby vhost+TLS+unit
+sudo bash scripts/infra/setup-instance.sh autumn-2025 8002 --domain energetica-game.org  # vhost+TLS+unit
 ```
 
 `setup-instance.sh` provisions the box (directory, venv, `/etc/energetica/{slug}/instance.json`,
@@ -35,6 +37,7 @@ From your local machine:
 ```bash
 ./scripts/deploy-instance.sh --server energetica-game --instance autumn-2025 --domain energetica-game.org
 ./scripts/deploy-landing.sh  --server energetica-game --domain energetica-game.org
+./scripts/deploy-lobby.sh    --server energetica-game --domain energetica-game.org
 ./scripts/list-instances.sh  --server energetica-game
 ```
 
@@ -47,13 +50,24 @@ From your local machine:
   instance-owned `instances.json` and `instances/` dir. No service restart — the landing is
   pure static.
 
+- `deploy-lobby.sh` builds the lobby bundle (no apex baking — the lobby derives it from
+  its own hostname at runtime), rsyncs the backend + `dist-lobby/` to
+  `/var/www/energetica-lobby`, reinstalls deps, restarts `energetica-lobby`, and
+  health-checks the vhost. **Hard precondition:** it refuses to deploy while the
+  `instance_membership` table is absent from `accounts.db` — Phase A (write-on-settle +
+  `scripts/backfill-instance-membership.py`) must be live first, else the lobby silently
+  shows every existing player zero runs (`docs/architecture/lobby.md` § Phasing).
+
 `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is
-admin-owned, so deploys never touch it.
+admin-owned, so deploys never touch it. The server-wide `/etc/energetica/server.json`
+(the lobby's signup toggle) is likewise admin-owned; `sudo`-edit it and the lobby picks
+the change up on the next request — no restart.
 
 ### Options
 
 `deploy-instance.sh`: `--yes` (skip confirm), `--skip-build`, `--skip-deps`, `--user <ssh-user>`.
 `deploy-landing.sh`: `--yes`, `--skip-build`, `--user <ssh-user>`.
+`deploy-lobby.sh`: `--yes`, `--skip-build`, `--skip-deps`, `--user <ssh-user>`.
 
 All inputs also accept env vars (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_DOMAIN`), so the
 scripts run unattended from CI.
