@@ -27,7 +27,7 @@ lint.ignore = [
 ]
 
 [tool.pyright]
-include = ["energetica", "tests", "scripts", "main.py"]
+include = ["energetica", "lobby", "tests", "scripts", "main.py", "main_lobby.py"]
 pythonVersion = "3.12"
 typeCheckingMode = "standard"
 
