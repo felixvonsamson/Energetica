@@ -57,8 +57,8 @@ if ! [[ "$DOMAIN" =~ ^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$ ]
     log_error "Invalid domain: '$DOMAIN' (expected a hostname like energetica-game.org)"
     exit 1
 fi
-if ! [[ "$INSTANCE" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
-    log_error "Instance slug must be lowercase kebab-case ([a-z0-9][a-z0-9-]*[a-z0-9]): '$INSTANCE'"
+if ! [[ "$INSTANCE" =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]]; then
+    log_error "Instance slug must be lowercase kebab-case, max 63 chars (a DNS label): '$INSTANCE'"
     exit 1
 fi
 if [ "$INSTANCE" = "landing" ]; then

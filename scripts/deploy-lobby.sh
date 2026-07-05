@@ -158,7 +158,7 @@ fi
 log_success "Service is running"
 
 # --- 8. Health check ------------------------------------------------------------------
-# The lobby exposes no /healthz, so three probes cover the chain:
+# The lobby exposes no /healthz, so four probes cover the chain:
 #   - SPA shell 200 → Apache serves the bundle;
 #   - unauthenticated my-runs 401 → vhost → proxy → uvicorn wiring is up;
 #   - login with a nonexistent user → 401 USER_NOT_FOUND proves the accounts.db READ
@@ -166,22 +166,33 @@ log_success "Service is running"
 #     state, so it cannot prove the db is reachable — a broken path answers 500 here).
 #     The probe username is 22 chars, above signup's 18-char cap, so it can never be a
 #     real account.
+#   - instances.json 200 → the manifest Alias off the landing dir serves the picker's
+#     "open runs". The Phase A precondition implies at least one instance deployment
+#     already published the manifest, so a 404/403 means the Alias or the file's
+#     permissions are broken, not a fresh box.
 log_step "Waiting for https://$FQDN to answer..."
 HEALTH_DEADLINE=$(( $(date +%s) + 120 ))
 HEALTH_OK=false
 while [ "$(date +%s)" -lt "$HEALTH_DEADLINE" ]; do
     SPA_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "https://$FQDN/" || true)
     API_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "https://$FQDN/api/v1/lobby/my-runs" || true)
+    MANIFEST_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "https://$FQDN/instances.json" || true)
     LOGIN_BODY=$(curl -s --max-time 5 -H 'Content-Type: application/json' \
         -d '{"username":"__deploy_healthcheck__","password":"deploy-probe"}' \
         "https://$FQDN/api/v1/auth/login" || true)
-    if [ "$SPA_CODE" = "200" ] && [ "$API_CODE" = "401" ] && echo "$LOGIN_BODY" | grep -q "USER_NOT_FOUND"; then
+    if [ "$SPA_CODE" = "200" ] && [ "$API_CODE" = "401" ] && [ "$MANIFEST_CODE" = "200" ] \
+        && echo "$LOGIN_BODY" | grep -q "USER_NOT_FOUND"; then
         HEALTH_OK=true; break
     fi
     sleep 5
 done
-[ "$HEALTH_OK" = true ] || { log_error "lobby did not become healthy within 120s (spa=$SPA_CODE my-runs=$API_CODE login=$LOGIN_BODY)"; echo "Logs: ssh $SSH 'sudo journalctl -u energetica-lobby -f'"; exit 1; }
-log_success "Lobby healthy (SPA 200, my-runs 401, accounts.db reachable)"
+if [ "$HEALTH_OK" != true ]; then
+    log_error "lobby did not become healthy within 120s (spa=$SPA_CODE my-runs=$API_CODE manifest=$MANIFEST_CODE login=$LOGIN_BODY)"
+    [ "$MANIFEST_CODE" = "200" ] || echo "instances.json is published by each instance backend on startup — if missing, restart an instance; if it 403s, check its permissions in /var/www/energetica-landing/."
+    echo "Logs: ssh $SSH 'sudo journalctl -u energetica-lobby -f'"
+    exit 1
+fi
+log_success "Lobby healthy (SPA 200, my-runs 401, manifest 200, accounts.db reachable)"
 
 echo
 log_success "Deployed lobby → https://$FQDN"
