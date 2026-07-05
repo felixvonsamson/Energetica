@@ -60,9 +60,11 @@ fi
 # Read-only sqlite check, run as the service user (the only non-root reader of
 # accounts.db; setup-lobby.sh grants exactly this). ANY failure — missing table,
 # missing db, missing sudo grant — refuses the deploy: an unverifiable precondition
-# is treated as an unmet one.
+# is treated as an unmet one. /usr/bin/python3 is fully qualified to match the
+# sudoers grant exactly (an unqualified `python3` resolves via PATH and may not
+# match the granted pathname on every host).
 log_step "Checking deploy precondition (instance_membership table in accounts.db)..."
-if ! ssh "$SSH" 'sudo -u energetica python3 -c '\''
+if ! ssh "$SSH" 'sudo -u energetica /usr/bin/python3 -c '\''
 import sqlite3, sys
 try:
     conn = sqlite3.connect("file:/var/lib/energetica/accounts.db?mode=ro", uri=True)
@@ -125,7 +127,11 @@ log_success "Backend synced"
 
 # --- 5. rsync lobby bundle (hashed assets need pruning → --delete) ------------------
 log_step "Syncing lobby bundle..."
-rsync -az --delete ./frontend/dist-lobby/ "$SSH:$REMOTE_PATH/dist-lobby/" >/dev/null
+# --chmod: Apache reads the bundle via the energetica group (the tree is 2750
+# deploy:energetica), and `rsync -a` would otherwise preserve local build permissions —
+# a restrictive local umask would ship files www-data cannot read (SPA 403s after an
+# apparently successful deploy). World bits are moot: others cannot traverse the root.
+rsync -az --delete --chmod=D755,F644 ./frontend/dist-lobby/ "$SSH:$REMOTE_PATH/dist-lobby/" >/dev/null
 log_success "Lobby bundle synced"
 
 # --- 6. Install deps into the server venv -------------------------------------------
@@ -152,22 +158,30 @@ fi
 log_success "Service is running"
 
 # --- 8. Health check ------------------------------------------------------------------
-# The lobby exposes no /healthz; an unauthenticated my-runs returning 401 proves the whole
-# chain (Apache vhost → proxy → uvicorn → accounts.db read path) is up, and the SPA shell
-# returning 200 proves the bundle is served.
+# The lobby exposes no /healthz, so three probes cover the chain:
+#   - SPA shell 200 → Apache serves the bundle;
+#   - unauthenticated my-runs 401 → vhost → proxy → uvicorn wiring is up;
+#   - login with a nonexistent user → 401 USER_NOT_FOUND proves the accounts.db READ
+#     path works (my-runs alone rejects at the cookie check, before touching any shared
+#     state, so it cannot prove the db is reachable — a broken path answers 500 here).
+#     The probe username is 22 chars, above signup's 18-char cap, so it can never be a
+#     real account.
 log_step "Waiting for https://$FQDN to answer..."
 HEALTH_DEADLINE=$(( $(date +%s) + 120 ))
 HEALTH_OK=false
 while [ "$(date +%s)" -lt "$HEALTH_DEADLINE" ]; do
-    API_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "https://$FQDN/api/v1/lobby/my-runs" || true)
     SPA_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "https://$FQDN/" || true)
-    if [ "$API_CODE" = "401" ] && [ "$SPA_CODE" = "200" ]; then
+    API_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "https://$FQDN/api/v1/lobby/my-runs" || true)
+    LOGIN_BODY=$(curl -s --max-time 5 -H 'Content-Type: application/json' \
+        -d '{"username":"__deploy_healthcheck__","password":"deploy-probe"}' \
+        "https://$FQDN/api/v1/auth/login" || true)
+    if [ "$SPA_CODE" = "200" ] && [ "$API_CODE" = "401" ] && echo "$LOGIN_BODY" | grep -q "USER_NOT_FOUND"; then
         HEALTH_OK=true; break
     fi
     sleep 5
 done
-[ "$HEALTH_OK" = true ] || { log_error "lobby did not become healthy within 120s (api=$API_CODE spa=$SPA_CODE)"; echo "Logs: ssh $SSH 'sudo journalctl -u energetica-lobby -f'"; exit 1; }
-log_success "Lobby healthy (api 401 unauthenticated, SPA 200)"
+[ "$HEALTH_OK" = true ] || { log_error "lobby did not become healthy within 120s (spa=$SPA_CODE my-runs=$API_CODE login=$LOGIN_BODY)"; echo "Logs: ssh $SSH 'sudo journalctl -u energetica-lobby -f'"; exit 1; }
+log_success "Lobby healthy (SPA 200, my-runs 401, accounts.db reachable)"
 
 echo
 log_success "Deployed lobby → https://$FQDN"
