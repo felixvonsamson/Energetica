@@ -1,15 +1,19 @@
-import { defineConfig, loadEnv, type Plugin, type ProxyOptions } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+
+import { rewriteSetCookieForLocalhost } from "./vite.shared";
 
 /**
  * Serve `index.lobby.html` for every SPA path in dev. Vite's dev server always
  * answers HTML requests with the root `index.html` (the _game_ entry — build
  * `rollupOptions.input` only applies to `vite build`), which would pull the
  * game's module graph into the lobby dev server. Registered in
- * `configureServer`, so it runs before Vite's internal HTML middleware.
+ * `configureServer`, so it runs before Vite's internal HTML middleware — and
+ * therefore also before the proxy middleware, so /api is excluded explicitly (a
+ * browser navigation to an API URL must reach the backend, not the shell).
  */
 const lobbyHtmlFallback: Plugin = {
     name: "lobby-html-fallback",
@@ -19,33 +23,17 @@ const lobbyHtmlFallback: Plugin = {
             const acceptsHtml = (req.headers.accept ?? "").includes(
                 "text/html",
             );
-            if (acceptsHtml && url !== undefined && !url.includes(".")) {
+            if (
+                acceptsHtml &&
+                url !== undefined &&
+                !url.includes(".") &&
+                !url.startsWith("/api")
+            ) {
                 req.url = "/index.lobby.html";
             }
             next();
         });
     },
-};
-
-/**
- * Strip `Secure` and `Domain` from `Set-Cookie` on proxied responses so the
- * lobby's parent-domain (`Domain=.{apex}`, `Secure`) session cookie round-trips
- * through the `http://localhost` dev origin. Same rationale as the identical
- * helper in `vite.config.ts`.
- */
-const rewriteSetCookieForLocalhost: NonNullable<ProxyOptions["configure"]> = (
-    proxy,
-) => {
-    proxy.on("proxyRes", (proxyRes) => {
-        const setCookie = proxyRes.headers["set-cookie"];
-        if (setCookie) {
-            proxyRes.headers["set-cookie"] = setCookie.map((cookie) =>
-                cookie
-                    .replace(/;\s*Secure/gi, "")
-                    .replace(/;\s*Domain=[^;]*/gi, ""),
-            );
-        }
-    });
 };
 
 export default defineConfig(({ mode }) => {

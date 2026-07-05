@@ -66,9 +66,12 @@ export function useLobbyLogin() {
 
     return useMutation({
         mutationFn: (credentials: LoginRequest) => authApi.login(credentials),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: lobbyQueryKeys.myRuns });
-        },
+        // Returned (not just fired) so mutateAsync resolves only after the
+        // refetch: the forms navigate to the picker right after awaiting the
+        // mutation, and a stale null (the pre-login 401 probe) would flash
+        // the logged-out hero after a successful login.
+        onSuccess: () =>
+            queryClient.invalidateQueries({ queryKey: lobbyQueryKeys.myRuns }),
     });
 }
 
@@ -78,9 +81,9 @@ export function useLobbySignup() {
 
     return useMutation({
         mutationFn: (data: SignupRequest) => authApi.signup(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: lobbyQueryKeys.myRuns });
-        },
+        // Returned for the same navigate-after-await reason as useLobbyLogin.
+        onSuccess: () =>
+            queryClient.invalidateQueries({ queryKey: lobbyQueryKeys.myRuns }),
     });
 }
 
@@ -89,7 +92,21 @@ export function useLobbyLogout() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: () => authApi.logout(),
+        mutationFn: async () => {
+            try {
+                await authApi.logout();
+            } catch (error) {
+                // The lobby's logout route itself requires auth, so a session
+                // that already expired (or was cleared by another tab) answers
+                // 401 — which IS the desired end state; anything else (network,
+                // 5xx) stays an error.
+                if (
+                    !(error instanceof ApiClientError && error.status === 401)
+                ) {
+                    throw error;
+                }
+            }
+        },
         onSuccess: () => {
             // Mark as logged out directly instead of invalidating: a refetch
             // would race the cookie deletion (same reasoning as the game's

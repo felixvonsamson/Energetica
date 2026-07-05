@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Compass, LogIn, UserPlus } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { MyRunCard, OpenRunCard } from "@/components/lobby/run-cards";
 import { Button } from "@/components/ui/button";
@@ -16,15 +16,10 @@ import {
 import { useInstancesManifest, useMyRuns } from "@/hooks/use-lobby";
 import type { MyRun } from "@/lib/api/lobby";
 import type { InstanceFragment } from "@/lib/instances";
-import { runAppHref } from "@/lib/lobby";
+import { runAppHref, validateReturnSearch } from "@/lib/lobby";
 
 export const Route = createFileRoute("/")({
-    validateSearch: (search: Record<string, unknown>) => ({
-        return:
-            typeof search.return === "string" && search.return !== ""
-                ? search.return
-                : undefined,
-    }),
+    validateSearch: validateReturnSearch,
     component: PickerPage,
     staticData: { title: "Lobby" },
 });
@@ -38,20 +33,28 @@ function PickerPage() {
     // lists are known, forward a *validated* slug to its run. The URL is
     // constructed against the fixed apex (runAppHref), never taken from the
     // parameter — no open redirect. Unknown slugs fall through to the picker.
-    useEffect(() => {
-        if (!returnSlug || !myRuns.data || instances.data === undefined) {
-            return;
-        }
+    // The target is derived in render (so the spinner below holds while the
+    // cross-origin navigation is in flight, instead of flashing the picker);
+    // the ref keeps the assign one-shot across query refetches.
+    let bounceHref: string | null = null;
+    if (returnSlug && myRuns.data && instances.data !== undefined) {
         const knownSlugs = new Set([
             ...myRuns.data.runs.map((run) => run.slug),
             ...instances.data.map((instance) => instance.slug),
         ]);
         if (knownSlugs.has(returnSlug)) {
-            window.location.assign(runAppHref(returnSlug));
+            bounceHref = runAppHref(returnSlug);
         }
-    }, [returnSlug, myRuns.data, instances.data]);
+    }
+    const bouncedRef = useRef(false);
+    useEffect(() => {
+        if (bounceHref && !bouncedRef.current) {
+            bouncedRef.current = true;
+            window.location.assign(bounceHref);
+        }
+    }, [bounceHref]);
 
-    if (myRuns.isPending || instances.isPending) {
+    if (bounceHref !== null || myRuns.isPending || instances.isPending) {
         return (
             <div className="flex justify-center py-24">
                 <Spinner />

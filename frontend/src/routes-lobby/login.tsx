@@ -11,15 +11,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { TypographyBrand } from "@/components/ui/typography";
 import { useLobbyLogin, useMyRuns } from "@/hooks/use-lobby";
 import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
-import { lobbyLandingHref } from "@/lib/lobby";
+import { lobbyLandingHref, validateReturnSearch } from "@/lib/lobby";
 
 export const Route = createFileRoute("/login")({
-    validateSearch: (search: Record<string, unknown>) => ({
-        return:
-            typeof search.return === "string" && search.return !== ""
-                ? search.return
-                : undefined,
-    }),
+    validateSearch: validateReturnSearch,
     component: LoginPage,
     staticData: { title: "Log in" },
 });

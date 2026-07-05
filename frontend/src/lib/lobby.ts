@@ -50,3 +50,21 @@ export function lobbyLandingHref(path: string): string {
     if (!apex) return path;
     return `https://${apex}${path}`;
 }
+
+/**
+ * Shared `validateSearch` for the `?return={slug}` parameter, used by every
+ * lobby route so the parsing rule cannot drift between the entry points. Kept
+ * here because this module owns the return-slug contract (the slug is later
+ * validated against known runs and only ever interpolated into
+ * {@link runAppHref}'s fixed template).
+ */
+export function validateReturnSearch(search: Record<string, unknown>): {
+    return: string | undefined;
+} {
+    return {
+        return:
+            typeof search.return === "string" && search.return !== ""
+                ? search.return
+                : undefined,
+    };
+}
