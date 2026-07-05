@@ -249,6 +249,49 @@ def test_aggregate_excludes_unadvertised_instances(tmp_path: Path, monkeypatch: 
     assert [entry["slug"] for entry in manifest["instances"]] == ["public-run"]
 
 
+def test_list_advertised_fragments_returns_only_advertised_sorted_desc(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The picker's 'other runs to join' read: advertised fragments only, most recent first."""
+    landing_dir = tmp_path / "landing"
+    monkeypatch.setenv("ENERGETICA_LANDING_DIR", str(landing_dir))
+
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "spring-2025")
+    instance_config.publish(
+        InstanceConfig.model_validate(
+            {
+                "name": "Spring 2025",
+                "advertised": True,
+                "starts_at": "2025-03-01T00:00:00Z",
+                "access": {"policy": "public"},
+            }
+        )
+    )
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "autumn-2025")
+    instance_config.publish(
+        InstanceConfig.model_validate(
+            {
+                "name": "Autumn 2025",
+                "advertised": True,
+                "starts_at": "2025-09-15T00:00:00Z",
+                "access": {"policy": "public"},
+            }
+        )
+    )
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "hidden-run")
+    instance_config.publish(InstanceConfig.model_validate({**PRIVATE_JSON, "advertised": False}))
+
+    fragments = instance_config.list_advertised_fragments()
+
+    assert [fragment.slug for fragment in fragments] == ["autumn-2025", "spring-2025"]
+    assert all(fragment.advertised for fragment in fragments)
+
+
+def test_list_advertised_fragments_empty_when_no_landing_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ENERGETICA_LANDING_DIR", str(tmp_path / "does-not-exist"))
+    assert instance_config.list_advertised_fragments() == []
+
+
 # --- load_fragment --------------------------------------------------------------------------
 
 

@@ -106,7 +106,7 @@ def login(request: Request, request_data: LoginRequest) -> Response:
     engine.log(f"{username} logged in")
 
     response = JSONResponse(content={"response": "success"}, status_code=status.HTTP_200_OK)
-    return add_session_cookie_to_response(response, user, request)
+    return add_session_cookie_to_response(response, user.username, request)
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
@@ -124,7 +124,7 @@ def signup(request: Request, request_data: SignupRequest) -> Response:
     except accounts.UsernameTakenError:
         raise HTTPException(status.HTTP_409_CONFLICT, GameExceptionType.USERNAME_TAKEN)
     return add_session_cookie_to_response(
-        JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED), user, request
+        JSONResponse(content={"response": "success"}, status_code=status.HTTP_201_CREATED), user.username, request
     )
 
 

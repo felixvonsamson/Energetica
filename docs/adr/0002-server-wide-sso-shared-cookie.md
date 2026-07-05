@@ -72,3 +72,30 @@ with the shared secret and auto-provisions a local `User` on first authenticated
   cross-instance coupling than the prior "each instance touches only its own files".
 - The apex is no longer pure-static: a new home/accounts service is the most-public origin
   and a new operational + attack surface.
+
+## Amendment (lobby Phase B, #816)
+
+**Session payload is `account_id`, not `username`.** The Context above reasoned from the
+then-current payload (the `username`), and either works — a shared secret makes any
+server-wide-unique identity resolve everywhere, and `User` already carries an `account_id`
+FK (`User.filter_by(account_id=…)` exists). We switch the signed payload to the immutable
+`account_id` so a future username change is a pure `accounts` write with **zero** session
+impact (no forced re-login, no cookie reissue). No schema change is needed.
+
+**Phasing of the switch.** The payload is interpreted on both the minting and validating
+sides, so it flips per side at that side's cutover, never mid-air:
+
+- **Phase B:** the *lobby* mints `str(account_id)` and resolves it via
+  `accounts.get_account_by_id`. Instances are untouched and keep minting/reading `username`
+  (their deployed pre-cutover code).
+- **Phase C:** the instance side flips to `account_id` (`get_user_from_token` →
+  `User.filter_by(account_id=…)`), riding the already-planned one-time forced global
+  re-login — no *extra* re-login cost. The B→C window is safe because the lobby cookie and
+  the per-instance cookies do not interoperate until C.
+
+The signing/cookie primitives (`serializer`, secret loading, password hashing, cookie
+set/delete) are extracted into a leaf module `energetica/utils/session.py` with no
+game-model imports, so the lobby can import them without dragging in the engine;
+`energetica/utils/auth.py` re-exports them and keeps the `User`/`Player`-coupled request
+dependencies. This is an interim split ahead of a larger identity-package extraction
+(follow-up), recorded so a future reader understands the re-export bridge.

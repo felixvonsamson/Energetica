@@ -197,18 +197,18 @@ def _atomic_write_json(target: Path, payload: str) -> None:
         raise
 
 
-def aggregate_instances() -> None:
-    """Aggregate the **advertised** ``instances/*.json`` fragments into ``instances.json``, sorted
-    by ``starts_at`` descending so the most recent instance is first.
+def list_advertised_fragments() -> list[InstanceFragment]:
+    """Read all on-disk fragments, keep only the **advertised** ones, sorted by ``starts_at``
+    descending (most recent first).
 
-    Only advertised instances are emitted: ``instances.json`` is world-readable and a slug *is* a
-    subdomain, so listing an unadvertised instance here would let anyone enumerate and target an
-    otherwise-hidden instance. Unadvertised instances keep their on-disk fragment (reachable only
-    by already knowing the slug) but never appear in the public manifest.
+    Only advertised instances are included: a slug *is* a subdomain, so surfacing an unadvertised
+    instance would let anyone enumerate and target an otherwise-hidden run. Unadvertised instances
+    keep their on-disk fragment (reachable only by already knowing the slug) but never appear here.
 
-    Pure-Python equivalent of the RFC's ``jq`` one-liner — same output shape, no subprocess
-    or runtime ``jq`` dependency. Last-writer-wins across concurrent aggregations is harmless:
-    every aggregator reads the same fragment dir and produces a complete snapshot.
+    Shared by both consumers of "the runs on offer": the world-readable ``instances.json``
+    (:func:`aggregate_instances`) and the lobby picker's "other runs to join". A malformed sibling
+    fragment is skipped (and warned) rather than poisoning the whole list. A missing landing dir
+    yields an empty list.
     """
     fragments_dir = _landing_dir() / "instances"
     fragments: list[InstanceFragment] = []
@@ -216,12 +216,23 @@ def aggregate_instances() -> None:
         try:
             fragment = InstanceFragment.model_validate_json(fragment_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            # A malformed sibling fragment must not poison the whole manifest. Skip and warn.
             logger.warning("skipping unreadable instance fragment %s", fragment_path)
             continue
         if fragment.advertised:
             fragments.append(fragment)
     fragments.sort(key=lambda fragment: fragment.starts_at, reverse=True)
+    return fragments
+
+
+def aggregate_instances() -> None:
+    """Aggregate the **advertised** ``instances/*.json`` fragments into ``instances.json``, sorted
+    by ``starts_at`` descending so the most recent instance is first.
+
+    Pure-Python equivalent of the RFC's ``jq`` one-liner — same output shape, no subprocess
+    or runtime ``jq`` dependency. Last-writer-wins across concurrent aggregations is harmless:
+    every aggregator reads the same fragment dir and produces a complete snapshot.
+    """
+    fragments = list_advertised_fragments()
     manifest = {"instances": [json.loads(fragment.model_dump_json()) for fragment in fragments]}
     _atomic_write_json(_landing_dir() / "instances.json", json.dumps(manifest))
 

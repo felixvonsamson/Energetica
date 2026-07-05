@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
 
-from energetica.utils.auth import check_password_hash
+from energetica.utils.session import check_password_hash
 
 # The default targets local dev: a repo-relative path under instance/ (the per-instance
 # working dir, alongside engine_data.pck and secret_key.txt), so `python main.py --env dev`
@@ -166,6 +166,26 @@ def verify_password(*, username: str, password: str) -> bool:
     if account is None:
         return False
     return check_password_hash(plain_password=password, hashed_password=account.pwhash)
+
+
+def get_account_by_id(account_id: int) -> Account | None:
+    """Look up an account by its immutable id. The lobby resolves the session cookie's
+    ``account_id`` payload through here (ADR-0002).
+    """
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT account_id, username, pwhash, email, created_at FROM accounts WHERE account_id = ?",
+            (account_id,),
+        ).fetchone()
+    if row is None:
+        return None
+    return Account(
+        account_id=row["account_id"],
+        username=row["username"],
+        pwhash=row["pwhash"],
+        email=row["email"],
+        created_at=row["created_at"],
+    )
 
 
 def get_account_by_username(username: str) -> Account | None:

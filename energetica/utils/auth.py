@@ -1,80 +1,56 @@
-"""Utility functions for authentication."""
+"""Authentication for the game (instance) side.
 
-import os
-import secrets
-from datetime import datetime, timedelta, timezone
+The signing/credential primitives now live in the game-model-free leaf
+``energetica.utils.session`` so the server-wide identity layer and the lobby can reuse them
+without importing ``User``/``Player`` (ADR-0002, lobby Phase B). This module re-exports them —
+game-side callers keep importing ``generate_password_hash`` etc. from ``energetica.utils.auth``
+unchanged — and adds the request dependencies that resolve a session cookie against this
+instance's local ``User``.
+"""
 
-import bcrypt
-import requests
-from fastapi import HTTPException, Request, Response, status
-from itsdangerous import URLSafeTimedSerializer
+from datetime import datetime, timezone
+
+from fastapi import HTTPException, Request, status
 
 from energetica.database.player import Player
 from energetica.database.user import User
 from energetica.game_error import GameExceptionType
 
+# Re-exported primitives (defined in the leaf; imported here so existing call sites are unchanged).
+from energetica.utils.session import (
+    COOKIE_MAX_AGE,
+    SECRET_KEY,
+    add_session_cookie_to_response,
+    add_session_cookie_to_session,
+    check_password_hash,
+    decode_session_token,
+    generate_password_hash,
+    get_or_create_secret_key,
+    serializer,
+)
 
-def get_or_create_secret_key() -> str:
-    """Load the cookie-signing SECRET_KEY, preferring the server-wide shared secret.
-
-    Resolution order (lobby Phase A — shared-secret *support*, cookie scope unchanged):
-
-    1. The server-wide shared secret ``/var/lib/energetica/secret_key.txt`` if present. It is
-       provisioned by ``setup-base.sh`` and shared across every instance so a session minted by
-       the lobby validates everywhere. Read-only here — the instance never creates it.
-    2. Otherwise the per-instance ``instance/secret_key.txt`` (the pre-lobby behaviour),
-       creating it on first run.
-
-    Both paths are env-overridable for tests. An existing-but-empty file fails loud rather than
-    signing cookies with a zero-entropy key (which ``URLSafeTimedSerializer`` would accept) — a
-    truncated write or a cleared file must not silently make every session cookie forgeable.
-    """
-    shared_path = os.environ.get("ENERGETICA_SHARED_SECRET_PATH", "/var/lib/energetica/secret_key.txt")
-    if os.path.exists(shared_path):
-        return _read_nonempty_secret(shared_path)
-
-    instance_path = os.environ.get("ENERGETICA_INSTANCE_SECRET_PATH", "instance/secret_key.txt")
-    if os.path.exists(instance_path):
-        return _read_nonempty_secret(instance_path)
-
-    secret_key = secrets.token_hex()
-    with open(instance_path, "w", encoding="utf-8") as f:
-        f.write(secret_key)
-    return secret_key
-
-
-def _read_nonempty_secret(path: str) -> str:
-    """Read a secret-key file, raising if it exists but is empty (guessable zero-entropy key)."""
-    with open(path, "r", encoding="utf-8") as f:
-        key = f.read().strip()
-    if not key:
-        raise RuntimeError(f"secret key file at {path} is empty — refusing to sign cookies with an empty key")
-    return key
-
-
-SECRET_KEY = get_or_create_secret_key()
-serializer = URLSafeTimedSerializer(SECRET_KEY)
-
-
-def generate_password_hash(password: str) -> str:
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode(), salt)
-    return hashed.decode()
-
-
-def check_password_hash(*, plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
-
-
-COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a command line argument in the future
+__all__ = [
+    "COOKIE_MAX_AGE",
+    "SECRET_KEY",
+    "add_session_cookie_to_response",
+    "add_session_cookie_to_session",
+    "check_password_hash",
+    "decode_session_token",
+    "generate_password_hash",
+    "get_or_create_secret_key",
+    "serializer",
+    "get_user_from_token",
+    "get_user",
+    "get_playing_user",
+    "get_settled_player",
+]
 
 
 def get_user_from_token(token: str) -> User | None:
-    try:
-        username = serializer.loads(token, max_age=COOKIE_MAX_AGE)
-        return next(User.filter_by(username=username), None)
-    except Exception:
+    username = decode_session_token(token)
+    if username is None:
         return None
+    return next(User.filter_by(username=username), None)
 
 
 def get_user(request: Request) -> User | None:
@@ -105,30 +81,3 @@ def get_settled_player(request: Request) -> Player:
     ):
         user.player.last_connection = datetime.now(timezone.utc)
     return user.player
-
-
-def add_session_cookie_to_response(response: Response, user: User, request: Request) -> Response:
-    token = serializer.dumps(user.username)
-    # Check if behind reverse proxy with HTTPS
-    is_https = request.headers.get("X-Forwarded-Proto") == "https"
-    response.set_cookie(
-        key="session",
-        value=token,
-        httponly=True,
-        secure=is_https,
-        samesite="lax",
-        max_age=COOKIE_MAX_AGE,
-    )
-    return response
-
-
-def add_session_cookie_to_session(session: requests.Session, user: User) -> requests.Session:
-    token = serializer.dumps(user.username)
-    session.cookies.set(
-        name="session",
-        value=token,
-        path="/",
-        secure=False,
-        rest={"HttpOnly": True, "SameSite": "Lax"},
-    )
-    return session

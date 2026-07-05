@@ -31,6 +31,22 @@ def test_create_and_lookup_account(accounts_db: Path) -> None:
     assert account.pwhash == "hash-of-secret"
 
 
+def test_get_account_by_id_roundtrip(accounts_db: Path) -> None:
+    """get_account_by_id reads back the account created under that id (the lobby resolves the
+    session cookie's account_id payload this way).
+    """
+    account_id = accounts.create_account(username="alice", pwhash="hash-of-secret")
+
+    account = accounts.get_account_by_id(account_id)
+    assert account is not None
+    assert account.account_id == account_id
+    assert account.username == "alice"
+
+
+def test_get_account_by_id_unknown_returns_none(accounts_db: Path) -> None:
+    assert accounts.get_account_by_id(999_999) is None
+
+
 def test_duplicate_username_raises_typed_error(accounts_db: Path) -> None:
     """A second create_account with the same username raises UsernameTakenError, not sqlite3.IntegrityError."""
     accounts.create_account(username="alice", pwhash="hash-1")
