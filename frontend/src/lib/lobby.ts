@@ -17,12 +17,12 @@ const LOBBY_HOSTNAME_PREFIX = "lobby.";
 
 /**
  * The slug shape the infra enforces at provision time (setup-instance.sh):
- * lowercase kebab-case, i.e. a valid DNS label. Checked again here because a
- * slug becomes a _hostname_ — an admin-created or migrated run with a dotted or
- * otherwise non-DNS-safe slug must never produce a URL whose host is something
- * other than `{slug}.{apex}`.
+ * lowercase kebab-case within a DNS label's 63-char limit. Checked again here
+ * because a slug becomes a _hostname_ — an admin-created or migrated run with a
+ * dotted, spaced, or overlong slug must never produce a URL whose host is
+ * something other than a valid `{slug}.{apex}`.
  */
-const RUN_SLUG_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
+const RUN_SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 
 /** Whether `slug` is safe to use as the run's subdomain label. */
 export function isValidRunSlug(slug: string): boolean {
