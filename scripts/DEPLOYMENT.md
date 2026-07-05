@@ -24,7 +24,12 @@ sudo bash scripts/infra/setup-instance.sh autumn-2025 8002 --domain energetica-g
 
 `setup-instance.sh` provisions the box (directory, venv, `/etc/energetica/{slug}/instance.json`,
 vhost+TLS, enabled-but-unstarted unit) but ships **no** code and does **not** start the
-service. The first deploy is what ships the backend and starts it.
+service. The first deploy is what ships the backend and starts it. `setup-lobby.sh` works
+the same way for the lobby service.
+
+Every service needs its own uvicorn port: the lobby defaults to **8001** (`--port`
+overrides), so give each instance a different one. `setup-lobby.sh` refuses a port
+already claimed by another `energetica-*` unit.
 
 DNS for the apex and each `{instance}.{domain}` subdomain must resolve to the server before
 running the setup scripts (certbot uses the webroot challenge). For a private/unadvertised

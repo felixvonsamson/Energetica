@@ -64,6 +64,22 @@ FQDN="lobby.$DOMAIN"
 VHOST=/etc/apache2/sites-available/energetica-lobby.conf
 UNIT=/etc/systemd/system/energetica-lobby.service
 
+# The port must be exclusively the lobby's. A collision with an instance would be
+# insidious: the lobby unit crash-loops on bind while Apache proxies lobby.{apex}/api to
+# the *instance* backend — which also answers /api/v1/lobby/my-runs with a 401, so even
+# the deploy health check would pass against the wrong app and SSO would silently never
+# work. Check the rendered units (source of truth) and — unless the listener is our own
+# already-provisioned lobby (re-run) — the live sockets.
+PORT_CONFLICT="$(grep -lE -- "--port $PORT( |\$)" /etc/systemd/system/energetica-*.service 2>/dev/null | grep -v '/energetica-lobby\.service$' || true)"
+if [ -n "$PORT_CONFLICT" ]; then
+    log_error "Port $PORT is already claimed by: $PORT_CONFLICT — pass a free --port"
+    exit 1
+fi
+if [ ! -f "$UNIT" ] && ss -ltnH "sport = :$PORT" 2>/dev/null | grep -q .; then
+    log_error "Port $PORT is already listening on this host — pass a free --port"
+    exit 1
+fi
+
 log_section "PROVISION LOBBY (port $PORT, $FQDN)"
 if [ "$AUTO_CONFIRM" = false ]; then
     read -r -p "DNS for $FQDN points here? Continue? (y/n) " -n 1 -r; echo
@@ -111,19 +127,23 @@ fi
 
 # --- Temporary HTTP vhost for ACME -------------------------------------------------
 log_section "TLS PROVISIONING"
-log_step "Writing temporary HTTP vhost for certbot..."
-cat > "$VHOST" <<EOF
+if [ -f "/etc/letsencrypt/live/$FQDN/fullchain.pem" ]; then
+    # Don't touch the vhost when the cert is already there: on a re-run the live HTTPS
+    # vhost would otherwise be clobbered by the bare HTTP one and a mid-script failure
+    # (certbot rate limit, configtest) would leave the lobby down and $APP_DIR exposed
+    # over plain HTTP until an operator restores it. The full vhost is rendered below
+    # either way.
+    log_success "Certificate for $FQDN already exists — skipping issuance"
+else
+    log_step "Writing temporary HTTP vhost for certbot..."
+    cat > "$VHOST" <<EOF
 <VirtualHost *:80>
     ServerName $FQDN
     DocumentRoot $APP_DIR
 </VirtualHost>
 EOF
-a2ensite energetica-lobby >/dev/null
-systemctl reload apache2
-
-if [ -f "/etc/letsencrypt/live/$FQDN/fullchain.pem" ]; then
-    log_success "Certificate for $FQDN already exists — skipping issuance"
-else
+    a2ensite energetica-lobby >/dev/null
+    systemctl reload apache2
     log_step "Obtaining certificate via webroot..."
     certbot certonly --webroot -w "$APP_DIR" -d "$FQDN" --non-interactive --agree-tos --register-unsafely-without-email
     log_success "Certificate obtained"
