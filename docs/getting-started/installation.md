@@ -1,90 +1,34 @@
-# Installation Guide
+# Installation
 
-Complete setup guide for new contributors to get Energetica running locally.
-
-## Quick Start
-
-### Clone and Install Dependencies
-
-```bash
-# Clone and install
-git clone https://github.com/felixvonsamson/Energetica
-cd Energetica
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cd frontend/ && bun install && cd ..
-```
-
-### Run the Backend
-
-```bash
-source .venv/bin/activate && python main.py --env dev
-```
-
-### Run the Frontend
-
-Against the live production game backend (auto-discovers the current instance — see below):
-
-```bash
-bun run dev:game
-```
-
-Against a local backend (`http://localhost:8000`):
-
-```bash
-bun dev
-```
-
-Against one specific backend, overriding everything:
-
-```bash
-VITE_BACKEND_URL=https://mar-27-2026.energetica-game.org bun dev
-```
-
-Or configure `/frontend/.env.example`.
-
-Visit http://localhost:5173/app/dashboard
+One-time setup to get Energetica building on your machine. Once this is done, see
+[local-development.md](./local-development.md) for how to actually run things day to day.
 
 ## Prerequisites
 
-Ensure you have the following installed:
-
 - **Python 3.12 or higher** (`python --version` or `python3 --version`)
-- **Bun 1.0 or higher** (`bun --version`) - [Install Bun](https://bun.sh)
+- **Bun 1.0 or higher** (`bun --version`) — [install Bun](https://bun.sh): `curl -fsSL https://bun.sh/install | bash`
 - **Git** (`git --version`)
 
-To install Bun:
-
-```bash
-curl -fsSL https://bun.sh/install | bash
-```
-
-## Installation
-
-### 1. Clone the Repository
+## 1. Clone
 
 ```bash
 git clone https://github.com/felixvonsamson/Energetica
 cd Energetica
 ```
 
-### 2. Backend Setup
+## 2. Backend (Python)
 
 ```bash
-# Create virtual environment
 python -m venv .venv
-
-# Activate virtual environment
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-# Install Python dependencies
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-**Note:** You'll need to activate the virtual environment (`source .venv/bin/activate`) every time you open a new terminal to work on the backend.
+The project scripts invoke the interpreter at `.venv/bin/python` directly, so you don't need the
+venv activated to run them — but activate it when running `python`, `pytest`, `ruff`, or `pyright`
+by hand.
 
-### 3. Frontend Setup
+## 3. Frontend (TypeScript)
 
 ```bash
 cd frontend
@@ -92,159 +36,29 @@ bun install
 cd ..
 ```
 
-### 4. Environment Configuration (Optional)
+## You're set up
 
-The frontend can connect to different backends via environment variables.
-
-**For local development (default):** No configuration needed - the frontend automatically connects to `http://localhost:8000`
-
-**To connect to a different backend:**
+Verify the toolchain is wired up:
 
 ```bash
-# Copy the example file
-cp frontend/.env.example frontend/.env
-
-# Edit frontend/.env and set:
-VITE_BACKEND_URL=https://energetica-game.org  # or your preferred backend
+bun run typecheck        # frontend TypeScript
+bun run typecheck:py     # backend (pyright)
 ```
 
-## Running the Application
+Now head to **[local-development.md](./local-development.md)** — it covers the three frontend
+surfaces (app / lobby / landing), how to run against a local vs. a live backend, and the one-command
+full-stack launcher (`bun run dev`).
 
-Energetica requires both backend and frontend servers running simultaneously.
-
-### Full Stack Development (Recommended)
-
-Open **two terminal windows**:
-
-**Terminal 1 - Backend Server:**
+The quickest first run:
 
 ```bash
-# From project root
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-python main.py --env dev
+bun run dev              # full local stack, then open http://localhost:5173 and log in as demo / demo1234
 ```
-
-You should see:
-
-```
-INFO:     Uvicorn running on http://0.0.0.0:8000
-INFO:     Application startup complete.
-```
-
-**Terminal 2 - Frontend Dev Server:**
-
-```bash
-# From project root
-cd frontend
-bun dev
-```
-
-You should see:
-
-```
-VITE vX.X.X  ready in XXX ms
-
-➜  Local:   http://localhost:5173/
-➜  Network: use --host to expose
-```
-
-### Frontend-Only Development
-
-If you only want to work on the frontend and connect to an existing backend:
-
-```bash
-cd frontend
-
-# Connect to local backend (default)
-bun dev
-
-# OR connect to the live production game (dev:edu / dev:ethz for those deployments)
-bun run dev:game
-```
-
-#### How `dev:game` finds the backend
-
-`dev:game` / `dev:edu` / `dev:ethz` run `vite --mode {game,edu,ethz}`, which loads
-`frontend/.env.{mode}`. After the multi-instance cutover the **apex** (`energetica-game.org`)
-serves only the static landing — the game backend lives on a per-season instance **subdomain**
-(`{slug}.energetica-game.org`) that is created and deleted over time. Pointing a dev mode at the
-apex would proxy `/api` into the landing's `index.html` and break with
-`Unexpected token '<', "<!DOCTYPE"...`.
-
-So each `.env.{mode}` sets only the **stable apex** (`VITE_APEX_DOMAIN=energetica-game.org`), and
-`vite.config.ts` discovers the current instance at startup by fetching the apex's public
-`instances.json` manifest and taking the newest advertised slug — the same ordering the landing's
-picker uses. No slug is ever hardcoded; it self-updates when the season's instance turns over. To
-target a specific instance (or a local backend) instead, set `VITE_BACKEND_URL` explicitly — it
-overrides the apex discovery. If the manifest is empty or unreachable, the dev server fails with an
-actionable message rather than silently falling back.
-
-## Quick Reference
-
-### Frontend Commands
-
-```bash
-bun dev              # Start dev server (http://localhost:5173)
-bun build            # Build for production
-bun lint       # Check ESLint errors
-bun typecheck        # TypeScript type checking
-bun format           # Format code with Prettier
-bun generate-types   # Generate API types from OpenAPI schema
-```
-
-### Backend Commands
-
-```bash
-python main.py --env dev        # Run dev server (http://localhost:8000)
-pytest                          # Run tests
-ruff check                      # Lint check
-ruff format                     # Auto-format code
-pyright                         # Type checking
-pre-commit run --all-files      # Run all pre-commit hooks manually
-```
-
-#### Useful Development Flags
-
-```bash
-# Custom port
-python main.py --env dev --port 5001
-
-# Disable hot reload
-python main.py --env dev --no-reload
-
-# Create test players on startup
-python main.py --env dev --run_init_test_players
-
-# Remove instance folder (reset database)
-python main.py --env dev --rm_instance
-```
-
-#### Local State & Resetting
-
-A dev instance keeps all of its state under `instance/` (gitignored): the engine pickle
-(`engine_data.pck`), the session signing key (`secret_key.txt`), and the server-wide accounts
-store (`accounts.db`). In production these paths are set explicitly via the systemd unit (e.g.
-`ENERGETICA_ACCOUNTS_DB_PATH=/var/lib/energetica/accounts.db`); locally the code defaults to
-`instance/` so `python main.py --env dev` runs with **zero host configuration**.
-
-`--rm_instance` wipes the whole `instance/` folder, so the pickle and `accounts.db` are reset
-together (the freshly-printed `instance/admin_accounts.txt` password stays in sync). **If your
-local instance predates server-wide accounts** (a pickle whose `User`s have no `account_id`,
-which raises a `RuntimeError` on startup), reset it with `--rm_instance` — the production
-`scripts/migrate-to-server-accounts.py` is not needed for disposable local data.
-
-## Next Steps
-
-Places to get started with in the documentation:
-
-- [Architecture Overview](../architecture/overview.md) - Understand system design
-- [Frontend Documentation](../frontend/overview.md) - React patterns and conventions
-- [API Documentation](../architecture/api.md) - Backend API structure
 
 ## Getting Help
 
 - **Issues:** [GitHub Issues](https://github.com/felixvonsamson/Energetica/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/felixvonsamson/Energetica/discussions)
-- **Documentation:** Check `docs/` folder for specific topics
+- **Documentation:** the [`docs/`](../README.md) folder
 
 Welcome to the Energetica project! Happy coding!

@@ -36,6 +36,16 @@ const APEX_DOMAIN = import.meta.env.VITE_APEX_DOMAIN;
 const LOBBY_SUBDOMAIN = "lobby.";
 
 /**
+ * Where the lobby lives in local dev, when no apex is configured. The lobby
+ * frontend runs on its own fixed Vite port (`DEV_PORTS.lobby` in
+ * `vite.shared.ts`); `VITE_LOBBY_URL` overrides for non-default setups. Lets
+ * the app bundle's "log in" bounce reach a real lobby locally instead of
+ * dead-ending on a relative path, so the full local stack (`bun run dev`) is
+ * clickable.
+ */
+const LOBBY_DEV_URL = import.meta.env.VITE_LOBBY_URL ?? "http://localhost:5174";
+
+/**
  * The slug shape the infra enforces at provision time (setup-instance.sh):
  * lowercase kebab-case within a DNS label's 63-char limit. Checked here too
  * because a slug becomes a _hostname_ — a dotted, spaced, or overlong slug must
@@ -67,15 +77,17 @@ export function runAppHref(slug: string): string {
  * A path on the lobby app as an absolute cross-origin URL
  * (`https://lobby.{apex}{path}`). The lobby owns login/signup/logout and the
  * picker (ADR-0002/0003), so every "log in", "play", and "open lobby" link
- * resolves here. Falls back to the relative path with no apex (local dev),
- * which does not resolve without the extended local lobby harness — an accepted
- * dev-only dead link, like {@link landingHref}.
+ * resolves here. With no apex configured, in dev this points at the local lobby
+ * dev server ({@link LOBBY_DEV_URL}) so the bounce is clickable when running the
+ * full local stack; in a non-dev build with no apex it degrades to the relative
+ * path.
  *
  * @param path Absolute lobby path, e.g. `/login`, `/signup`, `/logout`, `/`.
  */
 export function lobbyHref(path: string): string {
-    if (!APEX_DOMAIN) return path;
-    return `https://${LOBBY_SUBDOMAIN}${APEX_DOMAIN}${path}`;
+    if (APEX_DOMAIN) return `https://${LOBBY_SUBDOMAIN}${APEX_DOMAIN}${path}`;
+    if (import.meta.env.DEV) return `${LOBBY_DEV_URL}${path}`;
+    return path;
 }
 
 /**
@@ -114,12 +126,12 @@ export function lobbyLoginHref(): string {
  * bundle). Absolute to the apex in production, like {@link lobbyHref} and
  * {@link runAppHref}.
  *
- * When no apex is configured (local `bun run dev`) it falls back to a relative
- * path. The landing routes live in the separate landing bundle (served by `bun
- * run dev:landing` on its own port), so this fallback does not resolve inside
- * the app dev server — these are secondary "learn more" links and the dead dev
- * link is accepted. Set `VITE_APEX_DOMAIN` to exercise the real cross-origin
- * link locally.
+ * When no apex is configured (local `bun run dev:app`) it falls back to a
+ * relative path. The landing routes live in the separate landing bundle (served
+ * by `bun run dev:landing` on its own port), so this fallback does not resolve
+ * inside the app dev server — these are secondary "learn more" links and the
+ * dead dev link is accepted. Set `VITE_APEX_DOMAIN` to exercise the real
+ * cross-origin link locally.
  *
  * @param path Absolute landing path, e.g. `/landing-page`.
  */

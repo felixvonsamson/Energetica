@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv, type Plugin } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
@@ -10,7 +10,11 @@ import rehypeSlug from "rehype-slug";
 import svgr from "vite-plugin-svgr";
 import path from "path";
 
-import { rewriteSetCookieForLocalhost } from "./vite.shared";
+import {
+    DEV_PORTS,
+    loadDeploymentEnv,
+    rewriteSetCookieForLocalhost,
+} from "./vite.shared";
 
 interface InstanceManifest {
     instances?: { slug?: string }[];
@@ -23,15 +27,16 @@ interface InstanceManifest {
  *
  * 1. An explicit VITE_BACKEND_URL always wins (a specific instance, a local
  *    backend, CI).
- * 2. A per-deployment mode (dev:game / dev:edu / dev:ethz) sets the stable
- *    VITE_APEX_DOMAIN. The game backend lives on a rotating instance
- *    _subdomain_ ({slug}.{apex}), never the apex — which post-cutover is the
- *    pure-static landing, whose FallbackResource answers every path (so
- *    proxying /api there returns index.html → "Unexpected token '<'"). We
- *    discover the current slug at dev-server startup from the apex's public
- *    instances.json manifest (newest advertised first — the ordering the
- *    landing's picker uses), so no slug is ever baked into the repo and it
- *    self-updates when the season's instance turns over.
+ * 2. A deployment selected via `BACKEND=game|edu|ethz` loads the matching
+ *    `.env.{deployment}`, which sets the stable VITE_APEX_DOMAIN. The game
+ *    backend lives on a rotating instance _subdomain_ ({slug}.{apex}), never
+ *    the apex — which post-cutover is the pure-static landing, whose
+ *    FallbackResource answers every path (so proxying /api there returns
+ *    index.html → "Unexpected token '<'"). We discover the current slug at
+ *    dev-server startup from the apex's public instances.json manifest (newest
+ *    advertised first — the ordering the landing's picker uses), so no slug is
+ *    ever baked into the repo and it self-updates when the season's instance
+ *    turns over.
  * 3. Otherwise the local backend on :8000.
  *
  * Only runs for `serve`: a production `build` also sets VITE_APEX_DOMAIN but
@@ -97,9 +102,9 @@ const devRootRedirect: Plugin = {
 };
 
 export default defineConfig(async ({ mode, command }) => {
-    const env = loadEnv(mode, process.cwd(), "");
+    const env = loadDeploymentEnv(mode);
     // Backend the dev server proxies to: explicit override, else slug discovered from the
-    // mode's apex manifest, else local :8000. See resolveBackendUrl above.
+    // selected deployment's apex manifest (BACKEND=…), else local :8000. See resolveBackendUrl.
     const backendUrl = await resolveBackendUrl(command, env);
     const wsUrl = backendUrl.replace(/^http/, "ws");
 
@@ -140,6 +145,7 @@ export default defineConfig(async ({ mode, command }) => {
         },
         base: command === "serve" ? "/" : "/static/app/",
         server: {
+            port: DEV_PORTS.app,
             proxy: {
                 // API endpoints
                 "^/api": {

@@ -1,10 +1,14 @@
-import { defineConfig, loadEnv, type Plugin } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
-import { rewriteSetCookieForLocalhost } from "./vite.shared";
+import {
+    DEV_PORTS,
+    loadDeploymentEnv,
+    rewriteSetCookieForLocalhost,
+} from "./vite.shared";
 
 /**
  * Serve `index.lobby.html` for every SPA path in dev. Vite's dev server always
@@ -37,10 +41,16 @@ const lobbyHtmlFallback: Plugin = {
 };
 
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, process.cwd(), "");
-    // The lobby backend (main_lobby.py) defaults to :8001; VITE_BACKEND_URL
-    // overrides, mirroring the main config's precedence.
-    const backendUrl = env.VITE_BACKEND_URL ?? "http://localhost:8001";
+    const env = loadDeploymentEnv(mode);
+    // Which lobby backend the dev server proxies to, mirroring the app config's
+    // precedence: an explicit VITE_BACKEND_URL wins; else a deployment selected
+    // via BACKEND=… proxies to that apex's lobby (lobby.{apex}); else the local
+    // lobby backend (main_lobby.py) on :8001.
+    const backendUrl =
+        env.VITE_BACKEND_URL ??
+        (env.VITE_APEX_DOMAIN
+            ? `https://lobby.${env.VITE_APEX_DOMAIN}`
+            : "http://localhost:8001");
 
     return {
         plugins: [
@@ -65,6 +75,7 @@ export default defineConfig(({ mode }) => {
             entries: ["index.lobby.html"],
         },
         server: {
+            port: DEV_PORTS.lobby,
             proxy: {
                 // Lobby API (auth + my-runs). /instances.json is deliberately
                 // not proxied: in production Apache aliases it from the shared

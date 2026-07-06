@@ -1,6 +1,7 @@
 instance/*
 tests/*/instance/*
 checkpoints/*
+.energetica-dev/
 __pycache__
 .DS_Store
 .venv

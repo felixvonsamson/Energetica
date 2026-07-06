@@ -8,7 +8,8 @@ Welcome to the Energetica documentation! This guide covers the full architecture
 
 ### Getting Started
 
-- [**Overview**](getting-started/installation.md) - Installation & Quick Reference
+- [**Installation**](getting-started/installation.md) - One-time setup (Python venv, `bun install`)
+- [**Local Development**](getting-started/local-development.md) - Running the app/lobby/landing surfaces, local vs. live backends, the full-stack launcher
 
 ### Architecture
 
