@@ -1,13 +1,14 @@
 """Integration tests for the FastAPI root-level routes after the Phase 5 cutover.
 
 Apache now serves every static asset and SPA shell directly from disk (see
-docs/architecture/static-serving-and-deployment.md § Request routing). FastAPI
-keeps only the dynamic root routes — `/logout` — plus `/api/*` and `/socket.io`.
-Everything that used to be served by FastAPI (`/`, `/app/*`, `/landing-page`,
-the `/static` mount, `/service-worker.js`, `/manifest.json`, the legacy
-`/sign-up` → `/app/sign-up` redirect) must now 404 from uvicorn so a
-misconfigured vhost surfaces loudly instead of being silently papered over by
-FastAPI.
+docs/architecture/static-serving-and-deployment.md § Request routing). After the
+lobby cutover (#817) FastAPI keeps only `/api/*` and `/socket.io`: the instance no
+longer mints or clears sessions (login/signup/logout/change-password are the lobby's,
+ADR-0002/0003), so the legacy root `/logout` redirect was retired too. Everything that
+used to be served by FastAPI (`/`, `/app/*`, `/landing-page`, `/logout`, the `/static`
+mount, `/service-worker.js`, `/manifest.json`, the legacy `/sign-up` → `/app/sign-up`
+redirect) must now 404 from uvicorn so a misconfigured vhost surfaces loudly instead of
+being silently papered over by FastAPI.
 """
 
 import pytest
@@ -22,13 +23,6 @@ def client() -> TestClient:
     return TestClient(app)
 
 
-def test_logout_redirects_to_login(client: TestClient) -> None:
-    """/logout stays on FastAPI — it clears server-side session state."""
-    response = client.get("/logout", follow_redirects=False)
-    assert response.status_code in (302, 303, 307)
-    assert response.headers["location"] == "/app/login"
-
-
 @pytest.mark.parametrize(
     "path",
     [
@@ -37,6 +31,7 @@ def test_logout_redirects_to_login(client: TestClient) -> None:
         "/app/login",  # render_react_app removed — Apache FallbackResource serves /app/*
         "/app/dashboard",
         "/app/assets/index.js",  # never the HTML shell; now simply not a FastAPI route
+        "/logout",  # retired with the lobby cutover — global logout is the lobby's (#817)
         "/sign-up",  # legacy 301 removed — optional Apache RedirectMatch handles stale links
         "/static/app/index.html",  # StaticFiles mount removed
         "/service-worker.js",  # Apache serves it directly

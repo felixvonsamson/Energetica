@@ -20,6 +20,8 @@ from energetica.game_error import GameExceptionType
 from energetica.utils.session import (
     COOKIE_MAX_AGE,
     SECRET_KEY,
+    SESSION_COOKIE_NAME,
+    account_id_from_token,
     add_session_cookie_to_response,
     add_session_cookie_to_session,
     check_password_hash,
@@ -32,6 +34,8 @@ from energetica.utils.session import (
 __all__ = [
     "COOKIE_MAX_AGE",
     "SECRET_KEY",
+    "SESSION_COOKIE_NAME",
+    "account_id_from_token",
     "add_session_cookie_to_response",
     "add_session_cookie_to_session",
     "check_password_hash",
@@ -47,14 +51,21 @@ __all__ = [
 
 
 def get_user_from_token(token: str) -> User | None:
-    username = decode_session_token(token)
-    if username is None:
+    """Resolve the SSO cookie to this instance's local ``User``, or ``None``.
+
+    The token carries the immutable ``account_id`` (ADR-0002 amendment), resolved against the local
+    ``User`` via its ``account_id`` FK. This does **not** auto-provision: a valid session for an
+    account with no local ``User`` yet reads as ``None`` here — provisioning is the entry gate's job
+    (``routers.auth``), gated by the instance's access policy.
+    """
+    account_id = account_id_from_token(token)
+    if account_id is None:
         return None
-    return next(User.filter_by(username=username), None)
+    return next(User.filter_by(account_id=account_id), None)
 
 
 def get_user(request: Request) -> User | None:
-    token = request.cookies.get("session")
+    token = request.cookies.get(SESSION_COOKIE_NAME)
     if not token:
         return None
     return get_user_from_token(token)

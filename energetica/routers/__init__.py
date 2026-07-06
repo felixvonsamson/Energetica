@@ -34,10 +34,7 @@ from .leaderboards import router as leaderboards_router
 from .lobby import router as lobby_router
 from .shipments import router as shipments_router
 from .health import router as health_router
-from .templates import router as templates_router
 from .weather import router as weather_router
-
-__all__ = ["templates_router"]
 
 api_routers = [
     achievements_router,
@@ -63,14 +60,14 @@ api_routers = [
 
 
 class SocketIOFilter(logging.Filter):
-    def filter(self, record: logging.LogRecord):
+    def filter(self, record: logging.LogRecord) -> bool:
         return "/socket.io/" not in record.getMessage()
 
 
 logging.getLogger("uvicorn.access").addFilter(SocketIOFilter())
 
 
-def setup_routes(app: FastAPI):
+def setup_routes(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
         """If the validation of pydantic schemas fails (e.g. string too short), return a 422 with details."""
@@ -199,8 +196,9 @@ def setup_routes(app: FastAPI):
     for router in api_routers:
         app.include_router(router, prefix="/api/v1")
     app.include_router(health_router)
-    app.include_router(templates_router)
     # Static assets (/static/*, /service-worker.js, /manifest.json) are served
     # directly by Apache from disk after the RFC Phase 5 cutover — see
     # docs/architecture/static-serving-and-deployment.md § Request routing.
-    # FastAPI keeps only /api, /socket.io and /logout.
+    # FastAPI keeps only /api and /socket.io: the instance no longer mints or clears sessions
+    # (login/signup/logout/change-password are the lobby's, ADR-0002/0003), so the legacy root
+    # /logout redirect was retired with the cutover (#817). Global logout happens at the lobby.

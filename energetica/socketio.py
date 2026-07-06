@@ -13,7 +13,7 @@ from socketio.exceptions import ConnectionRefusedError
 
 from energetica.database.player import Player
 from energetica.globals import engine
-from energetica.utils.auth import get_user_from_token
+from energetica.utils.auth import SESSION_COOKIE_NAME, get_user_from_token
 
 
 def setup_socketio(app: FastAPI) -> None:
@@ -32,7 +32,7 @@ def setup_socketio(app: FastAPI) -> None:
             raise ConnectionRefusedError("authentication failed: no cookies")
         cookie = SimpleCookie()
         cookie.load(cast(str, cookie_header))
-        session_token = cookie.get("session")
+        session_token = cookie.get(SESSION_COOKIE_NAME)
         if session_token is None:
             raise ConnectionRefusedError("authentication failed: no session token")
         user = get_user_from_token(cast(str, session_token.value))

@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 
 from energetica import accounts
 from energetica.schemas.auth import ChangePasswordRequest, LoginRequest, SignupRequest
-from energetica.utils.session import decode_session_token
+from energetica.utils.session import SESSION_COOKIE_NAME, decode_session_token
 from lobby import create_lobby_app
 
 BASE = "http://testserver/api/v1"
@@ -59,7 +59,7 @@ def test_signup_creates_account_only_and_logs_in(signups_enabled: None) -> None:
     account = accounts.get_account_by_username("alice")
     assert account is not None
     # Auto-login: the response carries a session cookie signed with the account_id.
-    assert decode_session_token(client.cookies["session"]) == str(account.account_id)
+    assert decode_session_token(client.cookies[SESSION_COOKIE_NAME]) == str(account.account_id)
 
 
 def test_signup_blocked_when_signups_disabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -114,7 +114,7 @@ def test_login_valid_sets_account_id_cookie(signups_enabled: None) -> None:
     assert resp.status_code == 200
     account = accounts.get_account_by_username("alice")
     assert account is not None
-    assert decode_session_token(client.cookies["session"]) == str(account.account_id)
+    assert decode_session_token(client.cookies[SESSION_COOKIE_NAME]) == str(account.account_id)
 
 
 # --- my-runs --------------------------------------------------------------------------------

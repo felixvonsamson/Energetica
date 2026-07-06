@@ -14,10 +14,11 @@ from fastapi.testclient import TestClient
 
 from energetica import accounts, create_app
 from energetica.globals import engine
-from energetica.schemas.auth import SignupRequest
+
+from ._session_helpers import authenticate, make_account
 
 PORT = 8000
-SIGNUP_URL = f"http://localhost:{PORT}/api/v1/auth/signup"
+ME_URL = f"http://localhost:{PORT}/api/v1/auth/me"
 MY_RUNS_URL = f"http://localhost:{PORT}/api/v1/lobby/my-runs"
 
 
@@ -38,16 +39,17 @@ def _write_fragment(instances: Path, *, slug: str, name: str, starts_at: str, ad
 
 
 def _authenticated_client() -> tuple[TestClient, int]:
-    """Sign up 'alice' (provisions a server-wide account + session cookie) and return the client
-    plus alice's account_id.
+    """Create a server-wide account for 'alice', set her SSO cookie (as a lobby login would), and
+    drive the entry gate (``GET /auth/me``) so a local ``User`` is provisioned — the state a real
+    browser is in by the time the in-run switcher calls my-runs. Returns the client + account_id.
     """
     app = create_app(rm_instance=True, skip_adding_handlers=True, env="dev", port=PORT)
     engine.serve_local = False
     client = TestClient(app)
-    client.post(SIGNUP_URL, json=SignupRequest(username="alice", password="correct-password").model_dump())
-    account = accounts.get_account_by_username("alice")
-    assert account is not None
-    return client, account.account_id
+    account_id = make_account("alice")
+    authenticate(client, account_id)
+    assert client.get(ME_URL).status_code == 200  # entry gate provisions the local User
+    return client, account_id
 
 
 def test_my_runs_requires_authentication(landing_dir: Path) -> None:
