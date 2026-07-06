@@ -1,0 +1,25 @@
+{
+    "extends": "./tsconfig.json",
+    "include": [
+        "src/main-lobby.tsx",
+        "src/routes-lobby",
+        "src/routeTree.lobby.gen.ts",
+        "src/components",
+        "src/contexts/theme-context.tsx",
+        "src/lib",
+        "src/hooks",
+        "src/types",
+        "src/styles",
+        "src/assets",
+        "src/declarations.d.ts",
+        "src/vite-env.d.ts"
+    ],
+    "exclude": [
+        "**/*.mdx",
+        "src/service-worker.ts",
+        "src/main.tsx",
+        "src/routes",
+        "src/routeTree.gen.ts",
+        "src/router.d.ts"
+    ]
+}

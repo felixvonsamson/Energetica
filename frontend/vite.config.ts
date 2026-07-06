@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv, type Plugin, type ProxyOptions } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
@@ -9,6 +9,8 @@ import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
 import svgr from "vite-plugin-svgr";
 import path from "path";
+
+import { rewriteSetCookieForLocalhost } from "./vite.shared";
 
 interface InstanceManifest {
     instances?: { slug?: string }[];
@@ -92,30 +94,6 @@ const devRootRedirect: Plugin = {
             next();
         });
     },
-};
-
-/**
- * Strip `Secure` and `Domain` from `Set-Cookie` on proxied responses so a
- * session cookie minted by an HTTPS backend round-trips through the
- * `http://localhost` dev origin. Without this, the browser won't persist the
- * fresh `Secure` cookie over plain-HTTP localhost (so a stale, foreign-signed
- * cookie lingers and every authed request 401s), and a future parent-domain
- * (`Domain=.{apex}`) cookie wouldn't match `localhost` at all. No-op for the
- * local backend, which sets neither attribute.
- */
-const rewriteSetCookieForLocalhost: NonNullable<ProxyOptions["configure"]> = (
-    proxy,
-) => {
-    proxy.on("proxyRes", (proxyRes) => {
-        const setCookie = proxyRes.headers["set-cookie"];
-        if (setCookie) {
-            proxyRes.headers["set-cookie"] = setCookie.map((cookie) =>
-                cookie
-                    .replace(/;\s*Secure/gi, "")
-                    .replace(/;\s*Domain=[^;]*/gi, ""),
-            );
-        }
-    });
 };
 
 export default defineConfig(async ({ mode, command }) => {

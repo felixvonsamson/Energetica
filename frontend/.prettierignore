@@ -5,3 +5,4 @@ dist
 src/routeTree.gen.ts
 src/routeTree.landing.gen.ts
 src/types/api.generated.ts
+src/routeTree.lobby.gen.ts
