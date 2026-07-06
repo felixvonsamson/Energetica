@@ -21,11 +21,15 @@ export const DEV_PORTS = { app: 5173, lobby: 5174, landing: 5175 } as const;
  */
 export function loadDeploymentEnv(mode: string): Record<string, string> {
     const deployment = process.env.BACKEND || undefined;
+    const env = loadEnv(deployment ?? mode, process.cwd(), "");
     // A misspelled or unsupported BACKEND would otherwise load no deployment file, leave
     // VITE_APEX_DOMAIN unset, and silently proxy to the local backend — so a command meant to
-    // hit a live deployment would quietly exercise local data. Fail loudly instead.
+    // hit a live deployment would quietly exercise local data. Fail loudly instead. An explicit
+    // VITE_BACKEND_URL always wins (it's the top of the precedence in resolveBackendUrl), so a
+    // stale BACKEND in the shell must not pre-empt an override the developer set on purpose.
     if (
         deployment &&
+        !env.VITE_BACKEND_URL &&
         !fs.existsSync(path.join(process.cwd(), `.env.${deployment}`))
     ) {
         const available = fs
@@ -43,7 +47,7 @@ export function loadDeploymentEnv(mode: string): Record<string, string> {
                 `backend, or set VITE_BACKEND_URL to target a specific URL.`,
         );
     }
-    return loadEnv(deployment ?? mode, process.cwd(), "");
+    return env;
 }
 
 /**
