@@ -166,7 +166,7 @@ function LoginForm({ returnSlug }: { returnSlug: string | undefined }) {
                             ) : (
                                 <LogIn className="w-5 h-5" />
                             )}
-                            <>Log in</>
+                            Log in
                         </Button>
                     </form>
 

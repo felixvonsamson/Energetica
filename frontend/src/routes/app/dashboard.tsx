@@ -168,18 +168,16 @@ function DashboardContent() {
 
             {/* Construction - only show if there are any construction projects */}
             {hasConstructionProjects && (
-                <>
-                    <DashboardSection
-                        title={
-                            <>
-                                <HardHat className="inline w-4 h-4" /> Under
-                                Construction
-                            </>
-                        }
-                    >
-                        <ProjectList projectCategory={"construction"} />
-                    </DashboardSection>
-                </>
+                <DashboardSection
+                    title={
+                        <>
+                            <HardHat className="inline w-4 h-4" /> Under
+                            Construction
+                        </>
+                    }
+                >
+                    <ProjectList projectCategory={"construction"} />
+                </DashboardSection>
             )}
 
             {/* Under research - only show if player has laboratory and has research projects */}

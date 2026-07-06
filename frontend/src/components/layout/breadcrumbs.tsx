@@ -74,20 +74,18 @@ export function Breadcrumbs() {
     return (
         <>
             {breadcrumbs.length > 0 && (
-                <>
-                    <Breadcrumb>
-                        <BreadcrumbList>
-                            {breadcrumbs.map((crumb, index) => (
-                                <div key={crumb} className="contents">
-                                    {index > 0 && <BreadcrumbSeparator />}
-                                    <BreadcrumbItem>
-                                        <BreadcrumbPage>{crumb}</BreadcrumbPage>
-                                    </BreadcrumbItem>
-                                </div>
-                            ))}
-                        </BreadcrumbList>
-                    </Breadcrumb>
-                </>
+                <Breadcrumb>
+                    <BreadcrumbList>
+                        {breadcrumbs.map((crumb, index) => (
+                            <div key={crumb} className="contents">
+                                {index > 0 && <BreadcrumbSeparator />}
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage>{crumb}</BreadcrumbPage>
+                                </BreadcrumbItem>
+                            </div>
+                        ))}
+                    </BreadcrumbList>
+                </Breadcrumb>
             )}
         </>
     );

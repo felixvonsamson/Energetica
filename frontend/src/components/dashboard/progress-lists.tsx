@@ -313,7 +313,7 @@ function ClimateEventRecoveryItem({
             }
             speed={undefined}
             endTick={recovery.end_tick}
-            actions={<></>}
+            actions={null}
             info={<CashFlow amountPerTick={-recovery.recovery_cost} />}
         />
     );
@@ -338,7 +338,7 @@ function ShipmentItem({ shipment }: { shipment: Shipment }) {
             }
             speed={shipment.speed}
             endTick={shipment.arrival_tick}
-            actions={<></>}
+            actions={null}
         />
     );
 }
