@@ -125,8 +125,7 @@ function ChangePasswordForm() {
                 <CardContent>
                     {success && (
                         <InfoBanner variant="success" className="mb-6">
-                            Your password has been changed. It applies the next
-                            time you log in.
+                            Your password has been changed successfully.
                         </InfoBanner>
                     )}
 
@@ -194,7 +193,6 @@ function ChangePasswordForm() {
                                 }
                                 placeholder="Confirm your new password"
                                 disabled={changePassword.isPending}
-                                minLength={7}
                                 autoComplete="new-password"
                             />
                         </div>
@@ -213,7 +211,7 @@ function ChangePasswordForm() {
                             ) : (
                                 <KeyRound className="w-5 h-5" />
                             )}
-                            <>Change password</>
+                            Change password
                         </Button>
                     </form>
                 </CardContent>
