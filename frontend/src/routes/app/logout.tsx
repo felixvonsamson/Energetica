@@ -1,31 +1,24 @@
-/** Logout page - Clears session and redirects to login. */
+/** Logout page — hands off to the lobby, which owns the single session cookie. */
 
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 
-import { useLogout } from "@/hooks/use-auth-queries";
+import { Spinner } from "@/components/ui/spinner";
+import { lobbyHref } from "@/lib/instances";
 
 function LogoutComponent() {
-    const navigate = useNavigate();
-    const logout = useLogout();
-    const hasLoggedOut = useRef(false);
-
     useEffect(() => {
-        // Guard against React StrictMode's double effect invocation.
-        // Refs survive the simulated unmount/remount, so this fires only once.
-        if (hasLoggedOut.current) return;
-        hasLoggedOut.current = true;
-
-        logout
-            .mutateAsync()
-            .catch(() => {})
-            .finally(() => {
-                navigate({ to: "/app/login" });
-            });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // The session is a parent-domain cookie the lobby minted; only a global logout at the
+        // lobby clears it (ADR-0002). Full-page, cross-origin redirect to lobby.{apex}/logout,
+        // which clears the cookie and returns to the login page.
+        window.location.assign(lobbyHref("/logout"));
     }, []);
 
-    return <div>Logging out...</div>;
+    return (
+        <div className="flex min-h-screen items-center justify-center">
+            <Spinner />
+        </div>
+    );
 }
 
 export const Route = createFileRoute("/app/logout")({

@@ -23,6 +23,7 @@ import { useCallback, useEffect, useState } from "react";
 import Logo from "@/assets/icon.svg?react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationPopup } from "@/components/layout/notification-popup";
+import { RunSwitcher } from "@/components/layout/run-switcher";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
@@ -166,6 +167,9 @@ export function TopBar() {
                             </Button>
                         </ButtonGroup>
                     )}
+
+                    {/* In-run switcher — your settled runs + Open lobby (all sizes) */}
+                    <RunSwitcher />
 
                     {/* Notifications, Theme Toggle and User Menu — desktop only */}
                     <ButtonGroup className="hidden md:flex">

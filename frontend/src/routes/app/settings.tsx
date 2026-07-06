@@ -1,25 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 import { GameLayout } from "@/components/layout/game-layout";
-import {
-    Card,
-    Button,
-    InfoBanner,
-    CardContent,
-    ThemeToggle,
-} from "@/components/ui";
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Card, InfoBanner, CardContent, ThemeToggle } from "@/components/ui";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
@@ -28,9 +11,7 @@ import {
     TypographyLarge,
     TypographyMuted,
 } from "@/components/ui/typography";
-import { useChangePassword } from "@/hooks/use-auth-queries";
 import { browserNotificationsApi } from "@/lib/api/push-subscriptions";
-import { handleApiError } from "@/lib/error-utils";
 import {
     getAllPushPrefs,
     setPushPref,
@@ -83,8 +64,6 @@ function SettingsPage() {
 }
 
 function SettingsContent() {
-    const [showChangePasswordDialog, setShowChangePasswordDialog] =
-        useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
     const [notificationsPermissionDenied, setNotificationsPermissionDenied] =
@@ -332,222 +311,9 @@ function SettingsContent() {
                     </CardContent>
                 </Card>
 
-                {/* Password Settings Card */}
-                <Card>
-                    <CardContent className="flex items-center justify-between">
-                        <TypographyH2>
-                            <TypographyLarge>Password Settings</TypographyLarge>
-                        </TypographyH2>
-                        <Button
-                            onClick={() => setShowChangePasswordDialog(true)}
-                            variant="default"
-                        >
-                            Change Password
-                        </Button>
-                    </CardContent>
-                </Card>
+                {/* Password changes live at the lobby, which owns credentials for the whole
+                    server (ADR-0002/0003); the instance no longer has a password endpoint. */}
             </div>
-
-            {/* Change Password Dialog */}
-            <ChangePasswordDialog
-                isOpen={showChangePasswordDialog}
-                onClose={() => setShowChangePasswordDialog(false)}
-            />
         </div>
-    );
-}
-
-interface ChangePasswordDialogProps {
-    isOpen: boolean;
-    onClose: () => void;
-}
-
-function ChangePasswordDialog({ isOpen, onClose }: ChangePasswordDialogProps) {
-    const changePassword = useChangePassword();
-    const [oldPassword, setOldPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [fieldErrors, setFieldErrors] = useState<{
-        oldPassword?: string;
-        newPassword?: string;
-        confirmPassword?: string;
-    }>({});
-
-    const resetForm = () => {
-        setOldPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setFieldErrors({});
-    };
-
-    const handleClose = () => {
-        resetForm();
-        onClose();
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        const errors: typeof fieldErrors = {};
-
-        if (!oldPassword) {
-            errors.oldPassword = "Current password is required";
-        }
-
-        if (!newPassword) {
-            errors.newPassword = "New password is required";
-        } else if (newPassword.length < 8) {
-            errors.newPassword = "Password must be at least 8 characters";
-        } else if (oldPassword && newPassword === oldPassword) {
-            errors.newPassword =
-                "New password must differ from current password";
-        }
-
-        if (!confirmPassword) {
-            errors.confirmPassword = "Please confirm your new password";
-        } else if (newPassword && confirmPassword !== newPassword) {
-            errors.confirmPassword = "Passwords do not match";
-        }
-
-        if (Object.keys(errors).length > 0) {
-            setFieldErrors(errors);
-            return;
-        }
-
-        changePassword.mutate(
-            {
-                old_password: oldPassword,
-                new_password: newPassword,
-            },
-            {
-                onSuccess: () => {
-                    toast.success("Password changed successfully");
-                    resetForm();
-                    onClose();
-                },
-                onError: (err) => {
-                    const errorMessage = handleApiError(
-                        err,
-                        "Failed to change password",
-                    );
-                    toast.error(errorMessage);
-                },
-            },
-        );
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent>
-                <form onSubmit={handleSubmit} id="change-password-form">
-                    <DialogHeader>
-                        <DialogTitle>Change Password</DialogTitle>
-                        <DialogDescription>
-                            Enter your current password and choose a new one.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="old_password">
-                                Current Password
-                            </Label>
-                            <Input
-                                type="password"
-                                id="old_password"
-                                value={oldPassword}
-                                onChange={(e) => {
-                                    setOldPassword(e.target.value);
-                                    setFieldErrors((prev) => ({
-                                        ...prev,
-                                        oldPassword: undefined,
-                                    }));
-                                }}
-                                placeholder="Enter current password"
-                                disabled={changePassword.isPending}
-                                aria-invalid={!!fieldErrors.oldPassword}
-                            />
-                            {fieldErrors.oldPassword && (
-                                <p className="text-destructive text-sm">
-                                    {fieldErrors.oldPassword}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="new_password">New Password</Label>
-                            <Input
-                                type="password"
-                                id="new_password"
-                                value={newPassword}
-                                onChange={(e) => {
-                                    setNewPassword(e.target.value);
-                                    setFieldErrors((prev) => ({
-                                        ...prev,
-                                        newPassword: undefined,
-                                    }));
-                                }}
-                                placeholder="Enter new password"
-                                disabled={changePassword.isPending}
-                                aria-invalid={!!fieldErrors.newPassword}
-                            />
-                            {fieldErrors.newPassword && (
-                                <p className="text-destructive text-sm">
-                                    {fieldErrors.newPassword}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="confirm_password">
-                                Confirm New Password
-                            </Label>
-                            <Input
-                                type="password"
-                                id="confirm_password"
-                                value={confirmPassword}
-                                onChange={(e) => {
-                                    setConfirmPassword(e.target.value);
-                                    setFieldErrors((prev) => ({
-                                        ...prev,
-                                        confirmPassword: undefined,
-                                    }));
-                                }}
-                                placeholder="Re-enter new password"
-                                disabled={changePassword.isPending}
-                                aria-invalid={!!fieldErrors.confirmPassword}
-                            />
-                            {fieldErrors.confirmPassword && (
-                                <p className="text-destructive text-sm">
-                                    {fieldErrors.confirmPassword}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button
-                                variant="outline"
-                                disabled={changePassword.isPending}
-                            >
-                                Cancel
-                            </Button>
-                        </DialogClose>
-                        <Button
-                            type="submit"
-                            form="change-password-form"
-                            variant={
-                                changePassword.isPending ? "outline" : "default"
-                            }
-                            disabled={changePassword.isPending}
-                            className="flex items-center gap-2"
-                        >
-                            {changePassword.isPending && <Spinner />}
-                            Change Password
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
     );
 }

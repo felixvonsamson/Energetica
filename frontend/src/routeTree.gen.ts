@@ -10,11 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppIndexRouteImport } from './routes/app/index'
-import { Route as AppSignUpRouteImport } from './routes/app/sign-up'
 import { Route as AppSettleRouteImport } from './routes/app/settle'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppLogoutRouteImport } from './routes/app/logout'
-import { Route as AppLoginRouteImport } from './routes/app/login'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppChangelogRouteImport } from './routes/app/changelog'
 import { Route as AppWikiIndexRouteImport } from './routes/app/wiki/index'
@@ -49,11 +47,6 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/app/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppSignUpRoute = AppSignUpRouteImport.update({
-  id: '/app/sign-up',
-  path: '/app/sign-up',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppSettleRoute = AppSettleRouteImport.update({
   id: '/app/settle',
   path: '/app/settle',
@@ -67,11 +60,6 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppLogoutRoute = AppLogoutRouteImport.update({
   id: '/app/logout',
   path: '/app/logout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppLoginRoute = AppLoginRouteImport.update({
-  id: '/app/login',
-  path: '/app/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -223,11 +211,9 @@ const AppCommunityElectricityMarketsRoute =
 export interface FileRoutesByFullPath {
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
-  '/app/login': typeof AppLoginRoute
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
-  '/app/sign-up': typeof AppSignUpRoute
   '/app': typeof AppIndexRoute
   '/app/community/electricity-markets': typeof AppCommunityElectricityMarketsRoute
   '/app/community/leaderboards': typeof AppCommunityLeaderboardsRoute
@@ -259,11 +245,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
-  '/app/login': typeof AppLoginRoute
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
-  '/app/sign-up': typeof AppSignUpRoute
   '/app': typeof AppIndexRoute
   '/app/community/electricity-markets': typeof AppCommunityElectricityMarketsRoute
   '/app/community/leaderboards': typeof AppCommunityLeaderboardsRoute
@@ -296,11 +280,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/app/changelog': typeof AppChangelogRoute
   '/app/dashboard': typeof AppDashboardRouteWithChildren
-  '/app/login': typeof AppLoginRoute
   '/app/logout': typeof AppLogoutRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/settle': typeof AppSettleRoute
-  '/app/sign-up': typeof AppSignUpRoute
   '/app/': typeof AppIndexRoute
   '/app/community/electricity-markets': typeof AppCommunityElectricityMarketsRoute
   '/app/community/leaderboards': typeof AppCommunityLeaderboardsRoute
@@ -334,11 +316,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/app/changelog'
     | '/app/dashboard'
-    | '/app/login'
     | '/app/logout'
     | '/app/settings'
     | '/app/settle'
-    | '/app/sign-up'
     | '/app'
     | '/app/community/electricity-markets'
     | '/app/community/leaderboards'
@@ -370,11 +350,9 @@ export interface FileRouteTypes {
   to:
     | '/app/changelog'
     | '/app/dashboard'
-    | '/app/login'
     | '/app/logout'
     | '/app/settings'
     | '/app/settle'
-    | '/app/sign-up'
     | '/app'
     | '/app/community/electricity-markets'
     | '/app/community/leaderboards'
@@ -406,11 +384,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/app/changelog'
     | '/app/dashboard'
-    | '/app/login'
     | '/app/logout'
     | '/app/settings'
     | '/app/settle'
-    | '/app/sign-up'
     | '/app/'
     | '/app/community/electricity-markets'
     | '/app/community/leaderboards'
@@ -443,11 +419,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AppChangelogRoute: typeof AppChangelogRoute
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
-  AppLoginRoute: typeof AppLoginRoute
   AppLogoutRoute: typeof AppLogoutRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSettleRoute: typeof AppSettleRoute
-  AppSignUpRoute: typeof AppSignUpRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCommunityElectricityMarketsRoute: typeof AppCommunityElectricityMarketsRoute
   AppCommunityLeaderboardsRoute: typeof AppCommunityLeaderboardsRoute
@@ -485,13 +459,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/sign-up': {
-      id: '/app/sign-up'
-      path: '/app/sign-up'
-      fullPath: '/app/sign-up'
-      preLoaderRoute: typeof AppSignUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app/settle': {
       id: '/app/settle'
       path: '/app/settle'
@@ -511,13 +478,6 @@ declare module '@tanstack/react-router' {
       path: '/app/logout'
       fullPath: '/app/logout'
       preLoaderRoute: typeof AppLogoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app/login': {
-      id: '/app/login'
-      path: '/app/login'
-      fullPath: '/app/login'
-      preLoaderRoute: typeof AppLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/dashboard': {
@@ -734,11 +694,9 @@ const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AppChangelogRoute: AppChangelogRoute,
   AppDashboardRoute: AppDashboardRouteWithChildren,
-  AppLoginRoute: AppLoginRoute,
   AppLogoutRoute: AppLogoutRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSettleRoute: AppSettleRoute,
-  AppSignUpRoute: AppSignUpRoute,
   AppIndexRoute: AppIndexRoute,
   AppCommunityElectricityMarketsRoute: AppCommunityElectricityMarketsRoute,
   AppCommunityLeaderboardsRoute: AppCommunityLeaderboardsRoute,

@@ -33,45 +33,76 @@ export type InstancesManifest = {
  */
 const APEX_DOMAIN = import.meta.env.VITE_APEX_DOMAIN;
 
+const LOBBY_SUBDOMAIN = "lobby.";
+
 /**
- * A path on a given instance's app, as an absolute cross-origin URL.
- *
- * Once the landing is served from the apex domain, each instance lives on its
- * own subdomain, so links from the landing into an instance are absolute. In
- * the interim the landing shares an origin with the (single) app, so a
- * same-origin relative link is correct.
- *
- * @param path Absolute app path, e.g. `/app/login` or `/app/sign-up`.
+ * The slug shape the infra enforces at provision time (setup-instance.sh):
+ * lowercase kebab-case within a DNS label's 63-char limit. Checked here too
+ * because a slug becomes a _hostname_ — a dotted, spaced, or overlong slug must
+ * never produce a URL whose host is something other than a valid
+ * `{slug}.{apex}`. Mirrors `isValidRunSlug` in `lib/lobby.ts` (the two bundles
+ * derive the apex differently — build-time env here vs. hostname there — so the
+ * guard is copied, not shared).
  */
-export function instanceAppHref(
-    instance: InstanceFragment,
-    path: string,
-): string {
+const RUN_SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+
+/** Whether `slug` is safe to use as a run's subdomain label. */
+export function isValidRunSlug(slug: string): boolean {
+    return RUN_SLUG_PATTERN.test(slug);
+}
+
+/**
+ * A run's app entry point, as an absolute cross-origin URL
+ * (`https://{slug}.{apex}/app`). Used by the in-run switcher to hop between the
+ * account's runs. A slug that is not a valid DNS label, or a missing apex
+ * (local dev / interim), falls back to a relative `/app`: a dead same-origin
+ * link beats a cross-origin URL pointing at a host we did not intend.
+ */
+export function runAppHref(slug: string): string {
+    if (!APEX_DOMAIN || !isValidRunSlug(slug)) return "/app";
+    return `https://${slug}.${APEX_DOMAIN}/app`;
+}
+
+/**
+ * A path on the lobby app as an absolute cross-origin URL
+ * (`https://lobby.{apex}{path}`). The lobby owns login/signup/logout and the
+ * picker (ADR-0002/0003), so every "log in", "play", and "open lobby" link
+ * resolves here. Falls back to the relative path with no apex (local dev),
+ * which does not resolve without the extended local lobby harness — an accepted
+ * dev-only dead link, like {@link landingHref}.
+ *
+ * @param path Absolute lobby path, e.g. `/login`, `/signup`, `/logout`, `/`.
+ */
+export function lobbyHref(path: string): string {
     if (!APEX_DOMAIN) return path;
-    return `https://${instance.slug}.${APEX_DOMAIN}${path}`;
-}
-
-/** Where the signup CTA for a given instance points. */
-export function instanceSignupHref(instance: InstanceFragment): string {
-    return instanceAppHref(instance, "/app/sign-up");
+    return `https://${LOBBY_SUBDOMAIN}${APEX_DOMAIN}${path}`;
 }
 
 /**
- * Target for the landing's global app CTAs ("Play now", "Log In") — the most
- * recent advertised instance.
- *
- * `instances` is the advertised list, already sorted most-recent-first, so the
- * first entry is the current run. When the list is empty (no manifest yet, or
- * no advertised run) this falls back to the same-origin relative path: correct
- * in dev / the interim, and on the apex it 404s until a run is advertised — an
- * accepted transitory state handled by the instance-picker work (#810).
+ * This run's own slug, parsed from the hostname (`{slug}.{apex}`). `null` in
+ * dev / the interim, or when the host is not a single valid label under the
+ * apex.
  */
-export function primaryInstanceAppHref(
-    instances: InstanceFragment[],
-    path: string,
-): string {
-    const latest = instances[0];
-    return latest ? instanceAppHref(latest, path) : path;
+export function currentRunSlug(): string | null {
+    if (!APEX_DOMAIN) return null;
+    const suffix = `.${APEX_DOMAIN}`;
+    const { hostname } = window.location;
+    if (!hostname.endsWith(suffix)) return null;
+    const label = hostname.slice(0, -suffix.length);
+    return isValidRunSlug(label) ? label : null;
+}
+
+/**
+ * Where an unauthenticated player is sent: the lobby login, carrying
+ * `?return={thisRunSlug}` so the lobby bounces back into this run after login
+ * (the return value is re-validated against the live run list lobby-side, so an
+ * absent/invalid slug simply omits it).
+ */
+export function lobbyLoginHref(): string {
+    const slug = currentRunSlug();
+    return slug
+        ? lobbyHref(`/login?return=${encodeURIComponent(slug)}`)
+        : lobbyHref("/login");
 }
 
 /**
@@ -80,8 +111,8 @@ export function primaryInstanceAppHref(
  * The landing is served by Apache from the apex domain; an instance lives on a
  * subdomain, so from inside the app these are cross-origin links — a plain `<a
  * href>`, never a TanStack route (the landing routes don't exist in the app
- * bundle). Mirrors {@link instanceSignupHref} in the opposite direction:
- * absolute to the apex in production.
+ * bundle). Absolute to the apex in production, like {@link lobbyHref} and
+ * {@link runAppHref}.
  *
  * When no apex is configured (local `bun run dev`) it falls back to a relative
  * path. The landing routes live in the separate landing bundle (served by `bun

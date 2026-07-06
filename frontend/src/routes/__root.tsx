@@ -10,25 +10,25 @@ import { useEffect } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
+import { lobbyLoginHref } from "@/lib/instances";
 import type { ApiSchema } from "@/types/api-helpers";
 import type { PlayerCapabilities } from "@/types/capabilities";
 
 type User = ApiSchema<"UserOut">;
 
 /**
- * Determines the redirect target for the current route config.
+ * Determines the in-app redirect target for the current route config.
  *
- * Called only when auth and capabilities are fully loaded. Returns null if the
- * current route is accessible, or a path string if a redirect is required.
+ * Called only when auth + capabilities are loaded AND the user is authenticated
+ * (the unauthenticated case is a cross-origin redirect to the lobby, handled in
+ * the component). Returns null if the route is accessible, or an in-app path.
  */
 function computeRedirect(
     routeConfig: StaticDataRouteOption["routeConfig"],
-    user: User | null,
-    isAuthenticated: boolean,
+    user: User,
     capabilities: PlayerCapabilities | null,
 ): string | null {
     if (!routeConfig || routeConfig.requiredRole === null) return null;
-    if (!isAuthenticated || !user) return "/app/login";
     if (routeConfig.requiredRole !== user.role) return "/app/logout";
 
     const requiredRole = routeConfig.requiredRole;
@@ -71,15 +71,26 @@ function RootComponent() {
     const staticData = matches[matches.length - 1]?.staticData;
     const routeConfig = staticData?.routeConfig;
 
-    // Only compute redirect once auth and capabilities are resolved.
+    // Redirects are only decided once auth and capabilities are resolved.
+    const authResolved = !isLoading && capabilities !== undefined;
+    const routeNeedsAuth = !!routeConfig && routeConfig.requiredRole !== null;
+    // A protected route with no session sends the player to the lobby to sign in — a full-page,
+    // cross-origin redirect to lobby.{apex}, not an in-app navigate (the instance owns no login
+    // page after the cutover, ADR-0002/0003).
+    const mustLogIn =
+        authResolved && routeNeedsAuth && (!isAuthenticated || !user);
     const redirectTo =
-        !isLoading && capabilities !== undefined
-            ? computeRedirect(routeConfig, user, isAuthenticated, capabilities)
+        authResolved && isAuthenticated && user
+            ? computeRedirect(routeConfig, user, capabilities)
             : null;
 
     useEffect(() => {
+        if (mustLogIn) {
+            window.location.assign(lobbyLoginHref());
+            return;
+        }
         if (redirectTo) void navigate({ to: redirectTo });
-    }, [redirectTo, navigate]);
+    }, [mustLogIn, redirectTo, navigate]);
 
     // While auth or capabilities are still resolving, show a centred spinner rather than
     // leaking debug placeholders to users (these returns previously rendered raw strings).
@@ -92,7 +103,7 @@ function RootComponent() {
     }
     if (staticData === undefined) return "Unknown page";
     // Block rendering until the redirect from the effect fires.
-    if (redirectTo) return null;
+    if (mustLogIn || redirectTo) return null;
 
     return <Outlet />;
 }

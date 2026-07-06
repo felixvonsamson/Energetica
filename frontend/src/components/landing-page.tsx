@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { AdvertisedRuns } from "@/components/advertised-runs";
 import { HomeLayout } from "@/components/home-layout";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -21,8 +20,7 @@ import {
     TypographyLead,
     TypographyP,
 } from "@/components/ui/typography";
-import { useAdvertisedInstances } from "@/hooks/use-instances";
-import { primaryInstanceAppHref } from "@/lib/instances";
+import { lobbyHref } from "@/lib/instances";
 
 type ImageTile =
     | { type: "real"; src: string; alt: string; shadow?: boolean }
@@ -206,7 +204,6 @@ function ImageTileComponent({ image }: { image: ImageTile }) {
 }
 
 export function LandingPage() {
-    const { instances } = useAdvertisedInstances();
     return (
         <HomeLayout>
             <div className="flex flex-col gap-20 px-6 lg:px-8">
@@ -247,12 +244,10 @@ export function LandingPage() {
 
                     {/* CTAs */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Cross-bundle: see note in components/header.tsx. */}
+                        {/* Cross-bundle: see note in components/header.tsx. The lobby
+                            picker is where a player logs in and chooses a run. */}
                         <a
-                            href={primaryInstanceAppHref(
-                                instances,
-                                "/app/login",
-                            )}
+                            href={lobbyHref("/")}
                             className="md:col-span-2 bg-primary text-primary-foreground p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-primary/90 hover:shadow-xl active:scale-[0.99] transition-all"
                         >
                             <p className="text-xl font-semibold">Play now</p>
@@ -267,9 +262,6 @@ export function LandingPage() {
                         </Link>
                     </div>
                 </section>
-
-                {/* Advertised runs — rendered only once a manifest is served (see AdvertisedRuns). */}
-                <AdvertisedRuns />
 
                 {/* Game element cards — one image per card, alternating layout */}
                 <section className="max-w-6xl mx-auto w-full flex flex-col gap-8">
@@ -315,12 +307,10 @@ export function LandingPage() {
                 {/* Bottom CTAs */}
                 <section className="max-w-6xl mx-auto w-full">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Cross-bundle: see note in components/header.tsx. */}
+                        {/* Cross-bundle: see note in components/header.tsx. The lobby
+                            picker is where a player logs in and chooses a run. */}
                         <a
-                            href={primaryInstanceAppHref(
-                                instances,
-                                "/app/login",
-                            )}
+                            href={lobbyHref("/")}
                             className="md:col-span-2 bg-primary text-primary-foreground p-4 rounded-4xl flex flex-row justify-center items-center shadow-md hover:bg-primary/90 hover:shadow-xl active:scale-[0.99] transition-all"
                         >
                             <p className="text-xl font-semibold">Play now</p>
