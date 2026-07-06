@@ -105,6 +105,16 @@ else
     log_success "venv at $APP_DIR/.venv"
 fi
 
+# Importing the `energetica` package instantiates a dormant GameEngine (energetica/__init__.py),
+# whose constructor does `Path("instance").mkdir(exist_ok=True)` relative to the service's
+# WorkingDirectory. The lobby never uses game state, but the mkdir runs anyway — and the code dir
+# is deploy-owned (2750), so the energetica service user cannot create it and the unit crash-loops
+# on startup. Pre-create an energetica-owned instance/ subdir (mirrors setup-instance.sh) so the
+# mkdir is a harmless no-op. deploy-lobby.sh excludes instance/ from its rsync, so it survives
+# deploys. Remove once the dormant engine object is severed from the identity layer.
+install -d -o energetica -g energetica -m 0750 "$APP_DIR/instance"
+log_success "$APP_DIR/instance (writable by the service user)"
+
 # --- Deploy-precondition sudo grant ------------------------------------------------
 log_section "DEPLOY SUDOERS"
 # deploy-lobby.sh hard-refuses to deploy while Phase A's instance_membership backfill has

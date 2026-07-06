@@ -9,6 +9,7 @@ __pycache__
 energetica/static/app/*
 frontend/dist-landing/*
 frontend/dist-lobby/*
+frontend/public/instances.json
 energetica/static/service-worker.js
 scripts/openapi-schema.json
 admin_accounts.txt
