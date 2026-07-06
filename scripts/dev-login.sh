@@ -17,9 +17,13 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COOKIE_JAR="${COOKIE_JAR:-$REPO_ROOT/.energetica-dev/cookies.txt}"
 
 mkdir -p "$(dirname "$COOKIE_JAR")"
+# Build the JSON body with json.dumps so a username/password containing quotes, backslashes, etc.
+# is escaped correctly rather than producing malformed JSON.
+json_body="$(USERNAME="$USERNAME" PASSWORD="$PASSWORD" "$REPO_ROOT/.venv/bin/python" -c \
+    'import json, os; print(json.dumps({"username": os.environ["USERNAME"], "password": os.environ["PASSWORD"]}))')"
 curl -fsS -c "$COOKIE_JAR" -X POST "$LOBBY_URL/api/v1/auth/login" \
     -H 'Content-Type: application/json' \
-    -d "{\"username\":\"$USERNAME\",\"password\":\"$PASSWORD\"}" >/dev/null
+    -d "$json_body" >/dev/null
 
 echo "→ session for '$USERNAME' saved to $COOKIE_JAR"
 echo "  try:  curl -b \"$COOKIE_JAR\" http://localhost:8000/api/v1/auth/me"

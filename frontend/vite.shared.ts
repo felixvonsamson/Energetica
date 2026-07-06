@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 import { loadEnv, type ProxyOptions } from "vite";
 
 /**
@@ -17,7 +20,29 @@ export const DEV_PORTS = { app: 5173, lobby: 5174, landing: 5175 } as const;
  * a static `vite`/`vite --config …` and the selector is uniform across them.
  */
 export function loadDeploymentEnv(mode: string): Record<string, string> {
-    const deployment = process.env.BACKEND;
+    const deployment = process.env.BACKEND || undefined;
+    // A misspelled or unsupported BACKEND would otherwise load no deployment file, leave
+    // VITE_APEX_DOMAIN unset, and silently proxy to the local backend — so a command meant to
+    // hit a live deployment would quietly exercise local data. Fail loudly instead.
+    if (
+        deployment &&
+        !fs.existsSync(path.join(process.cwd(), `.env.${deployment}`))
+    ) {
+        const available = fs
+            .readdirSync(process.cwd())
+            .filter(
+                (f) =>
+                    f.startsWith(".env.") &&
+                    !f.endsWith(".local") &&
+                    f !== ".env.example",
+            )
+            .map((f) => f.slice(".env.".length));
+        throw new Error(
+            `[vite] BACKEND="${deployment}" has no matching frontend/.env.${deployment} ` +
+                `(known: ${available.join(", ") || "none"}). Unset BACKEND for the local ` +
+                `backend, or set VITE_BACKEND_URL to target a specific URL.`,
+        );
+    }
     return loadEnv(deployment ?? mode, process.cwd(), "");
 }
 
