@@ -1,11 +1,11 @@
-import { Info, AlertTriangle, XCircle } from "lucide-react";
+import { Info, AlertTriangle, XCircle, CheckCircle } from "lucide-react";
 import { type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
 interface InfoBannerProps {
     children: ReactNode;
-    variant?: "info" | "warning" | "error";
+    variant?: "info" | "warning" | "error" | "success";
     className?: string;
 }
 
@@ -33,6 +33,12 @@ export function InfoBanner({
             icon: "text-destructive",
             text: "text-destructive",
             IconComponent: XCircle,
+        },
+        success: {
+            container: "bg-success/10 border-success",
+            icon: "text-success",
+            text: "text-success",
+            IconComponent: CheckCircle,
         },
     };
 
