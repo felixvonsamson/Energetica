@@ -1,0 +1,39 @@
+# systemd unit template for the lobby service (server-wide SSO + instance picker).
+#
+# Rendered by scripts/infra/setup-lobby.sh into /etc/systemd/system/energetica-lobby.service,
+# substituting @DOMAIN@ and @PORT@.
+#
+# The Environment= lines are load-bearing — they are the contract between the deployment
+# and lobby/config.py + energetica/{utils/session.py,accounts/db.py,instance_config.py,
+# server_config.py}:
+#   * ENERGETICA_APEX_DOMAIN is MANDATORY in production. Without it the session cookie
+#     falls back to host-only scope (lobby.{apex} only) and never reaches the run
+#     subdomains — SSO silently doesn't happen (ADR-0002).
+#   * The others match the code defaults, but are set explicitly so the unit is the
+#     single source of truth for where the lobby reads shared state.
+# See docs/architecture/lobby.md § The lobby service.
+
+[Unit]
+Description=Energetica lobby service (server-wide SSO + picker)
+After=network.target
+
+[Service]
+Type=simple
+# Runs as the shared service user so it can read the server-wide accounts.db and
+# secret_key.txt in /var/lib/energetica (group-scoped, no world access).
+User=energetica
+Group=energetica
+WorkingDirectory=/var/www/energetica-lobby
+
+Environment=ENERGETICA_APEX_DOMAIN=@DOMAIN@
+Environment=ENERGETICA_SHARED_SECRET_PATH=/var/lib/energetica/secret_key.txt
+Environment=ENERGETICA_ACCOUNTS_DB_PATH=/var/lib/energetica/accounts.db
+Environment=ENERGETICA_LANDING_DIR=/var/www/energetica-landing
+Environment=ENERGETICA_SERVER_CONFIG_PATH=/etc/energetica/server.json
+
+ExecStart=/var/www/energetica-lobby/.venv/bin/python main_lobby.py --port @PORT@
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -47,8 +47,8 @@ log_info()    { echo -e "${BLUE}ℹ $1${NC}"; }
 
 # Validate the slug here too: it is interpolated into remote paths and `systemctl`
 # commands, so a malformed value would target the wrong path or split the remote command.
-if ! [[ "$INSTANCE" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]] || [ "$INSTANCE" = "landing" ]; then
-    log_error "Invalid instance slug: '$INSTANCE' (lowercase kebab-case, not 'landing')"
+if ! [[ "$INSTANCE" =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]] || [ "$INSTANCE" = "landing" ] || [ "$INSTANCE" = "lobby" ]; then
+    log_error "Invalid instance slug: '$INSTANCE' (lowercase kebab-case, not 'landing'/'lobby')"
     exit 1
 fi
 

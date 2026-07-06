@@ -136,6 +136,29 @@ log_success "/var/lib/energetica (2770 energetica:energetica)"
 install -d -o root -g energetica -m 0750 /etc/energetica
 log_success "/etc/energetica (0750 root:energetica)"
 
+# Server-wide cookie-signing secret (ADR-0002): minted once per server, read by the lobby
+# and — from the Phase C cutover — every instance, so a session minted by the lobby
+# validates everywhere. root:energetica 0640 → services read via group, only an admin
+# rotates it. Never overwritten on re-run (rotating it invalidates every live session).
+if [ -s /var/lib/energetica/secret_key.txt ]; then
+    log_success "Shared secret already exists — leaving it untouched"
+else
+    (umask 037; python3 -c 'import secrets; print(secrets.token_hex(32))' > /var/lib/energetica/secret_key.txt)
+    chown root:energetica /var/lib/energetica/secret_key.txt
+    log_success "/var/lib/energetica/secret_key.txt (0640 root:energetica)"
+fi
+
+# Server-wide config: the lobby's signup toggle (energetica/server_config.py — reads fresh
+# per request, fails closed when missing/malformed). Admin-edited like instance.json.
+if [ -f /etc/energetica/server.json ]; then
+    log_success "/etc/energetica/server.json already exists — leaving admin's copy untouched"
+else
+    echo '{"signups_enabled": true}' > /etc/energetica/server.json
+    chown root:energetica /etc/energetica/server.json
+    chmod 0640 /etc/energetica/server.json
+    log_success "/etc/energetica/server.json (signups_enabled=true, 0640 root:energetica)"
+fi
+
 # --- Certbot Apache-reload hook (shared by landing + every instance) -----------
 log_section "CERTBOT RENEWAL HOOK"
 install -d /etc/letsencrypt/renewal-hooks/deploy
