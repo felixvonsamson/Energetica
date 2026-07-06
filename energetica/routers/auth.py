@@ -66,13 +66,19 @@ def resolve_entry_user(request: Request) -> User:
 
     _enforce_instance_access(account.username)
 
-    user = next(User.filter_by(account_id=account.account_id), None)
-    if user is None:
-        # First authenticated visit to this instance: provision a pickle User for the server-wide
-        # account. The signed session already proves the credential; the access policy above proves
-        # admission. Player creation still happens at the settle page.
-        user = User(username=account.username, pwhash=account.pwhash, role="player", account_id=account.account_id)
-        engine.log(f"{account.username} auto-provisioned on this instance from server-wide account")
+    # Find-or-create under the engine lock. Unlike the retired /login POST (which the request
+    # middleware ran under engine.lock), /auth/me is a GET the SPA fires on every load — and GET
+    # and /auth/* requests deliberately bypass that middleware lock. Two first-visit tabs could
+    # otherwise both pass the `user is None` check and create duplicate User rows for one account.
+    # engine.lock is an RLock and this path does not already hold it, so acquiring it here is safe.
+    with engine.lock:
+        user = next(User.filter_by(account_id=account.account_id), None)
+        if user is None:
+            # First authenticated visit to this instance: provision a pickle User for the
+            # server-wide account. The signed session already proves the credential; the access
+            # policy above proves admission. Player creation still happens at the settle page.
+            user = User(username=account.username, pwhash=account.pwhash, role="player", account_id=account.account_id)
+            engine.log(f"{account.username} auto-provisioned on this instance from server-wide account")
     return user
 
 

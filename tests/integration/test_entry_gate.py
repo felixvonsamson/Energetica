@@ -77,3 +77,21 @@ def test_entry_gate_is_idempotent_and_does_not_duplicate_the_user() -> None:
     assert client.get(ME_URL).status_code == 200
 
     assert len(list(User.filter_by(account_id=account_id))) == 1
+
+
+def test_entry_gate_concurrent_first_visits_provision_exactly_one_user() -> None:
+    """Two tabs opening at once both fire GET /auth/me for a brand-new account. The find-or-create
+    is serialized under the engine lock, so the concurrent first visits must resolve to a single
+    User row, not duplicates (the race the entry gate would have without the lock).
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    client = _client()
+    account_id = make_account("visitor")
+    authenticate(client, account_id)
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        statuses = list(pool.map(lambda _: client.get(ME_URL).status_code, range(8)))
+
+    assert statuses == [200] * 8
+    assert len(list(User.filter_by(account_id=account_id))) == 1

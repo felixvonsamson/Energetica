@@ -6,8 +6,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { authApi } from "@/lib/api/auth";
-import { lobbyApi, type MyRunsResponse } from "@/lib/api/lobby";
+import { lobbyApi, lobbyAuthApi, type MyRunsResponse } from "@/lib/api/lobby";
 import { ApiClientError } from "@/lib/api-client";
 import { fetchInstances, type InstanceFragment } from "@/lib/instances";
 import type { LoginRequest, SignupRequest } from "@/types/auth";
@@ -50,8 +49,7 @@ export function useMyRuns() {
 /**
  * The public instance manifest (`/instances.json`), Apache-aliased onto the
  * lobby origin from the shared landing dir. Errors degrade silently to an empty
- * list, mirroring the landing's `useAdvertisedInstances` — in dev there is no
- * manifest and the picker simply shows no open runs.
+ * list — in dev there is no manifest and the picker simply shows no open runs.
  */
 export function useInstancesManifest() {
     return useQuery<InstanceFragment[]>({
@@ -65,7 +63,8 @@ export function useLobbyLogin() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (credentials: LoginRequest) => authApi.login(credentials),
+        mutationFn: (credentials: LoginRequest) =>
+            lobbyAuthApi.login(credentials),
         // Returned (not just fired) so mutateAsync resolves only after the
         // refetch: the forms navigate to the picker right after awaiting the
         // mutation, and a stale null (the pre-login 401 probe) would flash
@@ -80,7 +79,7 @@ export function useLobbySignup() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: SignupRequest) => authApi.signup(data),
+        mutationFn: (data: SignupRequest) => lobbyAuthApi.signup(data),
         // Returned for the same navigate-after-await reason as useLobbyLogin.
         onSuccess: () =>
             queryClient.invalidateQueries({ queryKey: lobbyQueryKeys.myRuns }),
@@ -94,7 +93,7 @@ export function useLobbyLogout() {
     return useMutation({
         mutationFn: async () => {
             try {
-                await authApi.logout();
+                await lobbyAuthApi.logout();
             } catch (error) {
                 // The lobby's logout route itself requires auth, so a session
                 // that already expired (or was cleared by another tab) answers
@@ -109,8 +108,7 @@ export function useLobbyLogout() {
         },
         onSuccess: () => {
             // Mark as logged out directly instead of invalidating: a refetch
-            // would race the cookie deletion (same reasoning as the game's
-            // useLogout in use-auth-queries.ts).
+            // would race the cookie deletion.
             queryClient.setQueryData(lobbyQueryKeys.myRuns, null);
         },
     });
