@@ -127,15 +127,17 @@ log_success "Backend synced"
 
 # --- 5. rsync lobby bundle (hashed assets need pruning → --delete) ------------------
 log_step "Syncing lobby bundle..."
-# --chmod: Apache reads the bundle via the energetica group (the tree is 2750
-# deploy:energetica), and `rsync -a` would otherwise preserve local build permissions —
-# a restrictive local umask would ship files www-data cannot read (SPA 403s after an
-# apparently successful deploy). rsync's --chmod would do this in one shot, but macOS ships
-# openrsync, which rejects it ("--chmod: invalid argument"), so normalise perms on the server
-# instead: dirs 755, files 644 (u=rwX gives dirs +x, files stay non-exec). World bits are moot —
+# Apache reads the bundle via the energetica group (the tree is 2750 deploy:energetica), and
+# `rsync -a` preserves permissions — a restrictive local umask would otherwise ship files
+# www-data cannot read (SPA 403s after an apparently successful deploy). rsync's --chmod would
+# fix perms during transfer, but macOS ships openrsync, which rejects it ("--chmod: invalid
+# argument"). So normalise the *local* bundle first and let `rsync -a` carry those perms across
+# in a single pass: dirs 755, files 644 (u=rwX gives dirs +x, files stay non-exec). Doing it
+# locally rather than as a second server-side chmod keeps the transfer atomic — there is no
+# window where Apache serves a just-rsynced file with the wrong perms. World bits are moot —
 # others cannot traverse the root.
+chmod -R u=rwX,g=rX,o=rX ./frontend/dist-lobby
 rsync -az --delete ./frontend/dist-lobby/ "$SSH:$REMOTE_PATH/dist-lobby/" >/dev/null
-ssh "$SSH" "chmod -R u=rwX,g=rX,o=rX '$REMOTE_PATH/dist-lobby'"
 log_success "Lobby bundle synced"
 
 # --- 6. Install deps into the server venv -------------------------------------------

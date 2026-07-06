@@ -37,8 +37,11 @@ export ENERGETICA_SHARED_SECRET_PATH="$SCRATCH/secret_key.txt"
 
 mkdir -p "$LANDING_DIR/instances"
 
-# Server-wide signup toggle: on, so the signup flow is testable.
-echo '{"signups_enabled": true}' > "$SCRATCH/server.json"
+# Server-wide signup toggle: on, so the signup flow is testable. Only written on first run —
+# edit the file directly to test the signups-disabled flow without it being clobbered.
+if [ ! -f "$SCRATCH/server.json" ]; then
+    echo '{"signups_enabled": true}' > "$SCRATCH/server.json"
+fi
 
 # Stable signing secret so sessions survive a backend restart.
 if [ ! -s "$SCRATCH/secret_key.txt" ]; then
