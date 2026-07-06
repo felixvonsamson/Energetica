@@ -74,20 +74,48 @@ export function runAppHref(slug: string): string {
 }
 
 /**
+ * Origin of the lobby that matches the backend this app is actually talking to,
+ * or `null` when it can't be determined (a non-dev build with no apex).
+ *
+ * Resolution mirrors the dev server's backend precedence (`vite.shared.ts` /
+ * `vite.config.ts`): a build-time apex wins; else, in dev, derive it from the
+ * proxy's backend — a live instance is `{slug}.{apex}` whose lobby is
+ * `lobby.{apex}`, so a `VITE_BACKEND_URL` pointed at a live instance routes the
+ * bounce to that deployment's lobby; a local (or unset) backend uses the local
+ * lobby dev server. This keeps "log in" pointed at the same deployment the app
+ * is testing rather than always the local lobby.
+ */
+function lobbyBaseUrl(): string | null {
+    if (APEX_DOMAIN) return `https://${LOBBY_SUBDOMAIN}${APEX_DOMAIN}`;
+    if (!import.meta.env.DEV) return null;
+    const backend = import.meta.env.VITE_BACKEND_URL;
+    if (backend) {
+        try {
+            const { protocol, hostname } = new URL(backend);
+            if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+                const apex = hostname.split(".").slice(1).join(".");
+                if (apex) return `${protocol}//${LOBBY_SUBDOMAIN}${apex}`;
+            }
+        } catch {
+            // Unparseable URL → fall through to the local lobby dev server.
+        }
+    }
+    return LOBBY_DEV_URL;
+}
+
+/**
  * A path on the lobby app as an absolute cross-origin URL
  * (`https://lobby.{apex}{path}`). The lobby owns login/signup/logout and the
  * picker (ADR-0002/0003), so every "log in", "play", and "open lobby" link
- * resolves here. With no apex configured, in dev this points at the local lobby
- * dev server ({@link LOBBY_DEV_URL}) so the bounce is clickable when running the
- * full local stack; in a non-dev build with no apex it degrades to the relative
+ * resolves here. In dev the origin follows the backend the proxy targets (see
+ * {@link lobbyBaseUrl}); a non-dev build with no apex degrades to the relative
  * path.
  *
  * @param path Absolute lobby path, e.g. `/login`, `/signup`, `/logout`, `/`.
  */
 export function lobbyHref(path: string): string {
-    if (APEX_DOMAIN) return `https://${LOBBY_SUBDOMAIN}${APEX_DOMAIN}${path}`;
-    if (import.meta.env.DEV) return `${LOBBY_DEV_URL}${path}`;
-    return path;
+    const base = lobbyBaseUrl();
+    return base ? `${base}${path}` : path;
 }
 
 /**
