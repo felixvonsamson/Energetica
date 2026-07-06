@@ -10,9 +10,9 @@ from here, so this module must stay a leaf (see ADR-0002, lobby Phase B).
 request dependencies (``get_user`` & friends); game-side callers keep importing from ``auth`` and
 see no change.
 
-The cookie payload is a bare *identity string* chosen by the caller — the game side signs a
-``username`` (pre-cutover), the lobby signs a ``str(account_id)``. This module neither knows nor
-cares which; interpretation happens where the token is decoded.
+The cookie payload is the immutable ``str(account_id)`` (ADR-0002 amendment): the lobby mints it
+and every instance validates it with the shared secret and resolves it against its local ``User``.
+This module signs/decodes the bare string; interpretation happens where the token is decoded.
 """
 
 from __future__ import annotations
@@ -68,6 +68,15 @@ def _read_nonempty_secret(path: str) -> str:
 SECRET_KEY = get_or_create_secret_key()
 serializer = URLSafeTimedSerializer(SECRET_KEY)
 
+# The single-sign-on session cookie is deliberately **not** named ``session``. Pre-cutover the
+# instance minted a host-only ``session`` cookie signed with its per-instance secret; those legacy
+# cookies linger in browsers for the cookie's whole ``max_age`` (60 days). Naming the shared SSO
+# cookie distinctly means the post-cutover instance reads only this name and can never confuse a
+# stale host-only ``session`` (which would fail to validate against the shared secret) with the
+# valid ``.{apex}`` SSO cookie — RFC 6265 does not define which wins when two same-named cookies
+# match a request, so a shared name risks a redirect loop for returning players (#817, ADR-0002).
+SESSION_COOKIE_NAME = "energetica_session"
+
 
 def generate_password_hash(password: str) -> str:
     salt = bcrypt.gensalt()
@@ -85,8 +94,8 @@ COOKIE_MAX_AGE = int(timedelta(days=60).total_seconds())  # NOTE: could be a com
 def decode_session_token(token: str) -> str | None:
     """Return the identity string a valid, unexpired session token carries, else ``None``.
 
-    Callers interpret the returned string themselves (``username`` game-side today,
-    ``str(account_id)`` lobby-side). Any tampering, bad signature, or expiry reads as ``None``.
+    The payload is a ``str(account_id)`` both lobby- and (post-cutover) instance-side. Any
+    tampering, bad signature, or expiry reads as ``None``.
     """
     try:
         return serializer.loads(token, max_age=COOKIE_MAX_AGE)
@@ -94,13 +103,29 @@ def decode_session_token(token: str) -> str | None:
         return None
 
 
+def account_id_from_token(token: str) -> int | None:
+    """The ``account_id`` a valid session token carries, or ``None`` if absent/invalid.
+
+    A tampered, expired, or non-integer payload reads as ``None`` (never raises). Shared by the
+    instance (``get_user_from_token``) and the lobby (``account_id_from_request``) so both decode
+    the cookie identically (ADR-0002 amendment: the payload is the immutable ``account_id``).
+    """
+    payload = decode_session_token(token)
+    if payload is None:
+        return None
+    try:
+        return int(payload)
+    except ValueError:
+        return None
+
+
 def add_session_cookie_to_response(
     response: Response, identity: str, request: Request, *, domain: str | None = None
 ) -> Response:
-    """Sign ``identity`` into the ``session`` cookie on ``response``.
+    """Sign ``identity`` into the SSO session cookie on ``response``.
 
-    ``identity`` is whatever the caller wants the session to carry (a ``username`` or a
-    ``str(account_id)``). ``Secure`` is set when the reverse proxy reports HTTPS. ``domain`` scopes
+    ``identity`` is the ``str(account_id)`` the session carries. ``Secure`` is set when the reverse
+    proxy reports HTTPS. ``domain`` scopes
     the cookie: the instance leaves it ``None`` (host-only), the lobby passes ``.{apex}`` so one
     session spans every run subdomain (ADR-0002).
     """
@@ -108,7 +133,7 @@ def add_session_cookie_to_response(
     # Check if behind reverse proxy with HTTPS
     is_https = request.headers.get("X-Forwarded-Proto") == "https"
     response.set_cookie(
-        key="session",
+        key=SESSION_COOKIE_NAME,
         value=token,
         httponly=True,
         secure=is_https,
@@ -122,7 +147,7 @@ def add_session_cookie_to_response(
 def add_session_cookie_to_session(session: requests.Session, identity: str) -> requests.Session:
     token = serializer.dumps(identity)
     session.cookies.set(
-        name="session",
+        name=SESSION_COOKIE_NAME,
         value=token,
         path="/",
         secure=False,

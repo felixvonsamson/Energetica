@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from energetica import technology_effects
 from energetica.database import DBModel
 from energetica.enums import FunctionalFacilityType, ProjectStatus, ProjectType, TechnologyType, WorkerType
 from energetica.globals import engine
@@ -37,6 +36,12 @@ class OngoingProject(DBModel):
 
     def __post_init__(self) -> None:
         """Post initialization function."""
+        # Imported lazily to break the technology_effects <-> ongoing_project import cycle:
+        # technology_effects imports OngoingProject at module top, so a top-level import here
+        # deadlocks whichever module is loaded first (surfaces as a collection-order-dependent
+        # ImportError in the test suite). Both sides only need the other at call time.
+        from energetica import technology_effects
+
         self.multipliers = technology_effects.current_multipliers(
             self.player,
             self.project_type,

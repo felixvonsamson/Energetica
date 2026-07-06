@@ -1,6 +1,6 @@
 # Design: Lobby — server-wide SSO & instance picker
 
-**Status:** Proposed (design agreed; not yet implemented)
+**Status:** Accepted — Phases A/B live in production; Phase C (cutover) implemented (#817)
 **Part of:** #603 (sustainable gameplay / replay-ability)
 **Supersedes the deferred items:** RFC `static-serving-and-deployment.md` → "Instance-picker UI" and the apex-CTA zero-state work tracked in #810
 **Decisions:** ADR-0002 (session model), ADR-0003 (signup decoupling)
@@ -79,8 +79,14 @@ The apex landing stays **pure-static** marketing; its CTAs link to the lobby.
 
 Single-sign-on via a **server-wide shared signing secret** + a **parent-domain session
 cookie** (`domain=.{apex}`). The lobby mints the cookie on login; every instance validates
-it with the shared secret. The session payload remains the (server-wide-unique) username,
-so each instance resolves it against its own local `User`.
+it with the shared secret. The session payload is the immutable **`account_id`** (ADR-0002
+amendment), so each instance resolves it against its own local `User` by `account_id`.
+
+The SSO cookie is named **`energetica_session`**, deliberately *not* `session`: pre-cutover
+instances minted a host-only `session` cookie that lingers in browsers for the cookie's whole
+`max_age`, and RFC 6265 leaves undefined which of two same-named cookies wins on a request. A
+distinct name lets the post-cutover instance read only the shared `.{apex}` cookie and ignore
+the stale one, avoiding a redirect loop for returning players (resolves the #816 B→C wrinkle).
 
 This deliberately gives up the RFC's per-subdomain cookie isolation. The isolation-
 preserving alternative (A2, token-handoff) is deferred to #813; its only live defence today

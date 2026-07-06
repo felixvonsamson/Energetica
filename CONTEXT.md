@@ -112,9 +112,10 @@ server. Distinct from the per-run **User**/**Player** state it unlocks.
 
 ### Flagged ambiguities
 
-- **User vs Player as "membership".** A login auto-provisions a **User** on a run before
-  the player has done anything there; a **Player** exists only after **settling**. "Runs
-  I'm in" was therefore ambiguous — provisioned-but-not-settled vs actually-playing.
+- **User vs Player as "membership".** Entering a run auto-provisions a **User** (the entry
+  gate, on the first authenticated visit) before the player has done anything there; a
+  **Player** exists only after **settling**. "Runs I'm in" was therefore ambiguous —
+  provisioned-but-not-settled vs actually-playing.
   Resolved: **membership = settled (has a Player)**. The lobby's "your runs" is keyed on
   Player, recorded in an `instance_membership` table in the server-wide accounts store,
   written by the run when a Player is created. A merely-provisioned **User** (silent SSO

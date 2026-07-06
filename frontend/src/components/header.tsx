@@ -3,11 +3,9 @@ import { Link } from "@tanstack/react-router";
 import Logo from "@/assets/icon.svg?react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { TypographyBrand } from "@/components/ui/typography";
-import { useAdvertisedInstances } from "@/hooks/use-instances";
-import { primaryInstanceAppHref } from "@/lib/instances";
+import { lobbyHref } from "@/lib/instances";
 
 export function Header() {
-    const { instances } = useAdvertisedInstances();
     return (
         <header className="relative z-50">
             <nav
@@ -47,12 +45,12 @@ export function Header() {
                 </div>
                 <div className="flex flex-1 justify-end gap-3 items-center">
                     <ThemeToggle />
-                    {/* Cross-bundle navigation: landing → the current instance's
-                        app, on its own subdomain. Uses <a href> (a real
-                        cross-origin nav) so TanStack Router — which has no /app/*
+                    {/* Cross-bundle navigation: landing → the lobby, which owns
+                        login and the run picker (ADR-0002). Uses <a href> (a real
+                        cross-origin nav) so TanStack Router — which has no lobby
                         routes in the landing bundle — doesn't intercept the click. */}
                     <a
-                        href={primaryInstanceAppHref(instances, "/app/login")}
+                        href={lobbyHref("/login")}
                         className="bg-primary text-primary-foreground px-6 py-2 rounded-4xl text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all shadow-md hover:shadow-lg"
                     >
                         Log In

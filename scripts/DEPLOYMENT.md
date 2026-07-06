@@ -50,10 +50,10 @@ From your local machine:
   cross-origin links resolve), rsyncs the Python backend + bundle, reinstalls deps into the
   server venv, restarts the service, and polls `/healthz`. On restart the instance re-reads
   `instance.json` and re-publishes its landing fragment, so admin policy edits take effect.
-- `deploy-landing.sh` builds the landing bundle (also baking `VITE_APEX_DOMAIN` so the signup
-  CTA targets each instance subdomain) and rsyncs `dist-landing/`. It preserves the
-  instance-owned `instances.json` and `instances/` dir. No service restart — the landing is
-  pure static.
+- `deploy-landing.sh` builds the landing bundle (also baking `VITE_APEX_DOMAIN` so the
+  "Play now" / "Log In" CTAs target `lobby.{apex}`) and rsyncs `dist-landing/`. It preserves
+  the instance-owned `instances.json` and `instances/` dir. No service restart — the landing
+  is pure static.
 
 - `deploy-lobby.sh` builds the lobby bundle (no apex baking — the lobby derives it from
   its own hostname at runtime), rsyncs the backend + `dist-lobby/` to
@@ -76,6 +76,39 @@ the change up on the next request — no restart.
 
 All inputs also accept env vars (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_DOMAIN`), so the
 scripts run unattended from CI.
+
+## Lobby cutover (#817) — one-time forced global re-login
+
+The Phase C cutover flips instances to the server-wide SSO model (`docs/architecture/lobby.md`
+§ Phasing, ADR-0002/0003). It is a **coordinated flag day**, not a quiet deploy, because it
+**logs every player out once**:
+
+- Instances stop minting their own session and instead validate the lobby's shared-secret,
+  parent-domain cookie. On its first post-cutover restart an instance adopts the shared
+  `/var/lib/energetica/secret_key.txt`, so any session it signed with its **old per-instance**
+  secret no longer validates → those players must log in again at the lobby.
+- The SSO cookie is renamed `session` → `energetica_session`. Pre-cutover host-only `session`
+  cookies (and any Phase-B lobby `session` cookie) are simply ignored by the new code; they
+  linger harmlessly until they expire. This distinct name is deliberate — two same-named
+  cookies on a run subdomain have an RFC-6265-undefined precedence and could otherwise loop a
+  returning player between run and lobby.
+
+**Announce the re-login before deploying.** Deploy order on the flag day:
+
+1. Deploy the lobby if its code changed (`deploy-lobby.sh`) — Phase A/B preconditions already
+   hold in production.
+2. Deploy each instance (`deploy-instance.sh …`). The restart adopts the shared secret and the
+   new cookie name; the entry gate (`GET /auth/me`) now provisions the local `User` on first
+   authenticated visit, access-policy-gated. Instance login/signup/logout/change-password and
+   the legacy root `/logout` are gone — unauthenticated app hits redirect to `lobby.{apex}`.
+3. Deploy the landing (`deploy-landing.sh`) so its CTAs point at the lobby.
+4. Smoke-test SSO on prod: log in at the lobby → open a run → no re-auth → the top-right
+   switcher lists your settled runs → a private run you're not on gives a clean 403 → logout
+   from a run clears the session everywhere.
+
+Not yet migrated (tracked separately): the `players.txt` → admin-bootstrap swap and removal of
+per-instance `disable_signups` (C0); the CI raw-HTML guard (C4, ADR-0002); and a lobby
+change-password UI (the endpoint exists; the instance dialog was removed).
 
 ## SSH Configuration
 
