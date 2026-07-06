@@ -77,30 +77,36 @@ export function runAppHref(slug: string): string {
  * Origin of the lobby that matches the backend this app is actually talking to,
  * or `null` when it can't be determined (a non-dev build with no apex).
  *
- * Resolution mirrors the dev server's backend precedence (`vite.shared.ts` /
- * `vite.config.ts`): a build-time apex wins; else, in dev, derive it from the
- * proxy's backend — a live instance is `{slug}.{apex}` whose lobby is
- * `lobby.{apex}`, so a `VITE_BACKEND_URL` pointed at a live instance routes the
- * bounce to that deployment's lobby; a local (or unset) backend uses the local
- * lobby dev server. This keeps "log in" pointed at the same deployment the app
- * is testing rather than always the local lobby.
+ * Resolution mirrors the dev proxy's backend precedence exactly
+ * (`resolveBackendUrl` in `vite.config.ts`): in dev an explicit
+ * `VITE_BACKEND_URL` wins over the apex — so if `/api` is pinned to one live
+ * instance while an apex lingers in the env, the login bounce still follows the
+ * pinned instance rather than the apex's (different) lobby. A live instance is
+ * `{slug}.{apex}`, so its lobby is `lobby.{apex}`; a local (or unparseable)
+ * backend uses the local lobby dev server. Only with no `VITE_BACKEND_URL` does
+ * the apex apply — which also covers production, where `VITE_BACKEND_URL` is
+ * unset and the baked-in apex is used.
  */
 function lobbyBaseUrl(): string | null {
-    if (APEX_DOMAIN) return `https://${LOBBY_SUBDOMAIN}${APEX_DOMAIN}`;
-    if (!import.meta.env.DEV) return null;
-    const backend = import.meta.env.VITE_BACKEND_URL;
-    if (backend) {
-        try {
-            const { protocol, hostname } = new URL(backend);
-            if (hostname !== "localhost" && hostname !== "127.0.0.1") {
-                const apex = hostname.split(".").slice(1).join(".");
-                if (apex) return `${protocol}//${LOBBY_SUBDOMAIN}${apex}`;
+    // Explicit backend URL (dev only) — resolved entirely from the backend so it never mixes with
+    // a stale apex.
+    if (import.meta.env.DEV) {
+        const backend = import.meta.env.VITE_BACKEND_URL;
+        if (backend) {
+            try {
+                const { protocol, hostname } = new URL(backend);
+                if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+                    const apex = hostname.split(".").slice(1).join(".");
+                    if (apex) return `${protocol}//${LOBBY_SUBDOMAIN}${apex}`;
+                }
+            } catch {
+                // Unparseable URL → fall through to the local lobby dev server.
             }
-        } catch {
-            // Unparseable URL → fall through to the local lobby dev server.
+            return LOBBY_DEV_URL;
         }
     }
-    return LOBBY_DEV_URL;
+    if (APEX_DOMAIN) return `https://${LOBBY_SUBDOMAIN}${APEX_DOMAIN}`;
+    return import.meta.env.DEV ? LOBBY_DEV_URL : null;
 }
 
 /**
