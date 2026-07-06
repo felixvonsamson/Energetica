@@ -74,6 +74,25 @@ export function runAppHref(slug: string): string {
 }
 
 /**
+ * The apex of an instance-subdomain host (`{slug}.{apex}` → `{apex}`), or
+ * `null` if `hostname` is not one: an IP address, `localhost`, a
+ * bare/Docker/LAN name, or anything lacking a registrable domain with an
+ * alphabetic TLD. Stops a reachable non-deployment backend (e.g. `10.0.0.5`)
+ * from being turned into a bogus `lobby.{garbage}` origin.
+ */
+function instanceSubdomainApex(hostname: string): string | null {
+    const labels = hostname.split(".");
+    const tld = labels[labels.length - 1];
+    // A slug plus a registrable apex is at least three labels, and a real TLD is alphabetic —
+    // which excludes IPv4 (numeric last octet), IPv6 (bracketed/colon host), and single-label
+    // hosts like `localhost` or a Docker service name.
+    if (labels.length < 3 || tld === undefined || !/^[a-z]{2,}$/i.test(tld)) {
+        return null;
+    }
+    return labels.slice(1).join(".");
+}
+
+/**
  * Origin of the lobby that matches the backend this app is actually talking to,
  * or `null` when it can't be determined (a non-dev build with no apex).
  *
@@ -81,11 +100,13 @@ export function runAppHref(slug: string): string {
  * (`resolveBackendUrl` in `vite.config.ts`): in dev an explicit
  * `VITE_BACKEND_URL` wins over the apex — so if `/api` is pinned to one live
  * instance while an apex lingers in the env, the login bounce still follows the
- * pinned instance rather than the apex's (different) lobby. A live instance is
- * `{slug}.{apex}`, so its lobby is `lobby.{apex}`; a local (or unparseable)
- * backend uses the local lobby dev server. Only with no `VITE_BACKEND_URL` does
- * the apex apply — which also covers production, where `VITE_BACKEND_URL` is
- * unset and the baked-in apex is used.
+ * pinned instance rather than the apex's (different) lobby. `lobby.{apex}` is
+ * derived only when the pinned host is a real instance subdomain
+ * (`{slug}.{apex}`); an IP, a bare/Docker/LAN name, or any other reachable
+ * non-deployment backend uses the local lobby dev server instead of a bogus
+ * `lobby.{garbage}`. Only with no `VITE_BACKEND_URL` does the apex apply —
+ * which also covers production, where `VITE_BACKEND_URL` is unset and the
+ * baked-in apex is used.
  */
 function lobbyBaseUrl(): string | null {
     // Explicit backend URL (dev only) — resolved entirely from the backend so it never mixes with
@@ -95,10 +116,8 @@ function lobbyBaseUrl(): string | null {
         if (backend) {
             try {
                 const { protocol, hostname } = new URL(backend);
-                if (hostname !== "localhost" && hostname !== "127.0.0.1") {
-                    const apex = hostname.split(".").slice(1).join(".");
-                    if (apex) return `${protocol}//${LOBBY_SUBDOMAIN}${apex}`;
-                }
+                const apex = instanceSubdomainApex(hostname);
+                if (apex) return `${protocol}//${LOBBY_SUBDOMAIN}${apex}`;
             } catch {
                 // Unparseable URL → fall through to the local lobby dev server.
             }
