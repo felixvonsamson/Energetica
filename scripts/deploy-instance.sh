@@ -76,7 +76,7 @@ if [ "$SKIP_BUILD" = false ]; then
     # the app's "Learn more" links point back to https://$DOMAIN (the Apache landing),
     # not the instance subdomain. Without it landingHref() falls back to a same-origin
     # relative path, which 404s on the instance vhost (it only serves /app/*).
-    ( cd frontend && VITE_APEX_DOMAIN="$DOMAIN" bun run build )
+    ( cd frontend && VITE_APEX_DOMAIN="$DOMAIN" bun run build:app )
     log_success "App bundle built"
 else
     log_info "Skipping build (--skip-build)"

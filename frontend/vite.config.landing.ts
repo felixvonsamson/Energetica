@@ -10,8 +10,11 @@ import rehypeSlug from "rehype-slug";
 import svgr from "vite-plugin-svgr";
 import path from "path";
 
+import { DEV_PORTS } from "./vite.shared";
+
 export default defineConfig(() => {
     return {
+        server: { port: DEV_PORTS.landing },
         plugins: [
             // Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'
             tanstackRouter({

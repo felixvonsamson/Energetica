@@ -36,6 +36,16 @@ const APEX_DOMAIN = import.meta.env.VITE_APEX_DOMAIN;
 const LOBBY_SUBDOMAIN = "lobby.";
 
 /**
+ * Where the lobby lives in local dev, when no apex is configured. The lobby
+ * frontend runs on its own fixed Vite port (`DEV_PORTS.lobby` in
+ * `vite.shared.ts`); `VITE_LOBBY_URL` overrides for non-default setups. Lets
+ * the app bundle's "log in" bounce reach a real lobby locally instead of
+ * dead-ending on a relative path, so the full local stack (`bun run dev`) is
+ * clickable.
+ */
+const LOBBY_DEV_URL = import.meta.env.VITE_LOBBY_URL ?? "http://localhost:5174";
+
+/**
  * The slug shape the infra enforces at provision time (setup-instance.sh):
  * lowercase kebab-case within a DNS label's 63-char limit. Checked here too
  * because a slug becomes a _hostname_ — a dotted, spaced, or overlong slug must
@@ -64,18 +74,64 @@ export function runAppHref(slug: string): string {
 }
 
 /**
+ * Pure core of {@link lobbyBaseUrl}, with its environment passed in so the host
+ * matrix is unit-testable without stubbing `import.meta.env`.
+ *
+ * The login bounce only ever needs to reach a lobby whose session cookie can
+ * _actually_ authenticate this app — which is exactly two cases:
+ *
+ * - **Production** (`dev: false`, apex baked in): the instance (`{slug}.{apex}`)
+ *   and the lobby (`lobby.{apex}`) share a registrable domain, and the lobby
+ *   sets its cookie on `Domain=.{apex}`, so it reaches the app. →
+ *   `lobby.{apex}`.
+ * - **Local dev** (`dev: true`): every `localhost` port shares one cookie jar
+ *   (cookies are not isolated by port, per RFC 6265), so the _local_ lobby's
+ *   host-only cookie reaches a `localhost` app session. → the local lobby.
+ *
+ * The case this deliberately does **not** serve is "app dev server proxied to a
+ * _remote_ backend" (`BACKEND=game bun run dev:app`): a remote lobby sets its
+ * cookie on `.{apex}`, which `localhost` can never read, and its post-login
+ * redirect targets the real instance host — so it cannot authenticate a
+ * `localhost:5173` session no matter which lobby URL we point at. Rather than
+ * derive a "correct" remote lobby that still can't log you in, dev always
+ * points at the local lobby; remote-backend app login is unsupported
+ * (documented in `docs/getting-started/local-development.md`).
+ */
+export function resolveLobbyBaseUrl(opts: {
+    dev: boolean;
+    apex: string | undefined;
+    lobbyDevUrl: string;
+}): string | null {
+    if (opts.dev) return opts.lobbyDevUrl;
+    return opts.apex ? `https://${LOBBY_SUBDOMAIN}${opts.apex}` : null;
+}
+
+/**
+ * Origin of the lobby the app's login bounce should target, or `null` for a
+ * non-dev build with no apex (degrades to a relative path). See
+ * {@link resolveLobbyBaseUrl} for the resolution rule.
+ */
+function lobbyBaseUrl(): string | null {
+    return resolveLobbyBaseUrl({
+        dev: import.meta.env.DEV,
+        apex: APEX_DOMAIN,
+        lobbyDevUrl: LOBBY_DEV_URL,
+    });
+}
+
+/**
  * A path on the lobby app as an absolute cross-origin URL
  * (`https://lobby.{apex}{path}`). The lobby owns login/signup/logout and the
  * picker (ADR-0002/0003), so every "log in", "play", and "open lobby" link
- * resolves here. Falls back to the relative path with no apex (local dev),
- * which does not resolve without the extended local lobby harness — an accepted
- * dev-only dead link, like {@link landingHref}.
+ * resolves here. In dev the origin is the local lobby dev server (see
+ * {@link lobbyBaseUrl}); a non-dev build with no apex degrades to the relative
+ * path.
  *
  * @param path Absolute lobby path, e.g. `/login`, `/signup`, `/logout`, `/`.
  */
 export function lobbyHref(path: string): string {
-    if (!APEX_DOMAIN) return path;
-    return `https://${LOBBY_SUBDOMAIN}${APEX_DOMAIN}${path}`;
+    const base = lobbyBaseUrl();
+    return base ? `${base}${path}` : path;
 }
 
 /**
@@ -114,12 +170,12 @@ export function lobbyLoginHref(): string {
  * bundle). Absolute to the apex in production, like {@link lobbyHref} and
  * {@link runAppHref}.
  *
- * When no apex is configured (local `bun run dev`) it falls back to a relative
- * path. The landing routes live in the separate landing bundle (served by `bun
- * run dev:landing` on its own port), so this fallback does not resolve inside
- * the app dev server — these are secondary "learn more" links and the dead dev
- * link is accepted. Set `VITE_APEX_DOMAIN` to exercise the real cross-origin
- * link locally.
+ * When no apex is configured (local `bun run dev:app`) it falls back to a
+ * relative path. The landing routes live in the separate landing bundle (served
+ * by `bun run dev:landing` on its own port), so this fallback does not resolve
+ * inside the app dev server — these are secondary "learn more" links and the
+ * dead dev link is accepted. Set `VITE_APEX_DOMAIN` to exercise the real
+ * cross-origin link locally.
  *
  * @param path Absolute landing path, e.g. `/landing-page`.
  */

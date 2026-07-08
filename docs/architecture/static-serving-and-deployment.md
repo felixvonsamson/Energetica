@@ -370,11 +370,11 @@ Both build outputs are **gitignored** and deployed via rsync:
 ### `package.json` scripts
 
 ```json
-"dev":            "vite",
+"dev:app":        "vite",
 "dev:landing":    "vite --config vite.config.landing.ts",
-"build":          "vite build && bun run build:sw",
+"build:app":      "vite build && bun run build:sw",
 "build:landing":  "vite build --config vite.config.landing.ts && mv ../frontend/dist-landing/index.landing.html ../frontend/dist-landing/index.html",
-"build:all":      "bun run build && bun run build:landing"
+"build:all":      "bun run build:app && bun run build:landing && bun run build:lobby"
 ```
 
 ✅ Scripts added in Phase 1. The `mv` step renames the landing entry from `index.landing.html` (Vite preserves the source basename) to `index.html` so Apache's `FallbackResource → index.html` works without further configuration.
@@ -427,7 +427,7 @@ TLS provisioning (steps 6–8) requires the DNS record for `{instance}.{domain}`
 
 ### `deploy-instance.sh` flow
 
-1. Build app bundle (`bun run build`)
+1. Build app bundle (`bun run build:app`)
 2. Confirm deployment summary (skipped with `--yes`)
 3. `rsync` Python backend code to server (excluding `.venv`, `instance/`, build artifacts). `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is admin-owned, so it is never touched by deploys.
 4. `rsync` app bundle to server (`energetica/static/app/`)
