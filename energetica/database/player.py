@@ -47,7 +47,7 @@ from energetica.enums import (
     WindFacilityType,
     WorkerType,
 )
-from energetica.globals import MAIN_EVENT_LOOP, engine
+from energetica.globals import engine
 from energetica.schemas.achievements import AchievementMilestoneOut, AchievementOut, AchievementUnlockOut
 from energetica.schemas.browser_notifications import Subscription
 from energetica.schemas.electricity_markets import AskType, BidType
@@ -370,6 +370,10 @@ class Player(DBModel):
 
     def emit(self, event: str, *args: Any) -> None:
         """Emit a socketio event to the player's clients."""
+        # Late import: MAIN_EVENT_LOOP is the serving loop, bound in the lifespan after this module
+        # is imported. Reading it at call time (not a module-level snapshot) gets the live loop.
+        from energetica.globals import MAIN_EVENT_LOOP
+
         for sid in self.socketio_clients:
             asyncio.run_coroutine_threadsafe(engine.socketio.emit(event, *args, to=sid), MAIN_EVENT_LOOP)
 
@@ -509,6 +513,8 @@ class Player(DBModel):
         2. It emits a socketio "invalidate" event to the player's active web clients.
         3. It sends the notification using webpush to the player's subscribed browser(s).
         """
+        from energetica.globals import MAIN_EVENT_LOOP  # serving loop, bound in the lifespan
+
         payload_dict = payload.model_dump(exclude={"type"})
         Notification(type=payload.type, payload=payload_dict, player=self)
         # Real-time invalidation

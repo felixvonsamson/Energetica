@@ -40,7 +40,12 @@ _REPO_ROOT = Path(__file__).parent.parent
 # extraction.
 engine = GameEngine()
 globals.engine = engine
-globals.MAIN_EVENT_LOOP = asyncio.get_event_loop()
+# globals.MAIN_EVENT_LOOP is captured in the lifespan (below), NOT here. This module is imported
+# by uvicorn while loading `main:app`; since uvicorn 0.5x that import happens *before* the serving
+# loop is created, so asyncio.get_event_loop() here returns a throwaway loop that never runs.
+# engine.emit() dispatches every socketio broadcast onto MAIN_EVENT_LOOP via
+# run_coroutine_threadsafe(); if it were this dead loop, no server→client event (ticks, cache
+# invalidations, chat) would ever fire — clients connect fine but receive nothing (#817 fallout).
 
 
 def create_app(
@@ -194,6 +199,13 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+        # Capture the serving loop here — the lifespan runs on it. engine.emit() feeds socketio
+        # broadcasts to this loop from the scheduler thread via run_coroutine_threadsafe(); it must
+        # be the loop the socketio server actually runs on. Capturing at import (uvicorn 0.5x loads
+        # the app before the loop exists) instead queued every emit onto a dead loop, so clients
+        # connected successfully but never received ticks/invalidations/chat.
+        globals.MAIN_EVENT_LOOP = asyncio.get_running_loop()
+
         # initialize the schedulers and add the recurrent functions :
         scheduler = AsyncIOScheduler()
 
