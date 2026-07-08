@@ -74,65 +74,56 @@ export function runAppHref(slug: string): string {
 }
 
 /**
- * The apex of an instance-subdomain host (`{slug}.{apex}` → `{apex}`), or
- * `null` if `hostname` is not one: an IP address, `localhost`, a
- * bare/Docker/LAN name, or anything lacking a registrable domain with an
- * alphabetic TLD. Stops a reachable non-deployment backend (e.g. `10.0.0.5`)
- * from being turned into a bogus `lobby.{garbage}` origin.
+ * Pure core of {@link lobbyBaseUrl}, with its environment passed in so the host
+ * matrix is unit-testable without stubbing `import.meta.env`.
+ *
+ * The login bounce only ever needs to reach a lobby whose session cookie can
+ * _actually_ authenticate this app — which is exactly two cases:
+ *
+ * - **Production** (`dev: false`, apex baked in): the instance (`{slug}.{apex}`)
+ *   and the lobby (`lobby.{apex}`) share a registrable domain, and the lobby
+ *   sets its cookie on `Domain=.{apex}`, so it reaches the app. →
+ *   `lobby.{apex}`.
+ * - **Local dev** (`dev: true`): every `localhost` port shares one cookie jar
+ *   (cookies are not isolated by port, per RFC 6265), so the _local_ lobby's
+ *   host-only cookie reaches a `localhost` app session. → the local lobby.
+ *
+ * The case this deliberately does **not** serve is "app dev server proxied to a
+ * _remote_ backend" (`BACKEND=game bun run dev:app`): a remote lobby sets its
+ * cookie on `.{apex}`, which `localhost` can never read, and its post-login
+ * redirect targets the real instance host — so it cannot authenticate a
+ * `localhost:5173` session no matter which lobby URL we point at. Rather than
+ * derive a "correct" remote lobby that still can't log you in, dev always
+ * points at the local lobby; remote-backend app login is unsupported
+ * (documented in `docs/getting-started/local-development.md`).
  */
-function instanceSubdomainApex(hostname: string): string | null {
-    const labels = hostname.split(".");
-    const tld = labels[labels.length - 1];
-    // A slug plus a registrable apex is at least three labels, and a real TLD is alphabetic —
-    // which excludes IPv4 (numeric last octet), IPv6 (bracketed/colon host), and single-label
-    // hosts like `localhost` or a Docker service name.
-    if (labels.length < 3 || tld === undefined || !/^[a-z]{2,}$/i.test(tld)) {
-        return null;
-    }
-    return labels.slice(1).join(".");
+export function resolveLobbyBaseUrl(opts: {
+    dev: boolean;
+    apex: string | undefined;
+    lobbyDevUrl: string;
+}): string | null {
+    if (opts.dev) return opts.lobbyDevUrl;
+    return opts.apex ? `https://${LOBBY_SUBDOMAIN}${opts.apex}` : null;
 }
 
 /**
- * Origin of the lobby that matches the backend this app is actually talking to,
- * or `null` when it can't be determined (a non-dev build with no apex).
- *
- * Resolution mirrors the dev proxy's backend precedence exactly
- * (`resolveBackendUrl` in `vite.config.ts`): in dev an explicit
- * `VITE_BACKEND_URL` wins over the apex — so if `/api` is pinned to one live
- * instance while an apex lingers in the env, the login bounce still follows the
- * pinned instance rather than the apex's (different) lobby. `lobby.{apex}` is
- * derived only when the pinned host is a real instance subdomain
- * (`{slug}.{apex}`); an IP, a bare/Docker/LAN name, or any other reachable
- * non-deployment backend uses the local lobby dev server instead of a bogus
- * `lobby.{garbage}`. Only with no `VITE_BACKEND_URL` does the apex apply —
- * which also covers production, where `VITE_BACKEND_URL` is unset and the
- * baked-in apex is used.
+ * Origin of the lobby the app's login bounce should target, or `null` for a
+ * non-dev build with no apex (degrades to a relative path). See
+ * {@link resolveLobbyBaseUrl} for the resolution rule.
  */
 function lobbyBaseUrl(): string | null {
-    // Explicit backend URL (dev only) — resolved entirely from the backend so it never mixes with
-    // a stale apex.
-    if (import.meta.env.DEV) {
-        const backend = import.meta.env.VITE_BACKEND_URL;
-        if (backend) {
-            try {
-                const { protocol, hostname } = new URL(backend);
-                const apex = instanceSubdomainApex(hostname);
-                if (apex) return `${protocol}//${LOBBY_SUBDOMAIN}${apex}`;
-            } catch {
-                // Unparseable URL → fall through to the local lobby dev server.
-            }
-            return LOBBY_DEV_URL;
-        }
-    }
-    if (APEX_DOMAIN) return `https://${LOBBY_SUBDOMAIN}${APEX_DOMAIN}`;
-    return import.meta.env.DEV ? LOBBY_DEV_URL : null;
+    return resolveLobbyBaseUrl({
+        dev: import.meta.env.DEV,
+        apex: APEX_DOMAIN,
+        lobbyDevUrl: LOBBY_DEV_URL,
+    });
 }
 
 /**
  * A path on the lobby app as an absolute cross-origin URL
  * (`https://lobby.{apex}{path}`). The lobby owns login/signup/logout and the
  * picker (ADR-0002/0003), so every "log in", "play", and "open lobby" link
- * resolves here. In dev the origin follows the backend the proxy targets (see
+ * resolves here. In dev the origin is the local lobby dev server (see
  * {@link lobbyBaseUrl}); a non-dev build with no apex degrades to the relative
  * path.
  *

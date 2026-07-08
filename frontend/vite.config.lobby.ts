@@ -7,6 +7,7 @@ import path from "path";
 import {
     DEV_PORTS,
     loadDeploymentEnv,
+    resolveLobbyProxyTarget,
     rewriteSetCookieForLocalhost,
 } from "./vite.shared";
 
@@ -42,15 +43,11 @@ const lobbyHtmlFallback: Plugin = {
 
 export default defineConfig(({ mode }) => {
     const env = loadDeploymentEnv(mode);
-    // Which lobby backend the dev server proxies to, mirroring the app config's
-    // precedence: an explicit VITE_BACKEND_URL wins; else a deployment selected
-    // via BACKEND=… proxies to that apex's lobby (lobby.{apex}); else the local
-    // lobby backend (main_lobby.py) on :8001.
-    const backendUrl =
-        env.VITE_BACKEND_URL ??
-        (env.VITE_APEX_DOMAIN
-            ? `https://lobby.${env.VITE_APEX_DOMAIN}`
-            : "http://localhost:8001");
+    // Which lobby backend the dev server proxies to (see resolveLobbyProxyTarget):
+    // explicit VITE_BACKEND_URL wins, else the selected deployment's lobby.{apex},
+    // else the local lobby backend on :8001. Shared with the app config so an
+    // empty VITE_BACKEND_URL (shipped in .env.example) reads as unset here too.
+    const backendUrl = resolveLobbyProxyTarget(env);
 
     return {
         plugins: [

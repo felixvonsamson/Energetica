@@ -12,6 +12,7 @@ import path from "path";
 
 import {
     DEV_PORTS,
+    explicitBackendUrl,
     loadDeploymentEnv,
     rewriteSetCookieForLocalhost,
 } from "./vite.shared";
@@ -47,7 +48,8 @@ async function resolveBackendUrl(
     command: "serve" | "build",
     env: Record<string, string>,
 ): Promise<string> {
-    if (env.VITE_BACKEND_URL) return env.VITE_BACKEND_URL;
+    const explicit = explicitBackendUrl(env);
+    if (explicit) return explicit;
 
     const apex = env.VITE_APEX_DOMAIN;
     if (command === "serve" && apex) {

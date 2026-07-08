@@ -40,8 +40,7 @@ URL, set `VITE_BACKEND_URL` instead — it overrides everything.
 
 ## Frontend work against a live backend (the common case)
 
-No local backend, no auth setup — the dev server proxies to a deployment that already has real data
-and a real lobby to log into:
+No local backend — the dev server proxies to a deployment that already has real data:
 
 ```bash
 cd frontend
@@ -50,8 +49,20 @@ BACKEND=game bun run dev:app     # app SPA    → http://localhost:5173
 ```
 
 The app config discovers the deployment's current instance subdomain from its public
-`instances.json`; the lobby config proxies to `lobby.{apex}`. You log in with your real credentials
-for that deployment.
+`instances.json`; the lobby config proxies to `lobby.{apex}`.
+
+**Auth differs by surface, because of where the session cookie lands.** The lobby dev server logs
+in for real: its login POST is proxied, and the response's `Set-Cookie` is rewritten to drop
+`Secure`/`Domain` (`rewriteSetCookieForLocalhost`), so the session cookie sticks to
+`http://localhost:5174`. Work on lobby UI against live data with your real credentials.
+
+The **app** dev server against a live backend **cannot** authenticate a `localhost` session. The
+app's "log in" bounce leads to the deployment's real lobby, which sets its cookie on `.{apex}` (never
+reachable from `localhost`) and, after login, redirects to the real instance host — not your dev
+server. So `BACKEND=game bun run dev:app` is for the **public / pre-login** surface; for authenticated
+app work run the **full local stack** below (where every `localhost` port shares one cookie jar, so
+login carries across). The app's dev login bounce therefore always points at the *local* lobby,
+regardless of which backend `/api` proxies to.
 
 ## Full local stack (backend work)
 

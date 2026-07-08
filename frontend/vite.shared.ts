@@ -51,6 +51,40 @@ export function loadDeploymentEnv(mode: string): Record<string, string> {
 }
 
 /**
+ * The explicit `VITE_BACKEND_URL` proxy override, or `undefined` when unset.
+ *
+ * `frontend/.env.example` ships `VITE_BACKEND_URL=` (empty), so a developer who
+ * copies it must get the same "fall through to the deployment/local backend"
+ * behaviour as leaving it out entirely — an empty string is _not_ a target.
+ * Every proxy resolver funnels its override through this one predicate so they
+ * cannot drift apart on that coercion again (the app config once used a truthy
+ * check while the lobby config used `??`, which turned `""` into a broken proxy
+ * target — the class of bug this centralises away).
+ */
+export function explicitBackendUrl(
+    env: Record<string, string>,
+): string | undefined {
+    return env.VITE_BACKEND_URL || undefined;
+}
+
+/**
+ * Which lobby backend the lobby dev server (`vite.config.lobby.ts`) proxies
+ * `/api` to. Precedence mirrors the app config's `resolveBackendUrl`: an
+ * explicit `VITE_BACKEND_URL` wins, else the selected deployment's lobby
+ * (`lobby.{apex}` from `BACKEND=…`), else the local lobby backend
+ * (`main_lobby.py`) on :8001. Pure and synchronous — unlike the app target, no
+ * instance-slug discovery is needed, since the lobby always lives at the apex's
+ * `lobby.` subdomain.
+ */
+export function resolveLobbyProxyTarget(env: Record<string, string>): string {
+    const explicit = explicitBackendUrl(env);
+    if (explicit) return explicit;
+    return env.VITE_APEX_DOMAIN
+        ? `https://lobby.${env.VITE_APEX_DOMAIN}`
+        : "http://localhost:8001";
+}
+
+/**
  * Strip `Secure` and `Domain` from `Set-Cookie` on proxied responses so a
  * session cookie minted by an HTTPS backend round-trips through the
  * `http://localhost` dev origin. Without this, the browser won't persist the
