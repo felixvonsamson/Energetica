@@ -112,13 +112,11 @@ export function TechnologyName({
 }: TechnologyNameProps) {
     if (level !== null) {
         return (
-            <>
-                <AssetName
-                    assetId={technology}
-                    {...props}
-                    suffix={` Level ${level}`}
-                />
-            </>
+            <AssetName
+                assetId={technology}
+                {...props}
+                suffix={` Level ${level}`}
+            />
         );
     }
 

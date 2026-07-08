@@ -173,7 +173,7 @@ export function CashFlowChart({
         isShowingPercent,
     ]);
 
-    if (!chartConfig) return <></>;
+    if (!chartConfig) return null;
 
     return (
         <EChartsTimeSeries

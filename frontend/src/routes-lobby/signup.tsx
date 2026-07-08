@@ -196,7 +196,7 @@ function SignUpForm({ returnSlug }: { returnSlug: string | undefined }) {
                             ) : (
                                 <UserPlus className="w-5 h-5" />
                             )}
-                            <>Create account</>
+                            Create account
                         </Button>
                     </form>
 

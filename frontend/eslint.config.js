@@ -103,6 +103,7 @@ export default defineConfig([
             ],
             // React extras (recommended rules come from react.configs.flat.recommended above)
             "react/no-unescaped-entities": "off",
+            "react/jsx-no-useless-fragment": ["error", { allowExpressions: true }],
             "react/no-array-index-key": "warn",
             "react/no-unstable-nested-components": "warn",
             "react/self-closing-comp": "warn",
