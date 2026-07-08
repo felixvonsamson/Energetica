@@ -116,7 +116,13 @@ install -d -o "$DEPLOY_USER" -g energetica -m 2750 "$APP_DIR"
 # Engine working dir: the service writes the pickle/logs here, so it is owned by the
 # service user. Excluded from deploy rsync (game state must survive deploys).
 install -d -o energetica -g energetica -m 2770 "$APP_DIR/instance"
-log_success "$APP_DIR (code, deploy-owned) and $APP_DIR/instance (game state, service-owned)"
+# Checkpoints dir: same deal — create_app() does Path("checkpoints").mkdir(exist_ok=True) and the
+# tick loop writes checkpoints/{new,last}_checkpoint.tar.gz here, but the service user cannot
+# create it under the deploy-owned (non-group-writable) app root. Pre-create it service-owned so
+# the mkdir is a no-op and checkpoints are writable. Excluded from deploy rsync for the same
+# reason as instance/ (runtime state the service owns; a shipped copy would reown it to deploy).
+install -d -o energetica -g energetica -m 2770 "$APP_DIR/checkpoints"
+log_success "$APP_DIR (code, deploy-owned) and $APP_DIR/{instance,checkpoints} (game state, service-owned)"
 
 if [ -x "$APP_DIR/.venv/bin/python" ]; then
     log_success "venv already present at $APP_DIR/.venv"
