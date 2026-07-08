@@ -28,7 +28,8 @@ convenience, since it spans both.)
 | I want to…                                   | Command                                          | Backend used            |
 | -------------------------------------------- | ------------------------------------------------ | ----------------------- |
 | Change **lobby** UI against real data        | `cd frontend && BACKEND=game bun run dev:lobby`  | live game lobby         |
-| Change **app** (game) UI against real data   | `cd frontend && BACKEND=game bun run dev:app`    | live game instance      |
+| Change **app** (game) UI against real data (public/pre-login) | `cd frontend && BACKEND=game bun run dev:app` | live game instance |
+| **Authenticated app** work against live data | `BACKEND=game bun run dev`                        | live lobby + instance   |
 | Work on the **landing** site                 | `cd frontend && bun run dev:landing`             | none (static)           |
 | Full **local app** dev (frontend + backend)  | `bun run dev`                                    | local lobby + app       |
 | Just the **lobby**, locally                  | `bun run dev:lobby`                              | local lobby             |
@@ -56,13 +57,41 @@ in for real: its login POST is proxied, and the response's `Set-Cookie` is rewri
 `Secure`/`Domain` (`rewriteSetCookieForLocalhost`), so the session cookie sticks to
 `http://localhost:5174`. Work on lobby UI against live data with your real credentials.
 
-The **app** dev server against a live backend **cannot** authenticate a `localhost` session. The
-app's "log in" bounce leads to the deployment's real lobby, which sets its cookie on `.{apex}` (never
-reachable from `localhost`) and, after login, redirects to the real instance host — not your dev
-server. So `BACKEND=game bun run dev:app` is for the **public / pre-login** surface; for authenticated
-app work run the **full local stack** below (where every `localhost` port shares one cookie jar, so
-login carries across). The app's dev login bounce therefore always points at the *local* lobby,
-regardless of which backend `/api` proxies to.
+The **app** dev server run *alone* against a live backend can't authenticate: its "log in" bounce
+points at the local lobby dev server (:5174), and if nothing is running there the link dead-ends. So
+`BACKEND=game bun run dev:app` on its own is for the **public / pre-login** surface. For authenticated
+app work against live data, run both frontends as one stack (next).
+
+## Authenticated app work against a live backend
+
+```bash
+BACKEND=game bun run dev    # app :5173 + lobby :5174, both proxying to the live game deployment
+```
+
+One launcher, both frontends, same `BACKEND` — no local backends. The flow:
+
+1. Open **http://localhost:5173**, unauthenticated → click "log in" → bounce to the lobby dev server
+   at **http://localhost:5174**.
+2. The lobby dev server proxies your login to the **live** `lobby.{apex}` and logs you in with your
+   real credentials. The live cookie comes back `Domain=.{apex}; Secure`, but the proxy strips both
+   attributes (`rewriteSetCookieForLocalhost`), leaving a **host-only `localhost` cookie**.
+3. Because cookies aren't isolated by port, that one cookie is sent to **:5173** too. Its `/api`
+   proxies to the live instance, whose entry gate validates the token against the deployment's
+   server-wide secret — so you're authenticated as your real account, against live data.
+
+Why both frontends and one launcher: they must share `BACKEND`, or the lobby mints a cookie signed
+by a *different* backend than the app talks to, and the live instance rejects it with a bare 401.
+Running them separately invites that mismatch; the launcher forecloses it.
+
+Two things to know:
+
+- **You operate as your real account on live data** — the entry gate provisions you on the live
+  instance and your writes hit it, exactly as logging into prod does. This is intended, not a
+  sandbox.
+- **One instance only.** The app dev server proxies to a single live instance (the newest
+  advertised, or `VITE_BACKEND_URL` if pinned). The in-run switcher marks that instance and disables
+  hops to your other runs — those are prod origins, not this local dev app. Pin `VITE_BACKEND_URL`
+  to target a specific instance.
 
 ## Full local stack (backend work)
 

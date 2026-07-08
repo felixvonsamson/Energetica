@@ -13,6 +13,7 @@ import path from "path";
 import {
     DEV_PORTS,
     explicitBackendUrl,
+    instanceSlugFromBackend,
     loadDeploymentEnv,
     rewriteSetCookieForLocalhost,
 } from "./vite.shared";
@@ -109,6 +110,13 @@ export default defineConfig(async ({ mode, command }) => {
     // selected deployment's apex manifest (BACKEND=…), else local :8000. See resolveBackendUrl.
     const backendUrl = await resolveBackendUrl(command, env);
     const wsUrl = backendUrl.replace(/^http/, "ws");
+    // Dev only: which single live instance this app dev server is pinned to, so the in-run
+    // switcher can mark it and disable hops to the account's *other* runs (those are prod origins,
+    // not this local dev app). null for a local backend or a prod build.
+    const devInstanceSlug =
+        command === "serve"
+            ? instanceSlugFromBackend(backendUrl, env.VITE_APEX_DOMAIN)
+            : null;
 
     return {
         plugins: [
@@ -144,6 +152,10 @@ export default defineConfig(async ({ mode, command }) => {
         ],
         resolve: {
             alias: { "@": path.resolve(__dirname, "./src") },
+        },
+        define: {
+            "import.meta.env.VITE_DEV_INSTANCE_SLUG":
+                JSON.stringify(devInstanceSlug),
         },
         base: command === "serve" ? "/" : "/static/app/",
         server: {

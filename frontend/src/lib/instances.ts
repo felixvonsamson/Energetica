@@ -135,6 +135,23 @@ export function lobbyHref(path: string): string {
 }
 
 /**
+ * The single live instance the app dev server is pinned to (its `/api` proxy
+ * target), injected at dev-server startup — see `instanceSlugFromBackend` in
+ * `vite.shared.ts`. `null` outside a live-backend dev server (a prod build, or
+ * a local backend with no apex).
+ *
+ * Deliberately separate from {@link currentRunSlug}: the switcher uses this to
+ * identify the pinned run, but the login bounce must NOT treat it as "the run
+ * I'm in" (that would send a `?return=` and auto-bounce back after login) — in
+ * a `localhost` dev app there is no run to return to.
+ */
+export function devInstanceSlug(): string | null {
+    return import.meta.env.DEV
+        ? (import.meta.env.VITE_DEV_INSTANCE_SLUG ?? null)
+        : null;
+}
+
+/**
  * This run's own slug, parsed from the hostname (`{slug}.{apex}`). `null` in
  * dev / the interim, or when the host is not a single valid label under the
  * apex.

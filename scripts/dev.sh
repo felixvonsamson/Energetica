@@ -42,8 +42,34 @@ start() {
     pids+=("$!")
 }
 
-# Seed the shared accounts store + sample runs once, before any server starts (avoids two
-# backends racing on the same sqlite file). The lobby owns accounts.
+# With BACKEND set, both frontends proxy to a live deployment — no local backends, no shared
+# scratch, no seeding. Running BOTH frontends from one launcher is the point: they inherit the
+# same BACKEND, so the live-signed cookie the lobby dev server mints (Domain/Secure stripped to a
+# host-only localhost cookie, shared across ports) is honoured by the live instance the app dev
+# server proxies to. Splitting them by hand risks a BACKEND mismatch → a locally-signed cookie the
+# live instance rejects with a bare 401. See docs/getting-started/local-development.md.
+if [ -n "${BACKEND:-}" ]; then
+    case "$TARGET" in
+    app)
+        echo "[dev] live app stack (BACKEND=$BACKEND) → app http://localhost:5173  ·  lobby http://localhost:5174  (log in on the lobby)"
+        start bash -c 'cd frontend && exec bun run dev:lobby'
+        start bash -c 'cd frontend && exec bun run dev:app'
+        ;;
+    lobby)
+        echo "[dev] live lobby stack (BACKEND=$BACKEND) → lobby http://localhost:5174"
+        start bash -c 'cd frontend && exec bun run dev:lobby'
+        ;;
+    *)
+        echo "usage: [BACKEND=game] bash scripts/dev.sh [app|lobby]" >&2
+        exit 1
+        ;;
+    esac
+    wait
+    exit 0
+fi
+
+# Local stack: seed the shared accounts store + sample runs once, before any server starts (avoids
+# two backends racing on the same sqlite file). The lobby owns accounts.
 seed_dev_data
 
 case "$TARGET" in

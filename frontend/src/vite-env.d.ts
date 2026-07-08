@@ -16,6 +16,13 @@ interface ImportMetaEnv {
      * `lib/lobby.ts`.
      */
     readonly VITE_APP_URL?: string;
+    /**
+     * The single live instance slug the app dev server is pinned to, injected
+     * at dev-server startup (never in a prod build). Lets the in-run switcher
+     * mark that instance and disable hops to the account's other (prod) runs.
+     * See `lib/instances.ts` and `vite.config.ts`.
+     */
+    readonly VITE_DEV_INSTANCE_SLUG?: string | null;
 }
 
 interface ImportMeta {
