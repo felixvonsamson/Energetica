@@ -1,5 +1,5 @@
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
+import { LogOut, UserCog } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -34,16 +34,28 @@ function RootComponent() {
                 <div className="flex flex-row items-center gap-1">
                     <ThemeToggle />
                     {myRuns != null && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => logout.mutate()}
-                            disabled={logout.isPending}
-                            className="gap-1.5"
-                        >
-                            <LogOut className="w-4 h-4" />
-                            Log out
-                        </Button>
+                        <>
+                            <Link to="/account">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="gap-1.5"
+                                >
+                                    <UserCog className="w-4 h-4" />
+                                    Account
+                                </Button>
+                            </Link>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => logout.mutate()}
+                                disabled={logout.isPending}
+                                className="gap-1.5"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                Log out
+                            </Button>
+                        </>
                     )}
                 </div>
             </header>

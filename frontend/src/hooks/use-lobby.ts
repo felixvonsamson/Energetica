@@ -9,7 +9,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { lobbyApi, lobbyAuthApi, type MyRunsResponse } from "@/lib/api/lobby";
 import { ApiClientError } from "@/lib/api-client";
 import { fetchInstances, type InstanceFragment } from "@/lib/instances";
-import type { LoginRequest, SignupRequest } from "@/types/auth";
+import type {
+    ChangePasswordRequest,
+    LoginRequest,
+    SignupRequest,
+} from "@/types/auth";
 
 /**
  * Query keys local to the lobby bundle. Deliberately not part of the game's
@@ -83,6 +87,19 @@ export function useLobbySignup() {
         // Returned for the same navigate-after-await reason as useLobbyLogin.
         onSuccess: () =>
             queryClient.invalidateQueries({ queryKey: lobbyQueryKeys.myRuns }),
+    });
+}
+
+/**
+ * Mutation hook for changing the authenticated account's password.
+ *
+ * No cache work on success: the password change leaves the session (and the
+ * my-runs auth probe) untouched — the same cookie stays valid.
+ */
+export function useLobbyChangePassword() {
+    return useMutation({
+        mutationFn: (data: ChangePasswordRequest) =>
+            lobbyAuthApi.changePassword(data),
     });
 }
 
