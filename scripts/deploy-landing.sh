@@ -72,6 +72,17 @@ rsync -az --delete \
     ./frontend/dist-landing/ "$SSH:$LANDING_DIR/" >/dev/null
 log_success "Landing bundle deployed"
 
+# rsync -a applies the source dir's mode to $LANDING_DIR itself, stripping the setgid +
+# group-write bits setup-landing.sh set (2775). Those bits are load-bearing: the instance
+# backends (group energetica) atomically write instances.json *into this dir*, so without
+# group-write the aggregate write fails with EPERM — and because the instances/ fragment dir
+# is --excluded (keeps its 2775), per-instance fragments still write while the aggregate
+# manifest silently goes stale (a new instance never appears in the lobby picker). openrsync
+# (macOS) lacks --chmod, so re-assert the mode over ssh after the sync. The deploy user owns
+# $LANDING_DIR, so it can restore the setgid bit.
+ssh "$SSH" "chmod 2775 '$LANDING_DIR'"
+log_success "Landing dir perms re-asserted (2775, setgid energetica)"
+
 # The landing + wiki pages reference /static/images/... (e.g. landing_page banners, wiki
 # figures). The apex is pure-static, so unlike the game vhost (which Aliases /static/images
 # into the instance code dir) these must be shipped into the landing DocumentRoot itself.
