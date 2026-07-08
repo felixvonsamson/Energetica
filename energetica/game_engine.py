@@ -353,6 +353,12 @@ class GameEngine(object):
         """Emit a socketio event to the player's clients."""
         from energetica.globals import MAIN_EVENT_LOOP
 
+        # No serving loop → nothing to broadcast to. This is the case under tests (create_app is
+        # called without running the lifespan that binds the loop) and momentarily before startup.
+        # Unlike Player.emit, this broadcast fires every tick even with zero clients, so it is the
+        # one path that must tolerate a None loop.
+        if MAIN_EVENT_LOOP is None:
+            return
         asyncio.run_coroutine_threadsafe(self.socketio.emit(event, *args), MAIN_EVENT_LOOP)
 
     def invalidate_queries(self, *query_keys: list[str | int]) -> None:
