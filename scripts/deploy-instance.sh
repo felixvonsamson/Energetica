@@ -96,14 +96,18 @@ fi
 
 # --- 3. rsync backend code ------------------------------------------------------
 # Ship the Python backend. Exclude build artifacts, the local venv, the frontend source,
-# and — critically — instance/ (server-side game state) and the app bundle dir (synced
-# separately with --delete below). --delete prunes removed backend files but never touches
-# the excluded paths.
+# and — critically — instance/ and checkpoints/ (server-side game state) and the app bundle
+# dir (synced separately with --delete below). --delete prunes removed backend files but
+# never touches the excluded paths. checkpoints/ MUST be excluded: the service (user
+# `energetica`) writes checkpoints/{new,last}_checkpoint.tar.gz at runtime, but rsync arrives
+# as `deploy` — shipping the dir hands it to deploy:deploy and the service can no longer
+# overwrite it (silent PermissionError on every checkpoint), same reasoning as instance/.
 log_step "Syncing backend code..."
 rsync -az --delete \
     --exclude='.git' \
     --exclude='.venv' \
     --exclude='instance/' \
+    --exclude='checkpoints/' \
     --exclude='frontend' \
     --exclude='node_modules' \
     --exclude='__pycache__' \
