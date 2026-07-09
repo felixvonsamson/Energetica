@@ -1754,26 +1754,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/change-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Change Password
-         * @description Change the authenticated account's password in the server-wide store.
-         */
-        post: operations["change_password_api_v1_auth_change_password_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/auth/logout": {
         parameters: {
             query?: never;
@@ -2931,6 +2911,11 @@ export interface components {
          * @description The account's settled runs, most recently settled first.
          */
         MyRunsResponse: {
+            /**
+             * Username
+             * @description The authenticated account's username
+             */
+            username: string;
             /** Runs */
             runs: components["schemas"]["MyRun"][];
         };
@@ -4209,13 +4194,6 @@ export interface components {
             construction: components["schemas"]["WorkerInfo"];
             /** @description Laboratory/research workers */
             laboratory: components["schemas"]["WorkerInfo"];
-        };
-        /** ChangePasswordRequest */
-        ChangePasswordRequest: {
-            /** Old Password */
-            old_password: string;
-            /** New Password */
-            new_password: string;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -6760,37 +6738,6 @@ export interface operations {
                 content: {
                     "application/json": unknown;
                 };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    change_password_api_v1_auth_change_password_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangePasswordRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** @description Validation Error */
             422: {

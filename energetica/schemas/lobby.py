@@ -17,4 +17,5 @@ class MyRun(BaseModel):
 class MyRunsResponse(BaseModel):
     """The account's settled runs, most recently settled first."""
 
+    username: str = Field(description="The authenticated account's username")
     runs: list[MyRun]

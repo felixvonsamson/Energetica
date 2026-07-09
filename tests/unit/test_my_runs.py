@@ -44,11 +44,13 @@ def test_joins_memberships_with_fragments_most_recent_first(stores: Path) -> Non
     accounts.record_membership(account_id=account_id, slug="spring-2026", settled_at="2026-03-02T00:00:00+00:00")
     accounts.record_membership(account_id=account_id, slug="autumn-2026", settled_at="2026-09-02T00:00:00+00:00")
 
-    response = resolve_my_runs(account_id)
+    response = resolve_my_runs(account_id, "alice")
 
     # ORDER BY settled_at DESC → autumn (settled later) first.
     assert [run.slug for run in response.runs] == ["autumn-2026", "spring-2026"]
     assert response.runs[0].name == "Autumn 2026"
+    # Echoed back for the change-password form's autocomplete="username" field.
+    assert response.username == "alice"
 
 
 def test_surfaces_unadvertised_runs(stores: Path) -> None:
@@ -59,7 +61,7 @@ def test_surfaces_unadvertised_runs(stores: Path) -> None:
     _fragment(stores, slug="secret-run", name="Secret", starts_at="2026-01-01T00:00:00Z", advertised=False)
     accounts.record_membership(account_id=account_id, slug="secret-run", settled_at="2026-01-02T00:00:00+00:00")
 
-    assert [run.slug for run in resolve_my_runs(account_id).runs] == ["secret-run"]
+    assert [run.slug for run in resolve_my_runs(account_id, "alice").runs] == ["secret-run"]
 
 
 def test_filters_stale_membership_without_fragment(stores: Path) -> None:
@@ -69,12 +71,12 @@ def test_filters_stale_membership_without_fragment(stores: Path) -> None:
     # Run since deleted: membership row remains but its fragment is gone.
     accounts.record_membership(account_id=account_id, slug="deleted-run", settled_at="2026-04-02T00:00:00+00:00")
 
-    assert [run.slug for run in resolve_my_runs(account_id).runs] == ["live-run"]
+    assert [run.slug for run in resolve_my_runs(account_id, "alice").runs] == ["live-run"]
 
 
 def test_empty_when_no_memberships(stores: Path) -> None:
     account_id = accounts.create_account(username="alice", pwhash="h")
-    assert resolve_my_runs(account_id).runs == []
+    assert resolve_my_runs(account_id, "alice").runs == []
 
 
 def _raw_membership(account_id: int, slug: str, settled_at: str) -> None:
@@ -98,7 +100,7 @@ def test_naive_settled_at_recovered_as_utc(stores: Path) -> None:
     _fragment(stores, slug="legacy", name="Legacy", starts_at="2026-01-01T00:00:00Z")
     _raw_membership(account_id, "legacy", "2026-01-02T00:00:00")  # naive — no timezone
 
-    runs = resolve_my_runs(account_id).runs
+    runs = resolve_my_runs(account_id, "alice").runs
 
     assert [run.slug for run in runs] == ["legacy"]
     assert runs[0].settled_at.tzinfo is not None
@@ -112,4 +114,4 @@ def test_unparseable_settled_at_skipped_not_fatal(stores: Path) -> None:
     accounts.record_membership(account_id=account_id, slug="good", settled_at="2026-01-02T00:00:00+00:00")
     _raw_membership(account_id, "corrupt", "not-a-timestamp")
 
-    assert [run.slug for run in resolve_my_runs(account_id).runs] == ["good"]
+    assert [run.slug for run in resolve_my_runs(account_id, "alice").runs] == ["good"]

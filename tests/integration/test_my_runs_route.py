@@ -71,6 +71,9 @@ def test_my_runs_returns_only_the_authed_accounts_runs_joined_with_fragments(lan
     response = client.get(MY_RUNS_URL)
 
     assert response.status_code == 200
+    # The instance echoes the provisioned User's username (== the account's) for the
+    # change-password form's autocomplete="username" field.
+    assert response.json()["username"] == "alice"
     runs = response.json()["runs"]
     # Most-recently-settled first.
     assert [r["slug"] for r in runs] == ["autumn-2026", "spring-2026"]

@@ -18,11 +18,6 @@ class SignupRequest(BaseModel):
     password: str = Field(min_length=7)
 
 
-class ChangePasswordRequest(BaseModel):  # TODO(mglst): use PUT or something
-    old_password: str
-    new_password: str = Field(min_length=7)
-
-
 class UserOut(BaseModel):
     """Response model for authenticated user information."""
 
