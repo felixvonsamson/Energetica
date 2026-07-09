@@ -82,7 +82,7 @@ describe("instanceSlugFromBackend", () => {
         ["nested subdomain", `https://a.b.${APEX}`, APEX, null],
         ["an IP address", "http://10.0.0.5", APEX, null],
         ["unparseable URL", "not a url", APEX, null],
-    ])("%s → %s", (_label, url, apex, expected) => {
+    ])("%s", (_label, url, apex, expected) => {
         expect(instanceSlugFromBackend(url, apex)).toBe(expected);
     });
 });
