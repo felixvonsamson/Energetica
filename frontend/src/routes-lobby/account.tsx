@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { KeyRound } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,6 +95,11 @@ function ChangePasswordForm({ username }: { username: string }) {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [clientError, setClientError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    // Synchronous double-submit guard. `submitting` (state) can't do this: it updates on
+    // the next render, so a second submit fired before the disabled button reaches the DOM
+    // would still POST. Two POSTs would change the password on the first, then fail the old
+    // check against the new hash on the second → a spurious `old-incorrect` after success.
+    const submittedRef = useRef(false);
 
     const success = status === "changed";
     const oldPasswordError =
@@ -113,6 +118,14 @@ function ChangePasswordForm({ username }: { username: string }) {
         // preventDefault, so the browser performs the native submit the password manager
         // needs to see. (Empty fields and min-length are enforced by native `required` /
         // `minLength`, which block the submit before this handler even fires.)
+
+        // Swallow any submit after the first accepted one, synchronously — before the browser
+        // starts the navigation a rapid second submit would otherwise ride in on.
+        if (submittedRef.current) {
+            e.preventDefault();
+            return;
+        }
+
         setClientError(null);
 
         if (newPassword !== confirmPassword) {
@@ -128,9 +141,11 @@ function ChangePasswordForm({ username }: { username: string }) {
             return;
         }
 
-        // Disable the button for the brief moment before the navigation lands. Only the
+        // Accepted: latch the guard synchronously so any follow-up submit is dropped above,
+        // and disable the button for the brief moment before the navigation lands. Only the
         // button, never the inputs: a disabled input is omitted from the native form
         // submission, which would drop the very fields we're posting.
+        submittedRef.current = true;
         setSubmitting(true);
     };
 
