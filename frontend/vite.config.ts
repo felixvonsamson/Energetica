@@ -109,7 +109,6 @@ export default defineConfig(async ({ mode, command }) => {
     // Backend the dev server proxies to: explicit override, else slug discovered from the
     // selected deployment's apex manifest (BACKEND=…), else local :8000. See resolveBackendUrl.
     const backendUrl = await resolveBackendUrl(command, env);
-    const wsUrl = backendUrl.replace(/^http/, "ws");
     // Dev only: which single live instance this app dev server is pinned to, so the in-run
     // switcher can mark it and disable hops to the account's *other* runs (those are prod origins,
     // not this local dev app). null for a local backend or a prod build.
@@ -172,9 +171,14 @@ export default defineConfig(async ({ mode, command }) => {
                     target: backendUrl,
                     changeOrigin: true,
                 },
-                // WebSocket connection
+                // Socket.IO (real-time ticks/invalidations). Targets the HTTP(S)
+                // origin, not a ws:// URL: Socket.IO opens with an HTTP polling
+                // handshake, and http-proxy only drives TLS for an https/http
+                // target on that path — a wss:// target hits the live host on
+                // port 80, gets Apache's 301 → https, and the handshake never
+                // completes. `ws: true` upgrades to wss over the same origin.
                 "^/socket.io": {
-                    target: wsUrl,
+                    target: backendUrl,
                     changeOrigin: true,
                     ws: true,
                 },
