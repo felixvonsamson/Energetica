@@ -24,7 +24,7 @@ source scripts/lib/dev-env.sh
 pids=()
 
 cleanup() {
-    trap - INT TERM EXIT # disarm so this runs once
+    trap - INT TERM HUP EXIT # disarm so this runs once
     echo
     echo "[dev] shutting down…"
     local pid
@@ -35,7 +35,11 @@ cleanup() {
         kill -TERM -"$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
     done
 }
-trap cleanup INT TERM EXIT
+# HUP is included so closing the terminal (tab/window/SSH pane) still tears the tree down —
+# without it the shell dies on SIGHUP before cleanup runs, and the vite/uvicorn children get
+# reparented to init and orphaned, squatting on the fixed dev ports (strictPort then refuses to
+# reboot the stack until they're killed by hand).
+trap cleanup INT TERM HUP EXIT
 
 start() {
     "$@" &

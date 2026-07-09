@@ -159,6 +159,9 @@ export default defineConfig(async ({ mode, command }) => {
         base: command === "serve" ? "/" : "/static/app/",
         server: {
             port: DEV_PORTS.app,
+            // Pin the port (see the lobby config): the fixed-port contract in
+            // vite.shared.ts assumes every surface lives at a known localhost origin.
+            strictPort: true,
             proxy: {
                 // API endpoints
                 "^/api": {
