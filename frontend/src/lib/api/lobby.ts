@@ -39,14 +39,10 @@ export const lobbyAuthApi = {
             data,
         ),
 
-    /** Change the authenticated account's password. */
-    changePassword: (
-        data: ApiRequestBody<"/api/v1/auth/change-password", "post">,
-    ) =>
-        apiClient.post<ApiResponse<"/api/v1/auth/change-password", "post">>(
-            "/auth/change-password",
-            data,
-        ),
+    // Change-password is deliberately absent here: the account page posts it as a
+    // native <form> (frontend/src/routes-lobby/account.tsx) rather than via this fetch
+    // client, so Safari/Apple Passwords sees the submit navigation and offers to update
+    // the saved credential (issue #849). There is no JSON change-password endpoint.
 
     /** Global logout — clears the single parent-domain session cookie. */
     logout: () =>

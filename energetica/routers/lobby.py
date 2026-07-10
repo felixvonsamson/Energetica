@@ -30,4 +30,4 @@ def get_my_runs(user: Annotated[User | None, Depends(get_user)]) -> MyRunsRespon
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
 
-    return resolve_my_runs(user.account_id)
+    return resolve_my_runs(user.account_id, user.username)
