@@ -5,7 +5,12 @@ set -euo pipefail
 # setup-base.sh and setup-landing.sh.
 #
 #   sudo bash scripts/infra/setup-instance.sh <instance> <port> --domain <apex-domain> \
-#        [--name "<display name>"] [--no-advertise] [--starts-at <ISO-8601-UTC>] [--yes]
+#        [--name "<display name>"] [--no-advertise] [--starts-at <ISO-8601-UTC>] \
+#        [--freeze-at <ISO-8601-UTC>] [--ended-at <ISO-8601-UTC>] [--yes]
+#
+# --starts-at/--freeze-at/--ended-at are the lifecycle boundaries (announced→active→freeze→ended).
+# --freeze-at and --ended-at are optional (omit → null → an open-ended run); when given they must
+# run forward: starts_at ≤ freeze_at ≤ ended_at (the backend rejects a config that doesn't).
 #
 # Creates the instance dir + venv, the admin-owned /etc/energetica/{instance}/instance.json,
 # the Apache vhost + TLS, and the energetica-{instance}.service unit (enabled, NOT started).
@@ -21,6 +26,8 @@ DEPLOY_USER="${DEPLOY_USER:-deploy}"
 NAME=""
 ADVERTISED="true"
 STARTS_AT=""
+FREEZE_AT=""
+ENDED_AT=""
 AUTO_CONFIRM=false
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -32,6 +39,8 @@ while [[ $# -gt 0 ]]; do
         --name) NAME="$2"; shift 2 ;;
         --no-advertise) ADVERTISED="false"; shift ;;
         --starts-at) STARTS_AT="$2"; shift 2 ;;
+        --freeze-at) FREEZE_AT="$2"; shift 2 ;;
+        --ended-at) ENDED_AT="$2"; shift 2 ;;
         --yes) AUTO_CONFIRM=true; shift ;;
         -*) echo "Unknown option: $1"; exit 1 ;;
         *) POSITIONAL+=("$1"); shift ;;
@@ -91,7 +100,19 @@ esac
 case "$STARTS_AT" in
     *[\"\\]*) log_error "--starts-at must not contain double-quotes or backslashes"; exit 1 ;;
 esac
+case "$FREEZE_AT" in
+    *[\"\\]*) log_error "--freeze-at must not contain double-quotes or backslashes"; exit 1 ;;
+esac
+case "$ENDED_AT" in
+    *[\"\\]*) log_error "--ended-at must not contain double-quotes or backslashes"; exit 1 ;;
+esac
 sed_escape() { printf '%s' "$1" | sed -e 's/[&/\]/\\&/g'; }
+
+# freeze_at / ended_at are nullable JSON: render a bare `null` when unset, else a quoted string.
+# The whole token (quotes included) is the sed replacement, so the template carries @FREEZE_AT@
+# unquoted — unlike starts_at, which is never null and keeps its literal quotes in the template.
+if [ -n "$FREEZE_AT" ]; then FREEZE_AT_JSON="\"$(sed_escape "$FREEZE_AT")\""; else FREEZE_AT_JSON="null"; fi
+if [ -n "$ENDED_AT" ]; then ENDED_AT_JSON="\"$(sed_escape "$ENDED_AT")\""; else ENDED_AT_JSON="null"; fi
 
 APP_DIR="/var/www/energetica-$INSTANCE"
 CONFIG_DIR="/etc/energetica/$INSTANCE"
@@ -103,6 +124,8 @@ log_section "PROVISION INSTANCE: $INSTANCE (port $PORT, $FQDN)"
 echo "  name:       $NAME"
 echo "  advertised: $ADVERTISED"
 echo "  starts_at:  $STARTS_AT"
+echo "  freeze_at:  ${FREEZE_AT:-<null, open-ended>}"
+echo "  ended_at:   ${ENDED_AT:-<null, open-ended>}"
 if [ "$AUTO_CONFIRM" = false ]; then
     read -r -p "DNS for $FQDN points here? Continue? (y/n) " -n 1 -r; echo
     [[ $REPLY =~ ^[Yy]$ ]] || { echo "Cancelled."; exit 0; }
@@ -147,6 +170,8 @@ else
     sed -e "s/@NAME@/$(sed_escape "$NAME")/g" \
         -e "s/@ADVERTISED@/$ADVERTISED/g" \
         -e "s/@STARTS_AT@/$(sed_escape "$STARTS_AT")/g" \
+        -e "s/@FREEZE_AT@/$FREEZE_AT_JSON/g" \
+        -e "s/@ENDED_AT@/$ENDED_AT_JSON/g" \
         "$SCRIPT_DIR/instance.json.tmpl" > "$CONFIG_DIR/instance.json"
     chown root:energetica "$CONFIG_DIR/instance.json"
     # 0640: service (group) reads; only root (admin, via sudo) edits. Edit later for a

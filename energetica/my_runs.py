@@ -58,5 +58,14 @@ def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
                 membership.slug,
             )
             continue
-        runs.append(MyRun(slug=fragment.slug, name=fragment.name, starts_at=fragment.starts_at, settled_at=settled_at))
+        runs.append(
+            MyRun(
+                slug=fragment.slug,
+                name=fragment.name,
+                starts_at=fragment.starts_at,
+                freeze_at=fragment.freeze_at,
+                ended_at=fragment.ended_at,
+                settled_at=settled_at,
+            )
+        )
     return MyRunsResponse(username=username, runs=runs)
