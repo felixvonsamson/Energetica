@@ -6,6 +6,11 @@
  * picker shows. Each run is a cross-origin `<a href>` to `{slug}.{apex}/app`;
  * the current run is marked and non-navigating. "Open lobby" always appears — a
  * just-provisioned player with no settled run yet still needs a way out.
+ *
+ * In a live-backend dev server (`BACKEND=game bun run dev`) the `/api` proxy is
+ * pinned to one live instance, so the other runs' links would leave the local
+ * dev app for prod — they are disabled, and the pinned instance is marked
+ * current (via {@link devInstanceSlug}).
  */
 
 import { ArrowLeftRight, Check } from "lucide-react";
@@ -20,11 +25,21 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMyRuns } from "@/hooks/use-my-runs";
-import { currentRunSlug, lobbyHref, runAppHref } from "@/lib/instances";
+import {
+    currentRunSlug,
+    devInstanceSlug,
+    lobbyHref,
+    runAppHref,
+} from "@/lib/instances";
 
 export function RunSwitcher() {
     const { data: runs } = useMyRuns();
-    const here = currentRunSlug();
+    // In a live-backend dev server the hostname is `localhost`, so there is no run in the URL —
+    // fall back to the injected slug the proxy is pinned to. When that is set, hopping to any other
+    // run would leave the local dev app for a prod origin, so those entries are disabled.
+    const pinnedSlug = devInstanceSlug();
+    const here = currentRunSlug() ?? pinnedSlug;
+    const pinnedToLocalDev = pinnedSlug !== null;
 
     return (
         <DropdownMenu>
@@ -51,6 +66,18 @@ export function RunSwitcher() {
                                             {run.name}
                                         </span>
                                         <Check size={16} />
+                                    </DropdownMenuItem>
+                                );
+                            }
+                            if (pinnedToLocalDev) {
+                                return (
+                                    <DropdownMenuItem
+                                        key={run.slug}
+                                        disabled
+                                        className="truncate"
+                                        title="Switching runs is disabled in local dev — this app dev server is pinned to one live instance."
+                                    >
+                                        {run.name}
                                     </DropdownMenuItem>
                                 );
                             }

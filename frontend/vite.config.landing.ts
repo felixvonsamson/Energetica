@@ -14,7 +14,9 @@ import { DEV_PORTS } from "./vite.shared";
 
 export default defineConfig(() => {
     return {
-        server: { port: DEV_PORTS.landing },
+        // Pin the port (see the lobby/app configs): the fixed-port contract in
+        // vite.shared.ts assumes every surface lives at a known localhost origin.
+        server: { port: DEV_PORTS.landing, strictPort: true },
         plugins: [
             // Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'
             tanstackRouter({
