@@ -1,35 +1,53 @@
 /**
- * CI guard: forbid raw-HTML rendering of user-generated content (ADR-0002, #843).
+ * CI guard: forbid raw-HTML rendering of user-generated content (ADR-0002,
+ * #843).
  *
  * With the shared parent-domain SSO cookie live in production, the sole live
  * defence against a cross-instance session-ride is that every user-controlled
  * string renders as React-escaped text. This guard fails CI if any frontend
- * source introduces a raw-HTML sink — `dangerouslySetInnerHTML` or `rehype-raw`
- * — outside the explicit allowlist below.
+ * source introduces a raw-HTML sink outside the explicit allowlist below.
  *
- * The allowlist is intentionally tiny and granular: it pins each permitted sink
- * to both its file AND the exact expression fed to `__html`. Adding a new UGC
- * surface, or changing an allowlisted site to render a different (possibly
- * user-controlled) field, therefore requires a visible, security-reviewable
- * edit to this file — it can never slip in silently.
+ * Two sinks are covered:
  *
- * Run: `bun run guard:no-raw-html` (from frontend/) or `bun scripts/guard-no-raw-html.ts`.
+ * 1. `dangerouslySetInnerHTML` — a JSX-level sink, so it is only scanned in
+ *    `frontend/src`. Each occurrence is pinned to a (file, __html-expression)
+ *    allowlist entry, consumed 1:1: a second sink — even one that reuses the
+ *    same expression text in a different scope — needs its own reviewable
+ *    entry, so a refactor cannot silently ride an existing approval.
+ * 2. `rehype-raw` — re-enables raw HTML inside our build-time MDX pipeline. MDX
+ *    plugins are wired in `frontend/vite.config*.ts` (never in `src`), so a
+ *    `src`-only scan would miss it entirely. It is forbidden outright at two
+ *    layers that together defeat aliasing / wrapper indirection: (a) it must
+ *    not be a declared dependency (or npm-aliased dependency) in
+ *    `frontend/package.json` — no package present, nothing to import; (b) its
+ *    module specifier must not be imported anywhere in `frontend/src` or the
+ *    build configs.
+ *
+ * The allowlist is intentionally tiny and granular. Adding a new UGC surface,
+ * or changing an allowlisted site to render a different (possibly
+ * user-controlled) field, requires a visible, security-reviewable edit to this
+ * file — it can never slip in silently.
+ *
+ * Run: `bun run guard:no-raw-html` (from frontend/) or `bun
+ * scripts/guard-no-raw-html.ts`.
  */
 
-import { readdirSync, readFileSync, statSync } from "fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import { dirname, join, relative, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SCAN_ROOT = join(REPO_ROOT, "frontend", "src");
+const FRONTEND_ROOT = join(REPO_ROOT, "frontend");
+const SCAN_ROOT = join(FRONTEND_ROOT, "src");
 
 /**
  * Every currently-permitted `dangerouslySetInnerHTML` sink.
  *
  * `file` is repo-relative; `html` is the exact expression passed to `__html`.
- * Both must match for a usage to be allowed. All current entries render
- * developer-authored game content (technology / facility descriptions), never
- * user-generated content.
+ * Both must match for a usage to be allowed, and entries are consumed one per
+ * physical sink: two sinks in the same file need two entries. All current
+ * entries render developer-authored game content (technology / facility
+ * descriptions), never user-generated content.
  *
  * DO NOT extend this list to cover any user-controlled string (chat, player /
  * team / tile names, or any future rich field). See ADR-0002.
@@ -57,6 +75,9 @@ const ALLOWLIST: { file: string; html: string }[] = [
     },
 ];
 
+/** The forbidden raw-HTML MDX plugin. */
+const RAW_MD_PACKAGE = "rehype-raw";
+
 interface Finding {
     file: string; // repo-relative
     line: number;
@@ -76,6 +97,14 @@ function collectSources(dir: string): string[] {
         }
     }
     return out;
+}
+
+/** Non-recursive .ts/.tsx files directly under `dir` (e.g. build configs). */
+function collectTopLevel(dir: string): string[] {
+    return readdirSync(dir)
+        .filter((e) => /\.tsx?$/.test(e))
+        .map((e) => join(dir, e))
+        .filter((f) => statSync(f).isFile());
 }
 
 function lineOf(source: string, index: number): number {
@@ -98,6 +127,7 @@ function extractHtmlExpr(source: string, from: number): string | undefined {
 
 const findings: Finding[] = [];
 
+// `dangerouslySetInnerHTML` is a JSX sink: scan application sources only.
 for (const absFile of collectSources(SCAN_ROOT)) {
     const file = relative(REPO_ROOT, absFile);
     const source = readFileSync(absFile, "utf8");
@@ -114,12 +144,25 @@ for (const absFile of collectSources(SCAN_ROOT)) {
             html: extractHtmlExpr(source, idx),
         });
     }
+}
 
-    // rehype-raw re-enables raw HTML inside react-markdown; forbidden outright,
-    // matched on the package name (import) and the conventional identifier.
-    const rawRe = /rehype-raw|rehypeRaw/g;
+// `rehype-raw` re-enables raw HTML inside react-markdown / MDX. Match only an
+// actual quoted module specifier (`"rehype-raw"` / `'rehype-raw'`), so prose or
+// a comment that merely names the package cannot trip CI. Scan both the app
+// sources and the build configs, where MDX `rehypePlugins` are actually wired.
+const rawSpecifierRe = new RegExp(
+    `["']${RAW_MD_PACKAGE.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']`,
+    "g",
+);
+const rawScanFiles = [
+    ...collectSources(SCAN_ROOT),
+    ...collectTopLevel(FRONTEND_ROOT),
+];
+for (const absFile of rawScanFiles) {
+    const file = relative(REPO_ROOT, absFile);
+    const source = readFileSync(absFile, "utf8");
     let m: RegExpExecArray | null;
-    while ((m = rawRe.exec(source)) !== null) {
+    while ((m = rawSpecifierRe.exec(source)) !== null) {
         findings.push({
             file,
             line: lineOf(source, m.index),
@@ -128,16 +171,52 @@ for (const absFile of collectSources(SCAN_ROOT)) {
     }
 }
 
-// Match findings against the allowlist. An allowlist entry is "used" only when
-// a real finding matches it, so stale entries surface as errors and the list
-// stays truthful and minimal.
-const used = new Set<number>();
+// Dependency-level block: an aliased or wrapped import still needs `rehype-raw`
+// present as a (possibly npm-aliased) dependency. Scan the manifest's keys AND
+// values so `"anything": "npm:rehype-raw@^7"` is caught too.
+const depViolations: string[] = [];
+const pkgPath = join(FRONTEND_ROOT, "package.json");
+if (existsSync(pkgPath)) {
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as Record<
+        string,
+        unknown
+    >;
+    const depSections = [
+        "dependencies",
+        "devDependencies",
+        "peerDependencies",
+        "optionalDependencies",
+    ];
+    for (const section of depSections) {
+        const deps = pkg[section];
+        if (!deps || typeof deps !== "object") continue;
+        for (const [name, version] of Object.entries(
+            deps as Record<string, string>,
+        )) {
+            if (
+                name === RAW_MD_PACKAGE ||
+                String(version).includes(RAW_MD_PACKAGE)
+            ) {
+                depViolations.push(
+                    `frontend/package.json  ${section}["${name}"] pulls in ${RAW_MD_PACKAGE}`,
+                );
+            }
+        }
+    }
+}
+
+// Match findings against the allowlist. Entries are consumed one-per-sink: a
+// finding claims the first *unconsumed* matching entry, so a duplicate sink
+// with no dedicated entry (even same file + same expression, different scope)
+// surfaces as a violation. Unconsumed entries are stale, keeping the list
+// truthful and minimal.
+const consumed = new Array<boolean>(ALLOWLIST.length).fill(false);
 const violations: string[] = [];
 
 for (const f of findings) {
     if (f.kind === "rehype-raw") {
         violations.push(
-            `${f.file}:${f.line}  raw-HTML markdown (rehype-raw) is forbidden`,
+            `${f.file}:${f.line}  raw-HTML markdown (${RAW_MD_PACKAGE}) is forbidden`,
         );
         continue;
     }
@@ -149,20 +228,24 @@ for (const f of findings) {
         continue;
     }
     const allowIdx = ALLOWLIST.findIndex(
-        (a) => a.file === f.file && a.html === f.html,
+        (a, i) => !consumed[i] && a.file === f.file && a.html === f.html,
     );
     if (allowIdx === -1) {
         violations.push(
             `${f.file}:${f.line}  dangerouslySetInnerHTML={{ __html: ${f.html} }} is not allowlisted`,
         );
     } else {
-        used.add(allowIdx);
+        consumed[allowIdx] = true;
     }
 }
 
-const stale = ALLOWLIST.filter((_, i) => !used.has(i));
+const stale = ALLOWLIST.filter((_, i) => !consumed[i]);
 
-if (violations.length === 0 && stale.length === 0) {
+if (
+    violations.length === 0 &&
+    depViolations.length === 0 &&
+    stale.length === 0
+) {
     console.log(
         `✓ raw-HTML UGC guard: ${ALLOWLIST.length} allowlisted sink(s), no violations.`,
     );
@@ -184,6 +267,15 @@ if (violations.length > 0) {
             "content, add an explicit { file, html } entry to ALLOWLIST in\n" +
             "scripts/guard-no-raw-html.ts — that edit gets security review.",
     );
+}
+
+if (depViolations.length > 0) {
+    console.error(
+        `\n${RAW_MD_PACKAGE} must not be a dependency — its presence lets any\n` +
+            "module re-enable raw HTML in the MDX pipeline, defeating this guard.\n\n" +
+            "Offending manifest entries:",
+    );
+    for (const v of depViolations) console.error(`  - ${v}`);
 }
 
 if (stale.length > 0) {
