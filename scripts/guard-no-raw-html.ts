@@ -17,11 +17,18 @@
  * 2. `rehype-raw` — re-enables raw HTML inside our build-time MDX pipeline. MDX
  *    plugins are wired in `frontend/vite.config*.ts` (never in `src`), so a
  *    `src`-only scan would miss it entirely. It is forbidden outright at two
- *    layers that together defeat aliasing / wrapper indirection: (a) it must
- *    not be a declared dependency (or npm-aliased dependency) in
- *    `frontend/package.json` — no package present, nothing to import; (b) its
- *    module specifier must not be imported anywhere in `frontend/src` or the
- *    build configs.
+ *    layers: (a) it must not be a declared dependency (or npm-aliased
+ *    dependency) in `frontend/package.json` — no package present, nothing to
+ *    import; (b) it must not be imported as a module specifier anywhere in
+ *    `frontend/src` or the build configs.
+ *
+ * Known boundary: this is a text-and-manifest guard, one defence-in-depth layer
+ * — not a hermetic sandbox. It does not resolve the dependency graph, so a
+ * wrapper package that transitively pulls `rehype-raw` and re-exports it under
+ * its own name would not be caught. That is an accepted residual risk: adding
+ * such a wrapper is a conspicuous, reviewable new dependency, not the silent
+ * slip this guard exists to stop. Graph resolution was considered and rejected
+ * as disproportionately brittle and false-positive-prone.
  *
  * The allowlist is intentionally tiny and granular. Adding a new UGC surface,
  * or changing an allowlisted site to render a different (possibly
@@ -146,12 +153,15 @@ for (const absFile of collectSources(SCAN_ROOT)) {
     }
 }
 
-// `rehype-raw` re-enables raw HTML inside react-markdown / MDX. Match only an
-// actual quoted module specifier (`"rehype-raw"` / `'rehype-raw'`), so prose or
-// a comment that merely names the package cannot trip CI. Scan both the app
+// `rehype-raw` re-enables raw HTML inside react-markdown / MDX. Match the
+// package name ONLY where it is an actual module specifier — the target of an
+// `import` / `export … from`, a side-effect `import`, or a `require(...)` /
+// dynamic `import(...)`. A bare quoted `"rehype-raw"` in prose, a data literal,
+// or a test fixture is therefore not a false positive. Scan both the app
 // sources and the build configs, where MDX `rehypePlugins` are actually wired.
+const pkgEsc = RAW_MD_PACKAGE.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const rawSpecifierRe = new RegExp(
-    `["']${RAW_MD_PACKAGE.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']`,
+    `(?:\\bfrom\\s*|\\bimport\\s*\\(?\\s*|\\brequire\\s*\\(\\s*)(["'])${pkgEsc}\\1`,
     "g",
 );
 const rawScanFiles = [
