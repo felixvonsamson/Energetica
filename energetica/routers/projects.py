@@ -15,7 +15,7 @@ from energetica.schemas.projects import (
     StorageFacilityCatalogListOut,
     TechnologyCatalogListOut,
 )
-from energetica.utils.auth import get_settled_player
+from energetica.utils.auth import get_settled_player, reject_when_frozen
 from energetica.utils import projects
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
@@ -29,7 +29,7 @@ def get_projects(
     return ProjectListOut.from_player(player)
 
 
-@router.post("", status_code=status.HTTP_200_OK)
+@router.post("", status_code=status.HTTP_200_OK, dependencies=[Depends(reject_when_frozen)])
 def queue_project(
     player: Annotated[Player, Depends(get_settled_player)],
     project: ProjectIn,
@@ -43,7 +43,7 @@ def queue_project(
     return get_projects(player)
 
 
-@router.post("/{project_id}:cancel")
+@router.post("/{project_id}:cancel", dependencies=[Depends(reject_when_frozen)])
 def cancel_project(
     player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
@@ -60,7 +60,7 @@ def cancel_project(
     return get_projects(player)
 
 
-@router.post("/{project_id}:pause")
+@router.post("/{project_id}:pause", dependencies=[Depends(reject_when_frozen)])
 def request_pause_project(
     player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
@@ -77,7 +77,7 @@ def request_pause_project(
     return get_projects(player)
 
 
-@router.post("/{project_id}:resume")
+@router.post("/{project_id}:resume", dependencies=[Depends(reject_when_frozen)])
 def request_resume_project(
     player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
@@ -94,7 +94,7 @@ def request_resume_project(
     return get_projects(player)
 
 
-@router.post("/{project_id}:decrease-priority")
+@router.post("/{project_id}:decrease-priority", dependencies=[Depends(reject_when_frozen)])
 async def decrease_project_priority(
     player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,
@@ -111,7 +111,7 @@ async def decrease_project_priority(
     return get_projects(player)
 
 
-@router.post("/{project_id}:increase-priority")
+@router.post("/{project_id}:increase-priority", dependencies=[Depends(reject_when_frozen)])
 async def increase_project_priority(
     player: Annotated[Player, Depends(get_settled_player)],
     project_id: int,

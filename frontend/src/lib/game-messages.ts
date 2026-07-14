@@ -39,6 +39,13 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     OLD_PASSWORD_INCORRECT: "The current password you entered is incorrect.",
     INSTANCE_ACCESS_DENIED: "Your account is not allowed on this instance.",
 
+    // --- Lifecycle ---
+    // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client
+    // derives its phase locally and stops firing game actions before this fires. The in-game
+    // read-only banner/disabled-controls UI lives in T8 (#866).
+    "Instance is frozen; the game is read-only.":
+        "This game has ended — it's now read-only.",
+
     // --- Location / tile ---
     locationOccupied: "This location is already occupied by another player.",
     choiceUnmodifiable: "Your location choice cannot be changed.",

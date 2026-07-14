@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException, Request, status
 
+from energetica import instance_config
 from energetica.database.player import Player
 from energetica.database.user import User
 from energetica.game_error import GameExceptionType
@@ -47,7 +48,27 @@ __all__ = [
     "get_user",
     "get_playing_user",
     "get_settled_player",
+    "reject_when_frozen",
 ]
+
+
+def reject_when_frozen() -> None:
+    """Path-operation guard: reject game-state mutations once this instance has entered ``freeze``
+    (or ``ended``).
+
+    Attached via ``dependencies=[Depends(reject_when_frozen)]`` on exactly the game-action **write**
+    endpoints (facilities/projects/power-priorities/resource-market/electricity-markets/map-settle/
+    daily-quiz). Reads, and the meta-writes that survive freeze (chat, ``/players/me/settings``,
+    notifications), keep their plain ``get_settled_player`` dependency — the frozen write-set is
+    game-state mutation + the sim tick, nothing else (see G2, #860).
+
+    Fails with ``409 Conflict`` (state, not authorization, forbids the write — distinct from the
+    ``403``s that mean auth failures). This is a **backstop**: a normal client derives its phase
+    locally and never fires a frozen write, so the 409 only catches a client whose clock lags the
+    freeze boundary, or a stale/scripted one.
+    """
+    if instance_config.current_phase() in ("freeze", "ended"):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=GameExceptionType.INSTANCE_FROZEN)
 
 
 def get_user_from_token(token: str) -> User | None:

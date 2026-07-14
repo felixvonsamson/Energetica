@@ -179,6 +179,33 @@ class InstanceFragment(BaseModel):
         return derive_phase(now, starts_at=self.starts_at, freeze_at=self.freeze_at, ended_at=self.ended_at)
 
 
+def current_phase(now: datetime | None = None) -> Phase:
+    """This instance's own lifecycle phase right now, from its on-disk ``instance.json``.
+
+    The running backend self-drives its ``active → freeze → ended`` transitions from this — the sim
+    halt (``state_update``) and the read-only write-gate (``reject_when_frozen``) both key off it. The
+    config is re-read every call (no cache), exactly like the login/access path, so an admin editing
+    ``freeze_at`` (the manual force-freeze / adjustment override) takes effect on the next check with
+    no restart.
+
+    Fails **open** — returns ``active`` — when the instance is unconfigured (dev/legacy: no slug or no
+    file → open-ended run, no freeze boundary) or the config is present-but-broken. A config typo must
+    not silently freeze a live game; the login path already fails *closed* on a broken config, so
+    entry stops there, while the running game keeps serving until a *readable* ``freeze_at`` is
+    actually crossed. Freeze is entered only on a positive clock signal, never on an error.
+    """
+    if now is None:
+        now = datetime.now(timezone.utc)
+    try:
+        config = load_instance_config()
+    except InstanceConfigError as exc:
+        logger.warning("treating instance as active; could not read config for phase: %s", exc)
+        return "active"
+    if config is None:
+        return "active"
+    return derive_phase(now, starts_at=config.starts_at, freeze_at=config.freeze_at, ended_at=config.ended_at)
+
+
 def instance_slug() -> str | None:
     """The instance's own slug, from the environment. ``None`` in dev / unconfigured deployments."""
     slug = os.environ.get(_SLUG_ENV_VAR)
