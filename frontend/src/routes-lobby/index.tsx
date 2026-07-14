@@ -17,6 +17,7 @@ import { useInstancesManifest, useMyRuns } from "@/hooks/use-lobby";
 import type { MyRun } from "@/lib/api/lobby";
 import type { InstanceFragment } from "@/lib/instances";
 import { runAppHref, validateReturnSearch } from "@/lib/lobby";
+import { isSingleOriginHost } from "@/lib/single-origin";
 
 export const Route = createFileRoute("/")({
     validateSearch: validateReturnSearch,
@@ -29,21 +30,31 @@ function PickerPage() {
     const myRuns = useMyRuns();
     const instances = useInstancesManifest();
 
-    // `?return=` bounce (client-side by design): once logged in and both run
-    // lists are known, forward a *validated* slug to its run. The URL is
-    // constructed against the fixed apex (runAppHref), never taken from the
-    // parameter — no open redirect. Unknown slugs fall through to the picker.
-    // The target is derived in render (so the spinner below holds while the
-    // cross-origin navigation is in flight, instead of flashing the picker);
-    // the ref keeps the assign one-shot across query refetches.
+    // Where an authenticated player is forwarded, if anywhere. Derived in render
+    // (so the spinner below holds while the navigation is in flight, instead of
+    // flashing the picker); the ref keeps the assign one-shot across refetches.
     let bounceHref: string | null = null;
-    if (returnSlug && myRuns.data && instances.data !== undefined) {
-        const knownSlugs = new Set([
-            ...myRuns.data.runs.map((run) => run.slug),
-            ...instances.data.map((instance) => instance.slug),
-        ]);
-        if (knownSlugs.has(returnSlug)) {
-            bounceHref = runAppHref(returnSlug);
+    if (myRuns.data) {
+        if (isSingleOriginHost()) {
+            // Single-origin proxy host (e.g. energetica.ethz.ch): exactly one
+            // run is reachable through this origin, so the picker's choice is
+            // moot. Send the player straight into the app — the instance's
+            // entry gate provisions/authorises them per its access policy. The
+            // multi-run UI below is never rendered here. See lib/single-origin.ts
+            // and the ADR-0002 amendment.
+            bounceHref = "/app";
+        } else if (returnSlug && instances.data !== undefined) {
+            // `?return=` bounce (client-side by design): once both run lists are
+            // known, forward a *validated* slug to its run. The URL is built
+            // against the fixed apex (runAppHref), never taken from the
+            // parameter — no open redirect. Unknown slugs fall through.
+            const knownSlugs = new Set([
+                ...myRuns.data.runs.map((run) => run.slug),
+                ...instances.data.map((instance) => instance.slug),
+            ]);
+            if (knownSlugs.has(returnSlug)) {
+                bounceHref = runAppHref(returnSlug);
+            }
         }
     }
     const bouncedRef = useRef(false);

@@ -66,6 +66,15 @@ def reject_when_frozen() -> None:
     ``403``s that mean auth failures). This is a **backstop**: a normal client derives its phase
     locally and never fires a frozen write, so the 409 only catches a client whose clock lags the
     freeze boundary, or a stale/scripted one.
+
+    The check is at request entry, not atomic with the mutation, so a request that passes here can
+    have ``freeze_at`` cross before its handler commits — a single in-flight write landing
+    milliseconds into freeze, once, at the exact boundary instant. Accepted by design: freeze is a
+    coarse wall-clock boundary (client-side derivation is the primary gate, this the backstop), an
+    already-submitted action completing at the deadline is the expected behaviour of any deadline,
+    and the recap is a freeze-instant photograph a late write simply isn't part of. Making it
+    airtight would mean re-checking inside each mutation's engine-lock section, which G2 (#860)
+    deliberately rejected in favour of this entry guard.
     """
     if instance_config.current_phase() in ("freeze", "ended"):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=GameExceptionType.INSTANCE_FROZEN)
