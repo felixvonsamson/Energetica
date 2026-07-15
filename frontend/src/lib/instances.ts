@@ -10,6 +10,8 @@
  * Visibility & Access.
  */
 
+import { isSingleOriginHost } from "./single-origin";
+
 /**
  * Public projection of an instance. Mirrors the backend `InstanceFragment`
  * model.
@@ -31,7 +33,24 @@ export type InstancesManifest = {
  * at build time. Empty during the interim, when the landing is still served
  * same-origin by FastAPI.
  */
-const APEX_DOMAIN = import.meta.env.VITE_APEX_DOMAIN;
+const BUILD_APEX = import.meta.env.VITE_APEX_DOMAIN;
+
+/**
+ * The apex used to build cross-origin links, or `undefined` to force a
+ * same-origin fallback.
+ *
+ * Normally the build-time {@link BUILD_APEX}. Suppressed to `undefined` on a
+ * single-origin proxy host (`lib/single-origin.ts`, ADR-0002 amendment): there,
+ * the lobby and the one reachable instance share ONE origin, so `lobby.{apex}`
+ * and `{slug}.{apex}` do not resolve and every helper below must emit a
+ * same-origin path instead. Routing all apex reads through this one gate means
+ * the existing no-apex fallbacks (`return path` / `"/app"`) cover `runAppHref`,
+ * `lobbyHref`, `currentRunSlug`, and `landingHref` with no per-helper
+ * special-casing.
+ */
+function apexDomain(): string | undefined {
+    return isSingleOriginHost() ? undefined : BUILD_APEX;
+}
 
 const LOBBY_SUBDOMAIN = "lobby.";
 
@@ -69,8 +88,9 @@ export function isValidRunSlug(slug: string): boolean {
  * link beats a cross-origin URL pointing at a host we did not intend.
  */
 export function runAppHref(slug: string): string {
-    if (!APEX_DOMAIN || !isValidRunSlug(slug)) return "/app";
-    return `https://${slug}.${APEX_DOMAIN}/app`;
+    const apex = apexDomain();
+    if (!apex || !isValidRunSlug(slug)) return "/app";
+    return `https://${slug}.${apex}/app`;
 }
 
 /**
@@ -114,7 +134,7 @@ export function resolveLobbyBaseUrl(opts: {
 function lobbyBaseUrl(): string | null {
     return resolveLobbyBaseUrl({
         dev: import.meta.env.DEV,
-        apex: APEX_DOMAIN,
+        apex: apexDomain(),
         lobbyDevUrl: LOBBY_DEV_URL,
     });
 }
@@ -140,8 +160,9 @@ export function lobbyHref(path: string): string {
  * apex.
  */
 export function currentRunSlug(): string | null {
-    if (!APEX_DOMAIN) return null;
-    const suffix = `.${APEX_DOMAIN}`;
+    const apex = apexDomain();
+    if (!apex) return null;
+    const suffix = `.${apex}`;
     const { hostname } = window.location;
     if (!hostname.endsWith(suffix)) return null;
     const label = hostname.slice(0, -suffix.length);
@@ -180,8 +201,9 @@ export function lobbyLoginHref(): string {
  * @param path Absolute landing path, e.g. `/landing-page`.
  */
 export function landingHref(path: string): string {
-    if (!APEX_DOMAIN) return path;
-    return `https://${APEX_DOMAIN}${path}`;
+    const apex = apexDomain();
+    if (!apex) return path;
+    return `https://${apex}${path}`;
 }
 
 /**
