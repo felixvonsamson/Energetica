@@ -22,6 +22,7 @@ def get_engine_config() -> GameEngineOut:
         start_date=engine.start_date,
         wall_clock_seconds_per_tick=engine.clock_time,
         game_seconds_per_tick=engine.in_game_seconds_per_tick,
+        starts_at=config.starts_at if config else None,
         freeze_at=config.freeze_at if config else None,
         ended_at=config.ended_at if config else None,
     )
