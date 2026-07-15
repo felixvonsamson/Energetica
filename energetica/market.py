@@ -10,9 +10,9 @@ Because clearing never reads ``MarketEntry.player_id``, a caller can inject a
 demand bid backed by no player at all (e.g. a Workshop-mode demand block) and
 still get a well-defined clearing out.
 
-NOTE: the historical naming is inverted vs. finance — :func:`place_bid` adds
-*supply* (an offer), :func:`place_ask` adds *demand*. Left as-is to keep this a
-behaviour-preserving extraction; flipping to ask/bid is a candidate follow-up.
+Naming follows finance convention: :func:`place_ask` adds *supply* (a seller's
+offer, into ``capacities``); :func:`place_bid` adds *demand* (a buyer's bid, into
+``demands``).
 """
 
 from __future__ import annotations
@@ -40,15 +40,15 @@ def init_market() -> dict:
     }
 
 
-def place_bid(market: dict, player_id: int, capacity: float, price: float, facility: str) -> dict:
-    """Make a bid (offer, supply) on the market."""
+def place_ask(market: dict, player_id: int, capacity: float, price: float, facility: str) -> dict:
+    """Make an ask (offer, supply) on the market."""
     if capacity > 0:
         market["capacities"].append(MarketEntry(player_id, capacity, price, facility))
     return market
 
 
-def place_ask(market: dict, player_id: int, demand: float, price: float, facility: str) -> dict:
-    """Make an ask (demand) on the market."""
+def place_bid(market: dict, player_id: int, demand: float, price: float, facility: str) -> dict:
+    """Make a bid (demand) on the market."""
     if demand > 0:
         market["demands"].append(MarketEntry(player_id, demand, price, facility))
     return market

@@ -412,7 +412,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
     # Obligatory generation is put on the internal market at a price of -5
     for facility in (*StorageFacilityType, *power_facility_types):
         if facility in player.capacities:
-            internal_market = place_bid(
+            internal_market = place_ask(
                 internal_market,
                 player.id,
                 generation[facility],
@@ -424,7 +424,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
     for bid_type in player.network_prices.bid_prices.keys():
         if bid_type in demand:
             price = player.network_prices.bid_prices[bid_type]
-            internal_market = place_ask(
+            internal_market = place_bid(
                 internal_market,
                 player.id,
                 demand[bid_type],
@@ -444,7 +444,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
             )
             price = player.network_prices.ask_prices[facility]
             capacity = max_prod - generation[facility]
-            internal_market = place_bid(internal_market, player.id, capacity, price, facility)
+            internal_market = place_ask(internal_market, player.id, capacity, price, facility)
 
     market_logic(new_values, internal_market)
     return internal_market["market_price"]  # type: ignore[return-value]
@@ -461,7 +461,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
     # offer minimal generation capacities of facilities on the market at a negative price
     for facility in (*StorageFacilityType, *power_facility_types):
         if player.capacities.get(facility) is not None:
-            market = place_bid(market, player.id, generation[facility], -5, facility)
+            market = place_ask(market, player.id, generation[facility], -5, facility)
 
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
@@ -470,7 +470,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
         if demand_type in demand:
             bid_q = demand[demand_type]
             price = player.network_prices.bid_prices[demand_type]
-            market = place_ask(market, player.id, bid_q, price, demand_type)
+            market = place_bid(market, player.id, bid_q, price, demand_type)
 
     resource_reservations = reset_resource_reservations()
     # offer capacities of remaining facilities on the market
@@ -487,7 +487,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
             )
             price = player.network_prices.ask_prices[facility]  # type: ignore
             capacity = max_prod - generation[facility]
-            market = place_bid(market, player.id, capacity, price, facility)
+            market = place_ask(market, player.id, capacity, price, facility)
 
     return market
 

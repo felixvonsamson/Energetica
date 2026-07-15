@@ -104,12 +104,12 @@ def test_no_cross_serves_nothing() -> None:
 
 
 def test_place_helpers_skip_nonpositive_quantities() -> None:
-    """place_bid/place_ask append only positive-quantity entries."""
+    """place_ask/place_bid append only positive-quantity entries."""
     market = {"capacities": [], "demands": []}
-    place_bid(market, 1, 50, 10, "coal")
-    place_bid(market, 1, 0, 10, "coal")  # skipped
-    place_ask(market, 2, 30, 80, "industry")
-    place_ask(market, 2, -5, 80, "industry")  # skipped
+    place_ask(market, 1, 50, 10, "coal")
+    place_ask(market, 1, 0, 10, "coal")  # skipped
+    place_bid(market, 2, 30, 80, "industry")
+    place_bid(market, 2, -5, 80, "industry")  # skipped
 
     assert len(market["capacities"]) == 1
     assert len(market["demands"]) == 1
