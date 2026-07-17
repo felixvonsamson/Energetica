@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { explicitBackendUrl, resolveLobbyProxyTarget } from "./vite.shared";
+import {
+    explicitBackendUrl,
+    instanceSlugFromBackend,
+    resolveLobbyProxyTarget,
+} from "./vite.shared";
 
 const APEX = "energetica-game.org";
 const INSTANCE = "https://mar-27-2026.energetica-game.org";
@@ -57,5 +61,28 @@ describe("resolveLobbyProxyTarget", () => {
         expect(resolveLobbyProxyTarget(env as Record<string, string>)).toBe(
             expected,
         );
+    });
+});
+
+describe("instanceSlugFromBackend", () => {
+    it.each([
+        ["a live instance subdomain", INSTANCE, APEX, "mar-27-2026"],
+        ["single-label slug", `https://prod.${APEX}`, APEX, "prod"],
+        // Not an instance under the apex → no pinned slug.
+        ["local backend", "http://localhost:8000", APEX, null],
+        ["no apex configured", INSTANCE, undefined, null],
+        [
+            "the bare apex (landing, not an instance)",
+            `https://${APEX}`,
+            APEX,
+            null,
+        ],
+        ["a different apex", "https://x.example.com", APEX, null],
+        // A nested/deep subdomain isn't a single valid run label.
+        ["nested subdomain", `https://a.b.${APEX}`, APEX, null],
+        ["an IP address", "http://10.0.0.5", APEX, null],
+        ["unparseable URL", "not a url", APEX, null],
+    ])("%s", (_label, url, apex, expected) => {
+        expect(instanceSlugFromBackend(url, apex)).toBe(expected);
     });
 });

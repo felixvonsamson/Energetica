@@ -9,11 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { lobbyApi, lobbyAuthApi, type MyRunsResponse } from "@/lib/api/lobby";
 import { ApiClientError } from "@/lib/api-client";
 import { fetchInstances, type InstanceFragment } from "@/lib/instances";
-import type {
-    ChangePasswordRequest,
-    LoginRequest,
-    SignupRequest,
-} from "@/types/auth";
+import type { LoginRequest, SignupRequest } from "@/types/auth";
 
 /**
  * Query keys local to the lobby bundle. Deliberately not part of the game's
@@ -90,18 +86,9 @@ export function useLobbySignup() {
     });
 }
 
-/**
- * Mutation hook for changing the authenticated account's password.
- *
- * No cache work on success: the password change leaves the session (and the
- * my-runs auth probe) untouched — the same cookie stays valid.
- */
-export function useLobbyChangePassword() {
-    return useMutation({
-        mutationFn: (data: ChangePasswordRequest) =>
-            lobbyAuthApi.changePassword(data),
-    });
-}
+// Change-password has no hook: the account page submits it as a native <form> POST
+// (see frontend/src/routes-lobby/account.tsx) so Safari/Apple Passwords detects the
+// credential change (issue #849). It never goes through this fetch/React Query layer.
 
 /** Mutation hook for global logout (clears the parent-domain cookie). */
 export function useLobbyLogout() {

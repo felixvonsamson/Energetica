@@ -34,10 +34,15 @@ def _parse_settled_at(raw: str) -> datetime | None:
     return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
 
 
-def resolve_my_runs(account_id: int) -> MyRunsResponse:
+def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
     """The account's settled runs, joined with each run's on-disk fragment for name / starts_at,
     most recently settled first. Stale memberships (run since deleted → no fragment) are dropped,
     and an account's own *unadvertised* runs are surfaced (their fragment exists on disk).
+
+    ``username`` is echoed back so the change-password form can carry an ``autocomplete="username"``
+    field — password managers only offer to *update* the right stored credential when the change
+    form identifies which account it belongs to. Both callers already hold it, so it is passed in
+    rather than re-read from the store.
     """
     runs: list[MyRun] = []
     for membership in accounts.get_memberships(account_id=account_id):
@@ -54,4 +59,4 @@ def resolve_my_runs(account_id: int) -> MyRunsResponse:
             )
             continue
         runs.append(MyRun(slug=fragment.slug, name=fragment.name, starts_at=fragment.starts_at, settled_at=settled_at))
-    return MyRunsResponse(runs=runs)
+    return MyRunsResponse(username=username, runs=runs)

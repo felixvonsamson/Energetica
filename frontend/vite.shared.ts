@@ -85,6 +85,37 @@ export function resolveLobbyProxyTarget(env: Record<string, string>): string {
 }
 
 /**
+ * The instance slug of a resolved backend URL (`https://{slug}.{apex}` →
+ * `{slug}`), or `null` when the backend isn't a real instance subdomain under
+ * `apex` (a local backend, an IP, a pinned non-deployment host, or no apex).
+ *
+ * Injected into the app bundle at dev-server startup (see `vite.config.ts`) so
+ * the in-run switcher knows which single live instance this dev server is
+ * pinned to — everything else it would link to is a _prod_ origin, not the
+ * local dev app. Build-time only: it reads the config's already-resolved
+ * backend, not a request, so it is not the runtime login derivation retired in
+ * PR #848.
+ */
+export function instanceSlugFromBackend(
+    backendUrl: string,
+    apex: string | undefined,
+): string | null {
+    if (!apex) return null;
+    let hostname: string;
+    try {
+        ({ hostname } = new URL(backendUrl));
+    } catch {
+        return null;
+    }
+    const suffix = `.${apex}`;
+    if (!hostname.endsWith(suffix)) return null;
+    const label = hostname.slice(0, -suffix.length);
+    // Same DNS-label shape the infra enforces (RUN_SLUG_PATTERN in lib/lobby.ts):
+    // a single lowercase kebab-case label, so `{sub}.{deep}.{apex}` is rejected.
+    return /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label) ? label : null;
+}
+
+/**
  * Strip `Secure` and `Domain` from `Set-Cookie` on proxied responses so a
  * session cookie minted by an HTTPS backend round-trips through the
  * `http://localhost` dev origin. Without this, the browser won't persist the

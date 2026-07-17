@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { KeyRound } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +9,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { TypographyBrand } from "@/components/ui/typography";
-import { useLobbyChangePassword, useMyRuns } from "@/hooks/use-lobby";
-import { getUserFriendlyError, isErrorType } from "@/lib/error-utils";
+import { useMyRuns } from "@/hooks/use-lobby";
+
+/**
+ * The change-password form posts _natively_ to this lobby-backend route rather
+ * than through the SPA's fetch client. That native submit navigation is what
+ * makes Safari / Apple Passwords offer to update the saved credential — an
+ * intercepted `fetch` (`preventDefault`) gives WebKit nothing to detect (issue
+ * #849). The backend answers every outcome with a 303 back to `/account?pw=…`,
+ * which we render as a banner.
+ *
+ * Absolute `/api` path: Apache proxies `/api` on the lobby vhost to the lobby
+ * uvicorn.
+ */
+const CHANGE_PASSWORD_ACTION = "/api/v1/auth/change-password-form";
+
+const MIN_PASSWORD_LENGTH = 7;
+
+/** Post-redirect status the backend sets via `?pw=`. */
+type PwStatus = "changed" | "old-incorrect" | "too-short";
+
+function validateAccountSearch(search: Record<string, unknown>): {
+    pw?: PwStatus;
+} {
+    const { pw } = search;
+    return {
+        pw:
+            pw === "changed" || pw === "old-incorrect" || pw === "too-short"
+                ? pw
+                : undefined,
+    };
+}
 
 export const Route = createFileRoute("/account")({
+    validateSearch: validateAccountSearch,
     component: AccountPage,
     staticData: { title: "Account" },
 });
@@ -29,7 +59,9 @@ function AccountPage() {
         }
     }, [isLoggedOut, navigate]);
 
-    if (isPending || isLoggedOut) {
+    // `myRuns == null` collapses both the pending and logged-out cases, and
+    // narrows the type so the form can read `myRuns.username` below.
+    if (isPending || myRuns == null) {
         return (
             <div className="flex justify-center py-24">
                 <Spinner />
@@ -39,66 +71,82 @@ function AccountPage() {
 
     return (
         <div className="flex items-center justify-center px-4 py-12">
-            <ChangePasswordForm />
+            <ChangePasswordForm username={myRuns.username} />
         </div>
     );
 }
 
-function ChangePasswordForm() {
-    const changePassword = useLobbyChangePassword();
+function ChangePasswordForm({ username }: { username: string }) {
+    const navigate = useNavigate();
+    const { pw } = Route.useSearch();
+
+    // Capture the post-redirect status once, then strip `?pw` so a manual refresh
+    // doesn't replay the banner. `replace` is a client-side history swap — it cannot
+    // affect the password-manager prompt, which already fired on the POST→GET nav.
+    const [status] = useState<PwStatus | undefined>(pw);
+    useEffect(() => {
+        if (pw !== undefined) {
+            void navigate({ to: "/account", search: {}, replace: true });
+        }
+    }, [pw, navigate]);
 
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [oldPasswordError, setOldPasswordError] = useState<string | null>(
-        null,
-    );
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState(false);
+    const [clientError, setClientError] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState(false);
+    // Synchronous double-submit guard. `submitting` (state) can't do this: it updates on
+    // the next render, so a second submit fired before the disabled button reaches the DOM
+    // would still POST. Two POSTs would change the password on the first, then fail the old
+    // check against the new hash on the second → a spurious `old-incorrect` after success.
+    const submittedRef = useRef(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setOldPasswordError(null);
-        setError(null);
-        setSuccess(false);
+    const success = status === "changed";
+    const oldPasswordError =
+        status === "old-incorrect"
+            ? "The current password you entered is incorrect."
+            : null;
+    const generalError =
+        clientError ??
+        (status === "too-short"
+            ? `New password must be at least ${MIN_PASSWORD_LENGTH} characters`
+            : null);
 
-        if (!oldPassword || !newPassword || !confirmPassword) {
-            setError("Please fill in all fields");
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        // Client-side gate for the checks the server can't infer from a single submit.
+        // On failure we preventDefault + show an inline error; on success we do NOT
+        // preventDefault, so the browser performs the native submit the password manager
+        // needs to see. (Empty fields and min-length are enforced by native `required` /
+        // `minLength`, which block the submit before this handler even fires.)
+
+        // Swallow any submit after the first accepted one, synchronously — before the browser
+        // starts the navigation a rapid second submit would otherwise ride in on.
+        if (submittedRef.current) {
+            e.preventDefault();
             return;
         }
 
-        // Mirrors the backend ChangePasswordRequest constraint (new_password ≥ 7).
-        if (newPassword.length < 7) {
-            setError("New password must be at least 7 characters");
-            return;
-        }
+        setClientError(null);
 
         if (newPassword !== confirmPassword) {
-            setError("New passwords do not match");
+            e.preventDefault();
+            setClientError("New passwords do not match");
             return;
         }
-
         if (newPassword === oldPassword) {
-            setError("New password must differ from your current password");
+            e.preventDefault();
+            setClientError(
+                "New password must differ from your current password",
+            );
             return;
         }
 
-        try {
-            await changePassword.mutateAsync({
-                old_password: oldPassword,
-                new_password: newPassword,
-            });
-            setSuccess(true);
-            setOldPassword("");
-            setNewPassword("");
-            setConfirmPassword("");
-        } catch (err) {
-            if (isErrorType(err, "OLD_PASSWORD_INCORRECT")) {
-                setOldPasswordError(getUserFriendlyError(err));
-            } else {
-                setError(getUserFriendlyError(err));
-            }
-        }
+        // Accepted: latch the guard synchronously so any follow-up submit is dropped above,
+        // and disable the button for the brief moment before the navigation lands. Only the
+        // button, never the inputs: a disabled input is omitted from the native form
+        // submission, which would drop the very fields we're posting.
+        submittedRef.current = true;
+        setSubmitting(true);
     };
 
     return (
@@ -129,13 +177,39 @@ function ChangePasswordForm() {
                         </InfoBanner>
                     )}
 
-                    {error && (
+                    {generalError && (
                         <InfoBanner variant="error" className="mb-6">
-                            {error}
+                            {generalError}
                         </InfoBanner>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form
+                        method="POST"
+                        action={CHANGE_PASSWORD_ACTION}
+                        onSubmit={handleSubmit}
+                        className="space-y-6"
+                    >
+                        {/* Read-only username so password managers (Apple
+                            Passwords especially) know *which* saved credential
+                            this current-password → new-password change updates.
+                            Without an autocomplete="username" field they won't
+                            offer to update the stored password. */}
+                        <div>
+                            <Label htmlFor="username" className="mb-2">
+                                Account
+                            </Label>
+                            <Input
+                                type="text"
+                                id="username"
+                                name="username"
+                                value={username}
+                                autoComplete="username"
+                                readOnly
+                                tabIndex={-1}
+                                className="text-muted-foreground"
+                            />
+                        </div>
+
                         <div>
                             <Label htmlFor="oldPassword" className="mb-2">
                                 Current password
@@ -143,11 +217,11 @@ function ChangePasswordForm() {
                             <Input
                                 type="password"
                                 id="oldPassword"
-                                name="oldPassword"
+                                name="old_password"
                                 value={oldPassword}
                                 onChange={(e) => setOldPassword(e.target.value)}
                                 placeholder="Enter current password"
-                                disabled={changePassword.isPending}
+                                required
                                 autoComplete="current-password"
                                 aria-invalid={
                                     oldPasswordError ? true : undefined
@@ -164,17 +238,18 @@ function ChangePasswordForm() {
 
                         <div>
                             <Label htmlFor="newPassword" className="mb-2">
-                                New password (minimum 7 characters)
+                                New password (minimum {MIN_PASSWORD_LENGTH}{" "}
+                                characters)
                             </Label>
                             <Input
                                 type="password"
                                 id="newPassword"
-                                name="newPassword"
+                                name="new_password"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 placeholder="Choose a new password"
-                                disabled={changePassword.isPending}
-                                minLength={7}
+                                required
+                                minLength={MIN_PASSWORD_LENGTH}
                                 autoComplete="new-password"
                             />
                         </div>
@@ -186,27 +261,25 @@ function ChangePasswordForm() {
                             <Input
                                 type="password"
                                 id="confirmPassword"
-                                name="confirmPassword"
+                                name="confirm_password"
                                 value={confirmPassword}
                                 onChange={(e) =>
                                     setConfirmPassword(e.target.value)
                                 }
                                 placeholder="Confirm your new password"
-                                disabled={changePassword.isPending}
+                                required
                                 autoComplete="new-password"
                             />
                         </div>
 
                         <Button
                             type="submit"
-                            variant={
-                                changePassword.isPending ? "outline" : "default"
-                            }
+                            variant={submitting ? "outline" : "default"}
                             size="lg"
-                            disabled={changePassword.isPending}
+                            disabled={submitting}
                             className="w-full flex items-center justify-center gap-2"
                         >
-                            {changePassword.isPending ? (
+                            {submitting ? (
                                 <Spinner />
                             ) : (
                                 <KeyRound className="w-5 h-5" />

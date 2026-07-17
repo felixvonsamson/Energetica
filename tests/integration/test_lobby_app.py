@@ -14,7 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from energetica import accounts
-from energetica.schemas.auth import ChangePasswordRequest, LoginRequest, SignupRequest
+from energetica.schemas.auth import LoginRequest, SignupRequest
 from energetica.utils.session import SESSION_COOKIE_NAME, decode_session_token
 from lobby import create_lobby_app
 
@@ -143,31 +143,53 @@ def test_my_runs_returns_authed_accounts_runs(signups_enabled: None, landing_dir
     resp = client.get(f"{BASE}/lobby/my-runs")
 
     assert resp.status_code == 200
+    assert resp.json()["username"] == "alice"
     assert [run["slug"] for run in resp.json()["runs"]] == ["spring-2026"]
 
 
 # --- change password + logout ---------------------------------------------------------------
 
 
-def test_change_password_wrong_old_rejected(signups_enabled: None) -> None:
+# Change-password is a native <form> POST (form-encoded, not JSON) that Post/Redirect/Gets
+# back into the SPA so Safari/Apple Passwords sees the submit navigation (issue #849). Assert
+# the 303 + its `?pw=` destination (follow_redirects=False — the redirect target is the SPA
+# shell, not served by this app), never a JSON body a native submit would render as raw text.
+
+
+def test_change_password_wrong_old_redirects_with_error(signups_enabled: None) -> None:
     client = _client()
     _signup(client)
     resp = client.post(
-        f"{BASE}/auth/change-password",
-        json=ChangePasswordRequest(old_password="wrong", new_password="brand-new-password").model_dump(),
+        f"{BASE}/auth/change-password-form",
+        data={"old_password": "wrong", "new_password": "brand-new-password"},
+        follow_redirects=False,
     )
-    assert resp.status_code == 400
-    assert resp.json()["game_exception_type"] == "OLD_PASSWORD_INCORRECT"
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/account?pw=old-incorrect"
+
+
+def test_change_password_too_short_redirects_with_error(signups_enabled: None) -> None:
+    client = _client()
+    _signup(client)
+    resp = client.post(
+        f"{BASE}/auth/change-password-form",
+        data={"old_password": "correct-password", "new_password": "short"},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/account?pw=too-short"
 
 
 def test_change_password_then_login_with_new(signups_enabled: None) -> None:
     client = _client()
     _signup(client)
     resp = client.post(
-        f"{BASE}/auth/change-password",
-        json=ChangePasswordRequest(old_password="correct-password", new_password="brand-new-password").model_dump(),
+        f"{BASE}/auth/change-password-form",
+        data={"old_password": "correct-password", "new_password": "brand-new-password"},
+        follow_redirects=False,
     )
-    assert resp.status_code == 204
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/account?pw=changed"
 
     client.cookies.clear()
     old = client.post(
