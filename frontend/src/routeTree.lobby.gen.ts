@@ -14,6 +14,7 @@ import { Route as LogoutRouteImport } from './routes-lobby/logout'
 import { Route as LoginRouteImport } from './routes-lobby/login'
 import { Route as AccountRouteImport } from './routes-lobby/account'
 import { Route as IndexRouteImport } from './routes-lobby/index'
+import { Route as RunsSlugRecapRouteImport } from './routes-lobby/runs.$slug.recap'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -40,6 +41,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RunsSlugRecapRoute = RunsSlugRecapRouteImport.update({
+  id: '/runs/$slug/recap',
+  path: '/runs/$slug/recap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
+  '/runs/$slug/recap': typeof RunsSlugRecapRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
+  '/runs/$slug/recap': typeof RunsSlugRecapRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,27 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
+  '/runs/$slug/recap': typeof RunsSlugRecapRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/account' | '/login' | '/logout' | '/signup'
+  fullPaths:
+    | '/'
+    | '/account'
+    | '/login'
+    | '/logout'
+    | '/signup'
+    | '/runs/$slug/recap'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/account' | '/login' | '/logout' | '/signup'
-  id: '__root__' | '/' | '/account' | '/login' | '/logout' | '/signup'
+  to: '/' | '/account' | '/login' | '/logout' | '/signup' | '/runs/$slug/recap'
+  id:
+    | '__root__'
+    | '/'
+    | '/account'
+    | '/login'
+    | '/logout'
+    | '/signup'
+    | '/runs/$slug/recap'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +99,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   SignupRoute: typeof SignupRoute
+  RunsSlugRecapRoute: typeof RunsSlugRecapRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +139,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/runs/$slug/recap': {
+      id: '/runs/$slug/recap'
+      path: '/runs/$slug/recap'
+      fullPath: '/runs/$slug/recap'
+      preLoaderRoute: typeof RunsSlugRecapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +155,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   SignupRoute: SignupRoute,
+  RunsSlugRecapRoute: RunsSlugRecapRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

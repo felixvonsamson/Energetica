@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { lobbyApi, lobbyAuthApi, type MyRunsResponse } from "@/lib/api/lobby";
 import { ApiClientError } from "@/lib/api-client";
 import { fetchInstances, type InstanceFragment } from "@/lib/instances";
+import { fetchRecap, RecapNotMintedError, type Recap } from "@/lib/recap";
 import type { LoginRequest, SignupRequest } from "@/types/auth";
 
 /**
@@ -19,6 +20,7 @@ import type { LoginRequest, SignupRequest } from "@/types/auth";
 export const lobbyQueryKeys = {
     myRuns: ["lobby", "my-runs"] as const,
     instances: ["lobby", "instances"] as const,
+    recap: (slug: string) => ["lobby", "recap", slug] as const,
 };
 
 /**
@@ -55,6 +57,29 @@ export function useInstancesManifest() {
     return useQuery<InstanceFragment[]>({
         queryKey: lobbyQueryKeys.instances,
         queryFn: ({ signal }) => fetchInstances(signal).catch(() => []),
+    });
+}
+
+/**
+ * A run's published recap (`/recaps/{slug}.json`). `data` is `null` while the
+ * run hasn't reached `freeze` yet — {@link RecapNotMintedError} (a 404) is
+ * swallowed rather than surfaced as a query error, since "not frozen yet" is an
+ * expected, common state, not a failure. Other errors (network, malformed
+ * payload) surface normally so the page can distinguish "not minted" from
+ * "broken". (`null`, not `undefined`: React Query's `queryFn` must resolve to
+ * a defined value.)
+ */
+export function useRecap(slug: string) {
+    return useQuery<Recap | null>({
+        queryKey: lobbyQueryKeys.recap(slug),
+        queryFn: async ({ signal }) => {
+            try {
+                return await fetchRecap(slug, signal);
+            } catch (error) {
+                if (error instanceof RecapNotMintedError) return null;
+                throw error;
+            }
+        },
     });
 }
 

@@ -31,6 +31,7 @@
         "src/main-lobby.tsx",
         "src/routes-lobby",
         "src/routeTree.lobby.gen.ts",
+        "src/components/lobby",
         "src/components/wiki/wiki-layout-public.tsx",
         "src/components/wiki/wiki-sidebar-public.tsx",
         "src/components/home-layout.tsx",
