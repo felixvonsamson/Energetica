@@ -11,6 +11,8 @@ config nor a running engine.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
 from fastapi import HTTPException, status
 
@@ -52,4 +54,33 @@ def test_state_update_halts_sim_when_frozen(monkeypatch: pytest.MonkeyPatch, fro
         raise AssertionError("tick() must not run once the instance is frozen")
 
     monkeypatch.setattr(tick_execution, "tick", _fail_if_ticked)
+    monkeypatch.setattr(tick_execution.recap, "mint_recap_if_needed", lambda: None)
     tick_execution.state_update()  # returns cleanly; the AssertionError above would fire if it ticked
+
+
+@pytest.mark.parametrize("frozen_phase", ["freeze", "ended"])
+def test_state_update_mints_recap_when_frozen(monkeypatch: pytest.MonkeyPatch, frozen_phase: str) -> None:
+    """Entering freeze mints the recap (T5, #863) on the same halted-sim path that stops ticking."""
+    monkeypatch.setattr(tick_execution.instance_config, "current_phase", lambda: frozen_phase)
+    monkeypatch.setattr(tick_execution, "tick", lambda: None)
+
+    minted: list[bool] = []
+    monkeypatch.setattr(tick_execution.recap, "mint_recap_if_needed", lambda: minted.append(True))
+    tick_execution.state_update()
+
+    assert minted == [True]
+
+
+def test_state_update_does_not_mint_while_live(monkeypatch: pytest.MonkeyPatch) -> None:
+    """While the game is live (active), the recap hook never fires — nothing to snapshot yet."""
+    monkeypatch.setattr(tick_execution.instance_config, "current_phase", lambda: "active")
+    monkeypatch.setattr(tick_execution, "tick", lambda: None)
+    monkeypatch.setattr(tick_execution.engine, "start_date", datetime.now(timezone.utc))
+    monkeypatch.setattr(tick_execution.engine, "clock_time", 60)
+    monkeypatch.setattr(tick_execution.engine, "total_t", 100)
+
+    minted: list[bool] = []
+    monkeypatch.setattr(tick_execution.recap, "mint_recap_if_needed", lambda: minted.append(True))
+    tick_execution.state_update()
+
+    assert minted == []

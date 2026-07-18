@@ -15,6 +15,7 @@ from energetica.enums import ProjectStatus, StorageFacilityType
 from energetica.globals import engine
 from energetica.schemas.simulate import TickAction
 from energetica.utils import projects
+from energetica.utils import recap
 from energetica.schemas.notifications import FacilityDecommissionedPayload
 from energetica.utils.facilities import dismantle_facility, remove_facility
 from energetica.utils.climate_helpers import check_climate_events
@@ -37,6 +38,10 @@ def state_update() -> None:
     # long post-downtime catch-up executes them a little after ``freeze_at`` in wall-clock. Re-checking
     # inside the loop would wrongly *drop* that valid pre-freeze catch-up.
     if instance_config.current_phase() in ("freeze", "ended"):
+        # Mint the recap on the way into freeze (T5, #863): the sim is now halted and the state is
+        # final, so this is where the frozen tombstone is taken. mint-once by file existence, so the
+        # repeated freeze-phase ticks (and a restart in freeze) don't re-photograph it.
+        recap.mint_recap_if_needed()
         return
     total_t = (time.time() - engine.start_date.timestamp()) / engine.clock_time
     while engine.total_t < total_t - 1 or engine.total_t == 0:
