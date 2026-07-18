@@ -302,6 +302,27 @@ The landing fetches `/instances.json` and renders advertised entries. Apache ser
 
 Unadvertised instances that are public are reachable by direct URL — a user who knows the subdomain may sign up and play. Unadvertised + private instances are reachable only by URL *and* require allowlisted credentials.
 
+### Recap publication (lifecycle tombstone)
+
+At the `active → freeze` transition (the sim's own clock passing `freeze_at`), the instance mints a **recap** — a frozen JSON tombstone of its final leaderboard — and publishes it *beside* the fragment:
+
+```
+/var/www/energetica-landing/recaps/{slug}.json
+
+  { "slug": "autumn-2025", "name": "Autumn 2025",
+    "starts_at": "...", "freeze_at": "...", "ended_at": null,
+    "player_count": 42, "total_captured_co2": 1234.5, "total_net_emissions": -678.9,
+    "rows": [ { "rank": 1, "account_id": 20, "username_at_freeze": "bob",
+                "network_name": "Grid Co", "operating_income": 1500,
+                "xp": 99, "captured_co2": 250 }, ... ] }
+```
+
+- **Curated projection, not a live dump** — one income-ranked table plus a small totals header (see `energetica/schemas/recap.py`), sized for a single payload (~15 KB), so the lobby renders it with no live backend. Reads by attribute via a `RecapPlayer` protocol, so the schema stays free of the game ORM.
+- **Same atomic-write mechanism** as the fragment (`_atomic_write_json`: tmp-sibling → `chmod 0o640` → `os.replace`), but a **separate file** — the recap is **not** aggregated into `instances.json` (heavyweight-per-instance, read rarely; folding it in would bloat the manifest the picker downloads on every visit).
+- **Mint-once, re-runnable** — file-existence is the "already minted" flag (`instance_config.recap_exists`), so the repeated freeze-phase ticks and a process restart in freeze don't re-photograph it. **Admin regenerate is the manual delete/regenerate path**: an admin deletes `recaps/{slug}.json` and the next freeze tick re-mints it (scripts suffice for the baseline, as with force-freeze). `energetica.utils.recap.mint_recap` is the underlying unconditional force-overwrite primitive that a future admin control (the deferred admin dashboard, #279) can call directly. Re-minting is reproducible: ties break on the immutable `account_id`, so a regenerate yields the identical ranking.
+- **Visibility is phase-derived, not a flag** — reveal-at-freeze-start == publish-at-mint; the lobby offers "View recap" ⟺ the fragment's `freeze_at` has passed (no new discovery field).
+- **Survives teardown** — the artifact lives on the landing dir, not in the instance process, so it outlives the reap at `ended_at`. `teardown-instance.sh` deletes the *fragment* but **must leave the recap in place**.
+
 ### Operational notes
 
 - The landing's `instances/` subdirectory must be writable by every instance's systemd unit. Cleanest: create a shared group `energetica`, `chmod g+ws /var/www/energetica-landing/instances/`, and run each `energetica-{slug}.service` as a user in that group. Setgid ensures new fragment files inherit group ownership.

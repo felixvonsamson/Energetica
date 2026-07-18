@@ -27,9 +27,12 @@ import os
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal, TypeVar
 
 from pydantic import AwareDatetime, BaseModel, Field, model_validator
+
+if TYPE_CHECKING:
+    from energetica.schemas.recap import Recap
 
 logger = logging.getLogger(__name__)
 
@@ -246,6 +249,28 @@ def load_instance_config() -> InstanceConfig | None:
         raise InstanceConfigError(f"invalid instance.json at {path}: {exc}") from exc
 
 
+_ModelT = TypeVar("_ModelT", bound=BaseModel)
+
+
+def _load_json_or_none(path: Path, model: type[_ModelT], *, what: str) -> _ModelT | None:
+    """Read a published static artifact into ``model``, tolerating absence or corruption.
+
+    The shared read policy for the landing dir's write-once JSON (fragments and recaps): an absent
+    file is ``None`` (nothing published / stale pointer), and a malformed one is ``None`` *with a
+    warning* rather than an exception — a single unreadable sibling must not poison a caller that
+    aggregates or lists many. ``what`` names the artifact in that warning ("instance fragment",
+    "recap"). Callers that must fail closed on corruption (the security-boundary config) parse
+    directly instead — see :func:`load_instance_config`.
+    """
+    if not path.exists():
+        return None
+    try:
+        return model.model_validate_json(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        logger.warning("skipping unreadable %s %s", what, path)
+        return None
+
+
 def load_fragment(slug: str) -> InstanceFragment | None:
     """Read a single on-disk instance fragment by slug, or ``None`` if it is absent or unreadable.
 
@@ -256,13 +281,7 @@ def load_fragment(slug: str) -> InstanceFragment | None:
     the caller filters it out.
     """
     fragment_path = _landing_dir() / "instances" / f"{slug}.json"
-    if not fragment_path.exists():
-        return None
-    try:
-        return InstanceFragment.model_validate_json(fragment_path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        logger.warning("skipping unreadable instance fragment %s", fragment_path)
-        return None
+    return _load_json_or_none(fragment_path, InstanceFragment, what="instance fragment")
 
 
 def is_access_allowed(config: InstanceConfig, username: str) -> bool:
@@ -322,12 +341,8 @@ def list_advertised_fragments() -> list[InstanceFragment]:
     fragments_dir = _landing_dir() / "instances"
     fragments: list[InstanceFragment] = []
     for fragment_path in fragments_dir.glob("*.json"):
-        try:
-            fragment = InstanceFragment.model_validate_json(fragment_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            logger.warning("skipping unreadable instance fragment %s", fragment_path)
-            continue
-        if fragment.advertised:
+        fragment = _load_json_or_none(fragment_path, InstanceFragment, what="instance fragment")
+        if fragment is not None and fragment.advertised:
             fragments.append(fragment)
     fragments.sort(key=lambda fragment: fragment.starts_at, reverse=True)
     return fragments
@@ -376,3 +391,51 @@ def publish_on_startup() -> None:
         logger.warning("not publishing fragment on startup: %s", exc)
         return
     publish(config)
+
+
+# --- Recap (the frozen JSON tombstone, G1/T5) ------------------------------------------------
+#
+# The recap is a write-once snapshot published to the landing dir at ``active → freeze`` and read by
+# the lobby, so it lives *beside* the fragment (same dir, same atomic-write mechanism) but is a
+# separate file: it is **not** aggregated into ``instances.json`` (heavyweight-per-instance, read
+# rarely — folding it in would bloat the manifest the picker downloads on every visit). Discovery
+# rides the existing fragment pointer: the lobby offers "View recap" ⟺ the fragment's ``freeze_at``
+# has passed. These primitives stay free of the game domain (the module-boundary rule) — the mint
+# side that reads ``Player`` lives in ``energetica.utils.recap``.
+
+
+def recap_path(slug: str) -> Path:
+    """The on-disk location of a slug's published recap (``{landing}/recaps/{slug}.json``)."""
+    return _landing_dir() / "recaps" / f"{slug}.json"
+
+
+def recap_exists(slug: str) -> bool:
+    """Whether this slug's recap has already been published — the mint-once flag (T5).
+
+    File-existence *is* the "already minted" signal: idempotent across the repeated freeze-phase
+    ticks and across a process restart in freeze, and an admin deleting the file triggers a
+    re-mint on the next check (the manual delete/regenerate path).
+    """
+    return recap_path(slug).exists()
+
+
+def publish_recap(recap: Recap) -> None:
+    """Atomically write ``recap`` to the landing dir, overwriting any existing artifact.
+
+    Reuses :func:`_atomic_write_json` (tmp-sibling → chmod → ``os.replace``) so a concurrent lobby
+    reader never sees a partial file, and the group-readable mode lets Apache serve it. Overwriting is
+    intentional: a bare ``publish_recap`` is the admin *regenerate* path; the mint-once guard is
+    :func:`recap_exists`, applied by the caller.
+    """
+    _atomic_write_json(recap_path(recap.slug), recap.model_dump_json())
+
+
+def load_recap(slug: str) -> Recap | None:
+    """Read a published recap by slug, or ``None`` if it is absent or unreadable.
+
+    The read side used by the lobby (T6) and by teardown validation (T7) — the artifact is a plain
+    static file, so this needs neither the instance process nor the game domain.
+    """
+    from energetica.schemas.recap import Recap
+
+    return _load_json_or_none(recap_path(slug), Recap, what="recap")
