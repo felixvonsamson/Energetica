@@ -38,6 +38,8 @@ class GameExceptionType(StrEnum):
     SIGNUP_DISABLED = "SIGNUP_DISABLED"
     OLD_PASSWORD_INCORRECT = "OLD_PASSWORD_INCORRECT"
     INSTANCE_ACCESS_DENIED = "INSTANCE_ACCESS_DENIED"
+    # Lifecycle
+    INSTANCE_FROZEN = "Instance is frozen; the game is read-only."
     # Technology effects
     INVALID_MULTIPLIER = "InvalidMultiplier"
     # network prices

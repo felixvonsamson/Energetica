@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends
 from energetica.database.player import Player
 from energetica.schemas.daily_quiz import DailyQuizBase, DailyQuizSubmitRequest
 from energetica.utils import misc
-from energetica.utils.auth import get_settled_player
+from energetica.utils.auth import get_settled_player, reject_when_frozen
 
 router = APIRouter(prefix="/daily-quiz", tags=["Daily Quiz"])
 
@@ -20,7 +20,7 @@ def get_quiz_question(
     return misc.get_quiz_question(player)
 
 
-@router.post("", response_model_exclude_unset=True)
+@router.post("", response_model_exclude_unset=True, dependencies=[Depends(reject_when_frozen)])
 def submit_quiz_answer(
     player: Annotated[Player, Depends(get_settled_player)],
     submission: DailyQuizSubmitRequest,

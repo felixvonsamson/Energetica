@@ -22,11 +22,54 @@ export type InstanceFragment = {
     advertised: boolean;
     /** ISO-8601 UTC, e.g. "2025-09-15T00:00:00Z". */
     starts_at: string;
+    /** `active → freeze` boundary; `null` for an open-ended run. */
+    freeze_at?: string | null;
+    /** `freeze → ended` boundary; `null` for an open-ended run. */
+    ended_at?: string | null;
 };
 
 export type InstancesManifest = {
     instances: InstanceFragment[];
 };
+
+/**
+ * The instance lifecycle, derived (never stored) from `now` vs the transition
+ * timestamps.
+ */
+export type Phase = "announced" | "active" | "freeze" | "ended";
+
+/**
+ * The subset of an instance carrying its lifecycle timestamps — a fragment, a
+ * `MyRun`, etc.
+ */
+export type Lifecycle = {
+    starts_at: string;
+    freeze_at?: string | null;
+    ended_at?: string | null;
+};
+
+/**
+ * The lifecycle phase at `now`, a pure function of the three transition
+ * timestamps. The frontend mirror of the backend's `derive_phase`
+ * (`energetica/instance_config.py`) — same ladder, so a run's phase is derived
+ * identically wherever it's read and nothing about the phase is stored or
+ * fetched. The latest boundary already crossed wins (checked newest-first); a
+ * `null`/absent boundary is one this run never crosses (an open-ended run stays
+ * `active`). An unparseable timestamp reads as not-yet-crossed, degrading
+ * toward the earlier phase rather than throwing.
+ */
+export function derivePhase(run: Lifecycle, now: Date = new Date()): Phase {
+    const t = now.getTime();
+    const crossed = (iso: string | null | undefined): boolean => {
+        if (!iso) return false;
+        const at = new Date(iso).getTime();
+        return !Number.isNaN(at) && t >= at;
+    };
+    if (crossed(run.ended_at)) return "ended";
+    if (crossed(run.freeze_at)) return "freeze";
+    if (crossed(run.starts_at)) return "active";
+    return "announced";
+}
 
 /**
  * Apex domain the instances live under (e.g. "energetica-game.org"), injected

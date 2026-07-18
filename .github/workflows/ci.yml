@@ -24,6 +24,9 @@ jobs:
       - name: Lint
         run: bun run lint
         working-directory: frontend
+      - name: Guard — no raw-HTML rendering of UGC (ADR-0002, #843)
+        run: bun run guard:no-raw-html
+        working-directory: frontend
 
   type-check:
     runs-on: ubuntu-latest

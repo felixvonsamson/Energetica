@@ -10,7 +10,13 @@ class MyRun(BaseModel):
 
     slug: str = Field(description="Subdomain slug of the run")
     name: str = Field(description="Human-readable run name, from the instance fragment")
-    starts_at: AwareDatetime = Field(description="When the run starts, from the instance fragment")
+    starts_at: AwareDatetime = Field(description="When the run starts (announced → active), from the instance fragment")
+    freeze_at: AwareDatetime | None = Field(
+        default=None, description="When play/sim ends (active → freeze), or null for an open-ended run"
+    )
+    ended_at: AwareDatetime | None = Field(
+        default=None, description="When the process is reaped (freeze → ended), or null for an open-ended run"
+    )
     settled_at: AwareDatetime = Field(description="When this account settled in the run")
 
 

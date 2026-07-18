@@ -25,12 +25,55 @@ import json
 import logging
 import os
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
-from pydantic import AwareDatetime, BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field, model_validator
 
 logger = logging.getLogger(__name__)
+
+# The instance lifecycle, derived (never stored) from ``now`` vs the three transition timestamps.
+# See :func:`derive_phase` for the boundaries.
+Phase = Literal["announced", "active", "freeze", "ended"]
+
+
+def derive_phase(
+    now: datetime,
+    *,
+    starts_at: datetime,
+    freeze_at: datetime | None,
+    ended_at: datetime | None,
+) -> Phase:
+    """The lifecycle phase at ``now``, a pure function of the three transition timestamps.
+
+    The single source of truth for "what phase is this instance in" — both the backend and the
+    lobby/app frontends (``derivePhase`` in ``frontend/src/lib/instances.ts``) implement this same
+    ladder, so a run self-drives its transitions from its own clock with nothing to store or
+    republish as time passes.
+
+        announced ──(starts_at)──▶ active ──(freeze_at)──▶ freeze ──(ended_at)──▶ ended
+
+    The latest boundary already crossed wins, so the checks run newest-first; a ``None`` boundary
+    is simply never crossed, which is exactly how an open-ended run (no ``freeze_at`` / ``ended_at``)
+    stays ``active`` forever. ``InstanceConfig`` guarantees the timestamps are non-decreasing, so
+    these checks can't disagree about which phase is "current".
+
+    The boundaries are always tz-aware (``AwareDatetime``), so a naive ``now`` — the ``datetime.now()``
+    footgun — would raise ``TypeError`` on the first comparison and turn a phase read into a request
+    failure. Recover it as UTC (matching ``_parse_settled_at``'s write-side convention) rather than
+    crash: a phase read must always yield a phase. Callers should still pass aware UTC.
+    """
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    if ended_at is not None and now >= ended_at:
+        return "ended"
+    if freeze_at is not None and now >= freeze_at:
+        return "freeze"
+    if now >= starts_at:
+        return "active"
+    return "announced"
+
 
 _SLUG_ENV_VAR = "ENERGETICA_INSTANCE_SLUG"
 _CONFIG_DIR_ENV_VAR = "ENERGETICA_INSTANCE_CONFIG_DIR"
@@ -81,20 +124,86 @@ class InstanceConfig(BaseModel):
     # Timezone-aware required: naive timestamps are rejected (fail closed), which also guarantees
     # every published fragment is aware so the aggregation sort never mixes naive/aware datetimes.
     starts_at: AwareDatetime
+    # The two later lifecycle boundaries (absolute, same tz-aware-or-fail-closed rule as
+    # ``starts_at``). Nullable because an open-ended run leaves them unset, and a freshly-announced
+    # run may not have scheduled them yet — a ``None`` boundary is simply one the phase ladder never
+    # crosses (see :func:`derive_phase`). Supersedes #809's single ambiguous ``ends_at``.
+    freeze_at: AwareDatetime | None = None  # active → freeze (play/sim ends, backend stays read-only)
+    ended_at: AwareDatetime | None = None  # freeze → ended (process reaped, recap outlives it on the lobby)
     access: AccessPolicy = Field(discriminator="policy")
+
+    @model_validator(mode="after")
+    def _timestamps_non_decreasing(self) -> InstanceConfig:
+        """The transition timestamps must run forward: ``starts_at ≤ freeze_at ≤ ended_at`` for
+        whichever are present. This is what makes the two-timestamp model *unambiguous* (the reason
+        it supersedes #809): a config that would freeze before it starts, or end before it freezes,
+        is a mistake the phase ladder can't sensibly resolve, so it fails closed here rather than
+        silently picking a phase.
+        """
+        ordered = [("starts_at", self.starts_at), ("freeze_at", self.freeze_at), ("ended_at", self.ended_at)]
+        present = [(name, value) for name, value in ordered if value is not None]
+        for (earlier_name, earlier), (later_name, later) in zip(present, present[1:]):
+            if later < earlier:
+                raise ValueError(f"{later_name} ({later.isoformat()}) is before {earlier_name} ({earlier.isoformat()})")
+        return self
 
 
 class InstanceFragment(BaseModel):
-    """The public projection written to the landing dir. The ``access`` block is stripped."""
+    """The public projection written to the landing dir. The ``access`` block is stripped.
+
+    Carries the three transition timestamps (never a stored ``phase``): a fragment is published
+    once and served statically for the life of the run, so the phase is derived on read from the
+    timestamps it carries — see :meth:`phase` / :func:`derive_phase`.
+    """
 
     slug: str
     name: str
     advertised: bool
     starts_at: AwareDatetime
+    freeze_at: AwareDatetime | None = None
+    ended_at: AwareDatetime | None = None
 
     @classmethod
     def from_config(cls, *, slug: str, config: InstanceConfig) -> InstanceFragment:
-        return cls(slug=slug, name=config.name, advertised=config.advertised, starts_at=config.starts_at)
+        return cls(
+            slug=slug,
+            name=config.name,
+            advertised=config.advertised,
+            starts_at=config.starts_at,
+            freeze_at=config.freeze_at,
+            ended_at=config.ended_at,
+        )
+
+    def phase(self, now: datetime) -> Phase:
+        """This instance's lifecycle phase at ``now`` (see :func:`derive_phase`)."""
+        return derive_phase(now, starts_at=self.starts_at, freeze_at=self.freeze_at, ended_at=self.ended_at)
+
+
+def current_phase(now: datetime | None = None) -> Phase:
+    """This instance's own lifecycle phase right now, from its on-disk ``instance.json``.
+
+    The running backend self-drives its ``active → freeze → ended`` transitions from this — the sim
+    halt (``state_update``) and the read-only write-gate (``reject_when_frozen``) both key off it. The
+    config is re-read every call (no cache), exactly like the login/access path, so an admin editing
+    ``freeze_at`` (the manual force-freeze / adjustment override) takes effect on the next check with
+    no restart.
+
+    Fails **open** — returns ``active`` — when the instance is unconfigured (dev/legacy: no slug or no
+    file → open-ended run, no freeze boundary) or the config is present-but-broken. A config typo must
+    not silently freeze a live game; the login path already fails *closed* on a broken config, so
+    entry stops there, while the running game keeps serving until a *readable* ``freeze_at`` is
+    actually crossed. Freeze is entered only on a positive clock signal, never on an error.
+    """
+    if now is None:
+        now = datetime.now(timezone.utc)
+    try:
+        config = load_instance_config()
+    except InstanceConfigError as exc:
+        logger.warning("treating instance as active; could not read config for phase: %s", exc)
+        return "active"
+    if config is None:
+        return "active"
+    return derive_phase(now, starts_at=config.starts_at, freeze_at=config.freeze_at, ended_at=config.ended_at)
 
 
 def instance_slug() -> str | None:

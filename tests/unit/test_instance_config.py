@@ -3,12 +3,20 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
 from energetica import instance_config
-from energetica.instance_config import InstanceConfig, InstanceConfigError, PrivateAccess, PublicAccess
+from energetica.instance_config import (
+    InstanceConfig,
+    InstanceConfigError,
+    InstanceFragment,
+    PrivateAccess,
+    PublicAccess,
+    derive_phase,
+)
 
 SLUG = "autumn-2025"
 
@@ -167,6 +175,8 @@ def test_publish_strips_access_block(configured: Path) -> None:
         "name": "ETHZ Spring 2026",
         "advertised": False,
         "starts_at": fragment["starts_at"],
+        "freeze_at": None,
+        "ended_at": None,
     }
 
 
@@ -328,3 +338,135 @@ def test_load_fragment_reads_unadvertised_fragment(configured: Path) -> None:
 
 def test_load_fragment_returns_none_when_absent(configured: Path) -> None:
     assert instance_config.load_fragment("no-such-run") is None
+
+
+# --- timestamps + derived phase -------------------------------------------------------------
+
+STARTS = datetime(2026, 1, 1, tzinfo=timezone.utc)
+FREEZE = datetime(2026, 2, 1, tzinfo=timezone.utc)
+ENDED = datetime(2026, 3, 1, tzinfo=timezone.utc)
+
+# The full-lifecycle config the phase tests key off (all three boundaries set).
+LIFECYCLE_JSON = {
+    "name": "Lifecycle",
+    "advertised": True,
+    "starts_at": "2026-01-01T00:00:00Z",
+    "freeze_at": "2026-02-01T00:00:00Z",
+    "ended_at": "2026-03-01T00:00:00Z",
+    "access": {"policy": "public"},
+}
+
+
+@pytest.mark.parametrize(
+    ("now", "expected"),
+    [
+        (datetime(2025, 12, 31, tzinfo=timezone.utc), "announced"),  # before starts_at
+        (STARTS, "active"),  # exactly at a boundary is already the later phase
+        (datetime(2026, 1, 15, tzinfo=timezone.utc), "active"),
+        (FREEZE, "freeze"),
+        (datetime(2026, 2, 15, tzinfo=timezone.utc), "freeze"),
+        (ENDED, "ended"),
+        (datetime(2026, 4, 1, tzinfo=timezone.utc), "ended"),
+    ],
+)
+def test_derive_phase_walks_the_ladder(now: datetime, expected: str) -> None:
+    assert derive_phase(now, starts_at=STARTS, freeze_at=FREEZE, ended_at=ENDED) == expected
+
+
+def test_derive_phase_naive_now_recovered_as_utc() -> None:
+    """A naive ``now`` (the ``datetime.now()`` footgun) is recovered as UTC rather than raising
+    TypeError against the aware boundaries — a phase read must always yield a phase.
+    """
+    naive_mid_active = datetime(2026, 1, 15)  # no tzinfo
+    assert derive_phase(naive_mid_active, starts_at=STARTS, freeze_at=FREEZE, ended_at=ENDED) == "active"
+
+
+def test_derive_phase_open_ended_run_stays_active() -> None:
+    """No freeze_at / ended_at → the run never leaves active once it has started."""
+    far_future = datetime(2099, 1, 1, tzinfo=timezone.utc)
+    assert derive_phase(far_future, starts_at=STARTS, freeze_at=None, ended_at=None) == "active"
+    assert derive_phase(STARTS, starts_at=STARTS, freeze_at=None, ended_at=None) == "active"
+    before = datetime(2025, 1, 1, tzinfo=timezone.utc)
+    assert derive_phase(before, starts_at=STARTS, freeze_at=None, ended_at=None) == "announced"
+
+
+def test_derive_phase_ended_without_freeze() -> None:
+    """ended_at fires even when freeze_at is null (active → ended directly)."""
+    assert derive_phase(ENDED, starts_at=STARTS, freeze_at=None, ended_at=ENDED) == "ended"
+    assert derive_phase(FREEZE, starts_at=STARTS, freeze_at=None, ended_at=ENDED) == "active"
+
+
+def test_fragment_carries_and_derives_phase(configured: Path) -> None:
+    """from_config threads freeze_at/ended_at through, and the fragment derives its own phase."""
+    config = InstanceConfig.model_validate(LIFECYCLE_JSON)
+    fragment = InstanceFragment.from_config(slug=SLUG, config=config)
+
+    assert fragment.freeze_at == FREEZE
+    assert fragment.ended_at == ENDED
+    assert fragment.phase(datetime(2026, 1, 15, tzinfo=timezone.utc)) == "active"
+    assert fragment.phase(datetime(2026, 2, 15, tzinfo=timezone.utc)) == "freeze"
+
+
+def test_config_omitting_later_boundaries_defaults_to_none() -> None:
+    """A config with only starts_at (the pre-existing shape) is still valid; the new fields default
+    to None so existing instance.json files keep parsing.
+    """
+    config = InstanceConfig.model_validate(PUBLIC_JSON)
+    assert config.freeze_at is None
+    assert config.ended_at is None
+
+
+def test_naive_freeze_at_fails_closed(configured: Path) -> None:
+    """The tz-aware-or-fail-closed rule extends to the new timestamps."""
+    _write_instance_json(configured, {**LIFECYCLE_JSON, "freeze_at": "2026-02-01T00:00:00"})
+    with pytest.raises(InstanceConfigError):
+        instance_config.load_instance_config()
+
+
+@pytest.mark.parametrize(
+    "broken",
+    [
+        {"freeze_at": "2025-12-01T00:00:00Z"},  # freeze before starts
+        {"ended_at": "2026-01-15T00:00:00Z"},  # ended before freeze
+        {"freeze_at": None, "ended_at": "2025-12-15T00:00:00Z"},  # ended before starts, no freeze
+    ],
+)
+def test_out_of_order_timestamps_rejected(broken: dict) -> None:
+    """starts_at ≤ freeze_at ≤ ended_at is enforced — the invariant that makes the two-timestamp
+    model unambiguous (why it supersedes #809).
+    """
+    with pytest.raises(ValueError):
+        InstanceConfig.model_validate({**LIFECYCLE_JSON, **broken})
+
+
+def test_equal_timestamps_allowed() -> None:
+    """Non-decreasing, not strictly increasing: a zero-width phase is odd but not a mistake."""
+    config = InstanceConfig.model_validate(
+        {**LIFECYCLE_JSON, "freeze_at": "2026-02-01T00:00:00Z", "ended_at": "2026-02-01T00:00:00Z"}
+    )
+    assert config.freeze_at == config.ended_at
+
+
+def test_current_phase_reads_own_config(configured: Path) -> None:
+    """current_phase derives this instance's live phase from its on-disk config (#861) — the source
+    both the sim halt and the write-gate key off.
+    """
+    _write_instance_json(configured, LIFECYCLE_JSON)
+    assert instance_config.current_phase(datetime(2026, 1, 15, tzinfo=timezone.utc)) == "active"
+    assert instance_config.current_phase(datetime(2026, 2, 15, tzinfo=timezone.utc)) == "freeze"
+    assert instance_config.current_phase(datetime(2026, 4, 1, tzinfo=timezone.utc)) == "ended"
+
+
+def test_current_phase_unconfigured_is_active(configured: Path) -> None:
+    """No instance.json (dev/legacy, open-ended run) → active: an unconfigured instance never freezes."""
+    assert instance_config.current_phase(datetime(2026, 4, 1, tzinfo=timezone.utc)) == "active"
+
+
+def test_current_phase_broken_config_fails_open_to_active(configured: Path) -> None:
+    """A present-but-broken config fails **open** to active.
+
+    A config typo must not silently freeze a live game. (The login path fails *closed* on the same
+    file; freeze is entered only on a positive clock signal, never on an error.)
+    """
+    _write_instance_json(configured, "{ not valid json")
+    assert instance_config.current_phase(datetime(2026, 4, 1, tzinfo=timezone.utc)) == "active"

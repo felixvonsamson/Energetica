@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from energetica.database.player import Player
 from energetica.schemas.electricity_markets import AskType, BidType
 from energetica.schemas.power_priorities import PowerPrioritiesListIn, PowerPrioritiesListOut
-from energetica.utils.auth import get_settled_player
+from energetica.utils.auth import get_settled_player, reject_when_frozen
 
 router = APIRouter(prefix="/power-priorities", tags=["Power Priorities"])
 
@@ -23,7 +23,7 @@ def get_power_priorities(
     return PowerPrioritiesListOut.from_player(player)
 
 
-@router.put("", status_code=status.HTTP_204_NO_CONTENT)
+@router.put("", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(reject_when_frozen)])
 def put_power_priorities(
     player: Annotated[Player, Depends(get_settled_player)],
     data: PowerPrioritiesListIn,
@@ -38,7 +38,7 @@ def put_power_priorities(
     )
 
 
-@router.post("/{side}/{item_type}:increase-priority")
+@router.post("/{side}/{item_type}:increase-priority", dependencies=[Depends(reject_when_frozen)])
 def increase_priority(
     player: Annotated[Player, Depends(get_settled_player)],
     side: Literal["ask", "bid"],
@@ -50,7 +50,7 @@ def increase_priority(
     return PowerPrioritiesListOut.from_player(player)
 
 
-@router.post("/{side}/{item_type}:decrease-priority")
+@router.post("/{side}/{item_type}:decrease-priority", dependencies=[Depends(reject_when_frozen)])
 def decrease_priority(
     player: Annotated[Player, Depends(get_settled_player)],
     side: Literal["ask", "bid"],

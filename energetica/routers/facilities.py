@@ -14,7 +14,7 @@ from energetica.enums import (
 from energetica.schemas.facilities import FacilitiesListOut, FacilityStatuses
 from energetica.schemas.players import DismantleOut, MoneyOut
 from energetica.utils import facilities
-from energetica.utils.auth import get_settled_player
+from energetica.utils.auth import get_settled_player, reject_when_frozen
 
 router = APIRouter(prefix="/facilities", tags=["Facilities"])
 
@@ -27,7 +27,7 @@ def get_active_facilities(
     return FacilitiesListOut.from_player(player)
 
 
-@router.post("/{facility_id}:upgrade")
+@router.post("/{facility_id}:upgrade", dependencies=[Depends(reject_when_frozen)])
 def upgrade_facility(
     player: Annotated[Player, Depends(get_settled_player)],
     facility_id: int,
@@ -40,7 +40,7 @@ def upgrade_facility(
     return MoneyOut.from_player(player)
 
 
-@router.post(":upgrade-all")
+@router.post(":upgrade-all", dependencies=[Depends(reject_when_frozen)])
 async def upgrade_all_of_type(
     player: Annotated[Player, Depends(get_settled_player)],
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
@@ -50,7 +50,7 @@ async def upgrade_all_of_type(
     return MoneyOut.from_player(player)
 
 
-@router.post("/{facility_id}:dismantle")
+@router.post("/{facility_id}:dismantle", dependencies=[Depends(reject_when_frozen)])
 async def dismantle_facility(
     player: Annotated[Player, Depends(get_settled_player)],
     facility_id: int,
@@ -69,7 +69,7 @@ async def dismantle_facility(
     return DismantleOut(money=player.money, draining=draining)
 
 
-@router.post(":dismantle-all")
+@router.post(":dismantle-all", dependencies=[Depends(reject_when_frozen)])
 async def dismantle_all_of_type(
     player: Annotated[Player, Depends(get_settled_player)],
     facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
