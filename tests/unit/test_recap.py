@@ -271,6 +271,21 @@ def test_mint_recap_regenerates_after_delete(configured: Path) -> None:
     assert instance_config.recap_exists(SLUG) is True
 
 
+def test_mint_recap_reheals_corrupt_file(configured: Path) -> None:
+    """A malformed recap on disk self-heals: the load-based guard re-mints it rather than treating
+    the corrupt file as 'already minted' and stranding the lobby with it.
+    """
+    path = instance_config.recap_path(SLUG)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{ not valid json", encoding="utf-8")
+
+    recap_util.mint_recap_if_needed()
+
+    healed = instance_config.load_recap(SLUG)
+    assert healed is not None
+    assert healed.player_count == 3
+
+
 def test_mint_recap_noop_when_unconfigured(landing: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """A dev/legacy instance with no slug mints nothing (no lifecycle to snapshot)."""
     monkeypatch.delenv("ENERGETICA_INSTANCE_SLUG", raising=False)

@@ -56,13 +56,17 @@ def mint_recap() -> None:
 def mint_recap_if_needed() -> None:
     """Mint the recap once, at the ``active → freeze`` edge — the tick-loop hook.
 
-    Idempotent and re-runnable: file-existence is the mint-once flag, so this no-ops on every freeze
-    tick after the first and across a restart in freeze, while an admin deleting ``recaps/{slug}.json``
-    triggers a re-mint on the next tick. Best-effort — a mint failure is logged and swallowed so it can
-    never break the tick loop (the same stance ``instance_config.publish`` takes for the fragment).
+    Idempotent and re-runnable: a *readable* recap on disk is the mint-once flag, so this no-ops on
+    every freeze tick after the first and across a restart in freeze. The guard is ``load_recap`` —
+    not bare file-existence — so it also **self-heals**: a malformed or unreadable recap reads back as
+    ``None`` and is re-minted on the next tick rather than stranding the lobby with a broken artifact
+    until an admin intervenes. An admin deleting ``recaps/{slug}.json`` re-mints the same way. The
+    re-parse per freeze tick is cheap (a ~15 KB file while the sim is halted). Best-effort — a mint
+    failure is logged and swallowed so it can never break the tick loop (the same stance
+    ``instance_config.publish`` takes for the fragment).
     """
     slug = instance_config.instance_slug()
-    if slug is None or instance_config.recap_exists(slug):
+    if slug is None or instance_config.load_recap(slug) is not None:
         return
     try:
         mint_recap()
