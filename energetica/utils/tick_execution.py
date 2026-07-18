@@ -4,6 +4,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from energetica import instance_config
 from energetica import production_update
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.climate_event_recovery import ClimateEventRecovery
@@ -23,6 +24,20 @@ from energetica.utils.resource_market import store_import
 
 def state_update() -> None:
     """Update the game state on every tick."""
+    # active → freeze self-transition (#861): once this instance's own clock passes ``freeze_at`` the
+    # sim halts — play is over. Checked here, around the catch-up loop, rather than inside ``tick()``:
+    # a short-circuit *inside* ``tick()`` would never advance ``engine.total_t`` and spin the
+    # ``while`` below forever. The named seam (tick_execution) is honoured; the loop is the correct
+    # spot within it. (``announced`` — sim paused before ``starts_at`` — is T4's concern, not gated here.)
+    #
+    # One check before the loop (not inside it) is right: ``total_t`` is the wall-clock-now target
+    # fixed at entry, and each ``tick()`` advances the sim counter *toward* it, so every tick
+    # processed has simulated time ≤ now. If ``freeze_at ≤ now`` we return here; otherwise every tick
+    # the loop runs is pre-``freeze_at`` in sim-time and legitimately belongs to the game — even if a
+    # long post-downtime catch-up executes them a little after ``freeze_at`` in wall-clock. Re-checking
+    # inside the loop would wrongly *drop* that valid pre-freeze catch-up.
+    if instance_config.current_phase() in ("freeze", "ended"):
+        return
     total_t = (time.time() - engine.start_date.timestamp()) / engine.clock_time
     while engine.total_t < total_t - 1 or engine.total_t == 0:
         tick()

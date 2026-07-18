@@ -445,3 +445,28 @@ def test_equal_timestamps_allowed() -> None:
         {**LIFECYCLE_JSON, "freeze_at": "2026-02-01T00:00:00Z", "ended_at": "2026-02-01T00:00:00Z"}
     )
     assert config.freeze_at == config.ended_at
+
+
+def test_current_phase_reads_own_config(configured: Path) -> None:
+    """current_phase derives this instance's live phase from its on-disk config (#861) — the source
+    both the sim halt and the write-gate key off.
+    """
+    _write_instance_json(configured, LIFECYCLE_JSON)
+    assert instance_config.current_phase(datetime(2026, 1, 15, tzinfo=timezone.utc)) == "active"
+    assert instance_config.current_phase(datetime(2026, 2, 15, tzinfo=timezone.utc)) == "freeze"
+    assert instance_config.current_phase(datetime(2026, 4, 1, tzinfo=timezone.utc)) == "ended"
+
+
+def test_current_phase_unconfigured_is_active(configured: Path) -> None:
+    """No instance.json (dev/legacy, open-ended run) → active: an unconfigured instance never freezes."""
+    assert instance_config.current_phase(datetime(2026, 4, 1, tzinfo=timezone.utc)) == "active"
+
+
+def test_current_phase_broken_config_fails_open_to_active(configured: Path) -> None:
+    """A present-but-broken config fails **open** to active.
+
+    A config typo must not silently freeze a live game. (The login path fails *closed* on the same
+    file; freeze is entered only on a positive clock signal, never on an error.)
+    """
+    _write_instance_json(configured, "{ not valid json")
+    assert instance_config.current_phase(datetime(2026, 4, 1, tzinfo=timezone.utc)) == "active"

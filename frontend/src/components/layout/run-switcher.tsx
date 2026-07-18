@@ -31,9 +31,15 @@ import {
     lobbyHref,
     runAppHref,
 } from "@/lib/instances";
+import { isSingleOriginHost } from "@/lib/single-origin";
 
 export function RunSwitcher() {
     const { data: runs } = useMyRuns();
+    // On a single-origin proxy host (e.g. energetica.ethz.ch) exactly one run is
+    // reachable and the lobby is the same origin, so every entry this control
+    // offers — lateral run-hops and "Open lobby" — is a no-op that lands back on
+    // this same app. Hide it entirely. See lib/single-origin.ts + ADR-0002.
+    if (isSingleOriginHost()) return null;
     // In a live-backend dev server the hostname is `localhost`, so there is no run in the URL —
     // fall back to the injected slug the proxy is pinned to. When that is set, hopping to any other
     // run would leave the local dev app for a prod origin, so those entries are disabled.

@@ -14,7 +14,7 @@ from energetica.schemas.electricity_markets import (
     ElectricityMarketOut,
 )
 from energetica.utils import network_helpers
-from energetica.utils.auth import get_settled_player
+from energetica.utils.auth import get_settled_player, reject_when_frozen
 
 router = APIRouter(prefix="/electricity-markets", tags=["Electricity Markets"])
 
@@ -33,7 +33,7 @@ def get_electricity_market_list(
     )
 
 
-@router.post("/{network_id}:join")
+@router.post("/{network_id}:join", dependencies=[Depends(reject_when_frozen)])
 def join_electricity_market(
     player: Annotated[Player, Depends(get_settled_player)],
     network_id: int,
@@ -48,7 +48,7 @@ def join_electricity_market(
     return ElectricityMarketOut.from_network(network_helpers.join_network(player, network))
 
 
-@router.post("/{network_id}:leave")
+@router.post("/{network_id}:leave", dependencies=[Depends(reject_when_frozen)])
 def leave_electricity_market(
     player: Annotated[Player, Depends(get_settled_player)],
     network_id: int,
@@ -68,7 +68,7 @@ def leave_electricity_market(
     return ElectricityMarketOut.from_network(new_network)
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(reject_when_frozen)])
 def create_electricity_market(
     player: Annotated[Player, Depends(get_settled_player)], request_data: ElectricityMarketCreate
 ) -> ElectricityMarketOut:
@@ -79,7 +79,7 @@ def create_electricity_market(
     return ElectricityMarketOut.from_network(new_network)
 
 
-@router.patch("/prices", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch("/prices", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(reject_when_frozen)])
 async def change_electricity_market_prices(
     player: Annotated[Player, Depends(get_settled_player)],
     prices_change_request: ChangeElectricityMarketPrices,

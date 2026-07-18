@@ -8,7 +8,7 @@ from energetica.database.user import User
 from energetica.schemas.map import SettleRequest, SettleResponse
 from energetica.schemas.map import HexTileOut
 from energetica.utils import map_helpers
-from energetica.utils.auth import get_playing_user
+from energetica.utils.auth import get_playing_user, reject_when_frozen
 
 router = APIRouter(prefix="/map", tags=["Map"])
 
@@ -39,7 +39,7 @@ def get_map() -> list[HexTileOut]:
     return hex_list
 
 
-@router.post("/settle")
+@router.post("/settle", dependencies=[Depends(reject_when_frozen)])
 def settle_region(
     user: Annotated[User, Depends(get_playing_user)],
     request_data: SettleRequest,

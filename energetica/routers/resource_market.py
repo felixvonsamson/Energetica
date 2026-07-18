@@ -14,7 +14,7 @@ from energetica.schemas.resource_market import (
     DeliveryCalculationResponse,
     PurchaseOrderCreate,
 )
-from energetica.utils.auth import get_settled_player
+from energetica.utils.auth import get_settled_player, reject_when_frozen
 from energetica.utils.resource_market import (
     calculate_shipment_duration,
     create_ask,
@@ -34,7 +34,7 @@ def get_resource_market_asks() -> AskListOut:
     )
 
 
-@router.post("/asks", status_code=201)
+@router.post("/asks", status_code=201, dependencies=[Depends(reject_when_frozen)])
 def post_resource_market_ask(
     player: Annotated[Player, Depends(get_settled_player)],
     request_data: AskCreate,
@@ -50,7 +50,7 @@ def post_resource_market_ask(
     )
 
 
-@router.post("/asks/{ask_id}:purchase")
+@router.post("/asks/{ask_id}:purchase", dependencies=[Depends(reject_when_frozen)])
 def post_resource_market_purchase(
     player: Annotated[Player, Depends(get_settled_player)],
     ask_id: int,
@@ -75,7 +75,7 @@ def post_resource_market_purchase(
     return AskOut.from_resource_on_sale(new_sale)
 
 
-@router.patch("/asks/{ask_id}")
+@router.patch("/asks/{ask_id}", dependencies=[Depends(reject_when_frozen)])
 def patch_resource_market_ask(
     player: Annotated[Player, Depends(get_settled_player)],
     ask_id: int,
@@ -90,7 +90,7 @@ def patch_resource_market_ask(
     )
 
 
-@router.delete("/asks/{ask_id}", status_code=204)
+@router.delete("/asks/{ask_id}", status_code=204, dependencies=[Depends(reject_when_frozen)])
 def delete_resource_market_ask(
     player: Annotated[Player, Depends(get_settled_player)],
     ask_id: int,
