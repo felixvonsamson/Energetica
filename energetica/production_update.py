@@ -31,6 +31,7 @@ from energetica.enums import (
     power_facility_types,
 )
 from energetica.globals import engine
+from energetica.market import clear_market, init_market, place_ask, place_bid
 from energetica.schemas.electricity_markets import AskType
 from energetica.schemas.notifications import NetworkExpelledPayload, NetworkOverdraftWarningPayload
 from energetica.utils import network_helpers
@@ -216,26 +217,6 @@ def update_player_progress_values(player: Player, new_values: dict) -> None:
     )
 
     player.check_continuous_achievements()
-
-
-class _MarketEntry:
-    __slots__ = ("player_id", "capacity", "price", "facility", "cumul_capacities")
-
-    def __init__(self, player_id: int, capacity: float, price: float, facility: str) -> None:
-        self.player_id = player_id
-        self.capacity = capacity
-        self.price = price
-        self.facility = facility
-        self.cumul_capacities = 0.0
-
-
-def init_market() -> dict:
-    # TODO (Felix): should be moved somewhere else, e.g. create a Market class in market.py (new) ?
-    """Initialize an empty market."""
-    return {
-        "capacities": [],
-        "demands": [],
-    }
 
 
 def update_storage_lvls(new_values: dict, player: Player) -> None:
@@ -431,7 +412,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
     # Obligatory generation is put on the internal market at a price of -5
     for facility in (*StorageFacilityType, *power_facility_types):
         if facility in player.capacities:
-            internal_market = place_bid(
+            internal_market = place_ask(
                 internal_market,
                 player.id,
                 generation[facility],
@@ -443,7 +424,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
     for bid_type in player.network_prices.bid_prices.keys():
         if bid_type in demand:
             price = player.network_prices.bid_prices[bid_type]
-            internal_market = place_ask(
+            internal_market = place_bid(
                 internal_market,
                 player.id,
                 demand[bid_type],
@@ -463,7 +444,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
             )
             price = player.network_prices.ask_prices[facility]
             capacity = max_prod - generation[facility]
-            internal_market = place_bid(internal_market, player.id, capacity, price, facility)
+            internal_market = place_ask(internal_market, player.id, capacity, price, facility)
 
     market_logic(new_values, internal_market)
     return internal_market["market_price"]  # type: ignore[return-value]
@@ -480,7 +461,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
     # offer minimal generation capacities of facilities on the market at a negative price
     for facility in (*StorageFacilityType, *power_facility_types):
         if player.capacities.get(facility) is not None:
-            market = place_bid(market, player.id, generation[facility], -5, facility)
+            market = place_ask(market, player.id, generation[facility], -5, facility)
 
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
@@ -489,7 +470,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
         if demand_type in demand:
             bid_q = demand[demand_type]
             price = player.network_prices.bid_prices[demand_type]
-            market = place_ask(market, player.id, bid_q, price, demand_type)
+            market = place_bid(market, player.id, bid_q, price, demand_type)
 
     resource_reservations = reset_resource_reservations()
     # offer capacities of remaining facilities on the market
@@ -506,13 +487,12 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
             )
             price = player.network_prices.ask_prices[facility]  # type: ignore
             capacity = max_prod - generation[facility]
-            market = place_bid(market, player.id, capacity, price, facility)
+            market = place_ask(market, player.id, capacity, price, facility)
 
     return market
 
 
 def market_logic(new_values: dict, market: dict) -> None:
-    # TODO (Felix): should be moved somewhere else, e.g. market.py (new)
     """
     Perform the market logic for a network.
 
@@ -572,26 +552,22 @@ def market_logic(new_values: dict, market: dict) -> None:
     market["generation"] = {}
     market["consumption"] = {}
 
-    offers = sorted(market["capacities"], key=lambda e: e.price)
-    cumul = 0.0
-    for entry in offers:
-        cumul += entry.capacity
-        entry.cumul_capacities = cumul
+    # Pure clearing: find the price/quantity and per-entry cleared MW. Settling the
+    # consequences onto players (money, generation, curtailment, chart data) is what
+    # the loops below do — that half stays here because it is Player-coupled.
+    clearing = clear_market(market["capacities"], market["demands"])
+    market_price = clearing.price
+    market_quantity = clearing.quantity
+    # Write the sorted, cumul-populated entries back so the chart serialization
+    # further up in update_electricity() dumps them in merit order.
+    market["capacities"] = [fill.entry for fill in clearing.offers]
+    market["demands"] = [fill.entry for fill in clearing.demands]
 
-    demands = sorted(market["demands"], key=lambda e: e.price, reverse=True)
-    cumul = 0.0
-    for entry in demands:
-        cumul += entry.capacity
-        entry.cumul_capacities = cumul
-
-    market["capacities"] = offers
-    market["demands"] = demands
-
-    market_price, market_quantity = market_optimum(offers, demands)
     # sell all capacities under market price
-    for row in offers:
+    for fill in clearing.offers:
+        row = fill.entry
         if row.cumul_capacities > market_quantity:
-            sold_cap = row.capacity - row.cumul_capacities + market_quantity
+            sold_cap = fill.cleared
             if sold_cap > 0.1:
                 sell(row, market_price, quantity=sold_cap)
             # dumping electricity that is offered at the minimal price and not sold
@@ -610,9 +586,10 @@ def market_logic(new_values: dict, market: dict) -> None:
             break
         sell(row, market_price)
     # buy all demands over market price
-    for row in demands:
+    for fill in clearing.demands:
+        row = fill.entry
         if row.cumul_capacities > market_quantity:
-            bought_cap = row.capacity - row.cumul_capacities + market_quantity
+            bought_cap = fill.cleared
             if bought_cap > 0.1:
                 buy(row, market_price, quantity=bought_cap)
             # measures a taken to reduce demand
@@ -626,41 +603,6 @@ def market_logic(new_values: dict, market: dict) -> None:
             buy(row, market_price)
     market["market_price"] = market_price
     market["market_quantity"] = market_quantity
-
-
-def market_optimum(offers: list[_MarketEntry], demands: list[_MarketEntry]) -> tuple[float, float]:
-    # TODO (Felix) : Move to market.py (new)
-    """Find market price and quantity by finding the intersection of demand and supply."""
-    if not demands or not offers:
-        return 0, 0
-
-    price_d = demands[0].price
-    price_o = offers[0].price
-
-    if price_o > price_d:
-        return price_d, 0
-
-    # Build merged event list: (cumul_capacity, is_offer, next_step_price)
-    # For offers (sorted ascending): next step price is the price of the next row (or +inf for last)
-    # For demands (sorted descending): next step price is the price of the next row (or -6 for last)
-    events: list[tuple[float, bool, float]] = []
-    for i, entry in enumerate(offers):
-        next_price = offers[i + 1].price if i + 1 < len(offers) else math.inf
-        events.append((entry.cumul_capacities, True, next_price))
-    for i, entry in enumerate(demands):
-        next_price = demands[i + 1].price if i + 1 < len(demands) else -6.0
-        events.append((entry.cumul_capacities, False, next_price))
-
-    events.sort(key=lambda e: e[0])
-
-    for cumul, is_offer, next_price in events:
-        if is_offer:
-            price_o = next_price
-        else:
-            price_d = next_price
-        if price_d < price_o:
-            return (price_d if is_offer else price_o), cumul
-    raise ValueError("No market optimum found.")
 
 
 def renewables_generation(player: Player, generation: dict) -> None:
@@ -835,22 +777,6 @@ def minimal_generation(player: Player, generation: dict, resource_reservations: 
             )
 
 
-def place_bid(market: dict, player_id: int, capacity: float, price: float, facility: str) -> dict:
-    # TODO (Felix): should be moved somewhere else, e.g. market.py (new) ?
-    """Make an bid (offer, supply) on the market."""
-    if capacity > 0:
-        market["capacities"].append(_MarketEntry(player_id, capacity, price, facility))
-    return market
-
-
-def place_ask(market: dict, player_id: int, demand: float, price: float, facility: str) -> dict:
-    # TODO (Felix): should be moved somewhere else, e.g. market.py (new) ?
-    """Make an ask (demand) on the market."""
-    if demand > 0:
-        market["demands"].append(_MarketEntry(player_id, demand, price, facility))
-    return market
-
-
 def resources_and_pollution(new_values: dict, player: Player) -> None:
     """Calculate resource use and production, O&M costs and emissions."""
     assert player is not None
@@ -867,9 +793,7 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
                     fuel = Fuel(fuel)
                     quantity = amount * generation[facility] / power
                     player.resources[fuel] -= quantity
-                facility_emissions = (
-                    player.capacities[facility]["pollution"] * generation[facility] / power
-                )
+                facility_emissions = player.capacities[facility]["pollution"] * generation[facility] / power
                 add_emissions(new_values, player, facility, facility_emissions)
 
     if player.functional_facility_lvl[FunctionalFacilityType.WAREHOUSE] > 0:
@@ -953,7 +877,6 @@ def construction_emissions(new_values: dict, player: Player) -> None:
 
 
 def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfaction: float) -> None:
-    # TODO (Felix): should be moved somewhere else, e.g. market.py (new) ?
     """
     Take measures to reduce power demand.
 
