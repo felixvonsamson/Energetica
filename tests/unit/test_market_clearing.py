@@ -62,8 +62,12 @@ def test_unserved_is_all_demand_that_did_not_clear() -> None:
     total_demand = 150 + 100
     assert clearing.unserved == total_demand - clearing.quantity
     assert clearing.unserved == 100
-    # the sub-clearing-price demand is the unmet one; each fill's shortfall sums to `unserved`
-    assert sum(f.entry.capacity - f.cleared for f in clearing.demands) == clearing.unserved
+    # demands come back sorted descending by price: the €80 bid is served, the €30 bid is not
+    served, curtailed = clearing.demands
+    assert served.entry.price == 80
+    assert served.unmet == 0
+    assert curtailed.entry.price == 30
+    assert curtailed.unmet == 100
 
 
 def test_cleared_is_clamped_to_capacity_beyond_the_margin() -> None:

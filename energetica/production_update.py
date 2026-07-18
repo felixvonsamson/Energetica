@@ -493,7 +493,6 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
 
 
 def market_logic(new_values: dict, market: dict) -> None:
-    # TODO (Felix): should be moved somewhere else, e.g. market.py (new)
     """
     Perform the market logic for a network.
 
@@ -878,7 +877,6 @@ def construction_emissions(new_values: dict, player: Player) -> None:
 
 
 def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfaction: float) -> None:
-    # TODO (Felix): should be moved somewhere else, e.g. market.py (new) ?
     """
     Take measures to reduce power demand.
 

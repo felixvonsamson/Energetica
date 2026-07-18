@@ -61,6 +61,24 @@ class Fill:
     entry: MarketEntry
     cleared: float  # MW sold (offer) or bought (demand), clamped to [0, entry.capacity]
 
+    @classmethod
+    def from_entry(cls, entry: MarketEntry, quantity: float) -> Fill:
+        """Build the fill for ``entry`` given the market cleared ``quantity`` MW.
+
+        Entries whose cumulative capacity sits at or below ``quantity`` clear in full;
+        the marginal (price-setting) entry clears partially; entries past it clear nothing.
+        """
+        if entry.cumul_capacities > quantity:
+            cleared = max(0.0, min(entry.capacity, entry.capacity - entry.cumul_capacities + quantity))
+        else:
+            cleared = entry.capacity
+        return cls(entry, cleared)
+
+    @property
+    def unmet(self) -> float:
+        """MW that was offered (supply) or bid (demand) but did not clear."""
+        return self.entry.capacity - self.cleared
+
 
 @dataclass(frozen=True, slots=True)
 class MarketClearing:
@@ -71,17 +89,6 @@ class MarketClearing:
     offers: list[Fill]  # sorted ascending by price; each entry's cumul_capacities is set
     demands: list[Fill]  # sorted descending by price; each entry's cumul_capacities is set
     unserved: float  # market-level MW of demand that was bid but did not clear (total demand - cleared demand)
-
-
-def _cleared_mw(entry: MarketEntry, quantity: float) -> float:
-    """MW of ``entry`` that clears at the intersection, clamped to ``[0, capacity]``.
-
-    Entries whose cumulative capacity sits at or below ``quantity`` clear in full;
-    the marginal (price-setting) entry clears partially; entries past it clear nothing.
-    """
-    if entry.cumul_capacities > quantity:
-        return max(0.0, min(entry.capacity, entry.capacity - entry.cumul_capacities + quantity))
-    return entry.capacity
 
 
 def clear_market(offers: list[MarketEntry], demands: list[MarketEntry]) -> MarketClearing:
@@ -109,9 +116,9 @@ def clear_market(offers: list[MarketEntry], demands: list[MarketEntry]) -> Marke
 
     price, quantity = market_optimum(sorted_offers, sorted_demands)
 
-    offer_fills = [Fill(entry, _cleared_mw(entry, quantity)) for entry in sorted_offers]
-    demand_fills = [Fill(entry, _cleared_mw(entry, quantity)) for entry in sorted_demands]
-    unserved = sum(fill.entry.capacity - fill.cleared for fill in demand_fills)
+    offer_fills = [Fill.from_entry(entry, quantity) for entry in sorted_offers]
+    demand_fills = [Fill.from_entry(entry, quantity) for entry in sorted_demands]
+    unserved = sum(fill.unmet for fill in demand_fills)
 
     return MarketClearing(price, quantity, offer_fills, demand_fills, unserved)
 
