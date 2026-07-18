@@ -30,11 +30,21 @@ lint.ignore = [
 include = ["energetica", "lobby", "tests", "scripts", "main.py", "main_lobby.py"]
 pythonVersion = "3.12"
 typeCheckingMode = "standard"
+# Resolve imports against the project venv so a bare `pyright` sees installed deps
+# (pydantic, pytest, …) instead of flooding reportMissingImports against its own
+# bundled environment. CI still passes --pythonpath explicitly as belt-and-suspenders.
+venvPath = "."
+venv = ".venv"
 
 [tool.pytest.ini_options]
 testpaths = [ "tests" ]
 filterwarnings = ["ignore::DeprecationWarning"]
 python_files = "tests/**/*.py"
+# Exclude the slow, network-dependent external_links tests by default so a bare
+# `pytest` matches what CI runs on normal branches and doesn't fail on an offline
+# machine. Run them explicitly with `pytest -m external_links`, or the whole suite
+# (including them) with `pytest -m ""`. CI runs the full suite on release/* branches.
+addopts = ["-m", "not external_links"]
 markers = [
-    "external_links: tests that make external HTTP requests (slow, should run before releases)",
+    "external_links: tests that make external HTTP requests (slow, network-dependent, run before releases)",
 ]
