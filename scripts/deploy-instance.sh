@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+# shellcheck source=lib/version-stamp.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/version-stamp.sh"
+
 # Energetica — deploy a single instance (Option A: no git on the server, rsync only).
 #
 #   ./scripts/deploy-instance.sh --server <ssh-host> --instance <instance> --domain <apex> \
@@ -113,6 +116,7 @@ rsync -az --delete \
     --exclude='__pycache__' \
     --exclude='*.pyc' \
     --exclude='energetica/static/app' \
+    --exclude='DEPLOYED_VERSION.json' \
     ./ "$SSH:$REMOTE_PATH/" >/dev/null
 log_success "Backend synced"
 
@@ -165,6 +169,14 @@ while [ "$(date +%s)" -lt "$HEALTH_DEADLINE" ]; do
 done
 [ "$HEALTH_OK" = true ] || { log_error "/healthz did not reach status=ok within 600s"; echo "Logs: ssh $SSH 'sudo journalctl -u energetica-$INSTANCE -f'"; exit 1; }
 log_success "/healthz status=ok"
+
+# --- 8. Stamp the deployed backend version -------------------------------------
+# Written only now — after the new process is confirmed serving — so /healthz never reports a
+# commit that failed to activate. The server has no .git (rsync excludes it), so the commit is
+# captured here on the deploy machine and written to the instance root as DEPLOYED_VERSION.json.
+# It is excluded from the rsync --delete above, so between restart and this write /healthz keeps
+# reporting the *previous* commit rather than a wrong one. Read by energetica/utils/version.py.
+stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 echo
 log_success "Deployed $INSTANCE → https://$FQDN"

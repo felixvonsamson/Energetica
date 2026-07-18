@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+# shellcheck source=lib/version-stamp.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/version-stamp.sh"
+
 # Energetica — deploy the lobby service (backend + SPA bundle, rsync only, no git).
 #
 #   ./scripts/deploy-lobby.sh --server <ssh-host> --domain <apex> \
@@ -123,6 +126,7 @@ rsync -az --delete \
     --exclude='*.pyc' \
     --exclude='energetica/static/app' \
     --exclude='dist-lobby/' \
+    --exclude='DEPLOYED_VERSION.json' \
     ./ "$SSH:$REMOTE_PATH/" >/dev/null
 log_success "Backend synced"
 
@@ -200,6 +204,13 @@ if [ "$HEALTH_OK" != true ]; then
     exit 1
 fi
 log_success "Lobby healthy (SPA 200, my-runs 401, manifest 200, accounts.db reachable)"
+
+# Stamp the deployed backend version — only now, after the new lobby is confirmed serving, so
+# /healthz never reports a commit that failed to activate. The server has no .git (rsync excludes
+# it), so the commit is captured here on the deploy machine. Excluded from the rsync --delete
+# above, so between restart and this write /healthz keeps reporting the previous commit rather
+# than a wrong one. Read by energetica/utils/version.py. See scripts/lib/version-stamp.sh.
+stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 echo
 log_success "Deployed lobby → https://$FQDN"

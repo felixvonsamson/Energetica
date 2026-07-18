@@ -5,6 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 import {
+    buildInfoPlugin,
     DEV_PORTS,
     loadDeploymentEnv,
     resolveLobbyProxyTarget,
@@ -52,6 +53,7 @@ export default defineConfig(({ mode }) => {
     return {
         plugins: [
             lobbyHtmlFallback,
+            buildInfoPlugin(),
             // Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'
             tanstackRouter({
                 target: "react",
