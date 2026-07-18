@@ -37,6 +37,10 @@ command -v jq >/dev/null 2>&1 || { log_error "jq is required"; exit 1; }
 [ "$#" -ge 2 ] || usage
 
 INSTANCE="$1"; ACTION="$2"; shift 2
+[[ "$INSTANCE" =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]] || {
+    log_error "Invalid instance slug: $INSTANCE"
+    exit 1
+}
 CONFIG="$CONFIG_ROOT/$INSTANCE/instance.json"
 
 [ -f "$CONFIG" ] || { log_error "No config at $CONFIG"; exit 1; }
