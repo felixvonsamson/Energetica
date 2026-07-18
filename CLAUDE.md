@@ -2,6 +2,13 @@
 
 Web game for energy systems with a focus on electricity.
 
+## Writing for people (GitHub, docs, code comments, commits)
+
+Prose others read should be plain and direct. Lead with the point. Write complete,
+ordinary sentences that stay concise while remaining easy to read. Prefer literal
+phrasing and common words. Explain programming jargon on first use (project and domain
+terms are fine). In-session conversational style is exempt.
+
 ## Stack
 
 Backend(`energetica/`): Python + FastAPI backend
