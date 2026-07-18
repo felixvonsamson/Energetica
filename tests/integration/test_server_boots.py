@@ -30,6 +30,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # a generous window before declaring the server dead.
 BOOT_DEADLINE_S = 60.0
 POLL_INTERVAL_S = 0.5
+# _free_port() releases the port before uvicorn claims it, so another process can slip in
+# and take it. Retry the whole boot with a fresh port when that happens.
+BOOT_ATTEMPTS = 3
+
+
+class _PortRace(Exception):
+    """The chosen port was taken before uvicorn could bind it — worth retrying."""
 
 
 def _free_port() -> int:
@@ -37,6 +44,11 @@ def _free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
         probe.bind(("127.0.0.1", 0))
         return probe.getsockname()[1]
+
+
+def _looks_like_port_in_use(output: str) -> bool:
+    """Detect uvicorn's bind failure across platforms ([Errno 48]/[Errno 98])."""
+    return "address already in use" in output.lower()
 
 
 def _terminate_process_group(proc: "subprocess.Popen[bytes]") -> None:
@@ -59,7 +71,22 @@ def _terminate_process_group(proc: "subprocess.Popen[bytes]") -> None:
 
 
 def test_server_boots_and_serves() -> None:
-    port = _free_port()
+    last_race: _PortRace | None = None
+    for _ in range(BOOT_ATTEMPTS):
+        try:
+            _boot_and_probe(_free_port())
+            return
+        except _PortRace as race:
+            last_race = race
+    raise AssertionError(f"Could not secure a free port across {BOOT_ATTEMPTS} attempts: {last_race}")
+
+
+def _boot_and_probe(port: int) -> None:
+    """Boot `python main.py` on `port`, assert it serves /healthz, then tear it down.
+
+    Raises _PortRace if the server exits because the port was already taken, so the
+    caller can retry with a freshly allocated port.
+    """
     # Capture server output to a temp file (not a PIPE we never drain, which could
     # deadlock if the buffer filled) so we can surface it when boot fails.
     with tempfile.TemporaryFile() as server_log:
@@ -91,9 +118,12 @@ def test_server_boots_and_serves() -> None:
 
             while time.monotonic() < deadline:
                 if proc.poll() is not None:
+                    output = read_log()
+                    if _looks_like_port_in_use(output):
+                        raise _PortRace(f"port {port} was taken before uvicorn could bind")
                     raise AssertionError(
                         f"Server exited before serving (code {proc.returncode}).\n"
-                        f"--- server output ---\n{read_log()}"
+                        f"--- server output ---\n{output}"
                     )
                 try:
                     response = requests.get(url, timeout=2)
