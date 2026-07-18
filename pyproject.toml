@@ -35,6 +35,11 @@ typeCheckingMode = "standard"
 testpaths = [ "tests" ]
 filterwarnings = ["ignore::DeprecationWarning"]
 python_files = "tests/**/*.py"
+# Exclude the slow, network-dependent external_links tests by default so a bare
+# `pytest` matches what CI runs on normal branches and doesn't fail on an offline
+# machine. Run them explicitly with `pytest -m external_links`, or the whole suite
+# (including them) with `pytest -m ""`. CI runs the full suite on release/* branches.
+addopts = ["-m", "not external_links"]
 markers = [
-    "external_links: tests that make external HTTP requests (slow, should run before releases)",
+    "external_links: tests that make external HTTP requests (slow, network-dependent, run before releases)",
 ]
