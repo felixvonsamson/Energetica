@@ -7,9 +7,12 @@ import {
 } from "@tanstack/react-router";
 import { useEffect } from "react";
 
+import { AnnouncedScreen } from "@/components/lifecycle/announced-screen";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
+import { useGameEngine } from "@/hooks/use-game";
+import { usePhase } from "@/hooks/use-phase";
 import { lobbyLoginHref } from "@/lib/instances";
 import type { ApiSchema } from "@/types/api-helpers";
 import type { PlayerCapabilities } from "@/types/capabilities";
@@ -68,6 +71,8 @@ function RootComponent() {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading } = useAuth();
     const capabilities = useCapabilities();
+    const phase = usePhase();
+    const { data: engine } = useGameEngine();
     const staticData = matches[matches.length - 1]?.staticData;
     const routeConfig = staticData?.routeConfig;
 
@@ -79,8 +84,20 @@ function RootComponent() {
     // page after the cutover, ADR-0002/0003).
     const mustLogIn =
         authResolved && routeNeedsAuth && (!isAuthenticated || !user);
+    // Announced-phase takeover (#862, T4): before `starts_at` the sim is paused and there is nothing
+    // to play, so an authenticated visitor sees the waiting screen on ANY app route. Gated at the
+    // root (not in GameLayout) so it also covers `/app/settle`, which renders outside GameLayout —
+    // this is what keeps "settle-during-announced" genuinely un-built (it stays fog, #856): a player
+    // can't reach the settle flow before the run starts. Fails open to the game — `usePhase` is
+    // `undefined` while the engine config loads or on an unconfigured/open-ended run — mirroring the
+    // backend's fail-open-to-active phase read (#861). Freeze/ended stay ungated here (that in-game
+    // read-only surface is T8, #866).
+    // `phase === "announced"` already implies `engine.starts_at` is set (usePhase returns undefined
+    // otherwise); the render branch below narrows it for the prop.
+    const announced =
+        authResolved && isAuthenticated && !!user && phase === "announced";
     const redirectTo =
-        authResolved && isAuthenticated && user
+        !announced && authResolved && isAuthenticated && user
             ? computeRedirect(routeConfig, user, capabilities)
             : null;
 
@@ -102,6 +119,12 @@ function RootComponent() {
         );
     }
     if (staticData === undefined) return "Unknown page";
+    // Before the run starts, an authenticated visitor waits here instead of entering the game or
+    // being routed to settle (#862, T4). Placed before the redirect gate so it preempts the
+    // settle/dashboard navigation the effect would otherwise fire.
+    if (announced && engine?.starts_at) {
+        return <AnnouncedScreen startsAt={engine.starts_at} />;
+    }
     // Block rendering until the redirect from the effect fires.
     if (mustLogIn || redirectTo) return null;
 
