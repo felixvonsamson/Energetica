@@ -64,6 +64,33 @@ class RecapRow(BaseModel):
     captured_co2: float = Field(description="Total captured CO2 in kg — the on-theme brag stat")
 
 
+class RecapTile(BaseModel):
+    """One frozen map tile: its terrain plus who settled it, at freeze (G1 addendum, #859).
+
+    The in-game :class:`~energetica.schemas.map.HexTileOut` shape minus the throwaway ``id``, with the
+    live ``player_id`` swapped for the durable ``owner_account_id``. Tiles join the leaderboard
+    :class:`RecapRow` s by ``account_id`` — settlement is 1:1 (one player per tile) — so no ``tile_id``
+    is needed on the rows and no second identity system enters the tombstone.
+
+    Terrain is frozen (not just ownership) because it is **un-recomputable** after the fact: the map is
+    regenerated manually between instances and never persisted, so only this frozen copy renders an old
+    recap on the terrain it was actually played on — the same frozen-photograph principle as usernames.
+    """
+
+    q: int
+    r: int
+    solar: float
+    wind: float
+    hydro: float
+    coal: float
+    gas: float
+    uranium: float
+    climate_risk: float
+    owner_account_id: int | None = Field(
+        description="Durable account FK of the player who settled this tile, or None if unsettled"
+    )
+
+
 class Recap(BaseModel):
     """The full published recap payload: an identity/totals header plus the income-ranked table.
 
@@ -84,6 +111,11 @@ class Recap(BaseModel):
     total_captured_co2: float = Field(description="Sum of captured_co2 across all players, in kg")
     total_net_emissions: float = Field(description="Sum of net CO2 emissions across all players, in kg")
     rows: list[RecapRow]
+    # Required (no default) on purpose: a pre-addendum recap on disk lacks this key, so it fails to
+    # load (``load_recap`` → None) and the mint-once guard re-mints it *with* the snapshot — the same
+    # self-heal path a corrupt artifact takes. The projection itself lives in ``utils.recap`` (it needs
+    # the game-domain Fuel/Renewable enums the leaf must not import), so this field is passed in built.
+    tiles: list[RecapTile] = Field(description="Frozen map snapshot: terrain + ownership at freeze")
 
     @classmethod
     def from_players(
@@ -92,6 +124,7 @@ class Recap(BaseModel):
         slug: str,
         config: InstanceConfig,
         players: Iterable[RecapPlayer],
+        tiles: Iterable[RecapTile] = (),
     ) -> Recap:
         """Project the live final game state into the frozen recap payload.
 
@@ -100,6 +133,9 @@ class Recap(BaseModel):
         ``account_id`` (ascending), so the ranking — and every row's ``rank`` — is fully reproducible:
         a re-mint (admin regenerate) yields the identical frozen photograph rather than reshuffling
         equal-income players by enumeration order.
+
+        ``tiles`` is the already-projected frozen map snapshot (built by the caller, which owns the
+        game-domain read); it is carried through verbatim so the whole recap is one payload.
         """
         ranked = sorted(
             players,
@@ -127,4 +163,5 @@ class Recap(BaseModel):
             total_captured_co2=sum(player.progression_metrics.get("captured_co2", 0) for player in ranked),
             total_net_emissions=sum(player.calculate_net_emissions() for player in ranked),
             rows=rows,
+            tiles=list(tiles),
         )
