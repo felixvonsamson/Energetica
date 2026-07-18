@@ -106,6 +106,8 @@ Subdomains also require less build configuration: subpaths need a per-instance V
 
 > **On shared credentials.** Server-wide accounts (introduced in [Server-Wide Accounts](#server-wide-accounts)) do **not** undo the cookie-isolation argument above. Credentials are shared via a server-side SQLite file; sessions are still per-subdomain. A user re-enters their password on each instance they visit and gets an independent session cookie for that origin. The cookie-leak class of bug remains structurally impossible.
 
+> **Exception — the ETHZ single-origin mirror.** One deployment deliberately serves the lobby + a *single* instance on one origin (`energetica.ethz.ch`), for VPN-blocked players who cannot reach `*.energetica-game.org` and where we cannot create subdomains. This is the subpath/single-origin arrangement argued against above, but the "most critical" cookie-leak reason is void there **because only one instance is ever exposed per origin** — there is no instance B to leak to. See the *ETHZ single-origin mirror* amendment in ADR-0002, `scripts/infra/apache-ethz-proxy.conf`, and `frontend/src/lib/single-origin.ts`. The constraint (at most one instance per proxy host) is what keeps it safe.
+
 ---
 
 ## Terminology

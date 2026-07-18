@@ -87,9 +87,9 @@ const BUILD_APEX = import.meta.env.VITE_APEX_DOMAIN;
  * the lobby and the one reachable instance share ONE origin, so `lobby.{apex}`
  * and `{slug}.{apex}` do not resolve and every helper below must emit a
  * same-origin path instead. Routing all apex reads through this one gate means
- * the existing no-apex fallbacks (`return path` / `"/app"`) cover
- * `runAppHref`, `lobbyHref`, `currentRunSlug`, and `landingHref` with no
- * per-helper special-casing.
+ * the existing no-apex fallbacks (`return path` / `"/app"`) cover `runAppHref`,
+ * `lobbyHref`, `currentRunSlug`, and `landingHref` with no per-helper
+ * special-casing.
  */
 function apexDomain(): string | undefined {
     return isSingleOriginHost() ? undefined : BUILD_APEX;

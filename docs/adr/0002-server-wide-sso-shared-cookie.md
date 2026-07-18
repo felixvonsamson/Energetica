@@ -101,3 +101,48 @@ game-model imports, so the lobby can import them without dragging in the engine;
 `energetica/utils/auth.py` re-exports them and keeps the `User`/`Player`-coupled request
 dependencies. This is an interim split ahead of a larger identity-package extraction
 (follow-up), recorded so a future reader understands the re-export bridge.
+
+## Amendment (ETHZ single-origin mirror)
+
+**A subset of players reaches the game only through a reverse proxy on a foreign
+single-origin host, and that host is exempted from this ADR's multi-origin model by
+construction.** Some players sit behind a VPN that can reach `energetica.ethz.ch` (a
+vanity alias on ETHZ's shared web-hosting platform, pointed at our box) but not
+`*.energetica-game.org`. We do not control the `ethz.ch` DNS zone, so we cannot create
+the `lobby.` / `{slug}.` subdomains this whole design assumes — new subdomains would be
+per-hostname ETHZ support tickets with no wildcard, re-filed every season as the instance
+slug rotates. Instead, `energetica.ethz.ch` reverse-proxies the game onto **one origin**:
+the lobby (login/signup) and **exactly one** live game instance, selected in the proxy
+config. See `scripts/infra/apache-ethz-proxy.conf` and
+`frontend/src/lib/single-origin.ts`.
+
+**Why this does not reopen the cookie-leak hole this ADR traded away.** The RFC's
+subdomain rationale (`static-serving-and-deployment.md` § Subdomains vs Subpaths) and the
+A2 hardening path below both exist to stop a session on instance A being ridden onto
+instance B when they share an origin. The ETHZ mirror exposes **one instance at a time**,
+so there is no instance B — the threat is structurally absent, not merely mitigated. A
+plain host-only cookie on `energetica.ethz.ch` (the lobby's `Domain=.energetica-game.org`
+cookie rewritten by `ProxyPassReverseCookieDomain`) gives A1's "log in once, play"
+property with less machinery than the parent-domain cookie, and cannot reach
+`energetica-game.org` (different registrable domain) either way. Password-manager and
+localStorage isolation are likewise moot (one account, one origin; a cross-season
+localStorage staleness is the only residue, handled by a storage version key if it bites).
+
+**Consequences.**
+
+- The frontend gains a single-origin mode keyed off an explicit host allowlist
+  (`SINGLE_ORIGIN_HOSTS`): outbound links become same-origin (`apexDomain()` in
+  `lib/instances.ts`), the lobby picker bounces an authenticated player straight into
+  `/app` (one reachable run — no choice to offer), and the in-run switcher is hidden. This
+  ships inert in every bundle and activates only under a listed host.
+- **A2 (below) does not apply to the ETHZ mirror.** A2's per-instance host-only cookies
+  via token handoff are inherently multi-origin; on a single origin the handoff is
+  degenerate and unnecessary (the threat it addresses cannot occur here). When A2 lands on
+  the main deployment, the mirror stays on the single-origin host-only cookie. This is a
+  deliberate, bounded **topology fork** — its cost is keeping the proxy + single-origin
+  mode working as auth evolves, not a security regression.
+- **Constraint that keeps the exemption valid:** the mirror must expose **at most one
+  instance per proxy host**. Exposing two concurrent instances on one origin would revive
+  exactly the cross-instance cookie-leak class — at which point this exemption is void and
+  the design must be revisited (per-run path scoping, or waiting for A2). Recorded here so
+  a future change that adds a second proxied instance is forced through this reasoning.
