@@ -1,17 +1,20 @@
-"""Unit tests for the active → freeze self-enforcement (#861, T3).
+"""Unit tests for the lifecycle self-enforcement seams (#861 T3 freeze, #862 T4 announced).
 
-Two seams, both keyed off ``instance_config.current_phase``:
+All keyed off ``instance_config.current_phase``:
 
 - ``reject_when_frozen`` — the game-action write-gate (409 once the instance is frozen/ended).
-- ``state_update`` — the sim tick halts once frozen (play is over).
+- ``state_update`` — the sim tick halts once frozen (play over) *and* stays paused while announced,
+  then self-starts once ``starts_at`` is crossed, re-anchoring the sim epoch to the start moment.
 
-Both are exercised here by monkeypatching the phase, so the tests need neither a real on-disk
-config nor a running engine.
+The phase is monkeypatched, so the freeze tests need neither a real on-disk config nor a running
+engine; the self-start test uses a small fake engine to observe the epoch re-anchor.
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from threading import RLock
+from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException, status
@@ -84,3 +87,72 @@ def test_state_update_does_not_mint_while_live(monkeypatch: pytest.MonkeyPatch) 
     tick_execution.state_update()
 
     assert minted == []
+
+
+def test_state_update_pauses_sim_while_announced(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Before ``starts_at`` the sim is paused: ``state_update`` returns without ticking (#862, T4).
+
+    This is the load-bearing half of self-start — without it the ``total_t == 0`` clause of the
+    catch-up loop would fire tick 0 the instant the announced process comes up.
+    """
+    monkeypatch.setattr(tick_execution.instance_config, "current_phase", lambda: "announced")
+
+    def _fail_if_ticked() -> None:
+        raise AssertionError("tick() must not run while the instance is announced")
+
+    monkeypatch.setattr(tick_execution, "tick", _fail_if_ticked)
+    tick_execution.state_update()  # returns cleanly; announced is a paused sim
+
+
+def test_state_update_self_starts_and_reanchors_epoch(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Crossing ``starts_at`` self-starts the sim and re-anchors the epoch to the start moment (#862).
+
+    A fresh instance (``total_t == 0``) that has become ``active`` re-pins ``start_date`` to ~now
+    (clock-aligned) so the catch-up loop begins at tick 0 rather than fast-forwarding across the
+    whole announced window, then ticks. The re-anchor happens exactly once — a running game keeps
+    its epoch, covered by ``test_state_update_reanchor_skipped_for_running_game`` below.
+    """
+    monkeypatch.setattr(tick_execution.instance_config, "current_phase", lambda: "active")
+    # Epoch left over from the announced window: process-start, well before now.
+    stale_epoch = datetime(2000, 1, 1, tzinfo=timezone.utc)
+    fake = SimpleNamespace(
+        total_t=0,
+        clock_time=60,
+        start_date=stale_epoch,
+        first_tick_time=stale_epoch,
+        lock=RLock(),
+        save=lambda: None,
+    )
+    monkeypatch.setattr(tick_execution, "engine", fake)
+    # A tick that just advances the counter, so the catch-up loop terminates after one iteration.
+    monkeypatch.setattr(tick_execution, "tick", lambda: setattr(fake, "total_t", fake.total_t + 1))
+
+    tick_execution.state_update()
+
+    assert fake.total_t == 1, "the sim should have self-started (ticked once)"
+    assert fake.start_date > stale_epoch, "the epoch must be re-anchored off the stale announced value"
+    assert fake.start_date.tzinfo is not None, "the re-anchored epoch stays tz-aware"
+    assert fake.start_date.timestamp() % fake.clock_time == 0, "the epoch stays clock-aligned"
+    assert fake.first_tick_time == fake.start_date, "the 'first tick not yet defined' sentinel is preserved"
+
+
+def test_state_update_reanchor_skipped_for_running_game(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A running game (``total_t > 0``) keeps its epoch — post-downtime catch-up is untouched (#862)."""
+    monkeypatch.setattr(tick_execution.instance_config, "current_phase", lambda: "active")
+    original_epoch = datetime(2020, 6, 1, tzinfo=timezone.utc)
+    fake = SimpleNamespace(
+        total_t=500,
+        clock_time=60,
+        start_date=original_epoch,
+        first_tick_time=datetime(2020, 6, 1, 0, 1, tzinfo=timezone.utc),
+        lock=RLock(),
+        save=lambda: None,
+    )
+    monkeypatch.setattr(tick_execution, "engine", fake)
+    # Stop the catch-up loop immediately: total_t is already past the wall-clock target for this old
+    # epoch only if we bump it high enough, so make tick a no-op-terminator by driving total_t up.
+    monkeypatch.setattr(tick_execution, "tick", lambda: setattr(fake, "total_t", 10**12))
+
+    tick_execution.state_update()
+
+    assert fake.start_date == original_epoch, "a running game must not re-anchor its epoch"

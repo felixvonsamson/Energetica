@@ -2537,6 +2537,8 @@ export interface components {
             wall_clock_seconds_per_tick: number;
             /** Game Seconds Per Tick */
             game_seconds_per_tick: number;
+            /** Starts At */
+            starts_at?: string | null;
             /** Freeze At */
             freeze_at?: string | null;
             /** Ended At */

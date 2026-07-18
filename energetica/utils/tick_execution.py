@@ -1,5 +1,6 @@
 """Utility functions relating to the GameEngine class."""
 
+import math
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,7 +30,7 @@ def state_update() -> None:
     # sim halts — play is over. Checked here, around the catch-up loop, rather than inside ``tick()``:
     # a short-circuit *inside* ``tick()`` would never advance ``engine.total_t`` and spin the
     # ``while`` below forever. The named seam (tick_execution) is honoured; the loop is the correct
-    # spot within it. (``announced`` — sim paused before ``starts_at`` — is T4's concern, not gated here.)
+    # spot within it.
     #
     # One check before the loop (not inside it) is right: ``total_t`` is the wall-clock-now target
     # fixed at entry, and each ``tick()`` advances the sim counter *toward* it, so every tick
@@ -37,12 +38,39 @@ def state_update() -> None:
     # the loop runs is pre-``freeze_at`` in sim-time and legitimately belongs to the game — even if a
     # long post-downtime catch-up executes them a little after ``freeze_at`` in wall-clock. Re-checking
     # inside the loop would wrongly *drop* that valid pre-freeze catch-up.
-    if instance_config.current_phase() in ("freeze", "ended"):
+    phase = instance_config.current_phase()
+    if phase in ("freeze", "ended"):
         # Mint the recap on the way into freeze (T5, #863): the sim is now halted and the state is
         # final, so this is where the frozen tombstone is taken. mint-once by file existence, so the
         # repeated freeze-phase ticks (and a restart in freeze) don't re-photograph it.
         recap.mint_recap_if_needed()
         return
+    # announced → active self-start (#862, T4): before ``starts_at`` the sim is paused. The process
+    # runs from creation (fragment already advertised, whitelist editable) but must not tick. The
+    # scheduler re-reads the phase every fire, so the instant ``now`` crosses ``starts_at`` this guard
+    # clears and the loop below begins on its own — the exact mirror of the self-freeze above. The
+    # guard is load-bearing, not cosmetic: the ``engine.total_t == 0`` clause in the loop would
+    # otherwise fire tick 0 the moment the process comes up, starting the game during its announced
+    # window.
+    if phase == "announced":
+        return
+    # First-active re-anchor: fix the sim epoch (``start_date``) to the moment the game actually
+    # becomes active, once, keyed off ``total_t == 0`` (the "never ticked" signal). At construction
+    # ``start_date`` is process-start time — during an announced window that is well before
+    # ``starts_at``, so leaving it there would make the catch-up ``total_t`` below span the whole
+    # announced window and fast-forward the game across thousands of empty ticks the instant it
+    # starts. Re-anchoring at activation (rather than at construction) also means an admin editing
+    # ``starts_at`` during announced is honoured — the epoch is pinned only when play truly begins.
+    # A running game (``total_t > 0``) keeps its epoch, so post-downtime catch-up is untouched; and
+    # for an instance created already-active (``starts_at`` in the past, today's default) this simply
+    # re-pins to ~now, matching the previous construction-time behaviour. Floored to ``clock_time`` to
+    # preserve the alignment the daily-question schedule and tick math rely on (see GameEngine init).
+    if engine.total_t == 0:
+        with engine.lock:
+            aligned = math.floor(time.time() / engine.clock_time) * engine.clock_time
+            engine.start_date = datetime.fromtimestamp(aligned, tz=timezone.utc)
+            engine.first_tick_time = engine.start_date  # keep the "first tick not yet defined" sentinel
+            engine.save()
     total_t = (time.time() - engine.start_date.timestamp()) / engine.clock_time
     while engine.total_t < total_t - 1 or engine.total_t == 0:
         tick()

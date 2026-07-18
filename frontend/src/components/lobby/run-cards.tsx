@@ -13,7 +13,7 @@ import { ChevronRight, Zap } from "lucide-react";
 
 import { TypographyMuted } from "@/components/ui/typography";
 import type { MyRun } from "@/lib/api/lobby";
-import type { InstanceFragment } from "@/lib/instances";
+import { derivePhase, type InstanceFragment } from "@/lib/instances";
 import { runAppHref } from "@/lib/lobby";
 
 /** "March 2026" from an ISO timestamp, or null when unparseable. */
@@ -81,7 +81,11 @@ export function OpenRunCard({
     instance: InstanceFragment;
     loggedIn: boolean;
 }) {
-    const since = formatMonthYear(instance.starts_at);
+    const when = formatMonthYear(instance.starts_at);
+    // An announced run advertises before it's playable (#862, T4): the fragment is published at
+    // creation with a future `starts_at`, so the card must say "Starts …", not "Running since …".
+    const label =
+        derivePhase(instance) === "announced" ? "Starts" : "Running since";
     const href = loggedIn
         ? runAppHref(instance.slug)
         : `/login?return=${encodeURIComponent(instance.slug)}`;
@@ -91,8 +95,10 @@ export function OpenRunCard({
                 <p className="text-lg font-semibold truncate">
                     {instance.name}
                 </p>
-                {since && (
-                    <TypographyMuted>Running since {since}</TypographyMuted>
+                {when && (
+                    <TypographyMuted>
+                        {label} {when}
+                    </TypographyMuted>
                 )}
             </div>
         </RunCardFrame>
