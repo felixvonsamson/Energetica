@@ -48,16 +48,30 @@ echo
 # probe the lobby too. The landing site is pure static with no /healthz, so it is not listed.
 SLUGS=$(ssh "$SSH" 'systemctl list-unit-files --no-legend "energetica-*.service" 2>/dev/null | awk "{print \$1}" | grep "^energetica-.*\.service$" | sed -E "s/^energetica-(.*)\.service$/\1/" | grep -v "^lobby$"' || true)
 
+# Classify a deployed backend commit against the reference by git ancestry, so a deploy that is
+# ahead of or diverged from the reference is not mislabelled "behind". Needs the commit object
+# present locally; a deploy built from an unfetched commit is reported "differs?" rather than
+# guessed. Callers handle the unknown/dirty cases before this runs.
+classify() {
+    local commit="$1"
+    [ "$commit" = "$REF_FULL" ] && { echo "up-to-date"; return; }
+    git cat-file -e "${commit}^{commit}" 2>/dev/null || { echo "differs?"; return; }
+    git merge-base --is-ancestor "$commit" "$REF_FULL" 2>/dev/null && { echo "BEHIND"; return; }
+    git merge-base --is-ancestor "$REF_FULL" "$commit" 2>/dev/null && { echo "ahead"; return; }
+    echo "DIVERGED"
+}
+
 # One /healthz probe → one table row. Verdict precedence: unreachable > no stamp > dirty >
-# behind > up-to-date. "dirty" (either half) wins over "behind" because a dirty deploy's commit
-# is not fully trustworthy in the first place — flag that before comparing SHAs.
+# ancestry (behind / ahead / diverged / up-to-date). "dirty" (either half) wins over the ancestry
+# verdict because a dirty deploy's commit is not fully trustworthy in the first place.
 probe() {
     local label="$1" url="$2"
-    local body be fe be_dirty fe_dirty verdict
+    local body be_full be fe be_dirty fe_dirty verdict
     body=$(curl -fsS --max-time 8 "$url/healthz" 2>/dev/null || true)
     if [ -z "$body" ]; then
         echo "$label|$url|unreachable|-|UNREACHABLE"; return
     fi
+    be_full=$(echo "$body" | jq -r '.version.backend.commit // ""' 2>/dev/null || echo "")
     be=$(echo "$body" | jq -r '.version.backend.commit_short // "?"' 2>/dev/null || echo "?")
     fe=$(echo "$body" | jq -r '.version.frontend.commit_short // "?"' 2>/dev/null || echo "?")
     be_dirty=$(echo "$body" | jq -r '.version.backend.dirty // false' 2>/dev/null || echo false)
@@ -65,14 +79,12 @@ probe() {
     [ "$be_dirty" = "true" ] && be="$be*"
     [ "$fe_dirty" = "true" ] && fe="$fe*"
 
-    if [ "$be" = "?" ]; then
+    if [ -z "$be_full" ]; then
         verdict="no-stamp"
     elif [ "$be_dirty" = "true" ] || [ "$fe_dirty" = "true" ]; then
         verdict="DIRTY"
-    elif [ "${be%\*}" = "$REF_SHORT" ]; then
-        verdict="up-to-date"
     else
-        verdict="BEHIND"
+        verdict=$(classify "$be_full")
     fi
     echo "$label|$url|$be|$fe|$verdict"
 }
@@ -87,3 +99,4 @@ probe() {
 
 echo
 echo "* = built/deployed from a tree with uncommitted changes (commit is not the whole truth)."
+echo "VS-REF: up-to-date | BEHIND | ahead | DIVERGED (vs $REF); differs? = commit not fetched locally."

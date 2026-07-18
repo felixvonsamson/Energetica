@@ -130,11 +130,6 @@ rsync -az --delete \
     ./ "$SSH:$REMOTE_PATH/" >/dev/null
 log_success "Backend synced"
 
-# Stamp the deployed backend version (the server has no .git; the deploy machine does). Excluded
-# from the rsync above so --delete never prunes it. Read by energetica/utils/version.py for
-# the lobby's /healthz. See scripts/lib/version-stamp.sh.
-stamp_deployed_version "$SSH" "$REMOTE_PATH"
-
 # --- 5. rsync lobby bundle (hashed assets need pruning → --delete) ------------------
 log_step "Syncing lobby bundle..."
 # Apache reads the bundle via the energetica group (the tree is 2750 deploy:energetica), and
@@ -209,6 +204,13 @@ if [ "$HEALTH_OK" != true ]; then
     exit 1
 fi
 log_success "Lobby healthy (SPA 200, my-runs 401, manifest 200, accounts.db reachable)"
+
+# Stamp the deployed backend version — only now, after the new lobby is confirmed serving, so
+# /healthz never reports a commit that failed to activate. The server has no .git (rsync excludes
+# it), so the commit is captured here on the deploy machine. Excluded from the rsync --delete
+# above, so between restart and this write /healthz keeps reporting the previous commit rather
+# than a wrong one. Read by energetica/utils/version.py. See scripts/lib/version-stamp.sh.
+stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 echo
 log_success "Deployed lobby → https://$FQDN"

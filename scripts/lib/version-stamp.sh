@@ -24,18 +24,31 @@ stamp_deployed_version() {
     deployed_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
     log_step "Stamping deployed version ($commit_short, dirty=$dirty)..."
-    # Heredoc piped over ssh so no version file is written locally. Default umask makes it
-    # world-readable, which the service user (energetica) needs to read it for /healthz.
-    ssh "$ssh_target" "cat > $remote_path/DEPLOYED_VERSION.json" <<EOF
-{
-  "commit": "$commit",
-  "commit_short": "$commit_short",
-  "branch": "$branch",
-  "dirty": $dirty,
-  "deployed_by": "$deployed_by",
-  "deployed_at": "$deployed_at",
-  "source": "deploy"
-}
-EOF
+    # Build the JSON with a real encoder rather than interpolating shell values into a template:
+    # git allows a branch name (and, in principle, a username) to contain a double quote or
+    # backslash, which would produce invalid JSON that version.py rejects — leaving the host with
+    # no reported version at all. Values are passed via the environment so the encoder, not the
+    # shell, does the escaping. python3 is used (present wherever this repo builds); dirty is a
+    # real JSON bool, the rest are strings.
+    local json
+    json=$(
+        DV_COMMIT="$commit" DV_COMMIT_SHORT="$commit_short" DV_BRANCH="$branch" \
+        DV_DIRTY="$dirty" DV_DEPLOYED_BY="$deployed_by" DV_DEPLOYED_AT="$deployed_at" \
+        python3 -c '
+import json, os
+print(json.dumps({
+    "commit": os.environ["DV_COMMIT"],
+    "commit_short": os.environ["DV_COMMIT_SHORT"],
+    "branch": os.environ["DV_BRANCH"],
+    "dirty": os.environ["DV_DIRTY"] == "true",
+    "deployed_by": os.environ["DV_DEPLOYED_BY"],
+    "deployed_at": os.environ["DV_DEPLOYED_AT"],
+    "source": "deploy",
+}, indent=2))
+'
+    )
+    # Piped over ssh so no version file is written locally. Default umask makes it world-readable,
+    # which the service user (energetica) needs to read it for /healthz.
+    printf '%s\n' "$json" | ssh "$ssh_target" "cat > $remote_path/DEPLOYED_VERSION.json"
     log_success "Stamped deployed version"
 }

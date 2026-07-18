@@ -120,13 +120,6 @@ rsync -az --delete \
     ./ "$SSH:$REMOTE_PATH/" >/dev/null
 log_success "Backend synced"
 
-# --- 3b. Stamp the deployed backend version -------------------------------------
-# The server has no .git (rsync excludes it), so /healthz cannot read the commit itself.
-# Capture it here — on the deploy machine, which does have git — and write it to the
-# instance root as DEPLOYED_VERSION.json. It is excluded from the rsync above so --delete
-# never prunes it, and it is rewritten on every deploy. Read by energetica/utils/version.py.
-stamp_deployed_version "$SSH" "$REMOTE_PATH"
-
 # --- 4. rsync app bundle (hashed assets need pruning → --delete) ---------------
 log_step "Syncing app bundle..."
 rsync -az --delete ./energetica/static/app/ "$SSH:$REMOTE_PATH/energetica/static/app/" >/dev/null
@@ -176,6 +169,14 @@ while [ "$(date +%s)" -lt "$HEALTH_DEADLINE" ]; do
 done
 [ "$HEALTH_OK" = true ] || { log_error "/healthz did not reach status=ok within 600s"; echo "Logs: ssh $SSH 'sudo journalctl -u energetica-$INSTANCE -f'"; exit 1; }
 log_success "/healthz status=ok"
+
+# --- 8. Stamp the deployed backend version -------------------------------------
+# Written only now — after the new process is confirmed serving — so /healthz never reports a
+# commit that failed to activate. The server has no .git (rsync excludes it), so the commit is
+# captured here on the deploy machine and written to the instance root as DEPLOYED_VERSION.json.
+# It is excluded from the rsync --delete above, so between restart and this write /healthz keeps
+# reporting the *previous* commit rather than a wrong one. Read by energetica/utils/version.py.
+stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 echo
 log_success "Deployed $INSTANCE → https://$FQDN"
