@@ -17,6 +17,7 @@
         "format:check": "prettier --check \"./**/*.{ts,tsx}\"",
         "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.landing.json && tsc --noEmit --project tsconfig.lobby.json && tsc --noEmit --project tsconfig.sw.json",
         "typecheck:watch": "tsc --noEmit --watch",
+        "guard:no-raw-html": "bun ../scripts/guard-no-raw-html.ts",
         "test": "vitest run",
         "test:watch": "vitest"
     },

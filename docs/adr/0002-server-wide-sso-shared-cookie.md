@@ -63,7 +63,9 @@ with the shared secret and auto-provisions a local `User` on first authenticated
   `components/chat/`. New raw-HTML renders are denied by default; adding one requires
   amending the allowlist, which forces a reviewer to confirm the input is not
   user-controlled. The day any UGC surface renders raw HTML, the cross-instance leak goes
-  live.
+  live. *Implemented (#843) as `scripts/guard-no-raw-html.ts`, run in CI via the frontend
+  `guard:no-raw-html` script; the allowlist pins each permitted sink to its file and the
+  exact `__html` expression.*
 - **A2 is the committed hardening path** (#813), to land before any UGC surface gains a
   rich-content renderer (backstop re-evaluation: 2026-12). Reversing A1 later means a
   cookie/secret migration across every instance — hence recording it here.
