@@ -1,7 +1,8 @@
+import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
-import { loadEnv, type ProxyOptions } from "vite";
+import { loadEnv, type Plugin, type ProxyOptions } from "vite";
 
 /**
  * Fixed dev-server ports, one per surface, so the app and lobby (and landing)
@@ -142,3 +143,68 @@ export const rewriteSetCookieForLocalhost: NonNullable<
         }
     });
 };
+
+/**
+ * Run a git command from the frontend dir, returning trimmed stdout or `null`
+ * on any failure.
+ */
+function git(args: string[]): string | null {
+    try {
+        return execSync(`git ${args.join(" ")}`, {
+            stdio: ["ignore", "pipe", "ignore"],
+        })
+            .toString()
+            .trim();
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * The git state at build time, written verbatim into each bundle's
+ * build-info.json. `dirty` reflects the whole tree (git cannot cheaply
+ * attribute uncommitted changes to the frontend alone), so it means "the tree
+ * had uncommitted changes when this bundle was built" — the signal that the
+ * `commit` below may not be the whole truth. `null` fields mean git could not
+ * be queried (e.g. a source tarball with no .git); the frontend and backend are
+ * stamped independently precisely because they can be built from different
+ * states.
+ */
+export function gitBuildInfo(): Record<string, string | boolean | null> {
+    const commit = git(["rev-parse", "HEAD"]);
+    const porcelain = git(["status", "--porcelain"]);
+    return {
+        commit,
+        commit_short: commit ? commit.slice(0, 9) : null,
+        branch: git(["rev-parse", "--abbrev-ref", "HEAD"]),
+        // null (not false) when git could not be queried, so "clean" and "unknown" stay distinct.
+        dirty: porcelain === null ? null : porcelain.length > 0,
+        built_at: new Date().toISOString(),
+        source: "build",
+    };
+}
+
+/**
+ * Write build-info.json into the build output dir so the backend's /healthz can
+ * report the deployed frontend version. Build-only (`apply: "build"`): a dev
+ * server serves the app from vite, not from a bundle, so there is nothing to
+ * stamp. Runs at closeBundle — after Vite has emitted (and, with emptyOutDir,
+ * cleared then repopulated) the dir — so the stamp survives.
+ */
+export function buildInfoPlugin(): Plugin {
+    let outDir = "";
+    return {
+        name: "energetica-build-info",
+        apply: "build",
+        configResolved(config) {
+            outDir = config.build.outDir;
+        },
+        closeBundle() {
+            fs.mkdirSync(outDir, { recursive: true });
+            fs.writeFileSync(
+                path.join(outDir, "build-info.json"),
+                JSON.stringify(gitBuildInfo(), null, 2) + "\n",
+            );
+        },
+    };
+}

@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+# shellcheck source=lib/version-stamp.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/version-stamp.sh"
+
 # Energetica — deploy a single instance (Option A: no git on the server, rsync only).
 #
 #   ./scripts/deploy-instance.sh --server <ssh-host> --instance <instance> --domain <apex> \
@@ -113,8 +116,16 @@ rsync -az --delete \
     --exclude='__pycache__' \
     --exclude='*.pyc' \
     --exclude='energetica/static/app' \
+    --exclude='DEPLOYED_VERSION.json' \
     ./ "$SSH:$REMOTE_PATH/" >/dev/null
 log_success "Backend synced"
+
+# --- 3b. Stamp the deployed backend version -------------------------------------
+# The server has no .git (rsync excludes it), so /healthz cannot read the commit itself.
+# Capture it here — on the deploy machine, which does have git — and write it to the
+# instance root as DEPLOYED_VERSION.json. It is excluded from the rsync above so --delete
+# never prunes it, and it is rewritten on every deploy. Read by energetica/utils/version.py.
+stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 # --- 4. rsync app bundle (hashed assets need pruning → --delete) ---------------
 log_step "Syncing app bundle..."

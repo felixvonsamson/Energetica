@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+# shellcheck source=lib/version-stamp.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/version-stamp.sh"
+
 # Energetica — deploy the lobby service (backend + SPA bundle, rsync only, no git).
 #
 #   ./scripts/deploy-lobby.sh --server <ssh-host> --domain <apex> \
@@ -123,8 +126,14 @@ rsync -az --delete \
     --exclude='*.pyc' \
     --exclude='energetica/static/app' \
     --exclude='dist-lobby/' \
+    --exclude='DEPLOYED_VERSION.json' \
     ./ "$SSH:$REMOTE_PATH/" >/dev/null
 log_success "Backend synced"
+
+# Stamp the deployed backend version (the server has no .git; the deploy machine does). Excluded
+# from the rsync above so --delete never prunes it. Read by energetica/utils/version.py for
+# the lobby's /healthz. See scripts/lib/version-stamp.sh.
+stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 # --- 5. rsync lobby bundle (hashed assets need pruning → --delete) ------------------
 log_step "Syncing lobby bundle..."

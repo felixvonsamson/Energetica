@@ -11,7 +11,6 @@ import platform
 import secrets
 import shutil
 import socket
-import subprocess
 import tarfile
 import uuid
 from contextlib import asynccontextmanager
@@ -90,13 +89,6 @@ def create_app(
         app = FastAPI()
         setup_routes(app)
         return app
-
-    try:
-        engine.git_sha = (
-            subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()
-        )
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        engine.git_sha = None
 
     print(f"Server is running in {env} mode")
     if simulate_checkpoint_ticks is None:
