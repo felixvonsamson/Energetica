@@ -87,9 +87,17 @@ accounts.record_membership(account_id=account_id, slug="poc-3", settled_at="2026
 accounts.record_membership(account_id=account_id, slug="private-beta", settled_at="2026-07-02T10:00:00+00:00")
 
 # The dev frontend serves /instances.json from frontend/public/ (Apache aliases it in prod).
+# Symlink it to the live landing aggregate rather than copying: a one-time copy goes stale the
+# moment a fragment's lifecycle timestamps are edited and re-aggregated, so the picker's phase
+# lags the app's (issue #886). The symlink tracks the path, so it keeps serving the live manifest
+# — including across aggregate_instances()'s atomic temp-then-rename — with no restart. Absolute
+# target so it resolves regardless of the frontend dev server's CWD.
 public = Path("frontend/public/instances.json")
 public.parent.mkdir(parents=True, exist_ok=True)
-public.write_text((landing / "instances.json").read_text(encoding="utf-8"), encoding="utf-8")
+# Idempotent: the path starts life as a real file (and this seed re-runs), so drop any existing
+# file or stale symlink before linking. missing_ok tolerates the first run / a prior rm-instance.
+public.unlink(missing_ok=True)
+public.symlink_to((landing / "instances.json").resolve())
 
 print("Seeded lobby dev data: demo / demo1234 (member of poc-3, private-beta) · advertised: poc-3, summer-2026")
 PY
