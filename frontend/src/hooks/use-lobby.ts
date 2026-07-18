@@ -66,8 +66,8 @@ export function useInstancesManifest() {
  * swallowed rather than surfaced as a query error, since "not frozen yet" is an
  * expected, common state, not a failure. Other errors (network, malformed
  * payload) surface normally so the page can distinguish "not minted" from
- * "broken". (`null`, not `undefined`: React Query's `queryFn` must resolve to
- * a defined value.)
+ * "broken". (`null`, not `undefined`: React Query's `queryFn` must resolve to a
+ * defined value.)
  */
 export function useRecap(slug: string) {
     return useQuery<Recap | null>({

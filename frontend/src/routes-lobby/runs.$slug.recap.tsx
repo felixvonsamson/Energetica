@@ -6,10 +6,23 @@
  * leaderboard, totals footer. No map/tile snapshot — the minted recap payload
  * (`energetica/schemas/recap.py`) carries no tile data, so that's deferred to a
  * future amendment rather than guessed at here (see #864 discussion).
+ *
+ * The layout was settled via a `/prototype` UI exploration (three variants —
+ * cards+table, podium spotlight, dense table); this one won. The full set of
+ * variants is preserved on the `prototype/864-recap-variants` branch.
  */
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Award, Leaf, Trophy, Users } from "lucide-react";
+import {
+    ArrowDown,
+    ArrowLeft,
+    ArrowUp,
+    ArrowUpDown,
+    Leaf,
+    Trophy,
+    Users,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -20,6 +33,7 @@ import { TypographyH1, TypographyMuted } from "@/components/ui/typography";
 import { useRecap } from "@/hooks/use-lobby";
 import { formatEmissions, formatTimestamp } from "@/lib/format-utils";
 import type { RecapRow } from "@/lib/recap";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/runs/$slug/recap")({
     component: RecapPage,
@@ -148,7 +162,66 @@ function StatCard({
     );
 }
 
+type SortKey =
+    | "rank"
+    | "username_at_freeze"
+    | "network_name"
+    | "operating_income"
+    | "xp"
+    | "captured_co2";
+type SortDir = "asc" | "desc";
+
+// The direction a column starts at on first click — numeric columns lead with
+// their "best first" direction (rank ascending, everything else descending),
+// text columns lead A→Z.
+const DEFAULT_DIR: Record<SortKey, SortDir> = {
+    rank: "asc",
+    username_at_freeze: "asc",
+    network_name: "asc",
+    operating_income: "desc",
+    xp: "desc",
+    captured_co2: "desc",
+};
+
+const COLUMNS: { key: SortKey; label: string; align: "left" | "right" }[] = [
+    { key: "rank", label: "Rank", align: "left" },
+    { key: "username_at_freeze", label: "Player", align: "left" },
+    { key: "network_name", label: "Network", align: "left" },
+    { key: "operating_income", label: "Income", align: "right" },
+    { key: "xp", label: "XP", align: "right" },
+    { key: "captured_co2", label: "CO2 captured", align: "right" },
+];
+
+function compare(a: RecapRow, b: RecapRow, key: SortKey): number {
+    const av = a[key];
+    const bv = b[key];
+    if (av === null) return bv === null ? 0 : 1;
+    if (bv === null) return -1;
+    if (typeof av === "string" || typeof bv === "string") {
+        return String(av).localeCompare(String(bv));
+    }
+    return av - bv;
+}
+
 function LeaderboardTable({ rows }: { rows: RecapRow[] }) {
+    const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
+        key: "rank",
+        dir: "asc",
+    });
+
+    const sorted = useMemo(() => {
+        const withDir = sort.dir === "asc" ? 1 : -1;
+        return [...rows].sort((a, b) => withDir * compare(a, b, sort.key));
+    }, [rows, sort]);
+
+    const toggleSort = (key: SortKey) => {
+        setSort((prev) =>
+            prev.key === key
+                ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
+                : { key, dir: DEFAULT_DIR[key] },
+        );
+    };
+
     if (rows.length === 0) {
         return (
             <EmptyState
@@ -164,39 +237,36 @@ function LeaderboardTable({ rows }: { rows: RecapRow[] }) {
             <table className="w-full text-sm">
                 <thead>
                     <tr className="border-b border-border text-muted-foreground text-left">
-                        <th className="py-2 pr-4 font-medium">Rank</th>
-                        <th className="py-2 pr-4 font-medium">Player</th>
-                        <th className="py-2 pr-4 font-medium">Network</th>
-                        <th className="py-2 pr-4 font-medium text-right">
-                            Income
-                        </th>
-                        <th className="py-2 pr-4 font-medium text-right">XP</th>
-                        <th className="py-2 font-medium text-right">
-                            CO2 captured
-                        </th>
+                        {COLUMNS.map((col) => (
+                            <th key={col.key} className="py-2 pr-4 font-medium">
+                                <button
+                                    onClick={() => toggleSort(col.key)}
+                                    className={cn(
+                                        "inline-flex items-center gap-1 hover:text-foreground transition-colors",
+                                        col.align === "right" &&
+                                            "flex-row-reverse",
+                                        sort.key === col.key &&
+                                            "text-foreground",
+                                    )}
+                                >
+                                    {col.label}
+                                    <SortIcon
+                                        active={sort.key === col.key}
+                                        dir={sort.dir}
+                                    />
+                                </button>
+                            </th>
+                        ))}
                     </tr>
                 </thead>
                 <tbody>
-                    {rows.map((row) => (
+                    {sorted.map((row) => (
                         <tr
                             key={row.account_id}
                             className="border-b border-border last:border-0"
                         >
-                            <td className="py-2 pr-4">
-                                <span className="inline-flex items-center gap-1">
-                                    {row.rank <= 3 && (
-                                        <Award
-                                            className={
-                                                row.rank === 1
-                                                    ? "w-4 h-4 text-yellow-500"
-                                                    : row.rank === 2
-                                                      ? "w-4 h-4 text-gray-400"
-                                                      : "w-4 h-4 text-amber-700"
-                                            }
-                                        />
-                                    )}
-                                    {row.rank}
-                                </span>
+                            <td className="py-2 pr-4 tabular-nums">
+                                {row.rank}
                             </td>
                             <td className="py-2 pr-4 font-medium">
                                 {row.username_at_freeze}
@@ -218,5 +288,14 @@ function LeaderboardTable({ rows }: { rows: RecapRow[] }) {
                 </tbody>
             </table>
         </div>
+    );
+}
+
+function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
+    if (!active) return <ArrowUpDown className="w-3.5 h-3.5 opacity-40" />;
+    return dir === "asc" ? (
+        <ArrowUp className="w-3.5 h-3.5" />
+    ) : (
+        <ArrowDown className="w-3.5 h-3.5" />
     );
 }
