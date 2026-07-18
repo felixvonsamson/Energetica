@@ -30,6 +30,11 @@ lint.ignore = [
 include = ["energetica", "lobby", "tests", "scripts", "main.py", "main_lobby.py"]
 pythonVersion = "3.12"
 typeCheckingMode = "standard"
+# Resolve imports against the project venv so a bare `pyright` sees installed deps
+# (pydantic, pytest, …) instead of flooding reportMissingImports against its own
+# bundled environment. CI still passes --pythonpath explicitly as belt-and-suspenders.
+venvPath = "."
+venv = ".venv"
 
 [tool.pytest.ini_options]
 testpaths = [ "tests" ]
