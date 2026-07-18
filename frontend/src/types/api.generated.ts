@@ -2896,9 +2896,19 @@ export interface components {
             /**
              * Starts At
              * Format: date-time
-             * @description When the run starts, from the instance fragment
+             * @description When the run starts (announced → active), from the instance fragment
              */
             starts_at: string;
+            /**
+             * Freeze At
+             * @description When play/sim ends (active → freeze), or null for an open-ended run
+             */
+            freeze_at?: string | null;
+            /**
+             * Ended At
+             * @description When the process is reaped (freeze → ended), or null for an open-ended run
+             */
+            ended_at?: string | null;
             /**
              * Settled At
              * Format: date-time
