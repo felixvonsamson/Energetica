@@ -1,0 +1,93 @@
+{
+    "slug": "demo-recap",
+    "name": "Summer 2026",
+    "starts_at": "2026-06-01T09:00:00Z",
+    "freeze_at": "2026-07-15T18:00:00Z",
+    "ended_at": null,
+    "player_count": 9,
+    "total_captured_co2": 184200.5,
+    "total_net_emissions": 62310.2,
+    "rows": [
+        {
+            "rank": 1,
+            "account_id": 14,
+            "username_at_freeze": "solaris_prime",
+            "network_name": "Nordlicht Grid",
+            "operating_income": 4820500,
+            "xp": 128400,
+            "captured_co2": 41200.8
+        },
+        {
+            "rank": 2,
+            "account_id": 7,
+            "username_at_freeze": "kelvin_watt",
+            "network_name": "Nordlicht Grid",
+            "operating_income": 4310200,
+            "xp": 119800,
+            "captured_co2": 35880.1
+        },
+        {
+            "rank": 3,
+            "account_id": 22,
+            "username_at_freeze": "meridian",
+            "network_name": null,
+            "operating_income": 3660900,
+            "xp": 98650,
+            "captured_co2": 28950.4
+        },
+        {
+            "rank": 4,
+            "account_id": 3,
+            "username_at_freeze": "voltaic_fox",
+            "network_name": "Iron Coast Co-op",
+            "operating_income": 2980100,
+            "xp": 87200,
+            "captured_co2": 22110.7
+        },
+        {
+            "rank": 5,
+            "account_id": 18,
+            "username_at_freeze": "gridlock",
+            "network_name": "Iron Coast Co-op",
+            "operating_income": 2415300,
+            "xp": 76300,
+            "captured_co2": 17540.2
+        },
+        {
+            "rank": 6,
+            "account_id": 9,
+            "username_at_freeze": "ferro_hana",
+            "network_name": null,
+            "operating_income": 1890700,
+            "xp": 61900,
+            "captured_co2": 13220.9
+        },
+        {
+            "rank": 7,
+            "account_id": 31,
+            "username_at_freeze": "delta_reed",
+            "network_name": "Nordlicht Grid",
+            "operating_income": 1204800,
+            "xp": 48100,
+            "captured_co2": 9870.3
+        },
+        {
+            "rank": 8,
+            "account_id": 5,
+            "username_at_freeze": "opal_current",
+            "network_name": null,
+            "operating_income": 812400,
+            "xp": 35600,
+            "captured_co2": 7460.1
+        },
+        {
+            "rank": 9,
+            "account_id": 26,
+            "username_at_freeze": "brackish_tide",
+            "network_name": "Iron Coast Co-op",
+            "operating_income": 340200,
+            "xp": 21900,
+            "captured_co2": 4020.6
+        }
+    ]
+}

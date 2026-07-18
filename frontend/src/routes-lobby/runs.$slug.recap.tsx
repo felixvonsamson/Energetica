@@ -6,28 +6,45 @@
  * leaderboard, totals footer. No map/tile snapshot — the minted recap payload
  * (`energetica/schemas/recap.py`) carries no tile data, so that's deferred to a
  * future amendment rather than guessed at here (see #864 discussion).
+ *
+ * PROTOTYPE (#864, T6): the actual rendering below the loading/error/empty
+ * states is currently a `?variant=A|B|C` switch between three UI variants
+ * (`components/lobby/recap-variants/`) — see `.agents/skills/prototype/UI.md`.
+ * Once a variant is picked, delete the losing variants, the switcher, this
+ * search param, and fold the winner in as the only rendering.
  */
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Award, Leaf, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Trophy } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    PrototypeSwitcher,
+    type VariantKey,
+} from "@/components/lobby/recap-variants/prototype-switcher";
+import { VariantACards } from "@/components/lobby/recap-variants/variant-a-cards";
+import { VariantBPodium } from "@/components/lobby/recap-variants/variant-b-podium";
+import { VariantCDenseTable } from "@/components/lobby/recap-variants/variant-c-dense-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InfoBanner } from "@/components/ui/info-banner";
-import { Money } from "@/components/ui/money";
 import { Spinner } from "@/components/ui/spinner";
-import { TypographyH1, TypographyMuted } from "@/components/ui/typography";
 import { useRecap } from "@/hooks/use-lobby";
-import { formatEmissions, formatTimestamp } from "@/lib/format-utils";
-import type { RecapRow } from "@/lib/recap";
+
+function validateVariantSearch(search: Record<string, unknown>): {
+    variant: VariantKey;
+} {
+    const v = search.variant;
+    return { variant: v === "B" || v === "C" ? v : "A" };
+}
 
 export const Route = createFileRoute("/runs/$slug/recap")({
+    validateSearch: validateVariantSearch,
     component: RecapPage,
     staticData: { title: "Run recap" },
 });
 
 function RecapPage() {
     const { slug } = Route.useParams();
+    const { variant } = Route.useSearch();
     const recap = useRecap(slug);
 
     if (recap.isPending) {
@@ -63,51 +80,18 @@ function RecapPage() {
     }
 
     const data = recap.data;
+    // Only "A" is used in a production build — see the module docstring.
+    const shown = import.meta.env.PROD ? "A" : variant;
+
     return (
         <div className="flex flex-col gap-8 py-8">
             <BackLink />
 
-            <div className="flex flex-col gap-1">
-                <TypographyH1>{data.name}</TypographyH1>
-                <TypographyMuted>
-                    {formatTimestamp(data.starts_at)}
-                    {data.ended_at
-                        ? ` – ${formatTimestamp(data.ended_at)}`
-                        : data.freeze_at
-                          ? ` – ${formatTimestamp(data.freeze_at)}`
-                          : ""}
-                </TypographyMuted>
-            </div>
+            {shown === "A" && <VariantACards data={data} />}
+            {shown === "B" && <VariantBPodium data={data} />}
+            {shown === "C" && <VariantCDenseTable data={data} />}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard
-                    icon={Users}
-                    label="Players"
-                    value={data.player_count.toString()}
-                />
-                <StatCard
-                    icon={Leaf}
-                    label="Total CO2 captured"
-                    value={formatEmissions(data.total_captured_co2)}
-                />
-                <StatCard
-                    icon={Leaf}
-                    label="Total net emissions"
-                    value={formatEmissions(data.total_net_emissions)}
-                />
-            </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-primary" />
-                        Final leaderboard
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <LeaderboardTable rows={data.rows} />
-                </CardContent>
-            </Card>
+            {!import.meta.env.PROD && <PrototypeSwitcher current={variant} />}
         </div>
     );
 }
@@ -121,102 +105,5 @@ function BackLink() {
             <ArrowLeft className="w-4 h-4" />
             Back to lobby
         </Link>
-    );
-}
-
-function StatCard({
-    icon: Icon,
-    label,
-    value,
-}: {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    value: string;
-}) {
-    return (
-        <Card className="py-4">
-            <CardContent className="flex flex-row items-center gap-3">
-                <Icon className="w-5 h-5 text-primary shrink-0" />
-                <div className="flex flex-col min-w-0">
-                    <TypographyMuted className="text-xs">
-                        {label}
-                    </TypographyMuted>
-                    <p className="text-lg font-semibold truncate">{value}</p>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-function LeaderboardTable({ rows }: { rows: RecapRow[] }) {
-    if (rows.length === 0) {
-        return (
-            <EmptyState
-                icon={Users}
-                title="No players"
-                description="Nobody settled in this run before it froze."
-            />
-        );
-    }
-
-    return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-                <thead>
-                    <tr className="border-b border-border text-muted-foreground text-left">
-                        <th className="py-2 pr-4 font-medium">Rank</th>
-                        <th className="py-2 pr-4 font-medium">Player</th>
-                        <th className="py-2 pr-4 font-medium">Network</th>
-                        <th className="py-2 pr-4 font-medium text-right">
-                            Income
-                        </th>
-                        <th className="py-2 pr-4 font-medium text-right">XP</th>
-                        <th className="py-2 font-medium text-right">
-                            CO2 captured
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows.map((row) => (
-                        <tr
-                            key={row.account_id}
-                            className="border-b border-border last:border-0"
-                        >
-                            <td className="py-2 pr-4">
-                                <span className="inline-flex items-center gap-1">
-                                    {row.rank <= 3 && (
-                                        <Award
-                                            className={
-                                                row.rank === 1
-                                                    ? "w-4 h-4 text-yellow-500"
-                                                    : row.rank === 2
-                                                      ? "w-4 h-4 text-gray-400"
-                                                      : "w-4 h-4 text-amber-700"
-                                            }
-                                        />
-                                    )}
-                                    {row.rank}
-                                </span>
-                            </td>
-                            <td className="py-2 pr-4 font-medium">
-                                {row.username_at_freeze}
-                            </td>
-                            <td className="py-2 pr-4 text-muted-foreground">
-                                {row.network_name ?? "—"}
-                            </td>
-                            <td className="py-2 pr-4 text-right">
-                                <Money amount={row.operating_income} />
-                            </td>
-                            <td className="py-2 pr-4 text-right tabular-nums">
-                                {Math.round(row.xp).toLocaleString()}
-                            </td>
-                            <td className="py-2 text-right tabular-nums">
-                                {formatEmissions(row.captured_co2)}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
     );
 }

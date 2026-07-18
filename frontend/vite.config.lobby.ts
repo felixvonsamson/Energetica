@@ -2,6 +2,7 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
+import svgr from "vite-plugin-svgr";
 import path from "path";
 
 import {
@@ -60,6 +61,27 @@ export default defineConfig(({ mode }) => {
                 generatedRouteTree: "./src/routeTree.lobby.gen.ts",
             }),
             tailwindcss(),
+            // components/ui is shared across bundles (Money/CoinIcon use `?react`
+            // SVG imports); landing's config already carries this — the lobby
+            // config didn't, because nothing lobby-side imported such a component
+            // until the recap page (T6, #864) started using `Money`.
+            svgr({
+                svgrOptions: {
+                    ref: true,
+                    svgoConfig: {
+                        plugins: [
+                            {
+                                name: "preset-default",
+                                params: {
+                                    overrides: {
+                                        removeViewBox: false,
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            }),
             react(),
         ],
         resolve: {
