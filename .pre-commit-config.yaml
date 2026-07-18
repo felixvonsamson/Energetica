@@ -15,13 +15,23 @@ repos:
 
   - repo: local
     hooks:
-      # Run lint-staged for incremental linting, formatting, and type checking
-      - id: lint-staged
-        name: lint-staged
-        entry: npx lint-staged
+      # Frontend formatting + linting, mirroring the ruff hooks above. These run prettier/eslint
+      # DIRECTLY (pre-commit passes the staged filenames and re-stages), rather than via lint-staged:
+      # lint-staged does its own git-stash dance, and nested inside pre-commit (which already stashes)
+      # the two collide, so lint-staged's fixes never reached the staged blob and misformatted code
+      # slipped through to CI. pre-commit hands us repo-root-relative paths, so strip the leading
+      # `frontend/` after cd-ing in. --write/--fix (not --check): mirror ruff — auto-fix, and
+      # pre-commit fails the commit when files change so you re-stage.
+      - id: prettier
+        name: prettier
+        entry: bash -c 'cd frontend && npx prettier --write "${@#frontend/}"' --
+        language: system
+        files: ^frontend/.*\.(ts|tsx)$
+      - id: eslint
+        name: eslint
+        entry: bash -c 'cd frontend && npx eslint --max-warnings 0 --fix --cache "${@#frontend/}"' --
         language: system
         files: ^frontend/src/.*\.(ts|tsx)$
-        pass_filenames: false
       - id: frontend-typecheck
         name: frontend typecheck
         entry: bash -c 'cd frontend && bun run typecheck'
