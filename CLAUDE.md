@@ -34,3 +34,13 @@ Deprecated Frontend: Deprecated Jinja `energetica/templates/`
 
 - backend: `energetica/schemas/` and `energetica/routers/` are the source of truth
 - frontend: `frontend/src/types/api-helpers.ts` for consuming types
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues (`felixvonsamson/Energetica`) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: root `CONTEXT.md` (context-indexed glossary), `docs/adr/`, and a topic-organized `docs/` tree. See `docs/agents/domain.md`.
