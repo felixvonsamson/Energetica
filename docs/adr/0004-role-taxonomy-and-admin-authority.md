@@ -85,6 +85,16 @@ the fiction (freeze, ban-for-abuse, spectate) is authority and is in scope. Mech
   worse than honest, it would imply the platform gates something it cannot. Cataloguing
   sysadmin capabilities without productising them keeps the boundary truthful.
 
+- **A "superadmin" web console — a second in-product elevated role for the exposure
+  levers.** Considered in [#898](https://github.com/felixvonsamson/Energetica/issues/898)
+  and deferred, not adopted. It is genuinely wanted (the two sysadmins would rather click a
+  button than SSH), but the exposure levers are root edits to each instance's
+  `instance.json`; a logged-in surface would need the lobby backend to write config across
+  the whole fleet — a cross-instance write channel that does not exist and is the same
+  infrastructure as productised fleet provisioning, which is out of scope. Adopting it would
+  also reopen the one-elevated-role decision. Deferred as a future effort; the operator stays
+  the sysadmin plane meanwhile.
+
 - **Ban and market-sanction as one moderation feature.** Rejected. Banning for out-of-game
   conduct and sanctioning in-game unfairness are different in kind — non-diegetic authority
   versus a diegetic game mechanic — with different owners. Merging them would put
@@ -101,5 +111,9 @@ the fiction (freeze, ban-for-abuse, spectate) is authority and is in scope. Mech
 - The persistent duplication between the per-instance `User` and the lobby `Account` is
   *not* fixed here — `User.role` is projected on top of the existing smell. That cleanup is
   tracked separately ([#905](https://github.com/felixvonsamson/Energetica/issues/905)).
-- Which out-of-band lifecycle levers graduate to an in-app facilitator surface is decided
-  in [#898](https://github.com/felixvonsamson/Energetica/issues/898).
+- Which out-of-band lifecycle levers graduate to an in-app facilitator surface was decided
+  in [#898](https://github.com/felixvonsamson/Energetica/issues/898): the **session** levers
+  — the clock (`freeze_at` / `starts_at` / `ended_at`) and the whitelist roster — graduate to
+  facilitator; the **exposure** levers (public/private, advertised, server-wide signups) and
+  **recovery** (regenerate recap) stay on the shell. The rule: the facilitator runs the room;
+  the operator controls the doors and the marquee.

@@ -132,11 +132,23 @@ Only one distinction about *how* a capability is exercised carries authorization
   therefore the definition of the sysadmin plane. Recovery by editing the database or a
   JSON file directly is the out-of-band catch-all and is deliberately not specified.
 
-Out-of-band and sysadmin are effectively the same set. The only place the distinction
-does real work is the **lifecycle levers**: capabilities that live out-of-band today but
-are candidates to graduate to an in-app facilitator surface. Whether each one graduates
-is decided in [#898](https://github.com/felixvonsamson/Energetica/issues/898), not here;
-those rows are flagged `→ #898`.
+Out-of-band and sysadmin are effectively the same set. A handful of capabilities live
+out-of-band today but were candidates to graduate to an in-app facilitator surface;
+[#898](https://github.com/felixvonsamson/Energetica/issues/898) resolved which. The seam:
+
+> A lever is a **facilitator (in-app)** power when it governs **who is in the session and
+> when it runs** — the clock (`freeze_at` / `starts_at` / `ended_at`) and the roster
+> (whitelist). It stays **sysadmin (out-of-band)** when it governs the instance's
+> **exposure to the outside world** (public/private, advertised, server-wide signups) or
+> is **infra/recovery** (provision, deploy, teardown, regenerate recap).
+
+The facilitator runs the room; the operator controls the doors and the marquee. This also
+settles the whitelist-versus-access-policy split below: the facilitator manages the
+*invite list*, while whether the door is roster-gated at all is an exposure decision set
+when the instance is stood up. The four graduating levers are `aspirational` (specced, not
+yet built as an in-app surface); the exposure and infra levers stay `built` on the shell.
+A logged-in "superadmin" console for the exposure levers is a desirable future but out of
+scope — see [Out of scope](#out-of-scope-for-this-spec).
 
 ## Capability matrix
 
@@ -153,26 +165,26 @@ or it applies uniformly). Format is a non-empty subset of {persistent, workshop}
 | Deploy instance code | sysadmin | n/a | both | out-of-band | built |
 | Deploy lobby code | sysadmin | n/a | both | out-of-band | built |
 | Set lifecycle timestamps at creation (`starts_at`/`freeze_at`/`ended_at`) | sysadmin | n/a | persistent | out-of-band | built |
-| Force-freeze / adjust `freeze_at` | sysadmin today; facilitator if graduated `→ #898` | instance (facilitator) | persistent | out-of-band today | built (out-of-band) |
-| Re-anchor start / adjust `starts_at` | sysadmin today; facilitator if graduated `→ #898` | instance (facilitator) | persistent | out-of-band today | built (out-of-band) |
-| Set `ended_at` (end instance) | sysadmin today; facilitator if graduated `→ #898` | instance (facilitator) | persistent | out-of-band today | built (out-of-band) |
+| Force-freeze / adjust `freeze_at` | facilitator | instance | persistent | in-app | aspirational (graduates from out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
+| Re-anchor start / adjust `starts_at` | facilitator | instance | persistent | in-app | aspirational (graduates from out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
+| Set `ended_at` (end instance) | facilitator | instance | persistent | in-app | aspirational (graduates from out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
 | Reap / teardown ended instance (OS-level) | sysadmin | n/a | persistent | out-of-band | built |
-| Advertise / hide instance | sysadmin today; facilitator candidate `→ #898` | instance (facilitator) | persistent | out-of-band today | built (out-of-band) |
+| Advertise / hide instance | sysadmin | n/a | persistent | out-of-band | built (stays out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
 | Set display name | sysadmin | n/a | persistent | out-of-band | built |
 | List instances | sysadmin | n/a | both | out-of-band | built |
 | Download / back up instance state | sysadmin | n/a | both | out-of-band | built |
 | Export instance to CSV | sysadmin | n/a | persistent | out-of-band | built |
 | Backfill instance membership (one-time migration) | sysadmin | n/a | persistent | out-of-band | built |
 | Migrate to server accounts (one-time migration) | sysadmin | n/a | persistent | out-of-band | built |
-| Regenerate recap | sysadmin today; facilitator candidate `→ #898` | instance (facilitator) | persistent | out-of-band today | built (out-of-band) |
+| Regenerate recap | sysadmin | n/a | persistent | out-of-band | built (stays out-of-band — dev recovery, not a facilitator act, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
 
 ### Access control and whitelisting
 
 | Capability | Owner | Scope | Format | Plane | Status |
 |---|---|---|---|---|---|
-| Set access policy (public / private) | sysadmin today; facilitator if graduated `→ #898` | instance (facilitator) | both | out-of-band today | built (out-of-band) |
-| Manage instance whitelist | sysadmin today; facilitator if graduated `→ #898` | instance (facilitator) | persistent | out-of-band today | built (out-of-band) |
-| Server-wide signup toggle | sysadmin today; server-wide facilitator candidate `→ #898` | server-wide | both | out-of-band today | built (out-of-band) |
+| Set access policy (public / private) | sysadmin | n/a | both | out-of-band | built (stays out-of-band — exposure lever, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
+| Manage instance whitelist | facilitator | instance | persistent | in-app | aspirational (graduates from out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
+| Server-wide signup toggle | sysadmin | n/a | both | out-of-band | built (stays out-of-band — exposure lever, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
 | Facilitator bypasses access allowlist | facilitator | server-wide or instance | both | in-app | aspirational (rule decided here) |
 | Per-instance `disable_signups` | — | — | persistent | — | retired (superseded by server-wide toggle) |
 | `players.txt` bootstrap enrollment | — | — | persistent | — | retired (superseded by CLI grant seed, [#842](https://github.com/felixvonsamson/Energetica/issues/842)) |
@@ -222,5 +234,12 @@ or it applies uniformly). Format is a non-empty subset of {persistent, workshop}
   grant-admin view, the bootstrap UI. This spec says who owns what; each surface is a
   downstream effort.
 - **sysadmin fleet provisioning as a product.** Setup, deploy, and teardown stay a shell
-  and root concern by deliberate boundary. Whether individual levers graduate is decided
+  and root concern by deliberate boundary. Whether individual levers graduate was decided
   in [#898](https://github.com/felixvonsamson/Energetica/issues/898).
+- **A "superadmin" web console for the exposure levers.** A logged-in surface where an
+  operator flips access policy, advertised, and signups without a shell is a desirable
+  future, but out of scope here: it needs the lobby backend to write every instance's
+  `instance.json` — a cross-instance config-write channel that does not exist, and the
+  same infrastructure as productised fleet provisioning above. It is a separate effort, not
+  a third product role — the operator stays the sysadmin plane until such a surface is
+  built ([#898](https://github.com/felixvonsamson/Energetica/issues/898)).
