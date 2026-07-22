@@ -43,6 +43,7 @@ class _FakePlayer:
     operating_income: float
     xp: float
     captured_co2: float
+    produced_co2: float
     net_emissions: float
     network_name: str | None = None
 
@@ -61,6 +62,9 @@ class _FakePlayer:
     @property
     def progression_metrics(self) -> dict[str, float]:
         return {"operating_income": self.operating_income, "xp": self.xp, "captured_co2": self.captured_co2}
+
+    def calculate_produced_co2(self) -> float:
+        return self.produced_co2
 
     def calculate_net_emissions(self) -> float:
         return self.net_emissions
@@ -133,28 +137,54 @@ def _config() -> InstanceConfig:
 
 def _players() -> list[_FakePlayer]:
     return [
-        _FakePlayer(account_id=10, _username="alice", operating_income=500, xp=42, captured_co2=100, net_emissions=-5),
+        _FakePlayer(
+            account_id=10,
+            _username="alice",
+            operating_income=500,
+            xp=42,
+            captured_co2=100,
+            produced_co2=95,  # net = 95 - 100 = -5
+            net_emissions=-5,
+        ),
         _FakePlayer(
             account_id=20,
             _username="bob",
             operating_income=1500,
             xp=99,
             captured_co2=250,
+            produced_co2=280,  # net = 280 - 250 = 30
             net_emissions=30,
             network_name="Grid Co",
         ),
-        _FakePlayer(account_id=30, _username="carol", operating_income=900, xp=70, captured_co2=0, net_emissions=12),
+        _FakePlayer(
+            account_id=30,
+            _username="carol",
+            operating_income=900,
+            xp=70,
+            captured_co2=0,
+            produced_co2=12,  # net = 12 - 0 = 12
+            net_emissions=12,
+        ),
     ]
 
 
 # --- Recap.from_players (schema projection, G1) ------------------------------------------------
 
 
-def test_from_players_ranks_by_operating_income_desc() -> None:
+def test_from_players_orders_by_operating_income_desc() -> None:
+    """Default order is operating_income descending — 'most consequential first', not a ranking
+    (ADR-0005). No row carries a rank/medal.
+    """
     recap = Recap.from_players(slug=SLUG, config=_config(), players=_players())
 
     assert [row.username_at_freeze for row in recap.rows] == ["bob", "carol", "alice"]
-    assert [row.rank for row in recap.rows] == [1, 2, 3]
+
+
+def test_from_players_has_no_rank_field() -> None:
+    """The recap crowns no winner: there is no global rank on a row (ADR-0005)."""
+    recap = Recap.from_players(slug=SLUG, config=_config(), players=_players())
+
+    assert "rank" not in recap.rows[0].model_dump()
 
 
 def test_from_players_ties_break_on_account_id_reproducibly() -> None:
@@ -162,9 +192,27 @@ def test_from_players_ties_break_on_account_id_reproducibly() -> None:
     regardless of the order Player.all() enumerates them in.
     """
     tied = [
-        _FakePlayer(account_id=30, _username="carol", operating_income=100, xp=0, captured_co2=0, net_emissions=0),
-        _FakePlayer(account_id=10, _username="alice", operating_income=100, xp=0, captured_co2=0, net_emissions=0),
-        _FakePlayer(account_id=20, _username="bob", operating_income=100, xp=0, captured_co2=0, net_emissions=0),
+        _FakePlayer(
+            account_id=30,
+            _username="carol",
+            operating_income=100,
+            xp=0,
+            captured_co2=0,
+            produced_co2=0,
+            net_emissions=0,
+        ),
+        _FakePlayer(
+            account_id=10,
+            _username="alice",
+            operating_income=100,
+            xp=0,
+            captured_co2=0,
+            produced_co2=0,
+            net_emissions=0,
+        ),
+        _FakePlayer(
+            account_id=20, _username="bob", operating_income=100, xp=0, captured_co2=0, produced_co2=0, net_emissions=0
+        ),
     ]
     forward = Recap.from_players(slug=SLUG, config=_config(), players=tied)
     reshuffled = Recap.from_players(slug=SLUG, config=_config(), players=list(reversed(tied)))
@@ -182,6 +230,8 @@ def test_from_players_projects_the_curated_columns() -> None:
     assert winner.network_name == "Grid Co"
     assert winner.operating_income == 1500
     assert winner.xp == 99
+    # CO2 laid bare as two un-netted columns — produced and captured, not collapsed (ADR-0005).
+    assert winner.produced_co2 == 280
     assert winner.captured_co2 == 250
 
 
@@ -195,6 +245,7 @@ def test_from_players_totals_header() -> None:
     recap = Recap.from_players(slug=SLUG, config=_config(), players=_players())
 
     assert recap.player_count == 3
+    assert recap.total_produced_co2 == 387  # 95 + 280 + 12
     assert recap.total_captured_co2 == 350  # 100 + 250 + 0
     assert recap.total_net_emissions == 37  # -5 + 30 + 12
 
@@ -214,6 +265,7 @@ def test_from_players_empty_instance() -> None:
 
     assert recap.player_count == 0
     assert recap.rows == []
+    assert recap.total_produced_co2 == 0
     assert recap.total_captured_co2 == 0
     assert recap.total_net_emissions == 0
     assert recap.tiles == []  # no tiles passed → empty snapshot (only from_players' test-only default)
@@ -365,7 +417,13 @@ def test_mint_recap_if_needed_is_mint_once(configured: Path, monkeypatch: pytest
         classmethod(
             lambda cls: [
                 _FakePlayer(
-                    account_id=99, _username="latecomer", operating_income=9999, xp=0, captured_co2=0, net_emissions=0
+                    account_id=99,
+                    _username="latecomer",
+                    operating_income=9999,
+                    xp=0,
+                    captured_co2=0,
+                    produced_co2=0,
+                    net_emissions=0,
                 )
             ]
         ),
