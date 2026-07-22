@@ -16,10 +16,38 @@ from __future__ import annotations
 import logging
 
 from energetica import instance_config
+from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
-from energetica.schemas.recap import Recap
+from energetica.enums import Fuel, Renewable
+from energetica.schemas.recap import Recap, RecapTile
 
 logger = logging.getLogger(__name__)
+
+
+def _freeze_tiles() -> list[RecapTile]:
+    """Project the live map into the frozen tile array — terrain plus ownership at freeze (G1 addendum).
+
+    Read here rather than in the schema so the schema leaf stays free of the game-domain ``Fuel`` /
+    ``Renewable`` vocabulary — the same module-boundary rule that keeps the ``Player`` read out of
+    ``instance_config``. Each tile resolves ``tile.player`` to the durable ``owner_account_id`` exactly
+    as the leaderboard rows resolve identity, so tiles join rows by ``account_id``. Sorted by ``(q, r)``
+    so a re-mint is a reproducible photograph, mirroring the leaderboard's ``account_id`` tiebreak.
+    """
+    return [
+        RecapTile(
+            q=tile.coordinates[0],
+            r=tile.coordinates[1],
+            solar=tile.potentials[Renewable.SOLAR],
+            wind=tile.potentials[Renewable.WIND],
+            hydro=tile.potentials[Renewable.HYDRO],
+            coal=tile.fuel_reserves[Fuel.COAL],
+            gas=tile.fuel_reserves[Fuel.GAS],
+            uranium=tile.fuel_reserves[Fuel.URANIUM],
+            climate_risk=tile.climate_risk,
+            owner_account_id=tile.player.user.account_id if tile.player else None,
+        )
+        for tile in sorted(HexTile.all(), key=lambda tile: tile.coordinates)
+    ]
 
 
 def build_recap() -> Recap | None:
@@ -34,7 +62,7 @@ def build_recap() -> Recap | None:
     config = instance_config.load_instance_config()
     if config is None:
         return None
-    return Recap.from_players(slug=slug, config=config, players=Player.all())
+    return Recap.from_players(slug=slug, config=config, players=Player.all(), tiles=_freeze_tiles())
 
 
 def mint_recap() -> None:
