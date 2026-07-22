@@ -539,6 +539,16 @@ class Player(DBModel):
         data = WorkersOut.from_player(self).model_dump()
         self.emit("worker_info", data)
 
+    def calculate_produced_co2(self) -> float:
+        """Calculate the gross CO2 the player produced, in kg.
+
+        The positive categories of the cumulative emissions are the emitting facilities; negative
+        categories are sinks (capture). Gross produced sums only the positive ones, so the recap can
+        show produced and captured un-netted (ADR-0005) rather than only the collapsed net figure.
+        """
+        cumulative_emissions = self.cumul_emissions.get_all()
+        return sum(value for value in cumulative_emissions.values() if value > 0)
+
     def calculate_net_emissions(self) -> float:
         """Calculate the net emissions of the player."""
         cumulative_emissions = self.cumul_emissions.get_all()
