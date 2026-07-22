@@ -171,8 +171,11 @@ class Recap(BaseModel):
             freeze_at=config.freeze_at,
             ended_at=config.ended_at,
             player_count=len(rows),
-            total_produced_co2=sum(player.calculate_produced_co2() for player in ordered),
-            total_captured_co2=sum(player.progression_metrics.get("captured_co2", 0) for player in ordered),
+            # Column totals are summed from the rows just built, not re-derived from the players, so
+            # each header total structurally equals its column (no second traversal to drift from).
+            # net_emissions is sourced from the players because it is not a row column.
+            total_produced_co2=sum(row.produced_co2 for row in rows),
+            total_captured_co2=sum(row.captured_co2 for row in rows),
             total_net_emissions=sum(player.calculate_net_emissions() for player in ordered),
             rows=rows,
             tiles=list(tiles),
