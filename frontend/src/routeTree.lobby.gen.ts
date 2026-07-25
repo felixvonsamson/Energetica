@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes-lobby/__root'
 import { Route as SignupRouteImport } from './routes-lobby/signup'
+import { Route as RecapPrototypeRouteImport } from './routes-lobby/recap-prototype'
 import { Route as LogoutRouteImport } from './routes-lobby/logout'
 import { Route as LoginRouteImport } from './routes-lobby/login'
 import { Route as AccountRouteImport } from './routes-lobby/account'
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes-lobby/index'
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecapPrototypeRoute = RecapPrototypeRouteImport.update({
+  id: '/recap-prototype',
+  path: '/recap-prototype',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LogoutRoute = LogoutRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/recap-prototype': typeof RecapPrototypeRoute
   '/signup': typeof SignupRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/recap-prototype': typeof RecapPrototypeRoute
   '/signup': typeof SignupRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,28 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/recap-prototype': typeof RecapPrototypeRoute
   '/signup': typeof SignupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/account' | '/login' | '/logout' | '/signup'
+  fullPaths:
+    | '/'
+    | '/account'
+    | '/login'
+    | '/logout'
+    | '/recap-prototype'
+    | '/signup'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/account' | '/login' | '/logout' | '/signup'
-  id: '__root__' | '/' | '/account' | '/login' | '/logout' | '/signup'
+  to: '/' | '/account' | '/login' | '/logout' | '/recap-prototype' | '/signup'
+  id:
+    | '__root__'
+    | '/'
+    | '/account'
+    | '/login'
+    | '/logout'
+    | '/recap-prototype'
+    | '/signup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +98,7 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
+  RecapPrototypeRoute: typeof RecapPrototypeRoute
   SignupRoute: typeof SignupRoute
 }
 
@@ -86,6 +109,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recap-prototype': {
+      id: '/recap-prototype'
+      path: '/recap-prototype'
+      fullPath: '/recap-prototype'
+      preLoaderRoute: typeof RecapPrototypeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/logout': {
@@ -124,6 +154,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
+  RecapPrototypeRoute: RecapPrototypeRoute,
   SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
