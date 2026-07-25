@@ -81,8 +81,10 @@ export default defineConfig(({ mode }) => {
             proxy: {
                 // Lobby API (auth + my-runs). /instances.json is deliberately
                 // not proxied: in production Apache aliases it from the shared
-                // landing dir; in dev it 404s and the picker degrades to "no
-                // open runs".
+                // landing dir; in dev the seed (scripts/lib/dev-env.sh) symlinks
+                // frontend/public/instances.json to the live landing aggregate,
+                // so Vite serves the current manifest statically — no proxy, and
+                // no stale copy (issue #886).
                 "^/api": {
                     target: backendUrl,
                     changeOrigin: true,
