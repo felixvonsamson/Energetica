@@ -4,10 +4,20 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
-from energetica.enums import Fuel, FunctionalFacilityType, TechnologyType, WorkerType
+from energetica.enums import (
+    ExtractionFacilityType,
+    Fuel,
+    FunctionalFacilityType,
+    PowerFacilityType,
+    StorageFacilityType,
+    TechnologyType,
+    WorkerType,
+    power_facility_types,
+)
 
 if TYPE_CHECKING:
     from energetica.database.player import Player
@@ -899,12 +909,55 @@ def warehouse_capacity_for_level(warehouse_level: int, fuel: Fuel) -> float | No
         )
 
 
+_ROUND_ECONOMICS_FACILITY_TYPES = (*power_facility_types, *StorageFacilityType, *ExtractionFacilityType)
+
+
+@dataclass(frozen=True)
+class FacilityRoundEconomics:
+    """A facility's construction lag, lifetime, and O&M cost, translated into round units.
+
+    ``om_fraction_of_price_per_round`` is a fraction of the facility's price, not an
+    absolute currency amount: a direct unit-translation of ``O&M_factor_per_day``
+    (fraction of ``base_price`` per in-game day), which is the only O&M model
+    ``assets.py`` has today. A caller multiplies it by whatever price it assigns the
+    facility (persistent-world ``base_price``, or a Workshop-specific one) to get the
+    round's O&M cost; nothing here assumes which.
+    """
+
+    construction_lag_rounds: float
+    lifetime_rounds: float
+    om_fraction_of_price_per_round: float
+
+
 class Config(object):
     """Config object that contains the modified data for a specific player considering the technologies he owns."""
 
     def __init__(self) -> None:
         """Constructor of the Config object."""
         self.for_player: dict = {}
+
+    @staticmethod
+    def facility_round_economics(
+        facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType,
+        seconds_per_round: float,
+    ) -> FacilityRoundEconomics:
+        """Translate a facility type's lifetime/construction-lag/O&M into round units.
+
+        Only defined for generation, storage, and extraction facility types -- the
+        subset ``const_config["assets"]`` carries these three fields for (confirmed by
+        the S0 seam audit, issue #872). Functional facilities and technologies have no
+        lifespan/construction-lag/O&M and raise ``ValueError``.
+        """
+        if facility_type not in _ROUND_ECONOMICS_FACILITY_TYPES:
+            raise ValueError(
+                f"{facility_type!r} has no round economics: not a generation, storage, or extraction facility",
+            )
+        data = const_config["assets"][facility_type]
+        return FacilityRoundEconomics(
+            construction_lag_rounds=data["base_construction_time"] / seconds_per_round,
+            lifetime_rounds=data["lifespan"] / seconds_per_round,
+            om_fraction_of_price_per_round=data["O&M_factor_per_day"] * seconds_per_round / 86400,
+        )
 
     def update_config_for_user(self, player: Player) -> None:
         """Update the config values according to the players technology level."""
