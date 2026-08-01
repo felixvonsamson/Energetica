@@ -3,10 +3,11 @@
  * tombstone minted at `active → freeze`, T5/G1) on the lobby, once it exists.
  *
  * A retrospective, not a scoreboard (ADR-0005 / G3): no winner, no rank. CO2 is
- * laid bare as two un-netted columns — gross produced and captured. Rows carry
- * no position; the per-player table defaults to operating-income order ("most
- * consequential first") but every column is sortable, and the top three in each
- * column get a single, uniform emphasis — deliberately not a 1/2/3 podium.
+ * laid bare, un-netted (captured is dropped from view for now, see below). Rows
+ * carry no position; the per-player table defaults to operating-income order
+ * ("most consequential first") but every column is sortable, and the top three
+ * in each column get a single, uniform emphasis — deliberately not a 1/2/3
+ * podium.
  *
  * Deliberately baseline, not the full spec (see #864). The layout was settled
  * via a `/prototype` UI exploration (three variants — ledger table, faceted
@@ -21,7 +22,6 @@ import {
     ArrowUp,
     ArrowUpDown,
     Factory,
-    Leaf,
     Scale,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -105,17 +105,19 @@ function RecapPage() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <StatCard
                     icon={Factory}
                     label="CO₂ produced"
                     value={formatEmissions(data.total_produced_co2)}
                 />
+                {/* CO2 captured: dropped for now, may return later.
                 <StatCard
                     icon={Leaf}
                     label="CO₂ captured"
                     value={formatEmissions(data.total_captured_co2)}
                 />
+                */}
                 <StatCard
                     icon={Scale}
                     label="Net emissions"
@@ -141,7 +143,7 @@ function RecapPage() {
 
             <section className="flex flex-col gap-3">
                 <h2 className="text-lg font-semibold text-primary font-titles">
-                    The world you played in
+                    The map
                 </h2>
                 <Card>
                     <CardContent>
@@ -235,13 +237,14 @@ const COLUMNS: Column[] = [
         measure: true,
         render: (row) => formatEmissions(row.produced_co2),
     },
-    {
-        key: "captured_co2",
-        label: "CO₂ captured",
-        align: "right",
-        measure: true,
-        render: (row) => formatEmissions(row.captured_co2),
-    },
+    // CO2 captured: dropped for now, may return later.
+    // {
+    //     key: "captured_co2",
+    //     label: "CO₂ captured",
+    //     align: "right",
+    //     measure: true,
+    //     render: (row) => formatEmissions(row.captured_co2),
+    // },
     {
         key: "xp",
         label: "XP",
@@ -264,7 +267,7 @@ const DEFAULT_DIR: Record<SortKey, SortDir> = {
 const MEASURE_KEYS: MeasureKey[] = [
     "operating_income",
     "produced_co2",
-    "captured_co2",
+    // "captured_co2", — dropped for now, may return later (see COLUMNS above).
     "xp",
 ];
 

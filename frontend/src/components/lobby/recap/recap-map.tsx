@@ -106,12 +106,12 @@ export function RecapMap({
                         : isRiver
                           ? "oklch(0.86 0.05 230)"
                           : "var(--map-tile-vacant, oklch(0.92 0.005 90))";
-                    const { fill } = calculateTileFillWithResource(
+                    const { fill, labelColor } = calculateTileFillWithResource(
                         { ...tile, player_id: tile.owner_account_id },
                         overlay,
                         theme,
                         base,
-                        "black",
+                        owned ? "white" : "black",
                     );
                     const highlighted =
                         highlightAccountId != null &&
@@ -139,18 +139,16 @@ export function RecapMap({
                                     strokeWidth: highlighted ? 2.5 : 1,
                                 }}
                             />
-                            {owned && overlay === undefined && (
-                                <>
-                                    <circle r={3} fill="white" />
-                                    <text
-                                        y={S * 0.9}
-                                        textAnchor="middle"
-                                        fontSize={7}
-                                        fill="var(--foreground, #111)"
-                                    >
-                                        {name?.slice(0, 6)}
-                                    </text>
-                                </>
+                            {owned && (
+                                <text
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    fontSize={7}
+                                    fill={labelColor}
+                                >
+                                    {/* 3 chars, centred on the tile — matches the in-game map's owner-label convention (map-resources.ts, calculateTileLabel). */}
+                                    {name?.slice(0, 3)}
+                                </text>
                             )}
                         </g>
                     );
