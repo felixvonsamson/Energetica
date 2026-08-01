@@ -41,6 +41,10 @@ Deprecated Frontend: Deprecated Jinja `energetica/templates/`
 
 Issues are tracked in GitHub Issues (`felixvonsamson/Energetica`) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
+### Triage labels
+
+Default vocabulary — label strings match the canonical role names. See `docs/agents/triage-labels.md`.
+
 ### Domain docs
 
 Single-context: root `CONTEXT.md` (context-indexed glossary), `docs/adr/`, and a topic-organized `docs/` tree. See `docs/agents/domain.md`.
