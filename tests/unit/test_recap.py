@@ -7,6 +7,7 @@ These tests exercise it without a running engine: the schema projection takes pl
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,6 +15,7 @@ from pathlib import Path
 import pytest
 
 from energetica import instance_config
+from energetica.enums import Fuel, Renewable
 from energetica.instance_config import InstanceConfig, PublicAccess
 from energetica.schemas.recap import Recap
 from energetica.utils import recap as recap_util
@@ -41,6 +43,7 @@ class _FakePlayer:
     operating_income: float
     xp: float
     captured_co2: float
+    produced_co2: float
     net_emissions: float
     network_name: str | None = None
 
@@ -60,8 +63,66 @@ class _FakePlayer:
     def progression_metrics(self) -> dict[str, float]:
         return {"operating_income": self.operating_income, "xp": self.xp, "captured_co2": self.captured_co2}
 
+    def calculate_produced_co2(self) -> float:
+        return self.produced_co2
+
     def calculate_net_emissions(self) -> float:
         return self.net_emissions
+
+
+# --- lightweight tile stand-ins (utils._freeze_tiles reads the ORM shape by attribute) ---------
+
+
+@dataclass
+class _FakeTileOwner:
+    """The narrow ``tile.player`` slice _freeze_tiles resolves — just ``.user.account_id``."""
+
+    account_id: int
+
+    @property
+    def user(self) -> _FakeUser:
+        return _FakeUser(account_id=self.account_id)
+
+
+@dataclass
+class _FakeTile:
+    """A HexTile stand-in: coordinates, enum-keyed terrain dicts, and an optional settling owner."""
+
+    q: int
+    r: int
+    owner_account_id: int | None = None
+    solar: float = 1.0
+    wind: float = 2.0
+    hydro: float = 3.0
+    coal: float = 4.0
+    gas: float = 5.0
+    uranium: float = 6.0
+    climate_risk: float = 0.5
+
+    @property
+    def coordinates(self) -> tuple[int, int]:
+        return (self.q, self.r)
+
+    @property
+    def potentials(self) -> dict[Renewable, float]:
+        return {Renewable.SOLAR: self.solar, Renewable.WIND: self.wind, Renewable.HYDRO: self.hydro}
+
+    @property
+    def fuel_reserves(self) -> dict[Fuel, float]:
+        return {Fuel.COAL: self.coal, Fuel.GAS: self.gas, Fuel.URANIUM: self.uranium}
+
+    @property
+    def player(self) -> _FakeTileOwner | None:
+        return _FakeTileOwner(account_id=self.owner_account_id) if self.owner_account_id is not None else None
+
+
+def _tiles() -> list[_FakeTile]:
+    """Two settled tiles (owned by bob/carol) and one unsettled — deliberately out of (q, r) order."""
+    return [
+        _FakeTile(q=1, r=0, owner_account_id=30),  # carol
+        _FakeTile(q=0, r=0, owner_account_id=20),  # bob
+        _FakeTile(q=0, r=1, owner_account_id=None),  # unsettled
+    ]
 
 
 def _config() -> InstanceConfig:
@@ -76,28 +137,54 @@ def _config() -> InstanceConfig:
 
 def _players() -> list[_FakePlayer]:
     return [
-        _FakePlayer(account_id=10, _username="alice", operating_income=500, xp=42, captured_co2=100, net_emissions=-5),
+        _FakePlayer(
+            account_id=10,
+            _username="alice",
+            operating_income=500,
+            xp=42,
+            captured_co2=100,
+            produced_co2=95,  # net = 95 - 100 = -5
+            net_emissions=-5,
+        ),
         _FakePlayer(
             account_id=20,
             _username="bob",
             operating_income=1500,
             xp=99,
             captured_co2=250,
+            produced_co2=280,  # net = 280 - 250 = 30
             net_emissions=30,
             network_name="Grid Co",
         ),
-        _FakePlayer(account_id=30, _username="carol", operating_income=900, xp=70, captured_co2=0, net_emissions=12),
+        _FakePlayer(
+            account_id=30,
+            _username="carol",
+            operating_income=900,
+            xp=70,
+            captured_co2=0,
+            produced_co2=12,  # net = 12 - 0 = 12
+            net_emissions=12,
+        ),
     ]
 
 
 # --- Recap.from_players (schema projection, G1) ------------------------------------------------
 
 
-def test_from_players_ranks_by_operating_income_desc() -> None:
+def test_from_players_orders_by_operating_income_desc() -> None:
+    """Default order is operating_income descending — 'most consequential first', not a ranking
+    (ADR-0005). No row carries a rank/medal.
+    """
     recap = Recap.from_players(slug=SLUG, config=_config(), players=_players())
 
     assert [row.username_at_freeze for row in recap.rows] == ["bob", "carol", "alice"]
-    assert [row.rank for row in recap.rows] == [1, 2, 3]
+
+
+def test_from_players_has_no_rank_field() -> None:
+    """The recap crowns no winner: there is no global rank on a row (ADR-0005)."""
+    recap = Recap.from_players(slug=SLUG, config=_config(), players=_players())
+
+    assert "rank" not in recap.rows[0].model_dump()
 
 
 def test_from_players_ties_break_on_account_id_reproducibly() -> None:
@@ -105,9 +192,27 @@ def test_from_players_ties_break_on_account_id_reproducibly() -> None:
     regardless of the order Player.all() enumerates them in.
     """
     tied = [
-        _FakePlayer(account_id=30, _username="carol", operating_income=100, xp=0, captured_co2=0, net_emissions=0),
-        _FakePlayer(account_id=10, _username="alice", operating_income=100, xp=0, captured_co2=0, net_emissions=0),
-        _FakePlayer(account_id=20, _username="bob", operating_income=100, xp=0, captured_co2=0, net_emissions=0),
+        _FakePlayer(
+            account_id=30,
+            _username="carol",
+            operating_income=100,
+            xp=0,
+            captured_co2=0,
+            produced_co2=0,
+            net_emissions=0,
+        ),
+        _FakePlayer(
+            account_id=10,
+            _username="alice",
+            operating_income=100,
+            xp=0,
+            captured_co2=0,
+            produced_co2=0,
+            net_emissions=0,
+        ),
+        _FakePlayer(
+            account_id=20, _username="bob", operating_income=100, xp=0, captured_co2=0, produced_co2=0, net_emissions=0
+        ),
     ]
     forward = Recap.from_players(slug=SLUG, config=_config(), players=tied)
     reshuffled = Recap.from_players(slug=SLUG, config=_config(), players=list(reversed(tied)))
@@ -125,6 +230,8 @@ def test_from_players_projects_the_curated_columns() -> None:
     assert winner.network_name == "Grid Co"
     assert winner.operating_income == 1500
     assert winner.xp == 99
+    # CO2 laid bare as two un-netted columns — produced and captured, not collapsed (ADR-0005).
+    assert winner.produced_co2 == 280
     assert winner.captured_co2 == 250
 
 
@@ -138,6 +245,7 @@ def test_from_players_totals_header() -> None:
     recap = Recap.from_players(slug=SLUG, config=_config(), players=_players())
 
     assert recap.player_count == 3
+    assert recap.total_produced_co2 == 387  # 95 + 280 + 12
     assert recap.total_captured_co2 == 350  # 100 + 250 + 0
     assert recap.total_net_emissions == 37  # -5 + 30 + 12
 
@@ -157,8 +265,42 @@ def test_from_players_empty_instance() -> None:
 
     assert recap.player_count == 0
     assert recap.rows == []
+    assert recap.total_produced_co2 == 0
     assert recap.total_captured_co2 == 0
     assert recap.total_net_emissions == 0
+    assert recap.tiles == []  # no tiles passed → empty snapshot (only from_players' test-only default)
+
+
+# --- _freeze_tiles (map-snapshot projection, G1 addendum) --------------------------------------
+
+
+def test_freeze_tiles_projects_terrain_and_resolves_ownership(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(recap_util.HexTile, "all", classmethod(lambda cls: _tiles()))
+
+    tiles = recap_util._freeze_tiles()
+    settled = next(tile for tile in tiles if tile.q == 0 and tile.r == 0)
+
+    assert settled.owner_account_id == 20  # bob's tile → durable account FK, not the live player_id
+    assert (settled.solar, settled.wind, settled.hydro) == (1.0, 2.0, 3.0)
+    assert (settled.coal, settled.gas, settled.uranium) == (4.0, 5.0, 6.0)
+    assert settled.climate_risk == 0.5
+
+
+def test_freeze_tiles_unsettled_owner_is_none(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(recap_util.HexTile, "all", classmethod(lambda cls: _tiles()))
+
+    unsettled = next(tile for tile in recap_util._freeze_tiles() if tile.owner_account_id is None)
+
+    assert (unsettled.q, unsettled.r) == (0, 1)
+
+
+def test_freeze_tiles_sorted_for_reproducibility(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tiles are ordered by (q, r) regardless of HexTile.all()'s enumeration, so a re-mint matches."""
+    monkeypatch.setattr(recap_util.HexTile, "all", classmethod(lambda cls: _tiles()))
+
+    coords = [(tile.q, tile.r) for tile in recap_util._freeze_tiles()]
+
+    assert coords == [(0, 0), (0, 1), (1, 0)]  # input was (1,0), (0,0), (0,1)
 
 
 # --- publish / load / exists primitives (instance_config) --------------------------------------
@@ -226,6 +368,7 @@ def configured(landing: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     target.write_text(_config().model_dump_json(), encoding="utf-8")
     monkeypatch.setenv("ENERGETICA_INSTANCE_CONFIG_DIR", str(config_dir))
     monkeypatch.setattr(recap_util.Player, "all", classmethod(lambda cls: _players()))
+    monkeypatch.setattr(recap_util.HexTile, "all", classmethod(lambda cls: _tiles()))
     return config_dir
 
 
@@ -236,6 +379,29 @@ def test_mint_recap_publishes(configured: Path) -> None:
     assert loaded is not None
     assert loaded.player_count == 3
     assert loaded.rows[0].username_at_freeze == "bob"
+    # The map snapshot is frozen alongside the leaderboard and survives the full JSON round-trip.
+    assert [(tile.q, tile.r) for tile in loaded.tiles] == [(0, 0), (0, 1), (1, 0)]
+    assert {tile.owner_account_id for tile in loaded.tiles} == {20, 30, None}
+
+
+def test_mint_recap_remigrates_pre_addendum_recap(configured: Path) -> None:
+    """A pre-addendum recap on disk lacks the ``tiles`` key, so it fails to load and is re-minted
+    with the map snapshot — the schema bump self-heals through the same mint-once guard as a corrupt
+    file, rather than stranding the lobby with a tile-less tombstone.
+    """
+    stale = Recap.from_players(slug=SLUG, config=_config(), players=_players()).model_dump(mode="json")
+    del stale["tiles"]
+    path = instance_config.recap_path(SLUG)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(stale), encoding="utf-8")
+
+    assert instance_config.load_recap(SLUG) is None  # missing required key → unreadable → re-mint
+
+    recap_util.mint_recap_if_needed()
+
+    healed = instance_config.load_recap(SLUG)
+    assert healed is not None
+    assert len(healed.tiles) == 3  # re-minted with the frozen map snapshot
 
 
 def test_mint_recap_if_needed_is_mint_once(configured: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -251,7 +417,13 @@ def test_mint_recap_if_needed_is_mint_once(configured: Path, monkeypatch: pytest
         classmethod(
             lambda cls: [
                 _FakePlayer(
-                    account_id=99, _username="latecomer", operating_income=9999, xp=0, captured_co2=0, net_emissions=0
+                    account_id=99,
+                    _username="latecomer",
+                    operating_income=9999,
+                    xp=0,
+                    captured_co2=0,
+                    produced_co2=0,
+                    net_emissions=0,
                 )
             ]
         ),
