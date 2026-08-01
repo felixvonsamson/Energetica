@@ -34,6 +34,6 @@ def demand_shape_factor(
     seasonal_factor = (sf1 * (ticks_per_day - intra_day_t) + sf2 * intra_day_t) / ticks_per_day
 
     intraday_len = len(intraday)
-    intra_day_factor = intraday[round(intra_day_t * intraday_len / ticks_per_day)]
+    intra_day_factor = intraday[round(intra_day_t * intraday_len / ticks_per_day) % intraday_len]
 
     return intra_day_factor * seasonal_factor
