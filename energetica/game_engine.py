@@ -76,12 +76,12 @@ class GameEngine(object):
         self.resim_target_tick: int | None = None
         self.scheduler_exception_count: int = 0
 
-        with open(_DATA_DIR / "industry_demand.pck", "rb") as file:
-            # array of length 1440 of normalized daily industry demand variations
-            self.industry_demand = pickle.load(file)
-        with open(_DATA_DIR / "industry_demand_year.pck", "rb") as file:
-            # array of length 51 of normalized yearly industry demand variations
-            self.industry_seasonal = pickle.load(file)
+        with open(_DATA_DIR / "national_demand_intraday.pck", "rb") as file:
+            # RTE (French grid operator) national consumption, length 1440: one sample per minute of the day
+            self.national_demand_intraday = pickle.load(file)
+        with open(_DATA_DIR / "national_demand_seasonal.pck", "rb") as file:
+            # RTE national consumption, length 72: one sample per ~5 days of the year
+            self.national_demand_seasonal = pickle.load(file)
 
         self.log("engine created")
 
