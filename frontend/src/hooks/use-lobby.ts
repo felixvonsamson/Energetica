@@ -80,6 +80,13 @@ export function useRecap(slug: string) {
                 throw error;
             }
         },
+        // "Not minted yet" (`null`) is a transient state waiting on the next
+        // tick to publish, not a stable answer — the lobby's default 30s
+        // staleTime would otherwise cache it and hide a recap published
+        // moments later. Poll until it appears; a published recap is frozen
+        // forever, so it's cached indefinitely once found.
+        staleTime: (query) => (query.state.data == null ? 0 : Infinity),
+        refetchInterval: (query) => (query.state.data == null ? 5000 : false),
     });
 }
 

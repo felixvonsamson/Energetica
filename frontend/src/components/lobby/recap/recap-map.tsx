@@ -73,6 +73,14 @@ export function RecapMap({
     const toggleOverlay = (id: ResourceId) =>
         setOverlay((current) => (current === id ? undefined : id));
 
+    if (tiles.length === 0) {
+        return (
+            <p className="text-muted-foreground text-sm">
+                No map data for this recap.
+            </p>
+        );
+    }
+
     return (
         <div>
             <div className="mb-4 grid grid-cols-4 gap-2 sm:grid-cols-7">
