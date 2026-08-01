@@ -18,3 +18,7 @@ admin_accounts.txt
 .env
 frontend/.env
 .claude
+
+# Deploy-time backend version stamp — written on the server by scripts/deploy-*.sh, and
+# never committed (would be stale the moment it lands). See scripts/lib/version-stamp.sh.
+DEPLOYED_VERSION.json

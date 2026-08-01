@@ -21,10 +21,13 @@ from fastapi import APIRouter
 from energetica.database.player import Player
 from energetica.database.network import Network
 from energetica.globals import engine
+from energetica.utils.version import backend_version, frontend_version
 
 router = APIRouter(prefix="", tags=["Health"])
 
 STATIC_INDEX_PATH = "energetica/static/app/index.html"
+# Where the built app bundle (and its build-info.json stamp) lives, relative to the repo root.
+APP_BUNDLE_SUBPATH = "energetica/static/app"
 PICKLE_PATH = "instance/engine_data.pck"
 
 Status = Literal["loading_actions", "resimulating", "ok", "degraded"]
@@ -90,9 +93,13 @@ def healthz() -> dict:
 
     uptime_s = int((datetime.datetime.now(datetime.timezone.utc) - engine.server_start_time).total_seconds())
 
+    backend = backend_version()
+
     body: dict = {
         "status": status,
-        "git_sha": engine.git_sha,
+        # Kept for backward compatibility with older probes; the full picture is under "version".
+        "git_sha": backend["commit"] if backend else None,
+        "version": {"backend": backend, "frontend": frontend_version(APP_BUNDLE_SUBPATH)},
         "uptime_s": uptime_s,
         "engine": {
             "loaded": engine.clock_time is not None,

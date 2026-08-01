@@ -75,7 +75,6 @@ class GameEngine(object):
         self.resim_start_tick: int | None = None
         self.resim_target_tick: int | None = None
         self.scheduler_exception_count: int = 0
-        self.git_sha: str | None = None
 
         with open(_DATA_DIR / "industry_demand.pck", "rb") as file:
             # array of length 1440 of normalized daily industry demand variations

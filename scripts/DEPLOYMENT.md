@@ -143,6 +143,37 @@ ssh energetica-game 'sudo systemctl restart energetica-autumn-2025'
 curl https://autumn-2025.energetica-game.org/healthz
 ```
 
+## Checking what is deployed
+
+The server has no git checkout (deploys rsync with `--exclude='.git'`), so a component cannot
+read its own commit from git. Instead each half is stamped, and both are reported by `/healthz`:
+
+- **Backend** — `deploy-instance.sh` / `deploy-lobby.sh` write `DEPLOYED_VERSION.json` to the
+  deploy root at rsync time, capturing the commit, branch, dirty flag, deployer, and timestamp.
+- **Frontend** — the vite build writes `build-info.json` into the bundle it emits.
+
+`/healthz` reads both and returns a `version` block:
+
+```json
+{ "status": "ok",
+  "version": {
+    "backend":  { "commit_short": "abc123def", "dirty": false, "deployed_by": "you", "source": "deploy" },
+    "frontend": { "commit_short": "abc123def", "dirty": false, "source": "build" } } }
+```
+
+The lobby now serves `/healthz` too (it previously had none). To see every component on a server
+and how each compares to `origin/main` in one table:
+
+```bash
+git fetch origin main
+./scripts/deployed-versions.sh --server energetica-game --domain energetica-game.org
+```
+
+A `*` next to a commit means it was built or deployed from a tree with uncommitted changes, so
+the commit alone does not fully describe what is running. Backend and frontend are stamped
+independently because they can be shipped from different states (a frontend-only redeploy is
+routine).
+
 ## Rollback
 
 (Not yet implemented. Re-deploy a previous local checkout with `deploy-instance.sh`.)
