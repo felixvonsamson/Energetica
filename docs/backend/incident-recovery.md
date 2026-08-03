@@ -19,9 +19,9 @@ This happens when the process is killed mid-save (OOM kill, SIGKILL, power loss)
 ## Recovery procedure
 
 ```bash
-ssh root@energetica-edu
-cd /var/www/energetica
-systemctl stop energetica
+ssh energetica-game
+cd /var/www/energetica-{slug}
+sudo systemctl stop energetica-{slug}
 ```
 
 **Step 1 — back up the current instance folder:**
@@ -34,25 +34,25 @@ cp -r instance/ instance.bak.$(date +%Y%m%d_%H%M%S)/
 
 The `--load_checkpoint` flag handles everything: it preserves the actions log, removes the stale `instance/` folder, extracts `checkpoints/last_checkpoint.tar.gz`, puts the log back, and replays all recorded actions before resuming normal operation.
 
-> ⚠️ **Run the replay as `www-data`, not `root`.** The systemd service runs as `www-data`. If you run the replay as `root`, every file it writes under `instance/` becomes root-owned, and the next live tick fails with `PermissionError` — putting you straight into another crash loop. Use `sudo -u www-data`:
+> ⚠️ **Run the replay as `energetica`, not as yourself or `root`.** The systemd unit runs as `User=energetica` (`scripts/infra/energetica.service`). If you run the replay as a different user, every file it writes under `instance/` gets that user's ownership, and the next live tick fails with `PermissionError` — putting you straight into another crash loop. Use `sudo -u energetica`:
 
 ```bash
-sudo -u www-data python main.py --env prod --no-reload --load_checkpoint
+sudo -u energetica .venv/bin/python main.py --env prod --no-reload --load_checkpoint
 ```
 
 Pass the same SSL and port flags used by the production service. Watch for rapid tick replays (`t = XXXX`). Once the ticks slow to the normal 30-second cadence, recovery is complete. Stop the process with Ctrl+C.
 
-If you did run anything as `root` by mistake, fix ownership before starting the service:
+If you did run anything as the wrong user by mistake, fix ownership before starting the service:
 
 ```bash
-chown -R www-data:www-data instance/ checkpoints/
+sudo chown -R energetica:energetica instance/ checkpoints/
 ```
 
 **Step 3 — start the service:**
 
 ```bash
-systemctl start energetica
-journalctl -u energetica -f
+sudo systemctl start energetica-{slug}
+sudo journalctl -u energetica-{slug} -f
 ```
 
 ## Verifying recovery
