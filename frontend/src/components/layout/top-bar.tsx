@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-import Logo from "@/assets/icon.svg?react";
+import Logo from "@/assets/simplified_logo.svg?react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationPopup } from "@/components/layout/notification-popup";
 import { RunSwitcher } from "@/components/layout/run-switcher";

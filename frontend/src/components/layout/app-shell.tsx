@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
-import Logo from "@/assets/icon.svg?react";
+import Logo from "@/assets/simplified_logo.svg?react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { TypographyBrand } from "@/components/ui/typography";
 
