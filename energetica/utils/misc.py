@@ -358,7 +358,7 @@ def calculate_solar_irradiance(
 
     # Calculate the real day and time in a year for a given tick
     start_date = datetime(2023, 7, 1)  # 6 months offset because i'm using the southern hemisphere
-    day_of_year = int((total_seconds / 3600 / 24 / 72) % 1 * 365)
+    day_of_year = int((total_seconds / 3600 / 24 / engine.days_per_year) % 1 * 365)
     time_of_day = total_seconds % (3600 * 24)
     weather_datetime = start_date + timedelta(days=day_of_year, seconds=time_of_day)
 
@@ -406,7 +406,7 @@ def calculate_wind_speed(position: tuple[float, float], total_seconds: float, ra
     wind_speed_noise = (1 - (1 - wind_speed_noise) ** 0.1282) ** 0.4673
     return (
         wind_speed_noise
-        * (1 + 0.4 * math.sin(t / 60 / 24 / 72 * math.pi * 2 + 0.5 * math.pi))
+        * (1 + 0.4 * math.sin(t / 60 / 24 / engine.days_per_year * math.pi * 2 + 0.5 * math.pi))
         * (1 + 0.1 * math.sin(t / 60 / 24 * math.pi * 2 + 0.4 * math.pi))
         * 85
     )  # type: ignore
@@ -416,8 +416,10 @@ def calculate_river_speed(total_seconds: float) -> float:
     """Calculate the river flow speed by interpolating the values from the seasonal variation."""
     days_since_start = math.floor(total_seconds / 3600 / 24)
     current_day_fraction = (total_seconds % (3600 * 24)) / (3600 * 24)
-    flow_factor = river_flow_speed_seasonal[days_since_start % 72] + current_day_fraction * (
-        river_flow_speed_seasonal[(days_since_start + 1) % 72] - river_flow_speed_seasonal[days_since_start % 72]
+    days_per_year = engine.days_per_year
+    flow_factor = river_flow_speed_seasonal[days_since_start % days_per_year] + current_day_fraction * (
+        river_flow_speed_seasonal[(days_since_start + 1) % days_per_year]
+        - river_flow_speed_seasonal[days_since_start % days_per_year]
     )
     return flow_factor * 2.5  # in m/s
 
@@ -432,7 +434,7 @@ def package_weather_data(player: Player) -> WeatherOut:
     wind_speed = calculate_wind_speed((x, y), total_seconds, random_seed)
     river_flow_speed = calculate_river_speed(total_seconds)
     return WeatherOut(
-        year_progress=(total_seconds / 3600 / 24 / 72) % 1,
+        year_progress=(total_seconds / 3600 / 24 / engine.days_per_year) % 1,
         month_number=1 + math.floor((total_seconds / 3600 / 24 / 6) % 12),
         solar_irradiance=solar_irradiance,
         clear_sky_value=clear_sky_value,
