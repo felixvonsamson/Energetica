@@ -16,6 +16,7 @@ from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
+from energetica.demand_shape import demand_shape_factor
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -300,16 +301,12 @@ def extraction_facility_demand(new_values: dict, player: Player, demand: dict) -
 def industry_demand_and_revenues(player: Player, demand: dict, revenues: dict) -> None:
     # TODO (Felix): should be moved somewhere else, e.g. player.py ?
     """Calculate maximal power consumption and revenues from industry."""
-    # interpolating seasonal factor on the day TODO (Felix): should be moved to a separate function
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
     real_t = engine.total_t + engine.delta_t  # this ensures that the year starts at real time midnight
-    day = round(real_t // ticks_per_day)
-    sf1 = engine.industry_seasonal[day % 72]
-    sf2 = engine.industry_seasonal[(day + 1) % 72]
-    seasonal_factor = (sf1 * (ticks_per_day - real_t % ticks_per_day) + sf2 * (real_t % ticks_per_day)) / ticks_per_day
-    intra_day_t = real_t % ticks_per_day
-    intra_day_factor = engine.industry_demand[round(intra_day_t * 1440 / ticks_per_day)]
-    demand["industry"] = intra_day_factor * seasonal_factor * player.config["industry"]["power_consumption"]
+    shape_factor = demand_shape_factor(
+        engine.national_demand_intraday, engine.national_demand_seasonal, ticks_per_day, engine.days_per_year, real_t
+    )
+    demand["industry"] = shape_factor * player.config["industry"]["power_consumption"]
     # calculate income of industry per tick
     revenues["industry"] = player.config["industry"]["income_per_day"] / ticks_per_day
     industry_upgrade = next(OngoingProject.filter_by(player=player, project_type=FunctionalFacilityType.INDUSTRY), None)
