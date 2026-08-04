@@ -76,11 +76,13 @@ class GameEngine(object):
         self.resim_target_tick: int | None = None
         self.scheduler_exception_count: int = 0
 
+        self.days_per_year = 72  # length of one seasonal cycle, in game days
+
         with open(_DATA_DIR / "national_demand_intraday.pck", "rb") as file:
             # RTE (French grid operator) national consumption, length 1440: one sample per minute of the day
             self.national_demand_intraday = pickle.load(file)
         with open(_DATA_DIR / "national_demand_seasonal.pck", "rb") as file:
-            # RTE national consumption, length 72: one sample per ~5 days of the year
+            # RTE national consumption, length 365: one sample per real calendar day of the year
             self.national_demand_seasonal = pickle.load(file)
 
         self.log("engine created")
@@ -136,7 +138,7 @@ class GameEngine(object):
         self.log_action(log_entry)
         # Random time shift in number of ticks to start the game at a random season of the year
         rng = np.random.default_rng(self.random_seed)
-        self.delta_t = int(rng.integers(0, 72 * 3600 * 24 // self.in_game_seconds_per_tick))
+        self.delta_t = int(rng.integers(0, self.days_per_year * 3600 * 24 // self.in_game_seconds_per_tick))
         # transform start_date to a seconds timestamp corresponding to the time of the first tick
         self.start_date = datetime.datetime.fromtimestamp(
             math.floor(self.start_date.timestamp() / clock_time) * clock_time,

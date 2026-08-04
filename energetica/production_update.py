@@ -304,7 +304,7 @@ def industry_demand_and_revenues(player: Player, demand: dict, revenues: dict) -
     ticks_per_day = 3600 * 24 / engine.in_game_seconds_per_tick
     real_t = engine.total_t + engine.delta_t  # this ensures that the year starts at real time midnight
     shape_factor = demand_shape_factor(
-        engine.national_demand_intraday, engine.national_demand_seasonal, ticks_per_day, real_t
+        engine.national_demand_intraday, engine.national_demand_seasonal, ticks_per_day, engine.days_per_year, real_t
     )
     demand["industry"] = shape_factor * player.config["industry"]["power_consumption"]
     # calculate income of industry per tick
