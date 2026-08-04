@@ -435,7 +435,7 @@ def package_weather_data(player: Player) -> WeatherOut:
     river_flow_speed = calculate_river_speed(total_seconds)
     return WeatherOut(
         year_progress=(total_seconds / 3600 / 24 / engine.days_per_year) % 1,
-        month_number=1 + math.floor((total_seconds / 3600 / 24 / 6) % 12),
+        month_number=1 + math.floor((total_seconds / 3600 / 24 / (engine.days_per_year / 12)) % 12),
         solar_irradiance=solar_irradiance,
         clear_sky_value=clear_sky_value,
         clear_sky_index=clear_sky_index,
