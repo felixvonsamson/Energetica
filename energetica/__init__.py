@@ -74,7 +74,6 @@ def create_app(
     # lobby stays free of the game domain, routers and socketio (ADR-0002, lobby Phase B). The
     # engine object itself is constructed at module scope above (it is light and the ORM needs it
     # at model-import time).
-    from energetica.api.app_services import register_app_services
     from energetica.init_test_players import init_test_players
     from energetica.routers import setup_routes
     from energetica.schemas.simulate import Action, InitEngineAction
@@ -337,7 +336,6 @@ def create_app(
     setup_socketio(app)
     setup_routes(app)
     load_or_create_vapid_keys(engine)
-    register_app_services(app)
 
     ssl_args = {"keyfile": None, "certfile": None}
     ssl_args = ssl_args if ssl_args["keyfile"] and ssl_args["certfile"] else {}
