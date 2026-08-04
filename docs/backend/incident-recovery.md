@@ -36,8 +36,11 @@ The `--load_checkpoint` flag handles everything: it preserves the actions log, r
 
 > ⚠️ **Run the replay as `energetica`, not as yourself or `root`.** The systemd unit runs as `User=energetica` (`scripts/infra/energetica.service`). If you run the replay as a different user, every file it writes under `instance/` gets that user's ownership, and the next live tick fails with `PermissionError` — putting you straight into another crash loop. Use `sudo -u energetica`:
 
+> ⚠️ **Carry over the unit's `Environment=` variables.** The unit sets `ENERGETICA_INSTANCE_SLUG`, `ENERGETICA_INSTANCE_CONFIG_DIR`, `ENERGETICA_LANDING_DIR`, and `ENERGETICA_ACCOUNTS_DB_PATH` (`scripts/infra/energetica.service`); a plain SSH shell doesn't have them. Without `ENERGETICA_INSTANCE_SLUG` in particular, the instance starts thinking it's public and skips reading its own `instance.json`. Pull them straight from the unit instead of retyping them:
+
 ```bash
-sudo -u energetica .venv/bin/python main.py --env prod --no-reload --load_checkpoint
+sudo -u energetica env $(systemctl show energetica-{slug} --property=Environment --value) \
+    .venv/bin/python main.py --env prod --no-reload --load_checkpoint
 ```
 
 Pass the same SSL and port flags used by the production service. Watch for rapid tick replays (`t = XXXX`). Once the ticks slow to the normal 30-second cadence, recovery is complete. Stop the process with Ctrl+C.
