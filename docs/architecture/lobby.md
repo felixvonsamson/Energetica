@@ -205,7 +205,7 @@ subdomains are not invalidated — see RFC limitation; unchanged.)
   initial `/etc/energetica/server.json` (`{"signups_enabled": true}`).
 - `infra/setup-lobby.sh`, `infra/apache-lobby.conf`, `infra/energetica-lobby.service`,
   `deploy-lobby.sh` — mirror the landing/instance scripts; DNS for `lobby.{apex}`.
-- `setup-instance.sh` / `DEPLOYMENT.md` — repoint the instance-local `/sign-up` redirect at
+- `setup-instance.sh` / `docs/backend/deployment.md` — repoint the instance-local `/sign-up` redirect at
   the lobby; document the cutover.
 
 ---

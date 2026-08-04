@@ -35,6 +35,13 @@ DNS for the apex and each `{instance}.{domain}` subdomain must resolve to the se
 running the setup scripts (certbot uses the webroot challenge). For a private/unadvertised
 instance, `sudo`-edit `/etc/energetica/{instance}/instance.json` before the first login.
 
+Certificates auto-renew via certbot's own timer + the deploy hook `setup-base.sh` installs
+(reloads Apache on renewal). To check an individual certificate's expiry directly:
+
+```bash
+ssh energetica-game 'sudo openssl x509 -enddate -noout -in /etc/letsencrypt/live/autumn-2025.energetica-game.org/cert.pem'
+```
+
 ## Regular Deployments
 
 From your local machine:
@@ -50,6 +57,9 @@ From your local machine:
   cross-origin links resolve), rsyncs the Python backend + bundle, reinstalls deps into the
   server venv, restarts the service, and polls `/healthz`. On restart the instance re-reads
   `instance.json` and re-publishes its landing fragment, so admin policy edits take effect.
+  Downtime is ~10-30 seconds while the restart happens — Apache and every other instance keep
+  serving throughout. Game state isn't touched: it lives in the instance's own `instance/`
+  directory, which the rsync step excludes.
 - `deploy-landing.sh` builds the landing bundle (also baking `VITE_APEX_DOMAIN` so the
   "Play now" / "Log In" CTAs target `lobby.{apex}`) and rsyncs `dist-landing/`. It preserves
   the instance-owned `instances.json` and `instances/` dir. No service restart — the landing
@@ -76,39 +86,6 @@ the change up on the next request — no restart.
 
 All inputs also accept env vars (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_DOMAIN`), so the
 scripts run unattended from CI.
-
-## Lobby cutover (#817) — one-time forced global re-login
-
-The Phase C cutover flips instances to the server-wide SSO model (`docs/architecture/lobby.md`
-§ Phasing, ADR-0002/0003). It is a **coordinated flag day**, not a quiet deploy, because it
-**logs every player out once**:
-
-- Instances stop minting their own session and instead validate the lobby's shared-secret,
-  parent-domain cookie. On its first post-cutover restart an instance adopts the shared
-  `/var/lib/energetica/secret_key.txt`, so any session it signed with its **old per-instance**
-  secret no longer validates → those players must log in again at the lobby.
-- The SSO cookie is renamed `session` → `energetica_session`. Pre-cutover host-only `session`
-  cookies (and any Phase-B lobby `session` cookie) are simply ignored by the new code; they
-  linger harmlessly until they expire. This distinct name is deliberate — two same-named
-  cookies on a run subdomain have an RFC-6265-undefined precedence and could otherwise loop a
-  returning player between run and lobby.
-
-**Announce the re-login before deploying.** Deploy order on the flag day:
-
-1. Deploy the lobby if its code changed (`deploy-lobby.sh`) — Phase A/B preconditions already
-   hold in production.
-2. Deploy each instance (`deploy-instance.sh …`). The restart adopts the shared secret and the
-   new cookie name; the entry gate (`GET /auth/me`) now provisions the local `User` on first
-   authenticated visit, access-policy-gated. Instance login/signup/logout/change-password and
-   the legacy root `/logout` are gone — unauthenticated app hits redirect to `lobby.{apex}`.
-3. Deploy the landing (`deploy-landing.sh`) so its CTAs point at the lobby.
-4. Smoke-test SSO on prod: log in at the lobby → open a run → no re-auth → the top-right
-   switcher lists your settled runs → a private run you're not on gives a clean 403 → logout
-   from a run clears the session everywhere.
-
-Not yet migrated (tracked separately): the `players.txt` → admin-bootstrap swap and removal of
-per-instance `disable_signups` (C0); the CI raw-HTML guard (C4, ADR-0002); and a lobby
-change-password UI (the endpoint exists; the instance dialog was removed).
 
 ## SSH Configuration
 
@@ -177,48 +154,3 @@ routine).
 ## Rollback
 
 (Not yet implemented. Re-deploy a previous local checkout with `deploy-instance.sh`.)
-
-## Troubleshooting
-
-### Service won't start
-
-```bash
-ssh energetica-game 'sudo journalctl -u energetica-autumn-2025 -n 30'
-```
-
-### SSL certificate issues
-
-```bash
-ssh energetica-game 'sudo certbot certificates'
-ssh energetica-game 'sudo certbot renew'
-```
-
-### WebSocket connection issues
-
-Check Apache proxy modules are enabled:
-
-```bash
-ssh energetica-game 'sudo apache2ctl -M | grep proxy'
-```
-
-Should include `proxy_module`, `proxy_http_module`, `proxy_wstunnel_module`, `rewrite_module`.
-If missing:
-
-```bash
-ssh energetica-game 'sudo a2enmod proxy proxy_http proxy_wstunnel rewrite && sudo systemctl reload apache2'
-```
-
-## FAQ
-
-**How long is downtime?** ~10-30 seconds per instance while its uvicorn service restarts.
-Apache and other instances keep serving throughout.
-
-**Will players lose progress?** No — game state is preserved in the instance's `instance/` directory.
-
-**Can I deploy a backend-only change?** Yes, use `--skip-build` on `deploy-instance.sh`.
-
-**How do I check certificate expiration?**
-
-```bash
-ssh energetica-game 'sudo openssl x509 -enddate -noout -in /etc/letsencrypt/live/autumn-2025.energetica-game.org/cert.pem'
-```

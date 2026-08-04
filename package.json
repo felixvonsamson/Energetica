@@ -20,14 +20,6 @@
         "ruff:check": ".venv/bin/ruff check energetica/ --fix",
         "ruff:format": ".venv/bin/ruff format energetica/",
         "check-wiki": ".venv/bin/python scripts/check_wiki_links.py",
-        "rm-instance": "rm -rf instance/ checkpoints/ .energetica-dev/ frontend/public/instances.json",
-        "deploy:game": "DEPLOY_HOST=energetica-game DEPLOY_DOMAIN=energetica-game.org bash scripts/deploy.sh --force --yes",
-        "deploy:edu": "DEPLOY_HOST=energetica-edu DEPLOY_DOMAIN=energetica-edu.org bash scripts/deploy.sh --force --yes",
-        "deploy:frontend:game": "DEPLOY_HOST=energetica-game DEPLOY_DOMAIN=energetica-game.org bash scripts/deploy.sh --force --yes --skip-backend",
-        "deploy:frontend:edu": "DEPLOY_HOST=energetica-edu DEPLOY_DOMAIN=energetica-edu.org bash scripts/deploy.sh --force --yes --skip-backend",
-        "deploy:reset:game": "DEPLOY_HOST=energetica-game DEPLOY_DOMAIN=energetica-game.org bash scripts/deploy.sh --force --yes --rm_instance",
-        "deploy:reset:edu": "DEPLOY_HOST=energetica-edu DEPLOY_DOMAIN=energetica-edu.org bash scripts/deploy.sh --force --yes --rm_instance",
-        "sync-instance:game": "rm -rf instance/ checkpoints/ && rsync -avz --delete energetica-game:/var/www/energetica/instance/ instance/",
-        "sync-instance:edu": "rm -rf instance/ checkpoints/ && rsync -avz --delete energetica-edu:/var/www/energetica/instance/ instance/"
+        "rm-instance": "rm -rf instance/ checkpoints/ .energetica-dev/ frontend/public/instances.json"
     }
 }
