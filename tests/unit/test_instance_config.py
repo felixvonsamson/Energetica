@@ -470,3 +470,61 @@ def test_current_phase_broken_config_fails_open_to_active(configured: Path) -> N
     """
     _write_instance_json(configured, "{ not valid json")
     assert instance_config.current_phase(datetime(2026, 4, 1, tzinfo=timezone.utc)) == "active"
+
+
+# --- retire_fragment (teardown, T7) -----------------------------------------------------------
+
+
+def _touch_recap(landing_dir: Path, slug: str) -> None:
+    """Put *something* at recaps/{slug}.json — retire_fragment only asks whether one exists."""
+    recap_path = landing_dir / "recaps" / f"{slug}.json"
+    recap_path.parent.mkdir(parents=True, exist_ok=True)
+    recap_path.write_text("{}", encoding="utf-8")
+
+
+def test_retire_fragment_deletes_when_no_recap(configured: Path) -> None:
+    """A run torn down before it ever froze leaves nothing to point at, so its fragment goes."""
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+    landing_dir = Path(configured).parent / "landing"
+
+    assert instance_config.retire_fragment(SLUG) is True
+
+    assert not (landing_dir / "instances" / f"{SLUG}.json").exists()
+    assert json.loads((landing_dir / "instances.json").read_text())["instances"] == []
+
+
+def test_retire_fragment_keeps_the_fragment_when_a_recap_exists(configured: Path) -> None:
+    """The headstone rule: the fragment is the *only* pointer the lobby finds a recap by, so a run
+    that minted one keeps its fragment through teardown — otherwise the recap survives on disk and
+    nothing links to it, defeating the reason it was minted.
+    """
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+    landing_dir = Path(configured).parent / "landing"
+    _touch_recap(landing_dir, SLUG)
+
+    assert instance_config.retire_fragment(SLUG) is False
+
+    assert (landing_dir / "instances" / f"{SLUG}.json").exists()
+    assert instance_config.load_fragment(SLUG) is not None
+    assert [entry["slug"] for entry in json.loads((landing_dir / "instances.json").read_text())["instances"]] == [SLUG]
+
+
+def test_retire_fragment_leaves_sibling_runs_listed(configured: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Re-aggregation after a retire must drop only the retired run from the manifest."""
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "spring-2026")
+    instance_config.publish(InstanceConfig.model_validate({**PUBLIC_JSON, "name": "Spring 2026"}))
+
+    instance_config.retire_fragment(SLUG)
+
+    landing_dir = Path(configured).parent / "landing"
+    manifest = json.loads((landing_dir / "instances.json").read_text())
+    assert [entry["slug"] for entry in manifest["instances"]] == ["spring-2026"]
+
+
+def test_retire_fragment_is_idempotent(configured: Path) -> None:
+    """Teardown is re-runnable: retiring an already-retired run is a no-op, not an error."""
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+
+    assert instance_config.retire_fragment(SLUG) is True
+    assert instance_config.retire_fragment(SLUG) is True

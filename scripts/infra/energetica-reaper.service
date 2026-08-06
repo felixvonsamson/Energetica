@@ -1,0 +1,26 @@
+# One sweep of the lifecycle reaper: stop + disable every instance whose ended_at has passed.
+#
+# Installed once per VPS by scripts/infra/setup-base.sh into
+# /etc/systemd/system/energetica-reaper.service. Server-wide, not per-instance — it discovers
+# runs by globbing /etc/energetica/*/instance.json, so a newly provisioned instance is swept
+# without touching this unit.
+#
+# Type=oneshot, driven by energetica-reaper.timer. Never enable this unit directly: enable the
+# timer, which is what schedules the sweeps.
+#
+# Runs as root because reaping means `systemctl stop`/`disable` on another unit, and the configs
+# it reads are root:energetica 0750.
+
+[Unit]
+Description=Energetica lifecycle reaper (stop instances past ended_at)
+Documentation=https://github.com/felixvonsamson/Energetica/issues/865
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/energetica-reap-instances
+
+# A failed sweep must not disable the timer. One broken instance config or a transient systemd
+# error should cost at most a single sweep — the next tick retries from scratch, and the sweep is
+# idempotent, so there is nothing to reconcile.
+SuccessExitStatus=0
