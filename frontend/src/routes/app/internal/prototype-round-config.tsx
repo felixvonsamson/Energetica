@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/segmented-picker";
 import { Switch } from "@/components/ui/switch";
 import {
+    DataValue,
     TypographyH1,
     TypographyH3,
     TypographyLead,
@@ -780,19 +781,28 @@ function VariantE({
 
     return (
         <div className="p-4 md:p-8 space-y-5 max-w-5xl mx-auto">
-            <div>
-                <TypographyH1>Round configuration</TypographyH1>
-                <TypographyLead>
-                    Round 3 of the session — card grid, narrative events as a
-                    picker.
-                </TypographyLead>
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <TypographyH1>Round configuration</TypographyH1>
+                    <TypographyLead>
+                        Card grid, narrative events as a picker.
+                    </TypographyLead>
+                </div>
+                <div className="shrink-0 rounded-xl bg-primary text-primary-foreground px-5 py-2.5 text-center">
+                    <div className="text-xs font-medium uppercase tracking-wide opacity-80">
+                        Round
+                    </div>
+                    <DataValue className="text-3xl font-bold leading-none">
+                        3
+                    </DataValue>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {LEVERS.map((lever) => (
                     <div
                         key={lever.id}
-                        className="rounded-lg border border-border p-3 space-y-1.5"
+                        className="rounded-lg border border-border bg-card p-3 space-y-1.5"
                     >
                         <div className="font-medium text-sm">{lever.label}</div>
                         <TierPicker
@@ -1219,7 +1229,7 @@ const VARIANT_NAMES = {
 function RoundConfigPrototypePage() {
     const navigate = Route.useNavigate();
     const { variant } = Route.useSearch();
-    const current = variant ?? "D";
+    const current = variant ?? "E";
     const [state, setState] = useState<RoundConfigState>(defaultState);
 
     function onSetTier(leverId: string, tierId: string) {
