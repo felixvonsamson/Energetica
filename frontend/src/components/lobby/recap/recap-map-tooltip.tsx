@@ -1,38 +1,37 @@
 /**
- * MapTooltip component - displays resource information when hovering over a
- * tile.
+ * The recap map's hover panel — same resource-bar info as the in-game
+ * `MapTooltip` (via the shared `buildResourceBars`/`calculateTooltipPosition`
+ * helpers in `map-resources.ts`), minus the pieces that only make sense for a
+ * live session: no "Distance" line (there's no "my tile" to measure from in a
+ * frozen recap, no current player) and no activity dot / "You" badge (a frozen
+ * photograph has no online presence to show).
  */
 
-import { PlayerName } from "@/components/ui/player-name";
 import {
     buildResourceBars,
     calculateTooltipPosition,
     TOOLTIP_WIDTH,
 } from "@/lib/map-resources";
-import type { ApiResponse } from "@/types/api-helpers";
-import type { Player } from "@/types/players";
+import type { HexTileResources } from "@/types/map";
 
-type HexTileData = ApiResponse<"/api/v1/map", "get">[number];
-
-interface MapTooltipProps {
-    tile: HexTileData;
-    player: Player | null;
-    distance: number;
+interface RecapMapTooltipProps {
+    tile: HexTileResources;
+    /** The settling player's username at freeze, or null for a vacant tile. */
+    ownerName: string | null;
     x: number;
     y: number;
     viewportWidth: number;
     viewportHeight: number;
 }
 
-export function MapTooltip({
+export function RecapMapTooltip({
     tile,
-    player,
-    distance,
+    ownerName,
     x,
     y,
     viewportWidth,
     viewportHeight,
-}: MapTooltipProps) {
+}: RecapMapTooltipProps) {
     const { left, top } = calculateTooltipPosition(
         x,
         y,
@@ -53,11 +52,8 @@ export function MapTooltip({
             <div className="bg-card border border-border px-6 py-3 rounded shadow-lg">
                 {/* Title */}
                 <div className="text-center text-xl mb-3">
-                    {player ? (
-                        <PlayerName
-                            player={player}
-                            className="justify-center"
-                        />
+                    {ownerName ? (
+                        <span>{ownerName}</span>
                     ) : (
                         <span className="text-brand-green dark:text-gray-100">
                             Vacant tile
@@ -88,15 +84,6 @@ export function MapTooltip({
                             </div>
                         );
                     })}
-                </div>
-
-                {/* Distance */}
-                <div className="text-center text-foreground text-base mt-4">
-                    Distance:{" "}
-                    {Number.isInteger(distance)
-                        ? distance
-                        : distance.toFixed(1)}{" "}
-                    {distance === 1 ? "tile" : "tiles"}
                 </div>
             </div>
         </div>

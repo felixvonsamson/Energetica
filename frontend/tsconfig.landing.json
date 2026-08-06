@@ -20,6 +20,7 @@
         "src/main.tsx",
         "src/routes",
         "src/routeTree.gen.ts",
-        "src/router.d.ts"
+        "src/router.d.ts",
+        "src/components/lobby"
     ]
 }

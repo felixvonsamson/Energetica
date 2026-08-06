@@ -165,3 +165,122 @@ export function calculateTileLabel(
     }
     return { label: null, size: MAX_LABEL_SIZE };
 }
+
+// --- tile info panel (hover tooltip) --------------------------------------
+//
+// Shared by the in-game map's MapTooltip and the recap's frozen-map tooltip,
+// so the two panels' resource numbers and bar colours can't drift apart.
+
+export interface ResourceBarInfo {
+    name: string;
+    value: number;
+    maxValue: number;
+    /**
+     * CSS colour for the bar fill (an HSL string — distinct from the oklch
+     * heatmap palette above; chosen for contrast on a thin 4px bar).
+     */
+    color: string;
+    displayValue: string;
+}
+
+// HSL hues, one per RESOURCES entry (solar, wind, hydro, coal, gas, uranium,
+// climate risk) — a different scale than RESOURCES[].color (heatmap tiles),
+// tuned instead for legibility as a thin progress-bar fill.
+const BAR_HUES = [59, 186, 239, 0, 275, 109, 320] as const;
+
+/**
+ * Fuel reserves in whole tons with a thousands separator, e.g. "1'500 tons".
+ * Deliberately not the shared adaptive-unit {@link formatMass} (kg/t/Mt) — this
+ * is the info panel's own long-standing display format, kept as-is.
+ */
+function formatMassInTons(mass: number): string {
+    const massInTons = mass / 1000;
+    return `${massInTons.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "'")} tons`;
+}
+
+/**
+ * Per-resource rows for a tile's info panel: value, formatted display string,
+ * and bar-fill color.
+ */
+export function buildResourceBars(tile: TileWithResources): ResourceBarInfo[] {
+    return [
+        {
+            name: "Solar",
+            value: tile.solar,
+            maxValue: MAX_VALUES[0],
+            color: `hsl(${BAR_HUES[0]}, 95%, 50%)`,
+            displayValue: `${Math.round(tile.solar * 1000)} W/m²`,
+        },
+        {
+            name: "Wind",
+            value: tile.wind,
+            maxValue: MAX_VALUES[1],
+            color: `hsl(${BAR_HUES[1]}, 95%, 50%)`,
+            displayValue: `${Math.round(Math.pow(tile.wind, 0.5) * 50)} km/h`,
+        },
+        {
+            name: "Hydro",
+            value: tile.hydro,
+            maxValue: MAX_VALUES[2],
+            color: `hsl(${BAR_HUES[2]}, 95%, 50%)`,
+            displayValue: `${Math.round(tile.hydro * 150)} m³/s`,
+        },
+        {
+            name: "Coal",
+            value: tile.coal,
+            maxValue: MAX_VALUES[3],
+            color: `hsl(${BAR_HUES[3]}, 95%, 50%)`,
+            displayValue: formatMassInTons(tile.coal),
+        },
+        {
+            name: "Gas",
+            value: tile.gas,
+            maxValue: MAX_VALUES[4],
+            color: `hsl(${BAR_HUES[4]}, 95%, 50%)`,
+            displayValue: formatMassInTons(tile.gas),
+        },
+        {
+            name: "Uranium",
+            value: tile.uranium,
+            maxValue: MAX_VALUES[5],
+            color: `hsl(${BAR_HUES[5]}, 95%, 50%)`,
+            displayValue: formatMassInTons(tile.uranium),
+        },
+        {
+            name: "Climate risk",
+            value: tile.climate_risk,
+            maxValue: MAX_VALUES[6],
+            color: `hsl(${BAR_HUES[6]}, 95%, 50%)`,
+            displayValue: `${tile.climate_risk} / 10`,
+        },
+    ];
+}
+
+const TOOLTIP_WIDTH = 200;
+const TOOLTIP_HEIGHT = 360;
+
+/**
+ * Where to draw a tile info panel so it stays inside the map's SVG viewport:
+ * offset down-right from the tile by default, flipped to whichever side keeps
+ * it on screen. `x`/`y` are the tile's centre in the same SVG-local coordinate
+ * space as the viewport dimensions (both centred on the map's own origin).
+ */
+export function calculateTooltipPosition(
+    x: number,
+    y: number,
+    viewportWidth: number,
+    viewportHeight: number,
+): { left: number; top: number } {
+    let left = x + 40;
+    let top = y - 40;
+
+    if (left + TOOLTIP_WIDTH > viewportWidth / 2) {
+        left -= TOOLTIP_WIDTH + 80;
+    }
+    if (top + TOOLTIP_HEIGHT > viewportHeight / 2) {
+        top = viewportHeight / 2 - TOOLTIP_HEIGHT - 10;
+    }
+    return { left, top };
+}
+
+export { TOOLTIP_WIDTH, TOOLTIP_HEIGHT };
