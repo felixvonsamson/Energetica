@@ -464,8 +464,17 @@ def retire_fragment(slug: str) -> bool:
     is what turns the lobby's card from "Join this run" into "View recap" — no new field, the same
     phase derivation as everywhere else. Only a run that never minted a recap (torn down before it
     ever froze) leaves nothing behind worth pointing at, and its fragment goes.
+
+    The guard is :func:`load_recap`, **not** :func:`recap_exists` — the same validating read the
+    mint-once guard uses, and for a related reason. A truncated or malformed artifact is one the
+    lobby cannot render, so keeping its fragment would leave the card advertising "View recap"
+    over a file that never loads. While the instance lives that state is self-healing (the next
+    freeze tick re-mints it), but teardown is exactly when the ability to re-mint is about to be
+    destroyed, so this must ask whether a *usable* recap survived, not whether a file is present.
+    ``teardown-instance.sh`` refuses outright in that case rather than reaching here, since the
+    run is still recoverable at that point; this stays total so any other caller fails safe.
     """
-    if recap_exists(slug):
+    if load_recap(slug) is not None:
         logger.info("keeping fragment for %s — its published recap needs the pointer", slug)
         return False
     (_landing_dir() / "instances" / f"{slug}.json").unlink(missing_ok=True)

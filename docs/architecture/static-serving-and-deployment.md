@@ -351,7 +351,11 @@ Why a periodic sweep rather than a timer armed at each `ended_at`: it keeps the 
 
 **What teardown must not strand.** `recaps/{slug}.json` is never touched — it is the artifact the whole lifecycle exists to produce. The fragment is subtler. It is not only the "run on offer" billboard: it is the *only* pointer by which either lobby surface finds a run at all — `my-runs` joins membership rows against it (`load_fragment`), and the picker reads it through `instances.json`. Deleting the fragment of a run that has a recap would therefore leave that recap on disk, served, and linked from nowhere. So:
 
-> **A recap promotes the fragment from billboard to headstone.** Teardown keeps the fragment whenever a recap exists; only a run that never froze — and so left nothing worth pointing at — loses it.
+> **A recap promotes the fragment from billboard to headstone.** Teardown keeps the fragment whenever a *loadable* recap exists; only a run that never froze — and so left nothing worth pointing at — loses it.
+
+"Loadable", not "present": the guard is `load_recap`, the same validating read the mint-once guard uses. A truncated or schema-invalid artifact is one the lobby cannot render, so holding the fragment open for it would leave the card advertising "View recap" over a file that never loads.
+
+That case gets its own treatment, because teardown is exactly when it stops being fixable. While the instance lives, a broken recap self-heals — the next freeze tick re-mints it — but teardown is about to delete the service, the venv and the pickle that re-mint depends on. So `teardown-instance.sh` **refuses to run** when the recap file is present but does not load, and points at the recovery: delete the file and let the instance re-mint it. There is no `--force`, because the escape hatch is the same `rm` either way — delete the corrupt file and re-run, and the run either keeps a freshly minted recap or retires as one that never froze. Both beat stranding it.
 
 The rule lives in `instance_config.retire_fragment` (tested in `tests/unit/test_instance_config.py`), which teardown calls through the instance's own venv before deleting it; the shell script is a thin wrapper, the same split as `whitelist-instance.sh` over `jq`. Nothing new is needed to make the kept fragment read as finished: `ended_at` has passed, so the phase derives to `ended`, and the lobby card turns from "Join" into "View recap" by itself.
 

@@ -88,8 +88,37 @@ echo "  config    $CONFIG_DIR"
 [ "$KEEP_CERT" = true ] && echo "  cert      kept (--keep-cert)" || echo "  cert      /etc/letsencrypt/live/$FQDN (revoked + deleted)"
 [ -n "$ARCHIVE_TO" ] && echo "  pickle    archived to $ARCHIVE_TO before deletion" || echo "  pickle    NOT archived (pass --archive-to <dir> to keep it)"
 echo
+
+# --- Refuse to destroy a recap that is still recoverable -------------------------
+# A recap FILE is not the same as a recap the lobby can render. If the artifact is truncated or
+# schema-invalid, the run is still salvageable *right now* — the instance and its player state are
+# untouched, and the documented regenerate path (delete the file; the next freeze tick re-mints it)
+# still works. A moment later this script will have deleted the service, the venv and the pickle,
+# and the recap becomes unrecoverable for good. So this is the one preflight that aborts.
+#
+# Note there is no --force: the escape hatch is the same `rm` either way. Delete the corrupt file
+# and re-run — if the instance re-mints first you keep the recap, and if you accept the loss the
+# run simply retires as one that never froze. Both paths are better than a flag that says "yes,
+# strand it", which is not an outcome anyone wants.
+VENV_PYTHON="$APP_DIR/.venv/bin/python"
 if [ -f "$RECAP" ]; then
-    log_success "recap $RECAP exists — it is KEPT, and so is the fragment that points at it"
+    if [ -x "$VENV_PYTHON" ] && ! ENERGETICA_LANDING_DIR="$LANDING_DIR" sudo -u energetica -E "$VENV_PYTHON" -c "
+import sys
+sys.path.insert(0, '$APP_DIR')
+from energetica import instance_config
+sys.exit(0 if instance_config.load_recap('$INSTANCE') is not None else 1)
+"; then
+        log_error "The recap at $RECAP exists but does NOT load — it is corrupt or schema-invalid."
+        log_error "Tearing down now would strand it: the lobby would advertise 'View recap' forever"
+        log_error "over a file that never renders, with the game state needed to re-mint it deleted."
+        echo
+        echo "Recover it while the instance is still here:"
+        echo "  sudo rm $RECAP     # the next freeze tick re-mints it (mint-once guard self-heals)"
+        echo "Then re-run this script. If the run is genuinely unsalvageable, delete the file anyway"
+        echo "and re-run — it will then retire as a run that never froze."
+        exit 1
+    fi
+    log_success "recap $RECAP loads — it is KEPT, and so is the fragment that points at it"
 else
     log_step "no recap at $RECAP — this run never froze, so its fragment will be removed too"
 fi
@@ -122,7 +151,6 @@ fi
 # teardown), say so loudly rather than silently skipping — a stale fragment left in the manifest
 # points the picker at a subdomain that no longer answers.
 log_section "LANDING FRAGMENT"
-VENV_PYTHON="$APP_DIR/.venv/bin/python"
 if [ -x "$VENV_PYTHON" ]; then
     ENERGETICA_LANDING_DIR="$LANDING_DIR" ENERGETICA_INSTANCE_CONFIG_DIR=/etc/energetica \
         sudo -u energetica -E "$VENV_PYTHON" -c "
