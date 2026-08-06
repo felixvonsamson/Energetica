@@ -176,7 +176,11 @@ The `instances.json` manifest and `instances/` fragment directory are populated 
 
 - `/api/v1/*` — REST API
 - `/socket.io` — WebSocket
-- `/logout` — deletes session cookie, redirects to `/app/login`
+- `/healthz` — health probe for Apache and the deploy scripts
+
+`/logout` was on this list until the lobby cutover (#817) moved global logout to the lobby;
+the instance mints and clears no sessions of its own. `tests/integration/test_route_surface.py`
+holds the app to this list.
 
 Everything else (`StaticFiles` mount, all `FileResponse` page handlers) is removed from FastAPI. (Phase 5; in Phase 1 the `FileResponse` handlers for `/`, `/app/*`, `/landing-page` still exist and serve the app bundle's `index.html` for interim compatibility.)
 
