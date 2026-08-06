@@ -25,6 +25,7 @@ import { Route as AppOverviewsEmissionsRouteImport } from './routes/app/overview
 import { Route as AppOverviewsElectricityMarketsRouteImport } from './routes/app/overviews/electricity-markets'
 import { Route as AppOverviewsCashFlowRouteImport } from './routes/app/overviews/cash-flow'
 import { Route as AppInternalTypographyRouteImport } from './routes/app/internal/typography'
+import { Route as AppInternalPrototypeRoundConfigRouteImport } from './routes/app/internal/prototype-round-config'
 import { Route as AppInternalIconsRouteImport } from './routes/app/internal/icons'
 import { Route as AppInternalDesignRouteImport } from './routes/app/internal/design'
 import { Route as AppInternalColorsRouteImport } from './routes/app/internal/colors'
@@ -123,6 +124,12 @@ const AppInternalTypographyRoute = AppInternalTypographyRouteImport.update({
   path: '/app/internal/typography',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppInternalPrototypeRoundConfigRoute =
+  AppInternalPrototypeRoundConfigRouteImport.update({
+    id: '/app/internal/prototype-round-config',
+    path: '/app/internal/prototype-round-config',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppInternalIconsRoute = AppInternalIconsRouteImport.update({
   id: '/app/internal/icons',
   path: '/app/internal/icons',
@@ -231,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/app/internal/colors': typeof AppInternalColorsRoute
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
+  '/app/internal/prototype-round-config': typeof AppInternalPrototypeRoundConfigRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
   '/app/overviews/electricity-markets': typeof AppOverviewsElectricityMarketsRoute
@@ -265,6 +273,7 @@ export interface FileRoutesByTo {
   '/app/internal/colors': typeof AppInternalColorsRoute
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
+  '/app/internal/prototype-round-config': typeof AppInternalPrototypeRoundConfigRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
   '/app/overviews/electricity-markets': typeof AppOverviewsElectricityMarketsRoute
@@ -300,6 +309,7 @@ export interface FileRoutesById {
   '/app/internal/colors': typeof AppInternalColorsRoute
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
+  '/app/internal/prototype-round-config': typeof AppInternalPrototypeRoundConfigRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
   '/app/overviews/electricity-markets': typeof AppOverviewsElectricityMarketsRoute
@@ -336,6 +346,7 @@ export interface FileRouteTypes {
     | '/app/internal/colors'
     | '/app/internal/design'
     | '/app/internal/icons'
+    | '/app/internal/prototype-round-config'
     | '/app/internal/typography'
     | '/app/overviews/cash-flow'
     | '/app/overviews/electricity-markets'
@@ -370,6 +381,7 @@ export interface FileRouteTypes {
     | '/app/internal/colors'
     | '/app/internal/design'
     | '/app/internal/icons'
+    | '/app/internal/prototype-round-config'
     | '/app/internal/typography'
     | '/app/overviews/cash-flow'
     | '/app/overviews/electricity-markets'
@@ -404,6 +416,7 @@ export interface FileRouteTypes {
     | '/app/internal/colors'
     | '/app/internal/design'
     | '/app/internal/icons'
+    | '/app/internal/prototype-round-config'
     | '/app/internal/typography'
     | '/app/overviews/cash-flow'
     | '/app/overviews/electricity-markets'
@@ -438,6 +451,7 @@ export interface RootRouteChildren {
   AppInternalColorsRoute: typeof AppInternalColorsRoute
   AppInternalDesignRoute: typeof AppInternalDesignRoute
   AppInternalIconsRoute: typeof AppInternalIconsRoute
+  AppInternalPrototypeRoundConfigRoute: typeof AppInternalPrototypeRoundConfigRoute
   AppInternalTypographyRoute: typeof AppInternalTypographyRoute
   AppOverviewsCashFlowRoute: typeof AppOverviewsCashFlowRoute
   AppOverviewsElectricityMarketsRoute: typeof AppOverviewsElectricityMarketsRoute
@@ -562,6 +576,13 @@ declare module '@tanstack/react-router' {
       path: '/app/internal/typography'
       fullPath: '/app/internal/typography'
       preLoaderRoute: typeof AppInternalTypographyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/internal/prototype-round-config': {
+      id: '/app/internal/prototype-round-config'
+      path: '/app/internal/prototype-round-config'
+      fullPath: '/app/internal/prototype-round-config'
+      preLoaderRoute: typeof AppInternalPrototypeRoundConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/internal/icons': {
@@ -713,6 +734,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppInternalColorsRoute: AppInternalColorsRoute,
   AppInternalDesignRoute: AppInternalDesignRoute,
   AppInternalIconsRoute: AppInternalIconsRoute,
+  AppInternalPrototypeRoundConfigRoute: AppInternalPrototypeRoundConfigRoute,
   AppInternalTypographyRoute: AppInternalTypographyRoute,
   AppOverviewsCashFlowRoute: AppOverviewsCashFlowRoute,
   AppOverviewsElectricityMarketsRoute: AppOverviewsElectricityMarketsRoute,
