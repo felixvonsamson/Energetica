@@ -2,12 +2,16 @@
  * The v1 baseline recap page — renders a run's published recap (the frozen
  * tombstone minted at `active → freeze`, T5/G1) on the lobby, once it exists.
  *
- * A retrospective, not a scoreboard (ADR-0005 / G3): no winner, no rank. CO2 is
- * laid bare, un-netted (captured is dropped from view for now, see below). Rows
- * carry no position; the per-player table defaults to operating-income order
- * ("most consequential first") but every column is sortable, and the top three
- * in each column get a single, uniform emphasis — deliberately not a 1/2/3
- * podium.
+ * A retrospective, not a full scoreboard (ADR-0005 / G3) — with one scoped
+ * exception (PR #915): operating income, the recap's main metric, gets an
+ * actual 1/2/3 podium — gold/silver/bronze medal plus a matching cell tint for
+ * the top three. XP and CO2 produced get the same three-tone tint for their own
+ * top three (independently ranked, lowest wins for CO2 — the cleanest three,
+ * not the biggest emitters) but no medal, so the colour reads as "notable"
+ * without a second overall ranking. CO2 is laid bare, un-netted (captured is
+ * dropped from view for now, see below). Rows otherwise carry no position; the
+ * per-player table defaults to operating-income order ("most consequential
+ * first") but every column is sortable.
  *
  * Deliberately baseline, not the full spec (see #864). The layout was settled
  * via a `/prototype` UI exploration (three variants — ledger table, faceted
@@ -23,6 +27,7 @@ import {
     ArrowUpDown,
     Factory,
     Scale,
+    Users,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -99,13 +104,15 @@ function RecapPage() {
                         : data.freeze_at
                           ? ` – ${formatTimestamp(data.freeze_at)}`
                           : ""}
-                    {" · "}
-                    {data.player_count} player
-                    {data.player_count === 1 ? "" : "s"}
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <StatCard
+                    icon={Users}
+                    label="Players"
+                    value={data.player_count.toLocaleString()}
+                />
                 <StatCard
                     icon={Factory}
                     label="CO₂ produced"
@@ -199,58 +206,71 @@ type MeasureKey = "operating_income" | "produced_co2" | "captured_co2" | "xp";
 type SortKey = MeasureKey | "username_at_freeze" | "network_name";
 type SortDir = "asc" | "desc";
 
+/** 0 = gold, 1 = silver, 2 = bronze. */
+type Tier = 0 | 1 | 2;
+
 type Column = {
     key: SortKey;
     label: string;
-    align: "left" | "right";
-    /** Measure columns are numeric, right-aligned, and get top-3 emphasis. */
-    measure: boolean;
+    /**
+     * Every column is centred; this only switches the cell to tabular/mono
+     * digits.
+     */
+    numeric: boolean;
     render: (row: RecapRow) => React.ReactNode;
+    /**
+     * Podium config for this column, or omitted for columns with no ranking
+     * (Player, Network). `direction` picks which extreme takes gold — "desc"
+     * for income/XP (highest first), "asc" for CO2 (lowest first). `medal`
+     * additionally draws the medal icon — reserved for income, the recap's one
+     * ranked metric; XP and CO2 get the tint only.
+     */
+    podium?: { direction: SortDir; medal?: boolean };
 };
 
 const COLUMNS: Column[] = [
     {
         key: "username_at_freeze",
         label: "Player",
-        align: "left",
-        measure: false,
+        numeric: false,
         render: (row) => row.username_at_freeze,
     },
     {
         key: "network_name",
         label: "Network",
-        align: "left",
-        measure: false,
+        numeric: false,
         render: (row) => row.network_name ?? "—",
     },
     {
         key: "operating_income",
         label: "Income",
-        align: "right",
-        measure: true,
+        numeric: true,
         render: (row) => <Money amount={row.operating_income} />,
+        podium: { direction: "desc", medal: true },
     },
     {
         key: "produced_co2",
         label: "CO₂ produced",
-        align: "right",
-        measure: true,
+        numeric: true,
         render: (row) => formatEmissions(row.produced_co2),
+        // Lower is better: the three cleanest players take gold, not the
+        // three biggest emitters.
+        podium: { direction: "asc" },
     },
     // CO2 captured: dropped for now, may return later.
     // {
     //     key: "captured_co2",
     //     label: "CO₂ captured",
-    //     align: "right",
-    //     measure: true,
+    //     numeric: true,
     //     render: (row) => formatEmissions(row.captured_co2),
+    //     podium: { direction: "desc" },
     // },
     {
         key: "xp",
         label: "XP",
-        align: "right",
-        measure: true,
+        numeric: true,
         render: (row) => Math.round(row.xp).toLocaleString(),
+        podium: { direction: "desc" },
     },
 ];
 
@@ -264,13 +284,6 @@ const DEFAULT_DIR: Record<SortKey, SortDir> = {
     xp: "desc",
 };
 
-const MEASURE_KEYS: MeasureKey[] = [
-    "operating_income",
-    "produced_co2",
-    // "captured_co2", — dropped for now, may return later (see COLUMNS above).
-    "xp",
-];
-
 function compare(a: RecapRow, b: RecapRow, key: SortKey): number {
     const av = a[key];
     const bv = b[key];
@@ -282,17 +295,45 @@ function compare(a: RecapRow, b: RecapRow, key: SortKey): number {
     return av - bv;
 }
 
-/** Account_ids in the top three by each measure — the (uniform) emphasis set. */
-function topThreeByMeasure(rows: RecapRow[]): Record<MeasureKey, Set<number>> {
-    const out = {} as Record<MeasureKey, Set<number>>;
-    for (const key of MEASURE_KEYS) {
-        const ranked = [...rows]
-            .sort((a, b) => b[key] - a[key])
-            .slice(0, 3)
-            .map((row) => row.account_id);
-        out[key] = new Set(ranked);
-    }
-    return out;
+// Faint gold/silver/bronze cell tints, paired with the medal emoji below by
+// index. Kept separate (rather than derived) so the tint always pairs with
+// its metal — tweak one without hunting for the other.
+const TIER_CELL_BG: Record<Tier, string> = {
+    // Gold runs more saturated than silver/bronze: amber sits close in hue to
+    // this page's warm tan surface, so a tint as faint as the other two all
+    // but vanishes on it — bumped until it reads at a glance.
+    0: "bg-amber-500/35 dark:bg-amber-400/20",
+    1: "bg-slate-400/25 dark:bg-slate-300/15",
+    2: "bg-orange-700/20 dark:bg-orange-500/15",
+};
+const TIER_MEDAL_EMOJI: Record<Tier, string> = {
+    0: "\u{1F947}", // 🥇
+    1: "\u{1F948}", // 🥈
+    2: "\u{1F949}", // 🥉
+};
+const TIER_LABEL: Record<Tier, string> = {
+    0: "Gold",
+    1: "Silver",
+    2: "Bronze",
+};
+
+/**
+ * Account_id → tier for one podium column, ranked independently of the other
+ * columns (and of the table's current sort/display order) so a player can
+ * podium in income without podiuming in XP or CO2.
+ */
+function computePodium(
+    rows: RecapRow[],
+    key: MeasureKey,
+    direction: SortDir,
+): Map<number, Tier> {
+    const dirMul = direction === "desc" ? -1 : 1;
+    const podium = new Map<number, Tier>();
+    [...rows]
+        .sort((a, b) => dirMul * (a[key] - b[key]))
+        .slice(0, 3)
+        .forEach((row, i) => podium.set(row.account_id, i as Tier));
+    return podium;
 }
 
 function RecapTable({ rows }: { rows: RecapRow[] }) {
@@ -301,7 +342,23 @@ function RecapTable({ rows }: { rows: RecapRow[] }) {
         dir: "desc",
     });
 
-    const tops = useMemo(() => topThreeByMeasure(rows), [rows]);
+    // One podium per opted-in column (income, CO2 produced, XP).
+    const podiums = useMemo(() => {
+        const out = new Map<SortKey, Map<number, Tier>>();
+        for (const col of COLUMNS) {
+            if (col.podium) {
+                out.set(
+                    col.key,
+                    computePodium(
+                        rows,
+                        col.key as MeasureKey,
+                        col.podium.direction,
+                    ),
+                );
+            }
+        }
+        return out;
+    }, [rows]);
     const sorted = useMemo(() => {
         const withDir = sort.dir === "asc" ? 1 : -1;
         return [...rows].sort((a, b) => withDir * compare(a, b, sort.key));
@@ -328,22 +385,16 @@ function RecapTable({ rows }: { rows: RecapRow[] }) {
     return (
         <table className="w-full text-sm">
             <thead>
-                <tr className="bg-secondary text-left">
+                <tr className="bg-surface-sunken">
                     {COLUMNS.map((col) => (
                         <th
                             key={col.key}
-                            className={cn(
-                                "py-3 px-4 font-semibold whitespace-nowrap",
-                                col.align === "right"
-                                    ? "text-right"
-                                    : "text-left",
-                            )}
+                            className="py-3 px-4 font-semibold whitespace-nowrap text-center"
                         >
                             <button
                                 onClick={() => toggleSort(col.key)}
                                 className={cn(
-                                    "inline-flex items-center gap-1 hover:text-primary transition-colors",
-                                    col.align === "right" && "flex-row-reverse",
+                                    "inline-flex items-center justify-center gap-1 hover:text-primary transition-colors",
                                     sort.key === col.key && "text-primary",
                                 )}
                             >
@@ -364,29 +415,46 @@ function RecapTable({ rows }: { rows: RecapRow[] }) {
                         className="border-b border-gray-200 dark:border-gray-700 transition-colors hover:bg-tan-green/20 dark:hover:bg-muted/30"
                     >
                         {COLUMNS.map((col) => {
-                            const emphasised =
-                                col.measure &&
-                                tops[col.key as MeasureKey].has(row.account_id);
+                            const tier = podiums
+                                .get(col.key)
+                                ?.get(row.account_id);
                             return (
                                 <td
                                     key={col.key}
                                     className={cn(
-                                        "py-3 px-4 whitespace-nowrap",
-                                        col.align === "right"
-                                            ? "text-right font-mono"
-                                            : "text-left",
+                                        "py-3 px-4 whitespace-nowrap text-center",
+                                        col.numeric && "font-mono",
                                         col.key === "username_at_freeze" &&
                                             "font-medium",
                                         col.key === "network_name" &&
                                             "text-muted-foreground",
-                                        // Top-3 emphasis lives on the cell box, not an
+                                        // Podium tint lives on the cell box, not an
                                         // inner span, so it can't nudge the number off
-                                        // the column's right edge.
-                                        emphasised &&
-                                            "bg-primary/10 font-semibold text-foreground",
+                                        // centre.
+                                        tier !== undefined && [
+                                            TIER_CELL_BG[tier],
+                                            "font-semibold text-foreground",
+                                        ],
                                     )}
                                 >
-                                    {col.render(row)}
+                                    {col.podium?.medal && tier !== undefined ? (
+                                        <span className="inline-flex w-full items-center justify-center gap-1.5">
+                                            <span
+                                                className="shrink-0"
+                                                role="img"
+                                                aria-label={`${TIER_LABEL[tier]} medal`}
+                                            >
+                                                {TIER_MEDAL_EMOJI[tier]}
+                                            </span>
+                                            <span
+                                                title={`${TIER_LABEL[tier]} — top 3 by income`}
+                                            >
+                                                {col.render(row)}
+                                            </span>
+                                        </span>
+                                    ) : (
+                                        col.render(row)
+                                    )}
                                 </td>
                             );
                         })}

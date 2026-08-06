@@ -1,74 +1,63 @@
 /**
- * The recap's frozen map snapshot. A self-contained SVG hex map: no
- * `MapContext`, no live game data — just the `RecapTile[]` frozen at freeze
- * (T5/G1). It reuses the pure geometry (`hex-utils`) and the resource-heatmap
- * colouring (`map-resources`) the in-game map already uses, so the snapshot
- * mimics the live view and the world survives instance teardown.
+ * The recap's frozen map snapshot. No `MapContext` provider of its own — it
+ * hands the frozen `RecapTile[]` (adapted to the live `HexTileOut` shape) to
+ * the _same_ `MapCanvas`/`MapTiles` the in-game community map renders with, so
+ * the snapshot isn't a lookalike reimplementation but the actual map component
+ * displaying old data. That also fixes the recap map's sizing: it previously
+ * hard-coded a 14px hex (`recap-map.tsx` pre-#915) instead of
+ * `calculateHexSizeWithConstraints`, so it never matched the live map's scale.
  *
  * With no resource selected it shows the world as it was — settled tiles
- * (labelled with the owner) against vacant land and rivers (hydro potential).
- * The `ResourceButton` row (the same control as the in-game community map)
- * swaps in a per-resource potential/reserve heatmap; clicking the active
- * resource toggles back to the territory view. Extraction/depletion is
- * deliberately absent: the frozen tiles carry only remaining reserves, not the
- * original, so a true "what was pulled from here" map needs a newly minted
- * metric (parked — see #864 discussion).
+ * (labelled with the owner) against vacant land. The `ResourceButton` row (the
+ * same control as the in-game community map) swaps in a per-resource
+ * potential/reserve heatmap; clicking the active resource toggles back to the
+ * territory view. Extraction/depletion is deliberately absent: the frozen tiles
+ * carry only remaining reserves, not the original, so a true "what was pulled
+ * from here" map needs a newly minted metric (parked — see #864 discussion).
+ *
+ * Hovering a tile shows the same info panel as the in-game map (owner, or
+ * "Vacant tile", plus every resource's level) via `RecapMapTooltip` — a
+ * recap-specific shell (no "Distance", no activity dot — neither applies to a
+ * frozen photograph with no current player) built on the same
+ * `buildResourceBars`/`calculateTooltipPosition` helpers `MapTooltip` uses, so
+ * the numbers can't drift between the two.
  */
 
 import { useMemo, useState } from "react";
 
+import { MapCanvas } from "@/components/map/map-canvas";
+import { MapTiles } from "@/components/map/map-tiles";
 import { ResourceButton } from "@/components/map/resource-button";
-import { useTheme } from "@/contexts/theme-context";
-import { getHexPosition, getHexagonPoints } from "@/lib/hex-utils";
-import {
-    RESOURCES,
-    ResourceId,
-    calculateTileFillWithResource,
-} from "@/lib/map-resources";
+import { useMapContext } from "@/contexts/map-context";
+import { getHexPosition } from "@/lib/hex-utils";
+import { RESOURCES, ResourceId } from "@/lib/map-resources";
 import type { RecapTile } from "@/lib/recap";
+import type { HexTileResources } from "@/types/map";
 
-const S = 14; // hex size (centre → vertex)
-const W = S * Math.sqrt(3);
+import { RecapMapTooltip } from "./recap-map-tooltip";
 
 type Props = {
     tiles: RecapTile[];
     /** Account_id → username at freeze, for the settled-tile labels. */
     ownerNames: Record<number, string>;
-    /** When set, the tile owned by this account is outlined (table↔map echo). */
-    highlightAccountId?: number | null;
-    onHoverOwner?: (accountId: number | null) => void;
 };
 
-export function RecapMap({
-    tiles,
-    ownerNames,
-    highlightAccountId,
-    onHoverOwner,
-}: Props) {
-    const { theme } = useTheme();
+export function RecapMap({ tiles, ownerNames }: Props) {
     const [overlay, setOverlay] = useState<ResourceId | undefined>(undefined);
 
-    const { points, viewBox } = useMemo(() => {
-        const placed = tiles.map((tile) => {
-            const { x, y } = getHexPosition(tile.q, tile.r, S, W);
-            return { tile, x, y };
-        });
-        const xs = placed.map((p) => p.x);
-        const ys = placed.map((p) => p.y);
-        const minX = Math.min(...xs);
-        const minY = Math.min(...ys);
-        const maxX = Math.max(...xs);
-        const maxY = Math.max(...ys);
-        const pad = S * 2;
-        return {
-            points: placed,
-            viewBox: `${minX - pad} ${minY - pad} ${maxX - minX + 2 * pad} ${
-                maxY - minY + 2 * pad
-            }`,
-        };
-    }, [tiles]);
-
-    const hexPoints = getHexagonPoints(S, W);
+    // MapTiles/HexTile expect the live HexTileOut shape: a numeric `id` (used
+    // only as the React key + hover lookup here, never round-tripped anywhere)
+    // and `player_id` in place of the recap's durable `owner_account_id`. The
+    // index is stable — `tiles` is a fixed prop, not a live-updating list.
+    const mapData: HexTileResources[] = useMemo(
+        () =>
+            tiles.map((tile, index) => ({
+                ...tile,
+                id: index,
+                player_id: tile.owner_account_id,
+            })),
+        [tiles],
+    );
 
     const toggleOverlay = (id: ResourceId) =>
         setOverlay((current) => (current === id ? undefined : id));
@@ -93,67 +82,57 @@ export function RecapMap({
                     />
                 ))}
             </div>
-            <svg
-                viewBox={viewBox}
-                className="w-full"
-                style={{ maxHeight: "70vh" }}
-            >
-                {points.map(({ tile, x, y }) => {
-                    const owned = tile.owner_account_id != null;
-                    const isRiver = tile.hydro > 0;
-                    const base = owned
-                        ? "var(--map-tile-other-player, oklch(0.55 0.02 250))"
-                        : isRiver
-                          ? "oklch(0.86 0.05 230)"
-                          : "var(--map-tile-vacant, oklch(0.92 0.005 90))";
-                    const { fill, labelColor } = calculateTileFillWithResource(
-                        { ...tile, player_id: tile.owner_account_id },
-                        overlay,
-                        theme,
-                        base,
-                        owned ? "white" : "black",
-                    );
-                    const highlighted =
-                        highlightAccountId != null &&
-                        tile.owner_account_id === highlightAccountId;
-                    const name =
-                        tile.owner_account_id != null
-                            ? ownerNames[tile.owner_account_id]
-                            : undefined;
-                    return (
-                        <g
-                            key={`${tile.q},${tile.r}`}
-                            transform={`translate(${x}, ${y})`}
-                            onMouseEnter={() =>
-                                onHoverOwner?.(tile.owner_account_id)
-                            }
-                            onMouseLeave={() => onHoverOwner?.(null)}
-                        >
-                            <polygon
-                                points={hexPoints}
-                                style={{
-                                    fill,
-                                    stroke: highlighted
-                                        ? "var(--foreground, #000)"
-                                        : "rgba(0,0,0,0.18)",
-                                    strokeWidth: highlighted ? 2.5 : 1,
-                                }}
-                            />
-                            {owned && (
-                                <text
-                                    textAnchor="middle"
-                                    dominantBaseline="middle"
-                                    fontSize={7}
-                                    fill={labelColor}
-                                >
-                                    {/* 3 chars, centred on the tile — matches the in-game map's owner-label convention (map-resources.ts, calculateTileLabel). */}
-                                    {name?.slice(0, 3)}
-                                </text>
-                            )}
-                        </g>
-                    );
-                })}
-            </svg>
+            {/* Fixed aspect-ratio box (same ratio as the settle/community-map
+                pages): MapCanvas measures its container and sizes hexes to fit,
+                so this keeps the frozen snapshot at the live map's scale
+                instead of a hard-coded pixel size. */}
+            <div className="w-full relative pt-[86.60%]">
+                <MapCanvas className="absolute inset-0" mapData={mapData}>
+                    <MapTiles
+                        mapData={mapData}
+                        playerMap={ownerNames}
+                        activeResourceId={overlay}
+                    />
+                    <RecapMapTooltipLayer ownerNames={ownerNames} />
+                </MapCanvas>
+            </div>
         </div>
+    );
+}
+
+/**
+ * Renders the hovered-tile info panel; must be inside a MapCanvas (uses
+ * context).
+ */
+function RecapMapTooltipLayer({
+    ownerNames,
+}: {
+    ownerNames: Record<number, string>;
+}) {
+    const { width, height, s, w, hoveredTile } = useMapContext();
+    if (!hoveredTile) return null;
+    const { x, y } = getHexPosition(hoveredTile.q, hoveredTile.r, s, w);
+    return (
+        <foreignObject
+            x={-width / 2}
+            y={-height / 2}
+            width={width}
+            height={height}
+            overflow="visible"
+            style={{ pointerEvents: "none" }}
+        >
+            <RecapMapTooltip
+                tile={hoveredTile}
+                ownerName={
+                    hoveredTile.player_id
+                        ? (ownerNames[hoveredTile.player_id] ?? null)
+                        : null
+                }
+                x={x}
+                y={y}
+                viewportWidth={width}
+                viewportHeight={height}
+            />
+        </foreignObject>
     );
 }
