@@ -20,7 +20,11 @@ After=network.target
 Type=oneshot
 ExecStart=/usr/local/sbin/energetica-reap-instances
 
-# A failed sweep must not disable the timer. One broken instance config or a transient systemd
-# error should cost at most a single sweep — the next tick retries from scratch, and the sweep is
-# idempotent, so there is nothing to reconcile.
-SuccessExitStatus=0
+# The sweep exits non-zero when it could not reap something it should have (a stop/disable that
+# failed, or a config it could not read). That is deliberate and must NOT be masked: nobody watches
+# this run, so a failed activation showing up in `systemctl --failed` is the only way a persistently
+# unreapable instance gets noticed instead of quietly staying live past its end.
+#
+# Failing does not stop the schedule — a failed activation still counts as an activation, so the
+# timer's OnUnitActiveSec fires the next sweep as usual and it retries. The sweep is idempotent, so
+# there is nothing to reconcile between attempts.

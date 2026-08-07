@@ -51,6 +51,7 @@ command -v jq >/dev/null 2>&1 || { log_error "jq is required"; exit 1; }
 
 NOW_EPOCH="$(date -u +%s)"
 REAPED=0
+FAILED=0
 
 for config in "$CONFIG_ROOT"/*/instance.json; do
     # No instance configured yet: the glob stays literal, so there is nothing to sweep.
@@ -63,6 +64,7 @@ for config in "$CONFIG_ROOT"/*/instance.json; do
     # reaches it — but the reserved names would be catastrophic to stop, so refuse explicitly.
     if [ "$slug" = "landing" ] || [ "$slug" = "lobby" ]; then
         log_error "refusing to reap reserved slug '$slug'"
+        FAILED=$((FAILED + 1))
         continue
     fi
 
@@ -70,14 +72,21 @@ for config in "$CONFIG_ROOT"/*/instance.json; do
     # and the fix for a broken file is an admin edit, not a stalled reaper. (Reading a phase we
     # cannot trust also has to fail SAFE — an unparseable ended_at leaves the run up, matching
     # current_phase()'s fail-open-to-active: the clock only ever ends a run on a positive signal.)
+    #
+    # It does count as a failure of the sweep, though. We cannot tell whether this run has ended,
+    # so it may be one that will never be reaped — and the same broken file also defeats the
+    # instance's own current_phase(), which fails open to active, leaving the game running. Exactly
+    # the sort of thing that must not sit in the journal behind a zero exit status.
     ended_at="$(jq -r '.ended_at // empty' "$config" 2>/dev/null)" || {
         log_error "$slug: cannot read $config — skipping"
+        FAILED=$((FAILED + 1))
         continue
     }
     [ -n "$ended_at" ] || continue  # open-ended run, never reaped
 
     ended_epoch="$(date -u -d "$ended_at" +%s 2>/dev/null)" || {
         log_error "$slug: unparseable ended_at ($ended_at) — skipping"
+        FAILED=$((FAILED + 1))
         continue
     }
     [ "$NOW_EPOCH" -ge "$ended_epoch" ] || continue  # not ended yet
@@ -96,14 +105,41 @@ for config in "$CONFIG_ROOT"/*/instance.json; do
     fi
 
     log_step "reaping $slug (ended_at $ended_at has passed)..."
-    systemctl stop "$unit" || log_error "$slug: stop failed"
-    systemctl disable "$unit" >/dev/null 2>&1 || log_error "$slug: disable failed"
-    log_success "$slug reaped — its recap lives on at the lobby"
-    REAPED=$((REAPED + 1))
+    # Attempt both even if the first fails — disabling is independently worth doing, since it at
+    # least stops a reboot from resurrecting the run — but only claim the reap when BOTH succeed.
+    # Nobody watches this sweep run; the journal is the whole signal, so "stop failed" followed by
+    # "reaped" is worse than useless. A partial reap stays on the books as a failure and is picked
+    # up by the next sweep (a still-running or still-enabled unit fails the already-reaped guard).
+    reaped_ok=true
+    if ! systemctl stop "$unit"; then
+        log_error "$slug: stop FAILED — the run is still up past ended_at"
+        reaped_ok=false
+    fi
+    if ! systemctl disable "$unit" >/dev/null 2>&1; then
+        log_error "$slug: disable FAILED — a reboot would bring this ended run back"
+        reaped_ok=false
+    fi
+    if [ "$reaped_ok" = true ]; then
+        log_success "$slug reaped — its recap lives on at the lobby"
+        REAPED=$((REAPED + 1))
+    else
+        log_error "$slug NOT reaped — retrying on the next sweep"
+        FAILED=$((FAILED + 1))
+    fi
 done
 
 # Say nothing on a quiet sweep. This runs every few minutes under systemd, and a "nothing to do"
 # line each time would bury the one journal entry that matters: the run that actually got reaped.
 if [ "$REAPED" -gt 0 ]; then
     log_success "$REAPED instance(s) $([ "$DRY_RUN" = true ] && echo "would be reaped" || echo "reaped")"
+fi
+
+# Exit non-zero when anything was left unreaped, so systemd marks the sweep failed and it shows up
+# in `systemctl --failed` / the timer's status. Without this a persistently failing reap is
+# invisible: the unit keeps exiting 0 and an ended run stays live with nothing to notice it. This
+# does NOT stop the timer — a failed activation still counts as an activation, so the next sweep
+# fires on schedule and retries.
+if [ "$FAILED" -gt 0 ]; then
+    log_error "$FAILED instance(s) need attention — see above"
+    exit 1
 fi
