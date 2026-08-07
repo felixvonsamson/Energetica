@@ -79,6 +79,69 @@ UNIT="/etc/systemd/system/energetica-$INSTANCE.service"
 PICKLE="$APP_DIR/instance/engine_data.pck"
 RECAP="$LANDING_DIR/recaps/$INSTANCE.json"
 
+# --- Resolve a Python that can import `energetica` -------------------------------
+# Two steps below need it: validating the recap, and retiring the fragment. Both call landing-dir
+# logic (load_recap / retire_fragment) that reads nothing but the landing dir and knows nothing
+# about the game domain, so ANY deployed copy on this box answers identically. Prefer this
+# instance's own venv, then the lobby's, then any sibling instance's.
+#
+# Resolved as a hard precondition rather than checked at each use, because the failure mode of
+# "no interpreter" differs from the failure mode of every other missing path here. A missing unit
+# or vhost means the work is already done; a missing interpreter means we cannot tell whether the
+# recap is readable or retire the fragment correctly — and this script's next act is to delete the
+# state that would let anyone fix it afterwards. Not being able to check must never read as a
+# clean check, so it stops the whole thing.
+CODE_ROOT=""
+for candidate in "$APP_DIR" /var/www/energetica-lobby /var/www/energetica-*; do
+    if [ -x "$candidate/.venv/bin/python" ] && [ -f "$candidate/energetica/instance_config.py" ]; then
+        CODE_ROOT="$candidate"
+        break
+    fi
+done
+if [ -z "$CODE_ROOT" ]; then
+    log_error "Found no deployed Energetica code with a usable venv on this server."
+    log_error "Looked in $APP_DIR, /var/www/energetica-lobby, and every /var/www/energetica-*."
+    log_error "Without one this script cannot verify the recap or retire the landing fragment,"
+    log_error "and it would delete the state needed to repair either. Refusing to continue."
+    echo
+    echo "Deploy any instance or the lobby first, then re-run."
+    exit 1
+fi
+
+# Run a snippet against the landing dir. Dropped to the service user so anything it rewrites
+# (instances.json) keeps the ownership the instance backends expect, rather than becoming
+# root-owned behind their backs.
+#
+# Run from a throwaway cwd, because importing `energetica` constructs the dormant GameEngine,
+# whose __init__ does Path("instance").mkdir() — RELATIVE to the working directory. An admin
+# running this from /root or a home dir would otherwise either litter an empty instance/ there or,
+# where the service user cannot write, fail the import outright and make a permission error look
+# like a corrupt recap. A temp dir the service user owns is writable by definition and takes the
+# stray directory with it.
+run_landing_py() {
+    local workdir rc=0
+    workdir="$(mktemp -d)"
+    # mktemp -d is 0700 root-owned; without this the service user cannot even cd into it.
+    # A failure here returns non-zero rather than tripping set -e, so the caller reports it as
+    # "could not check" instead of the script dying with no explanation.
+    if ! chown energetica "$workdir"; then
+        rm -rf "$workdir"
+        return 1
+    fi
+    (
+        cd "$workdir" || exit 1
+        ENERGETICA_LANDING_DIR="$LANDING_DIR" ENERGETICA_INSTANCE_CONFIG_DIR=/etc/energetica \
+            sudo -u energetica -E "$CODE_ROOT/.venv/bin/python" -c "
+import sys
+sys.path.insert(0, '$CODE_ROOT')
+from energetica import instance_config
+$1
+"
+    ) || rc=$?
+    rm -rf "$workdir"
+    return "$rc"
+}
+
 log_section "TEAR DOWN INSTANCE: $INSTANCE ($FQDN)"
 echo "Will remove:"
 echo "  service   $UNIT"
@@ -100,14 +163,21 @@ echo
 # and re-run — if the instance re-mints first you keep the recap, and if you accept the loss the
 # run simply retires as one that never froze. Both paths are better than a flag that says "yes,
 # strand it", which is not an outcome anyone wants.
-VENV_PYTHON="$APP_DIR/.venv/bin/python"
+#
+# Exit 3 means specifically "read it, it does not parse". Anything else non-zero means the check
+# itself failed — a broken interpreter, an import error, a permissions problem — which is NOT
+# evidence about the recap and must not be reported as such. Both abort, but they abort with the
+# truth, because "could not check" and "checked, it is broken" call for different fixes.
+RECAP_CHECK_RC=0
 if [ -f "$RECAP" ]; then
-    if [ -x "$VENV_PYTHON" ] && ! ENERGETICA_LANDING_DIR="$LANDING_DIR" sudo -u energetica -E "$VENV_PYTHON" -c "
-import sys
-sys.path.insert(0, '$APP_DIR')
-from energetica import instance_config
-sys.exit(0 if instance_config.load_recap('$INSTANCE') is not None else 1)
-"; then
+    run_landing_py "sys.exit(0 if instance_config.load_recap('$INSTANCE') is not None else 3)" || RECAP_CHECK_RC=$?
+    if [ "$RECAP_CHECK_RC" -ne 0 ] && [ "$RECAP_CHECK_RC" -ne 3 ]; then
+        log_error "Could not verify the recap at $RECAP (checker exited $RECAP_CHECK_RC, ran against $CODE_ROOT)."
+        log_error "That is a failure of the check, not a verdict on the recap. Refusing to tear down"
+        log_error "an instance whose recap might still be readable — fix the checker and re-run."
+        exit 1
+    fi
+    if [ "$RECAP_CHECK_RC" -eq 3 ]; then
         log_error "The recap at $RECAP exists but does NOT load — it is corrupt or schema-invalid."
         log_error "Tearing down now would strand it: the lobby would advertise 'View recap' forever"
         log_error "over a file that never renders, with the game state needed to re-mint it deleted."
@@ -144,26 +214,20 @@ if [ -n "$ARCHIVE_TO" ]; then
     fi
 fi
 
-# --- 2. Retire the fragment (before the venv it needs is deleted) ---------------
+# --- 2. Retire the fragment (before the code it needs may be deleted) -----------
 # The keep-or-delete rule lives in energetica.instance_config.retire_fragment, which also
-# re-aggregates instances.json. Run it through THIS instance's venv, which means it has to happen
-# before step 5 removes the app dir. If the venv is already gone (a half-finished earlier
-# teardown), say so loudly rather than silently skipping — a stale fragment left in the manifest
-# points the picker at a subdomain that no longer answers.
+# re-aggregates instances.json. Done before step 5 removes the app dir, since that dir is the
+# preferred CODE_ROOT. A failure here aborts rather than warning: leaving a stale fragment behind
+# while the rest of the teardown proceeds would point the picker at a subdomain that no longer
+# answers, and by then the run is gone — the same "don't destroy what you couldn't check" stance
+# as the recap preflight. set -e would catch this anyway; it is spelled out for the message.
 log_section "LANDING FRAGMENT"
-if [ -x "$VENV_PYTHON" ]; then
-    ENERGETICA_LANDING_DIR="$LANDING_DIR" ENERGETICA_INSTANCE_CONFIG_DIR=/etc/energetica \
-        sudo -u energetica -E "$VENV_PYTHON" -c "
-import sys
-sys.path.insert(0, '$APP_DIR')
-from energetica import instance_config
-deleted = instance_config.retire_fragment('$INSTANCE')
-print('deleted' if deleted else 'kept')
-" && log_success "Fragment retired and instances.json re-aggregated"
-else
-    log_error "No venv at $VENV_PYTHON — could NOT retire the fragment."
-    log_error "Re-aggregate by hand from another instance's venv, or the picker will keep listing $INSTANCE."
+if ! run_landing_py "print('deleted' if instance_config.retire_fragment('$INSTANCE') else 'kept')"; then
+    log_error "Could not retire the fragment (ran against $CODE_ROOT). Stopping before anything is deleted."
+    log_error "The picker would otherwise keep listing $INSTANCE with nothing behind it."
+    exit 1
 fi
+log_success "Fragment retired and instances.json re-aggregated"
 
 # --- 3. Service ------------------------------------------------------------------
 log_section "SERVICE"
