@@ -56,7 +56,13 @@ install -d -o "$DEPLOY_USER" -g energetica -m 2775 "$LANDING_DIR"
 # Fragment dir: every instance backend writes {slug}.json here. Setgid keeps new files
 # group=energetica regardless of which instance's service created them.
 install -d -o "$DEPLOY_USER" -g energetica -m 2775 "$LANDING_DIR/instances"
-log_success "$LANDING_DIR and $LANDING_DIR/instances (2775, setgid energetica)"
+# Recap dir: the instance backend mints {slug}.json here at active→freeze (T5). Created here
+# rather than left to the mint's own mkdir, which would take the service's umask and give the
+# dir no setgid bit — so a recap minted by one instance could end up in a group the lobby's
+# Apache cannot traverse. Same ownership as instances/ for the same reason: many writers, one
+# reader (www-data, via group energetica).
+install -d -o "$DEPLOY_USER" -g energetica -m 2775 "$LANDING_DIR/recaps"
+log_success "$LANDING_DIR and $LANDING_DIR/{instances,recaps} (2775, setgid energetica)"
 
 # --- Temporary HTTP vhost for ACME ---------------------------------------------
 log_section "TLS PROVISIONING"
