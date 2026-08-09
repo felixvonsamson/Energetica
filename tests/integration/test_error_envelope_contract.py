@@ -53,7 +53,8 @@ def _game_client() -> TestClient:
     # schema_only builds the routed app without the engine, tick loop or instance directory; the
     # exception handlers and the log_action middleware are registered before that early return.
     app = create_app(env="dev", schema_only=True)
-    # serve_local defaults True, which makes log_action reject every non-GET as a 503.
+    # serve_local defaults True, which makes log_action reject every non-GET as a 503. The autouse
+    # conftest fixture puts it back after the test.
     engine.serve_local = False
     _add_probe_routes(app)
     return TestClient(app)
