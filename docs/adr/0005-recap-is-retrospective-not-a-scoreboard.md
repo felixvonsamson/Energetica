@@ -11,8 +11,9 @@ semantics, map snapshot, phase-derived visibility, static publication.
 
 The recap is a write-once JSON tombstone minted at the `active → freeze` transition and
 published to `recaps/{slug}.json`, where it outlives the instance process
-(`energetica/utils/recap.py`, `mint_recap`, mint-once guarded by
-`instance_config.recap_exists`).
+(`energetica/utils/recap.py`, `mint_recap_if_needed`). The mint-once guard is a *readable*
+recap on disk — `instance_config.load_recap` returning non-`None`, not bare file existence —
+so a corrupt artifact re-mints on the next freeze tick instead of stranding the lobby.
 
 G1 specified it as an income-ranked leaderboard that crowns a winner. Energetica is a
 systems-education game about the trade-offs of running a grid. A podium answers a question
