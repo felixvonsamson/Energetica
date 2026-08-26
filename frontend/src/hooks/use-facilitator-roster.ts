@@ -24,7 +24,7 @@ export function useFacilitatorRoster() {
  */
 export function useRosterCandidates(prefix: string) {
     return useQuery({
-        queryKey: [...queryKeys.facilitator.roster, "candidates", prefix],
+        queryKey: queryKeys.facilitator.rosterCandidates(prefix),
         queryFn: () => facilitatorApi.searchRosterCandidates(prefix),
         enabled: prefix.length > 0,
     });

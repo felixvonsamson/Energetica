@@ -6,7 +6,7 @@ here is instance-wide, not tied to *which* admin is calling, so the auth gate is
 dependency rather than a per-route parameter each handler would otherwise ignore.
 """
 
-from typing import Annotated
+from typing import Annotated, Callable, TypeVar
 
 from fastapi import APIRouter, Depends, Query
 
@@ -24,18 +24,26 @@ from energetica.utils.auth import get_admin_user
 
 router = APIRouter(prefix="/facilitator", tags=["Facilitator"], dependencies=[Depends(get_admin_user)])
 
+_T = TypeVar("_T")
 
-def _access_out() -> FacilitatorAccessOut:
-    """The current join-link settings, generating the token on first call (never rotated after).
+
+def _or_not_private(mutate: Callable[[], _T]) -> _T:
+    """Run a private-access write, translating ``InstanceNotPrivateError`` into the same
+    ``GameError`` (400) every facilitator route surfaces instead of the 500 it would otherwise be.
 
     A facilitator route only makes sense on a privately-configured instance — a public one has no
-    allowlist/join-token to show — so ``InstanceNotPrivateError`` is translated into a ``GameError``
-    (400) rather than the 500 it would otherwise surface as.
+    allowlist/join-token to mutate — and every ``instance_config`` write below raises the same
+    error for that case, so this is the one place that translation happens.
     """
     try:
-        join_token = instance_config.get_or_create_join_token()
+        return mutate()
     except instance_config.InstanceNotPrivateError as exc:
         raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE) from exc
+
+
+def _access_out() -> FacilitatorAccessOut:
+    """The current join-link settings, generating the token on first call (never rotated after)."""
+    join_token = _or_not_private(instance_config.get_or_create_join_token)
     config = instance_config.load_instance_config()
     # get_or_create_join_token() just succeeded, which only happens for a privately-configured
     # instance, so re-reading here always finds the same PrivateAccess block.
@@ -52,10 +60,7 @@ def get_access() -> FacilitatorAccessOut:
 @router.patch("/access", status_code=204)
 def update_access(access_patch: FacilitatorAccessPatch) -> None:
     """Flip whether the join link currently admits new accounts."""
-    try:
-        instance_config.set_join_open(access_patch.join_open)
-    except instance_config.InstanceNotPrivateError as exc:
-        raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE) from exc
+    _or_not_private(lambda: instance_config.set_join_open(access_patch.join_open))
 
 
 def _private_access() -> instance_config.PrivateAccess:
@@ -107,10 +112,7 @@ def add_to_roster(body: RosterAddIn) -> None:
     """
     if accounts.get_account_by_username(body.username) is None:
         raise GameError(GameExceptionType.USER_NOT_FOUND)
-    try:
-        instance_config.add_allowed_username(body.username)
-    except instance_config.InstanceNotPrivateError as exc:
-        raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE) from exc
+    _or_not_private(lambda: instance_config.add_allowed_username(body.username))
 
 
 @router.delete("/roster/{username}", status_code=204)
@@ -122,7 +124,4 @@ def remove_from_roster(username: str) -> None:
     ``username`` wasn't on the allowlist, matching :func:`instance_config.remove_allowed_username`'s
     own idempotency.
     """
-    try:
-        instance_config.remove_allowed_username(username)
-    except instance_config.InstanceNotPrivateError as exc:
-        raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE) from exc
+    _or_not_private(lambda: instance_config.remove_allowed_username(username))

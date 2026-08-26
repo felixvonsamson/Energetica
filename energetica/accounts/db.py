@@ -168,6 +168,19 @@ def verify_password(*, username: str, password: str) -> bool:
     return check_password_hash(plain_password=password, hashed_password=account.pwhash)
 
 
+def _row_to_account(row: sqlite3.Row) -> Account:
+    """Map one ``accounts`` row to an :class:`Account`. The shared row shape every read query
+    below selects, so the column list and field-by-field construction live in exactly one place.
+    """
+    return Account(
+        account_id=row["account_id"],
+        username=row["username"],
+        pwhash=row["pwhash"],
+        email=row["email"],
+        created_at=row["created_at"],
+    )
+
+
 def get_account_by_id(account_id: int) -> Account | None:
     """Look up an account by its immutable id. The lobby resolves the session cookie's
     ``account_id`` payload through here (ADR-0002).
@@ -177,15 +190,7 @@ def get_account_by_id(account_id: int) -> Account | None:
             "SELECT account_id, username, pwhash, email, created_at FROM accounts WHERE account_id = ?",
             (account_id,),
         ).fetchone()
-    if row is None:
-        return None
-    return Account(
-        account_id=row["account_id"],
-        username=row["username"],
-        pwhash=row["pwhash"],
-        email=row["email"],
-        created_at=row["created_at"],
-    )
+    return _row_to_account(row) if row is not None else None
 
 
 def search_accounts(*, prefix: str, limit: int = 20) -> list[Account]:
@@ -208,16 +213,7 @@ def search_accounts(*, prefix: str, limit: int = 20) -> list[Account]:
             "WHERE username LIKE ? ESCAPE '\\' ORDER BY username LIMIT ?",
             (f"{escaped}%", limit),
         ).fetchall()
-    return [
-        Account(
-            account_id=row["account_id"],
-            username=row["username"],
-            pwhash=row["pwhash"],
-            email=row["email"],
-            created_at=row["created_at"],
-        )
-        for row in rows
-    ]
+    return [_row_to_account(row) for row in rows]
 
 
 def get_account_by_username(username: str) -> Account | None:
@@ -226,15 +222,7 @@ def get_account_by_username(username: str) -> Account | None:
             "SELECT account_id, username, pwhash, email, created_at FROM accounts WHERE username = ?",
             (username,),
         ).fetchone()
-    if row is None:
-        return None
-    return Account(
-        account_id=row["account_id"],
-        username=row["username"],
-        pwhash=row["pwhash"],
-        email=row["email"],
-        created_at=row["created_at"],
-    )
+    return _row_to_account(row) if row is not None else None
 
 
 def record_membership(*, account_id: int, slug: str, settled_at: str) -> None:
