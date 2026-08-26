@@ -289,6 +289,7 @@ export const queryKeys = {
     },
     facilitator: {
         access: ["facilitator", "access"] as const,
+        roster: ["facilitator", "roster"] as const,
     },
     join: {
         link: (token: string) => ["join", "link", token] as const,

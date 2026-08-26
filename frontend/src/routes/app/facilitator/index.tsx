@@ -7,11 +7,11 @@
  * has. This page is a small, self-contained shell instead.
  */
 
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import Logo from "@/assets/simplified_logo.svg?react";
+import { FacilitatorHeader } from "@/components/facilitator/facilitator-header";
 import { JoinQrCode } from "@/components/facilitator/join-qr-code";
 import {
     Card,
@@ -26,7 +26,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 import {
     useFacilitatorAccess,
@@ -56,25 +55,6 @@ export const Route = createFileRoute("/app/facilitator/")({
         infoDialog: { contents: <FacilitatorHelp /> },
     },
 });
-
-function FacilitatorHeader() {
-    return (
-        <header className="shrink-0 flex h-(--topbar-height) items-center justify-between border-b border-border-brand bg-topbar px-4">
-            <Link to="/app" className="flex items-center gap-1.5">
-                <Logo className="size-10 fill-foreground" />
-                <span className="font-titles text-lg">
-                    Energetica — Facilitator
-                </span>
-            </Link>
-            <div className="flex items-center gap-2">
-                <ThemeToggle variant="icon-only" />
-                <Button variant="outline" asChild>
-                    <Link to="/app/logout">Log out</Link>
-                </Button>
-            </div>
-        </header>
-    );
-}
 
 function FacilitatorPage() {
     return (

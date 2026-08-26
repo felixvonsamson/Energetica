@@ -1,16 +1,25 @@
-"""Facilitator instance-admin surface: join link and the open/closed toggle (#1020).
+"""Facilitator instance-admin surface: join link/toggle (#1020) and the roster page (#1022).
 
 Exposes #1019's private-access write path (``instance_config``'s ``get_or_create_join_token`` /
-``set_join_open``) over HTTP for the facilitator settings page. Every route here is instance-wide,
-not tied to *which* admin is calling, so the auth gate is a router-level dependency rather than a
-per-route parameter each handler would otherwise ignore.
+``set_join_open`` / ``add_allowed_username`` / ``remove_allowed_username``) over HTTP. Every route
+here is instance-wide, not tied to *which* admin is calling, so the auth gate is a router-level
+dependency rather than a per-route parameter each handler would otherwise ignore.
 """
 
-from fastapi import APIRouter, Depends
+from typing import Annotated
 
-from energetica import instance_config
+from fastapi import APIRouter, Depends, Query
+
+from energetica import accounts, instance_config
+from energetica.database.user import User
 from energetica.game_error import GameError, GameExceptionType
-from energetica.schemas.facilitator import FacilitatorAccessOut, FacilitatorAccessPatch
+from energetica.schemas.facilitator import (
+    FacilitatorAccessOut,
+    FacilitatorAccessPatch,
+    FacilitatorRosterOut,
+    RosterAddIn,
+    RosterCandidatesOut,
+)
 from energetica.utils.auth import get_admin_user
 
 router = APIRouter(prefix="/facilitator", tags=["Facilitator"], dependencies=[Depends(get_admin_user)])
@@ -45,5 +54,75 @@ def update_access(access_patch: FacilitatorAccessPatch) -> None:
     """Flip whether the join link currently admits new accounts."""
     try:
         instance_config.set_join_open(access_patch.join_open)
+    except instance_config.InstanceNotPrivateError as exc:
+        raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE) from exc
+
+
+def _private_access() -> instance_config.PrivateAccess:
+    """This instance's private-access block, translating "not private" into the same
+    ``GameError`` every facilitator route uses.
+    """
+    try:
+        config = instance_config.load_instance_config()
+    except instance_config.InstanceConfigError as exc:
+        raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE) from exc
+    if config is None or not isinstance(config.access, instance_config.PrivateAccess):
+        raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE)
+    return config.access
+
+
+@router.get("/roster")
+def get_roster() -> FacilitatorRosterOut:
+    """This instance's roster, split into joined (an auto-provisioned local ``User`` already
+    exists) vs invited (allowlisted, no entry yet).
+    """
+    access = _private_access()
+    joined: list[str] = []
+    invited: list[str] = []
+    for username in access.allowed_usernames:
+        bucket = joined if next(User.filter_by(username=username), None) is not None else invited
+        bucket.append(username)
+    return FacilitatorRosterOut(joined=joined, invited=invited)
+
+
+@router.get("/roster/candidates")
+def search_roster_candidates(prefix: Annotated[str, Query(min_length=1)]) -> RosterCandidatesOut:
+    """Existing accounts whose username starts with ``prefix`` — the add control's lookup.
+
+    Doesn't require this instance to be private (searching the server-wide account store doesn't
+    touch its allowlist), so it skips :func:`_private_access` — the add-control's own POST is
+    where "this instance isn't private" would actually matter.
+    """
+    matches = accounts.search_accounts(prefix=prefix)
+    return RosterCandidatesOut(usernames=[account.username for account in matches])
+
+
+@router.post("/roster", status_code=204)
+def add_to_roster(body: RosterAddIn) -> None:
+    """Add an existing account to the roster.
+
+    No freeform username strings: an account must already exist server-wide (a facilitator can
+    only invite someone with an account, not conjure a name into the allowlist), which reuses the
+    same ``USER_NOT_FOUND`` a login rejects an unknown username with.
+    """
+    if accounts.get_account_by_username(body.username) is None:
+        raise GameError(GameExceptionType.USER_NOT_FOUND)
+    try:
+        instance_config.add_allowed_username(body.username)
+    except instance_config.InstanceNotPrivateError as exc:
+        raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE) from exc
+
+
+@router.delete("/roster/{username}", status_code=204)
+def remove_from_roster(username: str) -> None:
+    """Ban/remove: drop ``username`` from the allowlist.
+
+    Revocation is eventual — it takes effect on the account's next entry check, not an instant
+    kick of a live session (out of scope here, #677 if ever built). A no-op (still 204) if
+    ``username`` wasn't on the allowlist, matching :func:`instance_config.remove_allowed_username`'s
+    own idempotency.
+    """
+    try:
+        instance_config.remove_allowed_username(username)
     except instance_config.InstanceNotPrivateError as exc:
         raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE) from exc

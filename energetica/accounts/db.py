@@ -188,6 +188,38 @@ def get_account_by_id(account_id: int) -> Account | None:
     )
 
 
+def search_accounts(*, prefix: str, limit: int = 20) -> list[Account]:
+    """Accounts whose username starts with ``prefix``, alphabetical, capped at ``limit``.
+
+    Backs the facilitator roster's add control (#1022): the facilitator can only add an account
+    that actually exists, so the frontend looks one up by prefix here rather than accepting a
+    freeform username string. Matching is an exact-case prefix, same as :func:`get_account_by_username`'s
+    exact-case equality — neither normalises case. ``prefix``'s own ``%``/``_`` characters are
+    escaped so a username containing either can't accidentally act as a wildcard.
+    """
+    escaped = prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    with _connect() as conn:
+        # SQLite's LIKE is case-insensitive for ASCII by default; case_sensitive_like matches
+        # get_account_by_username's exact-case equality instead of surprising callers with
+        # case-folded matches nowhere else in this module.
+        conn.execute("PRAGMA case_sensitive_like = ON")
+        rows = conn.execute(
+            "SELECT account_id, username, pwhash, email, created_at FROM accounts "
+            "WHERE username LIKE ? ESCAPE '\\' ORDER BY username LIMIT ?",
+            (f"{escaped}%", limit),
+        ).fetchall()
+    return [
+        Account(
+            account_id=row["account_id"],
+            username=row["username"],
+            pwhash=row["pwhash"],
+            email=row["email"],
+            created_at=row["created_at"],
+        )
+        for row in rows
+    ]
+
+
 def get_account_by_username(username: str) -> Account | None:
     with _connect() as conn:
         row = conn.execute(

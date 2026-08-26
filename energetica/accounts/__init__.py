@@ -19,6 +19,7 @@ from energetica.accounts.db import (
     get_or_create_account_id,
     init_db,
     record_membership,
+    search_accounts,
     update_password,
     verify_password,
 )
@@ -35,6 +36,7 @@ __all__ = [
     "get_or_create_account_id",
     "init_db",
     "record_membership",
+    "search_accounts",
     "update_password",
     "verify_password",
 ]
