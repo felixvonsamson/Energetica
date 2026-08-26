@@ -40,6 +40,8 @@ class GameExceptionType(StrEnum):
     OLD_PASSWORD_INCORRECT = "OLD_PASSWORD_INCORRECT"
     INSTANCE_ACCESS_DENIED = "INSTANCE_ACCESS_DENIED"
     INSTANCE_NOT_PRIVATE = "INSTANCE_NOT_PRIVATE"
+    JOIN_LINK_INVALID = "JOIN_LINK_INVALID"
+    JOIN_LINK_CLOSED = "JOIN_LINK_CLOSED"
     # Lifecycle
     INSTANCE_FROZEN = "Instance is frozen; the game is read-only."
     # Technology effects

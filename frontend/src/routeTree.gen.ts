@@ -25,6 +25,7 @@ import { Route as AppOverviewsPowerRouteImport } from './routes/app/overviews/po
 import { Route as AppOverviewsEmissionsRouteImport } from './routes/app/overviews/emissions'
 import { Route as AppOverviewsElectricityMarketsRouteImport } from './routes/app/overviews/electricity-markets'
 import { Route as AppOverviewsCashFlowRouteImport } from './routes/app/overviews/cash-flow'
+import { Route as AppJoinTokenRouteImport } from './routes/app/join/$token'
 import { Route as AppInternalTypographyRouteImport } from './routes/app/internal/typography'
 import { Route as AppInternalIconsRouteImport } from './routes/app/internal/icons'
 import { Route as AppInternalDesignRouteImport } from './routes/app/internal/design'
@@ -122,6 +123,11 @@ const AppOverviewsElectricityMarketsRoute =
 const AppOverviewsCashFlowRoute = AppOverviewsCashFlowRouteImport.update({
   id: '/app/overviews/cash-flow',
   path: '/app/overviews/cash-flow',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppJoinTokenRoute = AppJoinTokenRouteImport.update({
+  id: '/app/join/$token',
+  path: '/app/join/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppInternalTypographyRoute = AppInternalTypographyRouteImport.update({
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
+  '/app/join/$token': typeof AppJoinTokenRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
   '/app/overviews/electricity-markets': typeof AppOverviewsElectricityMarketsRoute
   '/app/overviews/emissions': typeof AppOverviewsEmissionsRoute
@@ -273,6 +280,7 @@ export interface FileRoutesByTo {
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
+  '/app/join/$token': typeof AppJoinTokenRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
   '/app/overviews/electricity-markets': typeof AppOverviewsElectricityMarketsRoute
   '/app/overviews/emissions': typeof AppOverviewsEmissionsRoute
@@ -309,6 +317,7 @@ export interface FileRoutesById {
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
+  '/app/join/$token': typeof AppJoinTokenRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
   '/app/overviews/electricity-markets': typeof AppOverviewsElectricityMarketsRoute
   '/app/overviews/emissions': typeof AppOverviewsEmissionsRoute
@@ -346,6 +355,7 @@ export interface FileRouteTypes {
     | '/app/internal/design'
     | '/app/internal/icons'
     | '/app/internal/typography'
+    | '/app/join/$token'
     | '/app/overviews/cash-flow'
     | '/app/overviews/electricity-markets'
     | '/app/overviews/emissions'
@@ -381,6 +391,7 @@ export interface FileRouteTypes {
     | '/app/internal/design'
     | '/app/internal/icons'
     | '/app/internal/typography'
+    | '/app/join/$token'
     | '/app/overviews/cash-flow'
     | '/app/overviews/electricity-markets'
     | '/app/overviews/emissions'
@@ -416,6 +427,7 @@ export interface FileRouteTypes {
     | '/app/internal/design'
     | '/app/internal/icons'
     | '/app/internal/typography'
+    | '/app/join/$token'
     | '/app/overviews/cash-flow'
     | '/app/overviews/electricity-markets'
     | '/app/overviews/emissions'
@@ -451,6 +463,7 @@ export interface RootRouteChildren {
   AppInternalDesignRoute: typeof AppInternalDesignRoute
   AppInternalIconsRoute: typeof AppInternalIconsRoute
   AppInternalTypographyRoute: typeof AppInternalTypographyRoute
+  AppJoinTokenRoute: typeof AppJoinTokenRoute
   AppOverviewsCashFlowRoute: typeof AppOverviewsCashFlowRoute
   AppOverviewsElectricityMarketsRoute: typeof AppOverviewsElectricityMarketsRoute
   AppOverviewsEmissionsRoute: typeof AppOverviewsEmissionsRoute
@@ -575,6 +588,13 @@ declare module '@tanstack/react-router' {
       path: '/app/overviews/cash-flow'
       fullPath: '/app/overviews/cash-flow'
       preLoaderRoute: typeof AppOverviewsCashFlowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/join/$token': {
+      id: '/app/join/$token'
+      path: '/app/join/$token'
+      fullPath: '/app/join/$token'
+      preLoaderRoute: typeof AppJoinTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/internal/typography': {
@@ -734,6 +754,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppInternalDesignRoute: AppInternalDesignRoute,
   AppInternalIconsRoute: AppInternalIconsRoute,
   AppInternalTypographyRoute: AppInternalTypographyRoute,
+  AppJoinTokenRoute: AppJoinTokenRoute,
   AppOverviewsCashFlowRoute: AppOverviewsCashFlowRoute,
   AppOverviewsElectricityMarketsRoute: AppOverviewsElectricityMarketsRoute,
   AppOverviewsEmissionsRoute: AppOverviewsEmissionsRoute,

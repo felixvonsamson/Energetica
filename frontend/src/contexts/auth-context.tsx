@@ -8,6 +8,7 @@ import { createContext, type ReactNode } from "react";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api-client";
+import { isErrorType } from "@/lib/error-utils";
 import { queryKeys } from "@/lib/query-client";
 import type { ApiSchema } from "@/types/api-helpers";
 
@@ -46,6 +47,14 @@ export async function fetchCurrentUser(): Promise<User | null> {
     } catch (err) {
         if (err instanceof ApiClientError && err.status === 401) {
             // Not authenticated - return null instead of throwing
+            return null;
+        }
+        if (isErrorType(err, "INSTANCE_ACCESS_DENIED")) {
+            // A valid SSO session for an account this private instance hasn't allowlisted yet
+            // (#1021's join flow puts a visitor in exactly this state between logging in and
+            // confirming). The SPA has as little use for this account here as for no session at
+            // all — treating it as authenticated would just point every role guard at a user with
+            // no access — so this collapses to the same "unauthenticated" outcome as a 401.
             return null;
         }
         throw err;

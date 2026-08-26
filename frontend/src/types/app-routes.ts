@@ -24,6 +24,7 @@ export type AppRoute =
     | "/app/internal/design"
     | "/app/internal/icons"
     | "/app/internal/typography"
+    | "/app/join/$token"
     | "/app/overviews/cash-flow"
     | "/app/overviews/electricity-markets"
     | "/app/overviews/emissions"

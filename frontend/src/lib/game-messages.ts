@@ -41,6 +41,9 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     INSTANCE_ACCESS_DENIED: "Your account is not allowed on this instance.",
     INSTANCE_NOT_PRIVATE:
         "This instance is not configured as private, so it has no join link.",
+    JOIN_LINK_INVALID:
+        "This join link isn't valid. Ask the organizer for a new one.",
+    JOIN_LINK_CLOSED: "This join link isn't accepting new members right now.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client
