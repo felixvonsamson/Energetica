@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from energetica.instance_config import (
     InstanceConfig,
     InstanceConfigError,
     InstanceFragment,
+    InstanceNotPrivateError,
     PrivateAccess,
     PublicAccess,
     derive_phase,
@@ -155,6 +157,155 @@ def test_private_empty_allowlist_denies_everyone() -> None:
     config = InstanceConfig.model_validate({**PRIVATE_JSON, "access": {"policy": "private"}})
     assert config.access.allowed_usernames == []  # type: ignore[union-attr]
     assert instance_config.is_access_allowed(config, "alice") is False
+
+
+# --- join_token / join_open (#1019) -----------------------------------------------------------
+
+
+def test_private_access_join_fields_default(configured: Path) -> None:
+    """A config file written before #1019 (neither field present) still loads, with the new fields
+    defaulting to "no join link yet".
+    """
+    _write_instance_json(configured, PRIVATE_JSON)
+
+    config = instance_config.load_instance_config()
+
+    assert config is not None
+    assert isinstance(config.access, PrivateAccess)
+    assert config.access.join_token is None
+    assert config.access.join_open is False
+
+
+def test_private_access_join_fields_round_trip(configured: Path) -> None:
+    access = {**PRIVATE_JSON["access"], "join_token": "abc123", "join_open": True}  # type: ignore[dict-item]
+    _write_instance_json(configured, {**PRIVATE_JSON, "access": access})
+
+    config = instance_config.load_instance_config()
+
+    assert config is not None
+    assert isinstance(config.access, PrivateAccess)
+    assert config.access.join_token == "abc123"
+    assert config.access.join_open is True
+
+
+# --- private-access mutation (#1019) --------------------------------------------------------
+
+
+def test_add_allowed_username_persists(configured: Path) -> None:
+    _write_instance_json(configured, PRIVATE_JSON)
+
+    access = instance_config.add_allowed_username("carol")
+
+    assert access.allowed_usernames == ["alice", "bob", "carol"]
+    reloaded = instance_config.load_instance_config()
+    assert reloaded is not None
+    assert reloaded.access.allowed_usernames == ["alice", "bob", "carol"]  # type: ignore[union-attr]
+
+
+def test_add_allowed_username_is_idempotent(configured: Path) -> None:
+    _write_instance_json(configured, PRIVATE_JSON)
+
+    instance_config.add_allowed_username("alice")
+    access = instance_config.add_allowed_username("alice")
+
+    assert access.allowed_usernames == ["alice", "bob"]
+
+
+def test_remove_allowed_username_persists(configured: Path) -> None:
+    _write_instance_json(configured, PRIVATE_JSON)
+
+    access = instance_config.remove_allowed_username("alice")
+
+    assert access.allowed_usernames == ["bob"]
+    reloaded = instance_config.load_instance_config()
+    assert reloaded is not None
+    assert reloaded.access.allowed_usernames == ["bob"]  # type: ignore[union-attr]
+
+
+def test_remove_allowed_username_absent_is_a_noop(configured: Path) -> None:
+    _write_instance_json(configured, PRIVATE_JSON)
+
+    access = instance_config.remove_allowed_username("carol")
+
+    assert access.allowed_usernames == ["alice", "bob"]
+
+
+def test_set_join_open_persists(configured: Path) -> None:
+    _write_instance_json(configured, PRIVATE_JSON)
+
+    access = instance_config.set_join_open(True)
+
+    assert access.join_open is True
+    reloaded = instance_config.load_instance_config()
+    assert reloaded is not None
+    assert reloaded.access.join_open is True  # type: ignore[union-attr]
+
+    access = instance_config.set_join_open(False)
+    assert access.join_open is False
+
+
+def test_get_or_create_join_token_generates_once(configured: Path) -> None:
+    """A first read generates and persists a token; a second read returns the same value rather
+    than rotating it.
+    """
+    _write_instance_json(configured, PRIVATE_JSON)
+
+    first = instance_config.get_or_create_join_token()
+    second = instance_config.get_or_create_join_token()
+
+    assert first == second
+    assert first  # non-empty
+    reloaded = instance_config.load_instance_config()
+    assert reloaded is not None
+    assert reloaded.access.join_token == first  # type: ignore[union-attr]
+
+
+def test_get_or_create_join_token_does_not_regenerate_an_existing_token(configured: Path) -> None:
+    access = {**PRIVATE_JSON["access"], "join_token": "already-set"}  # type: ignore[dict-item]
+    _write_instance_json(configured, {**PRIVATE_JSON, "access": access})
+
+    assert instance_config.get_or_create_join_token() == "already-set"
+
+
+def test_mutation_raises_when_no_slug_configured(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("ENERGETICA_INSTANCE_SLUG", raising=False)
+    monkeypatch.setenv("ENERGETICA_INSTANCE_CONFIG_DIR", str(tmp_path))
+
+    with pytest.raises(InstanceNotPrivateError):
+        instance_config.add_allowed_username("alice")
+
+
+def test_mutation_raises_when_no_config_file(configured: Path) -> None:
+    with pytest.raises(InstanceNotPrivateError):
+        instance_config.add_allowed_username("alice")
+
+
+def test_mutation_raises_on_public_instance(configured: Path) -> None:
+    _write_instance_json(configured, PUBLIC_JSON)
+
+    with pytest.raises(InstanceNotPrivateError):
+        instance_config.set_join_open(True)
+
+
+def test_mutation_is_atomic_under_concurrent_calls(configured: Path) -> None:
+    """Many threads each adding their own username must all land — no lost update, and no partial
+    write ever readable on disk.
+    """
+    _write_instance_json(configured, {**PRIVATE_JSON, "access": {"policy": "private", "allowed_usernames": []}})
+    usernames = [f"user{i}" for i in range(20)]
+
+    def add(username: str) -> None:
+        instance_config.add_allowed_username(username)
+
+    threads = [threading.Thread(target=add, args=(username,)) for username in usernames]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    config = instance_config.load_instance_config()
+    assert config is not None
+    assert sorted(config.access.allowed_usernames) == sorted(usernames)  # type: ignore[union-attr]
 
 
 # --- publish + aggregate --------------------------------------------------------------------
