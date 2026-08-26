@@ -11,10 +11,12 @@ gate reads.
 """
 
 import secrets
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica import instance_config
+from energetica.accounts import Account
 from energetica.game_error import GameError, GameExceptionType
 from energetica.schemas.join import JoinLinkOut
 from energetica.utils.auth import get_current_account
@@ -43,10 +45,9 @@ def _resolve(token: str) -> tuple[str, instance_config.PrivateAccess]:
 
 
 @router.get("/{token}")
-def get_join_link(token: str, request: Request) -> JoinLinkOut:
+def get_join_link(token: str, account: Annotated[Account | None, Depends(get_current_account)]) -> JoinLinkOut:
     """What this join link offers, and whether the visitor already has a session to join with."""
     instance_name, access = _resolve(token)
-    account = get_current_account(request)
     return JoinLinkOut(
         instance_name=instance_name,
         join_open=access.join_open,
@@ -55,22 +56,23 @@ def get_join_link(token: str, request: Request) -> JoinLinkOut:
 
 
 @router.post("/{token}", status_code=204)
-def confirm_join(token: str, request: Request) -> None:
+def confirm_join(token: str, account: Annotated[Account | None, Depends(get_current_account)]) -> None:
     """Confirm joining: append the signed-in visitor's username to the allowlist.
 
     Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
     is this runs *before* the visitor is access-allowed, so no local ``User`` need exist yet) but
     deliberately does not go through ``_enforce_instance_access``: granting access is this
-    endpoint's job, not a precondition for reaching it. Re-checks ``join_open`` server-side (not
-    just trusted from the page's last ``GET``) so a facilitator flipping the toggle mid-visit is
-    the outcome that wins, not a stale client.
+    endpoint's job, not a precondition for reaching it. Checks identity before instance state
+    (mirrors ``get_admin_user``/``get_settled_player``'s "who, then what" order elsewhere in this
+    codebase) and re-checks ``join_open`` server-side rather than trusting the page's last
+    ``GET``, so a facilitator flipping the toggle mid-visit is the outcome that wins, not a stale
+    client.
     """
-    _, access = _resolve(token)
-    if not access.join_open:
-        raise GameError(GameExceptionType.JOIN_LINK_CLOSED)
-    account = get_current_account(request)
     if account is None:
         # Matches resolve_entry_user's convention: no/invalid session is a 401, not a 400
         # GameError — this is a plain auth failure, not a game-domain rejection.
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
+    _, access = _resolve(token)
+    if not access.join_open:
+        raise GameError(GameExceptionType.JOIN_LINK_CLOSED)
     instance_config.add_allowed_username(account.username)
