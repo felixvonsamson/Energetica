@@ -41,9 +41,9 @@ def get_access() -> FacilitatorAccessOut:
 
 
 @router.patch("/access", status_code=204)
-def update_access(request_data: FacilitatorAccessPatch) -> None:
+def update_access(access_patch: FacilitatorAccessPatch) -> None:
     """Flip whether the join link currently admits new accounts."""
     try:
-        instance_config.set_join_open(request_data.join_open)
+        instance_config.set_join_open(access_patch.join_open)
     except instance_config.InstanceNotPrivateError as exc:
         raise GameError(GameExceptionType.INSTANCE_NOT_PRIVATE) from exc
