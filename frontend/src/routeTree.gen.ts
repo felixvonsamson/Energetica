@@ -17,6 +17,7 @@ import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppChangelogRouteImport } from './routes/app/changelog'
 import { Route as AppWikiIndexRouteImport } from './routes/app/wiki/index'
 import { Route as AppInternalIndexRouteImport } from './routes/app/internal/index'
+import { Route as AppFacilitatorIndexRouteImport } from './routes/app/facilitator/index'
 import { Route as AppWikiSlugRouteImport } from './routes/app/wiki/$slug'
 import { Route as AppOverviewsStorageRouteImport } from './routes/app/overviews/storage'
 import { Route as AppOverviewsResourcesRouteImport } from './routes/app/overviews/resources'
@@ -80,6 +81,11 @@ const AppWikiIndexRoute = AppWikiIndexRouteImport.update({
 const AppInternalIndexRoute = AppInternalIndexRouteImport.update({
   id: '/app/internal/',
   path: '/app/internal/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppFacilitatorIndexRoute = AppFacilitatorIndexRouteImport.update({
+  id: '/app/facilitator/',
+  path: '/app/facilitator/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppWikiSlugRoute = AppWikiSlugRouteImport.update({
@@ -239,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
 }
@@ -273,6 +280,7 @@ export interface FileRoutesByTo {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
 }
@@ -308,6 +316,7 @@ export interface FileRoutesById {
   '/app/overviews/resources': typeof AppOverviewsResourcesRoute
   '/app/overviews/storage': typeof AppOverviewsStorageRoute
   '/app/wiki/$slug': typeof AppWikiSlugRoute
+  '/app/facilitator/': typeof AppFacilitatorIndexRoute
   '/app/internal/': typeof AppInternalIndexRoute
   '/app/wiki/': typeof AppWikiIndexRoute
 }
@@ -344,6 +353,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
   fileRoutesByTo: FileRoutesByTo
@@ -378,6 +388,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
   id:
@@ -412,6 +423,7 @@ export interface FileRouteTypes {
     | '/app/overviews/resources'
     | '/app/overviews/storage'
     | '/app/wiki/$slug'
+    | '/app/facilitator/'
     | '/app/internal/'
     | '/app/wiki/'
   fileRoutesById: FileRoutesById
@@ -446,6 +458,7 @@ export interface RootRouteChildren {
   AppOverviewsResourcesRoute: typeof AppOverviewsResourcesRoute
   AppOverviewsStorageRoute: typeof AppOverviewsStorageRoute
   AppWikiSlugRoute: typeof AppWikiSlugRoute
+  AppFacilitatorIndexRoute: typeof AppFacilitatorIndexRoute
   AppInternalIndexRoute: typeof AppInternalIndexRoute
   AppWikiIndexRoute: typeof AppWikiIndexRoute
 }
@@ -506,6 +519,13 @@ declare module '@tanstack/react-router' {
       path: '/app/internal'
       fullPath: '/app/internal'
       preLoaderRoute: typeof AppInternalIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/facilitator/': {
+      id: '/app/facilitator/'
+      path: '/app/facilitator'
+      fullPath: '/app/facilitator'
+      preLoaderRoute: typeof AppFacilitatorIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/wiki/$slug': {
@@ -721,6 +741,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppOverviewsResourcesRoute: AppOverviewsResourcesRoute,
   AppOverviewsStorageRoute: AppOverviewsStorageRoute,
   AppWikiSlugRoute: AppWikiSlugRoute,
+  AppFacilitatorIndexRoute: AppFacilitatorIndexRoute,
   AppInternalIndexRoute: AppInternalIndexRoute,
   AppWikiIndexRoute: AppWikiIndexRoute,
 }

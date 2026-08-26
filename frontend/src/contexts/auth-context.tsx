@@ -29,6 +29,29 @@ export interface AuthProviderProps {
     children: ReactNode;
 }
 
+/**
+ * Fetch the current user (the instance entry gate), or `null` if
+ * unauthenticated.
+ *
+ * Exported (not inlined in `AuthProvider`'s `useQuery`) so `/app/`'s root
+ * loader can resolve the same `queryKeys.auth.me` data through
+ * `queryClient.ensureQueryData` — the loader needs the user's role _before_ the
+ * app renders (to send an admin to `/app/facilitator` instead of the
+ * player-only `/app/dashboard`, #1020), which a query only read from inside the
+ * React tree can't guarantee has resolved yet.
+ */
+export async function fetchCurrentUser(): Promise<User | null> {
+    try {
+        return await authApi.me();
+    } catch (err) {
+        if (err instanceof ApiClientError && err.status === 401) {
+            // Not authenticated - return null instead of throwing
+            return null;
+        }
+        throw err;
+    }
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
     const {
         data: user,
@@ -37,17 +60,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         refetch,
     } = useQuery({
         queryKey: queryKeys.auth.me,
-        queryFn: async () => {
-            try {
-                return await authApi.me();
-            } catch (err) {
-                if (err instanceof ApiClientError && err.status === 401) {
-                    // Not authenticated - return null instead of throwing
-                    return null;
-                }
-                throw err;
-            }
-        },
+        queryFn: fetchCurrentUser,
         // Don't auto-refetch on window focus for auth - only refetch on invalidation
         refetchOnWindowFocus: false,
         // Keep auth data fresh indefinitely until explicitly invalidated

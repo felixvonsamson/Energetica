@@ -39,6 +39,8 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     SIGNUP_DISABLED: "Sign-ups are currently disabled.",
     OLD_PASSWORD_INCORRECT: "The current password you entered is incorrect.",
     INSTANCE_ACCESS_DENIED: "Your account is not allowed on this instance.",
+    INSTANCE_NOT_PRIVATE:
+        "This instance is not configured as private, so it has no join link.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client
