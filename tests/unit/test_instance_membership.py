@@ -148,6 +148,53 @@ def test_grant_facilitator_server_wide_twice_does_not_duplicate_the_row(accounts
     assert rows[0] == 1
 
 
+def test_concurrent_settle_and_grant_for_the_same_scope_never_corrupts_the_role(accounts_db: Path) -> None:
+    """record_settlement and grant_facilitator are independent check-then-write operations on the
+    same (account_id, slug) row — without a shared transaction lock, both could pass their
+    conflict check before either writes, leaving a row whose role neither caller actually agreed
+    to (or a caller believing it won when it didn't). Racing them for real (two threads, a
+    barrier) must produce exactly one winner and one real MembershipRoleConflictError — never two
+    silent successes or a row that doesn't match either caller's belief about the outcome.
+    """
+    import threading
+
+    barrier = threading.Barrier(2)
+    outcomes: dict[str, BaseException | None] = {}
+
+    def settle() -> None:
+        barrier.wait()
+        try:
+            accounts.record_settlement(account_id=1, slug="spring-2026", settled_at="2026-03-01T12:00:00+00:00")
+            outcomes["settle"] = None
+        except accounts.MembershipRoleConflictError as exc:
+            outcomes["settle"] = exc
+
+    def grant() -> None:
+        barrier.wait()
+        try:
+            accounts.grant_facilitator(account_id=1, slug="spring-2026")
+            outcomes["grant"] = None
+        except accounts.MembershipRoleConflictError as exc:
+            outcomes["grant"] = exc
+
+    threads = [threading.Thread(target=settle), threading.Thread(target=grant)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    results = [outcomes["settle"], outcomes["grant"]]
+    assert results.count(None) == 1, "exactly one of the two operations must win"
+    assert sum(isinstance(r, accounts.MembershipRoleConflictError) for r in results) == 1
+
+    is_facilitator = accounts.is_facilitator(account_id=1, slug="spring-2026")
+    settled = len(accounts.get_memberships(account_id=1)) == 1
+    # The persisted row must match whichever operation actually won — never both, never neither.
+    assert is_facilitator != settled
+    assert (outcomes["grant"] is None) == is_facilitator
+    assert (outcomes["settle"] is None) == settled
+
+
 def test_migrate_instance_membership_columns_backfills_pre_role_rows(accounts_db: Path) -> None:
     """A row written under the pre-role schema (slug/settled_at NOT NULL, no role column) must
     survive the rebuild migration as role='player' with created_at taken from the old settled_at.

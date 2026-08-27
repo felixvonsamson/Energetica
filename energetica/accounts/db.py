@@ -105,15 +105,17 @@ def _create_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    _migrate_instance_membership_columns(conn)
     # SQLite (like standard SQL) treats every NULL as distinct in a unique index, so the PRIMARY
     # KEY above does *not* stop two server-wide (slug IS NULL) rows for the same account — a
     # partial index is the only way to make "one server-wide grant per account" a real DB
-    # constraint rather than just the app-level check-then-insert in grant_facilitator().
+    # constraint rather than just the app-level check-then-insert in grant_facilitator(). Created
+    # *after* the migration: the migration rebuilds the table under the same name (DROP + RENAME),
+    # which would silently drop this index too if it were created first.
     conn.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS instance_membership_one_server_wide_row_per_account "
         "ON instance_membership (account_id) WHERE slug IS NULL"
     )
-    _migrate_instance_membership_columns(conn)
     conn.commit()
 
 
@@ -309,21 +311,33 @@ def record_settlement(*, account_id: int, slug: str, settled_at: str) -> None:
     Raises :class:`MembershipRoleConflictError` if ``account_id`` already holds a facilitator
     grant covering ``slug`` (scoped to it, or server-wide) — player and facilitator are mutually
     exclusive (ADR-0004).
+
+    Atomic: the conflict check and the write run inside one ``BEGIN IMMEDIATE`` transaction, which
+    takes SQLite's write lock upfront. Without this, a concurrent :func:`grant_facilitator` call
+    could land between this function's check and its write (or vice versa) — two independent
+    check-then-insert operations racing on the same row, each seeing the pre-race state as clean.
+    ``BEGIN IMMEDIATE`` serializes every writer through this module, closing that window entirely
+    rather than narrowing it.
     """
     settled_at = _normalise_timestamp(settled_at, field_name="settled_at")
     with _connect() as conn:
-        if conn.execute(
-            "SELECT 1 FROM instance_membership WHERE account_id = ? AND role = 'facilitator' "
-            "AND (slug = ? OR slug IS NULL)",
-            (account_id, slug),
-        ).fetchone():
-            raise MembershipRoleConflictError(
-                f"account {account_id} already holds a facilitator grant covering {slug!r}; cannot settle as a player"
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            if conn.execute(
+                "SELECT 1 FROM instance_membership WHERE account_id = ? AND role = 'facilitator' "
+                "AND (slug = ? OR slug IS NULL)",
+                (account_id, slug),
+            ).fetchone():
+                raise MembershipRoleConflictError(
+                    f"account {account_id} already holds a facilitator grant covering {slug!r}; cannot settle as a player"
+                )
+            conn.execute(
+                "INSERT OR IGNORE INTO instance_membership (account_id, slug, role, created_at) VALUES (?, ?, 'player', ?)",
+                (account_id, slug, settled_at),
             )
-        conn.execute(
-            "INSERT OR IGNORE INTO instance_membership (account_id, slug, role, created_at) VALUES (?, ?, 'player', ?)",
-            (account_id, slug, settled_at),
-        )
+        except BaseException:
+            conn.rollback()
+            raise
         conn.commit()
 
 
@@ -336,33 +350,36 @@ def grant_facilitator(*, account_id: int, slug: str | None, granted_at: str | No
     :class:`MembershipRoleConflictError` if the account already has a player membership that
     this grant would conflict with — the same-slug row for an instance grant, or any player row
     at all for a server-wide grant.
+
+    Atomic like :func:`record_settlement` — see its docstring for why the whole check + insert
+    runs inside one ``BEGIN IMMEDIATE`` transaction rather than a plain check-then-insert. The
+    partial unique index on ``slug IS NULL`` (``_create_schema``) is a second, DB-level backstop
+    specifically for two concurrent server-wide grants for the same account, in case anything
+    ever writes to this table outside these two functions.
     """
     granted_at = _normalise_timestamp(granted_at or datetime.now(timezone.utc).isoformat(), field_name="granted_at")
     with _connect() as conn:
-        conflict_query = (
-            "SELECT 1 FROM instance_membership WHERE account_id = ? AND role = 'player'"
-            if slug is None
-            else "SELECT 1 FROM instance_membership WHERE account_id = ? AND slug = ? AND role = 'player'"
-        )
-        conflict_params = (account_id,) if slug is None else (account_id, slug)
-        if conn.execute(conflict_query, conflict_params).fetchone():
-            raise MembershipRoleConflictError(
-                f"account {account_id} already has a player membership conflicting with a facilitator grant for {slug!r}"
-            )
-        existing = _membership_role(conn, account_id=account_id, slug=slug)
-        if existing == "facilitator":
-            return  # already granted at this exact scope
+        conn.execute("BEGIN IMMEDIATE")
         try:
-            conn.execute(
-                "INSERT INTO instance_membership (account_id, slug, role, created_at) VALUES (?, ?, 'facilitator', ?)",
-                (account_id, slug, granted_at),
+            conflict_query = (
+                "SELECT 1 FROM instance_membership WHERE account_id = ? AND role = 'player'"
+                if slug is None
+                else "SELECT 1 FROM instance_membership WHERE account_id = ? AND slug = ? AND role = 'player'"
             )
-        except sqlite3.IntegrityError:
-            # Lost a race with a concurrent grant for the same account (the partial unique index
-            # on slug IS NULL catches what the (account_id, slug) primary key can't, since SQLite
-            # treats every NULL as distinct there) — the other grant already won, so this is a
-            # no-op, not a failure.
-            return
+            conflict_params = (account_id,) if slug is None else (account_id, slug)
+            if conn.execute(conflict_query, conflict_params).fetchone():
+                raise MembershipRoleConflictError(
+                    f"account {account_id} already has a player membership conflicting with a facilitator grant for {slug!r}"
+                )
+            existing = _membership_role(conn, account_id=account_id, slug=slug)
+            if existing != "facilitator":
+                conn.execute(
+                    "INSERT INTO instance_membership (account_id, slug, role, created_at) VALUES (?, ?, 'facilitator', ?)",
+                    (account_id, slug, granted_at),
+                )
+        except BaseException:
+            conn.rollback()
+            raise
         conn.commit()
 
 
