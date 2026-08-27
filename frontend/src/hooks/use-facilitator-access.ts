@@ -36,7 +36,11 @@ export function useSetJoinOpen() {
     return useMutation({
         mutationFn: (joinOpen: boolean) =>
             facilitatorApi.updateAccess({ join_open: joinOpen }),
-        onSuccess: () => {
+        onSettled: () => {
+            // Refetch on both success and failure: the switch reads `join_open`
+            // straight from this query rather than tracking optimistic state, so
+            // a failed PATCH needs a refetch too, to rule out the request having
+            // landed server-side despite the client-visible error.
             queryClient.invalidateQueries({
                 queryKey: queryKeys.facilitator.access,
             });
