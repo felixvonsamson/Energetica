@@ -271,6 +271,10 @@ def initialize_player(account: Account, tile: HexTile) -> Player:
     # above, so a DB failure (e.g. SQLITE_BUSY on the shared accounts.db) must never propagate and
     # fail an otherwise-successful settle — that would leave the player wedged (settled in-engine
     # but the request 500s). A missing row is recoverable via scripts/backfill-instance-membership.py.
+    # MembershipRoleConflictError is deliberately NOT caught here: get_playing_account already
+    # rejects a facilitator before they ever reach settle, so this should be unreachable — if it
+    # ever fires, that invariant broke and the 500 should surface loudly, not be swallowed as if
+    # it were a transient DB hiccup.
     slug = instance_config.instance_slug()
     if slug is not None:
         try:

@@ -18,7 +18,7 @@ type RouteConfig =
           isUnlocked?: (capabilities: Capabilities) => UnlockStatus;
       }
     | {
-          // Routes that require a user with an "facilitator" role (facilitator surfaces, #1019/#989).
+          // Routes that require a user with a "facilitator" role (facilitator surfaces, #1019/#989).
           // No further gating below the role match — a facilitator account has no settled-tile or
           // capability-unlock concept.
           requiredRole: "facilitator";

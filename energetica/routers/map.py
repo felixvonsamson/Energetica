@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.accounts import Account
 from energetica.database.map.hex_tile import HexTile
-from energetica.database.player import Player
 from energetica.schemas.map import SettleRequest, SettleResponse
 from energetica.schemas.map import HexTileOut
 from energetica.utils import map_helpers
@@ -45,12 +44,12 @@ def settle_region(
     account: Annotated[Account, Depends(get_playing_account)],
     request_data: SettleRequest,
 ) -> SettleResponse:
-    if next(Player.filter_by(account_id=account.account_id), None) is not None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already has a player")
     region = HexTile.getitem(
         request_data.region_id,
         error=HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Region not found"),
     )
+    # confirm_location itself rejects an account that already has a player (GameError ->
+    # CHOICE_UNMODIFIABLE, 400) — no need to duplicate that check here.
     player = map_helpers.confirm_location(account, region)
     # Returning player_id will probably be useful for debugging in the future
     return SettleResponse(player_id=player.id)

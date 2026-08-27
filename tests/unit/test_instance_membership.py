@@ -6,6 +6,7 @@ and the in-run switcher read these rows back, joined against on-disk instance fr
 
 from __future__ import annotations
 
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -34,7 +35,7 @@ def test_record_and_read_back_membership(accounts_db: Path) -> None:
     assert memberships[0].created_at == "2026-03-01T12:00:00+00:00"
 
 
-def test_record_membership_is_idempotent_and_keeps_first_settled_at(accounts_db: Path) -> None:
+def test_record_settlement_is_idempotent_and_keeps_first_created_at(accounts_db: Path) -> None:
     """A second record for the same (account, slug) does not duplicate the row nor overwrite
     the original timestamp — settling is a one-time event, and the backfill may re-run.
     """
@@ -47,7 +48,7 @@ def test_record_membership_is_idempotent_and_keeps_first_settled_at(accounts_db:
     assert memberships[0].created_at == "2026-03-01T12:00:00+00:00"
 
 
-def test_get_memberships_returns_only_the_given_account_ordered_by_settled_at_desc(accounts_db: Path) -> None:
+def test_get_memberships_returns_only_the_given_account_ordered_by_created_at_desc(accounts_db: Path) -> None:
     """get_memberships is scoped to one account and lists its runs most-recently-settled first."""
     accounts.record_settlement(account_id=1, slug="spring-2026", settled_at="2026-03-01T00:00:00+00:00")
     accounts.record_settlement(account_id=1, slug="autumn-2026", settled_at="2026-09-01T00:00:00+00:00")
@@ -85,7 +86,7 @@ def test_settled_at_is_normalised_to_utc_so_ordering_is_chronological(accounts_d
     assert memberships[1].created_at == "2026-03-01T06:00:00+00:00"  # stored normalised to UTC
 
 
-def test_record_membership_rejects_naive_timestamp(accounts_db: Path) -> None:
+def test_record_settlement_rejects_naive_timestamp(accounts_db: Path) -> None:
     """A tz-less settled_at is a bug and fails loud rather than sorting unpredictably."""
     with pytest.raises(ValueError, match="timezone-aware"):
         accounts.record_settlement(account_id=1, slug="oops", settled_at="2026-03-01T08:00:00")
@@ -131,6 +132,51 @@ def test_is_facilitator_false_for_an_unrelated_instance(accounts_db: Path) -> No
     accounts.grant_facilitator(account_id=1, slug="spring-2026")
 
     assert accounts.is_facilitator(account_id=1, slug="autumn-2026") is False
+
+
+def test_grant_facilitator_server_wide_twice_does_not_duplicate_the_row(accounts_db: Path) -> None:
+    """SQLite treats every NULL as distinct in a unique index, so the (account_id, slug) primary
+    key alone would let two server-wide grants for the same account both insert — a partial
+    unique index (WHERE slug IS NULL) backstops what the app-level idempotency check in
+    grant_facilitator races against under concurrent callers.
+    """
+    accounts.grant_facilitator(account_id=1, slug=None)
+    accounts.grant_facilitator(account_id=1, slug=None)  # must not raise or duplicate
+
+    with sqlite3.connect(accounts_db) as conn:
+        rows = conn.execute("SELECT COUNT(*) FROM instance_membership WHERE account_id = 1 AND slug IS NULL").fetchone()
+    assert rows[0] == 1
+
+
+def test_migrate_instance_membership_columns_backfills_pre_role_rows(accounts_db: Path) -> None:
+    """A row written under the pre-role schema (slug/settled_at NOT NULL, no role column) must
+    survive the rebuild migration as role='player' with created_at taken from the old settled_at.
+    """
+    with sqlite3.connect(accounts_db) as conn:
+        conn.execute("DROP TABLE instance_membership")
+        conn.execute(
+            """
+            CREATE TABLE instance_membership (
+                account_id INTEGER NOT NULL,
+                slug       TEXT    NOT NULL,
+                settled_at TEXT    NOT NULL,
+                PRIMARY KEY (account_id, slug)
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO instance_membership (account_id, slug, settled_at) VALUES (1, 'spring-2026', '2026-03-01T12:00:00+00:00')"
+        )
+        conn.commit()
+    from energetica.accounts.db import _reset_initialised_paths
+
+    _reset_initialised_paths()  # force the next _connect() to re-run schema/migration
+
+    memberships = accounts.get_memberships(account_id=1)
+
+    assert len(memberships) == 1
+    assert memberships[0].role == "player"
+    assert memberships[0].created_at == "2026-03-01T12:00:00+00:00"
 
 
 def test_settling_records_membership_for_this_instance(monkeypatch: pytest.MonkeyPatch) -> None:

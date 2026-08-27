@@ -105,6 +105,14 @@ def _create_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    # SQLite (like standard SQL) treats every NULL as distinct in a unique index, so the PRIMARY
+    # KEY above does *not* stop two server-wide (slug IS NULL) rows for the same account — a
+    # partial index is the only way to make "one server-wide grant per account" a real DB
+    # constraint rather than just the app-level check-then-insert in grant_facilitator().
+    conn.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS instance_membership_one_server_wide_row_per_account "
+        "ON instance_membership (account_id) WHERE slug IS NULL"
+    )
     _migrate_instance_membership_columns(conn)
     conn.commit()
 
@@ -344,10 +352,17 @@ def grant_facilitator(*, account_id: int, slug: str | None, granted_at: str | No
         existing = _membership_role(conn, account_id=account_id, slug=slug)
         if existing == "facilitator":
             return  # already granted at this exact scope
-        conn.execute(
-            "INSERT INTO instance_membership (account_id, slug, role, created_at) VALUES (?, ?, 'facilitator', ?)",
-            (account_id, slug, granted_at),
-        )
+        try:
+            conn.execute(
+                "INSERT INTO instance_membership (account_id, slug, role, created_at) VALUES (?, ?, 'facilitator', ?)",
+                (account_id, slug, granted_at),
+            )
+        except sqlite3.IntegrityError:
+            # Lost a race with a concurrent grant for the same account (the partial unique index
+            # on slug IS NULL catches what the (account_id, slug) primary key can't, since SQLite
+            # treats every NULL as distinct there) — the other grant already won, so this is a
+            # no-op, not a failure.
+            return
         conn.commit()
 
 
