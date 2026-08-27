@@ -91,7 +91,11 @@ function FacilitatorPage() {
 
 function JoinLinkCard() {
     const { data, isLoading, isError, error } = useFacilitatorAccess();
-    const { mutate: setJoinOpen, isPending } = useSetJoinOpen();
+    const {
+        mutate: setJoinOpen,
+        isPending,
+        error: setJoinOpenError,
+    } = useSetJoinOpen();
     const [copied, setCopied] = useState(false);
 
     // Reset the "Copied!" confirmation a couple seconds after each copy, and on unmount.
@@ -156,6 +160,11 @@ function JoinLinkCard() {
                         onCheckedChange={(checked) => setJoinOpen(checked)}
                     />
                 </div>
+                {setJoinOpenError && (
+                    <InfoBanner variant="error">
+                        {getUserFriendlyError(setJoinOpenError)}
+                    </InfoBanner>
+                )}
 
                 <Separator />
 
