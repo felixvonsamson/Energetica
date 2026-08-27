@@ -12,10 +12,25 @@
 
 import type { StaticDataRouteOption } from "@tanstack/react-router";
 
+import type { Phase } from "@/lib/instances";
 import type { ApiSchema } from "@/types/api-helpers";
 import type { PlayerCapabilities } from "@/types/capabilities";
 
 type User = ApiSchema<"UserOut">;
+
+/**
+ * Whether the announced-phase waiting screen (`__root.tsx`, #862) takes over
+ * rendering instead of the requested route. A facilitator route (`requiredRole:
+ * "admin"`) has no in-game session to wait on — inviting and managing the
+ * roster (#1022) is exactly what a facilitator needs to do _before_ the run
+ * starts — so it's exempt.
+ */
+export function isAnnouncedTakeover(
+    routeConfig: StaticDataRouteOption["routeConfig"],
+    phase: Phase | undefined,
+): boolean {
+    return phase === "announced" && routeConfig?.requiredRole !== "admin";
+}
 
 export function computeRedirect(
     routeConfig: StaticDataRouteOption["routeConfig"],
