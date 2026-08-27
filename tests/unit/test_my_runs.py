@@ -41,8 +41,8 @@ def test_joins_memberships_with_fragments_most_recent_first(stores: Path) -> Non
     account_id = accounts.create_account(username="alice", pwhash="h")
     _fragment(stores, slug="spring-2026", name="Spring 2026", starts_at="2026-03-01T00:00:00Z")
     _fragment(stores, slug="autumn-2026", name="Autumn 2026", starts_at="2026-09-01T00:00:00Z")
-    accounts.record_membership(account_id=account_id, slug="spring-2026", settled_at="2026-03-02T00:00:00+00:00")
-    accounts.record_membership(account_id=account_id, slug="autumn-2026", settled_at="2026-09-02T00:00:00+00:00")
+    accounts.record_settlement(account_id=account_id, slug="spring-2026", settled_at="2026-03-02T00:00:00+00:00")
+    accounts.record_settlement(account_id=account_id, slug="autumn-2026", settled_at="2026-09-02T00:00:00+00:00")
 
     response = resolve_my_runs(account_id, "alice")
 
@@ -59,7 +59,7 @@ def test_surfaces_unadvertised_runs(stores: Path) -> None:
     """
     account_id = accounts.create_account(username="alice", pwhash="h")
     _fragment(stores, slug="secret-run", name="Secret", starts_at="2026-01-01T00:00:00Z", advertised=False)
-    accounts.record_membership(account_id=account_id, slug="secret-run", settled_at="2026-01-02T00:00:00+00:00")
+    accounts.record_settlement(account_id=account_id, slug="secret-run", settled_at="2026-01-02T00:00:00+00:00")
 
     assert [run.slug for run in resolve_my_runs(account_id, "alice").runs] == ["secret-run"]
 
@@ -67,9 +67,9 @@ def test_surfaces_unadvertised_runs(stores: Path) -> None:
 def test_filters_stale_membership_without_fragment(stores: Path) -> None:
     account_id = accounts.create_account(username="alice", pwhash="h")
     _fragment(stores, slug="live-run", name="Live", starts_at="2026-03-01T00:00:00Z")
-    accounts.record_membership(account_id=account_id, slug="live-run", settled_at="2026-03-02T00:00:00+00:00")
+    accounts.record_settlement(account_id=account_id, slug="live-run", settled_at="2026-03-02T00:00:00+00:00")
     # Run since deleted: membership row remains but its fragment is gone.
-    accounts.record_membership(account_id=account_id, slug="deleted-run", settled_at="2026-04-02T00:00:00+00:00")
+    accounts.record_settlement(account_id=account_id, slug="deleted-run", settled_at="2026-04-02T00:00:00+00:00")
 
     assert [run.slug for run in resolve_my_runs(account_id, "alice").runs] == ["live-run"]
 
@@ -80,13 +80,13 @@ def test_empty_when_no_memberships(stores: Path) -> None:
 
 
 def _raw_membership(account_id: int, slug: str, settled_at: str) -> None:
-    """Insert a membership row directly, bypassing record_membership's aware-UTC normalisation, to
+    """Insert a membership row directly, bypassing record_settlement's aware-UTC normalisation, to
     simulate a legacy/restored/hand-edited row.
     """
     conn = sqlite3.connect(os.environ["ENERGETICA_ACCOUNTS_DB_PATH"])
     try:
         conn.execute(
-            "INSERT OR IGNORE INTO instance_membership (account_id, slug, settled_at) VALUES (?, ?, ?)",
+            "INSERT OR IGNORE INTO instance_membership (account_id, slug, role, created_at) VALUES (?, ?, 'player', ?)",
             (account_id, slug, settled_at),
         )
         conn.commit()
@@ -111,7 +111,7 @@ def test_unparseable_settled_at_skipped_not_fatal(stores: Path) -> None:
     account_id = accounts.create_account(username="alice", pwhash="h")
     _fragment(stores, slug="good", name="Good", starts_at="2026-01-01T00:00:00Z")
     _fragment(stores, slug="corrupt", name="Corrupt", starts_at="2026-02-01T00:00:00Z")
-    accounts.record_membership(account_id=account_id, slug="good", settled_at="2026-01-02T00:00:00+00:00")
+    accounts.record_settlement(account_id=account_id, slug="good", settled_at="2026-01-02T00:00:00+00:00")
     _raw_membership(account_id, "corrupt", "not-a-timestamp")
 
     assert [run.slug for run in resolve_my_runs(account_id, "alice").runs] == ["good"]

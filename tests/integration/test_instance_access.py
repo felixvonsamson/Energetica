@@ -3,7 +3,9 @@
 Post-cutover the access policy is enforced when the SSO cookie is validated on entry, not at a
 login POST (which no longer exists). A public (or unconfigured) instance admits any server-wide
 account; a private instance admits only allowlisted usernames. The policy file is read fresh on
-every entry, so a lockdown takes effect even for an already-provisioned user (#817, ADR-0003).
+every entry, so a lockdown takes effect even for an account that has already settled (#817,
+ADR-0003). There is nothing to auto-provision any more (ADR-0004): entry never creates a
+``Player`` — only settling does.
 """
 
 from __future__ import annotations
@@ -15,7 +17,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from energetica import create_app
-from energetica.database.user import User
+from energetica.database.player import Player
 from energetica.globals import engine
 
 from ._session_helpers import authenticate, make_account
@@ -80,27 +82,25 @@ def test_entry_denied_for_unlisted_username_on_private_instance(configured: Path
     assert client.get(ME_URL).status_code == 403
 
 
-def test_entry_denied_does_not_provision_local_user(configured: Path) -> None:
-    """A denied entry on a private instance must not auto-provision a pickle User."""
+def test_entry_denied_does_not_create_a_player(configured: Path) -> None:
+    """A denied entry on a private instance must not create a ``Player`` — entry never does."""
     _write_policy(configured, {"policy": "private", "allowed_usernames": ["alice"]})
     client = _client()
     account_id = _enter(client, "carol")
 
     client.get(ME_URL)
 
-    assert next(User.filter_by(account_id=account_id), None) is None
+    assert next(Player.filter_by(account_id=account_id), None) is None
 
 
-def test_entry_denied_after_instance_goes_private_excluding_provisioned_user(configured: Path) -> None:
-    """A user provisioned while the instance was public is denied once it flips to private without
-    them — the access policy is consulted on every entry, not just the first.
+def test_entry_denied_after_instance_goes_private_excluding_a_previously_allowed_account(configured: Path) -> None:
+    """An account admitted while the instance was public is denied once it flips to private
+    without them — the access policy is consulted on every entry, not just the first.
     """
     _write_policy(configured, {"policy": "public"})
     client = _client()
-    account_id = _enter(client, "alice")
-    # First entry (public) provisions the pickle User.
+    _enter(client, "alice")
     assert client.get(ME_URL).status_code == 200
-    assert next(User.filter_by(account_id=account_id), None) is not None
 
     # Instance is locked down to an allowlist that excludes alice.
     _write_policy(configured, {"policy": "private", "allowed_usernames": ["bob"]})

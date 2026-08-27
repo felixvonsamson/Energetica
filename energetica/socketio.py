@@ -13,7 +13,7 @@ from socketio.exceptions import ConnectionRefusedError
 
 from energetica.database.player import Player
 from energetica.globals import engine
-from energetica.utils.auth import SESSION_COOKIE_NAME, get_user_from_token
+from energetica.utils.auth import SESSION_COOKIE_NAME, get_account_from_token, get_role
 
 
 def setup_socketio(app: FastAPI) -> None:
@@ -35,19 +35,20 @@ def setup_socketio(app: FastAPI) -> None:
         session_token = cookie.get(SESSION_COOKIE_NAME)
         if session_token is None:
             raise ConnectionRefusedError("authentication failed: no session token")
-        user = get_user_from_token(cast(str, session_token.value))
-        if user is None:
+        account = get_account_from_token(cast(str, session_token.value))
+        if account is None:
             raise ConnectionRefusedError("authentication failed: invalid token")
-        if user.role != "player":
+        if get_role(account.account_id) != "player":
             raise ConnectionRefusedError("authentication failed: not a player")
 
         # Allow unsettled players to connect so they can receive broadcasts (e.g., map updates)
         # Only track socketio_clients if player exists (for targeted player.emit())
-        if user.player is not None:
-            user.player.socketio_clients.append(sid)
-            connected_users_by_sid[sid] = user.player
+        player = next(Player.filter_by(account_id=account.account_id), None)
+        if player is not None:
+            player.socketio_clients.append(sid)
+            connected_users_by_sid[sid] = player
         else:
-            # Track unsettled users with None so we can clean up on disconnect
+            # Track unsettled accounts with None so we can clean up on disconnect
             connected_users_by_sid[sid] = None
 
     @sio.event

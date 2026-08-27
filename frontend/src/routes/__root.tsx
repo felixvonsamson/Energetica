@@ -53,7 +53,7 @@ function RootComponent() {
     // `undefined` while the engine config loads or on an unconfigured/open-ended run — mirroring the
     // backend's fail-open-to-active phase read (#861). Freeze/ended stay ungated here (that in-game
     // read-only surface is T8, #866).
-    // Facilitator (`requiredRole: "admin"`) routes are exempt (#1028): a facilitator manages the
+    // Facilitator (`requiredRole: "facilitator"`) routes are exempt (#1028): a facilitator manages the
     // roster and join link precisely during this pre-start window, and the backend imposes no
     // phase gate on those endpoints.
     // `phase === "announced"` already implies `engine.starts_at` is set (usePhase returns undefined

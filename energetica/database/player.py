@@ -73,21 +73,24 @@ if TYPE_CHECKING:
 
     from energetica.database.map.hex_tile import HexTile
     from energetica.database.network import Network
-    from energetica.database.user import User
 
 
 @dataclass
 # TODO (Felix): add @dataclass(eq=False) on all classes
 class Player(DBModel):
-    """Class that stores the users and their data."""
+    """Class that stores a settled account's game data.
 
-    user: User
+    ``Player`` is now the sole per-instance identity object (there is no separate ``User`` — see
+    ADR-0004): it only exists for an account that has actually settled, carrying ``account_id`` as
+    the foreign key back to the lobby-owned ``Account``. A facilitator, who never settles, has no
+    per-instance object at all; every facilitator/player authority check reads ``accounts.db``
+    directly instead.
+    """
+
+    username: str
+    pwhash: str
+    account_id: int
     tile: HexTile
-
-    @property
-    def username(self) -> str:
-        """Return the username of the associated user."""
-        return self.user.username
 
     last_connection: datetime | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

@@ -136,7 +136,7 @@ def test_my_runs_returns_authed_accounts_runs(signups_enabled: None, landing_dir
         ),
         encoding="utf-8",
     )
-    accounts.record_membership(
+    accounts.record_settlement(
         account_id=account.account_id, slug="spring-2026", settled_at="2026-03-02T00:00:00+00:00"
     )
 

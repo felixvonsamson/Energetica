@@ -37,7 +37,9 @@ export function useConfirmJoin(token: string) {
             void queryClient.invalidateQueries({
                 queryKey: queryKeys.join.link(token),
             });
-            await queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
+            await queryClient.invalidateQueries({
+                queryKey: queryKeys.auth.me,
+            });
         },
     });
 }

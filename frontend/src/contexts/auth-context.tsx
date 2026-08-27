@@ -37,7 +37,7 @@ export interface AuthProviderProps {
  * Exported (not inlined in `AuthProvider`'s `useQuery`) so `/app/`'s root
  * loader can resolve the same `queryKeys.auth.me` data through
  * `queryClient.ensureQueryData` — the loader needs the user's role _before_ the
- * app renders (to send an admin to `/app/facilitator` instead of the
+ * app renders (to send a facilitator to `/app/facilitator` instead of the
  * player-only `/app/dashboard`, #1020), which a query only read from inside the
  * React tree can't guarantee has resolved yet.
  */

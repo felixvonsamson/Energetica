@@ -19,9 +19,10 @@ There are exactly three principals plus ordinary users.
 
 - **Player** — a participant in the simulation of one instance. Has an in-game identity
   (money, networks, facilities) and plays by the rules.
-- **User** — an account on the platform. A user is not necessarily a player: a
-  facilitator can hold an account and act on an instance without ever being a player in
-  it. `user ≠ player`.
+- **Account** — an identity on the platform, owned by the lobby (ADR-0002/0003). An
+  account is not necessarily a player: a facilitator holds an account and acts on an
+  instance without ever settling into it as a player. `account ≠ player`. There is no
+  separate per-instance "user" object — see [Role model](#the-role-model).
 - **Facilitator** — the single elevated, in-product role. Its power comes from its
   *capabilities*, not from its title. In a Workshop-Mode instance the facilitator is the
   person the participants call the "moderator" — same role, context-specific word.
@@ -36,10 +37,12 @@ moderator is the facilitator's Workshop word, not a separate role.
 
 ### The role model
 
-In code the role is a per-instance property of the engine `User`:
+In code the role is a lobby fact — a column on `instance_membership`, read directly by
+every authority/player check, never a property materialised onto a per-instance object:
 
 ```python
-UserRole = Literal["player", "facilitator"]  # was Literal["player", "admin"]
+Role = Literal["player", "facilitator"]  # was UserRole = Literal["player", "admin"] on the
+                                          # now-retired per-instance User (see ADR-0004)
 ```
 
 `"admin"` is retired with **no alias** — the migration replaces it outright. `sysadmin`
@@ -48,39 +51,51 @@ migration is tracked in the build backlog (see [#899](https://github.com/felixvo
 
 ## How elevated access is granted
 
-A facilitator grant is a **lobby fact**, stored once in the shared accounts store
-(`accounts.db`), keyed by account. It cannot live on the per-instance engine `User`,
-because a server-wide facilitator must have reach across instances that a per-instance
-pickle cannot express.
+A facilitator grant is a **lobby fact**: a row in `instance_membership`, the same table
+that already records an account's settled runs — a `role` column on that table, not a
+separate table. It cannot live on a per-instance object, because a server-wide facilitator
+must have reach across instances that a per-instance pickle cannot express, and there no
+longer is a per-instance `User` to put it on regardless (see below).
 
 ```
-facilitator_grants(account_id, slug, granted_at, granted_by)
+instance_membership(account_id, slug, role, created_at)
 ```
 
 - `slug IS NULL` — a **server-wide** grant: facilitator over every instance.
-- `slug = "<instance>"` — an **instance-scoped** grant: facilitator over that one
-  instance.
+- `slug = "<instance>"` — an **instance-scoped** grant, or an ordinary settled player.
+- `role` — `"player"` or `"facilitator"`.
 
-There is no role column: a row *is* the conferral of facilitator. Scope is **reach
-only** — it decides *which* instances a facilitator can act on, never *what* they can do
-there. A server-wide grant confers the same powers as an instance grant, over more
-instances.
+Scope is **reach only** — it decides *which* instances a facilitator can act on, never
+*what* they can do there. A server-wide grant confers the same powers as an instance grant,
+over more instances.
 
-**Projection.** When a granted account enters an instance, the instance derives
-`User.role = "facilitator"` from the grant, materialising it lazily the way player
-identities are already materialised on entry. Every existing `user.role` check keeps
-working unchanged; the grant is simply where the truth now lives.
+**Player and facilitator are mutually exclusive per `(account_id, slug)`.** One row, one
+role. An account already settled as a player in an instance cannot be granted facilitator
+there (and the grant script rejects it); an account already a facilitator cannot settle as
+a player. An account wanting both uses a second account.
+
+**No projection — every check reads the table directly.** There is no per-instance `User`
+object to materialise a role onto. Authority checks (`is_facilitator(account_id, slug)`)
+and player checks both query `instance_membership` straight from the request. This also
+retires the persistent `User`/`Account` duplication tracked in
+[#905](https://github.com/felixvonsamson/Energetica/issues/905): the per-instance engine
+object (`Player`) now carries `username`/`pwhash`/`account_id` directly and exists only for
+an account that has actually settled — nothing is auto-provisioned on first visit, and a
+facilitator, who never settles, has no per-instance object at all.
 
 **Revocation is eventual.** Removing a grant takes effect on the facilitator's next
-instance entry, not instantly. This is acceptable given short-lived instances with
-roughly one facilitator each; an instant kick is deferred to the ban surface
+request, not instantly (there is no live-session cache to invalidate to make it instant
+anyway). This is acceptable given short-lived instances with roughly one facilitator each;
+an instant kick is deferred to the ban surface
 ([#677](https://github.com/felixvonsamson/Energetica/issues/677)).
 
-**Bootstrap is a CLI seed.** The first grant is seeded out-of-band by a sysadmin from
-the shell, defaulting to server-wide. The old per-instance auto-provisioned `admin`
-account is **removed** — it existed only because this framework did not. A grant-admin
-web view (a facilitator issuing further grants through the platform) is a downstream
-surface, not part of this spec.
+**Bootstrap is a CLI seed, grant-only.** The first grant is seeded out-of-band by a
+sysadmin from the shell (`scripts/grant-facilitator.py`), defaulting to server-wide. There
+is deliberately no revoke command yet — YAGNI, given a single long-lived facilitator per
+short-lived instance; add one the day it's actually needed. The old per-instance
+auto-provisioned `admin` account is **removed** — it existed only because this framework
+did not. A grant-admin web view (a facilitator issuing further grants through the
+platform) is a downstream surface, not part of this spec.
 
 ## Access versus authority
 

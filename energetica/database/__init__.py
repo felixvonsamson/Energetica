@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from itertools import count
-from typing import TYPE_CHECKING, Generic, Literal, TypedDict, TypeVar, Unpack
+from typing import TYPE_CHECKING, Generic, TypedDict, TypeVar, Unpack
 
 from energetica.globals import engine
 
@@ -111,8 +111,7 @@ class DBModel:
         coordinates: tuple[int, int]
         # OngoingProject
         status: ProjectStatus
-        # User
-        role: Literal["player", "admin"]
+        # Player
         account_id: int
 
     @classmethod

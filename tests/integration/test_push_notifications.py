@@ -15,7 +15,7 @@ from energetica import create_app
 from energetica.database import player as player_module
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
-from energetica.database.user import User
+from energetica.accounts import Account
 from energetica.schemas.browser_notifications import Subscription, SubscriptionKeys
 from energetica.schemas.notifications import ChatMessagePayload
 from energetica.utils.auth import generate_password_hash
@@ -24,7 +24,9 @@ from energetica.utils.map_helpers import confirm_location
 
 def _make_player() -> Player:
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
-    user = User(username="username", pwhash=generate_password_hash("password"), role="player", account_id=1)
+    user = Account(
+        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
+    )
     return confirm_location(user, HexTile.getitem(1))
 
 

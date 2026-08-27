@@ -1,6 +1,6 @@
 """Public join-link surface (#1021): the visitor-facing counterpart to #1020's facilitator page.
 
-Reachable by anyone holding a valid token — no ``get_admin_user``/``get_settled_player`` gate here,
+Reachable by anyone holding a valid token — no ``get_facilitator``/``get_settled_player`` gate here,
 the unguessable token in the URL *is* the authorization. Resolves a token to this instance's name
 and open/closed state (``GET``, safe to call before the visitor is access-allowed or even signed
 in), and lets an already-signed-in visitor confirm joining (``POST``), which appends their
@@ -63,7 +63,7 @@ def confirm_join(token: str, account: Annotated[Account | None, Depends(get_curr
     is this runs *before* the visitor is access-allowed, so no local ``User`` need exist yet) but
     deliberately does not go through ``_enforce_instance_access``: granting access is this
     endpoint's job, not a precondition for reaching it. Checks identity before instance state
-    (mirrors ``get_admin_user``/``get_settled_player``'s "who, then what" order elsewhere in this
+    (mirrors ``get_facilitator``/``get_settled_player``'s "who, then what" order elsewhere in this
     codebase) and re-checks ``join_open`` server-side rather than trusting the page's last
     ``GET``, so a facilitator flipping the toggle mid-visit is the outcome that wins, not a stale
     client.

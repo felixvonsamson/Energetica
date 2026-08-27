@@ -18,10 +18,10 @@ type RouteConfig =
           isUnlocked?: (capabilities: Capabilities) => UnlockStatus;
       }
     | {
-          // Routes that require a user with an "admin" role (facilitator surfaces, #1019/#989).
-          // No further gating below the role match — an admin account has no settled-tile or
+          // Routes that require a user with an "facilitator" role (facilitator surfaces, #1019/#989).
+          // No further gating below the role match — a facilitator account has no settled-tile or
           // capability-unlock concept.
-          requiredRole: "admin";
+          requiredRole: "facilitator";
       };
 
 declare module "@tanstack/react-router" {

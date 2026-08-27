@@ -33,7 +33,7 @@ export interface paths {
         };
         /**
          * Get Current User
-         * @description Entry gate: validate the SSO cookie, enforce access, auto-provision, and return the user.
+         * @description Entry gate: validate the SSO cookie, enforce access, and return the account's role/status.
          */
         get: operations["get_current_user_api_v1_auth_me_get"];
         put?: never;
@@ -848,8 +848,8 @@ export interface paths {
         };
         /**
          * Get Roster
-         * @description This instance's roster, split into joined (an auto-provisioned local ``User`` already
-         *     exists) vs invited (allowlisted, no entry yet).
+         * @description This instance's roster, split into joined (a settled ``Player`` already exists) vs invited
+         *     (allowlisted, no entry yet).
          */
         get: operations["get_roster_api_v1_facilitator_roster_get"];
         put?: never;
@@ -1085,7 +1085,7 @@ export interface paths {
          *     is this runs *before* the visitor is access-allowed, so no local ``User`` need exist yet) but
          *     deliberately does not go through ``_enforce_instance_access``: granting access is this
          *     endpoint's job, not a precondition for reaching it. Checks identity before instance state
-         *     (mirrors ``get_admin_user``/``get_settled_player``'s "who, then what" order elsewhere in this
+         *     (mirrors ``get_facilitator``/``get_settled_player``'s "who, then what" order elsewhere in this
          *     codebase) and re-checks ``join_open`` server-side rather than trusting the page's last
          *     ``GET``, so a facilitator flipping the toggle mid-visit is the outcome that wins, not a stale
          *     client.
@@ -1291,7 +1291,8 @@ export interface paths {
         };
         /**
          * Get All Players
-         * @description Get all user ids and usernames, excluding admins.
+         * @description Get all settled players' ids and usernames (facilitators have no ``Player``, so there is
+         *     nothing to exclude).
          */
         get: operations["get_all_players_api_v1_players_get"];
         put?: never;
@@ -4310,7 +4311,7 @@ export interface components {
         UserOut: {
             /**
              * Id
-             * @description ID of the user
+             * @description The account's account_id (server-wide, ADR-0002)
              */
             id: number;
             /**
@@ -4323,7 +4324,7 @@ export interface components {
              * @description User role
              * @enum {string}
              */
-            role: "player" | "admin";
+            role: "player" | "facilitator";
             /**
              * Player Id
              * @description Player ID if role is 'player' and settled
@@ -4449,7 +4450,7 @@ export interface components {
          * GameExceptionType
          * @enum {string}
          */
-        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "USER_IS_NOT_AN_ADMIN" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
+        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
     };
     responses: never;
     parameters: never;

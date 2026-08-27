@@ -11,9 +11,9 @@ from __future__ import annotations
 import pytest
 
 from energetica import create_app
+from energetica.accounts import Account
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
-from energetica.database.user import User
 from energetica.utils.map_helpers import confirm_location
 
 
@@ -21,8 +21,8 @@ from energetica.utils.map_helpers import confirm_location
 def player() -> Player:
     """A fresh player settled on a fresh engine + map (Player construction needs both)."""
     create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
-    user = User("emitter", "pwhash", role="player", account_id=1)
-    return confirm_location(user, HexTile.getitem(1))
+    account = Account(account_id=1, username="emitter", pwhash="pwhash", email=None, created_at="")
+    return confirm_location(account, HexTile.getitem(1))
 
 
 def test_produced_co2_sums_only_positive_categories(player: Player) -> None:

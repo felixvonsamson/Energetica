@@ -7,8 +7,8 @@ import sys
 import textwrap
 
 from energetica import create_app
+from energetica.accounts import Account
 from energetica.database.map.hex_tile import HexTile
-from energetica.database.user import User
 from energetica.enums import ControllableFacilityType
 from energetica.globals import engine
 from energetica.utils.map_helpers import confirm_location
@@ -20,10 +20,10 @@ def test_price_randomization() -> None:
     # test ran before it (it settles tiles 1 & 2, which a prior test may have already occupied).
     create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
     engine.random_seed = 0
-    user_a = User("player1", "pwhash", role="player", account_id=1)
-    user_b = User("player2", "pwhash", role="player", account_id=2)
-    player_a = confirm_location(user_a, HexTile.getitem(1))
-    player_b = confirm_location(user_b, HexTile.getitem(2))
+    account_a = Account(account_id=1, username="player1", pwhash="pwhash", email=None, created_at="")
+    account_b = Account(account_id=2, username="player2", pwhash="pwhash", email=None, created_at="")
+    player_a = confirm_location(account_a, HexTile.getitem(1))
+    player_b = confirm_location(account_b, HexTile.getitem(2))
     assert (
         player_a.network_prices.ask_prices[ControllableFacilityType.COAL_BURNER]
         != player_b.network_prices.ask_prices[ControllableFacilityType.COAL_BURNER]
@@ -38,12 +38,13 @@ def test_seed_determinism() -> None:
         subprocess_code = textwrap.dedent(f"""
             import json
             from energetica import engine
+            from energetica.database.map.hex_tile import HexTile
             from energetica.database.player import Player
             from energetica import __version__
             engine.init_instance(30, 3600, 0, env="dev", game_version=__version__)
-            
+
             engine.random_seed = {seed}
-            player = Player("player1", "pwhash")
+            player = Player(username="player1", pwhash="pwhash", account_id=1, tile=HexTile.getitem(1))
             result = {{
                 "bid": player.network_prices.bid_prices,
                 "ask": player.network_prices.ask_prices,

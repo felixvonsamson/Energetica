@@ -13,13 +13,13 @@ from noise import pnoise3
 from scipy.stats import norm
 
 from energetica import accounts, instance_config, technology_effects
+from energetica.accounts import Account
 from energetica.config.assets import river_flow_speed_seasonal
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.messages import Chat, Message
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.database.user import User
 from energetica.enums import ControllableFacilityType
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
@@ -27,29 +27,24 @@ from energetica.schemas.daily_quiz import DailyQuizBase
 from energetica.schemas.simulate import CreateUserAction
 from energetica.schemas.weather import WeatherOut
 from energetica.utils.astro import DrHI
-from energetica.database.player import Player
-from energetica.database.user import User
 
 # Helper functions and data initialization utilities
 
 
-def signup_playing_user(request: Request | None, username: str, pwhash: str) -> User:
+def signup_playing_user(request: Request | None, username: str, pwhash: str) -> Account:
     """
-    Sign up a User with the player role.
+    Sign up an account with the player role.
 
-    Writes the credentials to the server-wide SQLite accounts store first, then creates the
-    pickle User. If pickle creation fails, the SQLite row is rolled back so re-attempts with
-    the same username are not blocked by a stale account row.
+    Writes the credentials to the server-wide SQLite accounts store. There is no per-instance
+    object to create at signup time any more (see ADR-0004) — a ``Player`` is only created later,
+    at settle.
 
     Calling with request set to null is reserved for simulation - when APIs call this function, they must pass the
     corresponding request object.
     """
     account_id = accounts.create_account(username=username, pwhash=pwhash)
-    try:
-        new_user = User(username=username, pwhash=pwhash, role="player", account_id=account_id)
-    except Exception:
-        accounts.delete_account(account_id=account_id)
-        raise
+    account = accounts.get_account_by_id(account_id)
+    assert account is not None
 
     log_entry = CreateUserAction(
         timestamp=datetime.now(),
@@ -57,14 +52,14 @@ def signup_playing_user(request: Request | None, username: str, pwhash: str) -> 
         if request is not None
         else None,
         action_type="create_user",
-        user_id=new_user.id,
-        username=new_user.username,
-        pw_hash=new_user.pwhash,
+        user_id=account.account_id,
+        username=account.username,
+        pw_hash=account.pwhash,
     )
     engine.log_action(log_entry)
 
     engine.log(f"{username} created an account")
-    return new_user
+    return account
 
 
 def add_player_to_data(player: Player) -> None:
@@ -237,7 +232,7 @@ def send_new_message_sio(message: Message, chat: Chat) -> None:
 # Map
 
 
-def initialize_player(user: User, tile: HexTile) -> Player:
+def initialize_player(account: Account, tile: HexTile) -> Player:
     """
     Initialize a player's data after they have chosen a location.
 
@@ -245,8 +240,7 @@ def initialize_player(user: User, tile: HexTile) -> Player:
     - Giving the player an initial steam engine
     - Adding the player to the general chat
     """
-    player = Player(user=user, tile=tile)
-    user.player = player
+    player = Player(username=account.username, pwhash=account.pwhash, account_id=account.account_id, tile=tile)
     tile.player = player
 
     eol = engine.total_t + math.ceil(
@@ -280,7 +274,9 @@ def initialize_player(user: User, tile: HexTile) -> Player:
     slug = instance_config.instance_slug()
     if slug is not None:
         try:
-            accounts.record_membership(account_id=user.account_id, slug=slug, settled_at=player.created_at.isoformat())
+            accounts.record_settlement(
+                account_id=account.account_id, slug=slug, settled_at=player.created_at.isoformat()
+            )
         except (OSError, sqlite3.Error) as exc:
             engine.log(f"could not record membership for {player.username} in run {slug}: {exc}")
 

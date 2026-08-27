@@ -13,7 +13,7 @@ from energetica.game_error import GameError
 from energetica.globals import engine
 from energetica.schemas.common import GameErrorOut
 from energetica.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
-from energetica.utils.auth import get_user
+from energetica.utils.auth import get_current_account
 
 from .achievements import router as achievements_router
 from .auth import router as auth_router
@@ -169,8 +169,8 @@ def setup_routes(app: FastAPI) -> None:
         except Exception:
             response_payload = "unparsable or not JSON"
 
-        user = get_user(request)
-        if user is None:
+        account = get_current_account(request)
+        if account is None:
             return new_response
 
         log_entry = ApiAction(
@@ -181,7 +181,7 @@ def setup_routes(app: FastAPI) -> None:
                 request.client.host if request.client is not None else "null",
             ),
             action_type="request",
-            user_id=user.id,
+            user_id=account.account_id,
             request=ApiActionRequest(
                 endpoint=request.url.path,
                 method=cast(Method, request.method),

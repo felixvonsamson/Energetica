@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import requests
 
-from energetica.database.user import User
+from energetica import accounts
 from energetica.globals import engine
 from energetica.schemas.simulate import Action
 from energetica.utils import misc
@@ -19,17 +19,25 @@ from energetica.utils.tick_execution import tick
 
 def create_user(user_id: int, username: str, pwhash: str) -> requests.Session:
     """Create a user with the given user_id."""
-    user = misc.signup_playing_user(None, username, pwhash)
+    account = misc.signup_playing_user(None, username, pwhash)
     session = requests.Session()
-    add_session_cookie_to_session(session, user.username)
+    add_session_cookie_to_session(session, account.username)
     return session
 
 
 def login_user(user_id: int) -> requests.Session:
-    """Login a user with the given user_id."""
-    user = User.getitem(user_id, ValueError(f"Cannot log in user: user with id {user_id} does not exist"))
+    """Login a user with the given user_id.
+
+    ``user_id`` is the account_id recorded as the ``user_id`` field of the ``CreateUserAction``
+    that originally signed this account up — an opaque correlation key within one
+    replay/simulation run, not a per-instance object id (there is no such thing any more; see
+    ADR-0004).
+    """
+    account = accounts.get_account_by_id(user_id)
+    if account is None:
+        raise ValueError(f"Cannot log in user: account with id {user_id} does not exist")
     session = requests.Session()
-    add_session_cookie_to_session(session, user.username)
+    add_session_cookie_to_session(session, account.username)
     return session
 
 

@@ -17,11 +17,11 @@ function player(overrides: Partial<User> = {}): User {
     };
 }
 
-function admin(overrides: Partial<User> = {}): User {
+function facilitator(overrides: Partial<User> = {}): User {
     return {
         id: 2,
         username: "root",
-        role: "admin",
+        role: "facilitator",
         is_settled: false,
         ...overrides,
     };
@@ -35,7 +35,7 @@ describe("computeRedirect", () => {
             computeRedirect({ requiredRole: null }, player(), null),
         ).toBeNull();
         expect(
-            computeRedirect({ requiredRole: null }, admin(), null),
+            computeRedirect({ requiredRole: null }, facilitator(), null),
         ).toBeNull();
     });
 
@@ -43,27 +43,35 @@ describe("computeRedirect", () => {
         expect(computeRedirect(undefined, player(), null)).toBeNull();
     });
 
-    // --- admin routes (#1019) ---------------------------------------------------------------
+    // --- facilitator routes (#1019) ---------------------------------------------------------------
 
-    it("allows an admin account onto an admin-required route", () => {
+    it("allows a facilitator account onto a facilitator-required route", () => {
         expect(
-            computeRedirect({ requiredRole: "admin" }, admin(), null),
+            computeRedirect(
+                { requiredRole: "facilitator" },
+                facilitator(),
+                null,
+            ),
         ).toBeNull();
     });
 
-    it("redirects a non-admin (player) account away from an admin-required route", () => {
+    it("redirects a non-facilitator (player) account away from a facilitator-required route", () => {
         expect(
-            computeRedirect({ requiredRole: "admin" }, player(), CAPABILITIES),
+            computeRedirect(
+                { requiredRole: "facilitator" },
+                player(),
+                CAPABILITIES,
+            ),
         ).toBe("/app/logout");
     });
 
     // --- player routes (pre-existing behaviour, unchanged by the extraction) ----------------
 
-    it("redirects an admin account away from a player-required route", () => {
+    it("redirects a facilitator account away from a player-required route", () => {
         expect(
             computeRedirect(
                 { requiredRole: "player", requiresSettledTile: true },
-                admin(),
+                facilitator(),
                 null,
             ),
         ).toBe("/app/logout");
@@ -124,9 +132,9 @@ describe("computeRedirect", () => {
 describe("isAnnouncedTakeover", () => {
     // --- facilitator exemption (#1028) --------------------------------------------------------
 
-    it("exempts an admin-required route from the announced takeover", () => {
+    it("exempts a facilitator-required route from the announced takeover", () => {
         expect(
-            isAnnouncedTakeover({ requiredRole: "admin" }, "announced"),
+            isAnnouncedTakeover({ requiredRole: "facilitator" }, "announced"),
         ).toBe(false);
     });
 
@@ -152,9 +160,9 @@ describe("isAnnouncedTakeover", () => {
                 "active",
             ),
         ).toBe(false);
-        expect(isAnnouncedTakeover({ requiredRole: "admin" }, "active")).toBe(
-            false,
-        );
+        expect(
+            isAnnouncedTakeover({ requiredRole: "facilitator" }, "active"),
+        ).toBe(false);
     });
 
     it("does not take over while the phase is unresolved", () => {

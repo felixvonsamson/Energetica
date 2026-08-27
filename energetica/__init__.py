@@ -267,23 +267,12 @@ def create_app(
         scheduler.start()
 
         from energetica import accounts
-        from energetica.database.user import User
         from energetica.utils.auth import generate_password_hash
 
         accounts.init_db()
 
-        # Creating the root admin account if it does not exist.
-        if not list(User.filter_by(role="admin")):
-            admin_password = secrets.token_hex(4)
-            hashed_password = generate_password_hash(admin_password)
-            admin_account_id = accounts.get_or_create_account_id(username="admin", pwhash=hashed_password)
-            new_admin = User(username="admin", pwhash=hashed_password, role="admin", account_id=admin_account_id)
-            engine.log(f"Admin account created with username '{new_admin.username}'")
-            # Written under instance/ (the per-instance, service-writable state dir): the code
-            # dir is deploy-owned and read-only to the service user in the multi-instance layout,
-            # so writing the repo root here would PermissionError on startup.
-            with open(_REPO_ROOT / "instance" / "admin_accounts.txt", "w", encoding="utf-8") as file:
-                file.write(f"{new_admin.username},{admin_password}\n")
+        # There is no more auto-provisioned admin account (ADR-0004): a facilitator is granted
+        # out-of-band by a sysadmin via scripts/grant-facilitator.py, never minted at startup.
 
         if disable_signups:
             # if sign-ups are disabled, accounts have to be created from a file. Lives under
@@ -302,15 +291,13 @@ def create_app(
                         raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
                     username = parts[0].strip()
                     password = parts[1].strip() if len(parts) > 1 else None
-                    existing_player = next(User.filter_by(username=username), None)
-                    if existing_player:
+                    if accounts.get_account_by_username(username) is not None:
                         engine.log(f"players.txt: Did not create new player {username}; username already exists.")
                         continue
                     if password is None:
                         password = secrets.token_hex(4)
                     hashed_password = generate_password_hash(password)
-                    account_id = accounts.get_or_create_account_id(username=username, pwhash=hashed_password)
-                    User(username=username, pwhash=hashed_password, role="player", account_id=account_id)
+                    accounts.get_or_create_account_id(username=username, pwhash=hashed_password)
                     file.write(f"{username},{password}\n")
                     engine.log(f"players.txt: Created player {username} with password {password}")
 
