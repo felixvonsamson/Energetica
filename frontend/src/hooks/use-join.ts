@@ -33,11 +33,11 @@ export function useJoinLink(token: string) {
 export function useConfirmJoin(token: string) {
     return useMutation({
         mutationFn: () => joinApi.confirm(token),
-        onSuccess: () => {
+        onSuccess: async () => {
             void queryClient.invalidateQueries({
                 queryKey: queryKeys.join.link(token),
             });
-            void queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
+            await queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
         },
     });
 }
