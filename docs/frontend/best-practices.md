@@ -8,12 +8,6 @@ Standards and patterns for the React migration.
 - [animations.md](animations.md) - Animation and transition guidelines
 - [asset-colours.md](asset-colours.md) - Asset-specific color system
 
-### File Naming
-
-- Components: `PascalCase.tsx` (e.g., `DashboardCard.tsx`)
-- Hooks: `use*.ts` (e.g., `usePlayerMoney.ts`)
-- Typescript utils: `camelCase.ts` (e.g., `formatCurrency.ts`)
-
 ## Component Guidelines
 
 Keep components small and focused where possible.
