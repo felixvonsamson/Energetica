@@ -17,6 +17,10 @@ set -euo pipefail
 #   5. retire the landing fragment (see below), re-aggregating instances.json
 #   6. optionally release the TLS certificate
 #
+# Step 1 runs before step 5, not after: /auth/me on a still-running instance republishes the
+# fragment on every authenticated hit, so retiring it before the unit is stopped just loses the
+# race to the next request.
+#
 # What it must NEVER touch is recaps/{instance}.json on the landing dir. That artifact is the
 # whole point of the lifecycle: the run's recap is minted at freeze and published OUTSIDE the
 # instance, so it survives both the reap and this teardown. The instance can vanish entirely and
@@ -214,7 +218,24 @@ if [ -n "$ARCHIVE_TO" ]; then
     fi
 fi
 
-# --- 2. Retire the fragment (before the code it needs may be deleted) -----------
+# --- 2. Service --------------------------------------------------------------------
+# Stopped BEFORE the fragment is retired, deliberately. /auth/me (the entry gate) republishes
+# this instance's fragment on every authenticated hit while the process is alive — so retiring
+# the fragment first only wins the race until the next request. Stopping the unit first cuts
+# the instance off from the world; nothing is left that can resurrect what step 3 is about to
+# take away.
+log_section "SERVICE"
+if [ -f "$UNIT" ]; then
+    systemctl stop "energetica-$INSTANCE" 2>/dev/null || true
+    systemctl disable "energetica-$INSTANCE" >/dev/null 2>&1 || true
+    rm -f "$UNIT"
+    systemctl daemon-reload
+    log_success "energetica-$INSTANCE.service stopped, disabled and removed"
+else
+    log_success "No unit at $UNIT — already removed"
+fi
+
+# --- 3. Retire the fragment (before the code it needs may be deleted) -----------
 # The keep-or-delete rule lives in energetica.instance_config.retire_fragment, which also
 # re-aggregates instances.json. Done before step 5 removes the app dir, since that dir is the
 # preferred CODE_ROOT. A failure here aborts rather than warning: leaving a stale fragment behind
@@ -228,18 +249,6 @@ if ! run_landing_py "print('deleted' if instance_config.retire_fragment('$INSTAN
     exit 1
 fi
 log_success "Fragment retired and instances.json re-aggregated"
-
-# --- 3. Service ------------------------------------------------------------------
-log_section "SERVICE"
-if [ -f "$UNIT" ]; then
-    systemctl stop "energetica-$INSTANCE" 2>/dev/null || true
-    systemctl disable "energetica-$INSTANCE" >/dev/null 2>&1 || true
-    rm -f "$UNIT"
-    systemctl daemon-reload
-    log_success "energetica-$INSTANCE.service stopped, disabled and removed"
-else
-    log_success "No unit at $UNIT — already removed"
-fi
 
 # --- 4. Apache vhost -------------------------------------------------------------
 log_section "VHOST"
