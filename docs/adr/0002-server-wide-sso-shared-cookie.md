@@ -1,6 +1,7 @@
 # Server-wide SSO via shared-secret parent-domain cookie (A1); token-handoff (A2) deferred
 
 **Status:** accepted
+**Date:** 2026-06-28
 
 ## Context
 
