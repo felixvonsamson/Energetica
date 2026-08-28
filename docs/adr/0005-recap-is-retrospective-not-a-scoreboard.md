@@ -24,8 +24,7 @@ they can read off the table is *the* thing that mattered.
 
 The recap presents information matter-of-factly and lets the reader draw the conclusions.
 
-1. **No winner is crowned.** No global `rank`, no medal on any row. Enforced by
-   `test_from_players_has_no_rank_field` in `tests/unit/test_recap.py`.
+1. **No overall winner is crowned.** Having per-category winners and rankings is fine.
 2. **CO2 is laid bare as two un-netted columns** — gross `produced_co2` and `captured_co2` —
    so a heavy emitter who also captures heavily reads as exactly that, with the
    produce-versus-capture relationship visible rather than collapsed.
