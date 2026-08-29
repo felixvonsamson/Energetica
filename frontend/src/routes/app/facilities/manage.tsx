@@ -8,7 +8,6 @@ import { GameLayout } from "@/components/layout/game-layout";
 import { StatusBadge } from "@/components/power-priorities/status-badge";
 import { CardContent, CardHeader, CardTitle, PageCard } from "@/components/ui";
 import { FacilityGauge } from "@/components/ui/facility-gauge";
-import { dummyFacilities } from "@/data/dummyFacilities";
 import { useHasCapability } from "@/hooks/use-capabilities";
 import { useFacilities, useFacilityStatuses } from "@/hooks/use-facilities";
 import { formatPower, formatEnergy, formatMassRate } from "@/lib/format-utils";
@@ -71,13 +70,10 @@ function FacilityManagementContent() {
     // Only show category UI if more than just power facilities are available
     const showCategoryUI = hasStorage || hasWarehouse;
 
-    // TEMPORARY: Set to true to showcase all asset colors with dummy data
-    const SHOW_DUMMY_DATA = false as boolean;
-
     const isLoading = facilitiesLoading;
     const error = facilitiesError;
 
-    if (isLoading && !SHOW_DUMMY_DATA) {
+    if (isLoading) {
         return (
             <div className="p-4 md:p-8 text-center">
                 <p className="text-lg">Loading...</p>
@@ -85,7 +81,7 @@ function FacilityManagementContent() {
         );
     }
 
-    if (error && !SHOW_DUMMY_DATA) {
+    if (error) {
         return (
             <div className="p-4 md:p-8 text-center text-destructive">
                 <p className="text-lg">Error loading data</p>
@@ -93,9 +89,7 @@ function FacilityManagementContent() {
         );
     }
 
-    const displayFacilities = SHOW_DUMMY_DATA ? dummyFacilities : facilities;
-
-    if (!displayFacilities) {
+    if (!facilities) {
         return null;
     }
 
@@ -121,9 +115,7 @@ function FacilityManagementContent() {
                             </CardHeader>
                             <CardContent className="overflow-x-auto">
                                 <FacilityGroupTable
-                                    facilities={
-                                        displayFacilities.power_facilities
-                                    }
+                                    facilities={facilities.power_facilities}
                                     columns={[
                                         {
                                             header: "Status",
@@ -242,9 +234,7 @@ function FacilityManagementContent() {
                             </CardHeader>
                             <CardContent className="overflow-x-auto">
                                 <FacilityGroupTable
-                                    facilities={
-                                        displayFacilities.storage_facilities
-                                    }
+                                    facilities={facilities.storage_facilities}
                                     columns={[
                                         {
                                             header: "Capacity",
@@ -322,7 +312,7 @@ function FacilityManagementContent() {
                             <CardContent className="overflow-x-auto">
                                 <FacilityGroupTable
                                     facilities={
-                                        displayFacilities.extraction_facilities
+                                        facilities.extraction_facilities
                                     }
                                     columns={[
                                         {

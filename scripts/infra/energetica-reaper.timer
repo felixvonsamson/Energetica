@@ -1,0 +1,27 @@
+# Schedules the lifecycle reaper sweep (energetica-reaper.service).
+#
+# Installed and enabled once per VPS by scripts/infra/setup-base.sh.
+#
+# Why a periodic sweep rather than a per-instance timer armed at ended_at: the sweep re-reads
+# every instance.json each tick, so an admin who edits ended_at — pulling it in to end a run
+# early, or pushing it out to extend one — is obeyed on the next tick with nothing to re-arm.
+# That is the same contract the rest of the lifecycle already keeps (the freeze clock and the
+# whitelist are both re-read, never cached), and it means there is no per-instance systemd state
+# to leak when a run is torn down.
+#
+# Every 5 minutes is deliberately coarse. `ended_at` is a wind-down boundary, not a starting gun:
+# the run's sim already halted at freeze_at, so the only thing the delay costs is a few minutes of
+# a read-only backend staying up. Persistent=true catches up one missed sweep after a reboot.
+
+[Unit]
+Description=Run the Energetica lifecycle reaper every 5 minutes
+Documentation=https://github.com/felixvonsamson/Energetica/issues/865
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Persistent=true
+Unit=energetica-reaper.service
+
+[Install]
+WantedBy=timers.target

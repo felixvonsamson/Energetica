@@ -7,8 +7,8 @@ set -euo pipefail
 #        [--user <ssh-user>] [--yes] [--skip-build]
 #
 # Builds the landing bundle locally and rsyncs it to /var/www/energetica-landing/.
-# instances.json and instances/ are owned and written by the instance backends — they are
-# excluded from the sync (and from --delete) so a landing deploy never clobbers them.
+# instances.json, instances/ and recaps/ are owned and written by the instance backends — they
+# are excluded from the sync (and from --delete) so a landing deploy never clobbers them.
 
 REMOTE_HOST="${DEPLOY_HOST:-}"
 REMOTE_USER="${DEPLOY_USER:-deploy}"
@@ -57,17 +57,20 @@ fi
 
 if [ "$AUTO_CONFIRM" = false ]; then
     echo
-    echo "  Landing → $SSH:$LANDING_DIR/  (instances.json + instances/ preserved)"
+    echo "  Landing → $SSH:$LANDING_DIR/  (instances.json + instances/ + recaps/ preserved)"
     read -r -p "Continue? (y/n) " -n 1 -r; echo
     [[ $REPLY =~ ^[Yy]$ ]] || { echo "Cancelled."; exit 0; }
 fi
 
 log_step "Syncing landing files..."
 # --delete prunes stale assets, but the excludes are honoured for deletion too, so the
-# instance-owned manifest/fragment dir and the separately-synced static/ tree survive.
+# instance-owned manifest/fragment/recap dirs and the separately-synced static/ tree survive.
+# recaps/ is the load-bearing one: a recap is minted once and is un-recomputable after the run
+# is reaped, so a deploy that pruned it would destroy the artifact for good.
 rsync -az --delete \
     --exclude='instances.json' \
     --exclude='instances/' \
+    --exclude='recaps/' \
     --exclude='static/' \
     ./frontend/dist-landing/ "$SSH:$LANDING_DIR/" >/dev/null
 log_success "Landing bundle deployed"

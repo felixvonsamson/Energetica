@@ -21,7 +21,7 @@ Avoid abbreviations unless ubiquitous (e.g. `cfg` discouraged, use `config`).
 
 | Convention                   | Python             | TypeScript (regular) | TypeScript (React)        |
 | ---------------------------- | ------------------ | -------------------- | ------------------------- |
-| **Modules**                  | `snake_case.py`    | `camelCase.ts`       | `PascalCase.tsx`          |
+| **Modules**                  | `snake_case.py`    | `kebab-case.ts`      | `kebab-case.tsx`          |
 | **Classes**                  | `PascalCase`       | `PascalCase`         | -                         |
 | **Functions**                | `snake_case`       | `camelCase`          | `PascalCase` (components) |
 | **Variables**                | `snake_case`       | `camelCase`          | `camelCase`               |

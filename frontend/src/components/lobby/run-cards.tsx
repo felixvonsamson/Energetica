@@ -20,6 +20,11 @@
  * of, the primary action: freeze keeps the live instance up and readable (G2),
  * so "Continue"/"Join" into the live run is still meaningful even after the
  * recap exists.
+ *
+ * At `ended` it replaces that primary action instead of sitting beside it: the
+ * reap has stopped the instance (T7), so the cross-origin link would point at a
+ * subdomain that no longer answers. The recap is what survived, so it becomes
+ * the whole card's destination.
  */
 
 import { Link } from "@tanstack/react-router";
@@ -72,20 +77,38 @@ function RunCardFrame({
     phase: ReturnType<typeof derivePhase>;
     children: React.ReactNode;
 }) {
-    const recapAvailable = phase === "freeze" || phase === "ended";
+    // Once the run is `ended` its process has been reaped (T7) and `{slug}.{apex}` no longer
+    // answers, so "Continue"/"Join" would be a link into nothing. The recap is all that outlived
+    // the reap, so it becomes the card's primary — and only — action. During `freeze` the
+    // instance is still up and readable (G2), which is why the recap is merely an extra row there.
+    const reaped = phase === "ended";
+    const body = (
+        <>
+            {children}
+            <div className="flex flex-row items-center gap-1 text-primary shrink-0">
+                <p className="font-semibold">{reaped ? "View recap" : cta}</p>
+                <ChevronRight />
+            </div>
+        </>
+    );
+    const rowClasses =
+        "p-5 flex flex-row justify-between items-center gap-4 hover:bg-muted transition-all";
     return (
         <div className="bg-card text-foreground border border-border rounded-4xl shadow-md overflow-hidden">
-            <a
-                href={href}
-                className="p-5 flex flex-row justify-between items-center gap-4 hover:bg-muted transition-all"
-            >
-                {children}
-                <div className="flex flex-row items-center gap-1 text-primary shrink-0">
-                    <p className="font-semibold">{cta}</p>
-                    <ChevronRight />
-                </div>
-            </a>
-            {recapAvailable && <ViewRecapRow slug={slug} />}
+            {reaped ? (
+                <Link
+                    to="/runs/$slug/recap"
+                    params={{ slug }}
+                    className={rowClasses}
+                >
+                    {body}
+                </Link>
+            ) : (
+                <a href={href} className={rowClasses}>
+                    {body}
+                </a>
+            )}
+            {phase === "freeze" && <ViewRecapRow slug={slug} />}
         </div>
     );
 }

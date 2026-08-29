@@ -547,3 +547,44 @@ def load_recap(slug: str) -> Recap | None:
     from energetica.schemas.recap import Recap
 
     return _load_json_or_none(recap_path(slug), Recap, what="recap")
+
+
+# --- Teardown (T7) ----------------------------------------------------------------------------
+#
+# Reaping a run at ``ended_at`` only stops its process; the run's *artifacts* on the landing dir
+# outlive it. Tearing the instance down afterwards is a separate, manual act, and the one landing
+# artifact it must reason about is the fragment — see :func:`retire_fragment`.
+
+
+def retire_fragment(slug: str) -> bool:
+    """Delete a torn-down run's fragment and re-aggregate — **unless** it has a published recap.
+
+    Returns whether the fragment was deleted.
+
+    The fragment is not only the "run on offer" billboard: it is the *only* pointer by which
+    either lobby surface finds a run at all. :func:`load_fragment` backs ``my-runs`` (no fragment →
+    the membership reads as stale and is dropped) and :func:`list_advertised_fragments` backs the
+    picker. So deleting the fragment of a run that has a recap would leave the recap on disk and
+    unreachable — the exact opposite of the "survives teardown" guarantee it was minted for.
+
+    Hence the rule: **a recap promotes the fragment from billboard to headstone.** Once the recap
+    exists the fragment is kept forever, and the phase it carries (``ended_at`` passed → ``ended``)
+    is what turns the lobby's card from "Join this run" into "View recap" — no new field, the same
+    phase derivation as everywhere else. Only a run that never minted a recap (torn down before it
+    ever froze) leaves nothing behind worth pointing at, and its fragment goes.
+
+    The guard is :func:`load_recap`, **not** :func:`recap_exists` — the same validating read the
+    mint-once guard uses, and for a related reason. A truncated or malformed artifact is one the
+    lobby cannot render, so keeping its fragment would leave the card advertising "View recap"
+    over a file that never loads. While the instance lives that state is self-healing (the next
+    freeze tick re-mints it), but teardown is exactly when the ability to re-mint is about to be
+    destroyed, so this must ask whether a *usable* recap survived, not whether a file is present.
+    ``teardown-instance.sh`` refuses outright in that case rather than reaching here, since the
+    run is still recoverable at that point; this stays total so any other caller fails safe.
+    """
+    if load_recap(slug) is not None:
+        logger.info("keeping fragment for %s — its published recap needs the pointer", slug)
+        return False
+    (_landing_dir() / "instances" / f"{slug}.json").unlink(missing_ok=True)
+    aggregate_instances()
+    return True
