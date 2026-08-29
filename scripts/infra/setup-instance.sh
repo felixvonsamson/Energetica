@@ -227,4 +227,6 @@ echo "Ship code and start the service from your machine:"
 echo "  ./scripts/deploy-instance.sh --server <ssh-host> --instance $INSTANCE --domain $DOMAIN"
 echo
 echo "For a private/unadvertised instance, edit the policy before first login:"
-echo "  sudo \$EDITOR $CONFIG_DIR/instance.json   # set advertised/access.policy + allowed_usernames"
+echo "  sudo \$EDITOR $CONFIG_DIR/instance.json   # set advertised/access.policy"
+echo "Then grow its roster (facilitator UI, or from the shell):"
+echo "  python scripts/whitelist-run.py $INSTANCE add <username> [<username> ...]"

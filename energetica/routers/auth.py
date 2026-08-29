@@ -32,20 +32,28 @@ def _enforce_instance_access(account: Account) -> None:
     A facilitator grant covering this instance (server-wide or scoped) bypasses the allowlist
     entirely (ADR-0004): the allowlist governs players, and a facilitator does not enter as one.
 
-    Reads ``instance.json`` fresh (no cache) so facilitator edits take effect on the next attempt.
-    An unconfigured instance (no slug / no file) is treated as ``public``. A present-but-broken
-    config fails closed. On a successful, allowed read, the public-facing fragment is re-published
-    if its fields have changed since this process last wrote them.
+    ``instance.json`` (re-read fresh, no cache) decides *whether* this instance is gated at all
+    — ``public`` or ``private``, and an unconfigured instance (no slug / no file) is treated as
+    ``public``. *Who* may enter a private one is a separate, lobby-side fact: ``accounts.db``'s
+    ``instance_membership`` table (#1030 follow-up, ADR-0006) — ``instance.json`` no longer
+    carries an allowlist to read. A present-but-broken config fails closed. On a successful,
+    allowed read, the public-facing fragment is re-published if its fields have changed since
+    this process last wrote them.
     """
-    if accounts.is_facilitator(account_id=account.account_id, slug=instance_config.instance_slug()):
+    slug = instance_config.instance_slug()
+    if accounts.is_facilitator(account_id=account.account_id, slug=slug):
         return
     try:
         config = instance_config.load_instance_config()
     except instance_config.InstanceConfigError as exc:
         engine.log(f"entry blocked: {exc}")
         raise HTTPException(status.HTTP_403_FORBIDDEN, GameExceptionType.INSTANCE_ACCESS_DENIED) from exc
-    if config is not None and not instance_config.is_access_allowed(config, account.username):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, GameExceptionType.INSTANCE_ACCESS_DENIED)
+    if config is not None and isinstance(config.access, instance_config.PrivateAccess):
+        # A loaded config implies a configured slug — load_instance_config() only returns
+        # non-None once _instance_json_path() has resolved one.
+        assert slug is not None
+        if not accounts.has_joined(account_id=account.account_id, slug=slug):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, GameExceptionType.INSTANCE_ACCESS_DENIED)
     instance_config.publish(config)
 
 

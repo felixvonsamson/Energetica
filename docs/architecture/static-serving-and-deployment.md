@@ -258,8 +258,12 @@ Both axes are declared per-instance in a single file the instance backend owns:
     { "name": "ETHZ Spring 2026",
       "advertised": false,
       "starts_at": "2026-03-01T00:00:00Z",
-      "access": { "policy": "private", "allowed_usernames": ["alice", "bob"] } }
+      "access": { "policy": "private" } }
 ```
+
+*(`access.allowed_usernames` shown in earlier drafts of this file is deprecated — who may access
+a private instance now lives in `accounts.db`, not this file. See ADR-0006 and § Why outside the
+vhost DocumentRoot below.)*
 
 `slug` is **not** stored in the file — it is the directory name under `/etc/energetica/`, mirroring the canonical slug from [Instance discovery](#instance-discovery). Subdomain is **not** stored either — the landing composes `${slug}.${apex}` at render time, where `apex` is a Vite build-time constant.
 
@@ -269,7 +273,7 @@ The file is re-read on every login attempt. There is no in-memory cache. Admin e
 
 ### Why outside the vhost DocumentRoot
 
-`instance.json` carries `allowed_usernames` for private instances. The vhost DocumentRoot is `/var/www/energetica-{slug}/`, and Apache has no catch-all deny rule for unlisted files — placing `instance.json` there would let a plain `GET https://{slug}.{apex}/instance.json` return the allowlist to anyone who guesses the URL. Moving the file to `/etc/energetica/{slug}/instance.json` makes that class of exposure structurally impossible: the file is not under any DocumentRoot, so no vhost configuration error can leak it.
+`instance.json` used to carry `allowed_usernames` for private instances; that allowlist now lives in `accounts.db` instead (ADR-0006), but the file still carries the run's join-link token (`join_token`) — an unguessable secret with the same exposure profile. The vhost DocumentRoot is `/var/www/energetica-{slug}/`, and Apache has no catch-all deny rule for unlisted files — placing `instance.json` there would let a plain `GET https://{slug}.{apex}/instance.json` return that token (or, historically, the allowlist) to anyone who guesses the URL. Moving the file to `/etc/energetica/{slug}/instance.json` makes that class of exposure structurally impossible: the file is not under any DocumentRoot, so no vhost configuration error can leak it.
 
 ### Publication to the landing
 
@@ -284,7 +288,7 @@ Each instance process, on start and whenever it reloads `instance.json`, writes 
     "starts_at": "2025-09-15T00:00:00Z" }
 ```
 
-The `access` block (including `allowed_usernames`) is **stripped before write** — the landing dir is served statically by Apache, and any allowlist that reached it would leak to the internet. `starts_at` is preserved (it is public information).
+The `access` block (including the join token) is **stripped before write** — the landing dir is served statically by Apache, and a leaked join token or (historically) allowlist would defeat the point of gating the instance at all. `starts_at` is preserved (it is public information). `private: bool` — whether *some* policy applies, not who it admits — is the one thing from this block published, so the lobby can keep a private run out of its freely-joinable picker list (#1030, ADR-0005/0006).
 
 Writes are atomic: write to `{slug}.json.tmp` then `rename(2)` over the target. No locking required across instance processes since each writes to a unique filename.
 

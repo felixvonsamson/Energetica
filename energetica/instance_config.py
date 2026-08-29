@@ -1,14 +1,18 @@
 """Per-instance visibility and access policy.
 
-Each instance declares its visibility (``advertised``) and access policy
-(``public`` / ``private`` allowlist) in a single admin-owned file that lives
-**outside** the vhost DocumentRoot:
+Each instance declares its visibility (``advertised``) and access policy (``public`` /
+``private``) in a single admin-owned file that lives **outside** the vhost DocumentRoot:
 
     {ENERGETICA_INSTANCE_CONFIG_DIR}/{slug}/instance.json   (default dir: /etc/energetica)
 
 The file is re-read on every login attempt — there is no in-memory cache of the
 policy, so admin edits take effect on the next login with no restart. A running instance can also
 edit its own ``private`` access block in place — see the "Private-access mutation" section below.
+*Who* may access a private instance is no longer part of this file (#1030 follow-up): that's
+``accounts.db``'s ``instance_membership`` table now (``accounts.has_joined`` /
+``accounts.record_join`` / ``accounts.remove_membership``, ADR-0006) — this module only owns
+*whether* the instance is gated at all (``policy``) and the join-link settings (``join_token`` /
+``join_open``), both properties of the run, not of any one account.
 
 On startup and whenever the public-facing fields change, the instance publishes a
 *sanitised* fragment (the ``access`` block stripped) to the landing directory and
@@ -110,6 +114,14 @@ class PrivateAccess(BaseModel):
     model_config = {"extra": "forbid"}
 
     policy: Literal["private"]
+    # Deprecated (#1030 follow-up): who may access a private run now lives in `accounts.db`'s
+    # `instance_membership` table (`accounts.has_joined` / `record_join` / `remove_membership`),
+    # the same substrate the public-run two-click join and facilitator grants already use — see
+    # ADR-0006. This field is never read or written by the running backend any more; it is kept
+    # here, still parsing (`extra: forbid` above would otherwise fail closed on it), purely so an
+    # instance.json written before this change still loads. `scripts/migrate-allowed-usernames.py`
+    # backfills any values it holds into accounts.db; a sysadmin may then strip the key by hand,
+    # or just leave it — it's inert either way.
     allowed_usernames: list[str] = Field(default_factory=list)
     # The facilitator join-link (#1019): a lazily-generated, never-rotated secret that admits an
     # account without pre-naming it on `allowed_usernames` (#989's "shared access password" idea).
@@ -297,13 +309,6 @@ def load_fragment(slug: str) -> InstanceFragment | None:
     return _load_json_or_none(fragment_path, InstanceFragment, what="instance fragment")
 
 
-def is_access_allowed(config: InstanceConfig, username: str) -> bool:
-    """Whether ``username`` may log in / sign up on this instance under ``config``'s policy."""
-    if isinstance(config.access, PublicAccess):
-        return True
-    return username in config.access.allowed_usernames
-
-
 def _atomic_write_json(target: Path, payload: str) -> None:
     """Write ``payload`` to ``target`` atomically: write a unique tmp sibling, then ``os.replace``.
 
@@ -383,26 +388,6 @@ def _update_private_access(mutate: Callable[[PrivateAccess], None]) -> PrivateAc
         mutate(config.access)
         _atomic_write_json(path, config.model_dump_json())
         return config.access
-
-
-def add_allowed_username(username: str) -> PrivateAccess:
-    """Add ``username`` to the allowlist. A no-op (still atomic) if already present."""
-
-    def mutate(access: PrivateAccess) -> None:
-        if username not in access.allowed_usernames:
-            access.allowed_usernames.append(username)
-
-    return _update_private_access(mutate)
-
-
-def remove_allowed_username(username: str) -> PrivateAccess:
-    """Remove ``username`` from the allowlist. A no-op (still atomic) if already absent."""
-
-    def mutate(access: PrivateAccess) -> None:
-        if username in access.allowed_usernames:
-            access.allowed_usernames.remove(username)
-
-    return _update_private_access(mutate)
 
 
 def set_join_open(join_open: bool) -> PrivateAccess:

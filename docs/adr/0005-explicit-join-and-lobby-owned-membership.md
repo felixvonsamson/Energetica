@@ -86,6 +86,6 @@ run, so "joined" means one consistent thing everywhere: the explicit click, neve
   settling).
 - The private-run allowlist (`instance.json`'s `allowed_usernames`) is untouched by this
   decision — moving it onto `instance_membership` alongside the public-run join model it now
-  shares a schema with is a follow-up, not part of this change.
+  shares a schema with is a follow-up, not part of this change. **Done in ADR-0006.**
 - `docs/architecture/lobby.md`'s `instance_membership` schema and flows, and
   `CONTEXT.md`'s "Joined a run" / membership-ambiguity entries, are updated alongside this ADR.

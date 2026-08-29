@@ -848,8 +848,8 @@ export interface paths {
         };
         /**
          * Get Roster
-         * @description This instance's roster, split into joined (a settled ``Player`` already exists) vs invited
-         *     (allowlisted, no entry yet).
+         * @description This instance's roster, split into joined (settled — has a ``Player``) vs invited (joined,
+         *     no ``Player`` yet).
          */
         get: operations["get_roster_api_v1_facilitator_roster_get"];
         put?: never;
@@ -858,8 +858,9 @@ export interface paths {
          * @description Add an existing account to the roster.
          *
          *     No freeform username strings: an account must already exist server-wide (a facilitator can
-         *     only invite someone with an account, not conjure a name into the allowlist), which reuses the
-         *     same ``USER_NOT_FOUND`` a login rejects an unknown username with.
+         *     only invite someone with an account, not conjure a name into the roster), which reuses the
+         *     same ``USER_NOT_FOUND`` a login rejects an unknown username with. Idempotent — adding an
+         *     already-joined account is a no-op (:func:`accounts.record_join`).
          */
         post: operations["add_to_roster_api_v1_facilitator_roster_post"];
         delete?: never;
@@ -880,7 +881,7 @@ export interface paths {
          * @description Existing accounts whose username starts with ``prefix`` — the add control's lookup.
          *
          *     Doesn't require this instance to be private (searching the server-wide account store doesn't
-         *     touch its allowlist), so it skips :func:`_private_access` — the add-control's own POST is
+         *     touch its roster), so it skips :func:`_require_private_slug` — the add-control's own POST is
          *     where "this instance isn't private" would actually matter.
          */
         get: operations["search_roster_candidates_api_v1_facilitator_roster_candidates_get"];
@@ -904,12 +905,13 @@ export interface paths {
         post?: never;
         /**
          * Remove From Roster
-         * @description Ban/remove: drop ``username`` from the allowlist.
+         * @description Ban/remove: drop ``username``'s membership in this run.
          *
          *     Revocation is eventual — it takes effect on the account's next entry check, not an instant
-         *     kick of a live session (out of scope here, #677 if ever built). A no-op (still 204) if
-         *     ``username`` wasn't on the allowlist, matching :func:`instance_config.remove_allowed_username`'s
-         *     own idempotency.
+         *     kick of a live session (out of scope here, #677 if ever built) — and does not touch any
+         *     ``Player`` already created; see :func:`accounts.remove_membership`. A no-op (still 204) if
+         *     ``username`` names no account, or isn't on the roster — matching the old allowlist's
+         *     idempotency.
          */
         delete: operations["remove_from_roster_api_v1_facilitator_roster__username__delete"];
         options?: never;
@@ -1079,10 +1081,10 @@ export interface paths {
         put?: never;
         /**
          * Confirm Join
-         * @description Confirm joining: append the signed-in visitor's username to the allowlist.
+         * @description Confirm joining: record the signed-in visitor's join in ``accounts.db``.
          *
          *     Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
-         *     is this runs *before* the visitor is access-allowed, so no local ``User`` need exist yet) but
+         *     is this runs *before* the visitor is access-allowed, so no membership row need exist yet) but
          *     deliberately does not go through ``_enforce_instance_access``: granting access is this
          *     endpoint's job, not a precondition for reaching it. Checks identity before instance state
          *     (mirrors ``get_facilitator``/``get_settled_player``'s "who, then what" order elsewhere in this
@@ -2565,18 +2567,17 @@ export interface components {
         };
         /**
          * FacilitatorRosterOut
-         * @description The private instance's roster (#1022), split by whether the account has touched this
-         *     instance yet.
+         * @description The private instance's roster (#1022), split by whether the account has settled yet.
          */
         FacilitatorRosterOut: {
             /**
              * Joined
-             * @description Allowlisted usernames that already have a User on this instance.
+             * @description Roster usernames that have settled (have a Player) on this instance.
              */
             joined: string[];
             /**
              * Invited
-             * @description Allowlisted usernames with no User here yet.
+             * @description Roster usernames that have not settled here yet.
              */
             invited: string[];
         };
@@ -3830,7 +3831,7 @@ export interface components {
         RosterAddIn: {
             /**
              * Username
-             * @description An existing account's username to add to the private allowlist.
+             * @description An existing account's username to add to the roster.
              */
             username: string;
         };

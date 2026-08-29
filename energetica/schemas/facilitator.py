@@ -19,12 +19,10 @@ class FacilitatorAccessPatch(BaseModel):
 
 
 class FacilitatorRosterOut(BaseModel):
-    """The private instance's roster (#1022), split by whether the account has touched this
-    instance yet.
-    """
+    """The private instance's roster (#1022), split by whether the account has settled yet."""
 
-    joined: list[str] = Field(description="Allowlisted usernames that already have a User on this instance.")
-    invited: list[str] = Field(description="Allowlisted usernames with no User here yet.")
+    joined: list[str] = Field(description="Roster usernames that have settled (have a Player) on this instance.")
+    invited: list[str] = Field(description="Roster usernames that have not settled here yet.")
 
 
 class RosterCandidatesOut(BaseModel):
@@ -36,4 +34,4 @@ class RosterCandidatesOut(BaseModel):
 class RosterAddIn(BaseModel):
     """Request body to add an existing account to the roster."""
 
-    username: str = Field(description="An existing account's username to add to the private allowlist.")
+    username: str = Field(description="An existing account's username to add to the roster.")
