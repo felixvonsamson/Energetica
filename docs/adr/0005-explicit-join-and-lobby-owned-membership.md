@@ -29,13 +29,22 @@ public and private runs a shared "joined" event to key membership on.
 
 **Membership means joined, not settled.** `instance_membership` gains `settled_at`, separate
 from the existing `created_at` (now `joined_at` for a player row): a row is written at *join*
-time — the picker's two-click join for a public run, or a private run's roster add / join-link
-confirm — and `settled_at` is filled in later, at settle. The lobby's "your runs" is keyed on
+time, and `settled_at` is filled in later, at settle. The lobby's "your runs" is keyed on
 having a row at all, unsettled included; `settled_at` is display-only (a "Settle" vs
 "Continue" affordance, and a future settled-player count). This reverses the prior
-"membership = settled" resolution now that both public and private runs write the row at a
-deliberate moment — the silent-auto-provision concern that motivated settled-only no longer
-applies, because nothing writes a row on a bare, unclicked visit.
+"membership = settled" resolution now that a run can write the row at a deliberate join
+moment — the silent-auto-provision concern that motivated settled-only no longer applies,
+because nothing writes a row on a bare, unclicked visit.
+
+**Scope of this PR: the public-run picker join only.** The write described above
+(`accounts.record_join`) is wired up here for the public-run two-click join
+(`POST /api/v1/lobby/runs/{slug}/join`). A private run's roster add and join-link confirm are
+*conceptually* the same deliberate "join" act — the reasoning above is why they belong on this
+same table — but as of this PR they still write to `instance.json`'s `allowed_usernames`, the
+pre-existing mechanism, unchanged. Wiring those two paths onto `accounts.record_join` too is the
+explicit follow-up in Consequences below (done in ADR-0006/#1031) — until that lands, a joined
+row exists only for a public-run join or an actual settlement, never yet for a private-run
+invite.
 
 **The lobby owns the public-run join write.** `POST /api/v1/lobby/runs/{slug}/join` is a lobby
 endpoint, not an instance one: it writes straight to `accounts.db`, which the lobby already
