@@ -25,6 +25,7 @@ from .electricity_markets import router as electricity_markets_router
 from .facilitator import router as facilitator_router
 from .facilities import router as facilities_router
 from .game import router as game_router
+from .join import router as join_router
 from .map import router as map_router
 from .notifications import router as notifications_router
 from .players import router as player_router
@@ -48,6 +49,7 @@ api_routers = [
     facilitator_router,
     facilities_router,
     game_router,
+    join_router,
     lobby_router,
     map_router,
     notifications_router,

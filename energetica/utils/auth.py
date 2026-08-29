@@ -12,7 +12,8 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException, Request, status
 
-from energetica import instance_config
+from energetica import accounts, instance_config
+from energetica.accounts import Account
 from energetica.database.player import Player
 from energetica.database.user import User
 from energetica.game_error import GameExceptionType
@@ -44,6 +45,7 @@ __all__ = [
     "generate_password_hash",
     "get_or_create_secret_key",
     "serializer",
+    "get_current_account",
     "get_user_from_token",
     "get_user",
     "get_playing_user",
@@ -79,6 +81,25 @@ def reject_when_frozen() -> None:
     """
     if instance_config.current_phase() in ("freeze", "ended"):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=GameExceptionType.INSTANCE_FROZEN)
+
+
+def get_current_account(request: Request) -> Account | None:
+    """Resolve the SSO cookie to a server-wide :class:`Account`, or ``None``.
+
+    Unlike :func:`get_user`, this never touches this instance's local ``User``/access-policy
+    layer — it is the identity check the join flow (#1021) needs *before* a visitor is
+    access-allowed, when no local ``User`` can exist yet and :func:`get_user` would read as
+    ``None`` regardless of whether they have a valid session. A missing/invalid cookie, or a
+    cookie for an account since deleted from the server-wide store, both read as ``None`` here —
+    identical to :func:`resolve_entry_user`'s 401 cases in ``routers.auth``, just without raising.
+    """
+    token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not token:
+        return None
+    account_id = account_id_from_token(token)
+    if account_id is None:
+        return None
+    return accounts.get_account_by_id(account_id)
 
 
 def get_user_from_token(token: str) -> User | None:

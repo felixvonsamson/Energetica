@@ -8,6 +8,7 @@ import { createContext, type ReactNode } from "react";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiClientError } from "@/lib/api-client";
+import { isErrorType } from "@/lib/error-utils";
 import { queryKeys } from "@/lib/query-client";
 import type { ApiSchema } from "@/types/api-helpers";
 
@@ -46,6 +47,20 @@ export async function fetchCurrentUser(): Promise<User | null> {
     } catch (err) {
         if (err instanceof ApiClientError && err.status === 401) {
             // Not authenticated - return null instead of throwing
+            return null;
+        }
+        if (isErrorType(err, "INSTANCE_ACCESS_DENIED")) {
+            // A valid SSO session for an account this private instance hasn't allowlisted yet
+            // (#1021's join flow puts a visitor in exactly this state between logging in and
+            // confirming). This doesn't change any *route guard's* behaviour — `AuthProvider`
+            // already coerced an errored query's `undefined` data to `user: null` /
+            // `isAuthenticated: false` via `user ?? null` below, so `__root.tsx`'s guards already
+            // treated a denied account the same as a logged-out one. What this catch actually
+            // fixes is `/app/`'s root loader: it reads this same query with `ensureQueryData`,
+            // which rejects on an unhandled error and previously crashed the loader outright for
+            // any denied visitor landing on bare `/app` — this makes it resolve to `null` and fall
+            // through to the ordinary redirect instead. (`error` here is unused anywhere in the
+            // app today, so nothing that surfaced `INSTANCE_ACCESS_DENIED`'s message loses it.)
             return null;
         }
         throw err;

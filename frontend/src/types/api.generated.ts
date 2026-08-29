@@ -986,6 +986,37 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/join/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Join Link
+         * @description What this join link offers, and whether the visitor already has a session to join with.
+         */
+        get: operations["get_join_link_api_v1_join__token__get"];
+        put?: never;
+        /**
+         * Confirm Join
+         * @description Confirm joining: append the signed-in visitor's username to the allowlist.
+         *
+         *     Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
+         *     is this runs *before* the visitor is access-allowed, so no local ``User`` need exist yet) but
+         *     deliberately does not go through ``_enforce_instance_access``: granting access is this
+         *     endpoint's job, not a precondition for reaching it. Re-checks ``join_open`` server-side (not
+         *     just trusted from the page's last ``GET``) so a facilitator flipping the toggle mid-visit is
+         *     the outcome that wins, not a stale client.
+         */
+        post: operations["confirm_join_api_v1_join__token__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/lobby/my-runs": {
         parameters: {
             query?: never;
@@ -2654,6 +2685,28 @@ export interface components {
          * @enum {string}
          */
         HydroFacilityType: "watermill" | "small_water_dam" | "large_water_dam";
+        /**
+         * JoinLinkOut
+         * @description What a join link resolves to — enough for the confirmation screen, and nothing that
+         *     requires the visitor to already be admitted onto this instance.
+         */
+        JoinLinkOut: {
+            /**
+             * Instance Name
+             * @description This instance's display name, for the 'Join <name>?' prompt.
+             */
+            instance_name: string;
+            /**
+             * Join Open
+             * @description Whether the join link currently admits new accounts.
+             */
+            join_open: boolean;
+            /**
+             * Viewer Username
+             * @description The visitor's username if they already have a valid SSO session, else null — null means the frontend must send them through login/signup before showing the confirmation screen.
+             */
+            viewer_username: string | null;
+        };
         /** LeaderboardsOut */
         LeaderboardsOut: {
             /** Rows */
@@ -4277,7 +4330,7 @@ export interface components {
          * GameExceptionType
          * @enum {string}
          */
-        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "USER_IS_NOT_AN_ADMIN" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
+        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "USER_IS_NOT_AN_ADMIN" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
     };
     responses: never;
     parameters: never;
@@ -5694,6 +5747,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GameEngineOut"];
+                };
+            };
+        };
+    };
+    get_join_link_api_v1_join__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JoinLinkOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_join_api_v1_join__token__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
