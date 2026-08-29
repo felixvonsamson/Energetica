@@ -22,6 +22,7 @@ from energetica.accounts import Account
 from energetica.game_error import GameError, GameExceptionType
 from energetica.schemas.join import JoinLinkOut
 from energetica.utils.auth import get_current_account
+from energetica.utils.misc import record_join_reconciling_settlement
 
 router = APIRouter(prefix="/join", tags=["Join"])
 
@@ -80,7 +81,9 @@ def confirm_join(token: str, account: Annotated[Account | None, Depends(get_curr
     slug = instance_config.instance_slug()
     assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
     try:
-        accounts.record_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
+        record_join_reconciling_settlement(
+            account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat()
+        )
     except accounts.MembershipRoleConflictError:
         # account is this run's facilitator (or server-wide) — a facilitator administers a run,
         # it doesn't also join one as a player (ADR-0004). There is no in-app way to reach this

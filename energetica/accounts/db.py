@@ -536,12 +536,13 @@ def remove_membership(*, account_id: int, slug: str) -> None:
     Deletes the row entirely rather than marking it revoked: a banned account's next entry
     attempt is denied by :func:`has_joined` finding no row, but this does not touch any
     ``Player`` already created in that run's engine — an already-settled, later-banned account
-    keeps its game state, it just can't re-enter (matching the roster's documented "revocation
-    is eventual" behaviour). One consequence worth knowing: re-adding a previously-settled,
-    then-banned account inserts a fresh row with ``settled_at`` null again — "your runs" would
-    briefly show it as unsettled even though a ``Player`` still exists, until the entry gate
-    re-derives it. Deliberately not solved with a tombstone/soft-delete here (YAGNI for a rare
-    ban-then-unban edge case); revisit if it turns out to matter in practice.
+    keeps its game state (tile, resources, facilities — none of it lives in this table, or is
+    affected by this delete), it just can't re-enter (matching the roster's documented
+    "revocation is eventual" behaviour). A plain :func:`record_join` on re-add would otherwise
+    come back with ``settled_at`` null again even though the ``Player`` never went anywhere —
+    every caller that can re-add a possibly-already-settled account uses
+    :func:`energetica.utils.misc.record_join_reconciling_settlement` instead, which backfills
+    ``settled_at`` from the engine's ``Player`` right after the join write.
     """
     with _connect() as conn:
         conn.execute(

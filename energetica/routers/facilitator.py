@@ -24,6 +24,7 @@ from energetica.schemas.facilitator import (
     RosterCandidatesOut,
 )
 from energetica.utils.auth import get_facilitator
+from energetica.utils.misc import record_join_reconciling_settlement
 
 router = APIRouter(prefix="/facilitator", tags=["Facilitator"], dependencies=[Depends(get_facilitator)])
 
@@ -116,14 +117,19 @@ def add_to_roster(body: RosterAddIn) -> None:
     No freeform username strings: an account must already exist server-wide (a facilitator can
     only invite someone with an account, not conjure a name into the roster), which reuses the
     same ``USER_NOT_FOUND`` a login rejects an unknown username with. Idempotent — adding an
-    already-joined account is a no-op (:func:`accounts.record_join`).
+    already-joined account is a no-op. Re-adding a previously-settled, then-banned account
+    (:func:`accounts.remove_membership`) reconciles ``settled_at`` from its still-intact
+    ``Player`` rather than coming back "invited" — see
+    :func:`energetica.utils.misc.record_join_reconciling_settlement`.
     """
     account = accounts.get_account_by_username(body.username)
     if account is None:
         raise GameError(GameExceptionType.USER_NOT_FOUND)
     slug = _require_private_slug()
     try:
-        accounts.record_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
+        record_join_reconciling_settlement(
+            account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat()
+        )
     except accounts.MembershipRoleConflictError:
         # body.username is this run's facilitator (or server-wide) — a facilitator administers a
         # run, it doesn't also join one as a player (ADR-0004).

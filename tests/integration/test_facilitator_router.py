@@ -308,6 +308,30 @@ def test_roster_delete_denies_the_banned_account_on_its_next_entry_attempt(insta
     assert client.get(f"http://localhost:{PORT}/api/v1/auth/me").status_code == 403
 
 
+def test_roster_readding_a_previously_settled_banned_account_keeps_it_joined(instance_json: Path) -> None:
+    """Ban-then-re-add of a settled account must not strand it labelled "invited" (#1031 follow-up,
+    per review): the account's Player (tile, resources, facilities) never went anywhere, so the
+    roster must show it settled again once re-added, not reset.
+    """
+    from energetica.accounts import Account
+    from energetica.database.map.hex_tile import HexTile
+    from energetica.utils.map_helpers import confirm_location
+
+    client = _facilitator_client(instance_json)
+    carol_id = make_account("carol", "pw")
+    confirm_location(
+        Account(account_id=carol_id, username="carol", pwhash="unused", email=None, created_at=""), HexTile.getitem(1)
+    )
+    assert client.get(ROSTER_URL).json() == {"joined": ["carol"], "invited": []}
+
+    assert client.delete(f"{ROSTER_URL}/carol").status_code == 204  # ban
+    assert accounts.has_joined(account_id=carol_id, slug=SLUG) is False
+
+    assert client.post(ROSTER_URL, json={"username": "carol"}).status_code == 204  # re-add
+
+    assert client.get(ROSTER_URL).json() == {"joined": ["carol"], "invited": []}
+
+
 def test_roster_delete_is_a_noop_for_an_unlisted_username(instance_json: Path) -> None:
     client = _facilitator_client(instance_json)
 

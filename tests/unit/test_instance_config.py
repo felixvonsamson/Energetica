@@ -50,7 +50,7 @@ PRIVATE_JSON = {
     "name": "ETHZ Spring 2026",
     "advertised": False,
     "starts_at": "2026-03-01T00:00:00Z",
-    "access": {"policy": "private", "allowed_usernames": ["alice", "bob"]},
+    "access": {"policy": "private"},
 }
 
 
@@ -86,7 +86,6 @@ def test_load_valid_private(configured: Path) -> None:
 
     assert config is not None
     assert isinstance(config.access, PrivateAccess)
-    assert config.access.allowed_usernames == ["alice", "bob"]
 
 
 def test_load_corrupt_file_fails_closed(configured: Path) -> None:
@@ -122,6 +121,17 @@ def test_load_public_policy_with_allowlist_key_fails_closed(configured: Path) ->
         instance_config.load_instance_config()
 
 
+def test_load_private_with_the_removed_allowlist_key_fails_closed(configured: Path) -> None:
+    """`allowed_usernames` is gone from PrivateAccess (#1031) — an instance.json still carrying it
+    (from before that change, or a stray hand-edit) fails closed rather than silently parsing as
+    if the key still had an effect.
+    """
+    _write_instance_json(configured, {**PRIVATE_JSON, "access": {"policy": "private", "allowed_usernames": ["alice"]}})
+
+    with pytest.raises(InstanceConfigError):
+        instance_config.load_instance_config()
+
+
 def test_load_naive_starts_at_fails_closed(configured: Path) -> None:
     """A timezone-naive starts_at is rejected (fail closed), so fragments are always tz-aware and
     the aggregation sort can never mix naive/aware datetimes.
@@ -132,12 +142,14 @@ def test_load_naive_starts_at_fails_closed(configured: Path) -> None:
         instance_config.load_instance_config()
 
 
-# --- allowed_usernames is deprecated (#1030 follow-up) --------------------------------------
+# --- allowed_usernames is removed, not deprecated (#1031) -----------------------------------
 #
-# Who may access a private run now lives in accounts.db (tests/unit/test_instance_membership.py:
-# has_joined / record_join / remove_membership / get_run_roster). The field itself still round-
-# trips through InstanceConfig (test_load_valid_private above) purely so an instance.json written
-# before this change still parses — see ADR-0006 and instance_config.PrivateAccess's docstring.
+# Who may access a private run lives in accounts.db (tests/unit/test_instance_membership.py:
+# has_joined / record_join / remove_membership / get_run_roster). No private instance had ever
+# been deployed with real allowlist data at the time of that migration, so the field was removed
+# outright rather than kept around inert — see ADR-0006 and instance_config.PrivateAccess's
+# docstring. test_load_private_with_the_removed_allowlist_key_fails_closed above covers the
+# fail-closed behaviour for a file that still carries the key.
 
 
 # --- join_token / join_open (#1019) -----------------------------------------------------------

@@ -40,15 +40,16 @@ exactly where they are — they're properties of the run, set by a sysadmin (pol
 facilitator (the toggle), not of any one account's relationship to it. Only the per-account
 allowlist itself (`allowed_usernames`) moves.
 
-**`allowed_usernames` is deprecated in place, not removed.** The field predates the in-app
-facilitator surfaces by a wide margin (`scripts/infra/whitelist-instance.sh` is a real,
-already-in-use out-of-band tool), so an existing deployment may have real, populated allowlists
-on disk. The field stays on `PrivateAccess` — inert, never read or written by the running
-backend — purely so an `instance.json` written before this change still parses (`extra: forbid`
-would otherwise fail closed on it). `scripts/migrate-allowed-usernames.py` is the one-time
-backfill: for each already-deployed private instance, it reads the old allowlist and calls
-`accounts.record_join` for every username with a matching account, reporting (not failing on)
-one with none.
+**`allowed_usernames` is removed outright, not deprecated in place.** The field predates the
+in-app facilitator surfaces by a wide margin (`scripts/infra/whitelist-instance.sh` is a real
+out-of-band tool that shipped with it), but no instance has actually been run with a `private`
+policy yet — there is no deployment with real, populated allowlist data this change could break.
+With nothing to preserve, keeping the field around inert (parsing but never read) would only
+have been confusing dead weight; `extra: forbid` on `PrivateAccess` means an `instance.json` that
+still carries the key now fails closed instead, which is the correct behaviour for a key that no
+longer does anything. (Had a private instance existed, the right move would have been a one-time
+backfill script reading the old allowlist into `accounts.db` before cutover — worth remembering
+if this class of migration comes up again once a real deployment exists.)
 
 **`scripts/infra/whitelist-instance.sh` is retired, replaced by `scripts/whitelist-run.py`.**
 Same shape (`list` / `add` / `remove`, sysadmin-run over SSH), same reasoning as
@@ -82,3 +83,12 @@ edited moved to `accounts.db`.
   behind an existing interface, not a product change, so the frontend needed no changes.
 - `docs/architecture/roles.md`'s "Manage instance whitelist" capability row flips from
   `aspirational` to `built`.
+- A plain-delete ban interacts with the join/settle model: re-adding a previously-settled,
+  then-banned account through a bare `record_join` would come back with `settled_at` null even
+  though its `Player` (tile, resources, facilities — none of it lives in `instance_membership`)
+  never went anywhere. `energetica.utils.misc.record_join_reconciling_settlement` — used by both
+  the roster's add and the join-link's confirm, the only two paths that can re-add an
+  already-settled account — closes this by backfilling `settled_at` from the engine's `Player`
+  right after the join write. The entry gate itself was never actually broken by the gap (its
+  `is_settled` reads the `Player` directly, never `settled_at`); this only fixes the lobby
+  display, which does read `settled_at`.

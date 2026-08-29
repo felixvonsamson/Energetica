@@ -102,9 +102,8 @@ class InstanceConfigError(Exception):
 
 
 class PublicAccess(BaseModel):
-    # ``forbid`` so a half-edited private config (e.g. policy mistyped back to "public" while
-    # allowed_usernames lingers) fails closed instead of silently dropping the allowlist and
-    # parsing as world-open.
+    # ``forbid`` so a half-edited config (e.g. a stray or mistyped access key) fails closed
+    # instead of silently parsing as something the admin didn't intend.
     model_config = {"extra": "forbid"}
 
     policy: Literal["public"]
@@ -114,18 +113,16 @@ class PrivateAccess(BaseModel):
     model_config = {"extra": "forbid"}
 
     policy: Literal["private"]
-    # Deprecated (#1030 follow-up): who may access a private run now lives in `accounts.db`'s
-    # `instance_membership` table (`accounts.has_joined` / `record_join` / `remove_membership`),
-    # the same substrate the public-run two-click join and facilitator grants already use — see
-    # ADR-0006. This field is never read or written by the running backend any more; it is kept
-    # here, still parsing (`extra: forbid` above would otherwise fail closed on it), purely so an
-    # instance.json written before this change still loads. `scripts/migrate-allowed-usernames.py`
-    # backfills any values it holds into accounts.db; a sysadmin may then strip the key by hand,
-    # or just leave it — it's inert either way.
-    allowed_usernames: list[str] = Field(default_factory=list)
+    # Who may access a private run lives in `accounts.db`'s `instance_membership` table
+    # (`accounts.has_joined` / `record_join` / `remove_membership`), the same substrate the
+    # public-run two-click join and facilitator grants already use — see ADR-0006. No
+    # `allowed_usernames` field lives here: at the time of that migration there was no deployed
+    # private instance with data to preserve, so the field was removed outright rather than kept
+    # around deprecated (`extra: forbid` above means an old file that still has the key now fails
+    # closed, which is correct — it should not silently parse as if the key had no effect).
     # The facilitator join-link (#1019): a lazily-generated, never-rotated secret that admits an
-    # account without pre-naming it on `allowed_usernames` (#989's "shared access password" idea).
-    # Both default so a config file written before this change (neither field present) still loads —
+    # account without pre-naming it on the roster (#989's "shared access password" idea). Both
+    # default so a config file written before this change (neither field present) still loads —
     # see :func:`get_or_create_join_token` / :func:`set_join_open` for the mutation side.
     join_token: str | None = None
     join_open: bool = False

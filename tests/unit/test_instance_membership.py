@@ -352,6 +352,56 @@ def test_settling_records_membership_for_this_instance(monkeypatch: pytest.Monke
     assert memberships[0].created_at == player.created_at.isoformat()
 
 
+# --- record_join_reconciling_settlement (#1031 follow-up, per review) -----------------------
+#
+# remove_membership is a plain delete: banning a settled account, then re-adding it, would
+# otherwise come back "invited" (settled_at null) even though its Player never went anywhere.
+# record_join_reconciling_settlement is what the facilitator roster's add and the join-link's
+# confirm use instead of a bare record_join, to backfill settled_at from the still-intact Player.
+
+
+def test_record_join_reconciling_settlement_backfills_settled_at_for_a_re_added_player(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from energetica import create_app
+    from energetica.accounts import Account
+    from energetica.database.map.hex_tile import HexTile
+    from energetica.utils.auth import generate_password_hash
+    from energetica.utils.map_helpers import confirm_location
+    from energetica.utils.misc import record_join_reconciling_settlement
+
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "spring-2026")
+    create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
+    account = Account(account_id=7, username="alice", pwhash=generate_password_hash("pw"), email=None, created_at="")
+    player = confirm_location(account, HexTile.getitem(1))  # settles — Player exists in-engine
+    accounts.remove_membership(account_id=7, slug="spring-2026")  # ban: deletes the accounts.db row
+    assert accounts.has_joined(account_id=7, slug="spring-2026") is False
+
+    record_join_reconciling_settlement(account_id=7, slug="spring-2026", joined_at="2026-06-01T00:00:00+00:00")
+
+    memberships = accounts.get_memberships(account_id=7)
+    assert len(memberships) == 1
+    assert memberships[0].created_at == "2026-06-01T00:00:00+00:00"  # the re-add's own join time
+    assert memberships[0].settled_at == player.created_at.isoformat()  # backfilled from the Player
+
+
+def test_record_join_reconciling_settlement_leaves_settled_at_null_for_a_fresh_join(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """No Player exists yet — the ordinary first-join case is unaffected: settled_at stays null."""
+    from energetica import create_app
+    from energetica.utils.misc import record_join_reconciling_settlement
+
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "spring-2026")
+    create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
+
+    record_join_reconciling_settlement(account_id=7, slug="spring-2026", joined_at="2026-06-01T00:00:00+00:00")
+
+    memberships = accounts.get_memberships(account_id=7)
+    assert len(memberships) == 1
+    assert memberships[0].settled_at is None
+
+
 def test_settle_survives_a_membership_write_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     """A failed membership write (e.g. SQLITE_BUSY on the shared accounts.db) must not break an
     otherwise-successful settle: the player is created in-memory regardless, and the row is

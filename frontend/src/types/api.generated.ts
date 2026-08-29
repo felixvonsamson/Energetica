@@ -860,7 +860,10 @@ export interface paths {
          *     No freeform username strings: an account must already exist server-wide (a facilitator can
          *     only invite someone with an account, not conjure a name into the roster), which reuses the
          *     same ``USER_NOT_FOUND`` a login rejects an unknown username with. Idempotent — adding an
-         *     already-joined account is a no-op (:func:`accounts.record_join`).
+         *     already-joined account is a no-op. Re-adding a previously-settled, then-banned account
+         *     (:func:`accounts.remove_membership`) reconciles ``settled_at`` from its still-intact
+         *     ``Player`` rather than coming back "invited" — see
+         *     :func:`energetica.utils.misc.record_join_reconciling_settlement`.
          */
         post: operations["add_to_roster_api_v1_facilitator_roster_post"];
         delete?: never;
