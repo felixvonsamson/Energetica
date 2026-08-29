@@ -244,7 +244,7 @@ def main():
         eng = pickle.load(f)
 
     id_to_username = {
-        pid: p.user.username
+        pid: p.username
         for pid, p in eng["db_model_instances"]["Player"].items()
     }
 

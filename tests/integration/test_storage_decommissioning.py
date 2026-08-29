@@ -6,7 +6,7 @@ Regression tests for https://github.com/felixvonsamson/Energetica/issues/762
 from energetica import create_app
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map.hex_tile import HexTile
-from energetica.database.user import User
+from energetica.accounts import Account
 from energetica.enums import StorageFacilityType
 from energetica.init_test_players import add_asset
 from energetica.utils.auth import generate_password_hash
@@ -18,7 +18,9 @@ STORAGE_TYPE = StorageFacilityType.LITHIUM_ION_BATTERIES
 
 
 def _make_player(username: str):
-    user = User(username=username, pwhash=generate_password_hash("password"), role="player", account_id=1)
+    user = Account(
+        account_id=1, username=username, pwhash=generate_password_hash("password"), email=None, created_at=""
+    )
     hex_tile = HexTile.getitem(1)
     return confirm_location(user, hex_tile)
 

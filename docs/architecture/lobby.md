@@ -56,8 +56,8 @@ Core identity terms — **Server**, **Instance** (player-facing: **Run**), **Acc
 |------|------------|
 | **Lobby** | The server-wide front door (`lobby.{apex}`): sign up, log in, pick a run. A small backend + frontend bundle on its own subdomain, separate from any run and outliving runs. Owns the server-wide session. |
 | **Server-wide session** | The single authenticated session minted by the lobby, carried to every run on the server via a parent-domain cookie. |
-| **Membership** | An account that has **settled** in a run (has a `Player` there). The "your runs" set. A merely auto-provisioned `User` is *not* membership. |
-| **Entry gate** | The point at which an authenticated account first touches a run: the run validates the session cookie and, if the run's access policy allows, auto-provisions a local `User`. Where per-instance access control now lives. |
+| **Membership** | An account's relationship to a run: a `role` (`player` or `facilitator`) on a row keyed `(account_id, slug)` in `instance_membership` (ADR-0004). A settled player's row is written at settle time; a facilitator's is written only by the sysadmin grant script. The two are mutually exclusive per run. |
+| **Entry gate** | The point at which an authenticated account touches a run: the run validates the session cookie and enforces the run's access policy (bypassed for a facilitator grant covering it). There is nothing to auto-provision — role is read straight from `instance_membership`, and a `Player` exists only once an account has actually settled. Where per-instance access control now lives. |
 
 ---
 

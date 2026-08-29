@@ -7,7 +7,6 @@ from energetica.database.map.hex_tile import HexTile
 from energetica.database.network import Network
 from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
-from energetica.database.user import User
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -53,12 +52,13 @@ def init_test_players() -> None:
             return player
         pwhash = generate_password_hash(password)
         account_id = accounts.get_or_create_account_id(username=username, pwhash=pwhash)
-        user = User(username=username, pwhash=pwhash, role="player", account_id=account_id)
+        account = accounts.get_account_by_id(account_id)
+        assert account is not None
         # If tile_id is None, find any tile that isn't assigned to a player
         hex_tile = HexTile.get(tile_id) if tile_id else next(HexTile.filter_by(player=None))
         if not hex_tile:
             raise GameError(GameExceptionType.TILE_NOT_FOUND)
-        player = confirm_location(user, hex_tile)
+        player = confirm_location(account, hex_tile)
         engine.log(f"create_player: player {username} created")
         return player
 

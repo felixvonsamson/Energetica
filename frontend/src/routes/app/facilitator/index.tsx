@@ -3,8 +3,8 @@
  * instance, and the "allow joining" toggle gating it.
  *
  * Deliberately doesn't use `GameLayout`/`AppSidebar` — those assume a settled
- * player (capability flags, money, workers), none of which an admin account
- * has. This page is a small, self-contained shell instead.
+ * player (capability flags, money, workers), none of which a facilitator
+ * account has. This page is a small, self-contained shell instead.
  */
 
 import { createFileRoute } from "@tanstack/react-router";
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/app/facilitator/")({
     component: FacilitatorPage,
     staticData: {
         title: "Facilitator",
-        routeConfig: { requiredRole: "admin" },
+        routeConfig: { requiredRole: "facilitator" },
         infoDialog: { contents: <FacilitatorHelp /> },
     },
 });

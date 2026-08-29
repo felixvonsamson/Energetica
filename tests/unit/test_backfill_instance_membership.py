@@ -29,8 +29,8 @@ def _load_script() -> ModuleType:
 
 
 def _player(account_id: int, settled_iso: str) -> SimpleNamespace:
-    """A duck-typed stand-in for a pickle Player: has .user.account_id and .created_at."""
-    return SimpleNamespace(user=SimpleNamespace(account_id=account_id), created_at=_FakeDatetime(settled_iso))
+    """A duck-typed stand-in for a pickle Player: has .account_id and .created_at."""
+    return SimpleNamespace(account_id=account_id, created_at=_FakeDatetime(settled_iso))
 
 
 class _FakeDatetime:
@@ -57,7 +57,7 @@ def test_backfill_writes_one_membership_per_settled_player(accounts_db: Path) ->
 
     assert written == 2
     assert accounts.get_memberships(account_id=1)[0].slug == "spring-2026"
-    assert accounts.get_memberships(account_id=1)[0].settled_at == "2026-03-01T00:00:00+00:00"
+    assert accounts.get_memberships(account_id=1)[0].created_at == "2026-03-01T00:00:00+00:00"
     assert accounts.get_memberships(account_id=2)[0].slug == "spring-2026"
 
 

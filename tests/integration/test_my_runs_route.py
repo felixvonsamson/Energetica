@@ -63,10 +63,10 @@ def test_my_runs_returns_only_the_authed_accounts_runs_joined_with_fragments(lan
     client, alice_id = _authenticated_client()
     _write_fragment(landing_dir, slug="spring-2026", name="Spring 2026", starts_at="2026-03-01T00:00:00Z")
     _write_fragment(landing_dir, slug="autumn-2026", name="Autumn 2026", starts_at="2026-09-01T00:00:00Z")
-    accounts.record_membership(account_id=alice_id, slug="spring-2026", settled_at="2026-03-02T00:00:00+00:00")
-    accounts.record_membership(account_id=alice_id, slug="autumn-2026", settled_at="2026-09-02T00:00:00+00:00")
+    accounts.record_settlement(account_id=alice_id, slug="spring-2026", settled_at="2026-03-02T00:00:00+00:00")
+    accounts.record_settlement(account_id=alice_id, slug="autumn-2026", settled_at="2026-09-02T00:00:00+00:00")
     # A different account's membership must not leak into alice's runs.
-    accounts.record_membership(account_id=alice_id + 999, slug="spring-2026", settled_at="2026-03-03T00:00:00+00:00")
+    accounts.record_settlement(account_id=alice_id + 999, slug="spring-2026", settled_at="2026-03-03T00:00:00+00:00")
 
     response = client.get(MY_RUNS_URL)
 
@@ -84,8 +84,8 @@ def test_my_runs_filters_out_stale_memberships_without_a_fragment(landing_dir: P
     """A membership whose run has been deleted (no fragment on disk) is silently dropped."""
     client, alice_id = _authenticated_client()
     _write_fragment(landing_dir, slug="live-run", name="Live", starts_at="2026-03-01T00:00:00Z")
-    accounts.record_membership(account_id=alice_id, slug="live-run", settled_at="2026-03-02T00:00:00+00:00")
-    accounts.record_membership(account_id=alice_id, slug="deleted-run", settled_at="2026-01-01T00:00:00+00:00")
+    accounts.record_settlement(account_id=alice_id, slug="live-run", settled_at="2026-03-02T00:00:00+00:00")
+    accounts.record_settlement(account_id=alice_id, slug="deleted-run", settled_at="2026-01-01T00:00:00+00:00")
 
     runs = client.get(MY_RUNS_URL).json()["runs"]
 
@@ -98,7 +98,7 @@ def test_my_runs_surfaces_the_accounts_own_unadvertised_run(landing_dir: Path) -
     """
     client, alice_id = _authenticated_client()
     _write_fragment(landing_dir, slug="hidden", name="Hidden", starts_at="2026-03-01T00:00:00Z", advertised=False)
-    accounts.record_membership(account_id=alice_id, slug="hidden", settled_at="2026-03-02T00:00:00+00:00")
+    accounts.record_settlement(account_id=alice_id, slug="hidden", settled_at="2026-03-02T00:00:00+00:00")
 
     runs = client.get(MY_RUNS_URL).json()["runs"]
 

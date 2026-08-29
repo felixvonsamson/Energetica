@@ -45,7 +45,7 @@ def _freeze_tiles() -> list[RecapTile]:
             gas=tile.fuel_reserves[Fuel.GAS],
             uranium=tile.fuel_reserves[Fuel.URANIUM],
             climate_risk=tile.climate_risk,
-            owner_account_id=tile.player.user.account_id if tile.player else None,
+            owner_account_id=tile.player.account_id if tile.player else None,
         )
         for tile in sorted(HexTile.all(), key=lambda tile: tile.coordinates)
     ]

@@ -3,8 +3,8 @@
 import pytest
 
 from energetica import create_app
+from energetica.accounts import Account
 from energetica.database.map.hex_tile import HexTile
-from energetica.database.user import User
 from energetica.enums import TechnologyType
 from energetica.globals import engine
 from energetica.technology_effects import (
@@ -32,8 +32,10 @@ def test_technology_total_energy_scales_with_spillover(n_researchers: int) -> No
     reduces total energy by f = 0.98^n.
     """
     create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
-    user = User(username="username", pwhash=generate_password_hash("password"), role="player", account_id=1)
-    player = confirm_location(user, HexTile.getitem(1))
+    account = Account(
+        account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
+    )
+    player = confirm_location(account, HexTile.getitem(1))
 
     technology = TechnologyType.MATHEMATICS
     engine.technology_lvls[technology][0] = n_researchers

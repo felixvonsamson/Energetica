@@ -12,8 +12,8 @@ pickle, so it does not rewrite it.
 
 Flow:
 1. Load the instance engine pickle (read-only).
-2. For each Player: INSERT OR IGNORE a membership (account_id from player.user, settled_at from
-   player.created_at, slug from --slug / ENERGETICA_INSTANCE_SLUG).
+2. For each Player: INSERT OR IGNORE a membership (account_id from player.account_id, settled_at
+   from player.created_at, slug from --slug / ENERGETICA_INSTANCE_SLUG).
 
 Usage:
     python scripts/backfill-instance-membership.py --pickle <path> --slug <slug> \
@@ -36,16 +36,16 @@ from typing import Iterable
 
 def backfill_memberships(players: Iterable[object], *, slug: str, dry_run: bool = False) -> int:
     """Write one membership per settled player. Returns the number of rows written (or, in
-    ``dry_run``, that would be written). Idempotent via accounts.record_membership.
+    ``dry_run``, that would be written). Idempotent via accounts.record_settlement.
     """
     from energetica import accounts
 
     written = 0
     for player in players:
-        account_id = player.user.account_id  # type: ignore[attr-defined]
+        account_id = player.account_id  # type: ignore[attr-defined]
         settled_at = player.created_at.isoformat()  # type: ignore[attr-defined]
         if not dry_run:
-            accounts.record_membership(account_id=account_id, slug=slug, settled_at=settled_at)
+            accounts.record_settlement(account_id=account_id, slug=slug, settled_at=settled_at)
         written += 1
     return written
 

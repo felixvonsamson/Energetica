@@ -3,8 +3,8 @@
  * the topbar plus a small nav between the two pages.
  *
  * Deliberately doesn't use `GameLayout`/`AppSidebar` — those assume a settled
- * player (capability flags, money, workers), none of which an admin account
- * has.
+ * player (capability flags, money, workers), none of which a facilitator
+ * account has.
  */
 
 import { Link, useLocation } from "@tanstack/react-router";

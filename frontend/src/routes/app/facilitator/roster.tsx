@@ -49,7 +49,7 @@ export const Route = createFileRoute("/app/facilitator/roster")({
     component: RosterPage,
     staticData: {
         title: "Roster",
-        routeConfig: { requiredRole: "admin" },
+        routeConfig: { requiredRole: "facilitator" },
         infoDialog: { contents: <RosterHelp /> },
     },
 });

@@ -2,20 +2,20 @@
 
 The signing/credential primitives now live in the game-model-free leaf
 ``energetica.utils.session`` so the server-wide identity layer and the lobby can reuse them
-without importing ``User``/``Player`` (ADR-0002, lobby Phase B). This module re-exports them —
-game-side callers keep importing ``generate_password_hash`` etc. from ``energetica.utils.auth``
-unchanged — and adds the request dependencies that resolve a session cookie against this
-instance's local ``User``.
+without importing ``Player`` (ADR-0002, lobby Phase B). This module re-exports them — game-side
+callers keep importing ``generate_password_hash`` etc. from ``energetica.utils.auth``
+unchanged — and adds the request dependencies that resolve a session cookie against a role
+(read straight from ``accounts.db``, ADR-0004) and, for players, a settled ``Player``.
 """
 
 from datetime import datetime, timezone
+from typing import Literal
 
 from fastapi import HTTPException, Request, status
 
 from energetica import accounts, instance_config
 from energetica.accounts import Account
 from energetica.database.player import Player
-from energetica.database.user import User
 from energetica.game_error import GameExceptionType
 
 # Re-exported primitives (defined in the leaf; imported here so existing call sites are unchanged).
@@ -46,10 +46,10 @@ __all__ = [
     "get_or_create_secret_key",
     "serializer",
     "get_current_account",
-    "get_user_from_token",
-    "get_user",
-    "get_playing_user",
-    "get_admin_user",
+    "get_account_from_token",
+    "get_role",
+    "get_playing_account",
+    "get_facilitator",
     "get_settled_player",
     "reject_when_frozen",
 ]
@@ -86,77 +86,78 @@ def reject_when_frozen() -> None:
 def get_current_account(request: Request) -> Account | None:
     """Resolve the SSO cookie to a server-wide :class:`Account`, or ``None``.
 
-    Unlike :func:`get_user`, this never touches this instance's local ``User``/access-policy
-    layer — it is the identity check the join flow (#1021) needs *before* a visitor is
-    access-allowed, when no local ``User`` can exist yet and :func:`get_user` would read as
-    ``None`` regardless of whether they have a valid session. A missing/invalid cookie, or a
-    cookie for an account since deleted from the server-wide store, both read as ``None`` here —
-    identical to :func:`resolve_entry_user`'s 401 cases in ``routers.auth``, just without raising.
+    A missing/invalid cookie, or a cookie for an account since deleted from the server-wide
+    store, both read as ``None`` here.
     """
     token = request.cookies.get(SESSION_COOKIE_NAME)
     if not token:
         return None
+    return get_account_from_token(token)
+
+
+def get_account_from_token(token: str) -> Account | None:
+    """Resolve a raw SSO cookie token to a server-wide :class:`Account`, or ``None``.
+
+    The token carries the immutable ``account_id`` (ADR-0002 amendment). Used directly (rather
+    than through :func:`get_current_account`) by callers with a raw cookie header instead of a
+    ``Request`` — e.g. Socket.IO's ``connect`` handler.
+    """
     account_id = account_id_from_token(token)
     if account_id is None:
         return None
     return accounts.get_account_by_id(account_id)
 
 
-def get_user_from_token(token: str) -> User | None:
-    """Resolve the SSO cookie to this instance's local ``User``, or ``None``.
+def get_role(account_id: int) -> Literal["player", "facilitator"]:
+    """This account's role for the current instance, read straight from ``accounts.db``
+    (ADR-0004) — never from a per-instance object, since none exists until a player settles.
 
-    The token carries the immutable ``account_id`` (ADR-0002 amendment), resolved against the local
-    ``User`` via its ``account_id`` FK. This does **not** auto-provision: a valid session for an
-    account with no local ``User`` yet reads as ``None`` here — provisioning is the entry gate's job
-    (``routers.auth``), gated by the instance's access policy.
+    ``"facilitator"`` only if explicitly granted (server-wide or scoped to this instance);
+    ``"player"`` is the default for every other account, settled or not.
     """
-    account_id = account_id_from_token(token)
-    if account_id is None:
-        return None
-    return next(User.filter_by(account_id=account_id), None)
+    if accounts.is_facilitator(account_id=account_id, slug=instance_config.instance_slug()):
+        return "facilitator"
+    return "player"
 
 
-def get_user(request: Request) -> User | None:
-    token = request.cookies.get(SESSION_COOKIE_NAME)
-    if not token:
-        return None
-    return get_user_from_token(token)
+def get_playing_account(request: Request) -> Account:
+    """Restrict a route to an authenticated account whose role is ``"player"``.
 
-
-def get_playing_user(request: Request) -> User:
-    user = get_user(request)
-    if user is None or user.role != "player":
+    No session, or a session that resolves to a facilitator, both fail as ``403`` — plain
+    authentication is already covered by the entry gate, ``/auth/me``.
+    """
+    account = get_current_account(request)
+    if account is None or get_role(account.account_id) != "player":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.USER_IS_NOT_A_PLAYER)
-    return user
+    return account
 
 
-def get_admin_user(request: Request) -> User:
-    """Restrict a route to the current instance's admin (``user.is_admin``, i.e. ``role ==
-    "admin"``) — the existing primitive, not the separate, not-yet-built facilitator-role/grants
-    rebuild (#899). The facilitator surfaces (#989) depend on this the way game routes depend on
+def get_facilitator(request: Request) -> Account:
+    """Restrict a route to the current instance's facilitator (server-wide or scoped grant,
+    ADR-0004) — the facilitator surfaces (#989) depend on this the way game routes depend on
     :func:`get_settled_player`.
 
-    No session, or a session that resolves to a non-admin user, both fail as ``403`` — mirroring
-    :func:`get_playing_user`'s convention of not distinguishing "not logged in" from "wrong role"
-    here (plain authentication is already covered by the entry gate, ``/auth/me``).
+    No session, or a session that resolves to a non-facilitator account, both fail as ``403`` —
+    mirroring :func:`get_playing_account`'s convention of not distinguishing "not logged in" from
+    "wrong role" here.
     """
-    user = get_user(request)
-    if user is None or not user.is_admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.USER_IS_NOT_AN_ADMIN)
-    return user
+    account = get_current_account(request)
+    if account is None or get_role(account.account_id) != "facilitator":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.ACCOUNT_IS_NOT_A_FACILITATOR
+        )
+    return account
 
 
 def get_settled_player(request: Request) -> Player:
-    user = get_user(request)
-    if user is None:
+    account = get_current_account(request)
+    if account is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=GameExceptionType.NOT_AUTHENTICATED)
-    if user.role != "player":
+    if get_role(account.account_id) != "player":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.USER_IS_NOT_A_PLAYER)
-    if user.player is None:
+    player = next(Player.filter_by(account_id=account.account_id), None)
+    if player is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=GameExceptionType.PLAYER_NOT_SET_UP)
-    if (
-        user.player.last_connection is None
-        or (datetime.now(timezone.utc) - user.player.last_connection).total_seconds() > 300
-    ):
-        user.player.last_connection = datetime.now(timezone.utc)
-    return user.player
+    if player.last_connection is None or (datetime.now(timezone.utc) - player.last_connection).total_seconds() > 300:
+        player.last_connection = datetime.now(timezone.utc)
+    return player

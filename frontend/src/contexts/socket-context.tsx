@@ -38,7 +38,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
     const [error, setError] = useState<Error | null>(null);
     const socketRef = useRef<Socket | null>(null);
 
-    // Socket.IO requires an authenticated player (not admin)
+    // Socket.IO requires an authenticated player (not a facilitator)
     // Unsettled players can connect to receive broadcasts (e.g., map updates when others settle)
     const canConnect = isAuthenticated && user?.role === "player";
 
@@ -50,7 +50,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
                 role: user?.role,
                 reason: !isAuthenticated
                     ? "Not authenticated"
-                    : "User is not a player (admin?)",
+                    : "User is not a player (facilitator?)",
             });
             // Disconnect if we have a connection and user logged out
             if (socketRef.current) {

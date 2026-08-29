@@ -2,17 +2,18 @@
 
 These are the low-level pieces of authentication — cookie-signing secret resolution, the
 ``itsdangerous`` serializer, password hashing, and the session-cookie read/write helpers — with
-**no import of ``User``/``Player`` or the game engine**. That is deliberate: the server-wide
-identity layer (``energetica.accounts``) and the instance-independent lobby service both import
-from here, so this module must stay a leaf (see ADR-0002, lobby Phase B).
+**no import of ``Player`` or the game engine**. That is deliberate: the server-wide identity
+layer (``energetica.accounts``) and the instance-independent lobby service both import from
+here, so this module must stay a leaf (see ADR-0002, lobby Phase B).
 
-``energetica.utils.auth`` re-exports everything here and adds the ``User``/``Player``-coupled
-request dependencies (``get_user`` & friends); game-side callers keep importing from ``auth`` and
-see no change.
+``energetica.utils.auth`` re-exports everything here and adds the ``Account``/``Player``-coupled
+request dependencies (``get_current_account`` & friends); game-side callers keep importing from
+``auth`` and see no change.
 
 The cookie payload is the immutable ``str(account_id)`` (ADR-0002 amendment): the lobby mints it
-and every instance validates it with the shared secret and resolves it against its local ``User``.
-This module signs/decodes the bare string; interpretation happens where the token is decoded.
+and every instance validates it with the shared secret and resolves it against ``accounts.db``
+(role) and, for a settled player, its local ``Player`` (ADR-0004). This module signs/decodes the
+bare string; interpretation happens where the token is decoded.
 """
 
 from __future__ import annotations
@@ -107,7 +108,7 @@ def account_id_from_token(token: str) -> int | None:
     """The ``account_id`` a valid session token carries, or ``None`` if absent/invalid.
 
     A tampered, expired, or non-integer payload reads as ``None`` (never raises). Shared by the
-    instance (``get_user_from_token``) and the lobby (``account_id_from_request``) so both decode
+    instance (``get_account_from_token``) and the lobby (``account_id_from_request``) so both decode
     the cookie identically (ADR-0002 amendment: the payload is the immutable ``account_id``).
     """
     payload = decode_session_token(token)

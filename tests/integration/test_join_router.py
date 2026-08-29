@@ -14,7 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from energetica import create_app
-from energetica.database.user import User
+from energetica.database.player import Player
 from energetica.globals import engine
 
 from ._session_helpers import authenticate, make_account
@@ -129,22 +129,22 @@ def test_get_reports_join_open_false(instance_json: Path) -> None:
     assert response.json()["join_open"] is False
 
 
-def test_get_reports_the_viewer_username_for_a_signed_in_visitor_with_no_local_user(instance_json: Path) -> None:
-    """The crux of #1021: a visitor with a valid SSO session but no User row yet (not
-    access-allowed, so the entry gate has never provisioned one) must still be identified here.
+def test_get_reports_the_viewer_username_for_a_signed_in_visitor_with_no_player(instance_json: Path) -> None:
+    """The crux of #1021: a visitor with a valid SSO session but no Player yet (not
+    access-allowed, so they've never settled) must still be identified here.
     """
     _write(instance_json, PRIVATE_JSON)
     client = _client()
     account_id = make_account("carol", "pw")
     authenticate(client, account_id)
-    assert next(User.filter_by(account_id=account_id), None) is None
+    assert next(Player.filter_by(account_id=account_id), None) is None
 
     response = client.get(_join_url(TOKEN))
 
     assert response.status_code == 200
     assert response.json()["viewer_username"] == "carol"
-    # Merely resolving the link must not itself grant or provision anything.
-    assert next(User.filter_by(account_id=account_id), None) is None
+    # Merely resolving the link must not itself grant or create anything.
+    assert next(Player.filter_by(account_id=account_id), None) is None
     assert "carol" not in _allowed_usernames(instance_json)
 
 
@@ -189,7 +189,7 @@ def test_post_rejects_when_join_is_closed_and_does_not_modify_the_allowlist(inst
 
 def test_post_adds_the_visitor_to_the_allowlist_and_the_entry_gate_then_admits_them(instance_json: Path) -> None:
     """The full acceptance scenario: confirm, then the existing entry gate (unmodified) admits
-    the visitor as a normal player and provisions their local User.
+    the visitor as a normal player.
     """
     _write(instance_json, PRIVATE_JSON)
     client = _client()
@@ -208,7 +208,6 @@ def test_post_adds_the_visitor_to_the_allowlist_and_the_entry_gate_then_admits_t
     body = me.json()
     assert body["username"] == "carol"
     assert body["role"] == "player"
-    assert next(User.filter_by(account_id=account_id), None) is not None
 
 
 def test_post_is_idempotent_for_an_already_allowed_username(instance_json: Path) -> None:

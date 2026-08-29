@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def _parse_settled_at(raw: str) -> datetime | None:
     """Parse a stored ``settled_at`` into an aware datetime, or ``None`` if it is unusable.
 
-    ``record_membership`` normalises every write to aware UTC, so a bad value only arises from a
+    ``record_settlement`` normalises every write to aware UTC, so a bad value only arises from a
     legacy/restored/hand-edited row. Rather than let one such row 500 the whole endpoint (and hide
     *every* run for the account), recover a naive timestamp as UTC — matching the write-side
     normalisation — and drop a truly unparseable one, consistent with how stale rows are skipped.
@@ -46,14 +46,17 @@ def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
     """
     runs: list[MyRun] = []
     for membership in accounts.get_memberships(account_id=account_id):
+        # get_memberships only returns role="player" rows, and a player's slug is never NULL
+        # (only a server-wide facilitator grant can have one) — see ADR-0004.
+        assert membership.slug is not None
         fragment = instance_config.load_fragment(membership.slug)
         if fragment is None:
             continue
-        settled_at = _parse_settled_at(membership.settled_at)
+        settled_at = _parse_settled_at(membership.created_at)
         if settled_at is None:
             logger.warning(
                 "skipping membership with unparseable settled_at %r (account_id=%s, slug=%s)",
-                membership.settled_at,
+                membership.created_at,
                 account_id,
                 membership.slug,
             )

@@ -22,7 +22,7 @@ export const Route = createFileRoute("/app/")({
             });
         }
 
-        // Role-aware so an admin account lands on its own home (#1020) instead of bouncing
+        // Role-aware so a facilitator account lands on its own home (#1020) instead of bouncing
         // through the player-only `/app/dashboard`, which `__root.tsx`'s route guard would then
         // redirect straight to `/app/logout` (a role mismatch on a gated route always logs out —
         // see `computeRedirect` in `lib/route-guard.ts`). `ensureQueryData` reads the same
@@ -37,7 +37,10 @@ export const Route = createFileRoute("/app/")({
             staleTime: Infinity,
         });
         throw redirect({
-            to: user?.role === "admin" ? "/app/facilitator" : "/app/dashboard",
+            to:
+                user?.role === "facilitator"
+                    ? "/app/facilitator"
+                    : "/app/dashboard",
         });
     },
     staticData: {

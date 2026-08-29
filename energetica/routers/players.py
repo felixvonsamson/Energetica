@@ -36,7 +36,9 @@ def get_me(user: Player = Depends(get_settled_player)) -> PlayerOut:
 
 @router.get("")
 def get_all_players() -> list[PlayerOut]:
-    """Get all user ids and usernames, excluding admins."""
+    """Get all settled players' ids and usernames (facilitators have no ``Player``, so there is
+    nothing to exclude).
+    """
     return [PlayerOut.from_player(player) for player in Player.all()]
 
 

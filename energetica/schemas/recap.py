@@ -28,10 +28,6 @@ if TYPE_CHECKING:
     from energetica.instance_config import InstanceConfig
 
 
-class _RecapUser(Protocol):
-    account_id: int
-
-
 class _RecapNetwork(Protocol):
     name: str
 
@@ -48,7 +44,7 @@ class RecapPlayer(Protocol):
     def username(self) -> str: ...
 
     @property
-    def user(self) -> _RecapUser: ...
+    def account_id(self) -> int: ...
 
     @property
     def network(self) -> _RecapNetwork | None: ...
@@ -150,11 +146,11 @@ class Recap(BaseModel):
         """
         ordered = sorted(
             players,
-            key=lambda player: (-player.progression_metrics.get("operating_income", 0), player.user.account_id),
+            key=lambda player: (-player.progression_metrics.get("operating_income", 0), player.account_id),
         )
         rows = [
             RecapRow(
-                account_id=player.user.account_id,
+                account_id=player.account_id,
                 username_at_freeze=player.username,
                 network_name=player.network.name if player.network else None,
                 operating_income=player.progression_metrics.get("operating_income", 0),

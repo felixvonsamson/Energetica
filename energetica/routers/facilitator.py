@@ -11,7 +11,7 @@ from typing import Annotated, Callable, TypeVar
 from fastapi import APIRouter, Depends, Query
 
 from energetica import accounts, instance_config
-from energetica.database.user import User
+from energetica.database.player import Player
 from energetica.game_error import GameError, GameExceptionType
 from energetica.schemas.facilitator import (
     FacilitatorAccessOut,
@@ -20,9 +20,9 @@ from energetica.schemas.facilitator import (
     RosterAddIn,
     RosterCandidatesOut,
 )
-from energetica.utils.auth import get_admin_user
+from energetica.utils.auth import get_facilitator
 
-router = APIRouter(prefix="/facilitator", tags=["Facilitator"], dependencies=[Depends(get_admin_user)])
+router = APIRouter(prefix="/facilitator", tags=["Facilitator"], dependencies=[Depends(get_facilitator)])
 
 _T = TypeVar("_T")
 
@@ -78,14 +78,14 @@ def _private_access() -> instance_config.PrivateAccess:
 
 @router.get("/roster")
 def get_roster() -> FacilitatorRosterOut:
-    """This instance's roster, split into joined (an auto-provisioned local ``User`` already
-    exists) vs invited (allowlisted, no entry yet).
+    """This instance's roster, split into joined (a settled ``Player`` already exists) vs invited
+    (allowlisted, no entry yet).
     """
     access = _private_access()
     joined: list[str] = []
     invited: list[str] = []
     for username in access.allowed_usernames:
-        bucket = joined if next(User.filter_by(username=username), None) is not None else invited
+        bucket = joined if next(Player.filter_by(username=username), None) is not None else invited
         bucket.append(username)
     return FacilitatorRosterOut(joined=joined, invited=invited)
 

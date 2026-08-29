@@ -27,11 +27,6 @@ SLUG = "autumn-2025"
 
 
 @dataclass
-class _FakeUser:
-    account_id: int
-
-
-@dataclass
 class _FakeNetwork:
     name: str
 
@@ -46,10 +41,6 @@ class _FakePlayer:
     produced_co2: float
     net_emissions: float
     network_name: str | None = None
-
-    @property
-    def user(self) -> _FakeUser:
-        return _FakeUser(account_id=self.account_id)
 
     @property
     def username(self) -> str:
@@ -75,13 +66,9 @@ class _FakePlayer:
 
 @dataclass
 class _FakeTileOwner:
-    """The narrow ``tile.player`` slice _freeze_tiles resolves — just ``.user.account_id``."""
+    """The narrow ``tile.player`` slice _freeze_tiles resolves — just ``.account_id``."""
 
     account_id: int
-
-    @property
-    def user(self) -> _FakeUser:
-        return _FakeUser(account_id=self.account_id)
 
 
 @dataclass
