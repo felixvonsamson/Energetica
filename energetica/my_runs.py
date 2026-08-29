@@ -14,7 +14,7 @@ import logging
 from datetime import datetime, timezone
 
 from energetica import accounts, instance_config
-from energetica.schemas.lobby import MyRun, MyRunsResponse
+from energetica.schemas.lobby import FacilitatedRun, MyRun, MyRunsResponse
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,11 @@ def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
     field — password managers only offer to *update* the right stored credential when the change
     form identifies which account it belongs to. Both callers already hold it, so it is passed in
     rather than re-read from the store.
+
+    Also joins the account's instance-scoped facilitator grants against the same fragments, into
+    ``facilitated_runs`` (#1032) — a server-wide grant is excluded (see
+    :func:`accounts.get_facilitator_grants`). Both origins that call this function get the new
+    field; only the lobby picker's UI reads it today.
     """
     runs: list[MyRun] = []
     for membership in accounts.get_memberships(account_id=account_id):
@@ -81,4 +86,32 @@ def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
                 settled_at=settled_at,
             )
         )
-    return MyRunsResponse(username=username, runs=runs)
+
+    facilitated_runs: list[FacilitatedRun] = []
+    for grant in accounts.get_facilitator_grants(account_id=account_id):
+        # get_facilitator_grants excludes slug IS NULL (server-wide) rows by construction.
+        assert grant.slug is not None
+        fragment = instance_config.load_fragment(grant.slug)
+        if fragment is None:
+            continue
+        granted_at = _parse_aware(grant.created_at)
+        if granted_at is None:
+            logger.warning(
+                "skipping facilitator grant with unparseable created_at %r (account_id=%s, slug=%s)",
+                grant.created_at,
+                account_id,
+                grant.slug,
+            )
+            continue
+        facilitated_runs.append(
+            FacilitatedRun(
+                slug=fragment.slug,
+                name=fragment.name,
+                starts_at=fragment.starts_at,
+                freeze_at=fragment.freeze_at,
+                ended_at=fragment.ended_at,
+                granted_at=granted_at,
+            )
+        )
+
+    return MyRunsResponse(username=username, runs=runs, facilitated_runs=facilitated_runs)

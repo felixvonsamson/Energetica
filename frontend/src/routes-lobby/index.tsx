@@ -2,7 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Compass, LogIn, UserPlus } from "lucide-react";
 import { useEffect, useRef } from "react";
 
-import { MyRunCard, OpenRunCard } from "@/components/lobby/run-cards";
+import {
+    FacilitatedRunCard,
+    MyRunCard,
+    OpenRunCard,
+} from "@/components/lobby/run-cards";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InfoBanner } from "@/components/ui/info-banner";
@@ -14,7 +18,7 @@ import {
     TypographyMuted,
 } from "@/components/ui/typography";
 import { useInstancesManifest, useMyRuns } from "@/hooks/use-lobby";
-import type { MyRun } from "@/lib/api/lobby";
+import type { FacilitatedRun, MyRun } from "@/lib/api/lobby";
 import type { InstanceFragment } from "@/lib/instances";
 import { runAppHref, validateReturnSearch } from "@/lib/lobby";
 import { isSingleOriginHost } from "@/lib/single-origin";
@@ -105,7 +109,13 @@ function PickerPage() {
             <LoggedOutPicker openRuns={advertised} returnSlug={returnSlug} />
         );
     }
-    return <LoggedInPicker runs={myRuns.data.runs} advertised={advertised} />;
+    return (
+        <LoggedInPicker
+            runs={myRuns.data.runs}
+            facilitatedRuns={myRuns.data.facilitated_runs}
+            advertised={advertised}
+        />
+    );
 }
 
 function LoggedOutPicker({
@@ -165,14 +175,22 @@ function LoggedOutPicker({
 
 function LoggedInPicker({
     runs,
+    facilitatedRuns,
     advertised,
 }: {
     runs: MyRun[];
+    facilitatedRuns: FacilitatedRun[];
     advertised: InstanceFragment[];
 }) {
     const myRunSlugs = new Set(runs.map((run) => run.slug));
+    const facilitatedSlugs = new Set(facilitatedRuns.map((run) => run.slug));
+    // A facilitator's own run can be public and advertised; without this exclusion it would show
+    // up under "Open runs" with a "Join" button that would just fail server-side — player and
+    // facilitator are mutually exclusive per (account_id, slug) (ADR-0004).
     const openRuns = advertised.filter(
-        (instance) => !myRunSlugs.has(instance.slug),
+        (instance) =>
+            !myRunSlugs.has(instance.slug) &&
+            !facilitatedSlugs.has(instance.slug),
     );
 
     return (
@@ -197,6 +215,19 @@ function LoggedInPicker({
                     />
                 )}
             </section>
+
+            {facilitatedRuns.length > 0 && (
+                <section className="flex flex-col gap-4">
+                    <TypographyH2 className="text-primary">
+                        Runs you facilitate
+                    </TypographyH2>
+                    <div className="flex flex-col gap-4">
+                        {facilitatedRuns.map((run) => (
+                            <FacilitatedRunCard key={run.slug} run={run} />
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {openRuns.length > 0 && (
                 <section className="flex flex-col gap-4">

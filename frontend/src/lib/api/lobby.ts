@@ -17,6 +17,7 @@ import type { ApiRequestBody, ApiResponse } from "@/types/api-helpers";
 
 export type MyRunsResponse = ApiResponse<"/api/v1/lobby/my-runs", "get">;
 export type MyRun = MyRunsResponse["runs"][number];
+export type FacilitatedRun = MyRunsResponse["facilitated_runs"][number];
 
 export const lobbyApi = {
     /**

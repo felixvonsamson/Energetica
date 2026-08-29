@@ -2545,6 +2545,45 @@ export interface components {
          */
         ExtractionFacilityType: "coal_mine" | "gas_drilling_site" | "uranium_mine";
         /**
+         * FacilitatedRun
+         * @description One run the authenticated account facilitates — an instance-scoped grant only (a
+         *     server-wide grant isn't tied to a single run, so it has no entry here; see #1032).
+         */
+        FacilitatedRun: {
+            /**
+             * Slug
+             * @description Subdomain slug of the run
+             */
+            slug: string;
+            /**
+             * Name
+             * @description Human-readable run name, from the instance fragment
+             */
+            name: string;
+            /**
+             * Starts At
+             * Format: date-time
+             * @description When the run starts, from the instance fragment
+             */
+            starts_at: string;
+            /**
+             * Freeze At
+             * @description When play/sim ends, or null for an open-ended run
+             */
+            freeze_at?: string | null;
+            /**
+             * Ended At
+             * @description When the process is reaped, or null for an open-ended run
+             */
+            ended_at?: string | null;
+            /**
+             * Granted At
+             * Format: date-time
+             * @description When this account was granted facilitator access to the run
+             */
+            granted_at: string;
+        };
+        /**
          * FacilitatorAccessOut
          * @description This instance's join-link settings, as shown on the facilitator page.
          */
@@ -3162,7 +3201,7 @@ export interface components {
         };
         /**
          * MyRunsResponse
-         * @description The account's joined runs, most recently joined first.
+         * @description The account's joined runs, most recently joined first, plus the runs it facilitates.
          */
         MyRunsResponse: {
             /**
@@ -3172,6 +3211,11 @@ export interface components {
             username: string;
             /** Runs */
             runs: components["schemas"]["MyRun"][];
+            /**
+             * Facilitated Runs
+             * @description Runs this account facilitates via an instance-scoped grant, most recently granted first
+             */
+            facilitated_runs: components["schemas"]["FacilitatedRun"][];
         };
         /** NetworkExpelledPayload */
         NetworkExpelledPayload: {
