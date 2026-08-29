@@ -1,5 +1,7 @@
 # Fix startup OOM on the read path; keep the action log complete from init
 
+**Date:** 2026-06-13
+
 ## Context
 
 `create_app()` deserialised the entire `instance/actions_history.log` into Pydantic

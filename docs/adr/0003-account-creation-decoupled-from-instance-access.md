@@ -1,6 +1,7 @@
 # Account creation decoupled from instance access; lobby signup is open
 
 **Status:** accepted
+**Date:** 2026-06-28
 
 ## Context
 
@@ -31,6 +32,13 @@ its `instance.json`) gates open signup, and closed-enrollment deployments seed a
 directly into `accounts.db` via an admin bootstrap (`accounts.get_or_create_account_id`)
 instead of `players.txt`. The per-instance `disable_signups` no longer governs account
 creation (signup is no longer per-instance).
+
+**The toggle fails closed.** `signups_enabled` defaults to `False`, is typed `StrictBool` so a
+stray `"yes"` or `1` is rejected rather than coerced, and a missing or malformed `server.json`
+disables signup rather than enabling it (`energetica/server_config.py`). `server.json` is
+written by `setup-base.sh`, so its absence means misconfiguration, and a broken toggle must
+never throw account creation open to the world. Closed-enrollment deployments bootstrap
+accounts directly, so signups-off is a benign degraded state rather than an outage.
 
 **Joining a run is a separate, later act:** pick a run → enter it → settle. The per-instance
 access policy (`_enforce_instance_access`) is enforced at **entry** (User auto-provision)

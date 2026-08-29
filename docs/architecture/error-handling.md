@@ -9,15 +9,7 @@ The backend produces three distinct error shapes. The API client in `lib/api-cli
 { "detail": "USERNAME_TAKEN" }
 ```
 
-**Game errors** — business logic failures from the `GameError` exception handler. Always 400.
-```json
-{ "game_exception_type": "NOT_ENOUGH_MONEY", "kwargs": { ... } }
-```
-
-**Validation errors** — Pydantic schema failures. Always 422.
-```json
-{ "detail": [{ "loc": ["body", "username"], "msg": "...", "type": "..." }] }
-```
+**Game errors** and **validation errors** come from two exception handlers that the game app and the lobby app each define separately. `tests/integration/test_error_envelope_contract.py` pins both shapes and asserts the two apps agree; read it for the exact status codes and body keys.
 
 `ApiClientError.getErrorMessage()` extracts the meaningful string from whichever format arrived.
 
