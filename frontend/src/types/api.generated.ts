@@ -839,6 +839,84 @@ export interface paths {
         patch: operations["update_access_api_v1_facilitator_access_patch"];
         trace?: never;
     };
+    "/api/v1/facilitator/roster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Roster
+         * @description This instance's roster, split into joined (an auto-provisioned local ``User`` already
+         *     exists) vs invited (allowlisted, no entry yet).
+         */
+        get: operations["get_roster_api_v1_facilitator_roster_get"];
+        put?: never;
+        /**
+         * Add To Roster
+         * @description Add an existing account to the roster.
+         *
+         *     No freeform username strings: an account must already exist server-wide (a facilitator can
+         *     only invite someone with an account, not conjure a name into the allowlist), which reuses the
+         *     same ``USER_NOT_FOUND`` a login rejects an unknown username with.
+         */
+        post: operations["add_to_roster_api_v1_facilitator_roster_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facilitator/roster/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search Roster Candidates
+         * @description Existing accounts whose username starts with ``prefix`` — the add control's lookup.
+         *
+         *     Doesn't require this instance to be private (searching the server-wide account store doesn't
+         *     touch its allowlist), so it skips :func:`_private_access` — the add-control's own POST is
+         *     where "this instance isn't private" would actually matter.
+         */
+        get: operations["search_roster_candidates_api_v1_facilitator_roster_candidates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facilitator/roster/{username}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove From Roster
+         * @description Ban/remove: drop ``username`` from the allowlist.
+         *
+         *     Revocation is eventual — it takes effect on the account's next entry check, not an instant
+         *     kick of a live session (out of scope here, #677 if ever built). A no-op (still 204) if
+         *     ``username`` wasn't on the allowlist, matching :func:`instance_config.remove_allowed_username`'s
+         *     own idempotency.
+         */
+        delete: operations["remove_from_roster_api_v1_facilitator_roster__username__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/facilities": {
         parameters: {
             query?: never;
@@ -1006,9 +1084,11 @@ export interface paths {
          *     Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
          *     is this runs *before* the visitor is access-allowed, so no local ``User`` need exist yet) but
          *     deliberately does not go through ``_enforce_instance_access``: granting access is this
-         *     endpoint's job, not a precondition for reaching it. Re-checks ``join_open`` server-side (not
-         *     just trusted from the page's last ``GET``) so a facilitator flipping the toggle mid-visit is
-         *     the outcome that wins, not a stale client.
+         *     endpoint's job, not a precondition for reaching it. Checks identity before instance state
+         *     (mirrors ``get_admin_user``/``get_settled_player``'s "who, then what" order elsewhere in this
+         *     codebase) and re-checks ``join_open`` server-side rather than trusting the page's last
+         *     ``GET``, so a facilitator flipping the toggle mid-visit is the outcome that wins, not a stale
+         *     client.
          */
         post: operations["confirm_join_api_v1_join__token__post"];
         delete?: never;
@@ -2455,6 +2535,23 @@ export interface components {
             /** Join Open */
             join_open: boolean;
         };
+        /**
+         * FacilitatorRosterOut
+         * @description The private instance's roster (#1022), split by whether the account has touched this
+         *     instance yet.
+         */
+        FacilitatorRosterOut: {
+            /**
+             * Joined
+             * @description Allowlisted usernames that already have a User on this instance.
+             */
+            joined: string[];
+            /**
+             * Invited
+             * @description Allowlisted usernames with no User here yet.
+             */
+            invited: string[];
+        };
         /** FacilitiesListOut */
         FacilitiesListOut: {
             /** Power Facilities */
@@ -3689,6 +3786,28 @@ export interface components {
             series: {
                 [key: string]: number[];
             };
+        };
+        /**
+         * RosterAddIn
+         * @description Request body to add an existing account to the roster.
+         */
+        RosterAddIn: {
+            /**
+             * Username
+             * @description An existing account's username to add to the private allowlist.
+             */
+            username: string;
+        };
+        /**
+         * RosterCandidatesOut
+         * @description Existing accounts matching a roster-search prefix — the add control's lookup.
+         */
+        RosterCandidatesOut: {
+            /**
+             * Usernames
+             * @description Existing accounts' usernames starting with the search prefix.
+             */
+            usernames: string[];
         };
         /**
          * SettingsOut
@@ -5548,6 +5667,117 @@ export interface operations {
                 "application/json": components["schemas"]["FacilitatorAccessPatch"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_roster_api_v1_facilitator_roster_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilitatorRosterOut"];
+                };
+            };
+        };
+    };
+    add_to_roster_api_v1_facilitator_roster_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RosterAddIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_roster_candidates_api_v1_facilitator_roster_candidates_get: {
+        parameters: {
+            query: {
+                prefix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterCandidatesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_from_roster_api_v1_facilitator_roster__username__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             204: {

@@ -13,6 +13,7 @@ export type AppRoute =
     | "/app/community/messages"
     | "/app/community/resource-market"
     | "/app/dashboard/quiz"
+    | "/app/facilitator/roster"
     | "/app/facilities/extraction"
     | "/app/facilities/functional"
     | "/app/facilities/manage"

@@ -139,3 +139,165 @@ def test_get_on_a_public_instance_fails_with_a_game_error(instance_json: Path) -
     response = client.get(ACCESS_URL)
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "INSTANCE_NOT_PRIVATE"
+
+
+# --- Roster: view, manual add, ban (#1022) -------------------------------------------------------
+
+ROSTER_URL = f"http://localhost:{PORT}/api/v1/facilitator/roster"
+
+
+def _candidates_url(prefix: str) -> str:
+    return f"{ROSTER_URL}/candidates?prefix={prefix}"
+
+
+def test_roster_rejects_a_non_admin(instance_json: Path) -> None:
+    _write(instance_json, PRIVATE_JSON)
+    client = _client()
+    account_id = make_account("alice", "pw")
+    User(username="alice", pwhash="unused", role="player", account_id=account_id)
+    authenticate(client, account_id)
+
+    assert client.get(ROSTER_URL).status_code == 403
+    assert client.get(_candidates_url("a")).status_code == 403
+    assert client.post(ROSTER_URL, json={"username": "alice"}).status_code == 403
+    assert client.delete(f"{ROSTER_URL}/alice").status_code == 403
+
+
+def test_roster_splits_joined_and_invited(instance_json: Path) -> None:
+    """"alice" is allowlisted (by ``PRIVATE_JSON``) and has a local User (joined); "bob" is
+    allowlisted via the add endpoint but has never touched this instance (invited).
+    """
+    client = _admin_client(instance_json)  # PRIVATE_JSON allowlists "alice"
+    alice_id = make_account("alice", "pw")
+    User(username="alice", pwhash="unused", role="player", account_id=alice_id)
+    make_account("bob", "pw")  # server-wide account exists, but no local User yet
+    assert client.post(ROSTER_URL, json={"username": "bob"}).status_code == 204
+
+    response = client.get(ROSTER_URL)
+
+    assert response.status_code == 200
+    assert response.json() == {"joined": ["alice"], "invited": ["bob"]}
+
+
+def test_roster_get_on_a_public_instance_fails_with_a_game_error(instance_json: Path) -> None:
+    _write(instance_json, PUBLIC_JSON)
+    client = _client()
+    account_id = make_account("prof", "pw")
+    User(username="prof", pwhash="unused", role="admin", account_id=account_id)
+    authenticate(client, account_id)
+
+    response = client.get(ROSTER_URL)
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "INSTANCE_NOT_PRIVATE"
+
+
+def test_roster_candidates_returns_matching_accounts(instance_json: Path) -> None:
+    client = _admin_client(instance_json)
+    make_account("carol", "pw")
+    make_account("caroline", "pw")
+    make_account("dave", "pw")
+
+    response = client.get(_candidates_url("car"))
+
+    assert response.status_code == 200
+    # Alphabetical: "carol" sorts before "caroline" (it's a prefix of it).
+    assert response.json() == {"usernames": ["carol", "caroline"]}
+
+
+def test_roster_candidates_does_not_require_a_private_instance(instance_json: Path) -> None:
+    """Searching the server-wide account store doesn't touch this instance's allowlist, so it
+    works even before/without a private config — unlike every other roster route.
+    """
+    _write(instance_json, PUBLIC_JSON)
+    client = _client()
+    account_id = make_account("prof", "pw")
+    User(username="prof", pwhash="unused", role="admin", account_id=account_id)
+    authenticate(client, account_id)
+    make_account("carol", "pw")
+
+    response = client.get(_candidates_url("car"))
+
+    assert response.status_code == 200
+    assert response.json() == {"usernames": ["carol"]}
+
+
+def test_roster_post_adds_an_existing_account_and_it_appears_as_invited(instance_json: Path) -> None:
+    client = _admin_client(instance_json)
+    make_account("carol", "pw")
+
+    response = client.post(ROSTER_URL, json={"username": "carol"})
+
+    assert response.status_code == 204
+    on_disk = json.loads(instance_json.read_text())
+    assert "carol" in on_disk["access"]["allowed_usernames"]
+    assert client.get(ROSTER_URL).json()["invited"] == ["alice", "carol"]
+
+
+def test_roster_post_rejects_a_username_with_no_matching_account(instance_json: Path) -> None:
+    """No freeform username strings — only an existing account can be added."""
+    client = _admin_client(instance_json)
+
+    response = client.post(ROSTER_URL, json={"username": "ghost"})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "USER_NOT_FOUND"
+    on_disk = json.loads(instance_json.read_text())
+    assert "ghost" not in on_disk["access"]["allowed_usernames"]
+
+
+def test_roster_post_on_a_public_instance_fails_with_a_game_error(instance_json: Path) -> None:
+    _write(instance_json, PUBLIC_JSON)
+    client = _client()
+    account_id = make_account("prof", "pw")
+    User(username="prof", pwhash="unused", role="admin", account_id=account_id)
+    authenticate(client, account_id)
+    make_account("carol", "pw")
+
+    response = client.post(ROSTER_URL, json={"username": "carol"})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "INSTANCE_NOT_PRIVATE"
+
+
+def test_roster_delete_removes_from_the_allowlist(instance_json: Path) -> None:
+    client = _admin_client(instance_json)  # "alice" is already allowlisted
+
+    response = client.delete(f"{ROSTER_URL}/alice")
+
+    assert response.status_code == 204
+    on_disk = json.loads(instance_json.read_text())
+    assert "alice" not in on_disk["access"]["allowed_usernames"]
+
+
+def test_roster_delete_denies_the_banned_account_on_its_next_entry_attempt(instance_json: Path) -> None:
+    """One shared client, swapping which account's cookie is set — a second ``_client()`` would
+    spin up a second engine and lose the first's state (see the module docstring's single-app
+    convention followed throughout this file and ``test_join_router.py``).
+    """
+    _write(instance_json, PRIVATE_JSON)
+    client = _client()
+    admin_id = make_account("prof", "pw")
+    User(username="prof", pwhash="unused", role="admin", account_id=admin_id)
+    carol_id = make_account("carol", "pw")
+
+    authenticate(client, admin_id)
+    assert client.post(ROSTER_URL, json={"username": "carol"}).status_code == 204
+
+    authenticate(client, carol_id)
+    assert client.get(f"http://localhost:{PORT}/api/v1/auth/me").status_code == 200
+
+    authenticate(client, admin_id)
+    response = client.delete(f"{ROSTER_URL}/carol")
+    assert response.status_code == 204
+
+    authenticate(client, carol_id)
+    assert client.get(f"http://localhost:{PORT}/api/v1/auth/me").status_code == 403
+
+
+def test_roster_delete_is_a_noop_for_an_unlisted_username(instance_json: Path) -> None:
+    client = _admin_client(instance_json)
+
+    response = client.delete(f"{ROSTER_URL}/never-invited")
+
+    assert response.status_code == 204

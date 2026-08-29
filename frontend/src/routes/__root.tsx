@@ -13,7 +13,7 @@ import { useCapabilities } from "@/hooks/use-capabilities";
 import { useGameEngine } from "@/hooks/use-game";
 import { usePhase } from "@/hooks/use-phase";
 import { lobbyLoginHref } from "@/lib/instances";
-import { computeRedirect } from "@/lib/route-guard";
+import { computeRedirect, isAnnouncedTakeover } from "@/lib/route-guard";
 
 export const Route = createRootRoute({
     staticData: { title: "", routeConfig: { requiredRole: null } },
@@ -53,10 +53,16 @@ function RootComponent() {
     // `undefined` while the engine config loads or on an unconfigured/open-ended run — mirroring the
     // backend's fail-open-to-active phase read (#861). Freeze/ended stay ungated here (that in-game
     // read-only surface is T8, #866).
+    // Facilitator (`requiredRole: "admin"`) routes are exempt (#1028): a facilitator manages the
+    // roster and join link precisely during this pre-start window, and the backend imposes no
+    // phase gate on those endpoints.
     // `phase === "announced"` already implies `engine.starts_at` is set (usePhase returns undefined
     // otherwise); the render branch below narrows it for the prop.
     const announced =
-        authResolved && isAuthenticated && !!user && phase === "announced";
+        authResolved &&
+        isAuthenticated &&
+        !!user &&
+        isAnnouncedTakeover(routeConfig, phase);
     const redirectTo =
         !announced && authResolved && isAuthenticated && user
             ? computeRedirect(routeConfig, user, capabilities)

@@ -85,3 +85,52 @@ def test_update_password_changes_stored_hash(accounts_db: Path) -> None:
 
     assert accounts.verify_password(username="alice", password="old-pw") is False
     assert accounts.verify_password(username="alice", password="new-pw") is True
+
+
+# --- search_accounts (#1022) --------------------------------------------------------------------
+#
+# Backs the facilitator roster's add control: looking up an existing account by username prefix
+# so the facilitator can only add an account that actually exists (no freeform username strings).
+
+
+def test_search_accounts_matches_by_prefix(accounts_db: Path) -> None:
+    accounts.create_account(username="alice", pwhash="hash")
+    accounts.create_account(username="alicia", pwhash="hash")
+    accounts.create_account(username="bob", pwhash="hash")
+
+    matches = accounts.search_accounts(prefix="ali")
+
+    assert [account.username for account in matches] == ["alice", "alicia"]
+
+
+def test_search_accounts_is_case_sensitive_like_the_rest_of_the_store(accounts_db: Path) -> None:
+    """Matches ``get_account_by_username``'s exact-match convention: no case folding."""
+    accounts.create_account(username="Alice", pwhash="hash")
+
+    assert accounts.search_accounts(prefix="ali") == []
+    assert [account.username for account in accounts.search_accounts(prefix="Ali")] == ["Alice"]
+
+
+def test_search_accounts_no_match_returns_empty_list(accounts_db: Path) -> None:
+    accounts.create_account(username="alice", pwhash="hash")
+
+    assert accounts.search_accounts(prefix="zzz") == []
+
+
+def test_search_accounts_treats_percent_and_underscore_as_literal(accounts_db: Path) -> None:
+    """A prefix containing SQL ``LIKE`` wildcards must not match unrelated usernames."""
+    accounts.create_account(username="a_b", pwhash="hash")
+    accounts.create_account(username="axb", pwhash="hash")
+
+    matches = accounts.search_accounts(prefix="a_")
+
+    assert [account.username for account in matches] == ["a_b"]
+
+
+def test_search_accounts_caps_results_at_limit(accounts_db: Path) -> None:
+    for i in range(5):
+        accounts.create_account(username=f"player{i}", pwhash="hash")
+
+    matches = accounts.search_accounts(prefix="player", limit=3)
+
+    assert len(matches) == 3
