@@ -2,21 +2,23 @@
 
 Post-cutover the access policy is enforced when the SSO cookie is validated on entry, not at a
 login POST (which no longer exists). A public (or unconfigured) instance admits any server-wide
-account; a private instance admits only allowlisted usernames. The policy file is read fresh on
-every entry, so a lockdown takes effect even for an account that has already settled (#817,
-ADR-0003). There is nothing to auto-provision any more (ADR-0004): entry never creates a
-``Player`` — only settling does.
+account; a private instance admits only accounts that have joined it (``accounts.db``'s
+``instance_membership``, #1030 follow-up, ADR-0007 — ``instance.json`` carries no allowlist any
+more). The policy file is read fresh on every entry, so a lockdown takes effect even for an
+account that has already settled (#817, ADR-0003). There is nothing to auto-provision any more
+(ADR-0004): entry never creates a ``Player`` — only settling does.
 """
 
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-from energetica import create_app
+from energetica import accounts, create_app
 from energetica.database.player import Player
 from energetica.globals import engine
 
@@ -58,6 +60,11 @@ def _enter(client: TestClient, username: str) -> int:
     return account_id
 
 
+def _join(account_id: int) -> None:
+    """Record account_id as having joined this test's private instance (accounts.db)."""
+    accounts.record_join(account_id=account_id, slug=SLUG, joined_at=datetime.now(timezone.utc).isoformat())
+
+
 def test_entry_allowed_on_public_instance(configured: Path) -> None:
     _write_policy(configured, {"policy": "public"})
     client = _client()
@@ -66,25 +73,26 @@ def test_entry_allowed_on_public_instance(configured: Path) -> None:
     assert client.get(ME_URL).status_code == 200
 
 
-def test_entry_allowed_for_allowlisted_username_on_private_instance(configured: Path) -> None:
-    _write_policy(configured, {"policy": "private", "allowed_usernames": ["alice"]})
+def test_entry_allowed_for_joined_account_on_private_instance(configured: Path) -> None:
+    _write_policy(configured, {"policy": "private"})
     client = _client()
-    _enter(client, "alice")
+    account_id = _enter(client, "alice")
+    _join(account_id)
 
     assert client.get(ME_URL).status_code == 200
 
 
-def test_entry_denied_for_unlisted_username_on_private_instance(configured: Path) -> None:
-    _write_policy(configured, {"policy": "private", "allowed_usernames": ["alice"]})
+def test_entry_denied_for_unjoined_account_on_private_instance(configured: Path) -> None:
+    _write_policy(configured, {"policy": "private"})
     client = _client()
-    _enter(client, "carol")  # valid session, but not on the allowlist
+    _enter(client, "carol")  # valid session, but never joined this run
 
     assert client.get(ME_URL).status_code == 403
 
 
 def test_entry_denied_does_not_create_a_player(configured: Path) -> None:
     """A denied entry on a private instance must not create a ``Player`` — entry never does."""
-    _write_policy(configured, {"policy": "private", "allowed_usernames": ["alice"]})
+    _write_policy(configured, {"policy": "private"})
     client = _client()
     account_id = _enter(client, "carol")
 
@@ -95,15 +103,15 @@ def test_entry_denied_does_not_create_a_player(configured: Path) -> None:
 
 def test_entry_denied_after_instance_goes_private_excluding_a_previously_allowed_account(configured: Path) -> None:
     """An account admitted while the instance was public is denied once it flips to private
-    without them — the access policy is consulted on every entry, not just the first.
+    without it having joined — the access policy is consulted on every entry, not just the first.
     """
     _write_policy(configured, {"policy": "public"})
     client = _client()
     _enter(client, "alice")
     assert client.get(ME_URL).status_code == 200
 
-    # Instance is locked down to an allowlist that excludes alice.
-    _write_policy(configured, {"policy": "private", "allowed_usernames": ["bob"]})
+    # Instance is locked down to private; alice never went through a join step.
+    _write_policy(configured, {"policy": "private"})
 
     assert client.get(ME_URL).status_code == 403
 

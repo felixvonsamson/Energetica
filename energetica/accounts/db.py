@@ -509,3 +509,72 @@ def get_memberships(*, account_id: int) -> list[Membership]:
         )
         for row in rows
     ]
+
+
+def has_joined(*, account_id: int, slug: str) -> bool:
+    """Whether ``account_id`` has joined run ``slug`` as a player — settled or not.
+
+    The private-run entry gate's access check (#1030 follow-up): a private instance's
+    ``access`` policy no longer carries its own allowlist (``instance.json``'s
+    ``allowed_usernames`` is deprecated), this table is the sole source of truth for who may
+    enter. Does not consider facilitator grants — a facilitator bypasses this check entirely at
+    the call site (:func:`is_facilitator`), it doesn't need to appear "joined".
+    """
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM instance_membership WHERE account_id = ? AND slug = ? AND role = 'player'",
+            (account_id, slug),
+        ).fetchone()
+    return row is not None
+
+
+def remove_membership(*, account_id: int, slug: str) -> None:
+    """Remove ``account_id``'s player membership in run ``slug`` outright — the roster's
+    ban/remove. Idempotent: a no-op if there was no row. Never touches a facilitator row
+    (scoped to ``role = 'player'``).
+
+    Deletes the row entirely rather than marking it revoked: a banned account's next entry
+    attempt is denied by :func:`has_joined` finding no row, but this does not touch any
+    ``Player`` already created in that run's engine — an already-settled, later-banned account
+    keeps its game state (tile, resources, facilities — none of it lives in this table, or is
+    affected by this delete), it just can't re-enter (matching the roster's documented
+    "revocation is eventual" behaviour). A plain :func:`record_join` on re-add would otherwise
+    come back with ``settled_at`` null again even though the ``Player`` never went anywhere —
+    every caller that can re-add a possibly-already-settled account uses
+    :func:`energetica.utils.misc.record_join_reconciling_settlement` instead, which backfills
+    ``settled_at`` from the engine's ``Player`` right after the join write.
+    """
+    with _connect() as conn:
+        conn.execute(
+            "DELETE FROM instance_membership WHERE account_id = ? AND slug = ? AND role = 'player'",
+            (account_id, slug),
+        )
+        conn.commit()
+
+
+@dataclass(frozen=True)
+class RosterEntry:
+    """One player's row on a run's roster, with the account's username resolved — the shape the
+    facilitator roster page reads (:func:`get_run_roster`).
+    """
+
+    username: str
+    joined_at: str
+    settled_at: str | None
+
+
+def get_run_roster(*, slug: str) -> list[RosterEntry]:
+    """Every player membership for run ``slug``, with each account's username resolved —
+    most recently joined first. Backs the facilitator roster page's Joined/Invited split
+    (``settled_at is None`` ⟺ invited-not-yet-settled).
+    """
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT a.username, m.created_at, m.settled_at FROM instance_membership m "
+            "JOIN accounts a ON a.account_id = m.account_id "
+            "WHERE m.slug = ? AND m.role = 'player' ORDER BY m.created_at DESC",
+            (slug,),
+        ).fetchall()
+    return [
+        RosterEntry(username=row["username"], joined_at=row["created_at"], settled_at=row["settled_at"]) for row in rows
+    ]

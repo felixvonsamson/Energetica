@@ -288,6 +288,31 @@ def initialize_player(account: Account, tile: HexTile) -> Player:
     return player
 
 
+def record_join_reconciling_settlement(*, account_id: int, slug: str, joined_at: str) -> None:
+    """Record a join (:func:`accounts.record_join`), then immediately reconcile ``settled_at`` if
+    the account already has a ``Player`` in this run's engine.
+
+    Covers the re-add-after-ban case (#1031 follow-up, per review): :func:`accounts.remove_membership`
+    is a plain delete, so a previously-settled account that gets banned and later re-added would
+    otherwise come back with ``settled_at`` reset to null even though its ``Player`` — tile,
+    resources, facilities, all in-engine — never went anywhere; a ban only revokes the *next*
+    entry attempt (see that function's docstring). The entry gate itself was never actually
+    broken by this (``is_settled`` is derived straight from ``Player.filter_by``, never from
+    ``settled_at``), but without this reconciliation the lobby would permanently mislabel the run
+    "not yet settled" for that account and offer a "Settle" CTA that just redirects back to the
+    dashboard. Only called from the two write paths that can re-add an already-settled account —
+    the facilitator roster's add and the private join-link's confirm.
+
+    Raises :class:`accounts.MembershipRoleConflictError` exactly like ``record_join`` — never
+    swallowed here, unlike the best-effort settle-time write in :func:`initialize_player`: a
+    roster/join-link write failing should surface loudly, not be treated as an incidental hiccup.
+    """
+    accounts.record_join(account_id=account_id, slug=slug, joined_at=joined_at)
+    player = next(Player.filter_by(account_id=account_id), None)
+    if player is not None:
+        accounts.record_settlement(account_id=account_id, slug=slug, settled_at=player.created_at.isoformat())
+
+
 # Quiz
 def submit_quiz_answer(player: Player, player_answer: str) -> bool:
     """Return True if the answer was correct, False otherwise."""

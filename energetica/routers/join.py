@@ -3,23 +3,26 @@
 Reachable by anyone holding a valid token — no ``get_facilitator``/``get_settled_player`` gate here,
 the unguessable token in the URL *is* the authorization. Resolves a token to this instance's name
 and open/closed state (``GET``, safe to call before the visitor is access-allowed or even signed
-in), and lets an already-signed-in visitor confirm joining (``POST``), which appends their
-username to the private instance's allowlist via #1019's write path. Entry into the game itself
-still goes through the existing, unmodified entry gate (``/auth/me`` → ``resolve_entry_user`` /
-``_enforce_instance_access`` in ``routers.auth``) — this router only ever grows the allowlist that
-gate reads.
+in), and lets an already-signed-in visitor confirm joining (``POST``), which records the join in
+``accounts.db``'s ``instance_membership`` (#1030 follow-up, ADR-0007) — the same write
+``accounts.record_join`` the public-run picker join and the facilitator roster's add both use.
+Entry into the game itself still goes through the existing, unmodified entry gate (``/auth/me`` →
+``resolve_entry_account`` / ``_enforce_instance_access`` in ``routers.auth``), which now reads
+that same table.
 """
 
 import secrets
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica import instance_config
+from energetica import accounts, instance_config
 from energetica.accounts import Account
 from energetica.game_error import GameError, GameExceptionType
 from energetica.schemas.join import JoinLinkOut
 from energetica.utils.auth import get_current_account
+from energetica.utils.misc import record_join_reconciling_settlement
 
 router = APIRouter(prefix="/join", tags=["Join"])
 
@@ -57,10 +60,10 @@ def get_join_link(token: str, account: Annotated[Account | None, Depends(get_cur
 
 @router.post("/{token}", status_code=204)
 def confirm_join(token: str, account: Annotated[Account | None, Depends(get_current_account)]) -> None:
-    """Confirm joining: append the signed-in visitor's username to the allowlist.
+    """Confirm joining: record the signed-in visitor's join in ``accounts.db``.
 
     Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
-    is this runs *before* the visitor is access-allowed, so no local ``User`` need exist yet) but
+    is this runs *before* the visitor is access-allowed, so no membership row need exist yet) but
     deliberately does not go through ``_enforce_instance_access``: granting access is this
     endpoint's job, not a precondition for reaching it. Checks identity before instance state
     (mirrors ``get_facilitator``/``get_settled_player``'s "who, then what" order elsewhere in this
@@ -69,10 +72,21 @@ def confirm_join(token: str, account: Annotated[Account | None, Depends(get_curr
     client.
     """
     if account is None:
-        # Matches resolve_entry_user's convention: no/invalid session is a 401, not a 400
+        # Matches resolve_entry_account's convention: no/invalid session is a 401, not a 400
         # GameError — this is a plain auth failure, not a game-domain rejection.
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
     _, access = _resolve(token)
     if not access.join_open:
         raise GameError(GameExceptionType.JOIN_LINK_CLOSED)
-    instance_config.add_allowed_username(account.username)
+    slug = instance_config.instance_slug()
+    assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
+    try:
+        record_join_reconciling_settlement(
+            account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat()
+        )
+    except accounts.MembershipRoleConflictError:
+        # account is this run's facilitator (or server-wide) — a facilitator administers a run,
+        # it doesn't also join one as a player (ADR-0004). There is no in-app way to reach this
+        # (a facilitator has no reason to visit their own join link), but fail closed rather than
+        # 500 if it ever happens.
+        raise GameError(GameExceptionType.INSTANCE_ACCESS_DENIED)

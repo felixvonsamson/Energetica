@@ -1,8 +1,10 @@
 """Integration tests for the public join-link routes (#1021): ``GET/POST /api/v1/join/{token}``.
 
 The visitor-facing counterpart to #1020's facilitator page — reachable by anyone holding the
-token, not just the instance's admin. Builds on #1019's write path (``add_allowed_username``) the
-same way ``test_facilitator_router.py`` builds on ``get_or_create_join_token``/``set_join_open``.
+token, not just the instance's admin. Confirming records the join in ``accounts.db``'s
+``instance_membership`` (``accounts.record_join``, #1030 follow-up, ADR-0007) the same way
+``test_facilitator_router.py``'s roster-add does, built on ``get_or_create_join_token`` /
+``set_join_open`` for the token/toggle themselves.
 """
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from energetica import create_app
+from energetica import accounts, create_app
 from energetica.database.player import Player
 from energetica.globals import engine
 
@@ -29,7 +31,6 @@ PRIVATE_JSON = {
     "starts_at": "2026-03-01T00:00:00Z",
     "access": {
         "policy": "private",
-        "allowed_usernames": ["alice"],
         "join_token": TOKEN,
         "join_open": True,
     },
@@ -68,8 +69,9 @@ def _client() -> TestClient:
     return TestClient(app)
 
 
-def _allowed_usernames(path: Path) -> list[str]:
-    return json.loads(path.read_text())["access"]["allowed_usernames"]
+def _joined_usernames() -> list[str]:
+    """Usernames that have joined this test's instance, per accounts.db."""
+    return [entry.username for entry in accounts.get_run_roster(slug=SLUG)]
 
 
 # --- GET: resolving the link -------------------------------------------------------------------
@@ -145,7 +147,7 @@ def test_get_reports_the_viewer_username_for_a_signed_in_visitor_with_no_player(
     assert response.json()["viewer_username"] == "carol"
     # Merely resolving the link must not itself grant or create anything.
     assert next(Player.filter_by(account_id=account_id), None) is None
-    assert "carol" not in _allowed_usernames(instance_json)
+    assert "carol" not in _joined_usernames()
 
 
 # --- POST: confirming -----------------------------------------------------------------------
@@ -170,7 +172,7 @@ def test_post_rejects_an_unknown_token(instance_json: Path) -> None:
 
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "JOIN_LINK_INVALID"
-    assert "carol" not in _allowed_usernames(instance_json)
+    assert "carol" not in _joined_usernames()
 
 
 def test_post_rejects_when_join_is_closed_and_does_not_modify_the_allowlist(instance_json: Path) -> None:
@@ -184,10 +186,10 @@ def test_post_rejects_when_join_is_closed_and_does_not_modify_the_allowlist(inst
 
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "JOIN_LINK_CLOSED"
-    assert "carol" not in _allowed_usernames(instance_json)
+    assert "carol" not in _joined_usernames()
 
 
-def test_post_adds_the_visitor_to_the_allowlist_and_the_entry_gate_then_admits_them(instance_json: Path) -> None:
+def test_post_adds_the_visitor_to_the_roster_and_the_entry_gate_then_admits_them(instance_json: Path) -> None:
     """The full acceptance scenario: confirm, then the existing entry gate (unmodified) admits
     the visitor as a normal player.
     """
@@ -196,12 +198,12 @@ def test_post_adds_the_visitor_to_the_allowlist_and_the_entry_gate_then_admits_t
     account_id = make_account("carol", "pw")
     authenticate(client, account_id)
 
-    # Blocked before confirming, exactly like any other not-yet-allowed account.
+    # Blocked before confirming, exactly like any other not-yet-joined account.
     assert client.get(f"http://localhost:{PORT}/api/v1/auth/me").status_code == 403
 
     response = client.post(_join_url(TOKEN))
     assert response.status_code == 204
-    assert "carol" in _allowed_usernames(instance_json)
+    assert "carol" in _joined_usernames()
 
     me = client.get(f"http://localhost:{PORT}/api/v1/auth/me")
     assert me.status_code == 200
@@ -210,16 +212,17 @@ def test_post_adds_the_visitor_to_the_allowlist_and_the_entry_gate_then_admits_t
     assert body["role"] == "player"
 
 
-def test_post_is_idempotent_for_an_already_allowed_username(instance_json: Path) -> None:
-    _write(instance_json, PRIVATE_JSON)  # "alice" is already allowlisted
+def test_post_is_idempotent_for_an_already_joined_username(instance_json: Path) -> None:
+    _write(instance_json, PRIVATE_JSON)
     client = _client()
     account_id = make_account("alice", "pw")
     authenticate(client, account_id)
+    client.post(_join_url(TOKEN))  # already joined once
 
-    response = client.post(_join_url(TOKEN))
+    response = client.post(_join_url(TOKEN))  # confirm again
 
     assert response.status_code == 204
-    assert _allowed_usernames(instance_json).count("alice") == 1
+    assert _joined_usernames().count("alice") == 1
 
 
 def test_post_rejects_a_token_on_a_public_instance(instance_json: Path) -> None:

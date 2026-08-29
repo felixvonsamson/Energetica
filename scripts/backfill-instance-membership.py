@@ -33,6 +33,11 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
+# This script lives in scripts/, not the repo root, so the interpreter's default sys.path (the
+# script's own directory) never includes the repo root — `energetica` isn't installed into the
+# venv as a package, so importing it below needs the repo root added explicitly.
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 
 def backfill_memberships(players: Iterable[object], *, slug: str, dry_run: bool = False) -> int:
     """Write one membership per settled player. Returns the number of rows written (or, in

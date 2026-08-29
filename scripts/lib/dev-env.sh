@@ -83,8 +83,8 @@ instance_config.aggregate_instances()
 account_id = accounts.get_or_create_account_id(
     username="demo", pwhash=generate_password_hash("demo1234")
 )
-accounts.record_membership(account_id=account_id, slug="poc-3", settled_at="2026-03-06T10:00:00+00:00")
-accounts.record_membership(account_id=account_id, slug="private-beta", settled_at="2026-07-02T10:00:00+00:00")
+accounts.record_settlement(account_id=account_id, slug="poc-3", settled_at="2026-03-06T10:00:00+00:00")
+accounts.record_settlement(account_id=account_id, slug="private-beta", settled_at="2026-07-02T10:00:00+00:00")
 
 # The dev frontend serves /instances.json from frontend/public/ (Apache aliases it in prod).
 # Symlink it to the live landing aggregate rather than copying: a one-time copy goes stale the

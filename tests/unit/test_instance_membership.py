@@ -352,6 +352,56 @@ def test_settling_records_membership_for_this_instance(monkeypatch: pytest.Monke
     assert memberships[0].created_at == player.created_at.isoformat()
 
 
+# --- record_join_reconciling_settlement (#1031 follow-up, per review) -----------------------
+#
+# remove_membership is a plain delete: banning a settled account, then re-adding it, would
+# otherwise come back "invited" (settled_at null) even though its Player never went anywhere.
+# record_join_reconciling_settlement is what the facilitator roster's add and the join-link's
+# confirm use instead of a bare record_join, to backfill settled_at from the still-intact Player.
+
+
+def test_record_join_reconciling_settlement_backfills_settled_at_for_a_re_added_player(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from energetica import create_app
+    from energetica.accounts import Account
+    from energetica.database.map.hex_tile import HexTile
+    from energetica.utils.auth import generate_password_hash
+    from energetica.utils.map_helpers import confirm_location
+    from energetica.utils.misc import record_join_reconciling_settlement
+
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "spring-2026")
+    create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
+    account = Account(account_id=7, username="alice", pwhash=generate_password_hash("pw"), email=None, created_at="")
+    player = confirm_location(account, HexTile.getitem(1))  # settles — Player exists in-engine
+    accounts.remove_membership(account_id=7, slug="spring-2026")  # ban: deletes the accounts.db row
+    assert accounts.has_joined(account_id=7, slug="spring-2026") is False
+
+    record_join_reconciling_settlement(account_id=7, slug="spring-2026", joined_at="2026-06-01T00:00:00+00:00")
+
+    memberships = accounts.get_memberships(account_id=7)
+    assert len(memberships) == 1
+    assert memberships[0].created_at == "2026-06-01T00:00:00+00:00"  # the re-add's own join time
+    assert memberships[0].settled_at == player.created_at.isoformat()  # backfilled from the Player
+
+
+def test_record_join_reconciling_settlement_leaves_settled_at_null_for_a_fresh_join(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """No Player exists yet — the ordinary first-join case is unaffected: settled_at stays null."""
+    from energetica import create_app
+    from energetica.utils.misc import record_join_reconciling_settlement
+
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "spring-2026")
+    create_app(rm_instance=True, skip_adding_handlers=True, env="prod")
+
+    record_join_reconciling_settlement(account_id=7, slug="spring-2026", joined_at="2026-06-01T00:00:00+00:00")
+
+    memberships = accounts.get_memberships(account_id=7)
+    assert len(memberships) == 1
+    assert memberships[0].settled_at is None
+
+
 def test_settle_survives_a_membership_write_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     """A failed membership write (e.g. SQLITE_BUSY on the shared accounts.db) must not break an
     otherwise-successful settle: the player is created in-memory regardless, and the row is
@@ -397,3 +447,122 @@ def test_settling_records_no_membership_when_slug_unset(monkeypatch: pytest.Monk
     confirm_location(account, HexTile.getitem(1))
 
     assert accounts.get_memberships(account_id=8) == []
+
+
+# --- has_joined / remove_membership / get_run_roster (#1030 follow-up) ----------------------
+#
+# The private-run allowlist's replacement: instance.json's allowed_usernames no longer exists as
+# a live mechanism (ADR-0007) — these three are what the entry gate and the facilitator roster
+# page read/write instead.
+
+
+def test_has_joined_false_before_any_join(accounts_db: Path) -> None:
+    assert accounts.has_joined(account_id=1, slug="spring-2026") is False
+
+
+def test_has_joined_true_after_join(accounts_db: Path) -> None:
+    accounts.record_join(account_id=1, slug="spring-2026", joined_at="2026-03-01T12:00:00+00:00")
+    assert accounts.has_joined(account_id=1, slug="spring-2026") is True
+
+
+def test_has_joined_true_after_settling_directly_with_no_prior_join(accounts_db: Path) -> None:
+    """A private run settled into directly (no lobby join step — dev/legacy) still counts."""
+    accounts.record_settlement(account_id=1, slug="spring-2026", settled_at="2026-03-01T12:00:00+00:00")
+    assert accounts.has_joined(account_id=1, slug="spring-2026") is True
+
+
+def test_has_joined_is_scoped_to_the_given_slug(accounts_db: Path) -> None:
+    accounts.record_join(account_id=1, slug="spring-2026", joined_at="2026-03-01T12:00:00+00:00")
+    assert accounts.has_joined(account_id=1, slug="autumn-2026") is False
+
+
+def test_has_joined_does_not_count_a_facilitator_grant(accounts_db: Path) -> None:
+    """A facilitator bypasses the allowlist at the call site (is_facilitator); has_joined itself
+    stays player-only, matching get_memberships' role='player' scoping.
+    """
+    accounts.grant_facilitator(account_id=1, slug="spring-2026")
+    assert accounts.has_joined(account_id=1, slug="spring-2026") is False
+
+
+def test_remove_membership_is_idempotent_when_absent(accounts_db: Path) -> None:
+    accounts.remove_membership(account_id=1, slug="spring-2026")  # must not raise
+
+
+def test_remove_membership_removes_a_joined_row(accounts_db: Path) -> None:
+    accounts.record_join(account_id=1, slug="spring-2026", joined_at="2026-03-01T12:00:00+00:00")
+
+    accounts.remove_membership(account_id=1, slug="spring-2026")
+
+    assert accounts.has_joined(account_id=1, slug="spring-2026") is False
+    assert accounts.get_memberships(account_id=1) == []
+
+
+def test_remove_membership_removes_a_settled_row(accounts_db: Path) -> None:
+    """Ban/remove is a plain delete regardless of settled_at — it denies the next entry attempt,
+    it does not touch any Player already created in that run's engine (that's the caller's
+    problem, not this table's).
+    """
+    accounts.record_settlement(account_id=1, slug="spring-2026", settled_at="2026-03-01T12:00:00+00:00")
+
+    accounts.remove_membership(account_id=1, slug="spring-2026")
+
+    assert accounts.has_joined(account_id=1, slug="spring-2026") is False
+
+
+def test_remove_membership_never_touches_a_facilitator_row(accounts_db: Path) -> None:
+    accounts.grant_facilitator(account_id=1, slug="spring-2026")
+
+    accounts.remove_membership(account_id=1, slug="spring-2026")
+
+    assert accounts.is_facilitator(account_id=1, slug="spring-2026") is True
+
+
+def test_remove_membership_only_affects_the_given_slug(accounts_db: Path) -> None:
+    accounts.record_join(account_id=1, slug="spring-2026", joined_at="2026-03-01T12:00:00+00:00")
+    accounts.record_join(account_id=1, slug="autumn-2026", joined_at="2026-03-02T12:00:00+00:00")
+
+    accounts.remove_membership(account_id=1, slug="spring-2026")
+
+    assert accounts.has_joined(account_id=1, slug="spring-2026") is False
+    assert accounts.has_joined(account_id=1, slug="autumn-2026") is True
+
+
+def test_get_run_roster_resolves_usernames_most_recently_joined_first(accounts_db: Path) -> None:
+    alice = accounts.create_account(username="alice", pwhash="h")
+    bob = accounts.create_account(username="bob", pwhash="h")
+    accounts.record_join(account_id=alice, slug="spring-2026", joined_at="2026-03-01T00:00:00+00:00")
+    accounts.record_join(account_id=bob, slug="spring-2026", joined_at="2026-03-02T00:00:00+00:00")
+
+    roster = accounts.get_run_roster(slug="spring-2026")
+
+    assert [entry.username for entry in roster] == ["bob", "alice"]
+    assert roster[0].settled_at is None
+
+
+def test_get_run_roster_reports_settled_at(accounts_db: Path) -> None:
+    alice = accounts.create_account(username="alice", pwhash="h")
+    accounts.record_join(account_id=alice, slug="spring-2026", joined_at="2026-03-01T00:00:00+00:00")
+    accounts.record_settlement(account_id=alice, slug="spring-2026", settled_at="2026-03-05T00:00:00+00:00")
+
+    roster = accounts.get_run_roster(slug="spring-2026")
+
+    assert roster[0].joined_at == "2026-03-01T00:00:00+00:00"
+    assert roster[0].settled_at == "2026-03-05T00:00:00+00:00"
+
+
+def test_get_run_roster_is_scoped_to_the_given_slug(accounts_db: Path) -> None:
+    alice = accounts.create_account(username="alice", pwhash="h")
+    accounts.record_join(account_id=alice, slug="spring-2026", joined_at="2026-03-01T00:00:00+00:00")
+
+    assert accounts.get_run_roster(slug="autumn-2026") == []
+
+
+def test_get_run_roster_excludes_facilitator_grants(accounts_db: Path) -> None:
+    prof = accounts.create_account(username="prof", pwhash="h")
+    accounts.grant_facilitator(account_id=prof, slug="spring-2026")
+
+    assert accounts.get_run_roster(slug="spring-2026") == []
+
+
+def test_get_run_roster_empty_for_an_unknown_slug(accounts_db: Path) -> None:
+    assert accounts.get_run_roster(slug="does-not-exist") == []

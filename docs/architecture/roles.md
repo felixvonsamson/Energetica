@@ -198,9 +198,9 @@ or it applies uniformly). Format is a non-empty subset of {persistent, workshop}
 | Capability | Owner | Scope | Format | Plane | Status |
 |---|---|---|---|---|---|
 | Set access policy (public / private) | sysadmin | n/a | both | out-of-band | built (stays out-of-band — exposure lever, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
-| Manage instance whitelist | facilitator | instance | persistent | in-app | aspirational (graduates from out-of-band, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
+| Manage instance whitelist | facilitator | instance | persistent | in-app | built (graduated from out-of-band; the roster lives in `accounts.db`, ADR-0007 — `scripts/whitelist-run.py` remains for a sysadmin who'd rather not go through the facilitator UI) |
 | Server-wide signup toggle | sysadmin | n/a | both | out-of-band | built (stays out-of-band — exposure lever, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
-| Facilitator bypasses access allowlist | facilitator | server-wide or instance | both | in-app | aspirational (rule decided here) |
+| Facilitator bypasses access allowlist | facilitator | server-wide or instance | both | in-app | built (ADR-0004) |
 | Per-instance `disable_signups` | — | — | persistent | — | retired (superseded by server-wide toggle) |
 | `players.txt` bootstrap enrollment | — | — | persistent | — | retired (superseded by CLI grant seed, [#842](https://github.com/felixvonsamson/Energetica/issues/842)) |
 

@@ -37,6 +37,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { TypographyMuted } from "@/components/ui/typography";
 import { useJoinRun } from "@/hooks/use-lobby";
 import type { MyRun } from "@/lib/api/lobby";
+import { getUserFriendlyError } from "@/lib/error-utils";
 import { derivePhase, type InstanceFragment } from "@/lib/instances";
 import { runAppHref } from "@/lib/lobby";
 
@@ -194,7 +195,7 @@ function JoinableOpenRunCard({ instance }: { instance: InstanceFragment }) {
                 <div className="px-5 pb-5 pt-4 border-t border-border flex flex-col gap-3">
                     {joinRun.isError && (
                         <InfoBanner variant="error">
-                            Couldn&apos;t join this run. Try again.
+                            {getUserFriendlyError(joinRun.error)}
                         </InfoBanner>
                     )}
                     <div className="flex flex-row justify-end gap-2">

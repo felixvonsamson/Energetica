@@ -50,7 +50,7 @@ PRIVATE_JSON = {
     "name": "ETHZ Spring 2026",
     "advertised": False,
     "starts_at": "2026-03-01T00:00:00Z",
-    "access": {"policy": "private", "allowed_usernames": ["alice", "bob"]},
+    "access": {"policy": "private"},
 }
 
 
@@ -86,7 +86,6 @@ def test_load_valid_private(configured: Path) -> None:
 
     assert config is not None
     assert isinstance(config.access, PrivateAccess)
-    assert config.access.allowed_usernames == ["alice", "bob"]
 
 
 def test_load_corrupt_file_fails_closed(configured: Path) -> None:
@@ -122,6 +121,17 @@ def test_load_public_policy_with_allowlist_key_fails_closed(configured: Path) ->
         instance_config.load_instance_config()
 
 
+def test_load_private_with_the_removed_allowlist_key_fails_closed(configured: Path) -> None:
+    """`allowed_usernames` is gone from PrivateAccess (#1031) — an instance.json still carrying it
+    (from before that change, or a stray hand-edit) fails closed rather than silently parsing as
+    if the key still had an effect.
+    """
+    _write_instance_json(configured, {**PRIVATE_JSON, "access": {"policy": "private", "allowed_usernames": ["alice"]}})
+
+    with pytest.raises(InstanceConfigError):
+        instance_config.load_instance_config()
+
+
 def test_load_naive_starts_at_fails_closed(configured: Path) -> None:
     """A timezone-naive starts_at is rejected (fail closed), so fragments are always tz-aware and
     the aggregation sort can never mix naive/aware datetimes.
@@ -132,31 +142,14 @@ def test_load_naive_starts_at_fails_closed(configured: Path) -> None:
         instance_config.load_instance_config()
 
 
-# --- is_access_allowed ----------------------------------------------------------------------
-
-
-def test_public_allows_anyone() -> None:
-    config = InstanceConfig.model_validate(PUBLIC_JSON)
-    assert instance_config.is_access_allowed(config, "anyone") is True
-
-
-def test_private_allows_listed_username() -> None:
-    config = InstanceConfig.model_validate(PRIVATE_JSON)
-    assert instance_config.is_access_allowed(config, "alice") is True
-
-
-def test_private_denies_unlisted_username() -> None:
-    config = InstanceConfig.model_validate(PRIVATE_JSON)
-    assert instance_config.is_access_allowed(config, "carol") is False
-
-
-def test_private_empty_allowlist_denies_everyone() -> None:
-    """A private instance whose allowlist is empty (or omitted) locks everyone out — the highest-risk
-    fail-open spot, so it is asserted explicitly.
-    """
-    config = InstanceConfig.model_validate({**PRIVATE_JSON, "access": {"policy": "private"}})
-    assert config.access.allowed_usernames == []  # type: ignore[union-attr]
-    assert instance_config.is_access_allowed(config, "alice") is False
+# --- allowed_usernames is removed, not deprecated (#1031) -----------------------------------
+#
+# Who may access a private run lives in accounts.db (tests/unit/test_instance_membership.py:
+# has_joined / record_join / remove_membership / get_run_roster). No private instance had ever
+# been deployed with real allowlist data at the time of that migration, so the field was removed
+# outright rather than kept around inert — see ADR-0007 and instance_config.PrivateAccess's
+# docstring. test_load_private_with_the_removed_allowlist_key_fails_closed above covers the
+# fail-closed behaviour for a file that still carries the key.
 
 
 # --- join_token / join_open (#1019) -----------------------------------------------------------
@@ -189,45 +182,6 @@ def test_private_access_join_fields_round_trip(configured: Path) -> None:
 
 
 # --- private-access mutation (#1019) --------------------------------------------------------
-
-
-def test_add_allowed_username_persists(configured: Path) -> None:
-    _write_instance_json(configured, PRIVATE_JSON)
-
-    access = instance_config.add_allowed_username("carol")
-
-    assert access.allowed_usernames == ["alice", "bob", "carol"]
-    reloaded = instance_config.load_instance_config()
-    assert reloaded is not None
-    assert reloaded.access.allowed_usernames == ["alice", "bob", "carol"]  # type: ignore[union-attr]
-
-
-def test_add_allowed_username_is_idempotent(configured: Path) -> None:
-    _write_instance_json(configured, PRIVATE_JSON)
-
-    instance_config.add_allowed_username("alice")
-    access = instance_config.add_allowed_username("alice")
-
-    assert access.allowed_usernames == ["alice", "bob"]
-
-
-def test_remove_allowed_username_persists(configured: Path) -> None:
-    _write_instance_json(configured, PRIVATE_JSON)
-
-    access = instance_config.remove_allowed_username("alice")
-
-    assert access.allowed_usernames == ["bob"]
-    reloaded = instance_config.load_instance_config()
-    assert reloaded is not None
-    assert reloaded.access.allowed_usernames == ["bob"]  # type: ignore[union-attr]
-
-
-def test_remove_allowed_username_absent_is_a_noop(configured: Path) -> None:
-    _write_instance_json(configured, PRIVATE_JSON)
-
-    access = instance_config.remove_allowed_username("carol")
-
-    assert access.allowed_usernames == ["alice", "bob"]
 
 
 def test_set_join_open_persists(configured: Path) -> None:
@@ -272,12 +226,12 @@ def test_mutation_raises_when_no_slug_configured(tmp_path: Path, monkeypatch: py
     monkeypatch.setenv("ENERGETICA_INSTANCE_CONFIG_DIR", str(tmp_path))
 
     with pytest.raises(InstanceNotPrivateError):
-        instance_config.add_allowed_username("alice")
+        instance_config.set_join_open(True)
 
 
 def test_mutation_raises_when_no_config_file(configured: Path) -> None:
     with pytest.raises(InstanceNotPrivateError):
-        instance_config.add_allowed_username("alice")
+        instance_config.set_join_open(True)
 
 
 def test_mutation_raises_on_public_instance(configured: Path) -> None:
@@ -288,24 +242,28 @@ def test_mutation_raises_on_public_instance(configured: Path) -> None:
 
 
 def test_mutation_is_atomic_under_concurrent_calls(configured: Path) -> None:
-    """Many threads each adding their own username must all land — no lost update, and no partial
-    write ever readable on disk.
+    """Many threads racing to generate the join token must all observe the same, single value.
+
+    No lost update, and no partial write ever readable on disk. (The list-mutation version of
+    this test, for the now-removed add_allowed_username, went with it — #1030 follow-up.)
     """
-    _write_instance_json(configured, {**PRIVATE_JSON, "access": {"policy": "private", "allowed_usernames": []}})
-    usernames = [f"user{i}" for i in range(20)]
+    _write_instance_json(configured, PRIVATE_JSON)
+    tokens: list[str] = []
+    lock = threading.Lock()
 
-    def add(username: str) -> None:
-        instance_config.add_allowed_username(username)
+    def generate() -> None:
+        token = instance_config.get_or_create_join_token()
+        with lock:
+            tokens.append(token)
 
-    threads = [threading.Thread(target=add, args=(username,)) for username in usernames]
+    threads = [threading.Thread(target=generate) for _ in range(20)]
     for thread in threads:
         thread.start()
     for thread in threads:
         thread.join()
 
-    config = instance_config.load_instance_config()
-    assert config is not None
-    assert sorted(config.access.allowed_usernames) == sorted(usernames)  # type: ignore[union-attr]
+    assert len(tokens) == 20
+    assert len(set(tokens)) == 1  # every thread observed the same, single generated token
 
 
 # --- publish + aggregate --------------------------------------------------------------------

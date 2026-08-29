@@ -1,13 +1,16 @@
 """Integration tests for the facilitator join-link/toggle routes (#1020).
 
-Builds on #1019's plumbing (``get_facilitator``, ``instance_config``'s private-access write path) —
-these tests exercise it through a real HTTP request against ``/api/v1/facilitator/access``, the way
-the facilitator page (#1020) will call it.
+Builds on #1019's plumbing (``get_facilitator``, ``instance_config``'s private-access write path
+for the join link/toggle) — these tests exercise it through a real HTTP request against
+``/api/v1/facilitator/access``, the way the facilitator page (#1020) will call it. The roster
+itself (#1022) lives in ``accounts.db``'s ``instance_membership`` (#1030 follow-up, ADR-0007), not
+``instance.json`` — see ``_join`` below.
 """
 
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -26,7 +29,7 @@ PRIVATE_JSON = {
     "name": "ETHZ Spring 2026",
     "advertised": False,
     "starts_at": "2026-03-01T00:00:00Z",
-    "access": {"policy": "private", "allowed_usernames": ["alice"]},
+    "access": {"policy": "private"},
 }
 PUBLIC_JSON = {
     "name": "Autumn 2025",
@@ -34,6 +37,13 @@ PUBLIC_JSON = {
     "starts_at": "2025-09-15T00:00:00Z",
     "access": {"policy": "public"},
 }
+
+
+def _join(account_id: int) -> None:
+    """Record account_id as having joined this test's instance (accounts.db) — the equivalent of
+    the pre-#1030 fixture that allowlisted "alice" directly in instance.json.
+    """
+    accounts.record_join(account_id=account_id, slug=SLUG, joined_at=datetime.now(timezone.utc).isoformat())
 
 
 @pytest.fixture
@@ -160,18 +170,18 @@ def test_roster_rejects_a_non_admin(instance_json: Path) -> None:
 
 
 def test_roster_splits_joined_and_invited(instance_json: Path) -> None:
-    """ "alice" is allowlisted (by ``PRIVATE_JSON``) and has settled (joined); "bob" is
-    allowlisted via the add endpoint but has never touched this instance (invited).
+    """ "alice" has settled (joined, settled_at set); "bob" is on the roster via the add endpoint
+    but has never settled (invited, settled_at null).
     """
     from energetica.accounts import Account
     from energetica.database.map.hex_tile import HexTile
     from energetica.utils.map_helpers import confirm_location
 
-    client = _facilitator_client(instance_json)  # PRIVATE_JSON allowlists "alice"
+    client = _facilitator_client(instance_json)
     alice_id = make_account("alice", "pw")
     confirm_location(
         Account(account_id=alice_id, username="alice", pwhash="unused", email=None, created_at=""), HexTile.getitem(1)
-    )
+    )  # settling with no prior join step still records an already-settled membership row
     make_account("bob", "pw")  # server-wide account exists, but has never settled
     assert client.post(ROSTER_URL, json={"username": "bob"}).status_code == 204
 
@@ -226,14 +236,15 @@ def test_roster_candidates_does_not_require_a_private_instance(instance_json: Pa
 
 def test_roster_post_adds_an_existing_account_and_it_appears_as_invited(instance_json: Path) -> None:
     client = _facilitator_client(instance_json)
-    make_account("carol", "pw")
+    alice_id = make_account("alice", "pw")
+    _join(alice_id)  # already on the roster, unsettled
+    carol_id = make_account("carol", "pw")
 
     response = client.post(ROSTER_URL, json={"username": "carol"})
 
     assert response.status_code == 204
-    on_disk = json.loads(instance_json.read_text())
-    assert "carol" in on_disk["access"]["allowed_usernames"]
-    assert client.get(ROSTER_URL).json()["invited"] == ["alice", "carol"]
+    assert accounts.has_joined(account_id=carol_id, slug=SLUG) is True
+    assert client.get(ROSTER_URL).json()["invited"] == ["carol", "alice"]
 
 
 def test_roster_post_rejects_a_username_with_no_matching_account(instance_json: Path) -> None:
@@ -244,8 +255,7 @@ def test_roster_post_rejects_a_username_with_no_matching_account(instance_json: 
 
     assert response.status_code == 400
     assert response.json()["game_exception_type"] == "USER_NOT_FOUND"
-    on_disk = json.loads(instance_json.read_text())
-    assert "ghost" not in on_disk["access"]["allowed_usernames"]
+    assert [entry.username for entry in accounts.get_run_roster(slug=SLUG)] == []
 
 
 def test_roster_post_on_a_public_instance_fails_with_a_game_error(instance_json: Path) -> None:
@@ -263,13 +273,14 @@ def test_roster_post_on_a_public_instance_fails_with_a_game_error(instance_json:
 
 
 def test_roster_delete_removes_from_the_allowlist(instance_json: Path) -> None:
-    client = _facilitator_client(instance_json)  # "alice" is already allowlisted
+    client = _facilitator_client(instance_json)
+    alice_id = make_account("alice", "pw")
+    _join(alice_id)
 
     response = client.delete(f"{ROSTER_URL}/alice")
 
     assert response.status_code == 204
-    on_disk = json.loads(instance_json.read_text())
-    assert "alice" not in on_disk["access"]["allowed_usernames"]
+    assert accounts.has_joined(account_id=alice_id, slug=SLUG) is False
 
 
 def test_roster_delete_denies_the_banned_account_on_its_next_entry_attempt(instance_json: Path) -> None:
@@ -295,6 +306,30 @@ def test_roster_delete_denies_the_banned_account_on_its_next_entry_attempt(insta
 
     authenticate(client, carol_id)
     assert client.get(f"http://localhost:{PORT}/api/v1/auth/me").status_code == 403
+
+
+def test_roster_readding_a_previously_settled_banned_account_keeps_it_joined(instance_json: Path) -> None:
+    """Ban-then-re-add of a settled account must not strand it labelled "invited" (#1031 follow-up,
+    per review): the account's Player (tile, resources, facilities) never went anywhere, so the
+    roster must show it settled again once re-added, not reset.
+    """
+    from energetica.accounts import Account
+    from energetica.database.map.hex_tile import HexTile
+    from energetica.utils.map_helpers import confirm_location
+
+    client = _facilitator_client(instance_json)
+    carol_id = make_account("carol", "pw")
+    confirm_location(
+        Account(account_id=carol_id, username="carol", pwhash="unused", email=None, created_at=""), HexTile.getitem(1)
+    )
+    assert client.get(ROSTER_URL).json() == {"joined": ["carol"], "invited": []}
+
+    assert client.delete(f"{ROSTER_URL}/carol").status_code == 204  # ban
+    assert accounts.has_joined(account_id=carol_id, slug=SLUG) is False
+
+    assert client.post(ROSTER_URL, json={"username": "carol"}).status_code == 204  # re-add
+
+    assert client.get(ROSTER_URL).json() == {"joined": ["carol"], "invited": []}
 
 
 def test_roster_delete_is_a_noop_for_an_unlisted_username(instance_json: Path) -> None:
