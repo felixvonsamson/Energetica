@@ -39,6 +39,7 @@ class GameExceptionType(StrEnum):
     SIGNUP_DISABLED = "SIGNUP_DISABLED"
     OLD_PASSWORD_INCORRECT = "OLD_PASSWORD_INCORRECT"
     INSTANCE_ACCESS_DENIED = "INSTANCE_ACCESS_DENIED"
+    INSTANCE_NOT_PRIVATE = "INSTANCE_NOT_PRIVATE"
     # Lifecycle
     INSTANCE_FROZEN = "Instance is frozen; the game is read-only."
     # Technology effects

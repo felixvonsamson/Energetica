@@ -287,4 +287,7 @@ export const queryKeys = {
     browserNotifications: {
         vapidKey: ["push-subscriptions", "vapid-key"] as const,
     },
+    facilitator: {
+        access: ["facilitator", "access"] as const,
+    },
 } as const;

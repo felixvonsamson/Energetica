@@ -815,6 +815,30 @@ export interface paths {
         patch: operations["change_electricity_market_prices_api_v1_electricity_markets_prices_patch"];
         trace?: never;
     };
+    "/api/v1/facilitator/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Access
+         * @description This instance's join-link settings — lazily generating the join token on first visit.
+         */
+        get: operations["get_access_api_v1_facilitator_access_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Access
+         * @description Flip whether the join link currently admits new accounts.
+         */
+        patch: operations["update_access_api_v1_facilitator_access_patch"];
+        trace?: never;
+    };
     "/api/v1/facilities": {
         parameters: {
             query?: never;
@@ -2376,6 +2400,30 @@ export interface components {
          * @enum {string}
          */
         ExtractionFacilityType: "coal_mine" | "gas_drilling_site" | "uranium_mine";
+        /**
+         * FacilitatorAccessOut
+         * @description This instance's join-link settings, as shown on the facilitator page.
+         */
+        FacilitatorAccessOut: {
+            /**
+             * Join Token
+             * @description The unguessable token encoded in the join link; generated on first read.
+             */
+            join_token: string;
+            /**
+             * Join Open
+             * @description Whether the join link currently admits new accounts.
+             */
+            join_open: boolean;
+        };
+        /**
+         * FacilitatorAccessPatch
+         * @description Request body to flip whether the join link currently admits new accounts.
+         */
+        FacilitatorAccessPatch: {
+            /** Join Open */
+            join_open: boolean;
+        };
         /** FacilitiesListOut */
         FacilitiesListOut: {
             /** Power Facilities */
@@ -4229,7 +4277,7 @@ export interface components {
          * GameExceptionType
          * @enum {string}
          */
-        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "USER_IS_NOT_AN_ADMIN" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
+        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "USER_IS_NOT_AN_ADMIN" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
     };
     responses: never;
     parameters: never;
@@ -5394,6 +5442,57 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ChangeElectricityMarketPrices"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_access_api_v1_facilitator_access_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilitatorAccessOut"];
+                };
+            };
+        };
+    };
+    update_access_api_v1_facilitator_access_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacilitatorAccessPatch"];
             };
         };
         responses: {

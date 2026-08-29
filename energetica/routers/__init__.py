@@ -22,6 +22,7 @@ from .charts import router as charts_router
 from .chats import router as chat_router
 from .daily_quiz import router as daily_quiz_router
 from .electricity_markets import router as electricity_markets_router
+from .facilitator import router as facilitator_router
 from .facilities import router as facilities_router
 from .game import router as game_router
 from .map import router as map_router
@@ -44,6 +45,7 @@ api_routers = [
     chat_router,
     daily_quiz_router,
     electricity_markets_router,
+    facilitator_router,
     facilities_router,
     game_router,
     lobby_router,

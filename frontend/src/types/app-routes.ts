@@ -3,11 +3,9 @@
 export type AppRoute =
     | "/app/changelog"
     | "/app/dashboard"
-    | "/app/login"
     | "/app/logout"
     | "/app/settings"
     | "/app/settle"
-    | "/app/sign-up"
     | "/app"
     | "/app/community/electricity-markets"
     | "/app/community/leaderboards"
@@ -33,5 +31,6 @@ export type AppRoute =
     | "/app/overviews/resources"
     | "/app/overviews/storage"
     | "/app/wiki/$slug"
+    | "/app/facilitator"
     | "/app/internal"
     | "/app/wiki";
