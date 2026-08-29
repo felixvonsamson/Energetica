@@ -42,6 +42,7 @@ class GameExceptionType(StrEnum):
     INSTANCE_NOT_PRIVATE = "INSTANCE_NOT_PRIVATE"
     JOIN_LINK_INVALID = "JOIN_LINK_INVALID"
     JOIN_LINK_CLOSED = "JOIN_LINK_CLOSED"
+    RUN_NOT_FOUND = "RUN_NOT_FOUND"
     # Lifecycle
     INSTANCE_FROZEN = "Instance is frozen; the game is read-only."
     # Technology effects

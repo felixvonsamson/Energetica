@@ -161,7 +161,9 @@ class InstanceConfig(BaseModel):
 
 
 class InstanceFragment(BaseModel):
-    """The public projection written to the landing dir. The ``access`` block is stripped.
+    """The public projection written to the landing dir. The ``access`` block itself (the
+    allowlist) is stripped — only whether one applies survives, as ``private``, so the lobby can
+    decide whether a run's two-click join is offered without ever seeing who is on it.
 
     Carries the three transition timestamps (never a stored ``phase``): a fragment is published
     once and served statically for the life of the run, so the phase is derived on read from the
@@ -171,6 +173,7 @@ class InstanceFragment(BaseModel):
     slug: str
     name: str
     advertised: bool
+    private: bool = False
     starts_at: AwareDatetime
     freeze_at: AwareDatetime | None = None
     ended_at: AwareDatetime | None = None
@@ -181,6 +184,7 @@ class InstanceFragment(BaseModel):
             slug=slug,
             name=config.name,
             advertised=config.advertised,
+            private=isinstance(config.access, PrivateAccess),
             starts_at=config.starts_at,
             freeze_at=config.freeze_at,
             ended_at=config.ended_at,

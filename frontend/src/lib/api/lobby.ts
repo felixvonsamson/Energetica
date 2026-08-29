@@ -19,8 +19,22 @@ export type MyRunsResponse = ApiResponse<"/api/v1/lobby/my-runs", "get">;
 export type MyRun = MyRunsResponse["runs"][number];
 
 export const lobbyApi = {
-    /** The authenticated account's settled runs, most recently settled first. */
+    /**
+     * The authenticated account's joined runs (settled or not), most recently
+     * joined first.
+     */
     myRuns: () => apiClient.get<MyRunsResponse>("/lobby/my-runs"),
+
+    /**
+     * The picker's explicit two-click join (#1030): record that the
+     * authenticated account has joined the public run `slug`. Idempotent. 403s
+     * for a private run (join stays instance-owned for those — the
+     * roster/join-link flow) and for this run's own facilitator.
+     */
+    joinRun: (slug: string) =>
+        apiClient.post<ApiResponse<"/api/v1/lobby/runs/{slug}/join", "post">>(
+            `/lobby/runs/${encodeURIComponent(slug)}/join`,
+        ),
 };
 
 /** Credential calls against the lobby backend. Lobby bundle only. */

@@ -24,7 +24,9 @@ def accounts_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def test_record_and_read_back_membership(accounts_db: Path) -> None:
-    """record_settlement writes a row; get_memberships reads it back with slug and created_at."""
+    """record_settlement writes a row; get_memberships reads it back with slug, created_at and
+    settled_at (both the same timestamp when there was no prior join).
+    """
     accounts.record_settlement(account_id=1, slug="spring-2026", settled_at="2026-03-01T12:00:00+00:00")
 
     memberships = accounts.get_memberships(account_id=1)
@@ -33,6 +35,68 @@ def test_record_and_read_back_membership(accounts_db: Path) -> None:
     assert memberships[0].slug == "spring-2026"
     assert memberships[0].role == "player"
     assert memberships[0].created_at == "2026-03-01T12:00:00+00:00"
+    assert memberships[0].settled_at == "2026-03-01T12:00:00+00:00"
+
+
+def test_record_join_then_get_memberships_shows_unsettled(accounts_db: Path) -> None:
+    """The lobby's two-click join (#1030) writes a player row with settled_at left null — the
+    run shows up under 'your runs' before the account has picked a tile.
+    """
+    accounts.record_join(account_id=1, slug="spring-2026", joined_at="2026-03-01T12:00:00+00:00")
+
+    memberships = accounts.get_memberships(account_id=1)
+
+    assert len(memberships) == 1
+    assert memberships[0].slug == "spring-2026"
+    assert memberships[0].role == "player"
+    assert memberships[0].created_at == "2026-03-01T12:00:00+00:00"
+    assert memberships[0].settled_at is None
+
+
+def test_record_join_is_idempotent(accounts_db: Path) -> None:
+    """Joining twice does not duplicate the row nor move joined_at."""
+    accounts.record_join(account_id=1, slug="spring-2026", joined_at="2026-03-01T12:00:00+00:00")
+    accounts.record_join(account_id=1, slug="spring-2026", joined_at="2026-09-09T09:09:09+00:00")
+
+    memberships = accounts.get_memberships(account_id=1)
+
+    assert len(memberships) == 1
+    assert memberships[0].created_at == "2026-03-01T12:00:00+00:00"
+
+
+def test_record_settlement_fills_in_settled_at_on_a_joined_row(accounts_db: Path) -> None:
+    """Settling after a prior lobby join keeps the original joined_at (created_at) and fills in
+    settled_at — it must not insert a second row for the same (account, slug).
+    """
+    accounts.record_join(account_id=1, slug="spring-2026", joined_at="2026-03-01T12:00:00+00:00")
+    accounts.record_settlement(account_id=1, slug="spring-2026", settled_at="2026-03-05T08:00:00+00:00")
+
+    memberships = accounts.get_memberships(account_id=1)
+
+    assert len(memberships) == 1
+    assert memberships[0].created_at == "2026-03-01T12:00:00+00:00"
+    assert memberships[0].settled_at == "2026-03-05T08:00:00+00:00"
+
+
+def test_record_settlement_after_join_does_not_overwrite_an_already_settled_row(accounts_db: Path) -> None:
+    """settled_at is set once; a later record_settlement call (the impossible 're-settle', or a
+    retried request) must not clobber the original timestamp.
+    """
+    accounts.record_join(account_id=1, slug="spring-2026", joined_at="2026-03-01T12:00:00+00:00")
+    accounts.record_settlement(account_id=1, slug="spring-2026", settled_at="2026-03-05T08:00:00+00:00")
+    accounts.record_settlement(account_id=1, slug="spring-2026", settled_at="2026-12-25T00:00:00+00:00")
+
+    memberships = accounts.get_memberships(account_id=1)
+
+    assert memberships[0].settled_at == "2026-03-05T08:00:00+00:00"
+
+
+def test_record_join_rejects_a_facilitator_account(accounts_db: Path) -> None:
+    """A facilitator administers a run, it doesn't also join one as a player (ADR-0004)."""
+    accounts.grant_facilitator(account_id=1, slug="spring-2026")
+
+    with pytest.raises(accounts.MembershipRoleConflictError):
+        accounts.record_join(account_id=1, slug="spring-2026", joined_at="2026-03-01T12:00:00+00:00")
 
 
 def test_record_settlement_is_idempotent_and_keeps_first_created_at(accounts_db: Path) -> None:
@@ -224,6 +288,45 @@ def test_migrate_instance_membership_columns_backfills_pre_role_rows(accounts_db
     assert len(memberships) == 1
     assert memberships[0].role == "player"
     assert memberships[0].created_at == "2026-03-01T12:00:00+00:00"
+    assert memberships[0].settled_at == "2026-03-01T12:00:00+00:00"  # every pre-role row was a real settlement
+
+
+def test_migrate_instance_membership_settled_at_backfills_pre_settled_at_rows(accounts_db: Path) -> None:
+    """A row written under the #1029-era schema (role + created_at, no settled_at column) must
+    survive the column-add migration with settled_at backfilled from created_at for a player row
+    — every row from that generation was, by construction, an actual settlement. A facilitator
+    row gets no settled_at.
+    """
+    with sqlite3.connect(accounts_db) as conn:
+        conn.execute("DROP TABLE instance_membership")
+        conn.execute(
+            """
+            CREATE TABLE instance_membership (
+                account_id INTEGER NOT NULL,
+                slug       TEXT,
+                role       TEXT    NOT NULL DEFAULT 'player',
+                created_at TEXT    NOT NULL,
+                PRIMARY KEY (account_id, slug)
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO instance_membership (account_id, slug, role, created_at) "
+            "VALUES (1, 'spring-2026', 'player', '2026-03-01T12:00:00+00:00')"
+        )
+        conn.execute(
+            "INSERT INTO instance_membership (account_id, slug, role, created_at) "
+            "VALUES (2, NULL, 'facilitator', '2026-01-01T00:00:00+00:00')"
+        )
+        conn.commit()
+    from energetica.accounts.db import _reset_initialised_paths
+
+    _reset_initialised_paths()  # force the next _connect() to re-run schema/migration
+
+    memberships = accounts.get_memberships(account_id=1)
+    assert len(memberships) == 1
+    assert memberships[0].settled_at == "2026-03-01T12:00:00+00:00"
+    assert accounts.is_facilitator(account_id=2, slug="anything") is True
 
 
 def test_settling_records_membership_for_this_instance(monkeypatch: pytest.MonkeyPatch) -> None:

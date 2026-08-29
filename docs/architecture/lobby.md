@@ -56,7 +56,7 @@ Core identity terms — **Server**, **Instance** (player-facing: **Run**), **Acc
 |------|------------|
 | **Lobby** | The server-wide front door (`lobby.{apex}`): sign up, log in, pick a run. A small backend + frontend bundle on its own subdomain, separate from any run and outliving runs. Owns the server-wide session. |
 | **Server-wide session** | The single authenticated session minted by the lobby, carried to every run on the server via a parent-domain cookie. |
-| **Membership** | An account's relationship to a run: a `role` (`player` or `facilitator`) on a row keyed `(account_id, slug)` in `instance_membership` (ADR-0004). A settled player's row is written at settle time; a facilitator's is written only by the sysadmin grant script. The two are mutually exclusive per run. |
+| **Membership** | An account's relationship to a run: a `role` (`player` or `facilitator`) on a row keyed `(account_id, slug)` in `instance_membership` (ADR-0004). A player's row is written at **join** time — the lobby's explicit two-click join for a public run, or a private run's roster add / join-link confirm (#1030) — and its `settled_at` filled in later, at settle; a facilitator's is written only by the sysadmin grant script. The two are mutually exclusive per run. |
 | **Entry gate** | The point at which an authenticated account touches a run: the run validates the session cookie and enforces the run's access policy (bypassed for a facilitator grant covering it). There is nothing to auto-provision — role is read straight from `instance_membership`, and a `Player` exists only once an account has actually settled. Where per-instance access control now lives. |
 
 ---
@@ -102,6 +102,7 @@ is that all UGC renders as escaped text — guarded by a CI tripwire (see Securi
 |---------|-------|
 | Signup, login, change-password, logout | **Lobby** |
 | `my-runs` (read `instance_membership` for the authed account) | **Both** — the lobby (for the picker) *and* every instance (for the in-run switcher). Identical read logic, deployed in each service and served from its own origin so neither frontend makes a cross-origin call (no CORS). |
+| Join a public run (`instance_membership` write, unsettled, #1030) | **Lobby** |
 | Session-cookie *validation* (shared secret) | Every instance |
 | Entry gate: auto-provision local `User` (access-policy-gated) | Instance |
 | Settle (`Player` creation) + `instance_membership` write | Instance |
@@ -125,21 +126,28 @@ lobby.energetica-game.org
 
 ## Data model
 
-### `instance_membership` (new table in `accounts.db`)
+### `instance_membership` (table in `accounts.db`)
 
 ```sql
 CREATE TABLE IF NOT EXISTS instance_membership (
     account_id  INTEGER NOT NULL,
-    slug        TEXT    NOT NULL,
-    settled_at  TEXT    NOT NULL,            -- ISO-8601 UTC
+    slug        TEXT,                        -- NULL = server-wide (facilitator only)
+    role        TEXT    NOT NULL DEFAULT 'player',
+    created_at  TEXT    NOT NULL,             -- ISO-8601 UTC; joined_at for a player,
+                                               -- granted_at for a facilitator
+    settled_at  TEXT,                         -- ISO-8601 UTC; null until a player settles
     PRIMARY KEY (account_id, slug)
 );
 ```
 
-- Written by the **instance** when a `Player` is created (settle). Idempotent
-  (`INSERT OR IGNORE`).
-- The lobby's "your runs" = membership rows joined against the on-disk fragments
-  (`/var/www/energetica-landing/instances/{slug}.json`) for name / `starts_at`. This
+- A player row is written at **join** time (`record_join`) — the lobby's explicit two-click
+  join for a public run, or a private run's roster add / join-link confirm (#1030) — and
+  `settled_at` is filled in later by `record_settlement` when a `Player` is actually created.
+  A run entered without ever going through a join step (a dev/legacy instance with no lobby)
+  still settles straight into an already-settled row, same as before #1030. Both writes are
+  idempotent. A facilitator row is written only by the sysadmin grant script (ADR-0004).
+- The lobby's "your runs" = membership rows (joined **or** settled) joined against the on-disk
+  fragments (`/var/www/energetica-landing/instances/{slug}.json`) for name / `starts_at`. This
   surfaces an account's **unadvertised** runs to that account (the public manifest can't).
 - Stale rows (run later deleted) are tolerated and filtered against existing fragments,
   matching the RFC's stale-fragment stance.
@@ -170,8 +178,15 @@ this authenticated-entry path.
 `return` value is **validated against the live instance list** (never an arbitrary URL) to
 prevent an open-redirect.
 
-**Settle.** Unchanged game-side, plus a write to `instance_membership`. This is what makes
-a run appear under "your runs."
+**Join a public run (#1030).** The picker's explicit two-click action — select a run, then
+"Join run" — calls the lobby's own `POST /api/v1/lobby/runs/{slug}/join`, which writes an
+unsettled `instance_membership` row straight from the lobby (no instance round-trip). This is
+what makes a run appear under "your runs," *before* the account has settled. A private run is
+excluded from this endpoint (403) — its admission stays instance-owned (roster / join-link).
+
+**Settle.** Unchanged game-side, plus a write to `instance_membership` — fills in `settled_at`
+on the row from the join step above, or inserts an already-settled row if there wasn't one
+(private runs, and dev/legacy instances with no lobby).
 
 **In-run switcher.** Top-right dropdown next to Logout. Lists your settled runs (current
 one marked) as cross-origin `<a href>` to `{slug}.{apex}/app` (`instanceAppHref`), plus an

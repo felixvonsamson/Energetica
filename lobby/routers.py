@@ -9,12 +9,13 @@ types cover the lobby unchanged. Unlike the instance, signup here is **account-o
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from energetica import accounts, server_config
+from energetica import accounts, instance_config, server_config
 from energetica.accounts import Account
 from energetica.game_error import GameError, GameExceptionType
 from energetica.my_runs import resolve_my_runs
@@ -101,5 +102,30 @@ def logout(account: Annotated[Account, Depends(require_current_account)]) -> Res
 
 @lobby_router.get("/my-runs")
 def get_my_runs(account: Annotated[Account, Depends(require_current_account)]) -> MyRunsResponse:
-    """The authenticated account's settled runs (same read the instance serves in-run)."""
+    """The authenticated account's joined runs (same read the instance serves in-run)."""
     return resolve_my_runs(account.account_id, account.username)
+
+
+@lobby_router.post("/runs/{slug}/join", status_code=status.HTTP_204_NO_CONTENT)
+def join_run(slug: str, account: Annotated[Account, Depends(require_current_account)]) -> Response:
+    """The picker's explicit two-click join (#1030): record that ``account`` has joined the
+    public run ``slug``, straight from the lobby, before it ever visits that run's own origin.
+    Idempotent — joining twice is a no-op.
+
+    This is the public-run join path only. A private run's admission stays entirely
+    instance-owned (the facilitator roster / join-link flow, #1019-#1022) — the lobby only ever
+    sees a private instance's stripped fragment (``InstanceFragment.private``), never its
+    allowlist, so it cannot decide who may join one.
+    """
+    fragment = instance_config.load_fragment(slug)
+    if fragment is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, GameExceptionType.RUN_NOT_FOUND)
+    if fragment.private:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, GameExceptionType.INSTANCE_ACCESS_DENIED)
+    try:
+        accounts.record_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
+    except accounts.MembershipRoleConflictError:
+        # account is this run's facilitator (or server-wide) — a facilitator administers a run,
+        # it doesn't also join one as a player (ADR-0004).
+        raise HTTPException(status.HTTP_403_FORBIDDEN, GameExceptionType.INSTANCE_ACCESS_DENIED)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
