@@ -312,7 +312,9 @@ def test_mutation_is_atomic_under_concurrent_calls(configured: Path) -> None:
 
 
 def test_publish_strips_access_block(configured: Path) -> None:
-    """The fragment written to the landing dir must never carry the allowlist."""
+    """The fragment written to the landing dir must never carry the allowlist — only whether one
+    applies survives, as ``private`` (#1030: the lobby needs this to gate the two-click join).
+    """
     config = InstanceConfig.model_validate(PRIVATE_JSON)
 
     instance_config.publish(config)
@@ -325,6 +327,7 @@ def test_publish_strips_access_block(configured: Path) -> None:
         "slug": SLUG,
         "name": "ETHZ Spring 2026",
         "advertised": False,
+        "private": True,
         "starts_at": fragment["starts_at"],
         "freeze_at": None,
         "ended_at": None,

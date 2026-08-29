@@ -1,4 +1,4 @@
-"""The shared ``my-runs`` read: an account's settled runs, joined against on-disk fragments.
+"""The shared ``my-runs`` read: an account's joined runs, joined against on-disk fragments.
 
 Both origins serve this identical logic from their own backend — the instance (``GET
 /lobby/my-runs``, for the in-run switcher) and the lobby service (for the picker) — so neither
@@ -19,14 +19,18 @@ from energetica.schemas.lobby import MyRun, MyRunsResponse
 logger = logging.getLogger(__name__)
 
 
-def _parse_settled_at(raw: str) -> datetime | None:
-    """Parse a stored ``settled_at`` into an aware datetime, or ``None`` if it is unusable.
+def _parse_aware(raw: str | None) -> datetime | None:
+    """Parse a stored timestamp into an aware datetime; ``None`` in, or unparseable, both yield
+    ``None`` out.
 
-    ``record_settlement`` normalises every write to aware UTC, so a bad value only arises from a
-    legacy/restored/hand-edited row. Rather than let one such row 500 the whole endpoint (and hide
-    *every* run for the account), recover a naive timestamp as UTC — matching the write-side
-    normalisation — and drop a truly unparseable one, consistent with how stale rows are skipped.
+    Writes to ``instance_membership`` normalise every timestamp to aware UTC, so a bad value only
+    arises from a legacy/restored/hand-edited row. Rather than let one such row 500 the whole
+    endpoint (and hide *every* run for the account), recover a naive timestamp as UTC — matching
+    the write-side normalisation — and drop a truly unparseable one, consistent with how stale
+    rows are skipped.
     """
+    if raw is None:
+        return None
     try:
         parsed = datetime.fromisoformat(raw)
     except ValueError:
@@ -35,9 +39,10 @@ def _parse_settled_at(raw: str) -> datetime | None:
 
 
 def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
-    """The account's settled runs, joined with each run's on-disk fragment for name / starts_at,
-    most recently settled first. Stale memberships (run since deleted → no fragment) are dropped,
-    and an account's own *unadvertised* runs are surfaced (their fragment exists on disk).
+    """The account's joined runs — settled or not (#1030) — joined with each run's on-disk
+    fragment for name / starts_at, most recently joined first. Stale memberships (run since
+    deleted → no fragment) are dropped, and an account's own *unadvertised* runs are surfaced
+    (their fragment exists on disk).
 
     ``username`` is echoed back so the change-password form can carry an ``autocomplete="username"``
     field — password managers only offer to *update* the right stored credential when the change
@@ -52,15 +57,19 @@ def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
         fragment = instance_config.load_fragment(membership.slug)
         if fragment is None:
             continue
-        settled_at = _parse_settled_at(membership.created_at)
-        if settled_at is None:
+        joined_at = _parse_aware(membership.created_at)
+        if joined_at is None:
             logger.warning(
-                "skipping membership with unparseable settled_at %r (account_id=%s, slug=%s)",
+                "skipping membership with unparseable created_at %r (account_id=%s, slug=%s)",
                 membership.created_at,
                 account_id,
                 membership.slug,
             )
             continue
+        # A present-but-unparseable settled_at reads as still-joined-only rather than dropping the
+        # whole run — a bad value here shouldn't hide an otherwise-valid membership the way a bad
+        # joined_at does.
+        settled_at = _parse_aware(membership.settled_at)
         runs.append(
             MyRun(
                 slug=fragment.slug,
@@ -68,6 +77,7 @@ def resolve_my_runs(account_id: int, username: str) -> MyRunsResponse:
                 starts_at=fragment.starts_at,
                 freeze_at=fragment.freeze_at,
                 ended_at=fragment.ended_at,
+                joined_at=joined_at,
                 settled_at=settled_at,
             )
         )

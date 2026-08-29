@@ -90,6 +90,21 @@ export function useRecap(slug: string) {
     });
 }
 
+/**
+ * Mutation hook for the picker's explicit two-click join (#1030). Refetches
+ * `my-runs` on success so the joined run moves from "Open runs" into "Your
+ * runs" (unsettled — the card shows a "Settle" CTA there, not "Continue").
+ */
+export function useJoinRun() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (slug: string) => lobbyApi.joinRun(slug),
+        onSuccess: () =>
+            queryClient.invalidateQueries({ queryKey: lobbyQueryKeys.myRuns }),
+    });
+}
+
 /** Mutation hook for lobby login; refreshes the my-runs auth probe. */
 export function useLobbyLogin() {
     const queryClient = useQueryClient();

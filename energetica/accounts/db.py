@@ -38,15 +38,21 @@ Role = Literal["player", "facilitator"]
 
 @dataclass(frozen=True)
 class Membership:
-    """One account's relationship to one run: either a settled player or a granted
+    """One account's relationship to one run: either a joined-or-settled player or a granted
     facilitator, never both (see ADR-0004) — ``slug`` is ``None`` only for a server-wide
     facilitator grant, never for a player row.
+
+    For a player row, ``created_at`` is when the account joined (from the lobby's two-click
+    join, or straight from settling if it never went through that step — dev/legacy runs and
+    private runs, see #1030); ``settled_at`` is ``None`` until they actually pick a tile.
+    Always ``None`` for a facilitator row.
     """
 
     account_id: int
     slug: str | None
     role: Role
     created_at: str
+    settled_at: str | None
 
 
 class UsernameTakenError(Exception):
@@ -99,13 +105,16 @@ def _create_schema(conn: sqlite3.Connection) -> None:
             account_id INTEGER NOT NULL,
             slug       TEXT,                        -- NULL = server-wide (facilitator only)
             role       TEXT    NOT NULL DEFAULT 'player',
-            created_at TEXT    NOT NULL,             -- ISO-8601 UTC; settled_at for a player,
+            created_at TEXT    NOT NULL,             -- ISO-8601 UTC; joined_at for a player,
                                                       -- granted_at for a facilitator
+            settled_at TEXT,                         -- ISO-8601 UTC; when a player settled
+                                                      -- (NULL until then); unused for facilitators
             PRIMARY KEY (account_id, slug)
         )
         """
     )
     _migrate_instance_membership_columns(conn)
+    _migrate_instance_membership_settled_at(conn)
     # SQLite (like standard SQL) treats every NULL as distinct in a unique index, so the PRIMARY
     # KEY above does *not* stop two server-wide (slug IS NULL) rows for the same account — a
     # partial index is the only way to make "one server-wide grant per account" a real DB
@@ -123,14 +132,16 @@ def _migrate_instance_membership_columns(conn: sqlite3.Connection) -> None:
     """One-time rebuild for an ``accounts.db`` created before the ``role`` column existed.
 
     The original schema had ``slug``/``settled_at`` as NOT NULL with no ``role`` column — every
-    row was implicitly a player, since facilitators weren't DB rows yet. SQLite can't relax a
-    NOT NULL constraint or rename a column across versions this old, so this rebuilds the table:
-    every existing row becomes ``role='player'`` with ``created_at`` taken from the old
-    ``settled_at``, then the new table swaps in under the same name.
+    row was implicitly a player, since facilitators weren't DB rows yet, and every row was by
+    construction an actual settlement (there was no "joined but not settled" state). SQLite can't
+    relax a NOT NULL constraint or rename a column across versions this old, so this rebuilds the
+    table: every existing row becomes ``role='player'`` with both ``created_at`` and the new
+    ``settled_at`` taken from the old ``settled_at`` value, then the new table swaps in under the
+    same name.
     """
     columns = {row["name"] for row in conn.execute("PRAGMA table_info(instance_membership)")}
     if "role" in columns:
-        return  # already the current schema (freshly created, or already migrated)
+        return  # already past this generation (freshly created, or already migrated)
     conn.execute(
         """
         CREATE TABLE instance_membership_new (
@@ -138,16 +149,34 @@ def _migrate_instance_membership_columns(conn: sqlite3.Connection) -> None:
             slug       TEXT,
             role       TEXT    NOT NULL DEFAULT 'player',
             created_at TEXT    NOT NULL,
+            settled_at TEXT,
             PRIMARY KEY (account_id, slug)
         )
         """
     )
     conn.execute(
-        "INSERT INTO instance_membership_new (account_id, slug, role, created_at) "
-        "SELECT account_id, slug, 'player', settled_at FROM instance_membership"
+        "INSERT INTO instance_membership_new (account_id, slug, role, created_at, settled_at) "
+        "SELECT account_id, slug, 'player', settled_at, settled_at FROM instance_membership"
     )
     conn.execute("DROP TABLE instance_membership")
     conn.execute("ALTER TABLE instance_membership_new RENAME TO instance_membership")
+
+
+def _migrate_instance_membership_settled_at(conn: sqlite3.Connection) -> None:
+    """One-time column add for an ``accounts.db`` created after ``role`` existed but before the
+    separate ``settled_at`` column did (#1030) — every row from that generation was, by
+    construction, an actual settlement (``record_settlement`` was the only writer of a player
+    row; there was no "joined but not settled" state yet). Backfill ``settled_at = created_at``
+    for those rows so they don't silently read as unsettled; facilitator rows get no
+    ``settled_at`` (not applicable to them). A plain ``ADD COLUMN`` suffices here — unlike
+    :func:`_migrate_instance_membership_columns` above, the column is nullable so no rebuild is
+    needed.
+    """
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(instance_membership)")}
+    if "settled_at" in columns:
+        return  # already the current schema (freshly created, or already migrated)
+    conn.execute("ALTER TABLE instance_membership ADD COLUMN settled_at TEXT")
+    conn.execute("UPDATE instance_membership SET settled_at = created_at WHERE role = 'player'")
 
 
 def init_db() -> None:
@@ -302,11 +331,60 @@ def _membership_role(conn: sqlite3.Connection, *, account_id: int, slug: str | N
     return row["role"] if row is not None else None
 
 
+def _has_facilitator_conflict(conn: sqlite3.Connection, *, account_id: int, slug: str) -> bool:
+    """Whether ``account_id`` already holds a facilitator grant covering ``slug`` — scoped to it
+    directly, or server-wide (``slug IS NULL``). Used by :func:`record_join` and
+    :func:`record_settlement`, both of which must reject a facilitator the same way
+    :func:`is_facilitator` would recognise one — unlike :func:`_membership_role`'s exact-scope
+    lookup, a server-wide grant has no row at this specific ``slug`` to find.
+    """
+    return (
+        conn.execute(
+            "SELECT 1 FROM instance_membership WHERE account_id = ? AND role = 'facilitator' "
+            "AND (slug = ? OR slug IS NULL)",
+            (account_id, slug),
+        ).fetchone()
+        is not None
+    )
+
+
+def record_join(*, account_id: int, slug: str, joined_at: str) -> None:
+    """Record that ``account_id`` has joined run ``slug`` — the lobby's explicit two-click join
+    (#1030), *before* settling. Idempotent (INSERT OR IGNORE): joining twice, or joining a run
+    already settled in, leaves the existing row (and its ``settled_at``) untouched.
+
+    Raises :class:`MembershipRoleConflictError` if ``account_id`` already holds a facilitator
+    grant covering ``slug`` (scoped to it, or server-wide) — player and facilitator are mutually
+    exclusive (ADR-0004).
+
+    Atomic for the same reason as :func:`record_settlement` — see its docstring.
+    """
+    joined_at = _normalise_timestamp(joined_at, field_name="joined_at")
+    with _connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            if _has_facilitator_conflict(conn, account_id=account_id, slug=slug):
+                raise MembershipRoleConflictError(
+                    f"account {account_id} already holds a facilitator grant covering {slug!r}; cannot join as a player"
+                )
+            conn.execute(
+                "INSERT OR IGNORE INTO instance_membership (account_id, slug, role, created_at, settled_at) "
+                "VALUES (?, ?, 'player', ?, NULL)",
+                (account_id, slug, joined_at),
+            )
+        except BaseException:
+            conn.rollback()
+            raise
+        conn.commit()
+
+
 def record_settlement(*, account_id: int, slug: str, settled_at: str) -> None:
-    """Record that ``account_id`` has settled (become a player) in run ``slug``. Idempotent
-    (INSERT OR IGNORE) — re-settling is impossible, but the write is on the settle path so it must
-    never raise on a duplicate, and a re-run of the backfill migration leaves the original
-    ``settled_at`` untouched.
+    """Record that ``account_id`` has settled (become a player) in run ``slug``. Idempotent —
+    re-settling is impossible, but the write is on the settle path so it must never raise on a
+    duplicate, and a re-run of the backfill migration leaves the original ``settled_at``
+    untouched. Fills in ``settled_at`` on the existing row from :func:`record_join` if there is
+    one; otherwise inserts a fresh, already-settled row (the path a private run or a dev/legacy
+    instance without a lobby join step still takes).
 
     Raises :class:`MembershipRoleConflictError` if ``account_id`` already holds a facilitator
     grant covering ``slug`` (scoped to it, or server-wide) — player and facilitator are mutually
@@ -323,18 +401,26 @@ def record_settlement(*, account_id: int, slug: str, settled_at: str) -> None:
     with _connect() as conn:
         conn.execute("BEGIN IMMEDIATE")
         try:
-            if conn.execute(
-                "SELECT 1 FROM instance_membership WHERE account_id = ? AND role = 'facilitator' "
-                "AND (slug = ? OR slug IS NULL)",
-                (account_id, slug),
-            ).fetchone():
+            if _has_facilitator_conflict(conn, account_id=account_id, slug=slug):
                 raise MembershipRoleConflictError(
                     f"account {account_id} already holds a facilitator grant covering {slug!r}; cannot settle as a player"
                 )
-            conn.execute(
-                "INSERT OR IGNORE INTO instance_membership (account_id, slug, role, created_at) VALUES (?, ?, 'player', ?)",
-                (account_id, slug, settled_at),
-            )
+            existing_role = _membership_role(conn, account_id=account_id, slug=slug)
+            if existing_role == "player":
+                # Already has a row — either joined-not-settled (fill in settled_at) or already
+                # settled (COALESCE leaves the original timestamp untouched, matching the old
+                # INSERT OR IGNORE's idempotence).
+                conn.execute(
+                    "UPDATE instance_membership SET settled_at = COALESCE(settled_at, ?) "
+                    "WHERE account_id = ? AND slug = ?",
+                    (settled_at, account_id, slug),
+                )
+            else:
+                conn.execute(
+                    "INSERT INTO instance_membership (account_id, slug, role, created_at, settled_at) "
+                    "VALUES (?, ?, 'player', ?, ?)",
+                    (account_id, slug, settled_at, settled_at),
+                )
         except BaseException:
             conn.rollback()
             raise
@@ -398,19 +484,28 @@ def is_facilitator(*, account_id: int, slug: str | None) -> bool:
 
 
 def get_memberships(*, account_id: int) -> list[Membership]:
-    """Return the runs ``account_id`` has settled in as a player, most recently settled first.
+    """Return the runs ``account_id`` has joined as a player — settled or not — most recently
+    joined first.
 
     Facilitator grants are excluded — this backs the lobby's "your runs" list, which is about
-    play, not administration. Rows for runs later deleted are tolerated here (stale rows) — the
+    play, not administration. A joined-but-not-yet-settled run is included (``settled_at is
+    None``): joining is the deliberate act that puts a run under "your runs" (#1030), settling is
+    a later, separate step. Rows for runs later deleted are tolerated here (stale rows) — the
     caller filters them against the on-disk fragments, matching the RFC's stale-fragment stance.
     """
     with _connect() as conn:
         rows = conn.execute(
-            "SELECT account_id, slug, role, created_at FROM instance_membership "
+            "SELECT account_id, slug, role, created_at, settled_at FROM instance_membership "
             "WHERE account_id = ? AND role = 'player' ORDER BY created_at DESC",
             (account_id,),
         ).fetchall()
     return [
-        Membership(account_id=row["account_id"], slug=row["slug"], role=row["role"], created_at=row["created_at"])
+        Membership(
+            account_id=row["account_id"],
+            slug=row["slug"],
+            role=row["role"],
+            created_at=row["created_at"],
+            settled_at=row["settled_at"],
+        )
         for row in rows
     ]

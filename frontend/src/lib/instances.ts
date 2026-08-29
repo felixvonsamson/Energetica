@@ -20,6 +20,13 @@ export type InstanceFragment = {
     slug: string;
     name: string;
     advertised: boolean;
+    /**
+     * Whether this run has a private (allowlisted) access policy — the
+     * allowlist itself is never published, only this. `false`/absent means
+     * public. See #1030: the picker uses this to keep private runs out of the
+     * freely-joinable "Open runs" list.
+     */
+    private?: boolean;
     /** ISO-8601 UTC, e.g. "2025-09-15T00:00:00Z". */
     starts_at: string;
     /** `active → freeze` boundary; `null` for an open-ended run. */

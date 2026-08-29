@@ -45,6 +45,7 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     JOIN_LINK_INVALID:
         "This join link isn't valid. Ask the organizer for a new one.",
     JOIN_LINK_CLOSED: "This join link isn't accepting new members right now.",
+    RUN_NOT_FOUND: "This run doesn't exist.",
 
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client

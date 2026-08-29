@@ -147,6 +147,87 @@ def test_my_runs_returns_authed_accounts_runs(signups_enabled: None, landing_dir
     assert [run["slug"] for run in resp.json()["runs"]] == ["spring-2026"]
 
 
+# --- join (#1030: the picker's explicit two-click join for public runs) --------------------
+
+
+def _write_fragment(landing_dir: Path, *, slug: str, name: str = "A Run", private: bool = False) -> None:
+    (landing_dir / f"{slug}.json").write_text(
+        json.dumps(
+            {
+                "slug": slug,
+                "name": name,
+                "advertised": True,
+                "private": private,
+                "starts_at": "2026-03-01T00:00:00Z",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_join_requires_auth(landing_dir: Path) -> None:
+    resp = _client().post(f"{BASE}/lobby/runs/spring-2026/join")
+    assert resp.status_code == 401
+
+
+def test_join_unknown_run_404(signups_enabled: None, landing_dir: Path) -> None:
+    client = _client()
+    _signup(client)
+    resp = client.post(f"{BASE}/lobby/runs/does-not-exist/join")
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "RUN_NOT_FOUND"
+
+
+def test_join_private_run_403(signups_enabled: None, landing_dir: Path) -> None:
+    client = _client()
+    _signup(client)
+    _write_fragment(landing_dir, slug="invite-only", private=True)
+
+    resp = client.post(f"{BASE}/lobby/runs/invite-only/join")
+
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == "INSTANCE_ACCESS_DENIED"
+
+
+def test_join_public_run_then_appears_in_my_runs_unsettled(signups_enabled: None, landing_dir: Path) -> None:
+    client = _client()
+    _signup(client)
+    _write_fragment(landing_dir, slug="spring-2026", name="Spring 2026")
+
+    resp = client.post(f"{BASE}/lobby/runs/spring-2026/join")
+    assert resp.status_code == 204
+
+    runs = client.get(f"{BASE}/lobby/my-runs").json()["runs"]
+    assert [run["slug"] for run in runs] == ["spring-2026"]
+    assert runs[0]["settled_at"] is None
+
+
+def test_join_is_idempotent(signups_enabled: None, landing_dir: Path) -> None:
+    client = _client()
+    _signup(client)
+    _write_fragment(landing_dir, slug="spring-2026")
+
+    assert client.post(f"{BASE}/lobby/runs/spring-2026/join").status_code == 204
+    assert client.post(f"{BASE}/lobby/runs/spring-2026/join").status_code == 204  # must not raise/duplicate
+
+    runs = client.get(f"{BASE}/lobby/my-runs").json()["runs"]
+    assert len(runs) == 1
+
+
+def test_join_rejects_the_runs_facilitator(signups_enabled: None, landing_dir: Path) -> None:
+    client = _client()
+    _signup(client)
+    account = accounts.get_account_by_username("alice")
+    assert account is not None
+    accounts.grant_facilitator(account_id=account.account_id, slug="spring-2026")
+    _write_fragment(landing_dir, slug="spring-2026")
+
+    resp = client.post(f"{BASE}/lobby/runs/spring-2026/join")
+
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == "INSTANCE_ACCESS_DENIED"
+
+
 # --- change password + logout ---------------------------------------------------------------
 
 

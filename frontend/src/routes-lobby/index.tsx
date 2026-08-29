@@ -43,16 +43,17 @@ function PickerPage() {
             // multi-run UI below is never rendered here. See lib/single-origin.ts
             // and the ADR-0002 amendment.
             bounceHref = "/app";
-        } else if (returnSlug && instances.data !== undefined) {
-            // `?return=` bounce (client-side by design): once both run lists are
-            // known, forward a *validated* slug to its run. The URL is built
-            // against the fixed apex (runAppHref), never taken from the
-            // parameter — no open redirect. Unknown slugs fall through.
-            const knownSlugs = new Set([
-                ...myRuns.data.runs.map((run) => run.slug),
-                ...instances.data.map((instance) => instance.slug),
-            ]);
-            if (knownSlugs.has(returnSlug)) {
+        } else if (returnSlug) {
+            // `?return=` bounce (client-side by design): forward a *validated* slug straight to
+            // its run, but only when the account has already joined it — a run the account has
+            // never joined stops here instead, on the picker, where the two-click join (#1030) is
+            // the only way in. This keeps "joined" meaning one consistent thing everywhere: no
+            // path silently joins an account without the explicit click. The URL is built against
+            // the fixed apex (runAppHref), never taken from the parameter — no open redirect.
+            const joinedSlugs = new Set(
+                myRuns.data.runs.map((run) => run.slug),
+            );
+            if (joinedSlugs.has(returnSlug)) {
                 bounceHref = runAppHref(returnSlug);
             }
         }
@@ -91,8 +92,12 @@ function PickerPage() {
         );
     }
 
+    // Private runs are never listed here: they aren't freely joinable (this list's whole point,
+    // #1030), and the two-click join is a public-run-only endpoint that would just 403 on one.
+    // A private run's admission is entirely through its own facilitator-issued join link/roster
+    // (#1019-#1022), not this picker.
     const advertised = (instances.data ?? []).filter(
-        (instance) => instance.advertised,
+        (instance) => instance.advertised && !instance.private,
     );
 
     if (myRuns.data === null) {

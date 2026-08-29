@@ -101,10 +101,15 @@ and deleted; the lobby is not). Owns the server-wide session.
 _Avoid_: landing (the **landing** is the pure-static marketing site on the apex; the lobby
 is the authenticated identity surface — distinct origins, distinct purposes).
 
-**Joined a run** / **started a run**:
-An **account** that has settled on a tile in a run — i.e. has a **Player** in that run's
-engine, not merely an auto-provisioned **User**. The lobby's "your runs" view is keyed on
-this. See the flagged ambiguity below.
+**Joined a run**:
+An account that has explicitly, deliberately joined a run — the lobby's two-click join for a
+public run (#1030), or a private run's roster add / join-link confirm — recorded as a row in
+`instance_membership` the moment that happens, before the account has necessarily settled. The
+lobby's "your runs" view is keyed on this, not on settling. See the flagged ambiguity below.
+
+**Settled**:
+An account that has picked a tile — has a **Player** in that run's engine. A later, separate
+step from joining; `instance_membership`'s `settled_at` is null until it happens.
 
 **Server-wide session**:
 The single authenticated session a player gets from the lobby, carried to every run on the
@@ -112,11 +117,12 @@ server. Distinct from the per-run **User**/**Player** state it unlocks.
 
 ### Flagged ambiguities
 
-- **User vs Player as "membership".** Entering a run auto-provisions a **User** (the entry
-  gate, on the first authenticated visit) before the player has done anything there; a
-  **Player** exists only after **settling**. "Runs I'm in" was therefore ambiguous —
-  provisioned-but-not-settled vs actually-playing.
-  Resolved: **membership = settled (has a Player)**. The lobby's "your runs" is keyed on
-  Player, recorded in an `instance_membership` table in the server-wide accounts store,
-  written by the run when a Player is created. A merely-provisioned **User** (silent SSO
-  entry) does **not** count as membership.
+- **"Membership": joined vs settled.** Originally resolved as membership = settled (has a
+  Player) — see ADR-0002/CONTEXT history — specifically to keep a *silent* auto-provisioned
+  entry on a public run's first visit from cluttering "your runs" with runs never actually
+  played. #1030 revisits this: the lobby's two-click join is itself a deliberate act (not
+  silent), so it now writes `instance_membership` immediately, before settling. Currently
+  resolved: **membership = joined** (settled or not); `settled_at` on the row distinguishes the
+  two for player-count purposes. A silently auto-provisioned account on a run it never
+  explicitly joined still does **not** count as membership — the entry gate's auto-provision
+  step itself writes nothing here.
