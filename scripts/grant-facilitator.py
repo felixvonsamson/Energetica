@@ -43,6 +43,10 @@ def main() -> int:
     # inherits db.py's dev-oriented default.
     os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = str(args.accounts_db)
 
+    # This script lives in scripts/, not the repo root, so the interpreter's default sys.path
+    # (the script's own directory) never includes the repo root — `energetica` isn't installed
+    # into the venv as a package, so importing it needs the repo root added explicitly.
+    sys.path.insert(0, str(Path(__file__).parent.parent))
     from energetica import accounts
 
     account = accounts.get_account_by_username(args.username)

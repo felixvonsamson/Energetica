@@ -12,6 +12,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { lobbyHref } from "@/lib/instances";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -33,6 +34,9 @@ export function FacilitatorHeader() {
                 </Link>
                 <div className="flex items-center gap-2">
                     <ThemeToggle variant="icon-only" />
+                    <Button variant="outline" asChild>
+                        <a href={lobbyHref("/")}>Back to lobby</a>
+                    </Button>
                     <Button variant="outline" asChild>
                         <Link to="/app/logout">Log out</Link>
                     </Button>
