@@ -1,7 +1,6 @@
 import {
     createRootRoute,
     Outlet,
-    type StaticDataRouteOption,
     useMatches,
     useNavigate,
 } from "@tanstack/react-router";
@@ -14,45 +13,7 @@ import { useCapabilities } from "@/hooks/use-capabilities";
 import { useGameEngine } from "@/hooks/use-game";
 import { usePhase } from "@/hooks/use-phase";
 import { lobbyLoginHref } from "@/lib/instances";
-import type { ApiSchema } from "@/types/api-helpers";
-import type { PlayerCapabilities } from "@/types/capabilities";
-
-type User = ApiSchema<"UserOut">;
-
-/**
- * Determines the in-app redirect target for the current route config.
- *
- * Called only when auth + capabilities are loaded AND the user is authenticated
- * (the unauthenticated case is a cross-origin redirect to the lobby, handled in
- * the component). Returns null if the route is accessible, or an in-app path.
- */
-function computeRedirect(
-    routeConfig: StaticDataRouteOption["routeConfig"],
-    user: User,
-    capabilities: PlayerCapabilities | null,
-): string | null {
-    if (!routeConfig || routeConfig.requiredRole === null) return null;
-    if (routeConfig.requiredRole !== user.role) return "/app/logout";
-
-    const requiredRole = routeConfig.requiredRole;
-    switch (requiredRole) {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        case "player":
-            if (routeConfig.requiresSettledTile && !user.is_settled)
-                return "/app/settle";
-            if (!routeConfig.requiresSettledTile && user.is_settled)
-                return "/app/dashboard";
-            if (
-                !capabilities ||
-                (routeConfig.isUnlocked &&
-                    !routeConfig.isUnlocked(capabilities).unlocked)
-            )
-                return "/app/dashboard";
-            return null;
-        default:
-            throw requiredRole satisfies never;
-    }
-}
+import { computeRedirect } from "@/lib/route-guard";
 
 export const Route = createRootRoute({
     staticData: { title: "", routeConfig: { requiredRole: null } },

@@ -7,7 +7,8 @@ Each instance declares its visibility (``advertised``) and access policy
     {ENERGETICA_INSTANCE_CONFIG_DIR}/{slug}/instance.json   (default dir: /etc/energetica)
 
 The file is re-read on every login attempt — there is no in-memory cache of the
-policy, so admin edits take effect on the next login with no restart.
+policy, so admin edits take effect on the next login with no restart. A running instance can also
+edit its own ``private`` access block in place — see the "Private-access mutation" section below.
 
 On startup and whenever the public-facing fields change, the instance publishes a
 *sanitised* fragment (the ``access`` block stripped) to the landing directory and
@@ -24,10 +25,12 @@ from __future__ import annotations
 import json
 import logging
 import os
+import secrets
 import tempfile
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, TypeVar
+from typing import TYPE_CHECKING, Callable, Literal, TypeVar
 
 from pydantic import AwareDatetime, BaseModel, Field, model_validator
 
@@ -108,6 +111,12 @@ class PrivateAccess(BaseModel):
 
     policy: Literal["private"]
     allowed_usernames: list[str] = Field(default_factory=list)
+    # The facilitator join-link (#1019): a lazily-generated, never-rotated secret that admits an
+    # account without pre-naming it on `allowed_usernames` (#989's "shared access password" idea).
+    # Both default so a config file written before this change (neither field present) still loads —
+    # see :func:`get_or_create_join_token` / :func:`set_join_open` for the mutation side.
+    join_token: str | None = None
+    join_open: bool = False
 
 
 AccessPolicy = PublicAccess | PrivateAccess
@@ -323,6 +332,101 @@ def _atomic_write_json(target: Path, payload: str) -> None:
             os.close(fd)
         Path(tmp_name).unlink(missing_ok=True)
         raise
+
+
+# --- Private-access mutation (#1019) ----------------------------------------------------------
+#
+# The facilitator surface (#989) needs to edit a *running* instance's allowlist/join settings from
+# inside the backend process, not by hand-editing ``instance.json`` on the box. These are the only
+# writers of that file besides an admin's text editor, so every one of them goes through the same
+# read-mutate-write helper below.
+
+# Serializes read-modify-write access to ``instance.json`` within this process. ``_atomic_write_json``
+# alone makes each *write* atomic on disk, but two concurrent callers (e.g. two facilitator requests
+# racing to add different usernames) could both read the same pre-mutation config and each write back
+# their own change — a lost update. This lock closes that race; the on-disk atomicity still matters
+# for a concurrent *reader* (another request mid-login) never observing a partial file.
+_private_access_write_lock = threading.Lock()
+
+
+class InstanceNotPrivateError(InstanceConfigError):
+    """Raised when a private-access mutation is attempted on an instance that has no config file, or
+    whose config is not the ``private`` policy — there is no allowlist/join-token to mutate.
+    """
+
+
+def _update_private_access(mutate: Callable[[PrivateAccess], None]) -> PrivateAccess:
+    """The single write path every private-access mutation goes through: read the config fresh,
+    apply ``mutate`` to its ``PrivateAccess`` block in place, and write the whole config back.
+
+    Re-reads ``instance.json`` from disk on every call (no cached config, matching the rest of this
+    module) rather than trusting an in-memory copy, so it always mutates the latest on-disk state.
+    The read, mutate, and write happen under :data:`_private_access_write_lock`, so this is atomic
+    from the point of view of any two calls made from within this process (see the lock's docstring
+    for why the on-disk atomic write alone isn't enough). Callers outside this process (a sysadmin
+    editing the file by hand) are out of scope, as they already were for :func:`publish`.
+
+    Raises :class:`InstanceNotPrivateError` if this instance is unconfigured or ``public`` — a
+    facilitator route only ever calls this for the private instance it manages.
+    """
+    path = _instance_json_path()
+    if path is None:
+        raise InstanceNotPrivateError("no instance slug configured")
+    with _private_access_write_lock:
+        config = load_instance_config()
+        if config is None or not isinstance(config.access, PrivateAccess):
+            raise InstanceNotPrivateError(f"instance is not privately configured: {path}")
+        mutate(config.access)
+        _atomic_write_json(path, config.model_dump_json())
+        return config.access
+
+
+def add_allowed_username(username: str) -> PrivateAccess:
+    """Add ``username`` to the allowlist. A no-op (still atomic) if already present."""
+
+    def mutate(access: PrivateAccess) -> None:
+        if username not in access.allowed_usernames:
+            access.allowed_usernames.append(username)
+
+    return _update_private_access(mutate)
+
+
+def remove_allowed_username(username: str) -> PrivateAccess:
+    """Remove ``username`` from the allowlist. A no-op (still atomic) if already absent."""
+
+    def mutate(access: PrivateAccess) -> None:
+        if username in access.allowed_usernames:
+            access.allowed_usernames.remove(username)
+
+    return _update_private_access(mutate)
+
+
+def set_join_open(join_open: bool) -> PrivateAccess:
+    """Set whether the join link (:func:`get_or_create_join_token`) currently admits new accounts."""
+
+    def mutate(access: PrivateAccess) -> None:
+        access.join_open = join_open
+
+    return _update_private_access(mutate)
+
+
+def get_or_create_join_token() -> str:
+    """This instance's join token, generating and persisting one on first access.
+
+    Generated exactly once: a second call — even from a different process, since the token is
+    persisted to disk and every call here re-reads it — returns the same value rather than rotating
+    it. Writing back an unchanged token on a call that finds one already set is deliberately not
+    special-cased: matching :func:`publish`'s "the writes are cheap ... so there is no in-memory
+    de-dup" policy keeps this one code path instead of an extra fast-path branch.
+    """
+
+    def mutate(access: PrivateAccess) -> None:
+        if access.join_token is None:
+            access.join_token = secrets.token_urlsafe(24)
+
+    access = _update_private_access(mutate)
+    assert access.join_token is not None  # mutate() above always leaves it set
+    return access.join_token
 
 
 def list_advertised_fragments() -> list[InstanceFragment]:

@@ -34,6 +34,7 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     INVALID_PASSWORD: "Incorrect password. Please try again.",
     NOT_AUTHENTICATED: "Please log in to continue.",
     USER_IS_NOT_A_PLAYER: "Access denied. Player account required.",
+    USER_IS_NOT_AN_ADMIN: "Access denied. Admin account required.",
     PLAYER_NOT_SET_UP: "Please complete your account setup.",
     SIGNUP_DISABLED: "Sign-ups are currently disabled.",
     OLD_PASSWORD_INCORRECT: "The current password you entered is incorrect.",

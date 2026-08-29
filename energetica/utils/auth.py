@@ -47,6 +47,7 @@ __all__ = [
     "get_user_from_token",
     "get_user",
     "get_playing_user",
+    "get_admin_user",
     "get_settled_player",
     "reject_when_frozen",
 ]
@@ -105,6 +106,22 @@ def get_playing_user(request: Request) -> User:
     user = get_user(request)
     if user is None or user.role != "player":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.USER_IS_NOT_A_PLAYER)
+    return user
+
+
+def get_admin_user(request: Request) -> User:
+    """Restrict a route to the current instance's admin (``user.is_admin``, i.e. ``role ==
+    "admin"``) — the existing primitive, not the separate, not-yet-built facilitator-role/grants
+    rebuild (#899). The facilitator surfaces (#989) depend on this the way game routes depend on
+    :func:`get_settled_player`.
+
+    No session, or a session that resolves to a non-admin user, both fail as ``403`` — mirroring
+    :func:`get_playing_user`'s convention of not distinguishing "not logged in" from "wrong role"
+    here (plain authentication is already covered by the entry gate, ``/auth/me``).
+    """
+    user = get_user(request)
+    if user is None or not user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.USER_IS_NOT_AN_ADMIN)
     return user
 
 
