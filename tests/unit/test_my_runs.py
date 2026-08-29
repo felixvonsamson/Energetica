@@ -164,3 +164,39 @@ def test_unparseable_settled_at_keeps_the_run_as_joined_only(stores: Path) -> No
 
     assert [run.slug for run in runs] == ["odd"]
     assert runs[0].settled_at is None
+
+
+def test_facilitated_runs_joined_with_fragments_most_recently_granted_first(stores: Path) -> None:
+    """The instance-scoped-facilitator counterpart to `runs` (#1032): joined against the same
+    fragments, most recently granted first.
+    """
+    account_id = accounts.create_account(username="alice", pwhash="h")
+    _fragment(stores, slug="spring-2026", name="Spring 2026", starts_at="2026-03-01T00:00:00Z")
+    _fragment(stores, slug="autumn-2026", name="Autumn 2026", starts_at="2026-09-01T00:00:00Z")
+    accounts.grant_facilitator(account_id=account_id, slug="spring-2026", granted_at="2026-01-01T00:00:00+00:00")
+    accounts.grant_facilitator(account_id=account_id, slug="autumn-2026", granted_at="2026-02-01T00:00:00+00:00")
+
+    response = resolve_my_runs(account_id, "alice")
+
+    assert [run.slug for run in response.facilitated_runs] == ["autumn-2026", "spring-2026"]
+    assert response.facilitated_runs[0].name == "Autumn 2026"
+    assert response.facilitated_runs[0].granted_at.isoformat() == "2026-02-01T00:00:00+00:00"
+
+
+def test_facilitated_runs_excludes_server_wide_grant(stores: Path) -> None:
+    account_id = accounts.create_account(username="alice", pwhash="h")
+    accounts.grant_facilitator(account_id=account_id, slug=None)
+
+    assert resolve_my_runs(account_id, "alice").facilitated_runs == []
+
+
+def test_facilitated_runs_filters_stale_grant_without_fragment(stores: Path) -> None:
+    account_id = accounts.create_account(username="alice", pwhash="h")
+    accounts.grant_facilitator(account_id=account_id, slug="deleted-run")
+
+    assert resolve_my_runs(account_id, "alice").facilitated_runs == []
+
+
+def test_facilitated_runs_empty_when_no_grants(stores: Path) -> None:
+    account_id = accounts.create_account(username="alice", pwhash="h")
+    assert resolve_my_runs(account_id, "alice").facilitated_runs == []

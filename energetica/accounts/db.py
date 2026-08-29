@@ -483,6 +483,20 @@ def is_facilitator(*, account_id: int, slug: str | None) -> bool:
     return row is not None
 
 
+def _row_to_membership(row: sqlite3.Row) -> Membership:
+    """Map one ``instance_membership`` row to a :class:`Membership`. The shared row shape both
+    :func:`get_memberships` and :func:`get_facilitator_grants` select, so the column list and
+    field-by-field construction live in exactly one place — mirrors :func:`_row_to_account` above.
+    """
+    return Membership(
+        account_id=row["account_id"],
+        slug=row["slug"],
+        role=row["role"],
+        created_at=row["created_at"],
+        settled_at=row["settled_at"],
+    )
+
+
 def get_memberships(*, account_id: int) -> list[Membership]:
     """Return the runs ``account_id`` has joined as a player — settled or not — most recently
     joined first.
@@ -499,16 +513,26 @@ def get_memberships(*, account_id: int) -> list[Membership]:
             "WHERE account_id = ? AND role = 'player' ORDER BY created_at DESC",
             (account_id,),
         ).fetchall()
-    return [
-        Membership(
-            account_id=row["account_id"],
-            slug=row["slug"],
-            role=row["role"],
-            created_at=row["created_at"],
-            settled_at=row["settled_at"],
-        )
-        for row in rows
-    ]
+    return [_row_to_membership(row) for row in rows]
+
+
+def get_facilitator_grants(*, account_id: int) -> list[Membership]:
+    """Return ``account_id``'s instance-scoped facilitator grants — excludes both player rows and
+    a server-wide grant (``slug IS NULL``, which isn't tied to one run) — most recently granted
+    first.
+
+    Backs the lobby picker's "runs you facilitate" section (#1032): unlike :func:`get_memberships`,
+    which stays player-only by design, this is the facilitator-only counterpart. Rows for runs
+    later deleted are tolerated here (stale rows) — the caller filters them against the on-disk
+    fragments, matching :func:`get_memberships`' stale-row stance.
+    """
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT account_id, slug, role, created_at, settled_at FROM instance_membership "
+            "WHERE account_id = ? AND role = 'facilitator' AND slug IS NOT NULL ORDER BY created_at DESC",
+            (account_id,),
+        ).fetchall()
+    return [_row_to_membership(row) for row in rows]
 
 
 def has_joined(*, account_id: int, slug: str) -> bool:

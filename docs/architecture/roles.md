@@ -201,6 +201,7 @@ or it applies uniformly). Format is a non-empty subset of {persistent, workshop}
 | Manage instance whitelist | facilitator | instance | persistent | in-app | built (graduated from out-of-band; the roster lives in `accounts.db`, ADR-0007 — `scripts/whitelist-run.py` remains for a sysadmin who'd rather not go through the facilitator UI) |
 | Server-wide signup toggle | sysadmin | n/a | both | out-of-band | built (stays out-of-band — exposure lever, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
 | Facilitator bypasses access allowlist | facilitator | server-wide or instance | both | in-app | built (ADR-0004) |
+| Discover own scoped facilitator run(s) from the lobby picker | facilitator | instance | both | in-app | built ([#1032](https://github.com/felixvonsamson/Energetica/issues/1032)) |
 | Per-instance `disable_signups` | — | — | persistent | — | retired (superseded by server-wide toggle) |
 | `players.txt` bootstrap enrollment | — | — | persistent | — | retired (superseded by CLI grant seed, [#842](https://github.com/felixvonsamson/Energetica/issues/842)) |
 

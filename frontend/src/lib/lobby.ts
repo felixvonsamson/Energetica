@@ -93,6 +93,17 @@ export function runAppHref(slug: string): string {
 }
 
 /**
+ * A run's facilitator page, as an absolute cross-origin URL — the "Manage"
+ * destination for the picker's "runs you facilitate" cards (#1032). Built on
+ * {@link resolveRunAppHref}'s same apex/slug resolution rather than a second
+ * hand-rolled URL, so it falls back to the same dev-server / relative-path
+ * rules `runAppHref` does.
+ */
+export function runFacilitatorHref(slug: string): string {
+    return `${runAppHref(slug)}/facilitator`;
+}
+
+/**
  * Where the lobby links back to the apex landing site (e.g. "Learn more").
  * Falls back to a relative path in dev (the landing has no local dev origin the
  * lobby knows about — these are secondary "learn more" links, so a dead dev

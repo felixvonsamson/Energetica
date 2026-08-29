@@ -134,6 +134,32 @@ def test_get_memberships_excludes_facilitator_grants(accounts_db: Path) -> None:
     assert accounts.get_memberships(account_id=1) == []
 
 
+def test_get_facilitator_grants_returns_only_scoped_grants_ordered_by_created_at_desc(accounts_db: Path) -> None:
+    """The counterpart to get_memberships: scoped facilitator grants only, most recently granted
+    first, excluding player rows and any server-wide grant.
+    """
+    accounts.grant_facilitator(account_id=1, slug="spring-2026", granted_at="2026-01-01T00:00:00+00:00")
+    accounts.grant_facilitator(account_id=1, slug="autumn-2026", granted_at="2026-06-01T00:00:00+00:00")
+    accounts.grant_facilitator(account_id=1, slug=None)  # server-wide — excluded
+    accounts.record_settlement(account_id=2, slug="winter-2026", settled_at="2026-01-01T00:00:00+00:00")  # player — excluded
+
+    grants = accounts.get_facilitator_grants(account_id=1)
+
+    assert [g.slug for g in grants] == ["autumn-2026", "spring-2026"]
+    assert all(g.role == "facilitator" for g in grants)
+    assert all(g.settled_at is None for g in grants)
+
+
+def test_get_facilitator_grants_empty_for_account_with_no_grants(accounts_db: Path) -> None:
+    assert accounts.get_facilitator_grants(account_id=999) == []
+
+
+def test_get_facilitator_grants_excludes_player_memberships(accounts_db: Path) -> None:
+    accounts.record_settlement(account_id=1, slug="spring-2026", settled_at="2026-03-01T00:00:00+00:00")
+
+    assert accounts.get_facilitator_grants(account_id=1) == []
+
+
 def test_settled_at_is_normalised_to_utc_so_ordering_is_chronological(accounts_db: Path) -> None:
     """created_at is stored as canonical UTC ISO regardless of the caller's offset, so the
     lexicographic ORDER BY on the TEXT column stays chronological. A '+02:00' timestamp that is

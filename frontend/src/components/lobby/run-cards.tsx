@@ -1,8 +1,10 @@
 /**
- * The picker's run cards — the lobby's signature element. Two tiers sharing one
+ * The picker's run cards — the lobby's signature element. Tiers sharing one
  * frame (the landing's `RunCard` idiom, so returning players recognise it):
  * "your runs" carry a pine icon tile and a "Continue"/"Settle" affordance;
- * "open runs" stay quieter with a "Join" affordance.
+ * "open runs" stay quieter with a "Join" affordance; "runs you facilitate"
+ * (#1032) carry a distinct shield tile and a "Manage" affordance, so a
+ * facilitator card never reads as a played run out of context.
  *
  * "Your runs" cards render as plain `<a href>`: run links are cross-origin
  * (`{slug}.{apex}/app`), which a full page load handles fine. A logged-in "open
@@ -28,7 +30,7 @@
  */
 
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, FileClock, Zap } from "lucide-react";
+import { ChevronRight, FileClock, Shield, Zap } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -36,10 +38,10 @@ import { InfoBanner } from "@/components/ui/info-banner";
 import { Spinner } from "@/components/ui/spinner";
 import { TypographyMuted } from "@/components/ui/typography";
 import { useJoinRun } from "@/hooks/use-lobby";
-import type { MyRun } from "@/lib/api/lobby";
+import type { FacilitatedRun, MyRun } from "@/lib/api/lobby";
 import { getUserFriendlyError } from "@/lib/error-utils";
 import { derivePhase, type InstanceFragment } from "@/lib/instances";
-import { runAppHref } from "@/lib/lobby";
+import { runAppHref, runFacilitatorHref } from "@/lib/lobby";
 
 /** "March 2026" from an ISO timestamp, or null when unparseable. */
 function formatMonthYear(iso: string): string | null {
@@ -138,6 +140,35 @@ export function MyRunCard({ run }: { run: MyRun }) {
                                 : `Joined ${joined} · pick your tile to settle`}
                         </TypographyMuted>
                     )}
+                </div>
+            </div>
+        </RunCardFrame>
+    );
+}
+
+/**
+ * A card for a run the account facilitates (instance-scoped grant, #1032).
+ * Reuses {@link RunCardFrame} so freeze/ended recap behavior comes for free, but
+ * is otherwise visually distinct from {@link MyRunCard}: a `Shield` tile instead
+ * of the played-run `Zap` bolt, a "Facilitator" label instead of a joined-date,
+ * and a "Manage" CTA that links to the run's facilitator page rather than its
+ * play view.
+ */
+export function FacilitatedRunCard({ run }: { run: FacilitatedRun }) {
+    return (
+        <RunCardFrame
+            href={runFacilitatorHref(run.slug)}
+            cta="Manage"
+            slug={run.slug}
+            phase={derivePhase(run)}
+        >
+            <div className="flex flex-row items-center gap-4 min-w-0">
+                <div className="bg-primary/10 text-primary rounded-2xl p-3 shrink-0">
+                    <Shield className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                    <p className="text-lg font-semibold truncate">{run.name}</p>
+                    <TypographyMuted>Facilitator</TypographyMuted>
                 </div>
             </div>
         </RunCardFrame>
