@@ -621,3 +621,96 @@ def test_current_phase_broken_config_fails_open_to_active(configured: Path) -> N
     """
     _write_instance_json(configured, "{ not valid json")
     assert instance_config.current_phase(datetime(2026, 4, 1, tzinfo=timezone.utc)) == "active"
+
+
+# --- retire_fragment (teardown, T7) -----------------------------------------------------------
+
+
+def _write_recap(landing_dir: Path, slug: str, payload: dict | str) -> None:
+    recap_path = landing_dir / "recaps" / f"{slug}.json"
+    recap_path.parent.mkdir(parents=True, exist_ok=True)
+    recap_path.write_text(payload if isinstance(payload, str) else json.dumps(payload), encoding="utf-8")
+
+
+# The smallest payload that actually validates as a Recap — an empty run, minted and readable.
+# It has to be a real one: retire_fragment asks whether a *loadable* recap survived, not whether
+# a file is there, so a stub would be indistinguishable from the corruption case below.
+VALID_RECAP = {
+    "slug": SLUG,
+    "name": "Autumn 2025",
+    "starts_at": "2025-09-15T00:00:00Z",
+    "freeze_at": "2025-12-01T00:00:00Z",
+    "ended_at": None,
+    "player_count": 0,
+    "total_produced_co2": 0.0,
+    "total_captured_co2": 0.0,
+    "total_net_emissions": 0.0,
+    "rows": [],
+    "tiles": [],
+}
+
+
+def test_retire_fragment_deletes_when_no_recap(configured: Path) -> None:
+    """A run torn down before it ever froze leaves nothing to point at, so its fragment goes."""
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+    landing_dir = Path(configured).parent / "landing"
+
+    assert instance_config.retire_fragment(SLUG) is True
+
+    assert not (landing_dir / "instances" / f"{SLUG}.json").exists()
+    assert json.loads((landing_dir / "instances.json").read_text())["instances"] == []
+
+
+def test_retire_fragment_keeps_the_fragment_when_a_recap_exists(configured: Path) -> None:
+    """The headstone rule: the fragment is the *only* pointer the lobby finds a recap by, so a run
+    that minted one keeps its fragment through teardown — otherwise the recap survives on disk and
+    nothing links to it, defeating the reason it was minted.
+    """
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+    landing_dir = Path(configured).parent / "landing"
+    _write_recap(landing_dir, SLUG, VALID_RECAP)
+
+    assert instance_config.retire_fragment(SLUG) is False
+
+    assert (landing_dir / "instances" / f"{SLUG}.json").exists()
+    assert instance_config.load_fragment(SLUG) is not None
+    assert [entry["slug"] for entry in json.loads((landing_dir / "instances.json").read_text())["instances"]] == [SLUG]
+
+
+@pytest.mark.parametrize("payload", ["{ not valid json", '{"slug": "autumn-2025"}'], ids=["truncated", "wrong-schema"])
+def test_retire_fragment_treats_an_unloadable_recap_as_no_recap(configured: Path, payload: str) -> None:
+    """A recap the lobby cannot render must not hold the fragment open.
+
+    The guard is ``load_recap``, not bare file-existence: keeping the fragment for a truncated or
+    schema-invalid artifact would leave the card advertising "View recap" over a file that never
+    loads — and teardown is precisely when the ability to re-mint it is being destroyed, so the
+    question has to be whether a *usable* recap survived. (``teardown-instance.sh`` refuses to run
+    at all in this state, since the run is still recoverable then; this is the fail-safe beneath it.)
+    """
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+    landing_dir = Path(configured).parent / "landing"
+    _write_recap(landing_dir, SLUG, payload)
+
+    assert instance_config.retire_fragment(SLUG) is True
+    assert not (landing_dir / "instances" / f"{SLUG}.json").exists()
+
+
+def test_retire_fragment_leaves_sibling_runs_listed(configured: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Re-aggregation after a retire must drop only the retired run from the manifest."""
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+    monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "spring-2026")
+    instance_config.publish(InstanceConfig.model_validate({**PUBLIC_JSON, "name": "Spring 2026"}))
+
+    instance_config.retire_fragment(SLUG)
+
+    landing_dir = Path(configured).parent / "landing"
+    manifest = json.loads((landing_dir / "instances.json").read_text())
+    assert [entry["slug"] for entry in manifest["instances"]] == ["spring-2026"]
+
+
+def test_retire_fragment_is_idempotent(configured: Path) -> None:
+    """Teardown is re-runnable: retiring an already-retired run is a no-op, not an error."""
+    instance_config.publish(InstanceConfig.model_validate(PUBLIC_JSON))
+
+    assert instance_config.retire_fragment(SLUG) is True
+    assert instance_config.retire_fragment(SLUG) is True

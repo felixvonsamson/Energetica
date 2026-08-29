@@ -12,10 +12,11 @@ import time
 import pytest
 
 from energetica import create_app
+from energetica.accounts import Account
 from energetica.database import player as player_module
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
-from energetica.accounts import Account
+from energetica.globals import engine
 from energetica.schemas.browser_notifications import Subscription, SubscriptionKeys
 from energetica.schemas.notifications import ChatMessagePayload
 from energetica.utils.auth import generate_password_hash
@@ -24,6 +25,9 @@ from energetica.utils.map_helpers import confirm_location
 
 def _make_player() -> Player:
     create_app(rm_instance=True, skip_adding_handlers=True, env="dev")
+    # push_only() skips delivery entirely while serve_local is True (#701), so these tests would
+    # assert nothing. They used to pass only on an earlier test file leaving the flag False.
+    engine.serve_local = False
     user = Account(
         account_id=1, username="username", pwhash=generate_password_hash("password"), email=None, created_at=""
     )

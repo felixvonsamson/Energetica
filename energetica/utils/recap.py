@@ -6,8 +6,9 @@ out of ``instance_config`` itself so that leaf stays free of the game domain (th
 rule) — the publish/load *primitives* live there, the ``Player``-reading *orchestration* lives here.
 
 The hook fires from ``tick_execution.state_update`` on every freeze/ended tick, but
-:func:`mint_recap_if_needed` mints only once (guarded by file existence), so the frozen photograph is
-taken at the first freeze tick and never overwritten by a later restart. Freeze is read-only and the
+:func:`mint_recap_if_needed` mints only once (guarded by a *readable* recap on disk, not by bare file
+existence), so the frozen photograph is taken at the first freeze tick and never overwritten by a
+later restart — while a corrupt artifact still self-heals. Freeze is read-only and the
 sim is halted, so the state is final — mint-at-freeze *is* the final leaderboard.
 """
 

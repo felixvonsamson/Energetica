@@ -117,9 +117,18 @@ lobby.energetica-game.org
 ├── /api/auth/*    → ProxyPass → uvicorn (lobby)
 ├── /api/lobby/*   → ProxyPass → uvicorn (lobby)   (my-runs)
 ├── /logout        → ProxyPass → uvicorn (lobby)
+├── /instances.json → Alias → the shared landing dir  (the picker's manifest)
+├── /recaps/*.json → Alias → the shared landing dir  (published recaps)
 ├── /static/*      → Apache serves the lobby bundle
 └── /*             → FallbackResource → index.html  (SPA: /login, /signup, picker)
 ```
+
+Both aliases point at `/var/www/energetica-landing/`, which the instance backends write into —
+so the lobby always serves the live artifacts with no CORS and no second copy to keep fresh.
+Serving recaps here rather than from the instance's own vhost is what lets a recap outlive its
+run: the instance can be reaped, and torn down entirely, without taking its recap with it.
+`FallbackResource` is disabled under `/recaps/` so a run that has not frozen yet still 404s
+instead of being answered with `index.html` as a 200.
 
 ---
 
@@ -256,8 +265,9 @@ and the lobby shows them **zero runs with no error**, silently breaking the core
 - **`ends_at` + active/ended picker** (#809) — needs run end-of-life mechanics.
 - **Email / password reset** — lobby is the eventual home.
 - **A2 session isolation** (#813) — see Security.
-- **Membership cleanup on run teardown** — stale rows tolerated until `teardown-instance.sh`
-  exists.
+- **Membership cleanup on run teardown** — `teardown-instance.sh` leaves the rows behind. They
+  are inert: `resolve_my_runs` drops any membership whose fragment is gone. Purging them is a
+  chore, not a blocker.
 - **Cross-server identity** — accounts stay per-VPS (RFC).
 - **Per-instance `disable_signups` is obsolete** — its two jobs split into the server-wide
   signup toggle (`server.json`) and the `accounts.db` admin bootstrap. Remove it during

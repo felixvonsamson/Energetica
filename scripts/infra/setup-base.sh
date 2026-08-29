@@ -14,6 +14,7 @@ set -euo pipefail
 
 DEPLOY_USER="${DEPLOY_USER:-deploy}"
 AUTO_CONFIRM=false
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -168,6 +169,24 @@ systemctl reload apache2
 HOOK
 chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-apache.sh
 log_success "Apache reload-on-renewal hook installed"
+
+# --- Lifecycle reaper (the ended_at sweep, T7) ----------------------------------
+log_section "LIFECYCLE REAPER"
+# announced→active and active→freeze are self-driven from each instance's own clock, but a
+# process cannot cleanly stop itself, so freeze→ended is driven from outside: a 5-minute sweep
+# that stops + disables any instance whose ended_at has passed. Server-wide (it globs
+# /etc/energetica/*/instance.json), so provisioning a new instance needs no timer of its own.
+#
+# The script is COPIED to /usr/local/sbin rather than run from the checkout: this repo is never
+# cloned onto the server (Option A — code arrives by rsync into per-instance dirs), so there is
+# no stable in-repo path a root-run unit could point at.
+install -m 0755 "$SCRIPT_DIR/reap-instances.sh" /usr/local/sbin/energetica-reap-instances
+install -m 0644 "$SCRIPT_DIR/energetica-reaper.service" /etc/systemd/system/energetica-reaper.service
+install -m 0644 "$SCRIPT_DIR/energetica-reaper.timer" /etc/systemd/system/energetica-reaper.timer
+systemctl daemon-reload
+# Enable the TIMER, not the service — the service is the oneshot the timer triggers.
+systemctl enable --now energetica-reaper.timer >/dev/null
+log_success "energetica-reaper.timer enabled (sweeps every 5 min; 'systemctl list-timers energetica-*' to check)"
 
 # --- Firewall -------------------------------------------------------------------
 log_section "FIREWALL"

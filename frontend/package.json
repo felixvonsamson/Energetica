@@ -18,6 +18,8 @@
         "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.landing.json && tsc --noEmit --project tsconfig.lobby.json && tsc --noEmit --project tsconfig.sw.json",
         "typecheck:watch": "tsc --noEmit --watch",
         "guard:no-raw-html": "bun ../scripts/guard-no-raw-html.ts",
+        "guard:filenames": "bun ../scripts/guard-filenames.ts",
+        "guard:no-dummy-data": "bun ../scripts/guard-no-dummy-data.ts",
         "test": "vitest run",
         "test:watch": "vitest"
     },
