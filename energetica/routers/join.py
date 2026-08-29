@@ -4,7 +4,7 @@ Reachable by anyone holding a valid token — no ``get_facilitator``/``get_settl
 the unguessable token in the URL *is* the authorization. Resolves a token to this instance's name
 and open/closed state (``GET``, safe to call before the visitor is access-allowed or even signed
 in), and lets an already-signed-in visitor confirm joining (``POST``), which records the join in
-``accounts.db``'s ``instance_membership`` (#1030 follow-up, ADR-0006) — the same write
+``accounts.db``'s ``instance_membership`` (#1030 follow-up, ADR-0007) — the same write
 ``accounts.record_join`` the public-run picker join and the facilitator roster's add both use.
 Entry into the game itself still goes through the existing, unmodified entry gate (``/auth/me`` →
 ``resolve_entry_account`` / ``_enforce_instance_access`` in ``routers.auth``), which now reads

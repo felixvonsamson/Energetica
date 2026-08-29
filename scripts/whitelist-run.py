@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Grow (or trim) a private run's roster from the shell (#1030 follow-up, ADR-0006).
+"""Grow (or trim) a private run's roster from the shell (#1030 follow-up, ADR-0007).
 
 Replaces ``scripts/infra/whitelist-instance.sh``, which edited ``instance.json``'s
 ``allowed_usernames`` directly — the backend no longer reads that field. This is the same write

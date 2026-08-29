@@ -3,7 +3,7 @@
 Builds on #1019's plumbing (``get_facilitator``, ``instance_config``'s private-access write path
 for the join link/toggle) — these tests exercise it through a real HTTP request against
 ``/api/v1/facilitator/access``, the way the facilitator page (#1020) will call it. The roster
-itself (#1022) lives in ``accounts.db``'s ``instance_membership`` (#1030 follow-up, ADR-0006), not
+itself (#1022) lives in ``accounts.db``'s ``instance_membership`` (#1030 follow-up, ADR-0007), not
 ``instance.json`` — see ``_join`` below.
 """
 

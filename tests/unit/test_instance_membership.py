@@ -452,7 +452,7 @@ def test_settling_records_no_membership_when_slug_unset(monkeypatch: pytest.Monk
 # --- has_joined / remove_membership / get_run_roster (#1030 follow-up) ----------------------
 #
 # The private-run allowlist's replacement: instance.json's allowed_usernames no longer exists as
-# a live mechanism (ADR-0006) — these three are what the entry gate and the facilitator roster
+# a live mechanism (ADR-0007) — these three are what the entry gate and the facilitator roster
 # page read/write instead.
 
 

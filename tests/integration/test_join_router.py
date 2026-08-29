@@ -2,7 +2,7 @@
 
 The visitor-facing counterpart to #1020's facilitator page — reachable by anyone holding the
 token, not just the instance's admin. Confirming records the join in ``accounts.db``'s
-``instance_membership`` (``accounts.record_join``, #1030 follow-up, ADR-0006) the same way
+``instance_membership`` (``accounts.record_join``, #1030 follow-up, ADR-0007) the same way
 ``test_facilitator_router.py``'s roster-add does, built on ``get_or_create_join_token`` /
 ``set_join_open`` for the token/toggle themselves.
 """

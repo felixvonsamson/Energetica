@@ -35,7 +35,7 @@ def _enforce_instance_access(account: Account) -> None:
     ``instance.json`` (re-read fresh, no cache) decides *whether* this instance is gated at all
     — ``public`` or ``private``, and an unconfigured instance (no slug / no file) is treated as
     ``public``. *Who* may enter a private one is a separate, lobby-side fact: ``accounts.db``'s
-    ``instance_membership`` table (#1030 follow-up, ADR-0006) — ``instance.json`` no longer
+    ``instance_membership`` table (#1030 follow-up, ADR-0007) — ``instance.json`` no longer
     carries an allowlist to read. A present-but-broken config fails closed. On a successful,
     allowed read, the public-facing fragment is re-published if its fields have changed since
     this process last wrote them.

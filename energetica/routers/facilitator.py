@@ -4,7 +4,7 @@ Exposes two write paths over HTTP: #1019's run-level config (``instance_config``
 ``get_or_create_join_token`` / ``set_join_open``, for the join link and its open/closed toggle),
 and the roster itself, which lives in ``accounts.db``'s ``instance_membership`` table
 (``accounts.record_join`` / ``remove_membership`` / ``get_run_roster``, #1030 follow-up,
-ADR-0006) rather than ``instance.json``. Every route here is instance-wide, not tied to *which*
+ADR-0007) rather than ``instance.json``. Every route here is instance-wide, not tied to *which*
 facilitator is calling, so the auth gate is a router-level dependency rather than a per-route
 parameter each handler would otherwise ignore.
 """
@@ -72,7 +72,7 @@ def _require_private_slug() -> str:
     private" into the same ``GameError`` every facilitator route uses.
 
     The roster lives in ``accounts.db``'s ``instance_membership``, keyed by slug (#1030
-    follow-up, ADR-0006), not in ``instance.json`` any more — this only checks that file's
+    follow-up, ADR-0007), not in ``instance.json`` any more — this only checks that file's
     *policy*, the one thing that still decides whether a roster applies at all.
     """
     try:

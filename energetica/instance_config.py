@@ -10,7 +10,7 @@ policy, so admin edits take effect on the next login with no restart. A running 
 edit its own ``private`` access block in place — see the "Private-access mutation" section below.
 *Who* may access a private instance is no longer part of this file (#1030 follow-up): that's
 ``accounts.db``'s ``instance_membership`` table now (``accounts.has_joined`` /
-``accounts.record_join`` / ``accounts.remove_membership``, ADR-0006) — this module only owns
+``accounts.record_join`` / ``accounts.remove_membership``, ADR-0007) — this module only owns
 *whether* the instance is gated at all (``policy``) and the join-link settings (``join_token`` /
 ``join_open``), both properties of the run, not of any one account.
 
@@ -115,7 +115,7 @@ class PrivateAccess(BaseModel):
     policy: Literal["private"]
     # Who may access a private run lives in `accounts.db`'s `instance_membership` table
     # (`accounts.has_joined` / `record_join` / `remove_membership`), the same substrate the
-    # public-run two-click join and facilitator grants already use — see ADR-0006. No
+    # public-run two-click join and facilitator grants already use — see ADR-0007. No
     # `allowed_usernames` field lives here: at the time of that migration there was no deployed
     # private instance with data to preserve, so the field was removed outright rather than kept
     # around deprecated (`extra: forbid` above means an old file that still has the key now fails

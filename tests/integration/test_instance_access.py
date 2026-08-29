@@ -3,7 +3,7 @@
 Post-cutover the access policy is enforced when the SSO cookie is validated on entry, not at a
 login POST (which no longer exists). A public (or unconfigured) instance admits any server-wide
 account; a private instance admits only accounts that have joined it (``accounts.db``'s
-``instance_membership``, #1030 follow-up, ADR-0006 — ``instance.json`` carries no allowlist any
+``instance_membership``, #1030 follow-up, ADR-0007 — ``instance.json`` carries no allowlist any
 more). The policy file is read fresh on every entry, so a lockdown takes effect even for an
 account that has already settled (#817, ADR-0003). There is nothing to auto-provision any more
 (ADR-0004): entry never creates a ``Player`` — only settling does.

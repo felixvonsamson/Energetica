@@ -262,7 +262,7 @@ Both axes are declared per-instance in a single file the instance backend owns:
 ```
 
 *(`access.allowed_usernames` shown in earlier drafts of this file is deprecated — who may access
-a private instance now lives in `accounts.db`, not this file. See ADR-0006 and § Why outside the
+a private instance now lives in `accounts.db`, not this file. See ADR-0007 and § Why outside the
 vhost DocumentRoot below.)*
 
 `slug` is **not** stored in the file — it is the directory name under `/etc/energetica/`, mirroring the canonical slug from [Instance discovery](#instance-discovery). Subdomain is **not** stored either — the landing composes `${slug}.${apex}` at render time, where `apex` is a Vite build-time constant.
@@ -273,7 +273,7 @@ The file is re-read on every login attempt. There is no in-memory cache. Admin e
 
 ### Why outside the vhost DocumentRoot
 
-`instance.json` used to carry `allowed_usernames` for private instances; that allowlist now lives in `accounts.db` instead (ADR-0006), but the file still carries the run's join-link token (`join_token`) — an unguessable secret with the same exposure profile. The vhost DocumentRoot is `/var/www/energetica-{slug}/`, and Apache has no catch-all deny rule for unlisted files — placing `instance.json` there would let a plain `GET https://{slug}.{apex}/instance.json` return that token (or, historically, the allowlist) to anyone who guesses the URL. Moving the file to `/etc/energetica/{slug}/instance.json` makes that class of exposure structurally impossible: the file is not under any DocumentRoot, so no vhost configuration error can leak it.
+`instance.json` used to carry `allowed_usernames` for private instances; that allowlist now lives in `accounts.db` instead (ADR-0007), but the file still carries the run's join-link token (`join_token`) — an unguessable secret with the same exposure profile. The vhost DocumentRoot is `/var/www/energetica-{slug}/`, and Apache has no catch-all deny rule for unlisted files — placing `instance.json` there would let a plain `GET https://{slug}.{apex}/instance.json` return that token (or, historically, the allowlist) to anyone who guesses the URL. Moving the file to `/etc/energetica/{slug}/instance.json` makes that class of exposure structurally impossible: the file is not under any DocumentRoot, so no vhost configuration error can leak it.
 
 ### Publication to the landing
 

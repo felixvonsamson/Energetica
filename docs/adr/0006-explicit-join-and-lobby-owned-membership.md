@@ -42,7 +42,7 @@ because nothing writes a row on a bare, unclicked visit.
 *conceptually* the same deliberate "join" act — the reasoning above is why they belong on this
 same table — but as of this PR they still write to `instance.json`'s `allowed_usernames`, the
 pre-existing mechanism, unchanged. Wiring those two paths onto `accounts.record_join` too is the
-explicit follow-up in Consequences below (done in ADR-0006/#1031) — until that lands, a joined
+explicit follow-up in Consequences below (done in ADR-0007/#1031) — until that lands, a joined
 row exists only for a public-run join or an actual settlement, never yet for a private-run
 invite.
 
@@ -86,6 +86,6 @@ run, so "joined" means one consistent thing everywhere: the explicit click, neve
   settling).
 - The private-run allowlist (`instance.json`'s `allowed_usernames`) is untouched by this
   decision — moving it onto `instance_membership` alongside the public-run join model it now
-  shares a schema with is a follow-up, not part of this change. **Done in ADR-0006.**
+  shares a schema with is a follow-up, not part of this change. **Done in ADR-0007.**
 - `docs/architecture/lobby.md`'s `instance_membership` schema and flows, and
   `CONTEXT.md`'s "Joined a run" / membership-ambiguity entries, are updated alongside this ADR.
