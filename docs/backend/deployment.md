@@ -19,7 +19,7 @@ sudo bash scripts/infra/setup-base.sh --deploy-user deploy   # Apache, Python, c
                                                              # shared secret + server.json
 sudo bash scripts/infra/setup-landing.sh --domain energetica-game.org   # apex vhost + TLS
 sudo bash scripts/infra/setup-lobby.sh --domain energetica-game.org     # lobby vhost+TLS+unit
-sudo bash scripts/infra/setup-instance.sh autumn-2025 8002 --domain energetica-game.org  # vhost+TLS+unit
+sudo bash scripts/infra/setup-instance.sh autumn-2025 8004 --domain energetica-game.org  # vhost+TLS+unit
 ```
 
 `setup-instance.sh` provisions the box (directory, venv, `/etc/energetica/{slug}/instance.json`,
@@ -27,7 +27,7 @@ vhost+TLS, enabled-but-unstarted unit) but ships **no** code and does **not** st
 service. The first deploy is what ships the backend and starts it. `setup-lobby.sh` works
 the same way for the lobby service.
 
-Every service needs its own uvicorn port: the lobby defaults to **8001** (`--port`
+Every service needs its own uvicorn port: the lobby defaults to **8002** (`--port`
 overrides), so give each instance a different one. `setup-lobby.sh` refuses a port
 already claimed by another `energetica-*` unit.
 
