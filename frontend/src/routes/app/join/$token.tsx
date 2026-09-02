@@ -122,6 +122,16 @@ function JoinCard() {
         );
     }
 
+    // Show show facilitators and players who have already joined the same thing
+    // irrespective of if the join link is still active or not
+    if (data.viewer?.membership === "facilitator") {
+        return <AlreadyFacilitatorCard instanceName={data.instance_name} />;
+    }
+
+    if (data.viewer?.membership === "player") {
+        return <AlreadyMemberCard instanceName={data.instance_name} />;
+    }
+
     if (!data.join_open) {
         return (
             <InfoBanner variant="warning">
@@ -135,14 +145,6 @@ function JoinCard() {
         return (
             <LogInToJoinCard instanceName={data.instance_name} token={token} />
         );
-    }
-
-    if (data.viewer.membership === "facilitator") {
-        return <AlreadyFacilitatorCard instanceName={data.instance_name} />;
-    }
-
-    if (data.viewer.membership === "player") {
-        return <AlreadyMemberCard instanceName={data.instance_name} />;
     }
 
     return <ConfirmJoinCard instanceName={data.instance_name} token={token} />;
