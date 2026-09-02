@@ -2855,8 +2855,9 @@ export interface components {
         HydroFacilityType: "watermill" | "small_water_dam" | "large_water_dam";
         /**
          * JoinLinkOut
-         * @description What a join link resolves to — enough for the confirmation screen, and nothing that
-         *     requires the visitor to already be admitted onto this instance.
+         * @description What a join link resolves to.
+         *
+         *     Contains all the information needed for the confirmation screen.
          */
         JoinLinkOut: {
             /**
@@ -2869,11 +2870,8 @@ export interface components {
              * @description Whether the join link currently admits new accounts.
              */
             join_open: boolean;
-            /**
-             * Viewer Username
-             * @description The visitor's username if they already have a valid SSO session, else null — null means the frontend must send them through login/signup before showing the confirmation screen.
-             */
-            viewer_username: string | null;
+            /** @description The visitor's identity and membership state, or `null` if they don't have a valid SSO session yet — `null` means they must first log in/sign up before joining. */
+            viewer: components["schemas"]["Viewer"] | null;
         };
         /** LeaderboardsOut */
         LeaderboardsOut: {
@@ -4444,6 +4442,19 @@ export interface components {
         VapidPublicKey: {
             /** Public Key */
             public_key: string;
+        };
+        /**
+         * Viewer
+         * @description The signed-in visitor's identity and standing relative to this instance.
+         */
+        Viewer: {
+            /** Username */
+            username: string;
+            /**
+             * Membership
+             * @description 'player' if the visitor is already a member, 'facilitator' if they hold a facilitator/moderator grant covering this instance (and so can't also join it as a player, per ADR-0004), or `null` if they haven't joined yet.
+             */
+            membership: ("player" | "facilitator") | null;
         };
         /** WeatherOut */
         WeatherOut: {
