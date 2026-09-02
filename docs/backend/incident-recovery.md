@@ -100,3 +100,16 @@ Persistence runs at two cadences (see `utils/tick_execution.py`):
 - **`save_checkpoint()` — every 6 hours.** Writes `checkpoints/last_checkpoint.tar.gz`, a tarball of the entire `instance/` directory (including a fresh `engine_data.pck` and all data files) at a consistent point in time. This is the unit of disaster recovery.
 
 Check `ls -la checkpoints/` to see the current checkpoint's age. Because the checkpoint is only every 6 h, recovery relies on replaying the actions log forward from the checkpoint tick — which is why the log must never be truncated below a tick you might need to restore from (see `docs/adr/0001-action-log-stays-complete-fix-oom-on-read.md`).
+
+## Pausing an instance without simulating downtime
+
+There's no built-in pause/resume: `announced → active → freeze → ended` is one-directional, and `freeze` mints the recap rather than allowing a resumable pause. If an instance needs to stop for a real-world break (e.g. a holiday) and resume afterwards without simulating that gap as elapsed game time, shift the persisted epoch forward by the downtime instead (issue #1024):
+
+```bash
+cd /var/www/energetica-{slug}
+sudo systemctl stop energetica-{slug}
+sudo -u energetica .venv/bin/python scripts/shift_start_date.py --pickle instance/engine_data.pck --days <N>
+sudo systemctl start energetica-{slug}
+```
+
+`<N>` is the real downtime in whole days (or any other whole multiple of the instance's `clock_time` — every supported `clock_time` divides a day evenly, so whole days are always safe). The script refuses to run against an instance it can still see running, backs up the pickle before writing, and prints the old/new `start_date`; pass `--dry-run` first to check the math. Editing `start_date` in the instance's config file does **not** work here — it's read only by `init_instance()`, never by `engine.load()`, which is the path a restart of an already-running instance always takes.
