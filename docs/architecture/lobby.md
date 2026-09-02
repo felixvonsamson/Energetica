@@ -118,6 +118,7 @@ lobby.energetica-game.org
 ├── /api/auth/*    → ProxyPass → uvicorn (lobby)
 ├── /api/lobby/*   → ProxyPass → uvicorn (lobby)   (my-runs)
 ├── /logout        → ProxyPass → uvicorn (lobby)
+├── /healthz       → ProxyPass → uvicorn (lobby)   (version/status; see docs/backend/deployment.md)
 ├── /instances.json → Alias → the shared landing dir  (the picker's manifest)
 ├── /recaps/*.json → Alias → the shared landing dir  (published recaps)
 ├── /static/*      → Apache serves the lobby bundle

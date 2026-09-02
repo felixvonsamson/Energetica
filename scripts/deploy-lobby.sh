@@ -169,7 +169,9 @@ fi
 log_success "Service is running"
 
 # --- 8. Health check ------------------------------------------------------------------
-# The lobby exposes no /healthz, so four probes cover the chain:
+# /healthz exists (and is now proxied — see apache-lobby.conf) but only reports the
+# already-stamped commit, not whether the just-deployed code is actually serving
+# correctly, so four probes cover that chain instead:
 #   - SPA shell 200 → Apache serves the bundle;
 #   - unauthenticated my-runs 401 → vhost → proxy → uvicorn wiring is up;
 #   - login with a nonexistent user → 401 USER_NOT_FOUND proves the accounts.db READ
