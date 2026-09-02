@@ -163,7 +163,11 @@ fi
 
 # --- 3. Admin-owned instance.json ----------------------------------------------
 log_section "INSTANCE CONFIG"
-install -d -o root -g energetica -m 0750 "$CONFIG_DIR"
+# 0770: the running service (group energetica) needs to *write* here too — a private
+# instance's facilitator surface persists join tokens/allowlist changes back to
+# instance.json via energetica/instance_config.py's atomic write (mkstemp + rename into
+# this directory), not just read it. See #1019.
+install -d -o root -g energetica -m 0770 "$CONFIG_DIR"
 if [ -f "$CONFIG_DIR/instance.json" ]; then
     log_success "$CONFIG_DIR/instance.json already exists — leaving admin's copy untouched"
 else
@@ -174,8 +178,9 @@ else
         -e "s/@ENDED_AT@/$ENDED_AT_JSON/g" \
         "$SCRIPT_DIR/instance.json.tmpl" > "$CONFIG_DIR/instance.json"
     chown root:energetica "$CONFIG_DIR/instance.json"
-    # 0640: service (group) reads; only root (admin, via sudo) edits. Edit later for a
-    # private/unadvertised instance — changes take effect on the instance's next login.
+    # 0640: service (group) reads; only root (admin, via sudo) edits by hand. The service
+    # itself writes back through instance_config.py's atomic write path (private-access
+    # mutations only), which re-asserts 0640 on every write — see _atomic_write_json.
     chmod 0640 "$CONFIG_DIR/instance.json"
     log_success "Rendered $CONFIG_DIR/instance.json (public, advertised=$ADVERTISED)"
 fi
