@@ -117,7 +117,7 @@ def test_get_with_a_valid_token_reports_the_instance_name_and_open_state(instanc
     body = response.json()
     assert body["instance_name"] == "ETHZ Spring 2026"
     assert body["join_open"] is True
-    assert body["viewer_username"] is None
+    assert body["viewer"] is None
 
 
 def test_get_reports_join_open_false(instance_json: Path) -> None:
@@ -131,7 +131,7 @@ def test_get_reports_join_open_false(instance_json: Path) -> None:
     assert response.json()["join_open"] is False
 
 
-def test_get_reports_the_viewer_username_for_a_signed_in_visitor_with_no_player(instance_json: Path) -> None:
+def test_get_reports_the_viewer_for_a_signed_in_visitor_with_no_player(instance_json: Path) -> None:
     """The crux of #1021: a visitor with a valid SSO session but no Player yet (not
     access-allowed, so they've never settled) must still be identified here.
     """
@@ -144,10 +144,38 @@ def test_get_reports_the_viewer_username_for_a_signed_in_visitor_with_no_player(
     response = client.get(_join_url(TOKEN))
 
     assert response.status_code == 200
-    assert response.json()["viewer_username"] == "carol"
+    assert response.json()["viewer"] == {"username": "carol", "membership": None}
     # Merely resolving the link must not itself grant or create anything.
     assert next(Player.filter_by(account_id=account_id), None) is None
     assert "carol" not in _joined_usernames()
+
+
+def test_get_reports_player_membership_for_a_visitor_who_already_joined(instance_json: Path) -> None:
+    _write(instance_json, PRIVATE_JSON)
+    client = _client()
+    account_id = make_account("carol", "pw")
+    accounts.record_join(account_id=account_id, slug=SLUG, joined_at="2026-01-01T00:00:00Z")
+    authenticate(client, account_id)
+
+    response = client.get(_join_url(TOKEN))
+
+    assert response.status_code == 200
+    assert response.json()["viewer"] == {"username": "carol", "membership": "player"}
+
+
+def test_get_reports_facilitator_membership_for_a_visitor_who_administers_this_run(
+    instance_json: Path,
+) -> None:
+    _write(instance_json, PRIVATE_JSON)
+    client = _client()
+    account_id = make_account("carol", "pw")
+    accounts.grant_facilitator(account_id=account_id, slug=SLUG)
+    authenticate(client, account_id)
+
+    response = client.get(_join_url(TOKEN))
+
+    assert response.status_code == 200
+    assert response.json()["viewer"] == {"username": "carol", "membership": "facilitator"}
 
 
 # --- POST: confirming -----------------------------------------------------------------------
