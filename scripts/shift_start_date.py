@@ -159,6 +159,13 @@ def main() -> int:
         )
         return 1
 
+    # This script lives in scripts/, not the repo root, so the interpreter's default sys.path
+    # (the script's own directory) never includes the repo root — `energetica` isn't installed
+    # into the venv as a package. Nothing here imports it directly, but the pickle's
+    # `db_model_instances` entry holds real `energetica.database.*` objects, so pickle.load()
+    # below needs the package importable to reconstruct them.
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+
     print(f"Loading pickle from {args.pickle}")
     with args.pickle.open("rb") as f:
         engine_state = pickle.load(f)
