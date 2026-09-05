@@ -6,11 +6,18 @@ set -euo pipefail
 #
 #   sudo bash scripts/infra/setup-instance.sh <instance> <port> --domain <apex-domain> \
 #        [--name "<display name>"] [--no-advertise] [--starts-at <ISO-8601-UTC>] \
-#        [--freeze-at <ISO-8601-UTC>] [--ended-at <ISO-8601-UTC>] [--yes]
+#        [--freeze-at <ISO-8601-UTC>] [--ended-at <ISO-8601-UTC>] \
+#        [--clock-time <seconds>] [--in-game-seconds-per-tick <seconds>] [--yes]
 #
 # --starts-at/--freeze-at/--ended-at are the lifecycle boundaries (announced→active→freeze→ended).
 # --freeze-at and --ended-at are optional (omit → null → an open-ended run); when given they must
 # run forward: starts_at ≤ freeze_at ≤ ended_at (the backend rejects a config that doesn't).
+#
+# --clock-time / --in-game-seconds-per-tick set the unit's ExecStart flags of the same name
+# (main.py --clock_time / --in_game_seconds_per_tick). They are baked into the engine at
+# init_instance() on the instance's very first tick and read from nowhere else afterwards, so
+# changing them later means tearing down and recreating the instance (see teardown-instance.sh).
+# Defaults here match main.py's argparse defaults, so omitting them reproduces today's behavior.
 #
 # Creates the instance dir + venv, the admin-owned /etc/energetica/{instance}/instance.json,
 # the Apache vhost + TLS, and the energetica-{instance}.service unit (enabled, NOT started).
@@ -28,6 +35,12 @@ ADVERTISED="true"
 STARTS_AT=""
 FREEZE_AT=""
 ENDED_AT=""
+# Must match main.py's argparse defaults/choices exactly — this is a second entry point to the
+# same flags, and a drift here would silently provision instances main.py itself would reject.
+CLOCK_TIME=30
+IN_GAME_SECONDS_PER_TICK=240
+CLOCK_TIME_CHOICES="60 30 20 15 12 10 6 5 4 3 2 1"
+TICK_CHOICES="3600 1800 1200 900 600 540 480 420 360 300 240 180 120 60 30"
 AUTO_CONFIRM=false
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -41,6 +54,8 @@ while [[ $# -gt 0 ]]; do
         --starts-at) STARTS_AT="$2"; shift 2 ;;
         --freeze-at) FREEZE_AT="$2"; shift 2 ;;
         --ended-at) ENDED_AT="$2"; shift 2 ;;
+        --clock-time) CLOCK_TIME="$2"; shift 2 ;;
+        --in-game-seconds-per-tick) IN_GAME_SECONDS_PER_TICK="$2"; shift 2 ;;
         --yes) AUTO_CONFIRM=true; shift ;;
         -*) echo "Unknown option: $1"; exit 1 ;;
         *) POSITIONAL+=("$1"); shift ;;
@@ -80,6 +95,14 @@ if [ "$INSTANCE" = "lobby" ]; then
 fi
 if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1024 ] || [ "$PORT" -gt 65535 ]; then
     log_error "Port must be an integer 1024-65535: '$PORT'"
+    exit 1
+fi
+if [[ " $CLOCK_TIME_CHOICES " != *" $CLOCK_TIME "* ]]; then
+    log_error "--clock-time must be one of: $CLOCK_TIME_CHOICES (got '$CLOCK_TIME')"
+    exit 1
+fi
+if [[ " $TICK_CHOICES " != *" $IN_GAME_SECONDS_PER_TICK "* ]]; then
+    log_error "--in-game-seconds-per-tick must be one of: $TICK_CHOICES (got '$IN_GAME_SECONDS_PER_TICK')"
     exit 1
 fi
 getent group energetica >/dev/null || { log_error "group 'energetica' missing — run setup-base.sh first"; exit 1; }
@@ -126,6 +149,8 @@ echo "  advertised: $ADVERTISED"
 echo "  starts_at:  $STARTS_AT"
 echo "  freeze_at:  ${FREEZE_AT:-<null, open-ended>}"
 echo "  ended_at:   ${ENDED_AT:-<null, open-ended>}"
+echo "  clock_time: ${CLOCK_TIME}s"
+echo "  tick:       ${IN_GAME_SECONDS_PER_TICK} in-game seconds"
 if [ "$AUTO_CONFIRM" = false ]; then
     read -r -p "DNS for $FQDN points here? Continue? (y/n) " -n 1 -r; echo
     [[ $REPLY =~ ^[Yy]$ ]] || { echo "Cancelled."; exit 0; }
@@ -222,6 +247,8 @@ log_success "Vhost active: https://$FQDN"
 log_section "SYSTEMD UNIT"
 sed -e "s/@INSTANCE@/$INSTANCE/g" \
     -e "s/@PORT@/$PORT/g" \
+    -e "s/@CLOCK_TIME@/$CLOCK_TIME/g" \
+    -e "s/@IN_GAME_SECONDS_PER_TICK@/$IN_GAME_SECONDS_PER_TICK/g" \
     "$SCRIPT_DIR/energetica.service" > "$UNIT"
 systemctl daemon-reload
 systemctl enable "energetica-$INSTANCE" >/dev/null

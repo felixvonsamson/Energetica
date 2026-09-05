@@ -1,7 +1,8 @@
 # systemd unit template for a single game instance.
 #
 # Rendered by scripts/infra/setup-instance.sh into
-# /etc/systemd/system/energetica-@INSTANCE@.service, substituting @INSTANCE@ and @PORT@.
+# /etc/systemd/system/energetica-@INSTANCE@.service, substituting @INSTANCE@, @PORT@,
+# @CLOCK_TIME@ and @IN_GAME_SECONDS_PER_TICK@.
 #
 # The Environment= lines below are load-bearing — they are the contract between the
 # deployment and energetica/instance_config.py + energetica/accounts/db.py:
@@ -29,7 +30,7 @@ Environment=ENERGETICA_INSTANCE_CONFIG_DIR=/etc/energetica
 Environment=ENERGETICA_LANDING_DIR=/var/www/energetica-landing
 Environment=ENERGETICA_ACCOUNTS_DB_PATH=/var/lib/energetica/accounts.db
 
-ExecStart=/var/www/energetica-@INSTANCE@/.venv/bin/python main.py --env prod --port @PORT@ --no-reload --fastapi-log-level warning
+ExecStart=/var/www/energetica-@INSTANCE@/.venv/bin/python main.py --env prod --port @PORT@ --clock_time @CLOCK_TIME@ --in_game_seconds_per_tick @IN_GAME_SECONDS_PER_TICK@ --no-reload --fastapi-log-level warning
 Restart=always
 RestartSec=10
 
