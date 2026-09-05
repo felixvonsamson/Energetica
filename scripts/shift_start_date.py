@@ -9,11 +9,15 @@ stopped and restarted after a break (holiday, maintenance window, ...) with noth
 it sees the full real-world gap since ``start_date`` and rapid-fires every missed tick to catch
 up — i.e. it simulates the whole break.
 
-This script shifts the persisted ``start_date`` forward (or back) by a whole number of days, so
-the instance resumes as if no time had passed — no catch-up burst. Shifting by a whole day (or
-any other multiple of the instance's ``clock_time``) keeps tick alignment intact — in particular
-the daily-quiz trigger (``utils/tick_execution.py``, ``% 86400 == 9*3600``), which depends on
-``start_date`` landing on the same second-of-day it did before the shift.
+This script shifts the persisted ``start_date`` forward (or back), so the instance resumes as if
+no time had passed — no catch-up burst. The shift can be given as a whole number of days
+(``--days``) or as a whole number of ticks (``--ticks``, each ``clock_time`` seconds long); either
+way, it must be a whole multiple of the instance's ``clock_time`` to keep tick alignment intact —
+in particular the daily-quiz trigger (``utils/tick_execution.py``, ``% 86400 == 9*3600``), which
+depends on ``start_date`` landing on the same second-of-day it did before the shift. A ``--days``
+shift always satisfies that for every ``clock_time`` game_engine.py actually allows (they all
+divide 86400 evenly); ``--ticks`` satisfies it by construction, and additionally lets the shift
+match a real-world gap exactly instead of rounding to a whole day.
 
 Only affects tick catch-up pacing, nothing else — see issue #1024 for the full trace of every
 ``total_t``/wall-clock consumer. All gameplay state is keyed off simulated ticks, not
@@ -31,10 +35,12 @@ override.
 
 Usage:
     python scripts/shift_start_date.py --pickle instance/engine_data.pck --days <N> [--dry-run]
+    python scripts/shift_start_date.py --pickle instance/engine_data.pck --ticks <N> [--dry-run]
 
-    N is the number of whole days to shift start_date forward; pass a negative number to shift
-    it back. A backup of the pickle (``<pickle>.bak-<timestamp>``) is written before overwriting
-    it, unless --no-backup is passed.
+    Pass exactly one of --days or --ticks: N is the number of whole days, or of clock_time-second
+    ticks, to shift start_date forward; pass a negative number to shift it back. A backup of the
+    pickle (``<pickle>.bak-<timestamp>``) is written before overwriting it, unless --no-backup is
+    passed.
 """
 
 from __future__ import annotations
@@ -78,23 +84,35 @@ def find_running_instance_pid(working_dir: Path, *, proc_root: Path = Path("/pro
     return None
 
 
-def shift_start_date(engine_state: dict[str, Any], days: int) -> tuple[datetime, datetime]:
-    """Shift ``engine_state["start_date"]`` by ``days`` whole days, in place.
+def shift_start_date(
+    engine_state: dict[str, Any], *, days: int | None = None, ticks: int | None = None
+) -> tuple[datetime, datetime]:
+    """Shift ``engine_state["start_date"]`` by a whole number of days or ticks, in place.
 
-    Returns (old_start_date, new_start_date). Raises ValueError if ``days`` is zero, or if the
-    resulting shift isn't a whole multiple of this instance's clock_time — that would desync the
-    daily-quiz trigger's tick alignment (see module docstring).
+    Exactly one of ``days`` or ``ticks`` must be given (a tick is ``clock_time`` seconds).
+    Returns (old_start_date, new_start_date). Raises ValueError if the shift amount is zero, if
+    neither or both of ``days``/``ticks`` were given, or if the resulting shift isn't a whole
+    multiple of this instance's clock_time — that would desync the daily-quiz trigger's tick
+    alignment (see module docstring). A ``ticks`` shift can't fail that last check — it's already
+    expressed in units of clock_time.
     """
-    if days == 0:
-        raise ValueError("--days must be nonzero")
+    if (days is None) == (ticks is None):
+        raise ValueError("specify exactly one of days or ticks")
     clock_time = engine_state["clock_time"]
-    shift = timedelta(days=days)
-    shift_seconds = shift.total_seconds()
-    if shift_seconds % clock_time != 0:
-        raise ValueError(
-            f"a {days}-day shift ({shift_seconds:.0f}s) is not a whole multiple of this "
-            f"instance's clock_time ({clock_time}s) — would desync tick alignment"
-        )
+    if days is not None:
+        if days == 0:
+            raise ValueError("--days must be nonzero")
+        shift = timedelta(days=days)
+        shift_seconds = shift.total_seconds()
+        if shift_seconds % clock_time != 0:
+            raise ValueError(
+                f"a {days}-day shift ({shift_seconds:.0f}s) is not a whole multiple of this "
+                f"instance's clock_time ({clock_time}s) — would desync tick alignment"
+            )
+    else:
+        if ticks == 0:
+            raise ValueError("--ticks must be nonzero")
+        shift = timedelta(seconds=ticks * clock_time)
     old_start_date = engine_state["start_date"]
     new_start_date = old_start_date + shift
     engine_state["start_date"] = new_start_date
@@ -104,8 +122,15 @@ def shift_start_date(engine_state: dict[str, Any], days: int) -> tuple[datetime,
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--pickle", required=True, type=Path, help="Path to engine_data.pck")
-    parser.add_argument(
-        "--days", required=True, type=int, help="Whole days to shift start_date forward (negative to shift back)."
+    shift_group = parser.add_mutually_exclusive_group(required=True)
+    shift_group.add_argument(
+        "--days", type=int, help="Whole days to shift start_date forward (negative to shift back)."
+    )
+    shift_group.add_argument(
+        "--ticks",
+        type=int,
+        help="Whole ticks (clock_time seconds each) to shift start_date forward (negative to shift "
+        "back). Use this instead of --days to match a real-world gap exactly.",
     )
     parser.add_argument("--dry-run", action="store_true", help="Report what would change without writing.")
     parser.add_argument(
@@ -139,12 +164,13 @@ def main() -> int:
         engine_state = pickle.load(f)
 
     try:
-        old_start_date, new_start_date = shift_start_date(engine_state, args.days)
+        old_start_date, new_start_date = shift_start_date(engine_state, days=args.days, ticks=args.ticks)
     except ValueError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
 
-    print(f"start_date: {old_start_date.isoformat()} -> {new_start_date.isoformat()} ({args.days:+d} day(s))")
+    amount = f"{args.days:+d} day(s)" if args.days is not None else f"{args.ticks:+d} tick(s)"
+    print(f"start_date: {old_start_date.isoformat()} -> {new_start_date.isoformat()} ({amount})")
 
     if args.dry_run:
         print("DRY RUN: no changes written.")

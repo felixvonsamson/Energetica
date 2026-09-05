@@ -39,7 +39,7 @@ def test_shift_start_date_moves_it_forward_by_whole_days() -> None:
     module = _load_script()
     engine_state = _engine_state(start_date=datetime(2026, 1, 1, tzinfo=timezone.utc))
 
-    old, new = module.shift_start_date(engine_state, 14)
+    old, new = module.shift_start_date(engine_state, days=14)
 
     assert old == datetime(2026, 1, 1, tzinfo=timezone.utc)
     assert new == datetime(2026, 1, 15, tzinfo=timezone.utc)
@@ -50,19 +50,19 @@ def test_shift_start_date_accepts_negative_days() -> None:
     module = _load_script()
     engine_state = _engine_state(start_date=datetime(2026, 1, 15, tzinfo=timezone.utc))
 
-    old, new = module.shift_start_date(engine_state, -14)
+    old, new = module.shift_start_date(engine_state, days=-14)
 
     assert old == datetime(2026, 1, 15, tzinfo=timezone.utc)
     assert new == datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
-def test_shift_start_date_rejects_a_zero_shift() -> None:
+def test_shift_start_date_rejects_a_zero_day_shift() -> None:
     module = _load_script()
     engine_state = _engine_state()
     original_start_date = engine_state["start_date"]
 
     with pytest.raises(ValueError, match="nonzero"):
-        module.shift_start_date(engine_state, 0)
+        module.shift_start_date(engine_state, days=0)
 
     assert engine_state["start_date"] == original_start_date  # untouched on rejection
 
@@ -75,7 +75,7 @@ def test_shift_start_date_rejects_a_shift_not_aligned_to_clock_time() -> None:
     engine_state = _engine_state(clock_time=7)
 
     with pytest.raises(ValueError, match="clock_time"):
-        module.shift_start_date(engine_state, 1)
+        module.shift_start_date(engine_state, days=1)
 
 
 @pytest.mark.parametrize("clock_time", [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1])
@@ -86,7 +86,68 @@ def test_shift_start_date_accepts_every_supported_clock_time(clock_time: int) ->
     module = _load_script()
     engine_state = _engine_state(clock_time=clock_time)
 
-    module.shift_start_date(engine_state, 3)  # must not raise
+    module.shift_start_date(engine_state, days=3)  # must not raise
+
+
+def test_shift_start_date_moves_it_forward_by_whole_ticks() -> None:
+    module = _load_script()
+    # A 1-day-10h15m real-world gap at clock_time=30 is exactly 4110 ticks — no whole day rounds
+    # to that, which is the whole point of offering --ticks.
+    engine_state = _engine_state(clock_time=30, start_date=datetime(2026, 1, 1, 8, 15, tzinfo=timezone.utc))
+
+    old, new = module.shift_start_date(engine_state, ticks=4110)
+
+    assert old == datetime(2026, 1, 1, 8, 15, tzinfo=timezone.utc)
+    assert new == datetime(2026, 1, 2, 18, 30, tzinfo=timezone.utc)
+    assert engine_state["start_date"] == new
+
+
+def test_shift_start_date_accepts_negative_ticks() -> None:
+    module = _load_script()
+    engine_state = _engine_state(clock_time=30, start_date=datetime(2026, 1, 2, 18, 30, tzinfo=timezone.utc))
+
+    old, new = module.shift_start_date(engine_state, ticks=-4110)
+
+    assert old == datetime(2026, 1, 2, 18, 30, tzinfo=timezone.utc)
+    assert new == datetime(2026, 1, 1, 8, 15, tzinfo=timezone.utc)
+
+
+def test_shift_start_date_rejects_a_zero_tick_shift() -> None:
+    module = _load_script()
+    engine_state = _engine_state()
+    original_start_date = engine_state["start_date"]
+
+    with pytest.raises(ValueError, match="nonzero"):
+        module.shift_start_date(engine_state, ticks=0)
+
+    assert engine_state["start_date"] == original_start_date  # untouched on rejection
+
+
+@pytest.mark.parametrize("clock_time", [7, 60, 30, 1])
+def test_shift_start_date_accepts_any_clock_time_for_a_tick_shift(clock_time: int) -> None:
+    """A ticks shift is expressed in units of clock_time already, so it can never fail the
+    alignment check that a days shift can — including for a clock_time --days would reject.
+    """
+    module = _load_script()
+    engine_state = _engine_state(clock_time=clock_time)
+
+    module.shift_start_date(engine_state, ticks=3)  # must not raise
+
+
+def test_shift_start_date_rejects_neither_days_nor_ticks() -> None:
+    module = _load_script()
+    engine_state = _engine_state()
+
+    with pytest.raises(ValueError, match="exactly one"):
+        module.shift_start_date(engine_state)
+
+
+def test_shift_start_date_rejects_both_days_and_ticks() -> None:
+    module = _load_script()
+    engine_state = _engine_state()
+
+    with pytest.raises(ValueError, match="exactly one"):
+        module.shift_start_date(engine_state, days=1, ticks=1)
 
 
 def test_find_running_instance_pid_returns_none_without_a_proc_dir(tmp_path: Path) -> None:
