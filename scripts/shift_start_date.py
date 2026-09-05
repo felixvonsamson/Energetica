@@ -7,10 +7,7 @@ tick, the scheduler computes how many ticks *should* have run by now as
 ``(time.time() - engine.start_date.timestamp()) / engine.clock_time``. If an instance is simply
 stopped and restarted after a break (holiday, maintenance window, ...) with nothing else changed,
 it sees the full real-world gap since ``start_date`` and rapid-fires every missed tick to catch
-up — i.e. it simulates the whole break. Editing ``start_date`` in the instance's *config* file
-does not help: config's ``start_date`` is only ever read by ``init_instance()``, which runs once
-for a brand-new instance. An instance already in progress always restores ``start_date`` straight
-from the pickle on restart (``GameEngine.load()``), ignoring the config entirely.
+up — i.e. it simulates the whole break.
 
 This script shifts the persisted ``start_date`` forward (or back) by a whole number of days, so
 the instance resumes as if no time had passed — no catch-up burst. Shifting by a whole day (or
@@ -43,6 +40,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import pickle
 import shutil
 import sys
@@ -157,8 +155,13 @@ def main() -> int:
         shutil.copy2(args.pickle, backup_path)
         print(f"Backed up original pickle to {backup_path}")
 
-    with args.pickle.open("wb") as f:
+    # Write to a temp sibling and atomically replace the live pickle, rather than truncating it
+    # in place: if the process is interrupted or hits an I/O error mid-dump, the original file
+    # must stay intact instead of being left half-written and unreadable on next startup.
+    tmp_path = args.pickle.with_name(f"{args.pickle.name}.tmp-{os.getpid()}")
+    with tmp_path.open("wb") as f:
         pickle.dump(engine_state, f)
+    tmp_path.replace(args.pickle)
     print(f"Saved {args.pickle}")
     return 0
 
