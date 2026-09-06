@@ -20,7 +20,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from energetica import accounts, instance_config
 from energetica.accounts import Account
 from energetica.game_error import GameError, GameExceptionType
-from energetica.schemas.join import JoinLinkOut
+from energetica.schemas.join import JoinLinkOut, Viewer
 from energetica.utils.auth import get_current_account
 from energetica.utils.misc import record_join_reconciling_settlement
 
@@ -51,11 +51,18 @@ def _resolve(token: str) -> tuple[str, instance_config.PrivateAccess]:
 def get_join_link(token: str, account: Annotated[Account | None, Depends(get_current_account)]) -> JoinLinkOut:
     """What this join link offers, and whether the visitor already has a session to join with."""
     instance_name, access = _resolve(token)
-    return JoinLinkOut(
-        instance_name=instance_name,
-        join_open=access.join_open,
-        viewer_username=account.username if account is not None else None,
-    )
+    viewer = None
+    if account is not None:
+        slug = instance_config.instance_slug()
+        assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
+        if accounts.is_facilitator(account_id=account.account_id, slug=slug):
+            membership = "facilitator"
+        elif accounts.has_joined(account_id=account.account_id, slug=slug):
+            membership = "player"
+        else:
+            membership = None
+        viewer = Viewer(username=account.username, membership=membership)
+    return JoinLinkOut(instance_name=instance_name, join_open=access.join_open, viewer=viewer)
 
 
 @router.post("/{token}", status_code=204)
