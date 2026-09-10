@@ -143,6 +143,22 @@ FQDN="$INSTANCE.$DOMAIN"
 VHOST="/etc/apache2/sites-available/energetica-$INSTANCE.conf"
 UNIT="/etc/systemd/system/energetica-$INSTANCE.service"
 
+# This script is for first-time provisioning only, never for editing a live instance. $UNIT is
+# the last thing a successful run writes (step 9 below), so its presence means a prior run of
+# THIS script already completed for $INSTANCE — everything from here on rewrites unconditionally
+# (the unit, the vhost) or is a no-op (the venv, instance.json), so rerunning would silently
+# replace whatever clock_time/in_game_seconds_per_tick the instance is actually running with. Those
+# two are read only once, at the engine's first tick, and never again — changing them for a live
+# instance needs teardown-instance.sh followed by a fresh run of this script, not a rerun of it.
+# (A unit that does NOT exist yet means an earlier run failed before reaching step 9, so nothing
+# is live and rerunning to retry is still safe — this check does not block that.)
+if [ -f "$UNIT" ]; then
+    log_error "$INSTANCE is already provisioned ($UNIT exists) — refusing to run again."
+    log_error "To ship new code: ./scripts/deploy-instance.sh --server <ssh-host> --instance $INSTANCE --domain $DOMAIN"
+    log_error "To change clock_time/in_game_seconds_per_tick or any other first-run setting: teardown-instance.sh $INSTANCE --domain $DOMAIN, then re-run this script."
+    exit 1
+fi
+
 log_section "PROVISION INSTANCE: $INSTANCE (port $PORT, $FQDN)"
 echo "  name:       $NAME"
 echo "  advertised: $ADVERTISED"
