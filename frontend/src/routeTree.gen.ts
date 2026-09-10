@@ -44,6 +44,11 @@ import { Route as AppCommunityMessagesRouteImport } from './routes/app/community
 import { Route as AppCommunityMapRouteImport } from './routes/app/community/map'
 import { Route as AppCommunityLeaderboardsRouteImport } from './routes/app/community/leaderboards'
 import { Route as AppCommunityElectricityMarketsRouteImport } from './routes/app/community/electricity-markets'
+import { Route as AppPrototypeWorkshopIndexRouteImport } from './routes/app/prototype/workshop/index'
+import { Route as AppPrototypeWorkshopTradingPeriodRouteImport } from './routes/app/prototype/workshop/trading-period'
+import { Route as AppPrototypeWorkshopRoundRouteImport } from './routes/app/prototype/workshop/round'
+import { Route as AppPrototypeWorkshopRecapRouteImport } from './routes/app/prototype/workshop/recap'
+import { Route as AppPrototypeWorkshopInvestmentRouteImport } from './routes/app/prototype/workshop/investment'
 
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/app/',
@@ -225,6 +230,36 @@ const AppCommunityElectricityMarketsRoute =
     path: '/app/community/electricity-markets',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppPrototypeWorkshopIndexRoute =
+  AppPrototypeWorkshopIndexRouteImport.update({
+    id: '/app/prototype/workshop/',
+    path: '/app/prototype/workshop/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppPrototypeWorkshopTradingPeriodRoute =
+  AppPrototypeWorkshopTradingPeriodRouteImport.update({
+    id: '/app/prototype/workshop/trading-period',
+    path: '/app/prototype/workshop/trading-period',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppPrototypeWorkshopRoundRoute =
+  AppPrototypeWorkshopRoundRouteImport.update({
+    id: '/app/prototype/workshop/round',
+    path: '/app/prototype/workshop/round',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppPrototypeWorkshopRecapRoute =
+  AppPrototypeWorkshopRecapRouteImport.update({
+    id: '/app/prototype/workshop/recap',
+    path: '/app/prototype/workshop/recap',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppPrototypeWorkshopInvestmentRoute =
+  AppPrototypeWorkshopInvestmentRouteImport.update({
+    id: '/app/prototype/workshop/investment',
+    path: '/app/prototype/workshop/investment',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/app/changelog': typeof AppChangelogRoute
@@ -262,6 +297,11 @@ export interface FileRoutesByFullPath {
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
+  '/app/prototype/workshop/investment': typeof AppPrototypeWorkshopInvestmentRoute
+  '/app/prototype/workshop/recap': typeof AppPrototypeWorkshopRecapRoute
+  '/app/prototype/workshop/round': typeof AppPrototypeWorkshopRoundRoute
+  '/app/prototype/workshop/trading-period': typeof AppPrototypeWorkshopTradingPeriodRoute
+  '/app/prototype/workshop': typeof AppPrototypeWorkshopIndexRoute
 }
 export interface FileRoutesByTo {
   '/app/changelog': typeof AppChangelogRoute
@@ -299,6 +339,11 @@ export interface FileRoutesByTo {
   '/app/facilitator': typeof AppFacilitatorIndexRoute
   '/app/internal': typeof AppInternalIndexRoute
   '/app/wiki': typeof AppWikiIndexRoute
+  '/app/prototype/workshop/investment': typeof AppPrototypeWorkshopInvestmentRoute
+  '/app/prototype/workshop/recap': typeof AppPrototypeWorkshopRecapRoute
+  '/app/prototype/workshop/round': typeof AppPrototypeWorkshopRoundRoute
+  '/app/prototype/workshop/trading-period': typeof AppPrototypeWorkshopTradingPeriodRoute
+  '/app/prototype/workshop': typeof AppPrototypeWorkshopIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -337,6 +382,11 @@ export interface FileRoutesById {
   '/app/facilitator/': typeof AppFacilitatorIndexRoute
   '/app/internal/': typeof AppInternalIndexRoute
   '/app/wiki/': typeof AppWikiIndexRoute
+  '/app/prototype/workshop/investment': typeof AppPrototypeWorkshopInvestmentRoute
+  '/app/prototype/workshop/recap': typeof AppPrototypeWorkshopRecapRoute
+  '/app/prototype/workshop/round': typeof AppPrototypeWorkshopRoundRoute
+  '/app/prototype/workshop/trading-period': typeof AppPrototypeWorkshopTradingPeriodRoute
+  '/app/prototype/workshop/': typeof AppPrototypeWorkshopIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -376,6 +426,11 @@ export interface FileRouteTypes {
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
+    | '/app/prototype/workshop/investment'
+    | '/app/prototype/workshop/recap'
+    | '/app/prototype/workshop/round'
+    | '/app/prototype/workshop/trading-period'
+    | '/app/prototype/workshop'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/app/changelog'
@@ -413,6 +468,11 @@ export interface FileRouteTypes {
     | '/app/facilitator'
     | '/app/internal'
     | '/app/wiki'
+    | '/app/prototype/workshop/investment'
+    | '/app/prototype/workshop/recap'
+    | '/app/prototype/workshop/round'
+    | '/app/prototype/workshop/trading-period'
+    | '/app/prototype/workshop'
   id:
     | '__root__'
     | '/app/changelog'
@@ -450,6 +510,11 @@ export interface FileRouteTypes {
     | '/app/facilitator/'
     | '/app/internal/'
     | '/app/wiki/'
+    | '/app/prototype/workshop/investment'
+    | '/app/prototype/workshop/recap'
+    | '/app/prototype/workshop/round'
+    | '/app/prototype/workshop/trading-period'
+    | '/app/prototype/workshop/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -487,6 +552,11 @@ export interface RootRouteChildren {
   AppFacilitatorIndexRoute: typeof AppFacilitatorIndexRoute
   AppInternalIndexRoute: typeof AppInternalIndexRoute
   AppWikiIndexRoute: typeof AppWikiIndexRoute
+  AppPrototypeWorkshopInvestmentRoute: typeof AppPrototypeWorkshopInvestmentRoute
+  AppPrototypeWorkshopRecapRoute: typeof AppPrototypeWorkshopRecapRoute
+  AppPrototypeWorkshopRoundRoute: typeof AppPrototypeWorkshopRoundRoute
+  AppPrototypeWorkshopTradingPeriodRoute: typeof AppPrototypeWorkshopTradingPeriodRoute
+  AppPrototypeWorkshopIndexRoute: typeof AppPrototypeWorkshopIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -736,6 +806,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCommunityElectricityMarketsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/prototype/workshop/': {
+      id: '/app/prototype/workshop/'
+      path: '/app/prototype/workshop'
+      fullPath: '/app/prototype/workshop'
+      preLoaderRoute: typeof AppPrototypeWorkshopIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/prototype/workshop/trading-period': {
+      id: '/app/prototype/workshop/trading-period'
+      path: '/app/prototype/workshop/trading-period'
+      fullPath: '/app/prototype/workshop/trading-period'
+      preLoaderRoute: typeof AppPrototypeWorkshopTradingPeriodRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/prototype/workshop/round': {
+      id: '/app/prototype/workshop/round'
+      path: '/app/prototype/workshop/round'
+      fullPath: '/app/prototype/workshop/round'
+      preLoaderRoute: typeof AppPrototypeWorkshopRoundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/prototype/workshop/recap': {
+      id: '/app/prototype/workshop/recap'
+      path: '/app/prototype/workshop/recap'
+      fullPath: '/app/prototype/workshop/recap'
+      preLoaderRoute: typeof AppPrototypeWorkshopRecapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/prototype/workshop/investment': {
+      id: '/app/prototype/workshop/investment'
+      path: '/app/prototype/workshop/investment'
+      fullPath: '/app/prototype/workshop/investment'
+      preLoaderRoute: typeof AppPrototypeWorkshopInvestmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -786,6 +891,12 @@ const rootRouteChildren: RootRouteChildren = {
   AppFacilitatorIndexRoute: AppFacilitatorIndexRoute,
   AppInternalIndexRoute: AppInternalIndexRoute,
   AppWikiIndexRoute: AppWikiIndexRoute,
+  AppPrototypeWorkshopInvestmentRoute: AppPrototypeWorkshopInvestmentRoute,
+  AppPrototypeWorkshopRecapRoute: AppPrototypeWorkshopRecapRoute,
+  AppPrototypeWorkshopRoundRoute: AppPrototypeWorkshopRoundRoute,
+  AppPrototypeWorkshopTradingPeriodRoute:
+    AppPrototypeWorkshopTradingPeriodRoute,
+  AppPrototypeWorkshopIndexRoute: AppPrototypeWorkshopIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
