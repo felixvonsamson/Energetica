@@ -30,15 +30,19 @@ export const Route = createFileRoute("/app/prototype/workshop/round")({
 });
 
 function RoundOverviewPrototypePage() {
+    // `?round=` overrides which round the nav centers on — mainly so the
+    // timeline's final-recap node (only reachable once the window includes
+    // Round 5) can be poked at without a dedicated page for it.
+    const { round = 3 } = Route.useSearch();
     return (
         <WorkshopChrome
-            phaseLabel="Review — Round 3"
+            phaseLabel={`Review — Round ${round}`}
             phaseKind="review"
             phaseSeconds={null}
             carbonTaxActive
-            timeline={{ currentRound: 3 }}
+            timeline={{ currentRound: round }}
         >
-            <RoundOverviewContent />
+            <RoundOverviewContent round={round} />
         </WorkshopChrome>
     );
 }
@@ -47,11 +51,11 @@ const totalRevenue = SEASON_REVENUE.reduce((s, r) => s + (r.revenue ?? 0), 0);
 const totalCost = SEASON_REVENUE.reduce((s, r) => s + (r.cost ?? 0), 0);
 const allDone = SEASON_REVENUE.every((r) => r.status === "done");
 
-function RoundOverviewContent() {
+function RoundOverviewContent({ round }: { round: number }) {
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-semibold font-titles">
-                Round 3 overview
+                Round {round} overview
             </h1>
 
             <div className="rounded-xl border border-border bg-card p-4 md:p-5 space-y-4">

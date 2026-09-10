@@ -17,7 +17,7 @@ import {
     MeritOrderChart,
 } from "@/components/workshop-prototype/charts";
 import { WorkshopChrome } from "@/components/workshop-prototype/chrome";
-import { cn } from "@/lib/utils";
+import { TabBar } from "@/components/workshop-prototype/tab-bar";
 import {
     SESSION,
     buildMeritOrderForHour,
@@ -95,28 +95,14 @@ function TradingPeriodContent() {
                         of Summer, and held for all 24 settlement points below.
                     </p>
                 </div>
-                <div className="flex rounded-lg border border-border p-0.5 bg-muted text-sm">
-                    <button
-                        onClick={() => setTab("chart")}
-                        className={cn(
-                            "px-3 py-1.5 rounded-md",
-                            tab === "chart" &&
-                                "bg-background shadow-sm font-medium",
-                        )}
-                    >
-                        Chart
-                    </button>
-                    <button
-                        onClick={() => setTab("prices")}
-                        className={cn(
-                            "px-3 py-1.5 rounded-md",
-                            tab === "prices" &&
-                                "bg-background shadow-sm font-medium",
-                        )}
-                    >
-                        My prices
-                    </button>
-                </div>
+                <TabBar
+                    tabs={[
+                        { key: "chart", label: "Chart" },
+                        { key: "prices", label: "My prices" },
+                    ]}
+                    value={tab}
+                    onChange={setTab}
+                />
             </div>
 
             {tab === "prices" ? (

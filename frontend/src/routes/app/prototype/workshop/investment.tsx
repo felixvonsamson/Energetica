@@ -1,9 +1,11 @@
 /**
  * PROTOTYPE — Workshop Mode: Investment page (issue #992, spec §12).
  *
- * Browsable catalog + current fleet, fuel purchase, and an active vote —
- * everything the spec's Investment-phase user stories (#26–47) describe. All
- * data is invented; see `lib/workshop-prototype/sample-data.ts`.
+ * "Build" tab: the facility catalog first (in the persistent-world's own card
+ * style — image, stats underneath), then fuel procurement, then the vote — in
+ * that order, per Felix's review. "Your Fleet" tab: current assets, kept out of
+ * the build flow rather than interleaved with it. All data is invented; see
+ * `lib/workshop-prototype/sample-data.ts`.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -15,19 +17,29 @@ import {
     ThumbsUp,
     Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { CatalogGrid } from "@/components/ui/catalog-grid";
 import { Money } from "@/components/ui/money";
 import { WorkshopChrome } from "@/components/workshop-prototype/chrome";
+import { TabBar } from "@/components/workshop-prototype/tab-bar";
 import { cn } from "@/lib/utils";
-import { CATEGORY_META } from "@/lib/workshop-prototype/meta";
+import { CATALOG_IMAGE, CATEGORY_META } from "@/lib/workshop-prototype/meta";
 import {
     ACTIVE_VOTE,
     CATALOG,
     FLEET,
     FUEL_PRICES,
     SESSION,
+    type WorkshopCatalogFacility,
 } from "@/lib/workshop-prototype/sample-data";
 
 export const Route = createFileRoute("/app/prototype/workshop/investment")({
@@ -53,6 +65,7 @@ function InvestmentPrototypePage() {
 }
 
 function InvestmentContent() {
+    const [tab, setTab] = useState<"build" | "fleet">("build");
     const [vote, setVote] = useState<"yes" | "no" | null>(null);
 
     return (
@@ -67,13 +80,25 @@ function InvestmentContent() {
                         in when the window closes — nothing is final until then.
                     </p>
                 </div>
-                <Money amount={128400} iconSize="lg" />
+                <TabBar
+                    tabs={[
+                        { key: "build", label: "Build" },
+                        { key: "fleet", label: "Your Fleet" },
+                    ]}
+                    value={tab}
+                    onChange={setTab}
+                />
             </div>
 
-            <VoteCard vote={vote} onVote={setVote} />
-            <FuelCard />
-            <FleetCard />
-            <CatalogSection />
+            {tab === "fleet" ? (
+                <FleetCard />
+            ) : (
+                <>
+                    <CatalogSection />
+                    <FuelCard />
+                    <VoteCard vote={vote} onVote={setVote} />
+                </>
+            )}
         </div>
     );
 }
@@ -98,43 +123,135 @@ function SectionCard({
     );
 }
 
-function VoteCard({
-    vote,
-    onVote,
-}: {
-    vote: "yes" | "no" | null;
-    onVote: (v: "yes" | "no") => void;
-}) {
+// ---------------------------------------------------------------------------
+// Catalog — same card shape as the persistent-world facility grid
+// (components/facilities/facility-item.tsx): image, then stats underneath
+// rather than behind a detail-dialog click, per Felix's review.
+// ---------------------------------------------------------------------------
+
+function CatalogSection() {
     return (
-        <SectionCard
-            title={`Proposal: ${ACTIVE_VOTE.name}`}
-            icon={AlertTriangle}
-        >
-            <p className="text-sm text-muted-foreground">
-                {ACTIVE_VOTE.description} ({ACTIVE_VOTE.ratePlaceholder},
-                placeholder rate)
-            </p>
-            <div className="flex items-center gap-3">
-                <Button
-                    variant={vote === "yes" ? "success" : "outline"}
-                    onClick={() => onVote("yes")}
-                >
-                    <ThumbsUp className="size-4" /> Yes
-                </Button>
-                <Button
-                    variant={vote === "no" ? "destructive" : "outline"}
-                    onClick={() => onVote("no")}
-                >
-                    <ThumbsDown className="size-4" /> No
-                </Button>
-                <span className="text-xs text-muted-foreground ml-2">
-                    Tally is hidden until the window closes — decide on your own
-                    judgment.
-                </span>
-            </div>
-        </SectionCard>
+        <div className="space-y-3">
+            <h2 className="flex items-center gap-2 font-semibold font-titles text-lg">
+                <Hammer className="size-5 text-brand" />
+                Facility catalog
+            </h2>
+            <CatalogGrid>
+                {CATALOG.map((facility) => (
+                    <CatalogCard key={facility.id} facility={facility} />
+                ))}
+            </CatalogGrid>
+        </div>
     );
 }
+
+function StatRow({ label, value }: { label: string; value: ReactNode }) {
+    return (
+        <div className="flex items-center justify-between gap-2">
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd className="font-mono">{value}</dd>
+        </div>
+    );
+}
+
+function CatalogCard({ facility }: { facility: WorkshopCatalogFacility }) {
+    const Icon = CATEGORY_META[facility.category].icon;
+    const image = CATALOG_IMAGE[facility.id];
+
+    return (
+        <Card
+            className={cn(
+                "flex flex-col h-full",
+                facility.locked && "opacity-80",
+            )}
+        >
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 min-w-0 justify-between">
+                    <span className="flex items-center gap-2 min-w-0">
+                        <Icon className="size-4 text-brand shrink-0" />
+                        <span className="truncate">{facility.name}</span>
+                    </span>
+                    {facility.locked && (
+                        <Lock className="size-4 text-muted-foreground shrink-0" />
+                    )}
+                </CardTitle>
+                <CardDescription>
+                    <Money amount={facility.price} />
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3 flex-1">
+                <div className="relative aspect-3/2">
+                    {image && (
+                        <img
+                            src={image}
+                            alt={facility.name}
+                            className={cn(
+                                "w-full h-full object-cover rounded",
+                                facility.locked && "grayscale",
+                            )}
+                        />
+                    )}
+                    {facility.locked && (
+                        <div className="absolute inset-0 bg-black/60 rounded flex items-center justify-center">
+                            <Lock className="w-10 h-10 text-white" />
+                        </div>
+                    )}
+                </div>
+
+                <dl className="text-xs space-y-1">
+                    <StatRow
+                        label={facility.isStorage ? "Capacity" : "Max output"}
+                        value={
+                            facility.isStorage
+                                ? `${facility.storageCapacityMwh} MWh`
+                                : `${facility.powerMw} MW`
+                        }
+                    />
+                    <StatRow
+                        label="Construction lag"
+                        value={
+                            facility.constructionLagRounds === 0
+                                ? "None"
+                                : `${facility.constructionLagRounds} round(s)`
+                        }
+                    />
+                    <StatRow
+                        label="Lifetime"
+                        value={`${facility.lifetimeRounds} round(s)`}
+                    />
+                    <StatRow
+                        label="O&M / round"
+                        value={<Money amount={facility.omPerRound} />}
+                    />
+                    <StatRow
+                        label="Pollution"
+                        value={
+                            facility.pollution > 0
+                                ? `${facility.pollution} t CO₂`
+                                : "None"
+                        }
+                    />
+                </dl>
+
+                <div className="flex-1" />
+
+                {facility.locked ? (
+                    <p className="text-xs text-muted-foreground">
+                        {facility.lockedReason}
+                    </p>
+                ) : (
+                    <Button size="sm" className="w-full" variant="outline">
+                        Build
+                    </Button>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Fuel procurement
+// ---------------------------------------------------------------------------
 
 function FuelCard() {
     return (
@@ -190,6 +307,52 @@ function FuelCard() {
         </SectionCard>
     );
 }
+
+// ---------------------------------------------------------------------------
+// Vote
+// ---------------------------------------------------------------------------
+
+function VoteCard({
+    vote,
+    onVote,
+}: {
+    vote: "yes" | "no" | null;
+    onVote: (v: "yes" | "no") => void;
+}) {
+    return (
+        <SectionCard
+            title={`Proposal: ${ACTIVE_VOTE.name}`}
+            icon={AlertTriangle}
+        >
+            <p className="text-sm text-muted-foreground">
+                {ACTIVE_VOTE.description} ({ACTIVE_VOTE.ratePlaceholder},
+                placeholder rate)
+            </p>
+            <div className="flex items-center gap-3">
+                <Button
+                    variant={vote === "yes" ? "success" : "outline"}
+                    onClick={() => onVote("yes")}
+                >
+                    <ThumbsUp className="size-4" /> Yes
+                </Button>
+                <Button
+                    variant={vote === "no" ? "destructive" : "outline"}
+                    onClick={() => onVote("no")}
+                >
+                    <ThumbsDown className="size-4" /> No
+                </Button>
+                <span className="text-xs text-muted-foreground ml-2">
+                    Tally is hidden until the window closes — decide on your own
+                    judgment.
+                </span>
+            </div>
+        </SectionCard>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Your fleet — separate tab
+// ---------------------------------------------------------------------------
 
 function FleetCard() {
     return (
@@ -258,64 +421,6 @@ function FleetCard() {
                         })}
                     </tbody>
                 </table>
-            </div>
-        </SectionCard>
-    );
-}
-
-function CatalogSection() {
-    return (
-        <SectionCard title="Facility catalog" icon={Hammer}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {CATALOG.map((f) => {
-                    const Icon = CATEGORY_META[f.category].icon;
-                    return (
-                        <div
-                            key={f.id}
-                            className={cn(
-                                "rounded-lg border border-border p-3 space-y-2",
-                                f.locked && "opacity-70",
-                            )}
-                        >
-                            <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-2 font-medium">
-                                    <Icon className="size-4 text-brand" />
-                                    {f.name}
-                                </span>
-                                {f.locked && (
-                                    <Lock className="size-4 text-muted-foreground" />
-                                )}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                                {f.isStorage
-                                    ? `${f.storageCapacityMwh} MWh capacity`
-                                    : `${f.powerMw} MW max`}
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                                <Money amount={f.price} />
-                                <span className="text-muted-foreground">
-                                    {f.constructionLagRounds === 0
-                                        ? "No lag"
-                                        : `${f.constructionLagRounds}rd lag`}{" "}
-                                    · {f.lifetimeRounds}rd life
-                                </span>
-                            </div>
-                            {f.locked ? (
-                                <p className="text-xs text-muted-foreground">
-                                    {f.lockedReason}
-                                </p>
-                            ) : (
-                                <Button
-                                    size="sm"
-                                    className="w-full"
-                                    variant="outline"
-                                >
-                                    Build
-                                </Button>
-                            )}
-                        </div>
-                    );
-                })}
             </div>
         </SectionCard>
     );

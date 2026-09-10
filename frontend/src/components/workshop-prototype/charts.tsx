@@ -345,17 +345,22 @@ export function MeritOrderChart({
                 {
                     type: "line",
                     name: "demand curve",
-                    step: "end",
+                    // Explicit staircase points rather than echarts' `step`
+                    // option: each block contributes its own flat segment
+                    // ([x1, price] → [x2, price]) at its own price, so
+                    // consecutive blocks — sharing an x at the boundary —
+                    // draw the vertical drop to the next tier's price
+                    // exactly at that boundary, not one tier late.
                     symbol: "none",
                     lineStyle: {
                         color: resolveVar("--muted-foreground"),
                         width: 2,
                         type: "dashed",
                     },
-                    data: [
-                        [0, demandBlocks[0]?.displayPrice ?? 0],
-                        ...demandBlocks.map((b) => [b.x2, b.displayPrice]),
-                    ],
+                    data: demandBlocks.flatMap((b) => [
+                        [b.x1, b.displayPrice],
+                        [b.x2, b.displayPrice],
+                    ]),
                     z: 3,
                     markLine: {
                         silent: true,
