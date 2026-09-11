@@ -34,7 +34,7 @@ import tempfile
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Literal, TypeVar
 
 from pydantic import AwareDatetime, BaseModel, Field, model_validator
 
@@ -131,6 +131,19 @@ class PrivateAccess(BaseModel):
 AccessPolicy = PublicAccess | PrivateAccess
 
 
+class WorkshopConfig(BaseModel):
+    """Marks an instance as a Workshop Run (#992 §10, #993).
+
+    Empty for now — the round-config levers a facilitator tunes during a live session (Round
+    count, market-clearing frequency, event/vote pools, phase-timer durations, …) are each their
+    own, later Workshop Mode ticket (#992 §3/§9). This class exists so ``InstanceConfig.workshop``
+    has something to be non-``None``, which is the whole point of it: presence, not any field on
+    it, is the discriminator (see :class:`InstanceConfig`).
+    """
+
+    model_config = {"extra": "forbid"}
+
+
 class InstanceConfig(BaseModel):
     """The full per-instance config, including the private ``access`` block.
 
@@ -152,6 +165,26 @@ class InstanceConfig(BaseModel):
     freeze_at: AwareDatetime | None = None  # active → freeze (play/sim ends, backend stays read-only)
     ended_at: AwareDatetime | None = None  # freeze → ended (process reaped, recap outlives it on the lobby)
     access: AccessPolicy = Field(discriminator="policy")
+    # No new Run model and no parallel mode flag (#992 §10): a Workshop Run is any instance where
+    # ``config.workshop is not None``. Presence, not a ``Literal``/enum value, is the discriminator
+    # — the same idiom ``access`` above already uses, so there's no separate flag that could drift
+    # out of sync with the data's actual shape. ``None`` (the default) is an ordinary persistent-
+    # world instance, which is every instance.json written before this field existed.
+    workshop: WorkshopConfig | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _default_workshop_access_to_private(cls, data: Any) -> Any:
+        """A Workshop Run defaults to :class:`PrivateAccess` (#992 §10, #993) when the file simply
+        omits ``access`` — private by default, no public-Workshop case considered. This only fills
+        in a *missing* key: a config that spells out ``access`` explicitly (public or private)
+        keeps exactly what it says, on a Workshop Run or not. Runs before field validation, on the
+        raw mapping, so it can distinguish "omitted" from "present" before ``access``'s own
+        required-field check would otherwise fire.
+        """
+        if isinstance(data, dict) and data.get("workshop") is not None and "access" not in data:
+            data = {**data, "access": {"policy": "private"}}
+        return data
 
     @model_validator(mode="after")
     def _timestamps_non_decreasing(self) -> InstanceConfig:

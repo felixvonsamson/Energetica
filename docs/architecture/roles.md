@@ -175,7 +175,7 @@ or it applies uniformly). Format is a non-empty subset of {persistent, workshop}
 | Capability | Owner | Scope | Format | Plane | Status |
 |---|---|---|---|---|---|
 | Base server setup | sysadmin | n/a | both | out-of-band | built |
-| Provision instance | sysadmin | n/a | persistent | out-of-band | built |
+| Provision instance | sysadmin | n/a | both | out-of-band | built (`--workshop` flag, [#993](https://github.com/felixvonsamson/Energetica/issues/993)) |
 | Provision lobby | sysadmin | n/a | both | out-of-band | built |
 | Deploy instance code | sysadmin | n/a | both | out-of-band | built |
 | Deploy lobby code | sysadmin | n/a | both | out-of-band | built |
