@@ -17,6 +17,7 @@ from energetica.instance_config import (
     InstanceNotPrivateError,
     PrivateAccess,
     PublicAccess,
+    WorkshopConfig,
     derive_phase,
 )
 
@@ -140,6 +141,56 @@ def test_load_naive_starts_at_fails_closed(configured: Path) -> None:
 
     with pytest.raises(InstanceConfigError):
         instance_config.load_instance_config()
+
+
+# --- Workshop discriminator (#992 §10, #993) -------------------------------------------------
+
+
+def test_workshop_absent_by_default() -> None:
+    """An ordinary persistent-world config — every instance.json written before this field
+    existed — still loads, with `workshop` defaulting to `None`.
+    """
+    config = InstanceConfig.model_validate(PUBLIC_JSON)
+    assert config.workshop is None
+
+
+def test_workshop_present_marks_a_workshop_run() -> None:
+    """Presence, not a literal/enum value, is the discriminator: any non-`None` `WorkshopConfig`
+    marks the Run as a Workshop Run.
+    """
+    config = InstanceConfig.model_validate({**PRIVATE_JSON, "workshop": {}})
+    assert config.workshop is not None
+    assert isinstance(config.workshop, WorkshopConfig)
+
+
+def test_workshop_run_defaults_access_to_private_when_access_omitted() -> None:
+    """A Workshop Run defaults to `PrivateAccess` (#992 §10) when the file simply omits `access`."""
+    config = InstanceConfig.model_validate(
+        {"name": "Workshop", "advertised": False, "starts_at": "2026-03-01T00:00:00Z", "workshop": {}}
+    )
+    assert isinstance(config.access, PrivateAccess)
+
+
+def test_workshop_run_explicit_access_is_not_overridden() -> None:
+    """The private-by-default only fills in an *omitted* key — a Workshop Run's config that spells
+    out `access` explicitly (public included) keeps exactly what it says.
+    """
+    config = InstanceConfig.model_validate({**PUBLIC_JSON, "workshop": {}})
+    assert isinstance(config.access, PublicAccess)
+
+
+def test_non_workshop_run_still_requires_access() -> None:
+    """The default-to-private fill-in is Workshop-only — an ordinary config omitting `access`
+    still fails closed exactly as before.
+    """
+    with pytest.raises(ValueError):
+        InstanceConfig.model_validate({"name": "No access", "advertised": True, "starts_at": "2026-03-01T00:00:00Z"})
+
+
+def test_workshop_config_rejects_extra_keys() -> None:
+    """A stray key on the `workshop` block fails closed, like every other block in this file."""
+    with pytest.raises(ValueError):
+        InstanceConfig.model_validate({**PRIVATE_JSON, "workshop": {"rounds": 5}})
 
 
 # --- allowed_usernames is removed, not deprecated (#1031) -----------------------------------

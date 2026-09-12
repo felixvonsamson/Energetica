@@ -7,11 +7,17 @@ set -euo pipefail
 #   sudo bash scripts/infra/setup-instance.sh <instance> <port> --domain <apex-domain> \
 #        [--name "<display name>"] [--no-advertise] [--starts-at <ISO-8601-UTC>] \
 #        [--freeze-at <ISO-8601-UTC>] [--ended-at <ISO-8601-UTC>] \
-#        [--clock-time <seconds>] [--in-game-seconds-per-tick <seconds>] [--yes]
+#        [--clock-time <seconds>] [--in-game-seconds-per-tick <seconds>] [--workshop] [--yes]
 #
 # --starts-at/--freeze-at/--ended-at are the lifecycle boundaries (announced→active→freeze→ended).
 # --freeze-at and --ended-at are optional (omit → null → an open-ended run); when given they must
 # run forward: starts_at ≤ freeze_at ≤ ended_at (the backend rejects a config that doesn't).
+#
+# --workshop provisions a Workshop Run instead of a persistent one: instance.json's `workshop`
+# key is rendered present (`{}`, matching `InstanceConfig.workshop: WorkshopConfig | None`, whose
+# mere presence is the discriminator — see energetica/instance_config.py) rather than `null`, and
+# access defaults to private (issue #993) since a Workshop session is invite-only by design (#992
+# §10) — omit --workshop for the existing persistent-world, public-by-default behavior.
 #
 # --clock-time / --in-game-seconds-per-tick set the unit's ExecStart flags of the same name
 # (main.py --clock_time / --in_game_seconds_per_tick). They are baked into the engine at
@@ -35,6 +41,7 @@ ADVERTISED="true"
 STARTS_AT=""
 FREEZE_AT=""
 ENDED_AT=""
+WORKSHOP=false
 # Must match main.py's argparse defaults/choices exactly — this is a second entry point to the
 # same flags, and a drift here would silently provision instances main.py itself would reject.
 CLOCK_TIME=30
@@ -56,6 +63,7 @@ while [[ $# -gt 0 ]]; do
         --ended-at) ENDED_AT="$2"; shift 2 ;;
         --clock-time) CLOCK_TIME="$2"; shift 2 ;;
         --in-game-seconds-per-tick) IN_GAME_SECONDS_PER_TICK="$2"; shift 2 ;;
+        --workshop) WORKSHOP=true; shift ;;
         --yes) AUTO_CONFIRM=true; shift ;;
         -*) echo "Unknown option: $1"; exit 1 ;;
         *) POSITIONAL+=("$1"); shift ;;
@@ -137,6 +145,13 @@ sed_escape() { printf '%s' "$1" | sed -e 's/[&/\]/\\&/g'; }
 if [ -n "$FREEZE_AT" ]; then FREEZE_AT_JSON="\"$(sed_escape "$FREEZE_AT")\""; else FREEZE_AT_JSON="null"; fi
 if [ -n "$ENDED_AT" ]; then ENDED_AT_JSON="\"$(sed_escape "$ENDED_AT")\""; else ENDED_AT_JSON="null"; fi
 
+# A Workshop Run defaults to private access (#992 §10, #993) — no public-Workshop case is
+# considered, and the facilitator-facing UX for actually populating the allowlist is out of scope
+# here (issue #989). `workshop` itself renders as `{}` (present, matching
+# `InstanceConfig.workshop: WorkshopConfig | None`) or `null` (absent — an ordinary persistent-world
+# instance) — presence, not this value's shape, is the discriminator the backend reads.
+if [ "$WORKSHOP" = true ]; then ACCESS_POLICY="private"; WORKSHOP_JSON="{}"; else ACCESS_POLICY="public"; WORKSHOP_JSON="null"; fi
+
 APP_DIR="/var/www/energetica-$INSTANCE"
 CONFIG_DIR="/etc/energetica/$INSTANCE"
 FQDN="$INSTANCE.$DOMAIN"
@@ -167,6 +182,8 @@ echo "  freeze_at:  ${FREEZE_AT:-<null, open-ended>}"
 echo "  ended_at:   ${ENDED_AT:-<null, open-ended>}"
 echo "  clock_time: ${CLOCK_TIME}s"
 echo "  tick:       ${IN_GAME_SECONDS_PER_TICK} in-game seconds"
+echo "  workshop:   $WORKSHOP"
+echo "  access:     $ACCESS_POLICY"
 if [ "$AUTO_CONFIRM" = false ]; then
     read -r -p "DNS for $FQDN points here? Continue? (y/n) " -n 1 -r; echo
     [[ $REPLY =~ ^[Yy]$ ]] || { echo "Cancelled."; exit 0; }
@@ -217,13 +234,15 @@ else
         -e "s/@STARTS_AT@/$(sed_escape "$STARTS_AT")/g" \
         -e "s/@FREEZE_AT@/$FREEZE_AT_JSON/g" \
         -e "s/@ENDED_AT@/$ENDED_AT_JSON/g" \
+        -e "s/@ACCESS_POLICY@/$ACCESS_POLICY/g" \
+        -e "s/@WORKSHOP_JSON@/$WORKSHOP_JSON/g" \
         "$SCRIPT_DIR/instance.json.tmpl" > "$CONFIG_DIR/instance.json"
     chown root:energetica "$CONFIG_DIR/instance.json"
     # 0640: service (group) reads; only root (admin, via sudo) edits by hand. The service
     # itself writes back through instance_config.py's atomic write path (private-access
     # mutations only), which re-asserts 0640 on every write — see _atomic_write_json.
     chmod 0640 "$CONFIG_DIR/instance.json"
-    log_success "Rendered $CONFIG_DIR/instance.json (public, advertised=$ADVERTISED)"
+    log_success "Rendered $CONFIG_DIR/instance.json ($ACCESS_POLICY, advertised=$ADVERTISED, workshop=$WORKSHOP)"
 fi
 
 # --- 4-5. Temporary HTTP vhost for ACME ----------------------------------------
@@ -274,7 +293,13 @@ log_section "INSTANCE PROVISIONED"
 echo "Ship code and start the service from your machine:"
 echo "  ./scripts/deploy-instance.sh --server <ssh-host> --instance $INSTANCE --domain $DOMAIN"
 echo
-echo "For a private/unadvertised instance, edit the policy before first login:"
-echo "  sudo \$EDITOR $CONFIG_DIR/instance.json   # set advertised/access.policy"
+if [ "$WORKSHOP" = true ]; then
+    echo "This is a Workshop Run — already private, per #992 §10 (no public-Workshop case)."
+    echo "Grant an account facilitator (moderator) access to it (scoped to this instance):"
+    echo "  python scripts/grant-facilitator.py --username <username> --slug $INSTANCE"
+else
+    echo "For a private/unadvertised instance, edit the policy before first login:"
+    echo "  sudo \$EDITOR $CONFIG_DIR/instance.json   # set advertised/access.policy"
+fi
 echo "Then grow its roster (facilitator UI, or from the shell):"
 echo "  python scripts/whitelist-run.py $INSTANCE add <username> [<username> ...]"
