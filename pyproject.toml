@@ -1,3 +1,71 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "energetica"
+description = "Energetica — a web game about energy systems, with a focus on electricity."
+readme = "README.md"
+requires-python = ">=3.12"
+dynamic = ["version"]
+dependencies = [
+    "numpy",
+    "scipy",
+    "apscheduler",
+    "bcrypt",
+    "ecdsa",
+    "requests",
+    "pandas",
+    "pywebpush",
+    "noise",
+    # Pinned: these determine the generated OpenAPI schema, so the api-types
+    # freshness check (CI) is only reproducible if their versions are fixed.
+    "pydantic==2.11.5",
+    "fastapi[standard]==0.115.12",
+    # ASGI/websocket server deps (uvicorn, websockets, wsproto) come from fastapi[standard];
+    # python-socketio dropped its 'asgi' extra by 5.16.x, so requesting it only warns.
+    "python-socketio",
+    "itsdangerous",
+]
+
+[project.optional-dependencies]
+# Everything needed to develop and check the backend, on top of the runtime deps, so that
+# `pip install -e '.[dev]'` is the whole local setup step. The deploy installs the project
+# without this extra — the server runs the code, it does not check it.
+dev = ["pytest", "pyright==1.1.407", "pre-commit"]
+
+[project.urls]
+Homepage = "https://github.com/felixvonsamson/Energetica"
+Issues = "https://github.com/felixvonsamson/Energetica/issues"
+
+[tool.setuptools]
+# src/ layout: only the two backend packages ship. `tests`, `scripts` and `map_generation`
+# live outside src/ and are deliberately not part of the distribution.
+package-dir = { "" = "src" }
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+# Namespace packages are discovered (the default here), which is load-bearing: a few real
+# subpackages — energetica.database.engine_data, energetica.database.map — have no
+# __init__.py and would otherwise be dropped from the wheel.
+namespaces = true
+# ...which also means every directory under src/energetica counts, including the web-asset
+# trees. Exclude them: they hold no Python, and what does ship from static/ is named
+# explicitly as package data below.
+exclude = ["energetica.static*"]
+
+[tool.setuptools.dynamic]
+# Read from the module's AST at build time, so building never imports the package.
+version = { attr = "energetica.__version__" }
+
+[tool.setuptools.package-data]
+# Only the game's own data tables ship inside the wheel. The web assets under `static/app`,
+# `static/images` and `static/service-worker.js` are served by Apache straight off the
+# rsynced tree (docs/architecture/static-serving-and-deployment.md) rather than read through
+# the installed package, and `static/images` alone is around 110 MB.
+energetica = ["static/data/*"]
+
 [tool.ruff]
 line-length = 120 # Let's keep this at 120 for now, there are some files that need it
 target-version = "py312"
@@ -27,7 +95,10 @@ lint.ignore = [
 ]
 
 [tool.pyright]
-include = ["energetica", "lobby", "tests", "scripts", "main.py", "main_lobby.py"]
+include = ["src", "tests", "scripts", "main.py", "main_lobby.py"]
+# Resolve `energetica` / `lobby` from the source tree. An editable install points at them
+# through a generated import hook that pyright cannot follow, so name the directory here.
+extraPaths = ["src"]
 pythonVersion = "3.12"
 typeCheckingMode = "standard"
 # Resolve imports against the project venv so a bare `pyright` sees installed deps

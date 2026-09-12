@@ -206,7 +206,7 @@ fi
 log_section "INSTANCE CONFIG"
 # 0770: the running service (group energetica) needs to *write* here too — a private
 # instance's facilitator surface persists join tokens/allowlist changes back to
-# instance.json via energetica/instance_config.py's atomic write (mkstemp + rename into
+# instance.json via src/energetica/instance_config.py's atomic write (mkstemp + rename into
 # this directory), not just read it. See #1019.
 install -d -o root -g energetica -m 0770 "$CONFIG_DIR"
 if [ -f "$CONFIG_DIR/instance.json" ]; then

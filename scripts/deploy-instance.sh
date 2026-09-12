@@ -3,14 +3,18 @@ set -euo pipefail
 
 # shellcheck source=lib/version-stamp.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/version-stamp.sh"
+# shellcheck source=lib/backend-wheel.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-wheel.sh"
 
 # Energetica — deploy a single instance (Option A: no git on the server, rsync only).
 #
 #   ./scripts/deploy-instance.sh --server <ssh-host> --instance <instance> --domain <apex> \
-#        [--user <ssh-user>] [--yes] [--skip-build] [--skip-deps]
+#        [--user <ssh-user>] [--yes] [--skip-build]
 #
-# Builds the app bundle locally, rsyncs the Python backend + bundle to the instance dir,
-# (re)installs deps into the server-side venv, and restarts the service. On restart the
+# Builds the app bundle and the backend wheel locally, rsyncs the Python backend + bundle to
+# the instance dir, installs the project into the server-side venv, and restarts the service.
+# The install is not optional: the backend lives under src/ and is imported as an installed
+# package, so a deploy that skips it leaves the service unable to start. On restart the
 # instance re-reads /etc/energetica/{instance}/instance.json and re-publishes its landing
 # fragment, so admin edits to the policy take effect here.
 #
@@ -23,7 +27,6 @@ INSTANCE=""
 DOMAIN="${DEPLOY_DOMAIN:-}"
 AUTO_CONFIRM=false
 SKIP_BUILD=false
-SKIP_DEPS=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -33,7 +36,6 @@ while [[ $# -gt 0 ]]; do
         --user) REMOTE_USER="$2"; shift 2 ;;
         --yes) AUTO_CONFIRM=true; shift ;;
         --skip-build) SKIP_BUILD=true; shift ;;
-        --skip-deps) SKIP_DEPS=true; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
@@ -84,13 +86,14 @@ if [ "$SKIP_BUILD" = false ]; then
 else
     log_info "Skipping build (--skip-build)"
 fi
+build_backend_wheel   # see scripts/lib/backend-wheel.sh for why this is not behind --skip-build
 
 # --- 2. Confirm -----------------------------------------------------------------
 echo
 log_step "Deployment summary:"
 echo "  Instance:  $INSTANCE   (https://$FQDN)"
 echo "  Remote:    $SSH:$REMOTE_PATH"
-echo "  Steps:     rsync backend → rsync app bundle → pip install → restart → health check"
+echo "  Steps:     rsync backend → rsync app bundle → install backend → restart → health check"
 echo
 if [ "$AUTO_CONFIRM" = false ]; then
     read -r -p "Continue? (y/n) " -n 1 -r; echo
@@ -98,10 +101,12 @@ if [ "$AUTO_CONFIRM" = false ]; then
 fi
 
 # --- 3. rsync backend code ------------------------------------------------------
-# Ship the Python backend. Exclude build artifacts, the local venv, the frontend source,
-# and — critically — instance/ and checkpoints/ (server-side game state) and the app bundle
-# dir (synced separately with --delete below). --delete prunes removed backend files but
-# never touches the excluded paths. checkpoints/ MUST be excluded: the service (user
+# Ship the Python backend, including dist/ — the wheel built above rides along with the rest of
+# the tree and is installed in step 5. Exclude local build artifacts, the local venv, the
+# frontend source, and — critically — instance/ and checkpoints/ (server-side game state) and
+# the app bundle dir (synced separately with --delete below). --delete prunes removed backend
+# files, including any stale wheel in dist/, but never touches the excluded paths.
+# checkpoints/ MUST be excluded: the service (user
 # `energetica`) writes checkpoints/{new,last}_checkpoint.tar.gz at runtime, but rsync arrives
 # as `deploy` — shipping the dir hands it to deploy:deploy and the service can no longer
 # overwrite it (silent PermissionError on every checkpoint), same reasoning as instance/.
@@ -115,24 +120,20 @@ rsync -az --delete \
     --exclude='node_modules' \
     --exclude='__pycache__' \
     --exclude='*.pyc' \
-    --exclude='energetica/static/app' \
+    --exclude='src/energetica/static/app' \
+    --exclude='*.egg-info' \
+    --exclude='build/' \
     --exclude='DEPLOYED_VERSION.json' \
     ./ "$SSH:$REMOTE_PATH/" >/dev/null
 log_success "Backend synced"
 
 # --- 4. rsync app bundle (hashed assets need pruning → --delete) ---------------
 log_step "Syncing app bundle..."
-rsync -az --delete ./energetica/static/app/ "$SSH:$REMOTE_PATH/energetica/static/app/" >/dev/null
+rsync -az --delete ./src/energetica/static/app/ "$SSH:$REMOTE_PATH/src/energetica/static/app/" >/dev/null
 log_success "App bundle synced"
 
-# --- 5. Install deps into the server venv --------------------------------------
-if [ "$SKIP_DEPS" = false ]; then
-    log_step "Installing Python deps into server venv..."
-    ssh "$SSH" "sudo -u energetica $REMOTE_PATH/.venv/bin/pip install -q -r $REMOTE_PATH/requirements.txt"
-    log_success "Deps installed"
-else
-    log_info "Skipping deps (--skip-deps)"
-fi
+# --- 5. Install the backend into the server venv --------------------------------
+install_backend_wheel "$SSH" "$REMOTE_PATH"
 
 # --- 6. Restart (first deploy: starts) -----------------------------------------
 log_step "Restarting energetica-$INSTANCE..."
@@ -175,7 +176,7 @@ log_success "/healthz status=ok"
 # commit that failed to activate. The server has no .git (rsync excludes it), so the commit is
 # captured here on the deploy machine and written to the instance root as DEPLOYED_VERSION.json.
 # It is excluded from the rsync --delete above, so between restart and this write /healthz keeps
-# reporting the *previous* commit rather than a wrong one. Read by energetica/utils/version.py.
+# reporting the *previous* commit rather than a wrong one. Read by src/energetica/utils/version.py.
 stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 echo

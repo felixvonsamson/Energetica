@@ -97,7 +97,7 @@ RECAP="$LANDING_DIR/recaps/$INSTANCE.json"
 # clean check, so it stops the whole thing.
 CODE_ROOT=""
 for candidate in "$APP_DIR" /var/www/energetica-lobby /var/www/energetica-*; do
-    if [ -x "$candidate/.venv/bin/python" ] && [ -f "$candidate/energetica/instance_config.py" ]; then
+    if [ -x "$candidate/.venv/bin/python" ] && [ -f "$candidate/src/energetica/instance_config.py" ]; then
         CODE_ROOT="$candidate"
         break
     fi
@@ -136,8 +136,6 @@ run_landing_py() {
         cd "$workdir" || exit 1
         ENERGETICA_LANDING_DIR="$LANDING_DIR" ENERGETICA_INSTANCE_CONFIG_DIR=/etc/energetica \
             sudo -u energetica -E "$CODE_ROOT/.venv/bin/python" -c "
-import sys
-sys.path.insert(0, '$CODE_ROOT')
 from energetica import instance_config
 $1
 "

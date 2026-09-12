@@ -58,13 +58,17 @@ Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore.
 
 ## Python Environment
 
-Target versions: 3.11 or 3.12 (ruff target currently 3.12). Use a virtual environment:
+Target version: 3.12 or higher (the ruff target is 3.12). Use a virtual environment:
 
 ```
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e '.[dev]'
 ```
+
+The backend packages live under `src/`, so that editable install is what makes `energetica` and
+`lobby` importable at all — without it, `pytest` and `python main.py` both fail with
+`ModuleNotFoundError`. Re-run it after a change to the dependency list.
 
 (Optional) Use `conda` if preferred.
 
@@ -150,8 +154,8 @@ ruff format .
 Pre-commit hooks ensure code quality by running linters and formatters on staged files before each commit.
 
 ```bash
-pip install pre-commit # Install pre-commit
-pre-commit install # Enable hooks. Hooks run automatically on commit.
+pre-commit install # Enable hooks (pre-commit itself comes with `pip install -e '.[dev]'`).
+                   # Hooks run automatically on commit.
 pre-commit run --all-files # Manually check all files
 pre-commit autoupdate # Update hooks after having modified `.pre-commit-config.yaml`
 ```
@@ -178,7 +182,7 @@ Checkpoint & profiling flags: `--simulate_till`, `--simulate_checkpoint_every_k_
 
 ## Adding / Modifying Game Logic
 
-1. Locate relevant engine modules under `energetica/` (e.g. production updates, climate events, technology effects).
+1. Locate relevant engine modules under `src/energetica/` (e.g. production updates, climate events, technology effects).
 2. Add or update enums in `enums.py` carefully—changing identifiers may break saved state.
 3. Provide migration / compatibility handling if saved engine data format changes.
 4. Add unit tests that cover both the new behavior and backward compatibility paths.
@@ -225,7 +229,7 @@ See [Backend Style Guide](./docs/backend/style-guide.md) and [Frontend Style Gui
 
 -   Justify the need (size, maintenance, security)
 -   Prefer widely used, actively maintained libraries
--   Update `requirements.txt` and pin if reproducibility becomes an issue (currently unpinned)
+-   Add it to `[project.dependencies]` in `pyproject.toml` (or `[project.optional-dependencies].dev` if it is only a development tool), and pin it if reproducibility matters
 -   Avoid heavy frameworks for small utilities
 
 ## Getting Help

@@ -7,11 +7,11 @@ repos:
       - id: ruff-check
         types_or: [python, pyi]
         args: [--fix]
-        files: ^energetica/
+        files: ^src/energetica/
       # Run the formatter for python.
       - id: ruff-format
         types_or: [python, pyi]
-        files: ^energetica/
+        files: ^src/energetica/
 
   - repo: local
     hooks:

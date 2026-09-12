@@ -8,7 +8,9 @@ import pytest
 import requests
 
 
-QUIZ_CSV_PATH = Path(__file__).parent.parent.parent / "energetica" / "static" / "data" / "daily_quiz_questions.csv"
+QUIZ_CSV_PATH = (
+    Path(__file__).parent.parent.parent / "src" / "energetica" / "static" / "data" / "daily_quiz_questions.csv"
+)
 
 # Timeout for HTTP requests in seconds
 REQUEST_TIMEOUT = 10

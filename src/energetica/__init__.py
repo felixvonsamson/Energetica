@@ -27,8 +27,6 @@ from pydantic import TypeAdapter
 from energetica import globals
 from energetica.game_engine import GameEngine
 
-_REPO_ROOT = Path(__file__).parent.parent
-
 # The engine object is light (config + a couple of pickles, no game domain, no I/O beyond a
 # mkdir) and is constructed at import so the DBModel registry (populated at model class-definition
 # time) always has an engine to bind to. The *heavy* game graph — routers, socketio, the tick
@@ -278,10 +276,14 @@ def create_app(
             # if sign-ups are disabled, accounts have to be created from a file. Lives under
             # instance/ (service-writable) — the code dir is read-only to the service user, and
             # this file is rewritten below with generated passwords, so it must be writable.
-            with open(_REPO_ROOT / "instance" / "players.txt", "r", encoding="utf-8") as file:
+            # The path is relative to the working directory, like every other instance/ and
+            # checkpoints/ path in this package. That is load-bearing now the project is
+            # installed: __file__ points into site-packages, not at the run's data directory.
+            # The systemd units pin WorkingDirectory to the run's directory.
+            with open("instance/players.txt", "r", encoding="utf-8") as file:
                 lines = file.readlines()
 
-            with open(_REPO_ROOT / "instance" / "players.txt", "w", encoding="utf-8") as file:
+            with open("instance/players.txt", "w", encoding="utf-8") as file:
                 for line in lines:
                     line = line.strip()
                     if not line:

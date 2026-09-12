@@ -4,7 +4,7 @@
 Run this BEFORE deploying the code that retires ``energetica.database.user.User`` in favour of
 ``Player`` carrying ``username``/``pwhash``/``account_id`` directly. Without it, an existing
 ``engine_data.pck`` still holding ``User``/``Player.user`` objects cannot be unpickled at all once
-``energetica/database/user.py`` is gone — ``pickle.load`` needs the class to still be importable
+``src/energetica/database/user.py`` is gone — ``pickle.load`` needs the class to still be importable
 at its original module path to reconstruct any instance of it. Idempotent — safe to re-run.
 
 Flow:

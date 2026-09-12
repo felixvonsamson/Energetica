@@ -8,7 +8,7 @@ each half is stamped separately:
   the server at rsync time. The deploy machine has a git checkout; the server does not
   (deploys rsync with ``--exclude='.git'``), so the commit must be captured before shipping.
 - **frontend** — the vite build writes ``build-info.json`` into the bundle it emits
-  (``energetica/static/app`` for an instance, ``dist-lobby`` for the lobby), and it rsyncs
+  (``src/energetica/static/app`` for an instance, ``dist-lobby`` for the lobby), and it rsyncs
   to the server with the rest of the bundle.
 
 In local dev neither file exists, so the backend half falls back to reading git directly.
@@ -22,11 +22,12 @@ import json
 import subprocess
 from pathlib import Path
 
-# energetica/utils/version.py -> energetica/utils -> energetica -> repo root. On the server the
-# "repo root" is the instance dir (e.g. /var/www/energetica-hertz), which is where the deploy
-# script writes DEPLOYED_VERSION.json and under which the frontend bundles live.
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-_BACKEND_STAMP = REPO_ROOT / "DEPLOYED_VERSION.json"
+# The working directory, which both systemd units pin to the instance dir (e.g.
+# /var/www/energetica-hertz) — where the deploy writes DEPLOYED_VERSION.json and under which the
+# frontend bundles live. It cannot be derived from __file__: the project is installed into the
+# service venv, so __file__ points into site-packages, not at the instance dir.
+WORKING_DIR = Path()
+_BACKEND_STAMP = WORKING_DIR / "DEPLOYED_VERSION.json"
 
 
 def _read_json(path: Path) -> dict | None:
@@ -39,7 +40,7 @@ def _read_json(path: Path) -> dict | None:
 
 def _git(*args: str) -> str | None:
     try:
-        out = subprocess.check_output(["git", *args], cwd=REPO_ROOT, stderr=subprocess.DEVNULL)
+        out = subprocess.check_output(["git", *args], cwd=WORKING_DIR, stderr=subprocess.DEVNULL)
     except (subprocess.CalledProcessError, FileNotFoundError, OSError):
         return None
     return out.decode().strip()
@@ -69,8 +70,8 @@ def backend_version() -> dict | None:
 def frontend_version(bundle_subpath: str) -> dict | None:
     """The built frontend version stamped into ``{bundle_subpath}/build-info.json``.
 
-    ``bundle_subpath`` is relative to the repo/instance root (e.g. ``energetica/static/app``
+    ``bundle_subpath`` is relative to the working directory (e.g. ``src/energetica/static/app``
     or ``dist-lobby``). Returns ``None`` when the bundle has no stamp — an old bundle built
     before this stamping existed, or a dev server that serves the app from vite instead.
     """
-    return _read_json(REPO_ROOT / bundle_subpath / "build-info.json")
+    return _read_json(WORKING_DIR / bundle_subpath / "build-info.json")

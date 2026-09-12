@@ -7,11 +7,11 @@ __pycache__
 .venv
 **/node_modules/*
 .eslintcache
-energetica/static/app/*
+src/energetica/static/app/*
 frontend/dist-landing/*
 frontend/dist-lobby/*
 frontend/public/instances.json
-energetica/static/service-worker.js
+src/energetica/static/service-worker.js
 scripts/openapi-schema.json
 admin_accounts.txt
 *actions_history.log
@@ -22,3 +22,8 @@ frontend/.env
 # Deploy-time backend version stamp — written on the server by scripts/deploy-*.sh, and
 # never committed (would be stale the moment it lands). See scripts/lib/version-stamp.sh.
 DEPLOYED_VERSION.json
+
+# Python build artifacts (`python -m build`, `pip install`)
+build/
+dist/
+*.egg-info/

@@ -6,6 +6,12 @@ uvicorn actually binding a port and serving requests. Every other test uses an
 in-process TestClient (see test_health_route.py), which builds the app object but
 never boots uvicorn, so a broken boot path would otherwise slip through.
 
+It is also the packaging seam. The server is booted from a scratch directory, never
+from the repo root, so the backend packages can only be found through the install
+(`pip install -e '.[dev]'`) — they live under `src/` and no longer sit next to main.py
+where a bare interpreter would pick them up. A packaging mistake therefore fails here
+rather than on a deploy.
+
 It lives in integration/ (not unit/) because it launches a real subprocess and binds
 a real TCP port.
 """
@@ -25,6 +31,7 @@ import requests
 
 # main.py sits at the repo root, two levels up from tests/integration/.
 REPO_ROOT = Path(__file__).resolve().parents[2]
+MAIN_PY = REPO_ROOT / "main.py"
 
 # Booting uvicorn plus create_app (which loads the game engine) is slow in CI, so allow
 # a generous window before declaring the server dead.
@@ -70,19 +77,24 @@ def _terminate_process_group(proc: "subprocess.Popen[bytes]") -> None:
         proc.wait(timeout=10)
 
 
-def test_server_boots_and_serves() -> None:
+def test_server_boots_and_serves(tmp_path: Path) -> None:
     last_race: _PortRace | None = None
     for _ in range(BOOT_ATTEMPTS):
         try:
-            _boot_and_probe(_free_port())
+            _boot_and_probe(_free_port(), workdir=tmp_path)
             return
         except _PortRace as race:
             last_race = race
     raise AssertionError(f"Could not secure a free port across {BOOT_ATTEMPTS} attempts: {last_race}")
 
 
-def _boot_and_probe(port: int) -> None:
-    """Boot `python main.py` on `port`, assert it serves /healthz, then tear it down.
+def _boot_and_probe(port: int, workdir: Path) -> None:
+    """Boot `python main.py` on `port` in `workdir`, assert it serves /healthz, then tear it down.
+
+    `workdir` is a scratch directory, deliberately not the repo root: it proves the backend
+    resolves through the install rather than off the working directory, and it keeps the
+    run's instance/ and checkpoints/ state (both addressed relative to the working
+    directory) out of the developer's tree.
 
     Raises _PortRace if the server exits because the port was already taken, so the
     caller can retry with a freshly allocated port.
@@ -93,7 +105,7 @@ def _boot_and_probe(port: int) -> None:
         proc = subprocess.Popen(
             [
                 sys.executable,
-                "main.py",
+                str(MAIN_PY),
                 "--port",
                 str(port),
                 "--rm_instance",
@@ -101,7 +113,7 @@ def _boot_and_probe(port: int) -> None:
                 "prod",
                 "--no-reload",  # the reloader would fork yet another process, complicating teardown
             ],
-            cwd=REPO_ROOT,
+            cwd=workdir,
             stdout=server_log,
             stderr=subprocess.STDOUT,
             start_new_session=True,

@@ -93,5 +93,5 @@ log_step "Syncing landing static images..."
 # The landing bundle ships no static/ tree, so pre-create the target path (old client-side
 # rsync, e.g. macOS, lacks --mkpath). The deploy user owns $LANDING_DIR (setgid energetica).
 ssh "$SSH" "mkdir -p '$LANDING_DIR/static/images'"
-rsync -az --delete ./energetica/static/images/ "$SSH:$LANDING_DIR/static/images/" >/dev/null
+rsync -az --delete ./src/energetica/static/images/ "$SSH:$LANDING_DIR/static/images/" >/dev/null
 log_success "Static images deployed"

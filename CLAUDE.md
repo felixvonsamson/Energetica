@@ -11,12 +11,12 @@ terms are fine). In-session conversational style is exempt.
 
 ## Stack
 
-Backend(`energetica/`): Python + FastAPI backend
+Backend(`src/energetica/`, `src/lobby/`): Python + FastAPI, an installed project (`pip install -e '.[dev]'`)
 Frontend(`frontend/`): TSX + Tailwind v4 (no `tailwind.config.ts`)
 Components: customised shadcn component + `frontend/src/styles/global.css`
 Package manager: `bun`
 Project docs: `docs/README.md`
-Deprecated Frontend: Deprecated Jinja `energetica/templates/`
+Deprecated Frontend: Deprecated Jinja `src/energetica/templates/`
 
 ## package.json scripts
 
@@ -32,7 +32,7 @@ Deprecated Frontend: Deprecated Jinja `energetica/templates/`
 
 `bun run generate-types` creates `frontend/src/types/api.generated.ts` is the bridge for full stack type safety.
 
-- backend: `energetica/schemas/` and `energetica/routers/` are the source of truth
+- backend: `src/energetica/schemas/` and `src/energetica/routers/` are the source of truth
 - frontend: `frontend/src/types/api-helpers.ts` for consuming types
 
 ## Agent skills

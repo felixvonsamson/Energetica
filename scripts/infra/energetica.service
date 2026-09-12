@@ -5,7 +5,7 @@
 # @CLOCK_TIME@ and @IN_GAME_SECONDS_PER_TICK@.
 #
 # The Environment= lines below are load-bearing — they are the contract between the
-# deployment and energetica/instance_config.py + energetica/accounts/db.py:
+# deployment and src/energetica/instance_config.py + src/energetica/accounts/db.py:
 #   * ENERGETICA_INSTANCE_SLUG is MANDATORY. Without it instance_slug() returns None, the
 #     instance treats itself as public (never reads its own instance.json) and never
 #     publishes a landing fragment.

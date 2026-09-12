@@ -205,7 +205,7 @@ export default defineConfig(async ({ mode, command }) => {
             },
         },
         build: {
-            outDir: "../energetica/static/app",
+            outDir: "../src/energetica/static/app",
             emptyOutDir: true,
         },
     };
