@@ -16,7 +16,6 @@ Frontend(`frontend/`): TSX + Tailwind v4 (no `tailwind.config.ts`)
 Components: customised shadcn component + `frontend/src/styles/global.css`
 Package manager: `bun`
 Project docs: `docs/README.md`
-Deprecated Frontend: Deprecated Jinja `src/energetica/templates/`
 
 ## package.json scripts
 
