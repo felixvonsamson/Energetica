@@ -27,7 +27,8 @@ class NotAWorkshopRunError(RuntimeError):
 
 
 def join_workshop_run(account: Account, config: InstanceConfig) -> WorkshopPlayer:
-    """Place ``account`` into the Workshop Run described by ``config``.
+    """Place ``account`` into the Workshop Run described by ``config``, or return its existing
+    :class:`~energetica.workshop.player.WorkshopPlayer` unchanged if it already joined.
 
     Unlike the persistent world's player-initiated ``join_network``, this is automatic,
     unconditional, and — because it is a distinct, system-driven assignment path rather than that
@@ -36,12 +37,16 @@ def join_workshop_run(account: Account, config: InstanceConfig) -> WorkshopPlaye
 
     Raises :class:`NotAWorkshopRunError` if ``config`` is not a Workshop Run's config.
 
-    A future ticket wires this into the actual join/settle route and must ensure it runs at most
-    once per account — this function itself does not check for an existing
-    :class:`~energetica.workshop.player.WorkshopPlayer` for ``account``.
+    Idempotent per account: a retried call (e.g. the future join/settle route retrying a failed
+    request) must not hand the same account a second Run identity and a second shared-Network
+    entry, so an existing ``WorkshopPlayer`` for ``account`` is returned as-is instead of
+    constructing another one.
     """
     if config.workshop is None:
         raise NotAWorkshopRunError(f"instance is not a Workshop Run: {config.name!r}")
+    existing = next(WorkshopPlayer.filter_by(account_id=account.account_id), None)
+    if existing is not None:
+        return existing
     network = get_or_create_shared_network()
     player = WorkshopPlayer(account_id=account.account_id, username=account.username)
     player.network = network

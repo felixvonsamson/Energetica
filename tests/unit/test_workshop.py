@@ -60,6 +60,19 @@ def test_join_accepts_a_workshop_run() -> None:
     assert isinstance(player, WorkshopPlayer)
 
 
+def test_joining_twice_with_the_same_account_returns_the_existing_player() -> None:
+    """A retried join must not hand one account a second Run identity or a second shared-Network
+    entry (greptile review on #1048).
+    """
+    first = join_workshop_run(_account(1, "alice"), WORKSHOP_CONFIG)
+    second = join_workshop_run(_account(1, "alice"), WORKSHOP_CONFIG)
+
+    assert second is first
+    assert len(WorkshopPlayer.all()) == 1
+    assert first.network is not None
+    assert first.network.members == [first]
+
+
 # --- shared Network -----------------------------------------------------------------------
 
 
