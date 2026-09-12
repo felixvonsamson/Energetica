@@ -267,10 +267,10 @@ def initialize_player(account: Account, tile: HexTile) -> Player:
 
     # Settling is what makes this run appear under the account's "your runs" in the lobby and the
     # in-run switcher. No-op without a slug (dev / unconfigured), where there is no lobby anyway.
-    # Best-effort, like instance_config.publish: this runs after the irreversible in-memory settle
-    # above, so a DB failure (e.g. SQLITE_BUSY on the shared accounts.db) must never propagate and
-    # fail an otherwise-successful settle — that would leave the player wedged (settled in-engine
-    # but the request 500s). A missing row is recoverable via scripts/backfill-instance-membership.py.
+    # TODO: a DB failure here (e.g. SQLITE_BUSY on the shared accounts.db) is currently swallowed
+    # so it doesn't 500 an otherwise-successful settle, but silently dropping the membership row
+    # with no alerting and no recovery path is not a validated design — revisit whether this
+    # should surface loudly instead (see discussion on scripts/ cleanup PR).
     # MembershipRoleConflictError is deliberately NOT caught here: get_playing_account already
     # rejects a facilitator before they ever reach settle, so this should be unreachable — if it
     # ever fires, that invariant broke and the 500 should surface loudly, not be swallowed as if

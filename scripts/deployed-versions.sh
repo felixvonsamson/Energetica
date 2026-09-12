@@ -4,8 +4,7 @@ set -euo pipefail
 # Energetica — show the deployed version of every instance + the lobby on a server, and how
 # each compares to a reference commit (default: origin/main).
 #
-#   ./scripts/deployed-versions.sh --server <ssh-host> --domain <apex> \
-#        [--user <ssh-user>] [--ref <git-ref>]
+#   ./scripts/deployed-versions.sh --server <ssh-host> --domain <apex> [--ref <git-ref>]
 #
 # Reads each component's public /healthz (added for the lobby in the same change that added
 # this script) and prints its stamped backend commit, frontend commit, dirty flags, and a
@@ -15,7 +14,9 @@ set -euo pipefail
 # This is a read-only diagnostic — it deploys nothing. Requires git (locally) and jq.
 
 REMOTE_HOST="${DEPLOY_HOST:-}"
-REMOTE_USER="${DEPLOY_USER:-deploy}"
+# Never varied across this server's history — hardcoded rather than a configurable
+# parameter (YAGNI); the OS account named "deploy" must already exist.
+readonly REMOTE_USER="deploy"
 DOMAIN="${DEPLOY_DOMAIN:-}"
 REF="origin/main"
 
@@ -23,7 +24,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --server) REMOTE_HOST="$2"; shift 2 ;;
         --domain) DOMAIN="$2"; shift 2 ;;
-        --user) REMOTE_USER="$2"; shift 2 ;;
         --ref) REF="$2"; shift 2 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac

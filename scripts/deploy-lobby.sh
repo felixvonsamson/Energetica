@@ -7,7 +7,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/version-stamp.sh"
 # Energetica — deploy the lobby service (backend + SPA bundle, rsync only, no git).
 #
 #   ./scripts/deploy-lobby.sh --server <ssh-host> --domain <apex> \
-#        [--user <ssh-user>] [--yes] [--skip-build] [--skip-deps]
+#        [--yes] [--skip-build] [--skip-deps]
 #
 # Builds the lobby bundle locally, rsyncs the Python backend + dist-lobby to
 # /var/www/energetica-lobby, (re)installs deps into the server venv, restarts the
@@ -21,7 +21,9 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/version-stamp.sh"
 # The first run after setup-lobby.sh is what actually STARTS the lobby.
 
 REMOTE_HOST="${DEPLOY_HOST:-}"
-REMOTE_USER="${DEPLOY_USER:-deploy}"
+# Never varied across this server's history — hardcoded rather than a configurable
+# parameter (YAGNI); the OS account named "deploy" must already exist.
+readonly REMOTE_USER="deploy"
 DOMAIN="${DEPLOY_DOMAIN:-}"
 AUTO_CONFIRM=false
 SKIP_BUILD=false
@@ -32,7 +34,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --server) REMOTE_HOST="$2"; shift 2 ;;
         --domain) DOMAIN="$2"; shift 2 ;;
-        --user) REMOTE_USER="$2"; shift 2 ;;
         --yes) AUTO_CONFIRM=true; shift ;;
         --skip-build) SKIP_BUILD=true; shift ;;
         --skip-deps) SKIP_DEPS=true; shift ;;
@@ -81,9 +82,8 @@ except Exception as exc:
 sys.exit(0 if row else 1)
 '\'''; then
     log_error "instance_membership is not present in /var/lib/energetica/accounts.db (or it could not be verified)."
-    echo "Phase A must be deployed first: its write-on-settle code creates the table and"
-    echo "scripts/backfill-instance-membership.py backfills existing players. Without it the"
-    echo "lobby would show every existing player zero runs, silently. Refusing to deploy."
+    echo "Phase A must be deployed first: its write-on-settle code creates the table. Without it"
+    echo "the lobby would show every existing player zero runs, silently. Refusing to deploy."
     exit 1
 fi
 log_success "Phase A precondition met"
@@ -114,6 +114,10 @@ fi
 # --- 4. rsync backend code ----------------------------------------------------------
 # Ship the Python backend (energetica/ + lobby/ + main_lobby.py). Same exclusions as
 # deploy-instance.sh, plus dist-lobby (synced separately with --delete below).
+#
+# scripts/ is excluded here and synced separately (step 4b): only scripts/lobby/ belongs
+# in the lobby dir (export_instance_to_csv.py is instance-only; scripts/dev/, scripts/lib/,
+# scripts/infra/, scripts/*.ts never need to touch the server at all).
 log_step "Syncing backend code..."
 rsync -az --delete \
     --exclude='.git' \
@@ -127,8 +131,14 @@ rsync -az --delete \
     --exclude='energetica/static/app' \
     --exclude='dist-lobby/' \
     --exclude='DEPLOYED_VERSION.json' \
+    --exclude='scripts' \
     ./ "$SSH:$REMOTE_PATH/" >/dev/null
 log_success "Backend synced"
+
+# --- 4b. rsync lobby-scoped scripts (flattened: scripts/lobby/* → scripts/*) --------------
+log_step "Syncing lobby scripts..."
+rsync -az --delete ./scripts/lobby/ "$SSH:$REMOTE_PATH/scripts/" >/dev/null
+log_success "Lobby scripts synced"
 
 # --- 5. rsync lobby bundle (hashed assets need pruning → --delete) ------------------
 log_step "Syncing lobby bundle..."

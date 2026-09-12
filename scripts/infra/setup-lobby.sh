@@ -5,7 +5,7 @@ set -euo pipefail
 # per VPS, as root, AFTER setup-base.sh and setup-landing.sh.
 #
 #   sudo bash scripts/infra/setup-lobby.sh --domain <apex-domain> \
-#        [--port 8002] [--deploy-user <user>] [--yes]
+#        [--port 8002] [--yes]
 #
 # Creates the lobby dir + venv, the Apache vhost (lobby.{apex}) + TLS, and the
 # energetica-lobby.service unit (enabled, NOT started). Like setup-instance.sh it ships
@@ -17,7 +17,9 @@ set -euo pipefail
 # predates them — it is idempotent).
 
 DOMAIN="${ENERGETICA_DOMAIN:-}"
-DEPLOY_USER="${DEPLOY_USER:-deploy}"
+# Never varied across this server's history — hardcoded rather than a configurable
+# parameter (YAGNI); the OS account named "deploy" must already exist (setup-base.sh).
+readonly DEPLOY_USER="deploy"
 PORT=8002
 AUTO_CONFIRM=false
 APP_DIR=/var/www/energetica-lobby
@@ -27,9 +29,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --domain) DOMAIN="$2"; shift 2 ;;
         --port) PORT="$2"; shift 2 ;;
-        --deploy-user) DEPLOY_USER="$2"; shift 2 ;;
         --yes) AUTO_CONFIRM=true; shift ;;
-        *) echo "Unknown option: $1"; echo "Usage: sudo bash setup-lobby.sh --domain <apex-domain> [--port 8002] [--deploy-user <user>] [--yes]"; exit 1 ;;
+        *) echo "Unknown option: $1"; echo "Usage: sudo bash setup-lobby.sh --domain <apex-domain> [--port 8002] [--yes]"; exit 1 ;;
     esac
 done
 

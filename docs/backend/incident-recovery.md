@@ -76,13 +76,7 @@ followed by rapid tick replays (`t = XXXX`). If the engine logs an error instead
 
 **The actions log itself is corrupt or truncated.** The engine will abort on the malformed line. In this case you lose actions from the truncation point forward; restore without the log or replay up to the last valid tick.
 
-**The checkpoint predates the `User`→`Player` migration (ADR-0004) and `--load_checkpoint` fails to unpickle.** `energetica/database/user.py` was deleted when `Player` absorbed `username`/`pwhash`/`account_id` directly, so a checkpoint taken before that change still pickles `User` instances — `pickle.load` needs the class importable at its original path to reconstruct them, and fails with an error naming `energetica.database.user`. Step 2 extracts `checkpoints/last_checkpoint.tar.gz` into `instance/` before you'd see this, so after extracting (and before starting the replay) run the one-time compatibility migration on the restored pickle:
-
-```bash
-sudo -u energetica .venv/bin/python scripts/migrate-drop-user.py --pickle instance/engine_data.pck
-```
-
-Idempotent and a no-op on a checkpoint that's already past the migration, so it's safe to run on every restore as a precaution.
+**The checkpoint predates the `User`→`Player` migration (ADR-0004) and `--load_checkpoint` fails to unpickle.** `energetica/database/user.py` was deleted when `Player` absorbed `username`/`pwhash`/`account_id` directly, so a checkpoint taken before that change still pickles `User` instances — `pickle.load` needs the class importable at its original path to reconstruct them, and fails with an error naming `energetica.database.user`. The one-time compatibility migration for this (`scripts/migrate-drop-user.py`) has been retired — it was only ever needed once per instance, all live instances are long past it, and a checkpoint old enough to hit this is not expected to still be in backup rotation. If this ever fires in practice, treat it as a signal that a genuinely ancient backup is being restored: recover the script from git history (it existed through the "scripts cleanup" PR) rather than restoring that checkpoint blind.
 
 ## Common causes
 

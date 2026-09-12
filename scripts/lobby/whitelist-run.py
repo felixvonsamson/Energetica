@@ -1,5 +1,8 @@
-#!/usr/bin/env python3
+#!.venv/bin/python
 """Grow (or trim) a private run's roster from the shell (#1030 follow-up, ADR-0007).
+
+Run from the lobby directory (this script is deployed only there — it touches the shared
+accounts.db, not any single instance's engine).
 
 Replaces ``scripts/infra/whitelist-instance.sh``, which edited ``instance.json``'s
 ``allowed_usernames`` directly — the backend no longer reads that field. This is the same write
@@ -16,14 +19,13 @@ live ``Player`` table; see ``energetica.utils.misc.record_join_reconciling_settl
 script only touches ``accounts.db`` — it has no connection to the running instance's engine — so
 it cannot do that reconciliation itself. Re-adding such an account here brings back a joined-but-
 unsettled row (the entry gate still lets them straight back in, since that reads the engine's
-``Player`` directly; only the lobby's "Settle" vs "Continue" label is briefly wrong). Run
-``scripts/backfill-instance-membership.py`` against a stopped instance afterward if that display
-needs to be exact right away, or use the facilitator roster page for this re-add instead.
+``Player`` directly; only the lobby's "Settle" vs "Continue" label is briefly wrong). Use the
+facilitator roster page for this re-add instead if that display needs to be exact right away.
 
-Usage:
-    python scripts/whitelist-run.py <slug> list
-    python scripts/whitelist-run.py <slug> add    <username> [<username> ...]
-    python scripts/whitelist-run.py <slug> remove <username> [<username> ...]
+Usage (from /var/www/energetica-lobby):
+    ./scripts/whitelist-run.py <slug> list
+    ./scripts/whitelist-run.py <slug> add    <username> [<username> ...]
+    ./scripts/whitelist-run.py <slug> remove <username> [<username> ...]
 
     [--accounts-db <path>]
 
@@ -63,10 +65,13 @@ def main() -> int:
     # inherits db.py's dev-oriented default.
     os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = str(args.accounts_db)
 
-    # This script lives in scripts/, not the repo root, so the interpreter's default sys.path
-    # (the script's own directory) never includes the repo root — `energetica` isn't installed
-    # into the venv as a package, so importing it needs the repo root added explicitly.
-    sys.path.insert(0, str(Path(__file__).parent.parent))
+    # `energetica` isn't installed into the venv as a package, so importing it needs the app
+    # root on sys.path explicitly. This script is always run from the lobby's app root (that's
+    # what makes its `#!.venv/bin/python` shebang resolve to the right interpreter in the first
+    # place), so the CWD *is* the app root — resolve from there, not from this file's own
+    # location (which differs between the repo checkout, scripts/lobby/, and the deployed
+    # lobby, scripts/).
+    sys.path.insert(0, str(Path.cwd()))
     from energetica import accounts
 
     if args.action == "list":

@@ -90,7 +90,7 @@ an instant kick is deferred to the ban surface
 ([#677](https://github.com/felixvonsamson/Energetica/issues/677)).
 
 **Bootstrap is a CLI seed, grant-only.** The first grant is seeded out-of-band by a
-sysadmin from the shell (`scripts/grant-facilitator.py`), defaulting to server-wide. There
+sysadmin from the shell (`scripts/lobby/grant-facilitator.py`), defaulting to server-wide. There
 is deliberately no revoke command yet — YAGNI, given a single long-lived facilitator per
 short-lived instance; add one the day it's actually needed. The old per-instance
 auto-provisioned `admin` account is **removed** — it existed only because this framework
@@ -198,7 +198,7 @@ or it applies uniformly). Format is a non-empty subset of {persistent, workshop}
 | Capability | Owner | Scope | Format | Plane | Status |
 |---|---|---|---|---|---|
 | Set access policy (public / private) | sysadmin | n/a | both | out-of-band | built (stays out-of-band — exposure lever, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
-| Manage instance whitelist | facilitator | instance | persistent | in-app | built (graduated from out-of-band; the roster lives in `accounts.db`, ADR-0007 — `scripts/whitelist-run.py` remains for a sysadmin who'd rather not go through the facilitator UI) |
+| Manage instance whitelist | facilitator | instance | persistent | in-app | built (graduated from out-of-band; the roster lives in `accounts.db`, ADR-0007 — `scripts/lobby/whitelist-run.py` remains for a sysadmin who'd rather not go through the facilitator UI) |
 | Server-wide signup toggle | sysadmin | n/a | both | out-of-band | built (stays out-of-band — exposure lever, [#898](https://github.com/felixvonsamson/Energetica/issues/898)) |
 | Facilitator bypasses access allowlist | facilitator | server-wide or instance | both | in-app | built (ADR-0004) |
 | Discover own scoped facilitator run(s) from the lobby picker | facilitator | instance | both | in-app | built ([#1032](https://github.com/felixvonsamson/Energetica/issues/1032)) |

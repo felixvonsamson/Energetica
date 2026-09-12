@@ -462,8 +462,8 @@ scripts/
                                 does not touch /etc/energetica/{instance}/instance.json (admin-owned);
                                 restart triggers fragment + aggregation rewrite
   list-instances.sh             ← usage: --server <server>; queries systemd, prints name/port/status table
-  migrate-to-server-accounts.py  ← one-time per VPS; backfills accounts.db from the existing instance's pickle
-                                   and writes account_id into each pickle User row
+  migrate-to-server-accounts.py  ← RETIRED (one-time per VPS; already run on every existing VPS — see
+                                   "migrate-to-server-accounts.py flow" below for what it did)
 ```
 
 `scripts/vps-setup.sh` is superseded by the three `infra/setup-*.sh` scripts and will be removed.
@@ -503,20 +503,13 @@ Scripts accept all inputs via arguments or env vars and support `--yes` to suppr
 
 No service restart — landing is pure static. `instances.json` and `instances/` are not touched — they are owned by the instance backends and must not be overwritten.
 
-### `migrate-to-server-accounts.py` flow
+### `migrate-to-server-accounts.py` flow (retired)
 
-Run once per VPS, before the first deploy that ships server-wide accounts. Safely re-runnable: a partial failure (e.g. crash after some SQLite inserts but before the pickle is saved) is recovered by re-running the script.
-
-1. Stop the instance service (`systemctl stop energetica-{instance}`) to prevent concurrent pickle mutation
-2. Load the existing engine pickle (`/var/www/energetica-{instance}/instance/engine_data.pck`)
-3. For each `User` in the engine's user table whose `account_id` is unset:
-   - `INSERT OR IGNORE INTO accounts (username, pwhash, email, created_at) VALUES (?, ?, NULL, ?)` — `OR IGNORE` so an already-inserted row from a previous partial run is not treated as an error
-   - `SELECT account_id FROM accounts WHERE username = ?` — retrieves the `account_id` whether the row was just inserted or already existed
-   - Write `account_id` back into the pickle `User`
-4. Save the modified pickle
-5. Restart the instance service
-
-The combination of (in-memory) per-user `account_id` guard and (on-disk) `INSERT OR IGNORE` + `SELECT` covers both failure modes: an interrupted run that didn't save the pickle, and an interrupted run that did. In both cases, re-running reaches the same end state.
+This was a one-time-per-VPS migration, run once before the first deploy that shipped server-wide
+accounts, to backfill `accounts.db` from each instance's existing pickle and write `account_id`
+back into every pickle `User` row. It has since run on every VPS that will ever need it and was
+deleted — see the scripts-cleanup PR. Nothing on a fresh VPS ever needs it again: a new instance
+starts with server-wide accounts from day one.
 
 Today there is exactly one instance per VPS, so no cross-instance username collisions are possible during migration. If multiple instances ever exist before this migration runs (e.g. on a new server that bootstrapped multi-instance before accounts were unified), the script must be re-thought.
 

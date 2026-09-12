@@ -29,7 +29,9 @@ set -euo pipefail
 # Requires DNS for {instance}.{apex-domain} to already resolve here (for TLS issuance).
 
 DOMAIN="${ENERGETICA_DOMAIN:-}"
-DEPLOY_USER="${DEPLOY_USER:-deploy}"
+# Never varied across this server's history — hardcoded rather than a configurable
+# parameter (YAGNI); the OS account named "deploy" must already exist (setup-base.sh).
+readonly DEPLOY_USER="deploy"
 NAME=""
 ADVERTISED="true"
 STARTS_AT=""
@@ -48,7 +50,6 @@ POSITIONAL=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --domain) DOMAIN="$2"; shift 2 ;;
-        --deploy-user) DEPLOY_USER="$2"; shift 2 ;;
         --name) NAME="$2"; shift 2 ;;
         --no-advertise) ADVERTISED="false"; shift ;;
         --starts-at) STARTS_AT="$2"; shift 2 ;;
@@ -276,5 +277,5 @@ echo "  ./scripts/deploy-instance.sh --server <ssh-host> --instance $INSTANCE --
 echo
 echo "For a private/unadvertised instance, edit the policy before first login:"
 echo "  sudo \$EDITOR $CONFIG_DIR/instance.json   # set advertised/access.policy"
-echo "Then grow its roster (facilitator UI, or from the shell):"
-echo "  python scripts/whitelist-run.py $INSTANCE add <username> [<username> ...]"
+echo "Then grow its roster (facilitator UI, or from the shell, from the lobby directory):"
+echo "  cd /var/www/energetica-lobby && ./scripts/whitelist-run.py $INSTANCE add <username> [<username> ...]"

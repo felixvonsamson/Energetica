@@ -2,7 +2,7 @@
 """
 Wiki link checker and connection visualizer.
 
-Usage: python scripts/check_wiki_links.py [port=5173]
+Usage: python scripts/dev/check_wiki_links.py [port=5173]
 
 Checks all links in wiki MDX files for 2XX responses, then outputs
 Mermaid flowchart and mindmap of inter-wiki connections.
@@ -16,7 +16,7 @@ from pathlib import Path
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 5173
 BASE_URL = f"http://localhost:{PORT}"
-ROOT = Path(__file__).parent.parent
+ROOT = Path(__file__).parent.parent.parent
 WIKI_DIR = ROOT / "frontend/src/content/wiki"
 ROUTES_DIR = ROOT / "frontend/src/routes"
 

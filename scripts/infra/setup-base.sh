@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Energetica — per-server base setup. Run ONCE per VPS, as root.
 #
-#   sudo bash scripts/infra/setup-base.sh [--deploy-user <user>] [--yes]
+#   sudo bash scripts/infra/setup-base.sh [--yes]
 #
 # Installs Apache + modules, Python, certbot, jq and a firewall; creates the shared
 # `energetica` group and service user, the server-wide accounts dir, and the admin-owned
@@ -12,15 +12,16 @@ set -euo pipefail
 # After this, run setup-landing.sh (apex vhost) then setup-instance.sh per instance.
 # Superseded scripts/vps-setup.sh (removed in this phase).
 
-DEPLOY_USER="${DEPLOY_USER:-deploy}"
+# The SSH/rsync deploy user. Never varied across this server's history — hardcoded rather
+# than a configurable parameter (YAGNI); the OS account named "deploy" must already exist.
+readonly DEPLOY_USER="deploy"
 AUTO_CONFIRM=false
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --deploy-user) DEPLOY_USER="$2"; shift 2 ;;
         --yes) AUTO_CONFIRM=true; shift ;;
-        *) echo "Unknown option: $1"; echo "Usage: sudo bash setup-base.sh [--deploy-user <user>] [--yes]"; exit 1 ;;
+        *) echo "Unknown option: $1"; echo "Usage: sudo bash setup-base.sh [--yes]"; exit 1 ;;
     esac
 done
 
@@ -118,7 +119,7 @@ EOF
         log_error "sudoers syntax invalid — removed $SUDOERS_FILE; deploys will prompt for a password"
     fi
 else
-    log_error "Deploy user '$DEPLOY_USER' does not exist — create it or pass --deploy-user; skipping"
+    log_error "Deploy user '$DEPLOY_USER' does not exist — create it first; skipping"
 fi
 
 # --- Server-wide accounts dir ---------------------------------------------------
