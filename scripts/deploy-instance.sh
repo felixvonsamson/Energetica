@@ -93,7 +93,7 @@ echo
 log_step "Deployment summary:"
 echo "  Instance:  $INSTANCE   (https://$FQDN)"
 echo "  Remote:    $SSH:$REMOTE_PATH"
-echo "  Steps:     rsync backend → rsync app bundle → install backend → restart → health check"
+echo "  Steps:     rsync backend → rsync app bundle → install backend → restart → health check (API + app shell)"
 echo
 if [ "$AUTO_CONFIRM" = false ]; then
     read -r -p "Continue? (y/n) " -n 1 -r; echo
@@ -105,8 +105,8 @@ fi
 # the tree and is installed in step 5. Exclude local build artifacts, the local venv, the
 # frontend source, and — critically — instance/ and checkpoints/ (server-side game state) and
 # the app bundle dir (synced separately with --delete below). --delete prunes removed backend
-# files, including any stale wheel in dist/, but never touches the excluded paths.
-# checkpoints/ MUST be excluded: the service (user
+# files, including any stale wheel in dist/, but never touches the excluded paths. checkpoints/
+# MUST be excluded: the service (user
 # `energetica`) writes checkpoints/{new,last}_checkpoint.tar.gz at runtime, but rsync arrives
 # as `deploy` — shipping the dir hands it to deploy:deploy and the service can no longer
 # overwrite it (silent PermissionError on every checkpoint), same reasoning as instance/.
@@ -151,25 +151,53 @@ fi
 log_success "Service is running"
 
 # --- 7. Health check ------------------------------------------------------------
-log_step "Waiting for /healthz status=ok on https://$FQDN..."
+# Two conditions, not one. /healthz proves uvicorn is serving, but it is reached through the
+# ProxyPass — it says nothing about the Alias directives that serve the app bundle off disk. A
+# vhost pointing at the wrong path leaves the API perfectly healthy while every player gets a
+# 404 for the app itself, which is a deploy that "succeeded" and broke the site. So the app
+# shell is probed too, the same way deploy-lobby.sh already probes its own SPA shell.
+#
+# Both are polled in one loop rather than gated in sequence, which is what makes the vhost path
+# change ship safely: on an instance whose vhost still points at the old location, the deploy
+# waits here while the operator edits and reloads it, then goes green on its own.
+log_step "Waiting for /healthz status=ok and the app shell on https://$FQDN..."
 HEALTH_DEADLINE=$(( $(date +%s) + 600 ))
 HEALTH_OK=false
+HEALTH_STATUS=""
+APP_SHELL_CODE=""
 while [ "$(date +%s)" -lt "$HEALTH_DEADLINE" ]; do
     HZ=$(curl -fsS --max-time 5 "https://$FQDN/healthz" 2>/dev/null || true)
     if [ -n "$HZ" ]; then
-        STATUS=$(echo "$HZ" | jq -r '.status' 2>/dev/null || echo "")
+        HEALTH_STATUS=$(echo "$HZ" | jq -r '.status' 2>/dev/null || echo "")
         SCHED_ERRS=$(echo "$HZ" | jq -r '.engine.scheduler_exception_count // 0' 2>/dev/null || echo 0)
-        if [ "$STATUS" = "ok" ] && [ "$SCHED_ERRS" = "0" ]; then
-            HEALTH_OK=true; break
-        elif [ "$SCHED_ERRS" != "0" ]; then
+        if [ "$SCHED_ERRS" != "0" ]; then
             log_error "Scheduler exception on server (count=$SCHED_ERRS)"
             exit 1
+        fi
+        if [ "$HEALTH_STATUS" = "ok" ]; then
+            APP_SHELL_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "https://$FQDN/static/app/index.html" || true)
+            if [ "$APP_SHELL_CODE" = "200" ]; then
+                HEALTH_OK=true; break
+            fi
         fi
     fi
     sleep 5
 done
-[ "$HEALTH_OK" = true ] || { log_error "/healthz did not reach status=ok within 600s"; echo "Logs: ssh $SSH 'sudo journalctl -u energetica-$INSTANCE -f'"; exit 1; }
-log_success "/healthz status=ok"
+if [ "$HEALTH_OK" != true ]; then
+    if [ "$HEALTH_STATUS" = "ok" ]; then
+        # The backend is fine and Apache is not serving the bundle — almost always the vhost.
+        log_error "/healthz is ok but /static/app/index.html returned '$APP_SHELL_CODE' within 600s."
+        echo "Apache serves the app bundle off disk via the Alias directives in the instance vhost."
+        echo "Check they match where the bundle now lives:"
+        echo "  ssh $SSH 'grep static /etc/apache2/sites-available/energetica-$INSTANCE.conf'"
+        echo "  ssh $SSH 'ls $REMOTE_PATH/src/energetica/static/app/index.html'"
+    else
+        log_error "/healthz did not reach status=ok within 600s (last status: '${HEALTH_STATUS:-unreachable}')"
+        echo "Logs: ssh $SSH 'sudo journalctl -u energetica-$INSTANCE -f'"
+    fi
+    exit 1
+fi
+log_success "/healthz status=ok, app shell 200"
 
 # --- 8. Stamp the deployed backend version -------------------------------------
 # Written only now — after the new process is confirmed serving — so /healthz never reports a

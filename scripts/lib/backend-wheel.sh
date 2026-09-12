@@ -43,15 +43,36 @@ build_backend_wheel() {
 
     local dist_dir="$_BACKEND_WHEEL_REPO_ROOT/dist"
     log_step "Building backend wheel..."
-    # Emptied first so the directory holds exactly one wheel. The project version rarely changes
-    # between deploys, so a previous build would leave a same-named file behind and there would
-    # be no way to tell which one was just built.
-    rm -rf "$dist_dir"
+    # Clear every artifact of a previous build, not just the wheel.
+    #
+    # dist/ so the directory holds exactly one wheel: the project version rarely changes between
+    # deploys, so a previous build leaves a same-named file behind and there is no way to tell
+    # which one was just built.
+    #
+    # build/ because setuptools assembles the wheel from build/lib rather than from the source
+    # tree, and it copies into that directory without ever pruning it. A file deleted or renamed
+    # since the last build is still sitting there and still ships — the wheel silently stops
+    # matching the source tree, and the first sign of it is on the server. The same staleness
+    # also re-adds files that the current package-data configuration excludes.
+    #
+    # The .egg-info directory for the same reason: its SOURCES.txt is regenerated from whatever
+    # the previous build left behind.
+    rm -rf "$dist_dir" "$_BACKEND_WHEEL_REPO_ROOT/build" "$_BACKEND_WHEEL_REPO_ROOT"/src/*.egg-info
     "$python" -m pip wheel --quiet --no-deps --wheel-dir "$dist_dir" "$_BACKEND_WHEEL_REPO_ROOT" || {
         log_error "Backend wheel build failed"
         exit 1
     }
     BACKEND_WHEEL="$(basename "$dist_dir"/*.whl)"
+
+    # The server installs the wheel as the `energetica` service user, but the instance tree is
+    # 2750 deploy:energetica — so the service user reaches the wheel through the group bit only.
+    # `rsync -a` preserves local permissions, so a developer with a restrictive umask (pip writes
+    # the wheel 0600 under umask 077) would ship a file the service user cannot read, failing
+    # every deploy at the install step. Normalise locally and let `rsync -a` carry the result
+    # across, exactly as deploy-lobby.sh does for the SPA bundle: dirs 755, files 644. rsync's
+    # --chmod would do this during transfer, but macOS ships openrsync, which rejects it.
+    chmod -R u=rwX,g=rX,o=rX "$dist_dir"
+
     log_success "Backend wheel built ($BACKEND_WHEEL)"
 }
 
