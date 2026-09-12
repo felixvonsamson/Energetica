@@ -154,17 +154,44 @@ log_success "Service is running"
 # Two conditions, not one. /healthz proves uvicorn is serving, but it is reached through the
 # ProxyPass — it says nothing about the Alias directives that serve the app bundle off disk. A
 # vhost pointing at the wrong path leaves the API perfectly healthy while every player gets a
-# 404 for the app itself, which is a deploy that "succeeded" and broke the site. So the app
-# shell is probed too, the same way deploy-lobby.sh already probes its own SPA shell.
-#
-# Both are polled in one loop rather than gated in sequence, which is what makes the vhost path
-# change ship safely: on an instance whose vhost still points at the old location, the deploy
-# waits here while the operator edits and reloads it, then goes green on its own.
-log_step "Waiting for /healthz status=ok and the app shell on https://$FQDN..."
+# 404 for the app itself, which is a deploy that "succeeded" and broke the site. So whether the
+# app actually loads is checked too, the same way deploy-lobby.sh already probes its own SPA.
+
+# Sets APP_DETAIL to the reason on failure, for the error message below.
+APP_DETAIL=""
+app_is_served() {
+    local shell code asset asset_code
+    # /app/ rather than the index.html behind it: that is the route a player lands on (the bare
+    # root redirects to it), and it exercises DocumentRoot and the SPA FallbackResource as well
+    # as the Alias. A wrong Alias path makes the fallback target unresolvable, so this 404s.
+    shell=$(curl -s --max-time 5 -w '\n%{http_code}' "https://$FQDN/app/" 2>/dev/null || true)
+    code=$(printf '%s' "$shell" | tail -n1 || true)
+    if [ "$code" != "200" ]; then
+        APP_DETAIL="/app/ returned '$code'"
+        return 1
+    fi
+    # The shell names its own hashed bundle, so fetch one. Serving the shell only proves the
+    # fallback resolves; it does not prove the hashed assets beside it are readable — a bundle
+    # rsynced under a restrictive umask gives Apache files it cannot read, which is a 403 on
+    # every asset behind a 200 on the shell (the same failure deploy-lobby.sh guards against).
+    # Apache deliberately does NOT mask a missing asset with the shell, so a 404 here is real.
+    asset=$(printf '%s' "$shell" | grep -o '/static/app/assets/[A-Za-z0-9._-]*\.js' | head -n1 || true)
+    if [ -z "$asset" ]; then
+        APP_DETAIL="/app/ returned 200 but the shell references no hashed bundle (stale or truncated index.html)"
+        return 1
+    fi
+    asset_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "https://$FQDN$asset" 2>/dev/null || true)
+    if [ "$asset_code" != "200" ]; then
+        APP_DETAIL="the app shell loads but its bundle $asset returned '$asset_code'"
+        return 1
+    fi
+    return 0
+}
+
+log_step "Waiting for /healthz status=ok and the app to load on https://$FQDN..."
 HEALTH_DEADLINE=$(( $(date +%s) + 600 ))
 HEALTH_OK=false
 HEALTH_STATUS=""
-APP_SHELL_CODE=""
 while [ "$(date +%s)" -lt "$HEALTH_DEADLINE" ]; do
     HZ=$(curl -fsS --max-time 5 "https://$FQDN/healthz" 2>/dev/null || true)
     if [ -n "$HZ" ]; then
@@ -174,30 +201,27 @@ while [ "$(date +%s)" -lt "$HEALTH_DEADLINE" ]; do
             log_error "Scheduler exception on server (count=$SCHED_ERRS)"
             exit 1
         fi
-        if [ "$HEALTH_STATUS" = "ok" ]; then
-            APP_SHELL_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "https://$FQDN/static/app/index.html" || true)
-            if [ "$APP_SHELL_CODE" = "200" ]; then
-                HEALTH_OK=true; break
-            fi
+        if [ "$HEALTH_STATUS" = "ok" ] && app_is_served; then
+            HEALTH_OK=true; break
         fi
     fi
     sleep 5
 done
 if [ "$HEALTH_OK" != true ]; then
     if [ "$HEALTH_STATUS" = "ok" ]; then
-        # The backend is fine and Apache is not serving the bundle — almost always the vhost.
-        log_error "/healthz is ok but /static/app/index.html returned '$APP_SHELL_CODE' within 600s."
+        # The backend is fine and Apache is not serving the app — almost always the vhost.
+        log_error "/healthz is ok but the app does not load: $APP_DETAIL (gave up after 600s)."
         echo "Apache serves the app bundle off disk via the Alias directives in the instance vhost."
-        echo "Check they match where the bundle now lives:"
+        echo "Check they match where the bundle now lives, and that Apache can read it:"
         echo "  ssh $SSH 'grep static /etc/apache2/sites-available/energetica-$INSTANCE.conf'"
-        echo "  ssh $SSH 'ls $REMOTE_PATH/src/energetica/static/app/index.html'"
+        echo "  ssh $SSH 'ls -l $REMOTE_PATH/src/energetica/static/app/index.html'"
     else
         log_error "/healthz did not reach status=ok within 600s (last status: '${HEALTH_STATUS:-unreachable}')"
         echo "Logs: ssh $SSH 'sudo journalctl -u energetica-$INSTANCE -f'"
     fi
     exit 1
 fi
-log_success "/healthz status=ok, app shell 200"
+log_success "/healthz status=ok, app and its bundle load"
 
 # --- 8. Stamp the deployed backend version -------------------------------------
 # Written only now — after the new process is confirmed serving — so /healthz never reports a
