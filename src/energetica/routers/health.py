@@ -25,9 +25,9 @@ from energetica.utils.version import backend_version, frontend_version
 
 router = APIRouter(prefix="", tags=["Health"])
 
-STATIC_INDEX_PATH = "energetica/static/app/index.html"
+STATIC_INDEX_PATH = "src/energetica/static/app/index.html"
 # Where the built app bundle (and its build-info.json stamp) lives, relative to the repo root.
-APP_BUNDLE_SUBPATH = "energetica/static/app"
+APP_BUNDLE_SUBPATH = "src/energetica/static/app"
 PICKLE_PATH = "instance/engine_data.pck"
 
 Status = Literal["loading_actions", "resimulating", "ok", "degraded"]

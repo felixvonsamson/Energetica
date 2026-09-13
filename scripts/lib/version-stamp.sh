@@ -4,7 +4,7 @@
 # The server carries no git checkout (deploys rsync with --exclude='.git'), so the running
 # backend cannot report its own commit. The deploy machine does have git, so we capture the
 # state here and write it to the deploy root as DEPLOYED_VERSION.json, which
-# energetica/utils/version.py reads for /healthz. Both callers exclude this file from their
+# src/energetica/utils/version.py reads for /healthz. Both callers exclude this file from their
 # rsync --delete so it survives between deploys and is simply overwritten each time.
 #
 #   stamp_deployed_version <ssh-target> <remote-path>

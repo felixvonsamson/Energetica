@@ -57,7 +57,7 @@ def test_frontend_version_reads_bundle_stamp(tmp_path: Path, monkeypatch: pytest
     bundle = tmp_path / "dist-lobby"
     bundle.mkdir()
     (bundle / "build-info.json").write_text('{"commit_short": "feed0000", "source": "build"}')
-    monkeypatch.setattr(version, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(version, "WORKING_DIR", tmp_path)
 
     assert version.frontend_version("dist-lobby") == {"commit_short": "feed0000", "source": "build"}
 
@@ -65,6 +65,6 @@ def test_frontend_version_reads_bundle_stamp(tmp_path: Path, monkeypatch: pytest
 def test_frontend_version_is_none_when_bundle_unstamped(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(version, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(version, "WORKING_DIR", tmp_path)
 
     assert version.frontend_version("dist-lobby") is None

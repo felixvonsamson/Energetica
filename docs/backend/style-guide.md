@@ -4,7 +4,7 @@ Complement to linter enforcement (Ruff + tooling). When in doubt: optimize for c
 
 ## Python
 
--   Target: 3.12 (compatible with 3.11 where feasible)
+-   Target: 3.12 or higher (`requires-python` in `pyproject.toml`; the ruff target is 3.12)
 -   Imports: standard lib, third-party, local (newline separated)
 -   Line length: 120
 -   Type hints: required for public functions & dataclasses; internal helpers may omit trivial types.

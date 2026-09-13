@@ -3,15 +3,19 @@ set -euo pipefail
 
 # shellcheck source=lib/version-stamp.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/version-stamp.sh"
+# shellcheck source=lib/backend-wheel.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-wheel.sh"
 
 # Energetica — deploy the lobby service (backend + SPA bundle, rsync only, no git).
 #
 #   ./scripts/deploy-lobby.sh --server <ssh-host> --domain <apex> \
-#        [--user <ssh-user>] [--yes] [--skip-build] [--skip-deps]
+#        [--user <ssh-user>] [--yes] [--skip-build]
 #
-# Builds the lobby bundle locally, rsyncs the Python backend + dist-lobby to
-# /var/www/energetica-lobby, (re)installs deps into the server venv, restarts the
-# service, and health-checks the live vhost.
+# Builds the lobby bundle and the backend wheel locally, rsyncs the Python backend +
+# dist-lobby to /var/www/energetica-lobby, installs the project into the server venv,
+# restarts the service, and health-checks the live vhost. The install is not optional:
+# the backend lives under src/ and is imported as an installed package, so a deploy that
+# skips it leaves the service unable to start.
 #
 # HARD PRECONDITION (checked before anything ships): the instance_membership table must
 # exist in the server-wide accounts.db — i.e. Phase A (write-on-settle + backfill) is
@@ -25,7 +29,6 @@ REMOTE_USER="${DEPLOY_USER:-deploy}"
 DOMAIN="${DEPLOY_DOMAIN:-}"
 AUTO_CONFIRM=false
 SKIP_BUILD=false
-SKIP_DEPS=false
 REMOTE_PATH=/var/www/energetica-lobby
 
 while [[ $# -gt 0 ]]; do
@@ -35,7 +38,6 @@ while [[ $# -gt 0 ]]; do
         --user) REMOTE_USER="$2"; shift 2 ;;
         --yes) AUTO_CONFIRM=true; shift ;;
         --skip-build) SKIP_BUILD=true; shift ;;
-        --skip-deps) SKIP_DEPS=true; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
@@ -98,13 +100,14 @@ if [ "$SKIP_BUILD" = false ]; then
 else
     log_info "Skipping build (--skip-build)"
 fi
+build_backend_wheel   # see scripts/lib/backend-wheel.sh for why this is not behind --skip-build
 
 # --- 3. Confirm --------------------------------------------------------------------
 echo
 log_step "Deployment summary:"
 echo "  Lobby:   https://$FQDN"
 echo "  Remote:  $SSH:$REMOTE_PATH"
-echo "  Steps:   rsync backend → rsync lobby bundle → pip install → restart → health check"
+echo "  Steps:   rsync backend → rsync lobby bundle → install backend → restart → health check"
 echo
 if [ "$AUTO_CONFIRM" = false ]; then
     read -r -p "Continue? (y/n) " -n 1 -r; echo
@@ -112,8 +115,9 @@ if [ "$AUTO_CONFIRM" = false ]; then
 fi
 
 # --- 4. rsync backend code ----------------------------------------------------------
-# Ship the Python backend (energetica/ + lobby/ + main_lobby.py). Same exclusions as
-# deploy-instance.sh, plus dist-lobby (synced separately with --delete below).
+# Ship the Python backend (src/energetica/ + src/lobby/ + main_lobby.py) and dist/, which
+# holds the wheel built above and installed in step 6. Same exclusions as deploy-instance.sh,
+# plus dist-lobby (synced separately with --delete below).
 log_step "Syncing backend code..."
 rsync -az --delete \
     --exclude='.git' \
@@ -124,7 +128,9 @@ rsync -az --delete \
     --exclude='node_modules' \
     --exclude='__pycache__' \
     --exclude='*.pyc' \
-    --exclude='energetica/static/app' \
+    --exclude='src/energetica/static/app' \
+    --exclude='*.egg-info' \
+    --exclude='build/' \
     --exclude='dist-lobby/' \
     --exclude='DEPLOYED_VERSION.json' \
     ./ "$SSH:$REMOTE_PATH/" >/dev/null
@@ -145,14 +151,8 @@ chmod -R u=rwX,g=rX,o=rX ./frontend/dist-lobby
 rsync -az --delete ./frontend/dist-lobby/ "$SSH:$REMOTE_PATH/dist-lobby/" >/dev/null
 log_success "Lobby bundle synced"
 
-# --- 6. Install deps into the server venv -------------------------------------------
-if [ "$SKIP_DEPS" = false ]; then
-    log_step "Installing Python deps into server venv..."
-    ssh "$SSH" "sudo -u energetica $REMOTE_PATH/.venv/bin/pip install -q -r $REMOTE_PATH/requirements.txt"
-    log_success "Deps installed"
-else
-    log_info "Skipping deps (--skip-deps)"
-fi
+# --- 6. Install the backend into the server venv --------------------------------------
+install_backend_wheel "$SSH" "$REMOTE_PATH"
 
 # --- 7. Restart (first deploy: starts) -----------------------------------------------
 log_step "Restarting energetica-lobby..."
@@ -211,7 +211,7 @@ log_success "Lobby healthy (SPA 200, my-runs 401, manifest 200, accounts.db reac
 # /healthz never reports a commit that failed to activate. The server has no .git (rsync excludes
 # it), so the commit is captured here on the deploy machine. Excluded from the rsync --delete
 # above, so between restart and this write /healthz keeps reporting the previous commit rather
-# than a wrong one. Read by energetica/utils/version.py. See scripts/lib/version-stamp.sh.
+# than a wrong one. Read by src/energetica/utils/version.py. See scripts/lib/version-stamp.sh.
 stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 echo

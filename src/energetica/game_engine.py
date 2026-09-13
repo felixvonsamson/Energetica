@@ -27,6 +27,15 @@ from energetica.schemas.simulate import Action, InitEngineAction
 if TYPE_CHECKING:
     from energetica.database.messages import Chat
 
+# Read-only game data that ships inside the wheel (see `package-data` in pyproject.toml), so it
+# is addressed relative to this file and resolves wherever the package is installed.
+#
+# Everything the engine *writes* — `instance/`, `checkpoints/` — is addressed relative to the
+# working directory instead, both here and in `energetica/__init__.py`. That works because the
+# systemd units pin WorkingDirectory to the run's own directory, and it is the only thing that
+# can work now the code is installed: __file__ points into site-packages, which holds no run
+# state and is shared by every run on the box. The split is deliberate: package data by
+# __file__, run state by working directory.
 _DATA_DIR = Path(__file__).parent / "static" / "data"
 
 

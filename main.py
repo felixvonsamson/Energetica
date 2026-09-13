@@ -15,6 +15,7 @@ import json
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 from energetica import create_app
 
@@ -161,6 +162,12 @@ if __name__ == "__main__":
         "-m",
         "uvicorn",
         "main:app",
+        # uvicorn looks for `main` on the import path, which by default means the working
+        # directory. This file is the app module, so point it at this file's directory
+        # instead: the server then starts correctly from any working directory, and the
+        # game's own instance/ and checkpoints/ paths stay relative to the real one.
+        "--app-dir",
+        str(Path(__file__).resolve().parent),
         "--host",
         "0.0.0.0",
         "--port",

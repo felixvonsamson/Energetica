@@ -5,9 +5,6 @@ import json
 import sys
 from pathlib import Path
 
-# Add the project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from energetica import create_app
 from energetica.game_error import GameExceptionType
 from lobby import create_lobby_app

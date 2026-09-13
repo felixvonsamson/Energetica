@@ -54,9 +54,10 @@ From your local machine:
 ```
 
 - `deploy-instance.sh` builds the app bundle locally (baking `VITE_APEX_DOMAIN` so
-  cross-origin links resolve), rsyncs the Python backend + bundle, reinstalls deps into the
-  server venv, restarts the service, and polls `/healthz`. On restart the instance re-reads
-  `instance.json` and re-publishes its landing fragment, so admin policy edits take effect.
+  cross-origin links resolve) and the backend wheel, rsyncs the Python backend + bundle,
+  installs the wheel into the server venv, restarts the service, and polls `/healthz`. On
+  restart the instance re-reads `instance.json` and re-publishes its landing fragment, so
+  admin policy edits take effect.
   Downtime is ~10-30 seconds while the restart happens — Apache and every other instance keep
   serving throughout. Game state isn't touched: it lives in the instance's own `instance/`
   directory, which the rsync step excludes.
@@ -67,9 +68,10 @@ From your local machine:
 
 - `deploy-lobby.sh` builds the lobby bundle (no apex baking — the lobby derives it from
   its own hostname at runtime), rsyncs the backend + `dist-lobby/` to
-  `/var/www/energetica-lobby`, reinstalls deps, restarts `energetica-lobby`, and
-  health-checks the vhost. **Hard precondition:** it refuses to deploy while the
-  `instance_membership` table is absent from `accounts.db` — Phase A (write-on-settle +
+  `/var/www/energetica-lobby`, installs the backend wheel into the server venv, restarts
+  `energetica-lobby`, and health-checks the vhost. **Hard precondition:** it refuses to
+  deploy while the `instance_membership` table is absent from `accounts.db` — Phase A
+  (write-on-settle +
   `scripts/backfill-instance-membership.py`) must be live first, else the lobby silently
   shows every existing player zero runs (`docs/architecture/lobby.md` § Phasing).
 
@@ -80,9 +82,13 @@ the change up on the next request — no restart.
 
 ### Options
 
-`deploy-instance.sh`: `--yes` (skip confirm), `--skip-build`, `--skip-deps`, `--user <ssh-user>`.
+`deploy-instance.sh`: `--yes` (skip confirm), `--skip-build`, `--user <ssh-user>`.
 `deploy-landing.sh`: `--yes`, `--skip-build`, `--user <ssh-user>`.
-`deploy-lobby.sh`: `--yes`, `--skip-build`, `--skip-deps`, `--user <ssh-user>`.
+`deploy-lobby.sh`: `--yes`, `--skip-build`, `--user <ssh-user>`.
+
+`--skip-build` skips only the frontend bundle. There is no way to skip installing the backend:
+the backend lives under `src/` and is imported as an installed package, so a deploy that did
+not install it would leave the service unable to start.
 
 All inputs also accept env vars (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_DOMAIN`), so the
 scripts run unattended from CI.
