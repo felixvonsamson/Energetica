@@ -60,7 +60,7 @@ export function TechnologyDetailDialog<T>({
         onClose();
     };
 
-    const imageUrl = `/static/images/technologies/${displayedTechnology?.name}.png`;
+    const imageUrl = `/static/images/technologies/${displayedTechnology?.name}.webp`;
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

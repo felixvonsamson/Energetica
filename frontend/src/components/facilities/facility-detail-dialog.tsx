@@ -123,7 +123,7 @@ function FacilityContent<T>(
     handleConstruction: () => void,
     affectingTechnologies: string[],
 ) {
-    const imageUrl = `/static/images/${facilityType}_facilities/${facility.name}.png`;
+    const imageUrl = `/static/images/${facilityType}_facilities/${facility.name}.webp`;
     const isLocked = facility.requirements_status === "unsatisfied";
     const hasUnsatisfiedRequirements = facility.requirements.some(
         (r) => r.status !== "satisfied",
