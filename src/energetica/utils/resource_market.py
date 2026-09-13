@@ -9,7 +9,7 @@ from energetica.enums import Fuel
 from energetica.schemas.notifications import ResourceSoldPayload, ShipmentArrivedPayload
 from energetica.game_error import GameError, GameExceptionType
 from energetica.globals import engine
-from energetica.utils.formatting import display_money, format_mass
+from energetica.utils.formatting import format_money, format_mass
 
 
 def calculate_shipment_duration(buyer: Player, seller: Player) -> float:
@@ -94,7 +94,7 @@ def purchase_resource(buyer: Player, quantity: float, sale: ResourceOnSale) -> R
         engine.log(
             f"{buyer.username} bought {format_mass(quantity)} of "
             f"{sale.resource} from {sale.player.username} for a total cost of "
-            f"{display_money(total_price)}.",
+            f"{format_money(total_price)}.",
         )
         if sale.quantity == 0:
             # Player is purchasing all available quantity
