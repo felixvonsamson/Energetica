@@ -65,13 +65,6 @@ def main() -> int:
     # inherits db.py's dev-oriented default.
     os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = str(args.accounts_db)
 
-    # `energetica` isn't installed into the venv as a package, so importing it needs the app
-    # root on sys.path explicitly. This script is always run from the lobby's app root (that's
-    # what makes its `#!.venv/bin/python` shebang resolve to the right interpreter in the first
-    # place), so the CWD *is* the app root — resolve from there, not from this file's own
-    # location (which differs between the repo checkout, scripts/lobby/, and the deployed
-    # lobby, scripts/).
-    sys.path.insert(0, str(Path.cwd()))
     from energetica import accounts
 
     if args.action == "list":

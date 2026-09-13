@@ -150,13 +150,13 @@ autumn-2025.energetica-game.org
 ├── /api/*             → ProxyPass → uvicorn :8001
 ├── /socket.io         → ProxyPass → uvicorn :8001  (+ WS upgrade)
 ├── /logout            → ProxyPass → uvicorn :8001
-├── /static/app/       → Apache serves energetica/static/app/
-├── /static/images/    → Apache serves energetica/static/images/
-├── /static/data/      → Apache serves energetica/static/data/
-├── /service-worker.js → Apache serves energetica/static/service-worker.js
-├── /manifest.json     → Apache serves energetica/static/app/manifest.json  (PWA, per-instance)
+├── /static/app/       → Apache serves src/energetica/static/app/
+├── /static/images/    → Apache serves src/energetica/static/images/
+├── /static/data/      → Apache serves src/energetica/static/data/
+├── /service-worker.js → Apache serves src/energetica/static/service-worker.js
+├── /manifest.json     → Apache serves src/energetica/static/app/manifest.json  (PWA, per-instance)
 ├── /                  → RedirectMatch ^/$ → /app/   (bare root → React router takes over)
-└── /app/*             → FallbackResource → energetica/static/app/index.html
+└── /app/*             → FallbackResource → src/energetica/static/app/index.html
 ```
 
 `manifest.json` is part of the app bundle output and must be served at the root path (PWA requirement). Apache aliases it explicitly. It is per-instance because the PWA manifest may eventually carry instance-specific metadata (name, scope, icons).
@@ -479,7 +479,7 @@ scripts/
 7. Update vhost with SSL directives, reload Apache
 8. Install certbot deploy hook to reload Apache on certificate renewal
 9. Create and enable `energetica-{instance}.service` systemd unit (runs as a user in group `energetica` so it can write fragments to the landing's `instances/` dir)
-10. `pip install -r requirements.txt`, start service — on startup the instance writes its sanitised fragment to `/var/www/energetica-landing/instances/{instance}.json` and runs the aggregation step
+10. `pip install <the backend wheel>`, start service — on startup the instance writes its sanitised fragment to `/var/www/energetica-landing/instances/{instance}.json` and runs the aggregation step
 
 TLS provisioning (steps 6–8) requires the DNS record for `{instance}.{domain}` to already resolve to the server before running.
 
@@ -488,9 +488,9 @@ TLS provisioning (steps 6–8) requires the DNS record for `{instance}.{domain}`
 1. Build app bundle (`bun run build:app`)
 2. Confirm deployment summary (skipped with `--yes`)
 3. `rsync` Python backend code to server (excluding `.venv`, `instance/`, build artifacts). `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is admin-owned, so it is never touched by deploys.
-4. `rsync` app bundle to server (`energetica/static/app/`)
-5. `rsync` service worker to server (`energetica/static/service-worker.js` — built separately by `build:sw`, lives outside the app bundle directory)
-6. `pip install -r requirements.txt` on server if dependencies changed
+4. `rsync` app bundle to server (`src/energetica/static/app/`)
+5. `rsync` service worker to server (`src/energetica/static/service-worker.js` — built separately by `build:sw`, lives outside the app bundle directory)
+6. `pip install` the backend wheel into the server venv (every deploy — the package no longer resolves from the working directory)
 7. `systemctl restart energetica-{instance}` — on restart the instance re-publishes its fragment and re-runs aggregation, picking up any admin edits to `instance.json` made since the last start
 8. Health check
 

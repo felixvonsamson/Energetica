@@ -106,7 +106,7 @@ else
     log_success "venv at $APP_DIR/.venv"
 fi
 
-# Importing the `energetica` package instantiates a dormant GameEngine (energetica/__init__.py),
+# Importing the `energetica` package instantiates a dormant GameEngine (src/energetica/__init__.py),
 # whose constructor does `Path("instance").mkdir(exist_ok=True)` relative to the service's
 # WorkingDirectory. The lobby never uses game state, but the mkdir runs anyway — and the code dir
 # is deploy-owned (2750), so the energetica service user cannot create it and the unit crash-loops

@@ -17,8 +17,8 @@
         "lint": "cd frontend && bun run lint",
         "format": "cd frontend && bun run format",
         "generate-types": "cd frontend && bun run generate-types",
-        "ruff:check": ".venv/bin/ruff check energetica/ --fix",
-        "ruff:format": ".venv/bin/ruff format energetica/",
+        "ruff:check": ".venv/bin/ruff check src/energetica/ --fix",
+        "ruff:format": ".venv/bin/ruff format src/energetica/",
         "check-wiki": ".venv/bin/python scripts/dev/check_wiki_links.py",
         "rm-instance": "rm -rf instance/ checkpoints/ .energetica-dev/ frontend/public/instances.json"
     }

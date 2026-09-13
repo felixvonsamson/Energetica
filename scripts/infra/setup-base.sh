@@ -128,7 +128,7 @@ log_section "SHARED STATE DIRECTORIES"
 # accounts.db itself is created lazily by the first instance backend (or the migration
 # script) on first connect — an empty/absent file is a valid fresh SQLite db. The dir
 # is group-writable + setgid so the service user (which connects as energetica) owns the
-# created db with the right group. See energetica/accounts/db.py.
+# created db with the right group. See src/energetica/accounts/db.py.
 install -d -o energetica -g energetica -m 2770 /var/lib/energetica
 log_success "/var/lib/energetica (2770 energetica:energetica)"
 
@@ -150,7 +150,7 @@ else
     log_success "/var/lib/energetica/secret_key.txt (0640 root:energetica)"
 fi
 
-# Server-wide config: the lobby's signup toggle (energetica/server_config.py — reads fresh
+# Server-wide config: the lobby's signup toggle (src/energetica/server_config.py — reads fresh
 # per request, fails closed when missing/malformed). Admin-edited like instance.json.
 if [ -f /etc/energetica/server.json ]; then
     log_success "/etc/energetica/server.json already exists — leaving admin's copy untouched"

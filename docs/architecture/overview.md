@@ -5,12 +5,23 @@ Overview of the project and directory structure.
 ```
 Energetica/
 ├── docs/                 # This documentation
-├── energetica/           # Python/FastAPI backend
+├── src/
+│   ├── energetica/       # Python/FastAPI backend — one game instance
+│   └── lobby/            # Python/FastAPI backend — the server-wide front door
+├── main.py               # Launcher for a game instance
+├── main_lobby.py         # Launcher for the lobby service
 ├── tests/                # Backend unit/integration tests
 ├── frontend/             # React/TypeScript frontend
+├── scripts/              # Deploy, provisioning and one-off operational scripts
+├── map_generation/       # Offline map-authoring tool
 ├── instance/             # Game saves
 └── checkpoints/          # Game backups
 ```
+
+The backend is an installed Python project: `pip install -e '.[dev]'` (see
+[installation.md](../getting-started/installation.md)). The `src/` layout means the packages are
+never importable just because a process happens to start in the repository root — development and
+production import the same code the same way.
 
 ### Key Technologies
 
@@ -29,10 +40,11 @@ Energetica/
 ## Backend
 
 ```
-energetica/           # Python/FastAPI backend
+src/energetica/       # Python/FastAPI backend
 ├── routers/          # API endpoints
 ├── schemas/          # Pydantic models
 ├── database/         # Game state models
+├── static/           # Web assets (app bundle, images) and the game's data tables
 └── game_engine.py    # Core game logic
 ```
 

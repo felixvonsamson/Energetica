@@ -19,7 +19,6 @@
         "admin_accounts.txt": true
     },
     "files.associations": {
-        "*.jinja": "jinja-html",
         "*.js": "javascript",
         "*.css": "tailwindcss",
         "*.mdx": "mdx"
@@ -31,14 +30,6 @@
     // MDX
     "[mdx]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    // Jinja
-    "[jinja-html]": {
-        "editor.defaultFormatter": "monosans.djlint",
-        "editor.rulers": [120],
-        "editor.formatOnSave": false,
-        "djlint.enableLinting": true
-        // "djlint.profile": "jinja"
     },
     "djlint.useEditorIndentation": true,
     "djlint.maxLineLength": 80,
