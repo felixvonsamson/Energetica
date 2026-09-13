@@ -3,7 +3,7 @@
 
 def display_money(price: float) -> str:
     """Format for price display."""
-    return f"{price:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(",", "'")
+    return f"{price:,.0f}".replace(",", "'") + " coins"
 
 
 def format_mass(mass: float) -> str:
