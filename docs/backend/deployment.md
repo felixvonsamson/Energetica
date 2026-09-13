@@ -11,9 +11,8 @@ the server.
 
 ## Initial Setup (One-Time)
 
-`scripts/infra/*` (the `setup-*.sh` scripts below) are never shipped by the normal deploy
-scripts — Option A means there is no git checkout on the server for anything to rsync into
-before the first instance or the lobby exists. Push them from your machine first:
+`scripts/infra/*` (the `setup-*.sh` scripts below) are never copied over to the 
+server by the normal deploy scripts. Instead, push them from your machine first:
 
 ```bash
 ./scripts/push-bootstrap.sh --server energetica-game
@@ -107,9 +106,8 @@ the change up on the next request — no restart.
 the backend lives under `src/` and is imported as an installed package, so a deploy that did
 not install it would leave the service unable to start.
 
-The SSH user is always `deploy` (hardcoded — never varied across this project's history).
-`--server`/`--domain` also accept env vars (`DEPLOY_HOST`, `DEPLOY_DOMAIN`), so the scripts
-run unattended from CI.
+The SSH user is always `deploy`. `--server`/`--domain` also accept env vars (`DEPLOY_HOST`, 
+`DEPLOY_DOMAIN`), so the scripts run unattended from CI.
 
 ## SSH Configuration
 
