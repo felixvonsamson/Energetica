@@ -77,6 +77,13 @@ DEFAULT_POLICY = Policy(max_width=1600, quality=85)
 # script -- the one that just skipped it.
 EXEMPT_FILES = ("icon_green.png", "icons/quiz.png")
 
+# Matched against a lowercased suffix, so `photo.JPG` off a camera is picked up
+# rather than silently skipped. guard-image-weight.ts lowercases the extension
+# before it judges one, so anything case-sensitive here would be a file CI
+# rejects and this script declines to fix -- the failure would name the script
+# that just ignored it.
+CONVERTIBLE_SUFFIXES = frozenset({".png", ".jpg", ".jpeg"})
+
 GREEN, RESET = "\033[92m", "\033[0m"
 
 
@@ -120,7 +127,7 @@ def jpeg_width(data: bytes) -> int:
 
 def image_width(path: Path) -> int:
     data = path.read_bytes()
-    return png_width(data) if path.suffix == ".png" else jpeg_width(data)
+    return png_width(data) if path.suffix.lower() == ".png" else jpeg_width(data)
 
 
 def main() -> int:
@@ -135,9 +142,10 @@ def main() -> int:
 
     sources = sorted(
         path
-        for pattern in ("*.png", "*.jpg", "*.jpeg")
-        for path in IMAGE_ROOT.rglob(pattern)
-        if not is_exempt(path.relative_to(IMAGE_ROOT))
+        for path in IMAGE_ROOT.rglob("*")
+        if path.is_file()
+        and path.suffix.lower() in CONVERTIBLE_SUFFIXES
+        and not is_exempt(path.relative_to(IMAGE_ROOT))
     )
 
     total_before = total_after = converted = 0
