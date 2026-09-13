@@ -11,15 +11,26 @@ the server.
 
 ## Initial Setup (One-Time)
 
-On the VPS, as root:
+`scripts/infra/*` (the `setup-*.sh` scripts below) are never shipped by the normal deploy
+scripts — Option A means there is no git checkout on the server for anything to rsync into
+before the first instance or the lobby exists. Push them from your machine first:
 
 ```bash
-sudo bash scripts/infra/setup-base.sh --deploy-user deploy   # Apache, Python, certbot, firewall,
-                                                             # `energetica` group/user, shared dirs,
-                                                             # shared secret + server.json
-sudo bash scripts/infra/setup-landing.sh --domain energetica-game.org   # apex vhost + TLS
-sudo bash scripts/infra/setup-lobby.sh --domain energetica-game.org     # lobby vhost+TLS+unit
-sudo bash scripts/infra/setup-instance.sh autumn-2025 8004 --domain energetica-game.org  # vhost+TLS+unit
+./scripts/push-bootstrap.sh --server energetica-game
+```
+
+This flattens `scripts/infra/*` into `/tmp` on the server (deliberately not a persistent
+path — these are meant to be re-synced immediately before use, not trusted to still be current
+later). Then, on the VPS, as root:
+
+```bash
+sudo bash /tmp/setup-base.sh                                    # Apache, Python, certbot, firewall,
+                                                                 # `energetica` group/user, shared dirs,
+                                                                 # shared secret + server.json
+                                                                 # (the OS "deploy" user must already exist)
+sudo bash /tmp/setup-landing.sh --domain energetica-game.org    # apex vhost + TLS
+sudo bash /tmp/setup-lobby.sh --domain energetica-game.org      # lobby vhost+TLS+unit
+sudo bash /tmp/setup-instance.sh autumn-2025 8004 --domain energetica-game.org  # vhost+TLS+unit
 ```
 
 `setup-instance.sh` provisions the box (directory, venv, `/etc/energetica/{slug}/instance.json`,
@@ -71,9 +82,15 @@ From your local machine:
   `/var/www/energetica-lobby`, installs the backend wheel into the server venv, restarts
   `energetica-lobby`, and health-checks the vhost. **Hard precondition:** it refuses to
   deploy while the `instance_membership` table is absent from `accounts.db` — Phase A
-  (write-on-settle +
-  `scripts/backfill-instance-membership.py`) must be live first, else the lobby silently
-  shows every existing player zero runs (`docs/architecture/lobby.md` § Phasing).
+  (write-on-settle) must be live first, else the lobby silently shows every existing
+  player zero runs (`docs/architecture/lobby.md` § Phasing).
+
+Each deploy script also syncs a target-specific `scripts/` subset, flattened with no
+subfolder on the server: `deploy-instance.sh` ships `scripts/instance/` (currently
+`export_instance_to_csv.py`), `deploy-lobby.sh` ships `scripts/lobby/` (currently
+`grant-facilitator.py`, `whitelist-run.py` — both touch the shared `accounts.db`, so they
+live with the lobby, not with any single instance). `scripts/dev/`, `scripts/lib/`, and
+`scripts/*.ts` never touch the server.
 
 `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is
 admin-owned, so deploys never touch it. The server-wide `/etc/energetica/server.json`
@@ -82,16 +99,17 @@ the change up on the next request — no restart.
 
 ### Options
 
-`deploy-instance.sh`: `--yes` (skip confirm), `--skip-build`, `--user <ssh-user>`.
-`deploy-landing.sh`: `--yes`, `--skip-build`, `--user <ssh-user>`.
-`deploy-lobby.sh`: `--yes`, `--skip-build`, `--user <ssh-user>`.
+`deploy-instance.sh`: `--yes` (skip confirm), `--skip-build`.
+`deploy-landing.sh`: `--yes`, `--skip-build`.
+`deploy-lobby.sh`: `--yes`, `--skip-build`.
 
 `--skip-build` skips only the frontend bundle. There is no way to skip installing the backend:
 the backend lives under `src/` and is imported as an installed package, so a deploy that did
 not install it would leave the service unable to start.
 
-All inputs also accept env vars (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_DOMAIN`), so the
-scripts run unattended from CI.
+The SSH user is always `deploy` (hardcoded — never varied across this project's history).
+`--server`/`--domain` also accept env vars (`DEPLOY_HOST`, `DEPLOY_DOMAIN`), so the scripts
+run unattended from CI.
 
 ## SSH Configuration
 
@@ -103,7 +121,7 @@ Host energetica-game
     User deploy
 ```
 
-Or override with environment variables (`DEPLOY_HOST`, `DEPLOY_USER`).
+Or override the host with the `DEPLOY_HOST` environment variable.
 
 ## Backup
 

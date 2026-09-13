@@ -4,13 +4,15 @@ set -euo pipefail
 # Energetica — download an instance's game state (the `instance/` dir) for backup.
 #
 #   ./scripts/download-instance.sh --server <ssh-host> --instance <instance> \
-#        [--user <ssh-user>] [--dest <local-dir>]
+#        [--dest <local-dir>]
 #
 # Tars the instance's engine state on the server, scps it down, and cleans up the
 # remote tarball. Game state lives at /var/www/energetica-{instance}/instance/.
 
 REMOTE_HOST="${DEPLOY_HOST:-}"
-REMOTE_USER="${DEPLOY_USER:-deploy}"
+# Never varied across this server's history — hardcoded rather than a configurable
+# parameter (YAGNI); the OS account named "deploy" must already exist.
+readonly REMOTE_USER="deploy"
 INSTANCE=""
 LOCAL_DEST="$HOME/Downloads"
 
@@ -18,7 +20,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --server) REMOTE_HOST="$2"; shift 2 ;;
         --instance) INSTANCE="$2"; shift 2 ;;
-        --user) REMOTE_USER="$2"; shift 2 ;;
         --dest) LOCAL_DEST="$2"; shift 2 ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac

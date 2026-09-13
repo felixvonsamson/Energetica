@@ -1,12 +1,14 @@
-#!/usr/bin/env python3
+#!.venv/bin/python
 """Grant an existing account facilitator authority (ADR-0004).
 
 There is no in-app path to becoming a facilitator: this is the *only* way, run by a sysadmin
-over SSH. Grant-only by design — no revoke command yet (YAGNI: a deployment has roughly one
-long-lived facilitator per short-lived instance; add revoke the day it's actually needed).
+over SSH, from the lobby directory (this script is deployed only there — it touches the shared
+accounts.db, not any single instance's engine). Grant-only by design — no revoke command yet
+(YAGNI: a deployment has roughly one long-lived facilitator per short-lived instance; add
+revoke the day it's actually needed).
 
-Usage:
-    python scripts/grant-facilitator.py --username <username> [--slug <slug>] \
+Usage (from /var/www/energetica-lobby):
+    ./scripts/grant-facilitator.py --username <username> [--slug <slug>] \
         [--accounts-db <path>]
 
 If --slug is omitted, the grant is server-wide (facilitator over every instance) — see

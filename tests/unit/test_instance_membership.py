@@ -141,7 +141,9 @@ def test_get_facilitator_grants_returns_only_scoped_grants_ordered_by_created_at
     accounts.grant_facilitator(account_id=1, slug="spring-2026", granted_at="2026-01-01T00:00:00+00:00")
     accounts.grant_facilitator(account_id=1, slug="autumn-2026", granted_at="2026-06-01T00:00:00+00:00")
     accounts.grant_facilitator(account_id=1, slug=None)  # server-wide — excluded
-    accounts.record_settlement(account_id=2, slug="winter-2026", settled_at="2026-01-01T00:00:00+00:00")  # player — excluded
+    accounts.record_settlement(
+        account_id=2, slug="winter-2026", settled_at="2026-01-01T00:00:00+00:00"
+    )  # player — excluded
 
     grants = accounts.get_facilitator_grants(account_id=1)
 
@@ -428,10 +430,14 @@ def test_record_join_reconciling_settlement_leaves_settled_at_null_for_a_fresh_j
     assert memberships[0].settled_at is None
 
 
-def test_settle_survives_a_membership_write_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A failed membership write (e.g. SQLITE_BUSY on the shared accounts.db) must not break an
-    otherwise-successful settle: the player is created in-memory regardless, and the row is
-    recoverable via the backfill script. Best-effort, like instance_config.publish.
+def test_settle_aborts_before_any_engine_mutation_on_a_membership_write_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failed membership write (e.g. SQLITE_BUSY on the shared accounts.db) must abort the
+    whole settle, not just log and continue: the DB write happens before any engine mutation
+    (tile claim, Player creation, chat join), so a failure here leaves nothing to undo and no
+    orphaned in-engine player with a missing membership row. The caller gets an unhandled
+    exception (a 500), and the client can safely retry — the tile is still unclaimed.
     """
     import sqlite3
 
@@ -450,10 +456,13 @@ def test_settle_survives_a_membership_write_failure(monkeypatch: pytest.MonkeyPa
 
     monkeypatch.setattr(accounts, "record_settlement", boom)
     account = Account(account_id=9, username="carol", pwhash=generate_password_hash("pw"), email=None, created_at="")
+    tile = HexTile.getitem(1)
 
-    player = confirm_location(account, HexTile.getitem(1))  # must not raise
+    with pytest.raises(sqlite3.OperationalError):
+        confirm_location(account, tile)
 
-    assert next(Player.filter_by(account_id=9), None) is player  # settle completed in-memory despite the DB failure
+    assert tile.player is None  # tile claim never happened
+    assert next(Player.filter_by(account_id=9), None) is None  # no orphaned in-engine player
 
 
 def test_settling_records_no_membership_when_slug_unset(monkeypatch: pytest.MonkeyPatch) -> None:

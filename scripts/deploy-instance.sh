@@ -9,7 +9,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-wheel.sh"
 # Energetica — deploy a single instance (Option A: no git on the server, rsync only).
 #
 #   ./scripts/deploy-instance.sh --server <ssh-host> --instance <instance> --domain <apex> \
-#        [--user <ssh-user>] [--yes] [--skip-build]
+#        [--yes] [--skip-build]
 #
 # Builds the app bundle and the backend wheel locally, rsyncs the Python backend + bundle to
 # the instance dir, installs the project into the server-side venv, and restarts the service.
@@ -22,7 +22,9 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/backend-wheel.sh"
 # instance.json is admin-owned under /etc/energetica/ and is never touched by deploys.
 
 REMOTE_HOST="${DEPLOY_HOST:-}"
-REMOTE_USER="${DEPLOY_USER:-deploy}"
+# Never varied across this server's history — hardcoded rather than a configurable
+# parameter (YAGNI); the OS account named "deploy" must already exist.
+readonly REMOTE_USER="deploy"
 INSTANCE=""
 DOMAIN="${DEPLOY_DOMAIN:-}"
 AUTO_CONFIRM=false
@@ -33,7 +35,6 @@ while [[ $# -gt 0 ]]; do
         --server) REMOTE_HOST="$2"; shift 2 ;;
         --instance) INSTANCE="$2"; shift 2 ;;
         --domain) DOMAIN="$2"; shift 2 ;;
-        --user) REMOTE_USER="$2"; shift 2 ;;
         --yes) AUTO_CONFIRM=true; shift ;;
         --skip-build) SKIP_BUILD=true; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
@@ -110,6 +111,10 @@ fi
 # `energetica`) writes checkpoints/{new,last}_checkpoint.tar.gz at runtime, but rsync arrives
 # as `deploy` — shipping the dir hands it to deploy:deploy and the service can no longer
 # overwrite it (silent PermissionError on every checkpoint), same reasoning as instance/.
+#
+# scripts/ is excluded here and synced separately (step 3b): only scripts/instance/ belongs
+# in an instance dir (grant-facilitator.py/whitelist-run.py are lobby-only; scripts/dev/,
+# scripts/lib/, scripts/infra/, scripts/*.ts never need to touch the server at all).
 log_step "Syncing backend code..."
 rsync -az --delete \
     --exclude='.git' \
@@ -124,8 +129,14 @@ rsync -az --delete \
     --exclude='*.egg-info' \
     --exclude='build/' \
     --exclude='DEPLOYED_VERSION.json' \
+    --exclude='scripts' \
     ./ "$SSH:$REMOTE_PATH/" >/dev/null
 log_success "Backend synced"
+
+# --- 3b. rsync instance-scoped scripts (flattened: scripts/instance/* → scripts/*) --------
+log_step "Syncing instance scripts..."
+rsync -az --delete ./scripts/instance/ "$SSH:$REMOTE_PATH/scripts/" >/dev/null
+log_success "Instance scripts synced"
 
 # --- 4. rsync app bundle (hashed assets need pruning → --delete) ---------------
 log_step "Syncing app bundle..."

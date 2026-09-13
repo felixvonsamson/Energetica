@@ -1,8 +1,9 @@
+#!.venv/bin/python
 """
 Export an Energetica instance snapshot to CSV files.
 
-Usage (run from the repo root):
-    python scripts/export_instance_to_csv.py <instance_dir> <output_dir>
+Usage (run from the instance directory, e.g. /var/www/energetica-<slug>):
+    ./scripts/export_instance_to_csv.py <instance_dir> <output_dir>
 
 Defaults:
     instance_dir : instance/

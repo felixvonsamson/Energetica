@@ -3,15 +3,16 @@ set -euo pipefail
 
 # Energetica — deploy the apex landing site (pure static, no service restart).
 #
-#   ./scripts/deploy-landing.sh --server <ssh-host> --domain <apex> \
-#        [--user <ssh-user>] [--yes] [--skip-build]
+#   ./scripts/deploy-landing.sh --server <ssh-host> --domain <apex> [--yes] [--skip-build]
 #
 # Builds the landing bundle locally and rsyncs it to /var/www/energetica-landing/.
 # instances.json, instances/ and recaps/ are owned and written by the instance backends — they
 # are excluded from the sync (and from --delete) so a landing deploy never clobbers them.
 
 REMOTE_HOST="${DEPLOY_HOST:-}"
-REMOTE_USER="${DEPLOY_USER:-deploy}"
+# Never varied across this server's history — hardcoded rather than a configurable
+# parameter (YAGNI); the OS account named "deploy" must already exist.
+readonly REMOTE_USER="deploy"
 DOMAIN="${DEPLOY_DOMAIN:-}"
 AUTO_CONFIRM=false
 SKIP_BUILD=false
@@ -21,7 +22,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --server) REMOTE_HOST="$2"; shift 2 ;;
         --domain) DOMAIN="$2"; shift 2 ;;
-        --user) REMOTE_USER="$2"; shift 2 ;;
         --yes) AUTO_CONFIRM=true; shift ;;
         --skip-build) SKIP_BUILD=true; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;

@@ -3,8 +3,7 @@
 import math
 import os
 import pickle
-import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -240,7 +239,35 @@ def initialize_player(account: Account, tile: HexTile) -> Player:
     - Giving the player an initial steam engine
     - Adding the player to the general chat
     """
-    player = Player(username=account.username, pwhash=account.pwhash, account_id=account.account_id, tile=tile)
+    # Settling is what makes this run appear under the account's "your runs" in the lobby and the
+    # in-run switcher. No-op without a slug (dev / unconfigured), where there is no lobby anyway.
+    #
+    # This write happens BEFORE any of the engine mutation below, and is deliberately left
+    # uncaught: everything from here down (tile claim, Player creation, chat join, facility,
+    # rolling history) is in-memory engine state that is hard to cleanly undo once touched — the
+    # tile claim especially is a shared resource other players immediately see as taken. A DB
+    # failure (e.g. SQLITE_BUSY on the shared accounts.db) must abort BEFORE any of that happens,
+    # not after: a request that mutated the engine and then 500'd would leave the player settled
+    # in-engine with no way to retry (the tile is already claimed, CHOICE_UNMODIFIABLE fires on
+    # retry) and no membership row to show for it — worse than just failing outright up front.
+    # Letting the exception propagate here, before any mutation, means a transient failure is a
+    # clean no-op: nothing happened, the client gets a 500, and a retry is always safe.
+    #
+    # MembershipRoleConflictError also propagates uncaught: get_playing_account already rejects a
+    # facilitator before they ever reach settle, so this should be unreachable — if it ever fires,
+    # that invariant broke and the 500 should surface loudly, not be treated as a transient hiccup.
+    slug = instance_config.instance_slug()
+    settled_at = datetime.now(timezone.utc)
+    if slug is not None:
+        accounts.record_settlement(account_id=account.account_id, slug=slug, settled_at=settled_at.isoformat())
+
+    player = Player(
+        username=account.username,
+        pwhash=account.pwhash,
+        account_id=account.account_id,
+        tile=tile,
+        created_at=settled_at,
+    )
     tile.player = player
 
     eol = engine.total_t + math.ceil(
@@ -264,25 +291,6 @@ def initialize_player(account: Account, tile: HexTile) -> Player:
     player.rolling_history.add_subcategory("op_costs", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("generation", ControllableFacilityType.STEAM_ENGINE)
     player.rolling_history.add_subcategory("emissions", ControllableFacilityType.STEAM_ENGINE)
-
-    # Settling is what makes this run appear under the account's "your runs" in the lobby and the
-    # in-run switcher. No-op without a slug (dev / unconfigured), where there is no lobby anyway.
-    # Best-effort, like instance_config.publish: this runs after the irreversible in-memory settle
-    # above, so a DB failure (e.g. SQLITE_BUSY on the shared accounts.db) must never propagate and
-    # fail an otherwise-successful settle — that would leave the player wedged (settled in-engine
-    # but the request 500s). A missing row is recoverable via scripts/backfill-instance-membership.py.
-    # MembershipRoleConflictError is deliberately NOT caught here: get_playing_account already
-    # rejects a facilitator before they ever reach settle, so this should be unreachable — if it
-    # ever fires, that invariant broke and the 500 should surface loudly, not be swallowed as if
-    # it were a transient DB hiccup.
-    slug = instance_config.instance_slug()
-    if slug is not None:
-        try:
-            accounts.record_settlement(
-                account_id=account.account_id, slug=slug, settled_at=player.created_at.isoformat()
-            )
-        except (OSError, sqlite3.Error) as exc:
-            engine.log(f"could not record membership for {player.username} in run {slug}: {exc}")
 
     engine.log(f"{player.username} chose the location {tile.id}")
     return player

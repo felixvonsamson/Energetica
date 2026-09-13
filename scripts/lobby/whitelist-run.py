@@ -1,5 +1,8 @@
-#!/usr/bin/env python3
+#!.venv/bin/python
 """Grow (or trim) a private run's roster from the shell (#1030 follow-up, ADR-0007).
+
+Run from the lobby directory (this script is deployed only there — it touches the shared
+accounts.db, not any single instance's engine).
 
 Replaces ``scripts/infra/whitelist-instance.sh``, which edited ``instance.json``'s
 ``allowed_usernames`` directly — the backend no longer reads that field. This is the same write
@@ -16,14 +19,13 @@ live ``Player`` table; see ``energetica.utils.misc.record_join_reconciling_settl
 script only touches ``accounts.db`` — it has no connection to the running instance's engine — so
 it cannot do that reconciliation itself. Re-adding such an account here brings back a joined-but-
 unsettled row (the entry gate still lets them straight back in, since that reads the engine's
-``Player`` directly; only the lobby's "Settle" vs "Continue" label is briefly wrong). Run
-``scripts/backfill-instance-membership.py`` against a stopped instance afterward if that display
-needs to be exact right away, or use the facilitator roster page for this re-add instead.
+``Player`` directly; only the lobby's "Settle" vs "Continue" label is briefly wrong). Use the
+facilitator roster page for this re-add instead if that display needs to be exact right away.
 
-Usage:
-    python scripts/whitelist-run.py <slug> list
-    python scripts/whitelist-run.py <slug> add    <username> [<username> ...]
-    python scripts/whitelist-run.py <slug> remove <username> [<username> ...]
+Usage (from /var/www/energetica-lobby):
+    ./scripts/whitelist-run.py <slug> list
+    ./scripts/whitelist-run.py <slug> add    <username> [<username> ...]
+    ./scripts/whitelist-run.py <slug> remove <username> [<username> ...]
 
     [--accounts-db <path>]
 

@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Energetica — list the game instances on a server.
 #
-#   ./scripts/list-instances.sh --server <ssh-host> [--user <ssh-user>]
+#   ./scripts/list-instances.sh --server <ssh-host>
 #
 # Canonical source of truth is systemd (energetica-*.service), NOT filesystem globbing of
 # /var/www/energetica-* (which would wrongly include the landing dir). The landing site is
@@ -11,12 +11,13 @@ set -euo pipefail
 # ExecStart --port. See docs/architecture/static-serving-and-deployment.md § Instance discovery.
 
 REMOTE_HOST="${DEPLOY_HOST:-}"
-REMOTE_USER="${DEPLOY_USER:-deploy}"
+# Never varied across this server's history — hardcoded rather than a configurable
+# parameter (YAGNI); the OS account named "deploy" must already exist.
+readonly REMOTE_USER="deploy"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --server) REMOTE_HOST="$2"; shift 2 ;;
-        --user) REMOTE_USER="$2"; shift 2 ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done

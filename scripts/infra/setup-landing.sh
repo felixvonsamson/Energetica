@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Energetica — apex landing site setup. Run ONCE per VPS, as root, AFTER setup-base.sh.
 #
-#   sudo bash scripts/infra/setup-landing.sh --domain <apex-domain> [--deploy-user <user>] [--yes]
+#   sudo bash scripts/infra/setup-landing.sh --domain <apex-domain> [--yes]
 #
 # Creates the landing DocumentRoot and the instance-fragment dir (setgid energetica so
 # every instance service can publish into it), then provisions the apex vhost + TLS.
@@ -12,7 +12,9 @@ set -euo pipefail
 # Requires DNS for <apex-domain> to already resolve to this server (for TLS issuance).
 
 DOMAIN="${ENERGETICA_DOMAIN:-}"
-DEPLOY_USER="${DEPLOY_USER:-deploy}"
+# Never varied across this server's history — hardcoded rather than a configurable
+# parameter (YAGNI); the OS account named "deploy" must already exist (setup-base.sh).
+readonly DEPLOY_USER="deploy"
 AUTO_CONFIRM=false
 LANDING_DIR=/var/www/energetica-landing
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,9 +22,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --domain) DOMAIN="$2"; shift 2 ;;
-        --deploy-user) DEPLOY_USER="$2"; shift 2 ;;
         --yes) AUTO_CONFIRM=true; shift ;;
-        *) echo "Unknown option: $1"; echo "Usage: sudo bash setup-landing.sh --domain <apex-domain> [--deploy-user <user>] [--yes]"; exit 1 ;;
+        *) echo "Unknown option: $1"; echo "Usage: sudo bash setup-landing.sh --domain <apex-domain> [--yes]"; exit 1 ;;
     esac
 done
 

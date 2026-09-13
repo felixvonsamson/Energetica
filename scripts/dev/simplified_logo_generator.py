@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Generates the coin icon as a standalone SVG file: the simplified "wind
-turbine clock" logo sitting on a two-tone coin background.
+Generates the simplified "wind turbine clock" logo as a standalone SVG file,
+for use as an icon when the full logo is displayed small.
 
 This does NOT need to run inside Inkscape - it writes a plain .svg file
 that you can then open and edit in Inkscape (every shape is a normal,
 fully editable path/circle/ellipse, not a bitmap).
 
-Run with:  python3 scripts/coin_generator.py
-Produces:  frontend/src/assets/coin.svg
+Run with:  python3 scripts/dev/simplified_logo_generator.py
+Produces:  frontend/src/assets/simplified_logo.svg
 """
 
 import math
@@ -17,20 +17,20 @@ from pathlib import Path
 # ----------------------------------------------------------------------
 # CONFIG - tweak these to taste
 # ----------------------------------------------------------------------
-CANVAS = 1450  # width / height of the SVG canvas
-CENTER = (725, 725)  # hub center
+CANVAS = 1100  # width / height of the SVG canvas
+CENTER = (550, 510)  # hub center
 
 BG_COLOR = None  # background color (set to "none" for transparent)
-FG_COLOR = "#ffc843"  # foreground
-
-COIN_OUTER_R = 725  # radius of the coin's outer rim circle
-COIN_INNER_R = 600  # radius of the coin's inner face circle
-COIN_OUTER_COLOR = "#ffc843"  # rim color
-COIN_INNER_COLOR = "#d49000"  # face color
+# No shape below sets its own fill - color is set once, on the root <svg>,
+# and every shape inherits it. That means one <svg fill="..."> (or a CSS
+# fill-* utility class overriding it, e.g. Tailwind's fill-foreground /
+# fill-bone) recolors the whole logo. DEFAULT_COLOR is the brand pine-700
+# green, used when nothing else overrides it (e.g. as a standalone favicon).
+DEFAULT_COLOR = "#285430"
 
 HUB_R = 50  # small filled circle radius
 RING_R = 220  # large ring circle radius
-RING_STROKE = 60  # large ring stroke width
+RING_THICKNESS = 60  # large ring thickness
 
 BLADE_LEN = 590  # hub-to-tip length of each turbine blade
 BLADE_W = 46  # half-width (rx) of the blade ellipse
@@ -109,6 +109,19 @@ def rounded_polygon_path(points, radius):
     return d
 
 
+def annulus_path(cx, cy, r_outer, r_inner):
+    """
+    Path 'd' string for a ring (outer circle minus inner circle), so it can
+    be drawn with a plain fill instead of a stroke - every shape in this
+    icon then shares the same "fill" property and recolors together.
+    """
+
+    def circle_subpath(r):
+        return f"M {cx - r},{cy} A {r},{r} 0 1,0 {cx + r},{cy} A {r},{r} 0 1,0 {cx - r},{cy} Z"
+
+    return f"{circle_subpath(r_outer)} {circle_subpath(r_inner)}"
+
+
 def ray_path(base_angle_deg):
     a1 = base_angle_deg - RAY_HALF_ANGLE
     a2 = base_angle_deg + RAY_HALF_ANGLE
@@ -127,25 +140,17 @@ def ray_path(base_angle_deg):
 def build_svg():
     parts = []
     parts.append(
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{CANVAS}" height="{CANVAS}" viewBox="0 0 {CANVAS} {CANVAS}">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{CANVAS}" height="{CANVAS}" viewBox="0 0 {CANVAS} {CANVAS}" '
+        f'fill="{DEFAULT_COLOR}">'
     )
 
     if BG_COLOR and BG_COLOR.lower() != "none":
         parts.append(f'<rect x="0" y="0" width="{CANVAS}" height="{CANVAS}" fill="{BG_COLOR}"/>')
 
-    # -- coin background (outer rim + inner face) --------------------------
-    parts.append(
-        f'<circle id="coin-outer" cx="{CENTER[0]}" cy="{CENTER[1]}" r="{COIN_OUTER_R}" fill="{COIN_OUTER_COLOR}"/>'
-    )
-    parts.append(
-        f'<circle id="coin-inner" cx="{CENTER[0]}" cy="{CENTER[1]}" r="{COIN_INNER_R}" fill="{COIN_INNER_COLOR}"/>'
-    )
-
-    # -- large ring (no fill, thick stroke) --------------------------------
-    parts.append(
-        f'<circle id="ring" cx="{CENTER[0]}" cy="{CENTER[1]}" r="{RING_R}" '
-        f'fill="none" stroke="{FG_COLOR}" stroke-width="{RING_STROKE}"/>'
-    )
+    # -- large ring (filled annulus, not a stroke, so it shares "fill" with
+    # -- everything else below) --------------------------------------------
+    ring_d = annulus_path(CENTER[0], CENTER[1], RING_R + RING_THICKNESS / 2, RING_R - RING_THICKNESS / 2)
+    parts.append(f'<path id="ring" fill-rule="evenodd" d="{ring_d}"/>')
 
     # -- 3 turbine blades (long ellipses, one hub-side tip, rotated) -------
     # An un-rotated blade points straight up: its far tip is above the hub,
@@ -154,18 +159,18 @@ def build_svg():
     for i, angle in enumerate(BLADE_ANGLES):
         parts.append(
             f'<ellipse id="blade{i + 1}" cx="{CENTER[0]}" cy="{ellipse_cy:.3f}" '
-            f'rx="{BLADE_W}" ry="{BLADE_LEN / 2:.3f}" fill="{FG_COLOR}" '
+            f'rx="{BLADE_W}" ry="{BLADE_LEN / 2:.3f}" '
             f'transform="rotate({angle} {CENTER[0]} {CENTER[1]})"/>'
         )
 
     # -- hub (small filled circle, on top so it covers blade tips) --------
-    parts.append(f'<circle id="hub" cx="{CENTER[0]}" cy="{CENTER[1]}" r="{HUB_R}" fill="{FG_COLOR}"/>')
+    parts.append(f'<circle id="hub" cx="{CENTER[0]}" cy="{CENTER[1]}" r="{HUB_R}"/>')
 
     # -- 12 rays (rounded trapezoids) --------------------------------------
     for i in range(RAY_COUNT):
         angle = i * (360 / RAY_COUNT)
         d = ray_path(angle)
-        parts.append(f'<path id="ray{i + 1}" d="{d}" fill="{FG_COLOR}"/>')
+        parts.append(f'<path id="ray{i + 1}" d="{d}"/>')
 
     parts.append("</svg>")
     return "\n".join(parts)
@@ -173,6 +178,6 @@ def build_svg():
 
 if __name__ == "__main__":
     svg = build_svg()
-    output_path = Path(__file__).resolve().parent.parent / "frontend" / "src" / "assets" / "coin.svg"
+    output_path = Path(__file__).resolve().parent.parent.parent / "frontend" / "src" / "assets" / "simplified_logo.svg"
     output_path.write_text(svg)
     print(f"Wrote {output_path}")

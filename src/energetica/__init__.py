@@ -270,7 +270,7 @@ def create_app(
         accounts.init_db()
 
         # There is no more auto-provisioned admin account (ADR-0004): a facilitator is granted
-        # out-of-band by a sysadmin via scripts/grant-facilitator.py, never minted at startup.
+        # out-of-band by a sysadmin via scripts/lobby/grant-facilitator.py, never minted at startup.
 
         if disable_signups:
             # if sign-ups are disabled, accounts have to be created from a file. Lives under
