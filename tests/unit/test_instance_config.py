@@ -675,3 +675,74 @@ def test_retire_fragment_is_idempotent(configured: Path) -> None:
 
     assert instance_config.retire_fragment(SLUG) is True
     assert instance_config.retire_fragment(SLUG) is True
+
+
+# --- Ownership failure on the atomic replace (#1072) ------------------------------------------
+
+
+def test_atomic_write_names_the_ownership_fix_when_the_replace_is_refused(
+    configured: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A refused ``os.replace`` must say how to fix it, not just report EPERM.
+
+    ``/etc/energetica/{slug}/`` is sticky, so only the owner of a file may replace it. An admin
+    who edits ``instance.json`` with an editor that saves by rename leaves it owned by whoever
+    ran the editor, and every later write by the service fails from then on. The bare OSError
+    for that reads as a disk problem; the fix is one ``chown``, so the message has to say so.
+    """
+    target = configured / SLUG / "instance.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    def refuse(src: str, dst: str) -> None:
+        raise PermissionError(1, "Operation not permitted", dst)
+
+    monkeypatch.setattr(instance_config.os, "replace", refuse)
+
+    with pytest.raises(PermissionError) as excinfo:
+        instance_config._atomic_write_json(target, "{}")
+
+    message = str(excinfo.value)
+    assert "chown energetica" in message
+    assert str(target) in message
+
+
+def test_atomic_write_cleans_up_its_tmp_file_when_the_replace_is_refused(
+    configured: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The rewritten error must not cost us the cleanup: a refused replace leaves no tmp sibling."""
+    target = configured / SLUG / "instance.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    def refuse(src: str, dst: str) -> None:
+        raise PermissionError(1, "Operation not permitted", dst)
+
+    monkeypatch.setattr(instance_config.os, "replace", refuse)
+
+    with pytest.raises(PermissionError):
+        instance_config._atomic_write_json(target, "{}")
+
+    assert list(target.parent.iterdir()) == []
+
+
+def test_atomic_write_still_replaces_an_owned_file_in_a_sticky_directory(configured: Path) -> None:
+    """The service must keep rewriting its own config once the directory turns sticky (#1072).
+
+    ``/etc/energetica/{slug}/`` is ``1770``. Sticky narrows replacement to the file's owner, and
+    the service owns ``instance.json`` precisely so the #1019 write path survives that. This is
+    the half of the permission change that could silently break it, so it is exercised for real
+    against a sticky directory rather than argued from the POSIX rule.
+
+    The other half — that a file the process does *not* own becomes unreplaceable — needs a
+    second uid and so cannot be shown here; ``_refused_replace`` covers how that failure reads.
+    """
+    config_dir = configured / SLUG
+    config_dir.mkdir(parents=True)
+    config_dir.chmod(0o1770)
+    assert config_dir.stat().st_mode & 0o1000, "sticky bit did not take on this filesystem"
+    target = config_dir / "instance.json"
+    target.write_text("{}", encoding="utf-8")
+
+    instance_config._atomic_write_json(target, '{"replaced": true}')
+
+    assert json.loads(target.read_text()) == {"replaced": True}
+    assert list(config_dir.iterdir()) == [target], "a tmp sibling was left behind"

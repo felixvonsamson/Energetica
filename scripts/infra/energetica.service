@@ -1,17 +1,18 @@
 # systemd unit template for a single game instance.
 #
 # Rendered by scripts/infra/setup-instance.sh into
-# /etc/systemd/system/energetica-@INSTANCE@.service, substituting @INSTANCE@, @PORT@,
-# @CLOCK_TIME@ and @IN_GAME_SECONDS_PER_TICK@.
+# /etc/systemd/system/energetica-@INSTANCE@.service, substituting @INSTANCE@ — and nothing
+# else. Every other per-instance value lives in the EnvironmentFile below, so two instances
+# differ in this file only by name.
 #
-# The Environment= lines below are load-bearing — they are the contract between the
-# deployment and src/energetica/instance_config.py + src/energetica/accounts/db.py:
-#   * ENERGETICA_INSTANCE_SLUG is MANDATORY. Without it instance_slug() returns None, the
-#     instance treats itself as public (never reads its own instance.json) and never
-#     publishes a landing fragment.
-#   * The other three match the code defaults, but are set explicitly so the unit is the
-#     single source of truth for where this instance reads/writes shared state.
-# See docs/architecture/static-serving-and-deployment.md § What FastAPI gains.
+# The EnvironmentFile= line is load-bearing. It carries the contract between the deployment and
+# src/energetica/instance_config.py + src/energetica/accounts/db.py, and it supplies the three
+# values ExecStart expands into main.py flags. It has no `-` prefix, so a missing or unreadable
+# file stops the unit rather than starting an instance with no ENERGETICA_INSTANCE_SLUG — which
+# would treat itself as public, never read its own instance.json and never publish a landing
+# fragment. systemd reads the file as root, before dropping to User=energetica below.
+# See scripts/infra/instance.env.tmpl and
+# docs/architecture/static-serving-and-deployment.md § What FastAPI gains.
 
 [Unit]
 Description=Energetica game instance (@INSTANCE@)
@@ -25,12 +26,9 @@ User=energetica
 Group=energetica
 WorkingDirectory=/var/www/energetica-@INSTANCE@
 
-Environment=ENERGETICA_INSTANCE_SLUG=@INSTANCE@
-Environment=ENERGETICA_INSTANCE_CONFIG_DIR=/etc/energetica
-Environment=ENERGETICA_LANDING_DIR=/var/www/energetica-landing
-Environment=ENERGETICA_ACCOUNTS_DB_PATH=/var/lib/energetica/accounts.db
+EnvironmentFile=/etc/energetica/@INSTANCE@/instance.env
 
-ExecStart=/var/www/energetica-@INSTANCE@/.venv/bin/python main.py --env prod --port @PORT@ --clock_time @CLOCK_TIME@ --in_game_seconds_per_tick @IN_GAME_SECONDS_PER_TICK@ --no-reload --fastapi-log-level warning
+ExecStart=/var/www/energetica-@INSTANCE@/.venv/bin/python main.py --env prod --port ${ENERGETICA_PORT} --clock_time ${ENERGETICA_CLOCK_TIME} --in_game_seconds_per_tick ${ENERGETICA_IN_GAME_SECONDS_PER_TICK} --no-reload --fastapi-log-level warning
 Restart=always
 RestartSec=10
 

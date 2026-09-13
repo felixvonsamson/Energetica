@@ -36,14 +36,24 @@ The `--load_checkpoint` flag handles everything: it preserves the actions log, r
 
 > ⚠️ **Run the replay as `energetica`, not as yourself or `root`.** The systemd unit runs as `User=energetica` (`scripts/infra/energetica.service`). If you run the replay as a different user, every file it writes under `instance/` gets that user's ownership, and the next live tick fails with `PermissionError` — putting you straight into another crash loop. Use `sudo -u energetica`:
 
-> ⚠️ **Carry over the unit's `Environment=` variables.** The unit sets `ENERGETICA_INSTANCE_SLUG`, `ENERGETICA_INSTANCE_CONFIG_DIR`, `ENERGETICA_LANDING_DIR`, and `ENERGETICA_ACCOUNTS_DB_PATH` (`scripts/infra/energetica.service`); a plain SSH shell doesn't have them. Without `ENERGETICA_INSTANCE_SLUG` in particular, the instance starts thinking it's public and skips reading its own `instance.json`. Pull them straight from the unit instead of retyping them:
+> ⚠️ **Carry over the unit's environment.** The service gets `ENERGETICA_INSTANCE_SLUG`, `ENERGETICA_INSTANCE_CONFIG_DIR`, `ENERGETICA_LANDING_DIR`, and `ENERGETICA_ACCOUNTS_DB_PATH` from `/etc/energetica/{slug}/instance.env`, which the unit reads with `EnvironmentFile=` (`scripts/infra/energetica.service`); a plain SSH shell doesn't have them. Without `ENERGETICA_INSTANCE_SLUG` in particular, the instance starts thinking it's public and skips reading its own `instance.json`. Source that file instead of retyping them — it also carries the port the production service runs on:
 
 ```bash
-sudo -u energetica env $(systemctl show energetica-{slug} --property=Environment --value) \
-    .venv/bin/python main.py --env prod --no-reload --load_checkpoint
+ENV=$(sudo grep '^ENERGETICA_' /etc/energetica/{slug}/instance.env) && \
+    sudo -u energetica env $ENV .venv/bin/python main.py --env prod --no-reload --load_checkpoint
 ```
 
-Pass the same SSL and port flags used by the production service. Watch for rapid tick replays (`t = XXXX`). Once the ticks slow to the normal 30-second cadence, recovery is complete. Stop the process with Ctrl+C.
+Both halves of that are load-bearing. The `grep` runs under `sudo` because the file is
+`0640 root:energetica` and the shell you're in may not be in that group. The `&&` is what makes
+it fail closed: if the read fails, the replay never starts. Written as one command with the
+substitution inline, an unreadable file would expand to nothing and launch the instance with no
+`ENERGETICA_INSTANCE_SLUG` — the "thinks it's public" failure this warning is about, arrived at
+by a different route. `$ENV` is deliberately unquoted so the lines split into separate
+`KEY=value` arguments.
+
+(`systemctl show --property=Environment` does **not** work here: it reports only inline `Environment=` lines, and this unit has none. An instance provisioned before #1072 has no `instance.env` at all — read its `Environment=` lines off `/etc/systemd/system/energetica-{slug}.service` directly.)
+
+Pass the same SSL and port flags used by the production service; `ENERGETICA_PORT` in that same file is the port. Watch for rapid tick replays (`t = XXXX`). Once the ticks slow to the normal 30-second cadence, recovery is complete. Stop the process with Ctrl+C.
 
 If you did run anything as the wrong user by mistake, fix ownership before starting the service:
 

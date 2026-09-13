@@ -38,8 +38,8 @@ Shipping in phased PRs. Each phase leaves the app deployable on its own.
   - `scripts/infra/`: `apache-instance.conf` + `apache-main.conf` (placeholder templates rendered with `sed`; `@INSTANCE@`/`@PORT@`/`@DOMAIN@`), `energetica.service` (systemd template), `instance.json.tmpl`, and the setup scripts `setup-base.sh`, `setup-landing.sh`, `setup-instance.sh`
   - `scripts/` root: `deploy-instance.sh`, `deploy-landing.sh`, `list-instances.sh`. `scripts/vps-setup.sh` removed (superseded). `deploy.sh` and the FastAPI static handlers are left for the Phase 5 cutover
   - **Server-side code delivery: rsync, no git (decided this phase).** `setup-instance.sh` provisions the box (dir, venv, `/etc/energetica/{slug}/instance.json`, vhost+TLS, enabled-but-unstarted unit) but ships **no** code; the first `deploy-instance.sh` rsyncs the backend, `pip install`s into the server venv, and starts the service. This matches the RFC's "rsync Python backend code" deploy step and removes deploy credentials/git from the server entirely — resolves the `setup-instance.sh` step-2 TBD (clone vs symlink) in favour of neither
-  - **systemd unit sets the full Phase-3 env contract** (`ENERGETICA_INSTANCE_SLUG` mandatory, plus `_CONFIG_DIR`/`_LANDING_DIR`/`_ACCOUNTS_DB_PATH`). Services run as the shared `energetica` user/group; the landing root and its `instances/` dir are `setgid energetica` + group-writable so any instance can publish its fragment and rewrite `instances.json`, and `www-data` joins the group to read the `0o640` fragments. `apache-instance.conf` serves `/static/{app,images,data}` (the `data` alias was dropped later by the disclosure fix #1070 — see § Request routing), `/service-worker.js`, `/manifest.json` (aliased to the app bundle) directly, redirects `^/$ → /app/`, scopes the SPA `FallbackResource` to `/app/*` (so a missing hashed asset 404s cleanly instead of returning `index.html` with a `200`), and proxies only `/api`, `/socket.io` (+ WS upgrade), `/logout`
-  - `instance.json.tmpl` renders the exact `InstanceConfig` schema (`name` titlecased slug, `advertised=true`, `starts_at`=now UTC `…Z`, `access.policy="public"`); the `--name`/`--starts-at` values are sed-metachar-escaped and JSON-breaking chars rejected so the rendered file always validates. Admins edit it under `sudo` for private/unadvertised instances. `list-instances.sh` discovers instances via `systemctl list-unit-files 'energetica-*.service'` (never filesystem globbing), reading the port from each unit's `ExecStart`
+  - **systemd unit sets the full Phase-3 env contract** (`ENERGETICA_INSTANCE_SLUG` mandatory, plus `_CONFIG_DIR`/`_LANDING_DIR`/`_ACCOUNTS_DB_PATH`) — these four `Environment=` lines, and the port and clock values that were baked into `ExecStart`, later moved into `/etc/energetica/{slug}/instance.env` and are read back with `EnvironmentFile=` (#1072 — see § Instance discovery). Services run as the shared `energetica` user/group; the landing root and its `instances/` dir are `setgid energetica` + group-writable so any instance can publish its fragment and rewrite `instances.json`, and `www-data` joins the group to read the `0o640` fragments. `apache-instance.conf` serves `/static/{app,images,data}` (the `data` alias was dropped later by the disclosure fix #1070 — see § Request routing), `/service-worker.js`, `/manifest.json` (aliased to the app bundle) directly, redirects `^/$ → /app/`, scopes the SPA `FallbackResource` to `/app/*` (so a missing hashed asset 404s cleanly instead of returning `index.html` with a `200`), and proxies only `/api`, `/socket.io` (+ WS upgrade), `/logout`
+  - `instance.json.tmpl` renders the exact `InstanceConfig` schema (`name` titlecased slug, `advertised=true`, `starts_at`=now UTC `…Z`, `access.policy="public"`); the `--name`/`--starts-at` values are sed-metachar-escaped and JSON-breaking chars rejected so the rendered file always validates. Admins edit it under `sudo` for private/unadvertised instances. `list-instances.sh` discovers instances via `systemctl list-unit-files 'energetica-*.service'` (never filesystem globbing), reading the port from each unit's `ExecStart` (it reads `instance.env` instead since #1072)
   - `setup-base.sh` also installs a scoped `sudoers` drop-in so the deploy user can run `sudo -u energetica pip …` and `sudo systemctl restart energetica-*` non-interactively (required by `deploy-instance.sh`)
   - **Validation:** `bash -n` clean on all six scripts. `shellcheck`/`apache2ctl`/`certbot` are unavailable in the dev sandbox, and end-to-end validation (real subdomain, cookie isolation, fragment round-trip) is **Phase 6**; live-checking the confs on a server is part of that
 - ✅ **Phase 5 — FastAPI cleanup + production cutover.**
@@ -138,6 +138,25 @@ The **apex domain always serves the landing page**, never an instance directly.
 
 ### Instance discovery
 Canonical source of truth is systemd: `systemctl list-units 'energetica-*.service'`. Filesystem enumeration of `/var/www/energetica-*/` is avoided since it would accidentally include `energetica-landing`.
+
+An instance's runtime configuration lives in `/etc/energetica/{slug}/instance.env`, the unit's `EnvironmentFile` (#1072): the env contract (`ENERGETICA_INSTANCE_SLUG` and the three path variables) plus the port and the two clock values, which the unit expands into `main.py` flags. The unit carries nothing but the slug, so every instance's unit is the same file with one name changed.
+
+The port is the reason this file exists. It used to have two rendered copies, the unit and the vhost, with no source of truth behind either, so anything that wanted to regenerate one had nowhere to read it from. Reading it is now unprivileged: the file is `0640 root:energetica` and the `deploy` user is in that group, so `list-instances.sh` discovers a port with no `sudo` at all.
+
+The `EnvironmentFile=` line has no `-` prefix, so a missing file stops the unit. See `scripts/infra/energetica.service` for why that is the behaviour worth having.
+
+Two files now share one directory with opposite write rules, which is what the sticky bit on `/etc/energetica/{slug}/` (`1770 root:energetica`) is for. The directory has to be group-writable at all, because the service replaces `instance.json` by renaming a temp sibling over it (#1019) and renaming into a directory needs write permission on it. Without the sticky bit that permission is all-or-nothing: every member of the group — the service, `deploy`, `www-data` — could unlink any file there, `instance.env` included, and its variables are what tell the service where to read accounts and write state.
+
+Sticky narrows the rule to "only the file's owner may replace it", so each file's owner answers the question for that file alone:
+
+| file | owner | who can replace it |
+|---|---|---|
+| `instance.json` | `energetica` | the service, which is what rewrites it |
+| `instance.env` | `root` | root only |
+
+That also makes the permissions state something that was already true and previously unsaid: the service replaces `instance.json` routinely, and used to do it through directory write permission on a file it did not own.
+
+The cost is one sharp edge. An admin who edits `instance.json` with an editor that saves by rename (vim's default `backupcopy`, emacs) leaves the new file owned by whoever ran the editor, and the service cannot replace it from then on. `instance_config._refused_replace` turns that into an error naming the `chown` that fixes it.
 
 ---
 
@@ -463,8 +482,10 @@ scripts/
                                 creates /etc/energetica/{instance}/ and writes initial instance.json there
     apache-main.conf          ← main domain vhost template (static landing, no proxy)
     apache-instance.conf        ← instance vhost template (app static + API proxy)
-    energetica.service        ← systemd service template (runs as user in `energetica` group)
+    energetica.service        ← systemd service template (runs as user in `energetica` group);
+                                carries only @INSTANCE@ — everything else comes from its EnvironmentFile
     instance.json.tmpl          ← initial per-instance config; default policy is public, advertised true
+    instance.env.tmpl           ← the unit's EnvironmentFile: env contract + port + clock values (#1072)
   deploy-landing.sh           ← build:landing → rsync dist-landing/ → server:/var/www/energetica-landing/
   deploy-instance.sh            ← usage: --server <server> --instance <instance>;
                                 does not touch /etc/energetica/{instance}/instance.json (admin-owned);
@@ -480,13 +501,13 @@ scripts/
 
 1. Create `/var/www/energetica-{instance}/` directory structure
 2. Clone repo (or symlink shared code — TBD)
-3. Create `/etc/energetica/{instance}/` (mode `0750`, owned by `root:energetica`) and render `instance.json.tmpl` into `/etc/energetica/{instance}/instance.json` (defaults: `name = {slug titlecased}`, `advertised = true`, `starts_at = now (UTC)`, `access.policy = "public"` — admin edits before going live for private instances)
+3. Create `/etc/energetica/{instance}/` (mode `0750`, owned by `root:energetica`) and render `instance.json.tmpl` into `/etc/energetica/{instance}/instance.json` (defaults: `name = {slug titlecased}`, `advertised = true`, `starts_at = now (UTC)`, `access.policy = "public"` — admin edits before going live for private instances), then render `instance.env.tmpl` into `/etc/energetica/{instance}/instance.env` with this run's port and clock values
 4. Create and enable Apache vhost from `apache-instance.conf` template
 5. Reload Apache (HTTP only at this point)
 6. Obtain TLS certificate: `certbot certonly --webroot -w /var/www/energetica-{instance}/ -d {instance}.{domain}` — the instance directory (created in step 1) is already the Apache DocumentRoot, so ACME challenge files are reachable there
 7. Update vhost with SSL directives, reload Apache
 8. Install certbot deploy hook to reload Apache on certificate renewal
-9. Create and enable `energetica-{instance}.service` systemd unit (runs as a user in group `energetica` so it can write fragments to the landing's `instances/` dir)
+9. Create and enable `energetica-{instance}.service` systemd unit (runs as a user in group `energetica` so it can write fragments to the landing's `instances/` dir), rendered from the template with nothing but the slug substituted — it reads the rest from the `instance.env` written in step 3
 10. `pip install <the backend wheel>`, start service — on startup the instance writes its sanitised fragment to `/var/www/energetica-landing/instances/{instance}.json` and runs the aggregation step
 
 TLS provisioning (steps 6–8) requires the DNS record for `{instance}.{domain}` to already resolve to the server before running.

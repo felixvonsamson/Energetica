@@ -69,9 +69,19 @@ UNIT=/etc/systemd/system/energetica-lobby.service
 # insidious: the lobby unit crash-loops on bind while Apache proxies lobby.{apex}/api to
 # the *instance* backend — which also answers /api/v1/lobby/my-runs with a 401, so even
 # the deploy health check would pass against the wrong app and SSO would silently never
-# work. Check the rendered units (source of truth) and — unless the listener is our own
+# work. Check every place a port is declared and — unless the listener is our own
 # already-provisioned lobby (re-run) — the live sockets.
-PORT_CONFLICT="$(grep -lE -- "--port $PORT( |\$)" /etc/systemd/system/energetica-*.service 2>/dev/null | grep -v '/energetica-lobby\.service$' || true)"
+#
+# There are two such places. An instance's port lives in /etc/energetica/{slug}/instance.env
+# (#1072), which its unit expands into ExecStart. The lobby's own unit still carries a literal
+# --port, and so does any instance unit provisioned before that change, so keep checking the
+# rendered units too.
+PORT_CONFLICT="$(
+    {
+        grep -lE -- "--port $PORT( |\$)" /etc/systemd/system/energetica-*.service 2>/dev/null || true
+        grep -lE -- "^ENERGETICA_PORT=$PORT\$" /etc/energetica/*/instance.env 2>/dev/null || true
+    } | grep -v '/energetica-lobby\.service$' | sort -u || true
+)"
 if [ -n "$PORT_CONFLICT" ]; then
     log_error "Port $PORT is already claimed by: $PORT_CONFLICT — pass a free --port"
     exit 1

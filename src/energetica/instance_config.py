@@ -306,6 +306,27 @@ def load_fragment(slug: str) -> InstanceFragment | None:
     return _load_json_or_none(fragment_path, InstanceFragment, what="instance fragment")
 
 
+def _refused_replace(target: Path, exc: PermissionError) -> PermissionError:
+    """Rewrite a refused ``os.replace`` into an error that names the one-line fix.
+
+    ``/etc/energetica/{slug}/`` carries the sticky bit, so a file in it may be replaced only by
+    the user who owns *that file* (#1072). The service owns ``instance.json`` for exactly this
+    reason, but an admin who edits it with an editor that saves by writing a temp file and
+    renaming (vim's default ``backupcopy``, emacs) leaves a new file owned by whoever ran the
+    editor — and every write the service makes from then on fails.
+
+    The bare ``PermissionError`` for that reads like a broken disk or a bad mount. The type is
+    kept so nothing that catches ``OSError`` changes behaviour; only the message is replaced.
+    """
+    return PermissionError(
+        exc.errno,
+        f"cannot replace {target}: {exc.strerror or 'permission denied'}. Its directory is "
+        f"sticky, so only the file's owner may replace it, and this process does not own it — "
+        f"an editor or script that saves by rename leaves the file owned by whoever ran it. "
+        f"Restore the service's ownership with: sudo chown energetica {target}",
+    )
+
+
 def _atomic_write_json(target: Path, payload: str) -> None:
     """Write ``payload`` to ``target`` atomically: write a unique tmp sibling, then ``os.replace``.
 
@@ -321,6 +342,9 @@ def _atomic_write_json(target: Path, payload: str) -> None:
     rather than ``0o644`` keeps the on-disk file from being world-readable — the HTTP exposure is
     intentional, the filesystem one need not be. The ``chmod`` is inside the ``try`` so a failure
     routes through the cleanup path below and no ``0o600`` tmp file is renamed into place.
+
+    A refused replace is re-raised through :func:`_refused_replace`, which names the ownership
+    fix. It re-raises from inside the ``try`` so the cleanup below still removes the tmp sibling.
     """
     target.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f"{target.name}.", suffix=".tmp")
@@ -330,7 +354,10 @@ def _atomic_write_json(target: Path, payload: str) -> None:
             fd_open = False  # fdopen owns the fd now; the context manager will close it
             tmp_file.write(payload)
         os.chmod(tmp_name, 0o640)
-        os.replace(tmp_name, target)
+        try:
+            os.replace(tmp_name, target)
+        except PermissionError as exc:
+            raise _refused_replace(target, exc) from exc
     except BaseException:
         # Close the fd only if fdopen never took ownership (else the `with` already closed it;
         # blindly re-closing would risk a thread-unsafe double-close on a recycled fd).
