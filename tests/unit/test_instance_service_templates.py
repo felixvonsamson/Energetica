@@ -111,3 +111,40 @@ def test_every_placeholder_is_substituted_when_rendered(template: Path) -> None:
 def test_the_unit_is_per_instance_only_by_name() -> None:
     # The point of the env file: two instances differ in the unit by their slug and nothing else.
     assert _placeholders(_UNIT_TEMPLATE) == {"INSTANCE"}
+
+
+def test_the_config_dir_is_locked_to_root_while_it_is_populated() -> None:
+    """`setup-instance.sh` must create the config dir root-only and open it up only at the end.
+
+    Every write in that section acts on a pathname, and a pathname in a group-writable directory
+    can be swapped between being checked and being used. Holding the directory at `0700` for the
+    duration removes the whole class of race, so the *order* of the two chmods is the property
+    worth pinning: `0700` before anything is written, `1770` only once both files are in place
+    and owned. An edit that creates the directory group-writable from the start would reopen
+    every race this closes, and would still pass every other test here.
+    """
+    lines = _SETUP_SCRIPT.read_text().splitlines()
+
+    def line_of(fragment: str) -> int:
+        matches = [i for i, line in enumerate(lines) if line.startswith(fragment)]
+        assert len(matches) == 1, f"expected exactly one {fragment!r}, found {len(matches)}"
+        return matches[0]
+
+    locked = line_of('install -d -o root -g energetica -m 0700 "$CONFIG_DIR"')
+    opened = line_of('chmod 1770 "$CONFIG_DIR"')
+    renders = [i for i, line in enumerate(lines) if "install_rendered " in line and "|" in line]
+    assert renders, "no renders found — has install_rendered been replaced?"
+    assert locked < min(renders), "the config dir is written to before it is locked to root"
+    assert opened > max(renders), "the config dir is opened to the group before it is populated"
+
+
+def test_the_rendered_file_is_chowned_only_once_it_is_in_place() -> None:
+    """`install_rendered` must rename first and chown second.
+
+    Chowning the scratch file would hand it to the shared `energetica` user while it still sits
+    at a temporary name, and under the sticky bit the owner of an entry is who may unlink it —
+    so any process running as that user could swap in its own file before the `mv`.
+    """
+    body = _SETUP_SCRIPT.read_text().split("install_rendered() {", 1)[1].split("\n}", 1)[0]
+    assert "mv -f" in body and "chown" in body
+    assert body.index("mv -f") < body.index("chown"), "chown must come after the rename"

@@ -208,25 +208,19 @@ fi
 
 # --- 3. Admin-owned instance.json ----------------------------------------------
 log_section "INSTANCE CONFIG"
-# 1770 = group-writable + sticky, and both halves are load-bearing.
+# Created root-only (0700) and opened up to 1770 at the end of this section, not here.
 #
-# Group-writable because the running service (group energetica) needs to *write* here, not just
-# read: a private instance's facilitator surface persists join tokens/allowlist changes back to
-# instance.json through src/energetica/instance_config.py's atomic write, which creates a tmp
-# sibling and renames it over the target. Renaming into a directory needs write permission on
-# that directory. See #1019.
+# Every operation below acts on a pathname, and a pathname in a group-writable directory can be
+# swapped between the moment it is checked and the moment it is used. Rather than harden each
+# one against that, take the directory away from the group for the duration: while it is 0700,
+# no process but root can create, unlink or rename anything inside it, so there is no window to
+# race. That costs nothing here — this instance has no unit yet (step 9) and therefore no
+# service running, and nothing else on the box reads this directory unprivileged.
 #
-# Sticky because directory write permission is otherwise all-or-nothing: it would let every
-# member of the group (the service, deploy, www-data) unlink *any* file here, including the
-# instance.env below, whose variables tell the service where to read accounts and write state.
-# The sticky bit narrows that to "only the file's owner may replace it", which turns each file's
-# owner into the answer for that file alone. So the two files below are owned deliberately:
-# instance.json by the service that rewrites it, instance.env by root and nobody else. See #1072.
-#
-# Set with an explicit chmod rather than `install -m 1770`: BSD and GNU install disagree about
-# whether -m applies the sticky bit, and this is not a bit to leave to the local implementation.
-install -d -o root -g energetica -m 0770 "$CONFIG_DIR"
-chmod 1770 "$CONFIG_DIR"
+# The renders below stay symlink-safe on their own terms anyway. The lock is the belt; they are
+# the braces, and they are what keeps this correct if the lock is ever removed.
+install -d -o root -g energetica -m 0700 "$CONFIG_DIR"
+chmod 0700 "$CONFIG_DIR"
 
 # Neither config file may be a symlink, and this refuses rather than repairs.
 #
@@ -239,9 +233,10 @@ chmod 1770 "$CONFIG_DIR"
 # drop a symlink here in the meantime. A root-run `>` redirect would follow it and write through
 # as root; the chown and chmod after it would land on whatever it points at.
 #
-# The renders below go through install_rendered() so they cannot follow one. This check covers
-# the other path: the "already exists" branch, whose chown would otherwise hand ownership of the
-# symlink's target to the service.
+# A link planted during an earlier window is still sitting here now, so the lock above does not
+# make this check redundant: it stops new ones appearing, not old ones being followed. The
+# renders go through install_rendered() and cannot follow a link; this covers the "already
+# exists" branch, whose chown and chmod would otherwise land on the link's target.
 for candidate in instance.json instance.env; do
     if [ -L "$CONFIG_DIR/$candidate" ]; then
         log_error "$CONFIG_DIR/$candidate is a symlink. Refusing to write through it."
@@ -251,17 +246,25 @@ for candidate in instance.json instance.env; do
     fi
 done
 
-# Render stdin into $CONFIG_DIR safely: create the destination with mktemp (O_EXCL, so it cannot
-# be pre-empted, and root-owned inside a sticky directory, so the group cannot swap it mid-write),
-# then rename it into place. rename(2) replaces a symlink rather than following it, and it is
-# atomic, so a reader never sees a half-rendered config.
+# Render stdin into $CONFIG_DIR safely. mktemp creates the scratch file with O_EXCL so it cannot
+# be pre-empted, then rename(2) puts it in place — atomically, so no reader sees a half-written
+# config, and replacing a symlink rather than following it.
+#
+# The chown comes AFTER the rename, and that ordering is the point. Chowning the scratch file
+# first would hand it to the shared `energetica` user while it still sits at a temporary name,
+# and under the sticky bit the owner of an entry is exactly who may unlink it — so any process
+# running as that user (every other instance on this box) could swap in its own file or symlink
+# in the gap before the mv, and root would install the result as this instance's config. Held
+# root-owned until it lands, the scratch file is unlinkable by nobody but root; once it lands,
+# $dest is a root-owned entry in a sticky directory, so the pathname the chown resolves cannot
+# be replaced either.
 install_rendered() {
     local dest="$1" owner="$2" rendered
     rendered="$(mktemp "$dest.XXXXXX")"
     cat > "$rendered"
-    chown "$owner" "$rendered"
     chmod 0640 "$rendered"
     mv -f "$rendered" "$dest"
+    chown "$owner" "$dest"
 }
 
 if [ -f "$CONFIG_DIR/instance.json" ]; then
@@ -282,15 +285,15 @@ else
         -e "s/@ENDED_AT@/$ENDED_AT_JSON/g" \
         "$SCRIPT_DIR/instance.json.tmpl" | install_rendered "$CONFIG_DIR/instance.json" energetica:energetica
     # Owned by the service, not by root, because the service is what rewrites it — the
-    # facilitator surface persists private-access changes here (#1019). Under the sticky bit
-    # above, ownership is what permits that rename, so this is the permissions finally saying
-    # out loud what was already true. 0640: group (deploy, www-data) reads, root still edits by
-    # hand since root bypasses the mode. instance_config.py re-asserts 0640 on every write.
+    # facilitator surface persists private-access changes here (#1019). Once the directory is
+    # sticky, ownership is what permits that rename, so this is the permissions finally saying
+    # out loud what was already true. install_rendered sets the 0640 with it: group (deploy,
+    # www-data) reads, root still edits by hand since root bypasses the mode, and
+    # instance_config.py re-asserts the same mode on every write it makes.
     #
     # An admin who edits this file with an editor that saves by rename (vim's default
     # backupcopy, emacs) leaves it owned by whoever ran the editor, and the service can then no
     # longer replace it. _atomic_write_json reports that case with the chown that fixes it.
-    chmod 0640 "$CONFIG_DIR/instance.json"
     log_success "Rendered $CONFIG_DIR/instance.json (public, advertised=$ADVERTISED)"
 fi
 
@@ -311,6 +314,26 @@ sed -e "s/@INSTANCE@/$INSTANCE/g" \
 # the sticky bit on $CONFIG_DIR nothing but root can unlink it either — so it is no easier to
 # tamper with here than as the /etc/systemd/system unit whose contents it took over.
 log_success "Rendered $CONFIG_DIR/instance.env (port $PORT, clock ${CLOCK_TIME}s, tick ${IN_GAME_SECONDS_PER_TICK}s)"
+
+# Both files are in place and correctly owned, so the directory can take its running mode.
+# 1770 = group-writable + sticky, and both halves are load-bearing.
+#
+# Group-writable because the running service (group energetica) needs to *write* here, not just
+# read: a private instance's facilitator surface persists join tokens/allowlist changes back to
+# instance.json through src/energetica/instance_config.py's atomic write, which creates a tmp
+# sibling and renames it over the target. Renaming into a directory needs write permission on it.
+# See #1019.
+#
+# Sticky because that write permission is otherwise all-or-nothing: it would let every member of
+# the group (the service, deploy, www-data) unlink *any* file here, including instance.env, whose
+# variables tell the service where to read accounts and write state. Sticky narrows it to "only
+# the file's owner may replace it", which makes each file's owner the answer for that file alone:
+# instance.json by the service that rewrites it, instance.env by root and nobody else. See #1072.
+#
+# Set with an explicit chmod rather than `install -m 1770`: BSD and GNU install disagree about
+# whether -m applies the sticky bit, and this is not a bit to leave to the local implementation.
+chmod 1770 "$CONFIG_DIR"
+log_success "$CONFIG_DIR opened to 1770 (group-writable + sticky)"
 
 # --- 4-5. Temporary HTTP vhost for ACME ----------------------------------------
 log_section "TLS PROVISIONING"
