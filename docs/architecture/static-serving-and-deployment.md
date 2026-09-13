@@ -503,16 +503,6 @@ Scripts accept all inputs via arguments or env vars and support `--yes` to suppr
 
 No service restart — landing is pure static. `instances.json` and `instances/` are not touched — they are owned by the instance backends and must not be overwritten.
 
-### `migrate-to-server-accounts.py` flow (retired)
-
-This was a one-time-per-VPS migration, run once before the first deploy that shipped server-wide
-accounts, to backfill `accounts.db` from each instance's existing pickle and write `account_id`
-back into every pickle `User` row. It has since run on every VPS that will ever need it and was
-deleted — see the scripts-cleanup PR. Nothing on a fresh VPS ever needs it again: a new instance
-starts with server-wide accounts from day one.
-
-Today there is exactly one instance per VPS, so no cross-instance username collisions are possible during migration. If multiple instances ever exist before this migration runs (e.g. on a new server that bootstrapped multi-instance before accounts were unified), the script must be re-thought.
-
 ---
 
 ## Deferred / Out of Scope
