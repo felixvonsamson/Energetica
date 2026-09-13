@@ -1,9 +1,12 @@
 """Utility functions for formatting things into text."""
 
 
-def display_money(price: float) -> str:
-    """Format for price display."""
-    return f"{price:,.0f}<img src='/static/images/icons/coin.svg' class='coin' alt='coin'>".replace(",", "'")
+def format_money(price: float) -> str:
+    """Format a quantity of money as a string."""
+    # The label is derived from the rendered digits, not from `price`, so it can never
+    # disagree with what is printed (a price of 1.4 renders "1" and must read "1 coin").
+    formatted = f"{price:,.0f}".replace(",", "'")
+    return formatted + (" coin" if formatted == "1" else " coins")
 
 
 def format_mass(mass: float) -> str:
