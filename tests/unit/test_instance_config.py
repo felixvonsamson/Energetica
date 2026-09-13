@@ -692,6 +692,7 @@ def test_atomic_write_names_the_ownership_fix_when_the_replace_is_refused(
     """
     target = configured / SLUG / "instance.json"
     target.parent.mkdir(parents=True, exist_ok=True)
+    target.parent.chmod(0o1770)
 
     def refuse(src: str, dst: str) -> None:
         raise PermissionError(1, "Operation not permitted", dst)
@@ -746,3 +747,30 @@ def test_atomic_write_still_replaces_an_owned_file_in_a_sticky_directory(configu
 
     assert json.loads(target.read_text()) == {"replaced": True}
     assert list(config_dir.iterdir()) == [target], "a tmp sibling was left behind"
+
+
+def test_atomic_write_leaves_a_non_sticky_refusal_undiagnosed(
+    configured: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Only a sticky directory gets the ownership diagnosis; everywhere else the error stands.
+
+    This writer also publishes fragments, ``instances.json`` and recaps into the landing dir,
+    which is ``2775`` — setgid and group-writable, never sticky. A refusal there is far more
+    likely to be the lost setgid/group-write an rsync can cause, and answering it with "chown
+    the file" would send an incident down the wrong path.
+    """
+    target = configured / SLUG / "instance.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.parent.chmod(0o0770)
+    original = PermissionError(13, "Permission denied", str(target))
+
+    def refuse(src: str, dst: str) -> None:
+        raise original
+
+    monkeypatch.setattr(instance_config.os, "replace", refuse)
+
+    with pytest.raises(PermissionError) as excinfo:
+        instance_config._atomic_write_json(target, "{}")
+
+    assert excinfo.value is original
+    assert "chown" not in str(excinfo.value)

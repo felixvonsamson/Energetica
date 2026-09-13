@@ -227,15 +227,60 @@ log_section "INSTANCE CONFIG"
 # whether -m applies the sticky bit, and this is not a bit to leave to the local implementation.
 install -d -o root -g energetica -m 0770 "$CONFIG_DIR"
 chmod 1770 "$CONFIG_DIR"
+
+# Neither config file may be a symlink, and this refuses rather than repairs.
+#
+# $CONFIG_DIR is group-writable, and sticky stops a group member *unlinking* what is already
+# there — not *creating* what is not. This script is documented as safe to re-run after a failed
+# attempt (see the $UNIT guard above), and the usual failure is certbot at step 6: DNS has not
+# propagated, or Let's Encrypt rate-limits. That leaves this directory standing, with no config
+# files in it, for as long as it takes to fix and re-run. Any member of the energetica group —
+# www-data, deploy, or the service user *every other instance on this box already runs as* — can
+# drop a symlink here in the meantime. A root-run `>` redirect would follow it and write through
+# as root; the chown and chmod after it would land on whatever it points at.
+#
+# The renders below go through install_rendered() so they cannot follow one. This check covers
+# the other path: the "already exists" branch, whose chown would otherwise hand ownership of the
+# symlink's target to the service.
+for candidate in instance.json instance.env; do
+    if [ -L "$CONFIG_DIR/$candidate" ]; then
+        log_error "$CONFIG_DIR/$candidate is a symlink. Refusing to write through it."
+        log_error "Nothing here creates one, so either an admin did, or a member of the"
+        log_error "energetica group planted it. Inspect it and remove it by hand before re-running."
+        exit 1
+    fi
+done
+
+# Render stdin into $CONFIG_DIR safely: create the destination with mktemp (O_EXCL, so it cannot
+# be pre-empted, and root-owned inside a sticky directory, so the group cannot swap it mid-write),
+# then rename it into place. rename(2) replaces a symlink rather than following it, and it is
+# atomic, so a reader never sees a half-rendered config.
+install_rendered() {
+    local dest="$1" owner="$2" rendered
+    rendered="$(mktemp "$dest.XXXXXX")"
+    cat > "$rendered"
+    chown "$owner" "$rendered"
+    chmod 0640 "$rendered"
+    mv -f "$rendered" "$dest"
+}
+
 if [ -f "$CONFIG_DIR/instance.json" ]; then
-    log_success "$CONFIG_DIR/instance.json already exists — leaving admin's copy untouched"
+    # The content is the admin's and stays untouched, but ownership is re-asserted every time.
+    # Under the sticky bit the service can only replace a file it owns, and this branch is
+    # exactly where a root-owned instance.json survives: left by a run of the pre-#1072 script
+    # that failed before the unit, or by an admin's editor saving by rename. Accepting it as-is
+    # would provision an instance whose facilitator writes fail on the first private-access
+    # change (#1019), with nothing in this run's output hinting why.
+    chown energetica:energetica "$CONFIG_DIR/instance.json"
+    chmod 0640 "$CONFIG_DIR/instance.json"
+    log_success "$CONFIG_DIR/instance.json already exists — content kept, ownership re-asserted"
 else
     sed -e "s/@NAME@/$(sed_escape "$NAME")/g" \
         -e "s/@ADVERTISED@/$ADVERTISED/g" \
         -e "s/@STARTS_AT@/$(sed_escape "$STARTS_AT")/g" \
         -e "s/@FREEZE_AT@/$FREEZE_AT_JSON/g" \
         -e "s/@ENDED_AT@/$ENDED_AT_JSON/g" \
-        "$SCRIPT_DIR/instance.json.tmpl" > "$CONFIG_DIR/instance.json"
+        "$SCRIPT_DIR/instance.json.tmpl" | install_rendered "$CONFIG_DIR/instance.json" energetica:energetica
     # Owned by the service, not by root, because the service is what rewrites it — the
     # facilitator surface persists private-access changes here (#1019). Under the sticky bit
     # above, ownership is what permits that rename, so this is the permissions finally saying
@@ -245,7 +290,6 @@ else
     # An admin who edits this file with an editor that saves by rename (vim's default
     # backupcopy, emacs) leaves it owned by whoever ran the editor, and the service can then no
     # longer replace it. _atomic_write_json reports that case with the chown that fixes it.
-    chown energetica:energetica "$CONFIG_DIR/instance.json"
     chmod 0640 "$CONFIG_DIR/instance.json"
     log_success "Rendered $CONFIG_DIR/instance.json (public, advertised=$ADVERTISED)"
 fi
@@ -261,13 +305,11 @@ sed -e "s/@INSTANCE@/$INSTANCE/g" \
     -e "s/@PORT@/$PORT/g" \
     -e "s/@CLOCK_TIME@/$CLOCK_TIME/g" \
     -e "s/@IN_GAME_SECONDS_PER_TICK@/$IN_GAME_SECONDS_PER_TICK/g" \
-    "$SCRIPT_DIR/instance.env.tmpl" > "$CONFIG_DIR/instance.env"
-chown root:energetica "$CONFIG_DIR/instance.env"
+    "$SCRIPT_DIR/instance.env.tmpl" | install_rendered "$CONFIG_DIR/instance.env" root:energetica
 # root-owned and 0640: systemd reads it as root when starting the unit, and the service user and
 # the deploy user read it through the energetica group. Nothing but root can write it, and under
 # the sticky bit on $CONFIG_DIR nothing but root can unlink it either — so it is no easier to
 # tamper with here than as the /etc/systemd/system unit whose contents it took over.
-chmod 0640 "$CONFIG_DIR/instance.env"
 log_success "Rendered $CONFIG_DIR/instance.env (port $PORT, clock ${CLOCK_TIME}s, tick ${IN_GAME_SECONDS_PER_TICK}s)"
 
 # --- 4-5. Temporary HTTP vhost for ACME ----------------------------------------

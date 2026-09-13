@@ -83,7 +83,10 @@ def test_the_unit_reads_the_env_file_setup_instance_writes() -> None:
     assert f"\nEnvironmentFile={_ENV_FILE_PATH}\n" in _UNIT_TEMPLATE.read_text()
     setup = _SETUP_SCRIPT.read_text()
     assert 'CONFIG_DIR="/etc/energetica/$INSTANCE"' in setup
-    assert '> "$CONFIG_DIR/instance.env"' in setup
+    # Named mechanism, not just the path: install_rendered is what keeps the write from
+    # following a symlink planted in the group-writable config dir, so a future edit that goes
+    # back to a plain `>` redirect should fail here rather than pass quietly.
+    assert 'install_rendered "$CONFIG_DIR/instance.env"' in setup
 
 
 def test_the_unit_refuses_to_start_without_its_env_file() -> None:

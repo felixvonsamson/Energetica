@@ -40,12 +40,20 @@ The `--load_checkpoint` flag handles everything: it preserves the actions log, r
 
 ```bash
 ENV=$(sudo grep '^ENERGETICA_' /etc/energetica/{slug}/instance.env) && \
-    sudo -u energetica env $ENV .venv/bin/python main.py --env prod --no-reload --load_checkpoint
+PORT=$(printf '%s\n' "$ENV" | sed -n 's/^ENERGETICA_PORT=//p') && \
+    sudo -u energetica env $ENV \
+        .venv/bin/python main.py --env prod --no-reload --load_checkpoint --port "$PORT"
 ```
 
-Both halves of that are load-bearing. The `grep` runs under `sudo` because the file is
-`0640 root:energetica` and the shell you're in may not be in that group. The `&&` is what makes
-it fail closed: if the read fails, the replay never starts. Written as one command with the
+The port is passed as a flag, not left to the environment. `main.py` takes it as
+`--port`; `ENERGETICA_PORT` exists so that *systemd* can expand it into that flag, and nothing
+in the app reads the variable. Without the flag the replay binds the argparse default of 8000
+and can collide with something else on the box. The two clock values need no such treatment —
+the engine read them at its very first tick and has carried them in its own state ever since.
+
+The rest is load-bearing too. The `grep` runs under `sudo` because the file is
+`0640 root:energetica` and the shell you're in may not be in that group. The `&&` chain is what
+makes it fail closed: if the read fails, the replay never starts. Written as one command with the
 substitution inline, an unreadable file would expand to nothing and launch the instance with no
 `ENERGETICA_INSTANCE_SLUG` — the "thinks it's public" failure this warning is about, arrived at
 by a different route. `$ENV` is deliberately unquoted so the lines split into separate
@@ -53,7 +61,7 @@ by a different route. `$ENV` is deliberately unquoted so the lines split into se
 
 (`systemctl show --property=Environment` does **not** work here: it reports only inline `Environment=` lines, and this unit has none. An instance provisioned before #1072 has no `instance.env` at all — read its `Environment=` lines off `/etc/systemd/system/energetica-{slug}.service` directly.)
 
-Pass the same SSL and port flags used by the production service; `ENERGETICA_PORT` in that same file is the port. Watch for rapid tick replays (`t = XXXX`). Once the ticks slow to the normal 30-second cadence, recovery is complete. Stop the process with Ctrl+C.
+Add the same SSL flags the production service uses, if it has any. Watch for rapid tick replays (`t = XXXX`). Once the ticks slow to the normal 30-second cadence, recovery is complete. Stop the process with Ctrl+C.
 
 If you did run anything as the wrong user by mistake, fix ownership before starting the service:
 
