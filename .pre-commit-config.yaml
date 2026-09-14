@@ -1,17 +1,20 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
+    # Ruff version. Kept in lockstep with the `ruff==` pin in pyproject.toml's dev extra —
+    # bump the two together, so the hook and a local `ruff` agree about formatting.
     rev: v0.12.10
     hooks:
+      # Both hooks cover every Python file in the repo (#1081). They used to carry
+      # `files: ^src/energetica/`, which silently skipped tests/, scripts/, src/lobby/,
+      # map_generation/, main.py and main_lobby.py. The same scope is enforced by the
+      # `python-lint` job in CI, so `--no-verify` no longer bypasses it.
       # Run the linter for python.
       - id: ruff-check
         types_or: [python, pyi]
         args: [--fix]
-        files: ^src/energetica/
       # Run the formatter for python.
       - id: ruff-format
         types_or: [python, pyi]
-        files: ^src/energetica/
 
   - repo: local
     hooks:

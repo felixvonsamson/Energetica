@@ -134,8 +134,7 @@ def _boot_and_probe(port: int, workdir: Path) -> None:
                     if _looks_like_port_in_use(output):
                         raise _PortRace(f"port {port} was taken before uvicorn could bind")
                     raise AssertionError(
-                        f"Server exited before serving (code {proc.returncode}).\n"
-                        f"--- server output ---\n{output}"
+                        f"Server exited before serving (code {proc.returncode}).\n--- server output ---\n{output}"
                     )
                 try:
                     response = requests.get(url, timeout=2)

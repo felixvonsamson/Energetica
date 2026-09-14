@@ -59,6 +59,49 @@ jobs:
         # pyright resolves against its own bundled env and floods reportMissingImports.
         run: pyright --pythonpath "$(which python)"
 
+  python-lint:
+    # Ruff over the whole Python tree, matching the pre-commit hooks (#1081). The hooks
+    # auto-fix; here the checks are read-only so CI reports rather than rewrites, and a
+    # commit made with --no-verify still gets caught.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          # Named explicitly: pyproject.toml is where the dependencies are declared.
+          cache-dependency-path: pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # The dev extra pins ruff to the same version as the pre-commit hook.
+          pip install -e '.[dev]'
+      - name: Ruff pins agree
+        # Ruff is pinned twice — the hook's `rev:` and the dev extra — and nothing else
+        # compares them. Two ruffs that disagree about formatting is worse than one, and
+        # the drift shows up as a mystery CI failure on an unrelated PR, so check it here.
+        run: |
+          python - <<'PY'
+          import pathlib, re, sys
+
+          import yaml
+
+          config = yaml.safe_load(pathlib.Path(".pre-commit-config.yaml").read_text())
+          hook = next(
+              repo["rev"] for repo in config["repos"] if "ruff-pre-commit" in str(repo.get("repo", ""))
+          )
+          extra = re.search(r'"ruff==([^"]+)"', pathlib.Path("pyproject.toml").read_text()).group(1)
+          if hook.lstrip("v") != extra:
+              sys.exit(f"::error::ruff pins disagree: hook {hook}, dev extra {extra}. Bump both together.")
+          print(f"ruff pinned to {extra} in both places")
+          PY
+      - name: Ruff lint
+        run: ruff check .
+      - name: Ruff format
+        run: ruff format --check .
+
   unit-tests:
     runs-on: ubuntu-latest
     steps:

@@ -146,7 +146,7 @@ def slug_label(slug: str) -> str:
     return slug.replace("-", " ").title()
 
 
-def main():
+def main() -> None:
     mdx_files = sorted(WIKI_DIR.glob("*.mdx"))
     route_patterns = build_route_patterns(ROUTES_DIR)
 

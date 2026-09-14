@@ -14,6 +14,9 @@ Produces:  frontend/src/assets/simplified_logo.svg
 import math
 from pathlib import Path
 
+# A point in SVG user units: (x, y).
+Point = tuple[float, float]
+
 # ----------------------------------------------------------------------
 # CONFIG - tweak these to taste
 # ----------------------------------------------------------------------
@@ -48,7 +51,7 @@ BLADE_ANGLES = [60, 180, 300]  # angles (deg, 0=up, clockwise) of the 3 blades
 # ----------------------------------------------------------------------
 
 
-def polar(radius, angle_deg, center=CENTER):
+def polar(radius: float, angle_deg: float, center: Point = CENTER) -> Point:
     """Point at `radius` from `center`, angle measured in degrees,
     0 = straight up, increasing clockwise (like a clock).
     """
@@ -58,24 +61,24 @@ def polar(radius, angle_deg, center=CENTER):
     return (x, y)
 
 
-def sub(a, b):
+def sub(a: Point, b: Point) -> Point:
     return (a[0] - b[0], a[1] - b[1])
 
 
-def add(a, b):
+def add(a: Point, b: Point) -> Point:
     return (a[0] + b[0], a[1] + b[1])
 
 
-def scale(a, s):
+def scale(a: Point, s: float) -> Point:
     return (a[0] * s, a[1] * s)
 
 
-def normalize(a):
+def normalize(a: Point) -> Point:
     length = math.hypot(a[0], a[1])
     return (a[0] / length, a[1] / length)
 
 
-def rounded_polygon_path(points, radius):
+def rounded_polygon_path(points: list[Point], radius: float) -> str:
     """
     Build an SVG path 'd' string for a convex polygon with every corner
     replaced by a circular arc of the given radius (classic
@@ -109,20 +112,20 @@ def rounded_polygon_path(points, radius):
     return d
 
 
-def annulus_path(cx, cy, r_outer, r_inner):
+def annulus_path(cx: float, cy: float, r_outer: float, r_inner: float) -> str:
     """
     Path 'd' string for a ring (outer circle minus inner circle), so it can
     be drawn with a plain fill instead of a stroke - every shape in this
     icon then shares the same "fill" property and recolors together.
     """
 
-    def circle_subpath(r):
+    def circle_subpath(r: float) -> str:
         return f"M {cx - r},{cy} A {r},{r} 0 1,0 {cx + r},{cy} A {r},{r} 0 1,0 {cx - r},{cy} Z"
 
     return f"{circle_subpath(r_outer)} {circle_subpath(r_inner)}"
 
 
-def ray_path(base_angle_deg):
+def ray_path(base_angle_deg: float) -> str:
     a1 = base_angle_deg - RAY_HALF_ANGLE
     a2 = base_angle_deg + RAY_HALF_ANGLE
     inner1 = polar(RAY_INNER_R, a1)
@@ -137,7 +140,7 @@ def ray_path(base_angle_deg):
 # ----------------------------------------------------------------------
 
 
-def build_svg():
+def build_svg() -> str:
     parts = []
     parts.append(
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{CANVAS}" height="{CANVAS}" viewBox="0 0 {CANVAS} {CANVAS}" '
