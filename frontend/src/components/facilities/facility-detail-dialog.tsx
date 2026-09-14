@@ -21,6 +21,7 @@ import {
 import { TypographyH2 } from "@/components/ui/typography";
 import { useLastDefined } from "@/hooks/use-last-defined";
 import { useQueueProject, useTechnologiesCatalog } from "@/hooks/use-projects";
+import { assetImages } from "@/lib/assets/asset-images";
 import { getTechnologyRoute } from "@/lib/facility-routes";
 import { ProjectType, Requirement } from "@/types/projects";
 
@@ -123,7 +124,6 @@ function FacilityContent<T>(
     handleConstruction: () => void,
     affectingTechnologies: string[],
 ) {
-    const imageUrl = `/static/images/${facilityType}_facilities/${facility.name}.webp`;
     const isLocked = facility.requirements_status === "unsatisfied";
     const hasUnsatisfiedRequirements = facility.requirements.some(
         (r) => r.status !== "satisfied",
@@ -160,7 +160,7 @@ function FacilityContent<T>(
                 {/* Image */}
                 <div className="w-full overflow-hidden">
                     <img
-                        src={imageUrl}
+                        src={assetImages[facility.name]}
                         alt={`${facility.name} ${facilityType} facility`}
                         className="w-full aspect-[5/2] [@media(min-height:900px)]:aspect-[16/9] object-cover rounded-lg"
                     />

@@ -38,7 +38,7 @@ Shipping in phased PRs. Each phase leaves the app deployable on its own.
   - `scripts/infra/`: `apache-instance.conf` + `apache-main.conf` (placeholder templates rendered with `sed`; `@INSTANCE@`/`@PORT@`/`@DOMAIN@`), `energetica.service` (systemd template), `instance.json.tmpl`, and the setup scripts `setup-base.sh`, `setup-landing.sh`, `setup-instance.sh`
   - `scripts/` root: `deploy-instance.sh`, `deploy-landing.sh`, `list-instances.sh`. `scripts/vps-setup.sh` removed (superseded). `deploy.sh` and the FastAPI static handlers are left for the Phase 5 cutover
   - **Server-side code delivery: rsync, no git (decided this phase).** `setup-instance.sh` provisions the box (dir, venv, `/etc/energetica/{slug}/instance.json`, vhost+TLS, enabled-but-unstarted unit) but ships **no** code; the first `deploy-instance.sh` rsyncs the backend, `pip install`s into the server venv, and starts the service. This matches the RFC's "rsync Python backend code" deploy step and removes deploy credentials/git from the server entirely — resolves the `setup-instance.sh` step-2 TBD (clone vs symlink) in favour of neither
-  - **systemd unit sets the full Phase-3 env contract** (`ENERGETICA_INSTANCE_SLUG` mandatory, plus `_CONFIG_DIR`/`_LANDING_DIR`/`_ACCOUNTS_DB_PATH`) — these four `Environment=` lines, and the port and clock values that were baked into `ExecStart`, later moved into `/etc/energetica/{slug}/instance.env` and are read back with `EnvironmentFile=` (#1072 — see § Instance discovery). Services run as the shared `energetica` user/group; the landing root and its `instances/` dir are `setgid energetica` + group-writable so any instance can publish its fragment and rewrite `instances.json`, and `www-data` joins the group to read the `0o640` fragments. `apache-instance.conf` serves `/static/{app,images,data}` (the `data` alias was dropped later by the disclosure fix #1070 — see § Request routing), `/service-worker.js`, `/manifest.json` (aliased to the app bundle) directly, redirects `^/$ → /app/`, scopes the SPA `FallbackResource` to `/app/*` (so a missing hashed asset 404s cleanly instead of returning `index.html` with a `200`), and proxies only `/api`, `/socket.io` (+ WS upgrade), `/logout`
+  - **systemd unit sets the full Phase-3 env contract** (`ENERGETICA_INSTANCE_SLUG` mandatory, plus `_CONFIG_DIR`/`_LANDING_DIR`/`_ACCOUNTS_DB_PATH`) — these four `Environment=` lines, and the port and clock values that were baked into `ExecStart`, later moved into `/etc/energetica/{slug}/instance.env` and are read back with `EnvironmentFile=` (#1072 — see § Instance discovery). Services run as the shared `energetica` user/group; the landing root and its `instances/` dir are `setgid energetica` + group-writable so any instance can publish its fragment and rewrite `instances.json`, and `www-data` joins the group to read the `0o640` fragments. `apache-instance.conf` serves `/static/{app,images,data}` (the `data` alias was dropped later by the disclosure fix #1070, and `images` stopped resolving when #1078 moved the tree into the bundles — see § Request routing), `/service-worker.js`, `/manifest.json` (aliased to the app bundle) directly, redirects `^/$ → /app/`, scopes the SPA `FallbackResource` to `/app/*` (so a missing hashed asset 404s cleanly instead of returning `index.html` with a `200`), and proxies only `/api`, `/socket.io` (+ WS upgrade), `/logout`
   - `instance.json.tmpl` renders the exact `InstanceConfig` schema (`name` titlecased slug, `advertised=true`, `starts_at`=now UTC `…Z`, `access.policy="public"`); the `--name`/`--starts-at` values are sed-metachar-escaped and JSON-breaking chars rejected so the rendered file always validates. Admins edit it under `sudo` for private/unadvertised instances. `list-instances.sh` discovers instances via `systemctl list-unit-files 'energetica-*.service'` (never filesystem globbing), reading the port from each unit's `ExecStart` (it reads `instance.env` instead since #1072)
   - `setup-base.sh` also installs a scoped `sudoers` drop-in so the deploy user can run `sudo -u energetica pip …` and `sudo systemctl restart energetica-*` non-interactively (required by `deploy-instance.sh`)
   - **Validation:** `bash -n` clean on all six scripts. `shellcheck`/`apache2ctl`/`certbot` are unavailable in the dev sandbox, and end-to-end validation (real subdomain, cookie isolation, fragment round-trip) is **Phase 6**; live-checking the confs on a server is part of that
@@ -169,8 +169,7 @@ autumn-2025.energetica-game.org
 ├── /api/*             → ProxyPass → uvicorn :8001
 ├── /socket.io         → ProxyPass → uvicorn :8001  (+ WS upgrade)
 ├── /logout            → ProxyPass → uvicorn :8001
-├── /static/app/       → Apache serves src/energetica/static/app/
-├── /static/images/    → Apache serves src/energetica/static/images/
+├── /static/app/       → Apache serves src/energetica/static/app/  (images live here too, hashed)
 ├── /service-worker.js → Apache serves src/energetica/static/service-worker.js
 ├── /manifest.json     → Apache serves src/energetica/static/app/manifest.json  (PWA, per-instance)
 ├── /                  → RedirectMatch ^/$ → /app/   (bare root → React router takes over)
@@ -182,9 +181,16 @@ questions and answers, the map, and the national-demand curves; the Python engin
 off the filesystem (`src/energetica/game_engine.py`) and no HTTP client asks for them. Apache
 served the whole directory until the disclosure fix #1070, which closed a path that let
 anyone who guessed it read the quiz answers. The vhost now denies the `static/` tree by
-default and grants back only the aliased app and images directories plus the
-`/service-worker.js` URL, so a directory added under `static/` later stays unreachable until
-someone opts it in.
+default and grants back only the aliased app directory plus the `/service-worker.js` URL, so
+a directory added under `static/` later stays unreachable until someone opts it in.
+
+Images are not in that list either, and for a different reason: since #1078 there is no
+served image tree. Every image is imported from `frontend/src/assets/`, so Vite resolves it
+at build time, gives it a content-hashed filename and emits it into the bundle that uses it
+— which means `/static/app/assets/` already covers them, including the year-long `immutable`
+caching a stable filename could never safely take. The `Alias /static/images` line and its
+grant still sit in the vhost, pointing at a directory that no longer exists; #1064 removes
+them in the same migration that retargets the other aliases.
 
 `manifest.json` is part of the app bundle output and must be served at the root path (PWA requirement). Apache aliases it explicitly. It is per-instance because the PWA manifest may eventually carry instance-specific metadata (name, scope, icons).
 
@@ -538,7 +544,6 @@ No service restart — landing is pure static. `instances.json` and `instances/`
 
 - **CI/CD** — deployment is via local scripts for now. Scripts are CI-compatible by design (all inputs via args/env vars, `--yes` flag, deterministic exit codes). Wiring to GitHub Actions or equivalent is a future decision.
 - **Admin dashboard** — currently stubbed. The server-side role gate in `templates.py` will be dropped along with all other `FileResponse` handlers. A proper frontend route guard and admin UI are a separate workstream.
-- **Landing images on multi-server** — landing pages reference images at `/static/images/`. On a server with no game instance (pure landing server), these paths would break. To be addressed when a second server deployment is made.
 - **Service worker on multiple instances** — currently scoped to `/`. Per-instance scoping implications (e.g. `autumn-2025.energetica-game.org/service-worker.js`) are not an architectural concern but should be tested when the first subdomain instance goes live.
 - **`instances.json` schema expansion** — current schema is `{slug, name, advertised, starts_at, freeze_at, ended_at}`. `freeze_at`/`ended_at` (nullable) are the lifecycle boundaries; `phase ∈ {announced, active, freeze, ended}` is *derived* from `now` vs the three timestamps (never stored — the fragment is served statically for the life of the run), by `derive_phase` in `energetica/instance_config.py` and its mirror `derivePhase` in `frontend/src/lib/instances.ts`. Further fields like `description` or `thumbnail` will be added when an instance-picker UI needs them (YAGNI until then).
 - **Instance-picker UI** — landing currently sends the signup CTA to the most recent advertised instance (`instances.json` is sorted by `starts_at` desc; first `advertised: true` entry wins). Lateral navigation between active instances (a picker page or persistent header element — UI form factor TBD) is a frontend workstream that consumes the existing `instances.json` data and may motivate schema additions above.

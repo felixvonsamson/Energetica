@@ -10,6 +10,7 @@ import {
     Money,
 } from "@/components/ui";
 import { CardDescription } from "@/components/ui/card";
+import { assetImages } from "@/lib/assets/asset-images";
 import { cn } from "@/lib/utils";
 import { ProjectType } from "@/types/projects";
 
@@ -34,8 +35,6 @@ export function FacilityItem({
     level,
     onClick,
 }: FacilityItemProps) {
-    const imageUrl = `/static/images/${facilityType}_facilities/${facilityName}.webp`;
-
     return (
         <Card
             className={cn(
@@ -61,7 +60,7 @@ export function FacilityItem({
             <CardContent>
                 <div className="relative aspect-3/2">
                     <img
-                        src={imageUrl}
+                        src={assetImages[facilityName]}
                         alt={`${facilityName} ${facilityType} facility`}
                         className="w-full h-full object-cover rounded"
                     />

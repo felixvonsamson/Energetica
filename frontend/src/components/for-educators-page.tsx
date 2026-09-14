@@ -9,6 +9,7 @@ import {
     Users,
 } from "lucide-react";
 
+import liveDemoPhoto from "@/assets/landing/live_demo_photo.webp";
 import { HomeLayout } from "@/components/home-layout";
 import {
     TypographyH1,
@@ -132,7 +133,7 @@ export function ForEducatorsPage() {
                     <div className="max-w-6xl mx-auto flex flex-col gap-12">
                         <div className="w-full">
                             <img
-                                src="/static/images/landing_page/live_demo_photo.webp"
+                                src={liveDemoPhoto}
                                 alt="Students playing Energetica in a classroom"
                                 className="w-full rounded-4xl shadow-lg object-cover max-h-144"
                             />
