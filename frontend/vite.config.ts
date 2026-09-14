@@ -208,7 +208,15 @@ export default defineConfig(async ({ mode, command }) => {
             },
         },
         build: {
-            outDir: "../src/energetica/static/app",
+            // The output directory and the public URL do not match on purpose: the
+            // bundle is built to `dist-app/` (beside dist-landing/ and dist-lobby/) but
+            // is served at `/static/app/` per `base` above, which an Apache Alias maps
+            // back to this directory. The URL is frozen; docs/architecture/
+            // static-serving-and-deployment.md § Request routing explains why.
+            outDir: "dist-app",
+            // Deletes dist-app/ before writing it, on every production build. That is
+            // why `build:sw`, which adds the service worker to the same directory, must
+            // run after this build and never before. See the note in package.json.
             emptyOutDir: true,
         },
     };

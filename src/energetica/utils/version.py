@@ -8,8 +8,8 @@ each half is stamped separately:
   the server at rsync time. The deploy machine has a git checkout; the server does not
   (deploys rsync with ``--exclude='.git'``), so the commit must be captured before shipping.
 - **frontend** — the vite build writes ``build-info.json`` into the bundle it emits
-  (``src/energetica/static/app`` for an instance, ``dist-lobby`` for the lobby), and it rsyncs
-  to the server with the rest of the bundle.
+  (``dist-app`` for an instance, ``dist-lobby`` for the lobby), and it rsyncs to the server
+  with the rest of the bundle.
 
 In local dev neither file exists, so the backend half falls back to reading git directly.
 Everything here fails soft: an unreadable or absent stamp yields ``None``, never an
@@ -70,8 +70,8 @@ def backend_version() -> dict | None:
 def frontend_version(bundle_subpath: str) -> dict | None:
     """The built frontend version stamped into ``{bundle_subpath}/build-info.json``.
 
-    ``bundle_subpath`` is relative to the working directory (e.g. ``src/energetica/static/app``
-    or ``dist-lobby``). Returns ``None`` when the bundle has no stamp — an old bundle built
+    ``bundle_subpath`` is relative to the working directory (e.g. ``dist-app`` or
+    ``dist-lobby``). Returns ``None`` when the bundle has no stamp — an old bundle built
     before this stamping existed, or a dev server that serves the app from vite instead.
     """
     return _read_json(WORKING_DIR / bundle_subpath / "build-info.json")

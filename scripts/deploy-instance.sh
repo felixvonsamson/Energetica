@@ -105,9 +105,10 @@ fi
 # Ship the Python backend, including dist/ — the wheel built above rides along with the rest of
 # the tree and is installed in step 5. Exclude local build artifacts, the local venv, the
 # frontend source, and — critically — instance/ and checkpoints/ (server-side game state) and
-# the app bundle dir (synced separately with --delete below). --delete prunes removed backend
-# files, including any stale wheel in dist/, but never touches the excluded paths. checkpoints/
-# MUST be excluded: the service (user
+# dist-app/ (the app bundle, synced separately with --delete below; it has no counterpart in
+# the local tree root, so without the exclude --delete would prune it every deploy). --delete
+# prunes removed backend files, including any stale wheel in dist/, but never touches the
+# excluded paths. checkpoints/ MUST be excluded: the service (user
 # `energetica`) writes checkpoints/{new,last}_checkpoint.tar.gz at runtime, but rsync arrives
 # as `deploy` — shipping the dir hands it to deploy:deploy and the service can no longer
 # overwrite it (silent PermissionError on every checkpoint), same reasoning as instance/.
@@ -125,7 +126,7 @@ rsync -az --delete \
     --exclude='node_modules' \
     --exclude='__pycache__' \
     --exclude='*.pyc' \
-    --exclude='src/energetica/static/app' \
+    --exclude='dist-app/' \
     --exclude='*.egg-info' \
     --exclude='build/' \
     --exclude='DEPLOYED_VERSION.json' \
@@ -139,8 +140,13 @@ rsync -az --delete ./scripts/instance/ "$SSH:$REMOTE_PATH/scripts/" >/dev/null
 log_success "Instance scripts synced"
 
 # --- 4. rsync app bundle (hashed assets need pruning → --delete) ---------------
+# The bundle is built to frontend/dist-app/ but lands at the instance root as dist-app/, the
+# same flattening deploy-lobby.sh does with dist-lobby/: the server carries no frontend source,
+# so a frontend/ directory holding nothing but build output would be misleading. The service
+# worker is inside the bundle (build:sw writes it there), so it needs no rsync of its own.
+# APP_BUNDLE_SUBPATH in src/energetica/routers/health.py names this same path.
 log_step "Syncing app bundle..."
-rsync -az --delete ./src/energetica/static/app/ "$SSH:$REMOTE_PATH/src/energetica/static/app/" >/dev/null
+rsync -az --delete ./frontend/dist-app/ "$SSH:$REMOTE_PATH/dist-app/" >/dev/null
 log_success "App bundle synced"
 
 # --- 5. Install the backend into the server venv --------------------------------
@@ -225,7 +231,7 @@ if [ "$HEALTH_OK" != true ]; then
         echo "Apache serves the app bundle off disk via the Alias directives in the instance vhost."
         echo "Check they match where the bundle now lives, and that Apache can read it:"
         echo "  ssh $SSH 'grep static /etc/apache2/sites-available/energetica-$INSTANCE.conf'"
-        echo "  ssh $SSH 'ls -l $REMOTE_PATH/src/energetica/static/app/index.html'"
+        echo "  ssh $SSH 'ls -l $REMOTE_PATH/dist-app/index.html'"
         # Deploys never write the vhost, on purpose (that is root's work, not the deploy user's
         # — see update-instance-vhost.sh), so a vhost left behind by a change to the template is
         # re-rendered by hand, and this is where an operator finds that out.
