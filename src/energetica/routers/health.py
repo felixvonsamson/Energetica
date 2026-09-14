@@ -5,8 +5,8 @@ during the PR #791 deploy: a replay job crashing in an APScheduler background
 thread while FastAPI itself stayed up and 200-OK.
 
 The endpoint is intentionally unauthenticated. It exposes only diagnostic data
-(commit sha, tick counters, scheduler error count, presence of static assets),
-not game state.
+(commit sha, tick counters, scheduler error count, deployed versions), not game
+state.
 """
 
 from __future__ import annotations
@@ -25,9 +25,10 @@ from energetica.utils.version import backend_version, frontend_version
 
 router = APIRouter(prefix="", tags=["Health"])
 
-STATIC_INDEX_PATH = "src/energetica/static/app/index.html"
-# Where the built app bundle (and its build-info.json stamp) lives, relative to the repo root.
-APP_BUNDLE_SUBPATH = "src/energetica/static/app"
+# Where the built app bundle (and its build-info.json stamp) lives on the server, relative to
+# the instance directory that systemd pins as the working directory. deploy-instance.sh rsyncs
+# frontend/dist-app/ to exactly this path, mirroring how the lobby ships dist-lobby/.
+APP_BUNDLE_SUBPATH = "dist-app"
 PICKLE_PATH = "instance/engine_data.pck"
 
 Status = Literal["loading_actions", "resimulating", "ok", "degraded"]
@@ -113,7 +114,6 @@ def healthz() -> dict:
             "scheduler_exception_count": engine.scheduler_exception_count,
         },
         "pickle_mtime": pickle_mtime,
-        "static_app_index_present": os.path.isfile(STATIC_INDEX_PATH),
     }
     if resim_progress is not None:
         body["resim_progress"] = resim_progress
