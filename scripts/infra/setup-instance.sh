@@ -13,14 +13,16 @@ set -euo pipefail
 # --freeze-at and --ended-at are optional (omit → null → an open-ended run); when given they must
 # run forward: starts_at ≤ freeze_at ≤ ended_at (the backend rejects a config that doesn't).
 #
-# --clock-time / --in-game-seconds-per-tick set the unit's ExecStart flags of the same name
-# (main.py --clock_time / --in_game_seconds_per_tick). They are baked into the engine at
-# init_instance() on the instance's very first tick and read from nowhere else afterwards, so
-# changing them later means tearing down and recreating the instance (see teardown-instance.sh).
-# Defaults here match main.py's argparse defaults, so omitting them reproduces today's behavior.
+# --clock-time / --in-game-seconds-per-tick end up in /etc/energetica/{instance}/instance.env,
+# which the unit expands into main.py's --clock_time / --in_game_seconds_per_tick. The engine
+# reads them at init_instance() on the instance's very first tick and from nowhere else
+# afterwards, so changing them for an instance that has already ticked does nothing — that still
+# means tearing down and recreating it (see teardown-instance.sh). Defaults here match main.py's
+# argparse defaults, so omitting them reproduces today's behavior.
 #
-# Creates the instance dir + venv, the admin-owned /etc/energetica/{instance}/instance.json,
-# the Apache vhost + TLS, and the energetica-{instance}.service unit (enabled, NOT started).
+# Creates the instance dir + venv, the admin-owned /etc/energetica/{instance}/{instance.json,
+# instance.env}, the Apache vhost + TLS, and the energetica-{instance}.service unit (enabled,
+# NOT started).
 #
 # This script does NOT ship application code — there is no git on the server (Option A).
 # The FIRST run of ./scripts/deploy-instance.sh rsyncs the backend, installs deps into the
@@ -147,10 +149,11 @@ UNIT="/etc/systemd/system/energetica-$INSTANCE.service"
 # This script is for first-time provisioning only, never for editing a live instance. $UNIT is
 # the last thing a successful run writes (step 9 below), so its presence means a prior run of
 # THIS script already completed for $INSTANCE — everything from here on rewrites unconditionally
-# (the unit, the vhost) or is a no-op (the venv, instance.json), so rerunning would silently
-# replace whatever clock_time/in_game_seconds_per_tick the instance is actually running with. Those
-# two are read only once, at the engine's first tick, and never again — changing them for a live
-# instance needs teardown-instance.sh followed by a fresh run of this script, not a rerun of it.
+# (the unit, the vhost, instance.env) or is a no-op (the venv, instance.json), so rerunning would
+# silently replace whatever port and clock_time/in_game_seconds_per_tick the instance is actually
+# running with. The two clock values are read only once, at the engine's first tick, and never
+# again — changing them for a live instance needs teardown-instance.sh followed by a fresh run of
+# this script, not a rerun of it.
 # (A unit that does NOT exist yet means an earlier run failed before reaching step 9, so nothing
 # is live and rerunning to retry is still safe — this check does not block that.)
 if [ -f "$UNIT" ]; then
@@ -205,27 +208,132 @@ fi
 
 # --- 3. Admin-owned instance.json ----------------------------------------------
 log_section "INSTANCE CONFIG"
-# 0770: the running service (group energetica) needs to *write* here too — a private
-# instance's facilitator surface persists join tokens/allowlist changes back to
-# instance.json via src/energetica/instance_config.py's atomic write (mkstemp + rename into
-# this directory), not just read it. See #1019.
-install -d -o root -g energetica -m 0770 "$CONFIG_DIR"
+# Created root-only (0700) and opened up to 1770 at the end of this section, not here.
+#
+# Every operation below acts on a pathname, and a pathname in a group-writable directory can be
+# swapped between the moment it is checked and the moment it is used. Rather than harden each
+# one against that, take the directory away from the group for the duration: while it is 0700,
+# no process but root can create, unlink or rename anything inside it, so there is no window to
+# race. That costs nothing here — this instance has no unit yet (step 9) and therefore no
+# service running, and nothing else on the box reads this directory unprivileged.
+#
+# The renders below stay symlink-safe on their own terms anyway. The lock is the belt; they are
+# the braces, and they are what keeps this correct if the lock is ever removed.
+install -d -o root -g energetica -m 0700 "$CONFIG_DIR"
+chmod 0700 "$CONFIG_DIR"
+
+# Neither config file may be a symlink, and this refuses rather than repairs.
+#
+# $CONFIG_DIR is group-writable, and sticky stops a group member *unlinking* what is already
+# there — not *creating* what is not. This script is documented as safe to re-run after a failed
+# attempt (see the $UNIT guard above), and the usual failure is certbot at step 6: DNS has not
+# propagated, or Let's Encrypt rate-limits. That leaves this directory standing, with no config
+# files in it, for as long as it takes to fix and re-run. Any member of the energetica group —
+# www-data, deploy, or the service user *every other instance on this box already runs as* — can
+# drop a symlink here in the meantime. A root-run `>` redirect would follow it and write through
+# as root; the chown and chmod after it would land on whatever it points at.
+#
+# A link planted during an earlier window is still sitting here now, so the lock above does not
+# make this check redundant: it stops new ones appearing, not old ones being followed. The
+# renders go through install_rendered() and cannot follow a link; this covers the "already
+# exists" branch, whose chown and chmod would otherwise land on the link's target.
+for candidate in instance.json instance.env; do
+    if [ -L "$CONFIG_DIR/$candidate" ]; then
+        log_error "$CONFIG_DIR/$candidate is a symlink. Refusing to write through it."
+        log_error "Nothing here creates one, so either an admin did, or a member of the"
+        log_error "energetica group planted it. Inspect it and remove it by hand before re-running."
+        exit 1
+    fi
+done
+
+# Render stdin into $CONFIG_DIR safely. mktemp creates the scratch file with O_EXCL so it cannot
+# be pre-empted, then rename(2) puts it in place — atomically, so no reader sees a half-written
+# config, and replacing a symlink rather than following it.
+#
+# The chown comes AFTER the rename, and that ordering is the point. Chowning the scratch file
+# first would hand it to the shared `energetica` user while it still sits at a temporary name,
+# and under the sticky bit the owner of an entry is exactly who may unlink it — so any process
+# running as that user (every other instance on this box) could swap in its own file or symlink
+# in the gap before the mv, and root would install the result as this instance's config. Held
+# root-owned until it lands, the scratch file is unlinkable by nobody but root; once it lands,
+# $dest is a root-owned entry in a sticky directory, so the pathname the chown resolves cannot
+# be replaced either.
+install_rendered() {
+    local dest="$1" owner="$2" rendered
+    rendered="$(mktemp "$dest.XXXXXX")"
+    cat > "$rendered"
+    chmod 0640 "$rendered"
+    mv -f "$rendered" "$dest"
+    chown "$owner" "$dest"
+}
+
 if [ -f "$CONFIG_DIR/instance.json" ]; then
-    log_success "$CONFIG_DIR/instance.json already exists — leaving admin's copy untouched"
+    # The content is the admin's and stays untouched, but ownership is re-asserted every time.
+    # Under the sticky bit the service can only replace a file it owns, and this branch is
+    # exactly where a root-owned instance.json survives: left by a run of the pre-#1072 script
+    # that failed before the unit, or by an admin's editor saving by rename. Accepting it as-is
+    # would provision an instance whose facilitator writes fail on the first private-access
+    # change (#1019), with nothing in this run's output hinting why.
+    chown energetica:energetica "$CONFIG_DIR/instance.json"
+    chmod 0640 "$CONFIG_DIR/instance.json"
+    log_success "$CONFIG_DIR/instance.json already exists — content kept, ownership re-asserted"
 else
     sed -e "s/@NAME@/$(sed_escape "$NAME")/g" \
         -e "s/@ADVERTISED@/$ADVERTISED/g" \
         -e "s/@STARTS_AT@/$(sed_escape "$STARTS_AT")/g" \
         -e "s/@FREEZE_AT@/$FREEZE_AT_JSON/g" \
         -e "s/@ENDED_AT@/$ENDED_AT_JSON/g" \
-        "$SCRIPT_DIR/instance.json.tmpl" > "$CONFIG_DIR/instance.json"
-    chown root:energetica "$CONFIG_DIR/instance.json"
-    # 0640: service (group) reads; only root (admin, via sudo) edits by hand. The service
-    # itself writes back through instance_config.py's atomic write path (private-access
-    # mutations only), which re-asserts 0640 on every write — see _atomic_write_json.
-    chmod 0640 "$CONFIG_DIR/instance.json"
+        "$SCRIPT_DIR/instance.json.tmpl" | install_rendered "$CONFIG_DIR/instance.json" energetica:energetica
+    # Owned by the service, not by root, because the service is what rewrites it — the
+    # facilitator surface persists private-access changes here (#1019). Once the directory is
+    # sticky, ownership is what permits that rename, so this is the permissions finally saying
+    # out loud what was already true. install_rendered sets the 0640 with it: group (deploy,
+    # www-data) reads, root still edits by hand since root bypasses the mode, and
+    # instance_config.py re-asserts the same mode on every write it makes.
+    #
+    # An admin who edits this file with an editor that saves by rename (vim's default
+    # backupcopy, emacs) leaves it owned by whoever ran the editor, and the service can then no
+    # longer replace it. _atomic_write_json reports that case with the chown that fixes it.
     log_success "Rendered $CONFIG_DIR/instance.json (public, advertised=$ADVERTISED)"
 fi
+
+# instance.env is the unit's EnvironmentFile — the whole of this instance's runtime
+# configuration, including the port, in one root-owned place anything on the box can read.
+# Rendered unconditionally, unlike instance.json: instance.json may already carry admin edits
+# (policy, join token) that this script must not clobber, whereas every value here comes from
+# this run's own arguments. Reaching this line at all means no prior run got as far as the unit
+# (see the guard above), so any instance.env sitting here is a failed run's leftover and the
+# arguments in hand are the current truth.
+sed -e "s/@INSTANCE@/$INSTANCE/g" \
+    -e "s/@PORT@/$PORT/g" \
+    -e "s/@CLOCK_TIME@/$CLOCK_TIME/g" \
+    -e "s/@IN_GAME_SECONDS_PER_TICK@/$IN_GAME_SECONDS_PER_TICK/g" \
+    "$SCRIPT_DIR/instance.env.tmpl" | install_rendered "$CONFIG_DIR/instance.env" root:energetica
+# root-owned and 0640: systemd reads it as root when starting the unit, and the service user and
+# the deploy user read it through the energetica group. Nothing but root can write it, and under
+# the sticky bit on $CONFIG_DIR nothing but root can unlink it either — so it is no easier to
+# tamper with here than as the /etc/systemd/system unit whose contents it took over.
+log_success "Rendered $CONFIG_DIR/instance.env (port $PORT, clock ${CLOCK_TIME}s, tick ${IN_GAME_SECONDS_PER_TICK}s)"
+
+# Both files are in place and correctly owned, so the directory can take its running mode.
+# 1770 = group-writable + sticky, and both halves are load-bearing.
+#
+# Group-writable because the running service (group energetica) needs to *write* here, not just
+# read: a private instance's facilitator surface persists join tokens/allowlist changes back to
+# instance.json through src/energetica/instance_config.py's atomic write, which creates a tmp
+# sibling and renames it over the target. Renaming into a directory needs write permission on it.
+# See #1019.
+#
+# Sticky because that write permission is otherwise all-or-nothing: it would let every member of
+# the group (the service, deploy, www-data) unlink *any* file here, including instance.env, whose
+# variables tell the service where to read accounts and write state. Sticky narrows it to "only
+# the file's owner may replace it", which makes each file's owner the answer for that file alone:
+# instance.json by the service that rewrites it, instance.env by root and nobody else. See #1072.
+#
+# Set with an explicit chmod rather than `install -m 1770`: BSD and GNU install disagree about
+# whether -m applies the sticky bit, and this is not a bit to leave to the local implementation.
+chmod 1770 "$CONFIG_DIR"
+log_success "$CONFIG_DIR opened to 1770 (group-writable + sticky)"
 
 # --- 4-5. Temporary HTTP vhost for ACME ----------------------------------------
 log_section "TLS PROVISIONING"
@@ -262,10 +370,8 @@ log_success "Vhost active: https://$FQDN"
 
 # --- 9. systemd unit (enabled, not started — no code yet) ----------------------
 log_section "SYSTEMD UNIT"
+# Only the slug: port and clock values reach the unit through the instance.env written above.
 sed -e "s/@INSTANCE@/$INSTANCE/g" \
-    -e "s/@PORT@/$PORT/g" \
-    -e "s/@CLOCK_TIME@/$CLOCK_TIME/g" \
-    -e "s/@IN_GAME_SECONDS_PER_TICK@/$IN_GAME_SECONDS_PER_TICK/g" \
     "$SCRIPT_DIR/energetica.service" > "$UNIT"
 systemctl daemon-reload
 systemctl enable "energetica-$INSTANCE" >/dev/null

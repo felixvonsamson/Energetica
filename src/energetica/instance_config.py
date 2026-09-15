@@ -30,6 +30,7 @@ import json
 import logging
 import os
 import secrets
+import stat
 import tempfile
 import threading
 from datetime import datetime, timezone
@@ -306,6 +307,43 @@ def load_fragment(slug: str) -> InstanceFragment | None:
     return _load_json_or_none(fragment_path, InstanceFragment, what="instance fragment")
 
 
+def _explain_refused_replace(target: Path, exc: PermissionError) -> PermissionError | None:
+    """Rewrite a refused ``os.replace`` into an error naming the fix, or ``None`` to leave it be.
+
+    ``/etc/energetica/{slug}/`` carries the sticky bit, so a file in it may be replaced only by
+    the user who owns *that file* (#1072). The service owns ``instance.json`` for exactly this
+    reason, but an admin who edits it with an editor that saves by writing a temp file and
+    renaming (vim's default ``backupcopy``, emacs) leaves a new file owned by whoever ran the
+    editor — and every write the service makes from then on fails. The bare ``PermissionError``
+    for that reads like a broken disk or a bad mount.
+
+    The diagnosis is gated on the directory actually being sticky, because this writer is shared.
+    It also publishes fragments, ``instances.json`` and recaps into the landing dir, which is
+    ``2775`` — setgid and group-writable, never sticky. A refusal there is far more likely to be
+    the lost setgid/group-write an rsync can cause, and answering that with "chown the file"
+    would send an incident down the wrong path. Returning ``None`` leaves the original error,
+    with its original traceback, to speak for itself.
+
+    Where it does apply, the ``PermissionError`` type is kept so nothing catching ``OSError``
+    changes behaviour; only the message differs.
+    """
+    try:
+        sticky = bool(os.stat(target.parent).st_mode & stat.S_ISVTX)
+    except OSError:
+        # The parent is unreadable or gone, so there is nothing to base a diagnosis on. Not
+        # being able to check must not read as a check that passed.
+        return None
+    if not sticky:
+        return None
+    return PermissionError(
+        exc.errno,
+        f"cannot replace {target}: {exc.strerror or 'permission denied'}. Its directory is "
+        f"sticky, so only the file's owner may replace it, and this process does not own it — "
+        f"an editor or script that saves by rename leaves the file owned by whoever ran it. "
+        f"Restore the service's ownership with: sudo chown energetica {target}",
+    )
+
+
 def _atomic_write_json(target: Path, payload: str) -> None:
     """Write ``payload`` to ``target`` atomically: write a unique tmp sibling, then ``os.replace``.
 
@@ -321,6 +359,10 @@ def _atomic_write_json(target: Path, payload: str) -> None:
     rather than ``0o644`` keeps the on-disk file from being world-readable — the HTTP exposure is
     intentional, the filesystem one need not be. The ``chmod`` is inside the ``try`` so a failure
     routes through the cleanup path below and no ``0o600`` tmp file is renamed into place.
+
+    A refused replace goes through :func:`_explain_refused_replace`, which names the ownership
+    fix where it applies and otherwise lets the original error stand. Either way it raises from
+    inside the ``try``, so the cleanup below still removes the tmp sibling.
     """
     target.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f"{target.name}.", suffix=".tmp")
@@ -330,7 +372,13 @@ def _atomic_write_json(target: Path, payload: str) -> None:
             fd_open = False  # fdopen owns the fd now; the context manager will close it
             tmp_file.write(payload)
         os.chmod(tmp_name, 0o640)
-        os.replace(tmp_name, target)
+        try:
+            os.replace(tmp_name, target)
+        except PermissionError as exc:
+            explained = _explain_refused_replace(target, exc)
+            if explained is None:
+                raise
+            raise explained from exc
     except BaseException:
         # Close the fd only if fdopen never took ownership (else the `with` already closed it;
         # blindly re-closing would risk a thread-unsafe double-close on a recycled fd).
