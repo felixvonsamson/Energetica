@@ -13,10 +13,12 @@ dependencies = [
     "scipy",
     "apscheduler",
     "bcrypt",
-    "ecdsa",
     "requests",
     "pandas",
     "pywebpush",
+    # pywebpush pulls this in anyway, but we import it directly to generate the VAPID
+    # keypair, so it is declared here rather than relied on as a transitive dependency.
+    "cryptography",
     "noise",
     # Pinned: these determine the generated OpenAPI schema, so the api-types
     # freshness check (CI) is only reproducible if their versions are fixed.
