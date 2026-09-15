@@ -143,6 +143,8 @@ An instance's runtime configuration lives in `/etc/energetica/{slug}/instance.en
 
 The port is the reason this file exists. It used to have two rendered copies, the unit and the vhost, with no source of truth behind either, so anything that wanted to regenerate one had nowhere to read it from. Reading it is now unprivileged: the file is `0640 root:energetica` and the `deploy` user is in that group, so `list-instances.sh` discovers a port with no `sudo` at all.
 
+Regenerating the vhost is what that unblocked. `scripts/infra/update-instance-vhost.sh <slug> --domain <apex>` renders `apache-instance.conf` for an instance that is already running, reading the port from `instance.env` rather than taking it as an argument (#1071). It is the only renderer of that template — `setup-instance.sh` calls it too — so a vhost change is now one rerunnable command per instance instead of a hand edit on every server. It stays a *manual*, root-run command on purpose: writing `/etc/apache2/sites-available/` and reloading Apache is equivalent to root, so handing it to `deploy-instance.sh` would dissolve the least-privilege split `setup-base.sh` sets up. See `docs/backend/deployment.md` § Changing an instance's Apache vhost.
+
 The `EnvironmentFile=` line has no `-` prefix, so a missing file stops the unit. See `scripts/infra/energetica.service` for why that is the behaviour worth having.
 
 Two files now share one directory with opposite write rules, which is what the sticky bit on `/etc/energetica/{slug}/` (`1770 root:energetica`) is for. The directory has to be group-writable at all, because the service replaces `instance.json` by renaming a temp sibling over it (#1019) and renaming into a directory needs write permission on it. Without the sticky bit that permission is all-or-nothing: every member of the group — the service, `deploy`, `www-data` — could unlink any file there, `instance.env` included, and its variables are what tell the service where to read accounts and write state.
@@ -486,6 +488,8 @@ scripts/
                                 creates /var/www/energetica-landing/instances/ with setgid `energetica`
     setup-instance.sh           ← run per instance; usage: setup-instance.sh <instance> <port>;
                                 creates /etc/energetica/{instance}/ and writes initial instance.json there
+    update-instance-vhost.sh    ← the one renderer of apache-instance.conf, rerunnable on a live
+                                instance; setup-instance.sh calls it at step 7 (#1071)
     apache-main.conf          ← main domain vhost template (static landing, no proxy)
     apache-instance.conf        ← instance vhost template (app static + API proxy)
     energetica.service        ← systemd service template (runs as user in `energetica` group);
@@ -508,10 +512,12 @@ scripts/
 1. Create `/var/www/energetica-{instance}/` directory structure
 2. Clone repo (or symlink shared code — TBD)
 3. Create `/etc/energetica/{instance}/` (mode `0750`, owned by `root:energetica`) and render `instance.json.tmpl` into `/etc/energetica/{instance}/instance.json` (defaults: `name = {slug titlecased}`, `advertised = true`, `starts_at = now (UTC)`, `access.policy = "public"` — admin edits before going live for private instances), then render `instance.env.tmpl` into `/etc/energetica/{instance}/instance.env` with this run's port and clock values
-4. Create and enable Apache vhost from `apache-instance.conf` template
+4. Create and enable a temporary HTTP-only vhost — written inline, not from `apache-instance.conf`, because that template names certificate files that do not exist yet
 5. Reload Apache (HTTP only at this point)
 6. Obtain TLS certificate: `certbot certonly --webroot -w /var/www/energetica-{instance}/ -d {instance}.{domain}` — the instance directory (created in step 1) is already the Apache DocumentRoot, so ACME challenge files are reachable there
-7. Update vhost with SSL directives, reload Apache
+7. Update vhost with SSL directives, reload Apache — by calling `update-instance-vhost.sh`, which
+   is also how a template change reaches an instance that is already provisioned (this script
+   refuses to run twice); it reads the port from the `instance.env` written in step 3
 8. Install certbot deploy hook to reload Apache on certificate renewal
 9. Create and enable `energetica-{instance}.service` systemd unit (runs as a user in group `energetica` so it can write fragments to the landing's `instances/` dir), rendered from the template with nothing but the slug substituted — it reads the rest from the `instance.env` written in step 3
 10. `pip install <the backend wheel>`, start service — on startup the instance writes its sanitised fragment to `/var/www/energetica-landing/instances/{instance}.json` and runs the aggregation step

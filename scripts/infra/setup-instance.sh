@@ -356,15 +356,12 @@ else
     log_success "Certificate obtained"
 fi
 # --- 7. Full vhost --------------------------------------------------------------
-log_section "INSTANCE VHOST"
-sed -e "s/@INSTANCE@/$INSTANCE/g" \
-    -e "s/@PORT@/$PORT/g" \
-    -e "s/@DOMAIN@/$DOMAIN/g" \
-    "$SCRIPT_DIR/apache-instance.conf" > "$VHOST"
-a2ensite "energetica-$INSTANCE" >/dev/null
-apache2ctl configtest
-systemctl reload apache2
-log_success "Vhost active: https://$FQDN"
+# Delegated rather than inlined (#1071). This script refuses to run twice on a provisioned
+# instance, so a substitution written here would be reachable only at provisioning time and
+# every later change to the template would be a hand edit on every server.
+# update-instance-vhost.sh is that one renderer, and it is rerunnable; it reads the port from
+# the instance.env written in step 3 rather than taking it from here, so the two cannot disagree.
+bash "$SCRIPT_DIR/update-instance-vhost.sh" "$INSTANCE" --domain "$DOMAIN"
 
 # --- 8. Certbot reload-on-renewal hook: installed once per server by setup-base.sh (no-op here).
 

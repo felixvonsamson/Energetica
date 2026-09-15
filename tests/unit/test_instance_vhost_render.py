@@ -1,0 +1,192 @@
+"""Drift guards for the instance Apache vhost and the script that renders it (issue #1071).
+
+`scripts/infra/apache-instance.conf` is a placeholder template, and
+`scripts/infra/update-instance-vhost.sh` is the only thing in the repo that renders it —
+`setup-instance.sh` calls that script rather than carrying a second copy of the `sed`. A
+placeholder added to the template and not to the renderer ships a vhost with a literal
+`@PORT@` in it, which Apache rejects at `configtest`; a renderer that substitutes a token the
+template no longer has is a silent no-op. Neither is visible from either file alone.
+
+Most of these tests read the files as text and check the seams between them; the script as a
+whole is not run, because it needs root, Apache and a provisioned instance. The exception is
+the rollback, which is the safety-critical part and the one piece that depends on nothing but
+four shell variables: it is lifted out of the script and executed against a sandbox with a
+stubbed `a2dissite`, so its ordering and its return status are observed rather than inferred
+from the text.
+"""
+
+from __future__ import annotations
+
+import re
+import subprocess
+from pathlib import Path
+
+_INFRA = Path(__file__).resolve().parents[2] / "scripts" / "infra"
+_VHOST_TEMPLATE = _INFRA / "apache-instance.conf"
+_RENDER_SCRIPT = _INFRA / "update-instance-vhost.sh"
+_SETUP_SCRIPT = _INFRA / "setup-instance.sh"
+
+_PLACEHOLDER = re.compile(r"@([A-Z_]+)@")
+
+# The shell expression the renderer uses, not a real path — the sibling test module has an
+# `_ENV_FILE_PATH` that IS one, so this one is named for what it is.
+_ENV_FILE_EXPR = "/etc/energetica/$INSTANCE/instance.env"
+
+
+def test_the_renderer_and_the_template_agree_on_placeholders() -> None:
+    substituted = set(re.findall(r"s/@([A-Z_]+)@/", _RENDER_SCRIPT.read_text()))
+    assert substituted == set(_PLACEHOLDER.findall(_VHOST_TEMPLATE.read_text())), (
+        "update-instance-vhost.sh and apache-instance.conf disagree on placeholders"
+    )
+
+
+def test_the_template_names_the_script_that_renders_it() -> None:
+    # The header is where an operator looks to find out what to re-run after editing.
+    assert "update-instance-vhost.sh" in _VHOST_TEMPLATE.read_text()
+
+
+def test_setup_instance_delegates_the_render_instead_of_repeating_it() -> None:
+    """One renderer, two callers — the whole point of #1071.
+
+    `setup-instance.sh` refuses to run twice on a provisioned instance, so a `sed` inlined here
+    would again be reachable only at provisioning time and every vhost change would again be a
+    hand edit on every server.
+    """
+    setup = _SETUP_SCRIPT.read_text()
+    # The render, not the name: a comment mentioning the template is fine, reading it is not.
+    assert '"$SCRIPT_DIR/apache-instance.conf"' not in setup, "setup-instance.sh renders the vhost itself again"
+    assert '"$SCRIPT_DIR/update-instance-vhost.sh" "$INSTANCE" --domain "$DOMAIN"' in setup
+
+
+def test_the_renderer_reads_the_port_from_the_env_file() -> None:
+    """The port is discovered, not typed.
+
+    A hand-passed `--port` that disagrees with the running service renders a vhost that passes
+    `configtest` and proxies to nothing, so the only source is the instance's own EnvironmentFile
+    (#1072), which is what the service itself runs from.
+    """
+    script = _RENDER_SCRIPT.read_text()
+    assert _ENV_FILE_EXPR in script
+    assert "ENERGETICA_PORT" in script
+    # The argument parser, not the prose: the header explains why there is no port flag, and
+    # saying so must not fail the test that enforces it.
+    assert "--port)" not in script, "the port must come from instance.env, never from an argument"
+
+
+def test_the_renderer_configtests_before_it_reloads() -> None:
+    script = _RENDER_SCRIPT.read_text()
+    assert script.index("apache2ctl configtest") < script.index("systemctl reload apache2")
+
+
+def test_the_renderer_puts_the_previous_vhost_back_when_configtest_fails() -> None:
+    """A failed render must not leave a broken file behind.
+
+    Apache's configuration is server-wide: a vhost that fails `configtest` fails every later
+    reload too, including the certbot renewal hook's, so a bad render for one instance would take
+    TLS renewal down for all of them.
+    """
+    script = _RENDER_SCRIPT.read_text()
+    assert "restore_previous_vhost() {" in script
+    failure_branch = script.split("if ! apache2ctl configtest", 1)[1].split("\nfi", 1)[0]
+    assert "exit 1" in failure_branch
+
+
+def test_the_rollback_covers_every_exit_from_the_window_it_guards() -> None:
+    """The rollback must hang off a trap, not off the `configtest` branch alone.
+
+    Between installing the rendered vhost and Apache accepting it, the `configtest` branch is not
+    the only way out: `a2ensite` can fail under `set -e`, and an operator can interrupt the test.
+    A rollback reachable only from that one branch leaves the untested render installed in either
+    case — and deletes the backup on the way out, which is worse than not taking one.
+    """
+    script = _RENDER_SCRIPT.read_text()
+    cleanup = script.split("cleanup() {", 1)[1].split("\n}", 1)[0]
+    assert "restore_previous_vhost" in cleanup, "the trap handler does not roll anything back"
+    assert "trap cleanup EXIT" in script
+    for signal in ("INT", "TERM"):
+        # The signal traps exit rather than clean up themselves, so cleanup runs once, via EXIT.
+        assert re.search(rf"trap 'exit \d+' {signal}\b", script), f"no {signal} trap"
+    # The flags are what tell the handler whether there is anything to undo.
+    assert "INSTALLED=true" in script and "COMMITTED=true" in script
+
+
+def test_the_renderer_is_syntactically_valid_bash() -> None:
+    subprocess.run(["bash", "-n", str(_RENDER_SCRIPT)], check=True)
+
+
+def _rollback_source() -> str:
+    """The text of the renderer's `restore_previous_vhost`, lifted out to be run on its own.
+
+    The script as a whole needs root, Apache and a provisioned instance, so it is not runnable
+    here — but this one function is the safety-critical part, and it depends on nothing but four
+    shell variables and `a2dissite`. Slicing it out (rather than adding a path-override seam to a
+    script whose whole job is writing root-owned Apache config) is what makes it testable at all.
+    """
+    text = _RENDER_SCRIPT.read_text()
+    start = text.index("restore_previous_vhost() {")
+    return text[start : text.index("\n}\n", start) + 3]
+
+
+def _run_rollback(
+    tmp_path: Path, *, vhost: str | None, backup: str | None, was_enabled: bool, a2dissite_exit: int = 0
+) -> tuple[int, Path, Path]:
+    """Run the rollback against a sandbox. Returns its status, the vhost path and the a2dissite log.
+
+    `a2dissite` is stubbed with a script that records whether the vhost file still existed when it
+    ran, which is how the ordering between the two is checked rather than assumed.
+    """
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    record = tmp_path / "a2dissite.log"
+    (bin_dir / "a2dissite").write_text(
+        f'#!/bin/bash\nif [ -e "$VHOST" ]; then echo present > "{record}"; else echo absent > "{record}"; fi\nexit {a2dissite_exit}\n'
+    )
+    (bin_dir / "a2dissite").chmod(0o755)
+
+    vhost_path = tmp_path / "energetica-demo.conf"
+    if vhost is not None:
+        vhost_path.write_text(vhost)
+    backup_path = tmp_path / "backup.conf"
+    if backup is not None:
+        backup_path.write_text(backup)
+
+    harness = tmp_path / "harness.sh"
+    harness.write_text(
+        # No `set -e`: the renderer calls this from an `if`, where errexit is suppressed anyway,
+        # and the return status is the thing under test.
+        f'set -uo pipefail\nexport PATH="{bin_dir}:$PATH"\nINSTANCE=demo\n'
+        f'export VHOST="{vhost_path}"\nBACKUP="{backup_path if backup is not None else ""}"\n'
+        f"WAS_ENABLED={'true' if was_enabled else 'false'}\n{_rollback_source()}\nrestore_previous_vhost\n"
+    )
+    result = subprocess.run(["bash", str(harness)], capture_output=True, text=True)
+    return result.returncode, vhost_path, record
+
+
+def test_rollback_restores_the_previous_vhost_and_leaves_an_enabled_site_enabled(tmp_path: Path) -> None:
+    status, vhost, record = _run_rollback(
+        tmp_path, vhost="the rejected render", backup="the vhost that was working", was_enabled=True
+    )
+    assert status == 0
+    assert vhost.read_text() == "the vhost that was working"
+    assert not record.exists(), "a site that was already enabled must not be disabled by a rollback"
+
+
+def test_rollback_disables_the_site_before_removing_the_file_it_points_at(tmp_path: Path) -> None:
+    """The ordering is the whole point: Debian's `a2dissite` refuses once the file is gone.
+
+    With no previous vhost to restore, rolling back means deleting the one this run installed. Do
+    that first and `a2dissite` fails, leaving a `sites-enabled` symlink pointing at nothing — a
+    configuration error that breaks every later Apache reload, which is precisely what the
+    rollback exists to prevent.
+    """
+    status, vhost, record = _run_rollback(tmp_path, vhost="the rejected render", backup=None, was_enabled=False)
+    assert status == 0
+    assert not vhost.exists(), "the vhost this run installed is still there"
+    assert record.read_text().strip() == "present", "a2dissite ran after the file was already gone"
+
+
+def test_rollback_reports_failure_when_the_site_cannot_be_disabled(tmp_path: Path) -> None:
+    # The caller prints a different, louder message when the rollback itself fails, so the status
+    # has to be honest about it rather than swallowed.
+    status, _, _ = _run_rollback(tmp_path, vhost="x", backup=None, was_enabled=False, a2dissite_exit=1)
+    assert status != 0

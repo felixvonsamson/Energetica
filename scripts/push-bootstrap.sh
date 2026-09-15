@@ -6,8 +6,8 @@ set -euo pipefail
 #   ./scripts/push-bootstrap.sh --server <ssh-host>
 #
 # setup-base.sh, setup-landing.sh, setup-lobby.sh, setup-instance.sh, teardown-instance.sh,
-# and reap-instances.sh (plus their Apache/systemd/environment templates) live in
-# scripts/infra/, but this is Option A (no git checkout on the server, ever
+# update-instance-vhost.sh and reap-instances.sh (plus their Apache/systemd/environment
+# templates) live in scripts/infra/, but this is Option A (no git checkout on the server, ever
 # — see docs/backend/deployment.md), so there is nothing for the normal deploy-instance.sh /
 # deploy-lobby.sh rsync to target before the first instance or the lobby exists. These scripts
 # must be delivered by hand.

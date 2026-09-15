@@ -140,6 +140,40 @@ not install it would leave the service unable to start.
 The SSH user is always `deploy`. `--server`/`--domain` also accept env vars (`DEPLOY_HOST`, 
 `DEPLOY_DOMAIN`), so the scripts run unattended from CI.
 
+## Changing an instance's Apache vhost
+
+Deploys never write `/etc/apache2/sites-available/`. Writing an Apache config and reloading
+Apache is equivalent to root — a config can `Include` arbitrary files, set `User`, and enable
+CGI — and the `deploy` user is deliberately not granted it. So a change to
+`scripts/infra/apache-instance.conf` reaches a running instance through one command per
+instance, run as root on the server:
+
+```bash
+./scripts/push-bootstrap.sh --server energetica-game
+```
+
+Then, on the VPS as root — the same way the setup scripts above are run, and for the same
+reason. It cannot be an `ssh energetica-game '…'` one-liner: that connects as `deploy`, whose
+passwordless sudo covers only the per-instance `pip` and `systemctl`/`journalctl` on
+`energetica-*`, so `sudo bash` would sit waiting for a password on a connection that has no
+terminal to type it into.
+
+```bash
+sudo bash /tmp/update-instance-vhost.sh autumn-2025 --domain energetica-game.org
+```
+
+`update-instance-vhost.sh` is the only thing that renders the vhost template, and
+`setup-instance.sh` calls it rather than repeating the substitution, so provisioning a new
+instance and migrating an old one cannot drift apart. It takes no port: it reads
+`ENERGETICA_PORT` from the instance's own `instance.env`, the same file the running service
+gets its port from, so there is nothing to type that could disagree with what is listening.
+
+It is safe to rerun. With the template unchanged it says so and does nothing. If the rendered
+vhost fails `apache2ctl configtest` it puts the previous file back and does not reload — which
+matters because Apache's configuration is server-wide: a vhost that fails the test would fail
+every later reload on that box, including the certbot renewal hook's, and cost every instance
+its TLS renewal.
+
 ## SSH Configuration
 
 Add to `~/.ssh/config`:
