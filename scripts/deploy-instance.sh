@@ -226,6 +226,12 @@ if [ "$HEALTH_OK" != true ]; then
         echo "Check they match where the bundle now lives, and that Apache can read it:"
         echo "  ssh $SSH 'grep static /etc/apache2/sites-available/energetica-$INSTANCE.conf'"
         echo "  ssh $SSH 'ls -l $REMOTE_PATH/src/energetica/static/app/index.html'"
+        # Deploys never write the vhost, on purpose (that is root's work, not the deploy user's
+        # — see update-instance-vhost.sh), so a vhost left behind by a change to the template is
+        # re-rendered by hand, and this is where an operator finds that out.
+        echo "If the vhost predates a change to scripts/infra/apache-instance.conf, re-render it:"
+        echo "  ./scripts/push-bootstrap.sh --server $REMOTE_HOST"
+        echo "  ssh $SSH 'sudo bash /tmp/update-instance-vhost.sh $INSTANCE --domain $DOMAIN'"
     else
         log_error "/healthz did not reach status=ok within 600s (last status: '${HEALTH_STATUS:-unreachable}')"
         echo "Logs: ssh $SSH 'sudo journalctl -u energetica-$INSTANCE -f'"
