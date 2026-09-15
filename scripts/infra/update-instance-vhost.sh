@@ -20,8 +20,14 @@ set -euo pipefail
 #
 # Deliver it the way the other infra scripts are delivered — there is no git on the server:
 #
-#   ./scripts/push-bootstrap.sh --server <ssh-host>
-#   ssh <ssh-host> 'sudo bash /tmp/update-instance-vhost.sh <instance> --domain <apex-domain>'
+#   ./scripts/push-bootstrap.sh --server <ssh-host>     # from your machine
+#   sudo bash /tmp/update-instance-vhost.sh <instance> --domain <apex-domain>   # on the VPS, as root
+#
+# The second line is run on the server by an administrator, not piped through `ssh <host> '…'`:
+# that connects as `deploy`, which is granted passwordless sudo for the per-instance pip and
+# `systemctl`/`journalctl` on energetica-* and nothing else. `sudo bash` is deliberately not on
+# that list — granting it would hand the deploy user the very privilege this script keeps out of
+# its reach (see below).
 #
 # Deliberately NOT run by deploy-instance.sh. Writing /etc/apache2/sites-available/ and
 # reloading Apache is equivalent to root — an Apache config can Include arbitrary files, set

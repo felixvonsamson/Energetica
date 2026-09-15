@@ -150,7 +150,16 @@ instance, run as root on the server:
 
 ```bash
 ./scripts/push-bootstrap.sh --server energetica-game
-ssh energetica-game 'sudo bash /tmp/update-instance-vhost.sh autumn-2025 --domain energetica-game.org'
+```
+
+Then, on the VPS as root — the same way the setup scripts above are run, and for the same
+reason. It cannot be an `ssh energetica-game '…'` one-liner: that connects as `deploy`, whose
+passwordless sudo covers only the per-instance `pip` and `systemctl`/`journalctl` on
+`energetica-*`, so `sudo bash` would sit waiting for a password on a connection that has no
+terminal to type it into.
+
+```bash
+sudo bash /tmp/update-instance-vhost.sh autumn-2025 --domain energetica-game.org
 ```
 
 `update-instance-vhost.sh` is the only thing that renders the vhost template, and

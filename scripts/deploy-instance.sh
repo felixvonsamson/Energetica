@@ -231,7 +231,8 @@ if [ "$HEALTH_OK" != true ]; then
         # re-rendered by hand, and this is where an operator finds that out.
         echo "If the vhost predates a change to scripts/infra/apache-instance.conf, re-render it:"
         echo "  ./scripts/push-bootstrap.sh --server $REMOTE_HOST"
-        echo "  ssh $SSH 'sudo bash /tmp/update-instance-vhost.sh $INSTANCE --domain $DOMAIN'"
+        echo "  then on $REMOTE_HOST, as root (not as $REMOTE_USER — it has no sudo for this):"
+        echo "    sudo bash /tmp/update-instance-vhost.sh $INSTANCE --domain $DOMAIN"
     else
         log_error "/healthz did not reach status=ok within 600s (last status: '${HEALTH_STATUS:-unreachable}')"
         echo "Logs: ssh $SSH 'sudo journalctl -u energetica-$INSTANCE -f'"
