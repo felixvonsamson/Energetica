@@ -50,9 +50,8 @@ where = ["src"]
 # subpackages — energetica.database.engine_data, energetica.database.map — have no
 # __init__.py and would otherwise be dropped from the wheel.
 namespaces = true
-# ...which also means every directory under src/energetica counts, including the web-asset
-# trees. Exclude them: they hold no Python, and what does ship from static/ is named
-# explicitly as package data below.
+# ...which also means every directory under src/energetica counts, including static/. Exclude
+# it: it holds no Python, and what does ship from it is named explicitly as package data below.
 exclude = ["energetica.static*"]
 
 [tool.setuptools.dynamic]
@@ -60,10 +59,11 @@ exclude = ["energetica.static*"]
 version = { attr = "energetica.__version__" }
 
 [tool.setuptools.package-data]
-# Only the game's own data tables ship inside the wheel. The web assets under `static/app`
-# and `static/service-worker.js` are served by Apache straight off the rsynced tree
-# (docs/architecture/static-serving-and-deployment.md) rather than read through the
-# installed package.
+# The game's own data tables are all that is left under static/, and all that ships inside the
+# wheel. Since #1064 no web assets live here at all: the app bundle and its service worker are
+# built to frontend/dist-app/ and served by Apache straight off the rsynced tree
+# (docs/architecture/static-serving-and-deployment.md), never read through the installed
+# package. #1049 step 2 moves these tables to freeplay/data/, which empties static/ for good.
 energetica = ["static/data/*"]
 
 [tool.ruff]
