@@ -94,6 +94,27 @@ import { WindTable } from "@/components/wiki/WindTable";
 <WindTable />
 ```
 
+## Figures
+
+Figures live in `frontend/src/assets/wiki/` and are referenced by module path, not
+by URL. Both markdown and JSX syntax work:
+
+```mdx
+![Probability distribution of heatwaves](@/assets/wiki/heatwave_probability_distribution.webp)
+
+<img
+    className="h-75"
+    src="@/assets/wiki/cloud_coverage.webp"
+    alt="Cloud coverage over a year"
+/>
+```
+
+A remark plugin (`frontend/remark-image-imports.ts`) turns each of those into an
+import before the page compiles, so Vite resolves the file at build time. Get the
+path wrong and the build fails with the offending file named, rather than the page
+rendering a broken image for a reader. See [Images](images.md) for the wider
+convention.
+
 ## Styling
 
 **Automatic styling with prose:**

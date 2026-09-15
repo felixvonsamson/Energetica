@@ -10,6 +10,7 @@ import {
     Money,
 } from "@/components/ui";
 import { CardDescription } from "@/components/ui/card";
+import { assetImages } from "@/lib/assets/asset-images";
 import { cn } from "@/lib/utils";
 import { ProjectType } from "@/types/projects";
 
@@ -34,8 +35,6 @@ export function TechnologyItem({
     level,
     onClick,
 }: TechnologyItemProps) {
-    const imageUrl = `/static/images/technologies/${technologyName}.webp`;
-
     return (
         <Card
             className={cn(
@@ -68,12 +67,9 @@ export function TechnologyItem({
             <CardContent>
                 <div className="relative aspect-3/2">
                     <img
-                        src={imageUrl}
+                        src={assetImages[technologyName]}
                         alt={`${technologyName} technology`}
                         className="w-full h-full object-cover rounded"
-                        onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                        }}
                     />
                     {isLocked && (
                         <div className="absolute inset-0 bg-black/60 rounded flex items-center justify-center">

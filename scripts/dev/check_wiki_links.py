@@ -19,6 +19,7 @@ BASE_URL = f"http://localhost:{PORT}"
 ROOT = Path(__file__).parent.parent.parent
 WIKI_DIR = ROOT / "frontend/src/content/wiki"
 ROUTES_DIR = ROOT / "frontend/src/routes"
+FRONTEND_SRC = ROOT / "frontend/src"
 
 OUT_FILE = ROOT / "wiki-links.md"
 
@@ -26,8 +27,9 @@ GREEN, RED, RESET, BOLD, DIM = "\033[92m", "\033[91m", "\033[0m", "\033[1m", "\0
 
 
 def extract_hrefs(content: str) -> list[str]:
-    hrefs = re.findall(r"\[[^\]]*\]\(([^)]+)\)", content)  # [text](href)
+    hrefs = re.findall(r"\[[^\]]*\]\(([^)]+)\)", content)  # [text](href) and ![alt](src)
     hrefs += re.findall(r'href="([^"]+)"', content)  # href="..."
+    hrefs += re.findall(r'src="([^"]+)"', content)  # <img src="..." />
     return hrefs
 
 
@@ -101,6 +103,11 @@ def check_url(url: str) -> int | str:
         return f"ERR: {e}"
 
 
+def asset_result(path: Path) -> tuple[bool, str]:
+    """Label a bundled asset, distinguishing a resolved one from a broken reference."""
+    return (True, "asset") if path.resolve().exists() else (False, "missing")
+
+
 def validate(href: str, route_patterns: list[re.Pattern]) -> tuple[bool, str]:
     """Returns (ok, status_label) for a given href."""
     base, _, anchor = href.partition("#")
@@ -121,6 +128,13 @@ def validate(href: str, route_patterns: list[re.Pattern]) -> tuple[bool, str]:
         status = check_url(url)
         ok = isinstance(status, int) and 200 <= status < 300
         return ok, str(status)
+    # Bundled assets: figures are referenced by module path, which Vite resolves at build
+    # time (#1078). Check the file is on disk rather than fetching it -- the dev server has
+    # no URL for it, and the hashed name it gets in a build is not knowable from here.
+    if base.startswith("@/"):
+        return asset_result(FRONTEND_SRC / base[2:])
+    if base.startswith("./") or base.startswith("../"):
+        return asset_result(WIKI_DIR / base)
     return True, "skip"
 
 

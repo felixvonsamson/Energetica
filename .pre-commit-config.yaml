@@ -27,9 +27,15 @@ repos:
         entry: bash -c 'cd frontend && npx prettier --write "${@#frontend/}"' --
         language: system
         files: ^frontend/.*\.(ts|tsx)$
+      # --no-warn-ignored: naming a file eslint's config ignores (src/service-worker.ts) makes
+      # it emit a "File ignored because of a matching ignore pattern" warning, which
+      # --max-warnings 0 then turns into a failed commit. `bun run lint` never hits this — it
+      # walks the tree and skips ignored files silently — so the trap only springs here, on
+      # any commit that touches the worker. The flag suppresses that one warning class and
+      # leaves the zero-tolerance budget intact for real ones.
       - id: eslint
         name: eslint
-        entry: bash -c 'cd frontend && npx eslint --max-warnings 0 --fix --cache "${@#frontend/}"' --
+        entry: bash -c 'cd frontend && npx eslint --max-warnings 0 --no-warn-ignored --fix --cache "${@#frontend/}"' --
         language: system
         files: ^frontend/src/.*\.(ts|tsx)$
       - id: frontend-typecheck

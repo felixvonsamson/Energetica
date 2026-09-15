@@ -2,7 +2,7 @@
 
 Energetica deploys as one **landing** site on the apex domain plus one or more
 **instances**, each on its own subdomain. Apache serves all static content
-(landing, app bundle, images, service worker, PWA manifest) directly from disk;
+(landing, app bundle, service worker, PWA manifest) directly from disk;
 uvicorn handles only `/api`, `/socket.io`, and `/logout`. See
 `docs/architecture/static-serving-and-deployment.md` for the full design.
 

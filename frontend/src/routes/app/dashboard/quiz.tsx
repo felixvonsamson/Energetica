@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
+import quizIcon from "@/assets/quiz.png";
 import { DailyQuizSection } from "@/components/dashboard/daily-quiz";
 import {
     Dialog,
@@ -35,17 +36,9 @@ function QuizDialog() {
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle className="text-center">
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
+                        <img src={quizIcon} className="inline w-6 h-6" alt="" />
                         <span className="mx-2">Daily Quiz</span>
-                        <img
-                            src="/static/images/icons/quiz.png"
-                            className="inline w-6 h-6"
-                            alt=""
-                        />
+                        <img src={quizIcon} className="inline w-6 h-6" alt="" />
                     </DialogTitle>
                 </DialogHeader>
                 <DailyQuizSection />

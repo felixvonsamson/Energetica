@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Convert raster images under src/energetica/static/images/ to WebP (#1073).
+Convert the raster images the frontend ships to WebP (#1073).
 
 Usage: python scripts/dev/optimize_images.py [--dry-run]
 
@@ -24,7 +24,12 @@ from pathlib import Path
 from typing import NamedTuple
 
 ROOT = Path(__file__).parent.parent.parent
-IMAGE_ROOT = ROOT / "src/energetica/static/images"
+
+# The same two roots guard-image-weight.ts weighs, and for the same reason: the
+# bundled tree Vite hashes and emits, plus the verbatim-copied public/ dir that
+# holds the one icon needing a URL no bundler owns. Walking both keeps the
+# script able to fix everything the guard can reject.
+IMAGE_ROOTS = (ROOT / "frontend/src/assets", ROOT / "frontend/public")
 
 
 class Policy(NamedTuple):
@@ -37,7 +42,7 @@ class Policy(NamedTuple):
 # Each cap is about twice the largest size the group is ever displayed at, which
 # covers 2x displays with nothing to spare:
 #
-#   landing_page/  tiles render ~560 CSS px wide, the lightbox at most 1024
+#   landing/       tiles render ~560 CSS px wide, the lightbox at most 1024
 #                  (max-w-5xl in landing-page.tsx); the hero banner and the
 #                  educators photo span a max-w-6xl column, so 1152
 #   wiki/          figures sit in a max-w-4xl prose column, so 896 CSS px
@@ -54,28 +59,28 @@ class Policy(NamedTuple):
 # here: at these qualities WebP reproduces the JPEG's own artifacts rather than
 # adding to them.
 POLICIES: list[tuple[str, Policy]] = [
-    ("landing_page/", Policy(max_width=2400, quality=85)),
-    ("wiki/", Policy(max_width=1800, quality=85)),
-    ("technologies/", Policy(max_width=1344, quality=82)),
-    ("_facilities/", Policy(max_width=1344, quality=82)),
+    ("assets/landing/", Policy(max_width=2400, quality=85)),
+    ("assets/wiki/", Policy(max_width=1800, quality=85)),
+    ("assets/technologies/", Policy(max_width=1344, quality=82)),
+    ("assets/facilities/", Policy(max_width=1344, quality=82)),
 ]
 DEFAULT_POLICY = Policy(max_width=1600, quality=85)
 
 # Files that stay in their original format, named one by one rather than by
 # directory. icon_green.png is the PWA icon, which manifest.json declares as
 # "image/png", and is also the icon Web Push notifications render.
-# icons/quiz.png is 3.5 KB, where conversion buys nothing.
+# quiz.png is 3.5 KB, where conversion buys nothing.
 #
-# Exempting the whole icons/ directory would be easier to write and wrong: it
-# would wave through a heavy PNG dropped in there later, which is the mistake
-# this script exists to prevent. A new icon either converts like everything
-# else or earns its own line here with a reason.
+# Exempting a whole directory would be easier to write and wrong: it would wave
+# through a heavy PNG dropped in there later, which is the mistake this script
+# exists to prevent. A new icon either converts like everything else or earns
+# its own line here with a reason.
 #
-# guard-image-weight.ts anchors its copy of this list at the tree root, so this
+# guard-image-weight.ts anchors its copy of this list at the repo root, so this
 # one compares whole paths for the same reason. An unanchored match here would
 # skip a file the guard then fails, and the failure would tell you to run this
 # script -- the one that just skipped it.
-EXEMPT_FILES = ("icon_green.png", "icons/quiz.png")
+EXEMPT_FILES = ("frontend/public/icon_green.png", "frontend/src/assets/quiz.png")
 
 # Matched against a lowercased suffix, so `photo.JPG` off a camera is picked up
 # rather than silently skipped. guard-image-weight.ts lowercases the extension
@@ -95,7 +100,7 @@ def policy_for(relative_path: str) -> Policy:
 
 
 def is_exempt(relative_path: Path) -> bool:
-    """Whether this file keeps its original format. Anchored at the tree root."""
+    """Whether this file keeps its original format. Anchored at the repo root."""
     return relative_path.as_posix() in EXEMPT_FILES
 
 
@@ -142,15 +147,14 @@ def main() -> int:
 
     sources = sorted(
         path
-        for path in IMAGE_ROOT.rglob("*")
-        if path.is_file()
-        and path.suffix.lower() in CONVERTIBLE_SUFFIXES
-        and not is_exempt(path.relative_to(IMAGE_ROOT))
+        for image_root in IMAGE_ROOTS
+        for path in image_root.rglob("*")
+        if path.is_file() and path.suffix.lower() in CONVERTIBLE_SUFFIXES and not is_exempt(path.relative_to(ROOT))
     )
 
     total_before = total_after = converted = 0
     for source in sources:
-        relative = source.relative_to(IMAGE_ROOT)
+        relative = source.relative_to(ROOT)
         max_width, quality = policy_for(str(relative))
         width = image_width(source)
 
@@ -171,7 +175,7 @@ def main() -> int:
         total_after += after
         converted += 1
         source.unlink()
-        print(f"{str(relative):<56} {before:>8} -> {after:>7} bytes  −{100 - after * 100 / before:.1f}%")
+        print(f"{str(relative):<64} {before:>8} -> {after:>7} bytes  −{100 - after * 100 / before:.1f}%")
 
     if total_before and not dry_run:
         saved = 100 - total_after * 100 / total_before

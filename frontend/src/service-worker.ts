@@ -40,7 +40,12 @@ sw.addEventListener("push", (event: PushEvent) => {
             console.log("[SW] Showing notification:", data.type, title);
             return sw.registration.showNotification(title, {
                 body,
-                icon: "/static/images/icon_green.png",
+                // Hand-written URL, not an import: this file is bundled by
+                // `bun build`, which does not own the app's assets and would
+                // emit a second copy of the icon. It ships in
+                // frontend/public/, which Vite copies to the app bundle root,
+                // and Apache aliases that directory to /static/app/.
+                icon: "/static/app/icon_green.png",
                 data: { path },
             });
         }),
