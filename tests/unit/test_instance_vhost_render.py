@@ -7,8 +7,12 @@ placeholder added to the template and not to the renderer ships a vhost with a l
 `@PORT@` in it, which Apache rejects at `configtest`; a renderer that substitutes a token the
 template no longer has is a silent no-op. Neither is visible from either file alone.
 
-These tests read the files as text and check the seams between them. They deliberately do not
-run the shell script: it needs root, Apache and a provisioned instance.
+Most of these tests read the files as text and check the seams between them; the script as a
+whole is not run, because it needs root, Apache and a provisioned instance. The exception is
+the rollback, which is the safety-critical part and the one piece that depends on nothing but
+four shell variables: it is lifted out of the script and executed against a sandbox with a
+stubbed `a2dissite`, so its ordering and its return status are observed rather than inferred
+from the text.
 """
 
 from __future__ import annotations
@@ -108,3 +112,81 @@ def test_the_rollback_covers_every_exit_from_the_window_it_guards() -> None:
 
 def test_the_renderer_is_syntactically_valid_bash() -> None:
     subprocess.run(["bash", "-n", str(_RENDER_SCRIPT)], check=True)
+
+
+def _rollback_source() -> str:
+    """The text of the renderer's `restore_previous_vhost`, lifted out to be run on its own.
+
+    The script as a whole needs root, Apache and a provisioned instance, so it is not runnable
+    here — but this one function is the safety-critical part, and it depends on nothing but four
+    shell variables and `a2dissite`. Slicing it out (rather than adding a path-override seam to a
+    script whose whole job is writing root-owned Apache config) is what makes it testable at all.
+    """
+    text = _RENDER_SCRIPT.read_text()
+    start = text.index("restore_previous_vhost() {")
+    return text[start : text.index("\n}\n", start) + 3]
+
+
+def _run_rollback(
+    tmp_path: Path, *, vhost: str | None, backup: str | None, was_enabled: bool, a2dissite_exit: int = 0
+) -> tuple[int, Path, Path]:
+    """Run the rollback against a sandbox. Returns its status, the vhost path and the a2dissite log.
+
+    `a2dissite` is stubbed with a script that records whether the vhost file still existed when it
+    ran, which is how the ordering between the two is checked rather than assumed.
+    """
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    record = tmp_path / "a2dissite.log"
+    (bin_dir / "a2dissite").write_text(
+        f'#!/bin/bash\nif [ -e "$VHOST" ]; then echo present > "{record}"; else echo absent > "{record}"; fi\nexit {a2dissite_exit}\n'
+    )
+    (bin_dir / "a2dissite").chmod(0o755)
+
+    vhost_path = tmp_path / "energetica-demo.conf"
+    if vhost is not None:
+        vhost_path.write_text(vhost)
+    backup_path = tmp_path / "backup.conf"
+    if backup is not None:
+        backup_path.write_text(backup)
+
+    harness = tmp_path / "harness.sh"
+    harness.write_text(
+        # No `set -e`: the renderer calls this from an `if`, where errexit is suppressed anyway,
+        # and the return status is the thing under test.
+        f'set -uo pipefail\nexport PATH="{bin_dir}:$PATH"\nINSTANCE=demo\n'
+        f'export VHOST="{vhost_path}"\nBACKUP="{backup_path if backup is not None else ""}"\n'
+        f"WAS_ENABLED={'true' if was_enabled else 'false'}\n{_rollback_source()}\nrestore_previous_vhost\n"
+    )
+    result = subprocess.run(["bash", str(harness)], capture_output=True, text=True)
+    return result.returncode, vhost_path, record
+
+
+def test_rollback_restores_the_previous_vhost_and_leaves_an_enabled_site_enabled(tmp_path: Path) -> None:
+    status, vhost, record = _run_rollback(
+        tmp_path, vhost="the rejected render", backup="the vhost that was working", was_enabled=True
+    )
+    assert status == 0
+    assert vhost.read_text() == "the vhost that was working"
+    assert not record.exists(), "a site that was already enabled must not be disabled by a rollback"
+
+
+def test_rollback_disables_the_site_before_removing_the_file_it_points_at(tmp_path: Path) -> None:
+    """The ordering is the whole point: Debian's `a2dissite` refuses once the file is gone.
+
+    With no previous vhost to restore, rolling back means deleting the one this run installed. Do
+    that first and `a2dissite` fails, leaving a `sites-enabled` symlink pointing at nothing — a
+    configuration error that breaks every later Apache reload, which is precisely what the
+    rollback exists to prevent.
+    """
+    status, vhost, record = _run_rollback(tmp_path, vhost="the rejected render", backup=None, was_enabled=False)
+    assert status == 0
+    assert not vhost.exists(), "the vhost this run installed is still there"
+    assert record.read_text().strip() == "present", "a2dissite ran after the file was already gone"
+
+
+def test_rollback_reports_failure_when_the_site_cannot_be_disabled(tmp_path: Path) -> None:
+    # The caller prints a different, louder message when the rollback itself fails, so the status
+    # has to be honest about it rather than swallowed.
+    status, _, _ = _run_rollback(tmp_path, vhost="x", backup=None, was_enabled=False, a2dissite_exit=1)
+    assert status != 0
