@@ -45,7 +45,7 @@ const gameElements: {
         icon: <TrendingUp />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/investment_strategies.png",
+            src: "/static/images/landing_page/investment_strategies.webp",
             alt: "Investment strategies: technology research tree and LCOE comparison",
         },
     },
@@ -62,7 +62,7 @@ const gameElements: {
         icon: <Package />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/resources_management.png",
+            src: "/static/images/landing_page/resources_management.webp",
             alt: "Resources management: network graph showing resource and energy flows",
         },
     },
@@ -78,7 +78,7 @@ const gameElements: {
         icon: <BarChart3 />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/dynamic_energy_markets2.png",
+            src: "/static/images/landing_page/dynamic_energy_markets2.webp",
             alt: "Dynamic energy markets: merit order chart and electricity market",
             shadow: true,
         },
@@ -96,7 +96,7 @@ const gameElements: {
         icon: <Sun />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/renewable_intermittency.png",
+            src: "/static/images/landing_page/renewable_intermittency.webp",
             alt: "Renewable intermittency: wind and solar production graph with weather model",
             shadow: true,
         },
@@ -114,7 +114,7 @@ const gameElements: {
         icon: <Handshake />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/collective_action.png",
+            src: "/static/images/landing_page/collective_action.webp",
             alt: "Collective action: global average temperatures graph showing climate change",
             shadow: true,
         },
@@ -131,7 +131,7 @@ const gameElements: {
         icon: <BookOpen />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/daily_knowledge_boost.png",
+            src: "/static/images/landing_page/daily_knowledge_boost.webp",
             alt: "Daily knowledge boost: daily quiz interface",
         },
     },
@@ -234,7 +234,7 @@ export function LandingPage() {
                             </div>
                             <div className="mt-10 mx-auto max-w-6xl overflow-hidden rounded-3xl shadow-lg">
                                 <img
-                                    src="/static/images/landing_page/energetica_landing_banner.png"
+                                    src="/static/images/landing_page/energetica_landing_banner.webp"
                                     alt="Energetica game interface showing power grid management"
                                     className="w-full h-auto"
                                 />

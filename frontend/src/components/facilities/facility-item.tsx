@@ -34,7 +34,7 @@ export function FacilityItem({
     level,
     onClick,
 }: FacilityItemProps) {
-    const imageUrl = `/static/images/${facilityType}_facilities/${facilityName}.png`;
+    const imageUrl = `/static/images/${facilityType}_facilities/${facilityName}.webp`;
 
     return (
         <Card

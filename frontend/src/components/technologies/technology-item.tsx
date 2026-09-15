@@ -34,7 +34,7 @@ export function TechnologyItem({
     level,
     onClick,
 }: TechnologyItemProps) {
-    const imageUrl = `/static/images/technologies/${technologyName}.png`;
+    const imageUrl = `/static/images/technologies/${technologyName}.webp`;
 
     return (
         <Card

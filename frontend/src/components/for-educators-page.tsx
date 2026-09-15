@@ -132,7 +132,7 @@ export function ForEducatorsPage() {
                     <div className="max-w-6xl mx-auto flex flex-col gap-12">
                         <div className="w-full">
                             <img
-                                src="/static/images/landing_page/live_demo_photo.jpg"
+                                src="/static/images/landing_page/live_demo_photo.webp"
                                 alt="Students playing Energetica in a classroom"
                                 className="w-full rounded-4xl shadow-lg object-cover max-h-144"
                             />

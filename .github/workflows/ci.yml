@@ -33,6 +33,9 @@ jobs:
       - name: Guard — no fixture data outside tests and /app/internal (#971)
         run: bun run guard:no-dummy-data
         working-directory: frontend
+      - name: Guard — served images stay WebP and under the size ceiling (#1073)
+        run: bun run guard:image-weight
+        working-directory: frontend
 
   type-check:
     runs-on: ubuntu-latest

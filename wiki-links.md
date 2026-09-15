@@ -12,11 +12,11 @@
 | ✓ | `file` | ./functional-facilities.mdx#carbon-capture | climate-effects |
 | ✓ | `route` | /app/community/map | climate-effects, map |
 | ✓ | `file` | ./time-and-weather.mdx#game-time | climate-effects, functional-facilities, power-facilities, resources |
-| ✓ | `200` | /static/images/wiki/heatwave_probability_distribution.png | climate-effects |
-| ✓ | `200` | /static/images/wiki/coldwave_probability_distribution.png | climate-effects |
-| ✓ | `200` | /static/images/wiki/wildfire_probability_distribution.png | climate-effects |
-| ✓ | `200` | /static/images/wiki/expected_occurrence_flood.jpg | climate-effects |
-| ✓ | `200` | /static/images/wiki/expected_occurrence_hurricane.jpg | climate-effects |
+| ✓ | `200` | /static/images/wiki/heatwave_probability_distribution.webp | climate-effects |
+| ✓ | `200` | /static/images/wiki/coldwave_probability_distribution.webp | climate-effects |
+| ✓ | `200` | /static/images/wiki/wildfire_probability_distribution.webp | climate-effects |
+| ✓ | `200` | /static/images/wiki/expected_occurrence_flood.webp | climate-effects |
+| ✓ | `200` | /static/images/wiki/expected_occurrence_hurricane.webp | climate-effects |
 | ✓ | `file` | ./projects.mdx#starting-a-project | functional-facilities, power-facilities, resources, storage-facilities, technologies |
 | ✓ | `route` | /app/facilities/functional | functional-facilities, projects |
 | ✓ | `file` | ./technologies.mdx | functional-facilities, power-facilities, projects |
