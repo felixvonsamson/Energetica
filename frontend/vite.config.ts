@@ -10,6 +10,7 @@ import rehypeSlug from "rehype-slug";
 import svgr from "vite-plugin-svgr";
 import path from "path";
 
+import remarkImageImports from "./remark-image-imports";
 import {
     buildInfoPlugin,
     DEV_PORTS,
@@ -128,7 +129,9 @@ export default defineConfig(async ({ mode, command }) => {
                 autoCodeSplitting: true,
             }),
             mdx({
-                remarkPlugins: [remarkGfm, remarkMath],
+                // remarkImageImports turns figure paths into imports, so a
+                // missing figure is a build error. See its module comment.
+                remarkPlugins: [remarkGfm, remarkMath, remarkImageImports],
                 rehypePlugins: [rehypeSlug, rehypeKatex],
             }),
             tailwindcss(),

@@ -11,6 +11,13 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import collectiveAction from "@/assets/landing/collective_action.webp";
+import dailyKnowledgeBoost from "@/assets/landing/daily_knowledge_boost.webp";
+import dynamicEnergyMarkets from "@/assets/landing/dynamic_energy_markets2.webp";
+import landingBanner from "@/assets/landing/energetica_landing_banner.webp";
+import investmentStrategies from "@/assets/landing/investment_strategies.webp";
+import renewableIntermittency from "@/assets/landing/renewable_intermittency.webp";
+import resourcesManagement from "@/assets/landing/resources_management.webp";
 import { HomeLayout } from "@/components/home-layout";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -45,7 +52,7 @@ const gameElements: {
         icon: <TrendingUp />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/investment_strategies.webp",
+            src: investmentStrategies,
             alt: "Investment strategies: technology research tree and LCOE comparison",
         },
     },
@@ -62,7 +69,7 @@ const gameElements: {
         icon: <Package />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/resources_management.webp",
+            src: resourcesManagement,
             alt: "Resources management: network graph showing resource and energy flows",
         },
     },
@@ -78,7 +85,7 @@ const gameElements: {
         icon: <BarChart3 />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/dynamic_energy_markets2.webp",
+            src: dynamicEnergyMarkets,
             alt: "Dynamic energy markets: merit order chart and electricity market",
             shadow: true,
         },
@@ -96,7 +103,7 @@ const gameElements: {
         icon: <Sun />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/renewable_intermittency.webp",
+            src: renewableIntermittency,
             alt: "Renewable intermittency: wind and solar production graph with weather model",
             shadow: true,
         },
@@ -114,7 +121,7 @@ const gameElements: {
         icon: <Handshake />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/collective_action.webp",
+            src: collectiveAction,
             alt: "Collective action: global average temperatures graph showing climate change",
             shadow: true,
         },
@@ -131,7 +138,7 @@ const gameElements: {
         icon: <BookOpen />,
         image: {
             type: "real",
-            src: "/static/images/landing_page/daily_knowledge_boost.webp",
+            src: dailyKnowledgeBoost,
             alt: "Daily knowledge boost: daily quiz interface",
         },
     },
@@ -234,7 +241,7 @@ export function LandingPage() {
                             </div>
                             <div className="mt-10 mx-auto max-w-6xl overflow-hidden rounded-3xl shadow-lg">
                                 <img
-                                    src="/static/images/landing_page/energetica_landing_banner.webp"
+                                    src={landingBanner}
                                     alt="Energetica game interface showing power grid management"
                                     className="w-full h-auto"
                                 />

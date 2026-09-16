@@ -1,7 +1,7 @@
 # Wiki Link Check
 
 **Server:** http://localhost:5173
-**Result:** All 45 links OK ✓
+**Result:** All 55 links OK ✓
 
 ## Link Check
 
@@ -12,20 +12,22 @@
 | ✓ | `file` | ./functional-facilities.mdx#carbon-capture | climate-effects |
 | ✓ | `route` | /app/community/map | climate-effects, map |
 | ✓ | `file` | ./time-and-weather.mdx#game-time | climate-effects, functional-facilities, power-facilities, resources |
-| ✓ | `200` | /static/images/wiki/heatwave_probability_distribution.webp | climate-effects |
-| ✓ | `200` | /static/images/wiki/coldwave_probability_distribution.webp | climate-effects |
-| ✓ | `200` | /static/images/wiki/wildfire_probability_distribution.webp | climate-effects |
-| ✓ | `200` | /static/images/wiki/expected_occurrence_flood.webp | climate-effects |
-| ✓ | `200` | /static/images/wiki/expected_occurrence_hurricane.webp | climate-effects |
+| ✓ | `asset` | @/assets/wiki/heatwave_probability_distribution.webp | climate-effects |
+| ✓ | `asset` | @/assets/wiki/coldwave_probability_distribution.webp | climate-effects |
+| ✓ | `asset` | @/assets/wiki/wildfire_probability_distribution.webp | climate-effects |
+| ✓ | `asset` | @/assets/wiki/expected_occurrence_flood.webp | climate-effects |
+| ✓ | `asset` | @/assets/wiki/expected_occurrence_hurricane.webp | climate-effects |
 | ✓ | `file` | ./projects.mdx#starting-a-project | functional-facilities, power-facilities, resources, storage-facilities, technologies |
 | ✓ | `route` | /app/facilities/functional | functional-facilities, projects |
 | ✓ | `file` | ./technologies.mdx | functional-facilities, power-facilities, projects |
+| ✓ | `asset` | @/assets/wiki/daily_variation_industry.webp | functional-facilities |
+| ✓ | `asset` | @/assets/wiki/seasonal_variation_industry.webp | functional-facilities |
 | ✓ | `file` | ./power-facilities.mdx#solar-power-generation | map, time-and-weather |
 | ✓ | `file` | ./power-facilities.mdx#wind-power-generation | map, time-and-weather |
 | ✓ | `file` | ./power-facilities.mdx#hydro-family | map, time-and-weather |
 | ✓ | `file` | ./resources.mdx#extraction-facilities | map, projects |
 | ✓ | `file` | ./climate-effects.mdx#climate-events | map |
-| ✓ | `route` | /app/community/electricity-markets | network, power-management |
+| ✓ | `route` | /app/community/electricity-markets | network |
 | ✓ | `route` | /app/dashboard | power-facilities, projects, time-and-weather |
 | ✓ | `file` | ./time-and-weather.mdx#solar-irradiance | power-facilities |
 | ✓ | `file` | ./time-and-weather.mdx#wind-speed | power-facilities |
@@ -34,8 +36,11 @@
 | ✓ | `file` | ./power-management.mdx | power-facilities |
 | ✓ | `route` | /app/facilities/technology#thermodynamics | power-facilities |
 | ✓ | `file` | ./climate-effects.mdx | power-facilities |
+| ✓ | `asset` | @/assets/wiki/char_func_wind.webp | power-facilities |
+| ✓ | `asset` | @/assets/wiki/seasonal_variation_rivers.webp | power-facilities |
 | ✓ | `file` | ./power-facilities.mdx#power-generation-of-renewable-facilities | power-management |
-| ✓ | `file` | ./network.mdx | power-management |
+| ✓ | `asset` | @/assets/wiki/light-prioritization_example.webp | power-management |
+| ✓ | `asset` | @/assets/wiki/dark-prioritization_example.webp | power-management |
 | ✓ | `route` | /app/facilities/manage | projects |
 | ✓ | `route` | /app/overviews/cash-flow | projects |
 | ✓ | `file` | ./power-facilities.mdx | projects, resources |
@@ -46,12 +51,17 @@
 | ✓ | `route` | /app/facilities/extraction | projects |
 | ✓ | `file` | ./resources.mdx#resource-market | projects |
 | ✓ | `route` | /app/community/resource-market | projects |
+| ✓ | `asset` | @/assets/wiki/example_project.webp | projects |
+| ✓ | `asset` | @/assets/wiki/worker_count_example.webp | projects |
+| ✓ | `asset` | @/assets/wiki/dashboard_project_progress_example.webp | projects |
+| ✓ | `asset` | @/assets/wiki/active_facilities_example.webp | projects |
 | ✓ | `file` | ./map.mdx | resources |
 | ✓ | `file` | ./functional-facilities.mdx#the-warehouse | resources |
 | ✓ | `route` | /app/overviews/resources | resources |
 | ✓ | `file` | ./power-facilities.mdx#power-generation-of-controllable-facilities | storage-facilities |
 | ✓ | `file` | ./functional-facilities.mdx#the-laboratory | technologies |
 | ✓ | `file` | ./power-facilities.mdx#hydropower-generation | time-and-weather |
+| ✓ | `asset` | @/assets/wiki/cloud_coverage.webp | time-and-weather |
 
 ## Flowchart
 
@@ -85,7 +95,6 @@ flowchart LR
     power_facilities --> power_management
     power_facilities --> climate_effects
     power_management --> power_facilities
-    power_management --> network
     projects --> power_facilities
     projects --> storage_facilities
     projects --> resources
@@ -130,7 +139,6 @@ mindmap
       Climate Effects
     Power Management
       Power Facilities
-      Network
     Projects
       Power Facilities
       Storage Facilities

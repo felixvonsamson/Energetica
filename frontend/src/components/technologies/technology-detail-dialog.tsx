@@ -19,6 +19,7 @@ import {
 import { TypographyH2 } from "@/components/ui/typography";
 import { useLastDefined } from "@/hooks/use-last-defined";
 import { useQueueProject } from "@/hooks/use-projects";
+import { assetImages } from "@/lib/assets/asset-images";
 import { getFacilityRoute } from "@/lib/facility-routes";
 import { ProjectType, Requirement } from "@/types/projects";
 
@@ -60,8 +61,6 @@ export function TechnologyDetailDialog<T>({
         onClose();
     };
 
-    const imageUrl = `/static/images/technologies/${displayedTechnology?.name}.webp`;
-
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="flex flex-col p-0 gap-0 overflow-hidden max-w-4xl">
@@ -86,12 +85,9 @@ export function TechnologyDetailDialog<T>({
                             {/* Image */}
                             <div className="w-full overflow-hidden">
                                 <img
-                                    src={imageUrl}
+                                    src={assetImages[displayedTechnology.name]}
                                     alt={`${displayedTechnology.name} technology`}
                                     className="w-full aspect-[5/2] [@media(min-height:900px)]:aspect-[16/9] object-cover rounded-lg"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = "none";
-                                    }}
                                 />
                             </div>
 

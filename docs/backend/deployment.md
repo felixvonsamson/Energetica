@@ -2,7 +2,7 @@
 
 Energetica deploys as one **landing** site on the apex domain plus one or more
 **instances**, each on its own subdomain. Apache serves all static content
-(landing, app bundle, images, service worker, PWA manifest) directly from disk;
+(landing, app bundle, service worker, PWA manifest) directly from disk;
 uvicorn handles only `/api`, `/socket.io`, and `/logout`. See
 `docs/architecture/static-serving-and-deployment.md` for the full design.
 
@@ -32,14 +32,45 @@ sudo bash /tmp/setup-lobby.sh --domain energetica-game.org      # lobby vhost+TL
 sudo bash /tmp/setup-instance.sh autumn-2025 8004 --domain energetica-game.org  # vhost+TLS+unit
 ```
 
-`setup-instance.sh` provisions the box (directory, venv, `/etc/energetica/{slug}/instance.json`,
-vhost+TLS, enabled-but-unstarted unit) but ships **no** code and does **not** start the
-service. The first deploy is what ships the backend and starts it. `setup-lobby.sh` works
-the same way for the lobby service.
+`setup-instance.sh` provisions the box (directory, venv, `/etc/energetica/{slug}/instance.json`
+and `instance.env`, vhost+TLS, enabled-but-unstarted unit) but ships **no** code and does **not**
+start the service. The first deploy is what ships the backend and starts it. `setup-lobby.sh`
+works the same way for the lobby service.
 
 Every service needs its own uvicorn port: the lobby defaults to **8002** (`--port`
 overrides), so give each instance a different one. `setup-lobby.sh` refuses a port
-already claimed by another `energetica-*` unit.
+already claimed by another `energetica-*` unit or by another instance's `instance.env`.
+
+### Where an instance's configuration lives
+
+Two files, both in `/etc/energetica/{slug}/`, both `0640` and readable by the `energetica` group:
+
+- **`instance.json`** — the run's identity and access policy: name, whether it is advertised,
+  the lifecycle dates, the join token. Read fresh on every login, and written back to by the
+  service for private-access changes. An admin can edit it at any time; no restart needed.
+  Owned by `energetica`, because the service is what rewrites it.
+- **`instance.env`** — how the service runs: the environment contract
+  (`ENERGETICA_INSTANCE_SLUG` plus the three path variables) and the port and two clock values.
+  The unit reads it with `EnvironmentFile=` and expands the last three into `main.py` flags, so
+  the unit differs between instances only by name. Edits take effect on the next restart. There
+  is no fallback if the file goes missing: the unit refuses to start rather than run an instance
+  that believes it is public. Owned by `root`, and only root can replace it.
+
+The port lives in `instance.env` for a second reason — it is the one place anything else can
+read it from. The `deploy` user is in the `energetica` group, so discovering an instance's port
+is a plain read with no `sudo`. That is how `list-instances.sh` reports it.
+
+The directory is `1770 root:energetica`. Group-writable so the service can rename its temp file
+over `instance.json`, and sticky so that permission does not also let the group replace
+`instance.json`'s neighbours — under the sticky bit only a file's owner may replace it, which is
+why the two files above are owned differently. Editing `instance.json` by hand with an editor
+that saves by rename will reassign its ownership and stop the service writing it; if that
+happens the error says which `chown` restores it.
+
+Instances provisioned before this split carry their configuration inside the rendered unit. The
+one-off migration is in the commit that introduced the split — `git log --grep '#1072'` — rather
+than a script in the tree, since it is worth running exactly once per instance and nothing would
+keep it honest afterwards.
 
 DNS for the apex and each `{instance}.{domain}` subdomain must resolve to the server before
 running the setup scripts (certbot uses the webroot challenge). For a private/unadvertised
@@ -91,8 +122,8 @@ subfolder on the server: `deploy-instance.sh` ships `scripts/instance/` (current
 live with the lobby, not with any single instance). `scripts/dev/`, `scripts/lib/`, and
 `scripts/*.ts` never touch the server.
 
-`instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is
-admin-owned, so deploys never touch it. The server-wide `/etc/energetica/server.json`
+`instance.json` and `instance.env` live outside the deploy dir (`/etc/energetica/{instance}/`)
+and are admin-owned, so deploys never touch them. The server-wide `/etc/energetica/server.json`
 (the lobby's signup toggle) is likewise admin-owned; `sudo`-edit it and the lobby picks
 the change up on the next request — no restart.
 

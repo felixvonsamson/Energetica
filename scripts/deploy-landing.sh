@@ -64,14 +64,20 @@ fi
 
 log_step "Syncing landing files..."
 # --delete prunes stale assets, but the excludes are honoured for deletion too, so the
-# instance-owned manifest/fragment/recap dirs and the separately-synced static/ tree survive.
-# recaps/ is the load-bearing one: a recap is minted once and is un-recomputable after the run
-# is reaped, so a deploy that pruned it would destroy the artifact for good.
+# instance-owned manifest/fragment/recap dirs survive. recaps/ is the load-bearing one: a
+# recap is minted once and is un-recomputable after the run is reaped, so a deploy that
+# pruned it would destroy the artifact for good.
+#
+# static/ is deliberately NOT excluded any more (#1078). The landing used to receive a
+# second rsync of the whole image tree into $LANDING_DIR/static/images/, because its pages
+# referenced /static/images/... by URL. Those images are now imported, so they arrive inside
+# dist-landing/assets/ hashed, and only the ones the landing actually renders. Letting
+# --delete see static/ is what removes the old tree from hosts that still carry it; once it
+# is gone the exclude would have nothing left to protect.
 rsync -az --delete \
     --exclude='instances.json' \
     --exclude='instances/' \
     --exclude='recaps/' \
-    --exclude='static/' \
     ./frontend/dist-landing/ "$SSH:$LANDING_DIR/" >/dev/null
 log_success "Landing bundle deployed"
 
@@ -85,13 +91,3 @@ log_success "Landing bundle deployed"
 # $LANDING_DIR, so it can restore the setgid bit.
 ssh "$SSH" "chmod 2775 '$LANDING_DIR'"
 log_success "Landing dir perms re-asserted (2775, setgid energetica)"
-
-# The landing + wiki pages reference /static/images/... (e.g. landing_page banners, wiki
-# figures). The apex is pure-static, so unlike the game vhost (which Aliases /static/images
-# into the instance code dir) these must be shipped into the landing DocumentRoot itself.
-log_step "Syncing landing static images..."
-# The landing bundle ships no static/ tree, so pre-create the target path (old client-side
-# rsync, e.g. macOS, lacks --mkpath). The deploy user owns $LANDING_DIR (setgid energetica).
-ssh "$SSH" "mkdir -p '$LANDING_DIR/static/images'"
-rsync -az --delete ./src/energetica/static/images/ "$SSH:$LANDING_DIR/static/images/" >/dev/null
-log_success "Static images deployed"

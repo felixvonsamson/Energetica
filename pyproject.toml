@@ -60,10 +60,10 @@ exclude = ["energetica.static*"]
 version = { attr = "energetica.__version__" }
 
 [tool.setuptools.package-data]
-# Only the game's own data tables ship inside the wheel. The web assets under `static/app`,
-# `static/images` and `static/service-worker.js` are served by Apache straight off the
-# rsynced tree (docs/architecture/static-serving-and-deployment.md) rather than read through
-# the installed package, and `static/images` alone is around 110 MB.
+# Only the game's own data tables ship inside the wheel. The web assets under `static/app`
+# and `static/service-worker.js` are served by Apache straight off the rsynced tree
+# (docs/architecture/static-serving-and-deployment.md) rather than read through the
+# installed package.
 energetica = ["static/data/*"]
 
 [tool.ruff]
