@@ -24,18 +24,14 @@ def test_backend_version_prefers_stamp(tmp_path: Path, monkeypatch: pytest.Monke
     assert version.backend_version() == {"commit": "abc123", "commit_short": "abc123", "source": "deploy"}
 
 
-def test_backend_version_falls_back_to_git_when_no_stamp(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_backend_version_falls_back_to_git_when_no_stamp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(version, "_BACKEND_STAMP", tmp_path / "missing.json")
     monkeypatch.setattr(version, "_git_fallback", lambda: {"commit": "deadbeef", "source": "git"})
 
     assert version.backend_version() == {"commit": "deadbeef", "source": "git"}
 
 
-def test_backend_version_falls_back_on_corrupt_stamp(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_backend_version_falls_back_on_corrupt_stamp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     stamp = tmp_path / "DEPLOYED_VERSION.json"
     stamp.write_text("not json {{{")
     monkeypatch.setattr(version, "_BACKEND_STAMP", stamp)
@@ -44,9 +40,7 @@ def test_backend_version_falls_back_on_corrupt_stamp(
     assert version.backend_version() == {"source": "git"}
 
 
-def test_backend_version_is_none_when_nothing_available(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_backend_version_is_none_when_nothing_available(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(version, "_BACKEND_STAMP", tmp_path / "missing.json")
     monkeypatch.setattr(version, "_git_fallback", lambda: None)
 
@@ -62,9 +56,7 @@ def test_frontend_version_reads_bundle_stamp(tmp_path: Path, monkeypatch: pytest
     assert version.frontend_version("dist-lobby") == {"commit_short": "feed0000", "source": "build"}
 
 
-def test_frontend_version_is_none_when_bundle_unstamped(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_frontend_version_is_none_when_bundle_unstamped(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(version, "WORKING_DIR", tmp_path)
 
     assert version.frontend_version("dist-lobby") is None

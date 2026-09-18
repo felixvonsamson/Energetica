@@ -11,13 +11,14 @@ from energetica.enums import StorageFacilityType
 from energetica.init_test_players import add_asset
 from energetica.utils.auth import generate_password_hash
 from energetica.utils.facilities import dismantle_facility
+from energetica.database.player import Player
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.tick_execution import tick
 
 STORAGE_TYPE = StorageFacilityType.LITHIUM_ION_BATTERIES
 
 
-def _make_player(username: str):
+def _make_player(username: str) -> Player:
     user = Account(
         account_id=1, username=username, pwhash=generate_password_hash("password"), email=None, created_at=""
     )
@@ -25,7 +26,7 @@ def _make_player(username: str):
     return confirm_location(user, hex_tile)
 
 
-def test_empty_decommissioning_facility_is_removed():
+def test_empty_decommissioning_facility_is_removed() -> None:
     """
     A decommissioning storage facility with 0 stored energy and no remaining
     active capacity must be removed on the next tick.
@@ -51,7 +52,7 @@ def test_empty_decommissioning_facility_is_removed():
     assert remaining == [], "Empty decommissioning facility should be removed on tick"
 
 
-def test_decommissioning_facility_stays_while_stored_energy_exceeds_remaining_capacity():
+def test_decommissioning_facility_stays_while_stored_energy_exceeds_remaining_capacity() -> None:
     """
     A decommissioning storage facility must NOT be removed while the stored
     energy would not fit into the remaining active facilities.
@@ -81,7 +82,7 @@ def test_decommissioning_facility_stays_while_stored_energy_exceeds_remaining_ca
     assert len(alive) == 2, "Facility should not be removed while stored energy > remaining capacity"
 
 
-def test_decommissioning_facility_removed_when_energy_fits_in_remaining_capacity():
+def test_decommissioning_facility_removed_when_energy_fits_in_remaining_capacity() -> None:
     """
     A decommissioning storage facility must be removed when the stored energy
     fits entirely within the remaining active facilities.
@@ -105,7 +106,7 @@ def test_decommissioning_facility_removed_when_energy_fits_in_remaining_capacity
     assert alive[0].decommissioning is False
 
 
-def test_decommissioning_facility_state_of_charge_is_finite():
+def test_decommissioning_facility_state_of_charge_is_finite() -> None:
     """
     A decommissioning facility with 0 active capacity must not expose np.inf
     as usage/state_of_charge — it should compute SoC from its own capacity.

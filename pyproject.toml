@@ -34,7 +34,9 @@ dependencies = [
 # Everything needed to develop and check the backend, on top of the runtime deps, so that
 # `pip install -e '.[dev]'` is the whole local setup step. The deploy installs the project
 # without this extra — the server runs the code, it does not check it.
-dev = ["pytest", "pyright==1.1.407", "pre-commit"]
+# ruff is pinned to the same version as the `rev:` in .pre-commit-config.yaml. Bump the two
+# together: two ruffs that disagree about formatting is worse than one.
+dev = ["pytest", "pyright==1.1.407", "pre-commit", "ruff==0.12.10"]
 
 [project.urls]
 Homepage = "https://github.com/felixvonsamson/Energetica"
@@ -71,6 +73,12 @@ energetica = ["static/data/*"]
 [tool.ruff]
 line-length = 120 # Let's keep this at 120 for now, there are some files that need it
 target-version = "py312"
+# Every rule below applies to the whole Python tree — tests/ and scripts/ included. There are
+# deliberately no per-file-ignores (#1081): when the hooks were widened past src/energetica/,
+# the rest of the tree already satisfied the docstring rules (D100, D400, D415) with nothing
+# to fix, so relaxing them there would only have licensed new violations. If a docstring rule
+# ever becomes genuinely unwanted in tests/ or scripts/, relax it here rather than narrowing
+# the hooks again.
 lint.select = [
     "D100",
     "D200",

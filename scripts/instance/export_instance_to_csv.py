@@ -21,29 +21,31 @@ import os
 import pickle
 import re
 import sys
-from datetime import timedelta
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any
 
 import pandas as pd
 
 
 RESOLUTIONS = [
-    (0,   1,  "1d"),
-    (1,   6,  "6d"),
-    (2,  36,  "36d"),
-    (3, 216,  "216d"),
+    (0, 1, "1d"),
+    (1, 6, "6d"),
+    (2, 36, "36d"),
+    (3, 216, "216d"),
 ]
 
 
-def key_name(k):
+def key_name(k: str | Enum) -> str:
     return k if isinstance(k, str) else k.value
 
 
-def extract_facility_name(s):
+def extract_facility_name(s: object) -> str:
     m = re.search(r"'([^']+)'", str(s))
     return m.group(1) if m else str(s)
 
 
-def time_points(total_t, clock_time, start_date, factor):
+def time_points(total_t: int, clock_time: float, start_date: datetime, factor: int) -> list[tuple[int, int, datetime]]:
     result = []
     for i in range(360):
         tick = total_t - (359 - i) * factor
@@ -54,8 +56,9 @@ def time_points(total_t, clock_time, start_date, factor):
 
 # ── Players ───────────────────────────────────────────────────────────────────
 
-def export_players(base, out, eng, id_to_username):
-    total_t    = eng["total_t"]
+
+def export_players(base: str, out: str, eng: dict[str, Any], id_to_username: dict[int, str]) -> None:
+    total_t = eng["total_t"]
     clock_time = eng["clock_time"]
     start_date = eng["start_date"]
     players_db = eng["db_model_instances"]["Player"]
@@ -77,9 +80,9 @@ def export_players(base, out, eng, id_to_username):
             for i, tick, ts in pts:
                 row = {
                     "player_id": pid,
-                    "username":  username,
+                    "username": username,
                     "timestamp": ts.isoformat(),
-                    "tick":      tick,
+                    "tick": tick,
                 }
                 for cat, series in d["revenues"].items():
                     row[f"revenue_{cat}"] = series[res_idx][i]
@@ -109,10 +112,11 @@ def export_players(base, out, eng, id_to_username):
 
 # ── Network time series ───────────────────────────────────────────────────────
 
-def export_networks(base, out, eng, id_to_username):
-    total_t     = eng["total_t"]
-    clock_time  = eng["clock_time"]
-    start_date  = eng["start_date"]
+
+def export_networks(base: str, out: str, eng: dict[str, Any], id_to_username: dict[int, str]) -> None:
+    total_t = eng["total_t"]
+    clock_time = eng["clock_time"]
+    start_date = eng["start_date"]
     networks_db = eng["db_model_instances"]["Network"]
 
     for res_idx, factor, name in RESOLUTIONS:
@@ -130,11 +134,11 @@ def export_networks(base, out, eng, id_to_username):
             net_name = net.name.strip()
             for i, tick, timestamp in pts:
                 row = {
-                    "network_id":      net_id,
-                    "network_name":    net_name,
-                    "timestamp":       timestamp.isoformat(),
-                    "tick":            tick,
-                    "market_price":    ts["network_data"]["price"][res_idx][i],
+                    "network_id": net_id,
+                    "network_name": net_name,
+                    "timestamp": timestamp.isoformat(),
+                    "tick": tick,
+                    "market_price": ts["network_data"]["price"][res_idx][i],
                     "market_quantity": ts["network_data"]["quantity"][res_idx][i],
                 }
                 for pid, series in ts["exports"].items():
@@ -154,7 +158,8 @@ def export_networks(base, out, eng, id_to_username):
 
 # ── Market last tick (supply/demand curves) ───────────────────────────────────
 
-def export_market_last(base, out, eng, id_to_username):
+
+def export_market_last(base: str, out: str, eng: dict[str, Any], id_to_username: dict[int, str]) -> None:
     print("Building market_last.csv ...")
     networks_db = eng["db_model_instances"]["Network"]
     rows = []
@@ -176,17 +181,19 @@ def export_market_last(base, out, eng, id_to_username):
             data = chart[section]
             for j in range(len(data["player_id"])):
                 pid = data["player_id"][j]
-                rows.append({
-                    "network_id":    net_id,
-                    "tick":          tick_num,
-                    "side":          side,
-                    "player_id":     pid,
-                    "username":      id_to_username.get(pid, str(pid)),
-                    "facility":      extract_facility_name(data["facility"][j]),
-                    "price":         data["price"][j],
-                    "capacity":      data["capacity"][j],
-                    "cumul_capacity": data["cumul_capacities"][j],
-                })
+                rows.append(
+                    {
+                        "network_id": net_id,
+                        "tick": tick_num,
+                        "side": side,
+                        "player_id": pid,
+                        "username": id_to_username.get(pid, str(pid)),
+                        "facility": extract_facility_name(data["facility"][j]),
+                        "price": data["price"][j],
+                        "capacity": data["capacity"][j],
+                        "cumul_capacity": data["cumul_capacities"][j],
+                    }
+                )
 
     df = pd.DataFrame(rows)
     df.to_csv(f"{out}/market_last.csv", index=False)
@@ -195,8 +202,9 @@ def export_market_last(base, out, eng, id_to_username):
 
 # ── Climate ───────────────────────────────────────────────────────────────────
 
-def export_climate(base, out, eng):
-    total_t    = eng["total_t"]
+
+def export_climate(base: str, out: str, eng: dict[str, Any]) -> None:
+    total_t = eng["total_t"]
     clock_time = eng["clock_time"]
     start_date = eng["start_date"]
 
@@ -226,14 +234,15 @@ def export_climate(base, out, eng):
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
-def main():
+
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("instance_dir", nargs="?", default="instance", help="Path to the instance folder")
-    parser.add_argument("output_dir",   nargs="?", default="energetica_export", help="Path to the output folder")
+    parser.add_argument("output_dir", nargs="?", default="energetica_export", help="Path to the output folder")
     args = parser.parse_args()
 
     base = args.instance_dir
-    out  = args.output_dir
+    out = args.output_dir
     os.makedirs(out, exist_ok=True)
 
     engine_file = f"{base}/engine_data.pck"
@@ -244,10 +253,7 @@ def main():
     with open(engine_file, "rb") as f:
         eng = pickle.load(f)
 
-    id_to_username = {
-        pid: p.username
-        for pid, p in eng["db_model_instances"]["Player"].items()
-    }
+    id_to_username = {pid: p.username for pid, p in eng["db_model_instances"]["Player"].items()}
 
     export_players(base, out, eng, id_to_username)
     export_networks(base, out, eng, id_to_username)

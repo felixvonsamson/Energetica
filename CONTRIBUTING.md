@@ -130,18 +130,19 @@ Add tests for every new feature and bug fix.
 
 Configured via `pyproject.toml`.
 
--   Ruff (lint + some formatting):
+-   Ruff (linter and formatter). Both cover every Python file in the repo — `src/`,
+    `tests/`, `scripts/`, `map_generation/`, `main.py`, `main_lobby.py` — and both run as
+    the `python-lint` job in CI, so a commit made with `--no-verify` still gets caught:
 
 ```
-ruff check .
-ruff fix .  # to apply safe fixes
+ruff check .          # lint
+ruff check . --fix    # lint, applying safe fixes
+ruff format .         # format
 ```
 
-(If using Ruff's formatter:)
-
-```
-ruff format .
-```
+`pip install -e '.[dev]'` installs ruff, pinned to the same version as the pre-commit
+hook. From the repo root, `bun run ruff:check` and `bun run ruff:format` are shorthands for
+the fixing and formatting forms — both write to your files, neither is read-only.
 
 -   Pylint (optional deeper static analysis): run in editors / CI if configured.
 -   Max line length: 120
