@@ -15,7 +15,7 @@ from energetica.enums import (
     WindFacilityType,
 )
 from energetica.schemas.electricity_markets import AskType, BidType
-from energetica.types.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
+from energetica.sim.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
 
 if TYPE_CHECKING:
     from energetica.database.player import Player

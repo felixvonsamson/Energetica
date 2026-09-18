@@ -44,6 +44,7 @@ src/energetica/       # Python/FastAPI backend
 ├── routers/          # API endpoints
 ├── schemas/          # Pydantic models
 ├── database/         # Game state models
+├── sim/              # Market clearing, demand shape, facility statuses
 ├── static/           # Web assets (app bundle) and the game's data tables
 └── game_engine.py    # Core game logic
 ```
