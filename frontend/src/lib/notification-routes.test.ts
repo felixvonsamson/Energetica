@@ -10,8 +10,14 @@ import type { AppRoute } from "@/types/notification-routes";
 // this whole arrangement exists for would be gone with nothing to show for it.
 //
 // The assertion has to live outside the register file, or it would disappear along with the
-// thing it is checking. A test is the natural home: it is covered by `bun run typecheck` and by
-// CI's unit-test job, and neither is easy to drop by accident.
+// thing it is checking.
+//
+// What enforces it is `bun run typecheck`, which CI runs as the "Typecheck" step of the
+// frontend-checks job. Running this file under vitest proves nothing extra: the check is
+// entirely at compile time, and `expect` is here only so the assertion has a use and does not
+// trip noUnusedLocals. CI does not currently run vitest at all — the unit-tests job is pytest
+// and the type-check job is Pyright, both Python. So do not read the file extension as a second
+// line of defence; the typechecker is the only one.
 //
 // tsconfig.landing.json and tsconfig.lobby.json exclude this file. Those programs leave the
 // register file out on purpose, so AppRoute is `string` there and the assertion below would be
