@@ -30,10 +30,10 @@ All contributions are made under the existing project license (AGPL-3.0+). By su
 
 ## Branching & Workflow
 
--   Default branch: `dev`
+-   Default branch: `main`
 -   Use short-lived feature branches: `feature/<summary>`, `fix/<issue-id>-<summary>`, `refactor/...`, `docs/...`
--   For larger restructuring (e.g. current `refactor/restructure-and-rename-database`) sync frequently with `dev` to reduce merge pain.
--   All PRs should target `dev` (only merge `dev` -> `main` during release workflow).
+-   For larger restructuring, sync frequently with `main` to reduce merge pain.
+-   All PRs should target `main`.
 -   Keep PRs focused and reasonably small (< ~600 LOC diff when possible).
 
 ## Commit Message Guidelines
@@ -197,7 +197,7 @@ Checkpoint & profiling flags: `--simulate_till`, `--simulate_checkpoint_every_k_
 
 Before opening a PR, ensure:
 
--   [ ] Branch up to date with `dev` (or with `main` only when preparing a release)
+-   [ ] Branch up to date with `main`
 -   [ ] Tests pass locally (`pytest`)
 -   [ ] New/changed code is covered by tests
 -   [ ] Lint passes (`ruff check .`)
