@@ -38,7 +38,7 @@ Shipping in phased PRs. Each phase leaves the app deployable on its own.
   - `scripts/infra/`: `apache-instance.conf` + `apache-main.conf` (placeholder templates rendered with `sed`; `@INSTANCE@`/`@PORT@`/`@DOMAIN@`), `energetica.service` (systemd template), `instance.json.tmpl`, and the setup scripts `setup-base.sh`, `setup-landing.sh`, `setup-instance.sh`
   - `scripts/` root: `deploy-instance.sh`, `deploy-landing.sh`, `list-instances.sh`. `scripts/vps-setup.sh` removed (superseded). `deploy.sh` and the FastAPI static handlers are left for the Phase 5 cutover
   - **Server-side code delivery: rsync, no git (decided this phase).** `setup-instance.sh` provisions the box (dir, venv, `/etc/energetica/{slug}/instance.json`, vhost+TLS, enabled-but-unstarted unit) but ships **no** code; the first `deploy-instance.sh` rsyncs the backend, `pip install`s into the server venv, and starts the service. This matches the RFC's "rsync Python backend code" deploy step and removes deploy credentials/git from the server entirely — resolves the `setup-instance.sh` step-2 TBD (clone vs symlink) in favour of neither
-  - **systemd unit sets the full Phase-3 env contract** (`ENERGETICA_INSTANCE_SLUG` mandatory, plus `_CONFIG_DIR`/`_LANDING_DIR`/`_ACCOUNTS_DB_PATH`) — these four `Environment=` lines, and the port and clock values that were baked into `ExecStart`, later moved into `/etc/energetica/{slug}/instance.env` and are read back with `EnvironmentFile=` (#1072 — see § Instance discovery). Services run as the shared `energetica` user/group; the landing root and its `instances/` dir are `setgid energetica` + group-writable so any instance can publish its fragment and rewrite `instances.json`, and `www-data` joins the group to read the `0o640` fragments. `apache-instance.conf` serves `/static/{app,images,data}` (the `data` alias was dropped later by the disclosure fix #1070, and `images` stopped resolving when #1078 moved the tree into the bundles — see § Request routing), `/service-worker.js`, `/manifest.json` (aliased to the app bundle) directly, redirects `^/$ → /app/`, scopes the SPA `FallbackResource` to `/app/*` (so a missing hashed asset 404s cleanly instead of returning `index.html` with a `200`), and proxies only `/api`, `/socket.io` (+ WS upgrade), `/logout`
+  - **systemd unit sets the full Phase-3 env contract** (`ENERGETICA_INSTANCE_SLUG` mandatory, plus `_CONFIG_DIR`/`_LANDING_DIR`/`_ACCOUNTS_DB_PATH`) — these four `Environment=` lines, and the port and clock values that were baked into `ExecStart`, later moved into `/etc/energetica/{slug}/instance.env` and are read back with `EnvironmentFile=` (#1072 — see § Instance discovery). Services run as the shared `energetica` user/group; the landing root and its `instances/` dir are `setgid energetica` + group-writable so any instance can publish its fragment and rewrite `instances.json`, and `www-data` joins the group to read the `0o640` fragments. `apache-instance.conf` serves `/static/{app,images,data}` (the `data` alias was dropped later by the disclosure fix #1070; `images` stopped resolving when #1078 moved the tree into the bundles and was deleted by #1064, which also retargeted `app` at `dist-app/` — see § Request routing), `/service-worker.js`, `/manifest.json` (aliased to the app bundle) directly, redirects `^/$ → /app/`, scopes the SPA `FallbackResource` to `/app/*` (so a missing hashed asset 404s cleanly instead of returning `index.html` with a `200`), and proxies only `/api`, `/socket.io` (+ WS upgrade), `/logout`
   - `instance.json.tmpl` renders the exact `InstanceConfig` schema (`name` titlecased slug, `advertised=true`, `starts_at`=now UTC `…Z`, `access.policy="public"`); the `--name`/`--starts-at` values are sed-metachar-escaped and JSON-breaking chars rejected so the rendered file always validates. Admins edit it under `sudo` for private/unadvertised instances. `list-instances.sh` discovers instances via `systemctl list-unit-files 'energetica-*.service'` (never filesystem globbing), reading the port from each unit's `ExecStart` (it reads `instance.env` instead since #1072)
   - `setup-base.sh` also installs a scoped `sudoers` drop-in so the deploy user can run `sudo -u energetica pip …` and `sudo systemctl restart energetica-*` non-interactively (required by `deploy-instance.sh`)
   - **Validation:** `bash -n` clean on all six scripts. `shellcheck`/`apache2ctl`/`certbot` are unavailable in the dev sandbox, and end-to-end validation (real subdomain, cookie isolation, fragment round-trip) is **Phase 6**; live-checking the confs on a server is part of that
@@ -171,28 +171,40 @@ autumn-2025.energetica-game.org
 ├── /api/*             → ProxyPass → uvicorn :8001
 ├── /socket.io         → ProxyPass → uvicorn :8001  (+ WS upgrade)
 ├── /logout            → ProxyPass → uvicorn :8001
-├── /static/app/       → Apache serves src/energetica/static/app/  (images live here too, hashed)
-├── /service-worker.js → Apache serves src/energetica/static/service-worker.js
-├── /manifest.json     → Apache serves src/energetica/static/app/manifest.json  (PWA, per-instance)
+├── /static/app/       → Apache serves dist-app/  (images and the service worker live here too)
+├── /service-worker.js → Apache serves dist-app/service-worker.js
+├── /manifest.json     → Apache serves dist-app/manifest.json  (PWA, per-instance)
 ├── /                  → RedirectMatch ^/$ → /app/   (bare root → React router takes over)
-└── /app/*             → FallbackResource → src/energetica/static/app/index.html
+└── /app/*             → FallbackResource → dist-app/index.html
 ```
+
+Those right-hand paths are relative to the instance directory, `/var/www/energetica-{instance}/`.
+`dist-app/` is the app bundle, built to `frontend/dist-app/` and flattened to the instance root
+on deploy, the same way the lobby ships `dist-lobby/`.
+
+The public URL `/static/app/` and the directory `dist-app/` do not match, on purpose, and the
+vhost aliases map one to the other. The URL is frozen: `scripts/infra/apache-ethz-proxy.conf` proxies
+`/static` to the instance, and ETHZ owns that file rather than this project, so renaming the
+prefix would mean asking a third party to edit their config. #1064 moved the bundle out of
+`src/energetica/` — where it was a vestige of the Flask/Jinja era, build output from another
+language sitting inside a Python package — without touching a single public URL.
 
 `src/energetica/static/data/` is deliberately **not** in that list. It holds the daily quiz
 questions and answers, the map, and the national-demand curves; the Python engine reads them
 off the filesystem (`src/energetica/game_engine.py`) and no HTTP client asks for them. Apache
 served the whole directory until the disclosure fix #1070, which closed a path that let
-anyone who guessed it read the quiz answers. The vhost now denies the `static/` tree by
-default and grants back only the aliased app directory plus the `/service-worker.js` URL, so
-a directory added under `static/` later stays unreachable until someone opts it in.
+anyone who guessed it read the quiz answers. Since #1064 nothing is aliased into `static/` at
+all, so no URL maps there — but the vhost keeps denying the tree outright, because Ubuntu's
+stock `apache2.conf` grants all of `/var/www/`, and the absence of an `Alias` is too weak a
+guarantee to rest a disclosure fix on. #1049 step 2 moves these tables to `freeplay/data/`,
+which empties `src/energetica/static/` and lets the deny be removed with it.
 
 Images are not in that list either, and for a different reason: since #1078 there is no
 served image tree. Every image is imported from `frontend/src/assets/`, so Vite resolves it
 at build time, gives it a content-hashed filename and emits it into the bundle that uses it
 — which means `/static/app/assets/` already covers them, including the year-long `immutable`
-caching a stable filename could never safely take. The `Alias /static/images` line and its
-grant still sit in the vhost, pointing at a directory that no longer exists; #1064 removes
-them in the same migration that retargets the other aliases.
+caching a stable filename could never safely take. #1078 left `Alias /static/images` dangling
+in the vhost; #1064 removed it, in the same migration that retargeted the other aliases.
 
 `manifest.json` is part of the app bundle output and must be served at the root path (PWA requirement). Apache aliases it explicitly. It is per-instance because the PWA manifest may eventually carry instance-specific metadata (name, scope, icons).
 
@@ -446,7 +458,7 @@ Two separate config files:
 
 | File | Bundle | `base` | Output dir |
 |------|--------|--------|------------|
-| `vite.config.ts` | app | `/static/app/` | `energetica/static/app/` |
+| `vite.config.ts` | app | `/static/app/` | `frontend/dist-app/` |
 | `vite.config.landing.ts` | landing | `/` | `frontend/dist-landing/` |
 
 ✅ Both configs land in Phase 1. The landing bundle uses a separate `tsconfig.landing.json` (eslint sees both via `parserOptions.project: [...]`). Because shared components (`landing-page.tsx`, `wiki-sidebar.tsx`, etc.) link into `/app/*` routes that don't exist in the landing route tree, `main-landing.tsx` deliberately does **not** declare a `Register` module augmentation — typed `to` props fall back to `string`. This is acceptable during the interim; when Apache moves the landing to the apex domain, those links become explicit cross-origin `<a href>` and the loose typing is no longer load-bearing.
@@ -455,7 +467,7 @@ Both build outputs are **gitignored** and deployed via rsync:
 
 | Bundle | Output dir | Gitignored | Deployed to |
 |--------|-----------|------------|-------------|
-| app | `energetica/static/app/` | yes | `server:/var/www/energetica-{instance}/energetica/static/app/` |
+| app | `frontend/dist-app/` | yes | `server:/var/www/energetica-{instance}/dist-app/` |
 | landing | `frontend/dist-landing/` | yes | `server:/var/www/energetica-landing/` |
 
 `.gitignore` must be updated: replace `energetica/static/react/*` with `energetica/static/app/*` and add `frontend/dist-landing/`. ✅ (Phase 1)
@@ -529,11 +541,10 @@ TLS provisioning (steps 6–8) requires the DNS record for `{instance}.{domain}`
 1. Build app bundle (`bun run build:app`)
 2. Confirm deployment summary (skipped with `--yes`)
 3. `rsync` Python backend code to server (excluding `.venv`, `instance/`, build artifacts). `instance.json` lives outside the deploy dir (`/etc/energetica/{instance}/`) and is admin-owned, so it is never touched by deploys.
-4. `rsync` app bundle to server (`src/energetica/static/app/`)
-5. `rsync` service worker to server (`src/energetica/static/service-worker.js` — built separately by `build:sw`, lives outside the app bundle directory)
-6. `pip install` the backend wheel into the server venv (every deploy — the package no longer resolves from the working directory)
-7. `systemctl restart energetica-{instance}` — on restart the instance re-publishes its fragment and re-runs aggregation, picking up any admin edits to `instance.json` made since the last start
-8. Health check
+4. `rsync` app bundle to server (`frontend/dist-app/` → `{instance dir}/dist-app/`). The service worker is inside it: since #1064 `build:sw` writes `dist-app/service-worker.js`, so there is no second rsync. That step must always run *after* the production build, which deletes the output directory before writing it — `build:app` chains them in that order.
+5. `pip install` the backend wheel into the server venv (every deploy — the package no longer resolves from the working directory)
+6. `systemctl restart energetica-{instance}` — on restart the instance re-publishes its fragment and re-runs aggregation, picking up any admin edits to `instance.json` made since the last start
+7. Health check
 
 Scripts accept all inputs via arguments or env vars and support `--yes` to suppress confirmation prompts, making them callable from a CI job without modification. No commitment to a CI platform is made here.
 

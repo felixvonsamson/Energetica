@@ -43,7 +43,11 @@ def test_healthz_returns_ok_after_init() -> None:
     assert body["engine"]["total_t"] == 0
     assert body["engine"]["scheduler_exception_count"] == 0
     assert "uptime_s" in body
-    assert "static_app_index_present" in body
+    # The app bundle lives outside the Python package and is served by Apache, never by
+    # this process, so a backend stat() of it proved nothing. #1064 dropped the field.
+    # deploy-instance.sh checks the bundle over HTTP through Apache instead, which is
+    # the only check that shows it is actually reachable.
+    assert "static_app_index_present" not in body
 
 
 def test_healthz_status_degraded_on_stale_tick() -> None:
