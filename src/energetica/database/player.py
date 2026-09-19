@@ -51,6 +51,7 @@ from energetica.globals import engine
 from energetica.schemas.achievements import AchievementMilestoneOut, AchievementOut, AchievementUnlockOut
 from energetica.schemas.browser_notifications import Subscription
 from energetica.schemas.electricity_markets import AskType, BidType
+from energetica.sim.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -58,7 +59,6 @@ from energetica.technology_effects import (
     package_power_facilities,
     package_storage_facilities,
 )
-from energetica.types.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
 
 # Web push delivery is a blocking network round-trip. It must never sit on a request handler or
 # game-tick critical path, so the actual webpush() calls are dispatched to this background pool

@@ -8,7 +8,7 @@ and no engine, and a future caller can inject a demand bid backed by no player a
 
 from __future__ import annotations
 
-from energetica.market import MarketEntry, clear_market, market_optimum, place_ask, place_bid
+from energetica.sim.market import MarketEntry, clear_market, market_optimum, place_ask, place_bid
 
 
 def _offer(capacity: float, price: float, player_id: int = 0) -> MarketEntry:
