@@ -35,6 +35,7 @@ from energetica.schemas.electricity_markets import AskType
 from energetica.schemas.notifications import NetworkExpelledPayload, NetworkOverdraftWarningPayload
 from energetica.sim.demand_shape import demand_shape_factor
 from energetica.sim.facility_statuses import ProductionStatus
+from energetica.sim.fuel_and_pollution import emissions_produced, fuel_burned
 from energetica.sim.market import clear_market, init_market, place_ask, place_bid
 from energetica.utils import network_helpers
 from energetica.utils.misc import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
@@ -708,7 +709,7 @@ def calculate_prod(
         if "fuel_use" in player.capacities[facility]:
             assert resource_reservations is not None
             for resource, amount in player.capacities[facility]["fuel_use"].items():
-                resource_reservations[resource] += amount * power / player.capacities[facility]["power"]
+                resource_reservations[resource] += fuel_burned(amount, power, player.capacities[facility]["power"])
 
     max_resources = np.inf
     ramping_speed = (
@@ -788,9 +789,10 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
             if power > 0:
                 for fuel, amount in player.capacities[facility]["fuel_use"].items():
                     fuel = Fuel(fuel)
-                    quantity = amount * generation[facility] / power
-                    player.resources[fuel] -= quantity
-                facility_emissions = player.capacities[facility]["pollution"] * generation[facility] / power
+                    player.resources[fuel] -= fuel_burned(amount, generation[facility], power)
+                facility_emissions = emissions_produced(
+                    player.capacities[facility]["pollution"], generation[facility], power
+                )
                 add_emissions(new_values, player, facility, facility_emissions)
 
     if player.functional_facility_lvl[FunctionalFacilityType.WAREHOUSE] > 0:
