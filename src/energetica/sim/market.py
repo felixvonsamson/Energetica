@@ -12,7 +12,9 @@ still get a well-defined clearing out.
 
 Naming follows finance convention: :func:`place_ask` adds *supply* (a seller's
 offer, into ``capacities``); :func:`place_bid` adds *demand* (a buyer's bid, into
-``demands``).
+``demands``). A facility's supply is offered in two parts, :func:`place_must_run_ask` for the
+output it cannot hold back and :func:`place_headroom_ask` for the rest, so the rule for splitting
+it is the same in every mode.
 """
 
 from __future__ import annotations
@@ -58,6 +60,18 @@ def place_bid(market: dict, player_id: int, demand: float, price: float, facilit
     if demand > 0:
         market["demands"].append(MarketEntry(player_id, demand, price, facility))
     return market
+
+
+def place_must_run_ask(market: dict, player_id: int, output: float, facility: str) -> dict:
+    """Offer output that cannot be held back at :data:`MIN_PRICE`, so it sits first in the merit order."""
+    return place_ask(market, player_id, output, MIN_PRICE, facility)
+
+
+def place_headroom_ask(
+    market: dict, player_id: int, minimum: float, maximum: float, price: float, facility: str
+) -> dict:
+    """Offer the output a facility can add above its ``minimum``, up to its ``maximum``, at ``price``."""
+    return place_ask(market, player_id, maximum - minimum, price, facility)
 
 
 @dataclass(frozen=True, slots=True)
