@@ -34,6 +34,7 @@ from energetica.globals import engine
 from energetica.schemas.electricity_markets import AskType
 from energetica.schemas.notifications import NetworkExpelledPayload, NetworkOverdraftWarningPayload
 from energetica.sim.demand_shape import demand_shape_factor
+from energetica.sim.dispatch import fuel_power_limit, max_output, min_output, ramping_speed, storage_power_limit
 from energetica.sim.facility_statuses import ProductionStatus
 from energetica.sim.market import clear_market, init_market, place_ask, place_bid
 from energetica.utils import network_helpers
@@ -710,55 +711,38 @@ def calculate_prod(
             for resource, amount in player.capacities[facility]["fuel_use"].items():
                 resource_reservations[resource] += amount * power / player.capacities[facility]["power"]
 
-    max_resources = np.inf
-    ramping_speed = (
-        player.capacities[facility]["power"]
-        / engine.const_config["assets"][facility]["ramping_time"]
-        * engine.in_game_seconds_per_tick
-    )
+    power = player.capacities[facility]["power"]
+    seconds_per_tick = engine.in_game_seconds_per_tick
+    ramp = ramping_speed(power, engine.const_config["assets"][facility]["ramping_time"], seconds_per_tick)
     if "fuel_use" in player.capacities[facility]:
         assert resource_reservations is not None
+        fuels = []
         for fuel, amount in player.capacities[facility]["fuel_use"].items():
             fuel = Fuel(fuel)
             available_resource = player.resources[fuel] - player.resources_on_sale[fuel] - resource_reservations[fuel]
-            p_max_resources = available_resource / amount * player.capacities[facility]["power"]
-            max_resources = min(p_max_resources, max_resources)
+            fuels.append((amount, available_resource))
+        max_resources = fuel_power_limit(power, fuels)
+    elif filling:
+        # max remaining storage space
+        free_room = player.capacities[facility]["capacity"] - player.rolling_history.get_last_data("storage", facility)
+        max_resources = storage_power_limit(
+            free_room, player.capacities[facility]["efficiency"], ramp, seconds_per_tick
+        )
     else:
-        if filling:
-            energy_capacity = (
-                max(
-                    0.0,
-                    player.capacities[facility]["capacity"] - player.rolling_history.get_last_data("storage", facility),
-                )
-                * 3600
-                / engine.in_game_seconds_per_tick
-                * (player.capacities[facility]["efficiency"] ** 0.5)
-            )  # max remaining storage space
-        else:
-            energy_capacity = max(
-                0.0,
-                player.rolling_history.get_last_data("storage", facility)
-                * 3600
-                / engine.in_game_seconds_per_tick
-                * (player.capacities[facility]["efficiency"] ** 0.5),
-            )  # max available storage content
-        max_resources = max(
-            0.0,
-            min(energy_capacity, (2 * energy_capacity * ramping_speed) ** 0.5),
-        )  # ramping down
+        # max available storage content
+        stored_energy = player.rolling_history.get_last_data("storage", facility)
+        max_resources = storage_power_limit(
+            stored_energy, player.capacities[facility]["efficiency"], ramp, seconds_per_tick
+        )
     if minmax == "max":
-        if filling:
-            max_ramping = player.rolling_history.get_last_data("demand", facility) + ramping_speed
-        else:
-            max_ramping = player.rolling_history.get_last_data("generation", facility) + ramping_speed
-        max_generation = min(max_resources, max_ramping, player.capacities[facility]["power"])
+        previous_output = player.rolling_history.get_last_data("demand" if filling else "generation", facility)
+        max_generation = max_output(max_resources, previous_output, ramp, power)
         reserve_resources(max_generation)
         return max_generation
-    else:
-        min_ramping = player.rolling_history.get_last_data("generation", facility) - ramping_speed
-        min_generation = max(0.0, min(max_resources, min_ramping, player.capacities[facility]["power"]))
-        reserve_resources(min_generation)
-        return min_generation
+    previous_output = player.rolling_history.get_last_data("generation", facility)
+    min_generation = min_output(max_resources, previous_output, ramp, power)
+    reserve_resources(min_generation)
+    return min_generation
 
 
 def minimal_generation(player: Player, generation: dict, resource_reservations: dict[Fuel, float]) -> None:
