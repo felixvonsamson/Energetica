@@ -12,7 +12,7 @@ import pytest
 
 from energetica import create_app
 from energetica.globals import engine
-from energetica.utils.misc import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
+from energetica.sim.renewables import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
 
 DAY = 86_400.0
 
@@ -61,14 +61,16 @@ def _engine() -> None:
 
 @pytest.mark.parametrize(("position", "seconds", "seed", "wind", "sun"), WEATHER)
 def test_wind_speed(position: tuple[float, float], seconds: float, seed: int, wind: float, sun: tuple) -> None:
-    assert calculate_wind_speed(position, seconds, seed) == pytest.approx(wind, rel=1e-9)
+    assert calculate_wind_speed(position, seconds, seed, engine.days_per_year) == pytest.approx(wind, rel=1e-9)
 
 
 @pytest.mark.parametrize(("position", "seconds", "seed", "wind", "sun"), WEATHER)
 def test_solar_irradiance(position: tuple[float, float], seconds: float, seed: int, wind: float, sun: tuple) -> None:
-    assert calculate_solar_irradiance(position, seconds, seed) == pytest.approx(sun, rel=1e-9, abs=1e-12)
+    assert calculate_solar_irradiance(position, seconds, seed, engine.days_per_year) == pytest.approx(
+        sun, rel=1e-9, abs=1e-12
+    )
 
 
 @pytest.mark.parametrize(("seconds", "speed"), RIVER)
 def test_river_flow_speed(seconds: float, speed: float) -> None:
-    assert calculate_river_speed(seconds) == pytest.approx(speed, rel=1e-12)
+    assert calculate_river_speed(seconds, engine.days_per_year) == pytest.approx(speed, rel=1e-12)
