@@ -21,6 +21,12 @@ import math
 from dataclasses import dataclass
 
 
+#: The lowest price an offer can carry. Generation that must run regardless of price (renewables, the
+#: minimum output a controllable facility cannot ramp below) is offered here so it always sits first in
+#: the merit order. Unsold power at this price is dumped, and the owner pays this price per MWh to do so.
+MIN_PRICE = -5
+
+
 class MarketEntry:
     __slots__ = ("player_id", "capacity", "price", "facility", "cumul_capacities")
 
@@ -136,13 +142,13 @@ def market_optimum(offers: list[MarketEntry], demands: list[MarketEntry]) -> tup
 
     # Build merged event list: (cumul_capacity, is_offer, next_step_price)
     # For offers (sorted ascending): next step price is the price of the next row (or +inf for last)
-    # For demands (sorted descending): next step price is the price of the next row (or -6 for last)
+    # For demands (sorted descending): next step price is the price of the next row (or one below MIN_PRICE for last)
     events: list[tuple[float, bool, float]] = []
     for i, entry in enumerate(offers):
         next_price = offers[i + 1].price if i + 1 < len(offers) else math.inf
         events.append((entry.cumul_capacities, True, next_price))
     for i, entry in enumerate(demands):
-        next_price = demands[i + 1].price if i + 1 < len(demands) else -6.0
+        next_price = demands[i + 1].price if i + 1 < len(demands) else MIN_PRICE - 1.0
         events.append((entry.cumul_capacities, False, next_price))
 
     events.sort(key=lambda e: e[0])

@@ -13,7 +13,6 @@ from energetica import create_app
 from energetica.accounts import Account
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
-from energetica.globals import engine
 from energetica.production_update import market_logic
 from energetica.sim.market import init_market, place_ask, place_bid
 from energetica.utils.map_helpers import confirm_location

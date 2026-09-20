@@ -1,10 +1,10 @@
 """The shared simulation layer: what every mode of play simulates the same way.
 
-Three things live here and nothing else — uniform-price market clearing
-(:mod:`~energetica.sim.market`), the demand-shape function
+Uniform-price market clearing (:mod:`~energetica.sim.market`), the arithmetic that settles a clearing
+into money (:mod:`~energetica.sim.settlement`), the demand-shape function
 (:mod:`~energetica.sim.demand_shape`), and the facility-status vocabulary
-(:mod:`~energetica.sim.facility_statuses`). That is exactly the surface the
-Workshop Mode spec (#992) names as reused from the persistent world.
+(:mod:`~energetica.sim.facility_statuses`) live here. Together they are the rules the
+Workshop Mode spec (#992) names as shared with the persistent world (see #1054).
 
 The layer is a leaf: no module in it imports from another layer, and none of them
 knows about players, maps, or the game engine. Anything that needs the persistent
