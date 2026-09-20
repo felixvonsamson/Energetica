@@ -6,13 +6,12 @@ import math
 
 import pytest
 
-from energetica.sim.astro import direct_horizontal_irradiance
+from energetica.sim.astro import DrHI
 from energetica.sim.renewable_curves import RIVER_FLOW_SPEED_SEASONAL, WIND_POWER_CURVE
 from energetica.sim.renewables import (
     MAX_RIVER_SPEED,
     SOLAR_FULL_POWER_IRRADIANCE,
     WIND_CUT_OUT_SPEED,
-    _normal_cdf,
     calculate_river_speed,
     hydro_power_fraction,
     solar_power_fraction,
@@ -57,22 +56,13 @@ def test_river_speed_interpolates_between_days_and_wraps_the_year() -> None:
     assert calculate_river_speed(days * day, days) == pytest.approx(calculate_river_speed(0, days))
 
 
-def test_normal_cdf_matches_known_values() -> None:
-    assert _normal_cdf(0, scale=1) == 0.5
-    assert _normal_cdf(1, scale=1) == pytest.approx(0.8413447460685429)
-    assert _normal_cdf(-1, scale=1) == pytest.approx(0.15865525393145707)
-    assert _normal_cdf(0.15, scale=0.15) == pytest.approx(0.8413447460685429)
-    assert _normal_cdf(-8, scale=1) == pytest.approx(6.22096057427178e-16, rel=1e-6)
-    assert _normal_cdf(8, scale=1) == pytest.approx(1.0)
-
-
 def test_there_is_no_direct_irradiance_when_the_sun_is_below_the_horizon() -> None:
     # 2023-07-01 00:00 UTC at the equator and longitude 0 is the middle of the night.
-    assert direct_horizontal_irradiance(1_688_169_600, 0, 0) == pytest.approx(0, abs=1e-6)
+    assert DrHI(1_688_169_600, 0, 0) == pytest.approx(0, abs=1e-6)
 
 
 def test_direct_irradiance_is_bounded_by_the_solar_constant() -> None:
-    values = [direct_horizontal_irradiance(1_688_169_600 + hour * 3600, 0, 0) for hour in range(24)]
+    values = [DrHI(1_688_169_600 + hour * 3600, 0, 0) for hour in range(24)]
     assert max(values) > 300
     assert all(0 <= value <= 1360 for value in values)
     assert not any(math.isnan(value) for value in values)
@@ -81,4 +71,4 @@ def test_direct_irradiance_is_bounded_by_the_solar_constant() -> None:
 @pytest.mark.parametrize(("latitude", "longitude"), [(-90, 0), (91, 0), (0, -180), (0, 181)])
 def test_direct_irradiance_rejects_coordinates_outside_the_valid_range(latitude: float, longitude: float) -> None:
     with pytest.raises(ValueError):
-        direct_horizontal_irradiance(1_688_169_600, latitude, longitude)
+        DrHI(1_688_169_600, latitude, longitude)

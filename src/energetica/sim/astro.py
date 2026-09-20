@@ -1,15 +1,14 @@
-"""Astronomical calculations for solar irradiance.
+"""Utility functions for astronomical calculations for solar irradiance computations."""
 
-Pure standard-library maths, so that :mod:`energetica.sim` needs no numerical package beyond ``noise``.
-"""
+from typing import Any
 
-from __future__ import annotations
-
-import math
+import numpy as np
+from numpy import arccos, cos, exp, pi, sin
+from numpy.linalg import norm
 
 # Constants
 TROPICAL_YEAR = 365.24219 * 24 * 3600  # seconds in a tropical year
-EARTH_TILT_ANGLE = 23.5 / 180 * math.pi  # Earth tilt angle in radians
+EARTH_TILT_ANGLE = 23.5 / 180 * pi  # Earth tilt angle in radians
 SIDEREAL_DAY = 86164.098903691  # seconds in a sidereal day
 ABSORPTION_FACTOR = 0.28352711107  # Atmospheric absorption factor
 TSI = 1360  # Total Solar Irradiance (W/m^2)
@@ -17,7 +16,7 @@ T0 = 15011250  # Earth's orbit initial phase
 T1 = 33400  # Earth's spin initial phase
 
 
-def direct_horizontal_irradiance(unix_time: float, latitude: float, longitude: float) -> float:
+def DrHI(unix_time: Any, latitude: Any, longitude: Any) -> Any:
     """
     Calculate Direct Horizontal Irradiance (DrHI) at a given time and location.
 
@@ -32,45 +31,55 @@ def direct_horizontal_irradiance(unix_time: float, latitude: float, longitude: f
     - DrHI: Direct horizontal irradiance in W/m^2
 
     """
-    if not (-90 < latitude <= 90):
+    # Validate inputs
+    if not (np.all(latitude > -90) and np.all(latitude <= 90)):
         msg = "Latitude must be between -90 (excluded) and 90 degrees."
         raise ValueError(msg)
-    if not (-180 < longitude <= 180):
+    if not (np.all(longitude > -180) and np.all(longitude <= 180)):
         msg = "Longitude must be between -180 (excluded) and 180 degrees."
         raise ValueError(msg)
 
-    latitude = latitude / 180 * math.pi
-    longitude = longitude / 180 * math.pi
+    # Convert to radians
+    latitude = latitude / 180 * pi
+    longitude = longitude / 180 * pi
 
-    # Earth's position in its orbit around the Sun (v1)
-    orbital_phase = 2 * math.pi * (unix_time - T0) / TROPICAL_YEAR
-    v1 = (math.cos(orbital_phase), math.sin(orbital_phase), 0.0)
+    # Calculate Earth’s position in its orbit around the Sun (v1)
+    orbital_phase = 2 * pi * (unix_time - T0) / TROPICAL_YEAR
+    v1 = np.stack([cos(orbital_phase), sin(orbital_phase), np.zeros_like(orbital_phase)], axis=-1)
 
-    # The observer's position on the Earth (v2)
-    sidereal_phase = 2 * math.pi * (unix_time - T1) / SIDEREAL_DAY
-    v2 = (
-        math.cos(latitude) * math.cos(longitude + sidereal_phase),
-        math.cos(latitude) * math.sin(longitude + sidereal_phase),
-        math.sin(latitude),
+    # Calculate the observer's position on the Earth (v2)
+    sidereal_phase = 2 * pi * (unix_time - T1) / SIDEREAL_DAY
+    v2 = np.stack(
+        [
+            cos(latitude) * cos(longitude + sidereal_phase),
+            cos(latitude) * sin(longitude + sidereal_phase),
+            sin(latitude) * np.ones_like(sidereal_phase),
+        ],
+        axis=-1,
     )
 
-    # Rotate the observer's position for Earth's axial tilt
-    cos_tilt = math.cos(EARTH_TILT_ANGLE)
-    sin_tilt = math.sin(EARTH_TILT_ANGLE)
-    tilted = (
-        cos_tilt * v2[0] - sin_tilt * v2[2],
-        v2[1],
-        sin_tilt * v2[0] + cos_tilt * v2[2],
+    # Rotation matrix for Earth's axial tilt
+    rot_matrix = np.array(
+        [
+            [cos(EARTH_TILT_ANGLE), 0, -sin(EARTH_TILT_ANGLE)],
+            [0, 1, 0],
+            [sin(EARTH_TILT_ANGLE), 0, cos(EARTH_TILT_ANGLE)],
+        ],
     )
 
-    # The zenith angle is the angle between the Sun's rays and the observer. Rounding can push the cosine a
-    # hair outside [-1, 1], which ``acos`` rejects, so it is clamped.
-    cos_zenith = -(v1[0] * tilted[0] + v1[1] * tilted[1] + v1[2] * tilted[2]) / (math.hypot(*v1) * math.hypot(*v2))
-    zenith_angle = math.acos(max(-1.0, min(1.0, cos_zenith)))
+    # Calculate the zenith angle (angle between the Sun's rays and the observer)
+    zenith_angle = arccos(
+        (-v1[..., None, :] @ (rot_matrix @ v2[..., None]))[..., 0, 0] / (norm(v1, axis=-1) * norm(v2, axis=-1)),
+    )
 
-    elevation = max(0.0, math.pi / 2 - zenith_angle)
+    # Calculate solar elevation angle
+    elevation = np.maximum(0, pi / 2 - zenith_angle)
 
-    # Direct Normal Irradiance (DrNI), then Direct Horizontal Irradiance (DrHI)
-    sin_elevation = math.sin(elevation)
-    dr_ni = math.exp(-ABSORPTION_FACTOR / max(sin_elevation, 1e-8)) * TSI
-    return dr_ni * sin_elevation
+    # Calculate Direct Normal Irradiance (DrNI)
+    sin_elevation = sin(elevation)
+    DrNI = exp(-ABSORPTION_FACTOR / np.maximum(sin_elevation, 1e-8)) * TSI
+
+    # Calculate Direct Horizontal Irradiance (DrHI)
+    DrHI = DrNI * sin_elevation
+
+    return DrHI

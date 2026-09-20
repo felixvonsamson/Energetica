@@ -12,9 +12,11 @@ from __future__ import annotations
 import math
 from datetime import datetime, timedelta
 
+import numpy as np
 from noise import pnoise3
+from scipy.stats import norm
 
-from energetica.sim.astro import direct_horizontal_irradiance
+from energetica.sim.astro import DrHI
 from energetica.sim.renewable_curves import RIVER_FLOW_SPEED_SEASONAL, WIND_POWER_CURVE
 
 #: Irradiance, in W/m^2, at which a solar facility produces its full power. Irradiance is capped here too.
@@ -24,16 +26,6 @@ MAX_RIVER_SPEED = 2.5
 #: Wind speed at and above which a wind facility is past the last full-power entry of the power curve
 #: and starts to taper towards cut-out.
 WIND_CUT_OUT_SPEED = 85
-
-
-def _normal_cdf(x: float, scale: float) -> float:
-    """Return the cumulative distribution function of a normal distribution centred on 0."""
-    root_half = math.sqrt(0.5)
-    scaled = x / scale * root_half
-    if abs(scaled) < root_half:
-        return 0.5 + 0.5 * math.erf(scaled)
-    tail = 0.5 * math.erfc(abs(scaled))
-    return 1 - tail if scaled > 0 else tail
 
 
 def calculate_solar_irradiance(
@@ -52,7 +44,7 @@ def calculate_solar_irradiance(
 
     def transformation(noise_value: float, threshold: float = 0, smoothness: float = 2) -> float:
         """Sigmoid transformation."""
-        return 1 / (1 + math.exp(-(noise_value - threshold) * 10 / smoothness))
+        return 1 / (1 + np.exp(-(noise_value - threshold) * 10 / smoothness))
 
     # Calculate the real day and time in a year for a given tick
     start_date = datetime(2023, 7, 1)  # 6 months offset because i'm using the southern hemisphere
@@ -80,7 +72,7 @@ def calculate_solar_irradiance(
         smoothness=max(0.3, 1 - regional_noise),
     )
     csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
-    clear_sky = direct_horizontal_irradiance(weather_datetime.timestamp(), (position[1] - 10) * 85 / 21, 0)
+    clear_sky = DrHI(weather_datetime.timestamp(), (position[1] - 10) * 85 / 21, 0)
     return min(SOLAR_FULL_POWER_IRRADIANCE, csi * clear_sky), clear_sky, csi
 
 
@@ -102,14 +94,14 @@ def calculate_wind_speed(
         + 0.007 * pnoise3(x * 18, y * 18, t / 15, base=random_seed)
         + 0.003 * pnoise3(x * 108, y * 108, t / 2.5, base=random_seed)
     )
-    wind_speed_noise = _normal_cdf(wind_speed_noise, scale=0.15)
+    wind_speed_noise = norm.cdf(wind_speed_noise, loc=0, scale=0.15)
     wind_speed_noise = (1 - (1 - wind_speed_noise) ** 0.1282) ** 0.4673
     return (
         wind_speed_noise
         * (1 + 0.4 * math.sin(t / 60 / 24 / days_per_year * math.pi * 2 + 0.5 * math.pi))
         * (1 + 0.1 * math.sin(t / 60 / 24 * math.pi * 2 + 0.4 * math.pi))
         * 85
-    )
+    )  # type: ignore
 
 
 def calculate_river_speed(total_seconds: float, days_per_year: int) -> float:
