@@ -2,8 +2,8 @@
 
 The server-wide analog of the per-instance ``instance.json``: a small admin-owned file, re-read
 fresh on every call (no cache) so admin edits take effect without a restart. It currently carries
-only the signup toggle — the server-wide replacement for the per-instance ``disable_signups`` the
-lobby (no engine, no slug) cannot reuse (ADR-0003). ``setup-base.sh`` writes the initial file.
+only the signup toggle. Account creation is a server-wide concern, so the toggle lives here
+rather than on any one instance (ADR-0003). ``setup-base.sh`` writes the initial file.
 
     {ENERGETICA_SERVER_CONFIG_PATH}   (default: /etc/energetica/server.json)
 """

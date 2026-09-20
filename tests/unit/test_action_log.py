@@ -35,7 +35,6 @@ def _init() -> InitEngineAction:
         in_game_seconds_per_tick=1,
         random_seed=1,
         start_date=_TS,
-        disable_signups=False,
     )
 
 

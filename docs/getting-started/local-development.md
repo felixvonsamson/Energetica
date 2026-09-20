@@ -142,7 +142,7 @@ typecheck     lint            format             generate-types
 dev            # launcher: full local app stack (one terminal)
 dev:lobby      # launcher: local lobby stack
 dev:login      # mint a lobby session for CLI use (lobby must be running)
-serve:app      serve:app:fast   serve:app:test   serve:app:no-signup
+serve:app      serve:app:fast   serve:app:test
 serve:lobby
 typecheck  typecheck:py  lint  format  generate-types  ruff:check  ruff:format
 rm-instance    # full local reset (see below)
@@ -159,7 +159,6 @@ others:
 ```bash
 bun run serve:app:fast        # fast clock (1s tick, 1h/tick) for quick game progression
 bun run serve:app:test        # fresh instance + seeded test players/bots
-bun run serve:app:no-signup   # fresh instance with signups disabled
 ```
 
 ## Ports
