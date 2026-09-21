@@ -42,8 +42,13 @@ def signups_enabled() -> bool:
 
     **Fails closed:** a missing or malformed file → signups *disabled*. ``server.json`` is written
     by ``setup-base.sh``, so its absence means misconfiguration, and a broken toggle must never
-    accidentally throw open account creation to the world. Closed-enrollment deployments create
-    accounts by direct bootstrap instead (ADR-0003), so signups-off is a benign degraded state.
+    accidentally throw open account creation to the world.
+
+    This is the only switch governing account creation; an instance has no signup path of its own
+    (ADR-0003). A closed-enrollment deployment therefore bootstraps by turning the toggle on long
+    enough for its players to sign up, then turning it back off — the file is re-read on every
+    call, so neither flip needs a restart. That replaces the ``players.txt`` enrollment path
+    removed in #842.
     """
     path = _config_path()
     try:
