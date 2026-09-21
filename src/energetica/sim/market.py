@@ -65,11 +65,11 @@ class Fill:
     """One market entry paired with how much of it cleared at the market price."""
 
     entry: MarketEntry
-    cleared: float  # MW sold (offer) or bought (demand), clamped to [0, entry.capacity]
+    cleared: float  # W sold (offer) or bought (demand), clamped to [0, entry.capacity]
 
     @classmethod
     def from_entry(cls, entry: MarketEntry, quantity: float) -> Fill:
-        """Build the fill for ``entry`` given the market cleared ``quantity`` MW.
+        """Build the fill for ``entry`` given the market cleared ``quantity`` W.
 
         Entries whose cumulative capacity sits at or below ``quantity`` clear in full;
         the marginal (price-setting) entry clears partially; entries past it clear nothing.
@@ -82,7 +82,7 @@ class Fill:
 
     @property
     def unmet(self) -> float:
-        """MW that was offered (supply) or bid (demand) but did not clear."""
+        """W that was offered (supply) or bid (demand) but did not clear."""
         return self.entry.capacity - self.cleared
 
 
@@ -91,10 +91,10 @@ class MarketClearing:
     """Result of a uniform-price clearing. Pure data — carries no Player references."""
 
     price: float  # uniform clearing price
-    quantity: float  # total cleared MW at the supply/demand intersection
+    quantity: float  # total cleared W at the supply/demand intersection
     offers: list[Fill]  # sorted ascending by price; each entry's cumul_capacities is set
     demands: list[Fill]  # sorted descending by price; each entry's cumul_capacities is set
-    unserved: float  # market-level MW of demand that was bid but did not clear (total demand - cleared demand)
+    unserved: float  # market-level W of demand that was bid but did not clear (total demand - cleared demand)
 
 
 def clear_market(offers: list[MarketEntry], demands: list[MarketEntry]) -> MarketClearing:
@@ -142,7 +142,8 @@ def market_optimum(offers: list[MarketEntry], demands: list[MarketEntry]) -> tup
 
     # Build merged event list: (cumul_capacity, is_offer, next_step_price)
     # For offers (sorted ascending): next step price is the price of the next row (or +inf for last)
-    # For demands (sorted descending): next step price is the price of the next row (or one below MIN_PRICE for last)
+    # For demands (sorted descending): next step price is the price of the next row (or negative infinity for
+    # the last, a sentinel below every valid offer price so the final demand step always crosses supply)
     events: list[tuple[float, bool, float]] = []
     for i, entry in enumerate(offers):
         next_price = offers[i + 1].price if i + 1 < len(offers) else math.inf

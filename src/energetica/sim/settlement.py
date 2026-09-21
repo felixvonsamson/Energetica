@@ -16,12 +16,16 @@ from dataclasses import dataclass
 
 from energetica.sim.market import MIN_PRICE, MarketClearing
 
-#: Below this many MW a partly cleared entry is treated as not having traded at all.
+#: Below this many W a partly cleared entry is treated as not having traded at all.
 MIN_SETTLED_QUANTITY = 0.1
 
 
 def energy_value(quantity: float, price: float, seconds_per_tick: float) -> float:
-    """Return the money for ``quantity`` MW at ``price`` (per MWh) sustained for one tick, in millions."""
+    """Return the money for ``quantity`` W at ``price`` (per MWh) sustained for one tick.
+
+    Quantities are in watts and prices are per megawatt hour, so dividing by a million converts the
+    quantity to megawatts before it meets the price. The result is in whole currency units.
+    """
     return quantity * price / 3600 * seconds_per_tick / 1_000_000
 
 
@@ -31,10 +35,10 @@ class SaleSettlement:
 
     player_id: int
     facility: str
-    quantity: float  # MW sold at the market price; 0 when nothing traded
+    quantity: float  # W sold at the market price; 0 when nothing traded
     revenue: float  # money earned for ``quantity``; negative when the market price is negative
     counts_as_generation: bool  # False for must-run offers, whose output the caller already recorded
-    dumped: float | None = None  # MW of must-run power thrown away; None when the offer was not must-run
+    dumped: float | None = None  # W of must-run power thrown away; None when the offer was not must-run
     dump_cost: float = 0.0  # money owed for ``dumped``
 
 
@@ -44,9 +48,9 @@ class PurchaseSettlement:
 
     player_id: int
     facility: str
-    quantity: float  # MW bought at the market price; 0 when nothing traded
+    quantity: float  # W bought at the market price; 0 when nothing traded
     cost: float  # money owed for ``quantity``; negative when the market price is negative
-    served: float | None  # MW the bid received when it was not fully served; None when it was fully served
+    served: float | None  # W the bid received when it was not fully served; None when it was fully served
 
 
 @dataclass(frozen=True, slots=True)

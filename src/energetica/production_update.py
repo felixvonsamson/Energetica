@@ -854,7 +854,7 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
 
     # Calculate consumption status before modifying demand
     original_demand = demand.get(demand_type, 0.0)
-    epsilon = 0.1  # MW tolerance
+    epsilon = 0.1  # W tolerance
     if original_demand > epsilon:
         # Only track status for facilities in the player's bid prices (market participants)
         if demand_type in player.network_prices.bid_prices:
@@ -937,7 +937,7 @@ def calculate_production_status(
         ProductionStatus indicating the facility's operational state
     """
     max_capacity = player.capacities[facility]["power"]
-    epsilon = 0.1  # MW tolerance for floating point comparison
+    epsilon = 0.1  # W tolerance for floating point comparison
 
     # Simple cases
     if actual_generation < epsilon:
@@ -1007,7 +1007,7 @@ def initialize_consumption_statuses(player: Player, new_values: dict) -> None:
     """
     player.consumption_statuses.clear()
     demand = new_values["demand"]
-    epsilon = 0.1  # MW tolerance
+    epsilon = 0.1  # W tolerance
 
     for facility_type in player.network_prices.bid_prices.keys():
         if demand.get(facility_type, 0.0) < epsilon:
