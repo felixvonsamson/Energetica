@@ -148,7 +148,7 @@ def market_optimum(offers: list[MarketEntry], demands: list[MarketEntry]) -> tup
         next_price = offers[i + 1].price if i + 1 < len(offers) else math.inf
         events.append((entry.cumul_capacities, True, next_price))
     for i, entry in enumerate(demands):
-        next_price = demands[i + 1].price if i + 1 < len(demands) else MIN_PRICE - 1.0
+        next_price = demands[i + 1].price if i + 1 < len(demands) else -math.inf
         events.append((entry.cumul_capacities, False, next_price))
 
     events.sort(key=lambda e: e[0])
