@@ -56,6 +56,12 @@ def test_river_speed_interpolates_between_days_and_wraps_the_year() -> None:
     assert calculate_river_speed(days * day, days) == pytest.approx(calculate_river_speed(0, days))
 
 
+@pytest.mark.parametrize("days", [36, 71, 73, 365])
+def test_river_speed_rejects_a_year_the_table_does_not_cover(days: int) -> None:
+    with pytest.raises(ValueError, match="days_per_year must be 72"):
+        calculate_river_speed(0, days)
+
+
 def test_there_is_no_direct_irradiance_when_the_sun_is_below_the_horizon() -> None:
     # 2023-07-01 00:00 UTC at the equator and longitude 0 is the middle of the night.
     assert DrHI(1_688_169_600, 0, 0) == pytest.approx(0, abs=1e-6)

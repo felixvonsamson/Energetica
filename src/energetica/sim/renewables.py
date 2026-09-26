@@ -106,7 +106,16 @@ def calculate_wind_speed(
 
 
 def calculate_river_speed(total_seconds: float, days_per_year: int) -> float:
-    """Calculate the river flow speed, in m/s, by interpolating the values from the seasonal variation."""
+    """Calculate the river flow speed, in m/s, by interpolating the values from the seasonal variation.
+
+    :data:`RIVER_FLOW_SPEED_SEASONAL` has one entry per day of a 72-day year, so ``days_per_year`` must be 72.
+    Any other year length raises :class:`ValueError`: a longer year would index past the end of the table, and
+    a shorter one would silently play only the start of the seasonal curve. Supporting other lengths would
+    mean resampling the table.
+    """
+    if days_per_year != len(RIVER_FLOW_SPEED_SEASONAL):
+        msg = f"days_per_year must be {len(RIVER_FLOW_SPEED_SEASONAL)}, the length of the river table, not {days_per_year}"
+        raise ValueError(msg)
     days_since_start = math.floor(total_seconds / 3600 / 24)
     current_day_fraction = (total_seconds % (3600 * 24)) / (3600 * 24)
     flow_factor = RIVER_FLOW_SPEED_SEASONAL[days_since_start % days_per_year] + current_day_fraction * (
