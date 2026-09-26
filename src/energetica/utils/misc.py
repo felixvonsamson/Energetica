@@ -17,7 +17,7 @@ from energetica.database.messages import Chat, Message
 from energetica.database.network import Network
 from energetica.database.player import Player
 from energetica.enums import ControllableFacilityType
-from energetica.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.schemas.daily_quiz import DailyQuizBase
 from energetica.schemas.simulate import CreateUserAction

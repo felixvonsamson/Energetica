@@ -15,7 +15,7 @@ from typing import Annotated, Callable, TypeVar
 from fastapi import APIRouter, Depends, Query
 
 from energetica import accounts, instance_config
-from energetica.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.schemas.facilitator import (
     FacilitatorAccessOut,
     FacilitatorAccessPatch,

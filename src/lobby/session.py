@@ -2,14 +2,14 @@
 
 The lobby signs the (immutable) ``account_id`` into the shared ``session`` cookie, scoped to
 ``.{apex}`` so one login spans every run subdomain (ADR-0002). Signing uses the server-wide shared
-secret via ``energetica.utils.session`` — the same secret every instance validates with.
+secret via ``energetica.kernel.session`` — the same secret every instance validates with.
 """
 
 from __future__ import annotations
 
 from fastapi import Request, Response
 
-from energetica.utils.session import (
+from energetica.kernel.session import (
     SESSION_COOKIE_NAME,
     account_id_from_token,
     add_session_cookie_to_response,

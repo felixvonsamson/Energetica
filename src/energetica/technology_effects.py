@@ -27,7 +27,7 @@ from energetica.enums import (
     power_facility_types,
     str_to_project_type,
 )
-from energetica.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 
 if TYPE_CHECKING:

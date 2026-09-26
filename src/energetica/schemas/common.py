@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
-    from energetica.game_error import GameError
+    from energetica.kernel.game_error import GameError
 
 
 class GameErrorOut(BaseModel):

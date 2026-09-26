@@ -17,11 +17,11 @@ from fastapi.responses import JSONResponse, RedirectResponse
 
 from energetica import accounts, instance_config, server_config
 from energetica.accounts import Account
-from energetica.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.my_runs import resolve_my_runs
 from energetica.schemas.auth import LoginRequest, SignupRequest
 from energetica.schemas.lobby import MyRunsResponse
-from energetica.utils.session import check_password_hash, generate_password_hash
+from energetica.kernel.session import check_password_hash, generate_password_hash
 from lobby.deps import require_current_account
 from lobby.session import clear_lobby_session_cookie, set_lobby_session_cookie
 

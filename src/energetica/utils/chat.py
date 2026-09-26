@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from energetica.database.messages import Chat, Message
-from energetica.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.schemas.notifications import ChatMessagePayload
 from energetica.utils.misc import send_new_message_sio

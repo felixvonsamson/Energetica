@@ -3,7 +3,7 @@
 from energetica.config.constants import NETWORK_MEMBER_LIMIT
 from energetica.database.network import Network
 from energetica.database.player import Player
-from energetica.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 
 

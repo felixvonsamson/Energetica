@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 
 from energetica import accounts
 from energetica.schemas.auth import LoginRequest, SignupRequest
-from energetica.utils.session import SESSION_COOKIE_NAME, decode_session_token
+from energetica.kernel.session import SESSION_COOKIE_NAME, decode_session_token
 from lobby import create_lobby_app
 
 BASE = "http://testserver/api/v1"

@@ -2,7 +2,7 @@
 
 An instance-independent FastAPI app — signup, login, change-password, logout, and ``my-runs`` —
 that owns credentials and the server-wide session. It reuses the server-wide identity layer
-(``energetica.accounts`` / ``instance_config`` / the ``energetica.utils.session`` signing
+(``energetica.accounts`` / ``instance_config`` / the ``energetica.kernel.session`` signing
 primitives) but pulls in **none** of the game domain, routers, socketio or tick loop (ADR-0002,
 lobby Phase B); the guard is ``tests/unit/test_module_boundary.py``.
 

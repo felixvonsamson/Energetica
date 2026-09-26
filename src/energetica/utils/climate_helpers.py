@@ -18,7 +18,7 @@ from energetica.schemas.notifications import ClimateEventPayload, FacilityDestro
 from energetica.globals import engine
 from energetica.utils.facilities import destroy_facility
 
-from energetica.utils.hashing import stable_hash
+from energetica.kernel.hashing import stable_hash
 
 
 def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generator) -> None:

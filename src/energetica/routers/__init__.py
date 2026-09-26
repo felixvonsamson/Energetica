@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from energetica.game_error import GameError
+from energetica.kernel.game_error import GameError
 from energetica.globals import engine
 from energetica.schemas.common import GameErrorOut
 from energetica.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method

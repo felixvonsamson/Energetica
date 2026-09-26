@@ -1,4 +1,4 @@
-"""Unit tests for deployed-version reporting (``energetica.utils.version``).
+"""Unit tests for deployed-version reporting (``energetica.kernel.version``).
 
 These exercise the read logic that ``/healthz`` relies on: the deploy stamp is preferred, a
 missing or corrupt stamp falls back to git, and each half is read independently. They patch the
@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica.utils import version
+from energetica.kernel import version
 
 
 def test_backend_version_prefers_stamp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

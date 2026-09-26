@@ -7,9 +7,9 @@ from energetica.database.player import Player
 from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.enums import Fuel
 from energetica.schemas.notifications import ResourceSoldPayload, ShipmentArrivedPayload
-from energetica.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.globals import engine
-from energetica.utils.formatting import format_money, format_mass
+from energetica.kernel.formatting import format_money, format_mass
 
 
 def calculate_shipment_duration(buyer: Player, seller: Player) -> float:

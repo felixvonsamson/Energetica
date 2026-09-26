@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from energetica import accounts, instance_config
 from energetica.accounts import Account
 from energetica.database.player import Player
-from energetica.game_error import GameExceptionType
+from energetica.kernel.game_error import GameExceptionType
 from energetica.globals import engine
 from energetica.schemas.auth import UserOut
 from energetica.schemas.capabilities import PlayerCapabilities

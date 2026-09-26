@@ -15,7 +15,7 @@ The backend produces three distinct error shapes. The API client in `lib/api-cli
 
 ## Error codes and type safety
 
-Backend game error codes live in `energetica/game_error.py` as a `StrEnum`:
+Backend game error codes live in `energetica/kernel/game_error.py` as a `StrEnum`:
 
 ```python
 class GameExceptionType(StrEnum):
@@ -96,7 +96,7 @@ Clear all error state at the top of the submit handler, before validation.
 
 ## Adding a new error code
 
-1. Add the value to `GameExceptionType` in `energetica/game_error.py`. Use `SCREAMING_CASE` for the string value.
+1. Add the value to `GameExceptionType` in `energetica/kernel/game_error.py`. Use `SCREAMING_CASE` for the string value.
 2. Raise it from the appropriate backend route via `HTTPException` (to preserve a meaningful HTTP status code) or `GameError` (for business logic errors where 400 is acceptable).
 3. Run `bun run generate-types`.
 4. Add an entry to `GAME_ERROR_MESSAGES` in `frontend/src/lib/game-messages.ts` — the compiler will flag the missing key.
