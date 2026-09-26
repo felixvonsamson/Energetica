@@ -14,7 +14,13 @@ permissions:
 
 jobs:
   assign:
-    if: github.event.pull_request.assignees[0] == null && github.event.pull_request.user.type != 'Bot'
+    # Only people with access to the repo can be assigned, so skip PRs from outside
+    # contributors instead of failing on them. Also skip bots and PRs that already
+    # have an assignee.
+    if: >-
+      github.event.pull_request.assignees[0] == null &&
+      github.event.pull_request.user.type != 'Bot' &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
     runs-on: ubuntu-latest
     steps:
       - run: gh pr edit "$PR" --repo "$REPO" --add-assignee "$AUTHOR"
