@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import math
 import pickle
-from typing import Any, Literal
+from typing import Literal
 
 import numpy as np
 
@@ -35,7 +35,8 @@ from energetica.schemas.electricity_markets import AskType
 from energetica.schemas.notifications import NetworkExpelledPayload, NetworkOverdraftWarningPayload
 from energetica.sim.demand_shape import demand_shape_factor
 from energetica.sim.facility_statuses import ProductionStatus
-from energetica.sim.market import clear_market, init_market, place_ask, place_bid
+from energetica.sim.market import MIN_PRICE, clear_market, init_market, place_ask, place_bid
+from energetica.sim.settlement import settle_clearing
 from energetica.utils import network_helpers
 from energetica.utils.misc import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
 
@@ -406,14 +407,14 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
     renewables_generation(player, generation)
     # TODO (Felix): Renewables_generation() should be included in minimal_generation()
     minimal_generation(player, generation, resource_reservations)
-    # Obligatory generation is put on the internal market at a price of -5
+    # Obligatory generation is put on the internal market at the minimum price
     for facility in (*StorageFacilityType, *power_facility_types):
         if facility in player.capacities:
             internal_market = place_ask(
                 internal_market,
                 player.id,
                 generation[facility],
-                -5,
+                MIN_PRICE,
                 facility,
             )
 
@@ -458,7 +459,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
     # offer minimal generation capacities of facilities on the market at a negative price
     for facility in (*StorageFacilityType, *power_facility_types):
         if player.capacities.get(facility) is not None:
-            market = place_ask(market, player.id, generation[facility], -5, facility)
+            market = place_ask(market, player.id, generation[facility], MIN_PRICE, facility)
 
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
@@ -515,35 +516,6 @@ def market_logic(new_values: dict, market: dict) -> None:
         else:
             market[generation_consumption][facility] = quantity
 
-    def sell(row: Any, market_price: Any, quantity: float | None = None) -> None:
-        """Sell and produce offered power capacity."""
-        player = Player.get(row.player_id)
-        assert player is not None
-        generation = new_values[player.id]["generation"]
-        demand = new_values[player.id]["demand"]
-        revenue = new_values[player.id]["revenues"]
-        if quantity is None:
-            quantity = row.capacity
-        if row.price > -5:
-            generation[row.facility] += quantity
-        demand["exports"] += quantity
-        player.money += quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
-        revenue["exports"] += quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
-        add_to_market_data(player.id, quantity, row.facility, export=True)  # type: ignore
-
-    def buy(row: Any, market_price: Any, quantity: float | None = None) -> None:
-        """Buy demanded power capacity."""
-        player = Player.get(row.player_id)
-        assert player is not None
-        generation = new_values[player.id]["generation"]
-        revenue = new_values[player.id]["revenues"]
-        if quantity is None:
-            quantity = row.capacity
-        generation["imports"] += quantity
-        player.money -= quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
-        revenue["imports"] -= quantity * market_price / 3600 * engine.in_game_seconds_per_tick / 1_000_000
-        add_to_market_data(player.id, quantity, row.facility, export=False)  # type: ignore
-
     market["player_exports"] = {}
     market["player_imports"] = {}
     market["generation"] = {}
@@ -560,44 +532,37 @@ def market_logic(new_values: dict, market: dict) -> None:
     market["capacities"] = [fill.entry for fill in clearing.offers]
     market["demands"] = [fill.entry for fill in clearing.demands]
 
-    # sell all capacities under market price
-    for fill in clearing.offers:
-        row = fill.entry
-        if row.cumul_capacities > market_quantity:
-            sold_cap = fill.cleared
-            if sold_cap > 0.1:
-                sell(row, market_price, quantity=sold_cap)
-            # dumping electricity that is offered at the minimal price and not sold
-            if row.price <= -5:
-                dump_cap = max(0.0, min(row.capacity, row.capacity - sold_cap))
-                player = Player.get(row.player_id)
-                assert player is not None
-                demand = new_values[row.player_id]["demand"]
-                demand["dumping"] += dump_cap
-                player.money -= dump_cap * 5 / 3600 * engine.in_game_seconds_per_tick / 1_000_000
-                revenue = new_values[row.player_id]["revenues"]
-                revenue["dumping"] -= dump_cap * 5 / 3600 * engine.in_game_seconds_per_tick / 1_000_000
-                add_to_market_data(player.id, dump_cap, "dumping", export=False)
-                add_to_market_data(player.id, dump_cap, row.facility, export=True)
-                continue
-            break
-        sell(row, market_price)
-    # buy all demands over market price
-    for fill in clearing.demands:
-        row = fill.entry
-        if row.cumul_capacities > market_quantity:
-            bought_cap = fill.cleared
-            if bought_cap > 0.1:
-                buy(row, market_price, quantity=bought_cap)
-            # measures a taken to reduce demand
-            reduce_demand(
-                new_values,
-                row.facility,
-                row.player_id,
-                max(0.0, bought_cap),
-            )
-        else:
-            buy(row, market_price)
+    # The pure half decides what each entry sold, bought and dumped, and what that is worth. Applying it
+    # to the players (money, generation, curtailment, chart data) is Player-coupled, so it stays here.
+    settlement = settle_clearing(clearing, engine.in_game_seconds_per_tick)
+    for sale in settlement.sales:
+        player = Player.get(sale.player_id)
+        assert player is not None
+        if sale.quantity > 0:
+            if sale.counts_as_generation:
+                new_values[player.id]["generation"][sale.facility] += sale.quantity
+            new_values[player.id]["demand"]["exports"] += sale.quantity
+            player.money += sale.revenue
+            new_values[player.id]["revenues"]["exports"] += sale.revenue
+            add_to_market_data(player.id, sale.quantity, sale.facility, export=True)
+        # dumping electricity that is offered at the minimal price and not sold
+        if sale.dumped is not None:
+            new_values[player.id]["demand"]["dumping"] += sale.dumped
+            player.money -= sale.dump_cost
+            new_values[player.id]["revenues"]["dumping"] -= sale.dump_cost
+            add_to_market_data(player.id, sale.dumped, "dumping", export=False)
+            add_to_market_data(player.id, sale.dumped, sale.facility, export=True)
+    for purchase in settlement.purchases:
+        player = Player.get(purchase.player_id)
+        assert player is not None
+        if purchase.quantity > 0:
+            new_values[player.id]["generation"]["imports"] += purchase.quantity
+            player.money -= purchase.cost
+            new_values[player.id]["revenues"]["imports"] -= purchase.cost
+            add_to_market_data(player.id, purchase.quantity, purchase.facility, export=False)
+        # measures a taken to reduce demand
+        if purchase.served is not None:
+            reduce_demand(new_values, purchase.facility, purchase.player_id, purchase.served)
     market["market_price"] = market_price
     market["market_quantity"] = market_quantity
 
@@ -889,7 +854,7 @@ def reduce_demand(new_values: dict, demand_type: str, player_id: int, satisfacti
 
     # Calculate consumption status before modifying demand
     original_demand = demand.get(demand_type, 0.0)
-    epsilon = 0.1  # MW tolerance
+    epsilon = 0.1  # W tolerance
     if original_demand > epsilon:
         # Only track status for facilities in the player's bid prices (market participants)
         if demand_type in player.network_prices.bid_prices:
@@ -972,7 +937,7 @@ def calculate_production_status(
         ProductionStatus indicating the facility's operational state
     """
     max_capacity = player.capacities[facility]["power"]
-    epsilon = 0.1  # MW tolerance for floating point comparison
+    epsilon = 0.1  # W tolerance for floating point comparison
 
     # Simple cases
     if actual_generation < epsilon:
@@ -1042,7 +1007,7 @@ def initialize_consumption_statuses(player: Player, new_values: dict) -> None:
     """
     player.consumption_statuses.clear()
     demand = new_values["demand"]
-    epsilon = 0.1  # MW tolerance
+    epsilon = 0.1  # W tolerance
 
     for facility_type in player.network_prices.bid_prices.keys():
         if demand.get(facility_type, 0.0) < epsilon:
