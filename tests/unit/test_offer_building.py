@@ -15,7 +15,13 @@ from energetica import create_app
 from energetica.accounts import Account
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
-from energetica.enums import ControllableFacilityType, Fuel, StorageFacilityType
+from energetica.enums import (
+    ControllableFacilityType,
+    Fuel,
+    FunctionalFacilityType,
+    NonFacilityBidType,
+    StorageFacilityType,
+)
 from energetica.init_test_players import add_asset
 from energetica.production_update import calculate_generation_with_market, calculate_generation_without_market
 from energetica.sim.market import MIN_PRICE, init_market
@@ -74,8 +80,8 @@ def test_networked_player_bids_its_demand_at_the_set_prices(player: Player) -> N
     new_values = _new_values(player)
     new_values[player.id]["demand"]["industry"] = 1000.0
     new_values[player.id]["demand"]["construction"] = 200.0
-    player.network_prices.bid_prices["industry"] = 100.0
-    player.network_prices.bid_prices["construction"] = 110.0
+    player.network_prices.bid_prices[FunctionalFacilityType.INDUSTRY] = 100.0
+    player.network_prices.bid_prices[NonFacilityBidType.CONSTRUCTION] = 110.0
 
     market = calculate_generation_with_market(new_values, init_market(), player)
 
