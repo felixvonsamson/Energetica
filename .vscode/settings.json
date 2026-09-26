@@ -11,7 +11,7 @@
     "**/.ruff_cache/**": true,
     "**/*.egg-info/**": true,
     "**/dist*/**": true,
-    "**/instance/**": true
+    "instance/**": true
   },
   "files.exclude": {
     ".git": true,
@@ -79,7 +79,6 @@
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
   "python.analysis.autoImportCompletions": false,
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "python.analysis.diagnosticMode": "workspace",
   // JSON
   "json.format.keepLines": true,
