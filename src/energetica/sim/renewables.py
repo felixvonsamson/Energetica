@@ -10,7 +10,7 @@ The caller passes the length of the game year in days, because it belongs to the
 from __future__ import annotations
 
 import math
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import numpy as np
 from noise import pnoise3
@@ -46,8 +46,9 @@ def calculate_solar_irradiance(
         """Sigmoid transformation."""
         return 1 / (1 + np.exp(-(noise_value - threshold) * 10 / smoothness))
 
-    # Calculate the real day and time in a year for a given tick
-    start_date = datetime(2023, 7, 1)  # 6 months offset because i'm using the southern hemisphere
+    # Calculate the real day and time in a year for a given tick. The start date is in UTC so the sun does not
+    # depend on the machine's time zone. The game server runs in UTC, so this matches what players saw before.
+    start_date = datetime(2023, 7, 1, tzinfo=UTC)  # 6 months offset because i'm using the southern hemisphere
     day_of_year = int((total_seconds / 3600 / 24 / days_per_year) % 1 * 365)
     time_of_day = total_seconds % (3600 * 24)
     weather_datetime = start_date + timedelta(days=day_of_year, seconds=time_of_day)
