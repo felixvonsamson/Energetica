@@ -21,6 +21,8 @@
         "src/routes",
         "src/routeTree.gen.ts",
         "src/router.d.ts",
-        "src/components/lobby"
+        "src/components/lobby",
+        "src/types/notification-routes-register.d.ts",
+        "src/lib/notification-routes.test.ts"
     ]
 }
