@@ -12,13 +12,21 @@ still get a well-defined clearing out.
 
 Naming follows finance convention: :func:`place_ask` adds *supply* (a seller's
 offer, into ``capacities``); :func:`place_bid` adds *demand* (a buyer's bid, into
-``demands``).
+``demands``). A facility's supply is offered in two parts, :func:`place_must_run_ask` for the
+output it cannot hold back and :func:`place_headroom_ask` for the rest, so the rule for splitting
+it is the same in every mode.
 """
 
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+
+
+#: The lowest price an offer can carry. Generation that must run regardless of price (renewables, the
+#: minimum output a controllable facility cannot ramp below) is offered here so it always sits first in
+#: the merit order. Unsold power at this price is dumped, and the owner pays this price per MWh to do so.
+MIN_PRICE = -5
 
 
 class MarketEntry:
@@ -54,16 +62,28 @@ def place_bid(market: dict, player_id: int, demand: float, price: float, facilit
     return market
 
 
+def place_must_run_ask(market: dict, player_id: int, output: float, facility: str) -> dict:
+    """Offer output that cannot be held back at :data:`MIN_PRICE`, so it sits first in the merit order."""
+    return place_ask(market, player_id, output, MIN_PRICE, facility)
+
+
+def place_headroom_ask(
+    market: dict, player_id: int, minimum: float, maximum: float, price: float, facility: str
+) -> dict:
+    """Offer the output a facility can add above its ``minimum``, up to its ``maximum``, at ``price``."""
+    return place_ask(market, player_id, maximum - minimum, price, facility)
+
+
 @dataclass(frozen=True, slots=True)
 class Fill:
     """One market entry paired with how much of it cleared at the market price."""
 
     entry: MarketEntry
-    cleared: float  # MW sold (offer) or bought (demand), clamped to [0, entry.capacity]
+    cleared: float  # W sold (offer) or bought (demand), clamped to [0, entry.capacity]
 
     @classmethod
     def from_entry(cls, entry: MarketEntry, quantity: float) -> Fill:
-        """Build the fill for ``entry`` given the market cleared ``quantity`` MW.
+        """Build the fill for ``entry`` given the market cleared ``quantity`` W.
 
         Entries whose cumulative capacity sits at or below ``quantity`` clear in full;
         the marginal (price-setting) entry clears partially; entries past it clear nothing.
@@ -76,7 +96,7 @@ class Fill:
 
     @property
     def unmet(self) -> float:
-        """MW that was offered (supply) or bid (demand) but did not clear."""
+        """W that was offered (supply) or bid (demand) but did not clear."""
         return self.entry.capacity - self.cleared
 
 
@@ -85,10 +105,10 @@ class MarketClearing:
     """Result of a uniform-price clearing. Pure data — carries no Player references."""
 
     price: float  # uniform clearing price
-    quantity: float  # total cleared MW at the supply/demand intersection
+    quantity: float  # total cleared W at the supply/demand intersection
     offers: list[Fill]  # sorted ascending by price; each entry's cumul_capacities is set
     demands: list[Fill]  # sorted descending by price; each entry's cumul_capacities is set
-    unserved: float  # market-level MW of demand that was bid but did not clear (total demand - cleared demand)
+    unserved: float  # market-level W of demand that was bid but did not clear (total demand - cleared demand)
 
 
 def clear_market(offers: list[MarketEntry], demands: list[MarketEntry]) -> MarketClearing:
@@ -136,13 +156,14 @@ def market_optimum(offers: list[MarketEntry], demands: list[MarketEntry]) -> tup
 
     # Build merged event list: (cumul_capacity, is_offer, next_step_price)
     # For offers (sorted ascending): next step price is the price of the next row (or +inf for last)
-    # For demands (sorted descending): next step price is the price of the next row (or -6 for last)
+    # For demands (sorted descending): next step price is the price of the next row (or negative infinity for
+    # the last, a sentinel below every valid offer price so the final demand step always crosses supply)
     events: list[tuple[float, bool, float]] = []
     for i, entry in enumerate(offers):
         next_price = offers[i + 1].price if i + 1 < len(offers) else math.inf
         events.append((entry.cumul_capacities, True, next_price))
     for i, entry in enumerate(demands):
-        next_price = demands[i + 1].price if i + 1 < len(demands) else -6.0
+        next_price = demands[i + 1].price if i + 1 < len(demands) else -math.inf
         events.append((entry.cumul_capacities, False, next_price))
 
     events.sort(key=lambda e: e[0])
