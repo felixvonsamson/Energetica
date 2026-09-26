@@ -15,11 +15,13 @@ from energetica import create_app
 from energetica.accounts import Account
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
+from energetica.config.assets import const_config
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
     StorageFacilityType,
     WindFacilityType,
+    power_facility_types,
 )
 from energetica.init_test_players import add_asset
 from energetica.production_update import resources_and_pollution
@@ -97,3 +99,8 @@ def test_the_player_is_charged_the_total(player: Player) -> None:
     op_costs = _run(player, 0.4, 0.6, 0.2)
 
     assert player.money - before == pytest.approx(sum(op_costs.values()))
+
+
+@pytest.mark.parametrize("facility", [*power_facility_types, *StorageFacilityType, *ExtractionFacilityType])
+def test_every_facility_that_pays_operating_cost_has_a_fixed_share(facility: str) -> None:
+    assert 0 <= const_config["assets"][facility]["O&M_fixed_share"] <= 1

@@ -24,6 +24,7 @@ const_config: dict = {
             "construction_power_factor": 0.4,  # fraction of power gen during construction
             "base_construction_pollution": 17_520,  # [kg]
             "O&M_factor_per_day": 0.8,  # [fraction of price per in-game day]
+            "O&M_fixed_share": 0.2,  # [share of the O&M cost owed however little the facility runs]
             "consumed_resource": {},  # [kg/MWh]
             "base_pollution": 988,  # [kg CO2/MWh]
             "ramping_time": timedelta(minutes=15).total_seconds(),  # [in-game seconds]
@@ -41,6 +42,7 @@ const_config: dict = {
             "construction_power_factor": 0.56,
             "base_construction_pollution": 1_600,
             "O&M_factor_per_day": 0.048,
+            "O&M_fixed_share": 1.0,
             "consumed_resource": {"wind": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -60,6 +62,7 @@ const_config: dict = {
             "construction_power_factor": 0.48,
             "base_construction_pollution": 2_200,
             "O&M_factor_per_day": 0.056,
+            "O&M_fixed_share": 1.0,
             "consumed_resource": {"water": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -79,6 +82,7 @@ const_config: dict = {
             "construction_power_factor": 0.28,
             "base_construction_pollution": 1_100_000,
             "O&M_factor_per_day": 0.096,
+            "O&M_fixed_share": 0.2,
             "consumed_resource": {"coal": 640},
             "base_pollution": 1_664,
             "ramping_time": timedelta(hours=2).total_seconds(),
@@ -96,6 +100,7 @@ const_config: dict = {
             "construction_power_factor": 0.56,
             "base_construction_pollution": 657_000,
             "O&M_factor_per_day": 0.116,
+            "O&M_fixed_share": 0.2,
             "consumed_resource": {"gas": 353},
             "base_pollution": 1_006,
             "ramping_time": timedelta(minutes=8).total_seconds(),
@@ -113,6 +118,7 @@ const_config: dict = {
             "construction_power_factor": 0.37,
             "base_construction_pollution": 876_000,
             "O&M_factor_per_day": 0.032,
+            "O&M_fixed_share": 1.0,
             "consumed_resource": {"hydropower": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -132,6 +138,7 @@ const_config: dict = {
             "construction_power_factor": 1.3,
             "base_construction_pollution": 420_000,
             "O&M_factor_per_day": 0.028,
+            "O&M_fixed_share": 1.0,
             "consumed_resource": {"wind": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -151,6 +158,7 @@ const_config: dict = {
             "construction_power_factor": 0.56,
             "base_construction_pollution": 1_500_000,
             "O&M_factor_per_day": 0.056,
+            "O&M_fixed_share": 0.2,
             "consumed_resource": {"gas": 210, "coal": 76},
             "base_pollution": 797,
             "ramping_time": timedelta(hours=1, minutes=15).total_seconds(),
@@ -168,6 +176,7 @@ const_config: dict = {
             "construction_power_factor": 0.08,
             "base_construction_pollution": 6_800_000,
             "O&M_factor_per_day": 0.288,
+            "O&M_fixed_share": 0.5,
             "consumed_resource": {"uranium": 0.044},
             "base_pollution": 2,
             "ramping_time": timedelta(hours=13).total_seconds(),
@@ -185,6 +194,7 @@ const_config: dict = {
             "construction_power_factor": 0.21,
             "base_construction_pollution": 8_760_000,
             "O&M_factor_per_day": 0.024,
+            "O&M_fixed_share": 1.0,
             "consumed_resource": {"hydropower": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -204,6 +214,7 @@ const_config: dict = {
             "construction_power_factor": 0.4,
             "base_construction_pollution": 1_260_000,
             "O&M_factor_per_day": 0.1,
+            "O&M_fixed_share": 1.0,
             "consumed_resource": {"irradiance": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -222,6 +233,7 @@ const_config: dict = {
             "construction_power_factor": 3,
             "base_construction_pollution": 12_000_000,
             "O&M_factor_per_day": 0.028,
+            "O&M_fixed_share": 1.0,
             "consumed_resource": {"irradiance": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -240,6 +252,7 @@ const_config: dict = {
             "construction_power_factor": 1.2,
             "base_construction_pollution": 4_900_000,
             "O&M_factor_per_day": 0.032,
+            "O&M_fixed_share": 1.0,
             "consumed_resource": {"wind": 0},
             "base_pollution": 0,
             "ramping_time": 0,
@@ -259,6 +272,7 @@ const_config: dict = {
             "construction_power_factor": 0.06,
             "base_construction_pollution": 12_000_000,
             "O&M_factor_per_day": 0.24,
+            "O&M_fixed_share": 0.5,
             "consumed_resource": {"uranium": 0.000_57},
             "base_pollution": 3,
             "ramping_time": timedelta(hours=8, minutes=20).total_seconds(),
@@ -278,6 +292,7 @@ const_config: dict = {
             "construction_power_factor": 0.005,  # fraction of capacity demanded during construction
             "base_construction_pollution": 80_000,  # [kg]
             "O&M_factor_per_day": 0.068,  # [fraction of price per in-game day]
+            "O&M_fixed_share": 1.0,
             "ramping_time": timedelta(minutes=9).total_seconds(),  # [in-game seconds]
             "lifespan": timedelta(days=525).total_seconds(),  # [in-game seconds]
             "description": "The small pumped hydro storage pumps water to a higher reservoir to store energy.",
@@ -295,6 +310,7 @@ const_config: dict = {
             "construction_power_factor": 0.001,
             "base_construction_pollution": 1_200_000,
             "O&M_factor_per_day": 0.24,
+            "O&M_fixed_share": 1.0,
             "ramping_time": timedelta(hours=1).total_seconds(),
             "lifespan": timedelta(days=105).total_seconds(),
             "description": "The molten salt storage stores energy in the form of high temperature molten salt.",
@@ -312,6 +328,7 @@ const_config: dict = {
             "construction_power_factor": 0.003,
             "base_construction_pollution": 3_000_000,
             "O&M_factor_per_day": 0.07,
+            "O&M_fixed_share": 1.0,
             "ramping_time": timedelta(minutes=16).total_seconds(),
             "lifespan": timedelta(days=630).total_seconds(),
             "description": "The large pumped hydro storage pumps water to a higher reservoir to store large amounts of energy.",
@@ -329,6 +346,7 @@ const_config: dict = {
             "construction_power_factor": 0.000_25,
             "base_construction_pollution": 2_400_000,
             "O&M_factor_per_day": 0.028,
+            "O&M_fixed_share": 1.0,
             "ramping_time": timedelta(minutes=8).total_seconds(),
             "lifespan": timedelta(days=315).total_seconds(),
             "description": "The hydrogen storage facility uses electricity to produce hydrogen by electrolysis of water. "
@@ -347,6 +365,7 @@ const_config: dict = {
             "construction_power_factor": 0.1,
             "base_construction_pollution": 8_000_000,
             "O&M_factor_per_day": 0.002_8,
+            "O&M_fixed_share": 1.0,
             "ramping_time": timedelta(minutes=3).total_seconds(),
             "lifespan": timedelta(days=112).total_seconds(),
             "description": "The lithium-ion batteries store energy with a high efficiency in the form of chemical energy.",
@@ -364,6 +383,7 @@ const_config: dict = {
             "construction_power_factor": 0.07,
             "base_construction_pollution": 6_000_000,
             "O&M_factor_per_day": 0.002,
+            "O&M_fixed_share": 1.0,
             "ramping_time": timedelta(minutes=3).total_seconds(),
             "lifespan": timedelta(days=210).total_seconds(),
             "description": "The solid state batteries store energy with a high efficiency in the form of chemical energy.",
@@ -439,6 +459,7 @@ const_config: dict = {
             "construction_power_factor": 1.5,  # fraction of power consumption during construction
             "base_construction_pollution": 200_000,  # [kg]
             "O&M_factor_per_day": 0.24,  # [fraction of price per in-game day]
+            "O&M_fixed_share": 0.2,
             "base_power_consumption": 3_000_000,  # [W]
             "base_pollution": 0.065,  # [kg CO2/kg extracted]
             "lifespan": timedelta(days=161).total_seconds(),  # [in-game seconds]
@@ -456,6 +477,7 @@ const_config: dict = {
             "construction_power_factor": 2.5,
             "base_construction_pollution": 700_000,
             "O&M_factor_per_day": 0.36,
+            "O&M_fixed_share": 0.2,
             "base_power_consumption": 5_100_000,
             "base_pollution": 0.523,
             "lifespan": timedelta(days=70).total_seconds(),
@@ -472,6 +494,7 @@ const_config: dict = {
             "construction_power_factor": 2,
             "base_construction_pollution": 500_000,
             "O&M_factor_per_day": 0.48,
+            "O&M_fixed_share": 0.2,
             "base_power_consumption": 18_000_000,
             "base_pollution": 86,
             "lifespan": timedelta(days=126).total_seconds(),

@@ -42,7 +42,7 @@ from energetica.sim.market import (
     place_headroom_ask,
     place_must_run_ask,
 )
-from energetica.sim.operating_cost import fixed_cost_share, operating_cost
+from energetica.sim.operating_cost import operating_cost
 from energetica.sim.renewables import (
     WIND_CUT_OUT_SPEED,
     calculate_river_speed,
@@ -785,15 +785,15 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
     # O&M costs
     for facility in (*power_facility_types, *StorageFacilityType, *ExtractionFacilityType):
         if player.capacities.get(facility) is not None:
-            scales_with_use = isinstance(facility, ControllableFacilityType | ExtractionFacilityType)
+            # Renewable and storage facilities have a fixed share of 1, so their utilisation does not matter.
             utilisation = 0.0
             if isinstance(facility, ExtractionFacilityType):
                 utilisation = demand[facility] / player.capacities[facility]["power_use"]
-            elif scales_with_use:
+            elif isinstance(facility, ControllableFacilityType):
                 utilisation = generation[facility] / player.capacities[facility]["power"]
             operational_cost = operating_cost(
                 player.capacities[facility]["O&M_cost"],
-                fixed_cost_share(facility, scales_with_use),
+                engine.const_config["assets"][facility]["O&M_fixed_share"],
                 utilisation,
             )
             player.money -= operational_cost
