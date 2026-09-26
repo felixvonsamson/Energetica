@@ -8,7 +8,6 @@ import glob
 import logging
 import os
 import platform
-import secrets
 import shutil
 import socket
 import tarfile
@@ -64,7 +63,6 @@ def create_app(
     simulate_profiling: bool = False,
     skip_adding_handlers: bool = False,  # TODO(mglst): revisit if this is still needed, currently unused
     env: Literal["dev"] | Literal["prod"],
-    disable_signups: bool = False,
     schema_only: bool = False,
 ) -> FastAPI:
     """Set up the app and the game engine."""
@@ -166,7 +164,7 @@ def create_app(
             kwargs.pop("action_type")
             engine.init_instance(**kwargs)
         else:
-            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, __version__, disable_signups)
+            engine.init_instance(clock_time, in_game_seconds_per_tick, random_seed, env, __version__)
 
     loaded_tick = engine.total_t
     if simulate_file:
@@ -265,43 +263,11 @@ def create_app(
         scheduler.start()
 
         from energetica import accounts
-        from energetica.utils.auth import generate_password_hash
 
         accounts.init_db()
 
         # There is no more auto-provisioned admin account (ADR-0004): a facilitator is granted
         # out-of-band by a sysadmin via scripts/lobby/grant-facilitator.py, never minted at startup.
-
-        if disable_signups:
-            # if sign-ups are disabled, accounts have to be created from a file. Lives under
-            # instance/ (service-writable) — the code dir is read-only to the service user, and
-            # this file is rewritten below with generated passwords, so it must be writable.
-            # The path is relative to the working directory, like every other instance/ and
-            # checkpoints/ path in this package. That is load-bearing now the project is
-            # installed: __file__ points into site-packages, not at the run's data directory.
-            # The systemd units pin WorkingDirectory to the run's directory.
-            with open("instance/players.txt", "r", encoding="utf-8") as file:
-                lines = file.readlines()
-
-            with open("instance/players.txt", "w", encoding="utf-8") as file:
-                for line in lines:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    parts = line.split(",")
-                    if len(parts) > 2:
-                        raise ValueError("Invalid format in players.txt. Expected 'username,password'.")
-                    username = parts[0].strip()
-                    password = parts[1].strip() if len(parts) > 1 else None
-                    if accounts.get_account_by_username(username) is not None:
-                        engine.log(f"players.txt: Did not create new player {username}; username already exists.")
-                        continue
-                    if password is None:
-                        password = secrets.token_hex(4)
-                    hashed_password = generate_password_hash(password)
-                    accounts.get_or_create_account_id(username=username, pwhash=hashed_password)
-                    file.write(f"{username},{password}\n")
-                    engine.log(f"players.txt: Created player {username} with password {password}")
 
         if run_init_test_players:
             engine.log("running init_test_players")

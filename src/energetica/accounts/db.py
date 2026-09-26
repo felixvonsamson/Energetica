@@ -215,7 +215,7 @@ def create_account(*, username: str, pwhash: str, email: str | None = None) -> i
 def get_or_create_account_id(*, username: str, pwhash: str, email: str | None = None) -> int:
     """Idempotent: insert if absent (INSERT OR IGNORE), then return account_id.
 
-    Used by the migration script and any bootstrap caller (admin creation, players.txt).
+    Used by the migration script and any bootstrap caller.
     Does not update pwhash if the row already exists.
     """
     created_at = datetime.now(timezone.utc).isoformat()

@@ -169,10 +169,10 @@ CREATE TABLE IF NOT EXISTS instance_membership (
 **Signup (lobby, account-only — ADR-0003).** Creates one `accounts` row. No instance, no
 `User`, no `Player`. An account may exist with zero memberships. Gated by a **server-wide
 signup toggle** — a `signups_enabled` flag in a new `/etc/energetica/server.json`, read
-fresh by the lobby (the server-wide analog of the per-instance `disable_signups`), never by
-a per-instance allowlist. Closed-enrollment deployments seed accounts directly into
-`accounts.db` via an admin bootstrap (`accounts.get_or_create_account_id`), replacing the
-per-instance `players.txt` for account creation. See ADR-0003.
+fresh by the lobby, never by a per-instance allowlist. This is the only switch governing
+account creation: an instance has no signup path of its own. Closed-enrollment deployments
+seed accounts directly into `accounts.db` via `accounts.get_or_create_account_id`. See
+ADR-0003.
 
 **Login (lobby).** Verify credentials against `accounts.db`; set the `domain=.{apex}`
 session cookie (shared secret). Redirect to the picker, or to `?return=` if present.
@@ -285,9 +285,6 @@ and the lobby shows them **zero runs with no error**, silently breaking the core
   are inert: `resolve_my_runs` drops any membership whose fragment is gone. Purging them is a
   chore, not a blocker.
 - **Cross-server identity** — accounts stay per-VPS (RFC).
-- **Per-instance `disable_signups` is obsolete** — its two jobs split into the server-wide
-  signup toggle (`server.json`) and the `accounts.db` admin bootstrap. Remove it during
-  Phase B/C cleanup rather than keep a second, overlapping signup knob.
 - **Personalized / invited run visibility** ("advertise a run to *specific accounts* only")
   — distinct from `advertised` (all-or-nothing picker visibility) and from private+allowlist
   (which gates *entry*, not visibility). A new invitation feature; deferred. ("Advertise or
