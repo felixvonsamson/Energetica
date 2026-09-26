@@ -1,5 +1,5 @@
 {
     "extends": "./tsconfig.json",
-    "include": ["src/service-worker.ts", "src/types/app-routes.ts", "src/types/notifications.ts", "src/types/api-helpers.ts", "src/types/api.generated.ts"],
+    "include": ["src/service-worker.ts", "src/types/notification-routes.ts", "src/types/notifications.ts", "src/types/api-helpers.ts", "src/types/api.generated.ts"],
     "exclude": []
 }

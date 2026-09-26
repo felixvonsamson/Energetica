@@ -7,7 +7,7 @@ import {
 import { getAssetLongName } from "@/lib/assets/asset-names";
 import { CLIMATE_EVENT_CONFIG } from "@/lib/climate-event-config";
 import { formatMass, formatMoney } from "@/lib/format-utils";
-import type { AppRoute } from "@/types/app-routes";
+import type { AppRoute } from "@/types/notification-routes";
 import type {
     InboxCategory,
     NotificationPayload,
