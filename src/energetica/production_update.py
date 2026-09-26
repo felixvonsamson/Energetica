@@ -35,7 +35,13 @@ from energetica.schemas.electricity_markets import AskType
 from energetica.schemas.notifications import NetworkExpelledPayload, NetworkOverdraftWarningPayload
 from energetica.sim.demand_shape import demand_shape_factor
 from energetica.sim.facility_statuses import ProductionStatus
-from energetica.sim.market import MIN_PRICE, clear_market, init_market, place_ask, place_bid
+from energetica.sim.market import (
+    clear_market,
+    init_market,
+    place_bid,
+    place_headroom_ask,
+    place_must_run_ask,
+)
 from energetica.sim.settlement import settle_clearing
 from energetica.utils import network_helpers
 from energetica.utils.misc import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
@@ -410,13 +416,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
     # Obligatory generation is put on the internal market at the minimum price
     for facility in (*StorageFacilityType, *power_facility_types):
         if facility in player.capacities:
-            internal_market = place_ask(
-                internal_market,
-                player.id,
-                generation[facility],
-                MIN_PRICE,
-                facility,
-            )
+            internal_market = place_must_run_ask(internal_market, player.id, generation[facility], facility)
 
     # demands are demanded on the internal market
     for bid_type in player.network_prices.bid_prices.keys():
@@ -441,8 +441,9 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
                 resource_reservations,
             )
             price = player.network_prices.ask_prices[facility]
-            capacity = max_prod - generation[facility]
-            internal_market = place_ask(internal_market, player.id, capacity, price, facility)
+            internal_market = place_headroom_ask(
+                internal_market, player.id, generation[facility], max_prod, price, facility
+            )
 
     market_logic(new_values, internal_market)
     return internal_market["market_price"]  # type: ignore[return-value]
@@ -459,7 +460,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
     # offer minimal generation capacities of facilities on the market at a negative price
     for facility in (*StorageFacilityType, *power_facility_types):
         if player.capacities.get(facility) is not None:
-            market = place_ask(market, player.id, generation[facility], MIN_PRICE, facility)
+            market = place_must_run_ask(market, player.id, generation[facility], facility)
 
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
@@ -484,8 +485,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
                 resource_reservations,
             )
             price = player.network_prices.ask_prices[facility]  # type: ignore
-            capacity = max_prod - generation[facility]
-            market = place_ask(market, player.id, capacity, price, facility)
+            market = place_headroom_ask(market, player.id, generation[facility], max_prod, price, facility)
 
     return market
 
