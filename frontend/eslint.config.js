@@ -12,6 +12,7 @@ export default defineConfig([
         ignores: [
             "node_modules/",
             "dist/",
+            "dist-app/",
             "dist-landing/",
             "dist-lobby/",
             "*.config.ts",

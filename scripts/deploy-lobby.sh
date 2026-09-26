@@ -117,7 +117,8 @@ fi
 # --- 4. rsync backend code ----------------------------------------------------------
 # Ship the Python backend (src/energetica/ + src/lobby/ + main_lobby.py) and dist/, which
 # holds the wheel built above and installed in step 6. Same exclusions as deploy-instance.sh,
-# plus dist-lobby (synced separately with --delete below).
+# except that the bundle protected from --delete here is dist-lobby/ rather than dist-app/
+# (both are synced separately with --delete below, in their respective scripts).
 #
 # scripts/ is excluded here and synced separately (step 4b): only scripts/lobby/ belongs
 # in the lobby dir (export_instance_to_csv.py is instance-only; scripts/dev/, scripts/lib/,
@@ -132,7 +133,6 @@ rsync -az --delete \
     --exclude='node_modules' \
     --exclude='__pycache__' \
     --exclude='*.pyc' \
-    --exclude='src/energetica/static/app' \
     --exclude='*.egg-info' \
     --exclude='build/' \
     --exclude='dist-lobby/' \

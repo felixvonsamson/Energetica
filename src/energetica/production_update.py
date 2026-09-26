@@ -16,7 +16,6 @@ from energetica.database.network import Network
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.database.player import Player
-from energetica.demand_shape import demand_shape_factor
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -32,11 +31,12 @@ from energetica.enums import (
     power_facility_types,
 )
 from energetica.globals import engine
-from energetica.market import clear_market, init_market, place_ask, place_bid
 from energetica.schemas.electricity_markets import AskType
 from energetica.schemas.notifications import NetworkExpelledPayload, NetworkOverdraftWarningPayload
+from energetica.sim.demand_shape import demand_shape_factor
+from energetica.sim.facility_statuses import ProductionStatus
+from energetica.sim.market import clear_market, init_market, place_ask, place_bid
 from energetica.utils import network_helpers
-from energetica.types.facility_statuses import ProductionStatus
 from energetica.utils.misc import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
 
 
