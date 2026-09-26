@@ -44,6 +44,7 @@ from energetica.sim.market import (
     place_headroom_ask,
     place_must_run_ask,
 )
+from energetica.sim.operating_cost import fixed_cost_share, operating_cost
 from energetica.sim.settlement import settle_clearing
 from energetica.utils import network_helpers
 from energetica.utils.misc import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
@@ -790,18 +791,17 @@ def resources_and_pollution(new_values: dict, player: Player) -> None:
     # O&M costs
     for facility in (*power_facility_types, *StorageFacilityType, *ExtractionFacilityType):
         if player.capacities.get(facility) is not None:
-            # the proportion of fixed cost is 100% for renewable and storage facilities,
-            # 50% for nuclear reactors and 20% for the rest
-            operational_cost = player.capacities[facility]["O&M_cost"]
-            if isinstance(facility, ControllableFacilityType | ExtractionFacilityType):
-                fc = 0.2
-                if facility in ["nuclear_reactor", "nuclear_reactor_gen4"]:
-                    fc = 0.5
-                if isinstance(facility, ExtractionFacilityType):
-                    capacity = demand[facility] / player.capacities[facility]["power_use"]
-                else:
-                    capacity = generation[facility] / player.capacities[facility]["power"]
-                operational_cost = operational_cost * (fc + (1 - fc) * capacity)
+            scales_with_use = isinstance(facility, ControllableFacilityType | ExtractionFacilityType)
+            utilisation = 0.0
+            if isinstance(facility, ExtractionFacilityType):
+                utilisation = demand[facility] / player.capacities[facility]["power_use"]
+            elif scales_with_use:
+                utilisation = generation[facility] / player.capacities[facility]["power"]
+            operational_cost = operating_cost(
+                player.capacities[facility]["O&M_cost"],
+                fixed_cost_share(facility, scales_with_use),
+                utilisation,
+            )
             player.money -= operational_cost
             op_costs[facility] -= operational_cost
 
