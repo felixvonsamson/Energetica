@@ -100,13 +100,22 @@ RECAP="$LANDING_DIR/recaps/$INSTANCE.json"
 # (#1053): the copies on one server are deployed independently, so an older instance or the lobby
 # can still carry the flat layout. Accept both, and remember which import that copy needs. Drop the
 # flat-layout branch once every deployed copy is past #1053.
+#
+# The layout is read from the package installed in the venv, because that is what the snippet
+# imports. The source tree is not a reliable guide: a deploy syncs the source before it installs
+# the wheel, so one that failed in between leaves the two disagreeing. The check looks at files
+# rather than asking the venv's interpreter, because it runs as root and the venv is writable by
+# the service user.
+venv_has() {
+    compgen -G "$1/.venv/lib/python3*/site-packages/$2" >/dev/null
+}
 CODE_ROOT=""
 INSTANCE_CONFIG_IMPORT=""
 for candidate in "$APP_DIR" /var/www/energetica-lobby /var/www/energetica-*; do
     [ -x "$candidate/.venv/bin/python" ] || continue
-    if [ -f "$candidate/src/energetica/identity/instance_config.py" ]; then
+    if venv_has "$candidate" energetica/identity/instance_config.py; then
         INSTANCE_CONFIG_IMPORT="from energetica.identity import instance_config"
-    elif [ -f "$candidate/src/energetica/instance_config.py" ]; then
+    elif venv_has "$candidate" energetica/instance_config.py; then
         INSTANCE_CONFIG_IMPORT="from energetica import instance_config"
     else
         continue
