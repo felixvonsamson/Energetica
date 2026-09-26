@@ -3,17 +3,14 @@
 import math
 import os
 import pickle
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 from fastapi import Request
-from noise import pnoise3
-from scipy.stats import norm
 
 from energetica import accounts, instance_config, technology_effects
 from energetica.accounts import Account
-from energetica.config.assets import river_flow_speed_seasonal
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.messages import Chat, Message
@@ -25,7 +22,7 @@ from energetica.globals import engine
 from energetica.schemas.daily_quiz import DailyQuizBase
 from energetica.schemas.simulate import CreateUserAction
 from energetica.schemas.weather import WeatherOut
-from energetica.utils.astro import DrHI
+from energetica.sim.renewables import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
 
 # Helper functions and data initialization utilities
 
@@ -371,101 +368,17 @@ def get_quiz_question(player: Player) -> DailyQuizBase:
 # Weather
 
 
-def calculate_solar_irradiance(
-    position: tuple[float, float], total_seconds: float, random_seed: int
-) -> tuple[float, float, float]:
-    """
-    Calculate the solar irradiance for a given location and time.
-
-    The clear sky index is derived from a 3d perlin noise function that moves in time to simulate the cloud cover.
-    The clear sky index is then multiplied by the clear sky irradiance to get the solar irradiance.
-    The irradiance is capped at 1000 W/m^2.
-
-    Returns:
-        (solar_irradiance, clear_sky_value, clear_sky_index)
-    """
-
-    def transformation(noise_value: float, threshold: float = 0, smoothness: float = 2) -> float:
-        """Sigmoid transformation."""
-        return 1 / (1 + np.exp(-(noise_value - threshold) * 10 / smoothness))
-
-    # Calculate the real day and time in a year for a given tick
-    start_date = datetime(2023, 7, 1)  # 6 months offset because i'm using the southern hemisphere
-    day_of_year = int((total_seconds / 3600 / 24 / engine.days_per_year) % 1 * 365)
-    time_of_day = total_seconds % (3600 * 24)
-    weather_datetime = start_date + timedelta(days=day_of_year, seconds=time_of_day)
-
-    x_noise = position[0] + total_seconds / 2400
-    y_noise = position[1] + total_seconds / 4000
-    t = total_seconds / 3600 / 24
-    regional_noise = pnoise3(
-        x_noise / 50,
-        y_noise / 50,
-        t,
-        octaves=2,
-        persistence=0.5,
-        lacunarity=2.0,
-        base=random_seed,
-    )
-    regional_noise = transformation(regional_noise, smoothness=1) * 2 - 1
-    cloud_cover_noise = pnoise3(x_noise, y_noise, t, octaves=6, persistence=0.5, lacunarity=2.0, base=random_seed)
-    cloud_cover_noise = transformation(
-        cloud_cover_noise,
-        threshold=0.5 * regional_noise,
-        smoothness=max(0.3, 1 - regional_noise),
-    )
-    csi = 1 - min(0.9, 5 - regional_noise * 5) * cloud_cover_noise
-    clear_sky = DrHI(weather_datetime.timestamp(), (position[1] - 10) * 85 / 21, 0)
-    return min(950, csi * clear_sky), clear_sky, csi
-
-
-def calculate_wind_speed(position: tuple[float, float], total_seconds: float, random_seed: int) -> float:
-    """
-    Calculate the wind speed for a given location and time.
-
-    The wind speed is derived from a 3d perlin noise function with a superposition of specific frequencies.
-    Two sinusoidal functions are multiplied to the noise to simulate the diurnal and seasonal wind patterns.
-    """
-    x, y = position
-    t = total_seconds / 60
-    wind_speed_noise = (
-        0.9 * pnoise3(x / 20, y / 20, t / 5760, base=random_seed)
-        + 0.06 * pnoise3(x, y, t / 360, base=random_seed)
-        + 0.03 * pnoise3(x * 3, y * 3, t / 90, base=random_seed)
-        + 0.007 * pnoise3(x * 18, y * 18, t / 15, base=random_seed)
-        + 0.003 * pnoise3(x * 108, y * 108, t / 2.5, base=random_seed)
-    )
-    wind_speed_noise = norm.cdf(wind_speed_noise, loc=0, scale=0.15)
-    wind_speed_noise = (1 - (1 - wind_speed_noise) ** 0.1282) ** 0.4673
-    return (
-        wind_speed_noise
-        * (1 + 0.4 * math.sin(t / 60 / 24 / engine.days_per_year * math.pi * 2 + 0.5 * math.pi))
-        * (1 + 0.1 * math.sin(t / 60 / 24 * math.pi * 2 + 0.4 * math.pi))
-        * 85
-    )  # type: ignore
-
-
-def calculate_river_speed(total_seconds: float) -> float:
-    """Calculate the river flow speed by interpolating the values from the seasonal variation."""
-    days_since_start = math.floor(total_seconds / 3600 / 24)
-    current_day_fraction = (total_seconds % (3600 * 24)) / (3600 * 24)
-    days_per_year = engine.days_per_year
-    flow_factor = river_flow_speed_seasonal[days_since_start % days_per_year] + current_day_fraction * (
-        river_flow_speed_seasonal[(days_since_start + 1) % days_per_year]
-        - river_flow_speed_seasonal[days_since_start % days_per_year]
-    )
-    return flow_factor * 2.5  # in m/s
-
-
 def package_weather_data(player: Player) -> WeatherOut:
     """Package date and weather data for a player."""
     x = player.tile.coordinates[0] + 0.5 * player.tile.coordinates[1]
     y = player.tile.coordinates[1] * 0.5 * 3**0.5
     total_seconds = (engine.total_t + engine.delta_t) * engine.in_game_seconds_per_tick
     random_seed = engine.random_seed
-    solar_irradiance, clear_sky_value, clear_sky_index = calculate_solar_irradiance((x, y), total_seconds, random_seed)
-    wind_speed = calculate_wind_speed((x, y), total_seconds, random_seed)
-    river_flow_speed = calculate_river_speed(total_seconds)
+    solar_irradiance, clear_sky_value, clear_sky_index = calculate_solar_irradiance(
+        (x, y), total_seconds, random_seed, engine.days_per_year
+    )
+    wind_speed = calculate_wind_speed((x, y), total_seconds, random_seed, engine.days_per_year)
+    river_flow_speed = calculate_river_speed(total_seconds, engine.days_per_year)
     return WeatherOut(
         year_progress=(total_seconds / 3600 / 24 / engine.days_per_year) % 1,
         month_number=1 + math.floor((total_seconds / 3600 / 24 / (engine.days_per_year / 12)) % 12),

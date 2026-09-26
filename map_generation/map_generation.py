@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import math
-import os
 import random
-import sys
 from datetime import datetime
 
 import numpy as np
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from energetica.utils.astro import DrHI
+from energetica.sim.astro import DrHI
 
 # Parameters
 size_param = 10
