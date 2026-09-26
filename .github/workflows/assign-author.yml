@@ -1,0 +1,25 @@
+# Assign each new pull request to its author, so the PR list shows who owns it.
+#
+# This uses pull_request_target so that PRs from forks also get a token that can
+# write. That trigger is only safe because this job never checks out or runs code
+# from the PR; it makes a single GitHub API call.
+name: Assign author
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  assign:
+    if: github.event.pull_request.assignees[0] == null && github.event.pull_request.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh pr edit "$PR" --repo "$REPO" --add-assignee "$AUTHOR"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
