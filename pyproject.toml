@@ -119,6 +119,10 @@ venv = ".venv"
 
 [tool.pytest.ini_options]
 testpaths = [ "tests" ]
+# Import `energetica` / `lobby` from this checkout's `src/`. A git worktree shares the main
+# checkout's .venv, whose editable install points at the main checkout's `src/`; without
+# this, tests in a worktree would silently run the main checkout's code.
+pythonpath = ["src"]
 filterwarnings = ["ignore::DeprecationWarning"]
 python_files = "tests/**/*.py"
 # Exclude the slow, network-dependent external_links tests by default so a bare
