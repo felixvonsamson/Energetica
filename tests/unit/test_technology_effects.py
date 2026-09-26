@@ -3,7 +3,7 @@
 import pytest
 
 from energetica import create_app
-from energetica.accounts import Account
+from energetica.identity.accounts import Account
 from energetica.database.map.hex_tile import HexTile
 from energetica.enums import TechnologyType
 from energetica.globals import engine
@@ -12,7 +12,7 @@ from energetica.technology_effects import (
     construction_time,
     knowledge_spillover_discount,
 )
-from energetica.utils.auth import generate_password_hash
+from energetica.kernel.session import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 
 

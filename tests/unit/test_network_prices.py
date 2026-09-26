@@ -7,7 +7,7 @@ import sys
 import textwrap
 
 from energetica import create_app
-from energetica.accounts import Account
+from energetica.identity.accounts import Account
 from energetica.database.map.hex_tile import HexTile
 from energetica.enums import ControllableFacilityType
 from energetica.globals import engine

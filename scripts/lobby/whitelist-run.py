@@ -65,7 +65,7 @@ def main() -> int:
     # inherits db.py's dev-oriented default.
     os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = str(args.accounts_db)
 
-    from energetica import accounts
+    from energetica.identity import accounts
 
     if args.action == "list":
         roster = accounts.get_run_roster(slug=args.slug)

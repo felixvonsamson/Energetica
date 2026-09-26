@@ -320,9 +320,9 @@ log_success "Rendered $CONFIG_DIR/instance.env (port $PORT, clock ${CLOCK_TIME}s
 #
 # Group-writable because the running service (group energetica) needs to *write* here, not just
 # read: a private instance's facilitator surface persists join tokens/allowlist changes back to
-# instance.json through src/energetica/instance_config.py's atomic write, which creates a tmp
-# sibling and renames it over the target. Renaming into a directory needs write permission on it.
-# See #1019.
+# instance.json through src/energetica/identity/instance_config.py's atomic write, which creates a
+# tmp sibling and renames it over the target. Renaming into a directory needs write permission on
+# it. See #1019.
 #
 # Sticky because that write permission is otherwise all-or-nothing: it would let every member of
 # the group (the service, deploy, www-data) unlink *any* file here, including instance.env, whose

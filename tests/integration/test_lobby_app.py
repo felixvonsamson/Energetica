@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from energetica import accounts
+from energetica.identity import accounts
 from energetica.schemas.auth import LoginRequest, SignupRequest
 from energetica.kernel.session import SESSION_COOKIE_NAME, decode_session_token
 from lobby import create_lobby_app

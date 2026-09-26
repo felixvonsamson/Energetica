@@ -95,12 +95,24 @@ RECAP="$LANDING_DIR/recaps/$INSTANCE.json"
 # recap is readable or retire the fragment correctly — and this script's next act is to delete the
 # state that would let anyone fix it afterwards. Not being able to check must never read as a
 # clean check, so it stops the whole thing.
+#
+# A candidate may be on either side of the move of instance_config into energetica.identity
+# (#1053): the copies on one server are deployed independently, so an older instance or the lobby
+# can still carry the flat layout. Accept both, and remember which import that copy needs. Drop the
+# flat-layout branch once every deployed copy is past #1053.
 CODE_ROOT=""
+INSTANCE_CONFIG_IMPORT=""
 for candidate in "$APP_DIR" /var/www/energetica-lobby /var/www/energetica-*; do
-    if [ -x "$candidate/.venv/bin/python" ] && [ -f "$candidate/src/energetica/instance_config.py" ]; then
-        CODE_ROOT="$candidate"
-        break
+    [ -x "$candidate/.venv/bin/python" ] || continue
+    if [ -f "$candidate/src/energetica/identity/instance_config.py" ]; then
+        INSTANCE_CONFIG_IMPORT="from energetica.identity import instance_config"
+    elif [ -f "$candidate/src/energetica/instance_config.py" ]; then
+        INSTANCE_CONFIG_IMPORT="from energetica import instance_config"
+    else
+        continue
     fi
+    CODE_ROOT="$candidate"
+    break
 done
 if [ -z "$CODE_ROOT" ]; then
     log_error "Found no deployed Energetica code with a usable venv on this server."
@@ -136,7 +148,7 @@ run_landing_py() {
         cd "$workdir" || exit 1
         ENERGETICA_LANDING_DIR="$LANDING_DIR" ENERGETICA_INSTANCE_CONFIG_DIR=/etc/energetica \
             sudo -u energetica -E "$CODE_ROOT/.venv/bin/python" -c "
-from energetica import instance_config
+$INSTANCE_CONFIG_IMPORT
 $1
 "
     ) || rc=$?
@@ -234,8 +246,8 @@ else
 fi
 
 # --- 3. Retire the fragment (before the code it needs may be deleted) -----------
-# The keep-or-delete rule lives in energetica.instance_config.retire_fragment, which also
-# re-aggregates instances.json. Done before step 5 removes the app dir, since that dir is the
+# The keep-or-delete rule lives in energetica.identity.instance_config.retire_fragment, which
+# also re-aggregates instances.json. Done before step 5 removes the app dir, since that dir is the
 # preferred CODE_ROOT. A failure here aborts rather than warning: leaving a stale fragment behind
 # while the rest of the teardown proceeds would point the picker at a subdomain that no longer
 # answers, and by then the run is gone — the same "don't destroy what you couldn't check" stance

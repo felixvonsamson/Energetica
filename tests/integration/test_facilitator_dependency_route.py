@@ -14,8 +14,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.testclient import TestClient
 
-from energetica import accounts, create_app
-from energetica.accounts import Account
+from energetica import create_app
+from energetica.identity import accounts
+from energetica.identity.accounts import Account
 from energetica.globals import engine
 from energetica.utils.auth import get_facilitator
 

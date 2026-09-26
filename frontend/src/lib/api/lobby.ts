@@ -1,8 +1,8 @@
 /**
  * Lobby API calls, served by the lobby backend (not an instance). The lobby
  * reuses the game's generated types: its endpoints mirror existing game paths
- * exactly (`energetica/schemas/lobby.py` / `auth.py`), and the schema generator
- * merges the lobby app's routes into `api.generated.ts`
+ * exactly (`energetica/identity/schemas/lobby.py` / `auth.py`), and the schema
+ * generator merges the lobby app's routes into `api.generated.ts`
  * (scripts/generate_openapi_schema.py).
  *
  * `lobbyApi.myRuns` is served by _both_ the lobby and every instance (same

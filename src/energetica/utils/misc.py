@@ -9,8 +9,9 @@ from pathlib import Path
 import numpy as np
 from fastapi import Request
 
-from energetica import accounts, instance_config, technology_effects
-from energetica.accounts import Account
+from energetica import technology_effects
+from energetica.identity import accounts, instance_config
+from energetica.identity.accounts import Account
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.messages import Chat, Message

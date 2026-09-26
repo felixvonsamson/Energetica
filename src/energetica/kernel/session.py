@@ -3,7 +3,7 @@
 These are the low-level pieces of authentication — cookie-signing secret resolution, the
 ``itsdangerous`` serializer, password hashing, and the session-cookie read/write helpers — with
 **no import of ``Player`` or the game engine**. That is deliberate: the server-wide identity
-layer (``energetica.accounts``) and the instance-independent lobby service both import from
+layer (``energetica.identity.accounts``) and the instance-independent lobby service both import from
 here, so this module must stay a leaf (see ADR-0002, lobby Phase B).
 
 ``energetica.utils.auth`` re-exports everything here and adds the ``Account``/``Player``-coupled

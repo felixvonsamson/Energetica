@@ -9,11 +9,11 @@ from typing import Any, cast
 
 import requests
 
-from energetica import accounts
+from energetica.identity import accounts
 from energetica.globals import engine
 from energetica.schemas.simulate import Action
 from energetica.utils import misc
-from energetica.utils.auth import add_session_cookie_to_session
+from energetica.kernel.session import add_session_cookie_to_session
 from energetica.utils.tick_execution import tick
 
 

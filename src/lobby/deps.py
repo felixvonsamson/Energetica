@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from fastapi import HTTPException, Request, status
 
-from energetica import accounts
-from energetica.accounts import Account
+from energetica.identity import accounts
+from energetica.identity.accounts import Account
 from energetica.kernel.game_error import GameExceptionType
 from lobby.session import account_id_from_request
 

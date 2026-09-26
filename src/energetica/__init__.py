@@ -31,10 +31,10 @@ from energetica.game_engine import GameEngine
 # mkdir) and is constructed at import so the DBModel registry (populated at model class-definition
 # time) always has an engine to bind to. The *heavy* game graph — routers, socketio, the tick
 # loop, the domain models — is imported lazily inside create_app instead, so importing the
-# server-wide identity layer (``energetica.accounts`` / ``instance_config``) or the
-# instance-independent lobby does not pull in the game domain or its running services (ADR-0002,
-# lobby Phase B). The final severing of this dormant object is the follow-up identity-package
-# extraction.
+# server-wide identity layer (``energetica.identity``) or the instance-independent lobby does not
+# pull in the game domain or its running services (ADR-0002, lobby Phase B). The engine still
+# lives here, so importing anything under ``energetica`` constructs this dormant object; it moves
+# into the persistent world's own package in #1055.
 engine = GameEngine()
 globals.engine = engine
 # globals.MAIN_EVENT_LOOP is captured in the lifespan (below), NOT here. This module is imported
@@ -264,8 +264,8 @@ def create_app(
 
         scheduler.start()
 
-        from energetica import accounts
-        from energetica.utils.auth import generate_password_hash
+        from energetica.identity import accounts
+        from energetica.kernel.session import generate_password_hash
 
         accounts.init_db()
 
@@ -310,7 +310,7 @@ def create_app(
         # Publish this instance's sanitised fragment to the landing dir and re-aggregate the
         # public manifest. Best-effort: unconfigured/dev deployments and an unwritable landing
         # dir are tolerated (logged, not fatal).
-        from energetica import instance_config
+        from energetica.identity import instance_config
 
         instance_config.publish_on_startup()
 

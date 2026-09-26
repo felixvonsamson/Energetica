@@ -14,10 +14,10 @@ from pathlib import Path
 
 import pytest
 
-from energetica import instance_config
+from energetica.identity import instance_config
 from energetica.enums import Fuel, Renewable
-from energetica.instance_config import InstanceConfig, PublicAccess
-from energetica.schemas.recap import Recap
+from energetica.identity.instance_config import InstanceConfig, PublicAccess
+from energetica.identity.schemas.recap import Recap
 from energetica.utils import recap as recap_util
 
 SLUG = "autumn-2025"

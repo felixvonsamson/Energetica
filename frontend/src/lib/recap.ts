@@ -6,7 +6,7 @@
  * § Recap publication).
  *
  * Mirrors the backend `Recap`/`RecapRow`/`RecapTile` models
- * (`energetica/schemas/recap.py`). Hand-mirrored rather than
+ * (`energetica/identity/schemas/recap.py`). Hand-mirrored rather than
  * `generate-types`-derived: the recap is never served through a FastAPI route
  * (it's a static file, sized to be fetched with no live backend), so it never
  * reaches the OpenAPI schema `generate-types` reads.

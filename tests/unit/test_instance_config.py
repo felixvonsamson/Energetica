@@ -1,4 +1,4 @@
-"""Unit tests for per-instance visibility & access policy (``energetica.instance_config``)."""
+"""Unit tests for per-instance visibility & access policy (``energetica.identity.instance_config``)."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from energetica import instance_config
-from energetica.instance_config import (
+from energetica.identity import instance_config
+from energetica.identity.instance_config import (
     InstanceConfig,
     InstanceConfigError,
     InstanceFragment,

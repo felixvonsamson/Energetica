@@ -1,4 +1,4 @@
-"""Unit tests for the shared ``my-runs`` read (``energetica.my_runs.resolve_my_runs``).
+"""Unit tests for the shared ``my-runs`` read (``energetica.identity.my_runs.resolve_my_runs``).
 
 This is the single join both the instance-side ``GET /lobby/my-runs`` and the lobby service serve:
 an account's joined memberships (settled or not, #1030) joined against the on-disk instance
@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from energetica import accounts
-from energetica.my_runs import resolve_my_runs
+from energetica.identity import accounts
+from energetica.identity.my_runs import resolve_my_runs
 
 
 @pytest.fixture

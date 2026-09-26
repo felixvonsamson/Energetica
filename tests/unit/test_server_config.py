@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica import server_config
+from energetica.identity import server_config
 
 
 @pytest.fixture

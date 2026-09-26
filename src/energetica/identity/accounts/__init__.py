@@ -9,7 +9,7 @@ key. See ``docs/architecture/static-serving-and-deployment.md`` § Server-Wide A
 
 from __future__ import annotations
 
-from energetica.accounts.db import (
+from energetica.identity.accounts.db import (
     Account,
     Membership,
     MembershipRoleConflictError,

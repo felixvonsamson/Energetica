@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica import accounts
+from energetica.identity import accounts
 
 
 @pytest.fixture
@@ -56,7 +56,7 @@ def test_duplicate_username_raises_typed_error(accounts_db: Path) -> None:
 
 
 def test_verify_password_correct(accounts_db: Path) -> None:
-    from energetica.utils.auth import generate_password_hash
+    from energetica.kernel.session import generate_password_hash
 
     accounts.create_account(username="alice", pwhash=generate_password_hash("s3cret"))
 
@@ -64,7 +64,7 @@ def test_verify_password_correct(accounts_db: Path) -> None:
 
 
 def test_verify_password_wrong(accounts_db: Path) -> None:
-    from energetica.utils.auth import generate_password_hash
+    from energetica.kernel.session import generate_password_hash
 
     accounts.create_account(username="alice", pwhash=generate_password_hash("s3cret"))
 
@@ -77,7 +77,7 @@ def test_verify_password_unknown_user(accounts_db: Path) -> None:
 
 def test_update_password_changes_stored_hash(accounts_db: Path) -> None:
     """After update_password, the old password no longer verifies; the new one does."""
-    from energetica.utils.auth import generate_password_hash
+    from energetica.kernel.session import generate_password_hash
 
     accounts.create_account(username="alice", pwhash=generate_password_hash("old-pw"))
 

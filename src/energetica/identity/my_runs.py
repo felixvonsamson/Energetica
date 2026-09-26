@@ -13,8 +13,8 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from energetica import accounts, instance_config
-from energetica.schemas.lobby import FacilitatedRun, MyRun, MyRunsResponse
+from energetica.identity import accounts, instance_config
+from energetica.identity.schemas.lobby import FacilitatedRun, MyRun, MyRunsResponse
 
 logger = logging.getLogger(__name__)
 

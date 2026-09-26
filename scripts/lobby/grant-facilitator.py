@@ -45,7 +45,7 @@ def main() -> int:
     # inherits db.py's dev-oriented default.
     os.environ["ENERGETICA_ACCOUNTS_DB_PATH"] = str(args.accounts_db)
 
-    from energetica import accounts
+    from energetica.identity import accounts
 
     account = accounts.get_account_by_username(args.username)
     if account is None:

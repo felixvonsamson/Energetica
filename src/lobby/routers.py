@@ -1,10 +1,10 @@
 """Lobby HTTP routes: credentials + session (``/auth/*``) and the picker read (``/lobby/*``).
 
 Mounted under ``/api/v1`` by :func:`lobby.app.create_lobby_app`. Request/response schemas are the
-game's own (``energetica.schemas.auth`` / ``energetica.schemas.lobby``) so the frontend's generated
-types cover the lobby unchanged. Unlike the instance, signup here is **account-only** — one
-``accounts`` row, no ``User``/``Player``/instance (ADR-0003) — and is gated by the server-wide
-``server.json`` toggle, not any per-instance policy.
+game's own (``energetica.schemas.auth`` / ``energetica.identity.schemas.lobby``) so the
+frontend's generated types cover the lobby unchanged. Unlike the instance, signup here is
+**account-only** — one ``accounts`` row, no ``User``/``Player``/instance (ADR-0003) — and is gated
+by the server-wide ``server.json`` toggle, not any per-instance policy.
 """
 
 from __future__ import annotations
@@ -15,12 +15,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from energetica import accounts, instance_config, server_config
-from energetica.accounts import Account
+from energetica.identity import accounts, instance_config, server_config
+from energetica.identity.accounts import Account
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.my_runs import resolve_my_runs
+from energetica.identity.my_runs import resolve_my_runs
 from energetica.schemas.auth import LoginRequest, SignupRequest
-from energetica.schemas.lobby import MyRunsResponse
+from energetica.identity.schemas.lobby import MyRunsResponse
 from energetica.kernel.session import check_password_hash, generate_password_hash
 from lobby.deps import require_current_account
 from lobby.session import clear_lobby_session_cookie, set_lobby_session_cookie

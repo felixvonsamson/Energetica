@@ -57,7 +57,7 @@ seed_dev_data() {
 import json
 from pathlib import Path
 
-from energetica import accounts, instance_config
+from energetica.identity import accounts, instance_config
 from energetica.kernel.session import generate_password_hash
 
 landing = instance_config._landing_dir()

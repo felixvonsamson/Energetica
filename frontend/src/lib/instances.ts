@@ -58,11 +58,11 @@ export type Lifecycle = {
 /**
  * The lifecycle phase at `now`, a pure function of the three transition
  * timestamps. The frontend mirror of the backend's `derive_phase`
- * (`energetica/instance_config.py`) — same ladder, so a run's phase is derived
- * identically wherever it's read and nothing about the phase is stored or
- * fetched. The latest boundary already crossed wins (checked newest-first); a
- * `null`/absent boundary is one this run never crosses (an open-ended run stays
- * `active`). An unparseable timestamp reads as not-yet-crossed, degrading
+ * (`energetica/identity/instance_config.py`) — same ladder, so a run's phase is
+ * derived identically wherever it's read and nothing about the phase is stored
+ * or fetched. The latest boundary already crossed wins (checked newest-first);
+ * a `null`/absent boundary is one this run never crosses (an open-ended run
+ * stays `active`). An unparseable timestamp reads as not-yet-crossed, degrading
  * toward the earlier phase rather than throwing.
  */
 export function derivePhase(run: Lifecycle, now: Date = new Date()): Phase {

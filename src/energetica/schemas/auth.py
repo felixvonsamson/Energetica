@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from energetica.accounts import Role
+from energetica.identity.accounts import Role
 from energetica.schemas.capabilities import PlayerCapabilities
 
 
