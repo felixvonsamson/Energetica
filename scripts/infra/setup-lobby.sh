@@ -117,7 +117,7 @@ else
 fi
 
 # Pre-create an energetica-owned instance/ subdir. This is probably no longer needed and can be
-# removed once a freshly provisioned lobby is confirmed to start without it.
+# removed once a freshly provisioned lobby is confirmed to start without it (#1121).
 # It was added because, until #1055, importing the `energetica` package built a dormant
 # GameEngine, whose constructor runs `Path("instance").mkdir(exist_ok=True)` in the service's
 # WorkingDirectory. The code dir is deploy-owned (2750), so the service user could not create it
