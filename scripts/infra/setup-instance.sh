@@ -5,9 +5,14 @@ set -euo pipefail
 # setup-base.sh and setup-landing.sh.
 #
 #   sudo bash scripts/infra/setup-instance.sh <instance> <port> --domain <apex-domain> \
-#        [--name "<display name>"] [--no-advertise] [--starts-at <ISO-8601-UTC>] \
+#        --mode <mode> [--name "<display name>"] [--no-advertise] [--starts-at <ISO-8601-UTC>] \
 #        [--freeze-at <ISO-8601-UTC>] [--ended-at <ISO-8601-UTC>] \
 #        [--clock-time <seconds>] [--in-game-seconds-per-tick <seconds>] [--yes]
+#
+# --mode is the kind of Run, written to instance.json's `run` block, and has no default (#1060).
+# The accepted values come from the backend: push-bootstrap.sh writes them to run-modes next to
+# this script, and render-instance-json.sh checks against that. A workshop Run is rendered
+# private; every other mode is rendered public.
 #
 # --starts-at/--freeze-at/--ended-at are the lifecycle boundaries (announced→active→freeze→ended).
 # --freeze-at and --ended-at are optional (omit → null → an open-ended run); when given they must
@@ -34,6 +39,7 @@ DOMAIN="${ENERGETICA_DOMAIN:-}"
 # Never varied across this server's history — hardcoded rather than a configurable
 # parameter (YAGNI); the OS account named "deploy" must already exist (setup-base.sh).
 readonly DEPLOY_USER="deploy"
+MODE=""
 NAME=""
 ADVERTISED="true"
 STARTS_AT=""
@@ -52,6 +58,7 @@ POSITIONAL=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --domain) DOMAIN="$2"; shift 2 ;;
+        --mode) MODE="$2"; shift 2 ;;
         --name) NAME="$2"; shift 2 ;;
         --no-advertise) ADVERTISED="false"; shift ;;
         --starts-at) STARTS_AT="$2"; shift 2 ;;
@@ -115,30 +122,16 @@ getent group energetica >/dev/null || { log_error "group 'energetica' missing �
 [ -n "$NAME" ] || NAME="$(echo "$INSTANCE" | awk -F- 'BEGIN{OFS=" "}{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1)) substr($i,2)}}1')"
 [ -n "$STARTS_AT" ] || STARTS_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-# instance.json is JSON rendered from the template via sed. A value containing a double-quote
-# or backslash would break the JSON; the sed replacement metacharacters (& / \) would corrupt
-# the substitution itself. Reject the JSON-breakers (auto defaults never contain them) and
-# escape the sed-special chars — for both interpolated values, since --starts-at is interpolated
-# into a JSON string too.
-case "$NAME" in
-    *[\"\\]*) log_error "--name must not contain double-quotes or backslashes"; exit 1 ;;
-esac
-case "$STARTS_AT" in
-    *[\"\\]*) log_error "--starts-at must not contain double-quotes or backslashes"; exit 1 ;;
-esac
-case "$FREEZE_AT" in
-    *[\"\\]*) log_error "--freeze-at must not contain double-quotes or backslashes"; exit 1 ;;
-esac
-case "$ENDED_AT" in
-    *[\"\\]*) log_error "--ended-at must not contain double-quotes or backslashes"; exit 1 ;;
-esac
-sed_escape() { printf '%s' "$1" | sed -e 's/[&/\]/\\&/g'; }
-
-# freeze_at / ended_at are nullable JSON: render a bare `null` when unset, else a quoted string.
-# The whole token (quotes included) is the sed replacement, so the template carries @FREEZE_AT@
-# unquoted — unlike starts_at, which is never null and keeps its literal quotes in the template.
-if [ -n "$FREEZE_AT" ]; then FREEZE_AT_JSON="\"$(sed_escape "$FREEZE_AT")\""; else FREEZE_AT_JSON="null"; fi
-if [ -n "$ENDED_AT" ]; then ENDED_AT_JSON="\"$(sed_escape "$ENDED_AT")\""; else ENDED_AT_JSON="null"; fi
+# Rendered here, before anything on the box changes, so a bad --mode, --name or timestamp stops
+# the run while there is still nothing to clean up. Written to disk in step 3. The renderer
+# checks every value and prints why it refused one.
+render_args=(--mode "$MODE" --name "$NAME" --advertised "$ADVERTISED" --starts-at "$STARTS_AT")
+[ -z "$FREEZE_AT" ] || render_args+=(--freeze-at "$FREEZE_AT")
+[ -z "$ENDED_AT" ] || render_args+=(--ended-at "$ENDED_AT")
+INSTANCE_JSON="$(bash "$SCRIPT_DIR/render-instance-json.sh" "${render_args[@]}")" || {
+    log_error "Could not render instance.json (reason above)"
+    exit 1
+}
 
 APP_DIR="/var/www/energetica-$INSTANCE"
 CONFIG_DIR="/etc/energetica/$INSTANCE"
@@ -164,6 +157,7 @@ if [ -f "$UNIT" ]; then
 fi
 
 log_section "PROVISION INSTANCE: $INSTANCE (port $PORT, $FQDN)"
+echo "  mode:       $MODE"
 echo "  name:       $NAME"
 echo "  advertised: $ADVERTISED"
 echo "  starts_at:  $STARTS_AT"
@@ -278,12 +272,7 @@ if [ -f "$CONFIG_DIR/instance.json" ]; then
     chmod 0640 "$CONFIG_DIR/instance.json"
     log_success "$CONFIG_DIR/instance.json already exists — content kept, ownership re-asserted"
 else
-    sed -e "s/@NAME@/$(sed_escape "$NAME")/g" \
-        -e "s/@ADVERTISED@/$ADVERTISED/g" \
-        -e "s/@STARTS_AT@/$(sed_escape "$STARTS_AT")/g" \
-        -e "s/@FREEZE_AT@/$FREEZE_AT_JSON/g" \
-        -e "s/@ENDED_AT@/$ENDED_AT_JSON/g" \
-        "$SCRIPT_DIR/instance.json.tmpl" | install_rendered "$CONFIG_DIR/instance.json" energetica:energetica
+    printf '%s\n' "$INSTANCE_JSON" | install_rendered "$CONFIG_DIR/instance.json" energetica:energetica
     # Owned by the service, not by root, because the service is what rewrites it — the
     # facilitator surface persists private-access changes here (#1019). Once the directory is
     # sticky, ownership is what permits that rename, so this is the permissions finally saying
@@ -294,7 +283,7 @@ else
     # An admin who edits this file with an editor that saves by rename (vim's default
     # backupcopy, emacs) leaves it owned by whoever ran the editor, and the service can then no
     # longer replace it. _atomic_write_json reports that case with the chown that fixes it.
-    log_success "Rendered $CONFIG_DIR/instance.json (public, advertised=$ADVERTISED)"
+    log_success "Rendered $CONFIG_DIR/instance.json (mode=$MODE, advertised=$ADVERTISED)"
 fi
 
 # instance.env is the unit's EnvironmentFile — the whole of this instance's runtime
@@ -378,7 +367,7 @@ log_section "INSTANCE PROVISIONED"
 echo "Ship code and start the service from your machine:"
 echo "  ./scripts/deploy-instance.sh --server <ssh-host> --instance $INSTANCE --domain $DOMAIN"
 echo
-echo "For a private/unadvertised instance, edit the policy before first login:"
+echo "A workshop Run is already private. For any other private or unadvertised instance, edit the policy before first login:"
 echo "  sudo \$EDITOR $CONFIG_DIR/instance.json   # set advertised/access.policy"
 echo "Then grant access to moderators via the following script:"
 echo "  cd /var/www/energetica-lobby && ./scripts/grant-facilitator.py --username <username> --slug $INSTANCE"

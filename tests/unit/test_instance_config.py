@@ -11,12 +11,14 @@ import pytest
 
 from energetica.identity import instance_config
 from energetica.identity.instance_config import (
+    FreeplayRun,
     InstanceConfig,
     InstanceConfigError,
     InstanceFragment,
     InstanceNotPrivateError,
     PrivateAccess,
     PublicAccess,
+    WorkshopRun,
     derive_phase,
 )
 
@@ -45,12 +47,14 @@ PUBLIC_JSON = {
     "advertised": True,
     "starts_at": "2025-09-15T00:00:00Z",
     "access": {"policy": "public"},
+    "run": {"mode": "freeplay"},
 }
 PRIVATE_JSON = {
     "name": "ETHZ Spring 2026",
     "advertised": False,
     "starts_at": "2026-03-01T00:00:00Z",
     "access": {"policy": "private"},
+    "run": {"mode": "freeplay"},
 }
 
 
@@ -140,6 +144,93 @@ def test_load_naive_starts_at_fails_closed(configured: Path) -> None:
 
     with pytest.raises(InstanceConfigError):
         instance_config.load_instance_config()
+
+
+# --- run mode (#1060) --------------------------------------------------------------------------
+
+
+def test_load_freeplay_run(configured: Path) -> None:
+    _write_instance_json(configured, PUBLIC_JSON)
+    config = instance_config.load_instance_config()
+    assert config is not None
+    assert isinstance(config.run, FreeplayRun)
+
+
+def test_load_workshop_run(configured: Path) -> None:
+    _write_instance_json(configured, {**PRIVATE_JSON, "run": {"mode": "workshop"}})
+    config = instance_config.load_instance_config()
+    assert config is not None
+    assert isinstance(config.run, WorkshopRun)
+
+
+def test_load_without_run_fails_closed(configured: Path) -> None:
+    """The mode must be stated. A file that predates the field is rejected, not read as freeplay."""
+    _write_instance_json(configured, {key: value for key, value in PUBLIC_JSON.items() if key != "run"})
+    with pytest.raises(InstanceConfigError):
+        instance_config.load_instance_config()
+
+
+def test_load_run_without_mode_fails_closed(configured: Path) -> None:
+    _write_instance_json(configured, {**PUBLIC_JSON, "run": {}})
+    with pytest.raises(InstanceConfigError):
+        instance_config.load_instance_config()
+
+
+def test_load_unknown_mode_fails_closed(configured: Path) -> None:
+    _write_instance_json(configured, {**PUBLIC_JSON, "run": {"mode": "tournament"}})
+    with pytest.raises(InstanceConfigError):
+        instance_config.load_instance_config()
+
+
+@pytest.mark.parametrize("mode", ["freeplay", "workshop"])
+def test_load_run_with_unknown_key_fails_closed(configured: Path, mode: str) -> None:
+    """A stray key inside the run block fails closed on either variant, like every other block."""
+    _write_instance_json(configured, {**PRIVATE_JSON, "run": {"mode": mode, "rounds": 5}})
+    with pytest.raises(InstanceConfigError):
+        instance_config.load_instance_config()
+
+
+def test_workshop_run_defaults_access_to_private_when_access_omitted(configured: Path) -> None:
+    workshop = {key: value for key, value in PRIVATE_JSON.items() if key != "access"}
+    _write_instance_json(configured, {**workshop, "run": {"mode": "workshop"}})
+    config = instance_config.load_instance_config()
+    assert config is not None
+    assert config.access == PrivateAccess(policy="private")
+
+
+@pytest.mark.parametrize(
+    "access",
+    [{"policy": "public"}, {"policy": "private", "join_token": "tok", "join_open": True}],
+)
+def test_workshop_run_explicit_access_is_not_overridden(configured: Path, access: dict) -> None:
+    _write_instance_json(configured, {**PRIVATE_JSON, "access": access, "run": {"mode": "workshop"}})
+    config = instance_config.load_instance_config()
+    assert config is not None
+    assert config.access.model_dump(exclude_defaults=True) == access
+
+
+def test_freeplay_run_still_requires_access(configured: Path) -> None:
+    """The private default is Workshop-only. A freeplay file with no access block fails closed."""
+    _write_instance_json(configured, {key: value for key, value in PUBLIC_JSON.items() if key != "access"})
+    with pytest.raises(InstanceConfigError):
+        instance_config.load_instance_config()
+
+
+def test_private_access_write_keeps_the_run_mode(configured: Path) -> None:
+    """The facilitator write path rewrites the whole file, so it must carry the run block through."""
+    workshop = {key: value for key, value in PRIVATE_JSON.items() if key != "access"}
+    _write_instance_json(configured, {**workshop, "run": {"mode": "workshop"}})
+
+    instance_config.get_or_create_join_token()
+
+    on_disk = json.loads((configured / SLUG / "instance.json").read_text())
+    assert on_disk["run"] == {"mode": "workshop"}
+    assert on_disk["access"]["policy"] == "private"
+
+
+def test_run_modes_lists_every_variant_tag() -> None:
+    """Provisioning validates `--mode` against this, so it must name exactly the accepted tags."""
+    assert instance_config.run_modes() == ("freeplay", "workshop")
 
 
 # --- allowed_usernames is removed, not deprecated (#1031) -----------------------------------
@@ -322,6 +413,7 @@ def test_publish_aggregates_sorted_by_starts_at_desc(tmp_path: Path, monkeypatch
                 "advertised": True,
                 "starts_at": "2025-03-01T00:00:00Z",
                 "access": {"policy": "public"},
+                "run": {"mode": "freeplay"},
             }
         )
     )
@@ -333,6 +425,7 @@ def test_publish_aggregates_sorted_by_starts_at_desc(tmp_path: Path, monkeypatch
                 "advertised": True,
                 "starts_at": "2025-09-15T00:00:00Z",
                 "access": {"policy": "public"},
+                "run": {"mode": "freeplay"},
             }
         )
     )
@@ -386,6 +479,7 @@ def test_list_advertised_fragments_returns_only_advertised_sorted_desc(
                 "advertised": True,
                 "starts_at": "2025-03-01T00:00:00Z",
                 "access": {"policy": "public"},
+                "run": {"mode": "freeplay"},
             }
         )
     )
@@ -397,6 +491,7 @@ def test_list_advertised_fragments_returns_only_advertised_sorted_desc(
                 "advertised": True,
                 "starts_at": "2025-09-15T00:00:00Z",
                 "access": {"policy": "public"},
+                "run": {"mode": "freeplay"},
             }
         )
     )
@@ -466,6 +561,7 @@ LIFECYCLE_JSON = {
     "freeze_at": "2026-02-01T00:00:00Z",
     "ended_at": "2026-03-01T00:00:00Z",
     "access": {"policy": "public"},
+    "run": {"mode": "freeplay"},
 }
 
 

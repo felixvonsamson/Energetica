@@ -31,12 +31,14 @@ PRIVATE_JSON = {
     "advertised": False,
     "starts_at": "2026-03-01T00:00:00Z",
     "access": {"policy": "private"},
+    "run": {"mode": "freeplay"},
 }
 PUBLIC_JSON = {
     "name": "Autumn 2025",
     "advertised": True,
     "starts_at": "2025-09-15T00:00:00Z",
     "access": {"policy": "public"},
+    "run": {"mode": "freeplay"},
 }
 
 

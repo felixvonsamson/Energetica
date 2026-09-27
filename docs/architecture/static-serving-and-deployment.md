@@ -498,15 +498,16 @@ scripts/
                                 creates `energetica` group
     setup-landing.sh          ← run once per server; creates /var/www/energetica-landing/, main domain vhost;
                                 creates /var/www/energetica-landing/instances/ with setgid `energetica`
-    setup-instance.sh           ← run per instance; usage: setup-instance.sh <instance> <port>;
+    setup-instance.sh           ← run per instance; usage: setup-instance.sh <instance> <port> --mode <mode>;
                                 creates /etc/energetica/{instance}/ and writes initial instance.json there
+    render-instance-json.sh     ← the one renderer of instance.json.tmpl; setup-instance.sh calls it (#1060)
     update-instance-vhost.sh    ← the one renderer of apache-instance.conf, rerunnable on a live
                                 instance; setup-instance.sh calls it at step 7 (#1071)
     apache-main.conf          ← main domain vhost template (static landing, no proxy)
     apache-instance.conf        ← instance vhost template (app static + API proxy)
     energetica.service        ← systemd service template (runs as user in `energetica` group);
                                 carries only @INSTANCE@ — everything else comes from its EnvironmentFile
-    instance.json.tmpl          ← initial per-instance config; default policy is public, advertised true
+    instance.json.tmpl          ← initial per-instance config; advertised true, public unless the Run mode is workshop
     instance.env.tmpl           ← the unit's EnvironmentFile: env contract + port + clock values (#1072)
   deploy-landing.sh           ← build:landing → rsync dist-landing/ → server:/var/www/energetica-landing/
   deploy-instance.sh            ← usage: --server <server> --instance <instance>;
@@ -523,7 +524,7 @@ scripts/
 
 1. Create `/var/www/energetica-{instance}/` directory structure
 2. Clone repo (or symlink shared code — TBD)
-3. Create `/etc/energetica/{instance}/` (mode `0750`, owned by `root:energetica`) and render `instance.json.tmpl` into `/etc/energetica/{instance}/instance.json` (defaults: `name = {slug titlecased}`, `advertised = true`, `starts_at = now (UTC)`, `access.policy = "public"` — admin edits before going live for private instances), then render `instance.env.tmpl` into `/etc/energetica/{instance}/instance.env` with this run's port and clock values
+3. Create `/etc/energetica/{instance}/` (mode `0750`, owned by `root:energetica`) and render `instance.json.tmpl` into `/etc/energetica/{instance}/instance.json` (defaults: `name = {slug titlecased}`, `advertised = true`, `starts_at = now (UTC)`, `run.mode` from the required `--mode`, `access.policy = "private"` for a workshop Run and `"public"` otherwise — admin edits before going live for other private instances). `render-instance-json.sh` does the rendering, and checks `--mode` against the `run-modes` list `push-bootstrap.sh` generates from the backend, then render `instance.env.tmpl` into `/etc/energetica/{instance}/instance.env` with this run's port and clock values
 4. Create and enable a temporary HTTP-only vhost — written inline, not from `apache-instance.conf`, because that template names certificate files that do not exist yet
 5. Reload Apache (HTTP only at this point)
 6. Obtain TLS certificate: `certbot certonly --webroot -w /var/www/energetica-{instance}/ -d {instance}.{domain}` — the instance directory (created in step 1) is already the Apache DocumentRoot, so ACME challenge files are reachable there

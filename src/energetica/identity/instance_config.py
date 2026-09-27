@@ -1,7 +1,8 @@
 """Per-instance visibility and access policy.
 
-Each instance declares its visibility (``advertised``) and access policy (``public`` /
-``private``) in a single admin-owned file that lives **outside** the vhost DocumentRoot:
+Each instance declares its visibility (``advertised``), access policy (``public`` /
+``private``) and Run mode (``run``: freeplay or workshop) in a single admin-owned file that lives
+**outside** the vhost DocumentRoot:
 
     {ENERGETICA_INSTANCE_CONFIG_DIR}/{slug}/instance.json   (default dir: /etc/energetica)
 
@@ -35,7 +36,7 @@ import tempfile
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Literal, TypeVar, get_args
 
 from pydantic import AwareDatetime, BaseModel, Field, model_validator
 
@@ -132,6 +133,34 @@ class PrivateAccess(BaseModel):
 AccessPolicy = PublicAccess | PrivateAccess
 
 
+class FreeplayRun(BaseModel):
+    """A persistent-world Run."""
+
+    model_config = {"extra": "forbid"}
+
+    mode: Literal["freeplay"]
+
+
+class WorkshopRun(BaseModel):
+    """A Workshop Run (#992). Its round-configuration levers land here as later tickets add them."""
+
+    model_config = {"extra": "forbid"}
+
+    mode: Literal["workshop"]
+
+
+RunMode = FreeplayRun | WorkshopRun
+
+
+def run_modes() -> tuple[str, ...]:
+    """The ``mode`` tags :class:`InstanceConfig` accepts, in declaration order.
+
+    ``push-bootstrap.sh`` writes these to the server so ``setup-instance.sh`` can validate its
+    ``--mode`` option against the backend instead of keeping its own copy of the list.
+    """
+    return tuple(get_args(variant.model_fields["mode"].annotation)[0] for variant in get_args(RunMode))
+
+
 class InstanceConfig(BaseModel):
     """The full per-instance config, including the private ``access`` block.
 
@@ -153,6 +182,24 @@ class InstanceConfig(BaseModel):
     freeze_at: AwareDatetime | None = None  # active → freeze (play/sim ends, backend stays read-only)
     ended_at: AwareDatetime | None = None  # freeze → ended (process reaped, recap outlives it on the lobby)
     access: AccessPolicy = Field(discriminator="policy")
+    # Required, with no default (#1060): a file that does not say which kind of Run it is fails
+    # closed like any other malformed file, rather than being read as freeplay.
+    run: RunMode = Field(discriminator="mode")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _default_workshop_access_to_private(cls, data: Any) -> Any:
+        """A Workshop Run with no ``access`` block is private (#993).
+
+        This only fills in a missing block. An explicit ``access``, public or private, is kept as
+        written. It runs on the raw mapping because once ``access`` is validated there is no way
+        to tell "omitted" from "present".
+        """
+        if isinstance(data, dict) and "access" not in data:
+            run = data.get("run")
+            if isinstance(run, dict) and run.get("mode") == "workshop":
+                data = {**data, "access": {"policy": "private"}}
+        return data
 
     @model_validator(mode="after")
     def _timestamps_non_decreasing(self) -> InstanceConfig:
