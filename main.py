@@ -17,6 +17,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Import `energetica` from the `src/` next to this file. A git worktree shares the main
+# checkout's .venv, whose editable install points at the main checkout's `src/`. This runs
+# again in the server subprocess, which imports this file as the app module.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+
 from energetica import create_app
 
 if __name__ == "__main__":

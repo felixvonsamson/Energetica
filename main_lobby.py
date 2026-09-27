@@ -10,8 +10,14 @@ Apache (``apache-lobby.conf``) proxies ``/api/v1`` and ``/logout`` to this proce
 """
 
 import argparse
+import sys
+from pathlib import Path
 
 import uvicorn
+
+# Import `lobby` from the `src/` next to this file. A git worktree shares the main checkout's
+# .venv, whose editable install points at the main checkout's `src/`.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from lobby import create_lobby_app
 

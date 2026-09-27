@@ -16,6 +16,7 @@ imported the whole game app — so each check runs in a subprocess and inspects 
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -37,9 +38,16 @@ def _modules_after_importing(module: str) -> set[str]:
     code = (
         f"import {module}, sys, json\nprint(json.dumps(sorted(m for m in sys.modules if m.startswith('energetica'))))\n"
     )
+    # Import from this checkout's src/, as pytest itself does (`pythonpath` in pyproject.toml).
+    # Otherwise a git worktree's shared .venv would resolve `energetica` to the main checkout.
+    env = {
+        **os.environ,
+        "PYTHONPATH": os.pathsep.join(filter(None, [str(_REPO_ROOT / "src"), os.environ.get("PYTHONPATH")])),
+    }
     result = subprocess.run(
         [sys.executable, "-c", code],
         cwd=_REPO_ROOT,
+        env=env,
         capture_output=True,
         text=True,
         check=True,
