@@ -3,12 +3,12 @@
 dragging in the game domain or its running services** (ADR-0002, lobby Phase B).
 ``energetica.kernel.session`` is a game-model-free leaf, and the heavy game graph (routers,
 socketio, tick loop, domain models) is imported lazily inside ``create_app`` rather than at
-``energetica`` import.
+import.
 
-A *dormant* ``GameEngine`` object is still constructed at import (it is light and the ORM binds it
-at model-definition time), so ``energetica.game_engine`` itself is deliberately **not** a leak
-marker — what must stay out is the domain graph, socketio and the tick loop. The ``energetica``
-package itself builds that dormant object, so it moves out with the engine in #1055.
+The persistent world's game engine is built when ``energetica.freeplay`` is imported, not when
+``energetica`` is (#1055). So ``energetica.freeplay`` itself is a leak marker: if it is loaded, the
+engine was constructed. The same check covers the shared simulation layer, which must not reach
+into any mode's package either.
 
 Import side effects can only be observed in a *fresh* interpreter — the pytest process has already
 imported the whole game app — so each check runs in a subprocess and inspects ``sys.modules``.
@@ -25,9 +25,11 @@ import pytest
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Modules whose presence after importing the identity layer means the heavy game graph / a running
-# service has leaked in: the domain models, the router package, the socketio server, the tick loop.
+# service has leaked in: the persistent world's package (which builds the engine), the domain models,
+# the router package, the socketio server, the tick loop.
 _ENGINE_MARKERS = (
-    "energetica.database.player",
+    "energetica.freeplay",
+    "energetica.freeplay.database.player",
     "energetica.routers",
     "energetica.socketio",
     "energetica.utils.tick_execution",
@@ -78,6 +80,27 @@ def test_importing_the_lobby_service_does_not_load_the_game_engine() -> None:
 
 @pytest.mark.parametrize("module", ["energetica.identity.server_config", "energetica.identity.my_runs"])
 def test_importing_the_rest_of_the_identity_layer_does_not_load_the_game_engine(module: str) -> None:
+    loaded = _modules_after_importing(module)
+    leaked = loaded.intersection(_ENGINE_MARKERS)
+    assert not leaked, f"importing {module} leaked the game engine: {sorted(leaked)}"
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "energetica.sim.astro",
+        "energetica.sim.demand_shape",
+        "energetica.sim.dispatch",
+        "energetica.sim.facility_statuses",
+        "energetica.sim.fuel_and_pollution",
+        "energetica.sim.market",
+        "energetica.sim.operating_cost",
+        "energetica.sim.renewable_curves",
+        "energetica.sim.renewables",
+        "energetica.sim.settlement",
+    ],
+)
+def test_importing_the_simulation_layer_does_not_load_the_game_engine(module: str) -> None:
     loaded = _modules_after_importing(module)
     leaked = loaded.intersection(_ENGINE_MARKERS)
     assert not leaked, f"importing {module} leaked the game engine: {sorted(leaked)}"

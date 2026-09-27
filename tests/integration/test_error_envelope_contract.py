@@ -22,9 +22,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
-from energetica import create_app
+from energetica.freeplay.app import create_app
+from energetica.freeplay.globals import engine
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.globals import engine
 from lobby import create_lobby_app
 
 GAME_ERROR_PATH = "/probe/game-error"

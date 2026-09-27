@@ -362,9 +362,9 @@ def test_settling_records_membership_for_this_instance(monkeypatch: pytest.Monke
     this instance's slug, stamped with the Player's settle time — this is what makes a run appear
     under 'your runs'.
     """
-    from energetica import create_app
+    from energetica.freeplay.app import create_app
+    from energetica.freeplay.database.map.hex_tile import HexTile
     from energetica.identity.accounts import Account
-    from energetica.database.map.hex_tile import HexTile
     from energetica.kernel.session import generate_password_hash
     from energetica.utils.map_helpers import confirm_location
 
@@ -391,9 +391,9 @@ def test_settling_records_membership_for_this_instance(monkeypatch: pytest.Monke
 def test_record_join_reconciling_settlement_backfills_settled_at_for_a_re_added_player(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from energetica import create_app
+    from energetica.freeplay.app import create_app
+    from energetica.freeplay.database.map.hex_tile import HexTile
     from energetica.identity.accounts import Account
-    from energetica.database.map.hex_tile import HexTile
     from energetica.kernel.session import generate_password_hash
     from energetica.utils.map_helpers import confirm_location
     from energetica.utils.misc import record_join_reconciling_settlement
@@ -417,7 +417,7 @@ def test_record_join_reconciling_settlement_leaves_settled_at_null_for_a_fresh_j
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """No Player exists yet — the ordinary first-join case is unaffected: settled_at stays null."""
-    from energetica import create_app
+    from energetica.freeplay.app import create_app
     from energetica.utils.misc import record_join_reconciling_settlement
 
     monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "spring-2026")
@@ -441,10 +441,10 @@ def test_settle_aborts_before_any_engine_mutation_on_a_membership_write_failure(
     """
     import sqlite3
 
-    from energetica import create_app
+    from energetica.freeplay.app import create_app
+    from energetica.freeplay.database.map.hex_tile import HexTile
+    from energetica.freeplay.database.player import Player
     from energetica.identity.accounts import Account
-    from energetica.database.map.hex_tile import HexTile
-    from energetica.database.player import Player
     from energetica.kernel.session import generate_password_hash
     from energetica.utils.map_helpers import confirm_location
 
@@ -469,9 +469,9 @@ def test_settling_records_no_membership_when_slug_unset(monkeypatch: pytest.Monk
     """In dev / unconfigured deployments there is no slug and no lobby; settle must not crash and
     writes no membership row (mirrors instance_config.publish's no-op-without-slug behaviour).
     """
-    from energetica import create_app
+    from energetica.freeplay.app import create_app
+    from energetica.freeplay.database.map.hex_tile import HexTile
     from energetica.identity.accounts import Account
-    from energetica.database.map.hex_tile import HexTile
     from energetica.kernel.session import generate_password_hash
     from energetica.utils.map_helpers import confirm_location
 

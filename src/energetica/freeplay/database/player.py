@@ -4,36 +4,18 @@ from __future__ import annotations
 
 import asyncio
 import json
-from concurrent.futures import ThreadPoolExecutor
-from urllib.parse import urlparse
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Iterable
+from urllib.parse import urlparse
 
 from pywebpush import WebPushException, webpush
 
 from energetica.config.achievements import achievements
-from energetica.database import DBModel
-from energetica.database.active_facility import ActiveFacility
-from energetica.database.engine_data.capacity_data import CapacityData
-from energetica.database.engine_data.circular_buffer_player import CircularBufferPlayer
-from energetica.database.engine_data.cumulative_emissions_data import CumulativeEmissionsData
-from energetica.database.messages import Chat, Notification
-from energetica.schemas.notifications import (
-    PersistableNotificationPayload,
-    PushOnlyPayload,
-    AchievementMilestoneBasePayload,
-    AchievementMilestoneEnergyStoragePayload,
-    AchievementMilestonePowerConsumptionPayload,
-    AchievementUnlockPayload,
-    NotificationPayload,
-)
-from energetica.database.network_prices import NetworkPrices
-from energetica.database.ongoing_project import OngoingProject
-from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.enums import (
     ExtractionFacilityType,
     Fuel,
@@ -47,10 +29,28 @@ from energetica.enums import (
     WindFacilityType,
     WorkerType,
 )
-from energetica.globals import engine
+from energetica.freeplay.database import DBModel
+from energetica.freeplay.database.active_facility import ActiveFacility
+from energetica.freeplay.database.engine_data.capacity_data import CapacityData
+from energetica.freeplay.database.engine_data.circular_buffer_player import CircularBufferPlayer
+from energetica.freeplay.database.engine_data.cumulative_emissions_data import CumulativeEmissionsData
+from energetica.freeplay.database.messages import Chat, Notification
+from energetica.freeplay.database.network_prices import NetworkPrices
+from energetica.freeplay.database.ongoing_project import OngoingProject
+from energetica.freeplay.database.ongoing_shipment import OngoingShipment
+from energetica.freeplay.globals import engine
 from energetica.schemas.achievements import AchievementMilestoneOut, AchievementOut, AchievementUnlockOut
 from energetica.schemas.browser_notifications import Subscription
 from energetica.schemas.electricity_markets import AskType, BidType
+from energetica.schemas.notifications import (
+    AchievementMilestoneBasePayload,
+    AchievementMilestoneEnergyStoragePayload,
+    AchievementMilestonePowerConsumptionPayload,
+    AchievementUnlockPayload,
+    NotificationPayload,
+    PersistableNotificationPayload,
+    PushOnlyPayload,
+)
 from energetica.sim.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
 from energetica.technology_effects import (
     package_available_technologies,
@@ -71,8 +71,8 @@ _PUSH_EXECUTOR = ThreadPoolExecutor(max_workers=16, thread_name_prefix="webpush"
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from energetica.database.map.hex_tile import HexTile
-    from energetica.database.network import Network
+    from energetica.freeplay.database.map.hex_tile import HexTile
+    from energetica.freeplay.database.network import Network
 
 
 @dataclass
@@ -375,7 +375,7 @@ class Player(DBModel):
         """Emit a socketio event to the player's clients."""
         # Late import: MAIN_EVENT_LOOP is the serving loop, bound in the lifespan after this module
         # is imported. Reading it at call time (not a module-level snapshot) gets the live loop.
-        from energetica.globals import MAIN_EVENT_LOOP
+        from energetica.freeplay.globals import MAIN_EVENT_LOOP
 
         for sid in self.socketio_clients:
             asyncio.run_coroutine_threadsafe(engine.socketio.emit(event, *args, to=sid), MAIN_EVENT_LOOP)
@@ -516,7 +516,7 @@ class Player(DBModel):
         2. It emits a socketio "invalidate" event to the player's active web clients.
         3. It sends the notification using webpush to the player's subscribed browser(s).
         """
-        from energetica.globals import MAIN_EVENT_LOOP  # serving loop, bound in the lifespan
+        from energetica.freeplay.globals import MAIN_EVENT_LOOP  # serving loop, bound in the lifespan
 
         payload_dict = payload.model_dump(exclude={"type"})
         Notification(type=payload.type, payload=payload_dict, player=self)

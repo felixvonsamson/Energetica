@@ -5,8 +5,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 
-from energetica.database.player import Player
-from energetica.globals import engine
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.schemas.browser_notifications import Subscription, VapidPublicKey
 from energetica.schemas.notifications import PushNotificationTestPayload
 from energetica.utils.auth import get_settled_player

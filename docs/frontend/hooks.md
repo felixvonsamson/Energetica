@@ -90,7 +90,7 @@ class DailyQuizOut(BaseModel):
 ```python
 # energetica/routers/daily_quiz.py
 from fastapi import APIRouter, Depends
-from energetica.database.player import Player
+from energetica.freeplay.database.player import Player
 from energetica.schemas.daily_quiz import DailyQuizOut
 from energetica.utils.auth import get_settled_player
 

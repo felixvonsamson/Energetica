@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from energetica.config.assets import warehouse_capacity_for_level
-from energetica.database.ongoing_project import OngoingProject
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -27,12 +26,13 @@ from energetica.enums import (
     power_facility_types,
     str_to_project_type,
 )
+from energetica.freeplay.database.ongoing_project import OngoingProject
+from energetica.freeplay.globals import engine
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.globals import engine
 
 if TYPE_CHECKING:
-    from energetica.database.map.hex_tile import HexTile
-    from energetica.database.player import Player
+    from energetica.freeplay.database.map.hex_tile import HexTile
+    from energetica.freeplay.database.player import Player
 
 
 def special_multiplier(pf: float, lvl: int) -> float:
@@ -345,7 +345,7 @@ def extraction_emissions_multiplier(player: Player, extraction_facility_type: Ex
 
 def next_available_location(player: Player, facility_type: HydroFacilityType | WindFacilityType) -> int:
     """Return the next available location for a hydro and wind facilities."""
-    from energetica.database.active_facility import ActiveFacility
+    from energetica.freeplay.database.active_facility import ActiveFacility
 
     active_facilities = ActiveFacility.filter_by(
         facility_type=facility_type,

@@ -2,7 +2,7 @@
 
 ## The data integrity check
 
-On startup, `engine.load()` (`game_engine.py:238`) compares the mtime of `instance/engine_data.pck` against the newest file in `instance/data/**/*`. If any data file is newer than the pickle, startup aborts with:
+On startup, `engine.load()` (`freeplay/game_engine.py`) compares the mtime of `instance/engine_data.pck` against the newest file in `instance/data/**/*`. If any data file is newer than the pickle, startup aborts with:
 
 ```
 RuntimeError: The data has not been saved correctly, please restart form the last checkpoint.

@@ -1,10 +1,10 @@
 """Utility functions relating to the game map."""
 
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.identity.accounts import Account
-from energetica.database.map.hex_tile import HexTile
-from energetica.database.player import Player
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.globals import engine
 from energetica.utils.misc import initialize_player
 
 

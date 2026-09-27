@@ -6,8 +6,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from energetica.database.messages import Chat, Message
-from energetica.database.player import Player
+from energetica.freeplay.database.messages import Chat, Message
+from energetica.freeplay.database.player import Player
 
 
 class ChatListOut(BaseModel):

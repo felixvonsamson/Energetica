@@ -180,9 +180,9 @@ jobs:
         run: |
           /tmp/wheel-venv/bin/python - <<'PY'
           import energetica, lobby
-          from energetica.database.map.hex_tile import HexTile
-          from energetica.database.engine_data.emission_data import EmissionData
-          from energetica.game_engine import _DATA_DIR
+          from energetica.freeplay.database.map.hex_tile import HexTile
+          from energetica.freeplay.database.engine_data.emission_data import EmissionData
+          from energetica.freeplay.game_engine import _DATA_DIR
 
           expected = {
               "daily_quiz_questions.csv",

@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from energetica import technology_effects
 from energetica.config.assets import const_config
-from energetica.database import DBModel
 from energetica.enums import ExtractionFacilityType, HydroFacilityType, PowerFacilityType, StorageFacilityType
-from energetica.globals import engine
+from energetica.freeplay.database import DBModel
+from energetica.freeplay.globals import engine
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from energetica.database.player import Player
+    from energetica.freeplay.database.player import Player
 
 
 @dataclass

@@ -10,7 +10,7 @@ from energetica.enums import RenewableFacilityType
 from energetica.schemas.electricity_markets import PowerPriorityItem
 
 if TYPE_CHECKING:
-    from energetica.database.player import Player
+    from energetica.freeplay.database.player import Player
 
 
 class PowerPrioritiesListOut(BaseModel):

@@ -6,11 +6,11 @@ import subprocess
 import sys
 import textwrap
 
-from energetica import create_app
-from energetica.identity.accounts import Account
-from energetica.database.map.hex_tile import HexTile
 from energetica.enums import ControllableFacilityType
-from energetica.globals import engine
+from energetica.freeplay.app import create_app
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.globals import engine
+from energetica.identity.accounts import Account
 from energetica.utils.map_helpers import confirm_location
 
 
@@ -37,9 +37,9 @@ def test_seed_determinism() -> None:
         """Runs the price generation logic in a subprocess with the given seed and returns the result."""
         subprocess_code = textwrap.dedent(f"""
             import json
-            from energetica import engine
-            from energetica.database.map.hex_tile import HexTile
-            from energetica.database.player import Player
+            from energetica.freeplay import engine
+            from energetica.freeplay.database.map.hex_tile import HexTile
+            from energetica.freeplay.database.player import Player
             from energetica import __version__
             engine.init_instance(30, 3600, 0, env="dev", game_version=__version__)
 

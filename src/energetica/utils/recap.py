@@ -17,10 +17,10 @@ from __future__ import annotations
 
 import logging
 
-from energetica.identity import instance_config
-from energetica.database.map.hex_tile import HexTile
-from energetica.database.player import Player
 from energetica.enums import Fuel, Renewable
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.database.player import Player
+from energetica.identity import instance_config
 from energetica.identity.schemas.recap import Recap, RecapTile
 
 logger = logging.getLogger(__name__)

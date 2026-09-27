@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from energetica.enums import ExtractionFacilityType, PowerFacilityType, StorageFacilityType
-from energetica.globals import engine
+from energetica.freeplay.globals import engine
 
 if TYPE_CHECKING:
-    from energetica.database.network import Network
-    from energetica.database.player import Player
+    from energetica.freeplay.database.network import Network
+    from energetica.freeplay.database.player import Player
 
 
 class CapacityData:
@@ -44,7 +44,7 @@ class CapacityData:
         facility_type: PowerFacilityType | StorageFacilityType | ExtractionFacilityType | None,
     ) -> None:
         """Update the capacity data of the player."""
-        from energetica.database.active_facility import ActiveFacility
+        from energetica.freeplay.database.active_facility import ActiveFacility
 
         active_facilities: list[ActiveFacility]
         if facility_type is None:

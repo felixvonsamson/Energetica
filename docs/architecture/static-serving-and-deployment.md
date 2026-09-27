@@ -189,15 +189,15 @@ prefix would mean asking a third party to edit their config. #1064 moved the bun
 `src/energetica/` — where it was a vestige of the Flask/Jinja era, build output from another
 language sitting inside a Python package — without touching a single public URL.
 
-`src/energetica/static/data/` is deliberately **not** in that list. It holds the daily quiz
+`src/energetica/freeplay/data/` is deliberately **not** in that list. It holds the daily quiz
 questions and answers, the map, and the national-demand curves; the Python engine reads them
-off the filesystem (`src/energetica/game_engine.py`) and no HTTP client asks for them. Apache
-served the whole directory until the disclosure fix #1070, which closed a path that let
-anyone who guessed it read the quiz answers. Since #1064 nothing is aliased into `static/` at
-all, so no URL maps there — but the vhost keeps denying the tree outright, because Ubuntu's
-stock `apache2.conf` grants all of `/var/www/`, and the absence of an `Alias` is too weak a
-guarantee to rest a disclosure fix on. #1049 step 2 moves these tables to `freeplay/data/`,
-which empties `src/energetica/static/` and lets the deny be removed with it.
+off the filesystem (`src/energetica/freeplay/game_engine.py`) and no HTTP client asks for them.
+The tables lived at `src/energetica/static/data/` until #1055 moved them next to the engine.
+Apache served that directory until the disclosure fix #1070, which closed a path that let
+anyone who guessed it read the quiz answers. No URL maps into the Python package any more, but
+the vhost still denies the data directory outright, because Ubuntu's stock `apache2.conf`
+grants all of `/var/www/`, and the absence of an `Alias` is too weak a guarantee to rest a
+disclosure fix on. The deny moved to the new path along with the tables.
 
 Images are not in that list either, and for a different reason: since #1078 there is no
 served image tree. Every image is imported from `frontend/src/assets/`, so Vite resolves it

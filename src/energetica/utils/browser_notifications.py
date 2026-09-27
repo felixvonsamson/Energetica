@@ -6,7 +6,7 @@ from pathlib import Path
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
-from energetica.game_engine import GameEngine
+from energetica.freeplay.game_engine import GameEngine
 
 
 def load_or_create_vapid_keys(engine: GameEngine) -> None:

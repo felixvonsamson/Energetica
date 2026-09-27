@@ -4,9 +4,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.database.network import Network
-from energetica.database.player import Player
-from energetica.globals import engine
+from energetica.freeplay.database.network import Network
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.schemas.electricity_markets import (
     ChangeElectricityMarketPrices,
     ElectricityMarketCreate,

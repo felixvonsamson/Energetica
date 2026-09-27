@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 from energetica.enums import Fuel, FunctionalFacilityType, TechnologyType, WorkerType
 
 if TYPE_CHECKING:
-    from energetica.database.player import Player
+    from energetica.freeplay.database.player import Player
 
 
 const_config: dict = {

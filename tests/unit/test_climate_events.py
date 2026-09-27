@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from energetica import create_app
-from energetica.database.map.hex_tile import HexTile
+from energetica.freeplay.app import create_app
+from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.utils.climate_helpers import climate_event_impact
 
 

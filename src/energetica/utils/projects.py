@@ -1,12 +1,11 @@
 """Utility functions for player projects."""
 
 import math
-from energetica import technology_effects
-from energetica.database.active_facility import ActiveFacility
-import numpy as np
 from collections.abc import Iterator
-from energetica.database.ongoing_project import OngoingProject
-from energetica.database.player import Player
+
+import numpy as np
+
+from energetica import technology_effects
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -19,8 +18,12 @@ from energetica.enums import (
     TechnologyType,
     WorkerType,
 )
+from energetica.freeplay.database.active_facility import ActiveFacility
+from energetica.freeplay.database.ongoing_project import OngoingProject
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.globals import engine
+from energetica.kernel.hashing import stable_hash
 from energetica.schemas.notifications import (
     ConstructionFinishedPayload,
     TechnologyResearchedPayload,
@@ -28,7 +31,6 @@ from energetica.schemas.notifications import (
 )
 from energetica.schemas.projects import ProjectListOut
 from energetica.utils.workers import deploy_available_workers
-from energetica.kernel.hashing import stable_hash
 
 
 def queue_project(

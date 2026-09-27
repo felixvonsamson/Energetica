@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
-    from energetica.database.player import Player
+    from energetica.freeplay.database.player import Player
 
 ActivityStatus = Literal["active", "away", "inactive"]
 

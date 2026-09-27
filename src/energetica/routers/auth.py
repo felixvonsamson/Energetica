@@ -14,14 +14,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.identity import accounts, instance_config
 from energetica.identity.accounts import Account
-from energetica.database.player import Player
 from energetica.kernel.game_error import GameExceptionType
-from energetica.globals import engine
+from energetica.kernel.session import SESSION_COOKIE_NAME, account_id_from_token
 from energetica.schemas.auth import UserOut
 from energetica.schemas.capabilities import PlayerCapabilities
-from energetica.kernel.session import SESSION_COOKIE_NAME, account_id_from_token
 from energetica.utils.auth import get_role
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])

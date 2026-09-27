@@ -52,6 +52,7 @@ def get_or_create_secret_key() -> str:
         return _read_nonempty_secret(instance_path)
 
     secret_key = secrets.token_hex()
+    os.makedirs(os.path.dirname(instance_path) or ".", exist_ok=True)
     with open(instance_path, "w", encoding="utf-8") as f:
         f.write(secret_key)
     return secret_key

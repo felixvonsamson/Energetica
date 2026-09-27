@@ -4,8 +4,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
 
-from energetica.database.messages import Notification
-from energetica.database.player import Player
+from energetica.freeplay.database.messages import Notification
+from energetica.freeplay.database.player import Player
 from energetica.schemas.notifications import (
     NotificationFeedSubscriptionsIn,
     NotificationFeedSubscriptionsOut,

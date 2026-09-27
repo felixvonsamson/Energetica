@@ -22,7 +22,7 @@ import pytest
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from py_vapid import Vapid
 
-from energetica.game_engine import GameEngine
+from energetica.freeplay.game_engine import GameEngine
 from energetica.utils.browser_notifications import load_or_create_vapid_keys
 
 

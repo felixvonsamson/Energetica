@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING, Optional
 
 from pydantic import BaseModel
 
-from energetica.database.player import Player
+from energetica.freeplay.database.player import Player
 
 if TYPE_CHECKING:
-    from energetica.database.player import Player
+    from energetica.freeplay.database.player import Player
 
 
 class LeaderboardsOut(BaseModel):

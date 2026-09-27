@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter
 
+from energetica.freeplay.globals import engine
 from energetica.identity import instance_config
-from energetica.globals import engine
 from energetica.schemas.game import GameEngineOut
 
 router = APIRouter(prefix="/game", tags=["Game"])

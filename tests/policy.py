@@ -7,7 +7,6 @@ from typing import Any
 import numpy as np
 
 from energetica import technology_effects
-from energetica.database.player import Player
 from energetica.enums import (
     ControllableFacilityType,
     FunctionalFacilityType,
@@ -17,8 +16,9 @@ from energetica.enums import (
     WindFacilityType,
     WorkerType,
 )
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.kernel.game_error import GameError
-from energetica.globals import engine
 from energetica.utils import projects
 
 

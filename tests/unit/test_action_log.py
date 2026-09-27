@@ -1,6 +1,6 @@
 """Unit tests for the streaming action-log reader (issue #766).
 
-These exercise the public interface of ``energetica.utils.action_log`` directly,
+These exercise the public interface of ``energetica.freeplay.action_log`` directly,
 without spinning up ``create_app``: given a log file on disk and a loaded tick,
 the reader must return exactly the actions that need replaying — and must do so
 without Pydantic-validating the prefix it skips.
@@ -13,14 +13,14 @@ from pathlib import Path
 
 import pytest
 
-from energetica.schemas.simulate import (
+from energetica.freeplay.action_log import read_init_action, stream_actions_after_tick
+from energetica.freeplay.schemas.simulate import (
     ApiAction,
     ApiActionRequest,
     ApiActionResponse,
     InitEngineAction,
     TickAction,
 )
-from energetica.utils.action_log import read_init_action, stream_actions_after_tick
 
 _TS = datetime(2026, 1, 1)
 

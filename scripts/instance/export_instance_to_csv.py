@@ -27,7 +27,6 @@ from typing import Any
 
 import pandas as pd
 
-
 RESOLUTIONS = [
     (0, 1, "1d"),
     (1, 6, "6d"),
@@ -250,8 +249,11 @@ def main() -> None:
         print(f"Error: {engine_file} not found.", file=sys.stderr)
         sys.exit(1)
 
+    # Engine state written before #1055 names its classes by their old module paths.
+    from energetica.freeplay import legacy_pickle
+
     with open(engine_file, "rb") as f:
-        eng = pickle.load(f)
+        eng = legacy_pickle.load(f)
 
     id_to_username = {pid: p.username for pid, p in eng["db_model_instances"]["Player"].items()}
 

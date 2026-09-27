@@ -1,12 +1,12 @@
 """Routes for the map."""
 
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.identity.accounts import Account
-from energetica.database.map.hex_tile import HexTile
-from energetica.schemas.map import SettleRequest, SettleResponse
-from energetica.schemas.map import HexTileOut
+from energetica.schemas.map import HexTileOut, SettleRequest, SettleResponse
 from energetica.utils import map_helpers
 from energetica.utils.auth import get_playing_account, reject_when_frozen
 
@@ -16,8 +16,8 @@ router = APIRouter(prefix="/map", tags=["Map"])
 @router.get("")
 def get_map() -> list[HexTileOut]:
     """Get the map data."""
-    from energetica.database.map.hex_tile import HexTile
     from energetica.enums import Fuel, Renewable
+    from energetica.freeplay.database.map.hex_tile import HexTile
 
     hex_map = HexTile.all()
     hex_list = [

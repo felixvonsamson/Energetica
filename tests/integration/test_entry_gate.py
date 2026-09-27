@@ -12,9 +12,9 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from energetica import create_app
-from energetica.database.player import Player
-from energetica.globals import engine
+from energetica.freeplay.app import create_app
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.kernel.session import SESSION_COOKIE_NAME, serializer
 
 from ._session_helpers import authenticate, make_account

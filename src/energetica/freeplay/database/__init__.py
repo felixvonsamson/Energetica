@@ -6,12 +6,11 @@ from dataclasses import dataclass, field
 from itertools import count
 from typing import TYPE_CHECKING, Generic, TypedDict, TypeVar, Unpack
 
-from energetica.globals import engine
+from energetica.freeplay.globals import engine
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
-    from energetica.database.player import Player
     from energetica.enums import (
         ExtractionFacilityType,
         PowerFacilityType,
@@ -20,6 +19,7 @@ if TYPE_CHECKING:
         StorageFacilityType,
         WorkerType,
     )
+    from energetica.freeplay.database.player import Player
 
 T = TypeVar("T", bound="DBModel")
 

@@ -3,15 +3,15 @@
 Regression tests for https://github.com/felixvonsamson/Energetica/issues/762
 """
 
-from energetica import create_app
-from energetica.database.active_facility import ActiveFacility
-from energetica.database.map.hex_tile import HexTile
-from energetica.identity.accounts import Account
 from energetica.enums import StorageFacilityType
+from energetica.freeplay.app import create_app
+from energetica.freeplay.database.active_facility import ActiveFacility
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.database.player import Player
+from energetica.identity.accounts import Account
 from energetica.init_test_players import add_asset
 from energetica.kernel.session import generate_password_hash
 from energetica.utils.facilities import dismantle_facility
-from energetica.database.player import Player
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.tick_execution import tick
 

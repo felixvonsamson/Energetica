@@ -73,3 +73,17 @@ def test_creates_instance_secret_when_neither_exists(_secret_paths: tuple[Path, 
     assert key
     assert instance.read_text(encoding="utf-8").strip() == key
     assert not shared.exists()
+
+
+def test_creates_the_instance_secret_directory_when_missing(_secret_paths: tuple[Path, Path]) -> None:
+    """The fallback creates ``instance/`` itself.
+
+    Before #1055 it relied on the dormant game engine, which made that directory whenever anything
+    under ``energetica`` was imported.
+    """
+    _shared, instance = _secret_paths
+    instance.parent.rmdir()
+
+    key = get_or_create_secret_key()
+
+    assert instance.read_text(encoding="utf-8") == key

@@ -17,7 +17,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from energetica import create_app
+from energetica.freeplay.app import create_app
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

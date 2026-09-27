@@ -1,8 +1,8 @@
 """Tests for the Player class."""
 
-from energetica import create_app
+from energetica.freeplay.app import create_app
+from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.identity.accounts import Account
-from energetica.database.map.hex_tile import HexTile
 from energetica.kernel.session import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 

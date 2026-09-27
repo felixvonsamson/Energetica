@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import pytest
 
-from energetica import create_app
-from energetica.identity.accounts import Account
-from energetica.database.map.hex_tile import HexTile
-from energetica.database.player import Player
 from energetica.enums import ControllableFacilityType, Fuel
+from energetica.freeplay.app import create_app
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.database.player import Player
+from energetica.identity.accounts import Account
 from energetica.init_test_players import add_asset
 from energetica.production_update import resources_and_pollution
 from energetica.utils.map_helpers import confirm_location

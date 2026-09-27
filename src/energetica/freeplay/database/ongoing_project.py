@@ -7,12 +7,12 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from energetica.database import DBModel
 from energetica.enums import FunctionalFacilityType, ProjectStatus, ProjectType, TechnologyType, WorkerType
-from energetica.globals import engine
+from energetica.freeplay.database import DBModel
+from energetica.freeplay.globals import engine
 
 if TYPE_CHECKING:
-    from energetica.database.player import Player
+    from energetica.freeplay.database.player import Player
 
 
 @dataclass

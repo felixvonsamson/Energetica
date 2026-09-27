@@ -14,7 +14,7 @@ being silently papered over by FastAPI.
 import pytest
 from fastapi.testclient import TestClient
 
-from energetica import create_app
+from energetica.freeplay.app import create_app
 
 
 @pytest.fixture

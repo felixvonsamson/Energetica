@@ -15,7 +15,7 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
-from energetica.schemas.simulate import Action, InitEngineAction
+from energetica.freeplay.schemas.simulate import Action, InitEngineAction
 
 _action_adapter: TypeAdapter[Action] = TypeAdapter(Action)
 

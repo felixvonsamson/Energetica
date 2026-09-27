@@ -4,8 +4,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from energetica.database.ongoing_shipment import OngoingShipment
-from energetica.database.player import Player
+from energetica.freeplay.database.ongoing_shipment import OngoingShipment
+from energetica.freeplay.database.player import Player
 from energetica.schemas.shipments import ShipmentListOut, ShipmentOut
 from energetica.utils.auth import get_settled_player
 

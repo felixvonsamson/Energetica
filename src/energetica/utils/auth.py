@@ -12,7 +12,7 @@ from typing import Literal
 
 from fastapi import HTTPException, Request, status
 
-from energetica.database.player import Player
+from energetica.freeplay.database.player import Player
 from energetica.identity import accounts, instance_config
 from energetica.identity.accounts import Account
 from energetica.kernel.game_error import GameExceptionType

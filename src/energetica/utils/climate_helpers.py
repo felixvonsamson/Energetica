@@ -9,16 +9,18 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 from energetica.config.climate_events import climate_events
-from energetica.database.active_facility import ActiveFacility
-from energetica.database.climate_event_recovery import ClimateEventRecovery
-from energetica.database.engine_data.emission_data import calculate_reference_gta, calculate_temperature_deviation
-from energetica.database.map.hex_tile import HexTile
 from energetica.enums import ClimateEventType, FunctionalFacilityType, Renewable
-from energetica.schemas.notifications import ClimateEventPayload, FacilityDestroyedPayload
-from energetica.globals import engine
-from energetica.utils.facilities import destroy_facility
-
+from energetica.freeplay.database.active_facility import ActiveFacility
+from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery
+from energetica.freeplay.database.engine_data.emission_data import (
+    calculate_reference_gta,
+    calculate_temperature_deviation,
+)
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.globals import engine
 from energetica.kernel.hashing import stable_hash
+from energetica.schemas.notifications import ClimateEventPayload, FacilityDestroyedPayload
+from energetica.utils.facilities import destroy_facility
 
 
 def climate_event_impact(tile: HexTile, event_name: str, rng: np.random.Generator) -> None:
