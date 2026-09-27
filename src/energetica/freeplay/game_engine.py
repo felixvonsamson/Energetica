@@ -21,8 +21,8 @@ import numpy as np
 import socketio
 
 from energetica.config.assets import config, const_config
-from energetica.freeplay import legacy_pickle
 from energetica.enums import Fuel, Renewable
+from energetica.freeplay import legacy_pickle
 from energetica.freeplay.schemas.simulate import Action, InitEngineAction
 
 if TYPE_CHECKING:
@@ -303,7 +303,7 @@ class GameEngine(object):
         return wrapped
 
     def package_global_data(self) -> dict:
-        """Package mutable from energetica.freeplay.globals import engine data as a dict to be sent and used on the frontend."""
+        """Package mutable engine data as a dict to be sent and used on the frontend."""
         return {
             "first_tick_date": self.start_date,
             "tick_length": self.clock_time,

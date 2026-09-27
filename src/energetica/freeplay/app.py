@@ -24,13 +24,6 @@ from pydantic import TypeAdapter
 from energetica import __version__
 from energetica.freeplay import engine, globals
 
-# globals.MAIN_EVENT_LOOP is captured in the lifespan (below), NOT at import. This module is imported
-# by uvicorn while loading `main:app`; since uvicorn 0.5x that import happens *before* the serving
-# loop is created, so asyncio.get_event_loop() at import returns a throwaway loop that never runs.
-# engine.emit() dispatches every socketio broadcast onto MAIN_EVENT_LOOP via
-# run_coroutine_threadsafe(); if it were this dead loop, no server→client event (ticks, cache
-# invalidations, chat) would ever fire — clients connect fine but receive nothing (#817 fallout).
-
 
 def create_app(
     *,
