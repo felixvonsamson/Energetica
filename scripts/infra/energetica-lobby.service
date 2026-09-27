@@ -4,7 +4,7 @@
 # substituting @DOMAIN@ and @PORT@.
 #
 # The Environment= lines are load-bearing — they are the contract between the deployment
-# and src/lobby/config.py + src/energetica/{utils/session.py,accounts/db.py,
+# and src/lobby/config.py + src/energetica/{kernel/session.py,accounts/db.py,
 # instance_config.py,server_config.py}:
 #   * ENERGETICA_APEX_DOMAIN is MANDATORY in production. Without it the session cookie
 #     falls back to host-only scope (lobby.{apex} only) and never reaches the run

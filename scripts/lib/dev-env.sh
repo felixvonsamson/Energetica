@@ -58,7 +58,7 @@ import json
 from pathlib import Path
 
 from energetica import accounts, instance_config
-from energetica.utils.session import generate_password_hash
+from energetica.kernel.session import generate_password_hash
 
 landing = instance_config._landing_dir()
 frag_dir = landing / "instances"

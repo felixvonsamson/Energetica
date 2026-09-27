@@ -13,7 +13,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica.accounts import Account
-from energetica.game_error import GameExceptionType
+from energetica.kernel.game_error import GameExceptionType
 from energetica.my_runs import resolve_my_runs
 from energetica.schemas.lobby import MyRunsResponse
 from energetica.utils.auth import get_current_account

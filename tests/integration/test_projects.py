@@ -10,7 +10,7 @@ from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
 from energetica.accounts import Account
 from energetica.enums import ControllableFacilityType, FunctionalFacilityType, ProjectStatus, TechnologyType, WorkerType
-from energetica.game_error import GameError
+from energetica.kernel.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.projects import (
     queue_project,

@@ -17,7 +17,7 @@ from energetica.enums import (
     WindFacilityType,
     WorkerType,
 )
-from energetica.game_error import GameError
+from energetica.kernel.game_error import GameError
 from energetica.globals import engine
 from energetica.utils import projects
 

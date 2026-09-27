@@ -1,7 +1,7 @@
 """Authentication for the game (instance) side.
 
 The signing/credential primitives now live in the game-model-free leaf
-``energetica.utils.session`` so the server-wide identity layer and the lobby can reuse them
+``energetica.kernel.session`` so the server-wide identity layer and the lobby can reuse them
 without importing ``Player`` (ADR-0002, lobby Phase B). This module re-exports them — game-side
 callers keep importing ``generate_password_hash`` etc. from ``energetica.utils.auth``
 unchanged — and adds the request dependencies that resolve a session cookie against a role
@@ -16,10 +16,10 @@ from fastapi import HTTPException, Request, status
 from energetica import accounts, instance_config
 from energetica.accounts import Account
 from energetica.database.player import Player
-from energetica.game_error import GameExceptionType
+from energetica.kernel.game_error import GameExceptionType
 
 # Re-exported primitives (defined in the leaf; imported here so existing call sites are unchanged).
-from energetica.utils.session import (
+from energetica.kernel.session import (
     COOKIE_MAX_AGE,
     SECRET_KEY,
     SESSION_COOKIE_NAME,

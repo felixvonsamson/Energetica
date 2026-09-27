@@ -12,7 +12,7 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from energetica import accounts
-from energetica.utils.session import SESSION_COOKIE_NAME, generate_password_hash, serializer
+from energetica.kernel.session import SESSION_COOKIE_NAME, generate_password_hash, serializer
 
 
 def make_account(username: str = "alice", password: str = "correct-password") -> int:

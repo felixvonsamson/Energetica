@@ -19,7 +19,7 @@ from energetica.enums import (
     TechnologyType,
     WorkerType,
 )
-from energetica.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.schemas.notifications import (
     ConstructionFinishedPayload,
@@ -28,7 +28,7 @@ from energetica.schemas.notifications import (
 )
 from energetica.schemas.projects import ProjectListOut
 from energetica.utils.workers import deploy_available_workers
-from energetica.utils.hashing import stable_hash
+from energetica.kernel.hashing import stable_hash
 
 
 def queue_project(

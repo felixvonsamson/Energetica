@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from energetica import accounts, instance_config
 from energetica.accounts import Account
-from energetica.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.schemas.join import JoinLinkOut, Viewer
 from energetica.utils.auth import get_current_account
 from energetica.utils.misc import record_join_reconciling_settlement

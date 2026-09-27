@@ -21,7 +21,7 @@ from fastapi import APIRouter
 from energetica.database.player import Player
 from energetica.database.network import Network
 from energetica.globals import engine
-from energetica.utils.version import backend_version, frontend_version
+from energetica.kernel.version import backend_version, frontend_version
 
 router = APIRouter(prefix="", tags=["Health"])
 

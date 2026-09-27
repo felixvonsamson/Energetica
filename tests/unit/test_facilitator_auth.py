@@ -14,7 +14,7 @@ from fastapi import HTTPException, status
 
 from energetica import accounts
 from energetica.accounts import Account
-from energetica.game_error import GameExceptionType
+from energetica.kernel.game_error import GameExceptionType
 from energetica.utils import auth
 
 

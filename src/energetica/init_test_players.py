@@ -19,7 +19,7 @@ from energetica.enums import (
     TechnologyType,
     WindFacilityType,
 )
-from energetica.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.utils.projects import queue_project
 from energetica.utils.auth import generate_password_hash

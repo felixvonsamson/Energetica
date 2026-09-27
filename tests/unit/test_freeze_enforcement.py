@@ -20,7 +20,7 @@ import pytest
 from fastapi import HTTPException, status
 
 from energetica import instance_config
-from energetica.game_error import GameExceptionType
+from energetica.kernel.game_error import GameExceptionType
 from energetica.utils import auth, tick_execution
 
 

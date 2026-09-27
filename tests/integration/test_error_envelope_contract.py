@@ -23,7 +23,7 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from energetica import create_app
-from energetica.game_error import GameError, GameExceptionType
+from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from lobby import create_lobby_app
 

@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from energetica import create_app
-from energetica.game_error import GameExceptionType
+from energetica.kernel.game_error import GameExceptionType
 from lobby import create_lobby_app
 
 

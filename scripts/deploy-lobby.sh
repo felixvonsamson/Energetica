@@ -221,7 +221,7 @@ log_success "Lobby healthy (SPA 200, my-runs 401, manifest 200, accounts.db reac
 # /healthz never reports a commit that failed to activate. The server has no .git (rsync excludes
 # it), so the commit is captured here on the deploy machine. Excluded from the rsync --delete
 # above, so between restart and this write /healthz keeps reporting the previous commit rather
-# than a wrong one. Read by src/energetica/utils/version.py. See scripts/lib/version-stamp.sh.
+# than a wrong one. Read by src/energetica/kernel/version.py. See scripts/lib/version-stamp.sh.
 stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 echo

@@ -1,7 +1,7 @@
 """The lobby is an instance-independent service: it reuses the server-wide identity layer
 (``energetica.accounts`` / ``energetica.instance_config`` / the signing primitives) but must be
 able to import it **without dragging in the game domain or its running services** (ADR-0002, lobby
-Phase B). ``energetica.utils.session`` is a game-model-free leaf, and the heavy game graph
+Phase B). ``energetica.kernel.session`` is a game-model-free leaf, and the heavy game graph
 (routers, socketio, tick loop, domain models) is imported lazily inside ``create_app`` rather than
 at ``energetica`` import.
 
@@ -56,9 +56,9 @@ def test_importing_accounts_does_not_load_the_game_engine() -> None:
 
 
 def test_importing_session_leaf_does_not_load_the_game_engine() -> None:
-    loaded = _modules_after_importing("energetica.utils.session")
+    loaded = _modules_after_importing("energetica.kernel.session")
     leaked = loaded.intersection(_ENGINE_MARKERS)
-    assert not leaked, f"importing energetica.utils.session leaked the game engine: {sorted(leaked)}"
+    assert not leaked, f"importing energetica.kernel.session leaked the game engine: {sorted(leaked)}"
 
 
 def test_importing_instance_config_does_not_load_the_game_engine() -> None:

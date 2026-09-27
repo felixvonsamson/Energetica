@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator, Literal
 
-from energetica.utils.session import check_password_hash
+from energetica.kernel.session import check_password_hash
 
 # The default targets local dev: a repo-relative path under instance/ (the per-instance
 # working dir, alongside engine_data.pck and secret_key.txt), so `python main.py --env dev`

@@ -11,9 +11,9 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from energetica.game_error import GameError
+from energetica.kernel.game_error import GameError
 from energetica.schemas.common import GameErrorOut
-from energetica.utils.version import backend_version, frontend_version
+from energetica.kernel.version import backend_version, frontend_version
 from lobby.routers import auth_router, lobby_router
 
 # The lobby serves its SPA from dist-lobby (see scripts/deploy-lobby.sh), so that is where its

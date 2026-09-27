@@ -252,7 +252,7 @@ log_success "/healthz status=ok, app and its bundle load"
 # commit that failed to activate. The server has no .git (rsync excludes it), so the commit is
 # captured here on the deploy machine and written to the instance root as DEPLOYED_VERSION.json.
 # It is excluded from the rsync --delete above, so between restart and this write /healthz keeps
-# reporting the *previous* commit rather than a wrong one. Read by src/energetica/utils/version.py.
+# reporting the *previous* commit rather than a wrong one. Read by src/energetica/kernel/version.py.
 stamp_deployed_version "$SSH" "$REMOTE_PATH"
 
 echo
