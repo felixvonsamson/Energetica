@@ -190,3 +190,25 @@ def test_rollback_reports_failure_when_the_site_cannot_be_disabled(tmp_path: Pat
     # has to be honest about it rather than swallowed.
     status, _, _ = _run_rollback(tmp_path, vhost="x", backup=None, was_enabled=False, a2dissite_exit=1)
     assert status != 0
+
+
+def test_the_deploy_refuses_a_vhost_that_does_not_deny_the_data_tables() -> None:
+    """The vhost denies the data tables where the engine reads them, and the deploy checks for it.
+
+    The tables include the daily quiz answers (#1070). If they move again, the deny must move
+    with them, and the deploy script's precondition must look for the new deny. Otherwise a
+    vhost rendered from an older template would pass the check.
+    """
+    from energetica.freeplay.game_engine import _DATA_DIR
+
+    src = Path(__file__).resolve().parents[2] / "src"
+    data_dir = f"/var/www/energetica-@INSTANCE@/src/{_DATA_DIR.relative_to(src).as_posix()}"
+    deny = f'<Directory "{data_dir}">'
+    assert deny in _VHOST_TEMPLATE.read_text(), "the vhost template does not deny the engine's data directory"
+
+    deploy = (_INFRA.parent / "deploy-instance.sh").read_text()
+    checked = re.search(r'^DATA_DENY="(.*)"$', deploy, re.MULTILINE)
+    assert checked is not None, "deploy-instance.sh no longer checks the vhost for the data deny"
+    rendered = checked.group(1).replace('\\"', '"').replace("$REMOTE_PATH", "/var/www/energetica-@INSTANCE@")
+    assert rendered == deny, "deploy-instance.sh checks for a different deny than the template renders"
+    assert 'REMOTE_PATH="/var/www/energetica-$INSTANCE"' in deploy
