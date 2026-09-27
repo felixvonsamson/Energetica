@@ -299,13 +299,15 @@ Both axes are declared per-instance in a single file the instance backend owns:
     { "name": "Autumn 2025",
       "advertised": true,
       "starts_at": "2025-09-15T00:00:00Z",
-      "access": { "policy": "public" } }
+      "access": { "policy": "public" },
+      "run": { "mode": "freeplay" } }
 
   Private (allowlist-gated) + unadvertised:
     { "name": "ETHZ Spring 2026",
       "advertised": false,
       "starts_at": "2026-03-01T00:00:00Z",
-      "access": { "policy": "private" } }
+      "access": { "policy": "private" },
+      "run": { "mode": "freeplay" } }
 ```
 
 *(`access.allowed_usernames` shown in earlier drafts of this file is deprecated — who may access
@@ -524,7 +526,8 @@ scripts/
 
 1. Create `/var/www/energetica-{instance}/` directory structure
 2. Clone repo (or symlink shared code — TBD)
-3. Create `/etc/energetica/{instance}/` (mode `0750`, owned by `root:energetica`) and render `instance.json.tmpl` into `/etc/energetica/{instance}/instance.json` (defaults: `name = {slug titlecased}`, `advertised = true`, `starts_at = now (UTC)`, `run.mode` from the required `--mode`, `access.policy = "private"` for a workshop Run and `"public"` otherwise — admin edits before going live for other private instances). `render-instance-json.sh` does the rendering, and checks `--mode` against the `run-modes` list `push-bootstrap.sh` generates from the backend, then render `instance.env.tmpl` into `/etc/energetica/{instance}/instance.env` with this run's port and clock values
+3. Create `/etc/energetica/{instance}/` (mode `0750`, owned by `root:energetica`) and render `instance.json.tmpl` into `/etc/energetica/{instance}/instance.json` (defaults: `name = {slug titlecased}`, `advertised = true`, `starts_at = now (UTC)`, `run.mode` from the required `--mode`, `access.policy = "private"` for a workshop Run and `"public"` otherwise; to make any other Run private, an admin edits the file before it goes live), then render `instance.env.tmpl` into `/etc/energetica/{instance}/instance.env` with this run's port and clock values
+   `render-instance-json.sh` renders `instance.json`. It checks `--mode` against the `run-modes` list that `push-bootstrap.sh` generates from the backend.
 4. Create and enable a temporary HTTP-only vhost — written inline, not from `apache-instance.conf`, because that template names certificate files that do not exist yet
 5. Reload Apache (HTTP only at this point)
 6. Obtain TLS certificate: `certbot certonly --webroot -w /var/www/energetica-{instance}/ -d {instance}.{domain}` — the instance directory (created in step 1) is already the Apache DocumentRoot, so ACME challenge files are reachable there

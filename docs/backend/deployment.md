@@ -51,8 +51,8 @@ already claimed by another `energetica-*` unit or by another instance's `instanc
 Two files, both in `/etc/energetica/{slug}/`, both `0640` and readable by the `energetica` group:
 
 - **`instance.json`** — the run's identity and access policy: name, whether it is advertised,
-  the lifecycle dates, the join token, and which kind of Run it is (`"run": {"mode": ...}`). Read fresh on every login, and written back to by the
-  service for private-access changes. An admin can edit it at any time; no restart needed.
+  the lifecycle dates, the join token, and which kind of Run it is (`"run": {"mode": ...}`).
+  Read fresh on every login, and written back to by the service for private-access changes. An admin can edit it at any time; no restart needed.
   Owned by `energetica`, because the service is what rewrites it.
 - **`instance.env`** — how the service runs: the environment contract
   (`ENERGETICA_INSTANCE_SLUG` plus the three path variables) and the port and two clock values.

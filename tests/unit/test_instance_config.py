@@ -42,6 +42,11 @@ def _write_instance_json(config_dir: Path, payload: dict | str) -> None:
     target.write_text(payload if isinstance(payload, str) else json.dumps(payload), encoding="utf-8")
 
 
+def _without(payload: dict, key: str) -> dict:
+    """``payload`` with ``key`` dropped, for tests of a file that omits a block."""
+    return {k: v for k, v in payload.items() if k != key}
+
+
 PUBLIC_JSON = {
     "name": "Autumn 2025",
     "advertised": True,
@@ -165,7 +170,7 @@ def test_load_workshop_run(configured: Path) -> None:
 
 def test_load_without_run_fails_closed(configured: Path) -> None:
     """The mode must be stated. A file that predates the field is rejected, not read as freeplay."""
-    _write_instance_json(configured, {key: value for key, value in PUBLIC_JSON.items() if key != "run"})
+    _write_instance_json(configured, _without(PUBLIC_JSON, "run"))
     with pytest.raises(InstanceConfigError):
         instance_config.load_instance_config()
 
@@ -191,7 +196,7 @@ def test_load_run_with_unknown_key_fails_closed(configured: Path, mode: str) -> 
 
 
 def test_workshop_run_defaults_access_to_private_when_access_omitted(configured: Path) -> None:
-    workshop = {key: value for key, value in PRIVATE_JSON.items() if key != "access"}
+    workshop = _without(PRIVATE_JSON, "access")
     _write_instance_json(configured, {**workshop, "run": {"mode": "workshop"}})
     config = instance_config.load_instance_config()
     assert config is not None
@@ -211,14 +216,14 @@ def test_workshop_run_explicit_access_is_not_overridden(configured: Path, access
 
 def test_freeplay_run_still_requires_access(configured: Path) -> None:
     """The private default is Workshop-only. A freeplay file with no access block fails closed."""
-    _write_instance_json(configured, {key: value for key, value in PUBLIC_JSON.items() if key != "access"})
+    _write_instance_json(configured, _without(PUBLIC_JSON, "access"))
     with pytest.raises(InstanceConfigError):
         instance_config.load_instance_config()
 
 
 def test_private_access_write_keeps_the_run_mode(configured: Path) -> None:
     """The facilitator write path rewrites the whole file, so it must carry the run block through."""
-    workshop = {key: value for key, value in PRIVATE_JSON.items() if key != "access"}
+    workshop = _without(PRIVATE_JSON, "access")
     _write_instance_json(configured, {**workshop, "run": {"mode": "workshop"}})
 
     instance_config.get_or_create_join_token()
