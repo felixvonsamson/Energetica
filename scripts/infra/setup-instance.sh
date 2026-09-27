@@ -10,9 +10,8 @@ set -euo pipefail
 #        [--clock-time <seconds>] [--in-game-seconds-per-tick <seconds>] [--yes]
 #
 # --mode is the kind of Run, written to instance.json's `run` block, and has no default (#1060).
-# The accepted values come from the backend: push-bootstrap.sh writes them to run-modes next to
-# this script, and render-instance-json.sh checks against that. A workshop Run is rendered
-# private; every other mode is rendered public.
+# render-instance-json.sh checks it against the modes the backend accepts. A workshop Run is
+# rendered private; every other mode is rendered public.
 #
 # --starts-at/--freeze-at/--ended-at are the lifecycle boundaries (announced→active→freeze→ended).
 # --freeze-at and --ended-at are optional (omit → null → an open-ended run); when given they must

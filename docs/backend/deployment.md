@@ -33,9 +33,8 @@ sudo bash /tmp/setup-instance.sh autumn-2025 8004 --domain energetica-game.org -
 ```
 
 `--mode` is required and has no default: it is the kind of Run (`freeplay` or `workshop`), and
-the backend rejects an `instance.json` that does not state one. `push-bootstrap.sh` asks your
-local backend which modes it accepts and pushes the list as `/tmp/run-modes`, so re-run it after
-pulling a change that adds a mode. A `workshop` Run is provisioned private.
+the backend rejects an `instance.json` that does not state one. A `workshop` Run is provisioned
+private.
 
 `setup-instance.sh` provisions the box (directory, venv, `/etc/energetica/{slug}/instance.json`
 and `instance.env`, vhost+TLS, enabled-but-unstarted unit) but ships **no** code and does **not**
@@ -103,7 +102,8 @@ From your local machine:
   cross-origin links resolve) and the backend wheel, rsyncs the Python backend + bundle,
   installs the wheel into the server venv, restarts the service, and polls `/healthz`. On
   restart the instance re-reads `instance.json` and re-publishes its landing fragment, so
-  admin policy edits take effect.
+  admin policy edits take effect. Before any of that, it checks the instance's `instance.json`
+  against the backend it is about to ship, and refuses to deploy if the new code would reject it.
   Downtime is ~10-30 seconds while the restart happens — Apache and every other instance keep
   serving throughout. Game state isn't touched: it lives in the instance's own `instance/`
   directory, which the rsync step excludes.
@@ -196,13 +196,10 @@ not `systemctl start` it by hand in between: that would run the old code against
 ./scripts/deploy-instance.sh --server energetica-game --instance "$SLUG" --domain energetica-game.org
 ```
 
-**4. Check the file loads.** Back on the VPS, as root, with the backend the deploy just installed:
-
-```bash
-sudo -u energetica env ENERGETICA_INSTANCE_SLUG="$SLUG" "/var/www/energetica-$SLUG/.venv/bin/python" \
-    -c 'from energetica.identity.instance_config import load_instance_config; print(load_instance_config().run)'
-# mode='freeplay'
-```
+Before it ships anything, the deploy reads the instance's `instance.json` and checks it with the
+code it is about to install. If step 2 was missed or went wrong, it refuses, prints which field is
+at fault, and leaves the server as it was. The instance is still stopped at that point: fix the
+file and deploy again.
 
 The reaper needs nothing. It reads `ended_at` with `jq` and no schema, so it works on either shape.
 

@@ -89,18 +89,14 @@ def test_the_unit_reads_the_env_file_setup_instance_writes() -> None:
     assert 'install_rendered "$CONFIG_DIR/instance.env"' in setup
 
 
-def test_instance_json_is_rendered_by_the_tested_renderer_against_the_pushed_mode_list() -> None:
+def test_instance_json_is_rendered_by_the_tested_renderer() -> None:
     """`setup-instance.sh` must write what `render-instance-json.sh` prints, since that is what
-    `test_render_instance_json.py` checks against the backend. The renderer reads the mode list
-    from `run-modes` beside itself, and `push-bootstrap.sh` flattens `scripts/infra/` into `/tmp/`,
-    so it must push the list to `/tmp/run-modes`.
+    `test_render_instance_json.py` checks against the backend.
     """
     setup = _SETUP_SCRIPT.read_text()
     assert '"$SCRIPT_DIR/render-instance-json.sh"' in setup
     assert "instance.json.tmpl" not in setup, "setup-instance.sh renders the template itself again"
     assert '"$INSTANCE_JSON" | install_rendered "$CONFIG_DIR/instance.json"' in setup
-    assert 'MODES_FILE="$SCRIPT_DIR/run-modes"' in (_INFRA / "render-instance-json.sh").read_text()
-    assert ':/tmp/run-modes"' in (_INFRA.parent / "push-bootstrap.sh").read_text()
 
 
 def test_the_unit_refuses_to_start_without_its_env_file() -> None:

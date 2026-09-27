@@ -92,6 +92,40 @@ if ! ssh "$SSH" "grep -qF '$DATA_DENY' '$VHOST_FILE'"; then
     exit 1
 fi
 
+# The instance's instance.json must parse under the backend this deploy ships. The instance reads
+# it on every login and fails closed, so a file the new code rejects locks every player out, even
+# on a public Run. That is what happens to a file an operator forgot to migrate by hand (#1060
+# added the required `run` block). Check it with this checkout's own code, since that is exactly
+# what is about to be installed, and before anything is synced, so a refusal changes nothing.
+# The file holds the join token, so it is streamed into the check and never written locally.
+CONFIG_FILE="/etc/energetica/$INSTANCE/instance.json"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LOCAL_PYTHON="$REPO_ROOT/.venv/bin/python"
+[ -x "$LOCAL_PYTHON" ] || LOCAL_PYTHON="$(command -v python3)"
+CHECK_CONFIG='
+import sys
+from pydantic import ValidationError
+from energetica.identity.instance_config import InstanceConfig
+try:
+    InstanceConfig.model_validate_json(sys.stdin.read())
+except ValidationError as exc:
+    # include_input=False keeps the values in the file, the join token among them, off the terminal.
+    for error in exc.errors(include_input=False):
+        print("  " + ".".join(str(part) for part in error["loc"]) + ": " + error["msg"])
+    sys.exit(1)
+'
+if ! CONFIG_JSON="$(ssh "$SSH" "cat '$CONFIG_FILE'")"; then
+    log_error "Cannot read $CONFIG_FILE on $REMOTE_HOST. setup-instance.sh writes it; has it run?"
+    exit 1
+fi
+if ! printf '%s' "$CONFIG_JSON" | PYTHONPATH="$REPO_ROOT/src" "$LOCAL_PYTHON" -c "$CHECK_CONFIG"; then
+    log_error "$CONFIG_FILE is not valid for the backend this deploy ships (reasons above)."
+    echo "Fix it on $REMOTE_HOST as root, then deploy again. For a missing run block, see"
+    echo "docs/backend/deployment.md § Adding the Run mode to existing instances."
+    exit 1
+fi
+unset CONFIG_JSON
+
 # --- 1. Build -------------------------------------------------------------------
 if [ "$SKIP_BUILD" = false ]; then
     log_step "Building app bundle (vite build + service worker)..."

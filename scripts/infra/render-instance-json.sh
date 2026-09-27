@@ -5,7 +5,7 @@ set -euo pipefail
 #
 #   bash scripts/infra/render-instance-json.sh --mode <mode> --name "<display name>" \
 #        --advertised true|false --starts-at <ISO-8601-UTC> \
-#        [--freeze-at <ISO-8601-UTC>] [--ended-at <ISO-8601-UTC>] [--modes-file <path>]
+#        [--freeze-at <ISO-8601-UTC>] [--ended-at <ISO-8601-UTC>]
 #
 # setup-instance.sh is the caller. It is split out so the rendering can be tested without root:
 # the backend fails closed on an instance.json it cannot parse, so a bad rendering would lock
@@ -13,13 +13,14 @@ set -euo pipefail
 # parses the output with the backend's own model.
 #
 # --mode has no default, matching the backend (#1060): the file must say which kind of Run it is.
-# The accepted modes are read from --modes-file (default: run-modes next to this script), which
-# push-bootstrap.sh generates from the backend. The list is not kept here, so it cannot drift.
 #
 # Prints nothing and exits non-zero on any input that would not render a valid file.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MODES_FILE="$SCRIPT_DIR/run-modes"
+# Must match the modes the backend accepts (instance_config.run_modes()). The backend is not
+# installed on the server when this runs, so the list is repeated here, and
+# tests/unit/test_render_instance_json.py fails if the two differ.
+MODE_CHOICES="freeplay workshop"
 MODE=""
 NAME=""
 ADVERTISED=""
@@ -35,7 +36,6 @@ while [[ $# -gt 0 ]]; do
         --starts-at) STARTS_AT="$2"; shift 2 ;;
         --freeze-at) FREEZE_AT="$2"; shift 2 ;;
         --ended-at) ENDED_AT="$2"; shift 2 ;;
-        --modes-file) MODES_FILE="$2"; shift 2 ;;
         *) echo "✗ Unknown option: $1" >&2; exit 1 ;;
     esac
 done
@@ -45,8 +45,11 @@ fail() { echo "✗ $1" >&2; exit 1; }
 [ -n "$MODE" ] || fail "--mode is required (the backend accepts no instance.json without one)"
 [ -n "$NAME" ] || fail "--name is required"
 [ -n "$STARTS_AT" ] || fail "--starts-at is required"
-[ -f "$MODES_FILE" ] || fail "$MODES_FILE is missing. Re-run ./scripts/push-bootstrap.sh, which generates it from the backend."
-grep -qxF -- "$MODE" "$MODES_FILE" || fail "--mode must be one of: $(tr '\n' ' ' < "$MODES_FILE")(got '$MODE')"
+MODE_VALID=false
+for choice in $MODE_CHOICES; do
+    [ "$MODE" != "$choice" ] || MODE_VALID=true
+done
+[ "$MODE_VALID" = true ] || fail "--mode must be one of: $MODE_CHOICES (got '$MODE')"
 case "$ADVERTISED" in
     true|false) ;;
     *) fail "--advertised must be true or false (got '$ADVERTISED')" ;;

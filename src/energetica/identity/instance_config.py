@@ -155,8 +155,8 @@ RunMode = FreeplayRun | WorkshopRun
 def run_modes() -> tuple[str, ...]:
     """The ``mode`` tags :class:`InstanceConfig` accepts, in declaration order.
 
-    ``push-bootstrap.sh`` writes these to the server so ``setup-instance.sh`` can validate its
-    ``--mode`` option against the backend instead of keeping its own copy of the list.
+    ``render-instance-json.sh`` keeps its own copy of this list, because the backend is not
+    installed on the server when it runs. ``test_render_instance_json.py`` holds the two equal.
     """
     return tuple(get_args(variant.model_fields["mode"].annotation)[0] for variant in get_args(RunMode))
 
