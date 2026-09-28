@@ -56,7 +56,9 @@ where = ["src"]
 namespaces = true
 # ...which also means every directory under src/energetica counts, including freeplay/data/.
 # Exclude it: it holds no Python, and what ships from it is named explicitly as package data below.
-exclude = ["energetica.freeplay.data*"]
+# The patterns are globs, so name the package and its children exactly: a bare
+# "energetica.freeplay.data*" would also match energetica.freeplay.database.
+exclude = ["energetica.freeplay.data", "energetica.freeplay.data.*"]
 
 [tool.setuptools.dynamic]
 # Read from the module's AST at build time, so building never imports the package.
