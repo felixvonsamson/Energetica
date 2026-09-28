@@ -5,13 +5,18 @@ Workshop-specific player-identity object, in place of the persistent world's pla
 
 from __future__ import annotations
 
+import threading
+import time
+from typing import Any
+
 import pytest
 
 from energetica.identity.accounts import Account
 from energetica.identity.instance_config import InstanceConfig
+from energetica.workshop import network as network_module
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.player import WORKSHOP_STARTING_BUDGET, WorkshopPlayer
-from energetica.workshop.setup import NotAWorkshopRunError, join_workshop_run, open_workshop_run
+from energetica.workshop.setup import NotAWorkshopRunError, open_workshop_run
 
 # The persistent world's per-network cap (`energetica.config.constants`). Restated rather than
 # imported: this module tests Workshop, which may not import from the persistent world.
@@ -65,8 +70,8 @@ def test_opening_a_workshop_run_gives_an_empty_shared_network() -> None:
 
 
 def test_multiple_players_joining_land_in_the_same_network(network: WorkshopNetwork) -> None:
-    alice = join_workshop_run(network, _account(1, "alice"))
-    bob = join_workshop_run(network, _account(2, "bob"))
+    alice = network.join(_account(1, "alice"))
+    bob = network.join(_account(2, "bob"))
 
     assert alice.network is network
     assert bob.network is network
@@ -77,11 +82,43 @@ def test_joining_twice_with_the_same_account_returns_the_existing_player(network
     """A retried join must not hand one account a second Run identity or a second shared-Network
     entry (review of #1048).
     """
-    first = join_workshop_run(network, _account(1, "alice"))
-    second = join_workshop_run(network, _account(1, "alice"))
+    first = network.join(_account(1, "alice"))
+    second = network.join(_account(1, "alice"))
 
     assert second is first
     assert network.players() == [first]
+
+
+def test_concurrent_joins_with_the_same_account_return_one_player(
+    network: WorkshopNetwork, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Two requests for the same account racing to join must both get the one player that is in the
+    Network. A slow player constructor widens the window between the lookup and the insert, so the
+    race shows up reliably whenever those two steps are not done as one.
+    """
+
+    def slow_player(**fields: Any) -> WorkshopPlayer:
+        time.sleep(0.05)
+        return WorkshopPlayer(**fields)
+
+    monkeypatch.setattr(network_module, "WorkshopPlayer", slow_player)
+    players: list[WorkshopPlayer] = []
+    lock = threading.Lock()
+
+    def join() -> None:
+        player = network.join(_account(1, "alice"))
+        with lock:
+            players.append(player)
+
+    threads = [threading.Thread(target=join) for _ in range(5)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert len(players) == 5
+    assert all(player is players[0] for player in players)
+    assert network.players() == [players[0]]
 
 
 def test_joining_does_not_count_against_the_persistent_network_member_limit(network: WorkshopNetwork) -> None:
@@ -89,7 +126,7 @@ def test_joining_does_not_count_against_the_persistent_network_member_limit(netw
     system-driven assignment path that the cap does not apply to (#990).
     """
     count = PERSISTENT_NETWORK_MEMBER_LIMIT + 5
-    players = [join_workshop_run(network, _account(i, f"player{i}")) for i in range(count)]
+    players = [network.join(_account(i, f"player{i}")) for i in range(count)]
 
     assert len(players) == count
     assert len(network.players()) == count
@@ -99,7 +136,7 @@ def test_joining_does_not_count_against_the_persistent_network_member_limit(netw
 
 
 def test_workshop_player_carries_account_linkage_and_starting_budget(network: WorkshopNetwork) -> None:
-    player = join_workshop_run(network, _account(7, "carol"))
+    player = network.join(_account(7, "carol"))
 
     assert isinstance(player, WorkshopPlayer)
     assert player.account_id == 7
@@ -112,7 +149,7 @@ def test_workshop_player_has_none_of_the_persistent_world_only_state(network: Wo
     """The persistent-world-only pieces are dropped, not adapted (#992 §11): no tile (Workshop has
     no map), no `projects_by_priority`, no `achievements`.
     """
-    player = join_workshop_run(network, _account(1, "alice"))
+    player = network.join(_account(1, "alice"))
 
     assert not hasattr(player, "tile")
     assert not hasattr(player, "projects_by_priority")
@@ -121,6 +158,6 @@ def test_workshop_player_has_none_of_the_persistent_world_only_state(network: Wo
 
 def test_player_repr_does_not_recurse_through_the_network(network: WorkshopNetwork) -> None:
     """The network holds each player, and each player holds the network back."""
-    player = join_workshop_run(network, _account(1, "alice"))
+    player = network.join(_account(1, "alice"))
 
     assert repr(player) == "<WorkshopPlayer 1 'alice'>"

@@ -30,7 +30,7 @@ WORKSHOP_STARTING_BUDGET = 25_000.0
 class WorkshopPlayer:
     """A single account's identity within one Workshop Run.
 
-    Created by :func:`energetica.workshop.setup.join_workshop_run`, never directly, so that every
+    Created by :meth:`energetica.workshop.network.WorkshopNetwork.join`, never directly, so that every
     player is in the Run's shared Network from the moment it exists.
     """
 
