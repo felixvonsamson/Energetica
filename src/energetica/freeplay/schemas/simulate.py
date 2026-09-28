@@ -17,7 +17,6 @@ class InitEngineAction(BaseModel):
     action_type: Literal["init_engine"]
     random_seed: int
     start_date: datetime
-    disable_signups: bool
 
 
 class CreateUserAction(BaseModel):

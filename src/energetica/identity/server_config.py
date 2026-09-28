@@ -2,8 +2,8 @@
 
 The server-wide analog of the per-instance ``instance.json``: a small admin-owned file, re-read
 fresh on every call (no cache) so admin edits take effect without a restart. It currently carries
-only the signup toggle — the server-wide replacement for the per-instance ``disable_signups`` the
-lobby (no engine, no slug) cannot reuse (ADR-0003). ``setup-base.sh`` writes the initial file.
+only the signup toggle. Account creation is a server-wide concern, so the toggle lives here
+rather than on any one instance (ADR-0003). ``setup-base.sh`` writes the initial file.
 
     {ENERGETICA_SERVER_CONFIG_PATH}   (default: /etc/energetica/server.json)
 """
@@ -42,8 +42,11 @@ def signups_enabled() -> bool:
 
     **Fails closed:** a missing or malformed file → signups *disabled*. ``server.json`` is written
     by ``setup-base.sh``, so its absence means misconfiguration, and a broken toggle must never
-    accidentally throw open account creation to the world. Closed-enrollment deployments create
-    accounts by direct bootstrap instead (ADR-0003), so signups-off is a benign degraded state.
+    accidentally throw open account creation to the world.
+
+    This is the only switch governing account creation (ADR-0003). A closed-enrollment deployment
+    turns the toggle on long enough for its players to sign up, then turns it back off. The file
+    is re-read on every call, so neither flip needs a restart.
     """
     path = _config_path()
     try:

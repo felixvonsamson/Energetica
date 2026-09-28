@@ -64,7 +64,6 @@ class GameEngine(object):
 
         self.uuid: uuid.UUID = None  # type: ignore[assignment]
         self.random_seed: int = None  # type: ignore[assignment]
-        self.disable_signups: bool = False
         self.total_t: int = None  # type: ignore[assignment]
         self.start_date: datetime.datetime = None  # type: ignore[assignment]
         self.first_tick_time: datetime.datetime = None  # type: ignore[assignment]
@@ -113,7 +112,6 @@ class GameEngine(object):
         random_seed: int,
         env: Literal["dev"] | Literal["prod"],
         game_version: str,
-        disable_signups: bool = False,
         start_date: datetime.datetime | None = None,
         instance_uuid: str | None = None,
     ) -> None:
@@ -130,7 +128,6 @@ class GameEngine(object):
         self.uuid = uuid.uuid1() if instance_uuid is None else uuid.UUID(instance_uuid)
         self.random_seed = random_seed
         self.env = env
-        self.disable_signups = disable_signups
         self.total_t = 0  # Number of simulated game ticks since server start
         self.start_date = start_date or datetime.datetime.now(datetime.timezone.utc)  # 0 point of server time
         self.first_tick_time = self.start_date  # will be set to the correct time later on
@@ -143,7 +140,6 @@ class GameEngine(object):
             action_type="init_engine",
             random_seed=self.random_seed,
             start_date=self.start_date,
-            disable_signups=disable_signups,
         )
         self.log_action(log_entry)
         # Random time shift in number of ticks to start the game at a random season of the year
@@ -253,7 +249,6 @@ class GameEngine(object):
             "technology_lvls",
             "db_model_instances",
             "env",
-            "disable_signups",
             "general_chat_id",
         ]
         data = {member: getattr(self, member) for member in members_to_save}
