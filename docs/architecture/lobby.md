@@ -170,9 +170,8 @@ CREATE TABLE IF NOT EXISTS instance_membership (
 `User`, no `Player`. An account may exist with zero memberships. Gated by a **server-wide
 signup toggle** — a `signups_enabled` flag in a new `/etc/energetica/server.json`, read
 fresh by the lobby, never by a per-instance allowlist. This is the only switch governing
-account creation: an instance has no signup path of its own. Closed-enrollment deployments
-seed accounts directly into `accounts.db` via `accounts.get_or_create_account_id`. See
-ADR-0003.
+account creation. A closed-enrollment deployment turns the toggle on while its players sign
+up, then turns it off again; neither flip needs a restart. See ADR-0003.
 
 **Login (lobby).** Verify credentials against `accounts.db`; set the `domain=.{apex}`
 session cookie (shared secret). Redirect to the picker, or to `?return=` if present.

@@ -44,11 +44,9 @@ def signups_enabled() -> bool:
     by ``setup-base.sh``, so its absence means misconfiguration, and a broken toggle must never
     accidentally throw open account creation to the world.
 
-    This is the only switch governing account creation; an instance has no signup path of its own
-    (ADR-0003). A closed-enrollment deployment therefore bootstraps by turning the toggle on long
-    enough for its players to sign up, then turning it back off — the file is re-read on every
-    call, so neither flip needs a restart. That replaces the ``players.txt`` enrollment path
-    removed in #842.
+    This is the only switch governing account creation (ADR-0003). A closed-enrollment deployment
+    turns the toggle on long enough for its players to sign up, then turns it back off. The file
+    is re-read on every call, so neither flip needs a restart.
     """
     path = _config_path()
     try:
