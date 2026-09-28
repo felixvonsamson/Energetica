@@ -72,6 +72,16 @@ one-off migration is in the commit that introduced the split — `git log --grep
 than a script in the tree, since it is worth running exactly once per instance and nothing would
 keep it honest afterwards.
 
+The `energetica` service user's home is `/var/cache/energetica`, which holds pip's download
+cache. Servers provisioned before #1067 have the home on the root-owned `/var/www`, where pip cannot
+write, so every dependency install re-downloads from PyPI. Re-running `setup-base.sh` creates the new
+directory and tries to move the home, but `usermod` refuses while any `energetica-*` service is
+running, so on a live server it reports that and carries on. Finish with a short outage rather
+than re-running the whole script with the games down: stop every unit that
+`systemctl list-units 'energetica-*'` lists, run `sudo usermod --home /var/cache/energetica
+energetica`, and start them again. The services also get the new `HOME` once restarted, since
+systemd takes it from the account; nothing in the game reads it.
+
 DNS for the apex and each `{instance}.{domain}` subdomain must resolve to the server before
 running the setup scripts (certbot uses the webroot challenge). For a private/unadvertised
 instance, `sudo`-edit `/etc/energetica/{instance}/instance.json` before the first login.
