@@ -35,7 +35,6 @@ def _init() -> InitEngineAction:
         in_game_seconds_per_tick=1,
         random_seed=1,
         start_date=_TS,
-        disable_signups=False,
     )
 
 
@@ -159,3 +158,32 @@ def test_read_init_action_returns_none_for_empty_log(tmp_path: Path) -> None:
     log.write_text("", encoding="utf-8")
 
     assert read_init_action(log) is None
+
+
+def test_read_init_action_accepts_a_log_predating_disable_signups_removal(tmp_path: Path) -> None:
+    """A log written before #842 still replays, and its dropped field never reaches the engine.
+
+    ``disable_signups`` was removed from ``InitEngineAction``, but logs written before that
+    still carry it. ``create_app`` restores an instance by splatting ``init_action.model_dump()``
+    straight into ``GameEngine.init_instance``, so a field that survived validation would arrive
+    as an unexpected keyword argument and break startup for every pre-existing run. Compatibility
+    rests on Pydantic ignoring unknown fields, which is a default rather than something this
+    schema states, so pin it here.
+    """
+    import inspect
+    import json
+
+    from energetica.game_engine import GameEngine
+
+    legacy = json.loads(_init().model_dump_json()) | {"disable_signups": True}
+    log = tmp_path / "actions_history.log"
+    log.write_text(json.dumps(legacy) + "\n", encoding="utf-8")
+
+    init = read_init_action(log)
+
+    assert init is not None
+    kwargs = init.model_dump()
+    kwargs.pop("action_type")
+    assert "disable_signups" not in kwargs
+    accepted = set(inspect.signature(GameEngine.init_instance).parameters) - {"self"}
+    assert set(kwargs) <= accepted
