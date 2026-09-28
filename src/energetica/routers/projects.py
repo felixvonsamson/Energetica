@@ -4,8 +4,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.database.ongoing_project import OngoingProject
-from energetica.database.player import Player
+from energetica.freeplay.database.ongoing_project import OngoingProject
+from energetica.freeplay.database.player import Player
 from energetica.schemas.projects import (
     ExtractionFacilityCatalogListOut,
     FunctionalFacilityCatalogListOut,
@@ -15,8 +15,8 @@ from energetica.schemas.projects import (
     StorageFacilityCatalogListOut,
     TechnologyCatalogListOut,
 )
-from energetica.utils.auth import get_settled_player, reject_when_frozen
 from energetica.utils import projects
+from energetica.utils.auth import get_settled_player, reject_when_frozen
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 

@@ -9,14 +9,14 @@ from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
 from energetica.enums import (
     ClimateEventType,
+    FacilityType,
     Fuel,
     ProjectType,
     TechnologyType,
 )
-from energetica.enums import FacilityType
 
 if TYPE_CHECKING:
-    from energetica.database.messages import Notification
+    from energetica.freeplay.database.messages import Notification
 
 # ---------------------------------------------------------------------------
 # Payload variants — one per notification type.

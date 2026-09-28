@@ -2,7 +2,7 @@
 
 from typing import get_args, get_type_hints
 
-from energetica.database.messages import NotificationType
+from energetica.freeplay.database.messages import NotificationType
 from energetica.schemas.notifications import PersistableNotificationPayload
 
 

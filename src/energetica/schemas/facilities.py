@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from energetica.database.active_facility import ActiveFacility
 from energetica.enums import (
     ExtractionFacilityType,
     PowerFacilityType,
@@ -14,11 +13,12 @@ from energetica.enums import (
     StorageFacilityType,
     WindFacilityType,
 )
+from energetica.freeplay.database.active_facility import ActiveFacility
 from energetica.schemas.electricity_markets import AskType, BidType
 from energetica.sim.facility_statuses import ConsumptionStatus, ProductionStatus, RenewableStatus
 
 if TYPE_CHECKING:
-    from energetica.database.player import Player
+    from energetica.freeplay.database.player import Player
 
 
 class PowerFacilityOut(BaseModel):

@@ -1,10 +1,10 @@
 """Utility functions relating to electricity market networks."""
 
 from energetica.config.constants import NETWORK_MEMBER_LIMIT
-from energetica.database.network import Network
-from energetica.database.player import Player
+from energetica.freeplay.database.network import Network
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.globals import engine
 
 
 # TODO (Felix): Move this to a method in Player

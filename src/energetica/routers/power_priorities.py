@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.database.player import Player
+from energetica.freeplay.database.player import Player
 from energetica.schemas.electricity_markets import AskType, BidType
 from energetica.schemas.power_priorities import PowerPrioritiesListIn, PowerPrioritiesListOut
 from energetica.utils.auth import get_settled_player, reject_when_frozen

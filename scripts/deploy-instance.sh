@@ -75,6 +75,23 @@ if ! ssh -o ConnectTimeout=5 "$SSH" exit 2>/dev/null; then
     exit 1
 fi
 
+# The instance vhost must deny the game's data tables at the path this deploy ships them to,
+# before they land there. They include the daily quiz answers (#1070), and #1055 moved them from
+# src/energetica/static/data/ to src/energetica/freeplay/data/. Deploys never write the vhost (that
+# is root's work, see update-instance-vhost.sh), so a vhost rendered from an older template still
+# denies the old path. Refuse to deploy until it has been re-rendered. This runs before anything
+# is synced, so a refusal leaves the server exactly as it was.
+VHOST_FILE="/etc/apache2/sites-available/energetica-$INSTANCE.conf"
+DATA_DENY="<Directory \"$REMOTE_PATH/src/energetica/freeplay/data\">"
+if ! ssh "$SSH" "grep -qF '$DATA_DENY' '$VHOST_FILE'"; then
+    log_error "The vhost does not deny $REMOTE_PATH/src/energetica/freeplay/data (or $VHOST_FILE is unreadable)."
+    echo "It predates the data-table move in #1055. Re-render it before deploying:"
+    echo "  ./scripts/push-bootstrap.sh --server $REMOTE_HOST"
+    echo "  then on $REMOTE_HOST, as root (not as $REMOTE_USER — it has no sudo for this):"
+    echo "    sudo bash /tmp/update-instance-vhost.sh $INSTANCE --domain $DOMAIN"
+    exit 1
+fi
+
 # --- 1. Build -------------------------------------------------------------------
 if [ "$SKIP_BUILD" = false ]; then
     log_step "Building app bundle (vite build + service worker)..."

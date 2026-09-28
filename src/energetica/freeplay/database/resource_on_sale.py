@@ -5,11 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from energetica.database import DBModel
+from energetica.freeplay.database import DBModel
 
 if TYPE_CHECKING:
-    from energetica.database.player import Player
     from energetica.enums import Fuel
+    from energetica.freeplay.database.player import Player
 
 
 @dataclass

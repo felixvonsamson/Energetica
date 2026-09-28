@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import csv
+import datetime
 import logging
 import math
 import os
@@ -12,31 +13,31 @@ import random
 import tarfile
 import uuid
 from collections import deque
-import numpy as np
-import datetime
 from pathlib import Path
 from threading import RLock
 from typing import TYPE_CHECKING, Any, Callable, Literal
 
+import numpy as np
 import socketio
 
 from energetica.config.assets import config, const_config
 from energetica.enums import Fuel, Renewable
-from energetica.schemas.simulate import Action, InitEngineAction
+from energetica.freeplay import legacy_pickle
+from energetica.freeplay.schemas.simulate import Action, InitEngineAction
 
 if TYPE_CHECKING:
-    from energetica.database.messages import Chat
+    from energetica.freeplay.database.messages import Chat
 
 # Read-only game data that ships inside the wheel (see `package-data` in pyproject.toml), so it
 # is addressed relative to this file and resolves wherever the package is installed.
 #
 # Everything the engine *writes* — `instance/`, `checkpoints/` — is addressed relative to the
-# working directory instead, both here and in `energetica/__init__.py`. That works because the
+# working directory instead, both here and in `energetica/freeplay/app.py`. That works because the
 # systemd units pin WorkingDirectory to the run's own directory, and it is the only thing that
 # can work now the code is installed: __file__ points into site-packages, which holds no run
 # state and is shared by every run on the box. The split is deliberate: package data by
 # __file__, run state by working directory.
-_DATA_DIR = Path(__file__).parent / "static" / "data"
+_DATA_DIR = Path(__file__).parent / "data"
 
 
 # This is the engine object
@@ -46,7 +47,7 @@ class GameEngine(object):
     def __init__(self) -> None:
         """Initialize the game engine object."""
         if TYPE_CHECKING:
-            from energetica.database.engine_data.emission_data import EmissionData
+            from energetica.freeplay.database.engine_data.emission_data import EmissionData
         Path("instance").mkdir(exist_ok=True)
         self.config = config
         self.const_config = const_config
@@ -97,8 +98,8 @@ class GameEngine(object):
 
     def clear_db(self) -> None:
         """Clear all the data in the database."""
-        from energetica.database import DBModel
-        from energetica.database.active_facility import ActiveFacility
+        from energetica.freeplay.database import DBModel
+        from energetica.freeplay.database.active_facility import ActiveFacility
 
         for db in DBModel.__subclasses__():
             db.instances().reset()
@@ -115,9 +116,9 @@ class GameEngine(object):
         instance_uuid: str | None = None,
     ) -> None:
         """Initialize the instance data / the GameEngine members."""
-        from energetica.database.engine_data.emission_data import EmissionData
-        from energetica.database.map.hex_tile import HexTile
-        from energetica.database.messages import Chat
+        from energetica.freeplay.database.engine_data.emission_data import EmissionData
+        from energetica.freeplay.database.map.hex_tile import HexTile
+        from energetica.freeplay.database.messages import Chat
         from energetica.utils.climate_helpers import data_init_climate
 
         assert clock_time in [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
@@ -265,11 +266,13 @@ class GameEngine(object):
         if instance_data_last_modified > engine_data_last_modified:
             raise RuntimeError("The data has not been saved correctly, please restart form the last checkpoint.")
         with open("instance/engine_data.pck", "rb") as file:
-            data = pickle.load(file)
+            data = legacy_pickle.load(file)
             for member, member_data in data.items():
                 setattr(self, member, member_data)
-        from energetica.database.active_facility import ActiveFacility  # late import to avoid circular dependency
-        from energetica.database.player import Player  # late import to avoid circular dependency
+        from energetica.freeplay.database.active_facility import (
+            ActiveFacility,  # late import to avoid circular dependency
+        )
+        from energetica.freeplay.database.player import Player  # late import to avoid circular dependency
 
         ActiveFacility.rebuild_index()
         # Migrate muted_chat_ids here rather than in Player.__setstate__ because
@@ -295,7 +298,7 @@ class GameEngine(object):
         return wrapped
 
     def package_global_data(self) -> dict:
-        """Package mutable from energetica.globals import engine data as a dict to be sent and used on the frontend."""
+        """Package mutable engine data as a dict to be sent and used on the frontend."""
         return {
             "first_tick_date": self.start_date,
             "tick_length": self.clock_time,
@@ -306,7 +309,7 @@ class GameEngine(object):
         """Load a new daily question from the csv file."""
         from datetime import datetime, timedelta, timezone
 
-        from energetica.database.player import Player
+        from energetica.freeplay.database.player import Player
         from energetica.schemas.notifications import (
             QuizReminderPayload,
             TutorialDailyQuizPayload,
@@ -350,13 +353,13 @@ class GameEngine(object):
 
     @property
     def general_chat(self) -> Chat:
-        from energetica.database.messages import Chat
+        from energetica.freeplay.database.messages import Chat
 
         return Chat.getitem(self.general_chat_id)
 
     def emit(self, event: str, *args: Any) -> None:
         """Emit a socketio event to the player's clients."""
-        from energetica.globals import MAIN_EVENT_LOOP
+        from energetica.freeplay.globals import MAIN_EVENT_LOOP
 
         # No serving loop → nothing to broadcast to. This is the case under tests (create_app is
         # called without running the lifespan that binds the loop) and momentarily before startup.

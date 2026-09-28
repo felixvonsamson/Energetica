@@ -116,13 +116,15 @@ else
     log_success "venv at $APP_DIR/.venv"
 fi
 
-# Importing the `energetica` package instantiates a dormant GameEngine (src/energetica/__init__.py),
-# whose constructor does `Path("instance").mkdir(exist_ok=True)` relative to the service's
-# WorkingDirectory. The lobby never uses game state, but the mkdir runs anyway — and the code dir
-# is deploy-owned (2750), so the energetica service user cannot create it and the unit crash-loops
-# on startup. Pre-create an energetica-owned instance/ subdir (mirrors setup-instance.sh) so the
-# mkdir is a harmless no-op. deploy-lobby.sh excludes instance/ from its rsync, so it survives
-# deploys. Remove once the dormant engine object is severed from the identity layer.
+# Pre-create an energetica-owned instance/ subdir. This is probably no longer needed and can be
+# removed once a freshly provisioned lobby is confirmed to start without it (#1121).
+# It was added because, until #1055, importing the `energetica` package built a dormant
+# GameEngine, whose constructor runs `Path("instance").mkdir(exist_ok=True)` in the service's
+# WorkingDirectory. The code dir is deploy-owned (2750), so the service user could not create it
+# and the unit crash-looped. Since #1055 the lobby does not build the engine. The only remaining
+# writer is the per-instance secret-key fallback in energetica.kernel.session, which does not run
+# while the shared secret from setup-base.sh exists. deploy-lobby.sh excludes instance/ from its
+# rsync, so the directory survives deploys.
 install -d -o energetica -g energetica -m 0750 "$APP_DIR/instance"
 log_success "$APP_DIR/instance (writable by the service user)"
 

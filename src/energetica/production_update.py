@@ -8,12 +8,6 @@ from typing import Literal
 
 import numpy as np
 
-from energetica.database.active_facility import ActiveFacility
-from energetica.database.climate_event_recovery import ClimateEventRecovery
-from energetica.database.network import Network
-from energetica.database.ongoing_project import OngoingProject
-from energetica.database.ongoing_shipment import OngoingShipment
-from energetica.database.player import Player
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -28,7 +22,13 @@ from energetica.enums import (
     WorkerType,
     power_facility_types,
 )
-from energetica.globals import engine
+from energetica.freeplay.database.active_facility import ActiveFacility
+from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery
+from energetica.freeplay.database.network import Network
+from energetica.freeplay.database.ongoing_project import OngoingProject
+from energetica.freeplay.database.ongoing_shipment import OngoingShipment
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.schemas.electricity_markets import AskType
 from energetica.schemas.notifications import NetworkExpelledPayload, NetworkOverdraftWarningPayload
 from energetica.sim.demand_shape import demand_shape_factor

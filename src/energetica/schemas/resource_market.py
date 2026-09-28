@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.enums import Fuel
+from energetica.freeplay.database.resource_on_sale import ResourceOnSale
 
 
 class AskBase(BaseModel):

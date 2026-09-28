@@ -1,12 +1,6 @@
 """Module to initialize the database with test players and networks."""
 
-from energetica.identity import accounts
 from energetica.config.climate_events import climate_events
-from energetica.database.climate_event_recovery import ClimateEventRecovery
-from energetica.database.map.hex_tile import HexTile
-from energetica.database.network import Network
-from energetica.database.ongoing_shipment import OngoingShipment
-from energetica.database.player import Player
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -19,13 +13,18 @@ from energetica.enums import (
     TechnologyType,
     WindFacilityType,
 )
+from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.database.network import Network
+from energetica.freeplay.database.ongoing_shipment import OngoingShipment
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
+from energetica.identity import accounts
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.globals import engine
-from energetica.utils.projects import queue_project
 from energetica.kernel.session import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
-from energetica.utils.projects import complete_project
+from energetica.utils.projects import complete_project, queue_project
 
 
 def add_asset(player: Player, project_type: ProjectType, n: int) -> None:

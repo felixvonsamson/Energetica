@@ -159,13 +159,16 @@ def main() -> int:
         )
         return 1
 
-    # Nothing here imports `energetica` directly, but the pickle's `db_model_instances` entry
-    # holds real `energetica.database.*` objects, so pickle.load() below needs the package
-    # importable to reconstruct them. Run this with the interpreter the project is installed
-    # into (on a server, `.venv/bin/python`).
+    # The pickle's `db_model_instances` entry holds real `energetica.freeplay.database.*` objects, so
+    # loading it needs the package importable to reconstruct them. Run this with the interpreter the
+    # project is installed into (on a server, `.venv/bin/python`). The loader also reads a pickle
+    # written before #1055, which names those classes by their old module paths; the dump below
+    # writes the new ones.
+    from energetica.freeplay import legacy_pickle
+
     print(f"Loading pickle from {args.pickle}")
     with args.pickle.open("rb") as f:
-        engine_state = pickle.load(f)
+        engine_state = legacy_pickle.load(f)
 
     try:
         old_start_date, new_start_date = shift_start_date(engine_state, days=args.days, ticks=args.ticks)

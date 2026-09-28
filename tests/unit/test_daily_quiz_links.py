@@ -7,9 +7,8 @@ from urllib.parse import urlparse
 import pytest
 import requests
 
-
 QUIZ_CSV_PATH = (
-    Path(__file__).parent.parent.parent / "src" / "energetica" / "static" / "data" / "daily_quiz_questions.csv"
+    Path(__file__).parent.parent.parent / "src" / "energetica" / "freeplay" / "data" / "daily_quiz_questions.csv"
 )
 
 # Timeout for HTTP requests in seconds

@@ -9,10 +9,10 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from energetica.freeplay.globals import engine
+from energetica.freeplay.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
 from energetica.kernel.game_error import GameError
-from energetica.globals import engine
 from energetica.schemas.common import GameErrorOut
-from energetica.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
 from energetica.utils.auth import get_current_account
 
 from .achievements import router as achievements_router
@@ -25,17 +25,17 @@ from .electricity_markets import router as electricity_markets_router
 from .facilitator import router as facilitator_router
 from .facilities import router as facilities_router
 from .game import router as game_router
+from .health import router as health_router
 from .join import router as join_router
+from .leaderboards import router as leaderboards_router
+from .lobby import router as lobby_router
 from .map import router as map_router
 from .notifications import router as notifications_router
 from .players import router as player_router
 from .power_priorities import router as power_priorities
 from .projects import router as projects_router
 from .resource_market import router as resource_market_router
-from .leaderboards import router as leaderboards_router
-from .lobby import router as lobby_router
 from .shipments import router as shipments_router
-from .health import router as health_router
 from .weather import router as weather_router
 
 api_routers = [

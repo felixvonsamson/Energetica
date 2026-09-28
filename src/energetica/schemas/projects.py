@@ -16,7 +16,7 @@ from energetica.enums import (
     StorageFacilityType,
     TechnologyType,
 )
-from energetica.globals import engine
+from energetica.freeplay.globals import engine
 from energetica.technology_effects import (
     package_available_technologies,
     package_extraction_facilities,
@@ -26,8 +26,8 @@ from energetica.technology_effects import (
 )
 
 if TYPE_CHECKING:
-    from energetica.database.ongoing_project import OngoingProject
-    from energetica.database.player import Player
+    from energetica.freeplay.database.ongoing_project import OngoingProject
+    from energetica.freeplay.database.player import Player
 
 
 class ProjectOut(BaseModel):

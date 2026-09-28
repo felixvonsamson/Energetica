@@ -15,7 +15,7 @@ from energetica.enums import (
 )
 
 if TYPE_CHECKING:
-    from energetica.database.network import Network
+    from energetica.freeplay.database.network import Network
 
 from energetica.config.constants import NETWORK_MEMBER_LIMIT
 

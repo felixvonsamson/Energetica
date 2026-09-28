@@ -1,6 +1,6 @@
 """Unit tests for the streaming action-log reader (issue #766).
 
-These exercise the public interface of ``energetica.utils.action_log`` directly,
+These exercise the public interface of ``energetica.freeplay.action_log`` directly,
 without spinning up ``create_app``: given a log file on disk and a loaded tick,
 the reader must return exactly the actions that need replaying — and must do so
 without Pydantic-validating the prefix it skips.
@@ -13,14 +13,14 @@ from pathlib import Path
 
 import pytest
 
-from energetica.schemas.simulate import (
+from energetica.freeplay.action_log import read_init_action, stream_actions_after_tick
+from energetica.freeplay.schemas.simulate import (
     ApiAction,
     ApiActionRequest,
     ApiActionResponse,
     InitEngineAction,
     TickAction,
 )
-from energetica.utils.action_log import read_init_action, stream_actions_after_tick
 
 _TS = datetime(2026, 1, 1)
 
@@ -173,7 +173,7 @@ def test_read_init_action_accepts_a_log_predating_disable_signups_removal(tmp_pa
     import inspect
     import json
 
-    from energetica.game_engine import GameEngine
+    from energetica.freeplay.game_engine import GameEngine
 
     legacy = json.loads(_init().model_dump_json()) | {"disable_signups": True}
     log = tmp_path / "actions_history.log"

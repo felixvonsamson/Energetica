@@ -7,12 +7,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from energetica.database import DBModel
-from energetica.database.engine_data.capacity_data import CapacityData
-from energetica.database.engine_data.circular_buffer_network import CircularBufferNetwork
+from energetica.freeplay.database import DBModel
+from energetica.freeplay.database.engine_data.capacity_data import CapacityData
+from energetica.freeplay.database.engine_data.circular_buffer_network import CircularBufferNetwork
 
 if TYPE_CHECKING:
-    from energetica.database.player import Player
+    from energetica.freeplay.database.player import Player
 
 
 @dataclass

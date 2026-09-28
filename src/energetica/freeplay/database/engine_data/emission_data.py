@@ -5,7 +5,7 @@ from collections import defaultdict, deque
 
 import noise
 
-from energetica.globals import engine
+from energetica.freeplay.globals import engine
 
 
 def calculate_reference_gta(tick: int, seconds_per_tick: int) -> float:

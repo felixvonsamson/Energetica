@@ -18,9 +18,9 @@ from typing import Literal
 
 from fastapi import APIRouter
 
-from energetica.database.player import Player
-from energetica.database.network import Network
-from energetica.globals import engine
+from energetica.freeplay.database.network import Network
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.kernel.version import backend_version, frontend_version
 
 router = APIRouter(prefix="", tags=["Health"])

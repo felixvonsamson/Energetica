@@ -4,13 +4,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.database.active_facility import ActiveFacility
-from energetica.database.player import Player
 from energetica.enums import (
     ExtractionFacilityType,
     PowerFacilityType,
     StorageFacilityType,
 )
+from energetica.freeplay.database.active_facility import ActiveFacility
+from energetica.freeplay.database.player import Player
 from energetica.schemas.facilities import FacilitiesListOut, FacilityStatuses
 from energetica.schemas.players import DismantleOut, MoneyOut
 from energetica.utils import facilities

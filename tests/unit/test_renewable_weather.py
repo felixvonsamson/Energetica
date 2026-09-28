@@ -18,8 +18,8 @@ import platform
 
 import pytest
 
-from energetica import create_app
-from energetica.globals import engine
+from energetica.freeplay.app import create_app
+from energetica.freeplay.globals import engine
 from energetica.sim.renewables import calculate_river_speed, calculate_solar_irradiance, calculate_wind_speed
 
 DAY = 86_400.0

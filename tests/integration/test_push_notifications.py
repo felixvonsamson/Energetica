@@ -11,15 +11,15 @@ import time
 
 import pytest
 
-from energetica import create_app
+from energetica.freeplay.app import create_app
+from energetica.freeplay.database import player as player_module
+from energetica.freeplay.database.map.hex_tile import HexTile
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.identity.accounts import Account
-from energetica.database import player as player_module
-from energetica.database.map.hex_tile import HexTile
-from energetica.database.player import Player
-from energetica.globals import engine
+from energetica.kernel.session import generate_password_hash
 from energetica.schemas.browser_notifications import Subscription, SubscriptionKeys
 from energetica.schemas.notifications import ChatMessagePayload
-from energetica.kernel.session import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 
 

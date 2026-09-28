@@ -5,8 +5,8 @@ import datetime
 import pytest
 from fastapi.testclient import TestClient
 
-from energetica import create_app
-from energetica.globals import engine
+from energetica.freeplay.app import create_app
+from energetica.freeplay.globals import engine
 
 
 @pytest.fixture(autouse=True)

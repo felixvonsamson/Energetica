@@ -7,8 +7,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 import energetica.utils.chat
-from energetica.database.messages import Chat
-from energetica.database.player import Player
+from energetica.freeplay.database.messages import Chat
+from energetica.freeplay.database.player import Player
 from energetica.schemas.chats import ChatCreate, ChatListOut, ChatOut, MessageCreate, MessageListOut, MessageOut
 from energetica.utils.auth import get_settled_player
 

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from energetica import create_app
+from energetica.freeplay.app import create_app
 
 # FastAPI mounts these itself for the interactive API docs.
 FASTAPI_BUILTIN_PATHS = frozenset({"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"})

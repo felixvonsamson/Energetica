@@ -2,14 +2,14 @@
 
 import math
 
-from energetica.database.ongoing_shipment import OngoingShipment
-from energetica.database.player import Player
-from energetica.database.resource_on_sale import ResourceOnSale
 from energetica.enums import Fuel
-from energetica.schemas.notifications import ResourceSoldPayload, ShipmentArrivedPayload
+from energetica.freeplay.database.ongoing_shipment import OngoingShipment
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.database.resource_on_sale import ResourceOnSale
+from energetica.freeplay.globals import engine
+from energetica.kernel.formatting import format_mass, format_money
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.globals import engine
-from energetica.kernel.formatting import format_money, format_mass
+from energetica.schemas.notifications import ResourceSoldPayload, ShipmentArrivedPayload
 
 
 def calculate_shipment_duration(buyer: Player, seller: Player) -> float:

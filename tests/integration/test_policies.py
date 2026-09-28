@@ -1,7 +1,7 @@
 """Module for tests for policies."""
 
-# from energetica.database.active_facility import ActiveFacility
-# from energetica.database.ongoing_project import OngoingProject
+# from energetica.freeplay.database.active_facility import ActiveFacility
+# from energetica.freeplay.database.ongoing_project import OngoingProject
 # from energetica.enums import ControllableFacilityType, FunctionalFacilityType, HydroFacilityType, WindFacilityType
 # from tests.policy import QueueProjectPolicy, StarterPolicy
 # from tests.policy_runner import run_policies

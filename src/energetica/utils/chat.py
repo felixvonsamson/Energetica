@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from energetica.database.messages import Chat, Message
+from energetica.freeplay.database.messages import Chat, Message
+from energetica.freeplay.globals import engine
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.globals import engine
 from energetica.schemas.notifications import ChatMessagePayload
 from energetica.utils.misc import send_new_message_sio
 
 if TYPE_CHECKING:
-    from energetica.database.player import Player
+    from energetica.freeplay.database.player import Player
 
 
 def check_existing_chats(participants: set[Player]) -> bool:

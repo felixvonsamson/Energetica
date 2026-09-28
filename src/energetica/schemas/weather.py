@@ -9,8 +9,8 @@ from pydantic import BaseModel, Field
 from energetica.enums import ClimateEventType
 
 if TYPE_CHECKING:
-    from energetica.database.climate_event_recovery import ClimateEventRecovery
-    from energetica.database.player import Player
+    from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery
+    from energetica.freeplay.database.player import Player
 
 
 class WeatherOut(BaseModel):
@@ -48,7 +48,7 @@ class ClimateEventRecoveryListOut(BaseModel):
 
     @classmethod
     def from_player(cls, player: Player) -> ClimateEventRecoveryListOut:
-        from energetica.database.climate_event_recovery import ClimateEventRecovery
+        from energetica.freeplay.database.climate_event_recovery import ClimateEventRecovery
 
         recoveries = [
             ClimateEventRecoveryOut.from_recovery(recovery)

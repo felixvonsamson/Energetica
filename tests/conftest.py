@@ -19,8 +19,8 @@ from pathlib import Path
 
 import pytest
 
+from energetica.freeplay.globals import engine
 from energetica.identity.accounts.db import _reset_initialised_paths
-from energetica.globals import engine
 
 
 @pytest.fixture(autouse=True)

@@ -51,24 +51,24 @@ include-package-data = false
 [tool.setuptools.packages.find]
 where = ["src"]
 # Namespace packages are discovered (the default here), which is load-bearing: a few real
-# subpackages — energetica.database.engine_data, energetica.database.map — have no
+# subpackages — energetica.freeplay.database.engine_data, energetica.freeplay.database.map — have no
 # __init__.py and would otherwise be dropped from the wheel.
 namespaces = true
-# ...which also means every directory under src/energetica counts, including static/. Exclude
-# it: it holds no Python, and what does ship from it is named explicitly as package data below.
-exclude = ["energetica.static*"]
+# ...which also means every directory under src/energetica counts, including freeplay/data/.
+# Exclude it: it holds no Python, and what ships from it is named explicitly as package data below.
+exclude = ["energetica.freeplay.data*"]
 
 [tool.setuptools.dynamic]
 # Read from the module's AST at build time, so building never imports the package.
 version = { attr = "energetica.__version__" }
 
 [tool.setuptools.package-data]
-# The game's own data tables are all that is left under static/, and all that ships inside the
-# wheel. Since #1064 no web assets live here at all: the app bundle and its service worker are
-# built to frontend/dist-app/ and served by Apache straight off the rsynced tree
-# (docs/architecture/static-serving-and-deployment.md), never read through the installed
-# package. #1049 step 2 moves these tables to freeplay/data/, which empties static/ for good.
-energetica = ["static/data/*"]
+# The persistent world's data tables are the only non-Python files in the wheel. They sit next to
+# the game engine that reads them (#1055). No web assets ship here: since #1064 the app bundle and
+# its service worker are built to frontend/dist-app/ and served by Apache straight off the rsynced
+# tree (docs/architecture/static-serving-and-deployment.md), never read through the installed
+# package.
+energetica = ["freeplay/data/*"]
 
 [tool.ruff]
 line-length = 120 # Let's keep this at 120 for now, there are some files that need it

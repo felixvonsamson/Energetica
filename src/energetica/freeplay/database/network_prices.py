@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Literal, Tuple
 import numpy as np
 
 if TYPE_CHECKING:
-    from energetica.database.player import Player
+    from energetica.freeplay.database.player import Player
 from energetica.enums import (
     ControllableFacilityType,
     ExtractionFacilityType,
@@ -18,10 +18,10 @@ from energetica.enums import (
     StorageFacilityType,
     renewable_facility_types,
 )
+from energetica.freeplay.globals import engine
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.globals import engine
-from energetica.schemas.electricity_markets import AskItem, AskType, BidItem, BidType, PowerPriorityItem
 from energetica.kernel.hashing import stable_hash
+from energetica.schemas.electricity_markets import AskItem, AskType, BidItem, BidType, PowerPriorityItem
 
 
 @dataclass

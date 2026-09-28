@@ -16,9 +16,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from energetica import create_app
+from energetica.freeplay.app import create_app
+from energetica.freeplay.globals import engine
 from energetica.identity import accounts
-from energetica.globals import engine
 
 from ._session_helpers import authenticate, make_account
 
@@ -174,8 +174,8 @@ def test_roster_splits_joined_and_invited(instance_json: Path) -> None:
     """ "alice" has settled (joined, settled_at set); "bob" is on the roster via the add endpoint
     but has never settled (invited, settled_at null).
     """
+    from energetica.freeplay.database.map.hex_tile import HexTile
     from energetica.identity.accounts import Account
-    from energetica.database.map.hex_tile import HexTile
     from energetica.utils.map_helpers import confirm_location
 
     client = _facilitator_client(instance_json)
@@ -314,8 +314,8 @@ def test_roster_readding_a_previously_settled_banned_account_keeps_it_joined(ins
     per review): the account's Player (tile, resources, facilities) never went anywhere, so the
     roster must show it settled again once re-added, not reset.
     """
+    from energetica.freeplay.database.map.hex_tile import HexTile
     from energetica.identity.accounts import Account
-    from energetica.database.map.hex_tile import HexTile
     from energetica.utils.map_helpers import confirm_location
 
     client = _facilitator_client(instance_json)

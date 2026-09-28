@@ -1,6 +1,7 @@
 """Unit tests for the daily quiz."""
 
-from energetica import create_app, engine
+from energetica.freeplay import engine
+from energetica.freeplay.app import create_app
 
 
 def test_daily_question_exists() -> None:

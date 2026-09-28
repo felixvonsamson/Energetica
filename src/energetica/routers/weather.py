@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from energetica.database.player import Player
+from energetica.freeplay.database.player import Player
 from energetica.schemas.weather import ClimateEventRecoveryListOut, WeatherOut
 from energetica.utils import misc
 from energetica.utils.auth import get_settled_player

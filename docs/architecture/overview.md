@@ -43,12 +43,15 @@ production import the same code the same way.
 src/energetica/       # Python/FastAPI backend
 ├── routers/          # API endpoints
 ├── schemas/          # Pydantic models
-├── database/         # Game state models
 ├── kernel/           # Error types, session signing, hashing, version, formatting
 ├── identity/         # Accounts store, instance and server configuration, my-runs
 ├── sim/              # Market clearing and settlement, demand shape, facility statuses
-├── static/           # Web assets (app bundle) and the game's data tables
-└── game_engine.py    # Core game logic
+└── freeplay/         # The persistent world
+    ├── app.py        # Application factory (create_app)
+    ├── game_engine.py  # Core game logic
+    ├── database/     # Model base class, id-keyed store, and game state models
+    ├── action_log.py # Reader for the action log the engine writes and replays
+    └── data/         # The game's data tables (map, quiz, demand curves)
 ```
 
 ## Frontend

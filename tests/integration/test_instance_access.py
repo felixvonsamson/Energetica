@@ -18,10 +18,10 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from energetica import create_app
+from energetica.freeplay.app import create_app
+from energetica.freeplay.database.player import Player
+from energetica.freeplay.globals import engine
 from energetica.identity import accounts
-from energetica.database.player import Player
-from energetica.globals import engine
 
 from ._session_helpers import authenticate, make_account
 
