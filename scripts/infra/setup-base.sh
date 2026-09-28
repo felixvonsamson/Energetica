@@ -101,8 +101,9 @@ if [ "$current_home" != "$SERVICE_HOME" ]; then
         log_success "Moved the service user's home from $current_home to $SERVICE_HOME"
     else
         log_error "Could not move the service user's home from $current_home to $SERVICE_HOME, probably because its services are running."
-        log_error "  Stop every unit that 'systemctl list-units \"energetica-*\"' lists, run"
-        log_error "  'sudo usermod --home $SERVICE_HOME energetica', then start them again. No need to re-run this script."
+        log_error "  Stop every service that 'systemctl list-units --type=service \"energetica-*\"' lists,"
+        log_error "  except energetica-reaper, which runs as root. Run 'sudo usermod --home $SERVICE_HOME energetica',"
+        log_error "  then start them again. No need to re-run this script."
     fi
 fi
 
