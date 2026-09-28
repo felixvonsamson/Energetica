@@ -8,14 +8,14 @@ from energetica import create_app
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.ongoing_project import OngoingProject
 from energetica.database.player import Player
-from energetica.accounts import Account
+from energetica.identity.accounts import Account
 from energetica.enums import ControllableFacilityType, FunctionalFacilityType, ProjectStatus, TechnologyType, WorkerType
 from energetica.kernel.game_error import GameError
 from energetica.globals import engine
 from energetica.utils.projects import (
     queue_project,
 )
-from energetica.utils.auth import generate_password_hash
+from energetica.kernel.session import generate_password_hash
 from energetica.utils.projects import (
     cancel_project,
     decrease_project_priority,

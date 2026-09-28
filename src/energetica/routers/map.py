@@ -3,7 +3,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica.accounts import Account
+from energetica.identity.accounts import Account
 from energetica.database.map.hex_tile import HexTile
 from energetica.schemas.map import SettleRequest, SettleResponse
 from energetica.schemas.map import HexTileOut

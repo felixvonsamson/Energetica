@@ -1,6 +1,6 @@
 """Utility functions relating to the game map."""
 
-from energetica.accounts import Account
+from energetica.identity.accounts import Account
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
 from energetica.kernel.game_error import GameError, GameExceptionType

@@ -2,13 +2,13 @@
 
 from energetica import create_app
 from energetica.database.map.hex_tile import HexTile
-from energetica.accounts import Account
+from energetica.identity.accounts import Account
 from energetica.enums import (
     Fuel,
     FunctionalFacilityType,
 )
 from energetica.init_test_players import add_asset
-from energetica.utils.auth import generate_password_hash
+from energetica.kernel.session import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.database.ongoing_shipment import OngoingShipment
 from energetica.utils.resource_market import create_ask, purchase_resource, store_import

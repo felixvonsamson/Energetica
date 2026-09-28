@@ -19,7 +19,7 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException, status
 
-from energetica import instance_config
+from energetica.identity import instance_config
 from energetica.kernel.game_error import GameExceptionType
 from energetica.utils import auth, tick_execution
 

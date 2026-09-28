@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica import accounts
+from energetica.identity import accounts
 
 
 @pytest.fixture
@@ -307,7 +307,7 @@ def test_migrate_instance_membership_columns_backfills_pre_role_rows(accounts_db
             "INSERT INTO instance_membership (account_id, slug, settled_at) VALUES (1, 'spring-2026', '2026-03-01T12:00:00+00:00')"
         )
         conn.commit()
-    from energetica.accounts.db import _reset_initialised_paths
+    from energetica.identity.accounts.db import _reset_initialised_paths
 
     _reset_initialised_paths()  # force the next _connect() to re-run schema/migration
 
@@ -347,7 +347,7 @@ def test_migrate_instance_membership_settled_at_backfills_pre_settled_at_rows(ac
             "VALUES (2, NULL, 'facilitator', '2026-01-01T00:00:00+00:00')"
         )
         conn.commit()
-    from energetica.accounts.db import _reset_initialised_paths
+    from energetica.identity.accounts.db import _reset_initialised_paths
 
     _reset_initialised_paths()  # force the next _connect() to re-run schema/migration
 
@@ -363,9 +363,9 @@ def test_settling_records_membership_for_this_instance(monkeypatch: pytest.Monke
     under 'your runs'.
     """
     from energetica import create_app
-    from energetica.accounts import Account
+    from energetica.identity.accounts import Account
     from energetica.database.map.hex_tile import HexTile
-    from energetica.utils.auth import generate_password_hash
+    from energetica.kernel.session import generate_password_hash
     from energetica.utils.map_helpers import confirm_location
 
     monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "spring-2026")
@@ -392,9 +392,9 @@ def test_record_join_reconciling_settlement_backfills_settled_at_for_a_re_added_
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from energetica import create_app
-    from energetica.accounts import Account
+    from energetica.identity.accounts import Account
     from energetica.database.map.hex_tile import HexTile
-    from energetica.utils.auth import generate_password_hash
+    from energetica.kernel.session import generate_password_hash
     from energetica.utils.map_helpers import confirm_location
     from energetica.utils.misc import record_join_reconciling_settlement
 
@@ -442,10 +442,10 @@ def test_settle_aborts_before_any_engine_mutation_on_a_membership_write_failure(
     import sqlite3
 
     from energetica import create_app
-    from energetica.accounts import Account
+    from energetica.identity.accounts import Account
     from energetica.database.map.hex_tile import HexTile
     from energetica.database.player import Player
-    from energetica.utils.auth import generate_password_hash
+    from energetica.kernel.session import generate_password_hash
     from energetica.utils.map_helpers import confirm_location
 
     monkeypatch.setenv("ENERGETICA_INSTANCE_SLUG", "spring-2026")
@@ -470,9 +470,9 @@ def test_settling_records_no_membership_when_slug_unset(monkeypatch: pytest.Monk
     writes no membership row (mirrors instance_config.publish's no-op-without-slug behaviour).
     """
     from energetica import create_app
-    from energetica.accounts import Account
+    from energetica.identity.accounts import Account
     from energetica.database.map.hex_tile import HexTile
-    from energetica.utils.auth import generate_password_hash
+    from energetica.kernel.session import generate_password_hash
     from energetica.utils.map_helpers import confirm_location
 
     monkeypatch.delenv("ENERGETICA_INSTANCE_SLUG", raising=False)

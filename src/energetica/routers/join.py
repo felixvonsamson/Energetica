@@ -17,8 +17,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from energetica import accounts, instance_config
-from energetica.accounts import Account
+from energetica.identity import accounts, instance_config
+from energetica.identity.accounts import Account
 from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.schemas.join import JoinLinkOut, Viewer
 from energetica.utils.auth import get_current_account

@@ -1,6 +1,6 @@
 """Module to initialize the database with test players and networks."""
 
-from energetica import accounts
+from energetica.identity import accounts
 from energetica.config.climate_events import climate_events
 from energetica.database.climate_event_recovery import ClimateEventRecovery
 from energetica.database.map.hex_tile import HexTile
@@ -22,7 +22,7 @@ from energetica.enums import (
 from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.globals import engine
 from energetica.utils.projects import queue_project
-from energetica.utils.auth import generate_password_hash
+from energetica.kernel.session import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.network_helpers import create_network, join_network
 from energetica.utils.projects import complete_project

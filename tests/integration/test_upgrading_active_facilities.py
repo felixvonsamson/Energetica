@@ -3,14 +3,14 @@
 from energetica import create_app
 from energetica.database.active_facility import ActiveFacility
 from energetica.database.map.hex_tile import HexTile
-from energetica.accounts import Account
+from energetica.identity.accounts import Account
 from energetica.enums import (
     TechnologyType,
     WindFacilityType,
 )
 from energetica.init_test_players import add_asset
 from energetica.utils.facilities import upgrade_facility
-from energetica.utils.auth import generate_password_hash
+from energetica.kernel.session import generate_password_hash
 from energetica.utils.map_helpers import confirm_location
 from energetica.utils.tick_execution import tick
 

@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Iterable, Mapping, Protocol
 from pydantic import AwareDatetime, BaseModel, Field
 
 if TYPE_CHECKING:
-    from energetica.instance_config import InstanceConfig
+    from energetica.identity.instance_config import InstanceConfig
 
 
 class _RecapNetwork(Protocol):

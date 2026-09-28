@@ -6,11 +6,12 @@
 # differ in this file only by name.
 #
 # The EnvironmentFile= line is load-bearing. It carries the contract between the deployment and
-# src/energetica/instance_config.py + src/energetica/accounts/db.py, and it supplies the three
-# values ExecStart expands into main.py flags. It has no `-` prefix, so a missing or unreadable
-# file stops the unit rather than starting an instance with no ENERGETICA_INSTANCE_SLUG — which
-# would treat itself as public, never read its own instance.json and never publish a landing
-# fragment. systemd reads the file as root, before dropping to User=energetica below.
+# src/energetica/identity/instance_config.py + src/energetica/identity/accounts/db.py, and it
+# supplies the three values ExecStart expands into main.py flags. It has no `-` prefix, so a
+# missing or unreadable file stops the unit rather than starting an instance with no
+# ENERGETICA_INSTANCE_SLUG — which would treat itself as public, never read its own instance.json
+# and never publish a landing fragment. systemd reads the file as root, before dropping to
+# User=energetica below.
 # See scripts/infra/instance.env.tmpl and
 # docs/architecture/static-serving-and-deployment.md § What FastAPI gains.
 

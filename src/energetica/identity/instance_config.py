@@ -40,7 +40,7 @@ from typing import TYPE_CHECKING, Callable, Literal, TypeVar
 from pydantic import AwareDatetime, BaseModel, Field, model_validator
 
 if TYPE_CHECKING:
-    from energetica.schemas.recap import Recap
+    from energetica.identity.schemas.recap import Recap
 
 logger = logging.getLogger(__name__)
 
@@ -574,7 +574,7 @@ def load_recap(slug: str) -> Recap | None:
     The read side used by the lobby (T6) and by teardown validation (T7) — the artifact is a plain
     static file, so this needs neither the instance process nor the game domain.
     """
-    from energetica.schemas.recap import Recap
+    from energetica.identity.schemas.recap import Recap
 
     return _load_json_or_none(recap_path(slug), Recap, what="recap")
 

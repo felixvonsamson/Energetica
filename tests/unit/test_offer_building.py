@@ -12,7 +12,7 @@ import pytest
 
 import energetica.production_update as production_update
 from energetica import create_app
-from energetica.accounts import Account
+from energetica.identity.accounts import Account
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
 from energetica.enums import (

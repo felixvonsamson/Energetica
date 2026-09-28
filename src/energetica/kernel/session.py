@@ -3,12 +3,12 @@
 These are the low-level pieces of authentication — cookie-signing secret resolution, the
 ``itsdangerous`` serializer, password hashing, and the session-cookie read/write helpers — with
 **no import of ``Player`` or the game engine**. That is deliberate: the server-wide identity
-layer (``energetica.accounts``) and the instance-independent lobby service both import from
-here, so this module must stay a leaf (see ADR-0002, lobby Phase B).
+layer (``energetica.identity.accounts``) and the instance-independent lobby service both import
+from here, so this module must stay a leaf (see ADR-0002, lobby Phase B).
 
-``energetica.utils.auth`` re-exports everything here and adds the ``Account``/``Player``-coupled
-request dependencies (``get_current_account`` & friends); game-side callers keep importing from
-``auth`` and see no change.
+Every caller, game side included, imports these primitives from here. The ``Account``/``Player``-
+coupled request dependencies (``get_current_account`` & friends) live in ``energetica.utils.auth``,
+which does not re-export anything from this module.
 
 The cookie payload is the immutable ``str(account_id)`` (ADR-0002 amendment): the lobby mints it
 and every instance validates it with the shared secret and resolves it against ``accounts.db``

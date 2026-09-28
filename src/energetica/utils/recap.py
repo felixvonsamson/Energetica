@@ -1,9 +1,10 @@
 """Mint + publish the recap at the ``active → freeze`` transition (T5, #863).
 
 This is the game-side half of the recap: it reads the live final state (``Player.all()`` + the
-instance config) and publishes the frozen tombstone via :mod:`energetica.instance_config`. It is kept
-out of ``instance_config`` itself so that leaf stays free of the game domain (the module-boundary
-rule) — the publish/load *primitives* live there, the ``Player``-reading *orchestration* lives here.
+instance config) and publishes the frozen tombstone via :mod:`energetica.identity.instance_config`.
+It is kept out of ``instance_config`` itself so that leaf stays free of the game domain (the
+module-boundary rule) — the publish/load *primitives* live there, the ``Player``-reading
+*orchestration* lives here.
 
 The hook fires from ``tick_execution.state_update`` on every freeze/ended tick, but
 :func:`mint_recap_if_needed` mints only once (guarded by a *readable* recap on disk, not by bare file
@@ -16,11 +17,11 @@ from __future__ import annotations
 
 import logging
 
-from energetica import instance_config
+from energetica.identity import instance_config
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
 from energetica.enums import Fuel, Renewable
-from energetica.schemas.recap import Recap, RecapTile
+from energetica.identity.schemas.recap import Recap, RecapTile
 
 logger = logging.getLogger(__name__)
 

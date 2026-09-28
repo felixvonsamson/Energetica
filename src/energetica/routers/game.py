@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from energetica import instance_config
+from energetica.identity import instance_config
 from energetica.globals import engine
 from energetica.schemas.game import GameEngineOut
 

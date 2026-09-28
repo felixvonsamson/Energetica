@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from energetica import accounts
+from energetica.identity import accounts
 from energetica.kernel.session import SESSION_COOKIE_NAME, generate_password_hash, serializer
 
 

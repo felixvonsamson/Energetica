@@ -1,11 +1,10 @@
 """Authentication for the game (instance) side.
 
-The signing/credential primitives now live in the game-model-free leaf
-``energetica.kernel.session`` so the server-wide identity layer and the lobby can reuse them
-without importing ``Player`` (ADR-0002, lobby Phase B). This module re-exports them — game-side
-callers keep importing ``generate_password_hash`` etc. from ``energetica.utils.auth``
-unchanged — and adds the request dependencies that resolve a session cookie against a role
-(read straight from ``accounts.db``, ADR-0004) and, for players, a settled ``Player``.
+The signing/credential primitives live in the game-model-free leaf ``energetica.kernel.session``
+so the server-wide identity layer and the lobby can reuse them without importing ``Player``
+(ADR-0002, lobby Phase B); callers import them from there. This module adds the request
+dependencies that resolve a session cookie against a role (read straight from ``accounts.db``,
+ADR-0004) and, for players, a settled ``Player``.
 """
 
 from datetime import datetime, timezone
@@ -13,46 +12,11 @@ from typing import Literal
 
 from fastapi import HTTPException, Request, status
 
-from energetica import accounts, instance_config
-from energetica.accounts import Account
 from energetica.database.player import Player
+from energetica.identity import accounts, instance_config
+from energetica.identity.accounts import Account
 from energetica.kernel.game_error import GameExceptionType
-
-# Re-exported primitives (defined in the leaf; imported here so existing call sites are unchanged).
-from energetica.kernel.session import (
-    COOKIE_MAX_AGE,
-    SECRET_KEY,
-    SESSION_COOKIE_NAME,
-    account_id_from_token,
-    add_session_cookie_to_response,
-    add_session_cookie_to_session,
-    check_password_hash,
-    decode_session_token,
-    generate_password_hash,
-    get_or_create_secret_key,
-    serializer,
-)
-
-__all__ = [
-    "COOKIE_MAX_AGE",
-    "SECRET_KEY",
-    "SESSION_COOKIE_NAME",
-    "account_id_from_token",
-    "add_session_cookie_to_response",
-    "add_session_cookie_to_session",
-    "check_password_hash",
-    "decode_session_token",
-    "generate_password_hash",
-    "get_or_create_secret_key",
-    "serializer",
-    "get_current_account",
-    "get_account_from_token",
-    "get_role",
-    "get_playing_account",
-    "get_facilitator",
-    "get_settled_player",
-    "reject_when_frozen",
-]
+from energetica.kernel.session import SESSION_COOKIE_NAME, account_id_from_token
 
 
 def reject_when_frozen() -> None:

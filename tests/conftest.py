@@ -2,8 +2,8 @@
 
 The autouse `_isolated_accounts_db` fixture redirects the server-wide accounts SQLite store to a
 per-test temp file. Without it, any test that calls ``create_app`` (or otherwise touches
-``energetica.accounts``) would write to the dev default ``instance/accounts.db`` in the repo,
-leaking state across tests and into the developer's working tree.
+``energetica.identity.accounts``) would write to the dev default ``instance/accounts.db`` in the
+repo, leaking state across tests and into the developer's working tree.
 
 The autouse `_restore_serve_local` fixture puts ``engine.serve_local`` back after every test. The
 engine is a module-scope singleton, so a test that flips the flag changes it for every test that
@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica.accounts.db import _reset_initialised_paths
+from energetica.identity.accounts.db import _reset_initialised_paths
 from energetica.globals import engine
 
 

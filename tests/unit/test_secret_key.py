@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from energetica.utils.auth import get_or_create_secret_key
+from energetica.kernel.session import get_or_create_secret_key
 
 
 @pytest.fixture(autouse=True)

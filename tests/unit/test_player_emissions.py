@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 from energetica import create_app
-from energetica.accounts import Account
+from energetica.identity.accounts import Account
 from energetica.database.map.hex_tile import HexTile
 from energetica.database.player import Player
 from energetica.utils.map_helpers import confirm_location
