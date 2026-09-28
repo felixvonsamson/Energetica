@@ -100,12 +100,24 @@ fi
 # The file holds the join token, so it is streamed into the check and never written locally.
 CONFIG_FILE="/etc/energetica/$INSTANCE/instance.json"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+#
+# The check needs the backend's dependencies (pydantic) on this machine, which building the wheel
+# does not. Without them it cannot run, and the deploy refuses with that as the reason rather than
+# go ahead unchecked: an unchecked deploy is exactly the one that could lock players out. The
+# exit code tells the two failures apart: 1 means the file is invalid, 2 means the check could not
+# run.
+CONFIG_FILE="/etc/energetica/$INSTANCE/instance.json"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOCAL_PYTHON="$REPO_ROOT/.venv/bin/python"
-[ -x "$LOCAL_PYTHON" ] || LOCAL_PYTHON="$(command -v python3)"
+[ -x "$LOCAL_PYTHON" ] || LOCAL_PYTHON="$(command -v python3 || true)"
 CHECK_CONFIG='
 import sys
-from pydantic import ValidationError
-from energetica.identity.instance_config import InstanceConfig
+try:
+    from pydantic import ValidationError
+    from energetica.identity.instance_config import InstanceConfig
+except ImportError as exc:
+    print(f"  {exc}")
+    sys.exit(2)
 try:
     InstanceConfig.model_validate_json(sys.stdin.read())
 except ValidationError as exc:
@@ -114,17 +126,32 @@ except ValidationError as exc:
         print("  " + ".".join(str(part) for part in error["loc"]) + ": " + error["msg"])
     sys.exit(1)
 '
+if [ -z "$LOCAL_PYTHON" ]; then
+    log_error "No Python found to check $CONFIG_FILE. Create the project venv — see docs/getting-started/installation.md."
+    exit 1
+fi
 if ! CONFIG_JSON="$(ssh "$SSH" "cat '$CONFIG_FILE'")"; then
     log_error "Cannot read $CONFIG_FILE on $REMOTE_HOST. setup-instance.sh writes it; has it run?"
     exit 1
 fi
-if ! printf '%s' "$CONFIG_JSON" | PYTHONPATH="$REPO_ROOT/src" "$LOCAL_PYTHON" -c "$CHECK_CONFIG"; then
-    log_error "$CONFIG_FILE is not valid for the backend this deploy ships (reasons above)."
-    echo "Fix it on $REMOTE_HOST as root, then deploy again. For a missing run block, see"
-    echo "docs/backend/deployment.md § Adding the Run mode to existing instances."
-    exit 1
-fi
+CHECK_STATUS=0
+printf '%s' "$CONFIG_JSON" | PYTHONPATH="$REPO_ROOT/src" "$LOCAL_PYTHON" -c "$CHECK_CONFIG" || CHECK_STATUS=$?
 unset CONFIG_JSON
+case "$CHECK_STATUS" in
+    0) ;;
+    1)
+        log_error "$CONFIG_FILE is not valid for the backend this deploy ships (reasons above)."
+        echo "Fix it on $REMOTE_HOST as root, then deploy again. For a missing run block, see"
+        echo "docs/backend/deployment.md § Adding the Run mode to existing instances."
+        exit 1
+        ;;
+    *)
+        log_error "Could not check $CONFIG_FILE: $LOCAL_PYTHON cannot import the backend (reason above)."
+        echo "The check needs the backend's dependencies. Create the project venv — see"
+        echo "docs/getting-started/installation.md — then deploy again. Nothing was changed on the server."
+        exit 1
+        ;;
+esac
 
 # --- 1. Build -------------------------------------------------------------------
 if [ "$SKIP_BUILD" = false ]; then
