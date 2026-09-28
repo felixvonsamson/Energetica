@@ -1,8 +1,8 @@
 """Unit tests for the server-wide config read by the lobby (``server.json``).
 
-Carries the server-wide signup toggle (ADR-0003) — the analog of the per-instance
-``disable_signups`` the lobby can't reuse. Read fresh on every call and **fail-closed**: a missing
-or malformed file disables signups rather than risk throwing open account creation.
+Carries the server-wide signup toggle (ADR-0003), the only switch governing account creation.
+Read fresh on every call and **fail-closed**: a missing or malformed file disables signups
+rather than risk throwing open account creation.
 """
 
 from __future__ import annotations
