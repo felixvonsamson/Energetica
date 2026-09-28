@@ -16,6 +16,7 @@ imported the whole game app — so each check runs in a subprocess and inspects 
 
 from __future__ import annotations
 
+import ast
 import os
 import pkgutil
 import subprocess
@@ -107,24 +108,51 @@ def test_importing_the_simulation_layer_does_not_load_the_game_engine(module: st
     assert not leaked, f"importing {module} leaked the game engine: {sorted(leaked)}"
 
 
-# Every module in the Workshop package, found from the package so a new module is covered too.
-_WORKSHOP_MODULES = sorted(
-    f"energetica.workshop.{m.name}" for m in pkgutil.iter_modules([str(_REPO_ROOT / "src/energetica/workshop")])
-)
-
-# The layers Workshop may import from (#1049), plus the namespace package itself and its own package.
+# The layers Workshop may import from (#1049), plus its own package.
 _WORKSHOP_ALLOWED_PREFIXES = ("energetica.kernel", "energetica.identity", "energetica.sim", "energetica.workshop")
+
+
+def _energetica_imports(path: Path, module: str) -> set[str]:
+    """Every ``energetica`` module that the source file at ``path`` (module ``module``) names in an import.
+
+    Read from the syntax tree rather than by importing, so imports inside ``if TYPE_CHECKING:``
+    blocks and function bodies count too. Relative imports are resolved against ``module``.
+    """
+    package = module if path.name == "__init__.py" else module.rpartition(".")[0]
+    found: set[str] = set()
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.Import):
+            found.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level == 0:
+                found.add(node.module or "")
+            else:
+                base = package.rsplit(".", node.level - 1)[0] if node.level > 1 else package
+                found.add(f"{base}.{node.module}" if node.module else base)
+    return {name for name in found if name == "energetica" or name.startswith("energetica.")}
 
 
 def _within(module: str, prefixes: tuple[str, ...]) -> bool:
     return any(module == prefix or module.startswith(f"{prefix}.") for prefix in prefixes)
 
 
-@pytest.mark.parametrize("module", ["energetica.workshop", *_WORKSHOP_MODULES])
-def test_workshop_imports_only_from_the_layers_below_it(module: str) -> None:
-    """Workshop is an application package: it builds on ``kernel``, ``identity`` and ``sim`` and on
+# Every source file in the Workshop package, subpackages included, so a new module is covered too.
+_WORKSHOP_FILES = sorted((_REPO_ROOT / "src/energetica/workshop").rglob("*.py"))
+
+
+def _module_name(path: Path) -> str:
+    parts = path.relative_to(_REPO_ROOT / "src").with_suffix("").parts
+    return ".".join(parts[:-1] if parts[-1] == "__init__" else parts)
+
+
+@pytest.mark.parametrize("path", _WORKSHOP_FILES, ids=_module_name)
+def test_workshop_imports_only_from_the_layers_below_it(path: Path) -> None:
+    """Workshop is an application package. It builds on ``kernel``, ``identity`` and ``sim`` and on
     nothing else, so it cannot pick up the persistent world's engine or model store by accident (#1061).
+
+    Unlike the checks above, this one is about which modules Workshop names, not what importing it
+    runs, so it reads the source instead of importing it in a subprocess.
     """
-    loaded = _modules_after_importing(module)
-    outside = sorted(m for m in loaded if m != "energetica" and not _within(m, _WORKSHOP_ALLOWED_PREFIXES))
-    assert not outside, f"importing {module} loaded modules outside kernel, identity and sim: {outside}"
+    module = _module_name(path)
+    outside = sorted(m for m in _energetica_imports(path, module) if not _within(m, _WORKSHOP_ALLOWED_PREFIXES))
+    assert not outside, f"{module} imports from outside kernel, identity and sim: {outside}"
