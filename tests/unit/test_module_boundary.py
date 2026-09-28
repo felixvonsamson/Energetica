@@ -105,3 +105,26 @@ def test_importing_the_simulation_layer_does_not_load_the_game_engine(module: st
     loaded = _modules_after_importing(module)
     leaked = loaded.intersection(_ENGINE_MARKERS)
     assert not leaked, f"importing {module} leaked the game engine: {sorted(leaked)}"
+
+
+# Every module in the Workshop package, found from the package so a new module is covered too.
+_WORKSHOP_MODULES = sorted(
+    f"energetica.workshop.{m.name}" for m in pkgutil.iter_modules([str(_REPO_ROOT / "src/energetica/workshop")])
+)
+
+# The layers Workshop may import from (#1049), plus the namespace package itself and its own package.
+_WORKSHOP_ALLOWED_PREFIXES = ("energetica.kernel", "energetica.identity", "energetica.sim", "energetica.workshop")
+
+
+def _within(module: str, prefixes: tuple[str, ...]) -> bool:
+    return any(module == prefix or module.startswith(f"{prefix}.") for prefix in prefixes)
+
+
+@pytest.mark.parametrize("module", ["energetica.workshop", *_WORKSHOP_MODULES])
+def test_workshop_imports_only_from_the_layers_below_it(module: str) -> None:
+    """Workshop is an application package: it builds on ``kernel``, ``identity`` and ``sim`` and on
+    nothing else, so it cannot pick up the persistent world's engine or model store by accident (#1061).
+    """
+    loaded = _modules_after_importing(module)
+    outside = sorted(m for m in loaded if m != "energetica" and not _within(m, _WORKSHOP_ALLOWED_PREFIXES))
+    assert not outside, f"importing {module} loaded modules outside kernel, identity and sim: {outside}"
