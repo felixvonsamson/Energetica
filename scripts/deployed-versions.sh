@@ -46,7 +46,9 @@ echo
 
 # Enumerate instance slugs from systemd (same source of truth as list-instances.sh), then
 # probe the lobby too. The landing site is pure static with no /healthz, so it is not listed.
-SLUGS=$(ssh "$SSH" 'systemctl list-unit-files --no-legend "energetica-*.service" 2>/dev/null | awk "{print \$1}" | grep "^energetica-.*\.service$" | sed -E "s/^energetica-(.*)\.service$/\1/" | grep -v "^lobby$"' || true)
+# energetica-lobby and energetica-reaper share the prefix but are not game instances, so they
+# are dropped by name. list-instances.sh applies the same exclusion; keep the two in step.
+SLUGS=$(ssh "$SSH" 'systemctl list-unit-files --no-legend "energetica-*.service" 2>/dev/null | awk "{print \$1}" | grep "^energetica-.*\.service$" | sed -E "s/^energetica-(.*)\.service$/\1/" | grep -vE "^(lobby|reaper)$"' || true)
 
 # Classify a deployed backend commit against the reference by git ancestry, so a deploy that is
 # ahead of or diverged from the reference is not mislabelled "behind". Needs the commit object

@@ -28,14 +28,15 @@ done
 SSH="${REMOTE_USER}@${REMOTE_HOST}"
 
 # Remote: enumerate energetica-*.service unit files and report slug/port/active/enabled.
+# energetica-lobby and energetica-reaper share the prefix but are not game instances, so they
+# are dropped by name. deployed-versions.sh applies the same exclusion; keep the two in step.
 REMOTE_SCRIPT='
-for unit in $(systemctl list-unit-files --no-legend "energetica-*.service" | awk "{print \$1}" | grep "^energetica-.*\.service$"); do
+for unit in $(systemctl list-unit-files --no-legend "energetica-*.service" | awk "{print \$1}" | grep "^energetica-.*\.service$" | grep -vE "^energetica-(lobby|reaper)\.service$"); do
     slug=${unit#energetica-}; slug=${slug%.service}
     state=$(systemctl is-active "$unit" 2>/dev/null || true)
     enabled=$(systemctl is-enabled "$unit" 2>/dev/null || true)
-    # No instance.env means either an instance provisioned before the port moved there, or a
-    # unit that is not a game instance at all (energetica-lobby, energetica-reaper), so the
-    # miss is routine and `|| true` says so on the line rather than relying on this snippet
+    # No instance.env means an instance provisioned before the port moved there, so the miss
+    # is routine and `|| true` says so on the line rather than relying on this snippet
     # happening to run without `set -e`.
     port=$(sed -n "s/^ENERGETICA_PORT=//p" "/etc/energetica/$slug/instance.env" 2>/dev/null | head -1 || true)
     # Those units still carry a literal --port. systemctl reports ExecStart unexpanded, so for a

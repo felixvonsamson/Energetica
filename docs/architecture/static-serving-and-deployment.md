@@ -139,6 +139,8 @@ The **apex domain always serves the landing page**, never an instance directly.
 ### Instance discovery
 Canonical source of truth is systemd: `systemctl list-units 'energetica-*.service'`. Filesystem enumeration of `/var/www/energetica-*/` is avoided since it would accidentally include `energetica-landing`.
 
+`energetica-lobby` and `energetica-reaper` (the lifecycle reaper's oneshot unit) match that pattern but are not game instances. `list-instances.sh` and `deployed-versions.sh` both drop them by name (#1126). Keying on the presence of `instance.env` instead would also drop instances provisioned before the port moved into that file.
+
 An instance's runtime configuration lives in `/etc/energetica/{slug}/instance.env`, the unit's `EnvironmentFile` (#1072): the env contract (`ENERGETICA_INSTANCE_SLUG` and the three path variables) plus the port and the two clock values, which the unit expands into `main.py` flags. The unit carries nothing but the slug, so every instance's unit is the same file with one name changed.
 
 The port is the reason this file exists. It used to have two rendered copies, the unit and the vhost, with no source of truth behind either, so anything that wanted to regenerate one had nowhere to read it from. Reading it is now unprivileged: the file is `0640 root:energetica` and the `deploy` user is in that group, so `list-instances.sh` discovers a port with no `sudo` at all.
