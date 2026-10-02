@@ -22,7 +22,7 @@ from pathlib import Path
 # again in the server subprocess, which imports this file as the app module.
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from energetica.freeplay.app import create_app
+from energetica.entry import create_instance_app
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -194,4 +194,4 @@ if __name__ != "__main__":
     except json.JSONDecodeError as e:
         raise RuntimeError(f"Invalid JSON in ENERGETICA_APP_CONFIG: {e}")
 
-    app = create_app(**kwargs)
+    app = create_instance_app(**kwargs)

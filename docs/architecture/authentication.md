@@ -47,6 +47,10 @@ To authenticate via API:
 -   `POST /auth/signup` - Creates new account
 -   `POST /auth/change-password` - Changes password
 
+**Entry gate:** `resolve_entry_account` in `energetica/identity/web.py` checks the session cookie
+and this instance's access policy. The persistent world's `GET /auth/me` and Workshop's
+`POST /workshop/enter` both depend on it, so the two kinds of Run admit the same accounts.
+
 **Session management:** `energetica/kernel/session.py`
 
 -   `add_session_cookie_to_response()` - Sets the session cookie on responses

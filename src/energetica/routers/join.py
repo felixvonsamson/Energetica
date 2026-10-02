@@ -7,7 +7,7 @@ in), and lets an already-signed-in visitor confirm joining (``POST``), which rec
 ``accounts.db``'s ``instance_membership`` (#1030 follow-up, ADR-0007) — the same write
 ``accounts.record_join`` the public-run picker join and the facilitator roster's add both use.
 Entry into the game itself still goes through the existing, unmodified entry gate (``/auth/me`` →
-``resolve_entry_account`` / ``_enforce_instance_access`` in ``routers.auth``), which now reads
+``resolve_entry_account`` / ``_enforce_instance_access`` in ``identity.web``), which now reads
 that same table.
 """
 

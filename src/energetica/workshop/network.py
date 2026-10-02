@@ -51,3 +51,13 @@ class WorkshopNetwork:
             player = WorkshopPlayer(account_id=account.account_id, username=account.username, network=self)
             self.members[account.account_id] = player
             return player
+
+    def restore(self, *, account_id: int, username: str, money: float) -> WorkshopPlayer:
+        """Put back a player saved from an earlier process, when a Run's session is reloaded.
+
+        Not a join: the player was already admitted to the Run, so this only rebuilds its object.
+        """
+        with self._join_lock:
+            player = WorkshopPlayer(account_id=account_id, username=username, network=self, money=money)
+            self.members[account_id] = player
+            return player

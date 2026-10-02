@@ -6,8 +6,8 @@ persistent world in ``energetica.freeplay``, or the modules still waiting to mov
 Workshop shares with the persistent world lives in one of those three layers; everything else is
 built fresh here. ``tests/unit/test_module_boundary.py`` enforces this.
 
-**Persistence is deferred.** Workshop state lives in ordinary Python objects in the backend
-process and is lost when the process restarts. The persistent world's model store and checkpoints
-belong to ``freeplay`` and are deliberately not reused (#1049). How Workshop persists is decided
-once its state machine is designed (#994), because the storage shape should follow the state shape.
+A Workshop Run's backend serves the app in :mod:`energetica.workshop.app`, chosen at startup by
+``energetica.entry``. The Run's whole state is one :class:`~energetica.workshop.session.WorkshopSession`,
+saved to a JSON file after every change (#994). The persistent world's model store and checkpoints
+belong to ``freeplay`` and are deliberately not reused (#1049).
 """

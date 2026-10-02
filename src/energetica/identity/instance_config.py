@@ -142,7 +142,12 @@ class FreeplayRun(BaseModel):
 
 
 class WorkshopRun(BaseModel):
-    """A Workshop Run (#992). Its round-configuration levers land here as later tickets add them."""
+    """A Workshop Run (#992).
+
+    Holds only settings fixed when the Run is provisioned, of which there are none yet. The levers
+    the facilitator changes during a session live in the Run's session state
+    (``energetica.workshop.session``), not here (#994).
+    """
 
     model_config = {"extra": "forbid"}
 

@@ -47,6 +47,10 @@ export const GAME_ERROR_MESSAGES: Record<GameExceptionType, string> = {
     JOIN_LINK_CLOSED: "This join link isn't accepting new members right now.",
     RUN_NOT_FOUND: "This run doesn't exist.",
 
+    // --- Workshop ---
+    WORKSHOP_SESSION_FINISHED:
+        "The session is over, so there is nothing left to advance to.",
+
     // --- Lifecycle ---
     // 409 backstop when a write reaches a frozen instance (#861). Normally unseen: the client
     // derives its phase locally and stops firing game actions before this fires. The in-game

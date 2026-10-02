@@ -34,7 +34,9 @@ sudo bash /tmp/setup-instance.sh autumn-2025 8004 --domain energetica-game.org -
 
 `--mode` is required and has no default: it is the kind of Run (`freeplay` or `workshop`), and
 the backend rejects an `instance.json` that does not state one. A `workshop` Run is provisioned
-private.
+private. The backend reads the mode when it starts (`energetica/entry.py`): a `workshop` Run
+serves Workshop's app, with no game engine or tick loop, and saves its session to
+`instance/workshop_session.json`. Changing the mode takes effect on the next restart.
 
 `setup-instance.sh` provisions the box (directory, venv, `/etc/energetica/{slug}/instance.json`
 and `instance.env`, vhost+TLS, enabled-but-unstarted unit) but ships **no** code and does **not**
