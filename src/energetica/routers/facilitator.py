@@ -23,7 +23,7 @@ from energetica.schemas.facilitator import (
     RosterAddIn,
     RosterCandidatesOut,
 )
-from energetica.utils.auth import get_facilitator
+from energetica.identity.web import get_facilitator
 from energetica.utils.misc import record_join_reconciling_settlement
 
 router = APIRouter(prefix="/facilitator", tags=["Facilitator"], dependencies=[Depends(get_facilitator)])

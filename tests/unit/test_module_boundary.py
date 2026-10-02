@@ -75,6 +75,12 @@ def test_importing_session_leaf_does_not_load_the_game_engine() -> None:
     assert not leaked, f"importing energetica.kernel.session leaked the game engine: {sorted(leaked)}"
 
 
+def test_importing_the_error_envelope_does_not_load_the_game_engine() -> None:
+    loaded = _modules_after_importing("energetica.kernel.error_envelope")
+    leaked = loaded.intersection(_ENGINE_MARKERS)
+    assert not leaked, f"importing energetica.kernel.error_envelope leaked the game engine: {sorted(leaked)}"
+
+
 def test_importing_instance_config_does_not_load_the_game_engine() -> None:
     loaded = _modules_after_importing("energetica.identity.instance_config")
     leaked = loaded.intersection(_ENGINE_MARKERS)
@@ -88,7 +94,15 @@ def test_importing_the_lobby_service_does_not_load_the_game_engine() -> None:
     assert not leaked, f"importing the lobby service leaked the game engine: {sorted(leaked)}"
 
 
-@pytest.mark.parametrize("module", ["energetica.identity.server_config", "energetica.identity.my_runs"])
+@pytest.mark.parametrize(
+    "module",
+    [
+        "energetica.identity.server_config",
+        "energetica.identity.my_runs",
+        "energetica.identity.web",
+        "energetica.identity.schemas.auth",
+    ],
+)
 def test_importing_the_rest_of_the_identity_layer_does_not_load_the_game_engine(module: str) -> None:
     loaded = _modules_after_importing(module)
     leaked = loaded.intersection(_ENGINE_MARKERS)

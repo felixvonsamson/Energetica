@@ -1,18 +1,15 @@
 """The lobby FastAPI application factory.
 
-Kept tiny and engine-free: it wires the two routers under ``/api/v1`` and reuses the game's error
-envelope so error responses match ``api.generated.ts`` and the frontend's error handling.
+Kept tiny and engine-free: it wires the two routers under ``/api/v1`` and installs the shared error
+envelope (:mod:`energetica.kernel.error_envelope`) so error responses match the frontend's error
+handling.
 """
 
 from __future__ import annotations
 
-from fastapi import FastAPI, Request, status
-from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 
-from energetica.kernel.game_error import GameError
-from energetica.schemas.common import GameErrorOut
+from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
 from lobby.routers import auth_router, lobby_router
 
@@ -27,22 +24,7 @@ def create_lobby_app(*, schema_only: bool = False) -> FastAPI:
     """
     app = FastAPI(title="Energetica Lobby")
 
-    @app.exception_handler(RequestValidationError)
-    def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
-        """Mirror the game's 422 envelope for schema validation failures (e.g. password too short)."""
-        return JSONResponse(
-            content={
-                "detail": jsonable_encoder(exc.errors()),
-                "meta": {"error_type": "request_validation_error"},
-            },
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        )
-
-    @app.exception_handler(GameError)
-    def game_error_handler(request: Request, exc: GameError) -> JSONResponse:
-        """Mirror the game's 400 GameError envelope so the frontend decodes lobby errors identically."""
-        content = GameErrorOut.from_game_error(exc)
-        return JSONResponse(content=content.model_dump(by_alias=True), status_code=status.HTTP_400_BAD_REQUEST)
+    install_error_handlers(app)
 
     @app.get("/healthz", include_in_schema=False)
     def healthz() -> dict:

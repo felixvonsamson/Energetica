@@ -8,7 +8,8 @@ from energetica.freeplay.database.map.hex_tile import HexTile
 from energetica.identity.accounts import Account
 from energetica.schemas.map import HexTileOut, SettleRequest, SettleResponse
 from energetica.utils import map_helpers
-from energetica.utils.auth import get_playing_account, reject_when_frozen
+from energetica.identity.web import get_playing_account
+from energetica.utils.auth import reject_when_frozen
 
 router = APIRouter(prefix="/map", tags=["Map"])
 
