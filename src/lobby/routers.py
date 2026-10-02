@@ -1,7 +1,7 @@
 """Lobby HTTP routes: credentials + session (``/auth/*``) and the picker read (``/lobby/*``).
 
 Mounted under ``/api/v1`` by :func:`lobby.app.create_lobby_app`. Request/response schemas are the
-game's own (``energetica.schemas.auth`` / ``energetica.identity.schemas.lobby``) so the
+identity layer's (``energetica.identity.schemas.auth`` / ``energetica.identity.schemas.lobby``) so the
 frontend's generated types cover the lobby unchanged. Unlike the instance, signup here is
 **account-only** — one ``accounts`` row, no ``User``/``Player``/instance (ADR-0003) — and is gated
 by the server-wide ``server.json`` toggle, not any per-instance policy.
@@ -19,7 +19,7 @@ from energetica.identity import accounts, instance_config, server_config
 from energetica.identity.accounts import Account
 from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.identity.my_runs import resolve_my_runs
-from energetica.schemas.auth import LoginRequest, SignupRequest
+from energetica.identity.schemas.auth import LoginRequest, SignupRequest
 from energetica.identity.schemas.lobby import MyRunsResponse
 from energetica.kernel.session import check_password_hash, generate_password_hash
 from lobby.deps import require_current_account

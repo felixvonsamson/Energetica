@@ -47,10 +47,9 @@ To authenticate via API:
 -   `POST /auth/signup` - Creates new account
 -   `POST /auth/change-password` - Changes password
 
-**Session management:** `energetica/utils/auth.py`
+**Session management:** `energetica/kernel/session.py`
 
 -   `add_session_cookie_to_response()` - Sets the session cookie on responses
--   `get_user()` - Retrieves user from session cookie
 -   Session tokens are signed using `itsdangerous` serializer
 
 **Middleware:** `energetica/routers/__init__.py`
@@ -58,12 +57,15 @@ To authenticate via API:
 -   The API only ever speaks JSON — it never issues browser redirects. An unauthenticated request returns a `401` (JSON) from the endpoint; the SPA owns the redirect to `/app/login` client-side (`frontend/src/routes/__root.tsx`, driven by `/auth/me`). After the Phase 5 cutover FastAPI serves no HTML, so a server-side redirect could only land a `fetch` client on Apache's (or, in dev, Vite's) `index.html` — the `Unexpected token '<', "<!DOCTYPE"...` break.
 -   POST/PUT/PATCH/DELETE requests require authentication (enforced per-endpoint)
 
-**Authentication enforcement:** Endpoints use FastAPI `Depends()` to require authentication:
+**Authentication enforcement:** Endpoints use FastAPI `Depends()` to require authentication.
+The account and role checks live in `energetica/identity/web.py`, so every game mode can use them.
+The checks that need the persistent world live in `energetica/utils/auth.py`.
 
 ```
-get_user()              - Returns User or None
-get_playing_user()      - Requires authenticated user with "player" role
-get_settled_player()    - Requires authenticated player who has chosen location
+get_current_account()   - Returns the Account or None            (identity/web.py)
+get_playing_account()   - Requires an account with the "player" role  (identity/web.py)
+get_facilitator()       - Requires an account with the "facilitator" role  (identity/web.py)
+get_settled_player()    - Requires a player who has chosen a location  (utils/auth.py)
 ```
 
 ## Frontend Implementation
@@ -96,4 +98,4 @@ When deployed behind a reverse proxy (e.g., Apache with SSL termination):
 -   Session cookie is set with `secure=true` only when `X-Forwarded-Proto: https` is present
 -   This allows the same code to work in dev (HTTP) and production (HTTPS behind proxy)
 
-See `energetica/utils/auth.py:add_session_cookie_to_response()` for implementation.
+See `energetica/kernel/session.py:add_session_cookie_to_response()` for implementation.

@@ -22,7 +22,7 @@ from energetica.kernel.game_error import GameExceptionType
 from energetica.kernel.session import SESSION_COOKIE_NAME, account_id_from_token
 from energetica.schemas.auth import UserOut
 from energetica.schemas.capabilities import PlayerCapabilities
-from energetica.utils.auth import get_role
+from energetica.identity.web import get_role
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 

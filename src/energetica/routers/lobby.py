@@ -16,7 +16,7 @@ from energetica.identity.accounts import Account
 from energetica.kernel.game_error import GameExceptionType
 from energetica.identity.my_runs import resolve_my_runs
 from energetica.identity.schemas.lobby import MyRunsResponse
-from energetica.utils.auth import get_current_account
+from energetica.identity.web import get_current_account
 
 router = APIRouter(prefix="/lobby", tags=["Lobby"])
 
