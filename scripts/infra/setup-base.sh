@@ -15,6 +15,10 @@ set -euo pipefail
 # The SSH/rsync deploy user. Never varied across this server's history — hardcoded rather
 # than a configurable parameter (YAGNI); the OS account named "deploy" must already exist.
 readonly DEPLOY_USER="deploy"
+# The service user's home. The account must own it: pip keeps its download cache in
+# ~/.cache/pip and silently runs without one when HOME is unwritable (#1067). It lives under
+# /var/cache because a cache is all it holds.
+readonly SERVICE_HOME=/var/cache/energetica
 AUTO_CONFIRM=false
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -75,10 +79,32 @@ fi
 
 # Service user that every energetica-{slug}.service runs as. System account, no login.
 if ! id energetica &>/dev/null; then
-    useradd --system --gid energetica --home-dir /var/www --no-create-home --shell /usr/sbin/nologin energetica
+    useradd --system --gid energetica --home-dir "$SERVICE_HOME" --no-create-home --shell /usr/sbin/nologin energetica
     log_success "Created service user 'energetica'"
 else
     log_success "Service user 'energetica' already exists"
+fi
+
+# useradd was told --no-create-home, so this is what makes the home exist. 0700: nothing but
+# the account itself has any reason to read its caches.
+install -d -o energetica -g energetica -m 0700 "$SERVICE_HOME"
+log_success "$SERVICE_HOME (0700 energetica:energetica, the service user's home)"
+
+# A server provisioned before #1067 has the home on /var/www, and re-running this script is how
+# it picks up the fix. usermod refuses to change the home of a user that has running processes,
+# which is every energetica-* service, so on a live server this fails until they are stopped.
+# Report that rather than abort: everything else this script does is still worth doing, and the
+# only cost of carrying on is that pip keeps running without a cache.
+current_home="$(getent passwd energetica | cut -d: -f6)"
+if [ "$current_home" != "$SERVICE_HOME" ]; then
+    if usermod --home "$SERVICE_HOME" energetica; then
+        log_success "Moved the service user's home from $current_home to $SERVICE_HOME"
+    else
+        log_error "Could not move the service user's home from $current_home to $SERVICE_HOME, probably because its services are running."
+        log_error "  Stop every service that 'systemctl list-units --type=service \"energetica-*\"' lists,"
+        log_error "  except energetica-reaper, which runs as root. Run 'sudo usermod --home $SERVICE_HOME energetica',"
+        log_error "  then start them again. No need to re-run this script."
+    fi
 fi
 
 # Apache must read group-readable fragments / instance.json files, and traverse the 2750
