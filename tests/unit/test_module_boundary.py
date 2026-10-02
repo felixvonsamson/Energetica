@@ -100,6 +100,7 @@ def test_importing_the_lobby_service_does_not_load_the_game_engine() -> None:
         "energetica.identity.server_config",
         "energetica.identity.my_runs",
         "energetica.identity.web",
+        "energetica.identity.run",
         "energetica.identity.schemas.auth",
     ],
 )

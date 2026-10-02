@@ -96,6 +96,7 @@ export const queryKeys = {
     lobby: {
         myRuns: ["lobby", "my-runs"] as const,
     },
+    run: ["run"] as const,
     players: {
         all: ["players"] as const,
         me: ["players", "me"] as const,

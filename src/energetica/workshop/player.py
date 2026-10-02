@@ -30,8 +30,9 @@ WORKSHOP_STARTING_BUDGET = 25_000.0
 class WorkshopPlayer:
     """A single account's identity within one Workshop Run.
 
-    Created by :meth:`energetica.workshop.network.WorkshopNetwork.join`, never directly, so that every
-    player is in the Run's shared Network from the moment it exists.
+    Created by :meth:`energetica.workshop.network.WorkshopNetwork.join`, or rebuilt by its
+    :meth:`~energetica.workshop.network.WorkshopNetwork.restore` after a restart, never directly, so
+    that every player is in the Run's shared Network from the moment it exists.
     """
 
     account_id: int
@@ -40,7 +41,8 @@ class WorkshopPlayer:
 
     money: float = WORKSHOP_STARTING_BUDGET
 
-    # Filled once Workshop's own facility catalog exists (#998). This ticket only adds the field.
+    # Filled once Workshop's own facility catalog exists (#998). This ticket only adds the field. It
+    # is not yet in the saved session (`energetica.workshop.session`); #998 adds it there too.
     owned_facilities: list[Any] = field(default_factory=list)
 
     def __repr__(self) -> str:

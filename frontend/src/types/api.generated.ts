@@ -1853,6 +1853,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Run
+         * @description Which kind of Run this instance is.
+         */
+        get: operations["get_run_api_v1_run_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -1936,6 +1956,67 @@ export interface paths {
          *     allowlist, so it cannot decide who may join one.
          */
         post: operations["join_run_api_v1_lobby_runs__slug__join_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/enter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enter
+         * @description Enter the Run. A player is placed into its shared Network the first time and gets the same
+         *     player every time after. A facilitator moderates rather than plays, so is placed nowhere.
+         */
+        post: operations["enter_api_v1_workshop_enter_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Session State
+         * @description Where the session is.
+         */
+        get: operations["get_session_state_api_v1_workshop_session_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/session/advance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Advance Session
+         * @description Move the session to its next checkpoint. Nothing else changes the session's phase.
+         */
+        post: operations["advance_session_api_v1_workshop_session_advance_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3892,6 +3973,18 @@ export interface components {
             usernames: string[];
         };
         /**
+         * RunOut
+         * @description What the frontend needs to know about this Run before choosing which pages to show.
+         */
+        RunOut: {
+            /**
+             * Mode
+             * @description The kind of Run: the persistent world (freeplay) or a Workshop
+             * @enum {string}
+             */
+            mode: "freeplay" | "workshop";
+        };
+        /**
          * SettingsOut
          * @description Response model for user configuration.
          */
@@ -4541,10 +4634,129 @@ export interface components {
             password: string;
         };
         /**
+         * Finished
+         * @description After the last Round's Recap. The session cannot advance any further.
+         */
+        Finished: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "finished";
+        };
+        /**
+         * Investment
+         * @description A Round's Investment phase, where players build facilities and buy fuel.
+         */
+        Investment: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "investment";
+            /** Round */
+            round: number;
+        };
+        /**
+         * NotStarted
+         * @description Before Round 1: players are arriving and nothing is open yet.
+         */
+        NotStarted: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "not_started";
+        };
+        /**
+         * Recap
+         * @description The close of a Round, telling the story of what happened in it.
+         */
+        Recap: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "recap";
+            /** Round */
+            round: number;
+        };
+        /**
+         * TradingPeriod
+         * @description One of a Round's four Trading periods, one per season.
+         */
+        TradingPeriod: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "trading_period";
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+        };
+        /**
+         * WorkshopEntryOut
+         * @description The result of entering the Run.
+         */
+        WorkshopEntryOut: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "player" | "facilitator";
+            /** @description The account's player, or null for a facilitator, who moderates and does not play */
+            player: components["schemas"]["WorkshopPlayerOut"] | null;
+        };
+        /**
+         * WorkshopMemberOut
+         * @description A player in the Run, as everyone in it sees them.
+         */
+        WorkshopMemberOut: {
+            /** Account Id */
+            account_id: number;
+            /** Username */
+            username: string;
+        };
+        /**
+         * WorkshopPlayerOut
+         * @description The calling account's own player in the Run.
+         */
+        WorkshopPlayerOut: {
+            /** Account Id */
+            account_id: number;
+            /** Username */
+            username: string;
+            /** Money */
+            money: number;
+        };
+        /**
+         * WorkshopSessionOut
+         * @description Where the session is.
+         */
+        WorkshopSessionOut: {
+            /** Checkpoint */
+            checkpoint: components["schemas"]["NotStarted"] | components["schemas"]["Investment"] | components["schemas"]["TradingPeriod"] | components["schemas"]["Recap"] | components["schemas"]["Finished"];
+            /**
+             * Round Count
+             * @description How many Rounds the session runs
+             */
+            round_count: number;
+            /**
+             * Players
+             * @description Everyone placed into the Run, in the order they entered
+             */
+            players: components["schemas"]["WorkshopMemberOut"][];
+        };
+        /**
          * GameExceptionType
          * @enum {string}
          */
-        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
+        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
     };
     responses: never;
     parameters: never;
@@ -7237,6 +7449,26 @@ export interface operations {
             };
         };
     };
+    get_run_api_v1_run_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunOut"];
+                };
+            };
+        };
+    };
     login_api_v1_auth_login_post: {
         parameters: {
             query?: never;
@@ -7346,6 +7578,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enter_api_v1_workshop_enter_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopEntryOut"];
+                };
+            };
+        };
+    };
+    get_session_state_api_v1_workshop_session_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopSessionOut"];
+                };
+            };
+        };
+    };
+    advance_session_api_v1_workshop_session_advance_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopSessionOut"];
                 };
             };
         };
