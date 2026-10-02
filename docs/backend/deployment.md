@@ -29,8 +29,12 @@ sudo bash /tmp/setup-base.sh                                    # Apache, Python
                                                                  # (the OS "deploy" user must already exist)
 sudo bash /tmp/setup-landing.sh --domain energetica-game.org    # apex vhost + TLS
 sudo bash /tmp/setup-lobby.sh --domain energetica-game.org      # lobby vhost+TLS+unit
-sudo bash /tmp/setup-instance.sh autumn-2025 8004 --domain energetica-game.org  # vhost+TLS+unit
+sudo bash /tmp/setup-instance.sh autumn-2025 8004 --domain energetica-game.org --mode freeplay  # vhost+TLS+unit
 ```
+
+`--mode` is required and has no default: it is the kind of Run (`freeplay` or `workshop`), and
+the backend rejects an `instance.json` that does not state one. A `workshop` Run is provisioned
+private.
 
 `setup-instance.sh` provisions the box (directory, venv, `/etc/energetica/{slug}/instance.json`
 and `instance.env`, vhost+TLS, enabled-but-unstarted unit) but ships **no** code and does **not**
@@ -46,8 +50,8 @@ already claimed by another `energetica-*` unit or by another instance's `instanc
 Two files, both in `/etc/energetica/{slug}/`, both `0640` and readable by the `energetica` group:
 
 - **`instance.json`** — the run's identity and access policy: name, whether it is advertised,
-  the lifecycle dates, the join token. Read fresh on every login, and written back to by the
-  service for private-access changes. An admin can edit it at any time; no restart needed.
+  the lifecycle dates, the join token, and which kind of Run it is (`"run": {"mode": ...}`).
+  Read fresh on every login, and written back to by the service for private-access changes. An admin can edit it at any time; no restart needed.
   Owned by `energetica`, because the service is what rewrites it.
 - **`instance.env`** — how the service runs: the environment contract
   (`ENERGETICA_INSTANCE_SLUG` plus the three path variables) and the port and two clock values.
@@ -98,7 +102,8 @@ From your local machine:
   cross-origin links resolve) and the backend wheel, rsyncs the Python backend + bundle,
   installs the wheel into the server venv, restarts the service, and polls `/healthz`. On
   restart the instance re-reads `instance.json` and re-publishes its landing fragment, so
-  admin policy edits take effect.
+  admin policy edits take effect. Before any of that, it checks the instance's `instance.json`
+  against the backend it is about to ship, and refuses to deploy if the new code would reject it.
   Downtime is ~10-30 seconds while the restart happens — Apache and every other instance keep
   serving throughout. Game state isn't touched: it lives in the instance's own `instance/`
   directory, which the rsync step excludes.
@@ -139,6 +144,64 @@ not install it would leave the service unable to start.
 
 The SSH user is always `deploy`. `--server`/`--domain` also accept env vars (`DEPLOY_HOST`, 
 `DEPLOY_DOMAIN`), so the scripts run unattended from CI.
+
+## Adding the Run mode to existing instances (#1060)
+
+Do this once per instance, before the first deploy that includes #1060.
+
+From #1060 on, every `instance.json` must say which kind of Run it is, in a `run` block. There is
+no default, on purpose: the file is written to say what the Run is, not to guess. The cost is that
+neither backend accepts both shapes. The new one rejects a file with no `run` block, and the old
+one rejects a file that has one, because the file forbids unknown keys. A rejected file does two
+things to a running instance:
+
+- **Every login is refused.** The login path fails closed on a file it cannot read, so the Run's
+  players are locked out, public Run or not.
+- **A frozen Run unfreezes.** The phase check fails open to `active` so that a typo never freezes
+  a live game, which means a Run past its `freeze_at` starts simulating again.
+
+So each instance goes through this order: stop it, edit the file, deploy, and let the deploy
+start it.
+
+**1. List the instances.** Work from the service units, not from the public `instances.json`,
+which by design lists only advertised Runs:
+
+```bash
+./scripts/list-instances.sh --server energetica-game
+```
+
+At the time of #1060 there are four.
+
+**2. Stop the instance and edit its file.** On the VPS, as root. `printf … >` writes into the
+existing file, so it keeps its owner (`energetica`) and mode (`0640`). Do not edit it with an
+editor that saves by rename (see [Where an instance's configuration
+lives](#where-an-instances-configuration-lives)).
+
+```bash
+SLUG=autumn-2025
+CONFIG=/etc/energetica/$SLUG/instance.json
+
+systemctl stop "energetica-$SLUG"
+NEW="$(jq '. + {run: {mode: "freeplay"}}' "$CONFIG")" && printf '%s\n' "$NEW" > "$CONFIG"
+jq -e '.run.mode == "freeplay"' "$CONFIG"   # prints true
+stat -c '%U:%G %a' "$CONFIG"                # energetica:energetica 640
+```
+
+Every instance live at the time of #1060 is a persistent-world Run, so the mode is `freeplay`.
+
+**3. Deploy.** From your machine. The deploy's restart is what starts the stopped instance, so do
+not `systemctl start` it by hand in between: that would run the old code against the new file.
+
+```bash
+./scripts/deploy-instance.sh --server energetica-game --instance "$SLUG" --domain energetica-game.org
+```
+
+Before it ships anything, the deploy reads the instance's `instance.json` and checks it with the
+code it is about to install. If step 2 was missed or went wrong, it refuses, prints which field is
+at fault, and leaves the server as it was. The instance is still stopped at that point: fix the
+file and deploy again.
+
+The reaper needs nothing. It reads `ended_at` with `jq` and no schema, so it works on either shape.
 
 ## Changing an instance's Apache vhost
 

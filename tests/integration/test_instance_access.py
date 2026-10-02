@@ -45,13 +45,15 @@ def _client() -> TestClient:
     return TestClient(app)
 
 
-def _write_policy(config_dir: Path, access: dict) -> None:
+def _write_policy(config_dir: Path, access: dict | None, *, run: dict | None = None) -> None:
+    """Write this test's instance.json. ``access=None`` omits the block; ``run`` defaults to freeplay."""
+    payload: dict = {"name": "Test", "advertised": True, "starts_at": "2025-01-01T00:00:00Z"}
+    if access is not None:
+        payload["access"] = access
+    payload["run"] = run if run is not None else {"mode": "freeplay"}
     target = config_dir / SLUG / "instance.json"
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
-        json.dumps({"name": "Test", "advertised": True, "starts_at": "2025-01-01T00:00:00Z", "access": access}),
-        encoding="utf-8",
-    )
+    target.write_text(json.dumps(payload), encoding="utf-8")
 
 
 def _enter(client: TestClient, username: str) -> int:
@@ -113,6 +115,52 @@ def test_entry_denied_after_instance_goes_private_excluding_a_previously_allowed
 
     # Instance is locked down to private; alice never went through a join step.
     _write_policy(configured, {"policy": "private"})
+
+    assert client.get(ME_URL).status_code == 403
+
+
+def test_entry_denied_for_unjoined_account_on_workshop_run_with_no_access_block(configured: Path) -> None:
+    """A Workshop Run that omits ``access`` is private (#1060), so entry needs a join."""
+    _write_policy(configured, None, run={"mode": "workshop"})
+    client = _client()
+    _enter(client, "carol")
+
+    assert client.get(ME_URL).status_code == 403
+
+
+def test_entry_allowed_for_joined_account_on_workshop_run_with_no_access_block(configured: Path) -> None:
+    _write_policy(configured, None, run={"mode": "workshop"})
+    client = _client()
+    account_id = _enter(client, "alice")
+    _join(account_id)
+
+    assert client.get(ME_URL).status_code == 200
+
+
+def test_entry_allowed_on_workshop_run_with_explicit_public_access(configured: Path) -> None:
+    """The private default never overrides an ``access`` block the file spells out."""
+    _write_policy(configured, {"policy": "public"}, run={"mode": "workshop"})
+    client = _client()
+    _enter(client, "alice")
+
+    assert client.get(ME_URL).status_code == 200
+
+
+def test_entry_fails_closed_when_run_mode_is_not_stated(configured: Path) -> None:
+    """A file with no ``run`` block is rejected rather than read as freeplay, which locks out even
+    a public Run's players. That is deliberate (#1060): the four live files are edited by hand
+    before the deploy that ships this.
+    """
+    target = configured / SLUG / "instance.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps(
+            {"name": "Test", "advertised": True, "starts_at": "2025-01-01T00:00:00Z", "access": {"policy": "public"}}
+        ),
+        encoding="utf-8",
+    )
+    client = _client()
+    _enter(client, "alice")
 
     assert client.get(ME_URL).status_code == 403
 

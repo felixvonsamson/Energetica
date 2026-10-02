@@ -16,7 +16,7 @@ import pytest
 
 from energetica.identity import instance_config
 from energetica.enums import Fuel, Renewable
-from energetica.identity.instance_config import InstanceConfig, PublicAccess
+from energetica.identity.instance_config import FreeplayRun, InstanceConfig, PublicAccess
 from energetica.identity.schemas.recap import Recap
 from energetica.utils import recap as recap_util
 
@@ -119,6 +119,7 @@ def _config() -> InstanceConfig:
         starts_at=datetime(2025, 9, 15, tzinfo=timezone.utc),
         freeze_at=datetime(2025, 12, 1, tzinfo=timezone.utc),
         access=PublicAccess(policy="public"),
+        run=FreeplayRun(mode="freeplay"),
     )
 
 

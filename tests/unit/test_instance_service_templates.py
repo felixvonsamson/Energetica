@@ -89,6 +89,16 @@ def test_the_unit_reads_the_env_file_setup_instance_writes() -> None:
     assert 'install_rendered "$CONFIG_DIR/instance.env"' in setup
 
 
+def test_instance_json_is_rendered_by_the_tested_renderer() -> None:
+    """`setup-instance.sh` must write what `render-instance-json.sh` prints, since that is what
+    `test_render_instance_json.py` checks against the backend.
+    """
+    setup = _SETUP_SCRIPT.read_text()
+    assert '"$SCRIPT_DIR/render-instance-json.sh"' in setup
+    assert "instance.json.tmpl" not in setup, "setup-instance.sh renders the template itself again"
+    assert '"$INSTANCE_JSON" | install_rendered "$CONFIG_DIR/instance.json"' in setup
+
+
 def test_the_unit_refuses_to_start_without_its_env_file() -> None:
     # No `-` prefix, by design: a unit that starts without ENERGETICA_INSTANCE_SLUG treats the
     # instance as public and skips its own instance.json, which is worse than not starting.

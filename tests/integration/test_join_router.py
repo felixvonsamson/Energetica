@@ -35,12 +35,14 @@ PRIVATE_JSON = {
         "join_token": TOKEN,
         "join_open": True,
     },
+    "run": {"mode": "freeplay"},
 }
 PUBLIC_JSON = {
     "name": "Autumn 2025",
     "advertised": True,
     "starts_at": "2025-09-15T00:00:00Z",
     "access": {"policy": "public"},
+    "run": {"mode": "freeplay"},
 }
 
 
