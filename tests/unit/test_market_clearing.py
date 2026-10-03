@@ -8,6 +8,8 @@ and no engine, and a future caller can inject a demand bid backed by no player a
 
 from __future__ import annotations
 
+import math
+
 from energetica.sim.market import MarketEntry, clear_market, market_optimum, place_ask, place_bid
 
 
@@ -32,6 +34,25 @@ def test_clears_without_any_player() -> None:
 
     assert clearing.price == 50
     assert clearing.quantity == 150
+
+
+def test_unbounded_bid_beyond_supply_goes_unserved() -> None:
+    """A bid at ``math.inf`` (Workshop's must-serve tier) cannot clear more than the supply offered.
+
+    The last offer's "no more supply" step is also ``math.inf``, so the two must not be read as a tie.
+    """
+    offers = [_offer(50, 10)]
+    demands = [_demand(80, math.inf), _demand(20, 50)]
+
+    clearing = clear_market(offers, demands)
+
+    assert clearing.quantity == 50
+    assert clearing.price == math.inf  # the unbounded bid is the one left unserved
+    must_serve, flexible = clearing.demands
+    assert must_serve.cleared == 50
+    assert must_serve.unmet == 30
+    assert flexible.cleared == 0
+    assert clearing.unserved == 50
 
 
 def test_marginal_offer_is_partially_cleared() -> None:

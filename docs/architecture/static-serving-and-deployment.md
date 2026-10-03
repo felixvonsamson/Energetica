@@ -192,8 +192,10 @@ prefix would mean asking a third party to edit their config. #1064 moved the bun
 language sitting inside a Python package — without touching a single public URL.
 
 `src/energetica/freeplay/data/` is deliberately **not** in that list. It holds the daily quiz
-questions and answers, the map, and the national-demand curves; the Python engine reads them
-off the filesystem (`src/energetica/freeplay/game_engine.py`) and no HTTP client asks for them.
+questions and answers and the map; the Python engine reads them off the filesystem
+(`src/energetica/freeplay/game_engine.py`) and no HTTP client asks for them. The national-demand
+curves were there too until #997 moved them to `src/energetica/sim/data/`, so that Workshop can
+read them. They hold nothing secret, and no URL maps there either.
 The tables lived at `src/energetica/static/data/` until #1055 moved them next to the engine.
 Apache served that directory until the disclosure fix #1070, which closed a path that let
 anyone who guessed it read the quiz answers. No URL maps into the Python package any more, but
