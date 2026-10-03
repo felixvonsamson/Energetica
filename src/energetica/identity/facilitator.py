@@ -8,8 +8,7 @@ ADR-0007) rather than ``instance.json``. Every route here is instance-wide, not 
 facilitator is calling, so the auth gate is a router-level dependency rather than a per-route
 parameter each handler would otherwise ignore.
 
-Both apps serve these routes (#1138). :func:`facilitator_router` takes the roster's join write as
-``on_join``, for the same reason as :func:`energetica.identity.join.join_router`.
+Both the persistent world and Workshop serve these routes (#1138).
 """
 
 from datetime import datetime, timezone
@@ -19,7 +18,6 @@ from fastapi import APIRouter, Depends, Query
 
 from energetica.identity import accounts, instance_config
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.identity.join import OnJoin
 from energetica.identity.schemas.facilitator import (
     FacilitatorAccessOut,
     FacilitatorAccessPatch,
@@ -28,6 +26,8 @@ from energetica.identity.schemas.facilitator import (
     RosterCandidatesOut,
 )
 from energetica.identity.web import get_facilitator
+
+router = APIRouter(prefix="/facilitator", tags=["Facilitator"], dependencies=[Depends(get_facilitator)])
 
 _T = TypeVar("_T")
 
@@ -56,6 +56,18 @@ def _access_out() -> FacilitatorAccessOut:
     return FacilitatorAccessOut(join_token=join_token, join_open=config.access.join_open)
 
 
+@router.get("/access")
+def get_access() -> FacilitatorAccessOut:
+    """This instance's join-link settings — lazily generating the join token on first visit."""
+    return _access_out()
+
+
+@router.patch("/access", status_code=204)
+def update_access(access_patch: FacilitatorAccessPatch) -> None:
+    """Flip whether the join link currently admits new accounts."""
+    _or_not_private(lambda: instance_config.set_join_open(access_patch.join_open))
+
+
 def _require_private_slug() -> str:
     """This instance's slug, after confirming it is privately configured — translating "not
     private" into the same ``GameError`` every facilitator route uses.
@@ -75,79 +87,58 @@ def _require_private_slug() -> str:
     return slug
 
 
-def facilitator_router(on_join: OnJoin) -> APIRouter:
-    """The ``/facilitator`` routes, recording each roster add with ``on_join``."""
-    router = APIRouter(prefix="/facilitator", tags=["Facilitator"], dependencies=[Depends(get_facilitator)])
+@router.get("/roster")
+def get_roster() -> FacilitatorRosterOut:
+    """This instance's roster: every account allowed to enter it, whether or not it has yet."""
+    slug = _require_private_slug()
+    return FacilitatorRosterOut(members=[entry.username for entry in accounts.get_run_roster(slug=slug)])
 
-    @router.get("/access")
-    def get_access() -> FacilitatorAccessOut:
-        """This instance's join-link settings — lazily generating the join token on first visit."""
-        return _access_out()
 
-    @router.patch("/access", status_code=204)
-    def update_access(access_patch: FacilitatorAccessPatch) -> None:
-        """Flip whether the join link currently admits new accounts."""
-        _or_not_private(lambda: instance_config.set_join_open(access_patch.join_open))
+@router.get("/roster/candidates")
+def search_roster_candidates(prefix: Annotated[str, Query(min_length=1)]) -> RosterCandidatesOut:
+    """Existing accounts whose username starts with ``prefix`` — the add control's lookup.
 
-    @router.get("/roster")
-    def get_roster() -> FacilitatorRosterOut:
-        """This instance's roster, split into joined (settled — has a ``Player``) vs invited (joined,
-        no ``Player`` yet).
-        """
-        slug = _require_private_slug()
-        roster = accounts.get_run_roster(slug=slug)
-        joined = [entry.username for entry in roster if entry.settled_at is not None]
-        invited = [entry.username for entry in roster if entry.settled_at is None]
-        return FacilitatorRosterOut(joined=joined, invited=invited)
+    Doesn't require this instance to be private (searching the server-wide account store doesn't
+    touch its roster), so it skips :func:`_require_private_slug` — the add-control's own POST is
+    where "this instance isn't private" would actually matter.
+    """
+    matches = accounts.search_accounts(prefix=prefix)
+    return RosterCandidatesOut(usernames=[account.username for account in matches])
 
-    @router.get("/roster/candidates")
-    def search_roster_candidates(prefix: Annotated[str, Query(min_length=1)]) -> RosterCandidatesOut:
-        """Existing accounts whose username starts with ``prefix`` — the add control's lookup.
 
-        Doesn't require this instance to be private (searching the server-wide account store doesn't
-        touch its roster), so it skips :func:`_require_private_slug` — the add-control's own POST is
-        where "this instance isn't private" would actually matter.
-        """
-        matches = accounts.search_accounts(prefix=prefix)
-        return RosterCandidatesOut(usernames=[account.username for account in matches])
+@router.post("/roster", status_code=204)
+def add_to_roster(body: RosterAddIn) -> None:
+    """Add an existing account to the roster.
 
-    @router.post("/roster", status_code=204)
-    def add_to_roster(body: RosterAddIn) -> None:
-        """Add an existing account to the roster.
+    No freeform username strings: an account must already exist server-wide (a facilitator can
+    only invite someone with an account, not conjure a name into the roster), which reuses the
+    same ``USER_NOT_FOUND`` a login rejects an unknown username with. Idempotent — adding an
+    already-joined account is a no-op.
+    """
+    account = accounts.get_account_by_username(body.username)
+    if account is None:
+        raise GameError(GameExceptionType.USER_NOT_FOUND)
+    slug = _require_private_slug()
+    try:
+        accounts.record_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
+    except accounts.MembershipRoleConflictError:
+        # body.username is this run's facilitator (or server-wide) — a facilitator administers a
+        # run, it doesn't also join one as a player (ADR-0004).
+        raise GameError(GameExceptionType.INSTANCE_ACCESS_DENIED)
 
-        No freeform username strings: an account must already exist server-wide (a facilitator can
-        only invite someone with an account, not conjure a name into the roster), which reuses the
-        same ``USER_NOT_FOUND`` a login rejects an unknown username with. Idempotent — adding an
-        already-joined account is a no-op. Re-adding a previously-settled, then-banned account
-        (:func:`accounts.remove_membership`) reconciles ``settled_at`` from its still-intact
-        ``Player`` rather than coming back "invited" — see
-        :func:`energetica.utils.misc.record_join_reconciling_settlement`.
-        """
-        account = accounts.get_account_by_username(body.username)
-        if account is None:
-            raise GameError(GameExceptionType.USER_NOT_FOUND)
-        slug = _require_private_slug()
-        try:
-            on_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
-        except accounts.MembershipRoleConflictError:
-            # body.username is this run's facilitator (or server-wide) — a facilitator administers a
-            # run, it doesn't also join one as a player (ADR-0004).
-            raise GameError(GameExceptionType.INSTANCE_ACCESS_DENIED)
 
-    @router.delete("/roster/{username}", status_code=204)
-    def remove_from_roster(username: str) -> None:
-        """Ban/remove: drop ``username``'s membership in this run.
+@router.delete("/roster/{username}", status_code=204)
+def remove_from_roster(username: str) -> None:
+    """Ban/remove: drop ``username``'s membership in this run.
 
-        Revocation is eventual — it takes effect on the account's next entry check, not an instant
-        kick of a live session (out of scope here, #677 if ever built) — and does not touch any
-        ``Player`` already created; see :func:`accounts.remove_membership`. A no-op (still 204) if
-        ``username`` names no account, or isn't on the roster — matching the old allowlist's
-        idempotency.
-        """
-        slug = _require_private_slug()
-        account = accounts.get_account_by_username(username)
-        if account is None:
-            return
-        accounts.remove_membership(account_id=account.account_id, slug=slug)
-
-    return router
+    Revocation is eventual — it takes effect on the account's next entry check, not an instant
+    kick of a live session (out of scope here, #677 if ever built) — and does not touch any
+    ``Player`` already created; see :func:`accounts.remove_membership`. A no-op (still 204) if
+    ``username`` names no account, or isn't on the roster — matching the old allowlist's
+    idempotency.
+    """
+    slug = _require_private_slug()
+    account = accounts.get_account_by_username(username)
+    if account is None:
+        return
+    accounts.remove_membership(account_id=account.account_id, slug=slug)

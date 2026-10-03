@@ -7,12 +7,10 @@ accounts. Advancing the session is the facilitator's alone.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
 
-from energetica.identity import accounts, instance_config
 from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError, GameExceptionType
@@ -49,14 +47,6 @@ def enter(account: Annotated[Account, Depends(resolve_entry_account)], session: 
     if get_role(account.account_id) == "facilitator":
         return WorkshopEntryOut(role="facilitator", player=None)
     player = session.join(account)
-    # Entering is what settling is in a Workshop Run, so the roster and the lobby show the account
-    # as joined. It is recorded on every entry, not only the first: the write keeps the first time,
-    # and an account re-added after a ban needs it written again.
-    slug = instance_config.instance_slug()
-    assert slug is not None  # a Workshop app only starts from a loaded config, which implies a slug
-    accounts.record_settlement(
-        account_id=account.account_id, slug=slug, settled_at=datetime.now(timezone.utc).isoformat()
-    )
     return WorkshopEntryOut(
         role="player",
         player=WorkshopPlayerOut(account_id=player.account_id, username=player.username, money=player.money),

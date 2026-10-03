@@ -8,12 +8,11 @@ from fastapi import FastAPI, Request, Response, status
 
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
-from energetica.identity.facilitator import facilitator_router
-from energetica.identity.join import join_router
+from energetica.identity.facilitator import router as facilitator_router
+from energetica.identity.join import router as join_router
 from energetica.identity.run import run_router
 from energetica.identity.web import get_current_account
 from energetica.kernel.error_envelope import install_error_handlers
-from energetica.utils.misc import record_join_reconciling_settlement
 
 from .achievements import router as achievements_router
 from .auth import router as auth_router
@@ -44,10 +43,10 @@ api_routers = [
     chat_router,
     daily_quiz_router,
     electricity_markets_router,
-    facilitator_router(record_join_reconciling_settlement),
+    facilitator_router,
     facilities_router,
     game_router,
-    join_router(record_join_reconciling_settlement),
+    join_router,
     lobby_router,
     map_router,
     notifications_router,

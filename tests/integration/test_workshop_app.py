@@ -74,13 +74,6 @@ def _facilitator(client: TestClient) -> int:
     return account_id
 
 
-def _facilitator_session(client: TestClient) -> None:
-    """Sign ``client`` back in as the facilitator :func:`_facilitator` created."""
-    account = accounts.get_account_by_username("prof")
-    assert account is not None
-    authenticate(client, account.account_id)
-
-
 def _checkpoint(kind: str, round_number: int | None = None, season: str | None = None) -> dict:
     checkpoint: dict = {"kind": kind}
     if round_number is not None:
@@ -196,22 +189,6 @@ def test_a_player_added_to_the_roster_can_enter(session_path: Path) -> None:
 
     assert response.status_code == 200
     assert response.json()["player"]["account_id"] == account_id
-
-
-def test_the_roster_lists_a_player_who_has_entered_as_joined(session_path: Path) -> None:
-    client = _client(session_path)
-    alice = make_account("alice")
-    make_account("bob")
-    _facilitator(client)
-    client.post(FACILITATOR_ROSTER_URL, json={"username": "alice"})
-    client.post(FACILITATOR_ROSTER_URL, json={"username": "bob"})
-    authenticate(client, alice)
-    client.post(ENTER_URL)
-
-    _facilitator_session(client)
-    response = client.get(FACILITATOR_ROSTER_URL)
-
-    assert response.json() == {"joined": ["alice"], "invited": ["bob"]}
 
 
 # --- the session ----------------------------------------------------------------------------

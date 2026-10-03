@@ -17,8 +17,8 @@ from fastapi import FastAPI
 
 from energetica.identity import accounts, instance_config
 from energetica.identity.instance_config import InstanceConfig
-from energetica.identity.facilitator import facilitator_router
-from energetica.identity.join import join_router
+from energetica.identity.facilitator import router as facilitator_router
+from energetica.identity.join import router as join_router
 from energetica.identity.run import run_router
 from energetica.kernel.error_envelope import install_error_handlers
 from energetica.kernel.version import backend_version, frontend_version
@@ -50,10 +50,9 @@ def create_workshop_app(
     app = FastAPI(title="Energetica Workshop", lifespan=_lifespan)
     install_error_handlers(app)
     app.include_router(run_router("workshop"), prefix="/api/v1")
-    # A private Run admits accounts through the join link and the roster. Workshop has no persistent
-    # Player whose settlement a re-added account would need reconciled, so a join is just recorded.
-    app.include_router(join_router(accounts.record_join), prefix="/api/v1")
-    app.include_router(facilitator_router(accounts.record_join), prefix="/api/v1")
+    # A private Run admits accounts through the join link and the facilitator's roster.
+    app.include_router(join_router, prefix="/api/v1")
+    app.include_router(facilitator_router, prefix="/api/v1")
     app.include_router(workshop_router, prefix="/api/v1")
     if schema_only:
         return app

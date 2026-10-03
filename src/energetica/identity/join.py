@@ -10,14 +10,12 @@ Entry into the game itself still goes through the existing, unmodified entry gat
 ``resolve_entry_account`` / ``_enforce_instance_access`` in ``identity.web``), which now reads
 that same table.
 
-Both apps serve these routes (#1138). :func:`join_router` takes the join write as ``on_join``,
-because the persistent world also reconciles the account's settlement, which needs its ``Player``
-table, and Workshop may not import that.
+Both the persistent world and Workshop serve these routes (#1138).
 """
 
 import secrets
 from datetime import datetime, timezone
-from typing import Annotated, Protocol
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -27,14 +25,7 @@ from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.identity.schemas.join import JoinLinkOut, Viewer
 from energetica.identity.web import get_current_account
 
-
-class OnJoin(Protocol):
-    """Records ``account_id`` joining run ``slug``, as :func:`accounts.record_join` does.
-
-    Raises :class:`accounts.MembershipRoleConflictError` if the account is a facilitator here.
-    """
-
-    def __call__(self, *, account_id: int, slug: str, joined_at: str) -> None: ...
+router = APIRouter(prefix="/join", tags=["Join"])
 
 
 def _resolve(token: str) -> tuple[str, instance_config.PrivateAccess]:
@@ -57,56 +48,51 @@ def _resolve(token: str) -> tuple[str, instance_config.PrivateAccess]:
     return config.name, access
 
 
-def join_router(on_join: OnJoin) -> APIRouter:
-    """The ``/join`` routes, recording each confirmed join with ``on_join``."""
-    router = APIRouter(prefix="/join", tags=["Join"])
-
-    @router.get("/{token}")
-    def get_join_link(token: str, account: Annotated[Account | None, Depends(get_current_account)]) -> JoinLinkOut:
-        """What this join link offers, and whether the visitor already has a session to join with."""
-        instance_name, access = _resolve(token)
-        viewer = None
-        if account is not None:
-            slug = instance_config.instance_slug()
-            assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
-            if accounts.is_facilitator(account_id=account.account_id, slug=slug):
-                membership = "facilitator"
-            elif accounts.has_joined(account_id=account.account_id, slug=slug):
-                membership = "player"
-            else:
-                membership = None
-            viewer = Viewer(username=account.username, membership=membership)
-        return JoinLinkOut(instance_name=instance_name, join_open=access.join_open, viewer=viewer)
-
-    @router.post("/{token}", status_code=204)
-    def confirm_join(token: str, account: Annotated[Account | None, Depends(get_current_account)]) -> None:
-        """Confirm joining: record the signed-in visitor's join in ``accounts.db``.
-
-        Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
-        is this runs *before* the visitor is access-allowed, so no membership row need exist yet) but
-        deliberately does not go through ``_enforce_instance_access``: granting access is this
-        endpoint's job, not a precondition for reaching it. Checks identity before instance state
-        (mirrors ``get_facilitator``/``get_settled_player``'s "who, then what" order elsewhere in this
-        codebase) and re-checks ``join_open`` server-side rather than trusting the page's last
-        ``GET``, so a facilitator flipping the toggle mid-visit is the outcome that wins, not a stale
-        client.
-        """
-        if account is None:
-            # Matches resolve_entry_account's convention: no/invalid session is a 401, not a 400
-            # GameError — this is a plain auth failure, not a game-domain rejection.
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
-        _, access = _resolve(token)
-        if not access.join_open:
-            raise GameError(GameExceptionType.JOIN_LINK_CLOSED)
+@router.get("/{token}")
+def get_join_link(token: str, account: Annotated[Account | None, Depends(get_current_account)]) -> JoinLinkOut:
+    """What this join link offers, and whether the visitor already has a session to join with."""
+    instance_name, access = _resolve(token)
+    viewer = None
+    if account is not None:
         slug = instance_config.instance_slug()
         assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
-        try:
-            on_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
-        except accounts.MembershipRoleConflictError:
-            # account is this run's facilitator (or server-wide) — a facilitator administers a run,
-            # it doesn't also join one as a player (ADR-0004). There is no in-app way to reach this
-            # (a facilitator has no reason to visit their own join link), but fail closed rather than
-            # 500 if it ever happens.
-            raise GameError(GameExceptionType.INSTANCE_ACCESS_DENIED)
+        if accounts.is_facilitator(account_id=account.account_id, slug=slug):
+            membership = "facilitator"
+        elif accounts.has_joined(account_id=account.account_id, slug=slug):
+            membership = "player"
+        else:
+            membership = None
+        viewer = Viewer(username=account.username, membership=membership)
+    return JoinLinkOut(instance_name=instance_name, join_open=access.join_open, viewer=viewer)
 
-    return router
+
+@router.post("/{token}", status_code=204)
+def confirm_join(token: str, account: Annotated[Account | None, Depends(get_current_account)]) -> None:
+    """Confirm joining: record the signed-in visitor's join in ``accounts.db``.
+
+    Requires an SSO session (``get_current_account``, not ``get_settled_player`` — the whole point
+    is this runs *before* the visitor is access-allowed, so no membership row need exist yet) but
+    deliberately does not go through ``_enforce_instance_access``: granting access is this
+    endpoint's job, not a precondition for reaching it. Checks identity before instance state
+    (mirrors ``get_facilitator``/``get_settled_player``'s "who, then what" order elsewhere in this
+    codebase) and re-checks ``join_open`` server-side rather than trusting the page's last
+    ``GET``, so a facilitator flipping the toggle mid-visit is the outcome that wins, not a stale
+    client.
+    """
+    if account is None:
+        # Matches resolve_entry_account's convention: no/invalid session is a 401, not a 400
+        # GameError — this is a plain auth failure, not a game-domain rejection.
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)
+    _, access = _resolve(token)
+    if not access.join_open:
+        raise GameError(GameExceptionType.JOIN_LINK_CLOSED)
+    slug = instance_config.instance_slug()
+    assert slug is not None  # _resolve() only succeeds for a slug-configured, privately-set-up instance
+    try:
+        accounts.record_join(account_id=account.account_id, slug=slug, joined_at=datetime.now(timezone.utc).isoformat())
+    except accounts.MembershipRoleConflictError:
+        # account is this run's facilitator (or server-wide) — a facilitator administers a run,
+        # it doesn't also join one as a player (ADR-0004). There is no in-app way to reach this
+        # (a facilitator has no reason to visit their own join link), but fail closed rather than
+        # 500 if it ever happens.
+        raise GameError(GameExceptionType.INSTANCE_ACCESS_DENIED)
