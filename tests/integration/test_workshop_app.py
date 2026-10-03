@@ -37,6 +37,8 @@ WORKSHOP_JSON = {
 ENTER_URL = "/api/v1/workshop/enter"
 SESSION_URL = "/api/v1/workshop/session"
 ADVANCE_URL = "/api/v1/workshop/session/advance"
+FACILITATOR_ACCESS_URL = "/api/v1/facilitator/access"
+FACILITATOR_ROSTER_URL = "/api/v1/facilitator/roster"
 
 
 @pytest.fixture
@@ -154,6 +156,39 @@ def test_a_facilitator_entering_is_not_placed_into_the_network(session_path: Pat
     assert response.status_code == 200
     assert response.json() == {"role": "facilitator", "player": None}
     assert client.get(SESSION_URL).json()["players"] == []
+
+
+# --- admitting players to a private Run ----------------------------------------------------
+
+
+def test_a_player_admitted_through_the_join_link_can_enter(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    token = client.get(FACILITATOR_ACCESS_URL).json()["join_token"]
+    assert client.patch(FACILITATOR_ACCESS_URL, json={"join_open": True}).status_code == 204
+    account_id = make_account("alice")
+    authenticate(client, account_id)
+    assert client.post(ENTER_URL).status_code == 403
+
+    assert client.post(f"/api/v1/join/{token}").status_code == 204
+    response = client.post(ENTER_URL)
+
+    assert response.status_code == 200
+    assert response.json()["player"]["account_id"] == account_id
+    assert [player["username"] for player in client.get(SESSION_URL).json()["players"]] == ["alice"]
+
+
+def test_a_player_added_to_the_roster_can_enter(session_path: Path) -> None:
+    client = _client(session_path)
+    account_id = make_account("alice")
+    _facilitator(client)
+
+    assert client.post(FACILITATOR_ROSTER_URL, json={"username": "alice"}).status_code == 204
+    authenticate(client, account_id)
+    response = client.post(ENTER_URL)
+
+    assert response.status_code == 200
+    assert response.json()["player"]["account_id"] == account_id
 
 
 # --- the session ----------------------------------------------------------------------------

@@ -13,15 +13,6 @@ this does not touch or require a private ``access.policy`` — the roster itself
 ``accounts.db`` regardless of what a run's ``instance.json`` currently says, though it is only
 *consulted* by the entry gate for a privately-configured run.
 
-Caveat on 'add': the in-app roster page and the join-link's confirm additionally reconcile
-``settled_at`` when re-adding a previously-settled, then-banned account (they can see the run's
-live ``Player`` table; see ``energetica.utils.misc.record_join_reconciling_settlement``). This
-script only touches ``accounts.db`` — it has no connection to the running instance's engine — so
-it cannot do that reconciliation itself. Re-adding such an account here brings back a joined-but-
-unsettled row (the entry gate still lets them straight back in, since that reads the engine's
-``Player`` directly; only the lobby's "Settle" vs "Continue" label is briefly wrong). Use the
-facilitator roster page for this re-add instead if that display needs to be exact right away.
-
 Usage (from /var/www/energetica-lobby):
     ./scripts/whitelist-run.py <slug> list
     ./scripts/whitelist-run.py <slug> add    <username> [<username> ...]
@@ -73,12 +64,10 @@ def main() -> int:
             print(f"No one on {args.slug!r}'s roster.")
             return 0
         for entry in roster:
-            state = "settled" if entry.settled_at is not None else "invited, not settled"
-            print(f"  {entry.username} ({state}, joined {entry.joined_at})")
+            print(f"  {entry.username} (joined {entry.joined_at})")
         return 0
 
     if args.action == "add":
-        added = 0
         for username in args.usernames:
             account = accounts.get_account_by_username(username)
             if account is None:
@@ -92,16 +81,6 @@ def main() -> int:
                 print(f"ERROR: {exc} — skipped", file=sys.stderr)
                 continue
             print(f"Added {username!r} to {args.slug!r}'s roster.")
-            added += 1
-        if added:
-            # See the module docstring's "Caveat on 'add'": this script can't see the run's live
-            # Player table, so a re-add of a previously-settled, then-banned account comes back
-            # unsettled in the lobby's display even though nothing about their in-run state changed.
-            print(
-                "Note: if any of the above previously settled in this run and were removed, their "
-                "lobby 'settled' status won't be restored automatically — see this script's --help.",
-                file=sys.stderr,
-            )
         return 0
 
     # remove
