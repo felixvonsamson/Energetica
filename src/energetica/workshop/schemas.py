@@ -33,6 +33,21 @@ class WorkshopMemberOut(BaseModel):
     username: str
 
 
+class WorkshopPhaseTimerOut(BaseModel):
+    """The running phase's countdown."""
+
+    remaining_seconds: float = Field(
+        description="Time left when the server answered. Zero once the phase has closed, though the session "
+        "stays at its checkpoint until the facilitator advances it"
+    )
+
+
+class WorkshopPhaseExtendIn(BaseModel):
+    """The facilitator's "+N minutes" on the running phase."""
+
+    minutes: int = Field(ge=1, le=60, description="How many minutes to add")
+
+
 class WorkshopSessionOut(BaseModel):
     """Where the session is."""
 
@@ -41,4 +56,8 @@ class WorkshopSessionOut(BaseModel):
         description="Where the facilitator's next advance moves the session, or null once it is finished"
     )
     round_count: int = Field(description="How many Rounds the session runs")
+    phase_timer: WorkshopPhaseTimerOut | None = Field(
+        description="The countdown on the Investment phase or a Trading period's price-setting window, or null "
+        "at a checkpoint that has none"
+    )
     players: list[WorkshopMemberOut] = Field(description="Everyone placed into the Run, in the order they entered")

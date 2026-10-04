@@ -2,14 +2,19 @@
 
 A session runs a configured number of Rounds. Each Round has one Investment phase, then four Trading
 periods (spring, summer, autumn, winter), then a Recap. Each of those is a **checkpoint**: the
-session sits at one until the moderator advances it, however long that takes. There is no clock,
-no timeout and no separate pause. The session also has a checkpoint before Round 1, while players
+session sits at one until the moderator advances it, however long that takes. There is no timeout
+and no separate pause. The session also has a checkpoint before Round 1, while players
 arrive, and one after the last Recap, when the session is over.
 
     NotStarted → [Investment → TradingPeriod ×4 → Recap] × round_count → Finished
 
+The Investment phase and each Trading period's price-setting window also get a countdown, a
+:class:`~energetica.workshop.phase_timer.PhaseTimer` (#996). It tells players how long they have, and
+the moderator can extend it. Running out of time closes the window but does not advance the session.
+
 :class:`WorkshopSession` holds a Run's whole state: the current checkpoint, the Round count, the
-round-configuration levers, and the Run's single shared Network. It is saved to a JSON file after
+round-configuration levers, the running phase's countdown, and the Run's single shared
+Network. It is saved to a JSON file after
 every change and reloaded from it on start, so a restart resumes the session where it was. This is
 Workshop's own persistence. It shares nothing with the persistent world's model store or checkpoints
 (#1049), and the file follows the shape of the session rather than of any persistent-world object.
@@ -20,12 +25,15 @@ from __future__ import annotations
 import os
 import tempfile
 import threading
+from collections.abc import Callable
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Literal, get_args
 
 from pydantic import BaseModel, Field
 
 from energetica.workshop.network import WorkshopNetwork
+from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.setup import open_workshop_run
 
 if TYPE_CHECKING:
@@ -39,6 +47,13 @@ SEASONS: tuple[Season, ...] = get_args(Season)
 # How many Rounds a session runs unless the moderator chooses otherwise (#992). A placeholder, like
 # every other Workshop magnitude.
 DEFAULT_ROUND_COUNT = 3
+
+Clock = Callable[[], datetime]
+
+
+def utc_now() -> datetime:
+    """The current time in UTC: the clock a session times its phases with, unless a test gives another."""
+    return datetime.now(timezone.utc)
 
 
 class NotStarted(BaseModel):
@@ -87,6 +102,10 @@ class SessionFinishedError(Exception):
     """Raised when advancing a session that is already :class:`Finished`."""
 
 
+class NoPhaseRunningError(Exception):
+    """Raised when extending a phase while none is open: the checkpoint is not timed, or its time is up."""
+
+
 def next_checkpoint(checkpoint: Checkpoint, *, round_count: int) -> Checkpoint:
     """The checkpoint that follows ``checkpoint`` in a session of ``round_count`` Rounds."""
     match checkpoint:
@@ -109,12 +128,32 @@ def next_checkpoint(checkpoint: Checkpoint, *, round_count: int) -> Checkpoint:
 class RoundLevers(BaseModel):
     """The round-configuration levers the moderator changes during a session.
 
-    Empty for now: each lever is added by the ticket that builds it (#1012, #1018). They belong to
-    the session, saved with it, and not to ``WorkshopRun`` in ``instance.json``, which the sysadmin
-    writes when the Run is provisioned.
+    Each lever is added by the ticket that builds it (#996, #1012, #1018). They belong to the
+    session, saved with it, and not to ``WorkshopRun`` in ``instance.json``, which the sysadmin
+    writes when the Run is provisioned. Every lever has a default, so a session saved before a lever
+    existed still loads.
     """
 
     model_config = {"extra": "forbid"}
+
+    # How long each timed phase is open when it starts (#986). The round-config page will make them
+    # editable (#1018).
+    investment_minutes: int = Field(default=8, ge=1)
+    price_setting_minutes: int = Field(default=5, ge=1)
+
+
+def phase_duration(checkpoint: Checkpoint, levers: RoundLevers) -> timedelta | None:
+    """How long the phase opened at ``checkpoint`` runs, or ``None`` if that checkpoint is not timed.
+
+    A Trading period's timer is its price-setting window.
+    """
+    match checkpoint:
+        case Investment():
+            return timedelta(minutes=levers.investment_minutes)
+        case TradingPeriod():
+            return timedelta(minutes=levers.price_setting_minutes)
+        case _:
+            return None
 
 
 class _SavedPlayer(BaseModel):
@@ -131,6 +170,8 @@ class _SavedSession(BaseModel):
     checkpoint: Checkpoint
     round_count: int = Field(ge=1)
     levers: RoundLevers
+    # Defaults to none for a file saved before phase timers existed.
+    phase_timer: PhaseTimer | None = None
     players: list[_SavedPlayer]
 
 
@@ -149,6 +190,8 @@ class WorkshopSession:
         checkpoint: Checkpoint,
         round_count: int,
         levers: RoundLevers,
+        phase_timer: PhaseTimer | None = None,
+        clock: Clock = utc_now,
     ) -> None:
         if round_count < 1:
             raise ValueError(f"a session needs at least one Round, not {round_count}")
@@ -157,26 +200,40 @@ class WorkshopSession:
         self.checkpoint: Checkpoint = checkpoint
         self.round_count = round_count
         self.levers = levers
+        self.phase_timer = phase_timer
+        self.clock = clock
         # Makes each change and the save that follows it one step, so two requests can neither
         # advance from the same checkpoint nor save over each other's change.
         self._lock = threading.Lock()
 
     @classmethod
-    def open(cls, config: InstanceConfig, path: Path, *, round_count: int = DEFAULT_ROUND_COUNT) -> WorkshopSession:
+    def open(
+        cls,
+        config: InstanceConfig,
+        path: Path,
+        *,
+        round_count: int = DEFAULT_ROUND_COUNT,
+        clock: Clock = utc_now,
+    ) -> WorkshopSession:
         """Reload the session saved at ``path``, or start a new one there if there is none.
 
         ``round_count`` applies only to a new session; a reloaded one keeps the count it was saved
         with. A file that exists but cannot be read raises ``ValueError`` rather than starting over,
         since starting over would discard a running session. Like :func:`open_workshop_run`, this
         raises :class:`~energetica.workshop.setup.NotAWorkshopRunError` unless ``config`` is a
-        Workshop Run.
+        Workshop Run. ``clock`` gives the current time that phase timers count from.
         """
         network = open_workshop_run(config)
         if not path.exists():
             session = cls(
-                network=network, path=path, checkpoint=NotStarted(), round_count=round_count, levers=RoundLevers()
+                network=network,
+                path=path,
+                checkpoint=NotStarted(),
+                round_count=round_count,
+                levers=RoundLevers(),
+                clock=clock,
             )
-            session._save(session.checkpoint)
+            session._save(session.checkpoint, session.phase_timer)
             return session
         saved = _SavedSession.model_validate_json(path.read_text(encoding="utf-8"))
         for player in saved.players:
@@ -187,6 +244,8 @@ class WorkshopSession:
             checkpoint=saved.checkpoint,
             round_count=saved.round_count,
             levers=saved.levers,
+            phase_timer=saved.phase_timer,
+            clock=clock,
         )
 
     def upcoming_checkpoint(self) -> Checkpoint | None:
@@ -198,14 +257,33 @@ class WorkshopSession:
     def advance(self) -> Checkpoint:
         """Move to the next checkpoint and return it. The only way the session changes phase.
 
-        Raises :class:`SessionFinishedError` once the session is :class:`Finished`.
+        A timed checkpoint starts its phase's countdown now. Raises :class:`SessionFinishedError`
+        once the session is :class:`Finished`.
         """
         with self._lock:
             checkpoint = next_checkpoint(self.checkpoint, round_count=self.round_count)
+            duration = phase_duration(checkpoint, self.levers)
+            phase_timer = None if duration is None else PhaseTimer(started_at=self.clock(), duration=duration)
             # Saved before it is applied, so a failed write leaves the session where the file says.
-            self._save(checkpoint)
+            self._save(checkpoint, phase_timer)
             self.checkpoint = checkpoint
+            self.phase_timer = phase_timer
             return checkpoint
+
+    def extend_phase(self, by: timedelta) -> PhaseTimer:
+        """Give the running phase ``by`` more time, and return its timer.
+
+        Raises :class:`NoPhaseRunningError` if no phase is open: the checkpoint is not timed, or its
+        time has run out. A closed window is never reopened, since what follows it may already rely
+        on it being closed.
+        """
+        with self._lock:
+            if self.phase_timer is None or not self.phase_timer.is_active(self.clock()):
+                raise NoPhaseRunningError("no phase is running")
+            phase_timer = self.phase_timer.extended(by)
+            self._save(self.checkpoint, phase_timer)
+            self.phase_timer = phase_timer
+            return phase_timer
 
     def join(self, account: Account) -> WorkshopPlayer:
         """Place ``account`` into the Run's Network, or return its existing player."""
@@ -214,19 +292,20 @@ class WorkshopSession:
             player = self.network.join(account)
             if is_new:
                 try:
-                    self._save(self.checkpoint)
+                    self._save(self.checkpoint, self.phase_timer)
                 except BaseException:
                     # Undo the join, so the session matches the file and the next entry retries it.
                     del self.network.members[account.account_id]
                     raise
             return player
 
-    def _save(self, checkpoint: Checkpoint) -> None:
-        """Write the session to its file as it would be at ``checkpoint``."""
+    def _save(self, checkpoint: Checkpoint, phase_timer: PhaseTimer | None) -> None:
+        """Write the session to its file as it would be at ``checkpoint`` with ``phase_timer``."""
         saved = _SavedSession(
             checkpoint=checkpoint,
             round_count=self.round_count,
             levers=self.levers,
+            phase_timer=phase_timer,
             players=[
                 _SavedPlayer(account_id=player.account_id, username=player.username, money=player.money)
                 for player in self.network.players()

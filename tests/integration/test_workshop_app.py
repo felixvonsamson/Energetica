@@ -38,6 +38,7 @@ WORKSHOP_JSON = {
 ENTER_URL = "/api/v1/workshop/enter"
 SESSION_URL = "/api/v1/workshop/session"
 ADVANCE_URL = "/api/v1/workshop/session/advance"
+EXTEND_URL = "/api/v1/workshop/session/phase/extend"
 
 
 @pytest.fixture
@@ -245,6 +246,65 @@ def test_the_session_survives_a_restart(session_path: Path) -> None:
     assert [player["username"] for player in body["players"]] == ["alice"]
 
 
+# --- phase timers (#996) --------------------------------------------------------------------
+
+
+def test_no_phase_is_timed_before_the_session_starts(session_path: Path) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+
+    assert client.get(SESSION_URL).json()["phase_timer"] is None
+
+
+def test_the_investment_phase_counts_down_from_eight_minutes(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    timer = client.post(ADVANCE_URL).json()["phase_timer"]
+
+    assert 470 < timer["remaining_seconds"] <= 480
+
+
+def test_the_facilitator_extends_the_running_phase(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    client.post(ADVANCE_URL)
+
+    response = client.post(EXTEND_URL, json={"minutes": 2})
+
+    assert response.status_code == 200
+    assert 590 < response.json()["phase_timer"]["remaining_seconds"] <= 600
+
+
+def test_a_player_cannot_extend_the_phase(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    client.post(ADVANCE_URL)
+    _player(client, "alice")
+
+    assert client.post(EXTEND_URL, json={"minutes": 2}).status_code == 403
+    assert client.get(SESSION_URL).json()["phase_timer"]["remaining_seconds"] <= 480
+
+
+def test_extending_when_no_phase_is_running_is_an_error(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+
+    response = client.post(EXTEND_URL, json={"minutes": 2})
+
+    assert response.status_code == 400
+    assert response.json()["game_exception_type"] == "WORKSHOP_NO_PHASE_RUNNING"
+
+
+@pytest.mark.parametrize("minutes", [0, -1, 61])
+def test_an_extension_must_be_between_one_minute_and_an_hour(session_path: Path, minutes: int) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    client.post(ADVANCE_URL)
+
+    assert client.post(EXTEND_URL, json={"minutes": minutes}).status_code == 422
+
+
 # --- pushing changes to open pages ---------------------------------------------------------
 
 
@@ -285,6 +345,19 @@ def test_advancing_tells_every_open_page_to_reread_the_session(session_path: Pat
         invalidate = ["invalidate", {"queries": [["workshop", "session"]]}]
         assert socket.poll(client, player_sid) == [invalidate]
         assert socket.poll(client, facilitator_sid) == [invalidate]
+
+
+def test_extending_tells_every_open_page_to_reread_the_session(session_path: Path) -> None:
+    with TestClient(create_workshop_app(load_instance_config(), session_path=session_path)) as client:
+        _player(client, "alice")
+        player_sid, _ = socket.connect(client)
+        _facilitator(client)
+        client.post(ADVANCE_URL)
+        socket.poll(client, player_sid)
+
+        assert client.post(EXTEND_URL, json={"minutes": 1}).status_code == 200
+
+        assert socket.poll(client, player_sid) == [["invalidate", {"queries": [["workshop", "session"]]}]]
 
 
 # --- starting the backend -------------------------------------------------------------------

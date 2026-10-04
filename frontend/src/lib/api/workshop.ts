@@ -1,4 +1,7 @@
-/** Workshop Run API calls (#994, #995). Served only by a Workshop Run's backend. */
+/**
+ * Workshop Run API calls (#994, #995, #996). Served only by a Workshop Run's
+ * backend.
+ */
 
 import { apiClient } from "@/lib/api-client";
 import type { ApiResponse } from "@/types/api-helpers";
@@ -23,7 +26,19 @@ export const workshopApi = {
             "/workshop/session/advance",
         ),
 
-    /** Where the session is: its checkpoint, Round count and players. */
+    /**
+     * Give the running phase `minutes` more time. Facilitator only. Returns the
+     * session after the change.
+     */
+    extendPhase: (minutes: number) =>
+        apiClient.post<
+            ApiResponse<"/api/v1/workshop/session/phase/extend", "post">
+        >("/workshop/session/phase/extend", { minutes }),
+
+    /**
+     * Where the session is: its checkpoint, its phase countdown, Round count
+     * and players.
+     */
     getSession: () =>
         apiClient.get<ApiResponse<"/api/v1/workshop/session", "get">>(
             "/workshop/session",

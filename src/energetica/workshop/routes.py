@@ -2,11 +2,13 @@
 
 Every route goes through the same entry gate as the persistent world
 (:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
-accounts. Advancing the session is the facilitator's alone, and tells every open page (#1140).
+accounts. Advancing the session and extending its running phase are the facilitator's alone, and
+each tells every open page (#1140).
 """
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
@@ -16,8 +18,15 @@ from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.workshop.realtime import invalidate_session
-from energetica.workshop.schemas import WorkshopEntryOut, WorkshopMemberOut, WorkshopPlayerOut, WorkshopSessionOut
-from energetica.workshop.session import SessionFinishedError, WorkshopSession
+from energetica.workshop.schemas import (
+    WorkshopEntryOut,
+    WorkshopMemberOut,
+    WorkshopPhaseExtendIn,
+    WorkshopPhaseTimerOut,
+    WorkshopPlayerOut,
+    WorkshopSessionOut,
+)
+from energetica.workshop.session import NoPhaseRunningError, SessionFinishedError, WorkshopSession
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
 
@@ -31,10 +40,14 @@ Session = Annotated[WorkshopSession, Depends(get_session)]
 
 
 def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
+    phase_timer = session.phase_timer
     return WorkshopSessionOut(
         checkpoint=session.checkpoint,
         next_checkpoint=session.upcoming_checkpoint(),
         round_count=session.round_count,
+        phase_timer=None
+        if phase_timer is None
+        else WorkshopPhaseTimerOut(remaining_seconds=phase_timer.remaining(session.clock()).total_seconds()),
         players=[
             WorkshopMemberOut(account_id=player.account_id, username=player.username)
             for player in session.network.players()
@@ -75,5 +88,23 @@ async def advance_session(
         await run_in_threadpool(session.advance)
     except SessionFinishedError as exc:
         raise GameError(GameExceptionType.WORKSHOP_SESSION_FINISHED) from exc
+    await invalidate_session(request)
+    return _session_out(session)
+
+
+@router.post("/session/phase/extend")
+async def extend_phase(
+    _: Annotated[Account, Depends(get_facilitator)],
+    session: Session,
+    request: Request,
+    extension: WorkshopPhaseExtendIn,
+) -> WorkshopSessionOut:
+    """Give the running phase more time, and tell every open page. A phase whose time is up cannot be
+    reopened, and no phase can be ended early.
+    """
+    try:
+        await run_in_threadpool(session.extend_phase, timedelta(minutes=extension.minutes))
+    except NoPhaseRunningError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_NO_PHASE_RUNNING) from exc
     await invalidate_session(request)
     return _session_out(session)

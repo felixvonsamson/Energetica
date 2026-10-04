@@ -2024,6 +2024,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/session/phase/extend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Extend Phase
+         * @description Give the running phase more time, and tell every open page. A phase whose time is up cannot be
+         *     reopened, and no phase can be ended early.
+         */
+        post: operations["extend_phase_api_v1_workshop_session_phase_extend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4724,6 +4745,28 @@ export interface components {
             username: string;
         };
         /**
+         * WorkshopPhaseExtendIn
+         * @description The facilitator's "+N minutes" on the running phase.
+         */
+        WorkshopPhaseExtendIn: {
+            /**
+             * Minutes
+             * @description How many minutes to add
+             */
+            minutes: number;
+        };
+        /**
+         * WorkshopPhaseTimerOut
+         * @description The running phase's countdown.
+         */
+        WorkshopPhaseTimerOut: {
+            /**
+             * Remaining Seconds
+             * @description Time left when the server answered. Zero once the phase has closed, though the session stays at its checkpoint until the facilitator advances it
+             */
+            remaining_seconds: number;
+        };
+        /**
          * WorkshopPlayerOut
          * @description The calling account's own player in the Run.
          */
@@ -4752,6 +4795,8 @@ export interface components {
              * @description How many Rounds the session runs
              */
             round_count: number;
+            /** @description The countdown on the Investment phase or a Trading period's price-setting window, or null at a checkpoint that has none */
+            phase_timer: components["schemas"]["WorkshopPhaseTimerOut"] | null;
             /**
              * Players
              * @description Everyone placed into the Run, in the order they entered
@@ -4762,7 +4807,7 @@ export interface components {
          * GameExceptionType
          * @enum {string}
          */
-        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
+        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
     };
     responses: never;
     parameters: never;
@@ -7644,6 +7689,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkshopSessionOut"];
+                };
+            };
+        };
+    };
+    extend_phase_api_v1_workshop_session_phase_extend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkshopPhaseExtendIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopSessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

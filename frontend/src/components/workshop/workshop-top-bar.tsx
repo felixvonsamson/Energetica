@@ -1,8 +1,8 @@
 /**
  * The Workshop top bar (#995): the phase the session is in, and who the visitor
- * is in it. The facilitator also gets the button that advances the session. The
- * phase countdown (#996) and the price-setting panel (#1002) will sit here
- * too.
+ * is in it, and the countdown on the running phase (#996). The facilitator also
+ * gets the buttons that advance the session and extend the phase. The
+ * price-setting panel (#1002) will sit here too.
  */
 
 import { Link } from "@tanstack/react-router";
@@ -11,6 +11,7 @@ import { ChevronRight } from "lucide-react";
 import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { PhaseCountdown } from "@/components/workshop/phase-countdown";
 import { useAdvanceSession, useWorkshopEntry } from "@/hooks/use-workshop";
 import { checkpointLabel } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -25,6 +26,7 @@ export function WorkshopTopBar({
 }) {
     const { data: entry } = useWorkshopEntry();
     const checkpoint = session?.checkpoint;
+    const isFacilitator = entry?.role === "facilitator";
 
     return (
         <header className="flex h-(--topbar-height) shrink-0 items-center gap-3 border-b border-border-brand bg-topbar px-4">
@@ -40,8 +42,9 @@ export function WorkshopTopBar({
                     {checkpointLabel(checkpoint)}
                 </span>
             )}
+            <PhaseCountdown isFacilitator={isFacilitator} />
             <div className="ml-auto flex items-center gap-3">
-                {entry?.role === "facilitator" && session && (
+                {isFacilitator && session && (
                     <AdvanceButton session={session} />
                 )}
                 {entry && (

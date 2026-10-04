@@ -106,3 +106,17 @@ export function useAdvanceSession() {
         },
     });
 }
+
+/**
+ * The facilitator's "+N minutes" on the running phase. Like an advance, it is
+ * never retried, since a retry after a lost response would add the time twice.
+ */
+export function useExtendPhase() {
+    return useMutation({
+        mutationFn: workshopApi.extendPhase,
+        retry: false,
+        onSuccess: (session) => {
+            queryClient.setQueryData(queryKeys.workshop.session, session);
+        },
+    });
+}
