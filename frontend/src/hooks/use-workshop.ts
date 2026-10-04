@@ -68,8 +68,8 @@ export function useWorkshopSession() {
  * re-read the queries its `invalidate` messages name. The server sends one to
  * every open page when the facilitator advances the session.
  *
- * Nothing is sent again for changes made while the socket was down, so the
- * session is re-read after every reconnect.
+ * Nothing is sent for changes made before the socket connected, or while it was
+ * down, so the session is re-read every time it connects.
  */
 export function useWorkshopSocket() {
     useEffect(() => {
@@ -79,7 +79,7 @@ export function useWorkshopSocket() {
                 void queryClient.invalidateQueries({ queryKey });
             }
         });
-        socket.io.on("reconnect", () => {
+        socket.on("connect", () => {
             void queryClient.invalidateQueries({
                 queryKey: queryKeys.workshop.session,
             });

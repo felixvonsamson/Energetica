@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
+from fastapi.concurrency import run_in_threadpool
 
 from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
@@ -61,7 +62,8 @@ def get_session_state(_: Annotated[Account, Depends(resolve_entry_account)], ses
     return _session_out(session)
 
 
-# Async so it runs on the event loop rather than a worker thread, and can send through Socket.IO directly.
+# Async so it can send through Socket.IO directly. The advance itself waits on a lock and writes the
+# session file, so it runs on a worker thread to keep the event loop free.
 @router.post("/session/advance")
 async def advance_session(
     _: Annotated[Account, Depends(get_facilitator)], session: Session, request: Request
@@ -70,7 +72,7 @@ async def advance_session(
     session's phase.
     """
     try:
-        session.advance()
+        await run_in_threadpool(session.advance)
     except SessionFinishedError as exc:
         raise GameError(GameExceptionType.WORKSHOP_SESSION_FINISHED) from exc
     await invalidate_session(request)
