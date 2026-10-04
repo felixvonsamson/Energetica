@@ -39,10 +39,11 @@ async function enterWorkshop(): Promise<WorkshopEntry | null> {
  * safe to repeat (the same player comes back), so it is read like `/auth/me`:
  * once, and again only when invalidated.
  */
-export function useWorkshopEntry() {
+export function useWorkshopEntry({ enabled = true } = {}) {
     return useQuery({
         queryKey: queryKeys.workshop.entry,
         queryFn: enterWorkshop,
+        enabled,
         staleTime: Infinity,
         refetchOnWindowFocus: false,
     });

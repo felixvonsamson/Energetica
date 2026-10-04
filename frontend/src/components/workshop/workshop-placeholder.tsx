@@ -1,4 +1,7 @@
-/** The body of a Workshop page that its own ticket has not built yet (#995). */
+/**
+ * The body of a Workshop page whose content is not built yet. The page exists
+ * so the timeline has somewhere to link to.
+ */
 
 import type { ReactNode } from "react";
 

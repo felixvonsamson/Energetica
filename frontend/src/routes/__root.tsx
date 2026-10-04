@@ -7,6 +7,7 @@ import {
 import { useEffect } from "react";
 
 import { AnnouncedScreen } from "@/components/lifecycle/announced-screen";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { useCapabilities } from "@/hooks/use-capabilities";
@@ -54,13 +55,21 @@ function FullPageSpinner() {
 /**
  * The gate in a Workshop Run (#995). The visitor enters through `POST
  * /workshop/enter` rather than `/auth/me`, and sees only the Workshop pages and
- * the pages shared by both Run modes, such as the join page.
+ * the pages shared by both Run modes, such as the join page. A shared page is
+ * public, so it does not enter at all: a visitor on the join page has not been
+ * admitted yet.
  */
 function WorkshopRoot() {
     const matches = useMatches();
     const navigate = useNavigate();
-    const { data: entry, isLoading, isError } = useWorkshopEntry();
     const staticData = matches[matches.length - 1]?.staticData;
+    const isSharedPage = staticData?.runMode === "any";
+    const {
+        data: entry,
+        isLoading,
+        isError,
+        refetch,
+    } = useWorkshopEntry({ enabled: !isSharedPage });
     const redirect =
         isLoading || isError || staticData === undefined
             ? null
@@ -74,8 +83,11 @@ function WorkshopRoot() {
     if (isLoading) return <FullPageSpinner />;
     if (isError) {
         return (
-            <div className="flex min-h-screen items-center justify-center">
-                Could not enter the Workshop.
+            <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+                <p>Could not enter the Workshop.</p>
+                <Button variant="outline" onClick={() => void refetch()}>
+                    Try again
+                </Button>
             </div>
         );
     }

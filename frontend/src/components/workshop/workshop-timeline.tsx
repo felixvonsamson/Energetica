@@ -23,6 +23,7 @@ import {
     SEASON_LABELS,
     type TimelineRound,
     tradingPeriodPage,
+    type WorkshopPage,
     workshopTimeline,
 } from "@/lib/workshop-timeline";
 
@@ -112,24 +113,22 @@ function TimelineNode({
     children,
 }: {
     status: NodeStatus;
-    page:
-        | ReturnType<typeof roundPage>
-        | ReturnType<typeof tradingPeriodPage>
-        | ReturnType<typeof recapPage>;
+    page: WorkshopPage;
     title?: string;
     className?: string;
     children: ReactNode;
 }) {
-    const classes = cn(
-        "flex shrink-0 items-center gap-1.5 font-medium",
-        className,
-    );
+    const base = "flex shrink-0 items-center gap-1.5 font-medium";
     if (status === "future") {
         return (
             <span
                 aria-disabled="true"
                 title={title}
-                className={cn(classes, "text-muted-foreground opacity-40")}
+                className={cn(
+                    base,
+                    "text-muted-foreground opacity-40",
+                    className,
+                )}
             >
                 {children}
             </span>
@@ -142,7 +141,7 @@ function TimelineNode({
             aria-current={status === "current" ? "step" : undefined}
             activeOptions={{ exact: true }}
             className={cn(
-                "flex shrink-0 items-center gap-1.5 font-medium",
+                base,
                 status === "current" ? "text-brand" : "text-foreground",
                 "hover:underline data-[status=active]:underline",
                 className,

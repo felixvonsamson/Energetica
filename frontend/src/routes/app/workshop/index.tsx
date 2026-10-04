@@ -5,6 +5,7 @@
 
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 
+import { InfoBanner } from "@/components/ui";
 import { Spinner } from "@/components/ui/spinner";
 import { WorkshopPlaceholder } from "@/components/workshop/workshop-placeholder";
 import { useWorkshopSession } from "@/hooks/use-workshop";
@@ -16,8 +17,15 @@ export const Route = createFileRoute("/app/workshop/")({
 });
 
 function WorkshopHome() {
-    const { data: session } = useWorkshopSession();
+    const { data: session, isError } = useWorkshopSession();
 
+    if (isError) {
+        return (
+            <InfoBanner variant="error">
+                Could not load the session. It is retried every few seconds.
+            </InfoBanner>
+        );
+    }
     if (!session) {
         return (
             <div className="flex justify-center py-12">

@@ -2,8 +2,8 @@
  * The Workshop timeline (#995): where each Round, Trading period and Recap
  * stands relative to the session's current checkpoint.
  *
- * The session runs `NotStarted → [Investment → 4 Trading periods → Recap] ×
- * Rounds → Finished` and only the moderator moves it along (#994). Each node on
+ * The session runs `not_started → [investment → 4 trading_period → recap] ×
+ * Rounds → finished` and only the moderator moves it along (#994). Each node on
  * the timeline is `past` (already reached, so its page has something to show),
  * `current`, or `future`, and each has its own page.
  */
@@ -129,12 +129,21 @@ export function recapPage(round: number) {
     } as const;
 }
 
+/** A link to one node's page, ready to spread into a `<Link>`. */
+export type WorkshopPage =
+    | ReturnType<typeof roundPage>
+    | ReturnType<typeof tradingPeriodPage>
+    | ReturnType<typeof recapPage>;
+
 /**
  * The page for where the session is now, or `null` before it starts, when no
  * page has anything to show. During an Investment phase it is the Round's
  * overview, and once the session is over it is the last Recap.
  */
-export function checkpointPage(checkpoint: Checkpoint, roundCount: number) {
+export function checkpointPage(
+    checkpoint: Checkpoint,
+    roundCount: number,
+): WorkshopPage | null {
     switch (checkpoint.kind) {
         case "not_started":
             return null;
