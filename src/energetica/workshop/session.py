@@ -189,6 +189,12 @@ class WorkshopSession:
             levers=saved.levers,
         )
 
+    def upcoming_checkpoint(self) -> Checkpoint | None:
+        """The checkpoint :meth:`advance` would move to, or ``None`` once the session is finished."""
+        if isinstance(self.checkpoint, Finished):
+            return None
+        return next_checkpoint(self.checkpoint, round_count=self.round_count)
+
     def advance(self) -> Checkpoint:
         """Move to the next checkpoint and return it. The only way the session changes phase.
 

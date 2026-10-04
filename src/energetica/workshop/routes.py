@@ -31,6 +31,7 @@ Session = Annotated[WorkshopSession, Depends(get_session)]
 def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
     return WorkshopSessionOut(
         checkpoint=session.checkpoint,
+        next_checkpoint=session.upcoming_checkpoint(),
         round_count=session.round_count,
         players=[
             WorkshopMemberOut(account_id=player.account_id, username=player.username)

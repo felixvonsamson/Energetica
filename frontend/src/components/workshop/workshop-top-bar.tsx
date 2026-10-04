@@ -12,11 +12,7 @@ import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAdvanceSession, useWorkshopEntry } from "@/hooks/use-workshop";
-import {
-    type Checkpoint,
-    checkpointLabel,
-    nextCheckpoint,
-} from "@/lib/workshop-timeline";
+import { checkpointLabel } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopSession = ApiSchema<"WorkshopSessionOut">;
@@ -46,10 +42,7 @@ export function WorkshopTopBar({
             )}
             <div className="ml-auto flex items-center gap-3">
                 {entry?.role === "facilitator" && session && (
-                    <AdvanceButton
-                        checkpoint={session.checkpoint}
-                        roundCount={session.round_count}
-                    />
+                    <AdvanceButton session={session} />
                 )}
                 {entry && (
                     <span className="text-sm text-muted-foreground">
@@ -69,20 +62,14 @@ export function WorkshopTopBar({
  * Moves the whole room to the next checkpoint. An advance cannot be undone, so
  * the button names where it goes rather than just saying "Next".
  */
-function AdvanceButton({
-    checkpoint,
-    roundCount,
-}: {
-    checkpoint: Checkpoint;
-    roundCount: number;
-}) {
+function AdvanceButton({ session }: { session: WorkshopSession }) {
     const { mutate: advance, isPending } = useAdvanceSession();
-    const next = nextCheckpoint(checkpoint, roundCount);
+    const next = session.next_checkpoint;
     if (!next) return null;
 
     return (
         <Button size="sm" disabled={isPending} onClick={() => advance()}>
-            {checkpoint.kind === "not_started"
+            {session.checkpoint.kind === "not_started"
                 ? "Start the session"
                 : `Next: ${checkpointLabel(next)}`}
             <ChevronRight className="size-4" />

@@ -4742,6 +4742,11 @@ export interface components {
             /** Checkpoint */
             checkpoint: components["schemas"]["NotStarted"] | components["schemas"]["Investment"] | components["schemas"]["TradingPeriod"] | components["schemas"]["Recap"] | components["schemas"]["Finished"];
             /**
+             * Next Checkpoint
+             * @description Where the facilitator's next advance moves the session, or null once it is finished
+             */
+            next_checkpoint: (components["schemas"]["NotStarted"] | components["schemas"]["Investment"] | components["schemas"]["TradingPeriod"] | components["schemas"]["Recap"] | components["schemas"]["Finished"]) | null;
+            /**
              * Round Count
              * @description How many Rounds the session runs
              */

@@ -169,6 +169,17 @@ def test_a_new_session_has_not_started(session_path: Path) -> None:
     assert body["round_count"] == 3
 
 
+def test_the_session_names_the_checkpoint_an_advance_moves_to(session_path: Path) -> None:
+    client = _client(session_path)
+    _facilitator(client)
+    assert client.get(SESSION_URL).json()["next_checkpoint"] == _checkpoint("investment", 1)
+
+    body = client.post(ADVANCE_URL).json()
+
+    assert body["checkpoint"] == _checkpoint("investment", 1)
+    assert body["next_checkpoint"] == _checkpoint("trading_period", 1, "spring")
+
+
 def test_reading_the_session_needs_entry(session_path: Path) -> None:
     client = _client(session_path)
     authenticate(client, make_account("stranger"))
@@ -208,7 +219,9 @@ def test_advancing_a_finished_session_is_an_error(session_path: Path) -> None:
     # Three Rounds of six checkpoints each, plus the step into the first Round and the step out of the last.
     for _ in range(3 * 6 + 1):
         assert client.post(ADVANCE_URL).status_code == 200
-    assert client.get(SESSION_URL).json()["checkpoint"] == _checkpoint("finished")
+    finished = client.get(SESSION_URL).json()
+    assert finished["checkpoint"] == _checkpoint("finished")
+    assert finished["next_checkpoint"] is None
 
     response = client.post(ADVANCE_URL)
 

@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
-    type Checkpoint,
     checkpointLabel,
     checkpointPage,
     isSeason,
-    nextCheckpoint,
     type NodeStatus,
     type TimelineRound,
     workshopTimeline,
@@ -145,34 +143,6 @@ describe("checkpointLabel", () => {
             "Round 3 · Recap",
         );
         expect(checkpointLabel({ kind: "finished" })).toBe("Session over");
-    });
-});
-
-describe("nextCheckpoint", () => {
-    it("walks a whole session in the backend's order, then stops", () => {
-        const visited: string[] = [];
-        let checkpoint: Checkpoint | null = { kind: "not_started" };
-        while (checkpoint) {
-            visited.push(checkpointLabel(checkpoint));
-            checkpoint = nextCheckpoint(checkpoint, 2);
-        }
-
-        expect(visited).toEqual([
-            "Waiting to start",
-            "Round 1 · Investment",
-            "Round 1 · Spring trading",
-            "Round 1 · Summer trading",
-            "Round 1 · Autumn trading",
-            "Round 1 · Winter trading",
-            "Round 1 · Recap",
-            "Round 2 · Investment",
-            "Round 2 · Spring trading",
-            "Round 2 · Summer trading",
-            "Round 2 · Autumn trading",
-            "Round 2 · Winter trading",
-            "Round 2 · Recap",
-            "Session over",
-        ]);
     });
 });
 
