@@ -97,6 +97,10 @@ export const queryKeys = {
         myRuns: ["lobby", "my-runs"] as const,
     },
     run: ["run"] as const,
+    workshop: {
+        entry: ["workshop", "entry"] as const,
+        session: ["workshop", "session"] as const,
+    },
     players: {
         all: ["players"] as const,
         me: ["players", "me"] as const,

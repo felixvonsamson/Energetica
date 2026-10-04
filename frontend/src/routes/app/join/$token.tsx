@@ -55,6 +55,8 @@ export const Route = createFileRoute("/app/join/$token")({
     staticData: {
         title: "Join",
         routeConfig: { requiredRole: null },
+        // A private Workshop Run is joined through this page too (#995).
+        runMode: "any",
         infoDialog: { contents: <JoinHelp /> },
     },
 });

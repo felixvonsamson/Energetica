@@ -28,6 +28,13 @@ declare module "@tanstack/react-router" {
     interface StaticDataRouteOption {
         title: string;
         routeConfig?: RouteConfig;
+        /**
+         * Which Run mode shows this page (#995). Unset means the persistent
+         * world only. `"workshop"` is a Workshop page, shown to anyone who has
+         * entered the Workshop Run, so it needs no `routeConfig`. `"any"` is
+         * shown in both, such as the join page.
+         */
+        runMode?: "workshop" | "any";
         infoDialog?: {
             title?: string; // If empty, the dialog title is inferred from route title
             contents: React.ReactNode;

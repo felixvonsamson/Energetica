@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest";
 import type { ApiSchema } from "@/types/api-helpers";
 import type { PlayerCapabilities } from "@/types/capabilities";
 
-import { computeRedirect, isAnnouncedTakeover } from "./route-guard";
+import {
+    computeRedirect,
+    isAnnouncedTakeover,
+    workshopRedirect,
+} from "./route-guard";
 
 type User = ApiSchema<"UserOut">;
 
@@ -172,5 +176,28 @@ describe("isAnnouncedTakeover", () => {
                 undefined,
             ),
         ).toBe(false);
+    });
+});
+
+describe("workshopRedirect", () => {
+    it("shows a Workshop page to a visitor who has entered the Run", () => {
+        expect(workshopRedirect("workshop", true)).toBeNull();
+    });
+
+    it("sends a visitor who has not entered the Run to log in", () => {
+        expect(workshopRedirect("workshop", false)).toBe("log-in");
+    });
+
+    it("sends a visitor on a persistent-world page to the Workshop pages", () => {
+        expect(workshopRedirect(undefined, true)).toBe("/app/workshop");
+    });
+
+    it("sends a visitor on a persistent-world page to log in first", () => {
+        expect(workshopRedirect(undefined, false)).toBe("log-in");
+    });
+
+    it("shows a page for both Run modes, such as the join page, without entering", () => {
+        expect(workshopRedirect("any", false)).toBeNull();
+        expect(workshopRedirect("any", true)).toBeNull();
     });
 });

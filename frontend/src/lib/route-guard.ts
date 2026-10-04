@@ -65,3 +65,24 @@ export function computeRedirect(
             throw requiredRole satisfies never;
     }
 }
+
+/**
+ * The root route's gate in a Workshop Run (#995), the counterpart of
+ * {@link computeRedirect}. `runMode` is the route's own `staticData.runMode`,
+ * and `hasEntered` says whether the visitor has entered the Run through `POST
+ * /workshop/enter`.
+ *
+ * Returns `"log-in"` when the visitor must go to the lobby to sign in, a path
+ * when the route is not a Workshop page, or `null` to show it. A page shown in
+ * both Run modes, such as the join page, is public here as it is in the
+ * persistent world.
+ */
+export function workshopRedirect(
+    runMode: StaticDataRouteOption["runMode"],
+    hasEntered: boolean,
+): "log-in" | "/app/workshop" | null {
+    if (runMode === "any") return null;
+    if (!hasEntered) return "log-in";
+    if (runMode !== "workshop") return "/app/workshop";
+    return null;
+}
