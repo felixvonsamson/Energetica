@@ -98,6 +98,9 @@ export function useWorkshopSocket() {
 export function useAdvanceSession() {
     return useMutation({
         mutationFn: workshopApi.advanceSession,
+        // Never retried: if the server advanced but its response was lost, a retry would move the
+        // whole room a second step, and an advance cannot be undone.
+        retry: false,
         onSuccess: (session) => {
             queryClient.setQueryData(queryKeys.workshop.session, session);
         },
