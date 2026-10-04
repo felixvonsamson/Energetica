@@ -3,15 +3,17 @@
 These read the session cookie and ``accounts.db`` (ADR-0004) and nothing from any mode's world, so
 every application package can use them: the persistent world's routes and real-time layer, and
 Workshop's routes. The entry gate, :func:`resolve_entry_account`, is here too, so both apps admit
-accounts by the same access policy. The signing and cookie primitives they build on live in
+accounts by the same access policy, and so is its Socket.IO form, :func:`admit_socket_connection`. The signing and cookie primitives they build on live in
 :mod:`energetica.kernel.session`. Dependencies that need the persistent world, such as resolving a
 settled ``Player`` or refusing writes after freeze, live in ``energetica.utils.auth``.
 """
 
 import logging
-from typing import Literal
+from http.cookies import SimpleCookie
+from typing import Any, Literal
 
 from fastapi import HTTPException, Request, status
+from socketio.exceptions import ConnectionRefusedError
 
 from energetica.identity import accounts, instance_config
 from energetica.identity.accounts import Account
@@ -36,9 +38,7 @@ def get_current_account(request: Request) -> Account | None:
 def get_account_from_token(token: str) -> Account | None:
     """Resolve a raw SSO cookie token to a server-wide :class:`Account`, or ``None``.
 
-    The token carries the immutable ``account_id`` (ADR-0002 amendment). Used directly (rather
-    than through :func:`get_current_account`) by callers with a raw cookie header instead of a
-    ``Request`` — e.g. Socket.IO's ``connect`` handler.
+    The token carries the immutable ``account_id`` (ADR-0002 amendment).
     """
     account_id = account_id_from_token(token)
     if account_id is None:
@@ -127,7 +127,28 @@ def resolve_entry_account(request: Request) -> Account:
     Access is enforced on *every* entry — the analog of the old per-login check — so a private
     instance that is locked down after an account last visited still denies it on the next load.
     """
-    token = request.cookies.get(SESSION_COOKIE_NAME)
+    return _resolve_entry_token(request.cookies.get(SESSION_COOKIE_NAME))
+
+
+def admit_socket_connection(environ: dict[str, Any]) -> Account:
+    """The entry gate for a Socket.IO connection, so a socket is admitted exactly when the Run's
+    pages would be (#1142).
+
+    ``environ`` is the one a Socket.IO ``connect`` handler receives, which carries the raw cookie
+    header rather than a ``Request``. A refusal raises Socket.IO's ``ConnectionRefusedError``, whose
+    message is the error type the HTTP gate would have answered with. Each app checks the account's
+    role itself, since the persistent world admits only players and Workshop admits facilitators too.
+    """
+    cookie = SimpleCookie(environ.get("HTTP_COOKIE", ""))
+    morsel = cookie.get(SESSION_COOKIE_NAME)
+    try:
+        return _resolve_entry_token(morsel.value if morsel is not None else None)
+    except HTTPException as exc:
+        raise ConnectionRefusedError(str(exc.detail)) from exc
+
+
+def _resolve_entry_token(token: str | None) -> Account:
+    """The entry gate, given the session token from whichever request carried it."""
     account_id = account_id_from_token(token) if token else None
     if account_id is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, GameExceptionType.NOT_AUTHENTICATED)

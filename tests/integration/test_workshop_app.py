@@ -22,6 +22,7 @@ from energetica.identity import accounts
 from energetica.identity.instance_config import load_instance_config
 from energetica.workshop.app import create_workshop_app
 
+from . import _socketio_helpers as socket
 from ._session_helpers import authenticate, make_account
 
 SLUG = "workshop-autumn"
@@ -96,7 +97,6 @@ def test_serves_none_of_the_persistent_world(session_path: Path) -> None:
     paths = {getattr(route, "path", None) for route in app.routes}
 
     assert "/api/v1/auth/me" not in paths
-    assert "/socket.io" not in paths
     assert not any(path and path.startswith("/api/v1/facilities") for path in paths)
 
 
@@ -243,6 +243,48 @@ def test_the_session_survives_a_restart(session_path: Path) -> None:
 
     assert body["checkpoint"] == _checkpoint("trading_period", 1, "summer")
     assert [player["username"] for player in body["players"]] == ["alice"]
+
+
+# --- pushing changes to open pages ---------------------------------------------------------
+
+
+def test_a_joined_player_and_the_facilitator_can_connect_a_socket(session_path: Path) -> None:
+    client = _client(session_path)
+    _player(client, "alice")
+    assert socket.is_admitted(socket.connect(client)[1])
+
+    _facilitator(client)
+    assert socket.is_admitted(socket.connect(client)[1])
+
+
+def test_a_socket_without_a_session_is_refused(session_path: Path) -> None:
+    _, answer = socket.connect(_client(session_path))
+
+    assert answer == {"message": "NOT_AUTHENTICATED"}
+
+
+def test_a_socket_for_an_account_that_has_not_joined_is_refused(session_path: Path) -> None:
+    client = _client(session_path)
+    authenticate(client, make_account("stranger"))
+
+    _, answer = socket.connect(client)
+
+    assert answer == {"message": "INSTANCE_ACCESS_DENIED"}
+
+
+def test_advancing_tells_every_open_page_to_reread_the_session(session_path: Path) -> None:
+    # One client, so one event loop, serves every request: the server's queues belong to it.
+    with TestClient(create_workshop_app(load_instance_config(), session_path=session_path)) as client:
+        _player(client, "alice")
+        player_sid, _ = socket.connect(client)
+        _facilitator(client)
+        facilitator_sid, _ = socket.connect(client)
+
+        assert client.post(ADVANCE_URL).status_code == 200
+
+        invalidate = ["invalidate", {"queries": [["workshop", "session"]]}]
+        assert socket.poll(client, player_sid) == [invalidate]
+        assert socket.poll(client, facilitator_sid) == [invalidate]
 
 
 # --- starting the backend -------------------------------------------------------------------

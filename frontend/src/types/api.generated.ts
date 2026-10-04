@@ -2014,7 +2014,8 @@ export interface paths {
         put?: never;
         /**
          * Advance Session
-         * @description Move the session to its next checkpoint. Nothing else changes the session's phase.
+         * @description Move the session to its next checkpoint, and tell every open page. Nothing else changes the
+         *     session's phase.
          */
         post: operations["advance_session_api_v1_workshop_session_advance_post"];
         delete?: never;

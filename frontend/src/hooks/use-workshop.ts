@@ -4,6 +4,8 @@
  */
 
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import io from "socket.io-client";
 
 import { workshopApi } from "@/lib/api/workshop";
 import { ApiClientError } from "@/lib/api-client";
@@ -13,9 +15,10 @@ import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopEntry = ApiSchema<"WorkshopEntryOut">;
 
-// How often the session is re-read. A Workshop Run has no socket, so this is how the timeline
-// learns that the moderator advanced it.
-const SESSION_POLL_MS = 5000;
+/** The server's `invalidate` message: the query keys a page should re-read. */
+interface InvalidateMessage {
+    queries: (readonly unknown[])[];
+}
 
 /**
  * Enter the Run, or `null` when the visitor may not: they have no session
@@ -50,21 +53,47 @@ export function useWorkshopEntry({ enabled = true } = {}) {
 }
 
 /**
- * Where the session is, re-read every few seconds while a Workshop page is
- * open.
+ * Where the session is. It is re-read when the server says it changed, through
+ * the socket {@link useWorkshopSocket} opens.
  */
 export function useWorkshopSession() {
     return useQuery({
         queryKey: queryKeys.workshop.session,
         queryFn: workshopApi.getSession,
-        refetchInterval: SESSION_POLL_MS,
     });
+}
+
+/**
+ * Connect to the Workshop Run's Socket.IO server while mounted (#1140), and
+ * re-read the queries its `invalidate` messages name. The server sends one to
+ * every open page when the facilitator advances the session.
+ *
+ * Nothing is sent again for changes made while the socket was down, so the
+ * session is re-read after every reconnect.
+ */
+export function useWorkshopSocket() {
+    useEffect(() => {
+        const socket = io();
+        socket.on("invalidate", (message: InvalidateMessage) => {
+            for (const queryKey of message.queries) {
+                void queryClient.invalidateQueries({ queryKey });
+            }
+        });
+        socket.io.on("reconnect", () => {
+            void queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.session,
+            });
+        });
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
 }
 
 /**
  * The facilitator's advance: moves the session to its next checkpoint. The
  * response is the session after the move, so it replaces the cached session
- * straight away instead of waiting for the next poll.
+ * straight away instead of waiting for the server's message.
  */
 export function useAdvanceSession() {
     return useMutation({
