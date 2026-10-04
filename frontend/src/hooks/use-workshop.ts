@@ -3,12 +3,12 @@
  * the moderator advances it.
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { workshopApi } from "@/lib/api/workshop";
 import { ApiClientError } from "@/lib/api-client";
 import { isErrorType } from "@/lib/error-utils";
-import { queryKeys } from "@/lib/query-client";
+import { queryClient, queryKeys } from "@/lib/query-client";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopEntry = ApiSchema<"WorkshopEntryOut">;
@@ -58,5 +58,19 @@ export function useWorkshopSession() {
         queryKey: queryKeys.workshop.session,
         queryFn: workshopApi.getSession,
         refetchInterval: SESSION_POLL_MS,
+    });
+}
+
+/**
+ * The facilitator's advance: moves the session to its next checkpoint. The
+ * response is the session after the move, so it replaces the cached session
+ * straight away instead of waiting for the next poll.
+ */
+export function useAdvanceSession() {
+    return useMutation({
+        mutationFn: workshopApi.advanceSession,
+        onSuccess: (session) => {
+            queryClient.setQueryData(queryKeys.workshop.session, session);
+        },
     });
 }

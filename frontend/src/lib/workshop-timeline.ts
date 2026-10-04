@@ -177,3 +177,43 @@ export function checkpointLabel(checkpoint: Checkpoint): string {
             throw checkpoint satisfies never;
     }
 }
+
+/**
+ * The checkpoint the facilitator's advance moves the session to, or `null` once
+ * it is finished. Mirrors `next_checkpoint` in
+ * `energetica/workshop/session.py`, which decides the real move; this only
+ * names it on the button beforehand.
+ */
+export function nextCheckpoint(
+    checkpoint: Checkpoint,
+    roundCount: number,
+): Checkpoint | null {
+    switch (checkpoint.kind) {
+        case "not_started":
+            return { kind: "investment", round: 1 };
+        case "investment":
+            return {
+                kind: "trading_period",
+                round: checkpoint.round,
+                season: SEASONS[0],
+            };
+        case "trading_period": {
+            const next = SEASONS[SEASONS.indexOf(checkpoint.season) + 1];
+            return next
+                ? {
+                      kind: "trading_period",
+                      round: checkpoint.round,
+                      season: next,
+                  }
+                : { kind: "recap", round: checkpoint.round };
+        }
+        case "recap":
+            return checkpoint.round < roundCount
+                ? { kind: "investment", round: checkpoint.round + 1 }
+                : { kind: "finished" };
+        case "finished":
+            return null;
+        default:
+            throw checkpoint satisfies never;
+    }
+}

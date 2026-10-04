@@ -23,7 +23,7 @@ function WorkshopLayout() {
 
     return (
         <div className="flex h-svh w-full flex-col overflow-hidden bg-background">
-            <WorkshopTopBar checkpoint={session?.checkpoint} />
+            <WorkshopTopBar session={session} />
             {session && (
                 <WorkshopTimeline
                     checkpoint={session.checkpoint}

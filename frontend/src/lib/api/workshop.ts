@@ -14,6 +14,15 @@ export const workshopApi = {
             "/workshop/enter",
         ),
 
+    /**
+     * Move the session to its next checkpoint. Facilitator only. Returns the
+     * session after the move.
+     */
+    advanceSession: () =>
+        apiClient.post<ApiResponse<"/api/v1/workshop/session/advance", "post">>(
+            "/workshop/session/advance",
+        ),
+
     /** Where the session is: its checkpoint, Round count and players. */
     getSession: () =>
         apiClient.get<ApiResponse<"/api/v1/workshop/session", "get">>(
