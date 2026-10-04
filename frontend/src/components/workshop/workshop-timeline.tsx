@@ -7,6 +7,10 @@
  * to their pages, as does the current one. Future nodes are grayed out and do
  * not link, because nothing has happened in them yet. The page being viewed is
  * underlined.
+ *
+ * Below the `xl` breakpoint the seasons show only their icons, so three Rounds
+ * fit a laptop screen. If the timeline is still wider than the screen it
+ * scrolls, and `justify-center-safe` keeps the first Round reachable.
  */
 
 import { Link } from "@tanstack/react-router";
@@ -39,7 +43,7 @@ export function WorkshopTimeline({
     return (
         <nav
             aria-label="Session timeline"
-            className="flex shrink-0 items-center justify-center gap-2 overflow-x-auto border-b border-border-brand bg-surface-card px-4 py-3"
+            className="flex shrink-0 items-center justify-center-safe gap-2 overflow-x-auto border-b border-border-brand bg-surface-card px-4 py-3"
         >
             {rounds.map((round) => (
                 <Fragment key={round.round}>
@@ -88,14 +92,16 @@ function RoundBlock({ round }: { round: TimelineRound }) {
                             page={tradingPeriodPage(round.round, season)}
                             title={`Round ${round.round}, ${SEASON_LABELS[season]}`}
                             className={cn(
-                                "rounded-full border px-2.5 py-1 text-xs",
+                                "rounded-full border px-1.5 py-1 text-xs xl:px-2.5",
                                 status === "current"
                                     ? "border-brand bg-brand text-brand-fg"
                                     : "border-border",
                             )}
                         >
                             <Icon className="size-3.5" />
-                            {SEASON_LABELS[season]}
+                            <span className="hidden xl:inline">
+                                {SEASON_LABELS[season]}
+                            </span>
                         </TimelineNode>
                     );
                 })}
