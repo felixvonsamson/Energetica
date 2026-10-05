@@ -2,8 +2,8 @@
  * PROTOTYPE — Variant D, the mix Felix asked for after reviewing A–C.
  *
  * - Card style from B (gradient frame, headline stat in the corner, icon rows),
- *   without the image border, the caption under the image, or the shimmer on
- *   upgrades. Fuel moves into a stat row now that the caption is gone.
+ *   without the image border, the caption under the image, or any mark on
+ *   upgrade cards. Fuel moves into a stat row now that the caption is gone.
  * - Catalog layout from A: one flat grid, not grouped by category.
  * - Cards differ in height (storage and fuel-burning facilities have more rows),
  *   so each card is centred vertically in its grid row. A subgrid keeps the
@@ -11,11 +11,12 @@
  * - Price tag from C. Clicking it reveals a Buy button. Buying adds a copy to the
  *   in-memory fleet, so the "Your fleet" tab updates.
  * - Fleet stacks open in place (from A), so several can be open at once. The
- *   count badge reads "×4" (from A).
+ *   opened rows hang directly off the card, as in B. The count badge reads "×4"
+ *   (from A).
  */
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Cloud, Hammer, ShoppingCart, Star } from "lucide-react";
+import { Check, Cloud, Hammer, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 
 import { Money } from "@/components/ui/money";
@@ -33,6 +34,11 @@ import {
 import { cardStats, LifetimePips, roundsLabel } from "./stats";
 
 const ROW_H = 30;
+// How far each opened lifetime row tucks up behind the card or row above it.
+// More than the card's corner radius, so no cut-off edge shows at the corners.
+const STRIP_OVERLAP = 22;
+// What shows of each opened row: frame, footer (with its top margin), frame.
+const STRIP_VISIBLE = 4 + ROW_H + 4 + 8;
 const CURRENT_ROUND = 3;
 
 // Kept at module level so a purchase survives switching tabs.
@@ -106,7 +112,6 @@ function Card({
 }) {
     const color = CATEGORY_COLOR[f.category];
     const [headline, ...rest] = cardStats(f, CATALOG);
-    const upgrade = f.availability !== "base";
     return (
         <div
             className="relative w-60 rounded-2xl p-2 shadow-lg"
@@ -117,9 +122,6 @@ function Card({
             <div className="relative rounded-xl bg-amber-50 p-2 text-stone-900 dark:bg-stone-900 dark:text-stone-100">
                 <div className="flex items-start justify-between gap-1">
                     <span className="flex items-center gap-1 text-sm leading-tight font-extrabold">
-                        {upgrade && (
-                            <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-500" />
-                        )}
                         {f.name}
                     </span>
                     <span className="shrink-0 text-xs font-bold whitespace-nowrap">
@@ -281,7 +283,7 @@ function Stack({
             <div className="flex items-center">
                 <button
                     type="button"
-                    className={`relative text-left ${many ? "cursor-pointer" : "cursor-default"}`}
+                    className={`relative isolate text-left ${many ? "cursor-pointer" : "cursor-default"}`}
                     onClick={() => many && setOpen((o) => !o)}
                 >
                     {/* Ghost cards behind the top one; they tuck away when open. */}
@@ -296,7 +298,7 @@ function Stack({
                             }}
                         />
                     ))}
-                    <div className="relative">
+                    <div className="relative z-10">
                         <Card
                             facility={f}
                             badge={
@@ -340,59 +342,83 @@ function Stack({
                             }
                         />
                     </div>
+                    {/*
+                     * The opened copies: only each one's bottom row. They hang
+                     * off the card's own bottom edge, not the grid row, so a
+                     * short card has no gap above them. Each one starts well
+                     * up behind the card (or the row above it), so its top is
+                     * hidden behind the rounded corners.
+                     */}
+                    <div className="absolute inset-x-0 top-full z-0">
+                        <AnimatePresence>
+                            {open &&
+                                copies.slice(1).map((c, i) => (
+                                    <motion.div
+                                        // eslint-disable-next-line react/no-array-index-key
+                                        key={i}
+                                        className="relative rounded-b-2xl px-2 pb-2"
+                                        style={{
+                                            zIndex: 19 - i,
+                                            background: frame,
+                                            marginTop: -STRIP_OVERLAP,
+                                            paddingTop: STRIP_OVERLAP + 4,
+                                        }}
+                                        initial={{
+                                            y: -(i + 1) * STRIP_VISIBLE,
+                                            opacity: 0,
+                                        }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        exit={{
+                                            y: -(i + 1) * STRIP_VISIBLE,
+                                            opacity: 0,
+                                        }}
+                                        transition={{
+                                            type: "spring",
+                                            stiffness: 320,
+                                            damping: 28,
+                                            delay: i * 0.05,
+                                        }}
+                                    >
+                                        <div className="rounded-lg bg-amber-50 px-2 text-stone-900 dark:bg-stone-900 dark:text-stone-100">
+                                            <Footer
+                                                left={
+                                                    c.underConstruction
+                                                        ? "🚧 Building"
+                                                        : `Built Round ${c.builtRound}`
+                                                }
+                                                right={
+                                                    <>
+                                                        <LifetimePips
+                                                            remaining={
+                                                                c.remainingRounds
+                                                            }
+                                                            total={
+                                                                f.lifetime_rounds
+                                                            }
+                                                            color={color}
+                                                        />
+                                                        {roundsLabel(
+                                                            c.remainingRounds,
+                                                        )}
+                                                    </>
+                                                }
+                                            />
+                                        </div>
+                                    </motion.div>
+                                ))}
+                        </AnimatePresence>
+                    </div>
                 </button>
             </div>
-            {/* The opened copies: only each one's bottom row, sliding out from behind. */}
-            <div className="w-60">
-                <AnimatePresence>
-                    {open &&
-                        copies.slice(1).map((c, i) => (
-                            <motion.div
-                                // eslint-disable-next-line react/no-array-index-key
-                                key={i}
-                                className="relative -mt-2 rounded-b-2xl px-2 pt-2 pb-2"
-                                style={{ zIndex: 19 - i, background: frame }}
-                                initial={{
-                                    y: -(i + 1) * (ROW_H + 10),
-                                    opacity: 0,
-                                }}
-                                animate={{ y: 0, opacity: 1 }}
-                                exit={{
-                                    y: -(i + 1) * (ROW_H + 10),
-                                    opacity: 0,
-                                }}
-                                transition={{
-                                    type: "spring",
-                                    stiffness: 320,
-                                    damping: 28,
-                                    delay: i * 0.05,
-                                }}
-                            >
-                                <div className="rounded-lg bg-amber-50 px-2 text-stone-900 dark:bg-stone-900 dark:text-stone-100">
-                                    <Footer
-                                        left={
-                                            c.underConstruction
-                                                ? "🚧 Building"
-                                                : `Built Round ${c.builtRound}`
-                                        }
-                                        right={
-                                            <>
-                                                <LifetimePips
-                                                    remaining={
-                                                        c.remainingRounds
-                                                    }
-                                                    total={f.lifetime_rounds}
-                                                    color={color}
-                                                />
-                                                {roundsLabel(c.remainingRounds)}
-                                            </>
-                                        }
-                                    />
-                                </div>
-                            </motion.div>
-                        ))}
-                </AnimatePresence>
-            </div>
+            {/* Reserves the room the opened rows take, so the next grid row moves down. */}
+            <motion.div
+                className="w-60"
+                initial={false}
+                animate={{
+                    height: open ? (copies.length - 1) * STRIP_VISIBLE : 0,
+                }}
+                transition={{ type: "spring", stiffness: 320, damping: 32 }}
+            />
         </div>
     );
 }
