@@ -29,6 +29,7 @@ import { Route as AppOverviewsElectricityMarketsRouteImport } from './routes/app
 import { Route as AppOverviewsCashFlowRouteImport } from './routes/app/overviews/cash-flow'
 import { Route as AppJoinTokenRouteImport } from './routes/app/join/$token'
 import { Route as AppInternalTypographyRouteImport } from './routes/app/internal/typography'
+import { Route as AppInternalPrototypeFacilityCardsRouteImport } from './routes/app/internal/prototype-facility-cards'
 import { Route as AppInternalIconsRouteImport } from './routes/app/internal/icons'
 import { Route as AppInternalDesignRouteImport } from './routes/app/internal/design'
 import { Route as AppInternalColorsRouteImport } from './routes/app/internal/colors'
@@ -151,6 +152,12 @@ const AppInternalTypographyRoute = AppInternalTypographyRouteImport.update({
   path: '/app/internal/typography',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppInternalPrototypeFacilityCardsRoute =
+  AppInternalPrototypeFacilityCardsRouteImport.update({
+    id: '/app/internal/prototype-facility-cards',
+    path: '/app/internal/prototype-facility-cards',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppInternalIconsRoute = AppInternalIconsRouteImport.update({
   id: '/app/internal/icons',
   path: '/app/internal/icons',
@@ -283,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/app/internal/colors': typeof AppInternalColorsRoute
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
+  '/app/internal/prototype-facility-cards': typeof AppInternalPrototypeFacilityCardsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
   '/app/join/$token': typeof AppJoinTokenRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
@@ -324,6 +332,7 @@ export interface FileRoutesByTo {
   '/app/internal/colors': typeof AppInternalColorsRoute
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
+  '/app/internal/prototype-facility-cards': typeof AppInternalPrototypeFacilityCardsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
   '/app/join/$token': typeof AppJoinTokenRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
@@ -367,6 +376,7 @@ export interface FileRoutesById {
   '/app/internal/colors': typeof AppInternalColorsRoute
   '/app/internal/design': typeof AppInternalDesignRoute
   '/app/internal/icons': typeof AppInternalIconsRoute
+  '/app/internal/prototype-facility-cards': typeof AppInternalPrototypeFacilityCardsRoute
   '/app/internal/typography': typeof AppInternalTypographyRoute
   '/app/join/$token': typeof AppJoinTokenRoute
   '/app/overviews/cash-flow': typeof AppOverviewsCashFlowRoute
@@ -411,6 +421,7 @@ export interface FileRouteTypes {
     | '/app/internal/colors'
     | '/app/internal/design'
     | '/app/internal/icons'
+    | '/app/internal/prototype-facility-cards'
     | '/app/internal/typography'
     | '/app/join/$token'
     | '/app/overviews/cash-flow'
@@ -452,6 +463,7 @@ export interface FileRouteTypes {
     | '/app/internal/colors'
     | '/app/internal/design'
     | '/app/internal/icons'
+    | '/app/internal/prototype-facility-cards'
     | '/app/internal/typography'
     | '/app/join/$token'
     | '/app/overviews/cash-flow'
@@ -494,6 +506,7 @@ export interface FileRouteTypes {
     | '/app/internal/colors'
     | '/app/internal/design'
     | '/app/internal/icons'
+    | '/app/internal/prototype-facility-cards'
     | '/app/internal/typography'
     | '/app/join/$token'
     | '/app/overviews/cash-flow'
@@ -536,6 +549,7 @@ export interface RootRouteChildren {
   AppInternalColorsRoute: typeof AppInternalColorsRoute
   AppInternalDesignRoute: typeof AppInternalDesignRoute
   AppInternalIconsRoute: typeof AppInternalIconsRoute
+  AppInternalPrototypeFacilityCardsRoute: typeof AppInternalPrototypeFacilityCardsRoute
   AppInternalTypographyRoute: typeof AppInternalTypographyRoute
   AppJoinTokenRoute: typeof AppJoinTokenRoute
   AppOverviewsCashFlowRoute: typeof AppOverviewsCashFlowRoute
@@ -690,6 +704,13 @@ declare module '@tanstack/react-router' {
       path: '/app/internal/typography'
       fullPath: '/app/internal/typography'
       preLoaderRoute: typeof AppInternalTypographyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/internal/prototype-facility-cards': {
+      id: '/app/internal/prototype-facility-cards'
+      path: '/app/internal/prototype-facility-cards'
+      fullPath: '/app/internal/prototype-facility-cards'
+      preLoaderRoute: typeof AppInternalPrototypeFacilityCardsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/internal/icons': {
@@ -888,6 +909,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppInternalColorsRoute: AppInternalColorsRoute,
   AppInternalDesignRoute: AppInternalDesignRoute,
   AppInternalIconsRoute: AppInternalIconsRoute,
+  AppInternalPrototypeFacilityCardsRoute:
+    AppInternalPrototypeFacilityCardsRoute,
   AppInternalTypographyRoute: AppInternalTypographyRoute,
   AppJoinTokenRoute: AppJoinTokenRoute,
   AppOverviewsCashFlowRoute: AppOverviewsCashFlowRoute,
