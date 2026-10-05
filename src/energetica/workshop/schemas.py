@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from energetica.workshop.facilities import FacilityId
 from energetica.workshop.session import Checkpoint
 
 
@@ -61,3 +62,14 @@ class WorkshopSessionOut(BaseModel):
         "at a checkpoint that has none"
     )
     players: list[WorkshopMemberOut] = Field(description="Everyone placed into the Run, in the order they entered")
+
+
+class WorkshopOwnedFacilityOut(BaseModel):
+    """One facility the calling player owns."""
+
+    facility: FacilityId
+    built_round: int = Field(description="The Round it was bought in")
+    rounds_left: int = Field(description="Rounds it still works for, counting the current one")
+    under_construction: bool = Field(
+        description="True while its construction lag runs. It then keeps its whole lifetime"
+    )

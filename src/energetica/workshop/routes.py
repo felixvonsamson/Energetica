@@ -17,16 +17,20 @@ from fastapi.concurrency import run_in_threadpool
 from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError, GameExceptionType
+from energetica.workshop.facilities import WorkshopFacility
+from energetica.workshop.fleet import lifetime_left
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
     WorkshopMemberOut,
+    WorkshopOwnedFacilityOut,
     WorkshopPhaseExtendIn,
     WorkshopPhaseTimerOut,
     WorkshopPlayerOut,
     WorkshopSessionOut,
 )
 from energetica.workshop.session import NoPhaseRunningError, SessionFinishedError, WorkshopSession
+from energetica.workshop.unlocks import available_facilities
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
 
@@ -108,3 +112,36 @@ async def extend_phase(
         raise GameError(GameExceptionType.WORKSHOP_NO_PHASE_RUNNING) from exc
     await invalidate_session(request)
     return _session_out(session)
+
+
+@router.get("/facilities")
+def get_facilities(_: Annotated[Account, Depends(resolve_entry_account)]) -> list[WorkshopFacility]:
+    """The facilities players can see and buy now. One that is not yet unlocked is left out, not
+    shown as locked.
+    """
+    return available_facilities()
+
+
+@router.get("/fleet")
+def get_fleet(
+    account: Annotated[Account, Depends(resolve_entry_account)], session: Session
+) -> list[WorkshopOwnedFacilityOut]:
+    """The facilities the calling player owns, in the order they were bought. Empty for a facilitator,
+    who does not play.
+    """
+    player = session.network.members.get(account.account_id)
+    if player is None:
+        return []
+    current_round = session.current_round()
+    fleet = []
+    for owned in player.owned_facilities:
+        left = lifetime_left(owned, current_round=current_round)
+        fleet.append(
+            WorkshopOwnedFacilityOut(
+                facility=owned.facility,
+                built_round=owned.built_round,
+                rounds_left=left.rounds,
+                under_construction=left.under_construction,
+            )
+        )
+    return fleet

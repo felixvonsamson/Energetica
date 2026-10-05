@@ -2045,6 +2045,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/facilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Facilities
+         * @description The facilities players can see and buy now. One that is not yet unlocked is left out, not
+         *     shown as locked.
+         */
+        get: operations["get_facilities_api_v1_workshop_facilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/fleet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Fleet
+         * @description The facilities the calling player owns, in the order they were bought. Empty for a facilitator,
+         *     who does not play.
+         */
+        get: operations["get_fleet_api_v1_workshop_fleet_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4656,6 +4698,18 @@ export interface components {
             password: string;
         };
         /**
+         * FacilityCategory
+         * @description The groups of #975. A base tier and its upgrade share one.
+         * @enum {string}
+         */
+        FacilityCategory: "wind" | "conventional" | "hydro" | "nuclear" | "pv" | "csp" | "batteries" | "hydrogen_storage" | "pumped_hydro";
+        /**
+         * FacilityId
+         * @description Every facility in the Workshop catalog.
+         * @enum {string}
+         */
+        FacilityId: "onshore_wind_turbine" | "offshore_wind_turbine" | "coal_burner" | "modern_coal_plant" | "gas_burner" | "combined_cycle" | "small_water_dam" | "large_water_dam" | "nuclear_reactor" | "nuclear_reactor_gen4" | "pv_solar" | "multi_layer_pv" | "csp_solar" | "lithium_ion_batteries" | "solid_state_batteries" | "hydrogen_storage" | "pumped_hydro";
+        /**
          * Finished
          * @description After the last Round's Recap. The session cannot advance any further.
          */
@@ -4735,6 +4789,73 @@ export interface components {
             player: components["schemas"]["WorkshopPlayerOut"] | null;
         };
         /**
+         * WorkshopFacility
+         * @description One facility's fixed values.
+         */
+        WorkshopFacility: {
+            id: components["schemas"]["FacilityId"];
+            /** Name */
+            name: string;
+            category: components["schemas"]["FacilityCategory"];
+            /**
+             * Base Price
+             * @description Price to build one
+             */
+            base_price: number;
+            /**
+             * Base Power Generation
+             * @description Maximum power output in W. For storage, the power it charges and discharges at
+             */
+            base_power_generation: number;
+            /**
+             * Base Storage Capacity
+             * @description Energy it stores, in Wh. Null if it is not storage
+             */
+            base_storage_capacity: number | null;
+            /**
+             * Base Efficiency
+             * @description Share of stored energy it gives back, from 0 to 1. Null if it is not storage
+             */
+            base_efficiency: number | null;
+            /**
+             * Construction Lag Rounds
+             * @description Rounds after the one it is built in before it works
+             */
+            construction_lag_rounds: number;
+            /**
+             * Lifetime Rounds
+             * @description Rounds it works for before it retires
+             */
+            lifetime_rounds: number;
+            /**
+             * Om Per Round
+             * @description Operation and maintenance cost per Round at full use
+             */
+            om_per_round: number;
+            /**
+             * Om Fixed Share
+             * @description Share of the O&M cost charged whatever the facility's use, from 0 to 1
+             */
+            om_fixed_share: number;
+            /**
+             * Base Construction Pollution
+             * @description CO₂ emitted to build one, in kg
+             */
+            base_construction_pollution: number;
+            /**
+             * Base Pollution
+             * @description CO₂ emitted per MWh generated, in kg
+             */
+            base_pollution: number;
+            /**
+             * Ramping Time
+             * @description In-game seconds to go from no output to full output
+             */
+            ramping_time: number;
+            /** @description The fuel it burns, or null if it burns none */
+            fuel_type: components["schemas"]["Fuel"] | null;
+        };
+        /**
          * WorkshopMemberOut
          * @description A player in the Run, as everyone in it sees them.
          */
@@ -4743,6 +4864,28 @@ export interface components {
             account_id: number;
             /** Username */
             username: string;
+        };
+        /**
+         * WorkshopOwnedFacilityOut
+         * @description One facility the calling player owns.
+         */
+        WorkshopOwnedFacilityOut: {
+            facility: components["schemas"]["FacilityId"];
+            /**
+             * Built Round
+             * @description The Round it was bought in
+             */
+            built_round: number;
+            /**
+             * Rounds Left
+             * @description Rounds it still works for, counting the current one
+             */
+            rounds_left: number;
+            /**
+             * Under Construction
+             * @description True while its construction lag runs. It then keeps its whole lifetime
+             */
+            under_construction: boolean;
         };
         /**
          * WorkshopPhaseExtendIn
@@ -7722,6 +7865,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_facilities_api_v1_workshop_facilities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopFacility"][];
+                };
+            };
+        };
+    };
+    get_fleet_api_v1_workshop_fleet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopOwnedFacilityOut"][];
                 };
             };
         };

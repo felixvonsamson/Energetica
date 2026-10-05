@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Annotated, Literal, get_args
 
 from pydantic import BaseModel, Field
 
+from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.setup import open_workshop_run
@@ -160,6 +161,7 @@ class _SavedPlayer(BaseModel):
     account_id: int
     username: str
     money: float
+    owned_facilities: list[OwnedFacility]
 
 
 class _SavedSession(BaseModel):
@@ -237,7 +239,12 @@ class WorkshopSession:
             return session
         saved = _SavedSession.model_validate_json(path.read_text(encoding="utf-8"))
         for player in saved.players:
-            network.restore(account_id=player.account_id, username=player.username, money=player.money)
+            network.restore(
+                account_id=player.account_id,
+                username=player.username,
+                money=player.money,
+                owned_facilities=player.owned_facilities,
+            )
         return cls(
             network=network,
             path=path,
@@ -247,6 +254,16 @@ class WorkshopSession:
             phase_timer=saved.phase_timer,
             clock=clock,
         )
+
+    def current_round(self) -> int:
+        """The Round the session is in. Round 1 before it starts, and the last Round once it is finished."""
+        match self.checkpoint:
+            case NotStarted():
+                return 1
+            case Finished():
+                return self.round_count
+            case _:
+                return self.checkpoint.round
 
     def upcoming_checkpoint(self) -> Checkpoint | None:
         """The checkpoint :meth:`advance` would move to, or ``None`` once the session is finished."""
@@ -307,7 +324,12 @@ class WorkshopSession:
             levers=self.levers,
             phase_timer=phase_timer,
             players=[
-                _SavedPlayer(account_id=player.account_id, username=player.username, money=player.money)
+                _SavedPlayer(
+                    account_id=player.account_id,
+                    username=player.username,
+                    money=player.money,
+                    owned_facilities=player.owned_facilities,
+                )
                 for player in self.network.players()
             ],
         )
