@@ -120,7 +120,14 @@ function Catalog({
                     key={facility.id}
                     className="row-span-2 grid grid-rows-subgrid justify-items-center gap-0"
                 >
-                    <div className="flex items-center">
+                    <div className="relative flex items-center">
+                        {/*
+                         * The top of the price tag's string. It runs from
+                         * behind the card's middle to the bottom of the row,
+                         * so it meets the card's bottom edge however much
+                         * shorter than the row the card is.
+                         */}
+                        <div className="absolute top-1/2 bottom-0 left-1/2 w-px -translate-x-1/2 bg-muted-foreground" />
                         <FacilityCard facility={facility} />
                     </div>
                     <FacilityPriceTag
