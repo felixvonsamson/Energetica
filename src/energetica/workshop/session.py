@@ -255,6 +255,10 @@ class WorkshopSession:
             clock=clock,
         )
 
+    def player(self, account_id: int) -> WorkshopPlayer | None:
+        """The account's player, or ``None`` if it has not entered the Run or is a facilitator."""
+        return self.network.members.get(account_id)
+
     def current_round(self) -> int:
         """The Round the session is in. Round 1 before it starts, and the last Round once it is finished."""
         match self.checkpoint:

@@ -1,7 +1,8 @@
 /**
  * The Workshop facility page (#998): the catalog of facilities players can buy
- * now, and the visitor's own fleet, both as playing cards. Open at every point
- * in the session. Buying lands in #999.
+ * now, and the player's own fleet, both as playing cards. Open at every point
+ * in the session. Buying lands in #999. Players only: a facilitator moderates
+ * rather than plays, so is sent back to the Workshop home.
  *
  * Cards differ in height, since storage and fuel-burning facilities have more
  * stats. Each grid cell is a two-row subgrid: the card is centred in the first
@@ -9,7 +10,7 @@
  * second.
  */
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Layers } from "lucide-react";
 
 import { EmptyState, InfoBanner } from "@/components/ui";
@@ -46,39 +47,40 @@ const GRID =
     "grid grid-cols-[repeat(auto-fill,minmax(15.5rem,1fr))] justify-items-center gap-x-6 gap-y-10";
 
 function FacilitiesPage() {
+    const { data: entry } = useWorkshopEntry();
+    if (!entry) return <Loading />;
+    if (entry.role !== "player") return <Navigate to="/app/workshop" replace />;
+    return <PlayerFacilities />;
+}
+
+function PlayerFacilities() {
     const navigate = Route.useNavigate();
     const { tab = "catalog" } = Route.useSearch();
-    const { data: entry } = useWorkshopEntry();
     const facilities = useWorkshopFacilities();
     const fleet = useWorkshopFleet();
-    // A facilitator moderates rather than plays, so owns nothing.
-    const plays = entry?.role === "player";
-    const shown: Tab = plays ? tab : "catalog";
 
     return (
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <TypographyH2>Facilities</TypographyH2>
-                {plays && (
-                    <SegmentedPicker<Tab>
-                        value={shown}
-                        onValueChange={(next) =>
-                            navigate({
-                                search: {
-                                    tab: next === "fleet" ? "fleet" : undefined,
-                                },
-                                replace: true,
-                            })
-                        }
-                    >
-                        <SegmentedPickerOption value="catalog">
-                            Catalog
-                        </SegmentedPickerOption>
-                        <SegmentedPickerOption value="fleet">
-                            Your fleet
-                        </SegmentedPickerOption>
-                    </SegmentedPicker>
-                )}
+                <SegmentedPicker<Tab>
+                    value={tab}
+                    onValueChange={(next) =>
+                        navigate({
+                            search: {
+                                tab: next === "fleet" ? "fleet" : undefined,
+                            },
+                            replace: true,
+                        })
+                    }
+                >
+                    <SegmentedPickerOption value="catalog">
+                        Catalog
+                    </SegmentedPickerOption>
+                    <SegmentedPickerOption value="fleet">
+                        Your fleet
+                    </SegmentedPickerOption>
+                </SegmentedPicker>
             </div>
             {facilities.isError || fleet.isError ? (
                 <InfoBanner variant="error">
@@ -86,14 +88,20 @@ function FacilitiesPage() {
                     seconds.
                 </InfoBanner>
             ) : !facilities.data || !fleet.data ? (
-                <div className="flex justify-center py-12">
-                    <Spinner />
-                </div>
-            ) : shown === "catalog" ? (
+                <Loading />
+            ) : tab === "catalog" ? (
                 <Catalog facilities={facilities.data} fleet={fleet.data} />
             ) : (
                 <Fleet facilities={facilities.data} fleet={fleet.data} />
             )}
+        </div>
+    );
+}
+
+function Loading() {
+    return (
+        <div className="flex justify-center py-12">
+            <Spinner />
         </div>
     );
 }

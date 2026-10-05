@@ -27,6 +27,7 @@ import {
 } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 import {
+    isStorage,
     workshopFacilityColor,
     workshopFacilityImages,
 } from "@/lib/workshop-facilities";
@@ -189,7 +190,7 @@ function HeadlineFigures({ facility }: { facility: WorkshopFacility }) {
             {formatPower(facility.base_power_generation)}
         </span>
     );
-    if (facility.base_storage_capacity === null) {
+    if (!isStorage(facility)) {
         return (
             <span className="shrink-0 text-xs font-bold whitespace-nowrap">
                 {power}
@@ -217,7 +218,7 @@ interface Stat {
 
 function facilityStats(facility: WorkshopFacility): Stat[] {
     const stats: Stat[] = [];
-    if (facility.base_efficiency !== null) {
+    if (isStorage(facility)) {
         stats.push({
             label: "Efficiency",
             icon: Percent,

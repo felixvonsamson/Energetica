@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from energetica.workshop.facilities import FacilityId
+from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.session import Checkpoint
 
 
@@ -73,3 +74,14 @@ class WorkshopOwnedFacilityOut(BaseModel):
     under_construction: bool = Field(
         description="True while its construction lag runs. It then keeps its whole lifetime"
     )
+
+    @classmethod
+    def from_owned(cls, owned: OwnedFacility, *, current_round: int) -> WorkshopOwnedFacilityOut:
+        """``owned`` as it stands in ``current_round``."""
+        left = lifetime_left(owned, current_round=current_round)
+        return cls(
+            facility=owned.facility,
+            built_round=owned.built_round,
+            rounds_left=left.rounds,
+            under_construction=left.under_construction,
+        )

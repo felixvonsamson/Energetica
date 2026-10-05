@@ -27,6 +27,7 @@ import { assetCSSColourVariable } from "@/lib/assets/asset-colors";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type FacilityId = ApiSchema<"FacilityId">;
+type WorkshopFacility = ApiSchema<"WorkshopFacility">;
 
 export const workshopFacilityImages: Record<FacilityId, string> = {
     onshore_wind_turbine: onshoreWindTurbine,
@@ -54,4 +55,20 @@ export const workshopFacilityImages: Record<FacilityId, string> = {
  */
 export function workshopFacilityColor(id: FacilityId): string {
     return assetCSSColourVariable(id);
+}
+
+/**
+ * Whether the facility stores energy. Storage has a capacity and an efficiency
+ * and generators have neither, so a storage facility has both set.
+ */
+export function isStorage(
+    facility: WorkshopFacility,
+): facility is WorkshopFacility & {
+    base_storage_capacity: number;
+    base_efficiency: number;
+} {
+    return (
+        facility.base_storage_capacity !== null &&
+        facility.base_efficiency !== null
+    );
 }

@@ -18,7 +18,6 @@ from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.workshop.facilities import WorkshopFacility
-from energetica.workshop.fleet import lifetime_left
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
@@ -129,19 +128,10 @@ def get_fleet(
     """The facilities the calling player owns, in the order they were bought. Empty for a facilitator,
     who does not play.
     """
-    player = session.network.members.get(account.account_id)
+    player = session.player(account.account_id)
     if player is None:
         return []
     current_round = session.current_round()
-    fleet = []
-    for owned in player.owned_facilities:
-        left = lifetime_left(owned, current_round=current_round)
-        fleet.append(
-            WorkshopOwnedFacilityOut(
-                facility=owned.facility,
-                built_round=owned.built_round,
-                rounds_left=left.rounds,
-                under_construction=left.under_construction,
-            )
-        )
-    return fleet
+    return [
+        WorkshopOwnedFacilityOut.from_owned(owned, current_round=current_round) for owned in player.owned_facilities
+    ]
