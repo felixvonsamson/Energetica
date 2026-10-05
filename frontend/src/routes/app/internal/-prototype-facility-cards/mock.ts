@@ -422,14 +422,14 @@ export const FLEET: OwnedFacility[] = [
 ];
 
 /** Groups the fleet into stacks, one per facility type, in catalog order. */
-export function fleetStacks(): {
+export function fleetStacks(fleet: OwnedFacility[] = FLEET): {
     facility: Facility;
     copies: OwnedFacility[];
 }[] {
     return CATALOG.flatMap((facility) => {
-        const copies = FLEET.filter((o) => o.facilityId === facility.id).sort(
-            (a, b) => b.remainingRounds - a.remainingRounds,
-        );
+        const copies = fleet
+            .filter((o) => o.facilityId === facility.id)
+            .sort((a, b) => b.remainingRounds - a.remainingRounds);
         return copies.length > 0 ? [{ facility, copies }] : [];
     });
 }

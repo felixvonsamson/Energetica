@@ -3,7 +3,8 @@
  * look like as playing cards, and how should a fleet stack open to show each
  * copy's remaining lifetime? See `.claude/skills/prototype/UI.md`.
  *
- * Three variants, switchable via `?variant=A|B|C` or the floating bottom bar:
+ * Four variants, switchable via `?variant=A|B|C|D` or the floating bottom bar.
+ * D is the default: Felix's mix of the other three after the first review.
  *
  * - A — Top Trumps: uniform grid, stat table, dashed "cost to buy" ticket; the
  *   stack slides open in place and pushes the page down.
@@ -32,6 +33,7 @@ import { type Reveal, visibleCatalog } from "./-prototype-facility-cards/mock";
 import { VariantA } from "./-prototype-facility-cards/variant-a";
 import { VariantB } from "./-prototype-facility-cards/variant-b";
 import { VariantC } from "./-prototype-facility-cards/variant-c";
+import { VariantD } from "./-prototype-facility-cards/variant-d";
 
 type Tab = "catalog" | "fleet";
 
@@ -54,18 +56,24 @@ export const Route = createFileRoute("/app/internal/prototype-facility-cards")({
     }),
 });
 
-const VARIANTS = { A: VariantA, B: VariantB, C: VariantC } as const;
+const VARIANTS = {
+    D: VariantD,
+    A: VariantA,
+    B: VariantB,
+    C: VariantC,
+} as const;
 const NAMES = {
     A: "Top Trumps",
     B: "Pokémon shelf",
     C: "Collector's binder",
+    D: "Mix after review",
 };
 
 function PrototypeFacilityCards() {
     const navigate = Route.useNavigate();
     const search = Route.useSearch();
     const variant = (
-        search.variant && search.variant in VARIANTS ? search.variant : "A"
+        search.variant && search.variant in VARIANTS ? search.variant : "D"
     ) as keyof typeof VARIANTS;
     const tab = search.tab ?? "catalog";
     const reveal = search.reveal ?? "base";
