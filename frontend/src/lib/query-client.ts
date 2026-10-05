@@ -100,6 +100,10 @@ export const queryKeys = {
     workshop: {
         entry: ["workshop", "entry"] as const,
         session: ["workshop", "session"] as const,
+        facilities: ["workshop", "facilities"] as const,
+        // Under the session's key, so every change the server announces to the session re-reads it:
+        // advancing to a new Round shortens each facility's lifetime left.
+        fleet: ["workshop", "session", "fleet"] as const,
     },
     players: {
         all: ["players"] as const,

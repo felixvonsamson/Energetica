@@ -1,6 +1,6 @@
 /**
- * Workshop Run API calls (#994, #995, #996). Served only by a Workshop Run's
- * backend.
+ * Workshop Run API calls (#994, #995, #996, #998). Served only by a Workshop
+ * Run's backend.
  */
 
 import { apiClient } from "@/lib/api-client";
@@ -42,5 +42,20 @@ export const workshopApi = {
     getSession: () =>
         apiClient.get<ApiResponse<"/api/v1/workshop/session", "get">>(
             "/workshop/session",
+        ),
+
+    /** The facilities players can see and buy now, in catalog order. */
+    getFacilities: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/facilities", "get">>(
+            "/workshop/facilities",
+        ),
+
+    /**
+     * The facilities the visitor owns, in the order they were bought, with how
+     * long each has left. Empty for a facilitator.
+     */
+    getFleet: () =>
+        apiClient.get<ApiResponse<"/api/v1/workshop/fleet", "get">>(
+            "/workshop/fleet",
         ),
 };
