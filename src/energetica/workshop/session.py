@@ -28,7 +28,7 @@ import threading
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Literal, get_args
+from typing import TYPE_CHECKING, Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -36,6 +36,7 @@ from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.phase_timer import PhaseTimer
+from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.unlocks import available_facilities
 
@@ -43,9 +44,6 @@ if TYPE_CHECKING:
     from energetica.identity.accounts import Account
     from energetica.identity.instance_config import InstanceConfig
     from energetica.workshop.player import WorkshopPlayer
-
-Season = Literal["spring", "summer", "autumn", "winter"]
-SEASONS: tuple[Season, ...] = get_args(Season)
 
 # How many Rounds a session runs unless the moderator chooses otherwise (#992). A placeholder, like
 # every other Workshop magnitude.

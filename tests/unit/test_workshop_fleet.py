@@ -1,11 +1,19 @@
-"""How long each facility a Workshop player owns has left (#998), and whether it operates and owes O&M (#1000)."""
+"""How long each facility a Workshop player owns has left (#998), and whether it operates, how much it
+ran, and the O&M it owes (#1000).
+"""
 
 from __future__ import annotations
 
 import pytest
 
 from energetica.workshop.facilities import FacilityId
-from energetica.workshop.fleet import OwnedFacility, is_operating, lifetime_left, om_owed
+from energetica.workshop.fleet import (
+    OwnedFacility,
+    capacity_factor,
+    is_operating,
+    lifetime_left,
+    om_owed,
+)
 
 # An onshore wind turbine has no construction lag and lasts 2 Rounds. A nuclear reactor takes one
 # Round to build and lasts 8 (#975).
@@ -63,31 +71,46 @@ def test_a_facility_past_its_lifetime_is_not_operating() -> None:
     assert not is_operating(wind, current_round=4)
 
 
-# --- the O&M a facility owes (#1000) --------------------------------------------------------
+# --- capacity factor and the O&M a facility owes in a Trading period (#1000) ----------------
 
-# A nuclear reactor's O&M is at most 110,000 a Round, half of it fixed. An onshore wind turbine's is
-# 15,000, all of it fixed.
+# A nuclear reactor's maximum output is 167 MW, and its O&M is at most 110,000 a Round, half of it fixed.
+# An onshore wind turbine's O&M is at most 15,000 a Round, all of it fixed. A Round has four Trading
+# periods, so each period owes a quarter of that.
+
+
+def test_the_capacity_factor_is_the_average_output_over_the_maximum() -> None:
+    reactor = OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=3)
+
+    assert capacity_factor(reactor, [167e6, 0.0, 83.5e6, 83.5e6]) == pytest.approx(0.5)
+
+
+def test_a_capacity_factor_needs_at_least_one_sample() -> None:
+    reactor = OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=3)
+
+    with pytest.raises(ValueError):
+        capacity_factor(reactor, [])
 
 
 def test_a_facility_under_construction_owes_no_om() -> None:
     reactor = OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=3)
 
-    assert om_owed(reactor, current_round=3, utilisation=1.0) == 0.0
+    assert om_owed(reactor, current_round=3, production=[0.0, 0.0]) == 0.0
 
 
-def test_an_operating_facility_owes_its_fixed_share_plus_the_rest_scaled_by_use() -> None:
+def test_an_operating_facility_owes_a_quarter_of_its_fixed_share_plus_the_rest_scaled_by_use() -> None:
     reactor = OwnedFacility(facility=FacilityId.NUCLEAR_REACTOR, built_round=3)
 
-    assert om_owed(reactor, current_round=4, utilisation=0.4) == pytest.approx(77_000)
+    # Running at 40%: 110,000 / 4 × (0.5 + 0.5 × 0.4).
+    assert om_owed(reactor, current_round=4, production=[66.8e6, 0.0, 133.6e6]) == pytest.approx(19_250)
 
 
 def test_a_facility_with_only_fixed_om_owes_it_all_even_when_idle() -> None:
     wind = OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=2)
 
-    assert om_owed(wind, current_round=3, utilisation=0.0) == 15_000
+    assert om_owed(wind, current_round=3, production=[0.0, 0.0]) == 3_750
 
 
 def test_a_facility_past_its_lifetime_owes_no_om() -> None:
     wind = OwnedFacility(facility=FacilityId.ONSHORE_WIND_TURBINE, built_round=2)
 
-    assert om_owed(wind, current_round=4, utilisation=0.0) == 0.0
+    assert om_owed(wind, current_round=4, production=[0.0, 0.0]) == 0.0

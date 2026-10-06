@@ -1,17 +1,20 @@
 """The facilities a Workshop player owns (#998).
 
-The session buys them (#999), and retiring one at the end of its lifetime is #1000. This module
-only says what a player owns and how long each facility has left.
+The session buys them (#999) and retires each one at the end of its lifetime (#1000). This module
+says what a player owns, how long each facility has left, whether it operates in a given Round, how
+much it ran, and the O&M it owes for a Trading period (#1000).
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import NamedTuple
 
 from pydantic import BaseModel, ConfigDict
 
 from energetica.sim.operating_cost import operating_cost
 from energetica.workshop.facilities import CATALOG, FacilityId
+from energetica.workshop.seasons import SEASONS
 
 
 class OwnedFacility(BaseModel):
@@ -56,14 +59,28 @@ def is_operating(owned: OwnedFacility, *, current_round: int) -> bool:
     return not left.under_construction and left.rounds > 0
 
 
-def om_owed(owned: OwnedFacility, *, current_round: int, utilisation: float) -> float:
-    """The O&M ``owned`` owes for ``current_round``, in which it ran at ``utilisation`` (0 to 1) of its maximum.
+def capacity_factor(owned: OwnedFacility, production: Sequence[float]) -> float:
+    """How much of its maximum output ``owned`` produced on average, from 0 to 1.
 
-    Nothing while it is not operating. Otherwise its fixed share of ``om_per_round``, plus the rest
-    scaled by ``utilisation`` (#992 §6). Nothing charges this yet: that waits for the Trading-period
-    engine (#1003), which knows how much each facility ran.
+    ``production`` is its output in W, sampled at evenly spaced time steps. Raises :class:`ValueError`
+    if it is empty.
+    """
+    if not production:
+        raise ValueError("a capacity factor needs at least one production sample")
+    return sum(production) / len(production) / CATALOG[owned.facility].base_power_generation
+
+
+def om_owed(owned: OwnedFacility, *, current_round: int, production: Sequence[float]) -> float:
+    """The O&M ``owned`` owes for one Trading period of ``current_round``, in which it produced ``production``.
+
+    ``production`` is its output in W over the period, sampled at evenly spaced time steps. Nothing is
+    owed while it is not operating. Otherwise it owes its share of ``om_per_round`` for one period: the
+    fixed share, plus the rest scaled by its :func:`capacity_factor` (#992 §6). Nothing charges this
+    yet: the Trading-period engine (#1003) will, once it knows how much each facility produced.
     """
     if not is_operating(owned, current_round=current_round):
         return 0.0
     facility = CATALOG[owned.facility]
-    return operating_cost(facility.om_per_round, facility.om_fixed_share, utilisation)
+    return operating_cost(
+        facility.om_per_round / len(SEASONS), facility.om_fixed_share, capacity_factor(owned, production)
+    )
