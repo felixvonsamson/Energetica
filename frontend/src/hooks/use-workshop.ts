@@ -1,16 +1,20 @@
 /**
  * Hooks for a Workshop Run (#995): entering it, following the session as the
- * moderator advances it, and reading the facility catalog and fleet (#998).
+ * moderator advances it, reading the facility catalog and fleet (#998), and
+ * picking facilities to buy in the Investment phase (#999).
  */
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import io from "socket.io-client";
+import { toast } from "sonner";
 
 import { workshopApi } from "@/lib/api/workshop";
 import { ApiClientError } from "@/lib/api-client";
 import { isErrorType } from "@/lib/error-utils";
+import { resolveErrorMessage } from "@/lib/game-messages";
 import { queryClient, queryKeys } from "@/lib/query-client";
+import { phaseDeadline } from "@/lib/workshop-countdown";
 import type { ApiSchema } from "@/types/api-helpers";
 
 type WorkshopEntry = ApiSchema<"WorkshopEntryOut">;
@@ -81,6 +85,81 @@ export function useWorkshopFleet() {
     return useQuery({
         queryKey: queryKeys.workshop.fleet,
         queryFn: workshopApi.getFleet,
+    });
+}
+
+/**
+ * Whether the Investment phase is open, so the visitor can change their
+ * selection. It closes when its countdown reaches zero, without waiting for the
+ * server to say so.
+ */
+export function useInvestmentOpen(): boolean {
+    const { data: session, dataUpdatedAt } = useWorkshopSession();
+    const deadline =
+        session?.checkpoint.kind === "investment" && session.phase_timer
+            ? phaseDeadline(session.phase_timer, dataUpdatedAt)
+            : null;
+    const [now, setNow] = useState(() => Date.now());
+
+    useEffect(() => {
+        if (deadline === null) return;
+        // Re-render once the deadline passes.
+        const id = setTimeout(
+            () => setNow(Date.now()),
+            Math.max(deadline - Date.now(), 0),
+        );
+        return () => clearTimeout(id);
+    }, [deadline]);
+
+    // `now` stands still while nothing is timed, so it can be older than the
+    // answer. The answer's arrival is a floor for the current time.
+    return deadline !== null && Math.max(now, dataUpdatedAt) < deadline;
+}
+
+/**
+ * The facilities the visitor has picked to buy when the Investment phase
+ * closes, their total cost, and the visitor's money. Players only.
+ */
+export function useWorkshopSelection() {
+    return useQuery({
+        queryKey: queryKeys.workshop.selection,
+        queryFn: workshopApi.getSelection,
+    });
+}
+
+/** Add one facility to the visitor's selection. */
+export function useAddToSelection() {
+    return useSelectionChange(workshopApi.addToSelection);
+}
+
+/** Take one copy of a facility out of the visitor's selection. */
+export function useRemoveFromSelection() {
+    return useSelectionChange(workshopApi.removeFromSelection);
+}
+
+/**
+ * A change to the selection. The response is the selection after the change, so
+ * it replaces the cached one. Never retried: a retry after a lost response
+ * would add or remove a second copy.
+ */
+function useSelectionChange(
+    change: (
+        facility: ApiSchema<"FacilityId">,
+    ) => Promise<ApiSchema<"WorkshopSelectionOut">>,
+) {
+    return useMutation({
+        mutationFn: change,
+        retry: false,
+        onSuccess: (selection) => {
+            queryClient.setQueryData(queryKeys.workshop.selection, selection);
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
+            // The page's view of the session or the selection is out of date.
+            void queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.session,
+            });
+        },
     });
 }
 

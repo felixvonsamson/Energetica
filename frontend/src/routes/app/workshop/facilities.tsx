@@ -1,8 +1,10 @@
 /**
  * The Workshop facility page (#998): the catalog of facilities players can buy
  * now, and the player's own fleet, both as playing cards. Open at every point
- * in the session. Buying lands in #999. Players only: a facilitator moderates
- * rather than plays, so is sent back to the Workshop home.
+ * in the session. During the Investment phase, the player picks facilities from
+ * the catalog into a selection shown above it, which is bought when the phase
+ * closes (#999). Players only: a facilitator moderates rather than plays, so is
+ * sent back to the Workshop home.
  *
  * Cards differ in height, since storage and fuel-burning facilities have more
  * stats. Each grid cell is a two-row subgrid: the card is centred in the first
@@ -23,10 +25,15 @@ import { TypographyH2 } from "@/components/ui/typography";
 import { FacilityCard } from "@/components/workshop/facility-card";
 import { FacilityPriceTag } from "@/components/workshop/facility-price-tag";
 import { FleetStack } from "@/components/workshop/fleet-stack";
+import { InvestmentSelection } from "@/components/workshop/investment-selection";
 import {
+    useAddToSelection,
+    useInvestmentOpen,
+    useRemoveFromSelection,
     useWorkshopEntry,
     useWorkshopFacilities,
     useWorkshopFleet,
+    useWorkshopSelection,
 } from "@/hooks/use-workshop";
 import { fleetStacks } from "@/lib/workshop-fleet";
 import type { ApiSchema } from "@/types/api-helpers";
@@ -34,6 +41,7 @@ import type { ApiSchema } from "@/types/api-helpers";
 type Tab = "catalog" | "fleet";
 type WorkshopFacility = ApiSchema<"WorkshopFacility">;
 type OwnedFacility = ApiSchema<"WorkshopOwnedFacilityOut">;
+type WorkshopSelection = ApiSchema<"WorkshopSelectionOut">;
 
 export const Route = createFileRoute("/app/workshop/facilities")({
     component: FacilitiesPage,
@@ -58,6 +66,7 @@ function PlayerFacilities() {
     const { tab = "catalog" } = Route.useSearch();
     const facilities = useWorkshopFacilities();
     const fleet = useWorkshopFleet();
+    const selection = useWorkshopSelection();
 
     return (
         <div className="space-y-6">
@@ -82,15 +91,19 @@ function PlayerFacilities() {
                     </SegmentedPickerOption>
                 </SegmentedPicker>
             </div>
-            {facilities.isError || fleet.isError ? (
+            {facilities.isError || fleet.isError || selection.isError ? (
                 <InfoBanner variant="error">
                     Could not load the facilities. They are retried every few
                     seconds.
                 </InfoBanner>
-            ) : !facilities.data || !fleet.data ? (
+            ) : !facilities.data || !fleet.data || !selection.data ? (
                 <Loading />
             ) : tab === "catalog" ? (
-                <Catalog facilities={facilities.data} fleet={fleet.data} />
+                <Catalog
+                    facilities={facilities.data}
+                    fleet={fleet.data}
+                    selection={selection.data}
+                />
             ) : (
                 <Fleet facilities={facilities.data} fleet={fleet.data} />
             )}
@@ -109,37 +122,64 @@ function Loading() {
 function Catalog({
     facilities,
     fleet,
+    selection,
 }: {
     facilities: WorkshopFacility[];
     fleet: OwnedFacility[];
+    selection: WorkshopSelection;
 }) {
+    const investmentOpen = useInvestmentOpen();
+    const add = useAddToSelection();
+    const remove = useRemoveFromSelection();
+    const moneyLeft = selection.money - selection.total_cost;
+
     return (
-        <div className={GRID}>
-            {facilities.map((facility) => (
-                <div
-                    key={facility.id}
-                    className="row-span-2 grid grid-rows-subgrid justify-items-center gap-0"
-                >
-                    <div className="relative flex items-center">
-                        {/*
-                         * The top of the price tag's string. It runs from
-                         * behind the card's middle to the bottom of the row,
-                         * so it meets the card's bottom edge however much
-                         * shorter than the row the card is.
-                         */}
-                        <div className="absolute top-1/2 bottom-0 left-1/2 w-px -translate-x-1/2 bg-muted-foreground" />
-                        <FacilityCard facility={facility} />
+        <div className="space-y-8">
+            {/* Kept while a closed phase's selection waits to be bought. */}
+            {(investmentOpen || selection.facilities.length > 0) && (
+                <InvestmentSelection
+                    facilities={facilities}
+                    selection={selection}
+                    investmentOpen={investmentOpen}
+                    onRemove={(facility) => remove.mutate(facility)}
+                />
+            )}
+            <div className={GRID}>
+                {facilities.map((facility) => (
+                    <div
+                        key={facility.id}
+                        className="row-span-2 grid grid-rows-subgrid justify-items-center gap-0"
+                    >
+                        <div className="relative flex items-center">
+                            {/*
+                             * The top of the price tag's string. It runs from
+                             * behind the card's middle to the bottom of the row,
+                             * so it meets the card's bottom edge however much
+                             * shorter than the row the card is.
+                             */}
+                            <div className="absolute top-1/2 bottom-0 left-1/2 w-px -translate-x-1/2 bg-muted-foreground" />
+                            <FacilityCard facility={facility} />
+                        </div>
+                        <FacilityPriceTag
+                            facility={facility}
+                            owned={
+                                fleet.filter(
+                                    (owned) => owned.facility === facility.id,
+                                ).length
+                            }
+                            selected={
+                                selection.facilities.filter(
+                                    (id) => id === facility.id,
+                                ).length
+                            }
+                            investmentOpen={investmentOpen}
+                            affordable={facility.base_price <= moneyLeft}
+                            onAdd={() => add.mutate(facility.id)}
+                            adding={add.isPending}
+                        />
                     </div>
-                    <FacilityPriceTag
-                        facility={facility}
-                        owned={
-                            fleet.filter(
-                                (owned) => owned.facility === facility.id,
-                            ).length
-                        }
-                    />
-                </div>
-            ))}
+                ))}
+            </div>
         </div>
     );
 }
