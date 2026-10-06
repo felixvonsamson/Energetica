@@ -107,6 +107,9 @@ export const queryKeys = {
         fleet: ["workshop", "session", "fleet"] as const,
         // Also under the session's key: the purchase when the Investment phase closes empties it.
         selection: ["workshop", "session", "selection"] as const,
+        // Also under the session's key: a new Trading period opens their window, and a facility that
+        // starts operating needs a price.
+        prices: ["workshop", "session", "prices"] as const,
     },
     players: {
         all: ["players"] as const,

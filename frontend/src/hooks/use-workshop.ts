@@ -1,7 +1,8 @@
 /**
  * Hooks for a Workshop Run (#995): entering it, following the session as the
- * moderator advances it, reading the facility catalog and fleet (#998), and
- * picking facilities to buy in the Investment phase (#999).
+ * moderator advances it, reading the facility catalog and fleet (#998), picking
+ * facilities to buy in the Investment phase (#999), and setting prices in a
+ * Trading period's price-setting window (#1002).
  */
 
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -94,9 +95,23 @@ export function useWorkshopFleet() {
  * server to say so.
  */
 export function useInvestmentOpen(): boolean {
+    return usePhaseOpen("investment");
+}
+
+/**
+ * Whether a Trading period's price-setting window is open, so the visitor can
+ * change their prices. Like {@link useInvestmentOpen}, it closes when its
+ * countdown reaches zero.
+ */
+export function usePriceSettingOpen(): boolean {
+    return usePhaseOpen("trading_period");
+}
+
+/** Whether the session is at a checkpoint of `kind` and its countdown runs. */
+function usePhaseOpen(kind: "investment" | "trading_period"): boolean {
     const { data: session, dataUpdatedAt } = useWorkshopSession();
     const deadline =
-        session?.checkpoint.kind === "investment" && session.phase_timer
+        session?.checkpoint.kind === kind && session.phase_timer
             ? phaseDeadline(session.phase_timer, dataUpdatedAt)
             : null;
     const [now, setNow] = useState(() => Date.now());
@@ -201,6 +216,66 @@ function useSelectionChange(
             });
         },
     });
+}
+
+/** The prices the visitor offers their facilities' power at. Players only. */
+export function useWorkshopPrices() {
+    return useQuery({
+        queryKey: queryKeys.workshop.prices,
+        queryFn: workshopApi.getPrices,
+    });
+}
+
+/**
+ * Set the visitor's `side` price for `facility`. The new price shows straight
+ * away, and goes back if the server refuses it.
+ *
+ * Each field gets its own hook, and its changes are sent one at a time, so an
+ * older price never lands after a newer one. A response carries every price,
+ * but only this field's is taken from it: another field's may have changed
+ * since the request left.
+ */
+export function useSetPrice(
+    facility: ApiSchema<"FacilityId">,
+    side: "sell" | "buy",
+) {
+    return useMutation({
+        mutationFn: (price: number) =>
+            workshopApi.setPrice({ facility, side, price }),
+        scope: { id: `workshop-price-${facility}-${side}` },
+        onMutate: (price) => {
+            queryClient.setQueryData(
+                queryKeys.workshop.prices,
+                (prices: ApiSchema<"WorkshopPricesOut"> | undefined) =>
+                    prices && withPrice(prices, facility, side, price),
+            );
+        },
+        onSuccess: (answer) => {
+            const price = answer[side][facility];
+            if (price === undefined) return;
+            queryClient.setQueryData(
+                queryKeys.workshop.prices,
+                (prices: ApiSchema<"WorkshopPricesOut"> | undefined) =>
+                    prices && withPrice(prices, facility, side, price),
+            );
+        },
+        onError: (error) => {
+            toast.error(resolveErrorMessage(error));
+            // Undo the price shown, and re-read whether the window is open.
+            void queryClient.invalidateQueries({
+                queryKey: queryKeys.workshop.session,
+            });
+        },
+    });
+}
+
+function withPrice(
+    prices: ApiSchema<"WorkshopPricesOut">,
+    facility: ApiSchema<"FacilityId">,
+    side: "sell" | "buy",
+    price: number,
+): ApiSchema<"WorkshopPricesOut"> {
+    return { ...prices, [side]: { ...prices[side], [facility]: price } };
 }
 
 /**

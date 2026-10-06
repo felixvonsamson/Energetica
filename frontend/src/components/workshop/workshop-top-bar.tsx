@@ -2,18 +2,23 @@
  * The Workshop top bar (#995): the phase the session is in, and who the visitor
  * is in it, and the countdown on the running phase (#996). The facilitator also
  * gets the buttons that advance the session and extend the phase. A player gets
- * a link to the facility page (#998). The price-setting panel (#1002) will sit
- * here too.
+ * a link to the facility page (#998) and the button that opens the
+ * price-setting panel (#1002), which shows a dot while the price-setting window
+ * is open.
  */
 
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Factory } from "lucide-react";
+import { ChevronRight, Factory, Tags } from "lucide-react";
 
 import Logo from "@/assets/simplified_logo.svg?react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PhaseCountdown } from "@/components/workshop/phase-countdown";
-import { useAdvanceSession, useWorkshopEntry } from "@/hooks/use-workshop";
+import {
+    useAdvanceSession,
+    usePriceSettingOpen,
+    useWorkshopEntry,
+} from "@/hooks/use-workshop";
 import { checkpointLabel } from "@/lib/workshop-timeline";
 import type { ApiSchema } from "@/types/api-helpers";
 
@@ -21,9 +26,13 @@ type WorkshopSession = ApiSchema<"WorkshopSessionOut">;
 
 export function WorkshopTopBar({
     session,
+    pricePanelOpen,
+    onTogglePricePanel,
 }: {
     /** Undefined while the session is still loading. */
     session: WorkshopSession | undefined;
+    pricePanelOpen: boolean;
+    onTogglePricePanel: () => void;
 }) {
     const { data: entry } = useWorkshopEntry();
     const checkpoint = session?.checkpoint;
@@ -52,6 +61,12 @@ export function WorkshopTopBar({
                             Facilities
                         </Link>
                     </Button>
+                )}
+                {entry?.role === "player" && (
+                    <PricesButton
+                        panelOpen={pricePanelOpen}
+                        onClick={onTogglePricePanel}
+                    />
                 )}
                 {isFacilitator && session && (
                     <AdvanceButton session={session} />
@@ -85,6 +100,36 @@ function AdvanceButton({ session }: { session: WorkshopSession }) {
                 ? "Start the session"
                 : `Next: ${checkpointLabel(next)}`}
             <ChevronRight className="size-4" />
+        </Button>
+    );
+}
+
+/** Opens and closes the price-setting panel. */
+function PricesButton({
+    panelOpen,
+    onClick,
+}: {
+    panelOpen: boolean;
+    onClick: () => void;
+}) {
+    const windowOpen = usePriceSettingOpen();
+
+    return (
+        <Button
+            variant={panelOpen ? "secondary" : "ghost"}
+            size="sm"
+            aria-pressed={panelOpen}
+            onClick={onClick}
+            className="relative"
+        >
+            <Tags className="size-4" />
+            Prices
+            {windowOpen && (
+                <span
+                    aria-label="Price-setting window open"
+                    className="absolute top-1 right-1 size-2 animate-pulse rounded-full bg-brand"
+                />
+            )}
         </Button>
     );
 }
