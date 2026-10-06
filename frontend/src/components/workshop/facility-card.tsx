@@ -8,17 +8,18 @@
  */
 
 import {
+    BatteryFull,
     Flame,
     Fuel,
     Gauge,
     type LucideIcon,
     Percent,
     Wrench,
+    Zap,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Money } from "@/components/ui/money";
-import { assetCSSColourVariable } from "@/lib/assets/asset-colors";
 import {
     formatEnergy,
     formatGameTimeDuration,
@@ -82,9 +83,7 @@ export function FacilityCard({
                             <stat.icon
                                 className="size-3.5 shrink-0"
                                 style={{
-                                    color:
-                                        stat.color ??
-                                        workshopFacilityColor(facility.id),
+                                    color: workshopFacilityColor(facility.id),
                                 }}
                             />
                             <span className="flex-1">{stat.label}</span>
@@ -185,8 +184,8 @@ export function LifetimePips({
  */
 function HeadlineFigures({ facility }: { facility: WorkshopFacility }) {
     const power = (
-        <span>
-            <span className="text-[10px] opacity-60">⚡</span>
+        <span className="flex items-center gap-0.5">
+            <Zap className="size-3 fill-yellow-400 text-yellow-500" />
             {formatPower(facility.base_power_generation)}
         </span>
     );
@@ -200,8 +199,8 @@ function HeadlineFigures({ facility }: { facility: WorkshopFacility }) {
     return (
         <span className="flex shrink-0 flex-col items-end text-xs leading-tight font-bold whitespace-nowrap">
             {power}
-            <span>
-                <span className="text-[10px] opacity-60">🔋</span>
+            <span className="flex items-center gap-0.5">
+                <BatteryFull className="size-3" />
                 {formatEnergy(facility.base_storage_capacity)}
             </span>
         </span>
@@ -212,8 +211,6 @@ interface Stat {
     label: string;
     icon: LucideIcon;
     value: ReactNode;
-    /** Defaults to the facility's colour. */
-    color?: string;
 }
 
 function facilityStats(facility: WorkshopFacility): Stat[] {
@@ -232,7 +229,6 @@ function facilityStats(facility: WorkshopFacility): Stat[] {
                 facility.base_pollution === 0
                     ? "None"
                     : `${formatMass(facility.base_pollution)}/MWh`,
-            color: "var(--destructive)",
         });
     }
     stats.push({
@@ -253,7 +249,6 @@ function facilityStats(facility: WorkshopFacility): Stat[] {
             label: "Fuel",
             icon: Fuel,
             value: capitalize(facility.fuel_type),
-            color: assetCSSColourVariable(facility.fuel_type),
         });
     }
     return stats;

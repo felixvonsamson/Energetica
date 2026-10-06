@@ -12,6 +12,7 @@
  */
 
 import { AnimatePresence, motion } from "framer-motion";
+import { Construction } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -179,9 +180,14 @@ function CopyRow({
     return (
         <CardFooterRow
             left={
-                copy.under_construction
-                    ? "🚧 Building"
-                    : `Built Round ${copy.built_round}`
+                copy.under_construction ? (
+                    <span className="flex items-center gap-1">
+                        <Construction className="size-3.5 text-orange-500" />
+                        Building
+                    </span>
+                ) : (
+                    `Built Round ${copy.built_round}`
+                )
             }
             right={
                 <>
