@@ -309,19 +309,22 @@ class WorkshopSession:
     def advance(self) -> Checkpoint:
         """Move to the next checkpoint and return it. The only way the session changes phase.
 
-        A timed checkpoint starts its phase's countdown now. Leaving an Investment phase first buys
+        A timed checkpoint starts its phase's countdown now. Leaving an Investment phase also buys
         any selection still waiting, so none is lost if the moderator advances before the timer has
         run out or before the purchase at its end has happened. Raises
         :class:`SessionFinishedError` once the session is :class:`Finished`.
         """
         with self._lock:
             checkpoint = next_checkpoint(self.checkpoint, round_count=self.round_count)
-            if isinstance(self.checkpoint, Investment):
-                self._buy_selections(self.checkpoint.round)
             duration = phase_duration(checkpoint, self.levers)
             phase_timer = None if duration is None else PhaseTimer(started_at=self.clock(), duration=duration)
-            # Saved before it is applied, so a failed write leaves the session where the file says.
-            self._save(checkpoint, phase_timer)
+            # Saved before it is applied, so a failed write leaves the session where the file says. A
+            # purchase is saved in the same write, so it happens only if the advance does.
+            bought = isinstance(self.checkpoint, Investment) and self._buy_selections(
+                self.checkpoint.round, checkpoint=checkpoint, phase_timer=phase_timer
+            )
+            if not bought:
+                self._save(checkpoint, phase_timer)
             self.checkpoint = checkpoint
             self.phase_timer = phase_timer
             return checkpoint
@@ -386,10 +389,14 @@ class WorkshopSession:
         with self._lock:
             if not isinstance(self.checkpoint, Investment) or self.investment_open():
                 return False
-            return self._buy_selections(self.checkpoint.round)
+            return self._buy_selections(self.checkpoint.round, checkpoint=self.checkpoint, phase_timer=self.phase_timer)
 
-    def _buy_selections(self, round_number: int) -> bool:
-        """Buy every player's selection in Round ``round_number``. The caller holds the lock."""
+    def _buy_selections(self, round_number: int, *, checkpoint: Checkpoint, phase_timer: PhaseTimer | None) -> bool:
+        """Buy every player's selection in Round ``round_number``, and return whether anything was bought.
+
+        The purchase is saved with the session at ``checkpoint`` with ``phase_timer``, and nothing is saved
+        if there is nothing to buy. The caller holds the lock.
+        """
         buyers = [player for player in self.network.players() if player.selection]
         if not buyers:
             return False
@@ -401,7 +408,7 @@ class WorkshopSession:
             )
             player.selection.clear()
         try:
-            self._save(self.checkpoint, self.phase_timer)
+            self._save(checkpoint, phase_timer)
         except BaseException:
             # Undo the purchase, so the session matches the file and the next attempt retries it.
             for player, (money, owned_facilities, selection) in zip(buyers, before, strict=True):

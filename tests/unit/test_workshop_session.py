@@ -615,3 +615,30 @@ def test_a_failed_save_undoes_the_purchase(path: Path, clock: _Clock, monkeypatc
 
     alice = session.network.members[1]
     assert (alice.money, alice.owned_facilities, alice.selection) == (1_000_000.0, [], [FacilityId.GAS_BURNER])
+
+
+def test_an_advance_that_fails_to_save_does_not_buy_the_selection(
+    path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    session = _investing(path, clock)
+    session.select(1, FacilityId.GAS_BURNER)
+    clock.tick(minutes=8)
+    real_write = session_module._write_atomically
+
+    def fail_to_leave_the_investment_phase(target: Path, text: str) -> None:
+        # Only the write that moves the session on fails. A purchase saved on its own beforehand
+        # would get through.
+        if '"trading_period"' in text:
+            raise OSError("disk full")
+        real_write(target, text)
+
+    monkeypatch.setattr(session_module, "_write_atomically", fail_to_leave_the_investment_phase)
+
+    with pytest.raises(OSError):
+        session.advance()
+    monkeypatch.undo()
+
+    for kept in (session, WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)):
+        alice = kept.network.members[1]
+        assert kept.checkpoint == Investment(round=1)
+        assert (alice.money, alice.owned_facilities, alice.selection) == (1_000_000.0, [], [FacilityId.GAS_BURNER])
