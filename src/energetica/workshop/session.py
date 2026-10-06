@@ -32,10 +32,12 @@ from typing import TYPE_CHECKING, Annotated, Literal, get_args
 
 from pydantic import BaseModel, Field
 
+from energetica.workshop.facilities import CATALOG, FacilityId
 from energetica.workshop.fleet import OwnedFacility
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.setup import open_workshop_run
+from energetica.workshop.unlocks import available_facilities
 
 if TYPE_CHECKING:
     from energetica.identity.accounts import Account
@@ -103,6 +105,22 @@ class SessionFinishedError(Exception):
     """Raised when advancing a session that is already :class:`Finished`."""
 
 
+class InvestmentClosedError(Exception):
+    """Raised when changing a selection while no Investment phase is open (#999)."""
+
+
+class FacilityNotOfferedError(Exception):
+    """Raised when selecting a facility the session does not offer yet (#999)."""
+
+
+class NotEnoughMoneyError(Exception):
+    """Raised when a selection would cost more than the player has (#999)."""
+
+
+class NotSelectedError(Exception):
+    """Raised when removing a facility that is not in the player's selection (#999)."""
+
+
 class NoPhaseRunningError(Exception):
     """Raised when extending a phase while none is open: the checkpoint is not timed, or its time is up."""
 
@@ -162,6 +180,8 @@ class _SavedPlayer(BaseModel):
     username: str
     money: float
     owned_facilities: list[OwnedFacility]
+    # Defaults to empty for a file saved before selections existed.
+    selection: list[FacilityId] = []
 
 
 class _SavedSession(BaseModel):
@@ -244,6 +264,7 @@ class WorkshopSession:
                 username=player.username,
                 money=player.money,
                 owned_facilities=player.owned_facilities,
+                selection=player.selection,
             )
         return cls(
             network=network,
@@ -269,6 +290,16 @@ class WorkshopSession:
             case _:
                 return self.checkpoint.round
 
+    def investment_open(self) -> bool:
+        """Whether players can change their selection: the session is in an Investment phase and its time
+        has not run out.
+        """
+        return (
+            isinstance(self.checkpoint, Investment)
+            and self.phase_timer is not None
+            and self.phase_timer.is_active(self.clock())
+        )
+
     def upcoming_checkpoint(self) -> Checkpoint | None:
         """The checkpoint :meth:`advance` would move to, or ``None`` once the session is finished."""
         if isinstance(self.checkpoint, Finished):
@@ -278,11 +309,15 @@ class WorkshopSession:
     def advance(self) -> Checkpoint:
         """Move to the next checkpoint and return it. The only way the session changes phase.
 
-        A timed checkpoint starts its phase's countdown now. Raises :class:`SessionFinishedError`
-        once the session is :class:`Finished`.
+        A timed checkpoint starts its phase's countdown now. Leaving an Investment phase first buys
+        any selection still waiting, so none is lost if the moderator advances before the timer has
+        run out or before the purchase at its end has happened. Raises
+        :class:`SessionFinishedError` once the session is :class:`Finished`.
         """
         with self._lock:
             checkpoint = next_checkpoint(self.checkpoint, round_count=self.round_count)
+            if isinstance(self.checkpoint, Investment):
+                self._buy_selections(self.checkpoint.round)
             duration = phase_duration(checkpoint, self.levers)
             phase_timer = None if duration is None else PhaseTimer(started_at=self.clock(), duration=duration)
             # Saved before it is applied, so a failed write leaves the session where the file says.
@@ -305,6 +340,74 @@ class WorkshopSession:
             self._save(self.checkpoint, phase_timer)
             self.phase_timer = phase_timer
             return phase_timer
+
+    def select(self, account_id: int, facility: FacilityId) -> None:
+        """Add one ``facility`` to the player's selection, to be bought when the Investment phase closes."""
+        with self._lock:
+            if not self.investment_open():
+                raise InvestmentClosedError("the Investment phase is not open")
+            if facility not in {offered.id for offered in available_facilities()}:
+                raise FacilityNotOfferedError(f"{facility} is not offered")
+            player = self.network.members[account_id]
+            if player.selection_cost() + CATALOG[facility].base_price > player.money:
+                raise NotEnoughMoneyError("the selection would cost more than the player has")
+            self._set_selection(player, [*player.selection, facility])
+
+    def deselect(self, account_id: int, facility: FacilityId) -> None:
+        """Take one ``facility`` out of the player's selection: the copy picked last."""
+        with self._lock:
+            if not self.investment_open():
+                raise InvestmentClosedError("the Investment phase is not open")
+            player = self.network.members[account_id]
+            if facility not in player.selection:
+                raise NotSelectedError(f"{facility} is not selected")
+            selection = list(player.selection)
+            del selection[len(selection) - 1 - selection[::-1].index(facility)]
+            self._set_selection(player, selection)
+
+    def _set_selection(self, player: WorkshopPlayer, selection: list[FacilityId]) -> None:
+        """Give ``player`` the selection ``selection`` and save it. The caller holds the lock."""
+        before = player.selection
+        player.selection = selection
+        try:
+            self._save(self.checkpoint, self.phase_timer)
+        except BaseException:
+            # Undo the change, so the session matches the file.
+            player.selection = before
+            raise
+
+    def buy_selections(self) -> bool:
+        """Buy every player's selection if the Investment phase's time has run out, and return whether
+        anything was bought.
+
+        Each selected facility is paid for in full and owned from the Round it is bought in. Nothing is
+        bought while the phase is open, or outside an Investment phase.
+        """
+        with self._lock:
+            if not isinstance(self.checkpoint, Investment) or self.investment_open():
+                return False
+            return self._buy_selections(self.checkpoint.round)
+
+    def _buy_selections(self, round_number: int) -> bool:
+        """Buy every player's selection in Round ``round_number``. The caller holds the lock."""
+        buyers = [player for player in self.network.players() if player.selection]
+        if not buyers:
+            return False
+        before = [(player.money, list(player.owned_facilities), list(player.selection)) for player in buyers]
+        for player in buyers:
+            player.money -= player.selection_cost()
+            player.owned_facilities.extend(
+                OwnedFacility(facility=facility, built_round=round_number) for facility in player.selection
+            )
+            player.selection.clear()
+        try:
+            self._save(self.checkpoint, self.phase_timer)
+        except BaseException:
+            # Undo the purchase, so the session matches the file and the next attempt retries it.
+            for player, (money, owned_facilities, selection) in zip(buyers, before, strict=True):
+                player.money, player.owned_facilities, player.selection = money, owned_facilities, selection
+            raise
+        return True
 
     def join(self, account: Account) -> WorkshopPlayer:
         """Place ``account`` into the Run's Network, or return its existing player."""
@@ -333,6 +436,7 @@ class WorkshopSession:
                     username=player.username,
                     money=player.money,
                     owned_facilities=player.owned_facilities,
+                    selection=player.selection,
                 )
                 for player in self.network.players()
             ],

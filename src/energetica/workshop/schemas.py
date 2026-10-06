@@ -65,6 +65,23 @@ class WorkshopSessionOut(BaseModel):
     players: list[WorkshopMemberOut] = Field(description="Everyone placed into the Run, in the order they entered")
 
 
+class WorkshopSelectionIn(BaseModel):
+    """One facility to add to the calling player's selection."""
+
+    facility: FacilityId
+
+
+class WorkshopSelectionOut(BaseModel):
+    """The facilities the calling player has picked in the open Investment phase (#999)."""
+
+    facilities: list[FacilityId] = Field(
+        description="One entry per copy, in the order they were picked. All are bought when the Investment "
+        "phase's time runs out"
+    )
+    total_cost: float = Field(description="What buying the whole selection costs")
+    money: float = Field(description="The player's cash. The selection can never cost more")
+
+
 class WorkshopOwnedFacilityOut(BaseModel):
     """One facility the calling player owns."""
 

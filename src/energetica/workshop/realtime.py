@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Any
 
 import socketio
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 
 from energetica.identity.web import admit_socket_connection
 
@@ -33,9 +33,9 @@ def setup_socketio(app: FastAPI) -> None:
         admit_socket_connection(environ)
 
 
-async def invalidate_session(request: Request) -> None:
-    """Tell every open page to re-read the session."""
-    sio: socketio.AsyncServer | None = getattr(request.app.state, "socketio", None)
+async def invalidate_session(app: FastAPI) -> None:
+    """Tell every open page to re-read the session, and with it everything cached under its key."""
+    sio: socketio.AsyncServer | None = getattr(app.state, "socketio", None)
     # An app built only for its OpenAPI schema has no server.
     if sio is not None:
         await sio.emit("invalidate", {"queries": [SESSION_QUERY_KEY]})

@@ -1,7 +1,7 @@
 """The facilities a Workshop player owns (#998).
 
-Buying one is #999, and retiring one at the end of its lifetime is #1000. This module only says what
-a player owns and how long each facility has left.
+The session buys them (#999), and retiring one at the end of its lifetime is #1000. This module
+only says what a player owns and how long each facility has left.
 """
 
 from __future__ import annotations

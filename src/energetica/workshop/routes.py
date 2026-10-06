@@ -3,7 +3,7 @@
 Every route goes through the same entry gate as the persistent world
 (:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
 accounts. Advancing the session and extending its running phase are the facilitator's alone, and
-each tells every open page (#1140).
+each tells every open page (#1140). A player's investment selection is theirs alone (#999).
 """
 
 from __future__ import annotations
@@ -11,13 +11,14 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 
 from energetica.identity.accounts import Account
 from energetica.identity.web import get_facilitator, get_role, resolve_entry_account
 from energetica.kernel.game_error import GameError, GameExceptionType
-from energetica.workshop.facilities import WorkshopFacility
+from energetica.workshop.facilities import FacilityId, WorkshopFacility
+from energetica.workshop.player import WorkshopPlayer
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
@@ -26,9 +27,19 @@ from energetica.workshop.schemas import (
     WorkshopPhaseExtendIn,
     WorkshopPhaseTimerOut,
     WorkshopPlayerOut,
+    WorkshopSelectionIn,
+    WorkshopSelectionOut,
     WorkshopSessionOut,
 )
-from energetica.workshop.session import NoPhaseRunningError, SessionFinishedError, WorkshopSession
+from energetica.workshop.session import (
+    FacilityNotOfferedError,
+    InvestmentClosedError,
+    NoPhaseRunningError,
+    NotEnoughMoneyError,
+    NotSelectedError,
+    SessionFinishedError,
+    WorkshopSession,
+)
 from energetica.workshop.unlocks import available_facilities
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
@@ -40,6 +51,17 @@ def get_session(request: Request) -> WorkshopSession:
 
 
 Session = Annotated[WorkshopSession, Depends(get_session)]
+
+
+def get_player(account: Annotated[Account, Depends(resolve_entry_account)], session: Session) -> WorkshopPlayer:
+    """The calling account's player. A facilitator, or a player who has not entered yet, is refused."""
+    player = session.player(account.account_id)
+    if player is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=GameExceptionType.USER_IS_NOT_A_PLAYER)
+    return player
+
+
+Player = Annotated[WorkshopPlayer, Depends(get_player)]
 
 
 def _session_out(session: WorkshopSession) -> WorkshopSessionOut:
@@ -91,7 +113,7 @@ async def advance_session(
         await run_in_threadpool(session.advance)
     except SessionFinishedError as exc:
         raise GameError(GameExceptionType.WORKSHOP_SESSION_FINISHED) from exc
-    await invalidate_session(request)
+    await invalidate_session(request.app)
     return _session_out(session)
 
 
@@ -109,7 +131,7 @@ async def extend_phase(
         await run_in_threadpool(session.extend_phase, timedelta(minutes=extension.minutes))
     except NoPhaseRunningError as exc:
         raise GameError(GameExceptionType.WORKSHOP_NO_PHASE_RUNNING) from exc
-    await invalidate_session(request)
+    await invalidate_session(request.app)
     return _session_out(session)
 
 
@@ -135,3 +157,46 @@ def get_fleet(
     return [
         WorkshopOwnedFacilityOut.from_owned(owned, current_round=current_round) for owned in player.owned_facilities
     ]
+
+
+def _selection_out(player: WorkshopPlayer) -> WorkshopSelectionOut:
+    return WorkshopSelectionOut(
+        facilities=list(player.selection), total_cost=player.selection_cost(), money=player.money
+    )
+
+
+@router.get("/selection")
+def get_selection(player: Player) -> WorkshopSelectionOut:
+    """The facilities the calling player has picked to buy when the Investment phase closes."""
+    return _selection_out(player)
+
+
+# Each change waits on the session's lock and writes the session file, so it runs on a worker thread.
+@router.post("/selection")
+async def add_to_selection(player: Player, session: Session, selection: WorkshopSelectionIn) -> WorkshopSelectionOut:
+    """Add one facility to the calling player's selection. Only while the Investment phase is open, and
+    only if the player can pay for the whole selection.
+    """
+    try:
+        await run_in_threadpool(session.select, player.account_id, selection.facility)
+    except InvestmentClosedError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_INVESTMENT_CLOSED) from exc
+    except FacilityNotOfferedError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_FACILITY_NOT_OFFERED) from exc
+    except NotEnoughMoneyError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_NOT_ENOUGH_MONEY) from exc
+    return _selection_out(player)
+
+
+@router.delete("/selection/{facility}")
+async def remove_from_selection(player: Player, session: Session, facility: FacilityId) -> WorkshopSelectionOut:
+    """Take one copy of ``facility`` out of the calling player's selection. Only while the Investment
+    phase is open.
+    """
+    try:
+        await run_in_threadpool(session.deselect, player.account_id, facility)
+    except InvestmentClosedError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_INVESTMENT_CLOSED) from exc
+    except NotSelectedError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_NOT_SELECTED) from exc
+    return _selection_out(player)
