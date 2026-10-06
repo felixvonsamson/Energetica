@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING, Annotated, Literal, get_args
 from pydantic import BaseModel, Field
 
 from energetica.workshop.facilities import CATALOG, FacilityId
-from energetica.workshop.fleet import OwnedFacility
+from energetica.workshop.fleet import OwnedFacility, lifetime_left
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.setup import open_workshop_run
@@ -311,7 +311,8 @@ class WorkshopSession:
 
         A timed checkpoint starts its phase's countdown now. Leaving an Investment phase also buys
         any selection still waiting, so none is lost if the moderator advances before the timer has
-        run out or before the purchase at its end has happened. Raises
+        run out or before the purchase at its end has happened. Starting a new Round's Investment
+        phase retires every facility whose lifetime has ended. Raises
         :class:`SessionFinishedError` once the session is :class:`Finished`.
         """
         with self._lock:
@@ -319,11 +320,14 @@ class WorkshopSession:
             duration = phase_duration(checkpoint, self.levers)
             phase_timer = None if duration is None else PhaseTimer(started_at=self.clock(), duration=duration)
             # Saved before it is applied, so a failed write leaves the session where the file says. A
-            # purchase is saved in the same write, so it happens only if the advance does.
-            bought = isinstance(self.checkpoint, Investment) and self._buy_selections(
-                self.checkpoint.round, checkpoint=checkpoint, phase_timer=phase_timer
-            )
-            if not bought:
+            # purchase or retirement is saved in the same write, so it happens only if the advance does.
+            if isinstance(self.checkpoint, Investment):
+                saved = self._buy_selections(self.checkpoint.round, checkpoint=checkpoint, phase_timer=phase_timer)
+            elif isinstance(checkpoint, Investment):
+                saved = self._retire_expired(checkpoint.round, checkpoint=checkpoint, phase_timer=phase_timer)
+            else:
+                saved = False
+            if not saved:
                 self._save(checkpoint, phase_timer)
             self.checkpoint = checkpoint
             self.phase_timer = phase_timer
@@ -413,6 +417,31 @@ class WorkshopSession:
             # Undo the purchase, so the session matches the file and the next attempt retries it.
             for player, (money, owned_facilities, selection) in zip(buyers, before, strict=True):
                 player.money, player.owned_facilities, player.selection = money, owned_facilities, selection
+            raise
+        return True
+
+    def _retire_expired(self, round_number: int, *, checkpoint: Checkpoint, phase_timer: PhaseTimer | None) -> bool:
+        """Retire every facility past its lifetime in Round ``round_number``, and return whether any was.
+
+        Retirement needs no player action and pays nothing back (#992 §6). It is saved with the session
+        at ``checkpoint`` with ``phase_timer``, and nothing is saved if nothing retires. The caller holds
+        the lock.
+        """
+        before = {player: list(player.owned_facilities) for player in self.network.players()}
+        for player in before:
+            player.owned_facilities = [
+                owned
+                for owned in player.owned_facilities
+                if lifetime_left(owned, current_round=round_number).rounds > 0
+            ]
+        if all(player.owned_facilities == owned for player, owned in before.items()):
+            return False
+        try:
+            self._save(checkpoint, phase_timer)
+        except BaseException:
+            # Undo the retirement, so the session matches the file and the next attempt retries it.
+            for player, owned in before.items():
+                player.owned_facilities = owned
             raise
         return True
 
