@@ -55,6 +55,13 @@ from energetica.sim.renewables import (
 from energetica.sim.settlement import settle_clearing
 from energetica.utils import network_helpers
 
+#: The lowest price an offer can carry in the persistent world. Generation that must run regardless of price
+#: (renewables, the minimum output a controllable facility cannot ramp below) is offered here so it always
+#: sits first in the merit order. Players' own prices must stay above it.
+MIN_PRICE = -5
+#: What dumping unsold must-run power costs its owner, per MWh. Selling at :data:`MIN_PRICE` costs the same.
+DUMP_COST = 5
+
 
 def update_electricity() -> None:
     """Main simulation tick for electricity, markets, resources and emissions."""
@@ -414,18 +421,21 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
     """
     # --- Initialization ---
     internal_market = init_market()
-    generation = new_values[player.id]["generation"]
+    # What each facility must produce this tick. It becomes generation only once the market has settled.
+    must_run_output = dict.fromkeys(new_values[player.id]["generation"], 0.0)
     demand = new_values[player.id]["demand"]
     resource_reservations = reset_resource_reservations()
 
     # generation of non controllable facilities is calculated from weather data.
-    renewables_generation(player, generation)
+    renewables_generation(player, must_run_output)
     # TODO (Felix): Renewables_generation() should be included in minimal_generation()
-    minimal_generation(player, generation, resource_reservations)
+    minimal_generation(player, must_run_output, resource_reservations)
     # Obligatory generation is put on the internal market at the minimum price
     for facility in (*StorageFacilityType, *power_facility_types):
         if facility in player.capacities:
-            internal_market = place_must_run_ask(internal_market, player.id, generation[facility], facility)
+            internal_market = place_must_run_ask(
+                internal_market, player.id, must_run_output[facility], MIN_PRICE, facility
+            )
 
     # demands are demanded on the internal market
     for bid_type in player.network_prices.bid_prices.keys():
@@ -451,7 +461,7 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
             )
             price = player.network_prices.ask_prices[facility]
             internal_market = place_headroom_ask(
-                internal_market, player.id, generation[facility], max_prod, price, facility
+                internal_market, player.id, must_run_output[facility], max_prod, price, facility
             )
 
     market_logic(new_values, internal_market)
@@ -460,16 +470,17 @@ def calculate_generation_without_market(new_values: dict, player: Player) -> flo
 
 def calculate_generation_with_market(new_values: dict, market: dict, player: Player) -> dict:
     """Calculate the generation of a player that is part of a network (before market logic)."""
-    generation = new_values[player.id]["generation"]
+    # What each facility must produce this tick. It becomes generation only once the market has settled.
+    must_run_output = dict.fromkeys(new_values[player.id]["generation"], 0.0)
     demand = new_values[player.id]["demand"]
     resource_reservations = reset_resource_reservations()
 
-    renewables_generation(player, generation)
-    minimal_generation(player, generation, resource_reservations)
+    renewables_generation(player, must_run_output)
+    minimal_generation(player, must_run_output, resource_reservations)
     # offer minimal generation capacities of facilities on the market at a negative price
     for facility in (*StorageFacilityType, *power_facility_types):
         if player.capacities.get(facility) is not None:
-            market = place_must_run_ask(market, player.id, generation[facility], facility)
+            market = place_must_run_ask(market, player.id, must_run_output[facility], MIN_PRICE, facility)
 
     # ask demand on the market at the set prices
     # TODO (Felix): Ideally, we would want to get rid of calls of network prices as iterators everywhere where they
@@ -494,7 +505,7 @@ def calculate_generation_with_market(new_values: dict, market: dict, player: Pla
                 resource_reservations,
             )
             price = player.network_prices.ask_prices[facility]  # type: ignore
-            market = place_headroom_ask(market, player.id, generation[facility], max_prod, price, facility)
+            market = place_headroom_ask(market, player.id, must_run_output[facility], max_prod, price, facility)
 
     return market
 
@@ -543,13 +554,12 @@ def market_logic(new_values: dict, market: dict) -> None:
 
     # The pure half decides what each entry sold, bought and dumped, and what that is worth. Applying it
     # to the players (money, generation, curtailment, chart data) is Player-coupled, so it stays here.
-    settlement = settle_clearing(clearing, engine.in_game_seconds_per_tick)
+    settlement = settle_clearing(clearing, engine.in_game_seconds_per_tick, DUMP_COST)
     for sale in settlement.sales:
         player = Player.get(sale.player_id)
         assert player is not None
+        new_values[player.id]["generation"][sale.facility] += sale.produced
         if sale.quantity > 0:
-            if sale.counts_as_generation:
-                new_values[player.id]["generation"][sale.facility] += sale.quantity
             new_values[player.id]["demand"]["exports"] += sale.quantity
             player.money += sale.revenue
             new_values[player.id]["revenues"]["exports"] += sale.revenue

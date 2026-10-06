@@ -23,20 +23,21 @@ import math
 from dataclasses import dataclass
 
 
-#: The lowest price an offer can carry. Generation that must run regardless of price (renewables, the
-#: minimum output a controllable facility cannot ramp below) is offered here so it always sits first in
-#: the merit order. Unsold power at this price is dumped, and the owner pays this price per MWh to do so.
-MIN_PRICE = -5
-
-
 class MarketEntry:
-    __slots__ = ("player_id", "capacity", "price", "facility", "cumul_capacities")
+    """One supply offer or demand bid.
 
-    def __init__(self, player_id: int, capacity: float, price: float, facility: str) -> None:
+    ``must_run`` marks an offer whose power is produced whether or not it sells, such as a renewable's
+    output. Whatever part of it does not clear is dumped. It can carry any price.
+    """
+
+    __slots__ = ("player_id", "capacity", "price", "facility", "must_run", "cumul_capacities")
+
+    def __init__(self, player_id: int, capacity: float, price: float, facility: str, *, must_run: bool = False) -> None:
         self.player_id = player_id
         self.capacity = capacity
         self.price = price
         self.facility = facility
+        self.must_run = must_run
         self.cumul_capacities = 0.0
 
 
@@ -48,10 +49,12 @@ def init_market() -> dict:
     }
 
 
-def place_ask(market: dict, player_id: int, capacity: float, price: float, facility: str) -> dict:
+def place_ask(
+    market: dict, player_id: int, capacity: float, price: float, facility: str, *, must_run: bool = False
+) -> dict:
     """Make an ask (offer, supply) on the market."""
     if capacity > 0:
-        market["capacities"].append(MarketEntry(player_id, capacity, price, facility))
+        market["capacities"].append(MarketEntry(player_id, capacity, price, facility, must_run=must_run))
     return market
 
 
@@ -62,9 +65,9 @@ def place_bid(market: dict, player_id: int, demand: float, price: float, facilit
     return market
 
 
-def place_must_run_ask(market: dict, player_id: int, output: float, facility: str) -> dict:
-    """Offer output that cannot be held back at :data:`MIN_PRICE`, so it sits first in the merit order."""
-    return place_ask(market, player_id, output, MIN_PRICE, facility)
+def place_must_run_ask(market: dict, player_id: int, output: float, price: float, facility: str) -> dict:
+    """Offer output that is produced whether or not it sells, at ``price``. What does not sell is dumped."""
+    return place_ask(market, player_id, output, price, facility, must_run=True)
 
 
 def place_headroom_ask(

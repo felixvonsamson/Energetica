@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from energetica.sim.market import MIN_PRICE, MarketClearing
+from energetica.sim.market import MarketClearing
 
 #: Below this many W a partly cleared entry is treated as not having traded at all.
 MIN_SETTLED_QUANTITY = 0.1
@@ -37,8 +37,10 @@ class SaleSettlement:
     facility: str
     quantity: float  # W sold at the market price; 0 when nothing traded
     revenue: float  # money earned for ``quantity``; negative when the market price is negative
-    counts_as_generation: bool  # False for must-run offers, whose output the caller already recorded
-    dumped: float | None = None  # W of must-run power thrown away; None when the offer was not must-run
+    produced: float  # W the facility generated for this offer: what sold, plus what was dumped
+    dumped: float | None = (
+        None  # W of must-run power thrown away; None unless the offer was must-run and not fully sold
+    )
     dump_cost: float = 0.0  # money owed for ``dumped``
 
 
@@ -61,21 +63,22 @@ class Settlement:
     purchases: list[PurchaseSettlement]
 
 
-def settle_clearing(clearing: MarketClearing, seconds_per_tick: float) -> Settlement:
+def settle_clearing(clearing: MarketClearing, seconds_per_tick: float, dump_cost_per_mwh: float) -> Settlement:
     """Work out what each entry of ``clearing`` sold or bought, and what it costs or earns.
 
     Offers arrive in merit order. Offers that cleared in full sell their whole capacity. The first offer
-    that did not clear in full sells what it can, and nothing after it sells, except that must-run offers
-    (priced at :data:`MIN_PRICE`, which sort first) that did not clear dump the power they could not sell.
+    that did not clear in full (the marginal offer) sells what it can, and nothing after it sells. Must-run
+    offers (:attr:`MarketEntry.must_run`) can sit anywhere in the merit order: the power they do not sell
+    is dumped, at ``dump_cost_per_mwh``, wherever they sit.
     Every demand that did not clear in full reports how much of it was served, so the caller can curtail it.
     """
     price = clearing.price
     quantity = clearing.quantity
 
     sales: list[SaleSettlement] = []
+    past_marginal_offer = False
     for fill in clearing.offers:
         entry = fill.entry
-        counts_as_generation = entry.price > MIN_PRICE
         if entry.cumul_capacities <= quantity:
             sales.append(
                 SaleSettlement(
@@ -83,24 +86,22 @@ def settle_clearing(clearing: MarketClearing, seconds_per_tick: float) -> Settle
                     entry.facility,
                     entry.capacity,
                     energy_value(entry.capacity, price, seconds_per_tick),
-                    counts_as_generation,
+                    entry.capacity,
                 )
             )
             continue
         sold = fill.cleared
         traded = sold if sold > MIN_SETTLED_QUANTITY else 0.0
         revenue = energy_value(traded, price, seconds_per_tick)
-        if entry.price <= MIN_PRICE:
-            dumped = max(0.0, min(entry.capacity, entry.capacity - sold))
-            dump_cost = energy_value(dumped, -MIN_PRICE, seconds_per_tick)
+        if entry.must_run:
+            dumped = entry.capacity - traded
+            dump_cost = energy_value(dumped, dump_cost_per_mwh, seconds_per_tick)
             sales.append(
-                SaleSettlement(
-                    entry.player_id, entry.facility, traded, revenue, counts_as_generation, dumped, dump_cost
-                )
+                SaleSettlement(entry.player_id, entry.facility, traded, revenue, entry.capacity, dumped, dump_cost)
             )
-            continue
-        sales.append(SaleSettlement(entry.player_id, entry.facility, traded, revenue, counts_as_generation))
-        break
+        elif not past_marginal_offer:
+            sales.append(SaleSettlement(entry.player_id, entry.facility, traded, revenue, traded))
+        past_marginal_offer = True
 
     purchases: list[PurchaseSettlement] = []
     for fill in clearing.demands:
