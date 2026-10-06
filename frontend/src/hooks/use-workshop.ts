@@ -65,7 +65,8 @@ export function useWorkshopSession() {
 
 /**
  * The facilities players can see and buy now. They only change when the session
- * unlocks one, so the list is not re-read on its own.
+ * unlocks one, so the list is not re-read on its own. It is re-read whenever
+ * the session changes, since its query key sits under the session's.
  */
 export function useWorkshopFacilities() {
     return useQuery({

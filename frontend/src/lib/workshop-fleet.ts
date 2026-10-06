@@ -28,7 +28,7 @@ export function fleetStacks(fleet: OwnedFacility[]): FleetStack[] {
     }
     return [...stacks].map(([facility, copies]) => ({
         facility,
-        copies: copies.toSorted((a, b) => b.rounds_left - a.rounds_left),
+        copies: copies.slice().sort((a, b) => b.rounds_left - a.rounds_left),
     }));
 }
 
