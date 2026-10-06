@@ -26,7 +26,7 @@ type WorkshopSelection = ApiSchema<"WorkshopSelectionOut">;
  * everything on the card together (text, image, icons and spacing), and unlike
  * a transform it also shrinks the room the card takes.
  */
-const CARD_ZOOM = 0.5;
+const CARD_ZOOM = 0.7;
 /** A card's width in the row: the catalog card's `w-60` (240px), zoomed. */
 const CARD_WIDTH = 240 * CARD_ZOOM;
 /** The space between cards while they all fit side by side. */
@@ -86,7 +86,7 @@ export function InvestmentSelection({
              * A fixed height that fits the tallest card, so the catalog below
              * does not move as cards come and go.
              */}
-            <div ref={rowRef} className="flex h-44 items-start pt-2">
+            <div ref={rowRef} className="flex h-60 items-start pt-2">
                 <AnimatePresence initial={false}>
                     {selection.facilities.map((id, index) => {
                         const facility = byId.get(id);

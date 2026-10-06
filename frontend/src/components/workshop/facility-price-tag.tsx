@@ -4,17 +4,17 @@
  * the construction time and the construction pollution.
  *
  * While the Investment phase is open, the tag flips over when hovered (or
- * tapped, on a touch screen) to show an Add button on its back, which adds the
- * facility to the player's selection (#999). While it is closed, the tag does
- * not flip: clicking it shakes it and says to wait for the next one.
+ * tapped, on a touch screen). Clicking its back adds the facility to the
+ * player's selection (#999), and the tag gives a little bounce. While the phase
+ * is closed, the tag does not flip: clicking it shakes it and says to wait for
+ * the next one.
  */
 
 import { useAnimate } from "framer-motion";
-import { Cloud, Hammer, Plus } from "lucide-react";
+import { Cloud, Hammer } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import { Money } from "@/components/ui/money";
 import { formatEmissions } from "@/lib/format-utils";
 import { GAME_ERROR_MESSAGES } from "@/lib/game-messages";
@@ -26,6 +26,9 @@ type WorkshopFacility = ApiSchema<"WorkshopFacility">;
 
 /** A quick left-right shake, as a disabled control gives, in pixels. */
 const SHAKE = [0, -6, 6, -5, 5, -3, 3, 0];
+
+/** A quick squeeze and spring back, when a click adds the facility. */
+const BOUNCE = [1, 0.88, 1.06, 0.98, 1];
 
 /** The look shared by both faces of the tag. */
 const FACE =
@@ -68,6 +71,11 @@ export function FacilityPriceTag({
         toast.error(GAME_ERROR_MESSAGES.WORKSHOP_INVESTMENT_CLOSED, {
             id: "workshop-investment-closed",
         });
+    }
+
+    function handleAdd() {
+        void animate(scope.current, { scale: BOUNCE }, { duration: 0.35 });
+        onAdd();
     }
 
     return (
@@ -128,23 +136,29 @@ export function FacilityPriceTag({
                             </span>
                         </span>
                     </button>
-                    <div inert={!flipped} className={cn(FACE, "rotate-y-180")}>
+                    <button
+                        type="button"
+                        onClick={handleAdd}
+                        disabled={!affordable || adding}
+                        inert={!flipped}
+                        className={cn(
+                            FACE,
+                            "rotate-y-180 disabled:cursor-not-allowed",
+                        )}
+                    >
                         <PinHole />
-                        <Button
-                            size="sm"
-                            className="h-6 rounded-full px-3 text-xs"
-                            disabled={!affordable || adding}
-                            onClick={onAdd}
+                        <span
+                            className={cn(
+                                "text-sm font-extrabold",
+                                !affordable && "opacity-50",
+                            )}
                         >
-                            <Plus className="size-3.5" />
-                            Add
-                        </Button>
-                        <span className="mt-0.5 text-[10px] whitespace-nowrap">
-                            {affordable
-                                ? countsLabel(owned, selected)
-                                : "Not enough money"}
+                            {affordable ? "Click to add" : "Not enough money"}
                         </span>
-                    </div>
+                        <span className="mt-0.5 text-[10px] whitespace-nowrap">
+                            {countsLabel(owned, selected)}
+                        </span>
+                    </button>
                 </div>
             </div>
         </div>
