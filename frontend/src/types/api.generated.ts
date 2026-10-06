@@ -2133,6 +2133,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workshop/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Prices
+         * @description The prices the calling player offers their facilities' power at.
+         */
+        get: operations["get_prices_api_v1_workshop_prices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/prices/{facility}/{side}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Price
+         * @description Set the calling player's ``side`` price for ``facility``: what it sells at, or for storage, what
+         *     it buys at to charge. Only while a Trading period's price-setting window is open.
+         */
+        put: operations["set_price_api_v1_workshop_prices__facility___side__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workshop/prices/locked": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Locked Prices
+         * @description The prices each completed Trading period ran at for the calling player, oldest first. A period
+         *     in which they had nothing operating is left out.
+         */
+        get: operations["get_locked_prices_api_v1_workshop_prices_locked_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4780,6 +4842,21 @@ export interface components {
             round: number;
         };
         /**
+         * LockedPrices
+         * @description The prices a player's facilities were offered at during one Trading period.
+         */
+        LockedPrices: {
+            /** Round */
+            round: number;
+            /**
+             * Season
+             * @enum {string}
+             */
+            season: "spring" | "summer" | "autumn" | "winter";
+            /** @description The prices of the facility types the player had operating */
+            prices: components["schemas"]["PriceSheet"];
+        };
+        /**
          * NotStarted
          * @description Before Round 1: players are arriving and nothing is open yet.
          */
@@ -4789,6 +4866,26 @@ export interface components {
              * @enum {string}
              */
             kind: "not_started";
+        };
+        /**
+         * PriceSheet
+         * @description A player's prices, per MWh.
+         */
+        PriceSheet: {
+            /**
+             * Sell
+             * @description The price each facility type sells its power at
+             */
+            sell: {
+                [key: string]: number;
+            };
+            /**
+             * Buy
+             * @description The price each storage type buys power at to charge
+             */
+            buy: {
+                [key: string]: number;
+            };
         };
         /**
          * Recap
@@ -4968,6 +5065,42 @@ export interface components {
             money: number;
         };
         /**
+         * WorkshopPriceIn
+         * @description A new price for one facility type, per MWh.
+         */
+        WorkshopPriceIn: {
+            /**
+             * Price
+             * @description The price per MWh. It has no ceiling, but cannot go below -25.0
+             */
+            price: number;
+        };
+        /**
+         * WorkshopPricesOut
+         * @description The calling player's prices, per MWh (#1002). Every facility type has one, owned or not.
+         */
+        WorkshopPricesOut: {
+            /**
+             * Sell
+             * @description The price each facility type sells its power at
+             */
+            sell: {
+                [key: string]: number;
+            };
+            /**
+             * Buy
+             * @description The price each storage type buys power at to charge
+             */
+            buy: {
+                [key: string]: number;
+            };
+            /**
+             * Price Floor
+             * @description The lowest price a player can set, per MWh
+             */
+            price_floor: number;
+        };
+        /**
          * WorkshopSelectionIn
          * @description One facility to add to the calling player's selection.
          */
@@ -5031,7 +5164,7 @@ export interface components {
          * GameExceptionType
          * @enum {string}
          */
-        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
+        GameExceptionType: "Not enough money" | "TileNotFound" | "noTile" | "noLocation" | "Player has no tile" | "locationOccupied" | "choiceUnmodifiable" | "USERNAME_TAKEN" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "NOT_AUTHENTICATED" | "USER_IS_NOT_A_PLAYER" | "ACCOUNT_IS_NOT_A_FACILITATOR" | "PLAYER_NOT_SET_UP" | "SIGNUP_DISABLED" | "OLD_PASSWORD_INCORRECT" | "INSTANCE_ACCESS_DENIED" | "INSTANCE_NOT_PRIVATE" | "JOIN_LINK_INVALID" | "JOIN_LINK_CLOSED" | "RUN_NOT_FOUND" | "WORKSHOP_SESSION_FINISHED" | "WORKSHOP_NO_PHASE_RUNNING" | "WORKSHOP_INVESTMENT_CLOSED" | "WORKSHOP_FACILITY_NOT_OFFERED" | "WORKSHOP_NOT_ENOUGH_MONEY" | "WORKSHOP_NOT_SELECTED" | "WORKSHOP_PRICE_SETTING_CLOSED" | "WORKSHOP_PRICE_BELOW_FLOOR" | "WORKSHOP_NOT_STORAGE" | "Instance is frozen; the game is read-only." | "InvalidMultiplier" | "malformedRequest" | "storagePriceInversion" | "Project not found" | "CannotDecreasePriorityOfLastProject" | "CannotIncreasePriorityOfFirstProject" | "requirementsPreventReorder" | "cannotPause" | "cannotResume" | "CannotSwapPausedProject" | "PausedPrerequisitePreventUnpause" | "Requirements not satisfied" | "HasDependents" | "Facility not upgradable" | "FacilityIsDecommissioning" | "Facility not found" | "Cannot remove technologies or functional facilities" | "wrongTitleLength" | "chatAlreadyExist" | "notInChat" | "noMessage" | "messageTooLong" | "quizAlreadyAnswered" | "networkNotUnlocked" | "noSuchNetwork" | "playerAlreadyInNetwork" | "nameAlreadyUsed" | "notInNetwork" | "networkFull" | "notEnoughResource" | "invalidQuantity";
     };
     responses: never;
     parameters: never;
@@ -8070,6 +8203,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_prices_api_v1_workshop_prices_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopPricesOut"];
+                };
+            };
+        };
+    };
+    set_price_api_v1_workshop_prices__facility___side__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                facility: components["schemas"]["FacilityId"];
+                side: "sell" | "buy";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkshopPriceIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopPricesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_locked_prices_api_v1_workshop_prices_locked_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LockedPrices"][];
                 };
             };
         };

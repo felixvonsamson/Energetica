@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from energetica.identity.accounts import Account
     from energetica.workshop.facilities import FacilityId
     from energetica.workshop.fleet import OwnedFacility
+    from energetica.workshop.prices import LockedPrices, PriceSheet
 
 
 @dataclass(eq=False)
@@ -63,6 +64,8 @@ class WorkshopNetwork:
         owned_facilities: list[OwnedFacility],
         selection: list[FacilityId],
         stored_energy: dict[FacilityId, float],
+        prices: PriceSheet,
+        locked_prices: list[LockedPrices],
     ) -> WorkshopPlayer:
         """Put back a player saved from an earlier process, when a Run's session is reloaded.
 
@@ -77,6 +80,8 @@ class WorkshopNetwork:
                 owned_facilities=owned_facilities,
                 selection=selection,
                 stored_energy=stored_energy,
+                prices=prices,
+                locked_prices=locked_prices,
             )
             self.members[account_id] = player
             return player

@@ -11,6 +11,8 @@ arrive, and one after the last Recap, when the session is over.
 The Investment phase and each Trading period's price-setting window also get a countdown, a
 :class:`~energetica.workshop.phase_timer.PhaseTimer` (#996). It tells players how long they have, and
 the moderator can extend it. Running out of time closes the window but does not advance the session.
+Players change their prices only while a price-setting window is open (#1002). Leaving a Trading
+period records the prices it ran at.
 
 :class:`WorkshopSession` holds a Run's whole state: the current checkpoint, the Round count, the
 round-configuration levers, the running phase's countdown, and the Run's single shared
@@ -22,6 +24,7 @@ Workshop's own persistence. It shares nothing with the persistent world's model 
 
 from __future__ import annotations
 
+import math
 import os
 import tempfile
 import threading
@@ -33,9 +36,10 @@ from typing import TYPE_CHECKING, Annotated, Literal
 from pydantic import BaseModel, Field
 
 from energetica.workshop.facilities import CATALOG, FacilityId
-from energetica.workshop.fleet import OwnedFacility, lifetime_left
+from energetica.workshop.fleet import OwnedFacility, is_operating, lifetime_left
 from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.phase_timer import PhaseTimer
+from energetica.workshop.prices import DEFAULT_PRICES, PRICE_FLOOR, LockedPrices, PriceSheet, PriceSide, is_storage
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.setup import open_workshop_run
 from energetica.workshop.storage import keep_what_fits
@@ -124,6 +128,18 @@ class NoPhaseRunningError(Exception):
     """Raised when extending a phase while none is open: the checkpoint is not timed, or its time is up."""
 
 
+class PriceSettingClosedError(Exception):
+    """Raised when changing a price while no price-setting window is open (#1002)."""
+
+
+class PriceBelowFloorError(Exception):
+    """Raised when a price is below Workshop's price floor, or is not a finite number (#1002)."""
+
+
+class NotStorageError(Exception):
+    """Raised when setting a buy price for a facility that is not storage (#1002)."""
+
+
 def next_checkpoint(checkpoint: Checkpoint, *, round_count: int) -> Checkpoint:
     """The checkpoint that follows ``checkpoint`` in a session of ``round_count`` Rounds."""
     match checkpoint:
@@ -183,6 +199,9 @@ class _SavedPlayer(BaseModel):
     selection: list[FacilityId] = []
     # Defaults to empty for a file saved before stored energy existed.
     stored_energy: dict[FacilityId, float] = {}
+    # Default to the starting prices and no history for a file saved before prices existed.
+    prices: PriceSheet = DEFAULT_PRICES
+    locked_prices: list[LockedPrices] = []
 
 
 class _SavedSession(BaseModel):
@@ -267,6 +286,8 @@ class WorkshopSession:
                 owned_facilities=player.owned_facilities,
                 selection=player.selection,
                 stored_energy=player.stored_energy,
+                prices=player.prices,
+                locked_prices=player.locked_prices,
             )
         return cls(
             network=network,
@@ -302,6 +323,16 @@ class WorkshopSession:
             and self.phase_timer.is_active(self.clock())
         )
 
+    def price_setting_open(self) -> bool:
+        """Whether players can change their prices: the session is in a Trading period and its
+        price-setting window has not run out.
+        """
+        return (
+            isinstance(self.checkpoint, TradingPeriod)
+            and self.phase_timer is not None
+            and self.phase_timer.is_active(self.clock())
+        )
+
     def upcoming_checkpoint(self) -> Checkpoint | None:
         """The checkpoint :meth:`advance` would move to, or ``None`` once the session is finished."""
         if isinstance(self.checkpoint, Finished):
@@ -313,8 +344,9 @@ class WorkshopSession:
 
         A timed checkpoint starts its phase's countdown now. Leaving an Investment phase also buys
         any selection still waiting, so none is lost if the moderator advances before the timer has
-        run out or before the purchase at its end has happened. Starting a new Round's Investment
-        phase retires every facility whose lifetime has ended. Raises
+        run out or before the purchase at its end has happened. Leaving a Trading period records the
+        prices it ran at. Starting a new Round's Investment phase retires every facility whose lifetime
+        has ended. Raises
         :class:`SessionFinishedError` once the session is :class:`Finished`.
         """
         with self._lock:
@@ -325,6 +357,8 @@ class WorkshopSession:
             # purchase or retirement is saved in the same write, so it happens only if the advance does.
             if isinstance(self.checkpoint, Investment):
                 saved = self._buy_selections(self.checkpoint.round, checkpoint=checkpoint, phase_timer=phase_timer)
+            elif isinstance(self.checkpoint, TradingPeriod):
+                saved = self._lock_prices(self.checkpoint, checkpoint=checkpoint, phase_timer=phase_timer)
             elif isinstance(checkpoint, Investment):
                 saved = self._retire_expired(checkpoint.round, checkpoint=checkpoint, phase_timer=phase_timer)
             else:
@@ -460,6 +494,56 @@ class WorkshopSession:
             raise
         return True
 
+    def set_price(self, account_id: int, facility: FacilityId, side: PriceSide, price: float) -> None:
+        """Set the price the player offers ``facility``'s power at, per MWh: its ``"sell"`` price, or for
+        storage its ``"buy"`` price too. Only while the price-setting window is open.
+
+        A price has no ceiling, but cannot go below :data:`~energetica.workshop.prices.PRICE_FLOOR`.
+        """
+        with self._lock:
+            if not self.price_setting_open():
+                raise PriceSettingClosedError("the price-setting window is not open")
+            if not (math.isfinite(price) and price >= PRICE_FLOOR):
+                raise PriceBelowFloorError(f"{price} is not a price of at least {PRICE_FLOOR}")
+            if side == "buy" and not is_storage(facility):
+                raise NotStorageError(f"{facility} is not storage, so it does not buy")
+            player = self.network.members[account_id]
+            before = player.prices
+            player.prices = before.with_price(facility, side, price)
+            try:
+                self._save(self.checkpoint, self.phase_timer)
+            except BaseException:
+                # Undo the change, so the session matches the file.
+                player.prices = before
+                raise
+
+    def _lock_prices(self, period: TradingPeriod, *, checkpoint: Checkpoint, phase_timer: PhaseTimer | None) -> bool:
+        """Record the prices every player ran ``period`` at, and return whether any player had any.
+
+        Each player's record holds the prices of the facility types they had operating, and a player with
+        none gets no record. It is saved with the session at ``checkpoint`` with ``phase_timer``, and
+        nothing is saved if nothing is recorded. The caller holds the lock.
+        """
+        before = {player: list(player.locked_prices) for player in self.network.players()}
+        for player in before:
+            operating = {
+                owned.facility for owned in player.owned_facilities if is_operating(owned, current_round=period.round)
+            }
+            if operating:
+                player.locked_prices.append(
+                    LockedPrices(round=period.round, season=period.season, prices=player.prices.only(operating))
+                )
+        if all(player.locked_prices == locked for player, locked in before.items()):
+            return False
+        try:
+            self._save(checkpoint, phase_timer)
+        except BaseException:
+            # Undo the record, so the session matches the file and the next attempt retries it.
+            for player, locked in before.items():
+                player.locked_prices = locked
+            raise
+        return True
+
     def join(self, account: Account) -> WorkshopPlayer:
         """Place ``account`` into the Run's Network, or return its existing player."""
         with self._lock:
@@ -489,6 +573,8 @@ class WorkshopSession:
                     owned_facilities=player.owned_facilities,
                     selection=player.selection,
                     stored_energy=player.stored_energy,
+                    prices=player.prices,
+                    locked_prices=player.locked_prices,
                 )
                 for player in self.network.players()
             ],

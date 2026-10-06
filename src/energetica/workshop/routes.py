@@ -3,7 +3,8 @@
 Every route goes through the same entry gate as the persistent world
 (:func:`~energetica.identity.web.resolve_entry_account`), so a private Workshop Run admits the same
 accounts. Advancing the session and extending its running phase are the facilitator's alone, and
-each tells every open page (#1140). A player's investment selection is theirs alone (#999).
+each tells every open page (#1140). A player's investment selection (#999) and prices (#1002) are
+theirs alone.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from energetica.identity.web import get_facilitator, get_role, resolve_entry_acc
 from energetica.kernel.game_error import GameError, GameExceptionType
 from energetica.workshop.facilities import FacilityId, WorkshopFacility
 from energetica.workshop.player import WorkshopPlayer
+from energetica.workshop.prices import PRICE_FLOOR, LockedPrices, PriceSide
 from energetica.workshop.realtime import invalidate_session
 from energetica.workshop.schemas import (
     WorkshopEntryOut,
@@ -27,6 +29,8 @@ from energetica.workshop.schemas import (
     WorkshopPhaseExtendIn,
     WorkshopPhaseTimerOut,
     WorkshopPlayerOut,
+    WorkshopPriceIn,
+    WorkshopPricesOut,
     WorkshopSelectionIn,
     WorkshopSelectionOut,
     WorkshopSessionOut,
@@ -37,6 +41,9 @@ from energetica.workshop.session import (
     NoPhaseRunningError,
     NotEnoughMoneyError,
     NotSelectedError,
+    NotStorageError,
+    PriceBelowFloorError,
+    PriceSettingClosedError,
     SessionFinishedError,
     WorkshopSession,
 )
@@ -209,3 +216,40 @@ async def remove_from_selection(player: Player, session: Session, facility: Faci
     except NotSelectedError as exc:
         raise GameError(GameExceptionType.WORKSHOP_NOT_SELECTED) from exc
     return _selection_out(player, session)
+
+
+def _prices_out(player: WorkshopPlayer) -> WorkshopPricesOut:
+    return WorkshopPricesOut(sell=player.prices.sell, buy=player.prices.buy, price_floor=PRICE_FLOOR)
+
+
+@router.get("/prices")
+def get_prices(player: Player) -> WorkshopPricesOut:
+    """The prices the calling player offers their facilities' power at."""
+    return _prices_out(player)
+
+
+# Waits on the session's lock and writes the session file, so it runs on a worker thread.
+@router.put("/prices/{facility}/{side}")
+async def set_price(
+    player: Player, session: Session, facility: FacilityId, side: PriceSide, new: WorkshopPriceIn
+) -> WorkshopPricesOut:
+    """Set the calling player's ``side`` price for ``facility``: what it sells at, or for storage, what
+    it buys at to charge. Only while a Trading period's price-setting window is open.
+    """
+    try:
+        await run_in_threadpool(session.set_price, player.account_id, facility, side, new.price)
+    except PriceSettingClosedError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_PRICE_SETTING_CLOSED) from exc
+    except PriceBelowFloorError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_PRICE_BELOW_FLOOR) from exc
+    except NotStorageError as exc:
+        raise GameError(GameExceptionType.WORKSHOP_NOT_STORAGE) from exc
+    return _prices_out(player)
+
+
+@router.get("/prices/locked")
+def get_locked_prices(player: Player) -> list[LockedPrices]:
+    """The prices each completed Trading period ran at for the calling player, oldest first. A period
+    in which they had nothing operating is left out.
+    """
+    return player.locked_prices
