@@ -62,12 +62,16 @@ def is_operating(owned: OwnedFacility, *, current_round: int) -> bool:
 def capacity_factor(owned: OwnedFacility, production: Sequence[float]) -> float:
     """How much of its maximum output ``owned`` produced on average, from 0 to 1.
 
-    ``production`` is its output in W, sampled at evenly spaced time steps. Raises :class:`ValueError`
-    if it is empty.
+    ``production`` is its output in W, sampled at evenly spaced time steps. For storage, that is the
+    power it discharges. Raises :class:`ValueError` if it is empty, or if a sample is below zero or
+    above the facility's maximum output, which would mean the caller simulated it wrongly.
     """
     if not production:
         raise ValueError("a capacity factor needs at least one production sample")
-    return sum(production) / len(production) / CATALOG[owned.facility].base_power_generation
+    maximum = CATALOG[owned.facility].base_power_generation
+    if not all(0 <= sample <= maximum for sample in production):
+        raise ValueError(f"{owned.facility} produced outside 0 to its maximum of {maximum} W")
+    return sum(production) / len(production) / maximum
 
 
 def om_owed(owned: OwnedFacility, *, current_round: int, production: Sequence[float]) -> float:
