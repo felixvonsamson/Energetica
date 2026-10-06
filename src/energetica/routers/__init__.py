@@ -5,15 +5,11 @@ from datetime import datetime
 from typing import Awaitable, Callable, cast
 
 from fastapi import FastAPI, Request, Response, status
-from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 
 from energetica.freeplay.globals import engine
 from energetica.freeplay.schemas.simulate import ApiAction, ApiActionRequest, ApiActionResponse, Method
-from energetica.kernel.game_error import GameError
-from energetica.schemas.common import GameErrorOut
-from energetica.utils.auth import get_current_account
+from energetica.identity.web import get_current_account
+from energetica.kernel.error_envelope import install_error_handlers
 
 from .achievements import router as achievements_router
 from .auth import router as auth_router
@@ -72,22 +68,7 @@ logging.getLogger("uvicorn.access").addFilter(SocketIOFilter())
 
 
 def setup_routes(app: FastAPI) -> None:
-    @app.exception_handler(RequestValidationError)
-    def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
-        """If the validation of pydantic schemas fails (e.g. string too short), return a 422 with details."""
-        return JSONResponse(
-            content={
-                "detail": jsonable_encoder(exc.errors()),
-                "meta": {"error_type": "request_validation_error"},
-            },
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        )
-
-    @app.exception_handler(GameError)
-    def global_exception_handler(request: Request, exc: GameError) -> JSONResponse:
-        """Handle global game exceptions."""
-        content = GameErrorOut.from_game_error(exc)
-        return JSONResponse(content=content.model_dump(by_alias=True), status_code=status.HTTP_400_BAD_REQUEST)
+    install_error_handlers(app)
 
     @app.middleware("log_action")
     async def log_action(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

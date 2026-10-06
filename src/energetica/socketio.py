@@ -14,7 +14,7 @@ from socketio.exceptions import ConnectionRefusedError
 from energetica.freeplay.database.player import Player
 from energetica.freeplay.globals import engine
 from energetica.kernel.session import SESSION_COOKIE_NAME
-from energetica.utils.auth import get_account_from_token, get_role
+from energetica.identity.web import get_account_from_token, get_role
 
 
 def setup_socketio(app: FastAPI) -> None:
