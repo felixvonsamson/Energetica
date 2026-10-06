@@ -173,12 +173,12 @@ def get_selection(player: Player) -> WorkshopSelectionOut:
 
 # Each change waits on the session's lock and writes the session file, so it runs on a worker thread.
 @router.post("/selection")
-async def add_to_selection(player: Player, session: Session, selection: WorkshopSelectionIn) -> WorkshopSelectionOut:
+async def add_to_selection(player: Player, session: Session, pick: WorkshopSelectionIn) -> WorkshopSelectionOut:
     """Add one facility to the calling player's selection. Only while the Investment phase is open, and
     only if the player can pay for the whole selection.
     """
     try:
-        await run_in_threadpool(session.select, player.account_id, selection.facility)
+        await run_in_threadpool(session.select, player.account_id, pick.facility)
     except InvestmentClosedError as exc:
         raise GameError(GameExceptionType.WORKSHOP_INVESTMENT_CLOSED) from exc
     except FacilityNotOfferedError as exc:

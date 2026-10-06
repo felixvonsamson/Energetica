@@ -6,7 +6,7 @@
  *
  * The cards sit in one row. When they no longer fit side by side, they overlap
  * like a hand of playing cards. Hovering one lifts it and shows its Remove
- * button.
+ * button. A touch screen cannot hover, so there the button always shows.
  */
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -119,7 +119,7 @@ export function InvestmentSelection({
                                             type="button"
                                             aria-label={`Remove ${facility.name}`}
                                             onClick={() => onRemove(id)}
-                                            className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-destructive text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 focus:opacity-100"
+                                            className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-destructive text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 focus:opacity-100 pointer-coarse:opacity-100"
                                         >
                                             <X className="size-3.5" />
                                         </button>
