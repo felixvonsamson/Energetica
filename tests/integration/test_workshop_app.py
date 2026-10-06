@@ -433,6 +433,7 @@ def test_a_player_selects_facilities_to_buy_when_the_investment_phase_closes(ses
         "facilities": ["gas_burner", "small_water_dam"],
         "total_cost": 155_000.0,
         "money": 1_000_000.0,
+        "stored_energy_at_risk": {},
     }
     assert client.get(SELECTION_URL).json() == response.json()
     assert client.get(FLEET_URL).json() == []
@@ -447,6 +448,22 @@ def test_a_player_removes_a_facility_from_their_selection(session_path: Path, cl
 
     assert response.status_code == 200
     assert response.json()["facilities"] == []
+
+
+def test_the_selection_says_how_much_stored_energy_it_does_not_yet_hold(session_path: Path, clock: _Clock) -> None:
+    app, client, _, [alice] = _investing(session_path, clock, "alice")
+    authenticate(client, alice)
+    # Handed to the player directly: energy left over from batteries that just retired, and the money
+    # for two new ones.
+    player = app.state.workshop_session.player(alice)
+    player.stored_energy[FacilityId.LITHIUM_ION_BATTERIES] = 5_000_000_000.0
+    player.money = 2_000_000.0
+
+    assert client.get(SELECTION_URL).json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 5_000_000_000.0}
+    response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
+    assert response.json()["stored_energy_at_risk"] == {"lithium_ion_batteries": 1_800_000_000.0}
+    response = client.post(SELECTION_URL, json={"facility": "lithium_ion_batteries"})
+    assert response.json()["stored_energy_at_risk"] == {}
 
 
 @pytest.mark.parametrize(
@@ -504,7 +521,12 @@ def test_players_buy_their_own_selections_when_the_facilitator_advances(session_
 
     authenticate(client, alice)
     assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["gas_burner"]
-    assert client.get(SELECTION_URL).json() == {"facilities": [], "total_cost": 0.0, "money": 910_000.0}
+    assert client.get(SELECTION_URL).json() == {
+        "facilities": [],
+        "total_cost": 0.0,
+        "money": 910_000.0,
+        "stored_energy_at_risk": {},
+    }
     authenticate(client, bob)
     assert [owned["facility"] for owned in client.get(FLEET_URL).json()] == ["small_water_dam", "small_water_dam"]
     assert client.get(SELECTION_URL).json()["money"] == 870_000.0

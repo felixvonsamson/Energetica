@@ -694,3 +694,93 @@ def test_an_advance_that_fails_to_save_retires_nothing(path: Path, monkeypatch: 
 
     assert session.checkpoint == Recap(round=2)
     assert session.network.members[1].owned_facilities == [WIND, REACTOR]
+
+
+# --- storage reinvest-or-lose (#1001) -------------------------------------------------------
+
+# Lithium-ion batteries last one Round, so batteries built in Round 1 retire as Round 2 starts.
+BATTERIES = FacilityId.LITHIUM_ION_BATTERIES
+BATTERY_CAPACITY = 3_200_000_000.0
+
+
+def _batteries_retiring(path: Path, clock: _Clock) -> WorkshopSession:
+    """A session in Round 2's open Investment phase. Alice (account 1) owned three batteries in Round 1,
+    which held half their capacity when they retired.
+    """
+    session = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+    alice = session.join(_account(1, "alice"))
+    alice.money = 10_000_000.0
+    alice.owned_facilities.extend([OwnedFacility(facility=BATTERIES, built_round=1)] * 3)
+    alice.stored_energy[BATTERIES] = 1.5 * BATTERY_CAPACITY
+    while session.checkpoint != Investment(round=2):
+        session.advance()
+    return session
+
+
+def test_retired_storage_keeps_its_energy_while_the_investment_phase_is_open(path: Path, clock: _Clock) -> None:
+    session = _batteries_retiring(path, clock)
+
+    alice = session.network.members[1]
+    assert alice.owned_facilities == []
+    assert alice.stored_energy == {BATTERIES: 1.5 * BATTERY_CAPACITY}
+
+
+def test_storage_bought_to_replace_retired_storage_takes_its_energy(path: Path, clock: _Clock) -> None:
+    session = _batteries_retiring(path, clock)
+    session.select(1, BATTERIES)
+    session.select(1, BATTERIES)
+    clock.tick(minutes=8)
+
+    session.buy_selections()
+
+    assert session.network.members[1].stored_energy == {BATTERIES: 1.5 * BATTERY_CAPACITY}
+
+
+def test_energy_the_replacement_cannot_hold_is_lost(path: Path, clock: _Clock) -> None:
+    session = _batteries_retiring(path, clock)
+    session.select(1, BATTERIES)
+    clock.tick(minutes=8)
+
+    session.buy_selections()
+
+    assert session.network.members[1].stored_energy == {BATTERIES: pytest.approx(BATTERY_CAPACITY)}
+
+
+def test_energy_is_lost_when_the_investment_phase_closes_without_a_replacement(path: Path, clock: _Clock) -> None:
+    session = _batteries_retiring(path, clock)
+
+    session.advance()
+
+    assert session.network.members[1].stored_energy == {}
+
+
+def test_stored_energy_survives_a_restart(path: Path, clock: _Clock) -> None:
+    _batteries_retiring(path, clock)
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path, clock=clock)
+
+    assert reopened.network.members[1].stored_energy == {BATTERIES: 1.5 * BATTERY_CAPACITY}
+
+
+def test_a_session_saved_before_stored_energy_existed_still_opens(path: Path) -> None:
+    path.write_text(
+        '{"checkpoint": {"kind": "recap", "round": 1}, "round_count": 3, "levers": {}, '
+        '"players": [{"account_id": 1, "username": "alice", "money": 5.0, "owned_facilities": []}]}',
+        encoding="utf-8",
+    )
+
+    reopened = WorkshopSession.open(WORKSHOP_CONFIG, path)
+
+    assert reopened.network.members[1].stored_energy == {}
+
+
+def test_a_failed_save_keeps_the_energy_that_would_be_lost(
+    path: Path, clock: _Clock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    session = _batteries_retiring(path, clock)
+    monkeypatch.setattr(session_module, "_write_atomically", _failing_write)
+
+    with pytest.raises(OSError):
+        session.advance()
+
+    assert session.network.members[1].stored_energy == {BATTERIES: 1.5 * BATTERY_CAPACITY}

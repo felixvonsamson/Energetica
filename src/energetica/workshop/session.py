@@ -38,6 +38,7 @@ from energetica.workshop.network import WorkshopNetwork
 from energetica.workshop.phase_timer import PhaseTimer
 from energetica.workshop.seasons import SEASONS, Season
 from energetica.workshop.setup import open_workshop_run
+from energetica.workshop.storage import keep_what_fits
 from energetica.workshop.unlocks import available_facilities
 
 if TYPE_CHECKING:
@@ -180,6 +181,8 @@ class _SavedPlayer(BaseModel):
     owned_facilities: list[OwnedFacility]
     # Defaults to empty for a file saved before selections existed.
     selection: list[FacilityId] = []
+    # Defaults to empty for a file saved before stored energy existed.
+    stored_energy: dict[FacilityId, float] = {}
 
 
 class _SavedSession(BaseModel):
@@ -263,6 +266,7 @@ class WorkshopSession:
                 money=player.money,
                 owned_facilities=player.owned_facilities,
                 selection=player.selection,
+                stored_energy=player.stored_energy,
             )
         return cls(
             network=network,
@@ -383,10 +387,11 @@ class WorkshopSession:
 
     def buy_selections(self) -> bool:
         """Buy every player's selection if the Investment phase's time has run out, and return whether
-        anything was bought.
+        anything changed.
 
-        Each selected facility is paid for in full and owned from the Round it is bought in. Nothing is
-        bought while the phase is open, or outside an Investment phase.
+        Each selected facility is paid for in full and owned from the Round it is bought in. Stored
+        energy that no longer fits its storage type is then lost (#1001). Nothing happens while the
+        phase is open, or outside an Investment phase.
         """
         with self._lock:
             if not isinstance(self.checkpoint, Investment) or self.investment_open():
@@ -394,27 +399,39 @@ class WorkshopSession:
             return self._buy_selections(self.checkpoint.round, checkpoint=self.checkpoint, phase_timer=self.phase_timer)
 
     def _buy_selections(self, round_number: int, *, checkpoint: Checkpoint, phase_timer: PhaseTimer | None) -> bool:
-        """Buy every player's selection in Round ``round_number``, and return whether anything was bought.
+        """Buy every player's selection in Round ``round_number``, drop the stored energy that no longer
+        fits, and return whether anything changed.
 
-        The purchase is saved with the session at ``checkpoint`` with ``phase_timer``, and nothing is saved
-        if there is nothing to buy. The caller holds the lock.
+        This is saved with the session at ``checkpoint`` with ``phase_timer``, and nothing is saved if
+        nothing changed. The caller holds the lock.
         """
-        buyers = [player for player in self.network.players() if player.selection]
-        if not buyers:
-            return False
-        before = [(player.money, list(player.owned_facilities), list(player.selection)) for player in buyers]
-        for player in buyers:
+        players = self.network.players()
+        before = [
+            (player.money, list(player.owned_facilities), list(player.selection), dict(player.stored_energy))
+            for player in players
+        ]
+        for player in players:
             player.money -= player.selection_cost()
             player.owned_facilities.extend(
                 OwnedFacility(facility=facility, built_round=round_number) for facility in player.selection
             )
             player.selection.clear()
+            player.stored_energy = keep_what_fits(
+                player.stored_energy, player.owned_facilities, current_round=round_number
+            )
+        changed = any(
+            (player.owned_facilities, player.stored_energy) != (owned_facilities, stored_energy)
+            for player, (_, owned_facilities, _, stored_energy) in zip(players, before, strict=True)
+        )
+        if not changed:
+            return False
         try:
             self._save(checkpoint, phase_timer)
         except BaseException:
             # Undo the purchase, so the session matches the file and the next attempt retries it.
-            for player, (money, owned_facilities, selection) in zip(buyers, before, strict=True):
+            for player, (money, owned_facilities, selection, stored_energy) in zip(players, before, strict=True):
                 player.money, player.owned_facilities, player.selection = money, owned_facilities, selection
+                player.stored_energy = stored_energy
             raise
         return True
 
@@ -471,6 +488,7 @@ class WorkshopSession:
                     money=player.money,
                     owned_facilities=player.owned_facilities,
                     selection=player.selection,
+                    stored_energy=player.stored_energy,
                 )
                 for player in self.network.players()
             ],

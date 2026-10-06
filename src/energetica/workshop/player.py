@@ -50,6 +50,10 @@ class WorkshopPlayer:
     # entry per copy, in the order they were picked.
     selection: list[FacilityId] = field(default_factory=list)
 
+    # The energy each storage type holds, in Wh, shared by every facility of that type (#1001). A type
+    # holding nothing is left out.
+    stored_energy: dict[FacilityId, float] = field(default_factory=dict)
+
     def selection_cost(self) -> float:
         """What the selection costs to buy, in full."""
         return sum(CATALOG[facility].base_price for facility in self.selection)
